@@ -51,7 +51,7 @@ const GlobalTasks: React.FC = () => {
     <div className="global-tasks">
       <div className="section-header">
         <div className="section-title">
-          <span className="section-icon">📝</span>
+          <span className="material-symbols-outlined section-icon">task</span>
           GLOBAL TASKS
           {highPriorityCount > 0 && (
             <span className="badge-high">{highPriorityCount} High</span>

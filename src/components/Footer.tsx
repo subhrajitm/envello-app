@@ -5,7 +5,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="footer">
       <div className="footer-item">
-        <span className="footer-icon">🔥</span>
+        <span className="material-symbols-outlined footer-icon">local_fire_department</span>
         <span className="footer-label">CURRENT STREAK:</span>
         <span className="footer-value">14 Days</span>
         <div className="streak-indicators">
@@ -20,11 +20,11 @@ const Footer: React.FC = () => {
         <span className="footer-label">SYSTEM OPERATIONAL</span>
       </div>
       <div className="footer-item">
-        <span className="footer-icon">☁️</span>
+        <span className="material-symbols-outlined footer-icon">cloud</span>
         <span className="footer-label">2.4 GB / 50 GB CORPORATE</span>
       </div>
       <div className="footer-item">
-        <span className="footer-icon">📅</span>
+        <span className="material-symbols-outlined footer-icon">calendar_today</span>
         <span className="footer-label">Writing Consistency: 89% (Last 30 Days)</span>
       </div>
       <div className="footer-item">

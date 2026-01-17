@@ -32,7 +32,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
       wordCount: '2,450',
       engagement: { views: '12.4k', comments: '842' },
       lastUpdated: 'Oct 28, 2023 · 14:02',
-      icon: '📄',
+      icon: 'description',
     },
     {
       id: '2',
@@ -41,7 +41,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
       pipeline: 'DRAFT',
       wordCount: '1,120',
       lastUpdated: '2 hours ago',
-      icon: '✏️',
+      icon: 'edit',
     },
     {
       id: '3',
@@ -50,7 +50,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
       pipeline: 'REVIEW',
       wordCount: '850',
       lastUpdated: 'Yesterday, 18:45',
-      icon: '💬',
+      icon: 'chat_bubble',
     },
     {
       id: '4',
@@ -60,7 +60,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
       wordCount: '3,100',
       engagement: { views: 'Pending', comments: '' },
       lastUpdated: 'Oct 26, 2023 · 09:15',
-      icon: '📅',
+      icon: 'calendar_today',
     },
     {
       id: '5',
@@ -70,7 +70,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
       wordCount: '1,820',
       engagement: { views: '3.1k', comments: '112' },
       lastUpdated: 'Oct 22, 2023 · 21:30',
-      icon: '📄',
+      icon: 'description',
     },
   ];
 
@@ -112,7 +112,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
         </div>
         <div className="filter-group-right">
           <button className="filter-btn">
-            🔍 Advanced Filters
+            <span className="material-symbols-outlined">filter_list</span> Advanced Filters
           </button>
         </div>
       </div>
@@ -133,7 +133,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
                 {articles.map((article) => (
                   <div key={article.id} className="table-row">
                     <div className="col-title">
-                      <span className="article-icon">{article.icon}</span>
+                      <span className="material-symbols-outlined article-icon">{article.icon}</span>
                       {article.title}
                     </div>
                     <div className="col-platform">{article.platform}</div>
@@ -149,12 +149,12 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
                           {article.engagement.views !== 'Pending' ? (
                             <>
                               <span className="engagement-item">
-                                <span className="engagement-icon">👁️</span>
+                                <span className="material-symbols-outlined engagement-icon">visibility</span>
                                 {article.engagement.views}
                               </span>
                               {article.engagement.comments && (
                                 <span className="engagement-item">
-                                  <span className="engagement-icon">💬</span>
+                                  <span className="material-symbols-outlined engagement-icon">comment</span>
                                   {article.engagement.comments}
                                 </span>
                               )}
@@ -169,7 +169,9 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
                     </div>
                     <div className="col-last-updated">{article.lastUpdated}</div>
                     <div className="col-menu">
-                      <button className="menu-btn">⋮</button>
+                      <button className="menu-btn">
+                        <span className="material-symbols-outlined">more_vert</span>
+                      </button>
                     </div>
                   </div>
                 ))}

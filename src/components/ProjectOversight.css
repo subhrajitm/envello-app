@@ -31,6 +31,18 @@
   font-size: 14px;
 }
 
+.section-icon.material-symbols-outlined {
+  font-size: 16px;
+}
+
+.filter-icon {
+  font-size: 14px;
+}
+
+.filter-icon.material-symbols-outlined {
+  font-size: 12px;
+}
+
 .section-controls {
   display: flex;
   gap: 6px;
@@ -116,7 +128,11 @@
 }
 
 .project-icon {
-  font-size: 16px;
+  font-size: 18px;
+}
+
+.project-icon.material-symbols-outlined {
+  font-size: 18px;
 }
 
 .col-status {

@@ -29,6 +29,18 @@
   font-size: 14px;
 }
 
+.section-icon.material-symbols-outlined {
+  font-size: 16px;
+}
+
+.activity-icon {
+  font-size: 18px;
+}
+
+.activity-icon.material-symbols-outlined {
+  font-size: 18px;
+}
+
 .view-all-link {
   background: none;
   border: none;

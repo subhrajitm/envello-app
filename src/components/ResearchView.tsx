@@ -26,8 +26,8 @@ const ResearchView: React.FC = () => {
       sourceType: 'WEB',
       relevance: 'Project Alpha',
       tags: ['History', 'Urban'],
-      icon: '🌐',
-      actionIcon: '🔗',
+      icon: 'language',
+      actionIcon: 'link',
     },
     {
       id: '2',
@@ -36,8 +36,8 @@ const ResearchView: React.FC = () => {
       sourceType: 'PDF',
       relevance: 'Mars Colony: Epsilon',
       tags: ['Science', 'Environment'],
-      icon: '📄',
-      actionIcon: '👁️',
+      icon: 'description',
+      actionIcon: 'visibility',
     },
     {
       id: '3',
@@ -46,8 +46,8 @@ const ResearchView: React.FC = () => {
       sourceType: 'INTERVIEW',
       relevance: 'The Green Scent',
       tags: ['Botany', 'Expert'],
-      icon: '🎙️',
-      actionIcon: '▶️',
+      icon: 'mic',
+      actionIcon: 'play_arrow',
     },
     {
       id: '4',
@@ -56,8 +56,8 @@ const ResearchView: React.FC = () => {
       sourceType: 'PHYSICAL',
       relevance: 'Project Alpha',
       tags: ['Steampunk'],
-      icon: '📚',
-      actionIcon: '🔖',
+      icon: 'menu_book',
+      actionIcon: 'bookmark',
     },
     {
       id: '5',
@@ -66,8 +66,8 @@ const ResearchView: React.FC = () => {
       sourceType: 'WEB',
       relevance: 'Mars Colony: Epsilon',
       tags: ['Physics', 'Atmosphere'],
-      icon: '🌐',
-      actionIcon: '🔗',
+      icon: 'language',
+      actionIcon: 'link',
     },
   ];
 
@@ -185,7 +185,9 @@ const ResearchView: React.FC = () => {
             <select className="sort-select">
               <option>Sort: Relevance</option>
             </select>
-            <button className="icon-btn">⬇️</button>
+            <button className="icon-btn">
+              <span className="material-symbols-outlined">download</span>
+            </button>
           </div>
         </div>
 
@@ -201,7 +203,7 @@ const ResearchView: React.FC = () => {
               {researchItems.map((item) => (
                 <div key={item.id} className="table-row">
                   <div className="col-research-item">
-                    <span className="item-icon">{item.icon}</span>
+                    <span className="material-symbols-outlined item-icon">{item.icon}</span>
                     <div className="item-content">
                       <div className="item-title">{item.title}</div>
                       <div className="item-description">{item.description}</div>
@@ -213,7 +215,7 @@ const ResearchView: React.FC = () => {
                     </span>
                   </div>
                   <div className="col-relevance">
-                    <span className="relevance-icon">🔗</span>
+                    <span className="material-symbols-outlined relevance-icon">link</span>
                     {item.relevance}
                   </div>
                   <div className="col-tags">
@@ -224,7 +226,9 @@ const ResearchView: React.FC = () => {
                     ))}
                   </div>
                   <div className="col-action">
-                    <button className="action-btn">{item.actionIcon}</button>
+                    <button className="action-btn">
+                      <span className="material-symbols-outlined">{item.actionIcon}</span>
+                    </button>
                   </div>
                 </div>
               ))}

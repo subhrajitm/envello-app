@@ -19,7 +19,7 @@ const NovelsView: React.FC = () => {
       status: 'DRAFTING',
       wordCount: '48,240',
       lastUpdated: '2h ago',
-      icon: '📄',
+      icon: 'description',
       progress: 58,
     },
     {
@@ -28,7 +28,7 @@ const NovelsView: React.FC = () => {
       status: 'PLANNING',
       wordCount: '12,500',
       lastUpdated: 'Yesterday, 14:20',
-      icon: '📄',
+      icon: 'description',
       progress: 15,
     },
     {
@@ -37,7 +37,7 @@ const NovelsView: React.FC = () => {
       status: 'PUBLISHED',
       wordCount: '82,100',
       lastUpdated: 'Oct 24, 2023',
-      icon: '✅',
+      icon: 'check_circle',
       progress: 100,
     },
     {
@@ -46,7 +46,7 @@ const NovelsView: React.FC = () => {
       status: 'REVISING',
       wordCount: '35,000',
       lastUpdated: '3 days ago',
-      icon: '📄',
+      icon: 'description',
       progress: 42,
     },
     {
@@ -55,7 +55,7 @@ const NovelsView: React.FC = () => {
       status: 'DRAFTING',
       wordCount: '15,200',
       lastUpdated: 'Nov 01, 2023',
-      icon: '📄',
+      icon: 'description',
       progress: 18,
     },
   ]);
@@ -124,7 +124,7 @@ const NovelsView: React.FC = () => {
             {novels.map((novel) => (
               <div key={novel.id} className="table-row">
                 <div className="col-title">
-                  <span className="project-icon">{novel.icon}</span>
+                  <span className="material-symbols-outlined project-icon">{novel.icon}</span>
                   {novel.title}
                 </div>
                 <div className="col-status">

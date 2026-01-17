@@ -18,7 +18,7 @@ const ProjectOversight: React.FC = () => {
       status: 'DRAFTING',
       words: '48.2k',
       updated: '2m ago',
-      icon: '📖',
+      icon: 'menu_book',
     },
     {
       id: '2',
@@ -26,7 +26,7 @@ const ProjectOversight: React.FC = () => {
       status: 'PLANNING',
       words: '12.5k',
       updated: '1h ago',
-      icon: '📄',
+      icon: 'description',
     },
     {
       id: '3',
@@ -34,7 +34,7 @@ const ProjectOversight: React.FC = () => {
       status: 'COMPLETE',
       words: '82.1k',
       updated: 'Oct 24',
-      icon: '✅',
+      icon: 'check_circle',
     },
     {
       id: '4',
@@ -42,7 +42,7 @@ const ProjectOversight: React.FC = () => {
       status: 'REVIEW',
       words: '35.0k',
       updated: '2d ago',
-      icon: '🧩',
+      icon: 'extension',
     },
   ]);
 
@@ -65,15 +65,17 @@ const ProjectOversight: React.FC = () => {
     <div className="project-oversight">
       <div className="section-header">
         <div className="section-title">
-          <span className="section-icon">📋</span>
+          <span className="material-symbols-outlined section-icon">list</span>
           PROJECT OVERSIGHT
         </div>
         <div className="section-controls">
           <button className="control-btn">All Status</button>
           <button className="control-btn">
-            Sort by: Last Updated <span className="filter-icon">🔽</span>
+            Sort by: Last Updated <span className="material-symbols-outlined filter-icon">expand_more</span>
           </button>
-          <button className="control-btn icon-only">🔍</button>
+          <button className="control-btn icon-only">
+            <span className="material-symbols-outlined">search</span>
+          </button>
         </div>
       </div>
       <div className="project-table">
@@ -87,7 +89,7 @@ const ProjectOversight: React.FC = () => {
           {projects.map((project) => (
             <div key={project.id} className="table-row">
               <div className="col-title">
-                <span className="project-icon">{project.icon}</span>
+                <span className="material-symbols-outlined project-icon">{project.icon}</span>
                 {project.title}
               </div>
               <div className="col-status">

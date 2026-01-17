@@ -18,7 +18,11 @@
 }
 
 .footer-icon {
-  font-size: 12px;
+  font-size: 14px;
+}
+
+.footer-icon.material-symbols-outlined {
+  font-size: 14px;
 }
 
 .footer-label {

@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
     <header className="header">
       <div className="header-top">
         <div className="logo">
-          <span className="logo-icon">🍌</span>
+          <span className="material-symbols-outlined logo-icon">nutrition</span>
           <span className="logo-text">ENVELLO</span>
         </div>
         <div className="header-search">
@@ -39,8 +39,12 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
           <button className="btn-new-project">
             + New Project
           </button>
-          <button className="icon-btn">🔔</button>
-          <button className="icon-btn">⬜</button>
+          <button className="icon-btn">
+            <span className="material-symbols-outlined">notifications</span>
+          </button>
+          <button className="icon-btn">
+            <span className="material-symbols-outlined">apps</span>
+          </button>
         </div>
       </div>
       <nav className="header-nav">
