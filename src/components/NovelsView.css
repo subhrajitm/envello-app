@@ -1,0 +1,242 @@
+.novels-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.novels-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.novel-metric {
+  background: #121212;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.novel-metric-label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.novel-metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.novels-table-section {
+  background: #121212;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.table-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.control-btn {
+  padding: 4px 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.control-btn:hover {
+  background: #222;
+}
+
+.filter-icon {
+  font-size: 10px;
+}
+
+.novels-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr 1.5fr 1fr 32px;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #222;
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+}
+
+.table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr 1.5fr 1fr 32px;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #222;
+  transition: background 0.2s;
+}
+
+.table-row:hover {
+  background: #1a1a1a;
+  margin: 0 -14px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.col-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+
+.project-icon {
+  font-size: 16px;
+}
+
+.col-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.status-yellow {
+  background: #3d3d1a;
+  color: #ffd700;
+}
+
+.status-gray {
+  background: #2a2a2a;
+  color: #888;
+}
+
+.status-green {
+  background: #1a3d1a;
+  color: #4ade80;
+}
+
+.status-orange {
+  background: #3d2d1a;
+  color: #fb923c;
+}
+
+.col-word-count {
+  display: flex;
+  align-items: center;
+}
+
+.word-count-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.word-count-value {
+  color: #e0e0e0;
+  font-size: 13px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background: #222;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.col-last-updated {
+  color: #888;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.col-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.menu-btn:hover {
+  color: #e0e0e0;
+}
+
+@media (max-width: 1200px) {
+  .novels-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .col-title,
+  .col-status,
+  .col-word-count,
+  .col-last-updated,
+  .col-menu {
+    padding: 4px 0;
+  }
+}

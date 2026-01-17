@@ -7,7 +7,19 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
-  const tabs = ['Overview', 'Novels', 'Research', 'Tasks', 'Reports'];
+  const tabs = [
+    'Overview',
+    'Daily Notes',
+    'Novels/Fiction',
+    'Journals',
+    'Research',
+    'Articles/Blogs',
+    'Meetings',
+    'Tasks/Todos',
+    'Books/Reading',
+    'Code Snippets',
+    'Brainstorming',
+  ];
 
   return (
     <header className="header">
@@ -19,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
         <div className="header-search">
           <input
             type="text"
-            placeholder="Quick find (Cmd + K)"
+            placeholder="Quick find across all categories (Cmd + K)"
             className="search-input"
           />
         </div>

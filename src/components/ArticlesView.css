@@ -1,0 +1,290 @@
+.articles-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.articles-filters {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 0;
+  border-bottom: 1px solid #222;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group-right {
+  margin-left: auto;
+}
+
+.filter-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.filter-btn {
+  padding: 4px 10px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-btn:hover {
+  background: #222;
+}
+
+.filter-btn.active {
+  background: #ffd700;
+  color: #0a0a0a;
+  border-color: #ffd700;
+}
+
+.articles-content {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 16px;
+}
+
+.articles-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.articles-table-section {
+  background: #121212;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.articles-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1.2fr 1fr 1.5fr 1.8fr;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #222;
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+}
+
+.table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1.2fr 1fr 1.5fr 1.8fr 32px;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #222;
+  transition: background 0.2s;
+}
+
+.table-row:hover {
+  background: #1a1a1a;
+  margin: 0 -14px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.col-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+
+.article-icon {
+  font-size: 16px;
+}
+
+.col-platform {
+  color: #888;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.col-pipeline {
+  display: flex;
+  align-items: center;
+}
+
+.pipeline-badge {
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.pipeline-green {
+  background: #1a3d1a;
+  color: #4ade80;
+}
+
+.pipeline-yellow {
+  background: #3d3d1a;
+  color: #fbbf24;
+}
+
+.pipeline-blue {
+  background: #1a1a3d;
+  color: #60a5fa;
+}
+
+.pipeline-orange {
+  background: #3d2d1a;
+  color: #fb923c;
+}
+
+.pipeline-gray {
+  background: #2a2a2a;
+  color: #888;
+}
+
+.col-word-count {
+  color: #888;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.col-engagement {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #888;
+  font-size: 12px;
+}
+
+.engagement-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.engagement-icon {
+  font-size: 12px;
+}
+
+.col-last-updated {
+  color: #888;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.col-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.menu-btn:hover {
+  color: #e0e0e0;
+}
+
+.articles-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-section {
+  background: #121212;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.sidebar-title {
+  margin-bottom: 8px;
+}
+
+.sidebar-title-underline {
+  font-size: 11px;
+  color: #ffd700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: #ffd700;
+  text-underline-offset: 4px;
+}
+
+.capacity-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+@media (max-width: 1400px) {
+  .articles-content {
+    grid-template-columns: 1fr;
+  }
+
+  .articles-sidebar {
+    order: -1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .col-title,
+  .col-platform,
+  .col-pipeline,
+  .col-word-count,
+  .col-engagement,
+  .col-last-updated,
+  .col-menu {
+    padding: 4px 0;
+  }
+}
