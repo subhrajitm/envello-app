@@ -1,24 +1,27 @@
 .footer {
-  background: #121212;
-  border-top: 1px solid #222;
-  padding: 8px 16px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-main);
+  padding: 4px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
   font-size: 10px;
+  color: var(--text-tertiary);
 }
 
 .footer-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #888;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
 }
 
 .footer-icon {
   font-size: 14px;
+  color: var(--text-tertiary);
 }
 
 .footer-icon.material-symbols-outlined {
@@ -29,11 +32,12 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
+  color: var(--text-tertiary);
 }
 
 .footer-value {
-  color: #ffd700;
-  font-weight: 700;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .streak-indicators {
@@ -45,25 +49,29 @@
 .streak-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: #222;
+  border-radius: 2px;
+  background: var(--bg-active);
+  border: 1px solid var(--border-subtle);
 }
 
 .streak-dot.active {
-  background: #ffd700;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
 }
 
 .status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #4ade80;
-  margin-right: 3px;
+  background: var(--accent-green);
+  margin-right: 4px;
+  box-shadow: 0 0 4px rgba(74, 222, 128, 0.4);
 }
 
 .footer-separator {
-  color: #444;
+  color: var(--border-subtle);
   margin: 0 6px;
+  font-weight: 300;
 }
 
 @media (max-width: 1200px) {

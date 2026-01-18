@@ -1,28 +1,34 @@
 .novels-view {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  height: 100%;
 }
 
 .novels-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .novel-metric {
-  background: #121212;
-  border: 1px solid #222;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-main);
   border-radius: 6px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: box-shadow 0.2s;
+}
+
+.novel-metric:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .novel-metric-label {
   font-size: 10px;
-  color: #888;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -31,62 +37,74 @@
 .novel-metric-value {
   font-size: 24px;
   font-weight: 700;
-  color: #e0e0e0;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
 }
 
 .novels-table-section {
-  background: #121212;
-  border: 1px solid #222;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-main);
   border-radius: 6px;
-  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  overflow: hidden;
+  /* For container aesthetics */
+  flex: 1;
+  /* Take remaining height */
+  min-height: 0;
 }
 
 .table-controls {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-main);
+  background: var(--bg-hover);
 }
 
 .control-btn {
   padding: 4px 8px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
-  color: #e0e0e0;
+  color: var(--text-secondary);
   font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
 
 .control-btn:hover {
-  background: #222;
-}
-
-.filter-icon {
-  font-size: 10px;
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
 }
 
 .novels-table {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  /* Allow internal scrolling if needed */
 }
 
 .table-header {
   display: grid;
   grid-template-columns: 2.5fr 1fr 1.5fr 1fr 32px;
   gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid #222;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-main);
+  background: var(--bg-app);
   font-size: 10px;
-  color: #888;
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
   font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .table-body {
@@ -98,16 +116,14 @@
   display: grid;
   grid-template-columns: 2.5fr 1fr 1.5fr 1fr 32px;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #222;
-  transition: background 0.2s;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.1s;
+  align-items: center;
 }
 
 .table-row:hover {
-  background: #1a1a1a;
-  margin: 0 -14px;
-  padding-left: 14px;
-  padding-right: 14px;
+  background: var(--bg-hover);
 }
 
 .table-row:last-child {
@@ -117,13 +133,15 @@
 .col-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #e0e0e0;
+  gap: 10px;
+  color: var(--text-primary);
   font-size: 13px;
+  font-weight: 500;
 }
 
 .project-icon {
   font-size: 16px;
+  color: var(--text-tertiary);
 }
 
 .col-status {
@@ -132,32 +150,37 @@
 }
 
 .status-badge {
-  padding: 3px 8px;
-  border-radius: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  border: 1px solid transparent;
 }
 
 .status-yellow {
-  background: #3d3d1a;
+  background: rgba(255, 215, 0, 0.1);
   color: #ffd700;
+  border-color: rgba(255, 215, 0, 0.2);
 }
 
 .status-gray {
-  background: #2a2a2a;
-  color: #888;
+  background: rgba(161, 161, 170, 0.1);
+  color: #a1a1aa;
+  border-color: rgba(161, 161, 170, 0.2);
 }
 
 .status-green {
-  background: #1a3d1a;
+  background: rgba(74, 222, 128, 0.1);
   color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.2);
 }
 
 .status-orange {
-  background: #3d2d1a;
+  background: rgba(251, 146, 60, 0.1);
   color: #fb923c;
+  border-color: rgba(251, 146, 60, 0.2);
 }
 
 .col-word-count {
@@ -173,14 +196,15 @@
 }
 
 .word-count-value {
-  color: #e0e0e0;
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-mono);
 }
 
 .progress-bar-container {
   width: 100%;
-  height: 4px;
-  background: #222;
+  height: 3px;
+  background: var(--bg-active);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -192,10 +216,8 @@
 }
 
 .col-last-updated {
-  color: #888;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
+  color: var(--text-tertiary);
+  font-size: 11px;
 }
 
 .col-menu {
@@ -207,36 +229,22 @@
 .menu-btn {
   background: transparent;
   border: none;
-  color: #888;
+  color: var(--text-tertiary);
   font-size: 16px;
   cursor: pointer;
   padding: 4px;
   line-height: 1;
-  transition: color 0.2s;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .menu-btn:hover {
-  color: #e0e0e0;
+  color: var(--text-primary);
+  background: var(--bg-active);
 }
 
 @media (max-width: 1200px) {
   .novels-metrics {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 1024px) {
-  .table-header,
-  .table-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  
-  .col-title,
-  .col-status,
-  .col-word-count,
-  .col-last-updated,
-  .col-menu {
-    padding: 4px 0;
   }
 }
