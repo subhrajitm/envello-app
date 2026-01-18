@@ -1,202 +1,346 @@
-.meetings-view {
+.meetings-view-new {
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: var(--bg-app);
-    gap: 16px;
+    background: #050505;
+    /* Deep black bg */
+    color: #e5e5e5;
+    font-family: var(--font-sans);
 }
 
-.meetings-header {
+/* Metric Strip */
+.metrics-strip {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border-main);
+    gap: 40px;
+    padding: 16px 24px;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 11px;
 }
 
-.header-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.header-controls {
+.metric-unit {
     display: flex;
+    align-items: baseline;
     gap: 8px;
 }
 
-.meetings-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+.metric-label {
+    color: #666;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.metric-val {
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.metric-trend.success {
+    color: #4ade80;
+}
+
+.metric-sub {
+    color: #444;
+}
+
+/* Date Nav */
+.date-nav-strip {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid #1a1a1a;
+    height: 48px;
+}
+
+.month-label {
+    color: #666;
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 40px;
+    cursor: pointer;
+}
+
+.calendar-scroll {
+    display: flex;
+    gap: 32px;
+    flex: 1;
+    height: 100%;
+}
+
+.calendar-day {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: #444;
+    cursor: pointer;
+    position: relative;
+    height: 100%;
+    padding: 0 4px;
+}
+
+.calendar-day:hover {
+    color: #888;
+}
+
+.calendar-day.active {
+    color: #ffd700;
+    font-weight: 600;
+}
+
+.calendar-day.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #ffd700;
+}
+
+.day-name {
+    text-transform: uppercase;
+}
+
+.show-all-btn {
+    font-size: 10px;
+    color: #666;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+}
+
+/* Content Area */
+.meetings-content-area {
+    display: flex;
     flex: 1;
 }
 
-.section-heading {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    font-weight: 600;
-    letter-spacing: 1px;
+.meetings-main-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #1a1a1a;
 }
 
-.meeting-cards {
+.list-headers {
+    display: flex;
+    padding: 16px 24px;
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-top: 16px;
+}
+
+.col-header {
+    flex: 1;
+}
+
+.col-project {
+    flex: 2;
+}
+
+.col-status {
+    flex: 1;
+}
+
+.col-activity {
+    flex: 1;
+    text-align: right;
+}
+
+.list-rows {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px;
+}
+
+.list-row {
+    display: flex;
+    padding: 24px 0;
+    border-bottom: 1px solid #111;
+    align-items: center;
+}
+
+.list-row .col-project {
+    flex: 2;
+}
+
+.list-row .col-status {
+    flex: 1;
+}
+
+.list-row .col-activity {
+    flex: 1;
+    text-align: right;
+}
+
+.meeting-title-lg {
+    font-size: 14px;
+    color: #e5e5e5;
+    font-weight: 500;
+}
+
+.status-text {
+    font-size: 10px;
+    color: #666;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.activity-time {
+    font-size: 12px;
+    color: #888;
+    font-family: var(--font-mono);
+}
+
+/* Log Section */
+.log-section {
+    margin-top: auto;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.meeting-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border-main);
-    border-radius: 6px;
+.log-header {
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.log-item {
+    font-size: 12px;
+    color: #888;
     display: flex;
-    overflow: hidden;
-    transition: transform 0.2s;
+    align-items: center;
+    gap: 8px;
 }
 
-.meeting-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-highlight);
-}
-
-.card-stripe {
+.log-dot {
     width: 4px;
-    background: var(--accent-primary);
+    height: 4px;
+    background: #333;
+    border-radius: 50%;
 }
 
-.card-content {
-    flex: 1;
-    padding: 16px;
+/* Sidebar */
+.meetings-sidebar {
+    width: 300px;
+    background: #080808;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    padding: 24px;
 }
 
-.meeting-time {
-    font-size: 11px;
-    color: var(--accent-primary);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-weight: 500;
-}
-
-.icon-tiny {
-    font-size: 14px;
-}
-
-.meeting-title {
-    font-size: 14px;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.meeting-attendees {
-    display: flex;
-    gap: 6px;
-}
-
-.attendee-chip {
+.sidebar-header {
     font-size: 10px;
-    color: var(--text-secondary);
-    background: var(--bg-active);
-    padding: 2px 6px;
-    border-radius: 3px;
+    color: #444;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-bottom: 24px;
 }
 
-.meeting-tags {
+.mini-task-list {
     display: flex;
-    gap: 4px;
-    margin-top: 4px;
+    flex-direction: column;
+    gap: 24px;
 }
 
-.tag-chip {
-    font-size: 9px;
-    color: var(--text-tertiary);
-    border: 1px solid var(--border-subtle);
-    padding: 1px 4px;
+.mini-task-item {
+    display: flex;
+    gap: 12px;
+}
+
+.checkbox-box {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #333;
     border-radius: 2px;
+    margin-top: 2px;
 }
 
-.card-actions {
+.mini-task-content {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    padding: 12px;
-    gap: 8px;
-    border-left: 1px solid var(--border-subtle);
-    background: var(--bg-hover);
+    gap: 4px;
 }
 
-.action-btn {
-    background: var(--accent-primary);
-    color: #000;
-    border: none;
-    font-size: 11px;
+.mini-task-title {
+    font-size: 13px;
+    color: #e5e5e5;
+}
+
+.mini-task-sub {
+    font-size: 9px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.consistency-section {
+    margin-top: auto;
+}
+
+.consistency-label {
+    font-size: 10px;
+    color: #333;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.consistency-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.c-dot {
+    width: 6px;
+    height: 6px;
+    background: #222;
+    border-radius: 50%;
+}
+
+.c-dot.active {
+    background: #ffd700;
+}
+
+/* Footer Strip */
+.system-footer-strip {
+    border-top: 1px solid #1a1a1a;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #444;
+    letter-spacing: 1px;
     font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 4px;
-    cursor: pointer;
+    background: #050505;
 }
 
-.past-list {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--border-main);
-    border-radius: 6px;
-    background: var(--bg-panel);
-}
-
-.past-row {
+.sys-left {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-subtle);
-    gap: 16px;
+    gap: 8px;
 }
 
-.past-row:last-child {
-    border-bottom: none;
+.status-indicator {
+    width: 4px;
+    height: 4px;
+    background: #4ade80;
+    border-radius: 50%;
 }
 
-.past-date {
-    width: 80px;
-    font-size: 11px;
-    color: var(--text-tertiary);
-    text-align: right;
-    font-family: var(--font-mono);
-}
-
-.past-info {
-    flex: 1;
-}
-
-.past-title {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.past-attendees {
-    font-size: 10px;
-    color: var(--text-tertiary);
-}
-
-.text-btn {
-    background: none;
-    border: none;
-    color: var(--accent-blue);
-    font-size: 11px;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-@media (max-width: 1000px) {
-    .meetings-grid {
-        grid-template-columns: 1fr;
-    }
+.sys-divider {
+    width: 1px;
+    height: 8px;
+    background: #222;
+    margin: 0 4px;
 }
