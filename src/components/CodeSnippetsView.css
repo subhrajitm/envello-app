@@ -1,0 +1,124 @@
+.code-view {
+    height: 100%;
+    display: flex;
+    background: var(--bg-app);
+}
+
+.code-sidebar {
+    width: 200px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border-main);
+    padding: 16px;
+}
+
+.group-header {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.group-item {
+    padding: 6px 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.group-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.group-item.active {
+    background: var(--bg-active);
+    color: var(--text-primary);
+}
+
+.code-main {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.code-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.snippet-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-main);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.snippet-card:hover {
+    border-color: var(--text-tertiary);
+}
+
+.snippet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lang-badge {
+    font-size: 9px;
+    background: var(--bg-active);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.snippet-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.snippet-tags {
+    display: flex;
+    gap: 4px;
+}
+
+.code-preview {
+    background: var(--bg-app);
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    opacity: 0.5;
+}
+
+.line {
+    height: 4px;
+    background: var(--text-tertiary);
+    border-radius: 2px;
+    width: 80%;
+}
+
+.line.short {
+    width: 40%;
+}
+
+.snippet-card.add-new {
+    border-style: dashed;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+}
+
+.snippet-card.add-new:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}

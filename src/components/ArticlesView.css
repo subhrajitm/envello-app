@@ -16,7 +16,7 @@
 
 .filter-group {
   display: flex;
-  align-items: center;
+  align-items: left;
   gap: 8px;
 }
 
