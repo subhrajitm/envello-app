@@ -4,148 +4,250 @@ import './TasksView.css';
 interface Task {
     id: string;
     title: string;
-    status: 'TODO' | 'IN_PROGRESS' | 'DONE' | 'BLOCKED';
-    priority: 'HIGH' | 'MEDIUM' | 'LOW';
-    dueDate: string;
-    project: string;
-    assignee: string;
-    tags: string[];
+    priority: 'PRIORITY 01' | 'PRIORITY 02' | 'PRIORITY 03';
+    hours: string;
+    isSubCheck?: boolean;
+    dueDate?: string;
+    status: 'ACTIVE' | 'COMPLETED' | 'PENDING';
+    project?: string;
+    assignee?: string;
+    due?: string;
 }
 
 const TasksView: React.FC = () => {
-    const [filter, setFilter] = useState('All Tasks');
+    const [selectedFilter, setSelectedFilter] = useState<string>('All');
     const [tasks] = useState<Task[]>([
         {
             id: '1',
-            title: 'Review Chapter 3 Draft',
-            status: 'TODO',
-            priority: 'HIGH',
-            dueDate: 'Today',
+            title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2',
+            priority: 'PRIORITY 01',
+            hours: '1.5H',
+            status: 'ACTIVE',
             project: 'Project Alpha',
-            assignee: 'Self',
-            tags: ['Editing', 'Urgent'],
+            assignee: 'SJ',
+            due: 'Today, 17:00'
         },
         {
             id: '2',
-            title: 'Research orbital mechanics',
-            status: 'IN_PROGRESS',
-            priority: 'MEDIUM',
-            dueDate: 'Oct 24',
-            project: 'Mars Colony',
-            assignee: 'Self',
-            tags: ['Research'],
+            title: 'DEEP WORK: DRAFTING SESSION CH. 4',
+            priority: 'PRIORITY 01',
+            hours: '3.0H',
+            status: 'ACTIVE',
+            project: 'Project Alpha',
+            assignee: 'SJ',
+            due: 'Today, 14:00'
         },
         {
             id: '3',
-            title: 'Email publisher regarding cover art',
-            status: 'BLOCKED',
-            priority: 'HIGH',
-            dueDate: 'Overdue',
-            project: 'The Green Scent',
-            assignee: 'Agent',
-            tags: ['Admin'],
+            title: 'SYNC WITH MARKETING TEAM',
+            priority: 'PRIORITY 02',
+            hours: '1.0H',
+            status: 'PENDING',
+            project: 'Neon Orchard',
+            assignee: 'MT',
+            due: 'Thu, 10:00'
         },
         {
             id: '4',
-            title: 'Update character bio: Elara',
-            status: 'DONE',
-            priority: 'LOW',
-            dueDate: 'Yesterday',
-            project: 'Project Alpha',
-            assignee: 'Self',
-            tags: ['Writing'],
-        },
+            title: 'REVIEW DELAYED RESEARCH NOTE #42',
+            priority: 'PRIORITY 01',
+            hours: '2.0H',
+            status: 'ACTIVE',
+            project: 'Neon Orchard',
+            assignee: 'MT',
+            due: 'Overdue 2h'
+        }
     ]);
 
-    const getPriorityColor = (p: string) => {
-        switch (p) {
-            case 'HIGH': return 'text-red-400';
-            case 'MEDIUM': return 'text-orange-400';
-            case 'LOW': return 'text-blue-400';
-            default: return 'text-gray-400';
-        }
-    };
-
-    const getStatusBadge = (s: string) => {
-        switch (s) {
-            case 'TODO': return 'badge-gray';
-            case 'IN_PROGRESS': return 'badge-blue';
-            case 'DONE': return 'badge-green';
-            case 'BLOCKED': return 'badge-red';
-            default: return 'badge-gray';
-        }
-    };
+    const todayTasks = tasks.filter(t => t.due?.includes('Today')).length;
+    const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
+    const activeTasks = tasks.filter(t => t.status === 'ACTIVE').length;
 
     return (
-        <div className="tasks-view">
-            <div className="tasks-sidebar">
-                <div className="sidebar-group">
-                    <div className="group-title">VIEWS</div>
-                    <button className="sidebar-btn active">
-                        <span className="material-symbols-outlined">list</span> All Tasks
-                    </button>
-                    <button className="sidebar-btn">
-                        <span className="material-symbols-outlined">today</span> Today
-                    </button>
-                    <button className="sidebar-btn">
-                        <span className="material-symbols-outlined">date_range</span> Upcoming
-                    </button>
+        <div className="tasks-view-minimal">
+            <div className="tasks-main-content">
+                <div className="tasks-metrics-bar">
+                    <div className="tasks-metric-item">
+                        <span className="tasks-metric-label">TODAY'S TASKS</span>
+                        <span className="tasks-metric-value">
+                            {todayTasks}
+                            <span className="material-symbols-outlined tasks-metric-icon">event</span>
+                        </span>
+                    </div>
+                    <div className="tasks-metric-item">
+                        <span className="tasks-metric-label">COMPLETED</span>
+                        <span className="tasks-metric-value">
+                            {completedTasks}
+                            <span className="tasks-metric-unit">/ {tasks.length} total</span>
+                        </span>
+                    </div>
+                    <div className="tasks-metric-item">
+                        <span className="tasks-metric-label">ACTIVE</span>
+                        <span className="tasks-metric-value">
+                            {activeTasks}
+                            <span className="material-symbols-outlined tasks-metric-icon">check_circle</span>
+                        </span>
+                    </div>
+                    <div className="tasks-metric-item">
+                        <span className="tasks-metric-label">PRIORITY</span>
+                        <span className="tasks-metric-value">
+                            {tasks.filter(t => t.priority === 'PRIORITY 01').length}
+                            <span className="tasks-metric-unit">high priority</span>
+                        </span>
+                    </div>
                 </div>
-                <div className="sidebar-group">
-                    <div className="group-title">PROJECTS</div>
-                    <button className="sidebar-btn">Project Alpha</button>
-                    <button className="sidebar-btn">Mars Colony</button>
-                    <button className="sidebar-btn">The Green Scent</button>
+
+                <div className="tasks-main-section">
+                    <div className="tasks-section-header">
+                        <h3 className="tasks-section-title">
+                            <span className="material-symbols-outlined tasks-section-icon">task</span>
+                            ALL TASKS
+                        </h3>
+                        <div className="tasks-section-controls">
+                            <button 
+                                className={`tasks-filter-btn ${selectedFilter === 'All' ? 'active' : ''}`}
+                                onClick={() => setSelectedFilter('All')}
+                            >
+                                All
+                            </button>
+                            <button 
+                                className={`tasks-filter-btn ${selectedFilter === 'Today' ? 'active' : ''}`}
+                                onClick={() => setSelectedFilter('Today')}
+                            >
+                                Today
+                            </button>
+                            <button 
+                                className={`tasks-filter-btn ${selectedFilter === 'This Week' ? 'active' : ''}`}
+                                onClick={() => setSelectedFilter('This Week')}
+                            >
+                                This Week
+                            </button>
+                            <button className="tasks-icon-btn">
+                                <span className="material-symbols-outlined">filter_list</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="tasks-detail-table">
+                        <div className="tasks-table-header">
+                            <div className="tasks-col-task">TASK</div>
+                            <div className="tasks-col-project">PROJECT</div>
+                            <div className="tasks-col-priority">PRIORITY</div>
+                            <div className="tasks-col-time">TIME</div>
+                            <div className="tasks-col-due">DUE</div>
+                        </div>
+                        <div className="tasks-table-body">
+                            {tasks.map((task) => (
+                                <div key={task.id} className="tasks-table-row">
+                                    <div className="tasks-col-task">
+                                        <input type="checkbox" className="tasks-table-checkbox" />
+                                        <div className="tasks-task-content">
+                                            <div className="tasks-task-title">{task.title}</div>
+                                        </div>
+                                    </div>
+                                    <div className="tasks-col-project">{task.project || '—'}</div>
+                                    <div className="tasks-col-priority">
+                                        <span className={`tasks-priority-badge ${task.priority.toLowerCase().replace(' ', '-')}`}>
+                                            {task.priority}
+                                        </span>
+                                    </div>
+                                    <div className="tasks-col-time">{task.hours}</div>
+                                    <div className={`tasks-col-due ${task.due?.includes('Overdue') ? 'tasks-overdue' : ''}`}>
+                                        {task.due || '—'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="tasks-main">
-                <div className="tasks-header">
-                    <div className="header-left">
-                        <h2>Tasks / All Tasks</h2>
-                    </div>
-                    <div className="header-right">
-                        <button className="btn-primary">+ Add Task</button>
+            <div className="tasks-sidebar">
+                <div className="tasks-header-col">
+                <div className="date-nav-minimal">
+                    <div className="mn-header">OCT 2023</div>
+                    <div className="nav-arrows">
+                        <span className="material-symbols-outlined nav-arr">chevron_left</span>
+                        <span className="material-symbols-outlined nav-arr">chevron_right</span>
                     </div>
                 </div>
 
-                <div className="tasks-container">
-                    {/* Kanban Board Layout Simulation for "All Tasks" or List */}
-                    <div className="tasks-list-header">
-                        <div className="col-check"></div>
-                        <div className="col-task">TASK</div>
-                        <div className="col-project">PROJECT</div>
-                        <div className="col-status">STATUS</div>
-                        <div className="col-priority">PRIORITY</div>
-                        <div className="col-due">DUE DATE</div>
+                <div className="mini-calendar-grid">
+                    <div className="cal-days-header">
+                        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
                     </div>
+                    <div className="cal-days-grid">
+                        <span className="c-day inactive">22</span>
+                        <span className="c-day inactive">23</span>
+                        <span className="c-day inactive">24</span>
+                        <span className="c-day inactive">25</span>
+                        <span className="c-day current">26</span>
+                        <span className="c-day">27</span>
+                        <span className="c-day">28</span>
+                        <span className="c-day">29</span>
+                        <span className="c-day">30</span>
+                        <span className="c-day">31</span>
+                        <span className="c-day active-yellow">12</span> {/* Highlighted in screenshot */}
+                        <span className="c-day">1</span>
+                        <span className="c-day">2</span>
+                        <span className="c-day">3</span>
+                    </div>
+                </div>
+                </div>
 
-                    <div className="tasks-list-body">
+                <div className="global-tasks-feed">
+                <div className="feed-header">
+                    <span className="feed-title">GLOBAL TASKS</span>
+                    <span className="feed-count">4 ACTIVE</span>
+                </div>
+
+                <div className="task-group">
+                    <div className="group-toggle">
+                        <span className="material-symbols-outlined toggle-icon">expand_more</span>
+                        <span className="group-label">TODAY</span>
+                        <span className="group-count">02</span>
+                    </div>
+                    <div className="task-items">
                         {tasks.map(task => (
-                            <div key={task.id} className="task-row">
-                                <div className="col-check">
-                                    <input type="checkbox" />
-                                </div>
-                                <div className="col-task">
-                                    <span className="task-title">{task.title}</span>
-                                    <div className="task-tags">
-                                        {task.tags.map(t => <span key={t} className="task-tag">#{t}</span>)}
+                            <div key={task.id} className="task-card-minimal">
+                                <div className="task-check-box"></div>
+                                <div className="task-min-content">
+                                    <div className="task-min-title">{task.title}</div>
+                                    <div className="task-min-meta">
+                                        <span className="p-badge">{task.priority}</span>
+                                        <span className="h-badge">{task.hours}</span>
                                     </div>
+                                    {task.id === '2' && (
+                                        <div className="sub-meta-time">14:00 — 16:00</div>
+                                    )}
                                 </div>
-                                <div className="col-project">{task.project}</div>
-                                <div className="col-status">
-                                    <span className={`status-badge ${getStatusBadge(task.status)}`}>{task.status.replace('_', ' ')}</span>
-                                </div>
-                                <div className="col-priority">
-                                    <span className={`priority-flag ${getPriorityColor(task.priority)}`}>
-                                        <span className="material-symbols-outlined icon-small">flag</span>
-                                        {task.priority}
-                                    </span>
-                                </div>
-                                <div className="col-due">{task.dueDate}</div>
                             </div>
                         ))}
                     </div>
+                </div>
+
+                <div className="task-group collapsed">
+                    <div className="group-toggle">
+                        <span className="material-symbols-outlined toggle-icon">chevron_right</span>
+                        <span className="group-label">UPCOMING</span>
+                        <span className="group-count">01</span>
+                    </div>
+                </div>
+
+                <div className="task-group collapsed">
+                    <div className="group-toggle">
+                        <span className="material-symbols-outlined toggle-icon">chevron_right</span>
+                        <span className="group-label">NO DUE DATE</span>
+                        <span className="group-count">01</span>
+                    </div>
+                </div>
+
+                <div className="new-task-entry">
+                    <button className="btn-add-entry">
+                        + NEW TASK ENTRY
+                    </button>
+                    <div className="version-info">V5.0.0-PRO // NANO_BANANA_CORE</div>
+                </div>
                 </div>
             </div>
         </div>
