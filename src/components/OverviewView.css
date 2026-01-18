@@ -78,6 +78,30 @@
   background: var(--accent-red);
 }
 
+.icon-btn-small {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-btn-small:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
+}
+
+.icon-btn-small .material-symbols-outlined {
+  font-size: 16px;
+}
+
 .timeline-controls {
   display: flex;
   align-items: center;
