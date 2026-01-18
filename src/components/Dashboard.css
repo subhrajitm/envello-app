@@ -17,6 +17,11 @@
   min-height: 0;
 }
 
+.dashboard-content.no-padding {
+  padding: 0;
+  gap: 0;
+}
+
 .dashboard-main {
   display: grid;
   grid-template-columns: 1fr 320px;

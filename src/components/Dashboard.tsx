@@ -16,6 +16,21 @@ import './Dashboard.css';
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Overview');
 
+  // Views that have sidebars should have no padding on dashboard-content
+  const viewsWithSidebar = [
+    'Research',
+    'Articles/Blogs',
+    'Journals',
+    'Daily Notes',
+    'Tasks/Todos',
+    'Meetings',
+    'Books/Reading',
+    'Code Snippets',
+    'Brainstorming',
+  ];
+
+  const hasSidebar = viewsWithSidebar.includes(activeTab);
+
   const renderContent = () => {
     switch (activeTab) {
       case 'Overview':
@@ -47,7 +62,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className="dashboard-content">
+      <div className={`dashboard-content ${hasSidebar ? 'no-padding' : ''}`}>
         {renderContent()}
       </div>
       <Footer />
