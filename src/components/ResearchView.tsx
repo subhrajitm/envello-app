@@ -27,7 +27,7 @@ const ResearchView: React.FC = () => {
       relevance: 'Project Alpha',
       tags: ['History', 'Urban'],
       icon: 'language',
-      actionIcon: 'link',
+      actionIcon: 'open_in_new',
     },
     {
       id: '2',
@@ -36,7 +36,7 @@ const ResearchView: React.FC = () => {
       sourceType: 'PDF',
       relevance: 'Mars Colony: Epsilon',
       tags: ['Science', 'Environment'],
-      icon: 'description',
+      icon: 'picture_as_pdf',
       actionIcon: 'visibility',
     },
     {
@@ -46,8 +46,8 @@ const ResearchView: React.FC = () => {
       sourceType: 'INTERVIEW',
       relevance: 'The Green Scent',
       tags: ['Botany', 'Expert'],
-      icon: 'mic',
-      actionIcon: 'play_arrow',
+      icon: 'record_voice_over',
+      actionIcon: 'play_circle',
     },
     {
       id: '4',
@@ -67,7 +67,7 @@ const ResearchView: React.FC = () => {
       relevance: 'Mars Colony: Epsilon',
       tags: ['Physics', 'Atmosphere'],
       icon: 'language',
-      actionIcon: 'link',
+      actionIcon: 'open_in_new',
     },
   ];
 
@@ -78,7 +78,12 @@ const ResearchView: React.FC = () => {
     { name: 'The Green Scent', count: 31, active: selectedProject === 'The Green Scent' },
   ];
 
-  const topics = ['Architecture', 'Sociology', 'Technology', 'Botany'];
+  const topics = [
+    { name: 'Architecture', color: 'blue-500' },
+    { name: 'Sociology', color: 'purple-500' },
+    { name: 'Technology', color: 'orange-500' },
+    { name: 'Botany', color: 'green-500' },
+  ];
 
   const getSourceTypeColor = (type: string) => {
     switch (type) {
@@ -98,96 +103,110 @@ const ResearchView: React.FC = () => {
   return (
     <div className="research-view">
       <div className="research-sidebar">
-        <div className="sidebar-section">
-          <div className="sidebar-title">FILTERS</div>
-          
+        <div className="sidebar-header">
+          <span className="sidebar-title">Filters</span>
+        </div>
+        <div className="sidebar-content">
           <div className="filter-group">
-            <div className="filter-label">BY PROJECT:</div>
-            {projects.map((project) => (
-              <button
-                key={project.name}
-                className={`project-filter ${project.active ? 'active' : ''}`}
-                onClick={() => setSelectedProject(project.name)}
-              >
-                {project.name} <span className="filter-count">{project.count}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="filter-group">
-            <div className="filter-label">BY TOPIC:</div>
-            <ul className="topic-list">
-              {topics.map((topic) => (
-                <li key={topic} className="topic-item">
-                  • {topic}
-                </li>
+            <h3 className="filter-label">By Project</h3>
+            <div className="filter-items">
+              {projects.map((project) => (
+                <button
+                  key={project.name}
+                  className={`project-filter ${project.active ? 'active' : ''}`}
+                  onClick={() => setSelectedProject(project.name)}
+                >
+                  <span>{project.name}</span>
+                  <span className={`filter-count ${project.active ? 'active' : ''}`}>
+                    {project.count}
+                  </span>
+                </button>
               ))}
-            </ul>
+            </div>
           </div>
 
           <div className="filter-group">
-            <div className="filter-label">SOURCE STATUS:</div>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={verifiedChecked}
-                onChange={(e) => setVerifiedChecked(e.target.checked)}
-              />
-              <span>Verified</span>
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={unreadChecked}
-                onChange={(e) => setUnreadChecked(e.target.checked)}
-              />
-              <span>Unread</span>
-            </label>
+            <h3 className="filter-label">By Topic</h3>
+            <div className="filter-items">
+              {topics.map((topic) => (
+                <button key={topic.name} className="topic-item">
+                  <span className={`topic-dot topic-dot-${topic.color}`}></span>
+                  <span>{topic.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="filter-group">
+            <h3 className="filter-label">Source Status</h3>
+            <div className="filter-checkboxes">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={verifiedChecked}
+                  onChange={(e) => setVerifiedChecked(e.target.checked)}
+                />
+                <span>Verified</span>
+              </label>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={unreadChecked}
+                  onChange={(e) => setUnreadChecked(e.target.checked)}
+                />
+                <span>Unread</span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="research-main">
         <div className="research-header">
-          <div>
-            <h2 className="research-title">Research Inventory</h2>
-            <p className="research-subtitle">Displaying all items across projects</p>
+          <div className="research-header-left">
+            <div>
+              <h2 className="research-title">Research Inventory</h2>
+              <p className="research-subtitle">Displaying all items across projects</p>
+            </div>
+            <div className="header-divider"></div>
+            <div className="research-stats">
+              <div className="stat-item">
+                <span className="stat-label">TOTAL SOURCES</span>
+                <span className="stat-value">124</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">PDF DOCS</span>
+                <span className="stat-value">45</span>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="research-stats">
-          <div className="stat-item">
-            <span className="stat-label">TOTAL SOURCES</span>
-            <span className="stat-value">124</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">PDF DOCS</span>
-            <span className="stat-value">45</span>
-          </div>
-          <div className="view-toggle">
-            <button
-              className={`view-btn ${viewMode === 'TABLE' ? 'active' : ''}`}
-              onClick={() => setViewMode('TABLE')}
-            >
-              TABLE
-            </button>
-            <button
-              className={`view-btn ${viewMode === 'GRID' ? 'active' : ''}`}
-              onClick={() => setViewMode('GRID')}
-            >
-              GRID
-            </button>
-          </div>
-          <div className="sort-controls">
-            <select className="sort-select">
-              <option>Source: All</option>
-            </select>
-            <select className="sort-select">
-              <option>Sort: Relevance</option>
-            </select>
-            <button className="icon-btn">
-              <span className="material-symbols-outlined">download</span>
-            </button>
+          <div className="research-header-right">
+            <div className="view-toggle">
+              <button
+                className={`view-btn ${viewMode === 'TABLE' ? 'active' : ''}`}
+                onClick={() => setViewMode('TABLE')}
+              >
+                TABLE
+              </button>
+              <button
+                className={`view-btn ${viewMode === 'GRID' ? 'active' : ''}`}
+                onClick={() => setViewMode('GRID')}
+              >
+                GRID
+              </button>
+            </div>
+            <div className="header-divider"></div>
+            <div className="sort-controls">
+              <select className="sort-select">
+                <option>Source: All</option>
+              </select>
+              <select className="sort-select">
+                <option>Sort: Relevance</option>
+              </select>
+              <button className="icon-btn">
+                <span className="material-symbols-outlined">file_download</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -203,7 +222,12 @@ const ResearchView: React.FC = () => {
               {researchItems.map((item) => (
                 <div key={item.id} className="table-row">
                   <div className="col-research-item">
-                    <span className="material-symbols-outlined item-icon">{item.icon}</span>
+                    <span className={`material-symbols-outlined item-icon ${
+                      item.sourceType === 'WEB' ? 'text-blue-400' :
+                      item.sourceType === 'PDF' ? 'text-red-400' :
+                      item.sourceType === 'INTERVIEW' ? 'text-purple-400' :
+                      'text-orange-400'
+                    }`}>{item.icon}</span>
                     <div className="item-content">
                       <div className="item-title">{item.title}</div>
                       <div className="item-description">{item.description}</div>
@@ -227,7 +251,7 @@ const ResearchView: React.FC = () => {
                   </div>
                   <div className="col-action">
                     <button className="action-btn">
-                      <span className="material-symbols-outlined">{item.actionIcon}</span>
+                      <span className="material-symbols-outlined">{item.actionIcon === 'link' ? 'open_in_new' : item.actionIcon}</span>
                     </button>
                   </div>
                 </div>

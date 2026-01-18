@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import Header from './Header';
-import Metrics from './Metrics';
-import ProjectOversight from './ProjectOversight';
-import GlobalTasks from './GlobalTasks';
-import RecentActivity from './RecentActivity';
+import OverviewView from './OverviewView';
 import NovelsView from './NovelsView';
 import ResearchView from './ResearchView';
 import ArticlesView from './ArticlesView';
@@ -27,25 +24,16 @@ const Dashboard: React.FC = () => {
     <div className="dashboard">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="dashboard-content">
-        {activeTab === 'Novels/Fiction' ? (
+        {activeTab === 'Overview' ? (
+          <OverviewView />
+        ) : activeTab === 'Novels/Fiction' ? (
           <NovelsView />
         ) : activeTab === 'Daily Notes' ? (
           <ResearchView />
         ) : articlesLayoutTabs.includes(activeTab) ? (
           <ArticlesView categoryName={activeTab} />
         ) : (
-          <>
-            <Metrics />
-            <div className="dashboard-main">
-              <div className="dashboard-left">
-                <ProjectOversight />
-                <RecentActivity />
-              </div>
-              <div className="dashboard-right">
-                <GlobalTasks />
-              </div>
-            </div>
-          </>
+          <OverviewView />
         )}
       </div>
       <Footer />
