@@ -60,10 +60,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const isImmersive = activeTab === 'Brainstorming';
+
   return (
     <div className="dashboard">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className={`dashboard-content ${hasSidebar ? 'no-padding' : ''}`}>
+      <div className={`dashboard-content ${hasSidebar ? 'no-padding' : ''} ${isImmersive ? 'immersive-view' : ''}`}>
         {renderContent()}
       </div>
       <Footer />

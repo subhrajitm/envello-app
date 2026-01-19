@@ -24,6 +24,11 @@
   gap: 0;
 }
 
+.dashboard-content.immersive-view {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
 .dashboard-main {
   display: grid;
   grid-template-columns: 1fr 320px;
