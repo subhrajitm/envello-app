@@ -29,21 +29,20 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
           <span className="logo-text">ENVELLO</span>
         </div>
         <div className="header-search">
+          <span className="material-symbols-outlined search-icon">search</span>
           <input
             type="text"
-            placeholder="Quick find across all categories (Cmd + K)"
+            placeholder="Quick find (Cmd + K)"
             className="search-input"
           />
         </div>
         <div className="header-actions">
           <button className="btn-new-project">
-            + New Project
+            <span className="material-symbols-outlined btn-icon-inner">add</span> New Project
           </button>
+          <div className="divider-vertical"></div>
           <button className="icon-btn">
             <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <button className="icon-btn">
-            <span className="material-symbols-outlined">apps</span>
           </button>
         </div>
       </div>

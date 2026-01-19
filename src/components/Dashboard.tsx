@@ -18,6 +18,7 @@ const Dashboard: React.FC = () => {
 
   // Views that have sidebars should have no padding on dashboard-content
   const viewsWithSidebar = [
+    'Novels/Fiction',
     'Research',
     'Articles/Blogs',
     'Journals',

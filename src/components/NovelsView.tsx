@@ -60,10 +60,6 @@ const NovelsView: React.FC = () => {
     },
   ]);
 
-  const totalWords = 142580;
-  const activeDrafts = 4;
-  const avgCompletion = 64;
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFTING':
@@ -90,35 +86,40 @@ const NovelsView: React.FC = () => {
 
   return (
     <div className="novels-view">
-      <div className="novels-metrics">
-        <div className="novel-metric">
-          <div className="novel-metric-label">TOTAL WORDS IN NOVELS</div>
-          <div className="novel-metric-value">{totalWords.toLocaleString()}</div>
+      {/* Sub-Header / Metrics Bar */}
+      <div className="novels-sub-header">
+        <div className="metrics-group">
+          <div className="metric-item">
+            <span className="metric-label">TOTAL WORDS IN NOVELS</span>
+            <span className="metric-value-lg text-yellow">142,580</span>
+          </div>
+          <div className="metric-item">
+            <span className="metric-label">ACTIVE DRAFTS</span>
+            <span className="metric-value-lg">04</span>
+          </div>
+          <div className="metric-item">
+            <span className="metric-label">AVG. COMPLETION</span>
+            <span className="metric-value-lg">64%</span>
+          </div>
         </div>
-        <div className="novel-metric">
-          <div className="novel-metric-label">ACTIVE DRAFTS</div>
-          <div className="novel-metric-value">{String(activeDrafts).padStart(2, '0')}</div>
-        </div>
-        <div className="novel-metric">
-          <div className="novel-metric-label">AVG. COMPLETION</div>
-          <div className="novel-metric-value">{avgCompletion}%</div>
+
+        <div className="controls-group">
+          <button className="control-btn-dark">All Statuses</button>
+          <button className="control-btn-dark">Sort by: Last Updated</button>
+          <button className="control-icon-btn">
+            <span className="material-symbols-outlined icon-sm">filter_list</span>
+          </button>
         </div>
       </div>
 
-      <div className="novels-table-section">
-        <div className="table-controls">
-          <button className="control-btn">All Statuses</button>
-          <button className="control-btn">
-            Sort by: Last Updated <span className="filter-icon">🔽</span>
-          </button>
-        </div>
-
+      <div className="novels-content-area">
         <div className="novels-table">
           <div className="table-header">
             <div className="col-title">PROJECT TITLE</div>
             <div className="col-status">STATUS</div>
             <div className="col-word-count">WORD COUNT</div>
             <div className="col-last-updated">LAST UPDATED</div>
+            <div className="col-menu"></div>
           </div>
           <div className="table-body">
             {novels.map((novel) => (
@@ -128,7 +129,7 @@ const NovelsView: React.FC = () => {
                   {novel.title}
                 </div>
                 <div className="col-status">
-                  <span className={`status-badge ${getStatusColor(novel.status)}`}>
+                  <span className={`status-badge-caps ${getStatusColor(novel.status)}`}>
                     {novel.status}
                   </span>
                 </div>
@@ -148,7 +149,9 @@ const NovelsView: React.FC = () => {
                 </div>
                 <div className="col-last-updated">{novel.lastUpdated}</div>
                 <div className="col-menu">
-                  <button className="menu-btn">⋯</button>
+                  <button className="menu-btn">
+                    <span className="material-symbols-outlined icon-sm">more_vert</span>
+                  </button>
                 </div>
               </div>
             ))}
