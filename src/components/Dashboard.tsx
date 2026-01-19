@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import OverviewView from './OverviewView';
 import NovelsView from './NovelsView';
@@ -12,10 +12,25 @@ import CodeSnippetsView from './CodeSnippetsView';
 import BrainstormingView from './BrainstormingView';
 import DailyNotesView from './DailyNotesView';
 import Footer from './Footer';
+import CommandPalette from './CommandPalette';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Overview');
+  const [isCmdOpen, setIsCmdOpen] = useState(false);
+
+  // Keyboard shortcut listener for Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCmdOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Views that have sidebars should have no padding on dashboard-content
   const viewsWithSidebar = [
@@ -72,6 +87,14 @@ const Dashboard: React.FC = () => {
         {renderContent()}
       </div>
       <Footer />
+      <CommandPalette
+        isOpen={isCmdOpen}
+        onClose={() => setIsCmdOpen(false)}
+        onNavigate={(tab) => {
+          setActiveTab(tab);
+          setIsCmdOpen(false);
+        }}
+      />
     </div>
   );
 };

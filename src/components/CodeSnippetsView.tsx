@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './CodeSnippetsView.css';
+import SyntaxHighlighter from './SyntaxHighlighter';
 
 interface Snippet {
     id: string;
@@ -173,9 +174,9 @@ class SSOAuthProvider:
                                 <div key={i}>{i + 1}</div>
                             ))}
                         </div>
-                        <pre className="code-content">
-                            <code>{selectedSnippet.content}</code>
-                        </pre>
+                        <div className="code-content-wrapper">
+                            <SyntaxHighlighter code={selectedSnippet.content} language={selectedSnippet.lang} />
+                        </div>
                     </div>
                 </div>
 

@@ -1,0 +1,60 @@
+.syntax-highlighter {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e5e5e5;
+    background: transparent;
+    overflow-x: auto;
+}
+
+.syntax-highlighter pre {
+    margin: 0;
+    white-space: pre;
+    background: transparent;
+}
+
+/* Tokens */
+.token.comment {
+    color: #6a9955;
+    font-style: italic;
+}
+
+.token.string {
+    color: #ce9178;
+}
+
+.token.keyword {
+    color: #569cd6;
+    font-weight: 600;
+}
+
+.token.decorator {
+    color: #dcdcaa;
+}
+
+.token.function {
+    color: #dcdcaa;
+}
+
+.token.number {
+    color: #b5cea8;
+}
+
+/* Scrollbar styling for the code block */
+.syntax-highlighter::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.syntax-highlighter::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.syntax-highlighter::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+.syntax-highlighter::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}

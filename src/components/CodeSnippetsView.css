@@ -379,10 +379,11 @@
     margin-right: 16px;
 }
 
-.code-content {
+.code-content-wrapper {
     flex: 1;
     margin: 0;
-    color: #d4d4d4;
+    overflow: hidden;
+    /* Prevent overflow from breaking layout */
 }
 
 .cs-preview-footer {

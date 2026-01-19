@@ -506,11 +506,47 @@
   background: #fcd34d;
 }
 
-.ov-footer-meta {
-  margin-top: 24px;
-  display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  color: #444;
-  font-weight: 600;
+@media (max-width: 1200px) {
+  .overview-layout {
+    flex-wrap: wrap;
+    overflow-y: auto;
+  }
+
+  .ov-sidebar-left,
+  .ov-sidebar-right {
+    width: 100%;
+    border-right: none;
+    border-left: none;
+    border-bottom: 1px solid #1a1a1a;
+    height: auto;
+  }
+
+  .ov-calendar-area {
+    min-height: 600px;
+    /* Ensure calendar has height when stacked */
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(40px, 1fr));
+  }
+
+  .cal-cell {
+    min-height: 80px;
+    padding: 4px;
+  }
+
+  .cal-event {
+    font-size: 8px;
+    padding: 4px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .day-num {
+    font-size: 10px;
+  }
 }

@@ -32,34 +32,79 @@ const JournalsView: React.FC = () => {
         { id: '6', title: 'Travel Reflections', entriesCount: 18, active: false },
     ]);
 
-    const ideasCards: KanbanCard[] = [
-        {
-            id: 'i1', type: 'CONCEPT', title: 'Neon Noir Protagonist',
-            desc: 'Initial sketches for the cybernetic detective character in Chapter 3.',
-            updatedTime: 'Updated 1h ago', hasAi: true
-        },
-        {
-            id: 'i2', type: 'SETTING', title: 'Underground Bazaar',
-            desc: 'The sensory details of the black market in Neo-Tokyo district.',
-            updatedTime: 'Updated 3h ago', statusColor: '#4ade80' // Green smiley equivalent
-        }
-    ];
+    const [columns, setColumns] = useState<{ [key: string]: KanbanCard[] }>({
+        IDEAS: [
+            {
+                id: 'i1', type: 'CONCEPT', title: 'Neon Noir Protagonist',
+                desc: 'Initial sketches for the cybernetic detective character in Chapter 3.',
+                updatedTime: 'Updated 1h ago', hasAi: true
+            },
+            {
+                id: 'i2', type: 'SETTING', title: 'Underground Bazaar',
+                desc: 'The sensory details of the black market in Neo-Tokyo district.',
+                updatedTime: 'Updated 3h ago', statusColor: '#4ade80' // Green smiley equivalent
+            }
+        ],
+        DRAFTING: [
+            {
+                id: 'd1', type: 'CHAPTER', title: 'The Rain Never Stops',
+                meta: '2,450 words', updatedTime: 'Active',
+                progress: 70
+            }
+        ],
+        REVIEW: [
+            {
+                id: 'r1', type: 'CRITICAL', title: 'Prologue Redux',
+                desc: 'Tone consistency check required after AI expansion of opening scene.',
+                updatedTime: 'Feedback Ready', isAiEdited: true, tags: ['Feedback Ready']
+            }
+        ]
+    });
 
-    const draftingCards: KanbanCard[] = [
-        {
-            id: 'd1', type: 'CHAPTER', title: 'The Rain Never Stops',
-            meta: '2,450 words', updatedTime: 'Active',
-            progress: 70
-        }
-    ];
+    const [draggedItem, setDraggedItem] = useState<{ card: KanbanCard, sourceCol: string } | null>(null);
 
-    const reviewCards: KanbanCard[] = [
-        {
-            id: 'r1', type: 'CRITICAL', title: 'Prologue Redux',
-            desc: 'Tone consistency check required after AI expansion of opening scene.',
-            updatedTime: 'Feedback Ready', isAiEdited: true, tags: ['Feedback Ready']
+    const onDragStart = (e: React.DragEvent, card: KanbanCard, sourceCol: string) => {
+        setDraggedItem({ card, sourceCol });
+        e.dataTransfer.effectAllowed = 'move';
+        // Add a ghost styling or transparent effect if needed
+        e.currentTarget.classList.add('dragging');
+    };
+
+    const onDragEnd = (e: React.DragEvent) => {
+        setDraggedItem(null);
+        e.currentTarget.classList.remove('dragging');
+    };
+
+    const onDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const onDrop = (e: React.DragEvent, targetCol: string) => {
+        e.preventDefault();
+
+        if (!draggedItem) return;
+        if (draggedItem.sourceCol === targetCol) return;
+
+        // Move logic
+        const sourceList = [...columns[draggedItem.sourceCol]];
+        const targetList = [...columns[targetCol]];
+
+        // Remove from source
+        const cardIndex = sourceList.findIndex(c => c.id === draggedItem.card.id);
+        if (cardIndex > -1) {
+            sourceList.splice(cardIndex, 1);
         }
-    ];
+
+        // Add to target
+        targetList.push(draggedItem.card);
+
+        setColumns({
+            ...columns,
+            [draggedItem.sourceCol]: sourceList,
+            [targetCol]: targetList
+        });
+    };
 
     return (
         <div className="journals-layout">
@@ -127,17 +172,27 @@ const JournalsView: React.FC = () => {
                 <div className="j-kanban-board">
 
                     {/* IDEAS Column */}
-                    <div className="j-col">
+                    <div
+                        className="j-col"
+                        onDragOver={onDragOver}
+                        onDrop={(e) => onDrop(e, 'IDEAS')}
+                    >
                         <div className="j-col-header">
                             <div className="col-title-group">
                                 <span className="col-dot blue"></span>
-                                IDEAS <span className="col-count">12</span>
+                                IDEAS <span className="col-count">{columns.IDEAS.length}</span>
                             </div>
                             <span className="material-symbols-outlined icon-add">add</span>
                         </div>
                         <div className="j-col-body">
-                            {ideasCards.map(card => (
-                                <div key={card.id} className="j-card">
+                            {columns.IDEAS.map(card => (
+                                <div
+                                    key={card.id}
+                                    className="j-card"
+                                    draggable
+                                    onDragStart={(e) => onDragStart(e, card, 'IDEAS')}
+                                    onDragEnd={onDragEnd}
+                                >
                                     <div className="card-top">
                                         <span className="card-tag tag-blue">{card.type}</span>
                                         <span className="material-symbols-outlined icon-more">more_horiz</span>
@@ -155,17 +210,27 @@ const JournalsView: React.FC = () => {
                     </div>
 
                     {/* DRAFTING Column */}
-                    <div className="j-col">
+                    <div
+                        className="j-col"
+                        onDragOver={onDragOver}
+                        onDrop={(e) => onDrop(e, 'DRAFTING')}
+                    >
                         <div className="j-col-header">
                             <div className="col-title-group">
                                 <span className="col-dot orange"></span>
-                                DRAFTING <span className="col-count">4</span>
+                                DRAFTING <span className="col-count">{columns.DRAFTING.length}</span>
                             </div>
                             <span className="material-symbols-outlined icon-add">add</span>
                         </div>
                         <div className="j-col-body">
-                            {draftingCards.map(card => (
-                                <div key={card.id} className="j-card">
+                            {columns.DRAFTING.map(card => (
+                                <div
+                                    key={card.id}
+                                    className="j-card"
+                                    draggable
+                                    onDragStart={(e) => onDragStart(e, card, 'DRAFTING')}
+                                    onDragEnd={onDragEnd}
+                                >
                                     <div className="card-top">
                                         <span className="card-tag tag-orange">{card.type} {card.title.includes('1') ? '1' : ''}</span> {/* Mock logic for "CHAPTER 1" */}
                                         <span className="material-symbols-outlined icon-more">more_horiz</span>
@@ -189,17 +254,27 @@ const JournalsView: React.FC = () => {
                     </div>
 
                     {/* REVIEW Column */}
-                    <div className="j-col">
+                    <div
+                        className="j-col"
+                        onDragOver={onDragOver}
+                        onDrop={(e) => onDrop(e, 'REVIEW')}
+                    >
                         <div className="j-col-header">
                             <div className="col-title-group">
                                 <span className="col-dot purple"></span>
-                                REVIEW <span className="col-count">2</span>
+                                REVIEW <span className="col-count">{columns.REVIEW.length}</span>
                             </div>
                             <span className="material-symbols-outlined icon-add">add</span>
                         </div>
                         <div className="j-col-body">
-                            {reviewCards.map(card => (
-                                <div key={card.id} className="j-card">
+                            {columns.REVIEW.map(card => (
+                                <div
+                                    key={card.id}
+                                    className="j-card"
+                                    draggable
+                                    onDragStart={(e) => onDragStart(e, card, 'REVIEW')}
+                                    onDragEnd={onDragEnd}
+                                >
                                     <div className="card-top">
                                         <div className="flex gap-2">
                                             <span className="card-tag tag-purple">{card.type}</span>
@@ -221,10 +296,7 @@ const JournalsView: React.FC = () => {
                 </div>
             </div>
 
-            {/* Bottom Status Bar is handled by global Footer component, 
-                 but specific view status "AI CORE ONLINE" is usually part of layout in these screenshots.
-                 Will leave it to global footer for consistency unless requested.
-             */}
+            {/* Bottom Status Bar is handled by global Footer component */}
         </div>
     );
 };
