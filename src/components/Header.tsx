@@ -44,6 +44,12 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
           <button className="icon-btn">
             <span className="material-symbols-outlined">notifications</span>
           </button>
+          <button className="icon-btn">
+            <span className="material-symbols-outlined">settings</span>
+          </button>
+          <div className="profile-menu">
+            <div className="profile-avatar"></div>
+          </div>
         </div>
       </div>
       <nav className="header-nav">

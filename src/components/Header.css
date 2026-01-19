@@ -136,6 +136,26 @@
   color: #fff;
 }
 
+.profile-menu {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.profile-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #fca5a5, #f87171, #7f1d1d);
+  /* Red-ish gradient similar to reference */
+  transition: opacity 0.2s;
+}
+
+.profile-avatar:hover {
+  opacity: 0.9;
+}
+
 /* Navigation Tabs */
 .header-nav {
   display: flex;
