@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import Dashboard from './components/Dashboard';
 import './App.css';
 
+import { StoreProvider } from './context/StoreContext';
+
 function App() {
   return (
-    <div className="app">
-      <Dashboard />
-    </div>
+    <StoreProvider>
+      <div className="app">
+        <Dashboard />
+      </div>
+    </StoreProvider>
   );
 }
 

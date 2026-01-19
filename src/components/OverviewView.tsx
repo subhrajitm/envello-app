@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useStore } from '../context/StoreContext';
 import './OverviewView.css';
 
 const OverviewView: React.FC = () => {
   const [currentMonth] = useState('November 2024');
+  const { tasks } = useStore();
 
   // Planning Pool items
   const planingItems = [
@@ -10,11 +12,10 @@ const OverviewView: React.FC = () => {
     { id: '2', title: 'Midnight Kyoto', tag: 'Mystery', stage: 'Planning • 12d left', active: false },
   ];
 
-  const globalTasks = [
-    'Finalize Ch. 14 outline',
-    'Character Bio: Elena',
-    'World History Sync'
-  ];
+  // Use tasks from context for Global Tasks
+  const globalTasks = tasks.slice(0, 5); // Just take first 5 for the view
+
+  // ... (rest of the file constants like days, activities)
 
   // Mock Calendar Days
   const days = [
@@ -75,9 +76,9 @@ const OverviewView: React.FC = () => {
         <div className="ov-section-header mt-4">GLOBAL TASKS</div>
         <div className="global-tasks-list">
           {globalTasks.map((t, i) => (
-            <div key={i} className="g-task-row">
+            <div key={t.id} className="g-task-row">
               <span className="material-symbols-outlined icon-xs">target</span>
-              {t}
+              {t.title}
             </div>
           ))}
         </div>

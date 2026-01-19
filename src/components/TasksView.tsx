@@ -1,63 +1,10 @@
 import React, { useState } from 'react';
+import { useStore } from '../context/StoreContext';
 import './TasksView.css';
-
-interface Task {
-    id: string;
-    title: string;
-    priority: 'PRIORITY 01' | 'PRIORITY 02' | 'PRIORITY 03';
-    hours: string;
-    isSubCheck?: boolean;
-    dueDate?: string;
-    status: 'ACTIVE' | 'COMPLETED' | 'PENDING';
-    project?: string;
-    assignee?: string;
-    due?: string;
-}
 
 const TasksView: React.FC = () => {
     const [selectedFilter, setSelectedFilter] = useState<string>('All');
-    const [tasks] = useState<Task[]>([
-        {
-            id: '1',
-            title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2',
-            priority: 'PRIORITY 01',
-            hours: '1.5H',
-            status: 'ACTIVE',
-            project: 'Project Alpha',
-            assignee: 'SJ',
-            due: 'Today, 17:00'
-        },
-        {
-            id: '2',
-            title: 'DEEP WORK: DRAFTING SESSION CH. 4',
-            priority: 'PRIORITY 01',
-            hours: '3.0H',
-            status: 'ACTIVE',
-            project: 'Project Alpha',
-            assignee: 'SJ',
-            due: 'Today, 14:00'
-        },
-        {
-            id: '3',
-            title: 'SYNC WITH MARKETING TEAM',
-            priority: 'PRIORITY 02',
-            hours: '1.0H',
-            status: 'PENDING',
-            project: 'Neon Orchard',
-            assignee: 'MT',
-            due: 'Thu, 10:00'
-        },
-        {
-            id: '4',
-            title: 'REVIEW DELAYED RESEARCH NOTE #42',
-            priority: 'PRIORITY 01',
-            hours: '2.0H',
-            status: 'ACTIVE',
-            project: 'Neon Orchard',
-            assignee: 'MT',
-            due: 'Overdue 2h'
-        }
-    ]);
+    const { tasks } = useStore();
 
     const todayTasks = tasks.filter(t => t.due?.includes('Today')).length;
     const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
@@ -104,19 +51,19 @@ const TasksView: React.FC = () => {
                             ALL TASKS
                         </h3>
                         <div className="tasks-section-controls">
-                            <button 
+                            <button
                                 className={`tasks-filter-btn ${selectedFilter === 'All' ? 'active' : ''}`}
                                 onClick={() => setSelectedFilter('All')}
                             >
                                 All
                             </button>
-                            <button 
+                            <button
                                 className={`tasks-filter-btn ${selectedFilter === 'Today' ? 'active' : ''}`}
                                 onClick={() => setSelectedFilter('Today')}
                             >
                                 Today
                             </button>
-                            <button 
+                            <button
                                 className={`tasks-filter-btn ${selectedFilter === 'This Week' ? 'active' : ''}`}
                                 onClick={() => setSelectedFilter('This Week')}
                             >
@@ -164,90 +111,90 @@ const TasksView: React.FC = () => {
 
             <div className="tasks-sidebar">
                 <div className="tasks-header-col">
-                <div className="date-nav-minimal">
-                    <div className="mn-header">OCT 2023</div>
-                    <div className="nav-arrows">
-                        <span className="material-symbols-outlined nav-arr">chevron_left</span>
-                        <span className="material-symbols-outlined nav-arr">chevron_right</span>
+                    <div className="date-nav-minimal">
+                        <div className="mn-header">OCT 2023</div>
+                        <div className="nav-arrows">
+                            <span className="material-symbols-outlined nav-arr">chevron_left</span>
+                            <span className="material-symbols-outlined nav-arr">chevron_right</span>
+                        </div>
                     </div>
-                </div>
 
-                <div className="mini-calendar-grid">
-                    <div className="cal-days-header">
-                        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                    <div className="mini-calendar-grid">
+                        <div className="cal-days-header">
+                            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                        </div>
+                        <div className="cal-days-grid">
+                            <span className="c-day inactive">22</span>
+                            <span className="c-day inactive">23</span>
+                            <span className="c-day inactive">24</span>
+                            <span className="c-day inactive">25</span>
+                            <span className="c-day current">26</span>
+                            <span className="c-day">27</span>
+                            <span className="c-day">28</span>
+                            <span className="c-day">29</span>
+                            <span className="c-day">30</span>
+                            <span className="c-day">31</span>
+                            <span className="c-day active-yellow">12</span> {/* Highlighted in screenshot */}
+                            <span className="c-day">1</span>
+                            <span className="c-day">2</span>
+                            <span className="c-day">3</span>
+                        </div>
                     </div>
-                    <div className="cal-days-grid">
-                        <span className="c-day inactive">22</span>
-                        <span className="c-day inactive">23</span>
-                        <span className="c-day inactive">24</span>
-                        <span className="c-day inactive">25</span>
-                        <span className="c-day current">26</span>
-                        <span className="c-day">27</span>
-                        <span className="c-day">28</span>
-                        <span className="c-day">29</span>
-                        <span className="c-day">30</span>
-                        <span className="c-day">31</span>
-                        <span className="c-day active-yellow">12</span> {/* Highlighted in screenshot */}
-                        <span className="c-day">1</span>
-                        <span className="c-day">2</span>
-                        <span className="c-day">3</span>
-                    </div>
-                </div>
                 </div>
 
                 <div className="global-tasks-feed">
-                <div className="feed-header">
-                    <span className="feed-title">GLOBAL TASKS</span>
-                    <span className="feed-count">4 ACTIVE</span>
-                </div>
-
-                <div className="task-group">
-                    <div className="group-toggle">
-                        <span className="material-symbols-outlined toggle-icon">expand_more</span>
-                        <span className="group-label">TODAY</span>
-                        <span className="group-count">02</span>
+                    <div className="feed-header">
+                        <span className="feed-title">GLOBAL TASKS</span>
+                        <span className="feed-count">4 ACTIVE</span>
                     </div>
-                    <div className="task-items">
-                        {tasks.map(task => (
-                            <div key={task.id} className="task-card-minimal">
-                                <div className="task-check-box"></div>
-                                <div className="task-min-content">
-                                    <div className="task-min-title">{task.title}</div>
-                                    <div className="task-min-meta">
-                                        <span className="p-badge">{task.priority}</span>
-                                        <span className="h-badge">{task.hours}</span>
+
+                    <div className="task-group">
+                        <div className="group-toggle">
+                            <span className="material-symbols-outlined toggle-icon">expand_more</span>
+                            <span className="group-label">TODAY</span>
+                            <span className="group-count">02</span>
+                        </div>
+                        <div className="task-items">
+                            {tasks.map(task => (
+                                <div key={task.id} className="task-card-minimal">
+                                    <div className="task-check-box"></div>
+                                    <div className="task-min-content">
+                                        <div className="task-min-title">{task.title}</div>
+                                        <div className="task-min-meta">
+                                            <span className="p-badge">{task.priority}</span>
+                                            <span className="h-badge">{task.hours}</span>
+                                        </div>
+                                        {task.id === '2' && (
+                                            <div className="sub-meta-time">14:00 — 16:00</div>
+                                        )}
                                     </div>
-                                    {task.id === '2' && (
-                                        <div className="sub-meta-time">14:00 — 16:00</div>
-                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                <div className="task-group collapsed">
-                    <div className="group-toggle">
-                        <span className="material-symbols-outlined toggle-icon">chevron_right</span>
-                        <span className="group-label">UPCOMING</span>
-                        <span className="group-count">01</span>
+                    <div className="task-group collapsed">
+                        <div className="group-toggle">
+                            <span className="material-symbols-outlined toggle-icon">chevron_right</span>
+                            <span className="group-label">UPCOMING</span>
+                            <span className="group-count">01</span>
+                        </div>
                     </div>
-                </div>
 
-                <div className="task-group collapsed">
-                    <div className="group-toggle">
-                        <span className="material-symbols-outlined toggle-icon">chevron_right</span>
-                        <span className="group-label">NO DUE DATE</span>
-                        <span className="group-count">01</span>
+                    <div className="task-group collapsed">
+                        <div className="group-toggle">
+                            <span className="material-symbols-outlined toggle-icon">chevron_right</span>
+                            <span className="group-label">NO DUE DATE</span>
+                            <span className="group-count">01</span>
+                        </div>
                     </div>
-                </div>
 
-                <div className="new-task-entry">
-                    <button className="btn-add-entry">
-                        + NEW TASK ENTRY
-                    </button>
-                    <div className="version-info">V5.0.0-PRO // NANO_BANANA_CORE</div>
-                </div>
+                    <div className="new-task-entry">
+                        <button className="btn-add-entry">
+                            + NEW TASK ENTRY
+                        </button>
+                        <div className="version-info">V5.0.0-PRO // NANO_BANANA_CORE</div>
+                    </div>
                 </div>
             </div>
         </div>
