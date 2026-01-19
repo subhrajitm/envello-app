@@ -137,8 +137,8 @@
 
 .table-header {
   display: grid;
-  grid-template-columns: 2.5fr 1fr 1.5fr 1fr 40px;
-  gap: 12px;
+  grid-template-columns: 5.5fr 1.2fr 1fr 1.8fr 40px;
+  gap: 16px;
   padding: 12px 24px;
   border-bottom: 1px solid #1a1a1a;
   background: #050505;
@@ -156,12 +156,13 @@
 
 .table-row {
   display: grid;
-  grid-template-columns: 2.5fr 1fr 1.5fr 1fr 40px;
-  gap: 12px;
+  grid-template-columns: 5.5fr 1.2fr 1fr 1.8fr 40px;
+  gap: 16px;
   padding: 16px 24px;
   border-bottom: 1px solid #111;
   align-items: center;
   transition: background 0.1s;
+  cursor: pointer;
 }
 
 .table-row:hover {
@@ -257,7 +258,7 @@
 
 .col-menu {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .menu-btn {

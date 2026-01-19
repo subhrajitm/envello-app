@@ -163,10 +163,7 @@ const OverviewView: React.FC = () => {
             <div className="switch-toggle on"></div>
           </div>
         </div>
-        <div className="ov-footer-meta">
-          <span>V5.2.0-WORKBENCH</span>
-          <span>Dynamic Planning Mode Enabled</span>
-        </div>
+
       </div>
     </div>
   );

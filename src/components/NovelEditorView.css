@@ -1,0 +1,560 @@
+/* Layout */
+.ne-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #050505;
+    color: #e5e5e5;
+    overflow: hidden;
+}
+
+/* Header */
+.ne-header {
+    height: 50px;
+    background: #080808;
+    border-bottom: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.ne-header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.ne-brand {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #e5e5e5;
+    text-transform: uppercase;
+}
+
+.ne-brand-sub {
+    color: #666;
+    font-weight: 400;
+}
+
+.ne-back-btn {
+    background: transparent;
+    border: none;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.ne-back-btn:hover {
+    color: #e5e5e5;
+    background: #1a1a1a;
+}
+
+.ne-project-select {
+    background: #121212;
+    border: 1px solid #222;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    min-width: 240px;
+    justify-content: space-between;
+}
+
+.ne-project-select:hover {
+    border-color: #333;
+    color: #e5e5e5;
+}
+
+.ne-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.icon-btn {
+    color: #666;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    color: #e5e5e5;
+}
+
+.ne-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e5e5e5;
+    /* Placeholder */
+    cursor: pointer;
+}
+
+/* Workspace */
+.ne-workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Sidebar Left */
+.ne-sidebar-left {
+    width: 240px;
+    background: #080808;
+    border-right: 1px solid #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 0;
+}
+
+.ne-sidebar-header-action {
+    padding: 0 16px 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #1a1a1a;
+}
+
+.ne-btn-back-sidebar {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #e5e5e5;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.ne-btn-back-sidebar:hover {
+    background: #252525;
+    border-color: #555;
+}
+
+.ne-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 24px;
+    color: #666;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ne-nav-group:hover,
+.ne-nav-group.active {
+    color: #fcd34d;
+    background: #0f0f0f;
+}
+
+.active-icon {
+    color: #fcd34d;
+}
+
+.ne-chapters-section {
+    margin-top: 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ne-chap-header {
+    padding: 0 24px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.icon-add {
+    font-size: 16px;
+    cursor: pointer;
+    color: #fcd34d;
+}
+
+.ne-chapter-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.ne-chapter-item {
+    padding: 12px 24px;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+}
+
+.ne-chapter-item:hover {
+    background: #0e0e0e;
+}
+
+.ne-chapter-item.active {
+    background: #121212;
+    border-left-color: #fcd34d;
+}
+
+.ne-chap-title {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+.ne-chapter-item.active .ne-chap-title {
+    color: #e5e5e5;
+    font-weight: 500;
+}
+
+.ne-chap-meta {
+    font-size: 10px;
+    color: #555;
+}
+
+.ne-draft-tag {
+    color: #888;
+}
+
+.ne-empty-tag {
+    color: #444;
+}
+
+.ne-sync-status {
+    padding: 16px 24px;
+    margin-top: auto;
+}
+
+.sync-line {
+    height: 1px;
+    background: #1a1a1a;
+    margin-bottom: 12px;
+}
+
+.sync-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 600;
+    color: #444;
+}
+
+.sync-active {
+    color: #22c55e;
+}
+
+/* Editor Area */
+.ne-editor-area {
+    flex: 1;
+    background: #0a0a0a;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.ne-editor-canvas {
+    width: 100%;
+    max-width: 800px;
+    padding: 64px 48px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ne-doc-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #e5e5e5;
+    margin: 0 0 8px 0;
+    font-family: 'Times New Roman', serif;
+    /* Or system serif */
+}
+
+.ne-doc-meta {
+    font-size: 10px;
+    font-weight: 700;
+    color: #444;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+}
+
+.meta-sep {
+    margin: 0 8px;
+    color: #333;
+}
+
+.ne-editor-text {
+    font-family: 'Georgia', serif;
+    /* Writing font */
+    font-size: 18px;
+    line-height: 1.8;
+    color: #d4d4d4;
+}
+
+.ne-editor-text p {
+    margin-bottom: 24px;
+}
+
+.ne-quote-block {
+    background: #121212;
+    border-left: 3px solid #fcd34d;
+    padding: 16px 24px;
+    margin: 24px 0;
+    font-style: italic;
+    color: #ccc;
+}
+
+.ne-editor-footer {
+    margin-top: 64px;
+    border-top: 1px solid #1a1a1a;
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.editor-placeholder {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    color: #332800;
+    /* Very dark yellow */
+    opacity: 0.7;
+}
+
+.editor-stats-pill {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 10px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.editor-stats-pill strong {
+    color: #e5e5e5;
+}
+
+.stat-sep {
+    color: #333;
+}
+
+/* Right Sidebar AI */
+.ne-sidebar-right {
+    width: 280px;
+    background: #080808;
+    border-left: 1px solid #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.ne-ai-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 24px;
+}
+
+.icon-bolt {
+    color: #fcd34d;
+    font-size: 16px;
+}
+
+.online-dot {
+    width: 4px;
+    height: 4px;
+    background: #fcd34d;
+    border-radius: 50%;
+    margin-left: auto;
+}
+
+.btn-ai-primary {
+    width: 100%;
+    background: #161000;
+    border: 1px solid #332800;
+    color: #fcd34d;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-ai-primary:hover {
+    background: #332800;
+    border-color: #fcd34d;
+}
+
+.ai-btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-ai-sec {
+    flex: 1;
+    background: #111;
+    border: 1px solid #222;
+    color: #888;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.btn-ai-sec:hover {
+    background: #1a1a1a;
+    color: #e5e5e5;
+}
+
+.ne-context-box {
+    margin-top: 24px;
+    background: #0f0f0f;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.ctx-header {
+    font-size: 9px;
+    font-weight: 700;
+    color: #444;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.ctx-input {
+    width: 100%;
+    height: 60px;
+    background: transparent;
+    border: none;
+    resize: none;
+    color: #e5e5e5;
+    font-size: 11px;
+    outline: none;
+}
+
+.ctx-input::placeholder {
+    color: #444;
+}
+
+.btn-execute {
+    width: 100%;
+    background: #fcd34d;
+    border: none;
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px;
+    border-radius: 2px;
+    margin-top: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.ne-suggestions-box {
+    margin-top: 24px;
+}
+
+.sugg-header {
+    font-size: 9px;
+    font-weight: 700;
+    color: #444;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.clear-link {
+    color: #fcd34d;
+    cursor: pointer;
+}
+
+.sugg-card {
+    background: #111;
+    border: 1px solid #222;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #aaa;
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.ne-ai-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #666;
+    cursor: pointer;
+}
+
+.footer-action:hover {
+    color: #e5e5e5;
+}
+
+.sc-hint {
+    margin-left: auto;
+    font-size: 9px;
+    background: #222;
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+/* Scrollbars */
+.ne-chapter-list::-webkit-scrollbar,
+.ne-editor-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ne-chapter-list::-webkit-scrollbar-thumb,
+.ne-editor-area::-webkit-scrollbar-thumb {
+    background: #222;
+    border-radius: 3px;
+}

@@ -11,7 +11,10 @@ interface Novel {
   progress: number; // 0-100
 }
 
+import NovelEditorView from './NovelEditorView';
+
 const NovelsView: React.FC = () => {
+  const [activeNovelId, setActiveNovelId] = useState<string | null>(null);
   const [novels] = useState<Novel[]>([
     {
       id: '1',
@@ -22,6 +25,7 @@ const NovelsView: React.FC = () => {
       icon: 'description',
       progress: 58,
     },
+    // ... (other items can remain, not replacing entire novels array in this tool block unless needed for context)
     {
       id: '2',
       title: 'Neon Orchard Chronicles',
@@ -84,6 +88,10 @@ const NovelsView: React.FC = () => {
     }
   };
 
+  if (activeNovelId) {
+    return <NovelEditorView novelId={activeNovelId} onBack={() => setActiveNovelId(null)} />;
+  }
+
   return (
     <div className="novels-view">
       {/* Sub-Header / Metrics Bar */}
@@ -123,7 +131,7 @@ const NovelsView: React.FC = () => {
           </div>
           <div className="table-body">
             {novels.map((novel) => (
-              <div key={novel.id} className="table-row">
+              <div key={novel.id} className="table-row" onClick={() => setActiveNovelId(novel.id)}>
                 <div className="col-title">
                   <span className="material-symbols-outlined project-icon">{novel.icon}</span>
                   {novel.title}
@@ -149,7 +157,7 @@ const NovelsView: React.FC = () => {
                 </div>
                 <div className="col-last-updated">{novel.lastUpdated}</div>
                 <div className="col-menu">
-                  <button className="menu-btn">
+                  <button className="menu-btn" onClick={(e) => e.stopPropagation()}>
                     <span className="material-symbols-outlined icon-sm">more_vert</span>
                   </button>
                 </div>
