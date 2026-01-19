@@ -19,7 +19,7 @@ interface ArticlesViewProps {
   categoryName?: string;
 }
 
-const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Blogs' }) => {
+const ArticlesView: React.FC<ArticlesViewProps> = () => {
   const [selectedPlatform, setSelectedPlatform] = useState('All Platforms');
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
 
@@ -91,100 +91,102 @@ const ArticlesView: React.FC<ArticlesViewProps> = ({ categoryName = 'Articles/Bl
 
   return (
     <div className="articles-view">
-      <div className="articles-filters">
-        <div className="filter-group">
-          <span className="filter-label">PLATFORM:</span>
-          <button
-            className={`filter-btn ${selectedPlatform === 'All Platforms' ? 'active' : ''}`}
-            onClick={() => setSelectedPlatform('All Platforms')}
-          >
-            All Platforms
+      {/* Sub-Header / Filter Bar */}
+      <div className="articles-sub-header">
+        <div className="filters-left">
+          <div className="filter-item">
+            <span className="filter-label">PLATFORM:</span>
+            <button
+              className={`filter-btn ${selectedPlatform === 'All Platforms' ? 'active' : ''}`}
+              onClick={() => setSelectedPlatform('All Platforms')}
+            >
+              All Platforms
+            </button>
+          </div>
+          <div className="filter-item">
+            <span className="filter-label">PIPELINE:</span>
+            <button
+              className={`filter-btn ${selectedStatus === 'All Statuses' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('All Statuses')}
+            >
+              All Statuses
+            </button>
+          </div>
+          <button className="filter-btn-icon">
+            <span className="material-symbols-outlined icon-sm">filter_list</span>
+            Advanced Filters
           </button>
         </div>
-        <div className="filter-group">
-          <span className="filter-label">PIPELINE:</span>
-          <button
-            className={`filter-btn ${selectedStatus === 'All Statuses' ? 'active' : ''}`}
-            onClick={() => setSelectedStatus('All Statuses')}
-          >
-            All Statuses
-          </button>
-        </div>
-        <div className="filter-group-right">
-          <button className="filter-btn">
-            <span className="material-symbols-outlined">filter_list</span> Advanced Filters
-          </button>
+
+        <div className="filters-right">
+          <div className="capacity-widget">
+            <span className="capacity-label">CURRENT CAPACITY</span>
+            <div className="capacity-bar-container">
+              <div className="capacity-bar" style={{ width: '65%' }}></div>
+            </div>
+          </div>
+          <div className="vertical-divider"></div>
+          <span className="active-projects-count">12 Active Projects</span>
         </div>
       </div>
 
-      <div className="articles-content">
-        <div className="articles-main">
-          <div className="articles-table-section">
-            <div className="articles-table">
-              <div className="table-header">
-                <div className="col-title">ARTICLE TITLE</div>
-                <div className="col-platform">PLATFORM</div>
-                <div className="col-pipeline">PIPELINE</div>
-                <div className="col-word-count">WORD COUNT</div>
-                <div className="col-engagement">ENGAGEMENT</div>
-                <div className="col-last-updated">LAST UPDATED</div>
-              </div>
-              <div className="table-body">
-                {articles.map((article) => (
-                  <div key={article.id} className="table-row">
-                    <div className="col-title">
-                      <span className="material-symbols-outlined article-icon">{article.icon}</span>
-                      {article.title}
-                    </div>
-                    <div className="col-platform">{article.platform}</div>
-                    <div className="col-pipeline">
-                      <span className={`pipeline-badge ${getPipelineColor(article.pipeline)}`}>
-                        {article.pipeline}
-                      </span>
-                    </div>
-                    <div className="col-word-count">{article.wordCount}</div>
-                    <div className="col-engagement">
-                      {article.engagement ? (
+      <div className="articles-content-area">
+        <div className="articles-table">
+          <div className="table-header">
+            <div className="col-title">ARTICLE TITLE</div>
+            <div className="col-platform">PLATFORM</div>
+            <div className="col-pipeline">PIPELINE</div>
+            <div className="col-word-count">WORD COUNT</div>
+            <div className="col-engagement">ENGAGEMENT</div>
+            <div className="col-last-updated">LAST UPDATED</div>
+            <div className="col-menu"></div>
+          </div>
+          <div className="table-body">
+            {articles.map((article) => (
+              <div key={article.id} className="table-row">
+                <div className="col-title">
+                  <span className="material-symbols-outlined article-icon">{article.icon}</span>
+                  {article.title}
+                </div>
+                <div className="col-platform">{article.platform}</div>
+                <div className="col-pipeline">
+                  <span className={`pipeline-badge ${getPipelineColor(article.pipeline)}`}>
+                    {article.pipeline}
+                  </span>
+                </div>
+                <div className="col-word-count">{article.wordCount}</div>
+                <div className="col-engagement">
+                  {article.engagement ? (
+                    <>
+                      {article.engagement.views !== 'Pending' ? (
                         <>
-                          {article.engagement.views !== 'Pending' ? (
-                            <>
-                              <span className="engagement-item">
-                                <span className="material-symbols-outlined engagement-icon">visibility</span>
-                                {article.engagement.views}
-                              </span>
-                              {article.engagement.comments && (
-                                <span className="engagement-item">
-                                  <span className="material-symbols-outlined engagement-icon">comment</span>
-                                  {article.engagement.comments}
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span>Pending</span>
+                          <span className="engagement-item">
+                            <span className="material-symbols-outlined engagement-icon">visibility</span>
+                            {article.engagement.views}
+                          </span>
+                          {article.engagement.comments && (
+                            <span className="engagement-item">
+                              <span className="material-symbols-outlined engagement-icon">comment</span>
+                              {article.engagement.comments}
+                            </span>
                           )}
                         </>
                       ) : (
-                        <span>--</span>
+                        <span className="text-muted">Pending</span>
                       )}
-                    </div>
-                    <div className="col-last-updated">{article.lastUpdated}</div>
-                    <div className="col-menu">
-                      <button className="menu-btn">
-                        <span className="material-symbols-outlined">more_vert</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                    </>
+                  ) : (
+                    <span className="text-muted">--</span>
+                  )}
+                </div>
+                <div className="col-last-updated">{article.lastUpdated}</div>
+                <div className="col-menu">
+                  <button className="menu-btn">
+                    <span className="material-symbols-outlined icon-sm">more_vert</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div className="articles-sidebar">
-          <div className="sidebar-section">
-            <div className="sidebar-title">
-              <span className="sidebar-title-underline">CURRENT CAPACITY</span>
-            </div>
-            <div className="capacity-value">12 Active Projects</div>
+            ))}
           </div>
         </div>
       </div>
