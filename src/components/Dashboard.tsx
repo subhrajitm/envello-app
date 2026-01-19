@@ -10,6 +10,7 @@ import MeetingsView from './MeetingsView';
 import BooksView from './BooksView';
 import CodeSnippetsView from './CodeSnippetsView';
 import BrainstormingView from './BrainstormingView';
+import DailyNotesView from './DailyNotesView';
 import Footer from './Footer';
 import './Dashboard.css';
 
@@ -31,7 +32,6 @@ const Dashboard: React.FC = () => {
   ];
 
   const hasSidebar = viewsWithSidebar.includes(activeTab);
-
   const renderContent = () => {
     switch (activeTab) {
       case 'Overview':
@@ -43,9 +43,11 @@ const Dashboard: React.FC = () => {
       case 'Articles/Blogs':
         return <ArticlesView categoryName={activeTab} />;
       case 'Journals':
-      case 'Daily Notes':
         return <JournalsView />;
+      case 'Daily Notes':
+        return <DailyNotesView />;
       case 'Tasks/Todos':
+        // ... existing code ...
         return <TasksView />;
       case 'Meetings':
         return <MeetingsView />;
