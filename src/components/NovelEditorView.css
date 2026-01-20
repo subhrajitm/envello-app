@@ -39,14 +39,14 @@
 }
 
 .ne-brand-sub {
-    color: #666;
+    color: var(--text-tertiary);
     font-weight: 400;
 }
 
 .ne-back-btn {
     background: transparent;
     border: none;
-    color: #666;
+    color: var(--text-tertiary);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -67,7 +67,7 @@
     padding: 6px 16px;
     border-radius: 4px;
     font-size: 12px;
-    color: #888;
+    color: var(--text-tertiary);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -88,7 +88,7 @@
 }
 
 .icon-btn {
-    color: #666;
+    color: var(--text-tertiary);
     font-size: 20px;
     cursor: pointer;
 }
@@ -101,7 +101,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #e5e5e5;
+    background: var(--bg-hover);
     /* Placeholder */
     cursor: pointer;
 }
@@ -126,7 +126,7 @@
 .ne-sidebar-header-action {
     padding: 0 16px 16px;
     margin-bottom: 8px;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .ne-btn-back-sidebar {
@@ -157,7 +157,7 @@
     align-items: center;
     gap: 12px;
     padding: 10px 24px;
-    color: #666;
+    color: var(--text-tertiary);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -171,7 +171,7 @@
 }
 
 .active-icon {
-    color: #fcd34d;
+    color: var(--accent-primary);
 }
 
 .ne-chapters-section {
@@ -187,7 +187,7 @@
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1.2px;
-    color: #555;
+    color: var(--text-tertiary);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -197,16 +197,16 @@
 .icon-add {
     font-size: 18px;
     cursor: pointer;
-    color: #fcd34d;
+    color: var(--accent-primary);
     padding: 2px 6px;
     border-radius: 4px;
     transition: all 0.2s;
-    background: rgba(252, 211, 77, 0.1);
+    background: var(--accent-primary-dim);
 }
 
 .icon-add:hover {
-    color: #fcd34d;
-    background: rgba(252, 211, 77, 0.2);
+    color: var(--accent-primary);
+    background: var(--accent-primary-dim);
 }
 
 .ne-chapter-list {
@@ -230,7 +230,7 @@
 }
 
 .ne-chapter-item:hover {
-    background: #0e0e0e;
+    background: var(--bg-hover);
 }
 
 .ne-chapter-item.active {
@@ -241,7 +241,7 @@
 .ne-collapse-btn {
     background: transparent;
     border: none;
-    color: #555;
+    color: var(--text-tertiary);
     padding: 2px;
     display: flex;
     justify-content: center;
@@ -251,7 +251,7 @@
 }
 
 .ne-collapse-btn:hover {
-    color: #e5e5e5;
+    color: var(--text-primary);
 }
 
 .ne-chap-info {
@@ -260,19 +260,19 @@
 
 .ne-chap-title {
     font-size: 13px;
-    color: #aaa;
+    color: var(--text-secondary);
     margin-bottom: 2px;
     line-height: 1.4;
 }
 
 .ne-chapter-item.active .ne-chap-title {
-    color: #e5e5e5;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 .ne-chap-meta {
     font-size: 10px;
-    color: #555;
+    color: var(--text-tertiary);
 }
 
 .ne-draft-tag {
@@ -280,7 +280,7 @@
 }
 
 .ne-empty-tag {
-    color: #444;
+    color: var(--text-disabled);
 }
 
 /* Sub-list (Scenes) */
@@ -296,7 +296,7 @@
 
 .ne-scene-item {
     font-size: 11px;
-    color: #666;
+    color: var(--text-tertiary);
     padding: 4px 0;
     display: flex;
     align-items: center;
@@ -306,18 +306,18 @@
 }
 
 .ne-scene-item:hover {
-    color: #aeaeae;
+    color: var(--text-secondary);
 }
 
 .sc-dot {
     width: 4px;
     height: 4px;
-    background: #333;
+    background: var(--bg-element);
     border-radius: 50%;
 }
 
 .ne-scene-item:hover .sc-dot {
-    background: #666;
+    background: var(--text-tertiary);
 }
 
 .sync-info {
@@ -325,11 +325,11 @@
     justify-content: space-between;
     font-size: 10px;
     font-weight: 600;
-    color: #444;
+    color: var(--text-tertiary);
 }
 
 .sync-active {
-    color: #22c55e;
+    color: var(--accent-green);
 }
 
 /* Editor Area */
@@ -364,7 +364,7 @@
 }
 
 .ne-doc-title-input::placeholder {
-    color: #333;
+    color: var(--text-disabled);
 }
 
 .ne-doc-meta {
@@ -378,7 +378,7 @@
 
 .meta-sep {
     margin: 0 8px;
-    color: #333;
+    color: var(--text-tertiary);
 }
 
 .ne-editor-text {
@@ -400,7 +400,7 @@
     padding: 16px 24px;
     margin: 24px 0;
     font-style: italic;
-    color: #ccc;
+    color: var(--text-secondary);
 }
 
 /* Editor Footer */
@@ -415,7 +415,7 @@
 .editor-placeholder {
     font-family: 'Georgia', serif;
     font-style: italic;
-    color: #332800;
+    color: var(--accent-primary);
     /* Very dark yellow */
     opacity: 0.7;
 }
@@ -432,7 +432,7 @@
     border-radius: 100px;
     padding: 8px 20px;
     font-size: 11px;
-    color: #666;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -440,15 +440,15 @@
 }
 
 .editor-stats-pill strong {
-    color: #e5e5e5;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 .stat-sep {
-    color: #333;
+    color: var(--border-highlight);
     height: 12px;
     width: 1px;
-    background: #333;
+    background: var(--border-highlight);
     display: block;
     text-indent: -9999px;
     /* Hide the pipe character text if we use background line */
@@ -476,7 +476,7 @@
     background: transparent;
     border: none;
     padding: 12px 0;
-    color: #666;
+    color: var(--text-tertiary);
     cursor: pointer;
     position: relative;
     transition: all 0.2s;
@@ -486,8 +486,8 @@
 }
 
 .ne-tab-btn:hover {
-    color: #aeaeae;
-    background: #111;
+    color: var(--text-secondary);
+    background: var(--bg-hover);
 }
 
 .ne-tab-btn.active {
@@ -502,7 +502,7 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: #fcd34d;
+    background: var(--accent-primary);
 }
 
 .icon-tab {
@@ -523,7 +523,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #444;
+    color: var(--text-disabled);
     gap: 12px;
     text-align: center;
 }

@@ -26,22 +26,32 @@
 }
 
 [data-theme="light"] {
-  --bg-app: #f3f4f6;
+  /* Kindle Paperwhite Aesthetic */
+  --bg-app: #f7f7f5;
+  /* Warm matte paper */
   --bg-panel: #ffffff;
-  --bg-hover: #e5e7eb;
-  --bg-active: #d1d5db;
+  /* Clean white for contrast */
+  --bg-hover: #ebebeb;
+  --bg-active: #e2e2e2;
 
-  --border-subtle: #e5e7eb;
-  --border-main: #d4d4d8;
-  --border-highlight: #a1a1aa;
+  --border-subtle: #e5e5e0;
+  --border-main: #d6d6d0;
+  --border-highlight: #a3a3a3;
 
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-tertiary: #71717a;
+  --text-primary: #0f0f0f;
+  /* E-ink black */
+  --text-secondary: #4a4a4a;
+  --text-tertiary: #767676;
 
-  --accent-primary: #ca8a04;
-  /* Darker Gold for visibility on white */
-  --accent-primary-dim: rgba(202, 138, 4, 0.1);
+  --accent-primary: #222222;
+  /* Monochrome accent preference for e-reader feel, or keep gold? Kindle uses minimal color. */
+  /* Keeping gold but deeper for readability, or switching to black/dark gray for a true "ink" feel */
+  /* User likely wants the "feel" (background/contrast) but might still want the brand gold. */
+  /* Let's stick to a sharp dark gray for primary accent to mimic ink, or a very deep gold. */
+  /* Actually, sticking to the brand Gold but adjusted for paper: */
+  --accent-primary: #b45309;
+  /* Amber-700, readable on paper */
+  --accent-primary-dim: rgba(180, 83, 9, 0.1);
 }
 
 * {
