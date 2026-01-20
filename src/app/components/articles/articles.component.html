@@ -1,1 +1,93 @@
-<p>articles works!</p>
+<div class="articles-view">
+    <!-- Sub-Header / Filter Bar -->
+    <div class="articles-sub-header">
+        <div class="filters-left">
+            <div class="filter-item">
+                <span class="filter-label">PLATFORM:</span>
+                <button class="filter-btn" [class.active]="selectedPlatform() === 'All Platforms'"
+                    (click)="selectedPlatform.set('All Platforms')">
+                    All Platforms
+                </button>
+            </div>
+            <div class="filter-item">
+                <span class="filter-label">PIPELINE:</span>
+                <button class="filter-btn" [class.active]="selectedStatus() === 'All Statuses'"
+                    (click)="selectedStatus.set('All Statuses')">
+                    All Statuses
+                </button>
+            </div>
+            <button class="filter-btn-icon">
+                <span class="material-symbols-outlined icon-sm">filter_list</span>
+                Advanced Filters
+            </button>
+        </div>
+
+        <div class="filters-right">
+            <div class="capacity-widget">
+                <span class="capacity-label">CURRENT CAPACITY</span>
+                <div class="capacity-bar-container">
+                    <div class="capacity-bar" style="width: 65%"></div>
+                </div>
+            </div>
+            <div class="vertical-divider"></div>
+            <span class="active-projects-count">12 Active Projects</span>
+        </div>
+    </div>
+
+    <div class="articles-content-area">
+        <div class="articles-table">
+            <div class="table-header">
+                <div class="col-title">ARTICLE TITLE</div>
+                <div class="col-platform">PLATFORM</div>
+                <div class="col-pipeline">PIPELINE</div>
+                <div class="col-word-count">WORD COUNT</div>
+                <div class="col-engagement">ENGAGEMENT</div>
+                <div class="col-last-updated">LAST UPDATED</div>
+                <div class="col-menu"></div>
+            </div>
+            <div class="table-body">
+                @for (article of articles; track article.id) {
+                <div class="table-row" (click)="activeArticleId.set(article.id)">
+                    <div class="col-title">
+                        <span class="material-symbols-outlined article-icon">{{ article.icon }}</span>
+                        {{ article.title }}
+                    </div>
+                    <div class="col-platform">{{ article.platform }}</div>
+                    <div class="col-pipeline">
+                        <span class="pipeline-badge" [class]="getPipelineColor(article.pipeline)">
+                            {{ article.pipeline }}
+                        </span>
+                    </div>
+                    <div class="col-word-count">{{ article.wordCount }}</div>
+                    <div class="col-engagement">
+                        @if (article.engagement) {
+                        @if (article.engagement.views !== 'Pending') {
+                        <span class="engagement-item">
+                            <span class="material-symbols-outlined engagement-icon">visibility</span>
+                            {{ article.engagement.views }}
+                        </span>
+                        @if (article.engagement.comments) {
+                        <span class="engagement-item">
+                            <span class="material-symbols-outlined engagement-icon">comment</span>
+                            {{ article.engagement.comments }}
+                        </span>
+                        }
+                        } @else {
+                        <span class="text-muted">Pending</span>
+                        }
+                        } @else {
+                        <span class="text-muted">--</span>
+                        }
+                    </div>
+                    <div class="col-last-updated">{{ article.lastUpdated }}</div>
+                    <div class="col-menu">
+                        <button class="menu-btn" (click)="$event.stopPropagation()">
+                            <span class="material-symbols-outlined icon-sm">more_vert</span>
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

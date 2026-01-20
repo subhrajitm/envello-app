@@ -1,1 +1,135 @@
-<p>code-snippets works!</p>
+<div class="cs-layout">
+
+    <!-- LEFT SIDEBAR: LANGUAGES -->
+    <div class="cs-sidebar-left">
+        <div class="cs-sidebar-header">LANGUAGES</div>
+        <ul class="cs-lang-list">
+            <li class="cs-lang-item" [class.active]="activeLang() === 'Python'" (click)="activeLang.set('Python')">
+                <span class="lang-dot python"></span> Python
+            </li>
+            <li class="cs-lang-item">
+                <span class="lang-dot js"></span> JavaScript
+            </li>
+            <li class="cs-lang-item">
+                <span class="lang-dot md"></span> Markdown
+            </li>
+            <li class="cs-lang-item">
+                <span class="lang-dot sql"></span> SQL
+            </li>
+            <li class="cs-lang-item">
+                <span class="lang-dot ts"></span> TypeScript
+            </li>
+            <li class="cs-lang-item">
+                <span class="lang-dot html"></span> HTML/CSS
+            </li>
+        </ul>
+
+        <div class="cs-sidebar-section mt-auto">
+            <div class="cs-sidebar-header">RECENT TAGS</div>
+            <!-- Mock tags if needed, or collapsed -->
+            <span class="material-symbols-outlined expand-icon">expand_more</span>
+        </div>
+
+        <div class="cs-sidebar-footer">
+            <div class="footer-status-dot"></div>
+            <span class="footer-status-text">SYNC: UP TO DATE</span>
+        </div>
+    </div>
+
+    <!-- MIDDLE PANE: SNIPPET LIST -->
+    <div class="cs-list-pane">
+        <div class="cs-pane-header">
+            <div class="cs-header-title">
+                {{ activeLang() }} Snippets <span class="count-badge">24 items</span>
+            </div>
+            <div class="cs-header-controls">
+                <button class="cs-control-btn">Status: All <span
+                        class="material-symbols-outlined icon-xs">expand_more</span></button>
+                <button class="cs-control-btn">Sort: Last Modified</button>
+            </div>
+        </div>
+
+        <div class="cs-table-header">
+            <div class="col-title">TITLE</div>
+            <div class="col-lang">LANG</div>
+            <div class="col-tags">TAGS</div>
+            <div class="col-mod">LAST MODIFIED</div>
+        </div>
+
+        <div class="cs-snippet-list">
+            @for (snip of snippets; track snip.id) {
+            <div class="cs-snippet-row" [class.selected]="selectedSnippetId() === snip.id"
+                (click)="selectedSnippetId.set(snip.id)">
+                <div class="col-title">
+                    <span class="material-symbols-outlined file-icon">code</span>
+                    {{ snip.title }}
+                </div>
+                <div class="col-lang">
+                    <span class="cs-badge">{{ snip.lang }}</span>
+                </div>
+                <div class="col-tags">
+                    @for (t of snip.tags; track t) {
+                    <span class="cs-tag">#{{ t }}</span>
+                    }
+                </div>
+                <div class="col-mod">{{ snip.lastModified }}</div>
+            </div>
+            }
+        </div>
+
+        <div class="cs-list-footer">
+            <span class="material-symbols-outlined icon-xs">code</span> 1,284 SNIPPETS TOTAL
+        </div>
+    </div>
+
+    <!-- RIGHT PANE: PREVIEW -->
+    <div class="cs-preview-pane">
+        <div class="cs-pane-header preview-header">
+            <div class="cs-header-title">SNIPPET PREVIEW</div>
+            <div class="cs-preview-actions">
+                <button class="cs-action-btn primary"><span
+                        class="material-symbols-outlined icon-xs">content_copy</span> Copy</button>
+                <button class="cs-action-btn"><span
+                        class="material-symbols-outlined icon-xs">open_in_full</span></button>
+                <button class="cs-action-btn"><span class="material-symbols-outlined icon-xs">edit</span></button>
+                <button class="cs-action-btn"><span class="material-symbols-outlined icon-xs">share</span></button>
+            </div>
+        </div>
+
+        <div class="cs-preview-content">
+            <div class="preview-meta">
+                <h2 class="preview-filename">{{ selectedSnippet().filename }}</h2>
+                <div class="preview-path">
+                    <span class="path-text">{{ selectedSnippet().path }}</span>
+                    <span class="meta-sep">•</span>
+                    <span class="creator-text">Created by {{ selectedSnippet().creator }}</span>
+                </div>
+            </div>
+
+            <div class="code-editor-mock">
+                <div class="line-numbers">
+                    @for (line of getLineNumbers(selectedSnippet().content); track line) {
+                    <div>{{ line }}</div>
+                    }
+                </div>
+                <div class="code-content-wrapper">
+                    <!-- Basic code display without syntax highlighting library -->
+                    <pre><code>{{ selectedSnippet().content }}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="cs-preview-footer">
+            <div class="assoc-header">ASSOCIATIONS</div>
+            <div class="assoc-chips">
+                <div class="assoc-chip">
+                    <span class="material-symbols-outlined link-icon">link</span>
+                    core-auth-lib
+                </div>
+            </div>
+            <div class="snippet-version-info">
+                V5.1.0-SNIPPET-HUB <span class="sep">|</span> Python 3.11
+            </div>
+        </div>
+    </div>
+</div>

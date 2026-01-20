@@ -1,1 +1,39 @@
-<p>daily-notes works!</p>
+<div class="daily-notes-view">
+    <div class="dn-sidebar">
+        <div class="dn-sidebar-header-action">
+            <button class="dn-btn-new-entry" (click)="handleNewNote()">+ New Note</button>
+        </div>
+        <div class="dn-entries-list">
+            @for (entry of notes(); track entry.id) {
+            <div class="dn-entry-item" [class.active]="selectedNote()?.id === entry.id" (click)="selectNote(entry.id)">
+                <div class="dn-entry-date">{{ entry.date }}</div>
+                <div class="dn-entry-title">{{ entry.title }}</div>
+                <div class="dn-entry-preview">{{ entry.preview }}</div>
+            </div>
+            }
+        </div>
+    </div>
+    <div class="dn-editor">
+        @if (selectedNote(); as note) {
+        <div class="dn-editor-header">
+            <div class="dn-editor-meta">
+                <span class="dn-editor-date">{{ note.date }}</span>
+                <span class="dn-editor-time">09:15 AM</span>
+            </div>
+            <div class="dn-editor-actions">
+                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">edit</span></button>
+                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">delete</span></button>
+                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">more_horiz</span></button>
+            </div>
+        </div>
+        <div class="dn-editor-content">
+            <h1 class="dn-entry-heading">{{ note.title }}</h1>
+            <!-- Using innerHTML for now as per React version, later enhance with Tiptap if needed -->
+            <div class="dn-entry-body" [innerHTML]="note.content"></div>
+        </div>
+        } @else {
+        <div class="dn-empty-state" style="padding: 20px; color: var(--text-secondary);">Select a note or create a new
+            one.</div>
+        }
+    </div>
+</div>

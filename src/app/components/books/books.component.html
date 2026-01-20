@@ -1,1 +1,185 @@
-<p>books works!</p>
+<div class="books-view-ent">
+    <!-- Main Content Area -->
+    <div class="books-main-area">
+        <!-- Header Bar -->
+        <div class="books-ent-header">
+            <div class="header-title-block">
+                <h1 class="ent-header-title">PRIMARY LIBRARY HUB</h1>
+                <div class="ent-header-meta">Managing 1,428 enterprise assets</div>
+            </div>
+            <div class="header-status-pills">
+                <div class="status-pill active-pill">
+                    <span class="dot-indicator"></span> ACTIVE: 08
+                </div>
+                <div class="status-pill">
+                    <span class="dot-indicator green"></span> ANNOTATED: 1,284
+                </div>
+            </div>
+            <div class="view-toggles">
+                <button class="toggle-btn active"><span class="material-symbols-outlined">view_list</span></button>
+                <button class="toggle-btn"><span class="material-symbols-outlined">grid_view</span></button>
+            </div>
+        </div>
+
+        <!-- Table List -->
+        <div class="books-list-container">
+            <div class="ent-table-header">
+                <div class="col-icon"></div>
+                <div class="col-title">ASSET TITLE / AUTHOR</div>
+                <div class="col-category">CATEGORY</div>
+                <div class="col-date">LAST ACCESSED</div>
+                <div class="col-progress">PROGRESS</div>
+                <div class="col-notes">ANNOTATIONS</div>
+                <div class="col-status">AI STATUS</div>
+                <div class="col-actions">ACTIONS</div>
+            </div>
+            <div class="ent-table-body">
+                @for (book of books(); track book.id) {
+                <div class="ent-table-row">
+                    <div class="col-icon">
+                        <span class="material-symbols-outlined book-icon">book</span>
+                    </div>
+                    <div class="col-title">
+                        <div class="row-title">{{ book.title }}</div>
+                        <div class="row-author">{{ book.author }}</div>
+                    </div>
+                    <div class="col-category">
+                        <span class="cat-badge" [class]="getCategoryColor(book.category)">
+                            {{ book.category }}
+                        </span>
+                    </div>
+                    <div class="col-date">{{ book.lastAccessed }}</div>
+                    <div class="col-progress">
+                        <div class="progress-bar-ent">
+                            <div class="prog-fill" [style.width.%]="book.progress"></div>
+                        </div>
+                    </div>
+                    <div class="col-notes">
+                        <span class="notes-val">{{ book.notes }} Notes</span>
+                    </div>
+                    <div class="col-status">
+                        <span class="status-indicator" [class.st-verified]="book.status === 'VERIFIED'"
+                            [class.st-queued]="book.status === 'QUEUED'">
+                            <span class="material-symbols-outlined st-icon">
+                                {{ book.status === 'VERIFIED' ? 'check_circle' : 'pending' }}
+                            </span>
+                            {{ book.status }}
+                        </span>
+                    </div>
+                    <div class="col-actions">
+                        <span class="material-symbols-outlined">more_horiz</span>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Featured Deep Dive Section -->
+        <div class="featured-section">
+            <div class="feat-image-placeholder">
+                <div class="placeholder-book-spine"></div>
+                <!-- In a real app this would be an image tag -->
+                <div class="placeholder-text">The Design of Everyday Things</div>
+            </div>
+            <div class="feat-content">
+                <div class="feat-header-row">
+                    <span class="feat-badge">CURRENT DEEP DIVE</span>
+                    <span class="feat-meta">UPDATED 2H AGO</span>
+                </div>
+                <h2 class="feat-title">The Design of Everyday Things</h2>
+                <h3 class="feat-subtitle">Revised and Expanded Edition</h3>
+
+                <div class="ai-insight-box">
+                    <div class="ai-insight-header">
+                        <span class="material-symbols-outlined ai-star">auto_awesome</span>
+                        AI SYNTHESIS: CRITICAL INSIGHTS
+                    </div>
+                    <div class="insights-grid">
+                        <div class="insight-card">
+                            <div class="in-title">Affordances</div>
+                            <div class="in-desc">Properties of objects that determine how they could possibly be used.
+                                Mental models built on past experiences.</div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="in-title">Signifiers</div>
+                            <div class="in-desc">The signaling component of affordances. Clear visual cues that
+                                communicate where an action takes place.</div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="in-title">Gulf of Execution</div>
+                            <div class="in-desc">The distance between human goal and physical system. Bridges needed for
+                                intuitive interface navigation.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="books-sidebar">
+        <div class="sidebar-section">
+            <div class="side-header">GLOBAL INSIGHTS</div>
+            <div class="insight-stat-card">
+                <div class="stat-row-top">
+                    <span class="stat-label">Total Reading Time</span>
+                    <span class="material-symbols-outlined stat-icon-mini">schedule</span>
+                </div>
+                <div class="stat-main-val">428h <span class="stat-growth">+12%</span></div>
+                <div class="stat-progress-line">
+                    <div class="p-line-fill" style="width: 60%"></div>
+                </div>
+            </div>
+
+            <div class="insight-stat-card">
+                <div class="stat-row-top">
+                    <span class="stat-label">Avg. Velocity</span>
+                    <span class="material-symbols-outlined stat-icon-mini">bolt</span>
+                </div>
+                <div class="stat-main-val">1.4 <span class="stat-sub">BOOKS/WEEK</span></div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="side-header">TOP SUBJECTS</div>
+            <div class="subject-list">
+                <div class="subject-item">
+                    <div class="sub-row">
+                        <span>Cognitive Science</span>
+                        <span>28%</span>
+                    </div>
+                    <div class="sub-bar">
+                        <div class="sub-fill" style="width: 28%"></div>
+                    </div>
+                </div>
+                <div class="subject-item">
+                    <div class="sub-row">
+                        <span>Narrative Theory</span>
+                        <span>22%</span>
+                    </div>
+                    <div class="sub-bar">
+                        <div class="sub-fill" style="width: 22%; background: #a855f7"></div>
+                    </div>
+                </div>
+                <div class="subject-item">
+                    <div class="sub-row">
+                        <span>Behavioral Economics</span>
+                        <span>19%</span>
+                    </div>
+                    <div class="sub-bar">
+                        <div class="sub-fill" style="width: 19%; background: #f97316"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section mt-auto">
+            <div class="writing-assistant-card">
+                <div class="wa-title">WRITING ASSISTANT</div>
+                <div class="wa-desc">Based on your recent annotations, I've generated 4 new connections for your
+                    manuscript.</div>
+                <button class="wa-btn">VIEW CONNECTIONS</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,1 +1,134 @@
-<p>meetings works!</p>
+<div class="meetings-view">
+    <div class="meetings-filters">
+        <div class="filters-left">
+            <select class="filter-select" [ngModel]="selectedProject()" (ngModelChange)="selectedProject.set($event)">
+                <option>All Projects</option>
+                <option>Neon Orchard</option>
+                <option>Project Alpha</option>
+            </select>
+            <select class="filter-select" [ngModel]="selectedTimeRange()"
+                (ngModelChange)="selectedTimeRange.set($event)">
+                <option>Last 30 Days</option>
+                <option>Last 7 Days</option>
+                <option>This Quarter</option>
+            </select>
+        </div>
+        <div class="filters-right">
+            <span class="sort-label">Sort by:</span>
+            <select class="sort-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+                <option>Recent First</option>
+                <option>Alphabetical</option>
+                <option>Attendees</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="meetings-content">
+        <div class="meetings-table-container">
+            <table class="meetings-table">
+                <thead>
+                    <tr>
+                        <th class="col-title">Meeting Title & Context</th>
+                        <th class="col-date">Date</th>
+                        <th class="col-attendees">Attendees</th>
+                        <th class="col-action-items">Action Items</th>
+                        <th class="col-icon"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (meeting of meetings; track meeting.id) {
+                    <tr class="table-row">
+                        <td class="col-title">
+                            <div class="meeting-title-cell">
+                                <div class="meeting-title-row">
+                                    <span class="meeting-dot" [style.backgroundColor]="meeting.color"></span>
+                                    <span class="meeting-title">{{ meeting.title }}</span>
+                                </div>
+                                <span class="meeting-project">Project: {{ meeting.project }}</span>
+                            </div>
+                        </td>
+                        <td class="col-date">
+                            <span class="meeting-date">{{ meeting.month }} {{ meeting.day }} {{ meeting.time }} {{
+                                meeting.period }}</span>
+                        </td>
+                        <td class="col-attendees">
+                            <div class="attendees-list">
+                                @for (attendee of meeting.attendees; track $index) {
+                                <div class="attendee-avatar"
+                                    [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
+                                    @if (!attendee.avatar) {
+                                    <span class="attendee-count">{{ attendee.name }}</span>
+                                    }
+                                </div>
+                                }
+                            </div>
+                        </td>
+                        <td class="col-action-items">
+                            @if (meeting.status === 'open') {
+                            <button class="action-items-btn">
+                                {{ meeting.actionItems }} OPEN
+                            </button>
+                            } @else {
+                            <span class="action-items-complete">Complete</span>
+                            }
+                        </td>
+                        <td class="col-icon">
+                            <span class="material-symbols-outlined icon-desc">description</span>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <aside class="meetings-sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title">Upcoming Syncs</h2>
+                    <span class="sidebar-badge">CALENDAR</span>
+                </div>
+                <div class="upcoming-syncs">
+                    @for (sync of upcomingSyncs; track $index) {
+                    <div class="sync-item" [class.sync-today]="sync.isToday">
+                        <div class="sync-time">{{ sync.time }}</div>
+                        <div class="sync-title">{{ sync.title }}</div>
+                        @if (sync.link) {
+                        <div class="sync-link">
+                            <span class="material-symbols-outlined icon-link">link</span>
+                            {{ sync.link }}
+                        </div>
+                        } @else {
+                        <div class="sync-location">{{ sync.location }}</div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <div class="sidebar-section sidebar-metrics">
+                <h3 class="metrics-title">Project PM Overview</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label-small">Avg. Velocity</div>
+                        <div class="metric-value-large">
+                            2.4k<span class="metric-unit">w/d</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label-small">Deadlines</div>
+                        <div class="metric-value-large metric-primary">02</div>
+                    </div>
+                    <div class="metric-card metric-card-wide">
+                        <div class="metric-header">
+                            <div class="metric-label-small">Active Action Items</div>
+                            <div class="metric-count">15/42</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 35.7%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

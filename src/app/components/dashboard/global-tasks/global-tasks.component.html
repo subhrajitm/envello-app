@@ -1,0 +1,30 @@
+<div class="global-tasks">
+    <div class="section-header">
+        <div class="section-title">
+            <span class="material-symbols-outlined section-icon">task</span>
+            GLOBAL TASKS
+            @if (highPriorityCount() > 0) {
+            <span class="badge-high">{{ highPriorityCount() }} High</span>
+            }
+        </div>
+    </div>
+    <div class="tasks-list">
+        @for (task of tasks(); track task.id) {
+        <div class="task-item">
+            <input type="checkbox" class="task-checkbox" />
+            <div class="task-content">
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-meta">
+                    @if (task.type) {
+                    <span class="task-type">{{ task.type }}</span>
+                    }
+                    <span class="priority-badge" [class]="getPriorityColor(task.priority)">
+                        {{ task.priority }} PRIORITY
+                    </span>
+                    <span class="task-due">Due {{ task.dueDate }}</span>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+</div>

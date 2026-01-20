@@ -17,6 +17,7 @@ export interface Note {
   title: string;
   preview: string;
   content: string; // HTML content for simplicity
+  tags?: string[];
 }
 
 const initialTasks: Task[] = [

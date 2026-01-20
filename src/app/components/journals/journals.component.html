@@ -1,1 +1,167 @@
-<p>journals works!</p>
+<div class="journals-layout">
+    <!-- Left Sidebar -->
+    <div class="j-sidebar">
+        <div class="j-sidebar-header">
+            JOURNALS & PROJECTS
+            <span class="material-symbols-outlined folder-icon">folder_open</span>
+        </div>
+        <div class="j-project-list">
+            @for (p of projects(); track p.id) {
+            <div class="j-project-row" [class.active]="p.active">
+                <span class="material-symbols-outlined icon-folder">
+                    {{ p.active ? 'folder_open' : 'folder' }}
+                </span>
+                <div class="j-proj-info">
+                    <div class="j-proj-title">{{ p.title }}</div>
+                    <div class="j-proj-count">{{ p.entriesCount }} Entries</div>
+                </div>
+            </div>
+            }
+        </div>
+        <div class="j-sidebar-footer">
+            <div class="storage-label">
+                <span>STORAGE USAGE</span>
+                <span>64%</span>
+            </div>
+            <div class="storage-bar">
+                <div class="storage-fill" style="width: 64%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Kanban Content -->
+    <div class="j-main-content">
+        <!-- Header -->
+        <div class="j-main-header">
+            <div class="j-header-left">
+                <h1 class="j-page-title">2024 Morning Pages <span
+                        class="material-symbols-outlined lock-icon">lock</span></h1>
+                <div class="j-sub-header">PROJECT WORKFLOW BOARD</div>
+            </div>
+
+            <div class="j-header-stats">
+                <div class="j-stat-group">
+                    <div class="stat-label">PROGRESS</div>
+                    <div class="stat-val yellow">78%</div>
+                </div>
+                <div class="j-stat-divider"></div>
+                <div class="j-stat-group">
+                    <div class="stat-label">TARGET</div>
+                    <div class="stat-val">50,000 words</div>
+                </div>
+            </div>
+
+            <div class="j-header-controls">
+                <button class="j-filter-btn">FILTER BY <span>All Entries</span></button>
+                <button class="j-view-toggle">
+                    <span class="material-symbols-outlined icon-sm">view_kanban</span>
+                    Kanban
+                </button>
+            </div>
+        </div>
+
+        <!-- Columns -->
+        <div class="j-kanban-board">
+
+            <!-- IDEAS Column -->
+            <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'IDEAS')">
+                <div class="j-col-header">
+                    <div class="col-title-group">
+                        <span class="col-dot blue"></span>
+                        IDEAS <span class="col-count">{{ columns()['IDEAS'].length }}</span>
+                    </div>
+                    <span class="material-symbols-outlined icon-add">add</span>
+                </div>
+                <div class="j-col-body">
+                    @for (card of columns()['IDEAS']; track card.id) {
+                    <div class="j-card" draggable="true" (dragstart)="onDragStart($event, card, 'IDEAS')"
+                        (dragend)="onDragEnd($event)">
+                        <div class="card-top">
+                            <span class="card-tag tag-blue">{{ card.type }}</span>
+                            <span class="material-symbols-outlined icon-more">more_horiz</span>
+                        </div>
+                        <div class="card-title">{{ card.title }}</div>
+                        @if (card.desc) { <div class="card-desc">{{ card.desc }}</div> }
+                        <div class="card-footer">
+                            @if (card.hasAi) { <span class="ai-badge-circle">AI</span> }
+                            @if (card.statusColor) { <span
+                                class="status-emoji material-symbols-outlined">sentiment_satisfied</span> }
+                            <span class="card-time">{{ card.updatedTime }}</span>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- DRAFTING Column -->
+            <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'DRAFTING')">
+                <div class="j-col-header">
+                    <div class="col-title-group">
+                        <span class="col-dot orange"></span>
+                        DRAFTING <span class="col-count">{{ columns()['DRAFTING'].length }}</span>
+                    </div>
+                    <span class="material-symbols-outlined icon-add">add</span>
+                </div>
+                <div class="j-col-body">
+                    @for (card of columns()['DRAFTING']; track card.id) {
+                    <div class="j-card" draggable="true" (dragstart)="onDragStart($event, card, 'DRAFTING')"
+                        (dragend)="onDragEnd($event)">
+                        <div class="card-top">
+                            <span class="card-tag tag-orange">{{ card.type }} {{ card.title.includes('1') ? '1' : ''
+                                }}</span>
+                            <span class="material-symbols-outlined icon-more">more_horiz</span>
+                        </div>
+                        <div class="card-title">{{ card.title }}</div>
+
+                        @if (card.progress) {
+                        <div class="card-progress-container">
+                            <div class="card-prog-bar">
+                                <div class="prog-fill" [style.width.%]="card.progress"></div>
+                            </div>
+                        </div>
+                        }
+
+                        <div class="card-footer">
+                            <span class="card-meta-icon material-symbols-outlined">description</span>
+                            <span class="card-meta-text">{{ card.meta }}</span>
+                            <span class="card-time ml-auto">{{ card.updatedTime }}</span>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- REVIEW Column -->
+            <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'REVIEW')">
+                <div class="j-col-header">
+                    <div class="col-title-group">
+                        <span class="col-dot purple"></span>
+                        REVIEW <span class="col-count">{{ columns()['REVIEW'].length }}</span>
+                    </div>
+                    <span class="material-symbols-outlined icon-add">add</span>
+                </div>
+                <div class="j-col-body">
+                    @for (card of columns()['REVIEW']; track card.id) {
+                    <div class="j-card" draggable="true" (dragstart)="onDragStart($event, card, 'REVIEW')"
+                        (dragend)="onDragEnd($event)">
+                        <div class="card-top">
+                            <div class="flex gap-2">
+                                <span class="card-tag tag-purple">{{ card.type }}</span>
+                                @if (card.isAiEdited) { <span class="card-tag tag-gray">AI EDITED</span> }
+                            </div>
+                        </div>
+                        <div class="card-title mt-2">{{ card.title }}</div>
+                        @if (card.desc) { <div class="card-desc">{{ card.desc }}</div> }
+                        <div class="card-footer mt-2">
+                            <div class="tag-feedback">
+                                <span class="material-symbols-outlined icon-xs">auto_awesome</span> Feedback Ready
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

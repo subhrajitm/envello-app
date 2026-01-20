@@ -10,11 +10,13 @@ import { MeetingsComponent } from './components/meetings/meetings.component';
 import { BooksComponent } from './components/books/books.component';
 import { CodeSnippetsComponent } from './components/code-snippets/code-snippets.component';
 import { BrainstormingComponent } from './components/brainstorming/brainstorming.component';
+import { NovelEditorComponent } from './components/novels/novel-editor/novel-editor.component';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'overview', pathMatch: 'full' },
     { path: 'overview', component: OverviewComponent, data: { hasSidebar: true } },
     { path: 'novels', component: NovelsComponent, data: { hasSidebar: true } },
+    { path: 'novels/:id', component: NovelEditorComponent, data: { immersive: true } },
     { path: 'research', component: ResearchComponent, data: { hasSidebar: true } },
     { path: 'articles', component: ArticlesComponent, data: { hasSidebar: true } },
     { path: 'journals', component: JournalsComponent, data: { hasSidebar: true } },
