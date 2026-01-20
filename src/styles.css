@@ -147,3 +147,53 @@ code {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-highlight);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+/* Global Layout Rules - Ensure sidebars extend to footer */
+[class$="-layout"],
+[class*="-layout "],
+[class$="-view"],
+[class*="-view "] {
+    height: 100%;
+}
+
+/* Ensure all sidebars have full height */
+[class$="-sidebar"],
+[class*="-sidebar-"],
+[class$="sidebar-left"],
+[class$="sidebar-right"] {
+    height: 100%;
+}
+/* Ensure all Angular components fill their containers */
+app-overview,
+app-novels,
+app-research,
+app-tasks,
+app-daily-notes,
+app-journals,
+app-meetings,
+app-books,
+app-articles,
+app-code-snippets,
+app-brainstorming {
+    display: block;
+    height: 100%;
+}

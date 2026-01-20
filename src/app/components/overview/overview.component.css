@@ -9,11 +9,13 @@
 /* Left Sidebar: Stats & Tasks */
 .ov-sidebar-left {
     width: 240px;
+    height: 100%;
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     padding: 12px;
+    overflow-y: auto;
 }
 
 .ov-stats-header {
@@ -402,11 +404,13 @@
 /* Right Sidebar: Activity */
 .ov-sidebar-right {
     width: 240px;
+    height: 100%;
     background: var(--bg-app);
     border-left: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     padding: 12px;
+    overflow-y: auto;
 }
 
 .activity-list {

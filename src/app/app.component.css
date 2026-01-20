@@ -22,6 +22,9 @@
 .dashboard-content.no-padding {
     padding: 0;
     gap: 0;
+    overflow: hidden;
+    height: 100%;
+    /* Allow child components to manage their own overflow */
 }
 
 .dashboard-content.immersive-view {
