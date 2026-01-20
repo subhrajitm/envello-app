@@ -377,6 +377,7 @@
     font-size: 18px;
     line-height: 1.8;
     color: #d4d4d4;
+    outline: none;
 }
 
 .ne-editor-text p {
@@ -394,13 +395,11 @@
 
 /* Editor Footer */
 .ne-editor-footer {
-    margin-top: 64px;
-    border-top: 1px solid #1a1a1a;
-    padding-top: 24px;
     display: flex;
-    justify-content: flex-start;
-    /* Changed from space-between to flex-start since stats are floating */
+    justify-content: center;
     align-items: center;
+    height: 100px;
+    /* Keep some space at bottom */
 }
 
 .editor-placeholder {
@@ -738,4 +737,75 @@
 .ne-editor-area::-webkit-scrollbar-thumb {
     background: #222;
     border-radius: 3px;
+}
+
+/* Floating Toolbar */
+.ne-floating-toolbar {
+    padding: 8px 7px 6px;
+    position: absolute;
+    z-index: 10000;
+    top: -10000px;
+    left: -10000px;
+    margin-top: -6px;
+    opacity: 0;
+    background-color: #222;
+    border-radius: 4px;
+    transition: opacity 0.75s;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+}
+
+.ne-toolbar-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ne-toolbar-btn:hover {
+    background: #333;
+    color: #e5e5e5;
+}
+
+.ne-toolbar-btn.active {
+    color: #fcd34d;
+    /* Use the brand yellow */
+
+    background: #333;
+}
+
+/* Fixed Toolbar */
+.ne-fixed-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #0a0a0a;
+    /* Match editor background */
+    border-bottom: 1px solid #1a1a1a;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    /* Spacing from content */
+}
+
+.ne-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.ne-toolbar-divider {
+    width: 1px;
+    height: 16px;
+    background: #222;
+    margin: 0 8px;
 }

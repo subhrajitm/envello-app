@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createEditor, Descendant, Node, BaseEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
+import { Slate, Editable, withReact, RenderElementProps, RenderLeafProps, ReactEditor, useSlate, useFocused } from 'slate-react';
+import { withHistory, HistoryEditor } from 'slate-history';
 import './NovelEditorView.css';
 
 interface NovelEditorProps {
@@ -6,7 +9,183 @@ interface NovelEditorProps {
     onBack: () => void;
 }
 
+type CustomText = { text: string; bold?: boolean; italic?: boolean; underline?: boolean }
+type ParagraphElement = { type: 'paragraph'; children: CustomText[] }
+type BlockQuoteElement = { type: 'block-quote'; children: CustomText[] }
+type CustomElement = ParagraphElement | BlockQuoteElement
+
+declare module 'slate' {
+    interface CustomTypes {
+        Editor: BaseEditor & ReactEditor & HistoryEditor
+        Element: CustomElement
+        Text: CustomText
+    }
+}
+const toggleMark = (editor: Editor, format: string) => {
+    const isActive = isMarkActive(editor, format)
+
+    if (isActive) {
+        Editor.removeMark(editor, format)
+    } else {
+        Editor.addMark(editor, format, true)
+    }
+}
+
+const isMarkActive = (editor: Editor, format: string) => {
+    const marks = Editor.marks(editor)
+    return marks ? marks[format as keyof Omit<CustomText, 'text'>] === true : false
+}
+
+const HoveringToolbar = () => {
+    const ref = useRef<HTMLDivElement | null>(null)
+    const editor = useSlate()
+    const inFocus = useFocused()
+
+    useEffect(() => {
+        const el = ref.current
+        const { selection } = editor
+
+        if (!el) {
+            return
+        }
+
+        if (
+            !selection ||
+            !inFocus ||
+            Range.isCollapsed(selection) ||
+            Editor.string(editor, selection) === ''
+        ) {
+            el.removeAttribute('style')
+            return
+        }
+
+        const domSelection = window.getSelection()
+        if (!domSelection || domSelection.rangeCount === 0) return
+
+        const domRange = domSelection.getRangeAt(0)
+        const rect = domRange.getBoundingClientRect()
+
+        // Calculate position relative to the editor container or viewport
+        // We'll use fixed positioning for simplicity and reliability with the portal-like behavior
+        el.style.opacity = '1'
+        el.style.top = `${rect.top + window.scrollY - el.offsetHeight - 10}px`
+        el.style.left = `${rect.left + window.scrollX - el.offsetWidth / 2 + rect.width / 2}px`
+    })
+
+    return (
+        <div ref={ref} className="ne-floating-toolbar">
+            <FormatButton format="bold" icon="format_bold" />
+            <FormatButton format="italic" icon="format_italic" />
+            <FormatButton format="underline" icon="format_underlined" />
+        </div>
+    )
+}
+
+const FormatButton = ({ format, icon }: { format: string; icon: string }) => {
+    const editor = useSlate()
+    return (
+        <button
+            className={`ne-toolbar-btn ${isMarkActive(editor, format) ? 'active' : ''}`}
+            onMouseDown={event => {
+                event.preventDefault()
+                toggleMark(editor, format)
+            }}
+        >
+            <span className="material-symbols-outlined icon-sm">{icon}</span>
+        </button>
+    )
+}
+const toggleBlock = (editor: Editor, format: string) => {
+    const isActive = isBlockActive(editor, format)
+    const newProperties: Partial<CustomElement> = {
+        type: isActive ? 'paragraph' : (format as 'paragraph' | 'block-quote'),
+    }
+    Transforms.setNodes<CustomElement>(editor, newProperties)
+}
+
+const isBlockActive = (editor: Editor, format: string) => {
+    const { selection } = editor
+    if (!selection) return false
+
+    const [match] = Array.from(
+        Editor.nodes(editor, {
+            at: Editor.unhangRange(editor, selection),
+            match: n =>
+                !Editor.isEditor(n) &&
+                SlateElement.isElement(n) &&
+                n.type === format,
+        })
+    )
+
+    return !!match
+}
+
+const FixedToolbar = () => {
+    const editor = useSlate()
+    return (
+        <div className="ne-fixed-toolbar">
+            <div className="ne-toolbar-group">
+                <BlockButton format="block-quote" icon="format_quote" />
+            </div>
+            <div className="ne-toolbar-divider"></div>
+            <div className="ne-toolbar-group">
+                <FormatButton format="bold" icon="format_bold" />
+                <FormatButton format="italic" icon="format_italic" />
+                <FormatButton format="underline" icon="format_underlined" />
+            </div>
+        </div>
+    )
+}
+
+const BlockButton = ({ format, icon }: { format: string; icon: string }) => {
+    const editor = useSlate()
+    return (
+        <button
+            className={`ne-toolbar-btn ${isBlockActive(editor, format) ? 'active' : ''}`}
+            onMouseDown={event => {
+                event.preventDefault()
+                toggleBlock(editor, format)
+            }}
+            title={format === 'block-quote' ? 'Quote' : format}
+        >
+            <span className="material-symbols-outlined icon-sm">{icon}</span>
+        </button>
+    )
+}
+
+const initialValue: Descendant[] = [
+    {
+        type: 'paragraph',
+        children: [
+            { text: 'The sun hung low over the horizon, casting long, golden shadows across the orchard. Arthur adjusted his spectacles, the weight of the manuscript heavy in his satchel. It was time. He had waited three years for this moment, but as he stood before the heavy oak doors, his resolve wavered. The wind whispered secrets through the leaves, a soft rustle that sounded almost like a warning.' },
+        ],
+    },
+    {
+        type: 'paragraph',
+        children: [
+            { text: 'He stepped forward, the gravel crunching beneath his boots. Every step felt like a mile, every breath a triumph. Behind him, the world he knew was fading; ahead, a story yet to be written. The AI pulse in his pocket vibrated—a gentle reminder that he wasn\'t alone in this creative endeavor.' },
+        ],
+    },
+    {
+        type: 'block-quote',
+        children: [
+            { text: '"You should go inside now," a small voice echoed in his mind, or perhaps it was the device. Arthur looked up. The lights in the upper window of the manor flickered once, then twice, mimicking the rhythmic beat of a mechanical heart. He took a deep breath, the scent of overripe fruit filling his lungs, and reached for the iron knocker.' },
+        ],
+    },
+    {
+        type: 'paragraph',
+        children: [
+            { text: 'The door didn\'t wait for him to strike. It creaked open, just a sliver, revealing a darkness that seemed more intentional than accidental. "Is anyone there?" Arthur\'s voice sounded thin, frail against the vast silence of the orchard. No answer came, only the smell of old paper and ozone—the signature scent of the Banana Conservatory.' }
+        ]
+    }
+];
+
 const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
+    // Slate editor setup
+    const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+    // Initial value state
+    const [value, setValue] = useState<Descendant[]>(initialValue);
+
     const [wordCount, setWordCount] = useState(1240);
     const [activeChapter, setActiveChapter] = useState('01');
     const [activeRightTab, setActiveRightTab] = useState('AI');
@@ -17,6 +196,37 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
         e.stopPropagation();
         setExpandedChapters(prev => ({ ...prev, [id]: !prev[id] }));
     };
+
+    // Calculate word count on change
+    const handleChange = (newValue: Descendant[]) => {
+        setValue(newValue);
+        const text = newValue.map(n => Node.string(n)).join('\n');
+        const count = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+        setWordCount(count);
+    };
+
+    const renderElement = useCallback((props: RenderElementProps) => {
+        switch (props.element.type) {
+            case 'block-quote':
+                return <blockquote {...props.attributes} className="ne-quote-block">{props.children}</blockquote>;
+            default:
+                return <p {...props.attributes}>{props.children}</p>;
+        }
+    }, []);
+
+    const renderLeaf = useCallback((props: RenderLeafProps) => {
+        let { children } = props
+        if (props.leaf.bold) {
+            children = <strong>{children}</strong>
+        }
+        if (props.leaf.italic) {
+            children = <em>{children}</em>
+        }
+        if (props.leaf.underline) {
+            children = <u>{children}</u>
+        }
+        return <span {...props.attributes}>{children}</span>
+    }, []);
 
     const chapters = [
         {
@@ -112,24 +322,24 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                             <span className="meta-scene">SCENE: THE ORCHARD ENTRANCE</span>
                         </div>
 
-                        <div className="ne-editor-text">
-                            <p>The sun hung low over the horizon, casting long, golden shadows across the orchard. Arthur adjusted his spectacles, the weight of the manuscript heavy in his satchel. It was time. He had waited three years for this moment, but as he stood before the heavy oak doors, his resolve wavered. The wind whispered secrets through the leaves, a soft rustle that sounded almost like a warning.</p>
-
-                            <p>He stepped forward, the gravel crunching beneath his boots. Every step felt like a mile, every breath a triumph. Behind him, the world he knew was fading; ahead, a story yet to be written. The AI pulse in his pocket vibrated—a gentle reminder that he wasn't alone in this creative endeavor.</p>
-
-                            <blockquote className="ne-quote-block">
-                                "You should go inside now," a small voice echoed in his mind, or perhaps it was the device. Arthur looked up. The lights in the upper window of the manor flickered once, then twice, mimicking the rhythmic beat of a mechanical heart. He took a deep breath, the scent of overripe fruit filling his lungs, and reached for the iron knocker.
-                            </blockquote>
-
-                            <p>The door didn't wait for him to strike. It creaked open, just a sliver, revealing a darkness that seemed more intentional than accidental. "Is anyone there?" Arthur's voice sounded thin, frail against the vast silence of the orchard. No answer came, only the smell of old paper and ozone—the signature scent of the Banana Conservatory.</p>
-                        </div>
+                        <Slate editor={editor} initialValue={value} onChange={handleChange}>
+                            <FixedToolbar />
+                            <HoveringToolbar />
+                            <Editable
+                                className="ne-editor-text"
+                                renderElement={renderElement}
+                                renderLeaf={renderLeaf}
+                                placeholder="Start writing your chapter..."
+                                spellCheck
+                                autoFocus
+                            />
+                        </Slate>
 
                         <div className="ne-editor-footer">
-                            <span className="editor-placeholder">Continue the sequence...</span>
                             <div className="editor-stats-pill">
                                 <span>WORDS <strong>{wordCount.toLocaleString()}/2,000</strong></span>
                                 <span className="stat-sep">|</span>
-                                <span>READING TIME <strong>5m</strong></span>
+                                <span>READING TIME <strong>{Math.ceil(wordCount / 250)}m</strong></span>
                             </div>
                         </div>
                     </div>
