@@ -1,0 +1,192 @@
+<div class="ne-layout">
+    <!-- Header -->
+    <header class="ne-header">
+        <div class="ne-header-left">
+            <button class="ne-back-btn" (click)="goBack()">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Back
+            </button>
+            <div class="ne-project-select">
+                <span class="ne-brand">EMERALD PROTOCOL</span>
+                <span class="material-symbols-outlined icon-btn">expand_more</span>
+            </div>
+        </div>
+        <div class="ne-header-right">
+            <span class="ne-user-avatar"></span>
+        </div>
+    </header>
+
+    <!-- Workspace -->
+    <div class="ne-workspace">
+        <!-- Left Sidebar: Chapters -->
+        <div class="ne-sidebar-left">
+            <div class="ne-nav-group active">
+                <span class="material-symbols-outlined active-icon">menu_book</span>
+                Manuscript
+            </div>
+            <div class="ne-nav-group">
+                <span class="material-symbols-outlined">person</span>
+                Characters
+            </div>
+            <div class="ne-nav-group">
+                <span class="material-symbols-outlined">location_on</span>
+                Locations
+            </div>
+
+            <div class="ne-chapters-section">
+                <div class="ne-chap-header">
+                    CHAPTERS
+                    <span class="material-symbols-outlined icon-add">add</span>
+                </div>
+                <div class="ne-chapter-list">
+                    @for (group of chapters; track group.id) {
+                    <div class="ne-chapter-group">
+                        <div class="ne-chapter-item group-header" (click)="toggleChapter(group)">
+                            <button class="ne-collapse-btn">
+                                <span class="material-symbols-outlined">
+                                    {{ group.expanded ? 'expand_more' : 'chevron_right' }}
+                                </span>
+                            </button>
+                            <div class="ne-chap-info">
+                                <div class="ne-chap-title"
+                                    style="font-weight: 700; font-size: 11px; text-transform: uppercase;">
+                                    {{ group.title }}
+                                </div>
+                            </div>
+                        </div>
+                        @if (group.expanded) {
+                        <div class="ne-scene-list">
+                            @for (chap of group.children; track chap.id) {
+                            <div class="ne-chapter-item" [class.active]="activeChapterId() === chap.id"
+                                (click)="selectChapter(chap)">
+                                <div class="ne-chap-info">
+                                    <div class="ne-chap-title">{{ chap.title }}</div>
+                                    <div class="ne-chap-meta">
+                                        <span class="ne-draft-tag">{{ chap.status }}</span> • {{ chap.words }} w
+                                    </div>
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <div class="ne-sync-status">
+                <div class="sync-line"></div>
+                <div class="sync-info">
+                    <span class="sync-active">SYNCED</span>
+                    <span>V 4.2</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Canvas -->
+        <div class="ne-editor-area">
+            <div class="ne-editor-canvas">
+                <input type="text" class="ne-doc-title-input" [ngModel]="title()" (ngModelChange)="title.set($event)"
+                    placeholder="Chapter Title" />
+
+                <div class="ne-doc-meta">
+                    DRAFT 2 <span class="meta-sep">•</span> LAST EDITED TODAY <span class="meta-sep">•</span> TAGS:
+                    SCI-FI
+                </div>
+
+                <!-- Tiptap Editor -->
+                <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: AI & Tools -->
+        <div class="ne-sidebar-right">
+            <div class="ne-right-tabs">
+                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'ai'" (click)="setActiveTab('ai')">
+                    <span class="material-symbols-outlined icon-tab">bolt</span>
+                </button>
+                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'notes'"
+                    (click)="setActiveTab('notes')">
+                    <span class="material-symbols-outlined icon-tab">sticky_note_2</span>
+                </button>
+                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'manuscript'"
+                    (click)="setActiveTab('manuscript')">
+                    <span class="material-symbols-outlined icon-tab">description</span>
+                </button>
+            </div>
+
+            <div class="ne-right-content">
+                @if (rightSidebarTab() === 'ai') {
+                <div class="ne-ai-panel">
+                    <div class="ne-ai-header">
+                        <span class="material-symbols-outlined icon-bolt">bolt</span>
+                        AI COMPANION
+                        <div class="online-dot"></div>
+                    </div>
+
+                    <div class="ai-actions">
+                        <button class="btn-ai-primary">
+                            <span class="material-symbols-outlined">auto_fix_high</span>
+                            Analyze Tone & Pacing
+                        </button>
+                        <div class="ai-btn-row">
+                            <button class="btn-ai-sec">
+                                <span class="material-symbols-outlined">menu_book</span>
+                                Suggest
+                            </button>
+                            <button class="btn-ai-sec">
+                                <span class="material-symbols-outlined">short_text</span>
+                                Summarize
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="ne-context-box">
+                        <div class="ctx-header">
+                            <span>CONTEXT WINDOW</span>
+                            <span>2k TOKENS</span>
+                        </div>
+                        <textarea class="ctx-input" placeholder="Ask AI to review, brainstorm, or expand..."></textarea>
+                        <button class="btn-execute">
+                            EXECUTE <span class="material-symbols-outlined" style="font-size: 12px;">return</span>
+                        </button>
+                    </div>
+
+                    <div class="ne-suggestions-box">
+                        <div class="sugg-header">
+                            <span>SUGGESTIONS</span>
+                            <span class="clear-link">CLEAR</span>
+                        </div>
+                        <div class="sugg-card">
+                            "Consider increasing the tension by delaying the response to the signal."
+                        </div>
+                    </div>
+
+                    <div class="ne-ai-footer">
+                        <div class="footer-action">
+                            <span class="material-symbols-outlined">settings</span>
+                            Configure Model
+                        </div>
+                    </div>
+                </div>
+                } @else {
+                <div class="ne-tab-placeholder">
+                    <div class="placeholder-icon">
+                        <span class="material-symbols-outlined">construction</span>
+                    </div>
+                    <div class="placeholder-text">Work in Progress</div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Stats -->
+    <div class="editor-stats-pill">
+        <span>Words: <strong>{{ wordCount() }}</strong></span>
+        <span class="stat-sep">|</span>
+        <span>Time: <strong>12m</strong></span>
+        <span class="stat-sep">|</span>
+        <span>Target: <strong>2500</strong></span>
+    </div>
+</div>

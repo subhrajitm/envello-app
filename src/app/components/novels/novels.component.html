@@ -1,0 +1,70 @@
+<div class="novels-view">
+    <!-- Sub-Header / Metrics Bar -->
+    <div class="novels-sub-header">
+        <div class="metrics-group">
+            <div class="metric-item">
+                <span class="metric-label">TOTAL WORDS IN NOVELS</span>
+                <span class="metric-value-lg text-yellow">142,580</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">ACTIVE DRAFTS</span>
+                <span class="metric-value-lg">04</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">AVG. COMPLETION</span>
+                <span class="metric-value-lg">64%</span>
+            </div>
+        </div>
+
+        <div class="controls-group">
+            <button class="control-btn-dark">All Statuses</button>
+            <button class="control-btn-dark">Sort by: Last Updated</button>
+            <button class="control-icon-btn">
+                <span class="material-symbols-outlined icon-sm">filter_list</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="novels-content-area">
+        <div class="novels-table">
+            <div class="table-header">
+                <div class="col-title">PROJECT TITLE</div>
+                <div class="col-status">STATUS</div>
+                <div class="col-word-count">WORD COUNT</div>
+                <div class="col-last-updated">LAST UPDATED</div>
+                <div class="col-menu"></div>
+            </div>
+            <div class="table-body">
+                @for (novel of novels; track novel.id) {
+                <div class="table-row" (click)="openNovel(novel.id)">
+                    <div class="col-title">
+                        <span class="material-symbols-outlined project-icon">{{ novel.icon }}</span>
+                        {{ novel.title }}
+                    </div>
+                    <div class="col-status">
+                        <span class="status-badge-caps" [ngClass]="getStatusColor(novel.status)">
+                            {{ novel.status }}
+                        </span>
+                    </div>
+                    <div class="col-word-count">
+                        <div class="word-count-content">
+                            <span class="word-count-value">{{ novel.wordCount }}</span>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" [style.width.%]="novel.progress"
+                                    [style.background-color]="getProgressColor(novel.status)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-last-updated">{{ novel.lastUpdated }}</div>
+                    <div class="col-menu">
+                        <button class="menu-btn" (click)="$event.stopPropagation()">
+                            <span class="material-symbols-outlined icon-sm">more_vert</span>
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

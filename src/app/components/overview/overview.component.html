@@ -1,0 +1,131 @@
+<div class="overview-layout">
+    <!-- Left Sidebar: Daily Stats & Pool -->
+    <div class="ov-sidebar-left">
+        <div class="ov-stats-header">DAILY STATS</div>
+        <div class="ov-stats-row">
+            <div class="stat-card">
+                <div class="stat-label">WORD COUNT</div>
+                <div class="stat-value">842.5k</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">STREAK</div>
+                <div class="stat-value yellow">18d</div>
+            </div>
+        </div>
+
+        <div class="ov-section-header">
+            PLANNING POOL <span class="material-symbols-outlined icon-xs">filter_list</span>
+        </div>
+        <div class="planning-list">
+            @for (item of planningItems; track item.id) {
+            <div class="planning-card" [class.active]="item.active">
+                <div class="plan-row-top">
+                    <span class="plan-title">{{ item.title }}</span>
+                    <span class="plan-tag" [ngClass]="item.tag.toLowerCase()">{{ item.tag }}</span>
+                </div>
+                <div class="plan-stage">
+                    <span class="material-symbols-outlined icon-tiny">drag_indicator</span>
+                    {{ item.stage }}
+                </div>
+                @if (item.active) {
+                <div class="active-indicator-bar"></div>
+                }
+            </div>
+            }
+        </div>
+
+        <div class="ov-section-header mt-4">GLOBAL TASKS</div>
+        <div class="global-tasks-list">
+            @for (t of globalTasks; track t.id) {
+            <div class="g-task-row">
+                <span class="material-symbols-outlined icon-xs">target</span>
+                {{ t.title }}
+            </div>
+            }
+        </div>
+
+        <button class="show-assets-btn">SHOW ALL ASSETS</button>
+    </div>
+
+    <!-- Main Content: Calendar -->
+    <div class="ov-calendar-area">
+        <div class="calendar-header">
+            <h2 class="cal-title">{{ currentMonth }}</h2>
+            <div class="cal-views">
+                <button class="cal-view-btn active">MONTH</button>
+                <button class="cal-view-btn">2 WEEKS</button>
+            </div>
+
+            <div class="cal-legend">
+                <div class="legend-item"><span class="dot blue"></span> FICTION</div>
+                <div class="legend-item"><span class="dot purple"></span> MYSTERY</div>
+                <div class="legend-item"><span class="dot yellow"></span> DEADLINE</div>
+            </div>
+
+            <div class="cal-nav">
+                <button class="cal-nav-btn"><span class="material-symbols-outlined">chevron_left</span></button>
+                <button class="cal-nav-btn"><span class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+        </div>
+
+        <div class="calendar-grid">
+            @for (d of weekDays; track d) {
+            <div class="cal-day-header">{{ d }}</div>
+            }
+
+            <!-- Days Grid -->
+            @for (day of days; track $index) {
+            <div class="cal-cell" [class.prev-month]="day.prevMonth">
+                <div class="day-num-row">
+                    <span class="day-num" [class.today]="day.today">{{ day.date }}</span>
+                    @if (day.today) {
+                    <span class="today-badge">TODAY</span>
+                    }
+                </div>
+                <div class="day-events">
+                    @for (ev of day.events; track $index) {
+                    <div class="cal-event" [ngClass]="ev.type">
+                        <div class="ev-title">{{ ev.title }}</div>
+                    </div>
+                    }
+                    @if (day.hasAdd) {
+                    <div class="cal-add-placeholder">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        DROP TO PLAN
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+            <!-- Fill empty cells for illustration -->
+            @for (p of calendarPlaceholders; track $index) {
+            <div class="cal-cell"></div>
+            }
+        </div>
+    </div>
+
+    <!-- Right Sidebar: Activity -->
+    <div class="ov-sidebar-right">
+        <div class="ov-section-header">RECENT ACTIVITY</div>
+        <div class="activity-list">
+            @for (act of activities; track act.id) {
+            <div class="act-item">
+                <span class="act-dot" [ngClass]="act.type"></span>
+                <div class="act-content">
+                    <div class="act-text">{{ act.text }}</div>
+                    <div class="act-time">{{ act.time }}</div>
+                </div>
+            </div>
+            }
+        </div>
+
+        <div class="ov-config-panel">
+            <div class="config-header">WORKBENCH CONFIG</div>
+            <div class="config-row">
+                <span>Auto-Schedule Tasks</span>
+                <div class="switch-toggle on"></div>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,40 @@
+<header class="header">
+    <div class="header-top">
+        <div class="logo">
+            <span class="material-symbols-outlined logo-icon">nutrition</span>
+            <span class="logo-text">ENVELLO</span>
+        </div>
+        <div class="header-search">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" placeholder="Quick find (Cmd + K)" class="search-input" />
+        </div>
+        <div class="header-actions">
+            <button class="btn-new-project">
+                <span class="material-symbols-outlined btn-icon-inner">add</span> <span>New Project</span>
+            </button>
+            <div class="divider-vertical"></div>
+            <button class="icon-btn">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <button class="icon-btn" (click)="toggleTheme()"
+                [title]="'Switch to ' + (theme === 'dark' ? 'Light' : 'Dark') + ' Mode'">
+                <span class="material-symbols-outlined">
+                    {{ theme === 'dark' ? 'light_mode' : 'dark_mode' }}
+                </span>
+            </button>
+            <button class="icon-btn">
+                <span class="material-symbols-outlined">settings</span>
+            </button>
+            <div class="profile-menu">
+                <div class="profile-avatar"></div>
+            </div>
+        </div>
+    </div>
+    <nav class="header-nav">
+        @for (tab of tabs; track tab) {
+        <button class="nav-tab" [class.active]="activeTab === tab" (click)="navigateTo(tab)">
+            {{ tab }}
+        </button>
+        }
+    </nav>
+</header>

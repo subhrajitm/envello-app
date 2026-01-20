@@ -1,0 +1,183 @@
+<div class="tasks-view-minimal">
+    <div class="tasks-main-content">
+        <div class="tasks-metrics-bar">
+            <div class="tasks-metric-item">
+                <span class="tasks-metric-label">TODAY'S TASKS</span>
+                <span class="tasks-metric-value">
+                    {{ todayTasksCount() }}
+                    <span class="material-symbols-outlined tasks-metric-icon">event</span>
+                </span>
+            </div>
+            <div class="tasks-metric-item">
+                <span class="tasks-metric-label">COMPLETED</span>
+                <span class="tasks-metric-value">
+                    {{ completedTasksCount() }}
+                    <span class="tasks-metric-unit">/ {{ store.tasks().length }} total</span>
+                </span>
+            </div>
+            <div class="tasks-metric-item">
+                <span class="tasks-metric-label">ACTIVE</span>
+                <span class="tasks-metric-value">
+                    {{ activeTasksCount() }}
+                    <span class="material-symbols-outlined tasks-metric-icon">check_circle</span>
+                </span>
+            </div>
+            <div class="tasks-metric-item">
+                <span class="tasks-metric-label">PRIORITY</span>
+                <span class="tasks-metric-value">
+                    {{ priorityTasksCount() }}
+                    <span class="tasks-metric-unit">high priority</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="tasks-main-section">
+            <div class="tasks-section-header">
+                <h3 class="tasks-section-title">
+                    <span class="material-symbols-outlined tasks-section-icon">task</span>
+                    ALL TASKS
+                </h3>
+                <div class="tasks-section-controls">
+                    <button class="tasks-filter-btn" [class.active]="selectedFilter() === 'All'"
+                        (click)="selectedFilter.set('All')">
+                        All
+                    </button>
+                    <button class="tasks-filter-btn" [class.active]="selectedFilter() === 'Today'"
+                        (click)="selectedFilter.set('Today')">
+                        Today
+                    </button>
+                    <button class="tasks-filter-btn" [class.active]="selectedFilter() === 'This Week'"
+                        (click)="selectedFilter.set('This Week')">
+                        This Week
+                    </button>
+                    <button class="tasks-icon-btn">
+                        <span class="material-symbols-outlined">filter_list</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tasks-detail-table">
+                <div class="tasks-table-header">
+                    <div class="tasks-col-task">TASK</div>
+                    <div class="tasks-col-project">PROJECT</div>
+                    <div class="tasks-col-priority">PRIORITY</div>
+                    <div class="tasks-col-time">TIME</div>
+                    <div class="tasks-col-due">DUE</div>
+                </div>
+                <div class="tasks-table-body">
+                    @for (task of filteredTasks(); track task.id) {
+                    <div class="tasks-table-row">
+                        <div class="tasks-col-task">
+                            <input type="checkbox" class="tasks-table-checkbox" />
+                            <div class="tasks-task-content">
+                                <div class="tasks-task-title">{{ task.title }}</div>
+                            </div>
+                        </div>
+                        <div class="tasks-col-project">{{ task.project || '—' }}</div>
+                        <div class="tasks-col-priority">
+                            <span class="tasks-priority-badge"
+                                [ngClass]="task.priority.toLowerCase().replace(' ', '-')">
+                                {{ task.priority }}
+                            </span>
+                        </div>
+                        <div class="tasks-col-time">{{ task.hours }}</div>
+                        <div class="tasks-col-due" [class.tasks-overdue]="task.due?.includes('Overdue')">
+                            {{ task.due || '—' }}
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tasks-sidebar">
+        <div class="tasks-header-col">
+            <div class="date-nav-minimal">
+                <div class="mn-header">OCT 2023</div>
+                <div class="nav-arrows">
+                    <span class="material-symbols-outlined nav-arr">chevron_left</span>
+                    <span class="material-symbols-outlined nav-arr">chevron_right</span>
+                </div>
+            </div>
+
+            <div class="mini-calendar-grid">
+                <div class="cal-days-header">
+                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                </div>
+                <div class="cal-days-grid">
+                    <!-- Static calendar for minimal implementation as per original code -->
+                    <span class="c-day inactive">22</span>
+                    <span class="c-day inactive">23</span>
+                    <span class="c-day inactive">24</span>
+                    <span class="c-day inactive">25</span>
+                    <span class="c-day current">26</span>
+                    <span class="c-day">27</span>
+                    <span class="c-day">28</span>
+                    <span class="c-day">29</span>
+                    <span class="c-day">30</span>
+                    <span class="c-day">31</span>
+                    <span class="c-day active-yellow">12</span>
+                    <span class="c-day">1</span>
+                    <span class="c-day">2</span>
+                    <span class="c-day">3</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="global-tasks-feed">
+            <div class="feed-header">
+                <span class="feed-title">GLOBAL TASKS</span>
+                <span class="feed-count">4 ACTIVE</span>
+            </div>
+
+            <div class="task-group">
+                <div class="group-toggle">
+                    <span class="material-symbols-outlined toggle-icon">expand_more</span>
+                    <span class="group-label">TODAY</span>
+                    <span class="group-count">02</span>
+                </div>
+                <div class="task-items">
+                    @for (task of store.tasks(); track task.id) {
+                    <div class="task-card-minimal">
+                        <div class="task-check-box"></div>
+                        <div class="task-min-content">
+                            <div class="task-min-title">{{ task.title }}</div>
+                            <div class="task-min-meta">
+                                <span class="p-badge">{{ task.priority }}</span>
+                                <span class="h-badge">{{ task.hours }}</span>
+                            </div>
+                            @if (task.id === '2') {
+                            <div class="sub-meta-time">14:00 — 16:00</div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <div class="task-group collapsed">
+                <div class="group-toggle">
+                    <span class="material-symbols-outlined toggle-icon">chevron_right</span>
+                    <span class="group-label">UPCOMING</span>
+                    <span class="group-count">01</span>
+                </div>
+            </div>
+
+            <div class="task-group collapsed">
+                <div class="group-toggle">
+                    <span class="material-symbols-outlined toggle-icon">chevron_right</span>
+                    <span class="group-label">NO DUE DATE</span>
+                    <span class="group-count">01</span>
+                </div>
+            </div>
+
+            <div class="new-task-entry">
+                <button class="btn-add-entry">
+                    + NEW TASK ENTRY
+                </button>
+                <div class="version-info">V5.0.0-PRO // NANO_BANANA_CORE</div>
+            </div>
+        </div>
+    </div>
+</div>
