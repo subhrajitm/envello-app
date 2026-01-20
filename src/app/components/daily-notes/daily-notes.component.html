@@ -30,54 +30,10 @@
             </button>
         </div>
 
-        <!-- Notes List with Groups -->
+        <!-- Notes List -->
         <div class="dn-entries-list">
-            <!-- Note Groups -->
-            @for (group of noteGroups(); track group.id) {
-            <div class="note-group">
-                <div class="group-header" (click)="toggleGroup(group.id)">
-                    <span class="material-symbols-outlined group-icon">{{ group.icon }}</span>
-                    <span class="group-name">{{ group.name }}</span>
-                    <span class="group-count">{{ filteredNotes().length }}</span>
-                    <span class="material-symbols-outlined expand-icon" [class.expanded]="group.expanded">
-                        {{ group.expanded ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                </div>
-
-                @if (group.expanded) {
-                <!-- Individual Notes -->
-                @for (entry of filteredNotes(); track entry.id) {
-                <div class="dn-entry-item" [class.active]="selectedNote().id === entry.id"
-                    [class.pinned]="isPinned(entry)" (click)="selectNote(entry.id)">
-                    <div class="entry-header">
-                        <div class="dn-entry-date">{{ entry.date }}</div>
-                        <button class="pin-btn" [class.pinned]="isPinned(entry)" (click)="togglePin(entry, $event)">
-                            <span class="material-symbols-outlined">
-                                {{ isPinned(entry) ? 'push_pin' : 'push_pin' }}
-                            </span>
-                        </button>
-                    </div>
-                    <div class="dn-entry-title">{{ entry.title }}</div>
-                    <div class="dn-entry-preview">{{ entry.preview }}</div>
-
-                    <!-- Tags -->
-                    @if (getNoteTags(entry).length > 0) {
-                    <div class="entry-tags">
-                        @for (tag of getNoteTags(entry); track tag) {
-                        <span class="tag-chip">{{ tag }}</span>
-                        }
-                    </div>
-                    }
-                </div>
-                }
-                }
-            </div>
-            }
-
-            <!-- Ungrouped Notes (fallback) -->
-            @if (allGroupsCollapsed()) {
             @for (entry of filteredNotes(); track entry.id) {
-            <div class="dn-entry-item" [class.active]="selectedNote().id === entry.id" [class.pinned]="isPinned(entry)"
+            <div class="dn-entry-item" [class.active]="selectedNote()?.id === entry.id" [class.pinned]="isPinned(entry)"
                 (click)="selectNote(entry.id)">
                 <div class="entry-header">
                     <div class="dn-entry-date">{{ entry.date }}</div>
@@ -96,7 +52,6 @@
                 </div>
                 }
             </div>
-            }
             }
         </div>
 
@@ -228,7 +183,6 @@
             <div class="editor-container">
                 <input type="text" class="dn-entry-heading-input" [value]="note.title" placeholder="Note title..." />
 
-                <!-- Tags Section -->
                 @if (getNoteTags(note).length > 0) {
                 <div class="editor-tags-section">
                     @for (tag of getNoteTags(note); track tag) {
@@ -247,12 +201,11 @@
                 </div>
                 }
 
-                <!-- Rich Text Editor Area -->
                 <div class="dn-entry-body" [innerHTML]="note.content"></div>
             </div>
         </div>
 
-        <!-- Editor Footer with Quick Actions -->
+        <!-- Editor Footer -->
         <div class="dn-editor-footer">
             <div class="footer-left">
                 <button class="footer-action-btn">

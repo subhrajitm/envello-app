@@ -33,7 +33,7 @@ export class DailyNotesComponent {
   noteGroups = signal<NoteGroup[]>([
     { id: 'today', name: 'Today', icon: 'today', count: 0, expanded: true, noteIds: [] },
     { id: 'this-week', name: 'This Week', icon: 'calendar_month', count: 0, expanded: true, noteIds: [] },
-    { id: 'older', name: 'Older Notes', icon: 'history', count: 0, expanded: false, noteIds: [] },
+    { id: 'older', name: 'Older Notes', icon: 'history', count: 0, expanded: true, noteIds: [] },
   ]);
 
   // Computed filtered notes
@@ -67,10 +67,14 @@ export class DailyNotesComponent {
 
   selectedNote = computed(() => {
     const list = this.filteredNotes();
-    if (!this.selectedEntryId() && list.length > 0) {
+    if (list.length === 0) {
+      return null;
+    }
+    if (!this.selectedEntryId()) {
       return list[0];
     }
-    return list.find(n => n.id === this.selectedEntryId()) || list[0];
+    const found = list.find(n => n.id === this.selectedEntryId());
+    return found || list[0];
   });
 
   constructor() {
