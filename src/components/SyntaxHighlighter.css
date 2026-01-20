@@ -2,7 +2,7 @@
     font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.6;
-    color: #e5e5e5;
+    color: var(--text-primary);
     background: transparent;
     overflow-x: auto;
 }
@@ -51,10 +51,10 @@
 }
 
 .syntax-highlighter::-webkit-scrollbar-thumb {
-    background: #333;
+    background: var(--border-highlight);
     border-radius: 4px;
 }
 
 .syntax-highlighter::-webkit-scrollbar-thumb:hover {
-    background: #444;
+    background: var(--border-main);
 }

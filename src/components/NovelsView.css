@@ -4,9 +4,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  background: #050505;
+  background: var(--bg-app);
   /* Black */
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border-subtle);
   min-height: 80px;
 }
 
@@ -26,7 +26,7 @@
 
 .metric-label {
   font-size: 10px;
-  color: #666;
+  color: var(--text-tertiary);
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -36,14 +36,14 @@
 .metric-value-lg {
   font-size: 20px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   font-family: var(--font-sans);
   line-height: 1.2;
   text-align: left;
 }
 
 .text-yellow {
-  color: #fcd34d;
+  color: var(--accent-primary);
 }
 
 /* Divider removed, handled by border-left on items */
@@ -64,7 +64,7 @@
   gap: 4px;
   align-items: flex-start;
   padding: 0 24px;
-  border-left: 1px solid #333;
+  border-left: 1px solid var(--border-highlight);
   /* Darker clean border */
 }
 
@@ -81,9 +81,9 @@
 
 .control-btn-dark {
   padding: 6px 12px;
-  background: #121212;
-  border: 1px solid #1f1f1f;
-  color: #888;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 500;
   border-radius: 4px;
@@ -92,17 +92,17 @@
 }
 
 .control-btn-dark:hover {
-  border-color: #333;
-  color: #e5e5e5;
-  background: #1a1a1a;
+  border-color: var(--border-highlight);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .control-icon-btn {
   width: 28px;
   height: 28px;
-  background: #121212;
-  border: 1px solid #1f1f1f;
-  color: #888;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -112,8 +112,8 @@
 }
 
 .control-icon-btn:hover {
-  border-color: #333;
-  color: #e5e5e5;
+  border-color: var(--border-highlight);
+  color: var(--text-primary);
 }
 
 .icon-sm {
@@ -126,7 +126,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #050505;
+  background: var(--bg-app);
 }
 
 .novels-table {
@@ -140,10 +140,10 @@
   grid-template-columns: 5.5fr 1.2fr 1fr 1.8fr 40px;
   gap: 16px;
   padding: 12px 24px;
-  border-bottom: 1px solid #1a1a1a;
-  background: #050505;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-app);
   font-size: 10px;
-  color: #666;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 600;
@@ -159,18 +159,18 @@
   grid-template-columns: 5.5fr 1.2fr 1fr 1.8fr 40px;
   gap: 16px;
   padding: 16px 24px;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--border-subtle);
   align-items: center;
   transition: background 0.1s;
   cursor: pointer;
 }
 
 .table-row:hover {
-  background: #0a0a0a;
+  background: var(--bg-hover);
 }
 
 .col-title {
-  color: #e5e5e5;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
   display: flex;
@@ -180,7 +180,7 @@
 
 .project-icon {
   font-size: 18px;
-  color: #444;
+  color: var(--text-tertiary);
   /* Darker icons */
 }
 
@@ -199,7 +199,7 @@
 .status-yellow {
   /* DRAFTING */
   background: #2a2200;
-  color: #fcd34d;
+  color: var(--accent-primary);
   border-color: #423000;
 }
 
@@ -236,14 +236,14 @@
 }
 
 .word-count-value {
-  color: #e5e5e5;
+  color: var(--text-primary);
   font-size: 12px;
   font-family: var(--font-mono);
 }
 
 .progress-bar-container {
   height: 2px;
-  background: #1a1a1a;
+  background: var(--border-subtle);
   border-radius: 1px;
 }
 
@@ -253,7 +253,7 @@
 
 .col-last-updated {
   font-size: 11px;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .col-menu {
@@ -264,7 +264,7 @@
 .menu-btn {
   background: transparent;
   border: none;
-  color: #444;
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -272,5 +272,5 @@
 }
 
 .menu-btn:hover {
-  color: #e5e5e5;
+  color: var(--text-primary);
 }

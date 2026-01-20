@@ -8,16 +8,16 @@
     z-index: 9999;
     display: flex;
     flex-direction: column;
-    background: #050505;
-    color: #e5e5e5;
+    background: var(--bg-app);
+    color: var(--text-primary);
     overflow: hidden;
 }
 
 /* Header */
 .ne-header {
     height: 50px;
-    background: #080808;
-    border-bottom: 1px solid #1a1a1a;
+    background: var(--bg-app);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -34,7 +34,7 @@
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 1px;
-    color: #e5e5e5;
+    color: var(--text-primary);
     text-transform: uppercase;
 }
 
@@ -57,13 +57,13 @@
 }
 
 .ne-back-btn:hover {
-    color: #e5e5e5;
-    background: #1a1a1a;
+    color: var(--text-primary);
+    background: var(--bg-hover);
 }
 
 .ne-project-select {
-    background: #121212;
-    border: 1px solid #222;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
     padding: 6px 16px;
     border-radius: 4px;
     font-size: 12px;
@@ -77,8 +77,8 @@
 }
 
 .ne-project-select:hover {
-    border-color: #333;
-    color: #e5e5e5;
+    border-color: var(--border-highlight);
+    color: var(--text-primary);
 }
 
 .ne-header-right {
@@ -94,7 +94,7 @@
 }
 
 .icon-btn:hover {
-    color: #e5e5e5;
+    color: var(--text-primary);
 }
 
 .ne-user-avatar {
@@ -116,8 +116,8 @@
 /* Sidebar Left */
 .ne-sidebar-left {
     width: 240px;
-    background: #080808;
-    border-right: 1px solid #1a1a1a;
+    background: var(--bg-app);
+    border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     padding: 16px 0;
@@ -131,9 +131,9 @@
 
 .ne-btn-back-sidebar {
     width: 100%;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #e5e5e5;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-highlight);
+    color: var(--text-primary);
     padding: 8px;
     border-radius: 4px;
     font-size: 11px;
@@ -147,8 +147,8 @@
 }
 
 .ne-btn-back-sidebar:hover {
-    background: #252525;
-    border-color: #555;
+    background: var(--bg-active);
+    border-color: var(--border-highlight);
 }
 
 /* Navigation Styles */
@@ -166,8 +166,8 @@
 
 .ne-nav-group:hover,
 .ne-nav-group.active {
-    color: #fcd34d;
-    background: #0f0f0f;
+    color: var(--accent-primary);
+    background: var(--bg-hover);
 }
 
 .active-icon {
@@ -234,8 +234,8 @@
 }
 
 .ne-chapter-item.active {
-    background: #121212;
-    border-left-color: #fcd34d;
+    background: var(--bg-panel);
+    border-left-color: var(--accent-primary);
 }
 
 .ne-collapse-btn {
@@ -335,7 +335,7 @@
 /* Editor Area */
 .ne-editor-area {
     flex: 1;
-    background: #0a0a0a;
+    background: var(--bg-app);
     overflow-y: auto;
     display: flex;
     justify-content: center;
@@ -356,7 +356,7 @@
     outline: none;
     font-size: 32px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
     margin: 0 0 16px 0;
     /* Increased margin for better spacing */
     font-family: 'Times New Roman', serif;
@@ -370,7 +370,7 @@
 .ne-doc-meta {
     font-size: 10px;
     font-weight: 700;
-    color: #444;
+    color: var(--text-tertiary);
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: 48px;
@@ -386,7 +386,7 @@
     /* Writing font */
     font-size: 18px;
     line-height: 1.8;
-    color: #d4d4d4;
+    color: var(--text-secondary);
     outline: none;
 }
 
@@ -395,8 +395,8 @@
 }
 
 .ne-quote-block {
-    background: #121212;
-    border-left: 3px solid #fcd34d;
+    background: var(--bg-panel);
+    border-left: 3px solid var(--accent-primary);
     padding: 16px 24px;
     margin: 24px 0;
     font-style: italic;
@@ -427,8 +427,8 @@
     transform: translateX(-50%);
     z-index: 100;
 
-    background: #111;
-    border: 1px solid #222;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
     border-radius: 100px;
     padding: 8px 20px;
     font-size: 11px;
@@ -458,8 +458,8 @@
 /* Right Sidebar Styles */
 .ne-sidebar-right {
     width: 300px;
-    background: #080808;
-    border-left: 1px solid #1a1a1a;
+    background: var(--bg-app);
+    border-left: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -467,8 +467,8 @@
 
 .ne-right-tabs {
     display: flex;
-    border-bottom: 1px solid #1a1a1a;
-    background: #0a0a0a;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
 }
 
 .ne-tab-btn {
@@ -491,8 +491,8 @@
 }
 
 .ne-tab-btn.active {
-    color: #fcd34d;
-    background: #080808;
+    color: var(--accent-primary);
+    background: var(--bg-panel);
 }
 
 .ne-tab-btn.active::after {

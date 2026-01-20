@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../context/ThemeContext';
 import './Header.css';
 
 interface HeaderProps {
@@ -7,6 +8,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
+  const { theme, toggleTheme } = useTheme();
   const tabs = [
     'Overview',
     'Daily Notes',
@@ -43,6 +45,11 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
           <div className="divider-vertical"></div>
           <button className="icon-btn">
             <span className="material-symbols-outlined">notifications</span>
+          </button>
+          <button className="icon-btn" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}>
+            <span className="material-symbols-outlined">
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
           </button>
           <button className="icon-btn">
             <span className="material-symbols-outlined">settings</span>

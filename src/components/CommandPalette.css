@@ -29,8 +29,8 @@
 .cmd-modal {
     width: 600px;
     max-width: 90vw;
-    background: #0f0f0f;
-    border: 1px solid #333;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
     display: flex;
@@ -56,12 +56,12 @@
     display: flex;
     align-items: center;
     padding: 16px;
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid var(--border-subtle);
     gap: 12px;
 }
 
 .search-icon {
-    color: #666;
+    color: var(--text-tertiary);
     font-size: 20px;
 }
 
@@ -71,22 +71,22 @@
     border: none;
     font-family: inherit;
     font-size: 16px;
-    color: #e5e5e5;
+    color: var(--text-primary);
     outline: none;
 }
 
 .cmd-input::placeholder {
-    color: #555;
+    color: var(--text-disabled);
     font-weight: 500;
 }
 
 .cmd-badge {
     font-size: 10px;
-    background: #222;
-    color: #888;
+    background: var(--bg-hover);
+    color: var(--text-tertiary);
     padding: 2px 6px;
     border-radius: 4px;
-    border: 1px solid #333;
+    border: 1px solid var(--border-subtle);
     font-weight: 700;
 }
 
@@ -103,7 +103,7 @@
 }
 
 .cmd-list::-webkit-scrollbar-thumb {
-    background: #333;
+    background: var(--bg-hover);
     border-radius: 3px;
 }
 
@@ -118,41 +118,41 @@
 }
 
 .cmd-item.selected {
-    background: #1a1a1a;
+    background: var(--bg-hover);
     border-left-color: #fcd34d;
 }
 
 .cmd-icon {
     font-size: 18px;
-    color: #666;
+    color: var(--text-tertiary);
 }
 
 .cmd-item.selected .cmd-icon {
-    color: #e5e5e5;
+    color: var(--text-secondary);
 }
 
 .cmd-label {
     flex: 1;
     font-size: 14px;
-    color: #aaa;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
 .cmd-item.selected .cmd-label {
-    color: #e5e5e5;
+    color: var(--text-primary);
 }
 
 .cmd-type {
     font-size: 10px;
-    color: #444;
+    color: var(--text-disabled);
     text-transform: uppercase;
     font-weight: 600;
 }
 
 .cmd-shortcut {
     font-size: 11px;
-    color: #666;
-    background: #222;
+    color: var(--text-tertiary);
+    background: var(--bg-hover);
     padding: 2px 6px;
     border-radius: 3px;
     font-family: var(--font-mono);
@@ -161,25 +161,25 @@
 .cmd-empty {
     padding: 24px;
     text-align: center;
-    color: #666;
+    color: var(--text-tertiary);
     font-size: 13px;
 }
 
 /* Footer */
 .cmd-footer {
     padding: 8px 16px;
-    background: #0a0a0a;
-    border-top: 1px solid #1a1a1a;
+    background: var(--bg-app);
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
     font-size: 10px;
-    color: #555;
+    color: var(--text-disabled);
 }
 
 .key {
-    background: #222;
+    background: var(--bg-hover);
     padding: 1px 4px;
     border-radius: 2px;
     margin: 0 2px;
-    color: #888;
+    color: var(--text-tertiary);
 }

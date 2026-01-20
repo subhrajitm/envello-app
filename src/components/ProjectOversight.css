@@ -1,6 +1,6 @@
 .project-oversight {
-  background: #121212;
-  border: 1px solid #222;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 12px 14px;
   display: flex;
@@ -18,7 +18,7 @@
 
 .section-title {
   font-size: 11px;
-  color: #888;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -50,10 +50,10 @@
 
 .control-btn {
   padding: 4px 8px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-app);
+  border: 1px solid var(--border-highlight);
   border-radius: 4px;
-  color: #e0e0e0;
+  color: var(--text-secondary);
   font-size: 11px;
   cursor: pointer;
   transition: background 0.2s;
@@ -63,7 +63,7 @@
 }
 
 .control-btn:hover {
-  background: #222;
+  background: var(--bg-hover);
 }
 
 .control-btn.icon-only {
@@ -86,9 +86,9 @@
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border-subtle);
   font-size: 10px;
-  color: #888;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   font-weight: 600;
@@ -104,12 +104,12 @@
   grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border-subtle);
   transition: background 0.2s;
 }
 
 .table-row:hover {
-  background: #1a1a1a;
+  background: var(--bg-hover);
   margin: 0 -14px;
   padding-left: 14px;
   padding-right: 14px;
@@ -123,7 +123,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #e0e0e0;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -170,25 +170,26 @@
 }
 
 .status-gray {
-  background: #2a2a2a;
-  color: #888;
+  background: var(--bg-hover);
+  color: var(--text-tertiary);
 }
 
 .col-words,
 .col-updated {
-  color: #888;
+  color: var(--text-tertiary);
   font-size: 12px;
   display: flex;
   align-items: center;
 }
 
 @media (max-width: 1024px) {
+
   .table-header,
   .table-row {
     grid-template-columns: 1fr;
     gap: 8px;
   }
-  
+
   .col-title,
   .col-status,
   .col-words,

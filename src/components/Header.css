@@ -1,7 +1,7 @@
 .header {
-  background: #050505;
+  background: var(--bg-app);
   /* Black */
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--border-subtle);
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -24,7 +24,7 @@
   gap: 8px;
   font-size: 14px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .logo-icon {
@@ -37,7 +37,7 @@
 .logo-text {
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #e5e5e5;
+  color: var(--text-secondary);
   font-family: var(--font-sans);
   font-size: 12px;
 }
@@ -54,15 +54,15 @@
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #555;
+  color: var(--text-disabled);
   font-size: 16px;
 }
 
 .search-input {
   width: 100%;
   padding: 4px 10px 4px 32px;
-  background: #0a0a0a;
-  border: 1px solid #1f1f1f;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
   color: var(--text-primary);
   font-size: 12px;
@@ -73,12 +73,12 @@
 }
 
 .search-input:focus {
-  border-color: #333;
-  background: #0f0f0f;
+  border-color: var(--border-main);
+  background: var(--bg-hover);
 }
 
 .search-input::placeholder {
-  color: #444;
+  color: var(--text-disabled);
 }
 
 .header-actions {
@@ -116,7 +116,7 @@
 .divider-vertical {
   width: 1px;
   height: 16px;
-  background: #1a1a1a;
+  background: var(--border-subtle);
 }
 
 .icon-btn {
@@ -124,7 +124,7 @@
   height: 28px;
   background: transparent;
   border: none;
-  color: #666;
+  color: var(--text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -133,7 +133,7 @@
 }
 
 .icon-btn:hover {
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .profile-menu {
@@ -160,8 +160,8 @@
 .header-nav {
   display: flex;
   gap: 0;
-  border-top: 1px solid #1a1a1a;
-  background: #080808;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-app);
   padding: 0 16px;
   height: 36px;
   /* Compact nav height */
@@ -179,7 +179,7 @@
   border: none;
   border-bottom: 2px solid transparent;
   /* Bottom border for active state */
-  color: #888;
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -189,14 +189,14 @@
 }
 
 .nav-tab:hover {
-  color: #e5e5e5;
-  background: #0f0f0f;
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .nav-tab.active {
-  background: #121212;
-  color: #fcd34d;
-  border-bottom-color: #fcd34d;
+  background: var(--bg-active);
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
   font-weight: 700;
   text-shadow: 0 0 1px rgba(252, 211, 77, 0.4);
 }

@@ -1,7 +1,7 @@
 .daily-notes-view {
     display: flex;
     height: 100%;
-    border: 1px solid var(--border-main);
+    border: 1px solid var(--border-subtle);
     border-radius: 6px;
     background: var(--bg-panel);
     overflow: hidden;
@@ -9,7 +9,7 @@
 
 .dn-sidebar {
     width: 300px;
-    border-right: 1px solid var(--border-main);
+    border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     background: var(--bg-app);
@@ -17,7 +17,7 @@
 
 .dn-sidebar-header-action {
     padding: 16px;
-    border-bottom: 1px solid var(--border-main);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .dn-btn-new-entry {

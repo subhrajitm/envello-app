@@ -1,6 +1,6 @@
 .recent-activity {
-  background: #121212;
-  border: 1px solid #222;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 12px 14px;
   display: flex;
@@ -16,7 +16,7 @@
 
 .section-title {
   font-size: 11px;
-  color: #888;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -44,7 +44,7 @@
 .view-all-link {
   background: none;
   border: none;
-  color: #888;
+  color: var(--text-tertiary);
   font-size: 11px;
   cursor: pointer;
   text-decoration: underline;
@@ -65,14 +65,14 @@
   display: flex;
   gap: 8px;
   padding: 8px 10px;
-  background: #1a1a1a;
-  border: 1px solid #222;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
   transition: border-color 0.2s;
 }
 
 .activity-item:hover {
-  border-color: #333;
+  border-color: var(--border-highlight);
 }
 
 .activity-icon {
@@ -87,11 +87,11 @@
 }
 
 .activity-action {
-  color: #e0e0e0;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .activity-time {
-  color: #888;
+  color: var(--text-tertiary);
   font-size: 10px;
 }

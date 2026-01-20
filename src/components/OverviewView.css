@@ -2,15 +2,15 @@
 .overview-layout {
   display: flex;
   height: 100%;
-  background: #050505;
+  background: var(--bg-app);
   overflow: hidden;
 }
 
 /* Left Sidebar: Stats & Tasks */
 .ov-sidebar-left {
   width: 260px;
-  background: #080808;
-  border-right: 1px solid #1a1a1a;
+  background: var(--bg-app);
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -19,7 +19,7 @@
 .ov-stats-header {
   font-size: 10px;
   font-weight: 700;
-  color: #666;
+  color: var(--text-tertiary);
   letter-spacing: 1px;
   margin-bottom: 12px;
 }
@@ -32,8 +32,8 @@
 
 .stat-card {
   flex: 1;
-  background: #0f0f0f;
-  border: 1px solid #1a1a1a;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 10px;
 }
@@ -41,14 +41,14 @@
 .stat-label {
   font-size: 9px;
   font-weight: 700;
-  color: #666;
+  color: var(--text-tertiary);
   margin-bottom: 4px;
 }
 
 .stat-value {
   font-size: 16px;
   font-weight: 700;
-  color: #e5e5e5;
+  color: var(--text-primary);
 }
 
 .stat-value.yellow {
@@ -58,7 +58,7 @@
 .ov-section-header {
   font-size: 10px;
   font-weight: 700;
-  color: #666;
+  color: var(--text-tertiary);
   letter-spacing: 1px;
   margin-bottom: 16px;
   display: flex;
@@ -77,8 +77,8 @@
 }
 
 .planning-card {
-  background: #0f0f0f;
-  border: 1px solid #1a1a1a;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 12px;
   display: flex;
@@ -90,8 +90,8 @@
 }
 
 .planning-card.active {
-  background: #121212;
-  border-color: #333;
+  background: var(--bg-active);
+  border-color: var(--border-highlight);
 }
 
 .active-indicator-bar {
@@ -113,7 +113,7 @@
 .plan-title {
   font-size: 13px;
   font-weight: 600;
-  color: #e5e5e5;
+  color: var(--text-primary);
 }
 
 .plan-tag {
@@ -135,7 +135,7 @@
 
 .plan-stage {
   font-size: 10px;
-  color: #666;
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -143,7 +143,7 @@
 
 .icon-tiny {
   font-size: 12px;
-  color: #444;
+  color: var(--text-disabled);
 }
 
 .icon-xs {
@@ -158,12 +158,12 @@
 }
 
 .g-task-row {
-  background: #0f0f0f;
-  border: 1px solid #1a1a1a;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
   padding: 10px 12px;
   font-size: 12px;
-  color: #aeaeae;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -171,8 +171,8 @@
 }
 
 .g-task-row:hover {
-  background: #151515;
-  color: #e5e5e5;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .show-assets-btn {
@@ -180,8 +180,8 @@
   margin-top: auto;
   padding: 12px;
   background: transparent;
-  border: 1px dashed #222;
-  color: #666;
+  border: 1px dashed var(--border-subtle);
+  color: var(--text-tertiary);
   font-size: 10px;
   font-weight: 700;
   border-radius: 4px;
@@ -206,14 +206,14 @@
 .cal-title {
   font-size: 20px;
   font-weight: 700;
-  color: #e5e5e5;
+  color: var(--text-primary);
   margin: 0;
   min-width: 180px;
 }
 
 .cal-views {
-  background: #121212;
-  border: 1px solid #222;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
   display: flex;
   padding: 2px;
@@ -222,7 +222,7 @@
 .cal-view-btn {
   background: transparent;
   border: none;
-  color: #666;
+  color: var(--text-tertiary);
   font-size: 10px;
   padding: 6px 12px;
   font-weight: 700;
@@ -231,8 +231,8 @@
 }
 
 .cal-view-btn.active {
-  background: #222;
-  color: #e5e5e5;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .cal-legend {
@@ -244,7 +244,7 @@
 .legend-item {
   font-size: 10px;
   font-weight: 700;
-  color: #666;
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -276,9 +276,9 @@
 .cal-nav-btn {
   width: 32px;
   height: 32px;
-  background: #121212;
-  border: 1px solid #222;
-  color: #888;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -293,24 +293,24 @@
   grid-template-rows: 24px repeat(3, 1fr);
   /* Header + 3 rows approx */
   gap: 1px;
-  background: #1a1a1a;
-  border: 1px solid #222;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .cal-day-header {
-  background: #0a0a0a;
+  background: var(--bg-panel);
   font-size: 9px;
   font-weight: 700;
-  color: #666;
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .cal-cell {
-  background: #0a0a0a;
+  background: var(--bg-panel);
   display: flex;
   flex-direction: column;
   padding: 8px;
@@ -320,11 +320,11 @@
 }
 
 .cal-cell:hover {
-  background: #0e0e0e;
+  background: var(--bg-hover);
 }
 
 .cal-cell.prev-month {
-  background: #080808;
+  background: var(--bg-app);
   opacity: 0.5;
 }
 
@@ -336,7 +336,7 @@
 
 .day-num {
   font-size: 11px;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .day-num.today {
@@ -364,7 +364,7 @@
   font-weight: 700;
   padding: 6px 8px;
   border-radius: 3px;
-  color: #e5e5e5;
+  color: var(--text-primary);
   margin-bottom: 2px;
 }
 
@@ -386,7 +386,7 @@
 .cal-add-placeholder {
   height: 100%;
   margin-top: 4px;
-  border: 1px dashed #333;
+  border: 1px dashed var(--border-highlight);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
@@ -395,15 +395,15 @@
   gap: 4px;
   font-size: 9px;
   font-weight: 700;
-  color: #444;
+  color: var(--text-disabled);
   padding: 12px;
 }
 
 /* Right Sidebar: Activity */
 .ov-sidebar-right {
   width: 260px;
-  background: #080808;
-  border-left: 1px solid #1a1a1a;
+  background: var(--bg-app);
+  border-left: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -449,20 +449,20 @@
 .act-text {
   font-size: 12px;
   font-weight: 500;
-  color: #e5e5e5;
+  color: var(--text-primary);
   line-height: 1.4;
 }
 
 .act-time {
   font-size: 10px;
-  color: #666;
+  color: var(--text-tertiary);
   text-transform: uppercase;
 }
 
 .ov-config-panel {
   margin-top: auto;
-  background: #0f0f0f;
-  border: 1px solid #1a1a1a;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 16px;
 }
@@ -470,7 +470,7 @@
 .config-header {
   font-size: 9px;
   font-weight: 700;
-  color: #666;
+  color: var(--text-tertiary);
   margin-bottom: 12px;
 }
 
@@ -479,13 +479,13 @@
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
-  color: #aeaeae;
+  color: var(--text-secondary);
 }
 
 .switch-toggle {
   width: 24px;
   height: 12px;
-  background: #333;
+  background: var(--bg-element);
   border-radius: 6px;
   position: relative;
 }
@@ -517,7 +517,7 @@
     width: 100%;
     border-right: none;
     border-left: none;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--border-subtle);
     height: auto;
   }
 

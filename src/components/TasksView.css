@@ -3,7 +3,7 @@
     height: 100%;
     display: flex;
     flex-direction: row;
-    background: #050505;
+    background: var(--bg-app);
 }
 
 .tasks-main-content {
@@ -15,7 +15,7 @@
     padding: 16px 20px;
     /* Reduced from 28px 32px as per request */
     overflow-y: auto;
-    background: #0a0a0a;
+    background: var(--bg-panel);
 }
 
 .tasks-sidebar {
@@ -23,13 +23,13 @@
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    border-left: 1px solid #1a1a1a;
-    background: #050505;
+    border-left: 1px solid var(--border-subtle);
+    background: var(--bg-app);
 }
 
 .tasks-header-col {
     padding: 24px 24px 16px 24px;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
@@ -44,7 +44,7 @@
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 1.5px;
-    color: #e5e5e5;
+    color: var(--text-primary);
 }
 
 .nav-arrows {
@@ -54,12 +54,12 @@
 
 .nav-arr {
     font-size: 16px;
-    color: #666;
+    color: var(--text-tertiary);
     cursor: pointer;
 }
 
 .nav-arr:hover {
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .mini-calendar-grid {
@@ -73,7 +73,7 @@
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
     font-size: 9px;
-    color: #444;
+    color: var(--text-tertiary);
     font-weight: 600;
 }
 
@@ -86,7 +86,7 @@
 
 .c-day {
     font-size: 10px;
-    color: #666;
+    color: var(--text-tertiary);
     height: 24px;
     display: flex;
     align-items: center;
@@ -96,11 +96,11 @@
 }
 
 .c-day.inactive {
-    color: #333;
+    color: var(--text-disabled);
 }
 
 .c-day.current {
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 700;
 }
 
@@ -111,7 +111,7 @@
 }
 
 .c-day:hover:not(.active-yellow) {
-    background: #1a1a1a;
+    background: var(--bg-hover);
 }
 
 
@@ -135,7 +135,7 @@
 }
 
 .feed-title {
-    color: #e5e5e5;
+    color: var(--text-primary);
     text-transform: uppercase;
 }
 
@@ -164,7 +164,7 @@
     cursor: pointer;
     /* margin-bottom: 16px; */
     padding-bottom: 12px;
-    border-bottom: 1px solid #111;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .task-group.collapsed .group-toggle {
@@ -174,20 +174,20 @@
 
 .toggle-icon {
     font-size: 14px;
-    color: #666;
+    color: var(--text-tertiary);
 }
 
 .group-label {
     font-size: 9px;
     font-weight: 700;
-    color: #888;
+    color: var(--text-tertiary);
     letter-spacing: 1px;
     flex: 1;
 }
 
 .group-count {
     font-size: 9px;
-    color: #444;
+    color: var(--text-disabled);
     font-family: var(--font-mono);
 }
 
@@ -207,7 +207,7 @@
 .task-check-box {
     width: 14px;
     height: 14px;
-    border: 1px solid #333;
+    border: 1px solid var(--border-highlight);
     background: transparent;
     margin-top: 2px;
     cursor: pointer;
@@ -215,7 +215,7 @@
 }
 
 .task-check-box:hover {
-    border-color: #666;
+    border-color: var(--text-tertiary);
 }
 
 .task-min-content {
@@ -226,7 +226,7 @@
 
 .task-min-title {
     font-size: 11px;
-    color: #e5e5e5;
+    color: var(--text-secondary);
     font-weight: 600;
     line-height: 1.4;
     text-transform: uppercase;
@@ -245,13 +245,13 @@
 }
 
 .h-badge {
-    color: #666;
+    color: var(--text-tertiary);
     font-size: 8px;
 }
 
 .sub-meta-time {
     font-size: 8px;
-    color: #666;
+    color: var(--text-tertiary);
     margin-top: 2px;
     font-family: var(--font-mono);
 }
@@ -266,9 +266,9 @@
 .btn-add-entry {
     width: 100%;
     background: transparent;
-    border: 1px dashed #333;
+    border: 1px dashed var(--border-highlight);
     padding: 12px;
-    color: #666;
+    color: var(--text-tertiary);
     font-size: 9px;
     letter-spacing: 1px;
     font-weight: 600;
@@ -278,14 +278,14 @@
 }
 
 .btn-add-entry:hover {
-    border-color: #555;
-    color: #888;
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
 }
 
 .version-info {
     text-align: right;
     font-size: 8px;
-    color: #333;
+    color: var(--text-disabled);
     letter-spacing: 1px;
 }
 
@@ -294,8 +294,8 @@
     display: flex;
     gap: 20px;
     padding: 16px 20px;
-    background: #121212;
-    border: 1px solid #222;
+    background: var(--bg-active);
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     flex-wrap: wrap;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -306,7 +306,7 @@
     flex-direction: column;
     gap: 8px;
     padding-right: 28px;
-    border-right: 1px solid #222;
+    border-right: 1px solid var(--border-highlight);
     min-width: 140px;
 }
 
@@ -317,7 +317,7 @@
 
 .tasks-metric-label {
     font-size: 9px;
-    color: #999;
+    color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 1.2px;
     font-weight: 700;
@@ -327,7 +327,7 @@
 .tasks-metric-value {
     font-size: 24px;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -337,7 +337,7 @@
 
 .tasks-metric-unit {
     font-size: 11px;
-    color: #777;
+    color: var(--text-tertiary);
     font-weight: 500;
     margin-left: 2px;
 }
@@ -350,8 +350,8 @@
 
 .tasks-main-section {
     flex: 1;
-    background: #121212;
-    border: 1px solid #222;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -361,8 +361,8 @@
 
 .tasks-section-header {
     padding: 16px 20px;
-    border-bottom: 1px solid #222;
-    background: #181818;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -371,7 +371,7 @@
 
 .tasks-section-title {
     font-size: 11px;
-    color: #ffffff;
+    color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     font-weight: 700;
@@ -397,9 +397,9 @@
 .tasks-filter-btn {
     padding: 6px 12px;
     background: transparent;
-    border: 1px solid #333;
+    border: 1px solid var(--border-highlight);
     border-radius: 5px;
-    color: #999;
+    color: var(--text-tertiary);
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -410,13 +410,13 @@
 }
 
 .tasks-filter-btn:hover {
-    background: #222;
-    color: #ffffff;
-    border-color: #444;
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
 }
 
 .tasks-filter-btn.active {
-    background: #2a2a2a;
+    background: var(--bg-active);
     color: #ffd700;
     border-color: #ffd700;
 }
@@ -425,9 +425,9 @@
     width: 32px;
     height: 32px;
     background: transparent;
-    border: 1px solid #333;
+    border: 1px solid var(--border-highlight);
     border-radius: 5px;
-    color: #999;
+    color: var(--text-tertiary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -436,9 +436,9 @@
 }
 
 .tasks-icon-btn:hover {
-    background: #222;
-    color: #ffffff;
-    border-color: #444;
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
 }
 
 .tasks-icon-btn .material-symbols-outlined {
@@ -456,10 +456,10 @@
     grid-template-columns: 3fr 1.5fr 1.2fr 0.8fr 1fr;
     gap: 20px;
     padding: 14px 20px;
-    border-bottom: 1px solid #222;
-    background: #0f0f0f;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-hover);
     font-size: 9px;
-    color: #888;
+    color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 1.2px;
     font-weight: 700;
@@ -471,7 +471,7 @@
 .tasks-table-body {
     display: flex;
     flex-direction: column;
-    background: #121212;
+    background: var(--bg-panel);
 }
 
 .tasks-table-row {
@@ -479,15 +479,15 @@
     grid-template-columns: 3fr 1.5fr 1.2fr 0.8fr 1fr;
     gap: 20px;
     padding: 16px 20px;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--border-subtle);
     transition: all 0.15s ease;
     cursor: pointer;
     align-items: center;
 }
 
 .tasks-table-row:hover {
-    background: #1a1a1a;
-    border-bottom-color: #222;
+    background: var(--bg-hover);
+    border-bottom-color: var(--border-main);
 }
 
 .tasks-table-row:last-child {
@@ -495,7 +495,7 @@
 }
 
 .tasks-table-row:active {
-    background: #222;
+    background: var(--bg-active);
 }
 
 .tasks-col-task {
@@ -520,7 +520,7 @@
 }
 
 .tasks-task-title {
-    color: #ffffff;
+    color: var(--text-primary);
     font-size: 13px;
     font-weight: 500;
     line-height: 1.5;
@@ -529,7 +529,7 @@
 }
 
 .tasks-col-project {
-    color: #bbb;
+    color: var(--text-secondary);
     font-size: 12px;
     display: flex;
     align-items: center;
@@ -572,7 +572,7 @@
 }
 
 .tasks-col-time {
-    color: #aaa;
+    color: var(--text-tertiary);
     font-size: 12px;
     font-family: var(--font-mono);
     font-weight: 500;
@@ -580,7 +580,7 @@
 }
 
 .tasks-col-due {
-    color: #aaa;
+    color: var(--text-tertiary);
     font-size: 12px;
     font-family: var(--font-mono);
     font-weight: 500;

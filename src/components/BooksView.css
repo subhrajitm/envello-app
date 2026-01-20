@@ -2,7 +2,7 @@
 .books-view-ent {
     display: flex;
     height: 100%;
-    background: #050505;
+    background: var(--bg-app);
     overflow: hidden;
 }
 
@@ -11,7 +11,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    border-right: 1px solid #1a1a1a;
+    border-right: 1px solid var(--border-subtle);
 }
 
 /* Header */
@@ -20,8 +20,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 24px;
-    border-bottom: 1px solid #1a1a1a;
-    background: #050505;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-app);
 }
 
 .header-title-block {
@@ -33,7 +33,7 @@
 .ent-header-title {
     font-size: 11px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
     letter-spacing: 1px;
     margin: 0;
     text-transform: uppercase;
@@ -41,7 +41,7 @@
 
 .ent-header-meta {
     font-size: 11px;
-    color: #666;
+    color: var(--text-tertiary);
 }
 
 .header-status-pills {
@@ -54,26 +54,26 @@
     align-items: center;
     gap: 8px;
     padding: 4px 10px;
-    background: #111;
-    border: 1px solid #222;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
-    color: #888;
+    color: var(--text-secondary);
     text-transform: uppercase;
 }
 
 .status-pill.active-pill {
-    background: #181818;
-    color: #e5e5e5;
-    border-color: #333;
+    background: var(--bg-active);
+    color: var(--text-primary);
+    border-color: var(--border-highlight);
 }
 
 .dot-indicator {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #fcd34d;
+    background: var(--accent-primary);
 }
 
 .dot-indicator.green {
@@ -87,8 +87,8 @@
 
 .toggle-btn {
     background: transparent;
-    border: 1px solid #222;
-    color: #666;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-tertiary);
     width: 32px;
     height: 32px;
     border-radius: 4px;
@@ -99,16 +99,16 @@
 }
 
 .toggle-btn.active {
-    background: #1a1a1a;
-    color: #fcd34d;
-    border-color: #333;
+    background: var(--bg-active);
+    color: var(--accent-primary);
+    border-color: var(--border-highlight);
 }
 
 /* List Table */
 .books-list-container {
     flex: 1;
     overflow-y: auto;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--border-subtle);
     margin-bottom: 0;
     display: flex;
     flex-direction: column;
@@ -119,10 +119,10 @@
     grid-template-columns: 40px 3fr 1.5fr 2fr 2fr 1.5fr 1.5fr 40px;
     gap: 16px;
     padding: 12px 24px;
-    border-bottom: 1px solid #1a1a1a;
-    background: #080808;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-app);
     font-size: 9px;
-    color: #666;
+    color: var(--text-tertiary);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -140,13 +140,13 @@
     grid-template-columns: 40px 3fr 1.5fr 2fr 2fr 1.5fr 1.5fr 40px;
     gap: 16px;
     padding: 16px 24px;
-    border-bottom: 1px solid #111;
+    border-bottom: 1px solid var(--border-subtle);
     align-items: center;
     transition: background 0.1s;
 }
 
 .ent-table-row:hover {
-    background: #0c0c0c;
+    background: var(--bg-hover);
 }
 
 .book-icon {
@@ -158,13 +158,13 @@
 .row-title {
     font-size: 13px;
     font-weight: 600;
-    color: #e5e5e5;
+    color: var(--text-primary);
     line-height: 1.2;
 }
 
 .row-author {
     font-size: 11px;
-    color: #666;
+    color: var(--text-tertiary);
 }
 
 .cat-badge {
@@ -202,25 +202,25 @@
 
 .col-date {
     font-size: 11px;
-    color: #666;
+    color: var(--text-tertiary);
 }
 
 .progress-bar-ent {
     width: 60px;
     height: 4px;
-    background: #222;
+    background: var(--border-subtle);
     border-radius: 2px;
     overflow: hidden;
 }
 
 .prog-fill {
     height: 100%;
-    background: #fcd34d;
+    background: var(--accent-primary);
 }
 
 .notes-val {
     font-size: 12px;
-    color: #e5e5e5;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
@@ -238,7 +238,7 @@
 }
 
 .st-queued {
-    color: #666;
+    color: var(--text-tertiary);
 }
 
 .st-icon {
@@ -250,8 +250,8 @@
     padding: 32px;
     display: flex;
     gap: 32px;
-    border-top: 1px solid #1a1a1a;
-    background: #050505;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-app);
     flex-shrink: 0;
 }
 
@@ -301,7 +301,7 @@
 .feat-badge {
     padding: 2px 6px;
     background: #2a2200;
-    color: #fcd34d;
+    color: var(--accent-primary);
     border: 1px solid #423000;
     font-size: 9px;
     font-weight: 700;
@@ -310,21 +310,21 @@
 
 .feat-meta {
     font-size: 10px;
-    color: #666;
+    color: var(--text-tertiary);
     font-weight: 600;
 }
 
 .feat-title {
     font-size: 24px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
     font-family: var(--font-serif);
     margin: 0 0 4px 0;
 }
 
 .feat-subtitle {
     font-size: 14px;
-    color: #666;
+    color: var(--text-secondary);
     font-style: italic;
     font-family: var(--font-serif);
     margin: 0 0 24px 0;
@@ -332,10 +332,10 @@
 }
 
 .ai-insight-box {
-    border: 1px solid #222;
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 20px;
-    background: #080808;
+    background: var(--bg-panel);
 }
 
 .ai-insight-header {
@@ -344,13 +344,13 @@
     gap: 8px;
     font-size: 10px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
     margin-bottom: 16px;
     letter-spacing: 1px;
 }
 
 .ai-star {
-    color: #fcd34d;
+    color: var(--accent-primary);
     font-size: 14px;
 }
 
@@ -369,19 +369,19 @@
 .in-title {
     font-size: 12px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
 }
 
 .in-desc {
     font-size: 11px;
-    color: #666;
+    color: var(--text-tertiary);
     line-height: 1.5;
 }
 
 /* Sidebar */
 .books-sidebar {
     width: 300px;
-    background: #080808;
+    background: var(--bg-app);
     display: flex;
     flex-direction: column;
     padding: 24px;
@@ -392,15 +392,15 @@
 .side-header {
     font-size: 10px;
     font-weight: 700;
-    color: #666;
+    color: var(--text-tertiary);
     letter-spacing: 1px;
     margin-bottom: 16px;
     text-transform: uppercase;
 }
 
 .insight-stat-card {
-    background: #121212;
-    border: 1px solid #222;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 16px;
     display: flex;
@@ -417,18 +417,18 @@
 
 .stat-label {
     font-size: 11px;
-    color: #888;
+    color: var(--text-secondary);
 }
 
 .stat-icon-mini {
     font-size: 14px;
-    color: #fcd34d;
+    color: var(--accent-primary);
 }
 
 .stat-main-val {
     font-size: 24px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
     font-family: var(--font-mono);
 }
 
@@ -441,21 +441,21 @@
 
 .stat-sub {
     font-size: 10px;
-    color: #666;
+    color: var(--text-tertiary);
     font-weight: 500;
     margin-left: 4px;
 }
 
 .stat-progress-line {
     height: 4px;
-    background: #222;
+    background: var(--border-subtle);
     border-radius: 2px;
     width: 100%;
 }
 
 .p-line-fill {
     height: 100%;
-    background: #fcd34d;
+    background: var(--accent-primary);
     border-radius: 2px;
 }
 
@@ -470,13 +470,13 @@
     display: flex;
     justify-content: space-between;
     font-size: 11px;
-    color: #e5e5e5;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 .sub-bar {
     height: 4px;
-    background: #222;
+    background: var(--border-subtle);
     border-radius: 2px;
 }
 
@@ -491,7 +491,7 @@
 }
 
 .writing-assistant-card {
-    border: 1px solid #333;
+    border: 1px solid var(--border-subtle);
     /* Gold-ish border hint in screen maybe, sticking to dark */
     border-radius: 8px;
     padding: 16px;
@@ -506,20 +506,20 @@
 .wa-title {
     font-size: 10px;
     font-weight: 700;
-    color: #fcd34d;
+    color: var(--accent-primary);
     letter-spacing: 0.5px;
 }
 
 .wa-desc {
     font-size: 11px;
-    color: #999;
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 
 .wa-btn {
     background: #2a2200;
     border: 1px solid #423000;
-    color: #fcd34d;
+    color: var(--accent-primary);
     padding: 8px;
     font-size: 10px;
     font-weight: 700;
@@ -531,5 +531,5 @@
 
 .wa-btn:hover {
     background: #423000;
-    border-color: #fcd34d;
+    border-color: var(--accent-primary);
 }

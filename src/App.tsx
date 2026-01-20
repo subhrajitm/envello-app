@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Dashboard from './components/Dashboard';
 import './App.css';
 
 import { StoreProvider } from './context/StoreContext';
 
+import { ThemeProvider } from './context/ThemeContext';
+
 function App() {
   return (
-    <StoreProvider>
-      <div className="app">
-        <Dashboard />
-      </div>
-    </StoreProvider>
+    <ThemeProvider>
+      <StoreProvider>
+        <div className="app">
+          <Dashboard />
+        </div>
+      </StoreProvider>
+    </ThemeProvider>
   );
 }
 

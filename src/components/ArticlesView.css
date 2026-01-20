@@ -11,8 +11,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background: #050505;
-  border-bottom: 1px solid #1a1a1a;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border-subtle);
   min-height: 56px;
 }
 
@@ -30,7 +30,7 @@
 
 .filter-label {
   font-size: 10px;
-  color: #666;
+  color: var(--text-tertiary);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -38,10 +38,10 @@
 
 .filter-btn {
   padding: 4px 10px;
-  background: #121212;
-  border: 1px solid #1f1f1f;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -50,17 +50,17 @@
 
 .filter-btn:hover,
 .filter-btn.active {
-  background: #1a1a1a;
-  color: #e5e5e5;
-  border-color: #333;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
 }
 
 .filter-btn-icon {
   padding: 4px 10px;
   background: transparent;
-  border: 1px solid #1f1f1f;
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -71,9 +71,9 @@
 }
 
 .filter-btn-icon:hover {
-  background: #1a1a1a;
-  color: #e5e5e5;
-  border-color: #333;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
 }
 
 .filters-right {
@@ -91,7 +91,7 @@
 
 .capacity-label {
   font-size: 9px;
-  color: #666;
+  color: var(--text-tertiary);
   font-weight: 700;
   letter-spacing: 0.5px;
   text-align: right;
@@ -100,14 +100,14 @@
 
 .capacity-bar-container {
   height: 4px;
-  background: #1a1a1a;
+  background: var(--border-subtle);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .capacity-bar {
   height: 100%;
-  background: #fcd34d;
+  background: var(--accent-primary);
   /* Yellow */
   border-radius: 2px;
 }
@@ -115,12 +115,12 @@
 .vertical-divider {
   width: 1px;
   height: 24px;
-  background: #1a1a1a;
+  background: var(--border-subtle);
 }
 
 .active-projects-count {
   font-size: 11px;
-  color: #e5e5e5;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -129,8 +129,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #050505;
-  border-top: 1px solid #1a1a1a;
+  background: var(--bg-app);
+  border-top: 1px solid var(--border-subtle);
   /* Separate content area */
 }
 
@@ -146,10 +146,10 @@
   grid-template-columns: 3fr 1fr 1.2fr 1fr 1.5fr 1.8fr 40px;
   gap: 16px;
   padding: 12px 24px;
-  border-bottom: 1px solid #1a1a1a;
-  background: #050505;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-app);
   font-size: 10px;
-  color: #666;
+  color: var(--text-tertiary);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -168,21 +168,21 @@
   grid-template-columns: 3fr 1fr 1.2fr 1fr 1.5fr 1.8fr 40px;
   gap: 16px;
   padding: 16px 24px;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--border-subtle);
   align-items: center;
   transition: background 0.1s;
   cursor: pointer;
 }
 
 .table-row:hover {
-  background: #0a0a0a;
+  background: var(--bg-hover);
 }
 
 .col-title {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #e5e5e5;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -190,20 +190,20 @@
 .article-icon {
   font-size: 18px;
   /* Slightly larger */
-  color: #fcd34d;
+  color: var(--accent-primary);
   /* Use theme yellow/gold per screen or default icon color */
   opacity: 0.8;
 }
 
 /* Adjust article icon color based on screenshot if needed. Screenshot has yellow icons. */
 .col-title .article-icon {
-  color: #fcd34d;
+  color: var(--accent-primary);
   font-size: 16px;
 }
 
 /* Override specific icons if screenshot shows variety. */
 .col-title .article-icon:contains('description') {
-  color: #fcd34d;
+  color: var(--accent-primary);
 }
 
 /* Example logic, CSS can't do contains. Just setting yellow default */
@@ -237,7 +237,7 @@
 .pipeline-yellow {
   /* DRAFT */
   background: #2a2200;
-  color: #fcd34d;
+  color: var(--accent-primary);
   border: 1px solid #423000;
 }
 
@@ -262,7 +262,7 @@
 }
 
 .col-word-count {
-  color: #e5e5e5;
+  color: var(--text-primary);
   font-size: 12px;
   font-family: var(--font-mono);
 }
@@ -271,7 +271,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  color: #e5e5e5;
+  color: var(--text-primary);
   font-size: 11px;
   font-weight: 500;
 }
@@ -284,12 +284,12 @@
 
 .engagement-icon {
   font-size: 14px;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .col-last-updated {
   font-size: 11px;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .col-menu {
@@ -300,7 +300,7 @@
 .menu-btn {
   background: transparent;
   border: none;
-  color: #444;
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -309,11 +309,11 @@
 }
 
 .menu-btn:hover {
-  color: #e5e5e5;
+  color: var(--text-primary);
 }
 
 .text-muted {
-  color: #444;
+  color: var(--text-tertiary);
   font-style: italic;
   font-size: 11px;
 }

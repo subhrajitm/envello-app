@@ -2,15 +2,15 @@
 .journals-layout {
     display: flex;
     height: 100%;
-    background: #050505;
+    background: var(--bg-app);
     overflow: hidden;
 }
 
 /* Sidebar */
 .j-sidebar {
     width: 260px;
-    background: #080808;
-    border-right: 1px solid #1a1a1a;
+    background: var(--bg-app);
+    border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
 }
@@ -19,12 +19,12 @@
     padding: 16px 20px;
     font-size: 10px;
     font-weight: 700;
-    color: #666;
+    color: var(--text-tertiary);
     letter-spacing: 1px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .folder-icon {
@@ -48,21 +48,21 @@
 }
 
 .j-project-row:hover {
-    background: #0f0f0f;
+    background: var(--bg-hover);
 }
 
 .j-project-row.active {
-    background: #121212;
-    border-left-color: #fcd34d;
+    background: var(--bg-panel);
+    border-left-color: var(--accent-primary);
 }
 
 .icon-folder {
-    color: #666;
+    color: var(--text-tertiary);
     font-size: 18px;
 }
 
 .j-project-row.active .icon-folder {
-    color: #fcd34d;
+    color: var(--accent-primary);
 }
 
 .j-proj-info {
@@ -74,7 +74,7 @@
 .j-proj-title {
     font-size: 13px;
     font-weight: 500;
-    color: #e5e5e5;
+    color: var(--text-primary);
 }
 
 .j-project-row.active .j-proj-title {
@@ -88,7 +88,7 @@
 
 .j-sidebar-footer {
     padding: 20px;
-    border-top: 1px solid #1a1a1a;
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -113,7 +113,7 @@
 
 .storage-fill {
     height: 100%;
-    background: #fcd34d;
+    background: var(--accent-primary);
     border-radius: 2px;
 }
 
@@ -131,8 +131,8 @@
     display: flex;
     align-items: center;
     padding: 0 32px;
-    border-bottom: 1px solid #1a1a1a;
-    background: #050505;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-app);
     gap: 32px;
 }
 
@@ -145,7 +145,7 @@
 .j-page-title {
     font-size: 18px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
     margin: 0;
     display: flex;
     align-items: center;
@@ -187,11 +187,11 @@
 .stat-val {
     font-size: 14px;
     font-weight: 700;
-    color: #e5e5e5;
+    color: var(--text-primary);
 }
 
 .stat-val.yellow {
-    color: #fcd34d;
+    color: var(--accent-primary);
 }
 
 .j-stat-divider {
@@ -208,9 +208,9 @@
 
 .j-filter-btn,
 .j-view-toggle {
-    background: #121212;
-    border: 1px solid #222;
-    color: #888;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
     padding: 6px 12px;
     border-radius: 4px;
     font-size: 11px;
@@ -221,7 +221,7 @@
 }
 
 .j-filter-btn span {
-    color: #e5e5e5;
+    color: var(--text-primary);
     font-weight: 600;
     margin-left: 4px;
 }
@@ -239,7 +239,7 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(320px, 1fr));
     gap: 24px;
-    background: #050505;
+    background: var(--bg-app);
 }
 
 .j-col {
@@ -284,11 +284,11 @@
 }
 
 .col-count {
-    background: #1a1a1a;
+    background: var(--bg-hover);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 10px;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .icon-add {
@@ -304,9 +304,9 @@
 }
 
 .j-card {
-    background: #0f0f0f;
+    background: var(--bg-panel);
     /* Slightly lighter than bg */
-    border: 1px solid #1a1a1a;
+    border: 1px solid var(--border-subtle);
     border-radius: 6px;
     padding: 16px;
     display: flex;
@@ -323,8 +323,8 @@
 
 .j-card.dragging {
     opacity: 0.5;
-    border: 1px dashed #fcd34d;
-    background: #1a1a1a;
+    border: 1px dashed var(--accent-primary);
+    background: var(--bg-hover);
 }
 
 .card-top {
@@ -371,13 +371,13 @@
 .card-title {
     font-size: 14px;
     font-weight: 600;
-    color: #e5e5e5;
+    color: var(--text-primary);
     line-height: 1.3;
 }
 
 .card-desc {
     font-size: 12px;
-    color: #888;
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 
@@ -410,7 +410,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #fcd34d;
+    background: var(--accent-primary);
     color: #000;
     font-size: 9px;
     font-weight: 800;
