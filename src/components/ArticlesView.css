@@ -229,36 +229,36 @@
 
 .pipeline-green {
   /* PUBLISHED */
-  background: #052e16;
-  color: #4ade80;
-  border: 1px solid #14532d;
+  background: var(--bg-hover);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
 }
 
 .pipeline-yellow {
   /* DRAFT */
-  background: #2a2200;
+  background: var(--bg-hover);
   color: var(--accent-primary);
-  border: 1px solid #423000;
+  border: 1px solid var(--accent-primary-dim);
 }
 
 .pipeline-blue {
   /* REVIEW */
-  background: #172554;
-  color: #60a5fa;
-  border: 1px solid #1e3a8a;
+  background: var(--bg-hover);
+  color: var(--accent-blue);
+  border: 1px solid var(--border-highlight);
 }
 
 .pipeline-orange {
   /* SCHEDULED */
-  background: #2a1000;
-  color: #fb923c;
-  border: 1px solid #431407;
+  background: var(--bg-hover);
+  color: var(--accent-red);
+  border: 1px solid var(--accent-red);
 }
 
 .pipeline-gray {
-  background: #18181b;
-  color: #a1a1aa;
-  border: 1px solid #27272a;
+  background: var(--bg-panel);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-subtle);
 }
 
 .col-word-count {

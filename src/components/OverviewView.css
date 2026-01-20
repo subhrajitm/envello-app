@@ -124,13 +124,13 @@
 }
 
 .plan-tag.fiction {
-  background: #172554;
-  color: #60a5fa;
+  background: var(--bg-hover);
+  color: var(--accent-blue);
 }
 
 .plan-tag.mystery {
-  background: #3b0764;
-  color: #a855f7;
+  background: var(--bg-hover);
+  color: var(--accent-purple);
 }
 
 .plan-stage {
@@ -369,18 +369,18 @@
 }
 
 .cal-event.fiction {
-  background: #172554;
-  border-left: 2px solid #3b82f6;
+  background: var(--bg-active);
+  border-left: 2px solid var(--accent-blue);
 }
 
 .cal-event.deadline {
-  background: #fcd34d;
-  color: #000;
+  background: var(--accent-primary);
+  color: var(--bg-app);
 }
 
 .cal-event.mystery {
-  background: #3b0764;
-  border-left: 2px solid #a855f7;
+  background: var(--bg-element);
+  border-left: 2px solid var(--text-secondary);
 }
 
 .cal-add-placeholder {

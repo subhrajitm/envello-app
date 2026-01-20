@@ -342,24 +342,24 @@
 }
 
 .tag-blue {
-    background: #172554;
-    color: #60a5fa;
+    background: var(--bg-hover);
+    color: var(--accent-blue);
 }
 
 .tag-orange {
-    background: #431407;
-    color: #fb923c;
+    background: var(--bg-hover);
+    color: var(--accent-red);
 }
 
 .tag-purple {
-    background: #3b0764;
-    color: #a855f7;
+    background: var(--bg-hover);
+    color: var(--accent-purple);
 }
 
 .tag-gray {
-    background: #1f1f1f;
-    color: #aaa;
-    border: 1px solid #333;
+    background: var(--bg-panel);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-subtle);
 }
 
 .icon-more {

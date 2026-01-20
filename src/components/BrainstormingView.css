@@ -86,7 +86,7 @@
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-bottom: 1px solid #111;
+    border-bottom: 1px solid var(--border-subtle);
     font-size: 13px;
     /* Increased from 11px */
     color: var(--text-tertiary);
@@ -177,7 +177,7 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: #4ade80;
+    background: var(--accent-green);
 }
 
 .status-icon-xs {
@@ -302,11 +302,11 @@
 }
 
 .dot.green {
-    background: #4ade80;
+    background: var(--accent-green);
 }
 
 .dot.gray {
-    background: #333;
+    background: var(--bg-element);
 }
 
 /* Sub Nodes */
@@ -340,7 +340,7 @@
 
 .stars-icon {
     font-size: 12px;
-    color: #4ade80;
+    color: var(--accent-green);
 }
 
 .node-title-sm {
@@ -359,7 +359,7 @@
 /* Connection Lines (Simulated - Simple lines for visual approximation) */
 .connection-line {
     position: absolute;
-    background: #333;
+    background: var(--border-highlight);
     z-index: -1;
 }
 

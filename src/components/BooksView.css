@@ -77,7 +77,7 @@
 }
 
 .dot-indicator.green {
-    background: #4ade80;
+    background: var(--accent-green);
 }
 
 .view-toggles {
@@ -177,27 +177,27 @@
 }
 
 .badge-blue {
-    background: #172554;
-    color: #60a5fa;
-    border-color: #1e3a8a;
+    background: var(--bg-hover);
+    color: var(--accent-blue);
+    border-color: var(--border-highlight);
 }
 
 .badge-purple {
-    background: #3b0764;
-    color: #a855f7;
-    border-color: #581c87;
+    background: var(--bg-hover);
+    color: var(--accent-purple);
+    border-color: var(--border-highlight);
 }
 
 .badge-orange {
-    background: #431407;
-    color: #fb923c;
-    border-color: #7c2d12;
+    background: var(--bg-hover);
+    color: var(--accent-red);
+    border-color: var(--border-highlight);
 }
 
 .badge-gray {
-    background: #18181b;
-    color: #a1a1aa;
-    border-color: #27272a;
+    background: var(--bg-panel);
+    color: var(--text-tertiary);
+    border-color: var(--border-subtle);
 }
 
 .col-date {
