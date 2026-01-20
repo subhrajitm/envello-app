@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { createEditor, Descendant, Node, BaseEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
 import { Slate, Editable, withReact, RenderElementProps, RenderLeafProps, ReactEditor, useSlate, useFocused } from 'slate-react';
 import { withHistory, HistoryEditor } from 'slate-history';
+import Footer from './Footer';
 import './NovelEditorView.css';
 
 interface NovelEditorProps {
@@ -484,6 +485,7 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };
