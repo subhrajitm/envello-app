@@ -2,10 +2,22 @@
 .de-layout {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
+    /* Fix: Use 100% of container, not 100vh to prevent overflow */
     background: #050505;
     color: #e5e5e5;
     font-family: 'Inter', system-ui, sans-serif;
+}
+
+
+/* RIGHT SIDEBAR */
+.de-sidebar-right {
+    width: 280px;
+    background: #09090b;
+    border-left: 1px solid #1f1f22;
+    padding: 0;
+    overflow-y: auto;
+    /* Allow internal scrolling only */
 }
 
 .de-workspace {
@@ -138,7 +150,8 @@
     background: #050505;
     position: relative;
     min-width: 0;
-    /* Flexbox trick */
+    overflow: hidden;
+    /* Fix: Prevent outer scroll */
 }
 
 /* Top Bar */
