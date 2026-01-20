@@ -15,6 +15,7 @@
 
     --accent-primary: #ffd700;
     --accent-primary-dim: rgba(255, 215, 0, 0.1);
+    --accent-primary-text: #000000;
     --accent-blue: #60a5fa;
     --accent-red: #f87171;
     --accent-green: #4ade80;
@@ -46,6 +47,7 @@
     --accent-primary: #b45309;
     /* Amber-700, readable on paper */
     --accent-primary-dim: rgba(180, 83, 9, 0.1);
+    --accent-primary-text: #ffffff;
 }
 
 * {
@@ -182,6 +184,7 @@ code {
 [class$="sidebar-right"] {
     height: 100%;
 }
+
 /* Ensure all Angular components fill their containers */
 app-overview,
 app-novels,

@@ -41,16 +41,19 @@
                         <span class="material-symbols-outlined">push_pin</span>
                     </button>
                 </div>
-                <div class="dn-entry-title">{{ entry.title }}</div>
-                <div class="dn-entry-preview">{{ entry.preview }}</div>
-
-                @if (getNoteTags(entry).length > 0) {
-                <div class="entry-tags">
-                    @for (tag of getNoteTags(entry); track tag) {
-                    <span class="tag-chip">{{ tag }}</span>
+                <div class="entry-title-row">
+                    <div class="dn-entry-title">{{ entry.title }}</div>
+                    @if (getNoteTags(entry).length > 0) {
+                    <div class="entry-tags-inline">
+                        @for (tag of getNoteTags(entry).slice(0, 2); track tag) {
+                        <span class="tag-chip-small">{{ tag }}</span>
+                        }
+                        @if (getNoteTags(entry).length > 2) {
+                        <span class="tag-more">+{{ getNoteTags(entry).length - 2 }}</span>
+                        }
+                    </div>
                     }
                 </div>
-                }
             </div>
             }
         </div>
