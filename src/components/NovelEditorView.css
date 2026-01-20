@@ -151,6 +151,7 @@
     border-color: #555;
 }
 
+/* Navigation Styles */
 .ne-nav-group {
     display: flex;
     align-items: center;
@@ -174,26 +175,37 @@
 }
 
 .ne-chapters-section {
-    margin-top: 24px;
+    margin-top: 0;
+    /* Reduced from 24px */
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
 .ne-chap-header {
-    padding: 0 24px 12px;
+    padding: 0 16px 8px;
     font-size: 10px;
     font-weight: 700;
-    color: #444;
+    letter-spacing: 1.2px;
+    color: #555;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    text-transform: uppercase;
 }
 
 .icon-add {
     font-size: 16px;
     cursor: pointer;
-    color: #fcd34d;
+    color: #666;
+    padding: 2px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.icon-add:hover {
+    color: #e5e5e5;
+    background: #1a1a1a;
 }
 
 .ne-chapter-list {
@@ -201,10 +213,19 @@
     overflow-y: auto;
 }
 
+/* New Expandable Chapter Item Styles */
+.ne-chapter-group {
+    margin-bottom: 2px;
+}
+
 .ne-chapter-item {
-    padding: 12px 24px;
+    padding: 8px 16px;
     border-left: 2px solid transparent;
     cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    transition: all 0.2s;
 }
 
 .ne-chapter-item:hover {
@@ -216,10 +237,31 @@
     border-left-color: #fcd34d;
 }
 
+.ne-collapse-btn {
+    background: transparent;
+    border: none;
+    color: #555;
+    padding: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin-top: 2px;
+}
+
+.ne-collapse-btn:hover {
+    color: #e5e5e5;
+}
+
+.ne-chap-info {
+    flex: 1;
+}
+
 .ne-chap-title {
     font-size: 13px;
     color: #aaa;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    line-height: 1.4;
 }
 
 .ne-chapter-item.active .ne-chap-title {
@@ -240,15 +282,41 @@
     color: #444;
 }
 
-.ne-sync-status {
-    padding: 16px 24px;
-    margin-top: auto;
+/* Sub-list (Scenes) */
+.ne-scene-list {
+    padding-left: 44px;
+    /* Indent under title */
+    padding-right: 16px;
+    padding-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.sync-line {
-    height: 1px;
-    background: #1a1a1a;
-    margin-bottom: 12px;
+.ne-scene-item {
+    font-size: 11px;
+    color: #666;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: color 0.1s;
+}
+
+.ne-scene-item:hover {
+    color: #aeaeae;
+}
+
+.sc-dot {
+    width: 4px;
+    height: 4px;
+    background: #333;
+    border-radius: 50%;
+}
+
+.ne-scene-item:hover .sc-dot {
+    background: #666;
 }
 
 .sync-info {
@@ -324,12 +392,14 @@
     color: #ccc;
 }
 
+/* Editor Footer */
 .ne-editor-footer {
     margin-top: 64px;
     border-top: 1px solid #1a1a1a;
     padding-top: 24px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
+    /* Changed from space-between to flex-start since stats are floating */
     align-items: center;
 }
 
@@ -342,23 +412,37 @@
 }
 
 .editor-stats-pill {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+
     background: #111;
     border: 1px solid #222;
     border-radius: 100px;
-    padding: 6px 16px;
-    font-size: 10px;
+    padding: 8px 20px;
+    font-size: 11px;
     color: #666;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .editor-stats-pill strong {
     color: #e5e5e5;
+    font-weight: 600;
 }
 
 .stat-sep {
     color: #333;
+    height: 12px;
+    width: 1px;
+    background: #333;
+    display: block;
+    text-indent: -9999px;
+    /* Hide the pipe character text if we use background line */
 }
 
 /* Right Sidebar AI */
@@ -598,38 +682,29 @@
 
 .ne-ai-footer {
     margin-top: auto;
-    padding-top: 24px;
+    padding: 24px 16px;
+    /* Added side padding to match content */
     border-top: 1px solid #1a1a1a;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    /* Increased gap between items */
 }
 
-.ne-nav-section-right {
-    margin-top: 24px;
-    border-top: 1px solid #1a1a1a;
-    padding-top: 16px;
-    margin-bottom: auto;
-    /* Push footer down if needed, but flex column handles most */
+/* Remove dead code if ne-nav-section-right is unused, or fix it */
+/* Clean up ne-nav-section-right since we use tabs now */
+
+.ne-sync-status {
+    padding: 12px 24px;
+    /* Reduced vertical padding */
+    margin-top: auto;
 }
 
-.ne-nav-group-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    color: #666;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 4px;
-}
-
-.ne-nav-group-right:hover,
-.ne-nav-group-right.active {
-    color: #fcd34d;
-    background: #111;
+.sync-line {
+    height: 1px;
+    background: #1a1a1a;
+    margin-bottom: 8px;
+    /* Reduced gap */
 }
 
 .footer-action {

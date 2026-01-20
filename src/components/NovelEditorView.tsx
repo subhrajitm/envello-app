@@ -11,6 +11,36 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
     const [activeChapter, setActiveChapter] = useState('01');
     const [activeRightTab, setActiveRightTab] = useState('AI');
 
+    const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({ '01': true });
+
+    const toggleChapter = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setExpandedChapters(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const chapters = [
+        {
+            id: '01',
+            title: '01. The First Peel',
+            meta: '1,240 words',
+            scenes: ['Scene 1: Orchard Entrance', 'Scene 2: The Inner Hall', 'Scene 3: The Discovery']
+        },
+        {
+            id: '02',
+            title: '02. Bitter Rinds',
+            meta: 'DRAFT',
+            tagClass: 'ne-draft-tag',
+            scenes: ['Scene 1: Market Dispute', 'Scene 2: Shadow Encounter']
+        },
+        {
+            id: '03',
+            title: '03. Harvest Moon',
+            meta: 'EMPTY',
+            tagClass: 'ne-empty-tag',
+            scenes: []
+        }
+    ];
+
     return (
         <div className="ne-layout">
             <div className="ne-workspace">
@@ -23,25 +53,43 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                         </button>
                     </div>
 
-
-
                     <div className="ne-chapters-section">
                         <div className="ne-chap-header">
                             CHAPTERS <span className="material-symbols-outlined icon-add">add</span>
                         </div>
                         <div className="ne-chapter-list">
-                            <div className={`ne-chapter-item ${activeChapter === '01' ? 'active' : ''}`} onClick={() => setActiveChapter('01')}>
-                                <div className="ne-chap-title">01. The First Peel</div>
-                                <div className="ne-chap-meta">1,240 words</div>
-                            </div>
-                            <div className={`ne-chapter-item ${activeChapter === '02' ? 'active' : ''}`} onClick={() => setActiveChapter('02')}>
-                                <div className="ne-chap-title">02. Bitter Rinds</div>
-                                <div className="ne-chap-meta ne-draft-tag">DRAFT</div>
-                            </div>
-                            <div className={`ne-chapter-item ${activeChapter === '03' ? 'active' : ''}`} onClick={() => setActiveChapter('03')}>
-                                <div className="ne-chap-title">03. Harvest Moon</div>
-                                <div className="ne-chap-meta ne-empty-tag">EMPTY</div>
-                            </div>
+                            {chapters.map(chapter => (
+                                <div key={chapter.id} className="ne-chapter-group">
+                                    <div
+                                        className={`ne-chapter-item ${activeChapter === chapter.id ? 'active' : ''}`}
+                                        onClick={() => setActiveChapter(chapter.id)}
+                                    >
+                                        <button
+                                            className="ne-collapse-btn"
+                                            onClick={(e) => toggleChapter(e, chapter.id)}
+                                        >
+                                            <span className="material-symbols-outlined icon-xs">
+                                                {expandedChapters[chapter.id] ? 'expand_more' : 'chevron_right'}
+                                            </span>
+                                        </button>
+                                        <div className="ne-chap-info">
+                                            <div className="ne-chap-title">{chapter.title}</div>
+                                            <div className={`ne-chap-meta ${chapter.tagClass || ''}`}>{chapter.meta}</div>
+                                        </div>
+                                    </div>
+
+                                    {expandedChapters[chapter.id] && chapter.scenes.length > 0 && (
+                                        <div className="ne-scene-list">
+                                            {chapter.scenes.map((scene, idx) => (
+                                                <div key={idx} className="ne-scene-item">
+                                                    <span className="sc-dot"></span>
+                                                    {scene}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     </div>
 
