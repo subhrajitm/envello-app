@@ -1,39 +1,141 @@
 <div class="daily-notes-view">
     <div class="dn-sidebar">
+        <!-- Header with New Note Button -->
         <div class="dn-sidebar-header-action">
-            <button class="dn-btn-new-entry" (click)="handleNewNote()">+ New Note</button>
+            <button class="dn-btn-new-entry" (click)="handleNewNote()">
+                <span class="material-symbols-outlined">add</span>
+                New Note
+            </button>
         </div>
+
+        <!-- Search Bar -->
+        <div class="dn-search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input type="text" class="dn-search-input" placeholder="Search notes..." [(ngModel)]="searchQuery"
+                (ngModelChange)="searchQuery.set($event)" />
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="dn-filter-tabs">
+            <button class="filter-tab" [class.active]="selectedFilter() === 'all'" (click)="setFilter('all')">
+                All Notes
+            </button>
+            <button class="filter-tab" [class.active]="selectedFilter() === 'pinned'" (click)="setFilter('pinned')">
+                <span class="material-symbols-outlined tab-icon">push_pin</span>
+                Pinned
+            </button>
+            <button class="filter-tab" [class.active]="selectedFilter() === 'tagged'" (click)="setFilter('tagged')">
+                <span class="material-symbols-outlined tab-icon">label</span>
+                Tagged
+            </button>
+        </div>
+
+        <!-- Notes List with Groups -->
         <div class="dn-entries-list">
-            @for (entry of notes(); track entry.id) {
-            <div class="dn-entry-item" [class.active]="selectedNote().id === entry.id" (click)="selectNote(entry.id)">
-                <div class="dn-entry-date">{{ entry.date }}</div>
-                <div class="dn-entry-title">{{ entry.title }}</div>
-                <div class="dn-entry-preview">{{ entry.preview }}</div>
+            <!-- Note Groups -->
+            @for (group of noteGroups(); track group.id) {
+            <div class="note-group">
+                <div class="group-header" (click)="toggleGroup(group.id)">
+                    <span class="material-symbols-outlined group-icon">{{ group.icon }}</span>
+                    <span class="group-name">{{ group.name }}</span>
+                    <span class="group-count">{{ filteredNotes().length }}</span>
+                    <span class="material-symbols-outlined expand-icon" [class.expanded]="group.expanded">
+                        {{ group.expanded ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                </div>
+
+                @if (group.expanded) {
+                <!-- Individual Notes -->
+                @for (entry of filteredNotes(); track entry.id) {
+                <div class="dn-entry-item" [class.active]="selectedNote().id === entry.id"
+                    [class.pinned]="isPinned(entry)" (click)="selectNote(entry.id)">
+                    <div class="entry-header">
+                        <div class="dn-entry-date">{{ entry.date }}</div>
+                        <button class="pin-btn" [class.pinned]="isPinned(entry)" (click)="togglePin(entry, $event)">
+                            <span class="material-symbols-outlined">
+                                {{ isPinned(entry) ? 'push_pin' : 'push_pin' }}
+                            </span>
+                        </button>
+                    </div>
+                    <div class="dn-entry-title">{{ entry.title }}</div>
+                    <div class="dn-entry-preview">{{ entry.preview }}</div>
+
+                    <!-- Tags -->
+                    @if (getNoteTags(entry).length > 0) {
+                    <div class="entry-tags">
+                        @for (tag of getNoteTags(entry); track tag) {
+                        <span class="tag-chip">{{ tag }}</span>
+                        }
+                    </div>
+                    }
+                </div>
+                }
+                }
             </div>
             }
+
+            <!-- Ungrouped Notes (fallback) -->
+            @if (allGroupsCollapsed()) {
+            @for (entry of filteredNotes(); track entry.id) {
+            <div class="dn-entry-item" [class.active]="selectedNote().id === entry.id" [class.pinned]="isPinned(entry)"
+                (click)="selectNote(entry.id)">
+                <div class="entry-header">
+                    <div class="dn-entry-date">{{ entry.date }}</div>
+                    <button class="pin-btn" [class.pinned]="isPinned(entry)" (click)="togglePin(entry, $event)">
+                        <span class="material-symbols-outlined">push_pin</span>
+                    </button>
+                </div>
+                <div class="dn-entry-title">{{ entry.title }}</div>
+                <div class="dn-entry-preview">{{ entry.preview }}</div>
+
+                @if (getNoteTags(entry).length > 0) {
+                <div class="entry-tags">
+                    @for (tag of getNoteTags(entry); track tag) {
+                    <span class="tag-chip">{{ tag }}</span>
+                    }
+                </div>
+                }
+            </div>
+            }
+            }
+        </div>
+
+        <!-- Sidebar Footer Stats -->
+        <div class="dn-sidebar-footer">
+            <span class="footer-stat">{{ filteredNotes().length }} notes</span>
         </div>
     </div>
+
+    <!-- Editor Pane -->
     <div class="dn-editor">
         @if (selectedNote(); as note) {
         <div class="dn-editor-header">
             <div class="dn-editor-meta">
                 <span class="dn-editor-date">{{ note.date }}</span>
                 <span class="dn-editor-time">09:15 AM</span>
+                @if (isPinned(note)) {
+                <span class="pinned-badge">
+                    <span class="material-symbols-outlined">push_pin</span>
+                    Pinned
+                </span>
+                }
             </div>
             <div class="dn-editor-actions">
                 <button class="dn-icon-btn-small"><span class="material-symbols-outlined">edit</span></button>
+                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">label</span></button>
                 <button class="dn-icon-btn-small"><span class="material-symbols-outlined">delete</span></button>
                 <button class="dn-icon-btn-small"><span class="material-symbols-outlined">more_horiz</span></button>
             </div>
         </div>
         <div class="dn-editor-content">
             <h1 class="dn-entry-heading">{{ note.title }}</h1>
-            <!-- Using innerHTML for now as per React version, later enhance with Tiptap if needed -->
             <div class="dn-entry-body" [innerHTML]="note.content"></div>
         </div>
         } @else {
-        <div class="dn-empty-state" style="padding: 20px; color: var(--text-secondary);">Select a note or create a new
-            one.</div>
+        <div class="dn-empty-state">
+            <span class="material-symbols-outlined empty-icon">note_add</span>
+            <p>Select a note or create a new one</p>
+        </div>
         }
     </div>
 </div>

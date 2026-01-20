@@ -8,7 +8,7 @@
 }
 
 .dn-sidebar {
-    width: 300px;
+    width: 320px;
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
@@ -16,13 +16,13 @@
 }
 
 .dn-sidebar-header-action {
-    padding: 16px;
+    padding: 12px;
     border-bottom: 1px solid var(--border-subtle);
 }
 
 .dn-btn-new-entry {
     width: 100%;
-    padding: 8px;
+    padding: 8px 12px;
     background: var(--accent-primary);
     color: #000;
     border: none;
@@ -31,12 +31,143 @@
     font-size: 13px;
     cursor: pointer;
     transition: filter 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .dn-btn-new-entry:hover {
     filter: brightness(1.1);
 }
 
+/* Search Bar */
+.dn-search-container {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-app);
+}
+
+.search-icon {
+    font-size: 18px;
+    color: var(--text-tertiary);
+}
+
+.dn-search-input {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    font-size: 12px;
+    outline: none;
+}
+
+.dn-search-input:focus {
+    border-color: var(--border-highlight);
+}
+
+.dn-search-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Filter Tabs */
+.dn-filter-tabs {
+    display: flex;
+    padding: 8px 12px;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-app);
+}
+
+.filter-tab {
+    flex: 1;
+    padding: 6px 8px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.filter-tab:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.filter-tab.active {
+    background: var(--bg-active);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.tab-icon {
+    font-size: 14px;
+}
+
+/* Note Groups */
+.note-group {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.group-header {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    background: var(--bg-app);
+    transition: background 0.2s;
+}
+
+.group-header:hover {
+    background: var(--bg-hover);
+}
+
+.group-icon {
+    font-size: 16px;
+    color: var(--text-tertiary);
+}
+
+.group-name {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.group-count {
+    font-size: 10px;
+    color: var(--text-disabled);
+    background: var(--bg-panel);
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.expand-icon {
+    font-size: 18px;
+    color: var(--text-tertiary);
+    transition: transform 0.2s;
+}
+
+.expand-icon.expanded {
+    transform: rotate(0deg);
+}
+
+/* Notes List */
 .dn-entries-list {
     flex: 1;
     overflow-y: auto;
@@ -45,13 +176,13 @@
 }
 
 .dn-entry-item {
-    padding: 14px 16px;
+    padding: 12px;
     border-bottom: 1px solid var(--border-subtle);
     cursor: pointer;
     transition: background 0.2s;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .dn-entry-item:hover {
@@ -63,11 +194,44 @@
     border-left: 3px solid var(--accent-primary);
 }
 
+.dn-entry-item.pinned {
+    background: var(--bg-panel);
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .dn-entry-date {
     font-size: 10px;
     color: var(--text-tertiary);
     text-transform: uppercase;
     font-weight: 600;
+}
+
+.pin-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-disabled);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.pin-btn:hover {
+    color: var(--accent-primary);
+}
+
+.pin-btn.pinned {
+    color: var(--accent-primary);
+}
+
+.pin-btn .material-symbols-outlined {
+    font-size: 14px;
 }
 
 .dn-entry-title {
@@ -80,10 +244,10 @@
 }
 
 .dn-entry-preview {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-secondary);
     line-height: 1.4;
-    height: 32px;
+    height: 30px;
     overflow: hidden;
     display: -webkit-box;
     line-clamp: 2;
@@ -91,6 +255,38 @@
     -webkit-box-orient: vertical;
 }
 
+/* Tags */
+.entry-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.tag-chip {
+    font-size: 9px;
+    padding: 2px 6px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    border-radius: 3px;
+    color: var(--accent-blue);
+    font-weight: 600;
+}
+
+/* Sidebar Footer */
+.dn-sidebar-footer {
+    padding: 10px 12px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-app);
+}
+
+.footer-stat {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+/* Editor */
 .dn-editor {
     flex: 1;
     display: flex;
@@ -109,7 +305,25 @@
 .dn-editor-meta {
     display: flex;
     gap: 12px;
+    align-items: center;
     color: var(--text-tertiary);
+    font-size: 12px;
+}
+
+.pinned-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--bg-active);
+    border: 1px solid var(--accent-primary);
+    border-radius: 4px;
+    color: var(--accent-primary);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.pinned-badge .material-symbols-outlined {
     font-size: 12px;
 }
 
@@ -172,4 +386,24 @@
 
 .dn-entry-body li {
     margin-bottom: 8px;
+}
+
+/* Empty State */
+.dn-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+    gap: 12px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.dn-empty-state p {
+    font-size: 14px;
 }
