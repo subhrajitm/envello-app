@@ -331,7 +331,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-family: var(--font-mono, 'SF Mono', 'Monaco', 'Consolas', monospace);
+    font-family: var(--font-mono);
     line-height: 1.2;
 }
 
@@ -574,7 +574,7 @@
 .tasks-col-time {
     color: #aaa;
     font-size: 12px;
-    font-family: var(--font-mono, 'SF Mono', 'Monaco', 'Consolas', monospace);
+    font-family: var(--font-mono);
     font-weight: 500;
     letter-spacing: 0.3px;
 }
@@ -582,7 +582,7 @@
 .tasks-col-due {
     color: #aaa;
     font-size: 12px;
-    font-family: var(--font-mono, 'SF Mono', 'Monaco', 'Consolas', monospace);
+    font-family: var(--font-mono);
     font-weight: 500;
     letter-spacing: 0.3px;
 }

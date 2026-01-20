@@ -382,7 +382,7 @@
 }
 
 .ne-editor-text {
-    font-family: 'Georgia', serif;
+    font-family: var(--font-serif);
     /* Writing font */
     font-size: 18px;
     line-height: 1.8;

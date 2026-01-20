@@ -1,5 +1,5 @@
 .syntax-highlighter {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.6;
     color: #e5e5e5;

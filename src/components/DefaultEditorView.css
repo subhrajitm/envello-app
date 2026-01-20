@@ -10,7 +10,7 @@
     flex-direction: column;
     background: #050505;
     color: #e5e5e5;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
 }
 
 
@@ -354,7 +354,7 @@
     color: #d4d4d4;
     font-size: 16px;
     line-height: 1.7;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
 }
 
 .de-preview-mode {

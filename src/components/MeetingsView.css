@@ -4,7 +4,7 @@
     flex-direction: column;
     background: #0F0F11;
     color: #d1d5db;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     overflow: hidden;
 }
 

@@ -21,6 +21,7 @@
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-serif: 'Georgia', 'Times New Roman', serif;
 }
 
 * {
