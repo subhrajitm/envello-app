@@ -186,6 +186,7 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
     // Initial value state
     const [value, setValue] = useState<Descendant[]>(initialValue);
 
+    const [chapterTitle, setChapterTitle] = useState('Chapter 1: The First Peel');
     const [wordCount, setWordCount] = useState(1240);
     const [activeChapter, setActiveChapter] = useState('01');
     const [activeRightTab, setActiveRightTab] = useState('AI');
@@ -315,7 +316,12 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                 {/* Center: Editor */}
                 <div className="ne-editor-area">
                     <div className="ne-editor-canvas">
-                        <h1 className="ne-doc-title">Chapter 1: The First Peel</h1>
+                        <input
+                            className="ne-doc-title-input"
+                            value={chapterTitle}
+                            onChange={(e) => setChapterTitle(e.target.value)}
+                            placeholder="Chapter Title"
+                        />
                         <div className="ne-doc-meta">
                             <span className="meta-ver">DRAFT V2.4</span>
                             <span className="meta-sep">•</span>

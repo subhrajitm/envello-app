@@ -348,13 +348,22 @@
     flex-direction: column;
 }
 
-.ne-doc-title {
+.ne-doc-title-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
     font-size: 32px;
     font-weight: 700;
     color: #e5e5e5;
-    margin: 0 0 8px 0;
+    margin: 0 0 16px 0;
+    /* Increased margin for better spacing */
     font-family: 'Times New Roman', serif;
-    /* Or system serif */
+    padding: 0;
+}
+
+.ne-doc-title-input::placeholder {
+    color: #333;
 }
 
 .ne-doc-meta {
