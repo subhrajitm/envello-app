@@ -109,32 +109,181 @@
     <!-- Editor Pane -->
     <div class="dn-editor">
         @if (selectedNote(); as note) {
+        <!-- Editor Header with Enhanced Metadata -->
         <div class="dn-editor-header">
-            <div class="dn-editor-meta">
-                <span class="dn-editor-date">{{ note.date }}</span>
-                <span class="dn-editor-time">09:15 AM</span>
-                @if (isPinned(note)) {
-                <span class="pinned-badge">
-                    <span class="material-symbols-outlined">push_pin</span>
-                    Pinned
-                </span>
-                }
+            <div class="dn-editor-meta-section">
+                <div class="meta-primary">
+                    <span class="meta-item">
+                        <span class="material-symbols-outlined meta-icon">calendar_today</span>
+                        {{ note.date }}
+                    </span>
+                    <span class="meta-item">
+                        <span class="material-symbols-outlined meta-icon">schedule</span>
+                        09:15 AM
+                    </span>
+                    <span class="meta-item">
+                        <span class="material-symbols-outlined meta-icon">edit_note</span>
+                        Last edited 2 hours ago
+                    </span>
+                </div>
+                <div class="meta-badges">
+                    @if (isPinned(note)) {
+                    <span class="pinned-badge">
+                        <span class="material-symbols-outlined">push_pin</span>
+                        Pinned
+                    </span>
+                    }
+                    @if (getNoteTags(note).length > 0) {
+                    <span class="tags-badge">
+                        <span class="material-symbols-outlined">label</span>
+                        {{ getNoteTags(note).length }} tags
+                    </span>
+                    }
+                </div>
             </div>
             <div class="dn-editor-actions">
-                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">edit</span></button>
-                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">label</span></button>
-                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">delete</span></button>
-                <button class="dn-icon-btn-small"><span class="material-symbols-outlined">more_horiz</span></button>
+                <button class="action-btn" title="Format">
+                    <span class="material-symbols-outlined">format_size</span>
+                </button>
+                <button class="action-btn" title="Add tags">
+                    <span class="material-symbols-outlined">label</span>
+                </button>
+                <button class="action-btn" title="Share">
+                    <span class="material-symbols-outlined">share</span>
+                </button>
+                <button class="action-btn" title="Export">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
+                <div class="action-divider"></div>
+                <button class="action-btn danger" title="Delete">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+                <button class="action-btn" title="More options">
+                    <span class="material-symbols-outlined">more_horiz</span>
+                </button>
             </div>
         </div>
+
+        <!-- Formatting Toolbar -->
+        <div class="formatting-toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Bold">
+                    <span class="material-symbols-outlined">format_bold</span>
+                </button>
+                <button class="toolbar-btn" title="Italic">
+                    <span class="material-symbols-outlined">format_italic</span>
+                </button>
+                <button class="toolbar-btn" title="Underline">
+                    <span class="material-symbols-outlined">format_underlined</span>
+                </button>
+                <button class="toolbar-btn" title="Strikethrough">
+                    <span class="material-symbols-outlined">strikethrough_s</span>
+                </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Heading">
+                    <span class="material-symbols-outlined">title</span>
+                </button>
+                <button class="toolbar-btn" title="Bullet list">
+                    <span class="material-symbols-outlined">format_list_bulleted</span>
+                </button>
+                <button class="toolbar-btn" title="Numbered list">
+                    <span class="material-symbols-outlined">format_list_numbered</span>
+                </button>
+                <button class="toolbar-btn" title="Checklist">
+                    <span class="material-symbols-outlined">checklist</span>
+                </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" title="Link">
+                    <span class="material-symbols-outlined">link</span>
+                </button>
+                <button class="toolbar-btn" title="Image">
+                    <span class="material-symbols-outlined">image</span>
+                </button>
+                <button class="toolbar-btn" title="Code block">
+                    <span class="material-symbols-outlined">code</span>
+                </button>
+                <button class="toolbar-btn" title="Quote">
+                    <span class="material-symbols-outlined">format_quote</span>
+                </button>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <div class="toolbar-stats">
+                <span class="stat-item">
+                    <span class="material-symbols-outlined stat-icon">article</span>
+                    342 words
+                </span>
+                <span class="stat-item">
+                    <span class="material-symbols-outlined stat-icon">schedule</span>
+                    2 min read
+                </span>
+            </div>
+        </div>
+
+        <!-- Editor Content -->
         <div class="dn-editor-content">
-            <h1 class="dn-entry-heading">{{ note.title }}</h1>
-            <div class="dn-entry-body" [innerHTML]="note.content"></div>
+            <div class="editor-container">
+                <input type="text" class="dn-entry-heading-input" [value]="note.title" placeholder="Note title..." />
+
+                <!-- Tags Section -->
+                @if (getNoteTags(note).length > 0) {
+                <div class="editor-tags-section">
+                    @for (tag of getNoteTags(note); track tag) {
+                    <span class="editor-tag-chip">
+                        <span class="material-symbols-outlined tag-icon">label</span>
+                        {{ tag }}
+                        <button class="tag-remove">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </span>
+                    }
+                    <button class="add-tag-btn">
+                        <span class="material-symbols-outlined">add</span>
+                        Add tag
+                    </button>
+                </div>
+                }
+
+                <!-- Rich Text Editor Area -->
+                <div class="dn-entry-body" [innerHTML]="note.content"></div>
+            </div>
+        </div>
+
+        <!-- Editor Footer with Quick Actions -->
+        <div class="dn-editor-footer">
+            <div class="footer-left">
+                <button class="footer-action-btn">
+                    <span class="material-symbols-outlined">history</span>
+                    Version history
+                </button>
+                <button class="footer-action-btn">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    AI Assist
+                </button>
+            </div>
+            <div class="footer-right">
+                <span class="save-status">
+                    <span class="material-symbols-outlined status-icon">cloud_done</span>
+                    All changes saved
+                </span>
+                <button class="primary-btn">
+                    <span class="material-symbols-outlined">check</span>
+                    Done
+                </button>
+            </div>
         </div>
         } @else {
         <div class="dn-empty-state">
             <span class="material-symbols-outlined empty-icon">note_add</span>
-            <p>Select a note or create a new one</p>
+            <h3>No note selected</h3>
+            <p>Select a note from the sidebar or create a new one to get started</p>
+            <button class="empty-action-btn" (click)="handleNewNote()">
+                <span class="material-symbols-outlined">add</span>
+                Create new note
+            </button>
         </div>
         }
     </div>
