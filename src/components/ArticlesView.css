@@ -171,6 +171,7 @@
   border-bottom: 1px solid #111;
   align-items: center;
   transition: background 0.1s;
+  cursor: pointer;
 }
 
 .table-row:hover {

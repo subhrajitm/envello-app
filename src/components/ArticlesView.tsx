@@ -19,11 +19,15 @@ interface ArticlesViewProps {
   categoryName?: string;
 }
 
+import DefaultEditorView from './DefaultEditorView';
+
 const ArticlesView: React.FC<ArticlesViewProps> = () => {
   const [selectedPlatform, setSelectedPlatform] = useState('All Platforms');
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
+  const [activeArticleId, setActiveArticleId] = useState<string | null>(null);
 
   const articles: Article[] = [
+    // ... existing articles data ...
     {
       id: '1',
       title: 'Scaling Enterprise SaaS: The 2024 Architecture Guide',
@@ -89,6 +93,17 @@ const ArticlesView: React.FC<ArticlesViewProps> = () => {
     }
   };
 
+  if (activeArticleId) {
+    const article = articles.find(a => a.id === activeArticleId);
+    return (
+      <DefaultEditorView
+        title={article?.title}
+        type="Article"
+        onBack={() => setActiveArticleId(null)}
+      />
+    );
+  }
+
   return (
     <div className="articles-view">
       {/* Sub-Header / Filter Bar */}
@@ -143,7 +158,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = () => {
           </div>
           <div className="table-body">
             {articles.map((article) => (
-              <div key={article.id} className="table-row">
+              <div key={article.id} className="table-row" onClick={() => setActiveArticleId(article.id)}>
                 <div className="col-title">
                   <span className="material-symbols-outlined article-icon">{article.icon}</span>
                   {article.title}
@@ -181,7 +196,7 @@ const ArticlesView: React.FC<ArticlesViewProps> = () => {
                 </div>
                 <div className="col-last-updated">{article.lastUpdated}</div>
                 <div className="col-menu">
-                  <button className="menu-btn">
+                  <button className="menu-btn" onClick={(e) => e.stopPropagation()}>
                     <span className="material-symbols-outlined icon-sm">more_vert</span>
                   </button>
                 </div>
