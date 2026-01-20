@@ -357,13 +357,87 @@
 }
 
 /* Right Sidebar AI */
+/* Right Sidebar Styles */
 .ne-sidebar-right {
-    width: 280px;
+    width: 300px;
     background: #080808;
     border-left: 1px solid #1a1a1a;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 0;
+}
+
+.ne-right-tabs {
+    display: flex;
+    border-bottom: 1px solid #1a1a1a;
+    background: #0a0a0a;
+}
+
+.ne-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 0;
+    color: #666;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ne-tab-btn:hover {
+    color: #aeaeae;
+    background: #111;
+}
+
+.ne-tab-btn.active {
+    color: #fcd34d;
+    background: #080808;
+}
+
+.ne-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #fcd34d;
+}
+
+.icon-tab {
+    font-size: 20px;
+}
+
+.ne-right-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ne-tab-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #444;
+    gap: 12px;
+    text-align: center;
+}
+
+.placeholder-icon span {
+    font-size: 48px;
+    opacity: 0.2;
+}
+
+.placeholder-text {
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .ne-ai-header {
@@ -371,10 +445,10 @@
     align-items: center;
     gap: 8px;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: 1px;
-    color: #888;
-    margin-bottom: 24px;
+    color: #aeaeae;
+    margin-bottom: 20px;
 }
 
 .icon-bolt {
@@ -524,6 +598,33 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.ne-nav-section-right {
+    margin-top: 24px;
+    border-top: 1px solid #1a1a1a;
+    padding-top: 16px;
+    margin-bottom: auto;
+    /* Push footer down if needed, but flex column handles most */
+}
+
+.ne-nav-group-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: #666;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 4px;
+}
+
+.ne-nav-group-right:hover,
+.ne-nav-group-right.active {
+    color: #fcd34d;
+    background: #111;
 }
 
 .footer-action {

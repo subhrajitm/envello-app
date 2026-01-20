@@ -9,6 +9,7 @@ interface NovelEditorProps {
 const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
     const [wordCount, setWordCount] = useState(1240);
     const [activeChapter, setActiveChapter] = useState('01');
+    const [activeRightTab, setActiveRightTab] = useState('AI');
 
     return (
         <div className="ne-layout">
@@ -22,22 +23,7 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                         </button>
                     </div>
 
-                    <div className="ne-nav-group active">
-                        <span className="material-symbols-outlined icon-nav active-icon">menu_book</span>
-                        Manuscript
-                    </div>
-                    <div className="ne-nav-group">
-                        <span className="material-symbols-outlined icon-nav">group</span>
-                        Characters
-                    </div>
-                    <div className="ne-nav-group">
-                        <span className="material-symbols-outlined icon-nav">account_tree</span>
-                        Plot Outliner
-                    </div>
-                    <div className="ne-nav-group">
-                        <span className="material-symbols-outlined icon-nav">public</span>
-                        World Codex
-                    </div>
+
 
                     <div className="ne-chapters-section">
                         <div className="ne-chap-header">
@@ -101,53 +87,124 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                     </div>
                 </div>
 
-                {/* Right Sidebar: AI Intelligence */}
+                {/* Right Sidebar: Tabs & Content */}
                 <div className="ne-sidebar-right">
-                    <div className="ne-ai-header">
-                        <span className="material-symbols-outlined icon-bolt">bolt</span>
-                        STUDIO INTELLIGENCE
-                        <div className="online-dot"></div>
-                    </div>
 
-                    <div className="ne-ai-actions">
-                        <button className="btn-ai-primary">
-                            <span className="material-symbols-outlined icon-play">play_arrow</span>
-                            Continue Scene
+                    {/* Tab Navigation */}
+                    <div className="ne-right-tabs">
+                        <button
+                            className={`ne-tab-btn ${activeRightTab === 'AI' ? 'active' : ''}`}
+                            onClick={() => setActiveRightTab('AI')}
+                            title="Studio Intelligence"
+                        >
+                            <span className="material-symbols-outlined icon-tab">bolt</span>
                         </button>
-                        <div className="ai-btn-row">
-                            <button className="btn-ai-sec">
-                                <span className="material-symbols-outlined">auto_fix_high</span>
-                                Rewrite
-                            </button>
-                            <button className="btn-ai-sec">
-                                <span className="material-symbols-outlined">analytics</span>
-                                Analyze
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="ne-context-box">
-                        <div className="ctx-header">
-                            CONTEXT OVERRIDE
-                            <span className="material-symbols-outlined icon-info">info</span>
-                        </div>
-                        <textarea
-                            className="ctx-input"
-                            placeholder="Inject specific direction or tone instructions here..."
-                        ></textarea>
-                        <button className="btn-execute">
-                            Execute <span className="material-symbols-outlined icon-sm">keyboard_return</span>
+                        <button
+                            className={`ne-tab-btn ${activeRightTab === 'MANUSCRIPT' ? 'active' : ''}`}
+                            onClick={() => setActiveRightTab('MANUSCRIPT')}
+                            title="Manuscript Settings"
+                        >
+                            <span className="material-symbols-outlined icon-tab">menu_book</span>
+                        </button>
+                        <button
+                            className={`ne-tab-btn ${activeRightTab === 'CHARACTERS' ? 'active' : ''}`}
+                            onClick={() => setActiveRightTab('CHARACTERS')}
+                            title="Characters"
+                        >
+                            <span className="material-symbols-outlined icon-tab">group</span>
+                        </button>
+                        <button
+                            className={`ne-tab-btn ${activeRightTab === 'PLOT' ? 'active' : ''}`}
+                            onClick={() => setActiveRightTab('PLOT')}
+                            title="Plot Outliner"
+                        >
+                            <span className="material-symbols-outlined icon-tab">account_tree</span>
+                        </button>
+                        <button
+                            className={`ne-tab-btn ${activeRightTab === 'WORLD' ? 'active' : ''}`}
+                            onClick={() => setActiveRightTab('WORLD')}
+                            title="World Codex"
+                        >
+                            <span className="material-symbols-outlined icon-tab">public</span>
                         </button>
                     </div>
 
-                    <div className="ne-suggestions-box">
-                        <div className="sugg-header">
-                            LATEST SUGGESTIONS
-                            <span className="clear-link">Clear</span>
-                        </div>
-                        <div className="sugg-card">
-                            "The iron felt colder than the surrounding frost, a chill that seeped into his marrow..."
-                        </div>
+                    {/* Tab Content */}
+                    <div className="ne-right-content">
+                        {activeRightTab === 'AI' && (
+                            <>
+                                <div className="ne-ai-header">
+                                    STUDIO INTELLIGENCE
+                                    <div className="online-dot"></div>
+                                </div>
+
+                                <div className="ne-ai-actions">
+                                    <button className="btn-ai-primary">
+                                        <span className="material-symbols-outlined icon-play">play_arrow</span>
+                                        Continue Scene
+                                    </button>
+                                    <div className="ai-btn-row">
+                                        <button className="btn-ai-sec">
+                                            <span className="material-symbols-outlined">auto_fix_high</span>
+                                            Rewrite
+                                        </button>
+                                        <button className="btn-ai-sec">
+                                            <span className="material-symbols-outlined">analytics</span>
+                                            Analyze
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="ne-context-box">
+                                    <div className="ctx-header">
+                                        CONTEXT OVERRIDE
+                                        <span className="material-symbols-outlined icon-info">info</span>
+                                    </div>
+                                    <textarea
+                                        className="ctx-input"
+                                        placeholder="Inject specific direction or tone instructions here..."
+                                    ></textarea>
+                                    <button className="btn-execute">
+                                        Execute <span className="material-symbols-outlined icon-sm">keyboard_return</span>
+                                    </button>
+                                </div>
+
+                                <div className="ne-suggestions-box">
+                                    <div className="sugg-header">
+                                        LATEST SUGGESTIONS
+                                        <span className="clear-link">Clear</span>
+                                    </div>
+                                    <div className="sugg-card">
+                                        "The iron felt colder than the surrounding frost, a chill that seeped into his marrow..."
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {activeRightTab === 'MANUSCRIPT' && (
+                            <div className="ne-tab-placeholder">
+                                <div className="placeholder-icon"><span className="material-symbols-outlined">menu_book</span></div>
+                                <div className="placeholder-text">Manuscript Settings & Goals</div>
+                            </div>
+                        )}
+                        {activeRightTab === 'CHARACTERS' && (
+                            <div className="ne-tab-placeholder">
+                                <div className="placeholder-icon"><span className="material-symbols-outlined">group</span></div>
+                                <div className="placeholder-text">Character Database</div>
+                            </div>
+                        )}
+                        {activeRightTab === 'PLOT' && (
+                            <div className="ne-tab-placeholder">
+                                <div className="placeholder-icon"><span className="material-symbols-outlined">account_tree</span></div>
+                                <div className="placeholder-text">Plot Outline & Beats</div>
+                            </div>
+                        )}
+                        {activeRightTab === 'WORLD' && (
+                            <div className="ne-tab-placeholder">
+                                <div className="placeholder-icon"><span className="material-symbols-outlined">public</span></div>
+                                <div className="placeholder-text">World Codex & Lore</div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="ne-ai-footer">
