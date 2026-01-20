@@ -5,7 +5,7 @@
         </div>
         <div class="dn-entries-list">
             @for (entry of notes(); track entry.id) {
-            <div class="dn-entry-item" [class.active]="selectedNote()?.id === entry.id" (click)="selectNote(entry.id)">
+            <div class="dn-entry-item" [class.active]="selectedNote().id === entry.id" (click)="selectNote(entry.id)">
                 <div class="dn-entry-date">{{ entry.date }}</div>
                 <div class="dn-entry-title">{{ entry.title }}</div>
                 <div class="dn-entry-preview">{{ entry.preview }}</div>

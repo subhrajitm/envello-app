@@ -8,12 +8,12 @@
 
 /* Left Sidebar: Stats & Tasks */
 .ov-sidebar-left {
-    width: 260px;
+    width: 240px;
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 12px;
 }
 
 .ov-stats-header {
@@ -26,8 +26,8 @@
 
 .ov-stats-row {
     display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .stat-card {
@@ -35,7 +35,7 @@
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 6px;
-    padding: 10px;
+    padding: 8px;
 }
 
 .stat-label {
@@ -46,7 +46,7 @@
 }
 
 .stat-value {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--text-primary);
 }
@@ -60,30 +60,30 @@
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 1px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .mt-4 {
-    margin-top: 32px;
+    margin-top: 16px;
 }
 
 .planning-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .planning-card {
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 6px;
-    padding: 12px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     position: relative;
     overflow: hidden;
     cursor: grab;
@@ -111,7 +111,7 @@
 }
 
 .plan-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -161,12 +161,12 @@
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 4px;
-    padding: 10px 12px;
-    font-size: 12px;
+    padding: 6px 8px;
+    font-size: 11px;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
 }
 
@@ -178,7 +178,7 @@
 .show-assets-btn {
     width: 100%;
     margin-top: auto;
-    padding: 12px;
+    padding: 8px;
     background: transparent;
     border: 1px dashed var(--border-subtle);
     color: var(--text-tertiary);
@@ -193,22 +193,22 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 24px 32px;
+    padding: 12px 16px;
 }
 
 .calendar-header {
     display: flex;
     align-items: center;
-    margin-bottom: 24px;
-    gap: 24px;
+    margin-bottom: 12px;
+    gap: 16px;
 }
 
 .cal-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
-    min-width: 180px;
+    min-width: 150px;
 }
 
 .cal-views {
@@ -290,7 +290,7 @@
     flex: 1;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: 24px repeat(3, 1fr);
+    grid-template-rows: 20px repeat(3, 1fr);
     /* Header + 3 rows approx */
     gap: 1px;
     background: var(--border-subtle);
@@ -313,8 +313,8 @@
     background: var(--bg-panel);
     display: flex;
     flex-direction: column;
-    padding: 8px;
-    min-height: 120px;
+    padding: 6px;
+    min-height: 80px;
     position: relative;
     transition: background 0.1s;
 }
@@ -331,7 +331,7 @@
 .day-num-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .day-num {
@@ -360,9 +360,9 @@
 }
 
 .cal-event {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
-    padding: 6px 8px;
+    padding: 4px 6px;
     border-radius: 3px;
     color: var(--text-primary);
     margin-bottom: 2px;
@@ -401,23 +401,23 @@
 
 /* Right Sidebar: Activity */
 .ov-sidebar-right {
-    width: 260px;
+    width: 240px;
     background: var(--bg-app);
     border-left: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 12px;
 }
 
 .activity-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
 }
 
 .act-item {
     display: flex;
-    gap: 12px;
+    gap: 8px;
 }
 
 .act-dot {
@@ -464,7 +464,7 @@
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 6px;
-    padding: 16px;
+    padding: 12px;
 }
 
 .config-header {
