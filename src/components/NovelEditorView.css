@@ -819,3 +819,225 @@
     background: #222;
     margin: 0 8px;
 }
+
+/* Right Sidebar New Sections */
+.ne-section-header {
+    font-size: 10px;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ne-section-header .icon-add-sm {
+    font-size: 14px;
+    cursor: pointer;
+    color: #666;
+}
+
+.ne-section-header .icon-add-sm:hover {
+    color: #fcd34d;
+}
+
+.mt-4 {
+    margin-top: 16px;
+}
+
+/* Manuscript Info Cards */
+.ne-info-card {
+    background: #111;
+    border: 1px solid #222;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.ne-card-label {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.ne-card-value {
+    font-size: 13px;
+    color: #e5e5e5;
+    font-weight: 500;
+}
+
+.ne-goal-progress {
+    background: #111;
+    border: 1px solid #222;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.goal-label {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.goal-bar {
+    height: 6px;
+    background: #222;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.goal-fill {
+    height: 100%;
+    background: #fcd34d;
+    border-radius: 3px;
+}
+
+/* Character List Items */
+.ne-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #111;
+}
+
+.ne-list-item:hover {
+    background: #111;
+}
+
+.ne-avatar {
+    width: 32px;
+    height: 32px;
+    background: #222;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #888;
+    border: 1px solid #333;
+}
+
+.ne-item-info {
+    flex: 1;
+}
+
+.ne-item-title {
+    font-size: 13px;
+    color: #e5e5e5;
+    font-weight: 500;
+}
+
+.ne-item-sub {
+    font-size: 10px;
+    color: #666;
+}
+
+/* Plot Timeline */
+.ne-timeline-item {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 24px;
+    position: relative;
+}
+
+.ne-timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-dot {
+    width: 8px;
+    height: 8px;
+    background: #333;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.timeline-dot.active {
+    background: #fcd34d;
+    box-shadow: 0 0 8px rgba(252, 211, 77, 0.4);
+}
+
+.ne-timeline-item::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 3.5px;
+    width: 1px;
+    height: 100%;
+    background: #222;
+    z-index: 1;
+}
+
+.ne-timeline-item:last-child::before {
+    display: none;
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-title {
+    font-size: 12px;
+    color: #ddd;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.timeline-desc {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* World Grid */
+.ne-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.ne-world-card {
+    background: #111;
+    border: 1px solid #222;
+    padding: 16px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ne-world-card:hover {
+    border-color: #333;
+    background: #161616;
+}
+
+.card-icon {
+    font-size: 24px;
+    color: #444;
+}
+
+.ne-world-card:hover .card-icon {
+    color: #fcd34d;
+}
+
+.card-name {
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+    font-weight: 500;
+}

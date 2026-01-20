@@ -122,7 +122,6 @@ const isBlockActive = (editor: Editor, format: string) => {
 }
 
 const FixedToolbar = () => {
-    const editor = useSlate()
     return (
         <div className="ne-fixed-toolbar">
             <div className="ne-toolbar-group">
@@ -206,6 +205,25 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
         const count = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
         setWordCount(count);
     };
+
+    const handleAIContinue = () => {
+        const aiText = "As if in response to his silent query, the air in the room shifted, growing heavier with the scent of ozone and old parchment. The shadows in the corner seemed to lengthen, stretching towards him like curious fingers.";
+
+        Transforms.insertNodes(
+            editor,
+            {
+                type: 'paragraph',
+                children: [{ text: aiText }]
+            },
+            { at: [editor.children.length] }
+        );
+
+        // Scroll to bottom (optional, but handled by React usually)
+    };
+
+    useEffect(() => {
+        console.log(`Loaded novel: ${novelId}`);
+    }, [novelId]);
 
     const renderElement = useCallback((props: RenderElementProps) => {
         switch (props.element.type) {
@@ -404,7 +422,7 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                                 </div>
 
                                 <div className="ne-ai-actions">
-                                    <button className="btn-ai-primary">
+                                    <button className="btn-ai-primary" onClick={handleAIContinue}>
                                         <span className="material-symbols-outlined icon-play">play_arrow</span>
                                         Continue Scene
                                     </button>
@@ -447,27 +465,100 @@ const NovelEditorView: React.FC<NovelEditorProps> = ({ novelId, onBack }) => {
                         )}
 
                         {activeRightTab === 'MANUSCRIPT' && (
-                            <div className="ne-tab-placeholder">
-                                <div className="placeholder-icon"><span className="material-symbols-outlined">menu_book</span></div>
-                                <div className="placeholder-text">Manuscript Settings & Goals</div>
+                            <div className="ne-tab-content">
+                                <div className="ne-section-header">MANUSCRIPT SETTINGS</div>
+                                <div className="ne-info-card">
+                                    <div className="ne-card-label">Title</div>
+                                    <div className="ne-card-value">The First Peel</div>
+                                </div>
+                                <div className="ne-info-card">
+                                    <div className="ne-card-label">Genre</div>
+                                    <div className="ne-card-value">Sci-Fi / Mystery</div>
+                                </div>
+                                <div className="ne-info-card">
+                                    <div className="ne-card-label">Target Audience</div>
+                                    <div className="ne-card-value">Adult</div>
+                                </div>
+                                <div className="ne-section-header mt-4">GOALS</div>
+                                <div className="ne-goal-progress">
+                                    <div className="goal-label">Daily Goal: 2,000 words</div>
+                                    <div className="goal-bar"><div className="goal-fill" style={{ width: '62%' }}></div></div>
+                                </div>
                             </div>
                         )}
                         {activeRightTab === 'CHARACTERS' && (
-                            <div className="ne-tab-placeholder">
-                                <div className="placeholder-icon"><span className="material-symbols-outlined">group</span></div>
-                                <div className="placeholder-text">Character Database</div>
+                            <div className="ne-tab-content">
+                                <div className="ne-section-header">CAST OF CHARACTERS <span className="material-symbols-outlined icon-add-sm">add</span></div>
+                                <div className="ne-list-item">
+                                    <div className="ne-avatar">A</div>
+                                    <div className="ne-item-info">
+                                        <div className="ne-item-title">Arthur</div>
+                                        <div className="ne-item-sub">Protagonist • The Seeker</div>
+                                    </div>
+                                </div>
+                                <div className="ne-list-item">
+                                    <div className="ne-avatar">V</div>
+                                    <div className="ne-item-info">
+                                        <div className="ne-item-title">The Voice</div>
+                                        <div className="ne-item-sub">Antagonist • AI Construct</div>
+                                    </div>
+                                </div>
+                                <div className="ne-list-item">
+                                    <div className="ne-avatar">E</div>
+                                    <div className="ne-item-info">
+                                        <div className="ne-item-title">Elara</div>
+                                        <div className="ne-item-sub">Supporting • The Librarian</div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                         {activeRightTab === 'PLOT' && (
-                            <div className="ne-tab-placeholder">
-                                <div className="placeholder-icon"><span className="material-symbols-outlined">account_tree</span></div>
-                                <div className="placeholder-text">Plot Outline & Beats</div>
+                            <div className="ne-tab-content">
+                                <div className="ne-section-header">PLOT OUTLINE <span className="material-symbols-outlined icon-add-sm">add</span></div>
+                                <div className="ne-timeline-item">
+                                    <div className="timeline-dot"></div>
+                                    <div className="timeline-content">
+                                        <div className="timeline-title">Inciting Incident</div>
+                                        <div className="timeline-desc">Arthur discovers the hidden door in the orchard.</div>
+                                    </div>
+                                </div>
+                                <div className="ne-timeline-item">
+                                    <div className="timeline-dot active"></div>
+                                    <div className="timeline-content">
+                                        <div className="timeline-title">Rising Action</div>
+                                        <div className="timeline-desc">The first trial of the Banana Conservatory begins.</div>
+                                    </div>
+                                </div>
+                                <div className="ne-timeline-item">
+                                    <div className="timeline-dot"></div>
+                                    <div className="timeline-content">
+                                        <div className="timeline-title">Midpoint Climax</div>
+                                        <div className="timeline-desc">Arthur loses his satchel and the manuscript.</div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                         {activeRightTab === 'WORLD' && (
-                            <div className="ne-tab-placeholder">
-                                <div className="placeholder-icon"><span className="material-symbols-outlined">public</span></div>
-                                <div className="placeholder-text">World Codex & Lore</div>
+                            <div className="ne-tab-content">
+                                <div className="ne-section-header">WORLD CODEX <span className="material-symbols-outlined icon-add-sm">add</span></div>
+                                <div className="ne-card-grid">
+                                    <div className="ne-world-card">
+                                        <span className="material-symbols-outlined card-icon">forest</span>
+                                        <div className="card-name">The Orchard</div>
+                                    </div>
+                                    <div className="ne-world-card">
+                                        <span className="material-symbols-outlined card-icon">castle</span>
+                                        <div className="card-name">Manor House</div>
+                                    </div>
+                                    <div className="ne-world-card">
+                                        <span className="material-symbols-outlined card-icon">science</span>
+                                        <div className="card-name">The Lab</div>
+                                    </div>
+                                    <div className="ne-world-card">
+                                        <span className="material-symbols-outlined card-icon">auto_stories</span>
+                                        <div className="card-name">Old Library</div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
