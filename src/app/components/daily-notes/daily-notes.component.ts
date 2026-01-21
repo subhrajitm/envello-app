@@ -67,6 +67,10 @@ export class DailyNotesComponent {
     return this.noteGroups().every(g => !g.expanded);
   });
 
+  allExpanded = computed(() => {
+    return this.noteGroups().every(g => g.expanded);
+  });
+
   selectedNote = computed(() => {
     const list = this.filteredNotes();
     if (list.length === 0) {
@@ -146,5 +150,12 @@ export class DailyNotesComponent {
   handleNewFolder() {
     console.log('Create new folder');
     // Implement folder creation logic
+  }
+
+  toggleExpandAll() {
+    const shouldExpand = !this.allExpanded();
+    this.noteGroups.update(groups =>
+      groups.map(g => ({ ...g, expanded: shouldExpand }))
+    );
   }
 }

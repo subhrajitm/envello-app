@@ -26,10 +26,22 @@
             </div>
         </div>
 
-        <!-- Tabs: Folders and Tags -->
+        <!-- Tabs: Folders and Tags with Expand/Collapse -->
         <div class="dn-tabs">
-            <button class="tab-btn active">Folders</button>
-            <button class="tab-btn">Tags</button>
+            <div class="tab-icons">
+                <button class="tab-icon-btn active" title="Folders">
+                    <span class="material-symbols-outlined">folder</span>
+                </button>
+                <button class="tab-icon-btn" title="Tags">
+                    <span class="material-symbols-outlined">label</span>
+                </button>
+            </div>
+            <div class="expand-controls">
+                <button class="control-btn" [title]="allExpanded() ? 'Collapse All' : 'Expand All'"
+                    (click)="toggleExpandAll()">
+                    <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
+                </button>
+            </div>
         </div>
 
         <!-- Notes List with Hierarchical Folders -->

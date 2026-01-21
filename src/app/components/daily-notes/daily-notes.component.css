@@ -124,36 +124,74 @@
     color: var(--text-secondary);
 }
 
-/* Tabs */
+/* Tabs with Icons and Controls */
 .dn-tabs {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 8px 14px;
-    gap: 6px;
     border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
-.tab-btn {
-    flex: 1;
-    padding: 6px 12px;
+.tab-icons {
+    display: flex;
+    gap: 4px;
+}
+
+.tab-icon-btn {
     background: transparent;
     border: 1px solid var(--border-subtle);
     border-radius: 4px;
     color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 500;
+    padding: 6px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.15s;
 }
 
-.tab-btn:hover {
+.tab-icon-btn:hover {
     background: var(--bg-hover);
+    color: var(--text-primary);
 }
 
-.tab-btn.active {
-    background: var(--bg-app);
+.tab-icon-btn.active {
+    background: var(--accent-primary);
+    color: var(--accent-primary-text);
+    border-color: var(--accent-primary);
+}
+
+.tab-icon-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.expand-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.control-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.control-btn:hover {
+    background: var(--bg-hover);
     color: var(--text-primary);
-    border-color: var(--border-main);
+}
+
+.control-btn .material-symbols-outlined {
+    font-size: 16px;
 }
 
 /* Notes List */
