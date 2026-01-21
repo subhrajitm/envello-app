@@ -75,37 +75,33 @@
     <!-- Editor Pane -->
     <div class="dn-editor">
         @if (selectedNote(); as note) {
-        <!-- Editor Header with Enhanced Metadata -->
+        <!-- Editor Header with Tab-like View -->
         <div class="dn-editor-header">
-            <div class="dn-editor-meta-section">
-                <div class="meta-primary">
-                    <span class="meta-item">
-                        <span class="material-symbols-outlined meta-icon">calendar_today</span>
-                        {{ note.date }}
-                    </span>
-                    <span class="meta-item">
-                        <span class="material-symbols-outlined meta-icon">schedule</span>
-                        09:15 AM
-                    </span>
-                    <span class="meta-item">
-                        <span class="material-symbols-outlined meta-icon">edit_note</span>
-                        Last edited 2 hours ago
-                    </span>
-                </div>
-                <div class="meta-badges">
-                    @if (isPinned(note)) {
-                    <span class="pinned-badge">
-                        <span class="material-symbols-outlined">push_pin</span>
-                        Pinned
-                    </span>
-                    }
-                    @if (getNoteTags(note).length > 0) {
-                    <span class="tags-badge">
-                        <span class="material-symbols-outlined">label</span>
-                        {{ getNoteTags(note).length }} tags
-                    </span>
-                    }
-                </div>
+            <div class="dn-editor-tabs">
+                <button class="editor-tab active">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    <span class="tab-label">{{ note.date }}</span>
+                </button>
+                <button class="editor-tab">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <span class="tab-label">09:15 AM</span>
+                </button>
+                <button class="editor-tab">
+                    <span class="material-symbols-outlined">edit_note</span>
+                    <span class="tab-label">Last edited 2 hours ago</span>
+                </button>
+                @if (isPinned(note)) {
+                <button class="editor-tab pinned">
+                    <span class="material-symbols-outlined">push_pin</span>
+                    <span class="tab-label">Pinned</span>
+                </button>
+                }
+                @if (getNoteTags(note).length > 0) {
+                <button class="editor-tab tags">
+                    <span class="material-symbols-outlined">label</span>
+                    <span class="tab-label">{{ getNoteTags(note).length }} tags</span>
+                </button>
+                }
             </div>
             <div class="dn-editor-actions">
                 <button class="action-btn" title="Format">
