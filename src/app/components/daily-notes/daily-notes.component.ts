@@ -124,4 +124,16 @@ export class DailyNotesComponent {
   getNoteTags(note: Note): string[] {
     return note.tags?.filter(tag => tag !== 'pinned') || [];
   }
+
+  expandAll() {
+    this.noteGroups.update(groups =>
+      groups.map(g => ({ ...g, expanded: true }))
+    );
+  }
+
+  collapseAll() {
+    this.noteGroups.update(groups =>
+      groups.map(g => ({ ...g, expanded: false }))
+    );
+  }
 }

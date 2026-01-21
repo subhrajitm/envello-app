@@ -1,11 +1,22 @@
 <div class="daily-notes-view">
     <div class="dn-sidebar">
-        <!-- Header with New Note Button -->
+        <!-- Header with New Note Button and Actions -->
         <div class="dn-sidebar-header-action">
             <button class="dn-btn-new-entry" (click)="handleNewNote()">
                 <span class="material-symbols-outlined">add</span>
                 New Note
             </button>
+            <div class="dn-action-buttons">
+                <button class="action-icon-btn" title="New Folder">
+                    <span class="material-symbols-outlined">create_new_folder</span>
+                </button>
+                <button class="action-icon-btn" title="Sort">
+                    <span class="material-symbols-outlined">sort</span>
+                </button>
+                <button class="action-icon-btn" title="Expand All" (click)="expandAll()">
+                    <span class="material-symbols-outlined">unfold_more</span>
+                </button>
+            </div>
         </div>
 
         <!-- Search Bar -->
@@ -30,30 +41,32 @@
             </button>
         </div>
 
-        <!-- Notes List -->
+
+        <!-- Notes List with Expandable Folders -->
         <div class="dn-entries-list">
-            @for (entry of filteredNotes(); track entry.id) {
-            <div class="dn-entry-item" [class.active]="selectedNote()?.id === entry.id" [class.pinned]="isPinned(entry)"
-                (click)="selectNote(entry.id)">
-                <div class="entry-header">
-                    <div class="dn-entry-date">{{ entry.date }}</div>
-                    <button class="pin-btn" [class.pinned]="isPinned(entry)" (click)="togglePin(entry, $event)">
-                        <span class="material-symbols-outlined">push_pin</span>
-                    </button>
+            @for (group of noteGroups(); track group.id) {
+            <div class="note-group">
+                <div class="group-header" (click)="toggleGroup(group.id)">
+                    <span class="material-symbols-outlined expand-icon" [class.expanded]="group.expanded">
+                        {{ group.expanded ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                    <span class="group-name">{{ group.name }}</span>
+                    <span class="group-count">{{ filteredNotes().length }}</span>
                 </div>
-                <div class="entry-title-row">
-                    <div class="dn-entry-title">{{ entry.title }}</div>
-                    @if (getNoteTags(entry).length > 0) {
-                    <div class="entry-tags-inline">
-                        @for (tag of getNoteTags(entry).slice(0, 2); track tag) {
-                        <span class="tag-chip-small">{{ tag }}</span>
-                        }
-                        @if (getNoteTags(entry).length > 2) {
-                        <span class="tag-more">+{{ getNoteTags(entry).length - 2 }}</span>
-                        }
+
+                @if (group.expanded) {
+                <div class="group-items">
+                    @for (entry of filteredNotes(); track entry.id) {
+                    <div class="dn-entry-item" [class.active]="selectedNote()?.id === entry.id"
+                        (click)="selectNote(entry.id)">
+                        <div class="entry-content">
+                            <div class="dn-entry-title">{{ entry.title }}</div>
+                            <div class="dn-entry-date">{{ entry.date }}</div>
+                        </div>
                     </div>
                     }
                 </div>
+                }
             </div>
             }
         </div>

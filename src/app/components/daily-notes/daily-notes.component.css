@@ -20,27 +20,64 @@
     border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
     height: auto !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
 }
 
 .dn-btn-new-entry {
-    width: 100%;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: var(--accent-primary);
     color: var(--accent-primary-text);
     border: none;
     border-radius: 4px;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
     transition: filter 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.dn-btn-new-entry .material-symbols-outlined {
+    font-size: 16px;
 }
 
 .dn-btn-new-entry:hover {
     filter: brightness(1.1);
+}
+
+/* Action Buttons Row */
+.dn-action-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.action-icon-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.action-icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-highlight);
+}
+
+.action-icon-btn .material-symbols-outlined {
+    font-size: 18px;
 }
 
 /* Search Bar */
@@ -180,14 +217,62 @@
     min-height: 0;
 }
 
-.dn-entry-item {
-    padding: 8px 12px;
+/* Note Groups (Folders) */
+.note-group {
     border-bottom: 1px solid var(--border-subtle);
+}
+
+.group-header {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
     transition: background 0.2s;
+    user-select: none;
+}
+
+.group-header:hover {
+    background: var(--bg-hover);
+}
+
+.expand-icon {
+    font-size: 18px;
+    color: var(--text-tertiary);
+    transition: transform 0.2s;
+}
+
+.expand-icon.expanded {
+    transform: rotate(0deg);
+}
+
+.group-name {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.group-count {
+    font-size: 10px;
+    color: var(--text-disabled);
+    background: var(--bg-panel);
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.group-items {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+}
+
+.dn-entry-item {
+    padding: 8px 12px 8px 36px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-left: 2px solid transparent;
 }
 
 .dn-entry-item:hover {
@@ -196,11 +281,27 @@
 
 .dn-entry-item.active {
     background: var(--bg-active);
-    border-left: 3px solid var(--accent-primary);
+    border-left-color: var(--accent-primary);
 }
 
-.dn-entry-item.pinned {
-    background: var(--bg-panel);
+.entry-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dn-entry-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dn-entry-date {
+    font-size: 10px;
+    color: var(--text-tertiary);
 }
 
 .entry-header {
@@ -240,8 +341,8 @@
 }
 
 .dn-entry-title {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -822,4 +923,36 @@
     padding: 2px 4px;
     color: var(--text-tertiary);
     font-weight: 600;
+}
+
+/* Action Buttons Row */
+.dn-action-buttons {
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-app);
+}
+
+.action-icon-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.action-icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-highlight);
+}
+
+.action-icon-btn .material-symbols-outlined {
+    font-size: 18px;
 }
