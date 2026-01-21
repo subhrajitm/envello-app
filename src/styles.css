@@ -50,6 +50,50 @@
     --accent-primary-text: #ffffff;
 }
 
+[data-theme="colorful"] {
+    /* Pastel Library Aesthetic */
+    --bg-app: linear-gradient(135deg, #f4efe6 0%, #faf7f2 50%, #f0ebe3 100%);
+    /* Natural warm gradient */
+    --bg-panel: #ffffff;
+    /* Clean white panels */
+    --bg-hover: #fef3e8;
+    /* Warm peachy hover */
+    --bg-active: #fde8d7;
+    /* Soft peach active */
+
+    --border-subtle: #e8dfd0;
+    --border-main: #d8cfc0;
+    --border-highlight: #c8bfb0;
+
+    --text-primary: #3a3a3a;
+    /* Soft black for readability */
+    --text-secondary: #6a6a6a;
+    --text-tertiary: #9a9a9a;
+
+    --accent-primary: #e8a87c;
+    /* Warm terracotta */
+    --accent-primary-dim: rgba(232, 168, 124, 0.15);
+    --accent-primary-text: #ffffff;
+    --accent-blue: #7eb3d4;
+    /* Soft sky blue */
+    --accent-red: #e89090;
+    /* Soft coral */
+    --accent-green: #a8d5a8;
+    /* Pastel sage green */
+    --accent-purple: #c4a8d8;
+    /* Soft lavender */
+    --accent-pink: #f0b8d0;
+    /* Soft rose */
+    --accent-yellow: #f4e89c;
+    /* Soft butter yellow */
+
+    /* Pastel card colors from reference */
+    --card-green: #d4f4dd;
+    --card-purple: #e5d4f4;
+    --card-pink: #f4d4e5;
+    --card-yellow: #f9f4d4;
+}
+
 * {
     margin: 0;
     padding: 0;

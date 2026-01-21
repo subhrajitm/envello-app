@@ -16,10 +16,9 @@
             <button class="icon-btn">
                 <span class="material-symbols-outlined">notifications</span>
             </button>
-            <button class="icon-btn" (click)="toggleTheme()"
-                [title]="'Switch to ' + (theme === 'dark' ? 'Light' : 'Dark') + ' Mode'">
+            <button class="icon-btn" (click)="toggleTheme()" [title]="'Switch to ' + getNextTheme() + ' Mode'">
                 <span class="material-symbols-outlined">
-                    {{ theme === 'dark' ? 'light_mode' : 'dark_mode' }}
+                    {{ getThemeIcon() }}
                 </span>
             </button>
             <button class="icon-btn">

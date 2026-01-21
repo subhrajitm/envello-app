@@ -34,6 +34,20 @@ export class HeaderComponent {
     return this.themeService.theme();
   }
 
+  getThemeIcon(): string {
+    const theme = this.theme;
+    if (theme === 'dark') return 'dark_mode';
+    if (theme === 'light') return 'light_mode';
+    return 'palette'; // colorful theme
+  }
+
+  getNextTheme(): string {
+    const theme = this.theme;
+    if (theme === 'dark') return 'Light';
+    if (theme === 'light') return 'Colorful';
+    return 'Dark';
+  }
+
   toggleTheme() {
     this.themeService.toggleTheme();
   }
