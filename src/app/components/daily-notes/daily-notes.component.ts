@@ -12,6 +12,14 @@ interface NoteGroup {
   noteIds: string[];
 }
 
+interface TagCategory {
+  id: string;
+  name: string;
+  color: string;
+  expanded: boolean;
+  tags: string[];
+}
+
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
@@ -28,6 +36,7 @@ export class DailyNotesComponent {
   selectedEntryId = signal<string>('');
   searchQuery = signal<string>('');
   selectedFilter = signal<string>('all'); // all, pinned, tagged, archived
+  activeView = signal<'folders' | 'tags'>('folders'); // Track active sidebar view
 
   // Track open notes as tabs
   openNotes = signal<string[]>([]);
@@ -37,6 +46,16 @@ export class DailyNotesComponent {
     { id: 'today', name: 'Today', icon: 'today', count: 0, expanded: true, noteIds: [] },
     { id: 'this-week', name: 'This Week', icon: 'calendar_month', count: 0, expanded: false, noteIds: [] },
     { id: 'older', name: 'Older Notes', icon: 'history', count: 0, expanded: false, noteIds: [] },
+  ]);
+
+  // Tag categories with colors
+  tagCategories = signal<TagCategory[]>([
+    { id: 'meta', name: '00 Meta', color: '#d89090', expanded: true, tags: ['Planning', 'Review', 'Goals'] },
+    { id: 'life', name: '10 Life', color: '#e8a87c', expanded: false, tags: ['Health', 'Family', 'Personal'] },
+    { id: 'it', name: '20 IT', color: '#f4e89c', expanded: false, tags: ['Programming', 'DevOps', 'Learning'] },
+    { id: 'hobbies', name: '30 Hobbies', color: '#a8d5a8', expanded: false, tags: ['Reading', 'Music', 'Art'] },
+    { id: 'devsystems', name: '50 DevO Systems', color: '#7eb3d4', expanded: false, tags: ['Architecture', 'Design', 'Tools'] },
+    { id: 'unsorted', name: 'Unsorted', color: '#b8d8e8', expanded: false, tags: ['Hippotology', 'Random', 'Misc'] },
   ]);
 
   showDropdown = signal<boolean>(false);
@@ -199,5 +218,26 @@ export class DailyNotesComponent {
     if (!dropdownWrapper && this.showDropdown()) {
       this.showDropdown.set(false);
     }
+  }
+
+  switchView(view: 'folders' | 'tags') {
+    this.activeView.set(view);
+  }
+
+  toggleTagCategory(categoryId: string) {
+    this.tagCategories.update(categories =>
+      categories.map(c => c.id === categoryId ? { ...c, expanded: !c.expanded } : c)
+    );
+  }
+
+  allTagCategoriesExpanded = computed(() => {
+    return this.tagCategories().every(c => c.expanded);
+  });
+
+  toggleExpandAllTags() {
+    const shouldExpand = !this.allTagCategoriesExpanded();
+    this.tagCategories.update(categories =>
+      categories.map(c => ({ ...c, expanded: shouldExpand }))
+    );
   }
 }

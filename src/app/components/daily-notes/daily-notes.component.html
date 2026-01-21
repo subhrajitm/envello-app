@@ -29,23 +29,34 @@
         <!-- Tabs: Folders and Tags with Expand/Collapse -->
         <div class="dn-tabs">
             <div class="tab-icons">
-                <button class="tab-icon-btn active" title="Folders">
+                <button class="tab-icon-btn" [class.active]="activeView() === 'folders'" (click)="switchView('folders')"
+                    title="Folders">
                     <span class="material-symbols-outlined">folder</span>
                 </button>
-                <button class="tab-icon-btn" title="Tags">
+                <button class="tab-icon-btn" [class.active]="activeView() === 'tags'" (click)="switchView('tags')"
+                    title="Tags">
                     <span class="material-symbols-outlined">label</span>
                 </button>
             </div>
             <div class="expand-controls">
+                @if (activeView() === 'folders') {
                 <button class="control-btn" [title]="allExpanded() ? 'Collapse All' : 'Expand All'"
                     (click)="toggleExpandAll()">
                     <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
                 </button>
+                } @else {
+                <button class="control-btn" [title]="allTagCategoriesExpanded() ? 'Collapse All' : 'Expand All'"
+                    (click)="toggleExpandAllTags()">
+                    <span class="material-symbols-outlined">{{ allTagCategoriesExpanded() ? 'unfold_less' :
+                        'unfold_more' }}</span>
+                </button>
+                }
             </div>
         </div>
 
         <!-- Notes List with Hierarchical Folders -->
         <div class="dn-entries-list">
+            @if (activeView() === 'folders') {
             @for (group of noteGroups(); track group.id) {
             <div class="folder-group">
                 <div class="folder-header" (click)="toggleGroup(group.id)">
@@ -68,6 +79,30 @@
                 </div>
                 }
             </div>
+            }
+            } @else {
+            <!-- Tags View -->
+            @for (category of tagCategories(); track category.id) {
+            <div class="tag-category">
+                <div class="tag-category-header" [style.background-color]="category.color"
+                    (click)="toggleTagCategory(category.id)">
+                    <span class="material-symbols-outlined category-icon">
+                        {{ category.expanded ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                    <span class="category-name">{{ category.name }}</span>
+                </div>
+
+                @if (category.expanded) {
+                <div class="tag-items">
+                    @for (tag of category.tags; track tag) {
+                    <div class="tag-item">
+                        <span class="tag-name">{{ tag }}</span>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+            }
             }
         </div>
     </div>
