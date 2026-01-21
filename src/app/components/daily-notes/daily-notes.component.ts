@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '../../services/store.service';
 import { FormsModule } from '@angular/forms';
@@ -157,5 +157,16 @@ export class DailyNotesComponent {
     this.noteGroups.update(groups =>
       groups.map(g => ({ ...g, expanded: shouldExpand }))
     );
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const dropdownWrapper = target.closest('.dropdown-wrapper');
+
+    // Close dropdown if clicking outside
+    if (!dropdownWrapper && this.showDropdown()) {
+      this.showDropdown.set(false);
+    }
   }
 }
