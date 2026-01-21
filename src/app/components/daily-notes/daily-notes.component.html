@@ -207,24 +207,32 @@
         <!-- Editor Footer -->
         <div class="dn-editor-footer">
             <div class="footer-left">
-                <button class="footer-action-btn">
-                    <span class="material-symbols-outlined">history</span>
-                    Version history
-                </button>
-                <button class="footer-action-btn">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                    AI Assist
-                </button>
+                <span class="footer-meta-item">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    <span>{{ note.date }}</span>
+                </span>
+                <span class="footer-meta-item">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <span>09:15 AM</span>
+                </span>
+                <span class="footer-meta-item">
+                    <span class="material-symbols-outlined">edit_note</span>
+                    <span>Last edited 2 hours ago</span>
+                </span>
             </div>
             <div class="footer-right">
+                <span class="footer-meta-item">
+                    <span class="material-symbols-outlined">article</span>
+                    <span>342 words</span>
+                </span>
+                <span class="footer-meta-item">
+                    <span class="material-symbols-outlined">text_fields</span>
+                    <span>1,847 characters</span>
+                </span>
                 <span class="save-status">
                     <span class="material-symbols-outlined status-icon">cloud_done</span>
                     All changes saved
                 </span>
-                <button class="primary-btn">
-                    <span class="material-symbols-outlined">check</span>
-                    Done
-                </button>
             </div>
         </div>
         } @else {
