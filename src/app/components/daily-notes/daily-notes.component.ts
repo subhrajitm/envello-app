@@ -32,8 +32,8 @@ export class DailyNotesComponent {
   // Note groups for organization
   noteGroups = signal<NoteGroup[]>([
     { id: 'today', name: 'Today', icon: 'today', count: 0, expanded: true, noteIds: [] },
-    { id: 'this-week', name: 'This Week', icon: 'calendar_month', count: 0, expanded: true, noteIds: [] },
-    { id: 'older', name: 'Older Notes', icon: 'history', count: 0, expanded: true, noteIds: [] },
+    { id: 'this-week', name: 'This Week', icon: 'calendar_month', count: 0, expanded: false, noteIds: [] },
+    { id: 'older', name: 'Older Notes', icon: 'history', count: 0, expanded: false, noteIds: [] },
   ]);
 
   showDropdown = signal<boolean>(false);
