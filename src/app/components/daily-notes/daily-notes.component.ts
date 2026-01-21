@@ -36,6 +36,8 @@ export class DailyNotesComponent {
     { id: 'older', name: 'Older Notes', icon: 'history', count: 0, expanded: true, noteIds: [] },
   ]);
 
+  showDropdown = signal<boolean>(false);
+
   // Computed filtered notes
   filteredNotes = computed(() => {
     let list = this.notes();
@@ -135,5 +137,14 @@ export class DailyNotesComponent {
     this.noteGroups.update(groups =>
       groups.map(g => ({ ...g, expanded: false }))
     );
+  }
+
+  toggleDropdown() {
+    this.showDropdown.update(show => !show);
+  }
+
+  handleNewFolder() {
+    console.log('Create new folder');
+    // Implement folder creation logic
   }
 }

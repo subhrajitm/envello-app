@@ -1,79 +1,62 @@
 <div class="daily-notes-view">
     <div class="dn-sidebar">
-        <!-- Header with New Note Button and Actions -->
-        <div class="dn-sidebar-header-action">
-            <button class="dn-btn-new-entry" (click)="handleNewNote()">
-                <span class="material-symbols-outlined">add</span>
-                New Note
-            </button>
-            <div class="dn-action-buttons">
-                <button class="action-icon-btn" title="New Folder">
-                    <span class="material-symbols-outlined">create_new_folder</span>
+        <!-- Search Bar with Dropdown + Button -->
+        <div class="dn-search-header">
+            <div class="search-container">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="dn-search-input" placeholder="Search..." [(ngModel)]="searchQuery"
+                    (ngModelChange)="searchQuery.set($event)" />
+            </div>
+            <div class="dropdown-wrapper">
+                <button class="add-btn" (click)="toggleDropdown()">
+                    <span class="material-symbols-outlined">add</span>
                 </button>
-                <button class="action-icon-btn" title="Sort">
-                    <span class="material-symbols-outlined">sort</span>
-                </button>
-                <button class="action-icon-btn" title="Expand All" (click)="expandAll()">
-                    <span class="material-symbols-outlined">unfold_more</span>
-                </button>
+                @if (showDropdown()) {
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" (click)="handleNewNote(); toggleDropdown()">
+                        <span class="material-symbols-outlined">description</span>
+                        <span>New Note</span>
+                    </button>
+                    <button class="dropdown-item" (click)="handleNewFolder(); toggleDropdown()">
+                        <span class="material-symbols-outlined">create_new_folder</span>
+                        <span>New Folder</span>
+                    </button>
+                </div>
+                }
             </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="dn-search-container">
-            <span class="material-symbols-outlined search-icon">search</span>
-            <input type="text" class="dn-search-input" placeholder="Search notes..." [(ngModel)]="searchQuery"
-                (ngModelChange)="searchQuery.set($event)" />
+        <!-- Tabs: Folders and Tags -->
+        <div class="dn-tabs">
+            <button class="tab-btn active">Folders</button>
+            <button class="tab-btn">Tags</button>
         </div>
 
-        <!-- Filter Tabs -->
-        <div class="dn-filter-tabs">
-            <button class="filter-tab" [class.active]="selectedFilter() === 'all'" (click)="setFilter('all')">
-                All Notes
-            </button>
-            <button class="filter-tab" [class.active]="selectedFilter() === 'pinned'" (click)="setFilter('pinned')">
-                <span class="material-symbols-outlined tab-icon">push_pin</span>
-                Pinned
-            </button>
-            <button class="filter-tab" [class.active]="selectedFilter() === 'tagged'" (click)="setFilter('tagged')">
-                <span class="material-symbols-outlined tab-icon">label</span>
-                Tagged
-            </button>
-        </div>
-
-
-        <!-- Notes List with Expandable Folders -->
+        <!-- Notes List with Hierarchical Folders -->
         <div class="dn-entries-list">
             @for (group of noteGroups(); track group.id) {
-            <div class="note-group">
-                <div class="group-header" (click)="toggleGroup(group.id)">
-                    <span class="material-symbols-outlined expand-icon" [class.expanded]="group.expanded">
-                        {{ group.expanded ? 'expand_more' : 'chevron_right' }}
+            <div class="folder-group">
+                <div class="folder-header" (click)="toggleGroup(group.id)">
+                    <span class="material-symbols-outlined folder-icon">
+                        {{ group.expanded ? 'folder_open' : 'folder' }}
                     </span>
-                    <span class="group-name">{{ group.name }}</span>
-                    <span class="group-count">{{ filteredNotes().length }}</span>
+                    <span class="folder-name">{{ group.name }}</span>
+                    <span class="folder-count">{{ filteredNotes().length }}</span>
                 </div>
 
                 @if (group.expanded) {
-                <div class="group-items">
+                <div class="folder-items">
                     @for (entry of filteredNotes(); track entry.id) {
-                    <div class="dn-entry-item" [class.active]="selectedNote()?.id === entry.id"
+                    <div class="note-item" [class.active]="selectedNote()?.id === entry.id"
                         (click)="selectNote(entry.id)">
-                        <div class="entry-content">
-                            <div class="dn-entry-title">{{ entry.title }}</div>
-                            <div class="dn-entry-date">{{ entry.date }}</div>
-                        </div>
+                        <span class="material-symbols-outlined note-icon">description</span>
+                        <span class="note-title">{{ entry.title }}</span>
                     </div>
                     }
                 </div>
                 }
             </div>
             }
-        </div>
-
-        <!-- Sidebar Footer Stats -->
-        <div class="dn-sidebar-footer">
-            <span class="footer-stat">{{ filteredNotes().length }} notes</span>
         </div>
     </div>
 
