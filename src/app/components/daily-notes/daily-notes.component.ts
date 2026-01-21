@@ -29,6 +29,9 @@ export class DailyNotesComponent {
   searchQuery = signal<string>('');
   selectedFilter = signal<string>('all'); // all, pinned, tagged, archived
 
+  // Track open notes as tabs
+  openNotes = signal<string[]>([]);
+
   // Note groups for organization
   noteGroups = signal<NoteGroup[]>([
     { id: 'today', name: 'Today', icon: 'today', count: 0, expanded: true, noteIds: [] },
@@ -86,7 +89,9 @@ export class DailyNotesComponent {
   constructor() {
     // Initialize selection if notes exist
     if (this.notes().length > 0) {
-      this.selectedEntryId.set(this.notes()[0].id);
+      const firstNoteId = this.notes()[0].id;
+      this.selectedEntryId.set(firstNoteId);
+      this.openNotes.set([firstNoteId]);
     }
   }
 
@@ -105,6 +110,10 @@ export class DailyNotesComponent {
 
   selectNote(id: string) {
     this.selectedEntryId.set(id);
+    // Add to open notes if not already open
+    if (!this.openNotes().includes(id)) {
+      this.openNotes.update(tabs => [...tabs, id]);
+    }
   }
 
   toggleGroup(groupId: string) {
@@ -157,6 +166,28 @@ export class DailyNotesComponent {
     this.noteGroups.update(groups =>
       groups.map(g => ({ ...g, expanded: shouldExpand }))
     );
+  }
+
+  closeNoteTab(noteId: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    this.openNotes.update(tabs => tabs.filter(id => id !== noteId));
+
+    // If closing the active note, switch to another open note
+    if (this.selectedEntryId() === noteId) {
+      const remainingTabs = this.openNotes();
+      if (remainingTabs.length > 0) {
+        this.selectedEntryId.set(remainingTabs[remainingTabs.length - 1]);
+      } else {
+        this.selectedEntryId.set('');
+      }
+    }
+  }
+
+  getNoteById(id: string): Note | undefined {
+    return this.notes().find(n => n.id === id);
   }
 
   @HostListener('document:click', ['$event'])

@@ -78,29 +78,17 @@
         <!-- Editor Header with Tab-like View -->
         <div class="dn-editor-header">
             <div class="dn-editor-tabs">
-                <button class="editor-tab active">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    <span class="tab-label">{{ note.date }}</span>
-                </button>
-                <button class="editor-tab">
-                    <span class="material-symbols-outlined">schedule</span>
-                    <span class="tab-label">09:15 AM</span>
-                </button>
-                <button class="editor-tab">
-                    <span class="material-symbols-outlined">edit_note</span>
-                    <span class="tab-label">Last edited 2 hours ago</span>
-                </button>
-                @if (isPinned(note)) {
-                <button class="editor-tab pinned">
-                    <span class="material-symbols-outlined">push_pin</span>
-                    <span class="tab-label">Pinned</span>
+                @for (noteId of openNotes(); track noteId) {
+                @if (getNoteById(noteId); as tabNote) {
+                <button class="editor-tab" [class.active]="selectedEntryId() === noteId"
+                    [class.pinned]="isPinned(tabNote)" (click)="selectNote(noteId)">
+                    <span class="material-symbols-outlined tab-icon">description</span>
+                    <span class="tab-label">{{ tabNote.title }}</span>
+                    <button class="tab-close" (click)="closeNoteTab(noteId, $event)" title="Close">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
                 </button>
                 }
-                @if (getNoteTags(note).length > 0) {
-                <button class="editor-tab tags">
-                    <span class="material-symbols-outlined">label</span>
-                    <span class="tab-label">{{ getNoteTags(note).length }} tags</span>
-                </button>
                 }
             </div>
             <div class="dn-editor-actions">
@@ -173,15 +161,19 @@
                 </button>
             </div>
             <div class="toolbar-spacer"></div>
-            <div class="toolbar-stats">
-                <span class="stat-item">
-                    <span class="material-symbols-outlined stat-icon">article</span>
-                    342 words
-                </span>
-                <span class="stat-item">
-                    <span class="material-symbols-outlined stat-icon">schedule</span>
-                    2 min read
-                </span>
+            <div class="toolbar-actions">
+                <button class="toolbar-action-btn">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>Version History</span>
+                </button>
+                <button class="toolbar-action-btn">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    <span>AI Assist</span>
+                </button>
+                <button class="toolbar-action-btn primary">
+                    <span class="material-symbols-outlined">check</span>
+                    <span>Done</span>
+                </button>
             </div>
         </div>
 
