@@ -142,21 +142,103 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Delete Modal State
+  deleteModal = signal<{
+    isOpen: boolean;
+    type: 'chapter' | 'character' | 'location' | 'note' | null;
+    id: string | null;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: null,
+    id: null,
+    title: '',
+    message: ''
+  });
+
+  requestDelete(type: 'chapter' | 'character' | 'location' | 'note', id: string, name?: string) {
+    let title = 'Delete Item';
+    let message = 'Are you sure you want to delete this item? This action cannot be undone.';
+
+    switch (type) {
+      case 'chapter':
+        title = 'Delete Chapter?';
+        message = `Are you sure you want to delete "${name || 'this chapter'}"?`;
+        break;
+      case 'character':
+        title = 'Delete Character?';
+        message = `Are you sure you want to delete "${name || 'this character'}"?`;
+        break;
+      case 'location':
+        title = 'Delete Location?';
+        message = `Are you sure you want to delete "${name || 'this location'}"?`;
+        break;
+      case 'note':
+        title = 'Delete Note?';
+        message = 'Are you sure you want to delete this note?';
+        break;
+    }
+
+    this.deleteModal.set({
+      isOpen: true,
+      type,
+      id,
+      title,
+      message
+    });
+  }
+
+  confirmDelete() {
+    const modal = this.deleteModal();
+    if (!modal.id || !modal.type) return;
+
+    switch (modal.type) {
+      case 'chapter':
+        this.novelService.deleteChapter(modal.id);
+        if (this.activeChapterId() === modal.id) {
+          this.activeChapterId.set(null);
+          this.title.set('');
+          this.editor.commands.clearContent();
+        }
+        break;
+      case 'character':
+        this.novelService.deleteCharacter(modal.id);
+        if (this.selectedCharacterId() === modal.id) {
+          this.selectedCharacterId.set(null);
+        }
+        break;
+      case 'location':
+        this.novelService.deleteLocation(modal.id);
+        if (this.selectedLocationId() === modal.id) {
+          this.selectedLocationId.set(null);
+        }
+        break;
+      case 'note':
+        this.novelService.deleteNote(modal.id);
+        break;
+    }
+
+    this.cancelDelete();
+  }
+
+  cancelDelete() {
+    this.deleteModal.set({
+      isOpen: false,
+      type: null,
+      id: null,
+      title: '',
+      message: ''
+    });
+  }
+
   // Chapter management
   addNewChapter(groupId: string) {
     this.novelService.addChapter(groupId);
   }
 
-  deleteChapter(chapterId: string) {
-    if (confirm('Delete this chapter?')) {
-      this.novelService.deleteChapter(chapterId);
-      // If deleted chapter was active, clear selection or select another
-      if (this.activeChapterId() === chapterId) {
-        this.activeChapterId.set(null);
-        this.title.set('');
-        this.editor.commands.clearContent();
-      }
-    }
+  deleteChapter(chapterId: string, title?: string) {
+    this.requestDelete('chapter', chapterId, title);
   }
 
   // Note management
@@ -168,9 +250,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
   }
 
   deleteNote(noteId: string) {
-    if (confirm('Delete this note?')) {
-      this.novelService.deleteNote(noteId);
-    }
+    this.requestDelete('note', noteId);
   }
 
   selectedCharacterId = signal<string | null>(null);
@@ -194,13 +274,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
     this.novelService.updateCharacter(charId, { [field]: value });
   }
 
-  deleteCharacter(charId: string) {
-    if (confirm('Delete this character?')) {
-      this.novelService.deleteCharacter(charId);
-      if (this.selectedCharacterId() === charId) {
-        this.selectedCharacterId.set(null);
-      }
-    }
+  deleteCharacter(charId: string, name?: string) {
+    this.requestDelete('character', charId, name);
   }
 
   // Location management
@@ -220,13 +295,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
     this.novelService.updateLocation(locId, { [field]: value });
   }
 
-  deleteLocation(locId: string) {
-    if (confirm('Delete this location?')) {
-      this.novelService.deleteLocation(locId);
-      if (this.selectedLocationId() === locId) {
-        this.selectedLocationId.set(null);
-      }
-    }
+  deleteLocation(locId: string, name?: string) {
+    this.requestDelete('location', locId, name);
   }
 
   // Time formatting

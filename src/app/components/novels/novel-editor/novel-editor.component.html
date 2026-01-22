@@ -52,7 +52,7 @@
                                     </div>
                                 </div>
                                 <span class="material-symbols-outlined list-delete chapter-delete"
-                                    (click)="deleteChapter(chap.id); $event.stopPropagation()"
+                                    (click)="deleteChapter(chap.id, chap.title); $event.stopPropagation()"
                                     title="Delete chapter">delete</span>
                             </div>
                             }
@@ -84,7 +84,7 @@
                             <div class="list-sub">{{ char.role }}</div>
                         </div>
                         <span class="material-symbols-outlined list-delete"
-                            (click)="deleteCharacter(char.id); $event.stopPropagation()"
+                            (click)="deleteCharacter(char.id, char.name); $event.stopPropagation()"
                             title="Delete character">delete</span>
                     </div>
                     }
@@ -112,7 +112,7 @@
                             <div class="list-sub">{{ loc.type }}</div>
                         </div>
                         <span class="material-symbols-outlined list-delete"
-                            (click)="deleteLocation(loc.id); $event.stopPropagation()"
+                            (click)="deleteLocation(loc.id, loc.name); $event.stopPropagation()"
                             title="Delete location">delete</span>
                     </div>
                     }
@@ -406,5 +406,22 @@
         </div>
     </div>
 
+    <!-- Confirm Dialog -->
+    @if (deleteModal().isOpen) {
+    <div class="ne-modal-overlay">
+        <div class="ne-modal">
+            <div class="ne-modal-header">
+                {{ deleteModal().title }}
+            </div>
+            <div class="ne-modal-body">
+                {{ deleteModal().message }}
+            </div>
+            <div class="ne-modal-footer">
+                <button class="ne-modal-btn cancel" (click)="cancelDelete()">Cancel</button>
+                <button class="ne-modal-btn delete" (click)="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+    }
 
 </div>
