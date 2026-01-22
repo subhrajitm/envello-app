@@ -17,14 +17,14 @@
 
 
             <!-- MANUSCRIPT VIEW -->
-            @if (activeNav() === 'manuscript') {
+            @if (activeNav() === 'manuscript' && novel()) {
             <div class="ne-chapters-section">
                 <div class="ne-chap-header">
                     CHAPTERS
                     <span class="material-symbols-outlined icon-add">add</span>
                 </div>
                 <div class="ne-chapter-list">
-                    @for (group of chapters; track group.id) {
+                    @for (group of novel()!.chapters; track group.id) {
                     <div class="ne-chapter-group">
                         <div class="ne-chapter-item group-header" (click)="toggleChapter(group)">
                             <button class="ne-collapse-btn">
@@ -47,7 +47,7 @@
                                 <div class="ne-chap-info">
                                     <div class="ne-chap-title">{{ chap.title }}</div>
                                     <div class="ne-chap-meta">
-                                        <span class="ne-draft-tag">{{ chap.status }}</span> • {{ chap.words }} w
+                                        <span class="ne-draft-tag">{{ chap.status }}</span> • {{ chap.wordCount }} w
                                     </div>
                                 </div>
                             </div>
@@ -61,14 +61,14 @@
             }
 
             <!-- CHARACTERS VIEW -->
-            @if (activeNav() === 'characters') {
+            @if (activeNav() === 'characters' && novel()) {
             <div class="ne-list-section">
                 <div class="ne-chap-header">
                     CAST LIST
                     <span class="material-symbols-outlined icon-add">add</span>
                 </div>
                 <div class="ne-simple-list">
-                    @for (char of characters; track char.id) {
+                    @for (char of novel()!.characters; track char.id) {
                     <div class="ne-list-item">
                         <span class="material-symbols-outlined list-icon">account_circle</span>
                         <div class="list-info">
@@ -82,14 +82,14 @@
             }
 
             <!-- LOCATIONS VIEW -->
-            @if (activeNav() === 'locations') {
+            @if (activeNav() === 'locations' && novel()) {
             <div class="ne-list-section">
                 <div class="ne-chap-header">
                     WORLD BUILDING
                     <span class="material-symbols-outlined icon-add">add</span>
                 </div>
                 <div class="ne-simple-list">
-                    @for (loc of locations; track loc.id) {
+                    @for (loc of novel()!.locations; track loc.id) {
                     <div class="ne-list-item">
                         <span class="material-symbols-outlined list-icon">public</span>
                         <div class="list-info">
@@ -216,7 +216,7 @@
                         </div>
                     </div>
                 </div>
-                } @else if (rightSidebarTab() === 'notes') {
+                } @else if (rightSidebarTab() === 'notes' && novel()) {
                 <div class="ne-notes-panel">
                     <div class="ne-ai-header">
                         <span class="material-symbols-outlined icon-bolt">sticky_note_2</span>
@@ -230,7 +230,7 @@
                             </button>
                         </div>
 
-                        @for (note of notes; track note.id) {
+                        @for (note of novel()!.notes; track note.id) {
                         <div class="ne-note-card">
                             <div class="note-card-header">
                                 <span class="note-title">{{ note.title }}</span>
@@ -241,7 +241,7 @@
                         }
                     </div>
                 </div>
-                } @else if (rightSidebarTab() === 'manuscript') {
+                } @else if (rightSidebarTab() === 'manuscript' && novel()) {
                 <div class="ne-meta-panel">
                     <div class="ne-ai-header">
                         <span class="material-symbols-outlined icon-bolt">description</span>
@@ -251,12 +251,12 @@
                     <div class="ne-meta-content">
                         <div class="meta-section">
                             <label>LOGLINE</label>
-                            <div class="meta-text">{{ synopsis.logline }}</div>
+                            <div class="meta-text">{{ novel()!.synopsis.logline }}</div>
                         </div>
 
                         <div class="meta-section">
                             <label>THEME</label>
-                            <div class="meta-text">{{ synopsis.theme }}</div>
+                            <div class="meta-text">{{ novel()!.synopsis.theme }}</div>
                         </div>
 
                         <div class="meta-section">

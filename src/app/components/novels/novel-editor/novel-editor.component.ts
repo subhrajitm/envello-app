@@ -1,11 +1,12 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NovelContentService, Chapter, ChapterGroup } from '../../../services/novel-content.service';
 
 @Component({
   selector: 'app-novel-editor',
@@ -16,53 +17,49 @@ import { Router } from '@angular/router';
 })
 export class NovelEditorComponent implements OnInit, OnDestroy {
   editor!: Editor;
+  novelService = inject(NovelContentService);
+  route = inject(ActivatedRoute);
 
   // State
-  title = signal('Emerald Protocol');
-  activeChapterId = signal('c2');
-  wordCount = signal(2405);
+  title = signal('');
+  activeChapterId = signal<string | null>(null);
+  wordCount = signal(0);
   rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
   activeNav = signal<'manuscript' | 'characters' | 'locations'>('manuscript');
 
-  // Mock Data
-  chapters = [
-    {
-      id: 'g1', title: 'Part I: The Awakening', expanded: true, children: [
-        { id: 'c1', title: 'Chapter 1: Static Noise', status: 'DRAFT', words: 3200 },
-        { id: 'c2', title: 'Chapter 2: The Signal', status: 'EDITING', words: 2405, active: true },
-        { id: 'c3', title: 'Chapter 3: Silence', status: 'EMPTY', words: 0 },
-      ]
-    },
-    {
-      id: 'g2', title: 'Part II: Ascension', expanded: false, children: []
-    }
-  ];
+  // Computed signals from Service
+  novel = this.novelService.activeNovel;
 
-  characters = [
-    { id: 'ch1', name: 'Jara Vance', role: 'Protagonist', archetype: 'Scientist' },
-    { id: 'ch2', name: 'Commander Rike', role: 'Antagonist', archetype: 'Military' },
-    { id: 'ch3', name: 'Unit 734', role: 'Support', archetype: 'Droid' }
-  ];
+  constructor(private router: Router) {
+    // Effect to update editor content when active chapter changes
+    effect(() => {
+      const chapterId = this.activeChapterId();
+      if (chapterId && this.editor) {
+        const chapter = this.novelService.getChapter(chapterId);
+        if (chapter && this.editor.getHTML() !== chapter.content) {
+          this.editor.commands.setContent(chapter.content);
+          this.title.set(chapter.title);
+          this.wordCount.set(chapter.wordCount);
+        }
+      }
+    });
 
-  locations = [
-    { id: 'l1', name: 'Outpost 42', type: 'Station', desc: 'Remote listening post' },
-    { id: 'l2', name: 'The Void Expanse', type: 'Space', desc: 'Sector 7G' }
-  ];
-
-  notes = [
-    { id: 'n1', title: 'The Signal Protocol', body: 'Remember to define the frequency modulation clearly.', date: '2h ago' },
-    { id: 'n2', title: 'Character Arc: Jara', body: 'She needs to hesitate before calling it in.', date: 'Yesterday' }
-  ];
-
-  synopsis = {
-    title: 'Emerald Protocol',
-    logline: 'A lone scientist discovers a structured signal from the void, triggering a protocol that was never meant to be activated.',
-    theme: 'Isolation vs. Duty'
-  };
-
-  constructor(private router: Router) { }
+    // Effect to set initial title from novel data
+    effect(() => {
+      const n = this.novel();
+      if (n && !this.activeChapterId()) {
+        // Default to first chapter
+        if (n.chapters.length > 0 && n.chapters[0].children.length > 0) {
+          this.selectChapter(n.chapters[0].children[0]);
+        }
+      }
+    });
+  }
 
   ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id') || '1';
+    this.novelService.loadNovel(id);
+
     this.editor = new Editor({
       extensions: [
         StarterKit,
@@ -70,16 +67,17 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
           placeholder: 'Start writing your chapter...',
         }),
       ],
-      content: `
-        <p>The signal was faint at first, barely a whisper against the background radiation of the cosmos. But it was there, a persistent rhythm that defied the random chaos of the void.</p>
-        <p>Jara adjusted the gain on her receiver, her fingers dancing across the haptic interface. "Computer, isolate frequency band 402. Is that... is that structure?"</p>
-        <blockquote>"Confirmed. Pattern analysis indicates artificial origin. Probability 99.9%."</blockquote>
-        <p>She leaned back, the breath catching in her throat. For twenty years she had listened to the static. Twenty years of silence. And now, finally, a voice.</p>
-      `,
+      content: '', // Initial content will be set by effect
       onUpdate: ({ editor }) => {
-        // Simple word count
         const text = editor.getText();
-        this.wordCount.set(text.split(/\s+/).filter(w => w.length > 0).length);
+        const count = text.split(/\s+/).filter(w => w.length > 0).length;
+        this.wordCount.set(count);
+
+        // Auto-save to service
+        const activeId = this.activeChapterId();
+        if (activeId) {
+          this.novelService.updateChapterContent(activeId, editor.getHTML(), count);
+        }
       }
     });
   }
@@ -92,11 +90,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
     this.router.navigate(['/novels']);
   }
 
-  toggleChapter(group: any) {
-    group.expanded = !group.expanded;
+  toggleChapter(group: ChapterGroup) {
+    this.novelService.toggleGroupExpand(group.id);
   }
 
-  selectChapter(chapter: any) {
+  selectChapter(chapter: Chapter) {
     this.activeChapterId.set(chapter.id);
   }
 
