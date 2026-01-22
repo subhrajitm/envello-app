@@ -53,8 +53,30 @@
     color: var(--text-primary);
 }
 
-.stat-value.yellow {
+/* Dynamic Streak Colors */
+.stat-value.streak-diamond {
+    color: #06b6d4;
+    /* Cyan for 365d+ */
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+}
+
+.stat-value.streak-fire {
+    color: #ef4444;
+    /* Red for 100d+ */
+}
+
+.stat-value.streak-gold {
+    color: #f59e0b;
+    /* Amber for 30d+ */
+}
+
+.stat-value.streak-active {
     color: #fcd34d;
+    /* Yellow for 7d+ */
+}
+
+.stat-value.streak-neutral {
+    color: var(--text-secondary);
 }
 
 .ov-section-header {

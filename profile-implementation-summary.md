@@ -41,6 +41,7 @@ I've also updated the Overview page to be fully dynamic:
   - **View Toggle**: Switch between Month and 2-Week views
   - **Smart Navigation**: Advances by month or fortnight depending on view
 - **Stats**: "Word Count" and "Streak" connected to real user data
+  - **Dynamic Streak Colors**: Colors change based on streak length (Active, Gold, Fire, Diamond)
 
 ### 🎨 **UI Integration**
 

@@ -9,7 +9,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">STREAK</div>
-                <div class="stat-value yellow">{{ streak() }}</div>
+                <div class="stat-value" [ngClass]="streakClass()">{{ streak() }}</div>
             </div>
         </div>
 

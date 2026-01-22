@@ -20,6 +20,18 @@ export class OverviewComponent {
   wordCount = computed(() => this.formatNumber(this.user()?.stats.totalWords || 0));
   streak = computed(() => (this.user()?.stats.daysActive || 0) + 'd');
 
+  streakClass = computed(() => {
+    const days = this.user()?.stats.daysActive || 0;
+    if (days >= 365) return 'yellow'; // Keep yellow for top tier or change? User said 365d showing same... 
+    // Actually user complaint "color is showing same in all views" might mean they expect DIFFERENT colors for different ranges.
+    // I'll implement a tiered system.
+    if (days >= 365) return 'streak-diamond';
+    if (days >= 100) return 'streak-fire';
+    if (days >= 30) return 'streak-gold';
+    if (days >= 7) return 'streak-active';
+    return 'streak-neutral';
+  });
+
   currentDate = new Date();
   viewMode = signal<'MONTH' | '2 WEEKS'>('MONTH');
   currentMonth = signal('');
