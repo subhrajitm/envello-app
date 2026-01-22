@@ -4,9 +4,9 @@
             <span class="material-symbols-outlined logo-icon">nutrition</span>
             <span class="logo-text">ENVELLO</span>
         </div>
-        <div class="header-search">
+        <div class="header-search" (click)="openQuickFind()">
             <span class="material-symbols-outlined search-icon">search</span>
-            <input type="text" placeholder="Quick find (Cmd + K)" class="search-input" />
+            <input type="text" placeholder="Quick find (Cmd + K)" class="search-input" readonly />
         </div>
         <div class="header-actions">
             <button class="btn-new-project">
@@ -37,3 +37,6 @@
         }
     </nav>
 </header>
+
+<!-- Quick Find Modal -->
+<app-quick-find></app-quick-find>

@@ -1,17 +1,19 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../../services/theme.service';
 import { Router } from '@angular/router';
+import { QuickFindComponent } from '../../quick-find/quick-find.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, QuickFindComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
 export class HeaderComponent {
   @Input() activeTab = 'Overview';
+  @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
 
   themeService = inject(ThemeService);
   private router = inject(Router);
@@ -69,5 +71,9 @@ export class HeaderComponent {
     };
     const path = map[tab] || 'overview';
     this.router.navigate([path]);
+  }
+
+  openQuickFind() {
+    this.quickFind?.open();
   }
 }

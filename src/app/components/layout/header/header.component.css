@@ -43,6 +43,7 @@
     max-width: 320px;
     position: relative;
     margin-left: 0;
+    cursor: pointer;
 }
 
 .search-icon {
@@ -52,6 +53,7 @@
     transform: translateY(-50%);
     color: var(--text-disabled);
     font-size: 16px;
+    pointer-events: none;
 }
 
 .search-input {
@@ -65,9 +67,11 @@
     outline: none;
     transition: all 0.2s;
     height: 28px;
+    cursor: pointer;
 }
 
-.search-input:focus {
+.search-input:focus,
+.header-search:hover .search-input {
     border-color: var(--border-main);
     background: var(--bg-hover);
 }
