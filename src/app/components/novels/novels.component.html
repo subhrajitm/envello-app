@@ -4,28 +4,40 @@
         <div class="metrics-group">
             <div class="metric-item">
                 <span class="metric-label">TOTAL WORDS IN NOVELS</span>
-                <span class="metric-value-lg text-yellow">142,580</span>
+                <span class="metric-value-lg text-yellow">{{ totalWords() | number }}</span>
             </div>
             <div class="metric-item">
                 <span class="metric-label">ACTIVE DRAFTS</span>
-                <span class="metric-value-lg">04</span>
+                <span class="metric-value-lg">{{ activeDrafts() | number:'2.0-0' }}</span>
             </div>
             <div class="metric-item">
                 <span class="metric-label">AVG. COMPLETION</span>
-                <span class="metric-value-lg">64%</span>
+                <span class="metric-value-lg">{{ avgCompletion() }}%</span>
             </div>
         </div>
 
         <div class="controls-group">
-            <button class="control-btn-dark">All Statuses</button>
-            <button class="control-btn-dark">Sort by: Last Updated</button>
-            <button class="control-icon-btn">
-                <span class="material-symbols-outlined icon-sm">filter_list</span>
+            <div class="view-toggles">
+                <button class="control-icon-btn" [class.active]="viewMode() === 'LIST'" (click)="toggleView('LIST')"
+                    title="List View">
+                    <span class="material-symbols-outlined icon-sm">format_list_bulleted</span>
+                </button>
+                <button class="control-icon-btn" [class.active]="viewMode() === 'GRID'" (click)="toggleView('GRID')"
+                    title="Grid View">
+                    <span class="material-symbols-outlined icon-sm">grid_view</span>
+                </button>
+            </div>
+            <button class="control-btn-dark" (click)="toggleStatusFilter()">
+                Status: {{ statusFilter() }}
+            </button>
+            <button class="control-btn-dark" (click)="toggleSort()">
+                Sort: {{ sortBy() }}
             </button>
         </div>
     </div>
 
     <div class="novels-content-area">
+        @if (viewMode() === 'LIST') {
         <div class="novels-table">
             <div class="table-header">
                 <div class="col-title">PROJECT TITLE</div>
@@ -38,7 +50,7 @@
                 <div class="col-menu"></div>
             </div>
             <div class="table-body">
-                @for (novel of novels; track novel.id) {
+                @for (novel of novels(); track novel.id) {
                 <div class="table-row" (click)="openNovel(novel.id)">
                     <div class="col-title">
                         <span class="material-symbols-outlined project-icon">{{ novel.icon }}</span>
@@ -73,7 +85,7 @@
                     <div class="col-word-count">
                         <div class="word-count-content">
                             <div class="word-count-display">
-                                <span class="word-count-value">{{ novel.wordCount }}</span>
+                                <span class="word-count-value">{{ novel.wordCount | number }}</span>
                                 <span class="word-count-separator">/</span>
                                 <span class="word-count-target">{{ novel.targetWordCount | number }}</span>
                             </div>
@@ -105,5 +117,39 @@
                 }
             </div>
         </div>
+        } @else {
+        <!-- GRID VIEW -->
+        <div class="novels-grid">
+            @for (novel of novels(); track novel.id) {
+            <div class="novel-card" (click)="openNovel(novel.id)">
+                <div class="card-cover">
+                    <span class="material-symbols-outlined card-icon">{{ novel.icon }}</span>
+                    <span class="status-badge-caps card-status" [ngClass]="getStatusColor(novel.status)">{{ novel.status
+                        }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">{{ novel.title }}</div>
+                    <div class="card-meta">
+                        <span>{{ novel.chapters }} Ch</span>
+                        <span class="dot">•</span>
+                        <span>{{ novel.wordCount | number }} W</span>
+                    </div>
+                    <div class="card-progress-bar">
+                        <div class="prog-fill" [style.width.%]="novel.progress"
+                            [style.background-color]="getProgressColor(novel.status)"></div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-genre">
+                            @for (tag of novel.genre.slice(0, 2); track tag) {
+                            <span class="genre-tag">{{ tag }}</span>
+                            }
+                        </div>
+                        <div class="card-updated">{{ novel.lastUpdated }}</div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        }
     </div>
 </div>

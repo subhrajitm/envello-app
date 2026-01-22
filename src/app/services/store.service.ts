@@ -35,6 +35,23 @@ export interface Activity {
   type: 'entry' | 'sync' | 'ai' | 'system';
 }
 
+export interface Novel {
+  id: string;
+  title: string;
+  icon: string;
+  status: 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED';
+  wordCount: number;
+  targetWordCount: number;
+  progress: number; // percentage
+  chapters: number;
+  notesCount: number;
+  createdDate: string;
+  lastUpdated: string;
+  genre: string[];
+  isRecentlyUpdated: boolean;
+  coverImage?: string; // For thumbnail view
+}
+
 const initialTasks: Task[] = [
   { id: '1', title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2', priority: 'PRIORITY 01', hours: '1.5H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 17:00' },
   { id: '2', title: 'DEEP WORK: DRAFTING SESSION CH. 4', priority: 'PRIORITY 01', hours: '3.0H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 14:00' },
@@ -66,6 +83,69 @@ const initialActivities: Activity[] = [
   { id: '3', text: "AI Analysis ready for Chapter 1", time: '4 HOURS AGO', type: 'ai' },
 ];
 
+const initialNovels: Novel[] = [
+  {
+    id: '1',
+    title: 'The Silent Echo',
+    icon: 'token',
+    status: 'DRAFTING',
+    wordCount: 45200,
+    targetWordCount: 80000,
+    progress: 56,
+    chapters: 12,
+    notesCount: 24,
+    createdDate: 'Oct 12, 2024',
+    lastUpdated: '2 hours ago',
+    genre: ['Sci-Fi', 'Thriller'],
+    isRecentlyUpdated: true
+  },
+  {
+    id: '2',
+    title: 'Kingdom of Glass',
+    icon: 'castle',
+    status: 'PLANNING',
+    wordCount: 0,
+    targetWordCount: 100000,
+    progress: 0,
+    chapters: 0,
+    notesCount: 156,
+    createdDate: 'Nov 01, 2024',
+    lastUpdated: 'Yesterday',
+    genre: ['Fantasy', 'YA'],
+    isRecentlyUpdated: false
+  },
+  {
+    id: '3',
+    title: 'Neon Veins',
+    icon: 'water_drop',
+    status: 'REVISING',
+    wordCount: 78500,
+    targetWordCount: 75000,
+    progress: 104,
+    chapters: 28,
+    notesCount: 42,
+    createdDate: 'Aug 15, 2024',
+    lastUpdated: '3 days ago',
+    genre: ['Cyberpunk', 'Noir'],
+    isRecentlyUpdated: false
+  },
+  {
+    id: '4',
+    title: 'Operation: Sunrise',
+    icon: 'rocket_launch',
+    status: 'PUBLISHED',
+    wordCount: 65000,
+    targetWordCount: 65000,
+    progress: 100,
+    chapters: 22,
+    notesCount: 18,
+    createdDate: 'Jan 10, 2024',
+    lastUpdated: '1 month ago',
+    genre: ['Action', 'Spy'],
+    isRecentlyUpdated: false
+  }
+];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -74,6 +154,7 @@ export class StoreService {
   notes = signal<Note[]>(initialNotes);
   planningItems = signal<PlanningItem[]>(initialPlanningItems);
   activities = signal<Activity[]>(initialActivities);
+  novels = signal<Novel[]>(initialNovels);
 
   constructor() { }
 
@@ -89,6 +170,11 @@ export class StoreService {
 
   addPlanningItem(item: PlanningItem) {
     this.planningItems.update(items => [...items, item]);
+  }
+
+  addNovel(novel: Novel) {
+    this.novels.update(novels => [...novels, novel]);
+    this.addActivity('Project started: ' + novel.title, 'system');
   }
 
   addActivity(text: string, type: Activity['type'] = 'entry') {

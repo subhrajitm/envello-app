@@ -43,6 +43,14 @@ I've also updated the Overview page to be fully dynamic:
 - **Stats**: "Word Count" and "Streak" connected to real user data
   - **Dynamic Streak Colors**: Colors change based on streak length (Active, Gold, Fire, Diamond)
 
+## 📚 Novels Module Enhancements
+
+- **Centralized State**: Moved novels data to `StoreService`
+- **Dynamic Metrics**: Total Words, Active Drafts, and Avg Completion are calculated in real-time
+- **Grid View (Thumbnail)**: Added toggle for card-based grid view
+- **Sorting & Filtering**: Implement sorting (Title, Progress, Date) and status filtering
+- **Compact UI**: Optimized list view density and contrast
+
 ### 🎨 **UI Integration**
 
 #### **Header Avatar**
