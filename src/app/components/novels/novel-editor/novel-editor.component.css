@@ -420,8 +420,8 @@
     justify-content: flex-start;
     gap: 0;
     /* Tabs touch each other */
-    padding: 0 20px 0 20px;
-    /* Removed top padding for alignment */
+    padding: 12px 20px 0 20px;
+    /* Added top padding for breathing room */
     width: 100%;
     max-width: 100%;
     /* Full width */
@@ -431,8 +431,6 @@
     z-index: 10;
     background: var(--bg-app);
     border-bottom: 1px solid var(--border-subtle);
-    height: 44px;
-    /* Unified height */
     box-sizing: border-box;
     align-items: flex-end;
     /* Align tabs to bottom line */
@@ -441,7 +439,9 @@
 .ne-editor-tab {
     background: transparent;
     border: 1px solid transparent;
-    border-bottom: none;
+    /* Pre-allocate border space to match active state */
+    border-top-width: 2px;
+    border-bottom: 1px solid transparent;
     color: var(--text-tertiary);
     font-size: 13px;
     font-weight: 500;
@@ -472,10 +472,12 @@
     /* font-weight: 600; Removed to prevent layout shift */
     opacity: 1;
     border-color: var(--border-subtle);
-    border-bottom-color: var(--bg-app);
-    /* Hide bottom border */
+
+    /* Active State Borders */
     border-top: 2px solid var(--accent-primary);
-    /* Highlight top */
+    border-bottom: 1px solid var(--bg-app);
+    /* Cover the container border */
+
     z-index: 2;
     /* Sit on top of line */
 }
@@ -1095,4 +1097,170 @@
     font-size: 11px;
     color: var(--text-primary);
     border: 1px solid var(--border-subtle);
+}
+
+/* Detailed Character & Location Views */
+.ne-details-canvas {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 48px;
+    /* Removed flex/overflow to let parent handle scrolling, matching manuscript view */
+}
+
+.ne-card-detail {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 32px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ne-card-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 24px;
+}
+
+.ne-card-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--bg-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    border: 2px solid var(--border-subtle);
+}
+
+.ne-card-avatar-large span {
+    font-size: 48px;
+}
+
+.ne-card-avatar-large.loc-avatar {
+    border-radius: 12px;
+}
+
+.ne-card-title-group {
+    flex: 1;
+}
+
+.ne-card-title-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    outline: none;
+}
+
+.ne-card-title-input:focus {
+    color: var(--accent-primary);
+}
+
+.ne-card-subtitle {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ne-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.ne-form-row {
+    display: flex;
+    gap: 24px;
+}
+
+.ne-form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ne-form-group label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+}
+
+.ne-form-group input,
+.ne-form-textarea {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.ne-form-group input:focus,
+.ne-form-textarea:focus {
+    border-color: var(--accent-primary);
+    background: var(--bg-panel);
+}
+
+.ne-form-textarea {
+    min-height: 150px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.ne-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+    gap: 16px;
+    opacity: 0.7;
+    margin-top: 64px;
+}
+
+.ne-empty-state span {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.ne-empty-state p {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ne-btn-primary {
+    background: var(--accent-primary);
+    color: var(--bg-app);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.ne-btn-primary:hover {
+    opacity: 0.9;
+}
+
+.ne-list-item.active {
+    background: var(--bg-active, #f0f0f0);
+    border-left: 2px solid var(--accent-primary);
+    padding-left: 10px;
 }

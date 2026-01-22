@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -34,6 +34,18 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
 
   // Computed signals from Service
   novel = this.novelService.activeNovel;
+
+  activeCharacter = computed(() => {
+    const n = this.novel();
+    const id = this.selectedCharacterId();
+    return n?.characters.find(c => c.id === id);
+  });
+
+  activeLocation = computed(() => {
+    const n = this.novel();
+    const id = this.selectedLocationId();
+    return n?.locations.find(l => l.id === id);
+  });
 
   constructor(private router: Router) {
     // Effect to update editor content when active chapter changes
@@ -149,61 +161,59 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  selectedCharacterId = signal<string | null>(null);
+  selectedLocationId = signal<string | null>(null);
+
   // Character management
   addNewCharacter() {
-    const name = prompt('Character name:');
-    if (name) {
-      this.novelService.addCharacter(name);
+    this.novelService.addCharacter('New Character');
+    // Auto-select the newly created character (assuming it's the last one)
+    const n = this.novel();
+    if (n && n.characters.length > 0) {
+      this.selectedCharacterId.set(n.characters[n.characters.length - 1].id);
     }
   }
 
-  editCharacter(char: any) {
-    const name = prompt('Character name:', char.name);
-    const role = prompt('Role:', char.role);
-    const archetype = prompt('Archetype:', char.archetype);
-    const description = prompt('Description:', char.description);
+  selectCharacter(charId: string) {
+    this.selectedCharacterId.set(charId);
+  }
 
-    if (name !== null) {
-      this.novelService.updateCharacter(char.id, {
-        name: name || char.name,
-        role: role || char.role,
-        archetype: archetype || char.archetype,
-        description: description || char.description
-      });
-    }
+  updateCharacterField(charId: string, field: string, value: string) {
+    this.novelService.updateCharacter(charId, { [field]: value });
   }
 
   deleteCharacter(charId: string) {
     if (confirm('Delete this character?')) {
       this.novelService.deleteCharacter(charId);
+      if (this.selectedCharacterId() === charId) {
+        this.selectedCharacterId.set(null);
+      }
     }
   }
 
   // Location management
   addNewLocation() {
-    const name = prompt('Location name:');
-    if (name) {
-      this.novelService.addLocation(name);
+    this.novelService.addLocation('New Location');
+    const n = this.novel();
+    if (n && n.locations.length > 0) {
+      this.selectedLocationId.set(n.locations[n.locations.length - 1].id);
     }
   }
 
-  editLocation(loc: any) {
-    const name = prompt('Location name:', loc.name);
-    const type = prompt('Type:', loc.type);
-    const description = prompt('Description:', loc.description);
+  selectLocation(locId: string) {
+    this.selectedLocationId.set(locId);
+  }
 
-    if (name !== null) {
-      this.novelService.updateLocation(loc.id, {
-        name: name || loc.name,
-        type: type || loc.type,
-        description: description || loc.description
-      });
-    }
+  updateLocationField(locId: string, field: string, value: string) {
+    this.novelService.updateLocation(locId, { [field]: value });
   }
 
   deleteLocation(locId: string) {
     if (confirm('Delete this location?')) {
       this.novelService.deleteLocation(locId);
+      if (this.selectedLocationId() === locId) {
+        this.selectedLocationId.set(null);
+      }
     }
   }
 

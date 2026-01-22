@@ -71,7 +71,8 @@
                 </div>
                 <div class="ne-simple-list">
                     @for (char of novel()!.characters; track char.id) {
-                    <div class="ne-list-item" (click)="editCharacter(char)">
+                    <div class="ne-list-item" (click)="selectCharacter(char.id)"
+                        [class.active]="selectedCharacterId() === char.id">
                         <span class="material-symbols-outlined list-icon">account_circle</span>
                         <div class="list-info">
                             <div class="list-title">{{ char.name }}</div>
@@ -96,7 +97,8 @@
                 </div>
                 <div class="ne-simple-list">
                     @for (loc of novel()!.locations; track loc.id) {
-                    <div class="ne-list-item" (click)="editLocation(loc)">
+                    <div class="ne-list-item" (click)="selectLocation(loc.id)"
+                        [class.active]="selectedLocationId() === loc.id">
                         <span class="material-symbols-outlined list-icon">public</span>
                         <div class="list-info">
                             <div class="list-title">{{ loc.name }}</div>
@@ -147,6 +149,7 @@
                 </button>
             </div>
 
+            @if (activeNav() === 'manuscript') {
             <div class="ne-editor-canvas">
                 <input type="text" class="ne-doc-title-input" [ngModel]="title()"
                     (ngModelChange)="onTitleChange($event)" placeholder="Chapter Title" />
@@ -159,6 +162,97 @@
                 <!-- Tiptap Editor -->
                 <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
             </div>
+            }
+
+            @if (activeNav() === 'characters' && novel()) {
+            <div class="ne-details-canvas">
+                @if (activeCharacter(); as activeChar) {
+                <div class="ne-card-detail">
+                    <div class="ne-card-header">
+                        <div class="ne-card-avatar-large">
+                            <span class="material-symbols-outlined">account_circle</span>
+                        </div>
+                        <div class="ne-card-title-group">
+                            <input type="text" class="ne-card-title-input" [value]="activeChar.name"
+                                (input)="updateCharacterField(activeChar.id, 'name', $any($event.target).value)"
+                                placeholder="Character Name" />
+                            <div class="ne-card-subtitle">CHARACTER PROFILE</div>
+                        </div>
+                    </div>
+                    <div class="ne-card-body">
+                        <div class="ne-form-row">
+                            <div class="ne-form-group">
+                                <label>ROLE</label>
+                                <input type="text" [value]="activeChar.role"
+                                    (input)="updateCharacterField(activeChar.id, 'role', $any($event.target).value)"
+                                    placeholder="e.g. Protagonist" />
+                            </div>
+                            <div class="ne-form-group">
+                                <label>ARCHETYPE</label>
+                                <input type="text" [value]="activeChar.archetype"
+                                    (input)="updateCharacterField(activeChar.id, 'archetype', $any($event.target).value)"
+                                    placeholder="e.g. The Hero" />
+                            </div>
+                        </div>
+
+                        <div class="ne-form-group">
+                            <label>DESCRIPTION & NOTES</label>
+                            <textarea class="ne-form-textarea" [value]="activeChar.description"
+                                (input)="updateCharacterField(activeChar.id, 'description', $any($event.target).value)"
+                                placeholder="Describe their appearance, personality, and backstory..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                } @else {
+                <div class="ne-empty-state">
+                    <span class="material-symbols-outlined">group</span>
+                    <p>Select a character to view details or create a new one.</p>
+                    <button class="ne-btn-primary" (click)="addNewCharacter()">Create Character</button>
+                </div>
+                }
+            </div>
+            }
+
+            @if (activeNav() === 'locations' && novel()) {
+            <div class="ne-details-canvas">
+                @if (activeLocation(); as activeLoc) {
+                <div class="ne-card-detail">
+                    <div class="ne-card-header">
+                        <div class="ne-card-avatar-large loc-avatar">
+                            <span class="material-symbols-outlined">public</span>
+                        </div>
+                        <div class="ne-card-title-group">
+                            <input type="text" class="ne-card-title-input" [value]="activeLoc.name"
+                                (input)="updateLocationField(activeLoc.id, 'name', $any($event.target).value)"
+                                placeholder="Location Name" />
+                            <div class="ne-card-subtitle">LOCATION DETAILS</div>
+                        </div>
+                    </div>
+                    <div class="ne-card-body">
+                        <div class="ne-form-group">
+                            <label>TYPE / REGION</label>
+                            <input type="text" [value]="activeLoc.type"
+                                (input)="updateLocationField(activeLoc.id, 'type', $any($event.target).value)"
+                                placeholder="e.g. City, Planet, Room" />
+                        </div>
+
+                        <div class="ne-form-group">
+                            <label>DESCRIPTION & LORE</label>
+                            <textarea class="ne-form-textarea" [value]="activeLoc.description"
+                                (input)="updateLocationField(activeLoc.id, 'description', $any($event.target).value)"
+                                placeholder="Describe the atmosphere, history, and key features..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                } @else {
+                <div class="ne-empty-state">
+                    <span class="material-symbols-outlined">public</span>
+                    <p>Select a location to view details or create a new one.</p>
+                    <button class="ne-btn-primary" (click)="addNewLocation()">Create Location</button>
+                </div>
+                }
+            </div>
+            }
         </div>
 
         <!-- Right Sidebar: AI & Tools -->
