@@ -147,6 +147,18 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
     this.novelService.addChapter(groupId);
   }
 
+  deleteChapter(chapterId: string) {
+    if (confirm('Delete this chapter?')) {
+      this.novelService.deleteChapter(chapterId);
+      // If deleted chapter was active, clear selection or select another
+      if (this.activeChapterId() === chapterId) {
+        this.activeChapterId.set(null);
+        this.title.set('');
+        this.editor.commands.clearContent();
+      }
+    }
+  }
+
   // Note management
   addNewNote() {
     const title = prompt('Note title:');
