@@ -120,13 +120,20 @@
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    padding: 12px 0;
+    padding: 0;
 }
 
 .ne-sidebar-header-action {
-    padding: 0 12px 12px;
-    margin-bottom: 8px;
+    padding: 0 12px 0 12px;
+    /* Top padding matches tabs */
+    margin-bottom: 0;
     border-bottom: 1px solid var(--border-subtle);
+    height: 44px;
+    /* Unified header height */
+    /* Fixed height to match tabs area roughly */
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
 }
 
 .ne-btn-back-sidebar {
@@ -134,11 +141,13 @@
     background: var(--bg-hover);
     border: 1px solid var(--border-highlight);
     color: var(--text-primary);
-    padding: 8px;
+    padding: 6px 12px;
     border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
+    height: 32px;
+    /* Explicit height component */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -175,7 +184,8 @@
 }
 
 .ne-chapters-section {
-    margin-top: 0;
+    margin-top: 16px;
+    /* Space after sticky header */
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -372,7 +382,7 @@
     justify-content: flex-start;
     gap: 0;
     /* Tabs touch each other */
-    padding: 16px 20px 0 20px;
+    padding: 8px 20px 0 20px;
     /* Left aligned, no bottom padding */
     width: 100%;
     max-width: 100%;
@@ -383,6 +393,11 @@
     z-index: 10;
     background: var(--bg-app);
     border-bottom: 1px solid var(--border-subtle);
+    height: 44px;
+    /* Unified height */
+    box-sizing: border-box;
+    align-items: flex-end;
+    /* Align tabs to bottom line */
 }
 
 .ne-editor-tab {
@@ -565,13 +580,16 @@
     display: flex;
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-panel);
+    height: 44px;
+    /* Unified height */
+    box-sizing: border-box;
 }
 
 .ne-tab-btn {
     flex: 1;
     background: transparent;
     border: none;
-    padding: 12px 0;
+    padding: 0;
     color: var(--text-tertiary);
     cursor: pointer;
     position: relative;
@@ -579,6 +597,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 100%;
 }
 
 .ne-tab-btn:hover {
