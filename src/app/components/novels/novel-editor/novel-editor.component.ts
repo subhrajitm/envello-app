@@ -27,6 +27,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
   rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
   activeNav = signal<'manuscript' | 'characters' | 'locations'>('manuscript');
 
+  // Time tracking
+  sessionStartTime = Date.now();
+  elapsedSeconds = signal(0);
+  targetWordCount = signal(2500);
+
   // Computed signals from Service
   novel = this.novelService.activeNovel;
 
@@ -54,6 +59,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    // Time tracking interval
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+      this.elapsedSeconds.set(elapsed);
+    }, 1000);
   }
 
   ngOnInit() {
@@ -104,5 +115,57 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
 
   setActiveNav(nav: 'manuscript' | 'characters' | 'locations') {
     this.activeNav.set(nav);
+  }
+
+  // Title editing
+  onTitleChange(newTitle: string) {
+    this.title.set(newTitle);
+    const activeId = this.activeChapterId();
+    if (activeId) {
+      this.novelService.updateChapterTitle(activeId, newTitle);
+    }
+  }
+
+  // Chapter management
+  addNewChapter(groupId: string) {
+    this.novelService.addChapter(groupId);
+  }
+
+  // Note management
+  addNewNote() {
+    const title = prompt('Note title:');
+    if (title) {
+      this.novelService.addNote(title, '', this.activeChapterId() || undefined);
+    }
+  }
+
+  deleteNote(noteId: string) {
+    if (confirm('Delete this note?')) {
+      this.novelService.deleteNote(noteId);
+    }
+  }
+
+  // Character management
+  addNewCharacter() {
+    const name = prompt('Character name:');
+    if (name) {
+      this.novelService.addCharacter(name);
+    }
+  }
+
+  // Location management
+  addNewLocation() {
+    const name = prompt('Location name:');
+    if (name) {
+      this.novelService.addLocation(name);
+    }
+  }
+
+  // Time formatting
+  getFormattedTime(): string {
+    const seconds = this.elapsedSeconds();
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
   }
 }

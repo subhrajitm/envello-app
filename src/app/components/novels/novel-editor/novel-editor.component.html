@@ -21,7 +21,7 @@
             <div class="ne-chapters-section">
                 <div class="ne-chap-header">
                     CHAPTERS
-                    <span class="material-symbols-outlined icon-add">add</span>
+                    <span class="material-symbols-outlined icon-add" (click)="addNewChapter(novel()!.chapters[0].id)" title="Add new chapter">add</span>
                 </div>
                 <div class="ne-chapter-list">
                     @for (group of novel()!.chapters; track group.id) {
@@ -65,7 +65,7 @@
             <div class="ne-list-section">
                 <div class="ne-chap-header">
                     CAST LIST
-                    <span class="material-symbols-outlined icon-add">add</span>
+                    <span class="material-symbols-outlined icon-add" (click)="addNewCharacter()" title="Add new character">add</span>
                 </div>
                 <div class="ne-simple-list">
                     @for (char of novel()!.characters; track char.id) {
@@ -86,7 +86,7 @@
             <div class="ne-list-section">
                 <div class="ne-chap-header">
                     WORLD BUILDING
-                    <span class="material-symbols-outlined icon-add">add</span>
+                    <span class="material-symbols-outlined icon-add" (click)="addNewLocation()" title="Add new location">add</span>
                 </div>
                 <div class="ne-simple-list">
                     @for (loc of novel()!.locations; track loc.id) {
@@ -133,7 +133,7 @@
             </div>
 
             <div class="ne-editor-canvas">
-                <input type="text" class="ne-doc-title-input" [ngModel]="title()" (ngModelChange)="title.set($event)"
+                <input type="text" class="ne-doc-title-input" [ngModel]="title()" (ngModelChange)="onTitleChange($event)"
                     placeholder="Chapter Title" />
 
                 <div class="ne-doc-meta">
@@ -225,7 +225,7 @@
 
                     <div class="ne-notes-list">
                         <div class="ne-add-btn-row">
-                            <button class="ne-btn-add-note">
+                            <button class="ne-btn-add-note" (click)="addNewNote()">
                                 <span class="material-symbols-outlined">add</span> New Note
                             </button>
                         </div>
@@ -234,7 +234,10 @@
                         <div class="ne-note-card">
                             <div class="note-card-header">
                                 <span class="note-title">{{ note.title }}</span>
-                                <span class="note-time">{{ note.date }}</span>
+                                <div class="note-actions">
+                                    <span class="note-time">{{ note.date }}</span>
+                                    <span class="material-symbols-outlined note-delete" (click)="deleteNote(note.id)" title="Delete note">delete</span>
+                                </div>
                             </div>
                             <div class="note-body">{{ note.body }}</div>
                         </div>
@@ -277,8 +280,8 @@
     <div class="editor-stats-pill">
         <span>Words: <strong>{{ wordCount() }}</strong></span>
         <span class="stat-sep">|</span>
-        <span>Time: <strong>12m</strong></span>
+        <span>Time: <strong>{{ getFormattedTime() }}</strong></span>
         <span class="stat-sep">|</span>
-        <span>Target: <strong>2500</strong></span>
+        <span>Target: <strong>{{ targetWordCount() }}</strong></span>
     </div>
 </div>

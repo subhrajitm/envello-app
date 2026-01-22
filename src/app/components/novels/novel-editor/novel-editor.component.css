@@ -987,6 +987,7 @@
 .note-card-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 6px;
 }
 
@@ -996,9 +997,29 @@
     color: var(--text-primary);
 }
 
+.note-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .note-time {
     font-size: 9px;
     color: var(--text-tertiary);
+}
+
+.note-delete {
+    font-size: 16px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.note-delete:hover {
+    color: var(--accent-red, #ff4444);
+    background: var(--bg-hover);
 }
 
 .note-body {
