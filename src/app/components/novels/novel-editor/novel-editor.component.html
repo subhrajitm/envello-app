@@ -19,20 +19,25 @@
     <!-- Workspace -->
     <div class="ne-workspace">
         <!-- Left Sidebar: Chapters -->
+        <!-- Left Sidebar: Chapters -->
         <div class="ne-sidebar-left">
-            <div class="ne-nav-group active">
+            <div class="ne-nav-group" [class.active]="activeNav() === 'manuscript'"
+                (click)="setActiveNav('manuscript')">
                 <span class="material-symbols-outlined active-icon">menu_book</span>
                 Manuscript
             </div>
-            <div class="ne-nav-group">
+            <div class="ne-nav-group" [class.active]="activeNav() === 'characters'"
+                (click)="setActiveNav('characters')">
                 <span class="material-symbols-outlined">person</span>
                 Characters
             </div>
-            <div class="ne-nav-group">
+            <div class="ne-nav-group" [class.active]="activeNav() === 'locations'" (click)="setActiveNav('locations')">
                 <span class="material-symbols-outlined">location_on</span>
                 Locations
             </div>
 
+            <!-- MANUSCRIPT VIEW -->
+            @if (activeNav() === 'manuscript') {
             <div class="ne-chapters-section">
                 <div class="ne-chap-header">
                     CHAPTERS
@@ -73,6 +78,49 @@
                     }
                 </div>
             </div>
+            }
+
+            <!-- CHARACTERS VIEW -->
+            @if (activeNav() === 'characters') {
+            <div class="ne-list-section">
+                <div class="ne-chap-header">
+                    CAST LIST
+                    <span class="material-symbols-outlined icon-add">add</span>
+                </div>
+                <div class="ne-simple-list">
+                    @for (char of characters; track char.id) {
+                    <div class="ne-list-item">
+                        <span class="material-symbols-outlined list-icon">account_circle</span>
+                        <div class="list-info">
+                            <div class="list-title">{{ char.name }}</div>
+                            <div class="list-sub">{{ char.role }} • {{ char.archetype }}</div>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- LOCATIONS VIEW -->
+            @if (activeNav() === 'locations') {
+            <div class="ne-list-section">
+                <div class="ne-chap-header">
+                    WORLD BUILDING
+                    <span class="material-symbols-outlined icon-add">add</span>
+                </div>
+                <div class="ne-simple-list">
+                    @for (loc of locations; track loc.id) {
+                    <div class="ne-list-item">
+                        <span class="material-symbols-outlined list-icon">public</span>
+                        <div class="list-info">
+                            <div class="list-title">{{ loc.name }}</div>
+                            <div class="list-sub">{{ loc.type }}</div>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
 
             <div class="ne-sync-status">
                 <div class="sync-line"></div>
@@ -169,12 +217,57 @@
                         </div>
                     </div>
                 </div>
-                } @else {
-                <div class="ne-tab-placeholder">
-                    <div class="placeholder-icon">
-                        <span class="material-symbols-outlined">construction</span>
+                } @else if (rightSidebarTab() === 'notes') {
+                <div class="ne-notes-panel">
+                    <div class="ne-ai-header">
+                        <span class="material-symbols-outlined icon-bolt">sticky_note_2</span>
+                        CHAPTER NOTES
                     </div>
-                    <div class="placeholder-text">Work in Progress</div>
+
+                    <div class="ne-notes-list">
+                        <div class="ne-add-btn-row">
+                            <button class="ne-btn-add-note">
+                                <span class="material-symbols-outlined">add</span> New Note
+                            </button>
+                        </div>
+
+                        @for (note of notes; track note.id) {
+                        <div class="ne-note-card">
+                            <div class="note-card-header">
+                                <span class="note-title">{{ note.title }}</span>
+                                <span class="note-time">{{ note.date }}</span>
+                            </div>
+                            <div class="note-body">{{ note.body }}</div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                } @else if (rightSidebarTab() === 'manuscript') {
+                <div class="ne-meta-panel">
+                    <div class="ne-ai-header">
+                        <span class="material-symbols-outlined icon-bolt">description</span>
+                        MANUSCRIPT DATA
+                    </div>
+
+                    <div class="ne-meta-content">
+                        <div class="meta-section">
+                            <label>LOGLINE</label>
+                            <div class="meta-text">{{ synopsis.logline }}</div>
+                        </div>
+
+                        <div class="meta-section">
+                            <label>THEME</label>
+                            <div class="meta-text">{{ synopsis.theme }}</div>
+                        </div>
+
+                        <div class="meta-section">
+                            <label>SCENE CHARACTERS</label>
+                            <div class="pills-row">
+                                <span class="meta-pill">Jara</span>
+                                <span class="meta-pill">Computer</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 }
             </div>

@@ -22,6 +22,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
   activeChapterId = signal('c2');
   wordCount = signal(2405);
   rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
+  activeNav = signal<'manuscript' | 'characters' | 'locations'>('manuscript');
 
   // Mock Data
   chapters = [
@@ -36,6 +37,28 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
       id: 'g2', title: 'Part II: Ascension', expanded: false, children: []
     }
   ];
+
+  characters = [
+    { id: 'ch1', name: 'Jara Vance', role: 'Protagonist', archetype: 'Scientist' },
+    { id: 'ch2', name: 'Commander Rike', role: 'Antagonist', archetype: 'Military' },
+    { id: 'ch3', name: 'Unit 734', role: 'Support', archetype: 'Droid' }
+  ];
+
+  locations = [
+    { id: 'l1', name: 'Outpost 42', type: 'Station', desc: 'Remote listening post' },
+    { id: 'l2', name: 'The Void Expanse', type: 'Space', desc: 'Sector 7G' }
+  ];
+
+  notes = [
+    { id: 'n1', title: 'The Signal Protocol', body: 'Remember to define the frequency modulation clearly.', date: '2h ago' },
+    { id: 'n2', title: 'Character Arc: Jara', body: 'She needs to hesitate before calling it in.', date: 'Yesterday' }
+  ];
+
+  synopsis = {
+    title: 'Emerald Protocol',
+    logline: 'A lone scientist discovers a structured signal from the void, triggering a protocol that was never meant to be activated.',
+    theme: 'Isolation vs. Duty'
+  };
 
   constructor(private router: Router) { }
 
@@ -54,8 +77,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
         <p>She leaned back, the breath catching in her throat. For twenty years she had listened to the static. Twenty years of silence. And now, finally, a voice.</p>
       `,
       onUpdate: ({ editor }) => {
-        this.wordCount.set(editor.storage.characterCount?.words?.() || 0); // Need CharacterCount extension for this, implementing naive count for now if extension missing
-        // For now, let's just do a rough split
+        // Simple word count
         const text = editor.getText();
         this.wordCount.set(text.split(/\s+/).filter(w => w.length > 0).length);
       }
@@ -76,10 +98,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
 
   selectChapter(chapter: any) {
     this.activeChapterId.set(chapter.id);
-    // Ideally load content for chapter
   }
 
   setActiveTab(tab: 'ai' | 'notes' | 'manuscript') {
     this.rightSidebarTab.set(tab);
+  }
+
+  setActiveNav(nav: 'manuscript' | 'characters' | 'locations') {
+    this.activeNav.set(nav);
   }
 }

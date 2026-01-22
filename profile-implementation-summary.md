@@ -51,6 +51,15 @@ I've also updated the Overview page to be fully dynamic:
 - **Sorting & Filtering**: Implement sorting (Title, Progress, Date) and status filtering
 - **Compact UI**: Optimized list view density and contrast
 
+## ✍️ Novel Editor Completion
+
+- **Left Sidebar Navigation**: Switch between Manuscript (Chapters), Characters (Cast List), and Locations (World Building)
+- **Right Sidebar Tools**:
+  - **AI Companion**: Existing mockup
+  - **Chapter Notes**: View and manage notes per chapter
+  - **Manuscript Data**: View logline, theme, and scene characters
+- **Mock Data**: populated with realistic starter data for all views
+
 ### 🎨 **UI Integration**
 
 #### **Header Avatar**

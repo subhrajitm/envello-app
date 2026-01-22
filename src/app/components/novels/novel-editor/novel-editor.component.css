@@ -723,15 +723,185 @@
 
 /* Scrollbars */
 .ne-chapter-list::-webkit-scrollbar,
-.ne-editor-area::-webkit-scrollbar {
+.ne-editor-area::-webkit-scrollbar,
+.ne-simple-list::-webkit-scrollbar,
+.ne-notes-panel::-webkit-scrollbar,
+.ne-meta-panel::-webkit-scrollbar {
     width: 6px;
 }
 
 .ne-chapter-list::-webkit-scrollbar-thumb,
-.ne-editor-area::-webkit-scrollbar-thumb {
+.ne-editor-area::-webkit-scrollbar-thumb,
+.ne-simple-list::-webkit-scrollbar-thumb,
+.ne-notes-panel::-webkit-scrollbar-thumb,
+.ne-meta-panel::-webkit-scrollbar-thumb {
     background: #222;
     border-radius: 3px;
 }
 
 /* Floating Toolbar */
 /* Note: Floating toolbar positioning will be handled by Tiptap Bubble Menu */
+
+/* New Functionality Styles */
+
+.ne-list-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Lists (Characters, Locations) */
+.ne-simple-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 16px;
+}
+
+.ne-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.ne-list-item:hover {
+    background: var(--bg-hover);
+}
+
+.list-icon {
+    font-size: 18px;
+    color: var(--text-tertiary);
+}
+
+.list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.list-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.list-sub {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+/* Notes Panel */
+.ne-notes-panel,
+.ne-meta-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.ne-add-btn-row {
+    margin-bottom: 12px;
+}
+
+.ne-btn-add-note {
+    width: 100%;
+    background: var(--bg-panel);
+    border: 1px dashed var(--border-subtle);
+    padding: 8px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ne-btn-add-note:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-style: solid;
+}
+
+.ne-notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.ne-note-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.note-card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.note-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.note-time {
+    font-size: 9px;
+    color: var(--text-tertiary);
+}
+
+.note-body {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Meta Panel */
+.ne-meta-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.meta-section label {
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.meta-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.meta-pill {
+    background: var(--bg-hover);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
