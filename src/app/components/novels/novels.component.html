@@ -29,8 +29,11 @@
         <div class="novels-table">
             <div class="table-header">
                 <div class="col-title">PROJECT TITLE</div>
+                <div class="col-chapters">CHAPTERS</div>
+                <div class="col-genre">GENRE</div>
                 <div class="col-status">STATUS</div>
-                <div class="col-word-count">WORD COUNT</div>
+                <div class="col-word-count">WORD COUNT / TARGET</div>
+                <div class="col-progress">PROGRESS</div>
                 <div class="col-last-updated">LAST UPDATED</div>
                 <div class="col-menu"></div>
             </div>
@@ -39,7 +42,28 @@
                 <div class="table-row" (click)="openNovel(novel.id)">
                     <div class="col-title">
                         <span class="material-symbols-outlined project-icon">{{ novel.icon }}</span>
-                        {{ novel.title }}
+                        <div class="title-content">
+                            <div class="title-main">
+                                {{ novel.title }}
+                                @if (novel.isRecentlyUpdated) {
+                                <span class="recent-indicator" title="Recently updated"></span>
+                                }
+                            </div>
+                            <div class="title-meta">
+                                Created {{ novel.createdDate }} • {{ novel.notesCount }} notes
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-chapters">
+                        <div class="chapter-badge">
+                            <span class="material-symbols-outlined chapter-icon">menu_book</span>
+                            <span class="chapter-count">{{ novel.chapters }}</span>
+                        </div>
+                    </div>
+                    <div class="col-genre">
+                        @for (tag of novel.genre; track tag) {
+                        <span class="genre-tag">{{ tag }}</span>
+                        }
                     </div>
                     <div class="col-status">
                         <span class="status-badge-caps" [ngClass]="getStatusColor(novel.status)">
@@ -48,12 +72,27 @@
                     </div>
                     <div class="col-word-count">
                         <div class="word-count-content">
-                            <span class="word-count-value">{{ novel.wordCount }}</span>
+                            <div class="word-count-display">
+                                <span class="word-count-value">{{ novel.wordCount }}</span>
+                                <span class="word-count-separator">/</span>
+                                <span class="word-count-target">{{ novel.targetWordCount | number }}</span>
+                            </div>
                             <div class="progress-bar-container">
                                 <div class="progress-bar" [style.width.%]="novel.progress"
                                     [style.background-color]="getProgressColor(novel.status)">
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="col-progress">
+                        <div class="circular-progress">
+                            <svg class="progress-ring" width="40" height="40">
+                                <circle class="progress-ring-bg" cx="20" cy="20" r="16" />
+                                <circle class="progress-ring-fill" cx="20" cy="20" r="16"
+                                    [style.stroke]="getProgressColor(novel.status)" [style.stroke-dasharray]="100.53"
+                                    [style.stroke-dashoffset]="100.53 - (100.53 * novel.progress / 100)" />
+                            </svg>
+                            <span class="progress-text">{{ novel.progress }}%</span>
                         </div>
                     </div>
                     <div class="col-last-updated">{{ novel.lastUpdated }}</div>

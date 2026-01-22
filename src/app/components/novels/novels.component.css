@@ -115,7 +115,7 @@
 
 .table-header {
     display: grid;
-    grid-template-columns: 5.5fr 1.2fr 1fr 1.8fr 40px;
+    grid-template-columns: 3fr 0.8fr 1.5fr 1fr 1.5fr 0.8fr 1.2fr 40px;
     gap: 16px;
     padding: 12px 24px;
     border-bottom: 1px solid var(--border-subtle);
@@ -134,7 +134,7 @@
 
 .table-row {
     display: grid;
-    grid-template-columns: 5.5fr 1.2fr 1fr 1.8fr 40px;
+    grid-template-columns: 3fr 0.8fr 1.5fr 1fr 1.5fr 0.8fr 1.2fr 40px;
     gap: 16px;
     padding: 16px 24px;
     border-bottom: 1px solid var(--border-subtle);
@@ -152,13 +152,62 @@
     font-size: 13px;
     font-weight: 600;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
 }
 
-.project-icon {
-    font-size: 18px;
+.title-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.title-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.title-meta {
+    font-size: 10px;
+    font-weight: 400;
     color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.recent-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+    }
+}
+
+.project-icon {
+    font-size: 20px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
 }
 
 /* Status Badges - Caps & Rectangular */
@@ -201,20 +250,88 @@
     border-color: var(--accent-red);
 }
 
+/* Chapters Column */
+.col-chapters {
+    display: flex;
+    align-items: center;
+}
+
+.chapter-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+}
+
+.chapter-icon {
+    font-size: 14px;
+    color: var(--text-tertiary);
+}
+
+.chapter-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+/* Genre Column */
+.col-genre {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.genre-tag {
+    padding: 2px 8px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-highlight);
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* Word Count Column - Enhanced */
 .col-word-count {
     display: flex;
 }
 
 .word-count-content {
-    width: 60%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
+.word-count-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
 .word-count-value {
     color: var(--text-primary);
     font-size: 12px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+}
+
+.word-count-separator {
+    color: var(--text-tertiary);
+    font-size: 11px;
+}
+
+.word-count-target {
+    color: var(--text-tertiary);
+    font-size: 11px;
     font-family: var(--font-mono);
 }
 
@@ -227,6 +344,46 @@
 .progress-bar {
     border-radius: 1px;
     height: 100%;
+}
+
+/* Progress Column - Circular Progress */
+.col-progress {
+    display: flex;
+    justify-content: center;
+}
+
+.circular-progress {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: var(--border-subtle);
+    stroke-width: 3;
+}
+
+.progress-ring-fill {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+.progress-text {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
 }
 
 .col-last-updated {
