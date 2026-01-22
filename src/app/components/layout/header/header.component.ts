@@ -9,11 +9,12 @@ import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.componen
 import { SettingsModalComponent } from '../../settings-modal/settings-modal.component';
 import { NotificationCenterComponent } from '../../notification-center/notification-center.component';
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
+import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -24,6 +25,7 @@ export class HeaderComponent {
   @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
   @ViewChild(NotificationCenterComponent) notificationCenter?: NotificationCenterComponent;
   @ViewChild(ProfileMenuComponent) profileMenu?: ProfileMenuComponent;
+  @ViewChild(ProfileEditorComponent) profileEditor?: ProfileEditorComponent;
 
   themeService = inject(ThemeService);
   notificationService = inject(NotificationService);
@@ -114,8 +116,6 @@ export class HeaderComponent {
   }
 
   handleOpenProfile() {
-    // Navigate to profile page or show profile modal
-    // For now logging, as full profile page might not exist yet
-    console.log('Navigate to profile');
+    this.profileEditor?.open();
   }
 }

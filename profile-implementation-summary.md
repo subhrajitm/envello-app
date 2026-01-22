@@ -24,6 +24,12 @@ I've successfully implemented a comprehensive user profile system for Envello. I
   - Auto Backup
 - **Logout Action**: securely logs out the user
 
+#### **3. Profile Editor Component** (`profile-editor/`)
+- **Modal Interface**: Clean modal for editing profile details
+- **Avatar Management**: Upload new photo or remove existing one
+- **Form Fields**: Edit name and bio
+- **Real-time Updates**: Changes reflect immediately across the app
+
 ### 🎨 **UI Integration**
 
 #### **Header Avatar**
