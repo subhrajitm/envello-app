@@ -114,8 +114,14 @@
             <div class="ne-sync-status">
                 <div class="sync-line"></div>
                 <div class="sync-info">
-                    <span class="sync-active">SYNCED</span>
-                    <span>V 4.2</span>
+                    <div class="stat-item">
+                        <span class="stat-label">WORDS</span>
+                        <span class="stat-value">{{ wordCount() }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">TIME</span>
+                        <span class="stat-value">{{ getFormattedTime() }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -286,12 +292,5 @@
         </div>
     </div>
 
-    <!-- Footer Stats -->
-    <div class="editor-stats-pill">
-        <span>Words: <strong>{{ wordCount() }}</strong></span>
-        <span class="stat-sep">|</span>
-        <span>Time: <strong>{{ getFormattedTime() }}</strong></span>
-        <span class="stat-sep">|</span>
-        <span>Target: <strong>{{ targetWordCount() }}</strong></span>
-    </div>
+
 </div>

@@ -376,14 +376,29 @@
 
 .sync-info {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 8px;
     font-size: 10px;
     font-weight: 600;
     color: var(--text-tertiary);
 }
 
-.sync-active {
-    color: var(--accent-green);
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    color: var(--text-tertiary);
+    font-size: 9px;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 700;
 }
 
 /* Editor Area */
@@ -560,37 +575,7 @@
     opacity: 0.7;
 }
 
-.editor-stats-pill {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    background: var(--bg-panel);
-    border: 1px solid var(--border-subtle);
-    border-radius: 100px;
-    padding: 8px 20px;
-    font-size: 11px;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
 
-.editor-stats-pill strong {
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-.stat-sep {
-    color: var(--border-highlight);
-    height: 12px;
-    width: 1px;
-    background: var(--border-highlight);
-    display: block;
-    text-indent: -9999px;
-}
 
 /* Right Sidebar */
 .ne-sidebar-right {
