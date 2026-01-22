@@ -20,6 +20,21 @@ export interface Note {
   tags?: string[];
 }
 
+export interface PlanningItem {
+  id: string;
+  title: string;
+  tag: string;
+  stage: string;
+  active: boolean;
+}
+
+export interface Activity {
+  id: string;
+  text: string;
+  time: string;
+  type: 'entry' | 'sync' | 'ai' | 'system';
+}
+
 const initialTasks: Task[] = [
   { id: '1', title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2', priority: 'PRIORITY 01', hours: '1.5H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 17:00' },
   { id: '2', title: 'DEEP WORK: DRAFTING SESSION CH. 4', priority: 'PRIORITY 01', hours: '3.0H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 14:00' },
@@ -40,20 +55,49 @@ const initialNotes: Note[] = [
   { id: '10', date: 'Jan 15, 2026', title: 'Ideas - Product Features', preview: 'Brainstorming session for new product features. Focus on user experience and automation...', content: '<p>Brainstorming new product features based on user feedback.</p><p><strong>Top Ideas:</strong></p><ul><li>Dark mode theme</li><li>Keyboard shortcuts</li><li>Bulk actions</li><li>Advanced search filters</li><li>Mobile app</li></ul><p>Prioritize based on user impact and development effort.</p>', tags: ['ideas', 'product', 'innovation'] }
 ];
 
+const initialPlanningItems: PlanningItem[] = [
+  { id: '1', title: 'Emerald Protocol', tag: 'Fiction', stage: 'Draft 2 • 4d left', active: true },
+  { id: '2', title: 'Midnight Kyoto', tag: 'Mystery', stage: 'Planning • 12d left', active: false },
+];
+
+const initialActivities: Activity[] = [
+  { id: '1', text: "Entry added to 'Morning Pages'", time: '10 MINS AGO', type: 'entry' },
+  { id: '2', text: "Sync complete on 3 devices", time: '1 HOUR AGO', type: 'sync' },
+  { id: '3', text: "AI Analysis ready for Chapter 1", time: '4 HOURS AGO', type: 'ai' },
+];
+
 @Injectable({
   providedIn: 'root'
 })
 export class StoreService {
   tasks = signal<Task[]>(initialTasks);
   notes = signal<Note[]>(initialNotes);
+  planningItems = signal<PlanningItem[]>(initialPlanningItems);
+  activities = signal<Activity[]>(initialActivities);
 
   constructor() { }
 
   addTask(task: Task) {
     this.tasks.update(tasks => [...tasks, task]);
+    this.addActivity('Task created: ' + task.title, 'system');
   }
 
   addNote(note: Note) {
     this.notes.update(notes => [note, ...notes]);
+    this.addActivity("Entry added to '" + note.title + "'", 'entry');
+  }
+
+  addPlanningItem(item: PlanningItem) {
+    this.planningItems.update(items => [...items, item]);
+  }
+
+  addActivity(text: string, type: Activity['type'] = 'entry') {
+    const newActivity: Activity = {
+      id: Date.now().toString(),
+      text,
+      time: 'Just now',
+      type
+    };
+    this.activities.update(activities => [newActivity, ...activities.slice(0, 9)]); // Keep last 10
   }
 }

@@ -12,6 +12,7 @@ export interface UserProfile {
     emailNotifications: boolean;
     weeklyDigest: boolean;
     autoBackup: boolean;
+    autoSchedule: boolean;
   };
   stats: {
     totalWords: number;
@@ -161,7 +162,8 @@ export class UserService {
       preferences: {
         emailNotifications: true,
         weeklyDigest: true,
-        autoBackup: true
+        autoBackup: true,
+        autoSchedule: false
       },
       stats: {
         totalWords: 142580,

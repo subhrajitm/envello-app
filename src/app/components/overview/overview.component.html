@@ -5,11 +5,11 @@
         <div class="ov-stats-row">
             <div class="stat-card">
                 <div class="stat-label">WORD COUNT</div>
-                <div class="stat-value">842.5k</div>
+                <div class="stat-value">{{ wordCount() }}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">STREAK</div>
-                <div class="stat-value yellow">18d</div>
+                <div class="stat-value yellow">{{ streak() }}</div>
             </div>
         </div>
 
@@ -17,7 +17,7 @@
             PLANNING POOL <span class="material-symbols-outlined icon-xs">filter_list</span>
         </div>
         <div class="planning-list">
-            @for (item of planningItems; track item.id) {
+            @for (item of planningItems(); track item.id) {
             <div class="planning-card" [class.active]="item.active">
                 <div class="plan-row-top">
                     <span class="plan-title">{{ item.title }}</span>
@@ -50,7 +50,7 @@
     <!-- Main Content: Calendar -->
     <div class="ov-calendar-area">
         <div class="calendar-header">
-            <h2 class="cal-title">{{ currentMonth }}</h2>
+            <h2 class="cal-title">{{ currentMonth() }}</h2>
             <div class="cal-views">
                 <button class="cal-view-btn active">MONTH</button>
                 <button class="cal-view-btn">2 WEEKS</button>
@@ -63,8 +63,10 @@
             </div>
 
             <div class="cal-nav">
-                <button class="cal-nav-btn"><span class="material-symbols-outlined">chevron_left</span></button>
-                <button class="cal-nav-btn"><span class="material-symbols-outlined">chevron_right</span></button>
+                <button class="cal-nav-btn" (click)="changeMonth(-1)"><span
+                        class="material-symbols-outlined">chevron_left</span></button>
+                <button class="cal-nav-btn" (click)="changeMonth(1)"><span
+                        class="material-symbols-outlined">chevron_right</span></button>
             </div>
         </div>
 
@@ -74,7 +76,7 @@
             }
 
             <!-- Days Grid -->
-            @for (day of days; track $index) {
+            @for (day of days(); track $index) {
             <div class="cal-cell" [class.prev-month]="day.prevMonth">
                 <div class="day-num-row">
                     <span class="day-num" [class.today]="day.today">{{ day.date }}</span>
@@ -108,7 +110,7 @@
     <div class="ov-sidebar-right">
         <div class="ov-section-header">RECENT ACTIVITY</div>
         <div class="activity-list">
-            @for (act of activities; track act.id) {
+            @for (act of activities(); track act.id) {
             <div class="act-item">
                 <span class="act-dot" [ngClass]="act.type"></span>
                 <div class="act-content">
@@ -123,7 +125,8 @@
             <div class="config-header">WORKBENCH CONFIG</div>
             <div class="config-row">
                 <span>Auto-Schedule Tasks</span>
-                <div class="switch-toggle on"></div>
+                <div class="switch-toggle" [class.on]="user()?.preferences?.autoSchedule"
+                    (click)="toggleAutoSchedule()"></div>
             </div>
         </div>
 

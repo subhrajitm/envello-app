@@ -30,6 +30,16 @@ I've successfully implemented a comprehensive user profile system for Envello. I
 - **Form Fields**: Edit name and bio
 - **Real-time Updates**: Changes reflect immediately across the app
 
+## ✅ Overview Dashboard Dynamic Data
+
+I've also updated the Overview page to be fully dynamic:
+
+- **Planning Pool**: Connected to `StoreService` signals
+- **Activity Feed**: Real-time activity tracking via `StoreService`
+- **Configuration**: "Auto-Schedule Tasks" toggle is now persisting to user profile
+- **Calendar**: Dynamically generates based on current date
+- **Stats**: "Word Count" and "Streak" connected to real user data
+
 ### 🎨 **UI Integration**
 
 #### **Header Avatar**
