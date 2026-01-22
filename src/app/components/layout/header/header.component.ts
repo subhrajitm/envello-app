@@ -2,16 +2,18 @@ import { Component, Input, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../../services/theme.service';
 import { NotificationService } from '../../../services/notification.service';
+import { UserService } from '../../../services/user.service';
 import { Router } from '@angular/router';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
 import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.component';
 import { SettingsModalComponent } from '../../settings-modal/settings-modal.component';
 import { NotificationCenterComponent } from '../../notification-center/notification-center.component';
+import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -21,13 +23,16 @@ export class HeaderComponent {
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
   @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
   @ViewChild(NotificationCenterComponent) notificationCenter?: NotificationCenterComponent;
+  @ViewChild(ProfileMenuComponent) profileMenu?: ProfileMenuComponent;
 
   themeService = inject(ThemeService);
   notificationService = inject(NotificationService);
+  userService = inject(UserService);
   private router = inject(Router);
 
-  // Expose unread count for template
+  // Expose signals for template
   unreadCount = this.notificationService.unreadCount;
+  userInitials = this.userService.userInitials;
 
   tabs = [
     'Overview',
@@ -98,5 +103,19 @@ export class HeaderComponent {
 
   openNotifications() {
     this.notificationCenter?.toggle();
+  }
+
+  openProfileMenu() {
+    this.profileMenu?.toggle();
+  }
+
+  handleOpenSettings() {
+    this.settingsModal?.open();
+  }
+
+  handleOpenProfile() {
+    // Navigate to profile page or show profile modal
+    // For now logging, as full profile page might not exist yet
+    console.log('Navigate to profile');
   }
 }

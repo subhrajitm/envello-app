@@ -27,8 +27,10 @@
             <button class="icon-btn" (click)="openSettings()">
                 <span class="material-symbols-outlined">settings</span>
             </button>
-            <div class="profile-menu">
-                <div class="profile-avatar"></div>
+            <div class="profile-menu" (click)="openProfileMenu()">
+                <div class="profile-avatar">
+                    <span class="avatar-text">{{ userInitials() }}</span>
+                </div>
             </div>
         </div>
     </div>
@@ -52,3 +54,7 @@
 
 <!-- Notification Center -->
 <app-notification-center></app-notification-center>
+
+<!-- Profile Menu -->
+<app-profile-menu (onOpenSettings)="handleOpenSettings()" (onOpenProfile)="handleOpenProfile()">
+</app-profile-menu>

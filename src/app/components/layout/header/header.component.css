@@ -173,6 +173,16 @@
     border-radius: 4px;
     background: linear-gradient(135deg, #fca5a5, #f87171, #7f1d1d);
     transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-text {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    font-family: var(--font-sans);
 }
 
 .profile-avatar:hover {
