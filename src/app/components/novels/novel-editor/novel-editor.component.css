@@ -9,6 +9,8 @@
 
 .ne-layout {
     display: flex;
+    flex: 1;
+    /* Critical: Fill parent width */
     flex-direction: column;
     height: 100%;
     /* Fill available space from dashboard-content */
@@ -124,6 +126,8 @@
 /* Sidebar Left */
 .ne-sidebar-left {
     width: 240px;
+    min-width: 240px;
+    /* Prevent collapse */
     /* Slightly wider for better tree readability */
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
@@ -401,8 +405,8 @@
     justify-content: flex-start;
     gap: 0;
     /* Tabs touch each other */
-    padding: 8px 20px 0 20px;
-    /* Left aligned, no bottom padding */
+    padding: 0 20px 0 20px;
+    /* Removed top padding for alignment */
     width: 100%;
     max-width: 100%;
     /* Full width */
@@ -472,7 +476,8 @@
 
 .ne-editor-canvas {
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
+    /* Increased for better readability */
     padding: 32px 48px 64px 48px;
     display: flex;
     flex-direction: column;
@@ -590,6 +595,8 @@
 /* Right Sidebar */
 .ne-sidebar-right {
     width: 320px;
+    min-width: 320px;
+    /* Prevent collapse */
     background: var(--bg-app);
     border-left: 1px solid var(--border-subtle);
     display: flex;
