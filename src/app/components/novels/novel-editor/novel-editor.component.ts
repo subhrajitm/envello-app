@@ -44,7 +44,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
         if (chapter && this.editor.getHTML() !== chapter.content) {
           this.editor.commands.setContent(chapter.content);
           this.title.set(chapter.title);
-          this.wordCount.set(chapter.wordCount);
+
+          // Recalculate word count from actual content instead of using stored value
+          const text = this.editor.getText();
+          const count = text.split(/\s+/).filter(w => w.length > 0).length;
+          this.wordCount.set(count);
         }
       }
     });
