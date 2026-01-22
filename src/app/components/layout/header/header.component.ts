@@ -1,15 +1,17 @@
 import { Component, Input, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../../services/theme.service';
+import { NotificationService } from '../../../services/notification.service';
 import { Router } from '@angular/router';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
 import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.component';
 import { SettingsModalComponent } from '../../settings-modal/settings-modal.component';
+import { NotificationCenterComponent } from '../../notification-center/notification-center.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -18,9 +20,14 @@ export class HeaderComponent {
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
   @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
+  @ViewChild(NotificationCenterComponent) notificationCenter?: NotificationCenterComponent;
 
   themeService = inject(ThemeService);
+  notificationService = inject(NotificationService);
   private router = inject(Router);
+
+  // Expose unread count for template
+  unreadCount = this.notificationService.unreadCount;
 
   tabs = [
     'Overview',
@@ -87,5 +94,9 @@ export class HeaderComponent {
 
   openSettings() {
     this.settingsModal?.open();
+  }
+
+  openNotifications() {
+    this.notificationCenter?.toggle();
   }
 }

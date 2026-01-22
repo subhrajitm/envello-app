@@ -134,6 +134,32 @@
     color: var(--text-primary);
 }
 
+/* Notification Badge */
+.notification-btn {
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: var(--accent-primary);
+    color: var(--accent-primary-text);
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+
 .profile-menu {
     display: flex;
     align-items: center;
