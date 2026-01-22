@@ -153,11 +153,53 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  editCharacter(char: any) {
+    const name = prompt('Character name:', char.name);
+    const role = prompt('Role:', char.role);
+    const archetype = prompt('Archetype:', char.archetype);
+    const description = prompt('Description:', char.description);
+
+    if (name !== null) {
+      this.novelService.updateCharacter(char.id, {
+        name: name || char.name,
+        role: role || char.role,
+        archetype: archetype || char.archetype,
+        description: description || char.description
+      });
+    }
+  }
+
+  deleteCharacter(charId: string) {
+    if (confirm('Delete this character?')) {
+      this.novelService.deleteCharacter(charId);
+    }
+  }
+
   // Location management
   addNewLocation() {
     const name = prompt('Location name:');
     if (name) {
       this.novelService.addLocation(name);
+    }
+  }
+
+  editLocation(loc: any) {
+    const name = prompt('Location name:', loc.name);
+    const type = prompt('Type:', loc.type);
+    const description = prompt('Description:', loc.description);
+
+    if (name !== null) {
+      this.novelService.updateLocation(loc.id, {
+        name: name || loc.name,
+        type: type || loc.type,
+        description: description || loc.description
+      });
+    }
+  }
+
+  deleteLocation(locId: string) {
+    if (confirm('Delete this location?')) {
+      this.novelService.deleteLocation(locId);
     }
   }
 

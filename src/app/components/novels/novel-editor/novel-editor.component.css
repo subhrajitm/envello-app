@@ -1,3 +1,12 @@
+/* Host Styles - Critical for proper scrolling */
+:host {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    /* Important for flex-shrink/stretch behavior */
+    height: 100%;
+}
+
 .ne-layout {
     display: flex;
     flex-direction: column;
@@ -197,6 +206,8 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
 }
 
 .ne-chap-header {
@@ -888,6 +899,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+    margin-top: 16px;
 }
 
 /* Lists (Characters, Locations) */
@@ -897,7 +910,8 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 0;
+    padding: 0 12px;
+    min-height: 0;
 }
 
 .ne-list-item {
@@ -936,13 +950,36 @@
     color: var(--text-tertiary);
 }
 
+.list-delete {
+    font-size: 16px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0;
+    margin-left: auto;
+}
+
+.ne-list-item:hover .list-delete {
+    opacity: 1;
+}
+
+.list-delete:hover {
+    color: var(--accent-red, #ff4444);
+    background: var(--bg-hover);
+}
+
 /* Notes Panel */
 .ne-notes-panel,
 .ne-meta-panel {
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow-y: auto;
+}
+
+.ne-notes-panel {
+    padding: 16px;
 }
 
 .ne-add-btn-row {
@@ -974,7 +1011,9 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 12px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .ne-note-card {

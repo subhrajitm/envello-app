@@ -21,7 +21,8 @@
             <div class="ne-chapters-section">
                 <div class="ne-chap-header">
                     CHAPTERS
-                    <span class="material-symbols-outlined icon-add" (click)="addNewChapter(novel()!.chapters[0].id)" title="Add new chapter">add</span>
+                    <span class="material-symbols-outlined icon-add" (click)="addNewChapter(novel()!.chapters[0].id)"
+                        title="Add new chapter">add</span>
                 </div>
                 <div class="ne-chapter-list">
                     @for (group of novel()!.chapters; track group.id) {
@@ -65,16 +66,20 @@
             <div class="ne-list-section">
                 <div class="ne-chap-header">
                     CAST LIST
-                    <span class="material-symbols-outlined icon-add" (click)="addNewCharacter()" title="Add new character">add</span>
+                    <span class="material-symbols-outlined icon-add" (click)="addNewCharacter()"
+                        title="Add new character">add</span>
                 </div>
                 <div class="ne-simple-list">
                     @for (char of novel()!.characters; track char.id) {
-                    <div class="ne-list-item">
+                    <div class="ne-list-item" (click)="editCharacter(char)">
                         <span class="material-symbols-outlined list-icon">account_circle</span>
                         <div class="list-info">
                             <div class="list-title">{{ char.name }}</div>
                             <div class="list-sub">{{ char.role }} • {{ char.archetype }}</div>
                         </div>
+                        <span class="material-symbols-outlined list-delete"
+                            (click)="deleteCharacter(char.id); $event.stopPropagation()"
+                            title="Delete character">delete</span>
                     </div>
                     }
                 </div>
@@ -86,16 +91,20 @@
             <div class="ne-list-section">
                 <div class="ne-chap-header">
                     WORLD BUILDING
-                    <span class="material-symbols-outlined icon-add" (click)="addNewLocation()" title="Add new location">add</span>
+                    <span class="material-symbols-outlined icon-add" (click)="addNewLocation()"
+                        title="Add new location">add</span>
                 </div>
                 <div class="ne-simple-list">
                     @for (loc of novel()!.locations; track loc.id) {
-                    <div class="ne-list-item">
+                    <div class="ne-list-item" (click)="editLocation(loc)">
                         <span class="material-symbols-outlined list-icon">public</span>
                         <div class="list-info">
                             <div class="list-title">{{ loc.name }}</div>
                             <div class="list-sub">{{ loc.type }}</div>
                         </div>
+                        <span class="material-symbols-outlined list-delete"
+                            (click)="deleteLocation(loc.id); $event.stopPropagation()"
+                            title="Delete location">delete</span>
                     </div>
                     }
                 </div>
@@ -133,8 +142,8 @@
             </div>
 
             <div class="ne-editor-canvas">
-                <input type="text" class="ne-doc-title-input" [ngModel]="title()" (ngModelChange)="onTitleChange($event)"
-                    placeholder="Chapter Title" />
+                <input type="text" class="ne-doc-title-input" [ngModel]="title()"
+                    (ngModelChange)="onTitleChange($event)" placeholder="Chapter Title" />
 
                 <div class="ne-doc-meta">
                     DRAFT 2 <span class="meta-sep">•</span> LAST EDITED TODAY <span class="meta-sep">•</span> TAGS:
@@ -236,7 +245,8 @@
                                 <span class="note-title">{{ note.title }}</span>
                                 <div class="note-actions">
                                     <span class="note-time">{{ note.date }}</span>
-                                    <span class="material-symbols-outlined note-delete" (click)="deleteNote(note.id)" title="Delete note">delete</span>
+                                    <span class="material-symbols-outlined note-delete" (click)="deleteNote(note.id)"
+                                        title="Delete note">delete</span>
                                 </div>
                             </div>
                             <div class="note-body">{{ note.body }}</div>
