@@ -9,6 +9,8 @@ interface AddNewOption {
     icon: string;
     route: string;
     color: string;
+    count?: number;
+    shortcut?: string;
 }
 
 @Component({
