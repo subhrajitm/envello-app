@@ -21,7 +21,7 @@
                     {{ getThemeIcon() }}
                 </span>
             </button>
-            <button class="icon-btn">
+            <button class="icon-btn" (click)="openSettings()">
                 <span class="material-symbols-outlined">settings</span>
             </button>
             <div class="profile-menu">
@@ -43,3 +43,6 @@
 
 <!-- Add New Modal -->
 <app-add-new-modal></app-add-new-modal>
+
+<!-- Settings Modal -->
+<app-settings-modal></app-settings-modal>

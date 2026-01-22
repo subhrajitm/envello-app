@@ -4,11 +4,12 @@ import { ThemeService, Theme } from '../../../services/theme.service';
 import { Router } from '@angular/router';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
 import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.component';
+import { SettingsModalComponent } from '../../settings-modal/settings-modal.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -16,6 +17,7 @@ export class HeaderComponent {
   @Input() activeTab = 'Overview';
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
+  @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
 
   themeService = inject(ThemeService);
   private router = inject(Router);
@@ -81,5 +83,9 @@ export class HeaderComponent {
 
   openAddNew() {
     this.addNewModal?.open();
+  }
+
+  openSettings() {
+    this.settingsModal?.open();
   }
 }
