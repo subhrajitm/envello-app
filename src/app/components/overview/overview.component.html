@@ -52,8 +52,10 @@
         <div class="calendar-header">
             <h2 class="cal-title">{{ currentMonth() }}</h2>
             <div class="cal-views">
-                <button class="cal-view-btn active">MONTH</button>
-                <button class="cal-view-btn">2 WEEKS</button>
+                <button class="cal-view-btn" [class.active]="viewMode() === 'MONTH'"
+                    (click)="setViewMode('MONTH')">MONTH</button>
+                <button class="cal-view-btn" [class.active]="viewMode() === '2 WEEKS'"
+                    (click)="setViewMode('2 WEEKS')">2 WEEKS</button>
             </div>
 
             <div class="cal-legend">

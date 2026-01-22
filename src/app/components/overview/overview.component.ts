@@ -21,6 +21,7 @@ export class OverviewComponent {
   streak = computed(() => (this.user()?.stats.daysActive || 0) + 'd');
 
   currentDate = new Date();
+  viewMode = signal<'MONTH' | '2 WEEKS'>('MONTH');
   currentMonth = signal('');
   days = signal<any[]>([]);
 
@@ -44,59 +45,104 @@ export class OverviewComponent {
     this.userService.updatePreferences({ autoSchedule: !current });
   }
 
+  setViewMode(mode: 'MONTH' | '2 WEEKS') {
+    this.viewMode.set(mode);
+    this.generateCalendar();
+  }
+
   changeMonth(delta: number) {
     const newDate = new Date(this.currentDate);
-    newDate.setMonth(newDate.getMonth() + delta);
+    if (this.viewMode() === 'MONTH') {
+      newDate.setMonth(newDate.getMonth() + delta);
+    } else {
+      // Move by 2 weeks
+      newDate.setDate(newDate.getDate() + (delta * 14));
+    }
     this.currentDate = newDate;
     this.generateCalendar();
   }
 
   generateCalendar() {
     const viewDate = this.currentDate;
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
     const now = new Date(); // Real 'now' for today check
 
-    // Set current month display
-    this.currentMonth.set(viewDate.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase());
-
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-
-    // 0 is Sunday, 1 is Monday. We want Monday to be 0 for array index
-    let startDayOfWeek = firstDay.getDay() - 1;
-    if (startDayOfWeek === -1) startDayOfWeek = 6; // Sunday becomes 6
+    // Set header display
+    if (this.viewMode() === 'MONTH') {
+      this.currentMonth.set(viewDate.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase());
+    } else {
+      const endDate = new Date(viewDate);
+      endDate.setDate(viewDate.getDate() + 13);
+      const startStr = viewDate.toLocaleString('default', { month: 'short', day: 'numeric' });
+      const endStr = endDate.toLocaleString('default', { month: 'short', day: 'numeric' });
+      this.currentMonth.set(`${startStr} - ${endStr}`.toUpperCase());
+    }
 
     const daysArray = [];
 
-    // Add previous month's days
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = startDayOfWeek - 1; i >= 0; i--) {
-      daysArray.push({
-        date: prevMonthLastDay - i,
-        prevMonth: true
-      });
-    }
+    if (this.viewMode() === 'MONTH') {
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
 
-    // Add current month's days
-    for (let i = 1; i <= lastDay.getDate(); i++) {
-      const isToday = i === now.getDate() && month === now.getMonth() && year === now.getFullYear();
-      const events = [];
+      // 0 is Sunday, 1 is Monday. We want Monday to be 0 for array index
+      let startDayOfWeek = firstDay.getDay() - 1;
+      if (startDayOfWeek === -1) startDayOfWeek = 6; // Sunday becomes 6
 
-      // Demo logic for events
-      if (i === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
-      if (isToday) {
-        events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
-        events.push({ title: 'EMERALD EDIT', type: 'fiction' });
+      // Add previous month's days
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        daysArray.push({
+          date: prevMonthLastDay - i,
+          prevMonth: true
+        });
       }
-      if (i === 14) events.push({ title: 'KYOTO RELEASE', type: 'deadline' });
 
-      daysArray.push({
-        date: i,
-        today: isToday,
-        events: events,
-        hasAdd: i === now.getDate() + 1 && month === now.getMonth() && year === now.getFullYear()
-      });
+      // Add current month's days
+      for (let i = 1; i <= lastDay.getDate(); i++) {
+        const isToday = i === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+        const events = [];
+
+        if (i === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
+        if (isToday) {
+          events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
+          events.push({ title: 'EMERALD EDIT', type: 'fiction' });
+        }
+        if (i === 14) events.push({ title: 'KYOTO RELEASE', type: 'deadline' });
+
+        daysArray.push({
+          date: i,
+          today: isToday,
+          events: events,
+          hasAdd: i === now.getDate() + 1 && month === now.getMonth() && year === now.getFullYear()
+        });
+      }
+    } else {
+      // 2 WEEKS MODE
+      // Align to start of the week (Monday)
+      const currentDayOfWeek = viewDate.getDay() || 7; // 1 (Mon) - 7 (Sun)
+      const startDate = new Date(viewDate);
+      startDate.setDate(viewDate.getDate() - (currentDayOfWeek - 1));
+
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+
+        const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        const events = [];
+
+        if (d.getDate() === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
+        if (isToday) {
+          events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
+        }
+
+        daysArray.push({
+          date: d.getDate(),
+          today: isToday,
+          events: events,
+          hasAdd: false
+        });
+      }
     }
 
     this.days.set(daysArray);

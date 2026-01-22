@@ -38,6 +38,8 @@ I've also updated the Overview page to be fully dynamic:
 - **Activity Feed**: Real-time activity tracking via `StoreService`
 - **Configuration**: "Auto-Schedule Tasks" toggle is now persisting to user profile
 - **Calendar**: Dynamically generates based on current date
+  - **View Toggle**: Switch between Month and 2-Week views
+  - **Smart Navigation**: Advances by month or fortnight depending on view
 - **Stats**: "Word Count" and "Streak" connected to real user data
 
 ### 🎨 **UI Integration**
