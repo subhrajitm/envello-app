@@ -9,7 +9,7 @@
             <input type="text" placeholder="Quick find (Cmd + K)" class="search-input" readonly />
         </div>
         <div class="header-actions">
-            <button class="btn-new-project">
+            <button class="btn-new-project" (click)="openAddNew()">
                 <span class="material-symbols-outlined btn-icon-inner">add</span> <span>Add New</span>
             </button>
             <div class="divider-vertical"></div>
@@ -40,3 +40,6 @@
 
 <!-- Quick Find Modal -->
 <app-quick-find></app-quick-find>
+
+<!-- Add New Modal -->
+<app-add-new-modal></app-add-new-modal>
