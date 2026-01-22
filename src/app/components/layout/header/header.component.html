@@ -34,6 +34,7 @@
             </div>
         </div>
     </div>
+    @if (!isImmersive) {
     <nav class="header-nav">
         @for (tab of tabs; track tab) {
         <button class="nav-tab" [class.active]="activeTab === tab" (click)="navigateTo(tab)">
@@ -41,6 +42,7 @@
         </button>
         }
     </nav>
+    }
 </header>
 
 <!-- Quick Find Modal -->

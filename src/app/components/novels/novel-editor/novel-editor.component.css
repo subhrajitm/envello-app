@@ -1,13 +1,8 @@
-/* Layout */
 .ne-layout {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    /* Fill available space from dashboard-content */
     background: var(--bg-app);
     color: var(--text-primary);
     overflow: hidden;
@@ -15,13 +10,13 @@
 
 /* Header */
 .ne-header {
-    height: 50px;
+    height: 56px;
     background: var(--bg-app);
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: 0 20px;
 }
 
 .ne-header-left {
@@ -74,11 +69,14 @@
     cursor: pointer;
     min-width: 240px;
     justify-content: space-between;
+    transition: all 0.2s ease;
 }
 
 .ne-project-select:hover {
     border-color: var(--border-highlight);
     color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Subtle lift */
 }
 
 .ne-header-right {
@@ -98,11 +96,13 @@
 }
 
 .ne-user-avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: var(--bg-hover);
     cursor: pointer;
+    border: 1px solid var(--border-subtle);
+    /* Better definition */
 }
 
 /* Workspace */
@@ -115,15 +115,16 @@
 /* Sidebar Left */
 .ne-sidebar-left {
     width: 240px;
+    /* Slightly wider for better tree readability */
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    padding: 16px 0;
+    padding: 12px 0;
 }
 
 .ne-sidebar-header-action {
-    padding: 0 16px 16px;
+    padding: 0 12px 12px;
     margin-bottom: 8px;
     border-bottom: 1px solid var(--border-subtle);
 }
@@ -155,7 +156,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 24px;
+    padding: 6px 12px;
     color: var(--text-tertiary);
     font-size: 13px;
     font-weight: 500;
@@ -181,7 +182,7 @@
 }
 
 .ne-chap-header {
-    padding: 0 16px 8px;
+    padding: 0 12px 8px;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1.2px;
@@ -193,18 +194,18 @@
 }
 
 .icon-add {
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
-    color: var(--accent-primary);
-    padding: 2px 6px;
+    color: var(--text-tertiary);
+    padding: 4px;
     border-radius: 4px;
     transition: all 0.2s;
-    background: var(--accent-primary-dim);
+    background: transparent;
 }
 
 .icon-add:hover {
     color: var(--accent-primary);
-    background: var(--accent-primary-dim);
+    background: var(--bg-hover);
 }
 
 .ne-chapter-list {
@@ -214,17 +215,20 @@
 
 /* New Expandable Chapter Item Styles */
 .ne-chapter-group {
-    margin-bottom: 2px;
+    margin-bottom: 6px;
 }
 
+/* Refined Chapter Items */
 .ne-chapter-item {
-    padding: 8px 16px;
+    padding: 5px 12px;
     border-left: 2px solid transparent;
     cursor: pointer;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
-    transition: all 0.2s;
+    transition: all 0.1s ease-in-out;
+    border-radius: 0 4px 4px 0;
+    margin-right: 4px;
 }
 
 .ne-chapter-item:hover {
@@ -232,10 +236,68 @@
 }
 
 .ne-chapter-item.active {
-    background: var(--bg-panel);
+    background: var(--bg-active);
     border-left-color: var(--accent-primary);
+    color: var(--text-primary);
 }
 
+.ne-chap-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.ne-chap-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ne-chapter-item.active .ne-chap-title {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.ne-chap-meta {
+    font-size: 9px;
+    color: var(--text-tertiary);
+    opacity: 0.8;
+}
+
+/* Sub-list (Scenes) */
+.ne-scene-list {
+    padding-left: 24px;
+    padding-right: 12px;
+    padding-bottom: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ne-scene-item {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.1s, color 0.1s;
+}
+
+.ne-scene-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}
+
+
+/* Utility Styles for Sidebar */
 .ne-collapse-btn {
     background: transparent;
     border: none;
@@ -245,76 +307,38 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    margin-top: 2px;
+    margin-right: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
 }
 
 .ne-collapse-btn:hover {
     color: var(--text-primary);
-}
-
-.ne-chap-info {
-    flex: 1;
-}
-
-.ne-chap-title {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: 2px;
-    line-height: 1.4;
-}
-
-.ne-chapter-item.active .ne-chap-title {
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.ne-chap-meta {
-    font-size: 10px;
-    color: var(--text-tertiary);
+    background: var(--bg-hover);
 }
 
 .ne-draft-tag {
-    color: #888;
+    color: var(--text-tertiary);
+    /* Muted for enterprise look */
+    font-weight: 500;
 }
 
 .ne-empty-tag {
     color: var(--text-disabled);
 }
 
-/* Sub-list (Scenes) */
-.ne-scene-list {
-    padding-left: 44px;
-    padding-right: 16px;
-    padding-bottom: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.ne-scene-item {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    padding: 4px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: color 0.1s;
-}
-
-.ne-scene-item:hover {
-    color: var(--text-secondary);
-}
-
 .sc-dot {
-    width: 4px;
-    height: 4px;
-    background: var(--bg-element);
+    width: 6px;
+    height: 6px;
+    background: var(--border-highlight);
     border-radius: 50%;
+    margin-right: 8px;
+    transition: all 0.2s;
 }
 
 .ne-scene-item:hover .sc-dot {
-    background: var(--text-tertiary);
+    background: var(--accent-primary);
+    transform: scale(1.2);
 }
 
 .sync-info {
@@ -335,15 +359,89 @@
     background: var(--bg-app);
     overflow-y: auto;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    /* Changed to column */
+    align-items: center;
+    /* Center children */
+}
+
+/* New Tab Styles */
+/* New Tab Styles - "Folder Tab" Look */
+.ne-editor-tabs {
+    display: flex;
+    justify-content: flex-start;
+    gap: 0;
+    /* Tabs touch each other */
+    padding: 16px 20px 0 20px;
+    /* Left aligned, no bottom padding */
+    width: 100%;
+    max-width: 100%;
+    /* Full width */
+    margin-top: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-app);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.ne-editor-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 16px;
+    position: relative;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: -1px;
+    /* Overlap border */
+    opacity: 0.7;
+}
+
+.ne-editor-tab:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    opacity: 1;
+}
+
+.ne-editor-tab.active {
+    background: var(--bg-app);
+    /* Matches content background */
+    color: var(--text-primary);
+    font-weight: 600;
+    opacity: 1;
+    border-color: var(--border-subtle);
+    border-bottom-color: var(--bg-app);
+    /* Hide bottom border */
+    z-index: 2;
+    /* Sit on top of line */
+}
+
+/* Remove old underline style */
+.ne-editor-tab.active::after {
+    display: none;
+}
+
+.tab-icon {
+    font-size: 16px;
 }
 
 .ne-editor-canvas {
     width: 100%;
     max-width: 800px;
-    padding: 64px 48px;
+    padding: 32px 48px 64px 48px;
     display: flex;
     flex-direction: column;
+    margin: 0 auto;
+    /* Center the canvas content */
 }
 
 .ne-doc-title-input {
@@ -355,7 +453,8 @@
     font-weight: 700;
     color: var(--text-primary);
     margin: 0 0 16px 0;
-    font-family: 'Times New Roman', serif;
+    font-family: var(--font-serif, 'Georgia', serif);
+    /* Use variable or nicer fallback */
     padding: 0;
 }
 
@@ -454,7 +553,7 @@
 
 /* Right Sidebar */
 .ne-sidebar-right {
-    width: 300px;
+    width: 320px;
     background: var(--bg-app);
     border-left: 1px solid var(--border-subtle);
     display: flex;
@@ -606,8 +705,9 @@
     margin-top: 24px;
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    padding: 12px;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .ctx-header {
@@ -639,16 +739,25 @@
     background: var(--accent-primary);
     border: none;
     color: var(--bg-app);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
-    padding: 4px;
-    border-radius: 2px;
-    margin-top: 4px;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-execute:hover {
+    opacity: 0.9;
+}
+
+.btn-execute:active {
+    transform: scale(0.98);
 }
 
 .ne-suggestions-box {
@@ -670,14 +779,15 @@
 }
 
 .sugg-card {
-    background: var(--bg-active);
+    background: linear-gradient(135deg, var(--bg-active), var(--bg-panel));
     border: 1px solid var(--border-subtle);
-    padding: 12px;
-    border-radius: 4px;
+    padding: 16px;
+    border-radius: 8px;
     font-size: 11px;
     color: var(--text-secondary);
     font-style: italic;
-    line-height: 1.5;
+    line-height: 1.6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .ne-ai-footer {
@@ -690,7 +800,7 @@
 }
 
 .ne-sync-status {
-    padding: 12px 24px;
+    padding: 12px 12px;
     margin-top: auto;
 }
 
@@ -758,14 +868,14 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 0 16px;
+    padding: 0;
 }
 
 .ne-list-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: 10px;
+    padding: 6px 12px;
     cursor: pointer;
     border-radius: 4px;
     transition: background 0.2s;

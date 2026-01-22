@@ -1,5 +1,5 @@
 <div class="dashboard">
-  <app-header [activeTab]="currentTab()"></app-header>
+  <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"></app-header>
 
   <div class="dashboard-content" [class.no-padding]="hasSidebar()" [class.immersive-view]="isImmersive()">
     <router-outlet></router-outlet>

@@ -1,40 +1,15 @@
 <div class="ne-layout">
-    <!-- Header -->
-    <header class="ne-header">
-        <div class="ne-header-left">
-            <button class="ne-back-btn" (click)="goBack()">
-                <span class="material-symbols-outlined">arrow_back</span>
-                Back
-            </button>
-            <div class="ne-project-select">
-                <span class="ne-brand">EMERALD PROTOCOL</span>
-                <span class="material-symbols-outlined icon-btn">expand_more</span>
-            </div>
-        </div>
-        <div class="ne-header-right">
-            <span class="ne-user-avatar"></span>
-        </div>
-    </header>
+    <!-- Header Hidden as per request -->
+    <!-- <header class="ne-header">...</header> -->
 
     <!-- Workspace -->
     <div class="ne-workspace">
         <!-- Left Sidebar: Chapters -->
         <!-- Left Sidebar: Chapters -->
         <div class="ne-sidebar-left">
-            <div class="ne-nav-group" [class.active]="activeNav() === 'manuscript'"
-                (click)="setActiveNav('manuscript')">
-                <span class="material-symbols-outlined active-icon">menu_book</span>
-                Manuscript
-            </div>
-            <div class="ne-nav-group" [class.active]="activeNav() === 'characters'"
-                (click)="setActiveNav('characters')">
-                <span class="material-symbols-outlined">person</span>
-                Characters
-            </div>
-            <div class="ne-nav-group" [class.active]="activeNav() === 'locations'" (click)="setActiveNav('locations')">
-                <span class="material-symbols-outlined">location_on</span>
-                Locations
-            </div>
+
+            <!-- Navigation moved to Editor Area Tabs -->
+
 
             <!-- MANUSCRIPT VIEW -->
             @if (activeNav() === 'manuscript') {
@@ -133,6 +108,25 @@
 
         <!-- Editor Canvas -->
         <div class="ne-editor-area">
+            <!-- Top Tabs -->
+            <div class="ne-editor-tabs">
+                <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
+                    (click)="setActiveNav('manuscript')">
+                    <span class="material-symbols-outlined tab-icon">description</span>
+                    Manuscript
+                </button>
+                <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
+                    (click)="setActiveNav('characters')">
+                    <span class="material-symbols-outlined tab-icon">group</span>
+                    Characters
+                </button>
+                <button class="ne-editor-tab" [class.active]="activeNav() === 'locations'"
+                    (click)="setActiveNav('locations')">
+                    <span class="material-symbols-outlined tab-icon">public</span>
+                    Locations
+                </button>
+            </div>
+
             <div class="ne-editor-canvas">
                 <input type="text" class="ne-doc-title-input" [ngModel]="title()" (ngModelChange)="title.set($event)"
                     placeholder="Chapter Title" />

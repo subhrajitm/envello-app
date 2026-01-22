@@ -20,6 +20,7 @@ import { ProfileEditorComponent } from '../../profile-editor/profile-editor.comp
 })
 export class HeaderComponent {
   @Input() activeTab = 'Overview';
+  @Input() isImmersive = false;
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
   @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
