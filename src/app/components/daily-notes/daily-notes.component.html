@@ -1,4 +1,112 @@
 <div class="daily-notes-view">
+
+    <!-- Modals -->
+    @if (activeModal() !== 'none') {
+    <div class="modal-overlay" (click)="closeModal()">
+        <div class="modal-container" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>{{ modalTitle() || (activeModal() === 'delete-confirm' ? 'Delete Note' :
+                    activeModal() === 'share' ? 'Share Note' :
+                    activeModal() === 'export' ? 'Export Note' : '') }}</h3>
+                <button class="close-modal-btn" (click)="closeModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <!-- New Folder Input -->
+                @if (activeModal() === 'new-folder') {
+                <p>Create a new folder to organize your notes.</p>
+                <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
+                    [(ngModel)]="modalInputValue" (keydown.enter)="confirmNewFolder()" autofocus>
+                }
+
+                <!-- Add Tag Input -->
+                @if (activeModal() === 'add-tag') {
+                <p>Enter a tag name to categorize this note.</p>
+                <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
+                    [(ngModel)]="modalInputValue" (keydown.enter)="confirmAddTag()" autofocus>
+                }
+
+                <!-- Link Input -->
+                @if (activeModal() === 'link') {
+                <p>Enter the URL for the link.</p>
+                <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
+                    [(ngModel)]="modalInputValue" (keydown.enter)="confirmSetLink()" autofocus>
+                }
+
+                <!-- Image Input -->
+                @if (activeModal() === 'image') {
+                <p>Enter the URL of the image you want to insert.</p>
+                <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
+                    [(ngModel)]="modalInputValue" (keydown.enter)="confirmAddImage()" autofocus>
+                }
+
+                <!-- Delete Confirmation -->
+                @if (activeModal() === 'delete-confirm') {
+                <p>Are you sure you want to delete this note? This action cannot be undone.</p>
+                }
+
+                <!-- Share Modal -->
+                @if (activeModal() === 'share') {
+                <p>Share this note via link or email.</p>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <input type="text" class="modal-input" value="https://envello.app/notes/share/{{selectedEntryId()}}"
+                        readonly style="margin: 0;">
+                    <button class="btn-secondary" (click)="closeModal()">Copy</button>
+                </div>
+                }
+
+                <!-- Export Modal -->
+                @if (activeModal() === 'export') {
+                <p>Choose a format to export your note.</p>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn-secondary" style="flex: 1;" (click)="closeModal()">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 20px; display: block; margin: 0 auto 4px;">picture_as_pdf</span>
+                        PDF
+                    </button>
+                    <button class="btn-secondary" style="flex: 1;" (click)="closeModal()">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 20px; display: block; margin: 0 auto 4px;">description</span>
+                        Markdown
+                    </button>
+                    <button class="btn-secondary" style="flex: 1;" (click)="closeModal()">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 20px; display: block; margin: 0 auto 4px;">html</span>
+                        HTML
+                    </button>
+                </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                @if (activeModal() === 'share' || activeModal() === 'export') {
+                <button class="btn-primary" (click)="closeModal()">Done</button>
+                } @else {
+                <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+
+                @if (activeModal() === 'new-folder') {
+                <button class="btn-primary" (click)="confirmNewFolder()">Create Folder</button>
+                }
+                @if (activeModal() === 'add-tag') {
+                <button class="btn-primary" (click)="confirmAddTag()">Add Tag</button>
+                }
+                @if (activeModal() === 'link') {
+                <button class="btn-primary" (click)="confirmSetLink()">Set Link</button>
+                }
+                @if (activeModal() === 'image') {
+                <button class="btn-primary" (click)="confirmAddImage()">Insert Image</button>
+                }
+                @if (activeModal() === 'delete-confirm') {
+                <button class="btn-danger" (click)="confirmDeleteNote()">Delete</button>
+                }
+                }
+            </div>
+        </div>
+    </div>
+    }
+
     <div class="dn-sidebar">
         <!-- Search Bar with Dropdown + Button -->
         <div class="dn-search-header">
@@ -133,17 +241,17 @@
                 <button class="action-btn" title="Add tags">
                     <span class="material-symbols-outlined">label</span>
                 </button>
-                <button class="action-btn" title="Share">
+                <button class="action-btn" title="Share" (click)="shareNote()">
                     <span class="material-symbols-outlined">share</span>
                 </button>
-                <button class="action-btn" title="Export">
+                <button class="action-btn" title="Export" (click)="exportNote()">
                     <span class="material-symbols-outlined">download</span>
                 </button>
                 <div class="action-divider"></div>
                 <button class="action-btn danger" title="Delete" (click)="deleteCurrentNote()">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
-                <button class="action-btn" title="More options">
+                <button class="action-btn" title="More options" (click)="showMoreOptions()">
                     <span class="material-symbols-outlined">more_horiz</span>
                 </button>
             </div>

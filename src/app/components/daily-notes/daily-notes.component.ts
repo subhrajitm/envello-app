@@ -46,6 +46,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   wordCount = signal(0);
   characterCount = signal(0);
 
+  // Modal State
+  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'share' | 'export'>('none');
+  modalInputValue = signal<string>('');
+  modalInputPlaceholder = signal<string>('');
+  modalTitle = signal<string>('');
+  tempNoteId = signal<string>(''); // For storing ID during confirmation flow
+
 
   selectedEntryId = signal<string>('');
   searchQuery = signal<string>('');
@@ -248,8 +255,26 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   handleNewFolder() {
-    console.log('Create new folder');
-    // Implement folder creation logic
+    this.modalTitle.set('New Folder');
+    this.modalInputPlaceholder.set('Enter folder name...');
+    this.modalInputValue.set('');
+    this.activeModal.set('new-folder');
+  }
+
+  confirmNewFolder() {
+    const folderName = this.modalInputValue();
+    if (folderName) {
+      const newGroup: NoteGroup = {
+        id: folderName.toLowerCase().replace(/\s+/g, '-'),
+        name: folderName,
+        icon: 'folder',
+        count: 0,
+        expanded: true,
+        noteIds: []
+      };
+      this.noteGroups.update(groups => [...groups, newGroup]);
+    }
+    this.closeModal();
   }
 
   toggleExpandAll() {
@@ -322,10 +347,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   deleteCurrentNote() {
     const activeId = this.selectedEntryId();
-    if (activeId && window.confirm('Are you sure you want to delete this note?')) {
+    if (activeId) {
+      this.tempNoteId.set(activeId);
+      this.activeModal.set('delete-confirm');
+    }
+  }
+
+  confirmDeleteNote() {
+    const activeId = this.tempNoteId();
+    if (activeId) {
       this.closeNoteTab(activeId);
       this.store.deleteNote(activeId);
     }
+    this.closeModal();
   }
 
   addTag(tag: string) {
@@ -346,33 +380,72 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   promptAddTag() {
-    const tag = window.prompt('Enter tag name:');
+    this.modalTitle.set('Add Tag');
+    this.modalInputPlaceholder.set('Enter tag name...');
+    this.modalInputValue.set('');
+    this.activeModal.set('add-tag');
+  }
+
+  confirmAddTag() {
+    const tag = this.modalInputValue();
     if (tag) {
       this.addTag(tag);
     }
+    this.closeModal();
   }
 
   setLink() {
     if (!this.editor) return;
     const previousUrl = this.editor.getAttributes('link')['href'];
-    const url = window.prompt('URL', previousUrl);
 
-    if (url === null) return;
+    this.modalTitle.set('Insert Link');
+    this.modalInputPlaceholder.set('https://example.com');
+    this.modalInputValue.set(previousUrl || '');
+    this.activeModal.set('link');
+  }
 
+  confirmSetLink() {
+    const url = this.modalInputValue();
     if (url === '') {
       this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
+    } else if (url) {
+      this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     }
+    this.closeModal();
+  }
 
-    this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  shareNote() {
+    this.activeModal.set('share');
+  }
+
+  exportNote() {
+    this.activeModal.set('export');
+  }
+
+  showMoreOptions() {
+    // This would toggle a dropdown menu
+    console.log('Show more options');
   }
 
   addImage() {
     if (!this.editor) return;
-    const url = window.prompt('Image URL');
+    this.modalTitle.set('Insert Image');
+    this.modalInputPlaceholder.set('Image URL (https://...)');
+    this.modalInputValue.set('');
+    this.activeModal.set('image');
+  }
 
+  confirmAddImage() {
+    const url = this.modalInputValue();
     if (url) {
       (this.editor.chain().focus() as any).setImage({ src: url }).run();
     }
+    this.closeModal();
+  }
+
+  closeModal() {
+    this.activeModal.set('none');
+    this.modalInputValue.set('');
+    this.tempNoteId.set('');
   }
 }
