@@ -1,6 +1,6 @@
 import { Injectable, signal, effect } from '@angular/core';
 
-export type Theme = 'dark' | 'light' | 'colorful';
+export type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterprise-light';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +28,9 @@ export class ThemeService {
 
   toggleTheme() {
     this.theme.update(t => {
-      if (t === 'dark') return 'light';
+      if (t === 'dark') return 'enterprise-dark';
+      if (t === 'enterprise-dark') return 'enterprise-light';
+      if (t === 'enterprise-light') return 'light';
       if (t === 'light') return 'colorful';
       return 'dark';
     });

@@ -54,8 +54,10 @@ export class SettingsModalComponent {
   ];
 
   themes: ThemeOption[] = [
-    { value: 'dark', label: 'Dark', icon: 'dark_mode' },
-    { value: 'light', label: 'Light', icon: 'light_mode' },
+    { value: 'dark', label: 'Midnight', icon: 'nights_stay' },
+    { value: 'enterprise-dark', label: 'Pro Dark', icon: 'dark_mode' },
+    { value: 'enterprise-light', label: 'Pro Light', icon: 'wb_sunny' },
+    { value: 'light', label: 'Paper', icon: 'light_mode' },
     { value: 'colorful', label: 'Colorful', icon: 'palette' }
   ];
 

@@ -26,6 +26,51 @@
     --font-serif: 'Georgia', 'Times New Roman', serif;
 }
 
+[data-theme="enterprise-dark"] {
+    /* Enterprise Dark Theme - Softer, Less Intense */
+    --bg-app: #18181b;
+    /* Zinc 900 - lighter than pure black */
+    --bg-panel: #27272a;
+    /* Zinc 800 */
+    --bg-hover: #3f3f46;
+    /* Zinc 700 */
+    --bg-active: #52525b;
+    /* Zinc 600 */
+
+    --bg-subtle: #1f1f23;
+    /* Between app and panel */
+    --bg-element: #2d2d30;
+
+    --border-subtle: #3f3f46;
+    /* Zinc 700 */
+    --border-main: #52525b;
+    /* Zinc 600 */
+    --border-highlight: #71717a;
+    /* Zinc 500 */
+
+    --text-primary: #fafafa;
+    /* Zinc 50 */
+    --text-secondary: #e4e4e7;
+    /* Zinc 200 */
+    --text-tertiary: #a1a1aa;
+    /* Zinc 400 */
+    --text-disabled: #71717a;
+
+    --accent-primary: #fbbf24;
+    /* Amber 400 - slightly softer than pure gold */
+    --accent-primary-dim: rgba(251, 191, 36, 0.1);
+    --accent-primary-text: #000000;
+    --accent-blue: #60a5fa;
+    --accent-red: #f87171;
+    --accent-green: #4ade80;
+    --accent-purple: #a855f7;
+    --accent-yellow: #fcd34d;
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-serif: 'Georgia', 'Times New Roman', serif;
+}
+
 [data-theme="light"] {
     /* Kindle Paperwhite Aesthetic */
     --bg-app: #f7f7f5;
@@ -92,6 +137,41 @@
     --card-purple: #e5d4f4;
     --card-pink: #f4d4e5;
     --card-yellow: #f9f4d4;
+}
+
+[data-theme="enterprise-light"] {
+    /* Enterprise Light Theme - Clean Professional */
+    --bg-app: #fafafa;
+    /* Zinc 50 */
+    --bg-panel: #ffffff;
+    --bg-hover: #f4f4f5;
+    /* Zinc 100 */
+    --bg-active: #e4e4e7;
+    /* Zinc 200 */
+
+    --border-subtle: #e4e4e7;
+    /* Zinc 200 */
+    --border-main: #d4d4d8;
+    /* Zinc 300 */
+    --border-highlight: #a1a1aa;
+    /* Zinc 400 */
+
+    --text-primary: #18181b;
+    /* Zinc 900 */
+    --text-secondary: #52525b;
+    /* Zinc 600 */
+    --text-tertiary: #a1a1aa;
+    /* Zinc 400 */
+
+    --accent-primary: #f59e0b;
+    /* Amber 500 */
+    --accent-primary-dim: rgba(245, 158, 11, 0.1);
+    --accent-primary-text: #ffffff;
+
+    --accent-blue: #3b82f6;
+    --accent-red: #ef4444;
+    --accent-green: #22c55e;
+    --accent-purple: #a855f7;
 }
 
 * {
