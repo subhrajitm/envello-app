@@ -1,4 +1,4 @@
-import { Component, signal, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, inject, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
@@ -68,5 +68,13 @@ export class ProfileEditorComponent {
       avatar: this.tempAvatar
     });
     this.close();
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  handleEscape(event: KeyboardEvent) {
+    if (this.isOpen()) {
+      event.preventDefault();
+      this.close();
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { Component, signal, inject, output } from '@angular/core';
+import { Component, signal, inject, output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -115,5 +115,13 @@ export class ProfileMenuComponent {
       month: 'short',
       year: 'numeric'
     });
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  handleEscape(event: KeyboardEvent) {
+    if (this.isOpen()) {
+      event.preventDefault();
+      this.close();
+    }
   }
 }

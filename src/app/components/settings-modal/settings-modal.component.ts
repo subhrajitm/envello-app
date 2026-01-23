@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../services/theme.service';
 import { AiService } from '../../services/ai.service';
@@ -67,6 +67,14 @@ export class SettingsModalComponent {
 
     // Load settings from localStorage
     this.loadSettings();
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  handleEscape(event: KeyboardEvent) {
+    if (this.isOpen()) {
+      event.preventDefault();
+      this.close();
+    }
   }
 
   open() {

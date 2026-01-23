@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -111,5 +111,13 @@ export class AddNewModalComponent {
 
     onModalClick(event: Event) {
         event.stopPropagation();
+    }
+
+    @HostListener('document:keydown.escape', ['$event'])
+    handleEscape(event: KeyboardEvent) {
+        if (this.isOpen()) {
+            event.preventDefault();
+            this.close();
+        }
     }
 }

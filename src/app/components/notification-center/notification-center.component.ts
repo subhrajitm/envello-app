@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { NotificationService, Notification, NotificationType } from '../../services/notification.service';
@@ -116,5 +116,13 @@ export class NotificationCenterComponent {
     if (days < 7) return `${days}d ago`;
 
     return date.toLocaleDateString();
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  handleEscape(event: KeyboardEvent) {
+    if (this.isOpen()) {
+      event.preventDefault();
+      this.close();
+    }
   }
 }
