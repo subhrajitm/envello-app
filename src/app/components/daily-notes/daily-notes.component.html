@@ -192,6 +192,10 @@
                         (click)="selectNote(entry.id)">
                         <span class="material-symbols-outlined note-icon">description</span>
                         <span class="note-title">{{ entry.title }}</span>
+                        <button class="note-delete-btn" title="Delete note"
+                            (click)="requestDeleteNote(entry.id, $event)">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
                     </div>
                     }
                 </div>

@@ -158,6 +158,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     });
   }
 
+  @HostListener('document:keydown.escape', ['$event'])
+  handleEscape(event: KeyboardEvent) {
+    if (this.activeModal() !== 'none') {
+      event.preventDefault();
+      this.closeModal();
+    }
+  }
+
   ngOnInit() {
     this.editor = new Editor({
       extensions: [
@@ -397,6 +405,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       this.tempNoteId.set(activeId);
       this.activeModal.set('delete-confirm');
     }
+  }
+
+  requestDeleteNote(noteId: string, event: Event) {
+    event.stopPropagation();
+    this.tempNoteId.set(noteId);
+    this.activeModal.set('delete-confirm');
   }
 
   confirmDeleteNote() {

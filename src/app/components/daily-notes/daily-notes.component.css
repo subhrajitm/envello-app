@@ -290,6 +290,34 @@
     text-overflow: ellipsis;
 }
 
+.note-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.note-item:hover .note-delete-btn {
+    opacity: 1;
+}
+
+.note-delete-btn:hover {
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--accent-red);
+}
+
+.note-delete-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
 /* Tag Categories */
 .tag-category {
     margin: 2px 6px;
