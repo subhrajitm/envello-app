@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { StoreService } from './store.service';
 
 export interface NovelContent {
     id: string; // Links to StoreService Novel.id
@@ -146,6 +147,7 @@ const INITIAL_DATA: Record<string, NovelContent> = {
 export class NovelContentService {
     // Current active novel state
     activeNovel = signal<NovelContent | null>(null);
+    store = inject(StoreService);
 
     constructor() { }
 
@@ -237,7 +239,7 @@ export class NovelContentService {
                 }
                 return group;
             });
-
+            this.store.addActivity(`Created new chapter '${title}'`, 'entry');
             return { ...novel, chapters: newChapters };
         });
     }
@@ -250,7 +252,7 @@ export class NovelContentService {
                 ...group,
                 children: group.children.filter(chap => chap.id !== chapterId)
             }));
-
+            this.store.addActivity('Deleted chapter', 'system');
             return { ...novel, chapters: newChapters };
         });
     }
@@ -282,7 +284,7 @@ export class NovelContentService {
                 date: 'Just now',
                 chapterId
             };
-
+            this.store.addActivity(`Added note '${title}'`, 'entry');
             return { ...novel, notes: [...novel.notes, newNote] };
         });
     }
@@ -318,7 +320,7 @@ export class NovelContentService {
                 archetype,
                 description
             };
-
+            this.store.addActivity(`Added character '${name}'`, 'entry');
             return { ...novel, characters: [...novel.characters, newCharacter] };
         });
     }
@@ -353,7 +355,7 @@ export class NovelContentService {
                 type,
                 description
             };
-
+            this.store.addActivity(`Added location '${name}'`, 'entry');
             return { ...novel, locations: [...novel.locations, newLocation] };
         });
     }

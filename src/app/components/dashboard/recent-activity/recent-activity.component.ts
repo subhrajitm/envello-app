@@ -1,12 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface Activity {
-  id: string;
-  action: string;
-  icon: string;
-  time: string;
-}
+import { Router } from '@angular/router';
+import { StoreService } from '../../../services/store.service';
 
 @Component({
   selector: 'app-recent-activity',
@@ -16,24 +11,30 @@ interface Activity {
   styleUrl: './recent-activity.component.css'
 })
 export class RecentActivityComponent {
-  activities = signal<Activity[]>([
-    {
-      id: '1',
-      action: 'Edited Chapter 3 in Project Alpha',
-      icon: 'edit',
-      time: '14:20',
-    },
-    {
-      id: '2',
-      action: 'New Research Note added to Neon Orchard',
-      icon: 'person',
-      time: '12:10',
-    },
-    {
-      id: '3',
-      action: 'Cloud Backup completed for all projects',
-      icon: 'cloud',
-      time: '09:45',
-    },
-  ]);
+  private store = inject(StoreService);
+
+  activities = computed(() => {
+    return this.store.activities().map(activity => ({
+      id: activity.id,
+      action: activity.text,
+      time: activity.time,
+      icon: this.getIconForType(activity.type)
+    })).slice(0, 5);
+  });
+
+  private router = inject(Router);
+
+  viewAll() {
+    this.router.navigate(['/activity-log']);
+  }
+
+  private getIconForType(type: string): string {
+    switch (type) {
+      case 'entry': return 'edit_note';
+      case 'sync': return 'cloud_sync';
+      case 'ai': return 'smart_toy';
+      case 'system': return 'settings';
+      default: return 'info';
+    }
+  }
 }

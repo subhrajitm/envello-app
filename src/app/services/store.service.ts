@@ -203,6 +203,6 @@ export class StoreService {
       time: 'Just now',
       type
     };
-    this.activities.update(activities => [newActivity, ...activities.slice(0, 9)]); // Keep last 10
+    this.activities.update(activities => [newActivity, ...activities.slice(0, 49)]); // Keep last 50
   }
 }

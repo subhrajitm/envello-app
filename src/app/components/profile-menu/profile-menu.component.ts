@@ -1,5 +1,6 @@
 import { Component, signal, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { UserService } from '../../services/user.service';
 
@@ -23,6 +24,7 @@ import { UserService } from '../../services/user.service';
 })
 export class ProfileMenuComponent {
   private userService = inject(UserService);
+  private router = inject(Router);
 
   isOpen = signal(false);
 
@@ -57,7 +59,7 @@ export class ProfileMenuComponent {
   }
 
   openActivity() {
-    console.log('Opening activity log...');
+    this.router.navigate(['/activity-log']);
     this.close();
   }
 

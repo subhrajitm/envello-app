@@ -2,11 +2,12 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService } from '../../services/store.service';
 import { UserService } from '../../services/user.service';
+import { RecentActivityComponent } from '../dashboard/recent-activity/recent-activity.component';
 
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RecentActivityComponent],
   templateUrl: './overview.component.html',
   styleUrl: './overview.component.css'
 })
@@ -38,7 +39,8 @@ export class OverviewComponent {
   days = signal<any[]>([]);
 
   planningItems = this.store.planningItems;
-  activities = this.store.activities;
+
+
 
   /* Fill empty cells for illustration */
   calendarPlaceholders = new Array(3).fill(null);
