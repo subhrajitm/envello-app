@@ -8,6 +8,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NovelContentService, Chapter, ChapterGroup } from '../../../services/novel-content.service';
 
+import { AiService } from '../../../services/ai.service';
+
 @Component({
   selector: 'app-novel-editor',
   standalone: true,
@@ -18,6 +20,7 @@ import { NovelContentService, Chapter, ChapterGroup } from '../../../services/no
 export class NovelEditorComponent implements OnInit, OnDestroy {
   editor!: Editor;
   novelService = inject(NovelContentService);
+  aiService = inject(AiService); // Inject AI Service
   route = inject(ActivatedRoute);
 
   // State
@@ -73,6 +76,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy {
         if (n.chapters.length > 0 && n.chapters[0].children.length > 0) {
           this.selectChapter(n.chapters[0].children[0]);
         }
+      }
+    });
+
+    // Effect to switch tab if AI is disabled
+    effect(() => {
+      if (!this.aiService.aiEnabled() && this.rightSidebarTab() === 'ai') {
+        this.rightSidebarTab.set('notes');
       }
     });
 

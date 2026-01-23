@@ -153,6 +153,41 @@
                 </div>
                 }
 
+                <!-- AI Section -->
+                @if (activeSection() === 'ai') {
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h3>AI & Intelligence</h3>
+                        <p>Configure automated features</p>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label-group">
+                            <label>Enable AI Features</label>
+                            <span class="setting-desc">Turn on/off AI assistance across the app</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" [checked]="aiService.aiEnabled()" (change)="aiService.toggleAi()">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-row">
+                            <span class="info-label">Status</span>
+                            <span class="info-value"
+                                [style.color]="aiService.aiEnabled() ? 'var(--accent-green)' : 'var(--text-tertiary)'">
+                                {{ aiService.aiEnabled() ? 'Active' : 'Disabled' }}
+                            </span>
+                        </div>
+                        <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 12px; line-height: 1.5;">
+                            When enabled, Envello provides intelligent suggestions, summaries, and creative assistance.
+                            All processing is done securely.
+                        </p>
+                    </div>
+                </div>
+                }
+
                 <!-- Notifications Section -->
                 @if (activeSection() === 'notifications') {
                 <div class="settings-section">

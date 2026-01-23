@@ -348,9 +348,11 @@
         <!-- Right Sidebar: AI & Tools -->
         <div class="ne-sidebar-right">
             <div class="ne-right-tabs">
+                @if (aiService.aiEnabled()) {
                 <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'ai'" (click)="setActiveTab('ai')">
                     <span class="material-symbols-outlined icon-tab">bolt</span>
                 </button>
+                }
                 <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'notes'"
                     (click)="setActiveTab('notes')">
                     <span class="material-symbols-outlined icon-tab">sticky_note_2</span>
@@ -362,7 +364,7 @@
             </div>
 
             <div class="ne-right-content">
-                @if (rightSidebarTab() === 'ai') {
+                @if (rightSidebarTab() === 'ai' && aiService.aiEnabled()) {
                 <div class="ne-ai-panel">
                     <div class="ne-ai-header">
                         <span class="material-symbols-outlined icon-bolt">bolt</span>

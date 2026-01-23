@@ -1,6 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../services/theme.service';
+import { AiService } from '../../services/ai.service';
 
 interface SettingsSection {
   id: string;
@@ -23,6 +24,7 @@ interface ThemeOption {
 })
 export class SettingsModalComponent {
   private themeService = inject(ThemeService);
+  aiService = inject(AiService);
 
   isOpen = signal(false);
   activeSection = signal('appearance');
@@ -45,6 +47,7 @@ export class SettingsModalComponent {
   sections: SettingsSection[] = [
     { id: 'appearance', label: 'Appearance', icon: 'palette' },
     { id: 'editor', label: 'Editor', icon: 'edit_note' },
+    { id: 'ai', label: 'AI & Intelligence', icon: 'smart_toy' },
     { id: 'notifications', label: 'Notifications', icon: 'notifications' },
     { id: 'privacy', label: 'Privacy & Data', icon: 'shield' },
     { id: 'about', label: 'About', icon: 'info' }
