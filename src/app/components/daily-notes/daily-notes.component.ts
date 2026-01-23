@@ -435,10 +435,51 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.activeModal.set('image');
   }
 
+  shareBtnText = signal('Copy');
+
   confirmAddImage() {
     const url = this.modalInputValue();
     if (url) {
-      (this.editor.chain().focus() as any).setImage({ src: url }).run();
+      if (this.editor) {
+        this.editor.chain().focus().setImage({ src: url }).run();
+      }
+    }
+    this.closeModal();
+  }
+
+  copyShareLink() {
+    const url = `https://envello.app/notes/share/${this.selectedEntryId()}`;
+    navigator.clipboard.writeText(url).then(() => {
+      this.shareBtnText.set('Copied!');
+      setTimeout(() => this.shareBtnText.set('Copy'), 2000);
+    });
+  }
+
+  downloadExport(format: 'pdf' | 'md' | 'html') {
+    const content = this.editor?.getHTML() || '';
+    const title = this.selectedNote()?.title || 'note';
+    const filename = `${title.toLowerCase().replace(/\s+/g, '-')}`;
+
+    if (format === 'html') {
+      const blob = new Blob([content], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'md') {
+      // Basic HTML to Markdown (simplified)
+      // Ideally use a library, but for now we'll save the HTML content which is valid MD
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'pdf') {
+      window.print();
     }
     this.closeModal();
   }

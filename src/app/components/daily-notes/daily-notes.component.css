@@ -828,6 +828,7 @@
 .empty-action-btn .material-symbols-outlined {
     font-size: 20px;
 }
+
 .toolbar-btn.active {
     background: var(--bg-active);
     color: var(--accent-primary);
@@ -846,37 +847,37 @@
 }
 
 .dn-editor-text .ProseMirror p.is-editor-empty:first-child::before {
-  color: var(--text-tertiary);
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
+    color: var(--text-tertiary);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
 }
 
 /* Task List Styling */
 ul[data-type="taskList"] {
-  list-style: none;
-  padding: 0;
+    list-style: none;
+    padding: 0;
 }
 
 li[data-type="taskItem"] {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
 }
 
 li[data-type="taskItem"] label {
-  margin-right: 0.5rem;
-  user-select: none;
-  cursor: pointer;
+    margin-right: 0.5rem;
+    user-select: none;
+    cursor: pointer;
 }
 
 li[data-type="taskItem"] div {
-  flex: 1;
+    flex: 1;
 }
 
 li[data-type="taskItem"] input[type="checkbox"] {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 /* Modal Styles */
@@ -1022,11 +1023,283 @@ li[data-type="taskItem"] input[type="checkbox"] {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* --- Enterprise & Smoothness Upgrades --- */
+
+/* Smooth Scrolling & Custom Scrollbars */
+.dn-entries-list,
+.dn-editor-content,
+.dn-tabs,
+.modal-body {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-subtle) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--border-subtle);
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-tertiary);
+}
+
+/* Premium Editor Typography & Feel */
+.dn-editor-content {
+    background: var(--bg-app);
+    /* Subtle texture or plain clean background */
+}
+
+.editor-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px;
+    /* More breathing room */
+    animation: fadeInContent 0.4s ease-out;
+}
+
+@keyframes fadeInContent {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dn-entry-heading-input {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 32px;
+    /* Larger title */
+    font-weight: 800;
+    /* Bolder */
+    letter-spacing: -0.02em;
+    /* Tight tracking for headings */
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    transition: color 0.2s;
+}
+
+.dn-entry-heading-input::placeholder {
+    color: var(--text-tertiary);
+    opacity: 0.5;
+}
+
+/* Tiptap Editor Styling - Notion-esque */
+.dn-editor-text .ProseMirror {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    /* Slightly larger body text */
+    line-height: 1.8;
+    /* Relaxed leading */
+    color: var(--text-secondary);
+    /* Softer black/white */
+    min-height: 60vh;
+    /* Takes up substantial space */
+}
+
+/* Focus State - no outline but maybe text color shift */
+.dn-editor-text .ProseMirror:focus {
+    color: var(--text-primary);
+}
+
+/* Selection Styling */
+.dn-editor-text .ProseMirror ::selection {
+    background-color: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.2);
+    color: inherit;
+}
+
+/* Blockquotes */
+.dn-editor-text .ProseMirror blockquote {
+    border-left: 3px solid var(--accent-primary);
+    margin-left: 0;
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-tertiary);
+    background: var(--bg-panel);
+    padding: 12px 16px;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Code Blocks */
+.dn-editor-text .ProseMirror pre {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 14px;
+    overflow-x: auto;
+}
+
+/* Placeholders */
+.dn-editor-text .ProseMirror p.is-editor-empty:first-child::before {
+    color: var(--text-tertiary);
+    opacity: 0.6;
+    font-style: normal;
+}
+
+/* Refined Tags Area */
+.editor-tags-section {
+    gap: 8px;
+    margin-bottom: 32px;
+    /* More separation from content */
+}
+
+.editor-tag-chip {
+    padding: 4px 12px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    /* Pill shape */
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.editor-tag-chip:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.add-tag-btn {
+    border-style: solid;
+    border-radius: 20px;
+}
+
+/* Button & Interactive Element Smoothness */
+.toolbar-btn,
+.action-btn,
+.editor-tab,
+.footer-action-btn,
+.tag-remove,
+.folder-header,
+.note-item {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Smoother cubic-bezier */
+}
+
+.toolbar-btn:active,
+.action-btn:active {
+    transform: scale(0.95);
+}
+
+/* H1-H6 Styling in Editor */
+.dn-editor-text .ProseMirror h1,
+.dn-editor-text .ProseMirror h2,
+.dn-editor-text .ProseMirror h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+.dn-editor-text .ProseMirror h1 {
+    font-size: 2em;
+}
+
+.dn-editor-text .ProseMirror h2 {
+    font-size: 1.5em;
+}
+
+.dn-editor-text .ProseMirror h3 {
+    font-size: 1.25em;
+}
+
+
+/* --- Focus & Outline Softening --- */
+
+/* Input Fields - Remove harsh browser outline, specific soft focus style */
+button:focus,
+input:focus,
+.dn-search-input:focus,
+.dn-entry-heading-input:focus,
+.modal-input:focus,
+.dn-editor-text:focus,
+.dn-editor-text .ProseMirror:focus {
+    outline: none !important;
+}
+
+/* Add soft focus ring to inputs that need it */
+.dn-search-input:focus,
+.modal-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.15);
+    /* Soft ring */
+}
+
+/* Buttons - no outline on click */
+.toolbar-btn:focus,
+.action-btn:focus,
+.editor-tab:focus {
+    outline: none;
+    /* Optional: minimal background change or soft ring if accessibility requires, but user asked to hide/soften */
+}
+
+/* Editor itself - pure clean focus */
+.dn-editor-text .ProseMirror:focus {
+    outline: none;
+    /* No border change, just cursor input */
+}
+
+/* Ensure global reset for these elements in this component scope */
+*:focus-visible {
+    outline: none !important;
+    /* Re-add softer replacement if needed for a specific element */
+}
+
+
+/* CRITICAL: Force remove any browser or framework outlines from the editor */
+::ng-deep .ProseMirror,
+::ng-deep .ProseMirror:focus,
+::ng-deep .ProseMirror-focused,
+::ng-deep .tiptap:focus,
+::ng-deep [contenteditable]:focus,
+tiptap-editor:focus,
+.dn-editor-text:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+}
+
+/* Also ensure the container wrapping it has no ring */
+::ng-deep .dn-editor-text {
+    outline: none !important;
 }

@@ -420,7 +420,7 @@
     justify-content: flex-start;
     gap: 0;
     /* Tabs touch each other */
-    padding: 12px 20px 0 20px;
+    padding: 10px 20px 0 20px;
     /* Added top padding for breathing room */
     width: 100%;
     max-width: 100%;
@@ -1264,6 +1264,7 @@
     border-left: 2px solid var(--accent-primary);
     padding-left: 10px;
 }
+
 /* Chapter Delete Button Styles */
 .chapter-delete {
     opacity: 0;
@@ -1289,7 +1290,7 @@
     border: 1px solid var(--border-subtle);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -1304,7 +1305,8 @@
 }
 
 .ne-ent-header-bg.loc-bg {
-    background: linear-gradient(135deg, #4caf5022, var(--bg-panel)); /* Greenish for locations */
+    background: linear-gradient(135deg, #4caf5022, var(--bg-panel));
+    /* Greenish for locations */
 }
 
 .ne-ent-header-content {
@@ -1322,7 +1324,7 @@
     border-radius: 50%;
     background: var(--bg-panel);
     border: 4px solid var(--bg-panel);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1446,12 +1448,12 @@
 
 /* Fix Right Sidebar Spacing */
 .ne-notes-panel {
-    padding: 20px 16px; 
+    padding: 20px 16px;
 }
 
 .ne-meta-content {
     padding: 20px 16px;
-    gap: 24px; 
+    gap: 24px;
 }
 
 .ne-avatar-mini {
@@ -1568,11 +1570,13 @@
     border-radius: 8px;
     margin-bottom: 24px;
     position: sticky;
-    top: 56px; /* Just below the sticky tabs */
+    top: 56px;
+    /* Just below the sticky tabs */
     z-index: 9;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     flex-wrap: wrap;
-    backdrop-filter: blur(8px); /* Glassmorphism touch */
+    backdrop-filter: blur(8px);
+    /* Glassmorphism touch */
 }
 
 .toolbar-group {
@@ -1605,7 +1609,8 @@
 }
 
 .toolbar-btn.active {
-    background: var(--bg-active); /* Light accent background */
+    background: var(--bg-active);
+    /* Light accent background */
     color: var(--accent-primary);
     border-color: var(--border-subtle);
 }
