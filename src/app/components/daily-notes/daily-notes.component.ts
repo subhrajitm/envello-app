@@ -1,7 +1,16 @@
-import { Component, computed, inject, signal, HostListener } from '@angular/core';
+import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '../../services/store.service';
 import { FormsModule } from '@angular/forms';
+import { Editor, Extension } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import CharacterCount from '@tiptap/extension-character-count';
+import { TiptapEditorDirective } from 'ngx-tiptap';
 
 interface NoteGroup {
   id: string;
@@ -23,15 +32,20 @@ interface TagCategory {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css'
 })
-export class DailyNotesComponent {
+export class DailyNotesComponent implements OnInit, OnDestroy {
   private store = inject(StoreService);
+  editor!: Editor;
 
   // Connect to store signals
   notes = this.store.notes;
+
+  wordCount = signal(0);
+  characterCount = signal(0);
+
 
   selectedEntryId = signal<string>('');
   searchQuery = signal<string>('');
@@ -111,6 +125,64 @@ export class DailyNotesComponent {
       const firstNoteId = this.notes()[0].id;
       this.selectedEntryId.set(firstNoteId);
       this.openNotes.set([firstNoteId]);
+    }
+
+    // Effect to update editor content when selected note changes
+    effect(() => {
+      const note = this.selectedNote();
+      if (note && this.editor) {
+        // Only update if content is different to avoid cursor jumps
+        if (this.editor.getHTML() !== note.content) {
+          this.editor.commands.setContent(note.content);
+        }
+      }
+    });
+  }
+
+  ngOnInit() {
+    this.editor = new Editor({
+      extensions: [
+        StarterKit,
+        Placeholder.configure({
+          placeholder: 'Start writing your thoughts...',
+        }),
+        Link.configure({
+          openOnClick: false,
+        }),
+        Image,
+        TaskList,
+        TaskItem.configure({
+          nested: true,
+        }),
+        CharacterCount,
+      ],
+      editorProps: {
+        attributes: {
+          class: 'dn-editor-text focus:outline-none',
+        },
+      },
+      onUpdate: ({ editor }) => {
+        const content = editor.getHTML();
+        const plainText = editor.getText();
+        const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
+        this.updateNoteContent(content, preview);
+
+        this.wordCount.set(editor.storage.characterCount.words());
+        this.characterCount.set(editor.storage.characterCount.characters());
+      },
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.editor) {
+      this.editor.destroy();
+    }
+  }
+
+  updateNoteContent(content: string, preview: string) {
+    const activeId = this.selectedEntryId();
+    if (activeId) {
+      this.store.updateNote(activeId, { content, preview });
     }
   }
 
@@ -239,5 +311,68 @@ export class DailyNotesComponent {
     this.tagCategories.update(categories =>
       categories.map(c => ({ ...c, expanded: shouldExpand }))
     );
+  }
+
+  updateNoteTitle(title: string) {
+    const activeId = this.selectedEntryId();
+    if (activeId) {
+      this.store.updateNote(activeId, { title });
+    }
+  }
+
+  deleteCurrentNote() {
+    const activeId = this.selectedEntryId();
+    if (activeId && window.confirm('Are you sure you want to delete this note?')) {
+      this.closeNoteTab(activeId);
+      this.store.deleteNote(activeId);
+    }
+  }
+
+  addTag(tag: string) {
+    const note = this.selectedNote();
+    if (note) {
+      const currentTags = note.tags || [];
+      if (!currentTags.includes(tag)) {
+        this.store.updateNote(note.id, { tags: [...currentTags, tag] });
+      }
+    }
+  }
+
+  removeTag(tag: string) {
+    const note = this.selectedNote();
+    if (note && note.tags) {
+      this.store.updateNote(note.id, { tags: note.tags.filter(t => t !== tag) });
+    }
+  }
+
+  promptAddTag() {
+    const tag = window.prompt('Enter tag name:');
+    if (tag) {
+      this.addTag(tag);
+    }
+  }
+
+  setLink() {
+    if (!this.editor) return;
+    const previousUrl = this.editor.getAttributes('link')['href'];
+    const url = window.prompt('URL', previousUrl);
+
+    if (url === null) return;
+
+    if (url === '') {
+      this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+
+    this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }
+
+  addImage() {
+    if (!this.editor) return;
+    const url = window.prompt('Image URL');
+
+    if (url) {
+      (this.editor.chain().focus() as any).setImage({ src: url }).run();
+    }
   }
 }

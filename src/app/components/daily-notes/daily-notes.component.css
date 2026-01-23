@@ -828,3 +828,53 @@
 .empty-action-btn .material-symbols-outlined {
     font-size: 20px;
 }
+.toolbar-btn.active {
+    background: var(--bg-active);
+    color: var(--accent-primary);
+}
+
+.dn-editor-text {
+    outline: none;
+    min-height: 300px;
+}
+
+.dn-editor-text .ProseMirror {
+    outline: none;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+.dn-editor-text .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--text-tertiary);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Task List Styling */
+ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+
+li[data-type="taskItem"] {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+li[data-type="taskItem"] label {
+  margin-right: 0.5rem;
+  user-select: none;
+  cursor: pointer;
+}
+
+li[data-type="taskItem"] div {
+  flex: 1;
+}
+
+li[data-type="taskItem"] input[type="checkbox"] {
+  cursor: pointer;
+}

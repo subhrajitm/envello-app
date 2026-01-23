@@ -140,7 +140,7 @@
                     <span class="material-symbols-outlined">download</span>
                 </button>
                 <div class="action-divider"></div>
-                <button class="action-btn danger" title="Delete">
+                <button class="action-btn danger" title="Delete" (click)="deleteCurrentNote()">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
                 <button class="action-btn" title="More options">
@@ -150,72 +150,86 @@
         </div>
 
         <!-- Formatting Toolbar -->
+        @if (editor) {
         <div class="formatting-toolbar">
             <div class="toolbar-group">
-                <button class="toolbar-btn" title="Bold">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
+                    [class.active]="editor.isActive('bold')" title="Bold">
                     <span class="material-symbols-outlined">format_bold</span>
                 </button>
-                <button class="toolbar-btn" title="Italic">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
+                    [class.active]="editor.isActive('italic')" title="Italic">
                     <span class="material-symbols-outlined">format_italic</span>
                 </button>
-                <button class="toolbar-btn" title="Underline">
-                    <span class="material-symbols-outlined">format_underlined</span>
-                </button>
-                <button class="toolbar-btn" title="Strikethrough">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleStrike().run()"
+                    [class.active]="editor.isActive('strike')" title="Strikethrough">
                     <span class="material-symbols-outlined">strikethrough_s</span>
                 </button>
             </div>
             <div class="toolbar-divider"></div>
             <div class="toolbar-group">
-                <button class="toolbar-btn" title="Heading">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+                    [class.active]="editor.isActive('heading', { level: 2 })" title="Heading">
                     <span class="material-symbols-outlined">title</span>
                 </button>
-                <button class="toolbar-btn" title="Bullet list">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleBulletList().run()"
+                    [class.active]="editor.isActive('bulletList')" title="Bullet list">
                     <span class="material-symbols-outlined">format_list_bulleted</span>
                 </button>
-                <button class="toolbar-btn" title="Numbered list">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleOrderedList().run()"
+                    [class.active]="editor.isActive('orderedList')" title="Numbered list">
                     <span class="material-symbols-outlined">format_list_numbered</span>
                 </button>
-                <button class="toolbar-btn" title="Checklist">
-                    <span class="material-symbols-outlined">checklist</span>
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleTaskList().run()"
+                    [class.active]="editor.isActive('taskList')" title="Checklist">
+                    <span class="material-symbols-outlined">check_box</span>
                 </button>
             </div>
             <div class="toolbar-divider"></div>
             <div class="toolbar-group">
-                <button class="toolbar-btn" title="Link">
-                    <span class="material-symbols-outlined">link</span>
-                </button>
-                <button class="toolbar-btn" title="Image">
-                    <span class="material-symbols-outlined">image</span>
-                </button>
-                <button class="toolbar-btn" title="Code block">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleCodeBlock().run()"
+                    [class.active]="editor.isActive('codeBlock')" title="Code block">
                     <span class="material-symbols-outlined">code</span>
                 </button>
-                <button class="toolbar-btn" title="Quote">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleBlockquote().run()"
+                    [class.active]="editor.isActive('blockquote')" title="Quote">
                     <span class="material-symbols-outlined">format_quote</span>
+                </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" (click)="setLink()" [class.active]="editor.isActive('link')" title="Link">
+                    <span class="material-symbols-outlined">link</span>
+                </button>
+                <button class="toolbar-btn" (click)="addImage()" title="Image">
+                    <span class="material-symbols-outlined">image</span>
                 </button>
             </div>
             <div class="toolbar-spacer"></div>
             <div class="toolbar-actions">
-                <button class="toolbar-action-btn">
-                    <span class="material-symbols-outlined">history</span>
-                    <span>Version History</span>
+                <button class="toolbar-action-btn" (click)="editor.chain().focus().undo().run()"
+                    [disabled]="!editor.can().undo()">
+                    <span class="material-symbols-outlined">undo</span>
+                    <span>Undo</span>
                 </button>
-                <button class="toolbar-action-btn">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                    <span>AI Assist</span>
+                <button class="toolbar-action-btn" (click)="editor.chain().focus().redo().run()"
+                    [disabled]="!editor.can().redo()">
+                    <span class="material-symbols-outlined">redo</span>
+                    <span>Redo</span>
                 </button>
-                <button class="toolbar-action-btn primary">
+                <button class="toolbar-action-btn primary" (click)="closeNoteTab(note.id)">
                     <span class="material-symbols-outlined">check</span>
                     <span>Done</span>
                 </button>
             </div>
         </div>
+        }
 
         <!-- Editor Content -->
         <div class="dn-editor-content">
             <div class="editor-container">
-                <input type="text" class="dn-entry-heading-input" [value]="note.title" placeholder="Note title..." />
+                <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
+                    (ngModelChange)="updateNoteTitle($event)" placeholder="Note title..." />
 
                 @if (getNoteTags(note).length > 0) {
                 <div class="editor-tags-section">
@@ -223,19 +237,19 @@
                     <span class="editor-tag-chip">
                         <span class="material-symbols-outlined tag-icon">label</span>
                         {{ tag }}
-                        <button class="tag-remove">
+                        <button class="tag-remove" (click)="removeTag(tag)">
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </span>
                     }
-                    <button class="add-tag-btn">
+                    <button class="add-tag-btn" (click)="promptAddTag()">
                         <span class="material-symbols-outlined">add</span>
                         Add tag
                     </button>
                 </div>
                 }
 
-                <div class="dn-entry-body" [innerHTML]="note.content"></div>
+                <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
             </div>
         </div>
 
@@ -252,17 +266,17 @@
                 </span>
                 <span class="footer-meta-item">
                     <span class="material-symbols-outlined">edit_note</span>
-                    <span>Last edited 2 hours ago</span>
+                    <span>Last edited {{ note.lastEdited || 'today' }}</span>
                 </span>
             </div>
             <div class="footer-right">
                 <span class="footer-meta-item">
                     <span class="material-symbols-outlined">article</span>
-                    <span>342 words</span>
+                    <span>{{ wordCount() }} words</span>
                 </span>
                 <span class="footer-meta-item">
                     <span class="material-symbols-outlined">text_fields</span>
-                    <span>1,847 characters</span>
+                    <span>{{ characterCount() }} characters</span>
                 </span>
                 <span class="save-status">
                     <span class="material-symbols-outlined status-icon">cloud_done</span>

@@ -18,6 +18,7 @@ export interface Note {
   preview: string;
   content: string; // HTML content for simplicity
   tags?: string[];
+  lastEdited?: string;
 }
 
 export interface PlanningItem {
@@ -166,6 +167,24 @@ export class StoreService {
   addNote(note: Note) {
     this.notes.update(notes => [note, ...notes]);
     this.addActivity("Entry added to '" + note.title + "'", 'entry');
+  }
+
+  updateNote(id: string, updates: Partial<Note>) {
+    const timestamp = new Date();
+    const timeString = timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    this.notes.update(notes =>
+      notes.map(note => note.id === id ? {
+        ...note,
+        ...updates,
+        lastEdited: updates.lastEdited || timeString
+      } : note)
+    );
+  }
+
+  deleteNote(id: string) {
+    this.notes.update(notes => notes.filter(n => n.id !== id));
+    this.addActivity('Note deleted', 'system');
   }
 
   addPlanningItem(item: PlanningItem) {
