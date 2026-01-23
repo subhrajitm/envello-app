@@ -879,7 +879,8 @@
 .ne-simple-list::-webkit-scrollbar-thumb,
 .ne-notes-panel::-webkit-scrollbar-thumb,
 .ne-meta-panel::-webkit-scrollbar-thumb {
-    background: #222;
+    background: var(--border-highlight);
+    /* Light gray */
     border-radius: 3px;
 }
 
