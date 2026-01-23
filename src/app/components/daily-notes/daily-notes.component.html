@@ -42,6 +42,13 @@
                     [(ngModel)]="modalInputValue" (keydown.enter)="confirmAddImage()" autofocus>
                 }
 
+                <!-- YouTube Input -->
+                @if (activeModal() === 'youtube') {
+                <p>Enter the YouTube URL you want to insert.</p>
+                <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
+                    [(ngModel)]="modalInputValue" (keydown.enter)="confirmAddYoutube()" autofocus>
+                }
+
                 <!-- Delete Confirmation -->
                 @if (activeModal() === 'delete-confirm') {
                 <p>Are you sure you want to delete this note? This action cannot be undone.</p>
@@ -97,6 +104,9 @@
                 }
                 @if (activeModal() === 'image') {
                 <button class="btn-primary" (click)="confirmAddImage()">Insert Image</button>
+                }
+                @if (activeModal() === 'youtube') {
+                <button class="btn-primary" (click)="confirmAddYoutube()">Insert Video</button>
                 }
                 @if (activeModal() === 'delete-confirm') {
                 <button class="btn-danger" (click)="confirmDeleteNote()">Delete</button>
@@ -269,16 +279,47 @@
                     [class.active]="editor.isActive('italic')" title="Italic">
                     <span class="material-symbols-outlined">format_italic</span>
                 </button>
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleUnderline().run()"
+                    [class.active]="editor.isActive('underline')" title="Underline">
+                    <span class="material-symbols-outlined">format_underlined</span>
+                </button>
                 <button class="toolbar-btn" (click)="editor.chain().focus().toggleStrike().run()"
                     [class.active]="editor.isActive('strike')" title="Strikethrough">
                     <span class="material-symbols-outlined">strikethrough_s</span>
                 </button>
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleHighlight().run()"
+                    [class.active]="editor.isActive('highlight')" title="Highlight">
+                    <span class="material-symbols-outlined">ink_highlighter</span>
+                </button>
             </div>
             <div class="toolbar-divider"></div>
             <div class="toolbar-group">
+                <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('left').run()"
+                    [class.active]="editor.isActive({ textAlign: 'left' })" title="Align Left">
+                    <span class="material-symbols-outlined">format_align_left</span>
+                </button>
+                <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('center').run()"
+                    [class.active]="editor.isActive({ textAlign: 'center' })" title="Align Center">
+                    <span class="material-symbols-outlined">format_align_center</span>
+                </button>
+                <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('right').run()"
+                    [class.active]="editor.isActive({ textAlign: 'right' })" title="Align Right">
+                    <span class="material-symbols-outlined">format_align_right</span>
+                </button>
+                <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('justify').run()"
+                    [class.active]="editor.isActive({ textAlign: 'justify' })" title="Justify">
+                    <span class="material-symbols-outlined">format_align_justify</span>
+                </button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+                    [class.active]="editor.isActive('heading', { level: 1 })" title="H1">
+                    <span class="material-symbols-outlined">format_h1</span>
+                </button>
                 <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                    [class.active]="editor.isActive('heading', { level: 2 })" title="Heading">
-                    <span class="material-symbols-outlined">title</span>
+                    [class.active]="editor.isActive('heading', { level: 2 })" title="H2">
+                    <span class="material-symbols-outlined">format_h2</span>
                 </button>
                 <button class="toolbar-btn" (click)="editor.chain().focus().toggleBulletList().run()"
                     [class.active]="editor.isActive('bulletList')" title="Bullet list">
@@ -311,6 +352,12 @@
                 </button>
                 <button class="toolbar-btn" (click)="addImage()" title="Image">
                     <span class="material-symbols-outlined">image</span>
+                </button>
+                <button class="toolbar-btn" (click)="insertTable()" title="Table">
+                    <span class="material-symbols-outlined">table</span>
+                </button>
+                <button class="toolbar-btn" (click)="addYoutube()" title="YouTube">
+                    <span class="material-symbols-outlined">smart_display</span>
                 </button>
             </div>
             <div class="toolbar-spacer"></div>
@@ -356,6 +403,69 @@
                     </button>
                 </div>
                 }
+
+                <tiptap-bubble-menu [editor]="editor">
+                    <div class="bubble-menu">
+                        <button class="bubble-btn" (click)="editor.chain().focus().toggleBold().run()"
+                            [class.active]="editor.isActive('bold')">
+                            <span class="material-symbols-outlined">format_bold</span>
+                        </button>
+                        <button class="bubble-btn" (click)="editor.chain().focus().toggleItalic().run()"
+                            [class.active]="editor.isActive('italic')">
+                            <span class="material-symbols-outlined">format_italic</span>
+                        </button>
+                        <button class="bubble-btn" (click)="editor.chain().focus().toggleUnderline().run()"
+                            [class.active]="editor.isActive('underline')">
+                            <span class="material-symbols-outlined">format_underlined</span>
+                        </button>
+                        <button class="bubble-btn" (click)="editor.chain().focus().toggleStrike().run()"
+                            [class.active]="editor.isActive('strike')">
+                            <span class="material-symbols-outlined">strikethrough_s</span>
+                        </button>
+                        <button class="bubble-btn" (click)="editor.chain().focus().toggleHighlight().run()"
+                            [class.active]="editor.isActive('highlight')">
+                            <span class="material-symbols-outlined">ink_highlighter</span>
+                        </button>
+                        <div class="bubble-divider"></div>
+                        <button class="bubble-btn" (click)="setLink()" [class.active]="editor.isActive('link')">
+                            <span class="material-symbols-outlined">link</span>
+                        </button>
+                        <button class="bubble-btn" (click)="editor.chain().focus().toggleCodeBlock().run()"
+                            [class.active]="editor.isActive('codeBlock')">
+                            <span class="material-symbols-outlined">code</span>
+                        </button>
+                    </div>
+                </tiptap-bubble-menu>
+
+                <tiptap-floating-menu [editor]="editor">
+                    <div class="floating-menu">
+                        <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+                            [class.active]="editor.isActive('heading', { level: 1 })">
+                            H1
+                        </button>
+                        <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+                            [class.active]="editor.isActive('heading', { level: 2 })">
+                            H2
+                        </button>
+                        <button class="float-btn" (click)="editor.chain().focus().toggleBulletList().run()"
+                            [class.active]="editor.isActive('bulletList')">
+                            <span class="material-symbols-outlined">format_list_bulleted</span>
+                        </button>
+                        <button class="float-btn" (click)="editor.chain().focus().toggleTaskList().run()"
+                            [class.active]="editor.isActive('taskList')">
+                            <span class="material-symbols-outlined">check_box</span>
+                        </button>
+                        <button class="float-btn" (click)="addImage()">
+                            <span class="material-symbols-outlined">image</span>
+                        </button>
+                        <button class="float-btn" (click)="insertTable()">
+                            <span class="material-symbols-outlined">table</span>
+                        </button>
+                        <button class="float-btn" (click)="addYoutube()">
+                            <span class="material-symbols-outlined">smart_display</span>
+                        </button>
+                    </div>
+                </tiptap-floating-menu>
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
             </div>

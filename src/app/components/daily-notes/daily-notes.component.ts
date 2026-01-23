@@ -10,7 +10,19 @@ import Image from '@tiptap/extension-image';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import CharacterCount from '@tiptap/extension-character-count';
-import { TiptapEditorDirective } from 'ngx-tiptap';
+import Underline from '@tiptap/extension-underline';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import Highlight from '@tiptap/extension-highlight';
+import TextAlign from '@tiptap/extension-text-align';
+import Youtube from '@tiptap/extension-youtube';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
+import BubbleMenu from '@tiptap/extension-bubble-menu';
+import FloatingMenu from '@tiptap/extension-floating-menu';
+import { TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective } from 'ngx-tiptap';
 
 interface NoteGroup {
   id: string;
@@ -32,7 +44,7 @@ interface TagCategory {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css'
 })
@@ -47,7 +59,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   characterCount = signal(0);
 
   // Modal State
-  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'share' | 'export'>('none');
+  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'share' | 'export' | 'youtube'>('none');
   modalInputValue = signal<string>('');
   modalInputPlaceholder = signal<string>('');
   modalTitle = signal<string>('');
@@ -149,9 +161,26 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.editor = new Editor({
       extensions: [
-        StarterKit,
+        StarterKit.configure({
+          codeBlock: false, // We use CodeBlockLowlight
+        }),
         Placeholder.configure({
-          placeholder: 'Start writing your thoughts...',
+          placeholder: 'Press \'/\' for commands...',
+        }),
+        BubbleMenu.configure({
+          pluginKey: 'bubbleMenu',
+          shouldShow: ({ editor, view, state, from, to }) => {
+            // Only show if selection is not empty and editor is editable
+            // Also check if not in a table (optional for some menus)
+            return !editor.view.state.selection.empty && editor.isEditable;
+          },
+        }),
+        FloatingMenu.configure({
+          pluginKey: 'floatingMenu',
+          shouldShow: ({ editor, view, state }) => {
+            // Show on empty lines
+            return editor.isActive('paragraph') && editor.state.selection.$from.parent.content.size === 0;
+          },
         }),
         Link.configure({
           openOnClick: false,
@@ -162,6 +191,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           nested: true,
         }),
         CharacterCount,
+        Underline,
+        Highlight.configure({ multicolor: true }),
+        TextAlign.configure({
+          types: ['heading', 'paragraph'],
+        }),
+        Table.configure({
+          resizable: true,
+        }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        Youtube.configure({
+          controls: true,
+        }),
+        CodeBlockLowlight.configure({
+          lowlight: createLowlight(common),
+        }),
       ],
       editorProps: {
         attributes: {
@@ -436,6 +482,28 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   shareBtnText = signal('Copy');
+
+  addYoutube() {
+    if (!this.editor) return;
+    this.modalTitle.set('Insert YouTube Video');
+    this.modalInputPlaceholder.set('Paste YouTube URL...');
+    this.modalInputValue.set('');
+    this.activeModal.set('youtube');
+  }
+
+  confirmAddYoutube() {
+    const url = this.modalInputValue();
+    if (url) {
+      if (this.editor) {
+        this.editor.commands.setYoutubeVideo({ src: url });
+      }
+    }
+    this.closeModal();
+  }
+
+  insertTable() {
+    this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  }
 
   confirmAddImage() {
     const url = this.modalInputValue();
