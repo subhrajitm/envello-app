@@ -86,7 +86,7 @@ export class HeaderComponent {
       'Meetings': 'meetings',
       'Books/Reading': 'books',
       'Code Snippets': 'snippets',
-      'Brainstorming': 'brainstorming'
+      'Brainstorming': 'brainstorming',
     };
     const path = map[tab] || 'overview';
     this.router.navigate([path]);

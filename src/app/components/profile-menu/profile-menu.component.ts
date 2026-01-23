@@ -68,6 +68,11 @@ export class ProfileMenuComponent {
     this.close();
   }
 
+  openBin() {
+    this.router.navigate(['/bin']);
+    this.close();
+  }
+
   openKeyboardShortcuts() {
     console.log('Opening keyboard shortcuts...');
     this.close();

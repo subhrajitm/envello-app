@@ -1,0 +1,72 @@
+.bin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.bin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bin-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.btn-empty {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-empty:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.bin-content {
+  overflow-x: auto;
+}
+
+.bin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.bin-table th,
+.bin-table td {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  text-align: left;
+}
+
+.bin-table th {
+  font-weight: 600;
+  color: var(--muted-foreground, #6b7280);
+}
+
+.actions {
+  text-align: right;
+}
+
+.btn-delete {
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.bin-empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--muted-foreground, #6b7280);
+}
+

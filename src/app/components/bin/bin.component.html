@@ -1,0 +1,43 @@
+<div class="bin-page">
+  <header class="bin-header">
+    <h1>Bin</h1>
+    <button class="btn-empty" type="button" (click)="emptyBin()" [disabled]="items().length === 0">
+      Empty Bin
+    </button>
+  </header>
+
+  <section class="bin-content" *ngIf="items().length > 0; else emptyState">
+    <table class="bin-table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Title</th>
+          <th>Context</th>
+          <th>Deleted At</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of items()">
+          <td>{{ item.type }}</td>
+          <td>{{ item.title || item.originalId }}</td>
+          <td>{{ item.contextId || '—' }}</td>
+          <td>{{ item.deletedAt | date: 'medium' }}</td>
+          <td class="actions">
+            <button type="button" class="btn-delete" (click)="permanentlyDelete(item.id)">
+              Delete forever
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <ng-template #emptyState>
+    <div class="bin-empty">
+      <p>No items in bin.</p>
+      <p>Deleted notes, chapters, characters, and locations will appear here.</p>
+    </div>
+  </ng-template>
+</div>
+

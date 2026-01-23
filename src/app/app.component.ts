@@ -52,7 +52,8 @@ export class AppComponent implements OnInit {
       'meetings': 'Meetings',
       'books': 'Books/Reading',
       'snippets': 'Code Snippets',
-      'brainstorming': 'Brainstorming'
+      'brainstorming': 'Brainstorming',
+      'bin': 'Bin'
     };
     return map[url] || 'Overview';
   }

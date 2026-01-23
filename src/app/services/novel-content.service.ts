@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
+import { BinService } from './bin.service';
 
 export interface NovelContent {
     id: string; // Links to StoreService Novel.id
@@ -148,6 +149,7 @@ export class NovelContentService {
     // Current active novel state
     activeNovel = signal<NovelContent | null>(null);
     store = inject(StoreService);
+  private bin = inject(BinService);
 
     constructor() { }
 
@@ -248,6 +250,32 @@ export class NovelContentService {
         this.activeNovel.update(novel => {
             if (!novel) return null;
 
+            // Capture the chapter before removing it so we can move it to the bin
+            let chapterToDelete: Chapter | undefined;
+            let groupIdForChapter: string | undefined;
+
+            for (const group of novel.chapters) {
+                const found = group.children.find(c => c.id === chapterId);
+                if (found) {
+                    chapterToDelete = found;
+                    groupIdForChapter = group.id;
+                    break;
+                }
+            }
+
+            if (chapterToDelete) {
+                this.bin.addToBin({
+                    type: 'novel-chapter',
+                    originalId: chapterToDelete.id,
+                    contextId: novel.id,
+                    title: chapterToDelete.title,
+                    payload: {
+                        ...chapterToDelete,
+                        groupId: groupIdForChapter
+                    }
+                });
+            }
+
             const newChapters = novel.chapters.map(group => ({
                 ...group,
                 children: group.children.filter(chap => chap.id !== chapterId)
@@ -304,6 +332,18 @@ export class NovelContentService {
     deleteNote(noteId: string) {
         this.activeNovel.update(novel => {
             if (!novel) return null;
+
+            const noteToDelete = novel.notes.find(note => note.id === noteId);
+            if (noteToDelete) {
+                this.bin.addToBin({
+                    type: 'novel-note',
+                    originalId: noteToDelete.id,
+                    contextId: novel.id,
+                    title: noteToDelete.title,
+                    payload: noteToDelete
+                });
+            }
+
             return { ...novel, notes: novel.notes.filter(note => note.id !== noteId) };
         });
     }
@@ -340,6 +380,18 @@ export class NovelContentService {
     deleteCharacter(characterId: string) {
         this.activeNovel.update(novel => {
             if (!novel) return null;
+
+            const characterToDelete = novel.characters.find(char => char.id === characterId);
+            if (characterToDelete) {
+                this.bin.addToBin({
+                    type: 'novel-character',
+                    originalId: characterToDelete.id,
+                    contextId: novel.id,
+                    title: characterToDelete.name,
+                    payload: characterToDelete
+                });
+            }
+
             return { ...novel, characters: novel.characters.filter(char => char.id !== characterId) };
         });
     }
@@ -375,6 +427,18 @@ export class NovelContentService {
     deleteLocation(locationId: string) {
         this.activeNovel.update(novel => {
             if (!novel) return null;
+
+            const locationToDelete = novel.locations.find(loc => loc.id === locationId);
+            if (locationToDelete) {
+                this.bin.addToBin({
+                    type: 'novel-location',
+                    originalId: locationToDelete.id,
+                    contextId: novel.id,
+                    title: locationToDelete.name,
+                    payload: locationToDelete
+                });
+            }
+
             return { ...novel, locations: novel.locations.filter(loc => loc.id !== locationId) };
         });
     }

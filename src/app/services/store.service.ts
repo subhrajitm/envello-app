@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { BinService } from './bin.service';
 
 export interface Task {
   id: string;
@@ -157,6 +158,8 @@ export class StoreService {
   activities = signal<Activity[]>(initialActivities);
   novels = signal<Novel[]>(initialNovels);
 
+  private bin = inject(BinService);
+
   constructor() { }
 
   addTask(task: Task) {
@@ -183,7 +186,19 @@ export class StoreService {
   }
 
   deleteNote(id: string) {
-    this.notes.update(notes => notes.filter(n => n.id !== id));
+    const existingNotes = this.notes();
+    const noteToDelete = existingNotes.find(n => n.id === id);
+
+    if (noteToDelete) {
+      this.bin.addToBin({
+        type: 'daily-note',
+        originalId: noteToDelete.id,
+        title: noteToDelete.title,
+        payload: noteToDelete
+      });
+    }
+
+    this.notes.set(existingNotes.filter(n => n.id !== id));
     this.addActivity('Note deleted', 'system');
   }
 
