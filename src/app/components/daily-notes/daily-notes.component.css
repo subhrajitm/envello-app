@@ -1482,6 +1482,25 @@ tiptap-editor:focus,
 
 ::ng-deep .dn-editor-text iframe {
     max-width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    margin: 8px 0;
+    border: none;
+    display: block;
+}
+
+/* Blockquote */
+::ng-deep .dn-editor-text blockquote {
+    border-left: 3px solid var(--accent-primary);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+::ng-deep .dn-editor-text iframe {
+    max-width: 100%;
     border-radius: 8px;
     margin: 8px 0;
     aspect-ratio: 16 / 9;
