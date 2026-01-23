@@ -1,31 +1,66 @@
 <div class="bin-page">
   <header class="bin-header">
-    <h1>Bin</h1>
-    <button class="btn-empty" type="button" (click)="emptyBin()" [disabled]="items().length === 0">
-      Empty Bin
-    </button>
+    <div class="bin-header-left">
+      <h1>Bin</h1>
+      <p class="bin-subtitle">
+        Soft‑deleted items from across Envello. Items are only permanently removed from here.
+      </p>
+    </div>
+    <div class="bin-header-actions" *ngIf="items().length > 0">
+      <span class="bin-count">{{ items().length }} items</span>
+      <button class="btn-empty" type="button" (click)="emptyBin()" [disabled]="items().length === 0">
+        <span class="material-symbols-outlined">delete_sweep</span>
+        <span>Empty Bin</span>
+      </button>
+    </div>
   </header>
 
   <section class="bin-content" *ngIf="items().length > 0; else emptyState">
     <table class="bin-table">
       <thead>
         <tr>
-          <th>Type</th>
-          <th>Title</th>
-          <th>Context</th>
-          <th>Deleted At</th>
-          <th></th>
+          <th>Item</th>
+          <th>Scope</th>
+          <th>Deleted</th>
+          <th class="col-actions"></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let item of items()">
-          <td>{{ item.type }}</td>
-          <td>{{ item.title || item.originalId }}</td>
-          <td>{{ item.contextId || '—' }}</td>
-          <td>{{ item.deletedAt | date: 'medium' }}</td>
+        <tr *ngFor="let item of sortedItems(); trackBy: trackById">
+          <td>
+            <div class="bin-item-main">
+              <div class="bin-item-title">
+                {{ item.title || item.originalId }}
+              </div>
+              <div class="bin-item-meta">
+                <span class="type-pill type-{{ item.type }}">
+                  {{ formatType(item.type) }}
+                </span>
+                <span class="meta-separator">•</span>
+                <span class="meta-id">ID: {{ item.originalId }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="bin-scope">
+              <span class="scope-label">Context</span>
+              <span class="scope-value">{{ item.contextId || 'Global' }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="bin-deleted">
+              <span class="deleted-primary">
+                {{ item.deletedAt | date: 'medium' }}
+              </span>
+              <span class="deleted-secondary">
+                {{ item.deletedAt | date: 'shortTime' }}
+              </span>
+            </div>
+          </td>
           <td class="actions">
             <button type="button" class="btn-delete" (click)="permanentlyDelete(item.id)">
-              Delete forever
+              <span class="material-symbols-outlined">delete_forever</span>
+              <span>Delete</span>
             </button>
           </td>
         </tr>
@@ -35,8 +70,9 @@
 
   <ng-template #emptyState>
     <div class="bin-empty">
-      <p>No items in bin.</p>
-      <p>Deleted notes, chapters, characters, and locations will appear here.</p>
+      <h2>No items in Bin</h2>
+      <p>Deleted notes, chapters, characters, and locations will appear here before permanent removal.</p>
+      <p class="bin-empty-caption">This acts as a safety net so teams can review destructive actions.</p>
     </div>
   </ng-template>
 </div>
