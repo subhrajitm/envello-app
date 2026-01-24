@@ -596,8 +596,18 @@
 
 .icon-more {
     font-size: 16px;
-    color: #666;
+    color: var(--text-tertiary);
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.icon-more:hover {
+    color: var(--text-primary);
+}
+
+.icon-more.pinned {
+    color: var(--accent-primary);
+    transform: rotate(45deg);
 }
 
 .card-title {

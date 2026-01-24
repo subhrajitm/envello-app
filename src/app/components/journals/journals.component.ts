@@ -46,6 +46,7 @@ export class JournalsComponent implements OnInit, OnDestroy {
   showColumnModal = signal<boolean>(false);
   showExportModal = signal<boolean>(false);
   showGoalsModal = signal<boolean>(false);
+  selectedSort = signal<'newest' | 'oldest' | 'alpha'>('newest');
   selectedEntry = signal<JournalEntry | null>(null);
   editingEntry = signal<JournalEntry | null>(null);
   showAiPanel = signal<boolean>(false);
@@ -113,6 +114,30 @@ export class JournalsComponent implements OnInit, OnDestroy {
     return grouped;
   });
 
+  private sortEntries(entries: JournalEntry[]): JournalEntry[] {
+    const sort = this.selectedSort();
+    const sorted = [...entries].sort((a, b) => {
+      // Pinned items always first
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+
+      if (sort === 'newest') {
+        return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+      } else if (sort === 'oldest') {
+        return new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime();
+      } else if (sort === 'alpha') {
+        return a.title.localeCompare(b.title);
+      }
+      return 0;
+    });
+    return sorted;
+  }
+
+  getEntriesForColumn(columnId: string): JournalEntry[] {
+    const grouped = this.filteredEntries();
+    return this.sortEntries(grouped[columnId] || []);
+  }
+
   timelineEntries = computed(() => {
     const project = this.activeProject();
     if (!project) return [];
@@ -137,8 +162,8 @@ export class JournalsComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(entry => entry.isAiEdited || entry.hasAi);
     }
 
-    // Sort by date descending
-    return filtered.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
+    // Use common sort logic
+    return this.sortEntries(filtered);
   });
 
   projectStats = computed(() => {
@@ -278,6 +303,21 @@ export class JournalsComponent implements OnInit, OnDestroy {
     this.journalService.setActiveProject(projectId);
   }
 
+  togglePin(entryId: string, event: Event) {
+    event.stopPropagation();
+    const entry = this.journalService.getEntry(entryId);
+    if (entry) {
+      this.journalService.updateEntry(entryId, { isPinned: !entry.isPinned });
+    }
+  }
+
+  toggleSort() {
+    const current = this.selectedSort();
+    if (current === 'newest') this.selectedSort.set('oldest');
+    else if (current === 'oldest') this.selectedSort.set('alpha');
+    else this.selectedSort.set('newest');
+  }
+
   onDragStart(e: DragEvent, entry: JournalEntry, sourceCol: string) {
     this.draggedEntry = { entry, sourceCol };
     if (e.dataTransfer) {
@@ -392,10 +432,7 @@ export class JournalsComponent implements OnInit, OnDestroy {
     this.journalService.setActiveProject(newProject.id);
   }
 
-  getEntriesForColumn(columnId: string): JournalEntry[] {
-    const grouped = this.filteredEntries();
-    return grouped[columnId] || [];
-  }
+
 
   getColumnColor(columnId: string): string {
     const column = this.columns().find(c => c.id === columnId);
@@ -712,10 +749,10 @@ export class JournalsComponent implements OnInit, OnDestroy {
     this.showProjectDropdown.update(v => !v);
   }
 
-  requestDeleteProject(projectId: string, event: Event) {
+  requestDeleteProject(id: string, event: Event) {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this project? All entries will be moved to bin.')) {
-      this.journalService.deleteProject(projectId);
+    if (confirm('Are you sure you want to delete this project?')) {
+      this.journalService.deleteProject(id);
     }
   }
 

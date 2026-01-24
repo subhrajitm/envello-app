@@ -22,6 +22,8 @@ export interface JournalEntry {
   meta?: string;
   isLocked?: boolean;
   linkedEntries?: string[]; // IDs of linked entries
+  isPinned?: boolean;
+  isFavorite?: boolean;
 }
 
 export interface JournalProject {
@@ -141,7 +143,8 @@ const initialEntries: JournalEntry[] = [
     createdDate: 'Jan 24, 2026',
     lastEdited: '3h ago',
     statusColor: '#4ade80',
-    tags: ['setting', 'location']
+    tags: ['setting', 'location'],
+    isPinned: true
   },
   {
     id: 'e3',

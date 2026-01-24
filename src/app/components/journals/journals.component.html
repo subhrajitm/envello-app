@@ -128,16 +128,21 @@
                 </button>
                 <div class="view-toggles">
                     <button class="j-view-toggle" [class.active]="viewMode() === 'kanban'"
-                        (click)="setViewMode('kanban')">
+                        (click)="viewMode.set('kanban')">
                         <span class="material-symbols-outlined icon-sm">view_kanban</span>
                         Kanban
                     </button>
                     <button class="j-view-toggle" [class.active]="viewMode() === 'timeline'"
-                        (click)="setViewMode('timeline')">
+                        (click)="viewMode.set('timeline')">
                         <span class="material-symbols-outlined icon-sm">timeline</span>
                         Timeline
                     </button>
                 </div>
+                <button class="j-filter-btn" (click)="toggleSort()" title="Sort Order">
+                    <span class="material-symbols-outlined icon-sm">sort</span>
+                    <span>{{ selectedSort() === 'newest' ? 'Newest' : selectedSort() === 'oldest' ? 'Oldest' : 'A-Z'
+                        }}</span>
+                </button>
             </div>
         </div>
 
@@ -171,8 +176,9 @@
                                 [style.color]="getColumnColor(col.id)">
                                 {{ entry.type }}
                             </span>
-                            <span class="material-symbols-outlined icon-more"
-                                (click)="$event.stopPropagation()">more_horiz</span>
+                            <span class="material-symbols-outlined icon-more" [class.pinned]="entry.isPinned"
+                                (click)="togglePin(entry.id, $event)">{{ entry.isPinned ? 'push_pin' : 'push_pin'
+                                }}</span>
                         </div>
                         <div class="card-title">{{ entry.title }}</div>
                         @if (entry.preview) {
