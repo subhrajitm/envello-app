@@ -260,53 +260,104 @@
     overflow-x: hidden;
     min-height: 0;
     /* Removed height: 0 to allow content to be visible */
+    padding-top: 0;
 }
 
+/* Enterprise-Level Sidebar Header Design - Matches Editor Toolbar Height */
 .ne-chap-header {
-    padding: 0 12px 8px;
-    font-size: 10px;
+    padding: 8px 12px;
+    margin-bottom: 0;
+    font-size: 9px;
     font-weight: 700;
-    letter-spacing: 1.2px;
+    letter-spacing: 1.5px;
     color: var(--text-tertiary);
     display: flex;
     justify-content: space-between;
     align-items: center;
     text-transform: uppercase;
+    border-bottom: 1px solid var(--border-subtle);
+    background: linear-gradient(to bottom, var(--bg-panel) 0%, transparent 100%);
+    position: relative;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
+/* Subtle accent line for enterprise feel */
+.ne-chap-header::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    right: 12px;
+    height: 1px;
+    background: linear-gradient(to right, transparent 0%, var(--border-highlight) 50%, transparent 100%);
+    opacity: 0.5;
+}
+
+/* Header action buttons container - consistent spacing */
+.ne-chap-header > div:last-child,
+.ne-chap-header > span:last-child {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* Enterprise-Level Add Icon Button */
 .icon-add {
     font-size: 16px;
     cursor: pointer;
     color: var(--text-tertiary);
-    padding: 4px;
+    padding: 6px;
     border-radius: 4px;
-    transition: all 0.2s;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     background: transparent;
     position: relative;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid transparent;
 }
 
 .icon-add:hover {
     color: var(--accent-primary);
     background: var(--bg-hover);
+    border-color: var(--border-subtle);
+    transform: scale(1.05);
 }
 
-/* Add Menu Dropdown */
+.icon-add:active {
+    transform: scale(0.95);
+    background: var(--bg-active);
+}
+
+/* Add Menu Dropdown Wrapper */
 .add-menu-wrapper {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Enterprise-Level Dropdown Menu */
 .add-dropdown-menu {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     right: 0;
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-highlight);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border-highlight);
     z-index: 1000;
     overflow: hidden;
-    min-width: 160px;
+    min-width: 180px;
+    padding: 4px;
     animation: dropdownFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(12px);
 }
@@ -322,44 +373,50 @@
     }
 }
 
+/* Enterprise-Level Dropdown Options */
 .add-dropdown-option {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
-    padding: 6px 10px;
+    padding: 8px 12px;
     background: transparent;
     border: none;
     color: var(--text-primary);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     font-family: var(--font-sans);
     cursor: pointer;
     transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: left;
     position: relative;
-    height: 28px;
+    min-height: 32px;
     letter-spacing: 0.1px;
+    border-radius: 4px;
 }
 
 .add-dropdown-option:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
+    transform: translateX(2px);
 }
 
 .add-dropdown-option .option-icon {
-    font-size: 16px;
+    font-size: 18px;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    transition: color 0.12s;
+    transition: all 0.12s;
     opacity: 0.8;
+    width: 20px;
+    height: 20px;
 }
 
 .add-dropdown-option:hover .option-icon {
     color: var(--accent-primary);
     opacity: 1;
+    transform: scale(1.1);
 }
 
 .add-dropdown-option .option-label {
@@ -367,6 +424,8 @@
     font-weight: 500;
     letter-spacing: 0.1px;
     white-space: nowrap;
+    line-height: 1.4;
+    color: var(--text-primary);
 }
 
 .ne-chapter-list {
@@ -377,12 +436,12 @@
 
 /* New Expandable Chapter Item Styles */
 .ne-chapter-group {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 /* Refined Chapter Items */
 .ne-chapter-item {
-    padding: 5px 12px;
+    padding: 6px 12px;
     border-left: 2px solid transparent;
     cursor: pointer;
     display: flex;
@@ -390,7 +449,7 @@
     gap: 8px;
     transition: all 0.1s ease-in-out;
     border-radius: 0 4px 4px 0;
-    margin-right: 4px;
+    margin-right: 0;
 }
 
 .ne-chapter-item:hover {
@@ -438,8 +497,8 @@
 
 /* Sub-list (Scenes) */
 .ne-scene-list {
-    padding-left: 24px;
-    padding-right: 12px;
+    padding-left: 20px;
+    padding-right: 0;
     padding-bottom: 4px;
     display: flex;
     flex-direction: column;
@@ -474,9 +533,12 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    margin-right: 4px;
+    margin-right: 0;
     border-radius: 4px;
     transition: all 0.2s;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
 }
 
 .ne-collapse-btn:hover {
@@ -1844,7 +1906,8 @@
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
-    margin-top: 16px;
+    margin-top: 0;
+    padding-top: 0;
 }
 
 /* Lists (Characters, Locations) */
@@ -1861,11 +1924,12 @@
 .ne-list-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 6px 12px;
     cursor: pointer;
     border-radius: 4px;
     transition: background 0.2s;
+    margin-right: 0;
 }
 
 .ne-list-item:hover {
@@ -1903,6 +1967,12 @@
     transition: all 0.2s;
     opacity: 0;
     margin-left: auto;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ne-list-item:hover .list-delete {
@@ -2490,7 +2560,7 @@
 .ne-list-item.active {
     background: var(--bg-active, #f0f0f0);
     border-left: 2px solid var(--accent-primary);
-    padding-left: 10px;
+    padding-left: 12px;
 }
 
 /* Chapter Delete Button Styles */
@@ -2508,6 +2578,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 20px;
+    height: 20px;
 }
 
 .ne-chapter-item:hover .chapter-delete,
@@ -2882,12 +2954,12 @@
 /* Structure View Styles */
 .ne-structure-section {
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     display: flex;
     flex-direction: column;
     overflow: visible;
     flex-shrink: 0;
-    padding: 8px 0;
+    padding: 0;
 }
 
 .ne-empty-state {
@@ -2991,9 +3063,10 @@
     width: 100%;
 }
 
+/* Enterprise-Level Toolbar Buttons */
 .ne-toolbar-btn {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3002,29 +3075,46 @@
     border-radius: 4px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    position: relative;
+}
+
+.ne-toolbar-btn .material-symbols-outlined {
+    font-size: 16px;
 }
 
 .ne-toolbar-btn:hover {
     background: var(--bg-hover);
     border-color: var(--border-highlight);
     color: var(--text-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ne-toolbar-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 .ne-toolbar-btn.active {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
     color: var(--accent-primary-text);
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
 }
 
 .ne-toolbar-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .ne-toolbar-btn:disabled:hover {
     background: transparent;
     border-color: var(--border-subtle);
+    transform: none;
+    box-shadow: none;
 }
 
 .undo-redo-group {
@@ -3939,15 +4029,7 @@
    ============================================ */
 
 /* Structure section padding - merged with main rule above */
-.ne-structure-section {
-    padding: 8px 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    flex-shrink: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 16px !important;
-    overflow: visible !important;
-}
+
 
 .ne-structure-item {
     padding: 8px 12px !important;
