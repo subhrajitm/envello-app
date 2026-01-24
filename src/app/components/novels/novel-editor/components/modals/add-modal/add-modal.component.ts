@@ -1,4 +1,4 @@
-import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -15,8 +15,12 @@ export interface AddModalData {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './add-modal.component.html',
-  styleUrl: './add-modal.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './add-modal.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class AddModalComponent implements AfterViewChecked {
   modal = input.required<AddModalData>();

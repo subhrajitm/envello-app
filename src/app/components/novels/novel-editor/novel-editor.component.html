@@ -221,7 +221,7 @@
                     (applySuggestion)="applySuggestion($event)"
                     (clearConversation)="clearAiConversation()"
                     (clearSuggestions)="aiSuggestions.set([])"
-                    (toggleContextPreview)="showContextPreview.update(v => !v)"
+                    (toggleContextPreview)="toggleContextPreview()"
                     (promptChange)="aiPrompt.set($event)"
                 />
                 } @else if (rightSidebarTab() === 'notes' && novel()) {

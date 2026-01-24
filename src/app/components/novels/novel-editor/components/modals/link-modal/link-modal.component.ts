@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -7,8 +7,12 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './link-modal.component.html',
-  styleUrl: './link-modal.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './link-modal.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class LinkModalComponent {
   isOpen = input.required<boolean>();

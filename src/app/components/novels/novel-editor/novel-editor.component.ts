@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { TiptapEditorDirective } from 'ngx-tiptap';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NovelContentService, Chapter, ChapterGroup } from '../../../services/novel-content.service';
@@ -41,7 +40,6 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
   standalone: true,
   imports: [
     CommonModule, 
-    TiptapEditorDirective, 
     FormsModule,
     // Modals
     DeleteModalComponent,
@@ -127,6 +125,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   aiSuggestions = signal<AiSuggestion[]>([]);
   showContextPreview = signal(false);
 
+  toggleContextPreview() {
+    this.showContextPreview.update(v => !v);
+  }
+
   // Computed signals from Service
   novel = this.novelService.activeNovel;
   isLoading = signal(true);
@@ -134,13 +136,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   activeCharacter = computed(() => {
     const n = this.novel();
     const id = this.selectedCharacterId();
-    return n?.characters.find(c => c.id === id);
+    return n?.characters.find(c => c.id === id) ?? null;
   });
 
   activeLocation = computed(() => {
     const n = this.novel();
     const id = this.selectedLocationId();
-    return n?.locations.find(l => l.id === id);
+    return n?.locations.find(l => l.id === id) ?? null;
   });
 
   activeChapter = computed(() => {
@@ -1293,7 +1295,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         timestamp: new Date()
       };
       this.aiMessages.update(messages => [...messages, assistantMessage]);
-      // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to get AI response. Please try again.');
       console.error('AI error:', error);
@@ -1333,7 +1334,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         timestamp: new Date()
       };
       this.aiMessages.update(messages => [...messages, assistantMessage]);
-      // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to analyze chapter. Please try again.');
       console.error('Analysis error:', error);
@@ -1392,7 +1392,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         timestamp: new Date()
       };
       this.aiMessages.update(messages => [...messages, message]);
-      this.scrollToBottom();
+      // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to summarize chapter. Please try again.');
       console.error('Summary error:', error);
@@ -1423,7 +1423,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         timestamp: new Date()
       };
       this.aiMessages.update(messages => [...messages, message]);
-      this.scrollToBottom();
+      // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to continue writing. Please try again.');
       console.error('Continue error:', error);

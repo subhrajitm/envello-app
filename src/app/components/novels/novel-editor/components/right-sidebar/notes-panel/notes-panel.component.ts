@@ -1,14 +1,18 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EditorNote } from '../../../../../services/novel-content.service';
+import { EditorNote } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-notes-panel',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './notes-panel.component.html',
-  styleUrl: './notes-panel.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './notes-panel.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class NotesPanelComponent {
   notes = input.required<EditorNote[]>();

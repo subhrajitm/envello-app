@@ -1,16 +1,20 @@
-import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
-import { AiMessage, AiSuggestion } from '../../../../../services/ai.service';
+import { AiMessage, AiSuggestion } from '../../../../../../services/ai.service';
 
 @Component({
   selector: 'app-ai-panel',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './ai-panel.component.html',
-  styleUrl: './ai-panel.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './ai-panel.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class AiPanelComponent implements AfterViewChecked {
   aiMessages = input.required<AiMessage[]>();

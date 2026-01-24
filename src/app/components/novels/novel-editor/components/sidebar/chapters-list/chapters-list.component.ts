@@ -1,17 +1,21 @@
-import { Component, input, output, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, signal, computed, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NovelContentService, Chapter, ChapterGroup } from '../../../../../services/novel-content.service';
+import { NovelContentService, Chapter, ChapterGroup } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-chapters-list',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './chapters-list.component.html',
-  styleUrl: './chapters-list.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './chapters-list.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class ChaptersListComponent {
-  novelService = inject(NovelContentService);
+  protected novelService = inject(NovelContentService);
   
   chapters = input.required<ChapterGroup[]>();
   activeChapterId = input.required<string | null>();

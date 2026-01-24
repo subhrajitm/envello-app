@@ -1,17 +1,21 @@
-import { Component, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NovelContentService, FrontMatterItem, Prologue } from '../../../../../services/novel-content.service';
+import { NovelContentService, FrontMatterItem, Prologue } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-structure-view',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './structure-view.component.html',
-  styleUrl: './structure-view.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './structure-view.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class StructureViewComponent {
-  novelService = inject(NovelContentService);
+  protected novelService = inject(NovelContentService);
   
   frontMatter = input.required<FrontMatterItem[]>();
   prologue = input<Prologue | null>(null);

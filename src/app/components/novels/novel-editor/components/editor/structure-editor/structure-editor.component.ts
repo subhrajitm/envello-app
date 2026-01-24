@@ -1,20 +1,24 @@
-import { Component, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
 import { TiptapEditorDirective } from 'ngx-tiptap';
-import { NovelContentService, FrontMatterItem, Prologue } from '../../../../../services/novel-content.service';
+import { NovelContentService, FrontMatterItem, Prologue } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-structure-editor',
   standalone: true,
   imports: [CommonModule, FormsModule, TiptapEditorDirective],
   templateUrl: './structure-editor.component.html',
-  styleUrl: './structure-editor.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './structure-editor.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class StructureEditorComponent {
-  novelService = inject(NovelContentService);
+  protected novelService = inject(NovelContentService);
   
   editor = input.required<Editor>();
   activeFrontMatterId = input.required<string | null>();

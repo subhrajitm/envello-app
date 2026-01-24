@@ -1,14 +1,18 @@
-import { Component, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { VersionHistoryService, VersionSnapshot } from '../../../../../services/version-history.service';
+import { VersionHistoryService, VersionSnapshot } from '../../../../../../services/version-history.service';
 
 @Component({
   selector: 'app-version-history-modal',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './version-history-modal.component.html',
-  styleUrl: './version-history-modal.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './version-history-modal.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class VersionHistoryModalComponent {
   isOpen = input.required<boolean>();
@@ -17,5 +21,5 @@ export class VersionHistoryModalComponent {
   restore = output<string>();
   close = output<void>();
   
-  versionHistoryService = inject(VersionHistoryService);
+  protected versionHistoryService = inject(VersionHistoryService);
 }

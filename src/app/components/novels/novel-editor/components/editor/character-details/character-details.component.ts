@@ -1,14 +1,18 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Character } from '../../../../../services/novel-content.service';
+import { Character } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-character-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './character-details.component.html',
-  styleUrl: './character-details.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './character-details.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class CharacterDetailsComponent {
   character = input<Character | null>(null);

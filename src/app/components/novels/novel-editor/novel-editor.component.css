@@ -7,6 +7,23 @@
     height: 100%;
 }
 
+/* Material Icons - Ensure font is available for all child components */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    user-select: none;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
 .ne-layout {
     display: flex;
     flex: 1;
@@ -215,9 +232,10 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     min-height: 0;
-    height: 0; /* Force flex child to respect parent constraints */
+    /* Removed height: 0 to allow content to be visible */
 }
 
 .ne-chap-header {
@@ -2795,7 +2813,13 @@
 
 /* Structure View Styles */
 .ne-structure-section {
+    margin-top: 0;
     margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    flex-shrink: 0;
+    padding: 8px 0;
 }
 
 .ne-empty-state {
@@ -3846,8 +3870,15 @@
    STRUCTURE VIEW - COMPACT
    ============================================ */
 
+/* Structure section padding - merged with main rule above */
 .ne-structure-section {
     padding: 8px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-shrink: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+    overflow: visible !important;
 }
 
 .ne-structure-item {

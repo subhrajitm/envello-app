@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor } from '@tiptap/core';
 
@@ -7,8 +7,12 @@ import { Editor } from '@tiptap/core';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './editor-toolbar.component.html',
-  styleUrl: './editor-toolbar.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './editor-toolbar.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class EditorToolbarComponent {
   editor = input.required<Editor>();

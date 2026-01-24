@@ -1,14 +1,18 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Location } from '../../../../../services/novel-content.service';
+import { Location } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-locations-list',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './locations-list.component.html',
-  styleUrl: './locations-list.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './locations-list.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class LocationsListComponent {
   locations = input.required<Location[]>();

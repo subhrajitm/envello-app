@@ -1,14 +1,18 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Location } from '../../../../../services/novel-content.service';
+import { Location } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-location-details',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './location-details.component.html',
-  styleUrl: './location-details.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './location-details.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class LocationDetailsComponent {
   location = input<Location | null>(null);

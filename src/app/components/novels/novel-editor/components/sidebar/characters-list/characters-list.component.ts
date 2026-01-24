@@ -1,14 +1,18 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Character } from '../../../../../services/novel-content.service';
+import { Character } from '../../../../../../services/novel-content.service';
 
 @Component({
   selector: 'app-characters-list',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './characters-list.component.html',
-  styleUrl: './characters-list.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: [
+    './characters-list.component.css',
+    '../../../novel-editor.component.css'
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class CharactersListComponent {
   characters = input.required<Character[]>();
