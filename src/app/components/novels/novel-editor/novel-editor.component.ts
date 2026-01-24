@@ -1119,8 +1119,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   toggleFocusMode() {
     this.focusMode.update(v => !v);
     if (this.focusMode()) {
+      // Entering focus mode: collapse sidebars
       this.leftSidebarCollapsed.set(true);
       this.rightSidebarCollapsed.set(true);
+    } else {
+      // Exiting focus mode: restore sidebars to default (visible)
+      this.leftSidebarCollapsed.set(false);
+      this.rightSidebarCollapsed.set(false);
     }
   }
 

@@ -2607,11 +2607,6 @@
     display: none;
 }
 
-.ne-editor-area.focus-mode .ne-editor-header,
-.ne-editor-area.focus-mode .ne-editor-toolbar {
-    display: none;
-}
-
 /* Full Screen Mode */
 :host.fullscreen {
     position: fixed;

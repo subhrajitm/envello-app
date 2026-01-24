@@ -303,7 +303,7 @@
         <!-- Editor Canvas -->
         <div class="ne-editor-area" [class.focus-mode]="focusMode()">
             <!-- Editor Header with Tabs -->
-            <div class="ne-editor-header" [class.hidden]="focusMode()">
+            <div class="ne-editor-header">
                 <div class="ne-editor-tabs">
                     <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
                         (click)="setActiveNav('manuscript')">
@@ -432,7 +432,7 @@
 
             <!-- Editor Toolbar (below tabs) -->
             @if (editor) {
-            <div class="ne-editor-toolbar" [class.hidden]="focusMode()">
+            <div class="ne-editor-toolbar">
                 <!-- Formatting Options -->
                 <div class="toolbar-group">
                     <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
