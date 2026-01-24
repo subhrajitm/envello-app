@@ -3,11 +3,13 @@
     <div class="j-sidebar">
         <div class="j-sidebar-header">
             JOURNALS & PROJECTS
-            <span class="material-symbols-outlined folder-icon">folder_open</span>
+            <button class="add-project-btn" (click)="showProjectModal.set(true)" title="New Project">
+                <span class="material-symbols-outlined">add</span>
+            </button>
         </div>
         <div class="j-project-list">
             @for (p of projects(); track p.id) {
-            <div class="j-project-row" [class.active]="p.active">
+            <div class="j-project-row" [class.active]="p.active" (click)="selectProject(p.id)">
                 <span class="material-symbols-outlined icon-folder">
                     {{ p.active ? 'folder_open' : 'folder' }}
                 </span>
@@ -30,29 +32,52 @@
     </div>
 
     <!-- Main Kanban Content -->
+    @if (activeProject(); as project) {
     <div class="j-main-content">
         <!-- Header -->
         <div class="j-main-header">
             <div class="j-header-left">
-                <h1 class="j-page-title">2024 Morning Pages <span
-                        class="material-symbols-outlined lock-icon">lock</span></h1>
+                <h1 class="j-page-title">
+                    {{ project.title }}
+                    @if (project.isLocked) {
+                    <span class="material-symbols-outlined lock-icon">lock</span>
+                    }
+                </h1>
                 <div class="j-sub-header">PROJECT WORKFLOW BOARD</div>
             </div>
 
             <div class="j-header-stats">
                 <div class="j-stat-group">
                     <div class="stat-label">PROGRESS</div>
-                    <div class="stat-val yellow">78%</div>
+                    <div class="stat-val yellow">{{ project.progress || 0 }}%</div>
                 </div>
                 <div class="j-stat-divider"></div>
                 <div class="j-stat-group">
                     <div class="stat-label">TARGET</div>
-                    <div class="stat-val">50,000 words</div>
+                    <div class="stat-val">{{ project.targetWordCount ? formatWordCount(project.targetWordCount) + ' words' : 'No target' }}</div>
                 </div>
             </div>
 
             <div class="j-header-controls">
-                <button class="j-filter-btn">FILTER BY <span>All Entries</span></button>
+                <button class="j-filter-btn" (click)="toggleSearch()">
+                    <span class="material-symbols-outlined icon-sm">search</span>
+                    @if (searchQuery()) {
+                    <span>{{ searchQuery() }}</span>
+                    } @else {
+                    <span>Search</span>
+                    }
+                </button>
+                <select class="j-filter-select" [ngModel]="selectedFilter()" (ngModelChange)="selectedFilter.set($event)">
+                    <option value="all">All Entries</option>
+                    <option value="tagged">Tagged</option>
+                    <option value="ai-edited">AI Edited</option>
+                </select>
+                <button class="j-action-btn" (click)="openGoalsModal()" title="Writing Goals">
+                    <span class="material-symbols-outlined icon-sm">flag</span>
+                </button>
+                <button class="j-action-btn" (click)="openExportModal()" title="Export">
+                    <span class="material-symbols-outlined icon-sm">download</span>
+                </button>
                 <button class="j-view-toggle">
                     <span class="material-symbols-outlined icon-sm">view_kanban</span>
                     Kanban
@@ -62,106 +87,346 @@
 
         <!-- Columns -->
         <div class="j-kanban-board">
-
-            <!-- IDEAS Column -->
-            <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'IDEAS')">
+            @for (col of getProjectColumns(); track col.id) {
+            <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, col.id)">
                 <div class="j-col-header">
                     <div class="col-title-group">
-                        <span class="col-dot blue"></span>
-                        IDEAS <span class="col-count">{{ columns()['IDEAS'].length }}</span>
+                        <span class="col-dot" [style.background-color]="col.color"></span>
+                        {{ col.name }} <span class="col-count">{{ getEntriesForColumn(col.id).length }}</span>
                     </div>
-                    <span class="material-symbols-outlined icon-add">add</span>
+                    <div class="col-actions">
+                        <span class="material-symbols-outlined icon-add" (click)="openNewEntryModal(col.id)" title="Add Entry">add</span>
+                        @if (getProjectColumns().length > 1) {
+                        <span class="material-symbols-outlined icon-delete" (click)="deleteColumn(col.id)" title="Delete Column">delete</span>
+                        }
+                    </div>
                 </div>
                 <div class="j-col-body">
-                    @for (card of columns()['IDEAS']; track card.id) {
-                    <div class="j-card" draggable="true" (dragstart)="onDragStart($event, card, 'IDEAS')"
-                        (dragend)="onDragEnd($event)">
+                    @for (entry of getEntriesForColumn(col.id); track entry.id) {
+                    <div class="j-card" draggable="true" 
+                         (dragstart)="onDragStart($event, entry, col.id)"
+                         (dragend)="onDragEnd($event)"
+                         (click)="openEntryDetail(entry.id)"
+                         (contextmenu)="$event.preventDefault(); openExportModal(entry.id)">
                         <div class="card-top">
-                            <span class="card-tag tag-blue">{{ card.type }}</span>
-                            <span class="material-symbols-outlined icon-more">more_horiz</span>
+                            <span class="card-tag" [style.background-color]="getColumnColor(col.id) + '20'" [style.color]="getColumnColor(col.id)">
+                                {{ entry.type }}
+                            </span>
+                            <span class="material-symbols-outlined icon-more" (click)="$event.stopPropagation()">more_horiz</span>
                         </div>
-                        <div class="card-title">{{ card.title }}</div>
-                        @if (card.desc) { <div class="card-desc">{{ card.desc }}</div> }
-                        <div class="card-footer">
-                            @if (card.hasAi) { <span class="ai-badge-circle">AI</span> }
-                            @if (card.statusColor) { <span
-                                class="status-emoji material-symbols-outlined">sentiment_satisfied</span> }
-                            <span class="card-time">{{ card.updatedTime }}</span>
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
-
-            <!-- DRAFTING Column -->
-            <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'DRAFTING')">
-                <div class="j-col-header">
-                    <div class="col-title-group">
-                        <span class="col-dot orange"></span>
-                        DRAFTING <span class="col-count">{{ columns()['DRAFTING'].length }}</span>
-                    </div>
-                    <span class="material-symbols-outlined icon-add">add</span>
-                </div>
-                <div class="j-col-body">
-                    @for (card of columns()['DRAFTING']; track card.id) {
-                    <div class="j-card" draggable="true" (dragstart)="onDragStart($event, card, 'DRAFTING')"
-                        (dragend)="onDragEnd($event)">
-                        <div class="card-top">
-                            <span class="card-tag tag-orange">{{ card.type }} {{ card.title.includes('1') ? '1' : ''
-                                }}</span>
-                            <span class="material-symbols-outlined icon-more">more_horiz</span>
-                        </div>
-                        <div class="card-title">{{ card.title }}</div>
-
-                        @if (card.progress) {
+                        <div class="card-title">{{ entry.title }}</div>
+                        @if (entry.preview) {
+                        <div class="card-desc">{{ entry.preview }}</div>
+                        }
+                        @if (entry.progress !== undefined) {
                         <div class="card-progress-container">
                             <div class="card-prog-bar">
-                                <div class="prog-fill" [style.width.%]="card.progress"></div>
+                                <div class="prog-fill" [style.width.%]="entry.progress"></div>
                             </div>
                         </div>
                         }
-
                         <div class="card-footer">
-                            <span class="card-meta-icon material-symbols-outlined">description</span>
-                            <span class="card-meta-text">{{ card.meta }}</span>
-                            <span class="card-time ml-auto">{{ card.updatedTime }}</span>
+                            @if (entry.hasAi || entry.isAiEdited) {
+                            <span class="ai-badge-circle">AI</span>
+                            }
+                            @if (entry.meta) {
+                            <span class="card-meta-text">{{ entry.meta }}</span>
+                            }
+                            @if (entry.tags && entry.tags.length > 0) {
+                            <div class="card-tags">
+                                @for (tag of entry.tags.slice(0, 2); track tag) {
+                                <span class="card-tag-small">{{ tag }}</span>
+                                }
+                                @if (entry.tags.length > 2) {
+                                <span class="card-tag-small">+{{ entry.tags.length - 2 }}</span>
+                                }
+                            </div>
+                            }
+                            <span class="card-time">{{ entry.lastEdited }}</span>
                         </div>
                     </div>
                     }
                 </div>
             </div>
-
-            <!-- REVIEW Column -->
-            <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, 'REVIEW')">
-                <div class="j-col-header">
-                    <div class="col-title-group">
-                        <span class="col-dot purple"></span>
-                        REVIEW <span class="col-count">{{ columns()['REVIEW'].length }}</span>
-                    </div>
-                    <span class="material-symbols-outlined icon-add">add</span>
-                </div>
-                <div class="j-col-body">
-                    @for (card of columns()['REVIEW']; track card.id) {
-                    <div class="j-card" draggable="true" (dragstart)="onDragStart($event, card, 'REVIEW')"
-                        (dragend)="onDragEnd($event)">
-                        <div class="card-top">
-                            <div class="flex gap-2">
-                                <span class="card-tag tag-purple">{{ card.type }}</span>
-                                @if (card.isAiEdited) { <span class="card-tag tag-gray">AI EDITED</span> }
-                            </div>
-                        </div>
-                        <div class="card-title mt-2">{{ card.title }}</div>
-                        @if (card.desc) { <div class="card-desc">{{ card.desc }}</div> }
-                        <div class="card-footer mt-2">
-                            <div class="tag-feedback">
-                                <span class="material-symbols-outlined icon-xs">auto_awesome</span> Feedback Ready
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
+            }
+            <!-- Add Column Button -->
+            <div class="j-col j-col-add">
+                <button class="add-column-btn" (click)="openColumnModal()">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>Add Column</span>
+                </button>
             </div>
-
         </div>
     </div>
+    }
+
+    <!-- New Entry Modal -->
+    @if (showEntryModal()) {
+    <div class="modal-overlay" (click)="showEntryModal.set(false)">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>New Entry</h2>
+                <button class="modal-close" (click)="showEntryModal.set(false)">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" [ngModel]="newEntryTitle()" (ngModelChange)="newEntryTitle.set($event)" placeholder="Entry title..." class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select [ngModel]="newEntryType()" (ngModelChange)="newEntryType.set($event)" class="form-input">
+                        <option value="NOTE">Note</option>
+                        <option value="CONCEPT">Concept</option>
+                        <option value="IDEA">Idea</option>
+                        <option value="CHAPTER">Chapter</option>
+                        <option value="SETTING">Setting</option>
+                        <option value="CRITICAL">Critical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Column</label>
+                    <select [ngModel]="newEntryColumn()" (ngModelChange)="newEntryColumn.set($event)" class="form-input">
+                        @for (col of getProjectColumns(); track col.id) {
+                        <option [value]="col.id">{{ col.name }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="showEntryModal.set(false)">Cancel</button>
+                <button class="btn-primary" (click)="createEntry()" [disabled]="!newEntryTitle().trim()">Create</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- New Project Modal -->
+    @if (showProjectModal()) {
+    <div class="modal-overlay" (click)="showProjectModal.set(false)">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>New Journal Project</h2>
+                <button class="modal-close" (click)="showProjectModal.set(false)">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Project Title</label>
+                    <input type="text" [ngModel]="newProjectTitle()" (ngModelChange)="newProjectTitle.set($event)" placeholder="Project name..." class="form-input" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="showProjectModal.set(false)">Cancel</button>
+                <button class="btn-primary" (click)="createProject()" [disabled]="!newProjectTitle().trim()">Create</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Entry Detail Modal -->
+    @if (selectedEntry() && editingEntry(); as entry) {
+    <div class="modal-overlay entry-detail-overlay" (click)="closeEntryDetail()">
+        <div class="modal-content entry-detail-modal" (click)="$event.stopPropagation()">
+            <div class="entry-detail-header">
+                <div class="entry-detail-title-group">
+                    <input type="text" [ngModel]="editingEntry()?.title" (ngModelChange)="updateEditingEntryTitle($event)" class="entry-title-input" />
+                    <div class="entry-meta">
+                        <span class="entry-type-badge">{{ entry.type }}</span>
+                        <span class="entry-date">{{ entry.createdDate }}</span>
+                        <span class="entry-word-count">{{ entry.wordCount }} words</span>
+                    </div>
+                </div>
+                <div class="entry-detail-actions">
+                    <button class="btn-icon" (click)="saveEntry()" title="Save">
+                        <span class="material-symbols-outlined">save</span>
+                    </button>
+                    <button class="btn-icon" (click)="openExportModal(entry.id)" title="Export">
+                        <span class="material-symbols-outlined">download</span>
+                    </button>
+                    <button class="btn-icon" (click)="deleteEntry(entry.id)" title="Delete">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                    <button class="btn-icon" (click)="closeEntryDetail()" title="Close">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="entry-detail-body">
+                <div class="entry-editor">
+                    <tiptap-editor [editor]="editor" class="journal-entry-editor"></tiptap-editor>
+                </div>
+                <div class="entry-sidebar">
+                    <div class="entry-sidebar-section">
+                        <h3>Tags</h3>
+                        <div class="tags-input">
+                            @if (entry.tags && entry.tags.length > 0) {
+                            <div class="tags-list">
+                                @for (tag of entry.tags; track tag) {
+                                <span class="tag-badge">{{ tag }}</span>
+                                }
+                            </div>
+                            }
+                            <input type="text" placeholder="Add tag..." class="tag-input" />
+                        </div>
+                    </div>
+                    <div class="entry-sidebar-section">
+                        <h3>Statistics</h3>
+                        <div class="stat-item">
+                            <span class="stat-label">Words:</span>
+                            <span class="stat-value">{{ wordCount() || entry.wordCount }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Characters:</span>
+                            <span class="stat-value">{{ characterCount() || entry.characterCount }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Last Edited:</span>
+                            <span class="stat-value">{{ entry.lastEdited }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Search Modal -->
+    @if (showSearchModal()) {
+    <div class="modal-overlay search-modal-overlay" (click)="showSearchModal.set(false)">
+        <div class="modal-content search-modal" (click)="$event.stopPropagation()">
+            <div class="search-header">
+                <input type="text" 
+                       [ngModel]="searchQuery()" 
+                       (ngModelChange)="searchQuery.set($event)"
+                       placeholder="Search entries..." 
+                       class="search-input"
+                       autofocus />
+                <button class="modal-close" (click)="showSearchModal.set(false)">×</button>
+            </div>
+            <div class="search-results">
+                @if (searchQuery()) {
+                    @for (entry of journalService.searchEntries(searchQuery(), getActiveProjectId()); track entry.id) {
+                    <div class="search-result-item" (click)="openEntryDetail(entry.id); showSearchModal.set(false)">
+                        <div class="search-result-title">{{ entry.title }}</div>
+                        <div class="search-result-preview">{{ entry.preview }}</div>
+                        <div class="search-result-meta">
+                            <span class="search-result-type">{{ entry.type }}</span>
+                            <span class="search-result-date">{{ entry.lastEdited }}</span>
+                        </div>
+                    </div>
+                    } @empty {
+                    <div class="search-empty">No entries found</div>
+                    }
+                } @else {
+                <div class="search-empty">Start typing to search...</div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- New Column Modal -->
+    @if (showColumnModal()) {
+    <div class="modal-overlay" (click)="showColumnModal.set(false)">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>New Column</h2>
+                <button class="modal-close" (click)="showColumnModal.set(false)">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Column Name</label>
+                    <input type="text" [ngModel]="newColumnName()" (ngModelChange)="newColumnName.set($event)" placeholder="Column name..." class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" [ngModel]="newColumnColor()" (ngModelChange)="newColumnColor.set($event)" class="form-input color-input" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="showColumnModal.set(false)">Cancel</button>
+                <button class="btn-primary" (click)="createColumn()" [disabled]="!newColumnName().trim()">Create</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Export Modal -->
+    @if (showExportModal()) {
+    <div class="modal-overlay" (click)="showExportModal.set(false)">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Export {{ exportEntryId() ? 'Entry' : 'Project' }}</h2>
+                <button class="modal-close" (click)="showExportModal.set(false)">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Export Format</label>
+                    <select [ngModel]="exportFormat()" (ngModelChange)="exportFormat.set($event)" class="form-input">
+                        <option value="html">HTML</option>
+                        <option value="md">Markdown</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </div>
+                <div class="export-info">
+                    @if (exportEntryId()) {
+                    <p class="info-text">Exporting a single entry</p>
+                    } @else {
+                    <p class="info-text">Exporting all entries from the current project</p>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="showExportModal.set(false)">Cancel</button>
+                <button class="btn-primary" (click)="exportEntry()">Export</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Writing Goals Modal -->
+    @if (showGoalsModal()) {
+    <div class="modal-overlay" (click)="showGoalsModal.set(false)">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Writing Goals</h2>
+                <button class="modal-close" (click)="showGoalsModal.set(false)">×</button>
+            </div>
+            <div class="modal-body">
+                @if (activeProject(); as project) {
+                <div class="form-group">
+                    <label>Target Word Count</label>
+                    <input type="number" [ngModel]="writingGoal()" (ngModelChange)="writingGoal.set(+$event)" placeholder="Enter target words..." class="form-input" min="0" />
+                </div>
+                <div class="form-group">
+                    <label>Goal Period</label>
+                    <select [ngModel]="writingGoalPeriod()" (ngModelChange)="writingGoalPeriod.set($event)" class="form-input">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="goals-stats">
+                    <div class="stat-card">
+                        <div class="stat-card-label">Current Words</div>
+                        <div class="stat-card-value">{{ formatWordCount(project.wordCount) }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">Progress</div>
+                        <div class="stat-card-value">{{ getWritingProgress(project).percentage }}%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">Streak</div>
+                        <div class="stat-card-value">{{ getStreakDays(project) }} days</div>
+                    </div>
+                </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="showGoalsModal.set(false)">Cancel</button>
+                <button class="btn-primary" (click)="saveWritingGoal()">Save Goal</button>
+            </div>
+        </div>
+    </div>
+    }
 </div>

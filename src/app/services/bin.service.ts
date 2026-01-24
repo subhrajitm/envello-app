@@ -6,7 +6,9 @@ export type BinItemType =
   | 'novel-group'
   | 'novel-note'
   | 'novel-character'
-  | 'novel-location';
+  | 'novel-location'
+  | 'journal-entry'
+  | 'journal-project';
 
 export interface BinItem {
   /** Unique id for the bin entry itself */
