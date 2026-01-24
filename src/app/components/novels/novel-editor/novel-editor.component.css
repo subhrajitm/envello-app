@@ -1027,6 +1027,7 @@
     position: relative; /* For absolute positioning of toggle button */
 }
 
+/* Right Sidebar Tabs Header - Matches Editor Toolbar Height */
 .ne-right-tabs {
     display: flex;
     border-bottom: 1px solid var(--border-subtle);
@@ -1036,6 +1037,8 @@
     max-height: 44px;
     box-sizing: border-box;
     flex-shrink: 0;
+    padding: 0;
+    align-items: stretch;
 }
 
 .ne-tab-btn {
@@ -1126,7 +1129,7 @@
     color: var(--text-secondary);
     margin-bottom: 12px;
     position: relative;
-    padding-bottom: 8px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -3849,12 +3852,6 @@
 /* ============================================
    AI & NOTES - COMPACT
    ============================================ */
-
-.ne-ai-header {
-    font-size: 10px !important;
-    margin-bottom: 12px !important;
-    gap: 6px !important;
-}
 
 .icon-bolt {
     font-size: 14px !important;
