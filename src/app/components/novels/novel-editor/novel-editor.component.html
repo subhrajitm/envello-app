@@ -21,8 +21,22 @@
             <div class="ne-chapters-section">
                 <div class="ne-chap-header">
                     CHAPTERS
-                    <span class="material-symbols-outlined icon-add" (click)="addNewChapter(novel()!.chapters[0].id)"
-                        title="Add new chapter">add</span>
+                    <div class="add-menu-wrapper" style="position: relative;">
+                        <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu(); $event.stopPropagation()"
+                            title="Add new item">add</span>
+                        @if (addMenuOpen()) {
+                        <div class="add-dropdown-menu">
+                            <button class="add-dropdown-option" (click)="addNewActOrPart(); $event.stopPropagation()">
+                                <span class="material-symbols-outlined option-icon">folder</span>
+                                <span class="option-label">Add Act/Part</span>
+                            </button>
+                            <button class="add-dropdown-option" (click)="addNewChapter(); $event.stopPropagation()">
+                                <span class="material-symbols-outlined option-icon">description</span>
+                                <span class="option-label">Add Chapter</span>
+                            </button>
+                        </div>
+                        }
+                    </div>
                 </div>
                 <div class="ne-chapter-list">
                     @for (group of novel()!.chapters; track group.id) {
@@ -39,6 +53,9 @@
                                     {{ group.title }}
                                 </div>
                             </div>
+                            <span class="material-symbols-outlined list-delete chapter-delete group-delete"
+                                (click)="deleteGroup(group.id, group.title); $event.stopPropagation()"
+                                title="Delete act/part">delete</span>
                         </div>
                         @if (group.expanded) {
                         <div class="ne-scene-list">
@@ -491,6 +508,40 @@
             <div class="ne-modal-footer">
                 <button class="ne-modal-btn cancel" (click)="cancelDelete()">Cancel</button>
                 <button class="ne-modal-btn delete" (click)="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Add Item Dialog -->
+    @if (addModal().isOpen) {
+    <div class="ne-modal-overlay" (click)="cancelAdd()">
+        <div class="ne-modal" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">
+                {{ addModal().title }}
+            </div>
+            <div class="ne-modal-body">
+                <div class="ne-modal-input-wrapper">
+                    <label class="ne-modal-label">
+                        {{ addModal().type === 'act' ? 'Act/Part Title' : 'Chapter Title' }}
+                    </label>
+                    <input 
+                        type="text" 
+                        class="ne-modal-input" 
+                        [value]="addModal().inputValue"
+                        (input)="updateAddModalInput($any($event.target).value)"
+                        (keydown.enter)="confirmAdd()"
+                        (keydown.escape)="cancelAdd()"
+                        #addInput
+                        autofocus
+                    />
+                </div>
+            </div>
+            <div class="ne-modal-footer">
+                <button class="ne-modal-btn cancel" (click)="cancelAdd()">Cancel</button>
+                <button class="ne-modal-btn confirm" (click)="confirmAdd()" [disabled]="!addModal().inputValue.trim()">
+                    Add
+                </button>
             </div>
         </div>
     </div>

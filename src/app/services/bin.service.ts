@@ -3,6 +3,7 @@ import { Injectable, signal } from '@angular/core';
 export type BinItemType =
   | 'daily-note'
   | 'novel-chapter'
+  | 'novel-group'
   | 'novel-note'
   | 'novel-character'
   | 'novel-location';

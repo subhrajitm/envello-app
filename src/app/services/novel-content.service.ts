@@ -300,6 +300,44 @@ export class NovelContentService {
         });
     }
 
+    deleteChapterGroup(groupId: string) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            // Capture the group before removing it so we can move it to the bin
+            const groupToDelete = novel.chapters.find(g => g.id === groupId);
+            
+            if (groupToDelete) {
+                // Move all chapters in the group to bin
+                groupToDelete.children.forEach(chapter => {
+                    this.bin.addToBin({
+                        type: 'novel-chapter',
+                        originalId: chapter.id,
+                        contextId: novel.id,
+                        title: chapter.title,
+                        payload: {
+                            ...chapter,
+                            groupId: groupId
+                        }
+                    });
+                });
+
+                // Move the group itself to bin
+                this.bin.addToBin({
+                    type: 'novel-group',
+                    originalId: groupToDelete.id,
+                    contextId: novel.id,
+                    title: groupToDelete.title,
+                    payload: groupToDelete
+                });
+            }
+
+            const newChapters = novel.chapters.filter(group => group.id !== groupId);
+            this.store.addActivity('Deleted act/part', 'system');
+            return { ...novel, chapters: newChapters };
+        });
+    }
+
     // Note Management
     addNote(title: string, body: string = '', chapterId?: string) {
         this.activeNovel.update(novel => {
