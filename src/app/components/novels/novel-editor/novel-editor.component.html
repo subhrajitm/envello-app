@@ -965,24 +965,24 @@
                             </div>
                         </div>
 
-                        @if (activeChapterId() && (getMentionedCharacters().length > 0 || getMentionedLocations().length > 0)) {
+                        @if (activeChapterId() && (mentionedCharacters().length > 0 || mentionedLocations().length > 0)) {
                         <div class="meta-section">
                             <label>MENTIONS IN THIS CHAPTER</label>
-                            @if (getMentionedCharacters().length > 0) {
+                            @if (mentionedCharacters().length > 0) {
                             <div class="mentions-group">
                                 <div class="mentions-label">Characters:</div>
                                 <div class="mentions-list">
-                                    @for (char of getMentionedCharacters(); track char) {
+                                    @for (char of mentionedCharacters(); track char) {
                                     <span class="mention-badge character-mention">{{ char }}</span>
                                     }
                                 </div>
                             </div>
                             }
-                            @if (getMentionedLocations().length > 0) {
+                            @if (mentionedLocations().length > 0) {
                             <div class="mentions-group">
                                 <div class="mentions-label">Locations:</div>
                                 <div class="mentions-list">
-                                    @for (loc of getMentionedLocations(); track loc) {
+                                    @for (loc of mentionedLocations(); track loc) {
                                     <span class="mention-badge location-mention">{{ loc }}</span>
                                     }
                                 </div>

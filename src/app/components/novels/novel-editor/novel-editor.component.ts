@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, HostListener, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -15,7 +15,8 @@ import { AiService, AiMessage, AiSuggestion } from '../../../services/ai.service
   standalone: true,
   imports: [CommonModule, TiptapEditorDirective, FormsModule],
   templateUrl: './novel-editor.component.html',
-  styleUrl: './novel-editor.component.css'
+  styleUrl: './novel-editor.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked {
   editor!: Editor;
@@ -26,6 +27,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
   @ViewChild('aiMessagesContainer') aiMessagesContainer!: ElementRef<HTMLDivElement>;
   private shouldFocusInput = false;
+  private timeInterval?: number;
 
   // State
   title = signal('');
@@ -110,6 +112,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     return this.activeChapter()?.lastEdited || 'Never';
   });
 
+  // Helper function to calculate word count efficiently
+  private calculateWordCount(text: string): number {
+    if (!text || text.trim() === '') return 0;
+    return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  }
+
   constructor(private router: Router) {
     // Effect to update editor content when active chapter changes
     effect(() => {
@@ -123,8 +131,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           if (chapter && this.editor.getHTML() !== chapter.content) {
             this.editor.commands.setContent(chapter.content);
             this.title.set(chapter.title);
-            const text = this.editor.getText();
-            const count = text.split(/\s+/).filter(w => w.length > 0).length;
+            const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
             // Create initial snapshot if none exists
             const versions = this.versionHistoryService.getVersions(chapterId, 'chapter');
@@ -139,8 +146,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           if (item && this.editor.getHTML() !== item.content) {
             this.editor.commands.setContent(item.content);
             this.title.set(item.title);
-            const text = this.editor.getText();
-            const count = text.split(/\s+/).filter(w => w.length > 0).length;
+            const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
             const versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
             if (versions.length === 0) {
@@ -154,8 +160,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           if (prologue && this.editor.getHTML() !== prologue.content) {
             this.editor.commands.setContent(prologue.content);
             this.title.set(prologue.title);
-            const text = this.editor.getText();
-            const count = text.split(/\s+/).filter(w => w.length > 0).length;
+            const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
             const versions = this.versionHistoryService.getVersions('prologue', 'prologue');
             if (versions.length === 0) {
@@ -192,7 +197,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     });
 
     // Time tracking interval
-    setInterval(() => {
+    this.timeInterval = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - this.sessionStartTime) / 1000);
       this.elapsedSeconds.set(elapsed);
     }, 1000);
@@ -200,13 +205,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id') || '1';
-    this.isLoading.set(true);
-    this.novelService.loadNovel(id);
-    // Simulate loading - in real app, this would be based on actual loading state
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 300);
-
+    
+    // Initialize editor first (non-blocking)
     this.editor = new Editor({
       extensions: [
         StarterKit,
@@ -216,8 +216,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       ],
       content: '', // Initial content will be set by effect
       onUpdate: ({ editor }) => {
-        const text = editor.getText();
-        const count = text.split(/\s+/).filter(w => w.length > 0).length;
+        const count = this.calculateWordCount(editor.getText());
         this.wordCount.set(count);
 
         // Auto-save to service with debouncing
@@ -250,6 +249,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         }, 1000); // 1 second debounce
       }
     });
+
+    // Load novel data (synchronous, instant)
+    this.novelService.loadNovel(id);
+    // Loading is complete immediately since loadNovel is synchronous
+    this.isLoading.set(false);
   }
 
   ngAfterViewChecked() {
@@ -261,6 +265,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
   ngOnDestroy() {
+    if (this.timeInterval) {
+      clearInterval(this.timeInterval);
+    }
+    if ((this as any).saveTimeout) {
+      clearTimeout((this as any).saveTimeout);
+    }
     this.editor.destroy();
   }
 
@@ -954,28 +964,38 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     }
   }
 
-  // Character/Location Mentions
-  getMentionedCharacters(): string[] {
-    if (!this.activeChapterId() || !this.editor) return [];
-    const content = this.editor.getText().toLowerCase();
+  // Character/Location Mentions - converted to computed signals for performance
+  mentionedCharacters = computed(() => {
+    const chapterId = this.activeChapterId();
+    if (!chapterId || !this.editor) return [];
+    
+    const chapter = this.activeChapter();
+    if (!chapter) return [];
+    
+    const content = chapter.content.toLowerCase();
     const novel = this.novel();
     if (!novel) return [];
     
     return novel.characters
       .filter(char => content.includes(char.name.toLowerCase()))
       .map(char => char.name);
-  }
+  });
 
-  getMentionedLocations(): string[] {
-    if (!this.activeChapterId() || !this.editor) return [];
-    const content = this.editor.getText().toLowerCase();
+  mentionedLocations = computed(() => {
+    const chapterId = this.activeChapterId();
+    if (!chapterId || !this.editor) return [];
+    
+    const chapter = this.activeChapter();
+    if (!chapter) return [];
+    
+    const content = chapter.content.toLowerCase();
     const novel = this.novel();
     if (!novel) return [];
     
     return novel.locations
       .filter(loc => content.includes(loc.name.toLowerCase()))
       .map(loc => loc.name);
-  }
+  });
 
   // Drag & Drop for reordering
   dragStartIndex = signal<number | null>(null);
@@ -1019,20 +1039,20 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   }
 
 
-  // Search functionality
+  // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {
-    const query = this.searchQuery().toLowerCase();
-    if (!query) return null;
+    const query = this.searchQuery().trim().toLowerCase();
+    if (!query || query.length < 2) return null; // Early return for short queries
     
     const novel = this.novel();
     if (!novel) return null;
 
     const results: Array<{type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue', id: string, title: string, subtitle?: string}> = [];
 
-    // Search chapters
-    novel.chapters.forEach(group => {
-      group.children.forEach(chap => {
-        if (chap.title.toLowerCase().includes(query) || chap.content.toLowerCase().includes(query)) {
+    // Search chapters - only check title for performance (content search is expensive)
+    for (const group of novel.chapters) {
+      for (const chap of group.children) {
+        if (chap.title.toLowerCase().includes(query)) {
           results.push({
             type: 'chapter',
             id: chap.id,
@@ -1040,12 +1060,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             subtitle: `Chapter in ${group.title}`
           });
         }
-      });
-    });
+      }
+    }
 
     // Search characters
-    novel.characters.forEach(char => {
-      if (char.name.toLowerCase().includes(query) || char.description.toLowerCase().includes(query)) {
+    for (const char of novel.characters) {
+      const nameLower = char.name.toLowerCase();
+      if (nameLower.includes(query) || (char.description && char.description.toLowerCase().includes(query))) {
         results.push({
           type: 'character',
           id: char.id,
@@ -1053,11 +1074,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           subtitle: char.role
         });
       }
-    });
+    }
 
     // Search locations
-    novel.locations.forEach(loc => {
-      if (loc.name.toLowerCase().includes(query) || loc.description.toLowerCase().includes(query)) {
+    for (const loc of novel.locations) {
+      const nameLower = loc.name.toLowerCase();
+      if (nameLower.includes(query) || (loc.description && loc.description.toLowerCase().includes(query))) {
         results.push({
           type: 'location',
           id: loc.id,
@@ -1065,11 +1087,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           subtitle: loc.type
         });
       }
-    });
+    }
 
     // Search front matter
-    novel.frontMatter.forEach(item => {
-      if (item.title.toLowerCase().includes(query) || item.content.toLowerCase().includes(query)) {
+    for (const item of novel.frontMatter) {
+      if (item.title.toLowerCase().includes(query) || (item.content && item.content.toLowerCase().includes(query))) {
         results.push({
           type: 'frontMatter',
           id: item.id,
@@ -1077,15 +1099,16 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           subtitle: this.getFrontMatterTypeLabel(item.type)
         });
       }
-    });
+    }
 
     // Search prologue
     if (novel.prologue) {
-      if (novel.prologue.title.toLowerCase().includes(query) || novel.prologue.content.toLowerCase().includes(query)) {
+      const prologue = novel.prologue;
+      if (prologue.title.toLowerCase().includes(query) || (prologue.content && prologue.content.toLowerCase().includes(query))) {
         results.push({
           type: 'prologue',
           id: 'prologue',
-          title: novel.prologue.title,
+          title: prologue.title,
           subtitle: 'Prologue'
         });
       }

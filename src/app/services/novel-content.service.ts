@@ -183,11 +183,22 @@ export class NovelContentService {
     constructor() { }
 
     loadNovel(id: string) {
-        // Simulate API Fetch
+        // Simulate API Fetch - instant synchronous load
         const data = INITIAL_DATA[id];
         if (data) {
-            // Deep copy to simulate fresh load
-            this.activeNovel.set(JSON.parse(JSON.stringify(data)));
+            // Use structuredClone for fast deep copy (available in modern browsers)
+            // This is much faster than JSON.parse/JSON.stringify
+            if (typeof structuredClone !== 'undefined') {
+                try {
+                    this.activeNovel.set(structuredClone(data));
+                } catch (e) {
+                    // Fallback to JSON if structuredClone fails (rare edge cases)
+                    this.activeNovel.set(JSON.parse(JSON.stringify(data)));
+                }
+            } else {
+                // Fallback for older browsers: use JSON (slower but compatible)
+                this.activeNovel.set(JSON.parse(JSON.stringify(data)));
+            }
         } else {
             // Create empty/new if not found (or handle error)
             this.activeNovel.set(this.createEmptyNovel(id));
