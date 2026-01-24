@@ -381,7 +381,7 @@
 
 /* Sidebar */
 .books-sidebar {
-    width: 300px;
+    width: 240px;
     background: var(--bg-app);
     display: flex;
     flex-direction: column;

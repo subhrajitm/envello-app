@@ -10,8 +10,8 @@
 
 /* Sidebar */
 .j-sidebar {
-    width: 280px;
-    min-width: 280px;
+    width: 240px;
+    min-width: 240px;
     background: var(--bg-panel);
     border-right: 1px solid var(--border-subtle);
     display: flex;
@@ -24,13 +24,13 @@
 
 /* Search Header */
 .j-search-header {
-    padding: 0 14px;
+    padding: 0 10px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
-    height: 46px;
+    height: 40px;
     box-sizing: border-box;
 }
 
@@ -57,7 +57,7 @@
     padding: 6px 10px 6px 32px;
     border-radius: 4px;
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: 11px;
     outline: none;
     transition: border-color 0.2s;
 }
@@ -145,7 +145,7 @@
     position: relative;
     -webkit-overflow-scrolling: touch;
     width: 100%;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100% - 40px);
 }
 
 .j-empty-state {
@@ -185,8 +185,8 @@
 .j-project-row {
     display: flex !important;
     align-items: flex-start;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 10px;
+    padding: 8px 12px;
     cursor: pointer;
     border-left: 2px solid transparent;
     transition: all 0.2s;
@@ -231,10 +231,10 @@
 }
 
 .j-proj-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-primary);
-    line-height: 1.3;
+    line-height: normal;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -247,7 +247,7 @@
 .j-proj-meta {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     font-size: 10px;
     color: var(--text-tertiary);
 }
@@ -321,15 +321,15 @@
 
 /* Header */
 .j-main-header {
-    height: 80px;
-    min-height: 80px;
+    height: 60px;
+    min-height: 60px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    padding: 0 32px;
+    padding: 0 24px;
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-app);
-    gap: 32px;
+    gap: 24px;
 }
 
 .j-header-left {
@@ -339,7 +339,7 @@
 }
 
 .j-page-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
@@ -354,7 +354,7 @@
 }
 
 .j-sub-header {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     color: #666;
     letter-spacing: 0.5px;
@@ -432,7 +432,7 @@
     flex: 1 1 0;
     overflow-x: auto;
     overflow-y: auto;
-    padding: 24px 32px;
+    padding: 16px 20px;
     display: grid;
     grid-template-columns: repeat(3, minmax(320px, 1fr));
     grid-auto-rows: max-content;
@@ -539,8 +539,8 @@
     background: var(--bg-panel);
     /* Slightly lighter than bg */
     border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 4px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -601,7 +601,7 @@
 }
 
 .card-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.3;

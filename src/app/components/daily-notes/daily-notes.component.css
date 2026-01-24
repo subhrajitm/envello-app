@@ -7,7 +7,7 @@
 
 /* Sidebar */
 .dn-sidebar {
-    width: 280px;
+    width: 240px;
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;

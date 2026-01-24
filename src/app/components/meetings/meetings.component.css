@@ -266,7 +266,7 @@
 
 /* Sidebar */
 .meetings-sidebar {
-    width: 320px;
+    width: 240px;
     flex-shrink: 0;
     background: var(--bg-hover);
     display: flex;
