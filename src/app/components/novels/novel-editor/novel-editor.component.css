@@ -548,6 +548,8 @@
     position: relative;
     padding-right: 0;
     margin-right: 0;
+    /* Prevent layout shift during tab switching */
+    contain: layout style;
 }
 
 /* Ensure editor components are flex children that can scroll */
@@ -560,6 +562,9 @@
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
+    /* Prevent layout shift during tab switching */
+    contain: layout style;
+    will-change: contents;
 }
 
 /* Ensure the editor canvas inside the component can scroll */
@@ -630,12 +635,15 @@
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
     white-space: nowrap;
     position: relative;
     max-width: 200px;
     margin-bottom: -1px;
     opacity: 0.7;
+    /* Prevent repaint glitches */
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .ne-editor-tab:hover {
@@ -653,6 +661,10 @@
     border-bottom: 1px solid var(--bg-panel);
     z-index: 1;
     position: relative;
+    transition: background-color 0.08s ease, color 0.08s ease, border-color 0.08s ease;
+    /* Prevent repaint glitches */
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .ne-editor-tab.active::after {
@@ -972,11 +984,14 @@
     color: var(--text-tertiary);
     cursor: pointer;
     position: relative;
-    transition: all 0.2s;
+    transition: background-color 0.12s ease, color 0.12s ease;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100%;
+    /* Prevent repaint glitches */
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .ne-tab-btn:hover {
@@ -987,6 +1002,10 @@
 .ne-tab-btn.active {
     color: var(--accent-primary);
     background: var(--bg-panel);
+    transition: background-color 0.08s ease, color 0.08s ease;
+    /* Prevent repaint glitches */
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .ne-tab-btn.active::after {
