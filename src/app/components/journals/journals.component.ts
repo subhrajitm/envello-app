@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, effect, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor, Extension } from '@tiptap/core';
@@ -34,10 +34,12 @@ export class JournalsComponent implements OnInit, OnDestroy {
   columns = this.journalService.columns;
 
   searchQuery = signal<string>('');
+  projectSearchQuery = signal<string>('');
   selectedFilter = signal<'all' | 'tagged' | 'ai-edited'>('all');
   showEntryModal = signal<boolean>(false);
   showProjectModal = signal<boolean>(false);
   showSearchModal = signal<boolean>(false);
+  showProjectDropdown = signal<boolean>(false);
   showColumnModal = signal<boolean>(false);
   showExportModal = signal<boolean>(false);
   showGoalsModal = signal<boolean>(false);
@@ -569,4 +571,46 @@ export class JournalsComponent implements OnInit, OnDestroy {
     const entryDates = new Set(entries.map(e => e.createdDate));
     return entryDates.size;
   }
+
+  filteredProjects = computed(() => {
+    const query = this.projectSearchQuery().toLowerCase();
+    if (!query) return this.projects();
+    return this.projects().filter(p => 
+      p.title.toLowerCase().includes(query) ||
+      p.description?.toLowerCase().includes(query)
+    );
+  });
+
+  toggleProjectDropdown() {
+    this.showProjectDropdown.update(v => !v);
+  }
+
+  requestDeleteProject(projectId: string, event: Event) {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this project? All entries will be moved to bin.')) {
+      this.journalService.deleteProject(projectId);
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const dropdownWrapper = target.closest('.j-dropdown-wrapper');
+
+    // Close dropdown if clicking outside
+    if (!dropdownWrapper && this.showProjectDropdown()) {
+      this.showProjectDropdown.set(false);
+    }
+  }
+
+  // Computed properties for statistics
+  totalProjects = computed(() => this.projects().length);
+
+  totalEntries = computed(() => {
+    return this.projects().reduce((sum, p) => sum + p.entriesCount, 0);
+  });
+
+  totalWords = computed(() => {
+    return this.projects().reduce((sum, p) => sum + p.wordCount, 0);
+  });
 }

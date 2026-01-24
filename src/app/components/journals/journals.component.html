@@ -1,32 +1,98 @@
 <div class="journals-layout">
     <!-- Left Sidebar -->
     <div class="j-sidebar">
-        <div class="j-sidebar-header">
-            JOURNALS & PROJECTS
-            <button class="add-project-btn" (click)="showProjectModal.set(true)" title="New Project">
-                <span class="material-symbols-outlined">add</span>
-            </button>
+        <!-- Search Header -->
+        <div class="j-search-header">
+            <div class="j-search-container">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="j-search-input" placeholder="Search projects..." 
+                       [ngModel]="projectSearchQuery()" 
+                       (ngModelChange)="projectSearchQuery.set($event)" />
+            </div>
+            <div class="j-dropdown-wrapper">
+                <button class="j-add-btn" (click)="toggleProjectDropdown()" title="New Project">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+                @if (showProjectDropdown()) {
+                <div class="j-dropdown-menu">
+                    <button class="j-dropdown-item" (click)="showProjectModal.set(true); showProjectDropdown.set(false)">
+                        <span class="material-symbols-outlined">folder</span>
+                        <span>New Project</span>
+                    </button>
+                    <button class="j-dropdown-item" (click)="openColumnModal(); showProjectDropdown.set(false)">
+                        <span class="material-symbols-outlined">view_column</span>
+                        <span>Manage Columns</span>
+                    </button>
+                </div>
+                }
+            </div>
         </div>
+
+        <!-- Projects List -->
         <div class="j-project-list">
-            @for (p of projects(); track p.id) {
+            @if (filteredProjects().length === 0 && projectSearchQuery()) {
+            <div class="j-empty-state">
+                <span class="material-symbols-outlined">search_off</span>
+                <p>No projects found</p>
+            </div>
+            } @else {
+            @for (p of filteredProjects(); track p.id) {
             <div class="j-project-row" [class.active]="p.active" (click)="selectProject(p.id)">
                 <span class="material-symbols-outlined icon-folder">
                     {{ p.active ? 'folder_open' : 'folder' }}
                 </span>
                 <div class="j-proj-info">
                     <div class="j-proj-title">{{ p.title }}</div>
-                    <div class="j-proj-count">{{ p.entriesCount }} Entries</div>
+                    <div class="j-proj-meta">
+                        <span class="j-proj-count">{{ p.entriesCount }} entries</span>
+                        @if (p.wordCount > 0) {
+                        <span class="j-proj-words">{{ formatWordCount(p.wordCount) }} words</span>
+                        }
+                    </div>
+                    @if (p.progress !== undefined) {
+                    <div class="j-proj-progress">
+                        <div class="j-proj-progress-bar">
+                            <div class="j-proj-progress-fill" [style.width.%]="p.progress"></div>
+                        </div>
+                    </div>
+                    }
+                </div>
+                <div class="j-project-actions" (click)="$event.stopPropagation()">
+                    <button class="j-project-action-btn" (click)="requestDeleteProject(p.id, $event)" title="Delete">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
                 </div>
             </div>
             }
+            }
         </div>
+
+        <!-- Sidebar Footer -->
         <div class="j-sidebar-footer">
-            <div class="storage-label">
-                <span>STORAGE USAGE</span>
-                <span>64%</span>
+            @if (activeProject(); as project) {
+            <div class="j-footer-stats">
+                <div class="j-stat-item">
+                    <span class="j-stat-label">Total Projects</span>
+                    <span class="j-stat-value">{{ totalProjects() }}</span>
+                </div>
+                <div class="j-stat-item">
+                    <span class="j-stat-label">Total Entries</span>
+                    <span class="j-stat-value">{{ totalEntries() }}</span>
+                </div>
+                <div class="j-stat-item">
+                    <span class="j-stat-label">Total Words</span>
+                    <span class="j-stat-value">{{ formatWordCount(totalWords()) }}</span>
+                </div>
             </div>
-            <div class="storage-bar">
-                <div class="storage-fill" style="width: 64%"></div>
+            }
+            <div class="j-storage-info">
+                <div class="j-storage-label">
+                    <span>STORAGE USAGE</span>
+                    <span>64%</span>
+                </div>
+                <div class="j-storage-bar">
+                    <div class="j-storage-fill" style="width: 64%"></div>
+                </div>
             </div>
         </div>
     </div>
