@@ -44,9 +44,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   rightSidebarCollapsed = signal(false);
   searchOpen = signal(false);
   searchQuery = signal('');
-  plotPointsExpanded = signal(true);
   exportMenuOpen = signal(false);
-  templateMenuOpen = signal(false);
   
   // Bulk selection
   selectedChapters = signal<Set<string>>(new Set());
@@ -101,14 +99,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   chapterLastEdited = computed(() => {
     return this.activeChapter()?.lastEdited || 'Never';
-  });
-
-  chapterTags = computed(() => {
-    return this.activeChapter()?.tags || [];
-  });
-
-  chapterSummary = computed(() => {
-    return this.activeChapter()?.summary || '';
   });
 
   constructor(private router: Router) {
@@ -800,71 +790,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     }
   }
 
-  // Plot Points
-  updatePlotPoint(chapterId: string, plotPoint: 'firstSlap' | 'secondSlap' | 'climax', content: string) {
-    this.novelService.updateChapterPlotPoint(chapterId, plotPoint, content);
-  }
-
-  // Chapter Templates
-  chapterTemplates = [
-    { id: 'action', name: 'Action Scene', icon: 'flash_on', content: '<h2>Action Scene</h2><p>Setting: </p><p>Characters: </p><p>Conflict: </p><p>Resolution: </p>' },
-    { id: 'dialogue', name: 'Dialogue Heavy', icon: 'chat_bubble', content: '<h2>Dialogue Scene</h2><p>Characters: </p><p>Topic: </p><p>Outcome: </p>' },
-    { id: 'introspection', name: 'Introspection', icon: 'psychology', content: '<h2>Character Reflection</h2><p>Character: </p><p>Internal Conflict: </p><p>Realization: </p>' },
-    { id: 'transition', name: 'Transition', icon: 'arrow_forward', content: '<h2>Scene Transition</h2><p>From: </p><p>To: </p><p>Time Passage: </p>' }
-  ];
-
-  applyTemplate(templateId: string) {
-    const template = this.chapterTemplates.find(t => t.id === templateId);
-    if (template && this.editor && this.activeChapterId()) {
-      this.editor.commands.setContent(template.content);
-      this.novelService.updateChapterContent(this.activeChapterId()!, template.content, 0);
-    }
-  }
-
-  // Tags management
-  addTagToChapter(chapterId: string, tag: string) {
-    const novel = this.novel();
-    if (!novel) return;
-    
-    for (const group of novel.chapters) {
-      const chapter = group.children.find(c => c.id === chapterId);
-      if (chapter) {
-        const currentTags = chapter.tags || [];
-        if (!currentTags.includes(tag)) {
-          this.novelService.updateChapterTags(chapterId, [...currentTags, tag]);
-        }
-        break;
-      }
-    }
-  }
-
-  removeTagFromChapter(chapterId: string, tag: string) {
-    const novel = this.novel();
-    if (!novel) return;
-    
-    for (const group of novel.chapters) {
-      const chapter = group.children.find(c => c.id === chapterId);
-      if (chapter) {
-        const currentTags = chapter.tags || [];
-        this.novelService.updateChapterTags(chapterId, currentTags.filter(t => t !== tag));
-        break;
-      }
-    }
-  }
-
-  // Chapter summary
-  updateChapterSummary(chapterId: string, summary: string) {
-    this.novelService.updateChapterSummary(chapterId, summary);
-  }
-
-  addTagFromInput(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const tag = input.value.trim();
-    if (tag && this.activeChapterId()) {
-      this.addTagToChapter(this.activeChapterId()!, tag);
-      input.value = '';
-    }
-  }
 
   // Version History & Undo/Redo
   updateUndoRedoState(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue') {
@@ -1084,9 +1009,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.onDragEnd();
   }
 
-  togglePlotPoints() {
-    this.plotPointsExpanded.update(v => !v);
-  }
 
   // Search functionality
   filteredChapters = computed(() => {
@@ -1278,9 +1200,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.exportMenuOpen.update(v => !v);
   }
 
-  toggleTemplateMenu() {
-    this.templateMenuOpen.update(v => !v);
-  }
 
   // Link insertion
   linkModalOpen = signal(false);

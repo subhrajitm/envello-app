@@ -550,17 +550,6 @@
                         <span class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()">{{ chapterStatus() }}</span>
                         <span class="meta-sep">•</span>
                         <span>LAST EDITED: {{ chapterLastEdited() }}</span>
-                        @if (chapterTags().length > 0) {
-                        <span class="meta-sep">•</span>
-                        <div class="tags-container">
-                            @for (tag of chapterTags(); track tag) {
-                            <span class="tag-badge">
-                                {{ tag }}
-                                <span class="material-symbols-outlined tag-remove" (click)="removeTagFromChapter(activeChapterId()!, tag); $event.stopPropagation()">close</span>
-                            </span>
-                            }
-                        </div>
-                        }
                         <span class="meta-sep">•</span>
                         <span class="save-indicator" [class.saving]="isSaving()">
                             @if (isSaving()) {
@@ -574,115 +563,11 @@
                             }
                         </span>
                     </div>
-                    @if (activeChapterId()) {
-                    <div class="chapter-actions-row">
-                        <div class="tags-input-wrapper">
-                            <input 
-                                type="text" 
-                                class="tag-input" 
-                                placeholder="Add tag..."
-                                (keydown.enter)="addTagFromInput($event)"
-                                #tagInput
-                            />
-                        </div>
-                        <div class="template-menu-wrapper" style="position: relative;">
-                            <button class="meta-action-btn" (click)="toggleTemplateMenu()" title="Apply Template">
-                                <span class="material-symbols-outlined" style="font-size: 14px;">auto_awesome</span>
-                                Template
-                            </button>
-                            @if (templateMenuOpen()) {
-                            <div class="add-dropdown-menu">
-                                @for (template of chapterTemplates; track template.id) {
-                                <button class="add-dropdown-option" (click)="applyTemplate(template.id); templateMenuOpen.set(false)">
-                                    <span class="material-symbols-outlined option-icon">{{ template.icon }}</span>
-                                    <span class="option-label">{{ template.name }}</span>
-                                </button>
-                                }
-                            </div>
-                            }
-                        </div>
-                    </div>
-                    }
                 </div>
 
-
-                <!-- Chapter Summary -->
-                @if (activeChapterId()) {
-                <div class="chapter-summary-section">
-                    <label class="summary-label">
-                        <span class="material-symbols-outlined" style="font-size: 16px;">summarize</span>
-                        CHAPTER SUMMARY
-                    </label>
-                    <textarea 
-                        class="summary-input" 
-                        [value]="chapterSummary()"
-                        (input)="updateChapterSummary(activeChapterId()!, $any($event.target).value)"
-                        placeholder="Brief summary of this chapter's events and purpose..."
-                        rows="3"
-                    ></textarea>
-                </div>
-                }
 
                 <!-- Tiptap Editor -->
                 <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
-
-                <!-- Plot Points Section -->
-                @if (activeChapterId() && novel()) {
-                    @for (group of novel()!.chapters; track group.id) {
-                        @for (chap of group.children; track chap.id) {
-                            @if (chap.id === activeChapterId()) {
-                            <div class="ne-plot-points-section">
-                                <div class="ne-plot-points-header" (click)="togglePlotPoints()" style="cursor: pointer;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span class="material-symbols-outlined" style="font-size: 18px;">timeline</span>
-                                        PLOT POINTS
-                                    </div>
-                                    <span class="material-symbols-outlined" [class.expanded]="plotPointsExpanded()" style="transition: transform 0.2s;">
-                                        expand_more
-                                    </span>
-                                </div>
-                                @if (plotPointsExpanded()) {
-                                <div class="ne-plot-points-grid">
-                                    <div class="ne-plot-point-card">
-                                        <div class="ne-plot-point-label">
-                                            <span class="material-symbols-outlined plot-icon">flash_on</span>
-                                            First Slap
-                                            <span class="plot-point-subtitle">Inciting Incident</span>
-                                        </div>
-                                        <textarea class="ne-plot-point-input" 
-                                            [value]="chap.plotPoints?.firstSlap || ''"
-                                            (input)="updatePlotPoint(chap.id, 'firstSlap', $any($event.target).value)"
-                                            placeholder="The moment that sets everything in motion..."></textarea>
-                                    </div>
-                                    <div class="ne-plot-point-card">
-                                        <div class="ne-plot-point-label">
-                                            <span class="material-symbols-outlined plot-icon">trending_up</span>
-                                            Second Slap
-                                            <span class="plot-point-subtitle">Midpoint</span>
-                                        </div>
-                                        <textarea class="ne-plot-point-input"
-                                            [value]="chap.plotPoints?.secondSlap || ''"
-                                            (input)="updatePlotPoint(chap.id, 'secondSlap', $any($event.target).value)"
-                                            placeholder="The turning point that changes everything..."></textarea>
-                                    </div>
-                                    <div class="ne-plot-point-card">
-                                        <div class="ne-plot-point-label">
-                                            <span class="material-symbols-outlined plot-icon">flag</span>
-                                            Climax
-                                            <span class="plot-point-subtitle">Resolution</span>
-                                        </div>
-                                        <textarea class="ne-plot-point-input"
-                                            [value]="chap.plotPoints?.climax || ''"
-                                            (input)="updatePlotPoint(chap.id, 'climax', $any($event.target).value)"
-                                            placeholder="The final confrontation and resolution..."></textarea>
-                                    </div>
-                                </div>
-                                }
-                            </div>
-                            }
-                        }
-                    }
-                }
                 }
             </div>
             }
