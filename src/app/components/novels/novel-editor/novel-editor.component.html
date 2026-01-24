@@ -302,30 +302,128 @@
 
         <!-- Editor Canvas -->
         <div class="ne-editor-area" [class.focus-mode]="focusMode()">
-            <!-- Top Toolbar -->
-            <div class="ne-top-toolbar">
-                <div class="ne-editor-tabs" [class.hidden]="focusMode()">
-                <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
-                    (click)="setActiveNav('manuscript')">
-                    <span class="material-symbols-outlined tab-icon">description</span>
-                    Manuscript
-                </button>
-                <button class="ne-editor-tab" [class.active]="activeNav() === 'structure'"
-                    (click)="setActiveNav('structure')">
-                    <span class="material-symbols-outlined tab-icon">menu_book</span>
-                    Structure
-                </button>
-                <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
-                    (click)="setActiveNav('characters')">
-                    <span class="material-symbols-outlined tab-icon">group</span>
-                    Characters
-                </button>
-                <button class="ne-editor-tab" [class.active]="activeNav() === 'locations'"
-                    (click)="setActiveNav('locations')">
-                    <span class="material-symbols-outlined tab-icon">public</span>
-                    Locations
-                </button>
+            <!-- Editor Header with Tabs -->
+            <div class="ne-editor-header" [class.hidden]="focusMode()">
+                <div class="ne-editor-tabs">
+                    <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
+                        (click)="setActiveNav('manuscript')">
+                        <span class="material-symbols-outlined tab-icon">description</span>
+                        Manuscript
+                    </button>
+                    <button class="ne-editor-tab" [class.active]="activeNav() === 'structure'"
+                        (click)="setActiveNav('structure')">
+                        <span class="material-symbols-outlined tab-icon">menu_book</span>
+                        Structure
+                    </button>
+                    <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
+                        (click)="setActiveNav('characters')">
+                        <span class="material-symbols-outlined tab-icon">group</span>
+                        Characters
+                    </button>
+                    <button class="ne-editor-tab" [class.active]="activeNav() === 'locations'"
+                        (click)="setActiveNav('locations')">
+                        <span class="material-symbols-outlined tab-icon">public</span>
+                        Locations
+                    </button>
                 </div>
+            </div>
+
+            <!-- Editor Toolbar (below tabs) -->
+            @if (editor) {
+            <div class="ne-editor-toolbar" [class.hidden]="focusMode()">
+                <!-- Formatting Options -->
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
+                        [class.active]="editor.isActive('bold')" title="Bold">
+                        <span class="material-symbols-outlined">format_bold</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
+                        [class.active]="editor.isActive('italic')" title="Italic">
+                        <span class="material-symbols-outlined">format_italic</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleUnderline().run()"
+                        [class.active]="editor.isActive('underline')" title="Underline">
+                        <span class="material-symbols-outlined">format_underlined</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleStrike().run()"
+                        [class.active]="editor.isActive('strike')" title="Strikethrough">
+                        <span class="material-symbols-outlined">strikethrough_s</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleHighlight().run()"
+                        [class.active]="editor.isActive('highlight')" title="Highlight">
+                        <span class="material-symbols-outlined">ink_highlighter</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('left').run()"
+                        [class.active]="editor.isActive({ textAlign: 'left' })" title="Align Left">
+                        <span class="material-symbols-outlined">format_align_left</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('center').run()"
+                        [class.active]="editor.isActive({ textAlign: 'center' })" title="Align Center">
+                        <span class="material-symbols-outlined">format_align_center</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('right').run()"
+                        [class.active]="editor.isActive({ textAlign: 'right' })" title="Align Right">
+                        <span class="material-symbols-outlined">format_align_right</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('justify').run()"
+                        [class.active]="editor.isActive({ textAlign: 'justify' })" title="Justify">
+                        <span class="material-symbols-outlined">format_align_justify</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+                        [class.active]="editor.isActive('heading', { level: 1 })" title="H1">
+                        <span class="material-symbols-outlined">format_h1</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+                        [class.active]="editor.isActive('heading', { level: 2 })" title="H2">
+                        <span class="material-symbols-outlined">format_h2</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleBulletList().run()"
+                        [class.active]="editor.isActive('bulletList')" title="Bullet list">
+                        <span class="material-symbols-outlined">format_list_bulleted</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleOrderedList().run()"
+                        [class.active]="editor.isActive('orderedList')" title="Numbered list">
+                        <span class="material-symbols-outlined">format_list_numbered</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleTaskList().run()"
+                        [class.active]="editor.isActive('taskList')" title="Checklist">
+                        <span class="material-symbols-outlined">check_box</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleCodeBlock().run()"
+                        [class.active]="editor.isActive('codeBlock')" title="Code block">
+                        <span class="material-symbols-outlined">code</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleBlockquote().run()"
+                        [class.active]="editor.isActive('blockquote')" title="Quote">
+                        <span class="material-symbols-outlined">format_quote</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" (click)="openLinkModal()" [class.active]="editor.isActive('link')" title="Link">
+                        <span class="material-symbols-outlined">link</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="addImage()" title="Image">
+                        <span class="material-symbols-outlined">image</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="insertTable()" title="Table">
+                        <span class="material-symbols-outlined">table</span>
+                    </button>
+                    <button class="toolbar-btn" (click)="addYoutube()" title="YouTube">
+                        <span class="material-symbols-outlined">smart_display</span>
+                    </button>
+                </div>
+                <div class="toolbar-spacer"></div>
+                <!-- Actions -->
                 <div class="ne-toolbar-actions">
                     <!-- Undo/Redo -->
                     <div class="undo-redo-group">
@@ -428,6 +526,7 @@
                     </div>
                 </div>
             </div>
+            }
 
             @if (activeNav() === 'manuscript') {
             <div class="ne-editor-canvas">
@@ -507,92 +606,6 @@
                     }
                 </div>
 
-                <!-- Edit Toolbar -->
-                @if (editor) {
-                <div class="ne-edit-toolbar">
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
-                            [class.active]="editor.isActive('bold')" title="Bold (Cmd+B)">
-                            <span class="material-symbols-outlined">format_bold</span>
-                        </button>
-                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
-                            [class.active]="editor.isActive('italic')" title="Italic (Cmd+I)">
-                            <span class="material-symbols-outlined">format_italic</span>
-                        </button>
-                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleStrike().run()"
-                            [class.active]="editor.isActive('strike')" title="Strikethrough">
-                            <span class="material-symbols-outlined">format_strikethrough</span>
-                        </button>
-                    </div>
-
-                    <div class="toolbar-sep"></div>
-
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn text-btn"
-                            (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-                            [class.active]="editor.isActive('heading', { level: 1 })" title="Heading 1">
-                            H1
-                        </button>
-                        <button class="toolbar-btn text-btn"
-                            (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                            [class.active]="editor.isActive('heading', { level: 2 })" title="Heading 2">
-                            H2
-                        </button>
-                    </div>
-
-                    <div class="toolbar-sep"></div>
-
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleBulletList().run()"
-                            [class.active]="editor.isActive('bulletList')" title="Bullet List">
-                            <span class="material-symbols-outlined">format_list_bulleted</span>
-                        </button>
-                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleOrderedList().run()"
-                            [class.active]="editor.isActive('orderedList')" title="Ordered List">
-                            <span class="material-symbols-outlined">format_list_numbered</span>
-                        </button>
-                    </div>
-
-                    <div class="toolbar-sep"></div>
-
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleBlockquote().run()"
-                            [class.active]="editor.isActive('blockquote')" title="Quote">
-                            <span class="material-symbols-outlined">format_quote</span>
-                        </button>
-                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleCode().run()"
-                            [class.active]="editor.isActive('code')" title="Code">
-                            <span class="material-symbols-outlined">code</span>
-                        </button>
-                        <button class="toolbar-btn" (click)="editor.chain().focus().setHorizontalRule().run()"
-                            title="Horizontal Rule">
-                            <span class="material-symbols-outlined">remove</span>
-                        </button>
-                    </div>
-
-                    <div class="toolbar-sep"></div>
-
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" (click)="openLinkModal()"
-                            [class.active]="editor.isActive('link')" title="Insert Link">
-                            <span class="material-symbols-outlined">link</span>
-                        </button>
-                    </div>
-
-                    <div class="toolbar-sep spacer"></div>
-
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" (click)="editor.chain().focus().undo().run()"
-                            [disabled]="!editor.can().undo()" title="Undo">
-                            <span class="material-symbols-outlined">undo</span>
-                        </button>
-                        <button class="toolbar-btn" (click)="editor.chain().focus().redo().run()"
-                            [disabled]="!editor.can().redo()" title="Redo">
-                            <span class="material-symbols-outlined">redo</span>
-                        </button>
-                    </div>
-                </div>
-                }
 
                 <!-- Chapter Summary -->
                 @if (activeChapterId()) {
@@ -684,20 +697,6 @@
                             (ngModelChange)="novelService.updateFrontMatterTitle(item.id, $event)"
                             [placeholder]="getFrontMatterTypeLabel(item.type)" />
                         <div class="ne-doc-meta">{{ item.wordCount }} w</div>
-                        @if (editor) {
-                        <div class="ne-edit-toolbar">
-                            <div class="toolbar-group">
-                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
-                                    [class.active]="editor.isActive('bold')">
-                                    <span class="material-symbols-outlined">format_bold</span>
-                                </button>
-                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
-                                    [class.active]="editor.isActive('italic')">
-                                    <span class="material-symbols-outlined">format_italic</span>
-                                </button>
-                            </div>
-                        </div>
-                        }
                         <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
                         }
                     }
@@ -708,20 +707,6 @@
                     <div class="ne-doc-meta">
                         <span class="ne-draft-tag">{{ prologue.status }}</span> • {{ prologue.wordCount }} w
                     </div>
-                    @if (editor) {
-                    <div class="ne-edit-toolbar">
-                        <div class="toolbar-group">
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
-                                [class.active]="editor.isActive('bold')">
-                                <span class="material-symbols-outlined">format_bold</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
-                                [class.active]="editor.isActive('italic')">
-                                <span class="material-symbols-outlined">format_italic</span>
-                            </button>
-                        </div>
-                    </div>
-                    }
                     <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
                     }
                 } @else {

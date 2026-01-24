@@ -1322,6 +1322,27 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.linkText.set('');
   }
 
+  addImage() {
+    if (!this.editor) return;
+    const url = prompt('Enter image URL:');
+    if (url) {
+      this.editor.chain().focus().setImage({ src: url }).run();
+    }
+  }
+
+  insertTable() {
+    if (!this.editor) return;
+    this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  }
+
+  addYoutube() {
+    if (!this.editor) return;
+    const url = prompt('Enter YouTube URL:');
+    if (url) {
+      this.editor.chain().focus().setYoutubeVideo({ src: url }).run();
+    }
+  }
+
   // Export functionality
   exportNovel(format: 'pdf' | 'docx' | 'md' | 'html') {
     const novel = this.novel();
