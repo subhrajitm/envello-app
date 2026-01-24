@@ -5,9 +5,8 @@
         <div class="j-search-header">
             <div class="j-search-container">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" class="j-search-input" placeholder="Search projects..." 
-                       [ngModel]="projectSearchQuery()" 
-                       (ngModelChange)="projectSearchQuery.set($event)" />
+                <input type="text" class="j-search-input" placeholder="Search projects..."
+                    [ngModel]="projectSearchQuery()" (ngModelChange)="projectSearchQuery.set($event)" />
             </div>
             <div class="j-dropdown-wrapper">
                 <button class="j-add-btn" (click)="toggleProjectDropdown()" title="New Project">
@@ -15,7 +14,8 @@
                 </button>
                 @if (showProjectDropdown()) {
                 <div class="j-dropdown-menu">
-                    <button class="j-dropdown-item" (click)="showProjectModal.set(true); showProjectDropdown.set(false)">
+                    <button class="j-dropdown-item"
+                        (click)="showProjectModal.set(true); showProjectDropdown.set(false)">
                         <span class="material-symbols-outlined">folder</span>
                         <span>New Project</span>
                     </button>
@@ -30,11 +30,20 @@
 
         <!-- Projects List -->
         <div class="j-project-list">
-            @if (filteredProjects().length === 0 && projectSearchQuery()) {
+            @if (filteredProjects().length === 0) {
+            @if (projectSearchQuery()) {
             <div class="j-empty-state">
                 <span class="material-symbols-outlined">search_off</span>
                 <p>No projects found</p>
             </div>
+            } @else {
+            <div class="j-empty-state">
+                <span class="material-symbols-outlined">folder</span>
+                <p>No projects yet</p>
+                <button class="j-create-first-btn" (click)="showProjectModal.set(true)">Create your first
+                    project</button>
+            </div>
+            }
             } @else {
             @for (p of filteredProjects(); track p.id) {
             <div class="j-project-row" [class.active]="p.active" (click)="selectProject(p.id)">
@@ -66,35 +75,6 @@
             }
             }
         </div>
-
-        <!-- Sidebar Footer -->
-        <div class="j-sidebar-footer">
-            @if (activeProject(); as project) {
-            <div class="j-footer-stats">
-                <div class="j-stat-item">
-                    <span class="j-stat-label">Total Projects</span>
-                    <span class="j-stat-value">{{ totalProjects() }}</span>
-                </div>
-                <div class="j-stat-item">
-                    <span class="j-stat-label">Total Entries</span>
-                    <span class="j-stat-value">{{ totalEntries() }}</span>
-                </div>
-                <div class="j-stat-item">
-                    <span class="j-stat-label">Total Words</span>
-                    <span class="j-stat-value">{{ formatWordCount(totalWords()) }}</span>
-                </div>
-            </div>
-            }
-            <div class="j-storage-info">
-                <div class="j-storage-label">
-                    <span>STORAGE USAGE</span>
-                    <span>64%</span>
-                </div>
-                <div class="j-storage-bar">
-                    <div class="j-storage-fill" style="width: 64%"></div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Main Kanban Content -->
@@ -120,7 +100,8 @@
                 <div class="j-stat-divider"></div>
                 <div class="j-stat-group">
                     <div class="stat-label">TARGET</div>
-                    <div class="stat-val">{{ project.targetWordCount ? formatWordCount(project.targetWordCount) + ' words' : 'No target' }}</div>
+                    <div class="stat-val">{{ project.targetWordCount ? formatWordCount(project.targetWordCount) + '
+                        words' : 'No target' }}</div>
                 </div>
             </div>
 
@@ -133,7 +114,8 @@
                     <span>Search</span>
                     }
                 </button>
-                <select class="j-filter-select" [ngModel]="selectedFilter()" (ngModelChange)="selectedFilter.set($event)">
+                <select class="j-filter-select" [ngModel]="selectedFilter()"
+                    (ngModelChange)="selectedFilter.set($event)">
                     <option value="all">All Entries</option>
                     <option value="tagged">Tagged</option>
                     <option value="ai-edited">AI Edited</option>
@@ -144,14 +126,24 @@
                 <button class="j-action-btn" (click)="openExportModal()" title="Export">
                     <span class="material-symbols-outlined icon-sm">download</span>
                 </button>
-                <button class="j-view-toggle">
-                    <span class="material-symbols-outlined icon-sm">view_kanban</span>
-                    Kanban
-                </button>
+                <div class="view-toggles">
+                    <button class="j-view-toggle" [class.active]="viewMode() === 'kanban'"
+                        (click)="setViewMode('kanban')">
+                        <span class="material-symbols-outlined icon-sm">view_kanban</span>
+                        Kanban
+                    </button>
+                    <button class="j-view-toggle" [class.active]="viewMode() === 'timeline'"
+                        (click)="setViewMode('timeline')">
+                        <span class="material-symbols-outlined icon-sm">timeline</span>
+                        Timeline
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Columns -->
+        <!-- Kanban View -->
+        @if (viewMode() === 'kanban') {
         <div class="j-kanban-board">
             @for (col of getProjectColumns(); track col.id) {
             <div class="j-col" (dragover)="onDragOver($event)" (drop)="onDrop($event, col.id)">
@@ -161,24 +153,26 @@
                         {{ col.name }} <span class="col-count">{{ getEntriesForColumn(col.id).length }}</span>
                     </div>
                     <div class="col-actions">
-                        <span class="material-symbols-outlined icon-add" (click)="openNewEntryModal(col.id)" title="Add Entry">add</span>
+                        <span class="material-symbols-outlined icon-add" (click)="openNewEntryModal(col.id)"
+                            title="Add Entry">add</span>
                         @if (getProjectColumns().length > 1) {
-                        <span class="material-symbols-outlined icon-delete" (click)="deleteColumn(col.id)" title="Delete Column">delete</span>
+                        <span class="material-symbols-outlined icon-delete" (click)="deleteColumn(col.id)"
+                            title="Delete Column">delete</span>
                         }
                     </div>
                 </div>
                 <div class="j-col-body">
                     @for (entry of getEntriesForColumn(col.id); track entry.id) {
-                    <div class="j-card" draggable="true" 
-                         (dragstart)="onDragStart($event, entry, col.id)"
-                         (dragend)="onDragEnd($event)"
-                         (click)="openEntryDetail(entry.id)"
-                         (contextmenu)="$event.preventDefault(); openExportModal(entry.id)">
+                    <div class="j-card" draggable="true" (dragstart)="onDragStart($event, entry, col.id)"
+                        (dragend)="onDragEnd($event)" (click)="openEntryDetail(entry.id)"
+                        (contextmenu)="$event.preventDefault(); openExportModal(entry.id)">
                         <div class="card-top">
-                            <span class="card-tag" [style.background-color]="getColumnColor(col.id) + '20'" [style.color]="getColumnColor(col.id)">
+                            <span class="card-tag" [style.background-color]="getColumnColor(col.id) + '20'"
+                                [style.color]="getColumnColor(col.id)">
                                 {{ entry.type }}
                             </span>
-                            <span class="material-symbols-outlined icon-more" (click)="$event.stopPropagation()">more_horiz</span>
+                            <span class="material-symbols-outlined icon-more"
+                                (click)="$event.stopPropagation()">more_horiz</span>
                         </div>
                         <div class="card-title">{{ entry.title }}</div>
                         @if (entry.preview) {
@@ -223,6 +217,43 @@
                 </button>
             </div>
         </div>
+        }
+
+        <!-- Timeline View -->
+        @if (viewMode() === 'timeline') {
+        <div class="j-timeline-container">
+            @for (entry of timelineEntries(); track entry.id) {
+            <div class="timeline-item" (click)="openEntryDetail(entry.id)">
+                <div class="timeline-date">
+                    <span class="day">{{ entry.createdDate | date:'dd' }}</span>
+                    <span class="month">{{ entry.createdDate | date:'MMM' }}</span>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <h3>{{ entry.title }}</h3>
+                        <span class="timeline-type">{{ entry.type }}</span>
+                    </div>
+                    <p class="timeline-preview">{{ entry.preview }}</p>
+                    <div class="timeline-meta">
+                        <span>{{ entry.wordCount }} words</span>
+                        @if (entry.tags && entry.tags.length > 0) {
+                        <span class="timeline-tags">
+                            @for (tag of entry.tags; track tag) {
+                            <span class="tag-badge">{{ tag }}</span>
+                            }
+                        </span>
+                        }
+                    </div>
+                </div>
+            </div>
+            } @empty {
+            <div class="j-empty-state">
+                <span class="material-symbols-outlined">history_toggle_off</span>
+                <p>No entries found in this timeline</p>
+            </div>
+            }
+        </div>
+        }
     </div>
     }
 
@@ -237,7 +268,8 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>Title</label>
-                    <input type="text" [ngModel]="newEntryTitle()" (ngModelChange)="newEntryTitle.set($event)" placeholder="Entry title..." class="form-input" />
+                    <input type="text" [ngModel]="newEntryTitle()" (ngModelChange)="newEntryTitle.set($event)"
+                        placeholder="Entry title..." class="form-input" />
                 </div>
                 <div class="form-group">
                     <label>Type</label>
@@ -252,7 +284,8 @@
                 </div>
                 <div class="form-group">
                     <label>Column</label>
-                    <select [ngModel]="newEntryColumn()" (ngModelChange)="newEntryColumn.set($event)" class="form-input">
+                    <select [ngModel]="newEntryColumn()" (ngModelChange)="newEntryColumn.set($event)"
+                        class="form-input">
                         @for (col of getProjectColumns(); track col.id) {
                         <option [value]="col.id">{{ col.name }}</option>
                         }
@@ -278,12 +311,14 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>Project Title</label>
-                    <input type="text" [ngModel]="newProjectTitle()" (ngModelChange)="newProjectTitle.set($event)" placeholder="Project name..." class="form-input" />
+                    <input type="text" [ngModel]="newProjectTitle()" (ngModelChange)="newProjectTitle.set($event)"
+                        placeholder="Project name..." class="form-input" />
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" (click)="showProjectModal.set(false)">Cancel</button>
-                <button class="btn-primary" (click)="createProject()" [disabled]="!newProjectTitle().trim()">Create</button>
+                <button class="btn-primary" (click)="createProject()"
+                    [disabled]="!newProjectTitle().trim()">Create</button>
             </div>
         </div>
     </div>
@@ -295,7 +330,8 @@
         <div class="modal-content entry-detail-modal" (click)="$event.stopPropagation()">
             <div class="entry-detail-header">
                 <div class="entry-detail-title-group">
-                    <input type="text" [ngModel]="editingEntry()?.title" (ngModelChange)="updateEditingEntryTitle($event)" class="entry-title-input" />
+                    <input type="text" [ngModel]="editingEntry()?.title"
+                        (ngModelChange)="updateEditingEntryTitle($event)" class="entry-title-input" />
                     <div class="entry-meta">
                         <span class="entry-type-badge">{{ entry.type }}</span>
                         <span class="entry-date">{{ entry.createdDate }}</span>
@@ -305,6 +341,10 @@
                 <div class="entry-detail-actions">
                     <button class="btn-icon" (click)="saveEntry()" title="Save">
                         <span class="material-symbols-outlined">save</span>
+                    </button>
+                    <button class="btn-icon" (click)="toggleAiPanel()" [class.active]="showAiPanel()"
+                        title="AI Assistant">
+                        <span class="material-symbols-outlined">auto_awesome</span>
                     </button>
                     <button class="btn-icon" (click)="openExportModal(entry.id)" title="Export">
                         <span class="material-symbols-outlined">download</span>
@@ -322,6 +362,41 @@
                     <tiptap-editor [editor]="editor" class="journal-entry-editor"></tiptap-editor>
                 </div>
                 <div class="entry-sidebar">
+                    @if (showAiPanel()) {
+                    <div class="ai-sidebar-panel">
+                        <h3>AI Companion</h3>
+                        <div class="ai-content">
+                            @if (isAiLoading()) {
+                            <div class="ai-loading">
+                                <div class="spinner"></div>
+                                <span>Thinking...</span>
+                            </div>
+                            } @else if (aiResponse()) {
+                            <div class="ai-response">
+                                <p>{{ aiResponse() }}</p>
+                                <button class="btn-small-action" (click)="insertAiContent()">Insert to Editor</button>
+                            </div>
+                            } @else {
+                            <div class="ai-placeholder">
+                                <p>Ask me to analyze your text, generate ideas, or help with writer's block.</p>
+                            </div>
+                            }
+                        </div>
+                        <div class="ai-input-area">
+                            <textarea [ngModel]="aiQuery()" (ngModelChange)="aiQuery.set($event)"
+                                placeholder="Ask for suggestions..." (keydown.control.enter)="askAi()">
+                                </textarea>
+                            <button class="btn-ai-send" (click)="askAi()" [disabled]="!aiQuery().trim()">
+                                <span class="material-symbols-outlined">send</span>
+                            </button>
+                        </div>
+                        <div class="ai-quick-actions">
+                            <button class="chip-btn" (click)="generateAiSuggestion()">💡 Ideas</button>
+                            <button class="chip-btn" (click)="aiQuery.set('Critique this content'); askAi()">📝
+                                Critique</button>
+                        </div>
+                    </div>
+                    } @else {
                     <div class="entry-sidebar-section">
                         <h3>Tags</h3>
                         <div class="tags-input">
@@ -350,6 +425,7 @@
                             <span class="stat-value">{{ entry.lastEdited }}</span>
                         </div>
                     </div>
+                    }
                 </div>
             </div>
         </div>
@@ -361,28 +437,24 @@
     <div class="modal-overlay search-modal-overlay" (click)="showSearchModal.set(false)">
         <div class="modal-content search-modal" (click)="$event.stopPropagation()">
             <div class="search-header">
-                <input type="text" 
-                       [ngModel]="searchQuery()" 
-                       (ngModelChange)="searchQuery.set($event)"
-                       placeholder="Search entries..." 
-                       class="search-input"
-                       autofocus />
+                <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+                    placeholder="Search entries..." class="search-input" autofocus />
                 <button class="modal-close" (click)="showSearchModal.set(false)">×</button>
             </div>
             <div class="search-results">
                 @if (searchQuery()) {
-                    @for (entry of journalService.searchEntries(searchQuery(), getActiveProjectId()); track entry.id) {
-                    <div class="search-result-item" (click)="openEntryDetail(entry.id); showSearchModal.set(false)">
-                        <div class="search-result-title">{{ entry.title }}</div>
-                        <div class="search-result-preview">{{ entry.preview }}</div>
-                        <div class="search-result-meta">
-                            <span class="search-result-type">{{ entry.type }}</span>
-                            <span class="search-result-date">{{ entry.lastEdited }}</span>
-                        </div>
+                @for (entry of journalService.searchEntries(searchQuery(), getActiveProjectId()); track entry.id) {
+                <div class="search-result-item" (click)="openEntryDetail(entry.id); showSearchModal.set(false)">
+                    <div class="search-result-title">{{ entry.title }}</div>
+                    <div class="search-result-preview">{{ entry.preview }}</div>
+                    <div class="search-result-meta">
+                        <span class="search-result-type">{{ entry.type }}</span>
+                        <span class="search-result-date">{{ entry.lastEdited }}</span>
                     </div>
-                    } @empty {
-                    <div class="search-empty">No entries found</div>
-                    }
+                </div>
+                } @empty {
+                <div class="search-empty">No entries found</div>
+                }
                 } @else {
                 <div class="search-empty">Start typing to search...</div>
                 }
@@ -402,16 +474,19 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>Column Name</label>
-                    <input type="text" [ngModel]="newColumnName()" (ngModelChange)="newColumnName.set($event)" placeholder="Column name..." class="form-input" />
+                    <input type="text" [ngModel]="newColumnName()" (ngModelChange)="newColumnName.set($event)"
+                        placeholder="Column name..." class="form-input" />
                 </div>
                 <div class="form-group">
                     <label>Color</label>
-                    <input type="color" [ngModel]="newColumnColor()" (ngModelChange)="newColumnColor.set($event)" class="form-input color-input" />
+                    <input type="color" [ngModel]="newColumnColor()" (ngModelChange)="newColumnColor.set($event)"
+                        class="form-input color-input" />
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" (click)="showColumnModal.set(false)">Cancel</button>
-                <button class="btn-primary" (click)="createColumn()" [disabled]="!newColumnName().trim()">Create</button>
+                <button class="btn-primary" (click)="createColumn()"
+                    [disabled]="!newColumnName().trim()">Create</button>
             </div>
         </div>
     </div>
@@ -462,11 +537,13 @@
                 @if (activeProject(); as project) {
                 <div class="form-group">
                     <label>Target Word Count</label>
-                    <input type="number" [ngModel]="writingGoal()" (ngModelChange)="writingGoal.set(+$event)" placeholder="Enter target words..." class="form-input" min="0" />
+                    <input type="number" [ngModel]="writingGoal()" (ngModelChange)="writingGoal.set(+$event)"
+                        placeholder="Enter target words..." class="form-input" min="0" />
                 </div>
                 <div class="form-group">
                     <label>Goal Period</label>
-                    <select [ngModel]="writingGoalPeriod()" (ngModelChange)="writingGoalPeriod.set($event)" class="form-input">
+                    <select [ngModel]="writingGoalPeriod()" (ngModelChange)="writingGoalPeriod.set($event)"
+                        class="form-input">
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>

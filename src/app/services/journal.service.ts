@@ -257,7 +257,7 @@ export class JournalService {
 
       // Delete entries
       this.entries.update(entries => entries.filter(e => e.projectId !== id));
-      
+
       // Delete project
       this.projects.update(projects => projects.filter(p => p.id !== id));
       this.store.addActivity(`Journal project deleted: ${project.title}`, 'system');
@@ -297,10 +297,10 @@ export class JournalService {
     };
 
     this.entries.update(entries => [...entries, newEntry]);
-    
+
     // Update project stats
     this.updateProjectStats(entry.projectId);
-    
+
     this.store.addActivity(`Entry added: ${newEntry.title}`, 'entry');
     return newEntry;
   }
@@ -310,7 +310,7 @@ export class JournalService {
     if (!entry) return;
 
     let finalUpdates = { ...updates };
-    
+
     // Recalculate word/character count if content changed
     if (updates.content) {
       const plainText = this.stripHtml(updates.content);
@@ -378,7 +378,7 @@ export class JournalService {
     this.entries.update(entries =>
       entries.map(e => e.column === id ? { ...e, column: 'IDEAS' } : e)
     );
-    
+
     this.columns.update(cols => cols.filter(c => c.id !== id));
   }
 
@@ -386,7 +386,7 @@ export class JournalService {
   searchEntries(query: string, projectId?: string): JournalEntry[] {
     const entries = projectId ? this.getEntries(projectId) : this.entries();
     const lowerQuery = query.toLowerCase();
-    
+
     return entries.filter(entry =>
       entry.title.toLowerCase().includes(lowerQuery) ||
       entry.preview.toLowerCase().includes(lowerQuery) ||
@@ -433,12 +433,12 @@ export class JournalService {
     const entries = this.getEntries(projectId);
     const totalWords = entries.reduce((sum, e) => sum + e.wordCount, 0);
     const project = this.getProject(projectId);
-    
+
     if (project) {
-      const progress = project.targetWordCount 
+      const progress = project.targetWordCount
         ? Math.min(100, Math.round((totalWords / project.targetWordCount) * 100))
         : undefined;
-      
+
       this.updateProject(projectId, {
         entriesCount: entries.length,
         wordCount: totalWords,

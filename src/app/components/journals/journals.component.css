@@ -2,18 +2,24 @@
 .journals-layout {
     display: flex;
     height: 100%;
+    width: 100%;
     background: var(--bg-app);
     overflow: hidden;
+    position: relative;
 }
 
 /* Sidebar */
 .j-sidebar {
     width: 280px;
+    min-width: 280px;
     background: var(--bg-panel);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
+    position: relative;
+    z-index: 1;
 }
 
 /* Search Header */
@@ -130,10 +136,16 @@
 
 /* Project List */
 .j-project-list {
-    flex: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 8px 0;
-    min-height: 0;
+    min-height: 100px;
+    display: block;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-height: calc(100vh - 200px);
 }
 
 .j-empty-state {
@@ -149,12 +161,29 @@
 }
 
 .j-empty-state p {
-    margin: 0;
+    margin: 0 0 12px 0;
     font-size: 13px;
 }
 
+.j-create-first-btn {
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: var(--accent-primary);
+    color: var(--accent-primary-text);
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.j-create-first-btn:hover {
+    filter: brightness(1.1);
+}
+
 .j-project-row {
-    display: flex;
+    display: flex !important;
     align-items: flex-start;
     gap: 12px;
     padding: 12px 16px;
@@ -162,6 +191,11 @@
     border-left: 2px solid transparent;
     transition: all 0.2s;
     position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: transparent;
 }
 
 .j-project-row:hover {
@@ -274,69 +308,6 @@
     font-size: 16px;
 }
 
-/* Sidebar Footer */
-.j-sidebar-footer {
-    padding: 16px;
-    border-top: 1px solid var(--border-subtle);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex-shrink: 0;
-    background: var(--bg-app);
-}
-
-.j-footer-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.j-stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-}
-
-.j-stat-label {
-    color: var(--text-tertiary);
-    font-weight: 600;
-}
-
-.j-stat-value {
-    color: var(--text-primary);
-    font-weight: 700;
-}
-
-.j-storage-info {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.j-storage-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--text-tertiary);
-    letter-spacing: 0.5px;
-}
-
-.j-storage-bar {
-    height: 4px;
-    background: var(--bg-hover);
-    border-radius: 2px;
-    width: 100%;
-    overflow: hidden;
-}
-
-.j-storage-fill {
-    height: 100%;
-    background: var(--accent-primary);
-    border-radius: 2px;
-    transition: width 0.3s;
-}
 
 /* Main Content */
 .j-main-content {
@@ -344,11 +315,15 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    height: 100%;
+    overflow: hidden;
 }
 
 /* Header */
 .j-main-header {
     height: 80px;
+    min-height: 80px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     padding: 0 32px;
@@ -454,12 +429,43 @@
 
 /* Kanban Board */
 .j-kanban-board {
-    flex: 1;
+    flex: 1 1 0;
     overflow-x: auto;
+    overflow-y: auto;
     padding: 24px 32px;
     display: grid;
     grid-template-columns: repeat(3, minmax(320px, 1fr));
+    grid-auto-rows: max-content;
     gap: 24px;
+    background: var(--bg-app);
+    min-height: 0;
+    height: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-subtle) var(--bg-app);
+}
+
+/* Custom Scrollbar Styling for Webkit browsers */
+.j-kanban-board::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.j-kanban-board::-webkit-scrollbar-track {
+    background: var(--bg-app);
+}
+
+.j-kanban-board::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 5px;
+    border: 2px solid var(--bg-app);
+}
+
+.j-kanban-board::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.j-kanban-board::-webkit-scrollbar-corner {
     background: var(--bg-app);
 }
 
@@ -467,6 +473,8 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-height: min-content;
+    align-items: stretch;
 }
 
 .j-col-header {
@@ -474,6 +482,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    flex-shrink: 0;
 }
 
 .col-title-group {
@@ -522,6 +531,8 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex: 1;
+    min-height: 0;
 }
 
 .j-card {
@@ -1305,4 +1316,302 @@
     font-size: 24px;
     font-weight: 700;
     color: var(--accent-primary);
+}
+
+/* View Toggles */
+.view-toggles {
+    display: flex;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.view-toggles .j-view-toggle {
+    border: none;
+    border-radius: 2px;
+    padding: 4px 8px;
+    background: transparent;
+    color: var(--text-tertiary);
+}
+
+.view-toggles .j-view-toggle.active {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Timeline View */
+.j-timeline-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px;
+    background: var(--bg-app);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 24px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.timeline-item:hover {
+    transform: translateX(4px);
+}
+
+.timeline-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+    padding-top: 4px;
+}
+
+.timeline-date .day {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.timeline-date .month {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.timeline-content {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 16px 24px;
+    position: relative;
+}
+
+.timeline-content::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 20px;
+    width: 10px;
+    height: 10px;
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    transform: rotate(45deg);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.timeline-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.timeline-type {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.timeline-preview {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 12px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.timeline-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.timeline-tags {
+    display: flex;
+    gap: 4px;
+}
+
+/* AI Sidebar Panel */
+.ai-sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.ai-sidebar-panel h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin: 0 0 16px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-sidebar-panel h3::before {
+    content: '✨';
+    font-size: 14px;
+}
+
+.ai-content {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.ai-placeholder {
+    color: var(--text-tertiary);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+.ai-response {
+    background: var(--bg-hover);
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 2px solid var(--accent-primary);
+}
+
+.btn-small-action {
+    margin-top: 8px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    padding: 4px 8px;
+    font-size: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.btn-small-action:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.ai-input-area {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    background: var(--bg-app);
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+}
+
+.ai-input-area textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: inherit;
+    resize: none;
+    height: 32px;
+    padding: 4px;
+}
+
+.ai-input-area textarea:focus {
+    outline: none;
+}
+
+.btn-ai-send {
+    background: transparent;
+    border: none;
+    color: var(--accent-primary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-ai-send:disabled {
+    color: var(--text-tertiary);
+    cursor: default;
+}
+
+.ai-quick-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chip-btn {
+    background: var(--bg-hover);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chip-btn:hover {
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+
+.ai-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    color: var(--text-tertiary);
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--bg-hover);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }

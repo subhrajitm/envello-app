@@ -18,6 +18,7 @@ import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { JournalService, JournalProject, JournalEntry, JournalColumn } from '../../services/journal.service';
+import { AiService } from '../../services/ai.service';
 
 @Component({
   selector: 'app-journals',
@@ -28,6 +29,7 @@ import { JournalService, JournalProject, JournalEntry, JournalColumn } from '../
 })
 export class JournalsComponent implements OnInit, OnDestroy {
   journalService = inject(JournalService);
+  aiService = inject(AiService);
 
   projects = this.journalService.projects;
   entries = this.journalService.entries;
@@ -36,6 +38,7 @@ export class JournalsComponent implements OnInit, OnDestroy {
   searchQuery = signal<string>('');
   projectSearchQuery = signal<string>('');
   selectedFilter = signal<'all' | 'tagged' | 'ai-edited'>('all');
+  viewMode = signal<'kanban' | 'timeline'>('kanban');
   showEntryModal = signal<boolean>(false);
   showProjectModal = signal<boolean>(false);
   showSearchModal = signal<boolean>(false);
@@ -45,6 +48,10 @@ export class JournalsComponent implements OnInit, OnDestroy {
   showGoalsModal = signal<boolean>(false);
   selectedEntry = signal<JournalEntry | null>(null);
   editingEntry = signal<JournalEntry | null>(null);
+  showAiPanel = signal<boolean>(false);
+  aiQuery = signal<string>('');
+  aiResponse = signal<string>('');
+  isAiLoading = signal<boolean>(false);
   newEntryTitle = signal<string>('');
   newEntryType = signal<JournalEntry['type']>('NOTE');
   newEntryColumn = signal<string>('IDEAS');
@@ -69,7 +76,7 @@ export class JournalsComponent implements OnInit, OnDestroy {
     if (!project) return {};
 
     const allEntries = this.journalService.getEntries(project.id);
-    
+
     // Group by column
     const grouped: { [key: string]: JournalEntry[] } = {};
     allEntries.forEach(entry => {
@@ -104,6 +111,34 @@ export class JournalsComponent implements OnInit, OnDestroy {
     }
 
     return grouped;
+  });
+
+  timelineEntries = computed(() => {
+    const project = this.activeProject();
+    if (!project) return [];
+
+    const allEntries = this.journalService.getEntries(project.id);
+
+    // Filter first
+    let filtered = allEntries;
+    const query = this.searchQuery().toLowerCase();
+    if (query) {
+      filtered = filtered.filter(entry =>
+        entry.title.toLowerCase().includes(query) ||
+        entry.preview.toLowerCase().includes(query) ||
+        entry.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+
+    const filter = this.selectedFilter();
+    if (filter === 'tagged') {
+      filtered = filtered.filter(entry => entry.tags && entry.tags.length > 0);
+    } else if (filter === 'ai-edited') {
+      filtered = filtered.filter(entry => entry.isAiEdited || entry.hasAi);
+    }
+
+    // Sort by date descending
+    return filtered.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
   });
 
   projectStats = computed(() => {
@@ -338,7 +373,7 @@ export class JournalsComponent implements OnInit, OnDestroy {
   getProjectColumns(): JournalColumn[] {
     const project = this.activeProject();
     if (!project) return this.columns();
-    
+
     // Return columns that are in the project's column list, or all columns if project has no specific columns
     const projectColumnIds = project.columns.length > 0 ? project.columns : this.columns().map(c => c.id);
     return this.columns().filter(c => projectColumnIds.includes(c.id)).sort((a, b) => {
@@ -566,16 +601,76 @@ export class JournalsComponent implements OnInit, OnDestroy {
     // Mock implementation - in real app, this would calculate based on entry dates
     const entries = this.journalService.getEntries(project.id);
     if (entries.length === 0) return 0;
-    
+
     // Simple calculation: count unique days with entries
     const entryDates = new Set(entries.map(e => e.createdDate));
     return entryDates.size;
   }
 
+  // View Navigation
+  setViewMode(mode: 'kanban' | 'timeline') {
+    this.viewMode.set(mode);
+  }
+
+  // AI Functionality
+  toggleAiPanel() {
+    this.showAiPanel.update(v => !v);
+  }
+
+  async askAi() {
+    if (!this.aiQuery().trim()) return;
+
+    this.isAiLoading.set(true);
+    try {
+      const response = await this.aiService.sendMessage(this.aiQuery(), this.editingEntry()?.content);
+      this.aiResponse.set(response);
+    } catch (err) {
+      console.error('AI Error:', err);
+      this.aiResponse.set('Sorry, I encountered an error. Please try again.');
+    } finally {
+      this.isAiLoading.set(false);
+      this.aiQuery.set('');
+    }
+  }
+
+  async generateAiSuggestion() {
+    const content = this.editor?.getText();
+    if (!content) return;
+
+    this.isAiLoading.set(true);
+    this.showAiPanel.set(true);
+    try {
+      const suggestions = await this.aiService.generateSuggestions(content);
+      if (suggestions.length > 0) {
+        this.aiResponse.set(suggestions[0].content); // Simple display for now
+      } else {
+        this.aiResponse.set('No suggestions at this time.');
+      }
+    } catch (err) {
+      this.aiResponse.set('Error generating suggestions.');
+    } finally {
+      this.isAiLoading.set(false);
+    }
+  }
+
+  insertAiContent() {
+    if (!this.aiResponse() || !this.editor) return;
+    this.editor.commands.insertContent(this.aiResponse());
+
+    // Mark as AI edited
+    const current = this.editingEntry();
+    if (current) {
+      this.editingEntry.set({
+        ...current,
+        isAiEdited: true
+      });
+    }
+  }
+
   filteredProjects = computed(() => {
     const query = this.projectSearchQuery().toLowerCase();
     if (!query) return this.projects();
-    return this.projects().filter(p => 
+    return this.projects().filter(p =>
       p.title.toLowerCase().includes(query) ||
       p.description?.toLowerCase().includes(query)
     );
