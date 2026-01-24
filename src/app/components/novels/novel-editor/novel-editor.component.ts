@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NovelContentService, Chapter, ChapterGroup } from '../../../services/novel-content.service';
 import { VersionHistoryService, VersionSnapshot } from '../../../services/version-history.service';
-import { AiService } from '../../../services/ai.service';
+import { AiService, AiMessage, AiSuggestion } from '../../../services/ai.service';
 
 @Component({
   selector: 'app-novel-editor',
@@ -24,6 +24,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   aiService = inject(AiService); // Inject AI Service
   route = inject(ActivatedRoute);
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('aiMessagesContainer') aiMessagesContainer!: ElementRef<HTMLDivElement>;
   private shouldFocusInput = false;
 
   // State
@@ -64,6 +65,14 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   versionHistory = signal<VersionSnapshot[]>([]);
   canUndo = signal(false);
   canRedo = signal(false);
+
+  // AI Companion state
+  aiMessages = signal<AiMessage[]>([]);
+  aiLoading = signal(false);
+  aiError = signal<string | null>(null);
+  aiPrompt = signal('');
+  aiSuggestions = signal<AiSuggestion[]>([]);
+  showContextPreview = signal(false);
 
   // Computed signals from Service
   novel = this.novelService.activeNovel;
@@ -1126,6 +1135,271 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       // Exiting focus mode: restore sidebars to default (visible)
       this.leftSidebarCollapsed.set(false);
       this.rightSidebarCollapsed.set(false);
+    }
+  }
+
+  // AI Companion Methods
+  getCurrentContext(): string {
+    const chapter = this.activeChapter();
+    const novel = this.novel();
+    if (!chapter || !novel) return '';
+    
+    let context = `Chapter: ${chapter.title}\n\n${chapter.content}\n\n`;
+    
+    // Add novel metadata
+    if (novel.characters.length > 0) {
+      context += `Characters: ${novel.characters.map(c => c.name).join(', ')}\n`;
+    }
+    if (novel.locations.length > 0) {
+      context += `Locations: ${novel.locations.map(l => l.name).join(', ')}\n`;
+    }
+    
+    return context;
+  }
+
+  getSelectedText(): string {
+    if (!this.editor) return '';
+    const { from, to } = this.editor.state.selection;
+    if (from === to) return '';
+    return this.editor.state.doc.textBetween(from, to);
+  }
+
+  async sendAiMessage(prompt?: string) {
+    const message = prompt || this.aiPrompt();
+    if (!message.trim()) return;
+
+    const context = this.getCurrentContext();
+    const selectedText = this.getSelectedText();
+    const fullContext = selectedText ? `${context}\n\nSelected text: ${selectedText}` : context;
+
+    // Add user message
+    const userMessage: AiMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: message,
+      timestamp: new Date(),
+      context: fullContext
+    };
+    this.aiMessages.update(messages => [...messages, userMessage]);
+    this.aiPrompt.set('');
+
+    // Show loading
+    this.aiLoading.set(true);
+    this.aiError.set(null);
+
+    try {
+      const response = await this.aiService.sendMessage(message, fullContext);
+      
+      // Add assistant response
+      const assistantMessage: AiMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response,
+        timestamp: new Date()
+      };
+      this.aiMessages.update(messages => [...messages, assistantMessage]);
+      this.scrollToBottom();
+    } catch (error) {
+      this.aiError.set('Failed to get AI response. Please try again.');
+      console.error('AI error:', error);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
+  async analyzeToneAndPacing() {
+    const chapter = this.activeChapter();
+    if (!chapter) {
+      this.aiError.set('Please select a chapter to analyze.');
+      return;
+    }
+
+    this.aiLoading.set(true);
+    this.aiError.set(null);
+
+    try {
+      const analysis = await this.aiService.analyzeToneAndPacing(chapter.content);
+      
+      // Add user message
+      const userMessage: AiMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: 'Analyze the tone and pacing of this chapter',
+        timestamp: new Date(),
+        context: this.getCurrentContext()
+      };
+      this.aiMessages.update(messages => [...messages, userMessage]);
+      
+      // Add assistant response
+      const assistantMessage: AiMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: analysis,
+        timestamp: new Date()
+      };
+      this.aiMessages.update(messages => [...messages, assistantMessage]);
+      this.scrollToBottom();
+    } catch (error) {
+      this.aiError.set('Failed to analyze chapter. Please try again.');
+      console.error('Analysis error:', error);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
+  async generateSuggestions() {
+    const chapter = this.activeChapter();
+    if (!chapter) {
+      this.aiError.set('Please select a chapter to get suggestions.');
+      return;
+    }
+
+    this.aiLoading.set(true);
+    this.aiError.set(null);
+
+    try {
+      const suggestions = await this.aiService.generateSuggestions(chapter.content);
+      this.aiSuggestions.set(suggestions);
+      
+      // Also add to chat
+      const suggestionsText = suggestions.map(s => `- ${s.content}`).join('\n');
+      const message: AiMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `**Writing Suggestions:**\n\n${suggestionsText}`,
+        timestamp: new Date()
+      };
+      this.aiMessages.update(messages => [...messages, message]);
+    } catch (error) {
+      this.aiError.set('Failed to generate suggestions. Please try again.');
+      console.error('Suggestions error:', error);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
+  async summarizeChapter() {
+    const chapter = this.activeChapter();
+    if (!chapter) {
+      this.aiError.set('Please select a chapter to summarize.');
+      return;
+    }
+
+    this.aiLoading.set(true);
+    this.aiError.set(null);
+
+    try {
+      const summary = await this.aiService.summarizeContent(chapter.content);
+      const message: AiMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `**Chapter Summary:**\n\n${summary}`,
+        timestamp: new Date()
+      };
+      this.aiMessages.update(messages => [...messages, message]);
+      this.scrollToBottom();
+    } catch (error) {
+      this.aiError.set('Failed to summarize chapter. Please try again.');
+      console.error('Summary error:', error);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
+  async continueWriting() {
+    if (!this.editor) return;
+
+    const content = this.editor.getHTML();
+    const cursorPosition = this.editor.state.selection.anchor;
+
+    this.aiLoading.set(true);
+    this.aiError.set(null);
+
+    try {
+      const continuation = await this.aiService.continueWriting(content, cursorPosition);
+      
+      // Insert at cursor
+      this.editor.chain().focus().insertContent(continuation).run();
+      
+      const message: AiMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `**Continued writing:**\n\n${continuation}`,
+        timestamp: new Date()
+      };
+      this.aiMessages.update(messages => [...messages, message]);
+      this.scrollToBottom();
+    } catch (error) {
+      this.aiError.set('Failed to continue writing. Please try again.');
+      console.error('Continue error:', error);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
+  applySuggestion(suggestion: AiSuggestion) {
+    if (!this.editor) return;
+
+    if (suggestion.originalText && suggestion.position !== undefined) {
+      // Replace original text
+      const content = this.editor.getHTML();
+      const newContent = content.replace(suggestion.originalText, suggestion.content);
+      this.editor.commands.setContent(newContent);
+    } else {
+      // Insert at cursor
+      this.editor.chain().focus().insertContent(suggestion.content).run();
+    }
+
+    // Remove suggestion
+    this.aiSuggestions.update(suggestions => 
+      suggestions.filter(s => s.id !== suggestion.id)
+    );
+  }
+
+  clearAiConversation() {
+    this.aiMessages.set([]);
+    this.aiSuggestions.set([]);
+    this.aiError.set(null);
+  }
+
+  getTokenCount(): number {
+    const context = this.getCurrentContext();
+    return this.aiService.estimateTokens(context);
+  }
+
+  formatMessage(content: string): string {
+    // Simple markdown-like formatting
+    return content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+  }
+
+  formatTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return date.toLocaleDateString();
+  }
+
+  scrollToBottom() {
+    setTimeout(() => {
+      if (this.aiMessagesContainer) {
+        const container = this.aiMessagesContainer.nativeElement;
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 100);
+  }
+
+  handleChatEnter(event: KeyboardEvent) {
+    if (!event.shiftKey) {
+      event.preventDefault();
+      this.sendAiMessage();
     }
   }
 
