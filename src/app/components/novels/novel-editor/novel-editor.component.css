@@ -159,6 +159,30 @@
     height: 100%;
 }
 
+/* Ensure child components in left sidebar are flex children that can scroll */
+.ne-sidebar-left > app-chapters-list,
+.ne-sidebar-left > app-structure-view,
+.ne-sidebar-left > app-characters-list,
+.ne-sidebar-left > app-locations-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Ensure the chapters section inside the component can scroll */
+.ne-sidebar-left app-chapters-list .ne-chapters-section,
+.ne-sidebar-left app-structure-view .ne-chapters-section,
+.ne-sidebar-left app-characters-list .ne-list-section,
+.ne-sidebar-left app-locations-list .ne-list-section {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .ne-sidebar-header-action {
     padding: 0 12px;
     margin-bottom: 0;
@@ -524,6 +548,27 @@
     position: relative;
     padding-right: 0;
     margin-right: 0;
+}
+
+/* Ensure editor components are flex children that can scroll */
+.ne-editor-area > app-manuscript-editor,
+.ne-editor-area > app-structure-editor,
+.ne-editor-area > app-character-editor,
+.ne-editor-area > app-location-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Ensure the editor canvas inside the component can scroll */
+.ne-editor-area app-manuscript-editor .ne-editor-canvas,
+.ne-editor-area app-structure-editor .ne-editor-canvas,
+.ne-editor-area app-character-editor .ne-editor-canvas,
+.ne-editor-area app-location-editor .ne-editor-canvas {
+    flex: 1;
+    min-height: 0;
 }
 
 /* Wrapper to position scrollbar at edge */
