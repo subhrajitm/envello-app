@@ -9,8 +9,9 @@
     class="dashboard-content" 
     [class.no-padding]="hasSidebar()" 
     [class.immersive-view]="isImmersive()"
-    [class.with-sidebar]="!isImmersive()"
-    [class.sidebar-collapsed]="sidebarCollapsed()">
+    [class.with-sidebar]="!isImmersive() && navigationLayout() !== 'horizontal'"
+    [class.sidebar-collapsed]="sidebarCollapsed()"
+    [class.horizontal-nav]="navigationLayout() === 'horizontal'">
     <router-outlet></router-outlet>
   </div>
 

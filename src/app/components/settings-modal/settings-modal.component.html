@@ -83,6 +83,30 @@
                             <span class="toggle-track"></span>
                         </label>
                     </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label-group">
+                            <label>Navigation Layout</label>
+                            <span class="setting-desc">Choose how navigation is displayed</span>
+                        </div>
+                        <div class="layout-selector">
+                            <button class="layout-option" [class.active]="navigationLayout() === 'minimized'"
+                                (click)="setNavigationLayout('minimized')" title="Minimized (Icon-only sidebar)">
+                                <span class="material-symbols-outlined">view_sidebar</span>
+                                <span>Minimized</span>
+                            </button>
+                            <button class="layout-option" [class.active]="navigationLayout() === 'vertical'"
+                                (click)="setNavigationLayout('vertical')" title="Vertical (Full sidebar)">
+                                <span class="material-symbols-outlined">vertical_split</span>
+                                <span>Vertical</span>
+                            </button>
+                            <button class="layout-option" [class.active]="navigationLayout() === 'horizontal'"
+                                (click)="setNavigationLayout('horizontal')" title="Horizontal (Top navigation)">
+                                <span class="material-symbols-outlined">horizontal_split</span>
+                                <span>Horizontal</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 }
 

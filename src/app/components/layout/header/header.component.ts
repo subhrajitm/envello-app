@@ -1,4 +1,4 @@
-import { Component, Input, inject, ViewChild, signal, Output, EventEmitter } from '@angular/core';
+import { Component, Input, inject, ViewChild, signal, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../../services/theme.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -18,7 +18,7 @@ import { ProfileEditorComponent } from '../../profile-editor/profile-editor.comp
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
   @Input() activeTab = 'Overview';
   @Input() isImmersive = false;
   @Output() sidebarCollapsedChange = new EventEmitter<boolean>();
@@ -38,8 +38,14 @@ export class HeaderComponent {
   unreadCount = this.notificationService.unreadCount;
   userInitials = this.userService.userInitials;
 
+  // Navigation layout: 'vertical' | 'horizontal' | 'minimized'
+  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
+  
   // Sidebar state - default to collapsed (minimized)
   sidebarCollapsed = signal(true);
+  
+  private navigationLayoutListener?: (event: CustomEvent) => void;
+  private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
 
   tabs = [
     'Overview',
@@ -140,11 +146,66 @@ export class HeaderComponent {
   }
 
   toggleSidebar() {
-    this.sidebarCollapsed.set(!this.sidebarCollapsed());
-    this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
+    // Allow toggling in both minimized and vertical modes
+    if (this.navigationLayout() === 'minimized' || this.navigationLayout() === 'vertical') {
+      this.sidebarCollapsed.set(!this.sidebarCollapsed());
+      this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
+    }
   }
 
   getTabIcon(tab: string): string {
     return this.tabIcons[tab] || 'circle';
+  }
+
+  ngOnInit() {
+    // Load navigation layout from localStorage
+    this.loadNavigationLayout();
+    
+    // Listen for navigation layout changes from settings
+    this.navigationLayoutListener = (event: CustomEvent) => {
+      this.navigationLayout.set(event.detail);
+      this.applyNavigationLayout();
+    };
+    window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+    
+    // Apply initial layout
+    this.applyNavigationLayout();
+  }
+
+  ngOnDestroy() {
+    if (this.navigationLayoutListener) {
+      window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+    }
+  }
+
+  private loadNavigationLayout() {
+    const saved = localStorage.getItem('envello-settings');
+    if (saved) {
+      try {
+        const settings = JSON.parse(saved);
+        this.navigationLayout.set(settings.navigationLayout || 'minimized');
+      } catch (e) {
+        console.error('Failed to load navigation layout:', e);
+      }
+    }
+  }
+
+  private applyNavigationLayout() {
+    const layout = this.navigationLayout();
+    
+    // Only set initial state when layout actually changes, not on every call
+    if (this.previousLayout !== layout) {
+      if (layout === 'minimized') {
+        // Start collapsed in minimized mode, but allow user to expand via toggle
+        this.sidebarCollapsed.set(true);
+      } else if (layout === 'vertical') {
+        // Start expanded in vertical mode, but allow user to collapse via toggle
+        this.sidebarCollapsed.set(false);
+      }
+      // For horizontal, sidebar is not shown
+      
+      this.previousLayout = layout;
+      this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
+    }
   }
 }

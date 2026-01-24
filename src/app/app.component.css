@@ -28,6 +28,11 @@
     margin-left: 64px;
 }
 
+/* No margin when horizontal navigation is used */
+.dashboard-content.with-sidebar.horizontal-nav {
+    margin-left: 0;
+}
+
 .dashboard-content.no-padding {
     padding: 0;
     gap: 0;

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from './components/layout/header/header.component';
@@ -12,7 +12,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'envello-app';
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
@@ -21,8 +21,20 @@ export class AppComponent implements OnInit {
   hasSidebar = signal(true);
   isImmersive = signal(false);
   sidebarCollapsed = signal(true);
+  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
+  
+  private navigationLayoutListener?: (event: CustomEvent) => void;
 
   ngOnInit() {
+    // Load navigation layout from localStorage
+    this.loadNavigationLayout();
+    
+    // Listen for navigation layout changes from settings
+    this.navigationLayoutListener = (event: CustomEvent) => {
+      this.navigationLayout.set(event.detail);
+    };
+    window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+    
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       map(() => this.activatedRoute),
@@ -39,6 +51,24 @@ export class AppComponent implements OnInit {
       const url = this.router.url.split('/')[1];
       this.currentTab.set(this.mapUrlToTabName(url));
     });
+  }
+
+  ngOnDestroy() {
+    if (this.navigationLayoutListener) {
+      window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+    }
+  }
+
+  private loadNavigationLayout() {
+    const saved = localStorage.getItem('envello-settings');
+    if (saved) {
+      try {
+        const settings = JSON.parse(saved);
+        this.navigationLayout.set(settings.navigationLayout || 'minimized');
+      } catch (e) {
+        console.error('Failed to load navigation layout:', e);
+      }
+    }
   }
 
   mapUrlToTabName(url: string): string {

@@ -34,6 +34,7 @@ export class SettingsModalComponent {
   fontSize = signal(14);
   compactMode = signal(false);
   animations = signal(true);
+  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
   editorFont = signal('serif');
   lineHeight = signal(1.8);
   autoSave = signal(true);
@@ -80,6 +81,8 @@ export class SettingsModalComponent {
   open() {
     this.isOpen.set(true);
     this.currentTheme.set(this.themeService.theme());
+    // Reload settings to get current navigation layout
+    this.loadSettings();
   }
 
   close() {
@@ -110,6 +113,12 @@ export class SettingsModalComponent {
   toggleAnimations() {
     this.animations.set(!this.animations());
     document.body.classList.toggle('no-animations', !this.animations());
+  }
+
+  setNavigationLayout(layout: 'vertical' | 'horizontal' | 'minimized') {
+    this.navigationLayout.set(layout);
+    // Dispatch custom event to notify header component
+    window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: layout }));
   }
 
   // Editor settings
@@ -165,6 +174,7 @@ export class SettingsModalComponent {
       fontSize: this.fontSize(),
       compactMode: this.compactMode(),
       animations: this.animations(),
+      navigationLayout: this.navigationLayout(),
       editorFont: this.editorFont(),
       lineHeight: this.lineHeight(),
       autoSave: this.autoSave(),
@@ -177,6 +187,8 @@ export class SettingsModalComponent {
     };
 
     localStorage.setItem('envello-settings', JSON.stringify(settings));
+    // Dispatch event to notify header component
+    window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: this.navigationLayout() }));
     this.close();
   }
 
@@ -186,6 +198,7 @@ export class SettingsModalComponent {
       this.fontSize.set(14);
       this.compactMode.set(false);
       this.animations.set(true);
+      this.navigationLayout.set('minimized');
       this.editorFont.set('serif');
       this.lineHeight.set(1.8);
       this.autoSave.set(true);
@@ -204,6 +217,9 @@ export class SettingsModalComponent {
       document.documentElement.style.removeProperty('--editor-font');
       document.documentElement.style.removeProperty('--editor-line-height');
       document.body.classList.remove('compact-mode', 'no-animations');
+      
+      // Dispatch event to reset navigation layout
+      window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
     }
   }
 
@@ -215,6 +231,7 @@ export class SettingsModalComponent {
         this.fontSize.set(settings.fontSize || 14);
         this.compactMode.set(settings.compactMode || false);
         this.animations.set(settings.animations !== false);
+        this.navigationLayout.set(settings.navigationLayout || 'minimized');
         this.editorFont.set(settings.editorFont || 'serif');
         this.lineHeight.set(settings.lineHeight || 1.8);
         this.autoSave.set(settings.autoSave !== false);

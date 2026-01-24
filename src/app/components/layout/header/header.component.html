@@ -34,23 +34,37 @@
         </div>
     </header>
     @if (!isImmersive) {
-    <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
-        <nav class="sidebar-nav">
+        @if (navigationLayout() === 'horizontal') {
+        <!-- Horizontal Navigation -->
+        <nav class="header-nav">
             @for (tab of tabs; track tab) {
-            <button class="sidebar-nav-item" [class.active]="activeTab === tab" (click)="navigateTo(tab)" [title]="sidebarCollapsed() ? tab : ''">
-                <span class="material-symbols-outlined sidebar-icon">{{ getTabIcon(tab) }}</span>
-                @if (!sidebarCollapsed()) {
-                <span class="sidebar-label">{{ tab }}</span>
-                }
+            <button class="nav-tab" [class.active]="activeTab === tab" (click)="navigateTo(tab)">
+                {{ tab }}
             </button>
             }
         </nav>
-        <button class="sidebar-toggle" (click)="toggleSidebar()" [title]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
-            <span class="material-symbols-outlined">
-                {{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
-            </span>
-        </button>
-    </aside>
+        } @else {
+        <!-- Vertical Sidebar -->
+        <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
+            <nav class="sidebar-nav">
+                @for (tab of tabs; track tab) {
+                <button class="sidebar-nav-item" [class.active]="activeTab === tab" (click)="navigateTo(tab)" [title]="sidebarCollapsed() ? tab : ''">
+                    <span class="material-symbols-outlined sidebar-icon">{{ getTabIcon(tab) }}</span>
+                    @if (!sidebarCollapsed()) {
+                    <span class="sidebar-label">{{ tab }}</span>
+                    }
+                </button>
+                }
+            </nav>
+            @if (navigationLayout() === 'vertical' || navigationLayout() === 'minimized') {
+            <button class="sidebar-toggle" (click)="toggleSidebar()" [title]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
+                <span class="material-symbols-outlined">
+                    {{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
+                </span>
+            </button>
+            }
+        </aside>
+        }
     }
 </div>
 
