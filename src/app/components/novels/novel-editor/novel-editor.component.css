@@ -1063,58 +1063,99 @@
     border-radius: 2px;
 }
 
-/* Scrollbars */
+/* ============================================
+   UNIFORM SCROLLBARS - ENTERPRISE LEVEL
+   ============================================ */
+
+/* Standard scrollbar width: 8px for all scrollable areas */
 .ne-chapter-list::-webkit-scrollbar,
 .ne-editor-area::-webkit-scrollbar,
 .ne-editor-canvas::-webkit-scrollbar,
 .ne-simple-list::-webkit-scrollbar,
 .ne-notes-panel::-webkit-scrollbar,
-.ne-meta-panel::-webkit-scrollbar {
+.ne-meta-panel::-webkit-scrollbar,
+.ne-sidebar-left::-webkit-scrollbar,
+.ne-sidebar-right::-webkit-scrollbar,
+.ne-right-content::-webkit-scrollbar,
+.search-results::-webkit-scrollbar,
+.version-history-body::-webkit-scrollbar,
+.add-dropdown-menu::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 
+/* Uniform scrollbar thumb styling */
 .ne-chapter-list::-webkit-scrollbar-thumb,
 .ne-editor-area::-webkit-scrollbar-thumb,
 .ne-editor-canvas::-webkit-scrollbar-thumb,
 .ne-simple-list::-webkit-scrollbar-thumb,
 .ne-notes-panel::-webkit-scrollbar-thumb,
-.ne-meta-panel::-webkit-scrollbar-thumb {
+.ne-meta-panel::-webkit-scrollbar-thumb,
+.ne-sidebar-left::-webkit-scrollbar-thumb,
+.ne-sidebar-right::-webkit-scrollbar-thumb,
+.ne-right-content::-webkit-scrollbar-thumb,
+.search-results::-webkit-scrollbar-thumb,
+.version-history-body::-webkit-scrollbar-thumb,
+.add-dropdown-menu::-webkit-scrollbar-thumb {
     background: var(--border-highlight);
-    border-radius: 4px 0 0 4px;
+    border-radius: 4px;
     border: none;
+    transition: background 0.2s;
 }
 
+/* Uniform hover state */
 .ne-chapter-list::-webkit-scrollbar-thumb:hover,
 .ne-editor-area::-webkit-scrollbar-thumb:hover,
 .ne-editor-canvas::-webkit-scrollbar-thumb:hover,
 .ne-simple-list::-webkit-scrollbar-thumb:hover,
 .ne-notes-panel::-webkit-scrollbar-thumb:hover,
-.ne-meta-panel::-webkit-scrollbar-thumb:hover {
+.ne-meta-panel::-webkit-scrollbar-thumb:hover,
+.ne-sidebar-left::-webkit-scrollbar-thumb:hover,
+.ne-sidebar-right::-webkit-scrollbar-thumb:hover,
+.ne-right-content::-webkit-scrollbar-thumb:hover,
+.search-results::-webkit-scrollbar-thumb:hover,
+.version-history-body::-webkit-scrollbar-thumb:hover,
+.add-dropdown-menu::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
 }
 
+/* Uniform scrollbar track */
 .ne-chapter-list::-webkit-scrollbar-track,
 .ne-editor-area::-webkit-scrollbar-track,
 .ne-editor-canvas::-webkit-scrollbar-track,
 .ne-simple-list::-webkit-scrollbar-track,
 .ne-notes-panel::-webkit-scrollbar-track,
-.ne-meta-panel::-webkit-scrollbar-track {
+.ne-meta-panel::-webkit-scrollbar-track,
+.ne-sidebar-left::-webkit-scrollbar-track,
+.ne-sidebar-right::-webkit-scrollbar-track,
+.ne-right-content::-webkit-scrollbar-track,
+.search-results::-webkit-scrollbar-track,
+.version-history-body::-webkit-scrollbar-track,
+.add-dropdown-menu::-webkit-scrollbar-track {
     background: transparent;
     margin: 0;
     border: none;
 }
 
-/* Firefox scrollbar */
-.ne-editor-canvas {
+/* Firefox scrollbar - uniform */
+.ne-chapter-list,
+.ne-editor-area,
+.ne-editor-canvas,
+.ne-simple-list,
+.ne-notes-panel,
+.ne-meta-panel,
+.ne-sidebar-left,
+.ne-sidebar-right,
+.ne-right-content,
+.search-results,
+.version-history-body {
     scrollbar-width: thin;
     scrollbar-color: var(--border-highlight) transparent;
 }
 
-/* Ensure scrollbar is flush to the right edge */
+/* Ensure scrollbar is flush to the right edge for editor canvas */
 .ne-editor-canvas::-webkit-scrollbar {
     margin-right: 0;
-    position: absolute;
-    right: 0;
 }
 
 .ne-editor-canvas::-webkit-scrollbar-track {
