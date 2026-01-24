@@ -30,7 +30,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   activeChapterId = signal<string | null>(null);
   wordCount = signal(0);
   rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
-  activeNav = signal<'manuscript' | 'characters' | 'locations'>('manuscript');
+  activeNav = signal<'manuscript' | 'structure' | 'characters' | 'locations'>('manuscript');
+  
+  // Structure view state
+  activeFrontMatterId = signal<string | null>(null);
+  activePrologueId = signal<string | null>(null);
 
   // Time tracking
   sessionStartTime = Date.now();
@@ -56,16 +60,43 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     // Effect to update editor content when active chapter changes
     effect(() => {
       const chapterId = this.activeChapterId();
-      if (chapterId && this.editor) {
-        const chapter = this.novelService.getChapter(chapterId);
-        if (chapter && this.editor.getHTML() !== chapter.content) {
-          this.editor.commands.setContent(chapter.content);
-          this.title.set(chapter.title);
-
-          // Recalculate word count from actual content instead of using stored value
-          const text = this.editor.getText();
-          const count = text.split(/\s+/).filter(w => w.length > 0).length;
-          this.wordCount.set(count);
+      const frontMatterId = this.activeFrontMatterId();
+      const prologueId = this.activePrologueId();
+      
+      if (this.editor) {
+        if (chapterId) {
+          const chapter = this.novelService.getChapter(chapterId);
+          if (chapter && this.editor.getHTML() !== chapter.content) {
+            this.editor.commands.setContent(chapter.content);
+            this.title.set(chapter.title);
+            const text = this.editor.getText();
+            const count = text.split(/\s+/).filter(w => w.length > 0).length;
+            this.wordCount.set(count);
+          }
+        } else if (frontMatterId) {
+          const novel = this.novel();
+          const item = novel?.frontMatter.find(fm => fm.id === frontMatterId);
+          if (item && this.editor.getHTML() !== item.content) {
+            this.editor.commands.setContent(item.content);
+            this.title.set(item.title);
+            const text = this.editor.getText();
+            const count = text.split(/\s+/).filter(w => w.length > 0).length;
+            this.wordCount.set(count);
+          }
+        } else if (prologueId) {
+          const novel = this.novel();
+          const prologue = novel?.prologue;
+          if (prologue && this.editor.getHTML() !== prologue.content) {
+            this.editor.commands.setContent(prologue.content);
+            this.title.set(prologue.title);
+            const text = this.editor.getText();
+            const count = text.split(/\s+/).filter(w => w.length > 0).length;
+            this.wordCount.set(count);
+          }
+        } else if (!chapterId && !frontMatterId && !prologueId) {
+          this.editor.commands.clearContent();
+          this.title.set('');
+          this.wordCount.set(0);
         }
       }
     });
@@ -114,8 +145,15 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
         // Auto-save to service
         const activeId = this.activeChapterId();
+        const frontMatterId = this.activeFrontMatterId();
+        const prologueId = this.activePrologueId();
+        
         if (activeId) {
           this.novelService.updateChapterContent(activeId, editor.getHTML(), count);
+        } else if (frontMatterId) {
+          this.novelService.updateFrontMatterContent(frontMatterId, editor.getHTML(), count);
+        } else if (prologueId) {
+          this.novelService.updatePrologueContent(editor.getHTML(), count);
         }
       }
     });
@@ -149,7 +187,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.rightSidebarTab.set(tab);
   }
 
-  setActiveNav(nav: 'manuscript' | 'characters' | 'locations') {
+  setActiveNav(nav: 'manuscript' | 'structure' | 'characters' | 'locations') {
     this.activeNav.set(nav);
   }
 
@@ -463,5 +501,71 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
+  }
+
+  // Front Matter Management
+  getFrontMatterTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      'title-page': 'Title Page',
+      'copyright': 'Copyright Page',
+      'toc': 'Table of Contents',
+      'dedication': 'Dedication',
+      'foreword': 'Foreword',
+      'preface': 'Preface'
+    };
+    return labels[type] || type;
+  }
+
+  getFrontMatterTypeIcon(type: string): string {
+    const icons: Record<string, string> = {
+      'title-page': 'title',
+      'copyright': 'copyright',
+      'toc': 'list',
+      'dedication': 'favorite',
+      'foreword': 'menu_book',
+      'preface': 'description'
+    };
+    return icons[type] || 'description';
+  }
+
+  addFrontMatterItem(type: 'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface') {
+    const title = this.getFrontMatterTypeLabel(type);
+    this.novelService.addFrontMatterItem(type, title);
+  }
+
+  selectFrontMatterItem(itemId: string) {
+    this.activeFrontMatterId.set(itemId);
+    this.activeChapterId.set(null);
+    this.activePrologueId.set(null);
+  }
+
+  selectPrologue() {
+    this.activePrologueId.set('prologue');
+    this.activeChapterId.set(null);
+    this.activeFrontMatterId.set(null);
+  }
+
+  addPrologue() {
+    this.novelService.addPrologue();
+    this.selectPrologue();
+  }
+
+  deletePrologue() {
+    this.novelService.deletePrologue();
+    this.activePrologueId.set(null);
+  }
+
+  deleteFrontMatterItem(itemId: string, title: string) {
+    this.novelService.deleteFrontMatterItem(itemId);
+    if (this.activeFrontMatterId() === itemId) {
+      this.activeFrontMatterId.set(null);
+      this.title.set('');
+      this.editor.commands.clearContent();
+    }
+  }
+
+  // Plot Points
+  updatePlotPoint(chapterId: string, plotPoint: 'firstSlap' | 'secondSlap' | 'climax', content: string) {
+    this.novelService.updateChapterPlotPoint(chapterId, plotPoint, content);
   }
 }

@@ -1703,6 +1703,104 @@
     cursor: not-allowed;
 }
 
+/* Structure View Styles */
+.ne-structure-section {
+    margin-bottom: 16px;
+}
+
+.ne-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 48px;
+}
+
+/* Plot Points Section */
+.ne-plot-points-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.ne-plot-points-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+.ne-plot-points-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.ne-plot-point-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ne-plot-point-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.plot-icon {
+    font-size: 18px;
+    color: var(--accent-primary);
+}
+
+.plot-point-subtitle {
+    font-size: 9px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: auto;
+}
+
+.ne-plot-point-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    resize: vertical;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.ne-plot-point-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-dim);
+}
+
+.ne-plot-point-input::placeholder {
+    color: var(--text-tertiary);
+}
+
 /* Edit Toolbar Styles */
 .ne-edit-toolbar {
     display: flex;

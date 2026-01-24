@@ -81,6 +81,93 @@
             </div>
             }
 
+            <!-- STRUCTURE VIEW -->
+            @if (activeNav() === 'structure' && novel()) {
+            <div class="ne-chapters-section">
+                <!-- Front Matter Section -->
+                <div class="ne-structure-section">
+                    <div class="ne-chap-header">
+                        FRONT MATTER
+                        <div class="add-menu-wrapper" style="position: relative;">
+                            <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu(); $event.stopPropagation()"
+                                title="Add front matter">add</span>
+                            @if (addMenuOpen()) {
+                            <div class="add-dropdown-menu">
+                                <button class="add-dropdown-option" (click)="addFrontMatterItem('title-page'); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">title</span>
+                                    <span class="option-label">Title Page</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addFrontMatterItem('copyright'); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">copyright</span>
+                                    <span class="option-label">Copyright Page</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addFrontMatterItem('toc'); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">list</span>
+                                    <span class="option-label">Table of Contents</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addFrontMatterItem('dedication'); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">favorite</span>
+                                    <span class="option-label">Dedication</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addFrontMatterItem('foreword'); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">menu_book</span>
+                                    <span class="option-label">Foreword</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addFrontMatterItem('preface'); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">description</span>
+                                    <span class="option-label">Preface</span>
+                                </button>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="ne-chapter-list">
+                        @for (item of novel()!.frontMatter; track item.id) {
+                        <div class="ne-chapter-item" [class.active]="activeFrontMatterId() === item.id"
+                            (click)="selectFrontMatterItem(item.id)">
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-primary);">
+                                {{ getFrontMatterTypeIcon(item.type) }}
+                            </span>
+                            <div class="ne-chap-info">
+                                <div class="ne-chap-title">{{ item.title }}</div>
+                                <div class="ne-chap-meta">{{ item.wordCount }} w</div>
+                            </div>
+                            <span class="material-symbols-outlined list-delete chapter-delete"
+                                (click)="deleteFrontMatterItem(item.id, item.title); $event.stopPropagation()"
+                                title="Delete">delete</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Prologue Section -->
+                <div class="ne-structure-section" style="margin-top: 24px;">
+                    <div class="ne-chap-header">
+                        PROLOGUE
+                        @if (!novel()!.prologue) {
+                        <span class="material-symbols-outlined icon-add" (click)="addPrologue()" title="Add prologue">add</span>
+                        }
+                    </div>
+                    @if (novel()!.prologue; as prologue) {
+                    <div class="ne-chapter-list">
+                        <div class="ne-chapter-item" [class.active]="activePrologueId() === 'prologue'"
+                            (click)="selectPrologue()">
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-primary);">menu_book</span>
+                            <div class="ne-chap-info">
+                                <div class="ne-chap-title">{{ prologue.title }}</div>
+                                <div class="ne-chap-meta">
+                                    <span class="ne-draft-tag">{{ prologue.status }}</span> • {{ prologue.wordCount }} w
+                                </div>
+                            </div>
+                            <span class="material-symbols-outlined list-delete chapter-delete"
+                                (click)="deletePrologue(); $event.stopPropagation()" title="Delete prologue">delete</span>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
             <!-- CHARACTERS VIEW -->
             @if (activeNav() === 'characters' && novel()) {
             <div class="ne-list-section">
@@ -160,6 +247,11 @@
                     (click)="setActiveNav('manuscript')">
                     <span class="material-symbols-outlined tab-icon">description</span>
                     Manuscript
+                </button>
+                <button class="ne-editor-tab" [class.active]="activeNav() === 'structure'"
+                    (click)="setActiveNav('structure')">
+                    <span class="material-symbols-outlined tab-icon">menu_book</span>
+                    Structure
                 </button>
                 <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
                     (click)="setActiveNav('characters')">
@@ -255,6 +347,115 @@
 
                 <!-- Tiptap Editor -->
                 <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
+
+                <!-- Plot Points Section -->
+                @if (activeChapterId() && novel()) {
+                    @for (group of novel()!.chapters; track group.id) {
+                        @for (chap of group.children; track chap.id) {
+                            @if (chap.id === activeChapterId()) {
+                            <div class="ne-plot-points-section">
+                                <div class="ne-plot-points-header">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">timeline</span>
+                                    PLOT POINTS
+                                </div>
+                                <div class="ne-plot-points-grid">
+                                    <div class="ne-plot-point-card">
+                                        <div class="ne-plot-point-label">
+                                            <span class="material-symbols-outlined plot-icon">flash_on</span>
+                                            First Slap
+                                            <span class="plot-point-subtitle">Inciting Incident</span>
+                                        </div>
+                                        <textarea class="ne-plot-point-input" 
+                                            [value]="chap.plotPoints?.firstSlap || ''"
+                                            (input)="updatePlotPoint(chap.id, 'firstSlap', $any($event.target).value)"
+                                            placeholder="The moment that sets everything in motion..."></textarea>
+                                    </div>
+                                    <div class="ne-plot-point-card">
+                                        <div class="ne-plot-point-label">
+                                            <span class="material-symbols-outlined plot-icon">trending_up</span>
+                                            Second Slap
+                                            <span class="plot-point-subtitle">Midpoint</span>
+                                        </div>
+                                        <textarea class="ne-plot-point-input"
+                                            [value]="chap.plotPoints?.secondSlap || ''"
+                                            (input)="updatePlotPoint(chap.id, 'secondSlap', $any($event.target).value)"
+                                            placeholder="The turning point that changes everything..."></textarea>
+                                    </div>
+                                    <div class="ne-plot-point-card">
+                                        <div class="ne-plot-point-label">
+                                            <span class="material-symbols-outlined plot-icon">flag</span>
+                                            Climax
+                                            <span class="plot-point-subtitle">Resolution</span>
+                                        </div>
+                                        <textarea class="ne-plot-point-input"
+                                            [value]="chap.plotPoints?.climax || ''"
+                                            (input)="updatePlotPoint(chap.id, 'climax', $any($event.target).value)"
+                                            placeholder="The final confrontation and resolution..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            }
+                        }
+                    }
+                }
+            </div>
+            }
+
+            @if (activeNav() === 'structure' && novel()) {
+            <div class="ne-editor-canvas">
+                @if (activeFrontMatterId() && novel()) {
+                    @for (item of novel()!.frontMatter; track item.id) {
+                        @if (item.id === activeFrontMatterId()) {
+                        <input type="text" class="ne-doc-title-input" [ngModel]="item.title"
+                            (ngModelChange)="novelService.updateFrontMatterTitle(item.id, $event)"
+                            [placeholder]="getFrontMatterTypeLabel(item.type)" />
+                        <div class="ne-doc-meta">{{ item.wordCount }} w</div>
+                        @if (editor) {
+                        <div class="ne-edit-toolbar">
+                            <div class="toolbar-group">
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
+                                    [class.active]="editor.isActive('bold')">
+                                    <span class="material-symbols-outlined">format_bold</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
+                                    [class.active]="editor.isActive('italic')">
+                                    <span class="material-symbols-outlined">format_italic</span>
+                                </button>
+                            </div>
+                        </div>
+                        }
+                        <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
+                        }
+                    }
+                } @else if (activePrologueId() && novel()?.prologue) {
+                    @if (novel()!.prologue; as prologue) {
+                    <input type="text" class="ne-doc-title-input" [ngModel]="prologue.title"
+                        (ngModelChange)="novelService.updatePrologueTitle($event)" placeholder="Prologue Title" />
+                    <div class="ne-doc-meta">
+                        <span class="ne-draft-tag">{{ prologue.status }}</span> • {{ prologue.wordCount }} w
+                    </div>
+                    @if (editor) {
+                    <div class="ne-edit-toolbar">
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
+                                [class.active]="editor.isActive('bold')">
+                                <span class="material-symbols-outlined">format_bold</span>
+                            </button>
+                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
+                                [class.active]="editor.isActive('italic')">
+                                <span class="material-symbols-outlined">format_italic</span>
+                            </button>
+                        </div>
+                    </div>
+                    }
+                    <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
+                    }
+                } @else {
+                <div class="ne-empty-state">
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--text-tertiary); opacity: 0.5;">menu_book</span>
+                    <p style="color: var(--text-tertiary); margin-top: 16px;">Select a Front Matter item or Prologue to edit</p>
+                </div>
+                }
             </div>
             }
 

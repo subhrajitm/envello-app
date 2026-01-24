@@ -9,6 +9,8 @@ export interface NovelContent {
         logline: string;
         theme: string;
     };
+    frontMatter: FrontMatterItem[];
+    prologue?: Prologue;
     chapters: ChapterGroup[];
     characters: Character[];
     locations: Location[];
@@ -23,6 +25,29 @@ export interface ChapterGroup {
 }
 
 export interface Chapter {
+    id: string;
+    title: string;
+    content: string; // HTML content
+    status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
+    wordCount: number;
+    lastEdited: string;
+    plotPoints?: {
+        firstSlap?: string; // Inciting incident
+        secondSlap?: string; // Midpoint
+        climax?: string; // Resolution
+    };
+}
+
+export interface FrontMatterItem {
+    id: string;
+    type: 'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface';
+    title: string;
+    content: string; // HTML content
+    wordCount: number;
+    lastEdited: string;
+}
+
+export interface Prologue {
     id: string;
     title: string;
     content: string; // HTML content
@@ -63,6 +88,7 @@ const INITIAL_DATA: Record<string, NovelContent> = {
             logline: 'A lone scientist discovers a structured signal from the void, triggering a protocol that was never meant to be activated.',
             theme: 'Isolation vs. Duty'
         },
+        frontMatter: [],
         chapters: [
             {
                 id: 'g1', title: 'Part I: The Awakening', expanded: true, children: [
@@ -496,12 +522,167 @@ export class NovelContentService {
         });
     }
 
+    // Front Matter Management
+    addFrontMatterItem(type: FrontMatterItem['type'], title: string) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const newItem: FrontMatterItem = {
+                id: `fm${Date.now()}`,
+                type,
+                title,
+                content: '',
+                wordCount: 0,
+                lastEdited: 'Never'
+            };
+
+            this.store.addActivity(`Added ${title}`, 'entry');
+            return { ...novel, frontMatter: [...novel.frontMatter, newItem] };
+        });
+    }
+
+    updateFrontMatterContent(itemId: string, content: string, wordCount: number) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const updatedFrontMatter = novel.frontMatter.map(item =>
+                item.id === itemId
+                    ? { ...item, content, wordCount, lastEdited: 'Just now' }
+                    : item
+            );
+
+            return { ...novel, frontMatter: updatedFrontMatter };
+        });
+    }
+
+    updateFrontMatterTitle(itemId: string, title: string) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const updatedFrontMatter = novel.frontMatter.map(item =>
+                item.id === itemId ? { ...item, title } : item
+            );
+
+            return { ...novel, frontMatter: updatedFrontMatter };
+        });
+    }
+
+    deleteFrontMatterItem(itemId: string) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const itemToDelete = novel.frontMatter.find(item => item.id === itemId);
+            if (itemToDelete) {
+                this.bin.addToBin({
+                    type: 'novel-note', // Reuse note type for now
+                    originalId: itemToDelete.id,
+                    contextId: novel.id,
+                    title: itemToDelete.title,
+                    payload: itemToDelete
+                });
+            }
+
+            this.store.addActivity('Deleted front matter item', 'system');
+            return { ...novel, frontMatter: novel.frontMatter.filter(item => item.id !== itemId) };
+        });
+    }
+
+    // Prologue Management
+    addPrologue(title: string = 'Prologue') {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const prologue: Prologue = {
+                id: `pro${Date.now()}`,
+                title,
+                content: '',
+                status: 'EMPTY',
+                wordCount: 0,
+                lastEdited: 'Never'
+            };
+
+            this.store.addActivity('Added prologue', 'entry');
+            return { ...novel, prologue };
+        });
+    }
+
+    updatePrologueContent(content: string, wordCount: number) {
+        this.activeNovel.update(novel => {
+            if (!novel || !novel.prologue) return null;
+
+            return {
+                ...novel,
+                prologue: {
+                    ...novel.prologue,
+                    content,
+                    wordCount,
+                    lastEdited: 'Just now'
+                }
+            };
+        });
+    }
+
+    updatePrologueTitle(title: string) {
+        this.activeNovel.update(novel => {
+            if (!novel || !novel.prologue) return null;
+
+            return {
+                ...novel,
+                prologue: { ...novel.prologue, title }
+            };
+        });
+    }
+
+    deletePrologue() {
+        this.activeNovel.update(novel => {
+            if (!novel || !novel.prologue) return null;
+
+            this.bin.addToBin({
+                type: 'novel-note',
+                originalId: novel.prologue.id,
+                contextId: novel.id,
+                title: novel.prologue.title,
+                payload: novel.prologue
+            });
+
+            this.store.addActivity('Deleted prologue', 'system');
+            const { prologue, ...rest } = novel;
+            return rest;
+        });
+    }
+
+    // Plot Points Management
+    updateChapterPlotPoint(chapterId: string, plotPoint: 'firstSlap' | 'secondSlap' | 'climax', content: string) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const updatedChapters = novel.chapters.map(group => ({
+                ...group,
+                children: group.children.map(chap => {
+                    if (chap.id === chapterId) {
+                        return {
+                            ...chap,
+                            plotPoints: {
+                                ...chap.plotPoints,
+                                [plotPoint]: content
+                            }
+                        };
+                    }
+                    return chap;
+                })
+            }));
+
+            return { ...novel, chapters: updatedChapters };
+        });
+    }
+
     // Helpers
     private createEmptyNovel(id: string): NovelContent {
         return {
             id,
             title: 'Untitled Novel',
             synopsis: { logline: '', theme: '' },
+            frontMatter: [],
             chapters: [
                 { id: 'g1', title: 'Part 1', expanded: true, children: [] }
             ],
