@@ -16,6 +16,7 @@
     flex-direction: column;
     padding: 12px;
     overflow-y: auto;
+    min-height: 0;
 }
 
 .ov-stats-header {
@@ -433,6 +434,7 @@
     flex-direction: column;
     padding: 12px;
     overflow-y: auto;
+    min-height: 0;
 }
 
 .activity-list {

@@ -208,6 +208,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .cs-snippet-row {
@@ -326,6 +327,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .preview-meta {

@@ -227,18 +227,27 @@
 
 /* Scrollbar */
 .quick-find-results::-webkit-scrollbar {
-    width: 6px;
+    width: 10px;
+    height: 10px;
 }
 
 .quick-find-results::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--bg-panel);
+    border-radius: 4px;
 }
 
 .quick-find-results::-webkit-scrollbar-thumb {
     background: var(--border-highlight);
-    border-radius: 3px;
+    border: 2px solid var(--bg-panel);
+    border-radius: 4px;
+    min-height: 20px;
 }
 
 .quick-find-results::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
+}
+
+.quick-find-results {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) var(--bg-panel);
 }

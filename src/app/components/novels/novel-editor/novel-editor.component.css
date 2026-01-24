@@ -348,6 +348,7 @@
 .ne-chapter-list {
     flex: 1;
     overflow-y: auto;
+    min-height: 0;
 }
 
 /* New Expandable Chapter Item Styles */
@@ -1735,9 +1736,10 @@
 .search-results::-webkit-scrollbar-track,
 .version-history-body::-webkit-scrollbar-track,
 .add-dropdown-menu::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--bg-panel);
     margin: 0;
     border: none;
+    border-radius: 4px;
 }
 
 /* Firefox scrollbar - uniform */
@@ -1753,7 +1755,7 @@
 .search-results,
 .version-history-body {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-highlight) transparent;
+    scrollbar-color: var(--border-highlight) var(--bg-panel);
 }
 
 /* Ensure scrollbar is flush to the right edge for editor canvas */
@@ -1763,7 +1765,8 @@
 
 .ne-editor-canvas::-webkit-scrollbar-track {
     margin-right: 0;
-    background: transparent;
+    background: var(--bg-panel);
+    border-radius: 4px;
 }
 
 /* Floating Toolbar */
@@ -2541,6 +2544,7 @@
     flex-direction: column;
     gap: 24px;
     overflow-y: auto;
+    min-height: 0;
 }
 
 .ne-ent-grid-row {

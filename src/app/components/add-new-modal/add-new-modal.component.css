@@ -237,20 +237,29 @@
 
 /* Scrollbar */
 .options-grid::-webkit-scrollbar {
-    width: 6px;
+    width: 10px;
+    height: 10px;
 }
 
 .options-grid::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--bg-panel);
+    border-radius: 4px;
 }
 
 .options-grid::-webkit-scrollbar-thumb {
     background: var(--border-highlight);
-    border-radius: 3px;
+    border: 2px solid var(--bg-panel);
+    border-radius: 4px;
+    min-height: 20px;
 }
 
 .options-grid::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
+}
+
+.options-grid {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) var(--bg-panel);
 }
 
 /* Responsive */

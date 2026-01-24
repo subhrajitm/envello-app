@@ -1115,25 +1115,39 @@ li[data-type="taskItem"] input[type="checkbox"] {
 .modal-body {
     scroll-behavior: smooth;
     scrollbar-width: thin;
-    scrollbar-color: var(--border-subtle) transparent;
+    scrollbar-color: var(--border-highlight) var(--bg-panel);
 }
 
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+.dn-entries-list::-webkit-scrollbar,
+.dn-editor-content::-webkit-scrollbar,
+.dn-tabs::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
 }
 
-::-webkit-scrollbar-track {
-    background: transparent;
+.dn-entries-list::-webkit-scrollbar-track,
+.dn-editor-content::-webkit-scrollbar-track,
+.dn-tabs::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+    background: var(--bg-panel);
+    border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb {
-    background-color: var(--border-subtle);
-    border-radius: 3px;
+.dn-entries-list::-webkit-scrollbar-thumb,
+.dn-editor-content::-webkit-scrollbar-thumb,
+.dn-tabs::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+    background-color: var(--border-highlight);
+    border-radius: 4px;
+    border: 2px solid var(--bg-panel);
     transition: background-color 0.2s;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.dn-entries-list::-webkit-scrollbar-thumb:hover,
+.dn-editor-content::-webkit-scrollbar-thumb:hover,
+.dn-tabs::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
     background-color: var(--text-tertiary);
 }
 

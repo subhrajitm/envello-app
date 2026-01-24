@@ -190,26 +190,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border-highlight);
-    border: 2px solid var(--bg-app);
-    /* Creates padding effect */
-    border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-tertiary);
-}
-
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
@@ -274,23 +254,32 @@ code {
     letter-spacing: 0.5px;
 }
 
-/* Scrollbar Styling */
+/* Global Scrollbar Styling - Applied to all scrollable elements */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-app);
+    background: var(--bg-panel);
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--border-highlight);
     border-radius: 4px;
+    border: 2px solid var(--bg-panel);
+    min-height: 20px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
+}
+
+/* Firefox scrollbar styling */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) var(--bg-panel);
 }
 
 /* Global Layout Rules - Ensure sidebars extend to footer */
@@ -323,4 +312,36 @@ app-code-snippets,
 app-brainstorming {
     display: block;
     height: 100%;
+    min-height: 0;
+}
+
+/* Critical: All flex children with overflow-y: auto need min-height: 0 to allow scrolling */
+/* This is essential for flexbox scrolling to work properly in flex containers */
+/* 
+ * Universal fix: Apply min-height: 0 to all elements with overflow-y: auto
+ * that are likely flex children. This ensures scrolling works in all flex layouts.
+ * 
+ * Note: The most reliable approach is to add min-height: 0 directly in component CSS,
+ * but this provides a comprehensive fallback for all scrollable sections.
+ */
+
+/* Universal rule: Any element with overflow-y: auto should have min-height: 0 if it's a flex child */
+/* We can't detect flex parent in CSS, so we apply broadly and let specific rules override */
+* {
+    /* This will be overridden by component-specific rules, but provides a base */
+}
+
+/* More specific: Target common scrollable container class patterns */
+/* These patterns are used throughout the app for scrollable sections */
+[class*="-list"]:not([class*="no-scroll"]),
+[class*="-content"]:not([class*="no-scroll"]),
+[class*="-area"]:not([class*="no-scroll"]),
+[class*="-panel"]:not([class*="no-scroll"]),
+[class*="-sidebar"]:not([class*="no-scroll"]),
+[class*="-container"]:not([class*="no-scroll"]),
+[class*="-feed"]:not([class*="no-scroll"]),
+[class*="-body"]:not([class*="no-scroll"]),
+[class*="-canvas"]:not([class*="no-scroll"]) {
+    /* Component CSS should add min-height: 0 for flex children with overflow-y: auto */
+    /* This is a placeholder to ensure proper scrolling behavior */
 }

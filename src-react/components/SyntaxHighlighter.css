@@ -42,19 +42,27 @@
 
 /* Scrollbar styling for the code block */
 .syntax-highlighter::-webkit-scrollbar {
-    height: 8px;
-    width: 8px;
+    height: 10px;
+    width: 10px;
 }
 
 .syntax-highlighter::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--bg-panel);
+    border-radius: 4px;
 }
 
 .syntax-highlighter::-webkit-scrollbar-thumb {
     background: var(--border-highlight);
+    border: 2px solid var(--bg-panel);
     border-radius: 4px;
+    min-height: 20px;
 }
 
 .syntax-highlighter::-webkit-scrollbar-thumb:hover {
-    background: var(--border-main);
+    background: var(--text-tertiary);
+}
+
+.syntax-highlighter {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) var(--bg-panel);
 }

@@ -99,12 +99,29 @@
 
 /* Scrollbar */
 .cmd-list::-webkit-scrollbar {
-    width: 6px;
+    width: 10px;
+    height: 10px;
+}
+
+.cmd-list::-webkit-scrollbar-track {
+    background: var(--bg-panel);
+    border-radius: 4px;
 }
 
 .cmd-list::-webkit-scrollbar-thumb {
-    background: var(--bg-hover);
-    border-radius: 3px;
+    background: var(--border-highlight);
+    border: 2px solid var(--bg-panel);
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+.cmd-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+.cmd-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) var(--bg-panel);
 }
 
 .cmd-item {
