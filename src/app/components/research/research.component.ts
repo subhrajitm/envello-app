@@ -1,118 +1,166 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface ResearchItem {
-  id: string;
-  title: string;
-  description: string;
-  sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL';
-  relevance: string;
-  tags: string[];
-  icon: string;
-  actionIcon: string;
-}
+import { FormsModule } from '@angular/forms';
+import { ResearchService, ResearchEntry } from '../../services/research.service';
 
 @Component({
   selector: 'app-research',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './research.component.html',
   styleUrl: './research.component.css'
 })
 export class ResearchComponent {
-  selectedProject = signal('All Research');
-  verifiedChecked = signal(true);
-  unreadChecked = signal(false);
-  viewMode = signal<'TABLE' | 'GRID'>('TABLE');
+  private researchService = inject(ResearchService);
 
-  researchItems: ResearchItem[] = [
-    {
-      id: '1',
-      title: 'Victorian London Architecture',
-      description: 'britishlibrary.org.uk/arch-history-1850',
-      sourceType: 'WEB',
-      relevance: 'Project Alpha',
-      tags: ['History', 'Urban'],
-      icon: 'language',
-      actionIcon: 'open_in_new',
-    },
-    {
-      id: '2',
-      title: 'Martian Soil Composition (Survey-2044)',
-      description: 'Local Storage / Research / Science / PDF',
-      sourceType: 'PDF',
-      relevance: 'Mars Colony: Epsilon',
-      tags: ['Science', 'Environment'],
-      icon: 'picture_as_pdf',
-      actionIcon: 'visibility',
-    },
-    {
-      id: '3',
-      title: 'Interview with Dr. Aris Thorne',
-      description: 'Audio Recording - 42:15 mins',
-      sourceType: 'INTERVIEW',
-      relevance: 'The Green Scent',
-      tags: ['Botany', 'Expert'],
-      icon: 'record_voice_over',
-      actionIcon: 'play_circle',
-    },
-    {
-      id: '4',
-      title: 'The Industrial Evolution (Chapter 4)',
-      description: 'Physical Book - Page 112-145',
-      sourceType: 'PHYSICAL',
-      relevance: 'Project Alpha',
-      tags: ['Steampunk'],
-      icon: 'menu_book',
-      actionIcon: 'bookmark',
-    },
-    {
-      id: '5',
-      title: 'Atmospheric Pressure on Highlands',
-      description: 'nasa.gov/mars/atmosphere-data',
-      sourceType: 'WEB',
-      relevance: 'Mars Colony: Epsilon',
-      tags: ['Physics', 'Atmosphere'],
-      icon: 'language',
-      actionIcon: 'open_in_new',
-    },
-  ];
+  // UI State
+  showAddModal = signal(false);
+  showDetailPanel = signal(false);
+  selectedEntry = signal<ResearchEntry | null>(null);
 
-  projects = [
-    { name: 'All Research', count: 124 },
-    { name: 'Victorian London Project', count: 42 },
-    { name: 'Mars Colony: Epsilon', count: 18 },
-    { name: 'The Green Scent', count: 31 },
-  ];
+  // Filter & Search State
+  searchQuery = signal('');
+  filterStatus = signal<'ALL' | 'UNREAD' | 'READING' | 'PROCESSED'>('ALL');
+  filterType = signal<'ALL' | 'WEB' | 'PDF' | 'INTERVIEW'>('ALL');
 
-  topics = [
-    { name: 'Architecture', color: 'blue-500' },
-    { name: 'Sociology', color: 'purple-500' },
-    { name: 'Technology', color: 'orange-500' },
-    { name: 'Botany', color: 'green-500' },
-  ];
+  // Input State for New Entry
+  newEntryTitle = signal('');
+  newEntryUrl = signal('');
+  newEntryType = signal<ResearchEntry['sourceType']>('WEB');
+  newEntryTags = signal(''); // comma separated
+  newEntryDesc = signal('');
 
-  getSourceTypeColor(type: string) {
-    switch (type) {
-      case 'WEB': return 'source-blue';
-      case 'PDF': return 'source-red';
-      case 'INTERVIEW': return 'source-purple';
-      case 'PHYSICAL': return 'source-orange';
-      default: return 'source-gray';
+  // Editing State
+  editNotes = signal(''); // For the detail panel notes
+
+  entries = this.researchService.entries;
+
+  filteredEntries = computed(() => {
+    let list = this.entries();
+    const query = this.searchQuery().toLowerCase();
+    const status = this.filterStatus();
+    const type = this.filterType();
+
+    if (query) {
+      list = list.filter(e =>
+        e.title.toLowerCase().includes(query) ||
+        e.tags.some(t => t.toLowerCase().includes(query)) ||
+        e.description?.toLowerCase().includes(query)
+      );
+    }
+
+    if (status !== 'ALL') {
+      list = list.filter(e => e.status === status);
+    }
+
+    if (type !== 'ALL') {
+      list = list.filter(e => e.sourceType === type);
+    }
+
+    return list;
+  });
+
+  // Analytics
+  stats = computed(() => {
+    const list = this.entries();
+    return {
+      total: list.length,
+      unread: list.filter(e => e.status === 'UNREAD').length,
+      reading: list.filter(e => e.status === 'READING').length,
+      processed: list.filter(e => e.status === 'PROCESSED').length
+    };
+  });
+
+  openDetail(entry: ResearchEntry) {
+    this.selectedEntry.set(entry);
+    this.editNotes.set(entry.notes || '');
+    this.showDetailPanel.set(true);
+  }
+
+  closeDetail() {
+    this.showDetailPanel.set(false);
+    this.selectedEntry.set(null);
+  }
+
+  openAddModal() {
+    this.newEntryTitle.set('');
+    this.newEntryUrl.set('');
+    this.newEntryType.set('WEB');
+    this.newEntryTags.set('');
+    this.newEntryDesc.set('');
+    this.showAddModal.set(true);
+  }
+
+  closeAddModal() {
+    this.showAddModal.set(false);
+  }
+
+  saveNewEntry() {
+    if (!this.newEntryTitle()) return;
+
+    this.researchService.addEntry({
+      title: this.newEntryTitle(),
+      url: this.newEntryUrl(),
+      sourceType: this.newEntryType(),
+      tags: this.newEntryTags().split(',').map(t => t.trim()).filter(t => t),
+      description: this.newEntryDesc(),
+      status: 'UNREAD'
+    });
+
+    this.closeAddModal();
+  }
+
+  updateEntryStatus(status: 'UNREAD' | 'READING' | 'PROCESSED') {
+    const current = this.selectedEntry();
+    if (current) {
+      this.researchService.updateEntry(current.id, { status });
+      // Update local selected entry to reflect change immediately in UI if needed, 
+      // though signal selectedEntry relies on object ref, better to refresh it or let UI bind to service
+      this.selectedEntry.update(e => e ? { ...e, status } : null);
     }
   }
 
-  getIconColorClass(type: string) {
-    switch (type) {
-      case 'WEB': return 'text-blue-400';
-      case 'PDF': return 'text-red-400';
-      case 'INTERVIEW': return 'text-purple-400';
-      case 'PHYSICAL': return 'text-orange-400';
-      default: return '';
+  saveNotes() {
+    const current = this.selectedEntry();
+    if (current) {
+      this.researchService.updateEntry(current.id, { notes: this.editNotes() });
     }
   }
 
-  getActionIcon(icon: string) {
-    return icon === 'link' ? 'open_in_new' : icon;
+  deleteCurrentEntry() {
+    const current = this.selectedEntry();
+    if (current && confirm('Delete this research source?')) {
+      this.researchService.deleteEntry(current.id);
+      this.closeDetail();
+    }
+  }
+
+  autoFillFromUrl() {
+    // Simulate AI/Scraper
+    if (this.newEntryUrl()) {
+      this.newEntryTitle.set('Auto-detected Title from URL');
+      this.newEntryDesc.set('Automatically captured description metadata from the provided link...');
+    }
+  }
+
+  // Helpers for UI
+  getStatusColor(status: string) {
+    switch (status) {
+      case 'PROCESSED': return '#4ade80'; // Green
+      case 'READING': return '#facc15'; // Yellow
+      case 'UNREAD': return '#f87171'; // Red
+      default: return '#9ca3af';
+    }
+  }
+
+  getSourceIcon(type: string) {
+    switch (type) {
+      case 'WEB': return 'language';
+      case 'PDF': return 'picture_as_pdf';
+      case 'VIDEO': return 'smart_display';
+      case 'INTERVIEW': return 'mic';
+      case 'PHYSICAL': return 'menu_book';
+      default: return 'article';
+    }
   }
 }

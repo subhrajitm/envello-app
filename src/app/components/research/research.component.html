@@ -1,141 +1,247 @@
 <div class="research-view">
+    <!-- Left Sidebar: Filters & Stats -->
     <div class="research-sidebar">
         <div class="sidebar-header">
-            <span class="sidebar-title">Filters</span>
+            <span class="sidebar-title">Research Library</span>
         </div>
+
         <div class="sidebar-content">
-            <div class="filter-group">
-                <h3 class="filter-label">By Project</h3>
-                <div class="filter-items">
-                    @for (project of projects; track project.name) {
-                    <button class="project-filter" [class.active]="project.name === selectedProject()"
-                        (click)="selectedProject.set(project.name)">
-                        <span>{{ project.name }}</span>
-                        <span class="filter-count" [class.active]="project.name === selectedProject()">
-                            {{ project.count }}
-                        </span>
-                    </button>
-                    }
+            <!-- Stats Widget -->
+            <div class="stats-widget">
+                <div class="stat-row">
+                    <span class="stat-label">Total Sources</span>
+                    <span class="stat-number">{{ stats().total }}</span>
+                </div>
+                <div class="stat-progress-bar">
+                    <div class="stat-bar-segment green" [style.flex]="stats().processed"></div>
+                    <div class="stat-bar-segment yellow" [style.flex]="stats().reading"></div>
+                    <div class="stat-bar-segment red" [style.flex]="stats().unread"></div>
+                </div>
+                <div class="stat-legend">
+                    <span class="legend-item"><span class="dot green"></span> Processed</span>
+                    <span class="legend-item"><span class="dot yellow"></span> Reading</span>
+                    <span class="legend-item"><span class="dot red"></span> Unread</span>
                 </div>
             </div>
 
             <div class="filter-group">
-                <h3 class="filter-label">By Topic</h3>
+                <div class="filter-label">Status</div>
                 <div class="filter-items">
-                    @for (topic of topics; track topic.name) {
-                    <button class="topic-item">
-                        <span class="topic-dot" [ngClass]="'topic-dot-' + topic.color"></span>
-                        <span>{{ topic.name }}</span>
-                    </button>
-                    }
+                    <button class="filter-btn" [class.active]="filterStatus() === 'ALL'"
+                        (click)="filterStatus.set('ALL')">All</button>
+                    <button class="filter-btn" [class.active]="filterStatus() === 'UNREAD'"
+                        (click)="filterStatus.set('UNREAD')">To Read</button>
+                    <button class="filter-btn" [class.active]="filterStatus() === 'READING'"
+                        (click)="filterStatus.set('READING')">In Progress</button>
+                    <button class="filter-btn" [class.active]="filterStatus() === 'PROCESSED'"
+                        (click)="filterStatus.set('PROCESSED')">Processed</button>
                 </div>
             </div>
 
             <div class="filter-group">
-                <h3 class="filter-label">Source Status</h3>
-                <div class="filter-checkboxes">
-                    <label class="checkbox-label">
-                        <input type="checkbox" [checked]="verifiedChecked()"
-                            (change)="verifiedChecked.set(!verifiedChecked())" />
-                        <span>Verified</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" [checked]="unreadChecked()"
-                            (change)="unreadChecked.set(!unreadChecked())" />
-                        <span>Unread</span>
-                    </label>
+                <div class="filter-label">Type</div>
+                <div class="filter-items">
+                    <button class="filter-btn" [class.active]="filterType() === 'ALL'"
+                        (click)="filterType.set('ALL')">Any Type</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'WEB'"
+                        (click)="filterType.set('WEB')">Web</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'PDF'"
+                        (click)="filterType.set('PDF')">PDF / Doc</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'INTERVIEW'"
+                        (click)="filterType.set('INTERVIEW')">Interviews</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Main Content Area -->
     <div class="research-main">
         <div class="research-header">
             <div class="research-header-left">
-                <div>
-                    <h2 class="research-title">Research Inventory</h2>
-                    <p class="research-subtitle">Displaying all items across projects</p>
-                </div>
-                <div class="header-divider"></div>
-                <div class="research-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">TOTAL SOURCES</span>
-                        <span class="stat-value">124</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">PDF DOCS</span>
-                        <span class="stat-value">45</span>
-                    </div>
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" placeholder="Search sources, tags..." [ngModel]="searchQuery()"
+                        (ngModelChange)="searchQuery.set($event)">
                 </div>
             </div>
             <div class="research-header-right">
-                <div class="view-toggle">
-                    <button class="view-btn" [class.active]="viewMode() === 'TABLE'" (click)="viewMode.set('TABLE')">
-                        TABLE
-                    </button>
-                    <button class="view-btn" [class.active]="viewMode() === 'GRID'" (click)="viewMode.set('GRID')">
-                        GRID
-                    </button>
-                </div>
-                <div class="header-divider"></div>
-                <div class="sort-controls">
-                    <select class="sort-select">
-                        <option>Source: All</option>
-                    </select>
-                    <select class="sort-select">
-                        <option>Sort: Relevance</option>
-                    </select>
-                    <button class="icon-btn">
-                        <span class="material-symbols-outlined">file_download</span>
-                    </button>
-                </div>
+                <button class="btn-primary" (click)="openAddModal()">
+                    <span class="material-symbols-outlined">add</span>
+                    Add Source
+                </button>
             </div>
         </div>
 
-        <div class="research-table-section">
-            <div class="research-table">
-                <div class="table-header">
-                    <div class="col-research-item">RESEARCH ITEM</div>
-                    <div class="col-source-type">SOURCE TYPE</div>
-                    <div class="col-relevance">RELEVANCE</div>
-                    <div class="col-tags">TAGS</div>
+        <div class="research-table-container">
+            <div class="r-table-header">
+                <div class="r-col-icon"></div>
+                <div class="r-col-title">Title & Description</div>
+                <div class="r-col-tags">Tags</div>
+                <div class="r-col-status">Status</div>
+                <div class="r-col-date">Added</div>
+            </div>
+
+            <div class="r-table-body">
+                @for (entry of filteredEntries(); track entry.id) {
+                <div class="r-table-row" (click)="openDetail(entry)">
+                    <div class="r-col-icon">
+                        <span class="material-symbols-outlined type-icon">{{ getSourceIcon(entry.sourceType) }}</span>
+                    </div>
+                    <div class="r-col-title">
+                        <div class="entry-title">{{ entry.title }}</div>
+                        <div class="entry-desc">{{ entry.description || 'No description provided' }}</div>
+                        @if (entry.url) {
+                        <a [href]="entry.url" target="_blank" class="entry-link" (click)="$event.stopPropagation()">{{
+                            entry.url }}</a>
+                        }
+                    </div>
+                    <div class="r-col-tags">
+                        @for (tag of entry.tags; track tag) {
+                        <span class="r-tag">{{ tag }}</span>
+                        }
+                    </div>
+                    <div class="r-col-status">
+                        <span class="status-badge" [style.background-color]="getStatusColor(entry.status) + '20'"
+                            [style.color]="getStatusColor(entry.status)">
+                            {{ entry.status }}
+                        </span>
+                    </div>
+                    <div class="r-col-date">{{ entry.createdDate }}</div>
                 </div>
-                <div class="table-body">
-                    @for (item of researchItems; track item.id) {
-                    <div class="table-row">
-                        <div class="col-research-item">
-                            <span class="material-symbols-outlined item-icon"
-                                [ngClass]="getIconColorClass(item.sourceType)">{{ item.icon }}</span>
-                            <div class="item-content">
-                                <div class="item-title">{{ item.title }}</div>
-                                <div class="item-description">{{ item.description }}</div>
-                            </div>
-                        </div>
-                        <div class="col-source-type">
-                            <span class="source-badge" [ngClass]="getSourceTypeColor(item.sourceType)">
-                                {{ item.sourceType }}
-                            </span>
-                        </div>
-                        <div class="col-relevance">
-                            <span class="material-symbols-outlined relevance-icon">link</span>
-                            {{ item.relevance }}
-                        </div>
-                        <div class="col-tags">
-                            @for (tag of item.tags; track tag) {
-                            <span class="tag">
-                                {{ tag }}
-                            </span>
-                            }
-                        </div>
-                        <div class="col-action">
-                            <button class="action-btn">
-                                <span class="material-symbols-outlined">{{ getActionIcon(item.actionIcon) }}</span>
-                            </button>
-                        </div>
+                } @empty {
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">library_books</span>
+                    <p>No research sources found matching your filters.</p>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Slide-over Panel -->
+    @if (showDetailPanel() && selectedEntry(); as entry) {
+    <div class="detail-panel-overlay" (click)="closeDetail()">
+        <div class="detail-panel" (click)="$event.stopPropagation()">
+            <div class="detail-header">
+                <div class="detail-title-group">
+                    <span class="detail-type">{{ entry.sourceType }}</span>
+                    <h2>{{ entry.title }}</h2>
+                </div>
+                <button class="btn-icon" (click)="closeDetail()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="detail-body">
+                <div class="detail-section">
+                    <label>Status</label>
+                    <div class="status-toggles">
+                        <button class="status-btn" [class.active]="entry.status === 'UNREAD'"
+                            (click)="updateEntryStatus('UNREAD')">Unread</button>
+                        <button class="status-btn" [class.active]="entry.status === 'READING'"
+                            (click)="updateEntryStatus('READING')">Reading</button>
+                        <button class="status-btn" [class.active]="entry.status === 'PROCESSED'"
+                            (click)="updateEntryStatus('PROCESSED')">Processed</button>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <label>Metadata</label>
+                    @if (entry.url) {
+                    <div class="meta-row">
+                        <span class="material-symbols-outlined">link</span>
+                        <a [href]="entry.url" target="_blank">{{ entry.url }}</a>
                     </div>
                     }
+                    <div class="meta-row">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        <span>Added: {{ entry.createdDate }}</span>
+                    </div>
+                    <div class="tag-row">
+                        @for (tag of entry.tags; track tag) {
+                        <span class="r-tag">{{ tag }}</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="detail-section flex-grow">
+                    <label>Notes & Insights</label>
+                    <textarea class="notes-editor" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)"
+                        placeholder="Take notes on this source..."></textarea>
+                </div>
+
+                <div class="detail-actions">
+                    <button class="btn-secondary" (click)="saveNotes()">Save Notes</button>
+                    <button class="btn-danger" (click)="deleteCurrentEntry()">Delete Source</button>
+                </div>
+
+                <!-- Enterprise Feature: AI Analysis Mock -->
+                <div class="ai-analysis-box">
+                    <div class="ai-header">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                        <span>AI Analysis</span>
+                    </div>
+                    <p class="ai-text">This source appears to be highly relevant to your project "Victorian London". It
+                        contains key references to architectural styles consistent with your timeline.</p>
                 </div>
             </div>
         </div>
     </div>
+    }
+
+    <!-- Add Modal -->
+    @if (showAddModal()) {
+    <div class="modal-overlay" (click)="closeAddModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Add New Source</h3>
+                <button class="btn-icon" (click)="closeAddModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>URL (Optional)</label>
+                    <div class="input-with-action">
+                        <input type="text" [ngModel]="newEntryUrl()" (ngModelChange)="newEntryUrl.set($event)"
+                            placeholder="https://..." (blur)="autoFillFromUrl()">
+                        <button class="btn-secondary small" (click)="autoFillFromUrl()"
+                            title="Auto-fill details">Auto</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" [ngModel]="newEntryTitle()" (ngModelChange)="newEntryTitle.set($event)"
+                        placeholder="Source Title">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Type</label>
+                        <select [ngModel]="newEntryType()" (ngModelChange)="newEntryType.set($event)">
+                            <option value="WEB">Web Page</option>
+                            <option value="PDF">PDF Document</option>
+                            <option value="VIDEO">Video / Audio</option>
+                            <option value="INTERVIEW">Interview</option>
+                            <option value="PHYSICAL">Book / Physical</option>
+                        </select>
+                    </div>
+                    <div class="form-group half">
+                        <label>Tags</label>
+                        <input type="text" [ngModel]="newEntryTags()" (ngModelChange)="newEntryTags.set($event)"
+                            placeholder="Comma separated...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea [ngModel]="newEntryDesc()" (ngModelChange)="newEntryDesc.set($event)" rows="3"
+                        placeholder="Brief summary..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+                <button class="btn-primary" (click)="saveNewEntry()" [disabled]="!newEntryTitle()">Add Source</button>
+            </div>
+        </div>
+    </div>
+    }
 </div>
