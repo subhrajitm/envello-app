@@ -972,13 +972,18 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    padding: 0;
+    /* Remove padding for toolbar */
+}
+
+.editor-scroll-area {
+    flex: 1;
+    overflow-y: auto;
     padding: 24px;
 }
 
 .journal-entry-editor {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
+    min-height: 100%;
 }
 
 .journal-entry-editor .ProseMirror {
@@ -987,6 +992,57 @@
     color: var(--text-primary);
     font-size: 15px;
     line-height: 1.6;
+}
+
+/* Formatting Toolbar */
+.formatting-toolbar {
+    padding: 8px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-panel);
+    position: relative;
+    z-index: 10;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 2px;
+}
+
+.toolbar-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.toolbar-btn.active {
+    background: var(--bg-active);
+    color: var(--accent-primary);
+}
+
+.toolbar-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.toolbar-divider {
+    width: 1px;
+    background: var(--border-subtle);
+    margin: 0 8px;
+    height: 20px;
 }
 
 .journal-entry-editor .ProseMirror p {

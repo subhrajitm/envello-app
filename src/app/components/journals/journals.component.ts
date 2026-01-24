@@ -242,6 +242,38 @@ export class JournalsComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Editor Toolbar Helpers
+  setLink() {
+    const previousUrl = this.editor.getAttributes('link')['href'];
+    const url = window.prompt('URL', previousUrl);
+
+    // cancelled
+    if (url === null) {
+      return;
+    }
+
+    // empty
+    if (url === '') {
+      this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+
+    // update link
+    this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }
+
+  addImage() {
+    const url = window.prompt('Image URL');
+
+    if (url) {
+      this.editor.chain().focus().setImage({ src: url }).run();
+    }
+  }
+
+  insertTable() {
+    this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  }
+
   selectProject(projectId: string) {
     this.journalService.setActiveProject(projectId);
   }
