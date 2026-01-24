@@ -522,7 +522,7 @@
     justify-content: space-between;
     align-items: flex-end;
     background: var(--bg-panel);
-    height: 46px;
+    height: 44px;
     position: relative;
     z-index: 1;
     flex-shrink: 0;
@@ -545,6 +545,7 @@
     overflow-y: hidden;
     position: relative;
     z-index: 1;
+    top:1px;
 }
 
 /* Hide scrollbar */
@@ -3165,13 +3166,6 @@
 /* ============================================
    TOOLBAR & BUTTONS - COMPACT
    ============================================ */
-
-.ne-editor-header {
-    padding: 0 !important;
-    height: 46px !important;
-    min-height: 46px !important;
-    max-height: 46px !important;
-}
 
 .ne-editor-toolbar {
     padding: 8px 20px !important;
