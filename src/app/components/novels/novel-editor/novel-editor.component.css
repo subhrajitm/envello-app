@@ -121,6 +121,9 @@
     flex: 1;
     display: flex;
     overflow: hidden;
+    align-items: flex-start;
+    height: 100%;
+    min-height: 0;
 }
 
 /* Sidebar Left */
@@ -134,19 +137,22 @@
     display: flex;
     flex-direction: column;
     padding: 0;
+    overflow: hidden;
+    min-height: 0;
+    height: 100%;
 }
 
 .ne-sidebar-header-action {
-    padding: 0 12px 0 12px;
-    /* Top padding matches tabs */
+    padding: 0 12px;
     margin-bottom: 0;
     border-bottom: 1px solid var(--border-subtle);
     height: 44px;
-    /* Unified header height */
-    /* Fixed height to match tabs area roughly */
+    min-height: 44px;
+    max-height: 44px;
     display: flex;
     align-items: center;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .ne-btn-back-sidebar {
@@ -205,13 +211,13 @@
 }
 
 .ne-chapters-section {
-    margin-top: 16px;
-    /* Space after sticky header */
+    margin-top: 0;
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
+    height: 0; /* Force flex child to respect parent constraints */
 }
 
 .ne-chap-header {
@@ -490,12 +496,20 @@
 .ne-editor-area {
     flex: 1;
     background: var(--bg-app);
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    /* Changed to column */
-    align-items: center;
-    /* Center children */
+    align-items: stretch;
+    min-height: 0;
+    height: 100%;
+    position: relative;
+    padding-right: 0;
+    margin-right: 0;
+}
+
+/* Wrapper to position scrollbar at edge */
+.ne-editor-area > * {
+    position: relative;
 }
 
 /* New Tab Styles */
@@ -504,13 +518,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px 0 20px;
+    padding: 0 20px;
     width: 100%;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-app);
     position: sticky;
     top: 0;
     z-index: 10;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
 .ne-editor-tabs.hidden {
@@ -523,7 +543,7 @@
     gap: 0;
     /* Tabs touch each other */
     width: auto;
-    margin-top: 0;
+    margin-top: 10px;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -591,13 +611,32 @@
 
 .ne-editor-canvas {
     width: 100%;
-    max-width: 900px;
-    /* Increased for better readability */
-    padding: 32px 48px 64px 48px;
+    max-width: 100%;
+    /* Fill full width so scrollbar is at edge */
+    padding: 32px 0 64px 0;
+    /* No side padding */
     display: flex;
     flex-direction: column;
-    margin: 0 auto;
-    /* Center the canvas content */
+    align-items: center;
+    margin: 0;
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    min-height: 0;
+    align-self: stretch;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Content wrapper to center content */
+.ne-editor-canvas > * {
+    max-width: 900px;
+    width: 100%;
+    padding-left: 48px;
+    padding-right: 48px;
+    box-sizing: border-box;
 }
 
 .ne-doc-title-input {
@@ -733,12 +772,16 @@
 .ne-sidebar-right {
     width: 320px;
     min-width: 320px;
-    /* Prevent collapse */
     background: var(--bg-app);
     border-left: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     padding: 0;
+    align-items: stretch;
+    overflow: hidden;
+    min-height: 0;
+    height: 100%;
+    position: relative; /* For absolute positioning of toggle button */
 }
 
 .ne-right-tabs {
@@ -746,8 +789,10 @@
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-panel);
     height: 44px;
-    /* Unified height */
+    min-height: 44px;
+    max-height: 44px;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .ne-tab-btn {
@@ -792,9 +837,12 @@
 .ne-right-content {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 16px;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    height: 0; /* Force flex child to respect parent constraints */
 }
 
 .ne-tab-placeholder {
@@ -1018,20 +1066,60 @@
 /* Scrollbars */
 .ne-chapter-list::-webkit-scrollbar,
 .ne-editor-area::-webkit-scrollbar,
+.ne-editor-canvas::-webkit-scrollbar,
 .ne-simple-list::-webkit-scrollbar,
 .ne-notes-panel::-webkit-scrollbar,
 .ne-meta-panel::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .ne-chapter-list::-webkit-scrollbar-thumb,
 .ne-editor-area::-webkit-scrollbar-thumb,
+.ne-editor-canvas::-webkit-scrollbar-thumb,
 .ne-simple-list::-webkit-scrollbar-thumb,
 .ne-notes-panel::-webkit-scrollbar-thumb,
 .ne-meta-panel::-webkit-scrollbar-thumb {
     background: var(--border-highlight);
-    /* Light gray */
-    border-radius: 3px;
+    border-radius: 4px 0 0 4px;
+    border: none;
+}
+
+.ne-chapter-list::-webkit-scrollbar-thumb:hover,
+.ne-editor-area::-webkit-scrollbar-thumb:hover,
+.ne-editor-canvas::-webkit-scrollbar-thumb:hover,
+.ne-simple-list::-webkit-scrollbar-thumb:hover,
+.ne-notes-panel::-webkit-scrollbar-thumb:hover,
+.ne-meta-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+.ne-chapter-list::-webkit-scrollbar-track,
+.ne-editor-area::-webkit-scrollbar-track,
+.ne-editor-canvas::-webkit-scrollbar-track,
+.ne-simple-list::-webkit-scrollbar-track,
+.ne-notes-panel::-webkit-scrollbar-track,
+.ne-meta-panel::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 0;
+    border: none;
+}
+
+/* Firefox scrollbar */
+.ne-editor-canvas {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-highlight) transparent;
+}
+
+/* Ensure scrollbar is flush to the right edge */
+.ne-editor-canvas::-webkit-scrollbar {
+    margin-right: 0;
+    position: absolute;
+    right: 0;
+}
+
+.ne-editor-canvas::-webkit-scrollbar-track {
+    margin-right: 0;
+    background: transparent;
 }
 
 /* Floating Toolbar */
@@ -2020,7 +2108,7 @@
 
 /* Fix Right Sidebar Spacing */
 .ne-notes-panel {
-    padding: 20px 16px;
+    padding: 0;
 }
 
 .ne-meta-content {
@@ -2665,6 +2753,851 @@
     }
 }
 
+/* ============================================
+   COMPACT & ENTERPRISE-LEVEL UI UPDATES
+   ============================================ */
+
+/* Standardized Spacing Scale */
+:root {
+    --spacing-xs: 4px;
+    --spacing-sm: 6px;
+    --spacing-md: 8px;
+    --spacing-lg: 12px;
+    --spacing-xl: 16px;
+    --spacing-2xl: 20px;
+    --spacing-3xl: 24px;
+}
+
+/* ============================================
+   TOOLBAR & BUTTONS - COMPACT
+   ============================================ */
+
+.ne-top-toolbar {
+    padding: 0 16px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+}
+
+.ne-toolbar-btn {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+}
+
+.ne-toolbar-btn .material-symbols-outlined {
+    font-size: 16px !important;
+}
+
+.undo-redo-group {
+    gap: 2px !important;
+}
+
+.toolbar-sep-vertical {
+    height: 16px !important;
+    margin: 0 6px !important;
+}
+
+/* ============================================
+   TABS - COMPACT
+   ============================================ */
+
+
+.tab-icon {
+    font-size: 14px !important;
+}
+
+/* ============================================
+   SIDEBAR - COMPACT
+   ============================================ */
+
+.ne-sidebar-header-action {
+    padding: 0 12px !important;
+    margin-bottom: 0 !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+}
+
+.ne-btn-back-sidebar {
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.ne-chap-header {
+    padding: 0 12px 6px !important;
+    font-size: 9px !important;
+    margin-bottom: 4px !important;
+}
+
+.ne-chapter-item {
+    padding: 6px 12px !important;
+    min-height: 32px !important;
+    font-size: 12px !important;
+}
+
+.ne-chap-title {
+    font-size: 12px !important;
+}
+
+.ne-chap-meta {
+    font-size: 10px !important;
+    margin-top: 2px !important;
+}
+
+.ne-collapse-btn {
+    width: 20px !important;
+    height: 20px !important;
+    padding: 0 !important;
+}
+
+.ne-collapse-btn .material-symbols-outlined {
+    font-size: 16px !important;
+}
+
+.list-delete {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 16px !important;
+    padding: 0 !important;
+}
+
+/* ============================================
+   DROPDOWNS - COMPACT
+   ============================================ */
+
+.add-dropdown-menu {
+    min-width: 140px !important;
+    border-radius: 6px !important;
+    padding: 4px !important;
+}
+
+.add-dropdown-option {
+    padding: 5px 8px !important;
+    height: 26px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
+}
+
+.option-icon {
+    font-size: 14px !important;
+}
+
+.option-label {
+    font-size: 11px !important;
+}
+
+.icon-add {
+    font-size: 18px !important;
+    padding: 2px !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* ============================================
+   EDITOR CANVAS - COMPACT
+   ============================================ */
+
+.ne-editor-canvas {
+    padding: 20px 0 40px 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+}
+
+.ne-editor-canvas > * {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px;
+    padding-right: 32px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ne-doc-title-input {
+    font-size: 28px !important;
+    margin: 0 0 12px 0 !important;
+}
+
+.ne-doc-meta {
+    font-size: 9px !important;
+    margin-bottom: 24px !important;
+}
+
+.meta-sep {
+    margin: 0 6px !important;
+}
+
+/* ============================================
+   TOOLBAR (EDITOR) - COMPACT
+   ============================================ */
+
+.toolbar {
+    padding: 6px 8px !important;
+    gap: 4px !important;
+    min-height: 36px !important;
+}
+
+.toolbar-group {
+    gap: 2px !important;
+}
+
+.toolbar-btn {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+}
+
+.toolbar-btn .material-symbols-outlined {
+    font-size: 16px !important;
+}
+
+.toolbar-sep {
+    width: 1px !important;
+    height: 20px !important;
+    margin: 0 4px !important;
+}
+
+/* ============================================
+   MODALS - COMPACT
+   ============================================ */
+
+.ne-modal {
+    border-radius: 8px !important;
+    max-width: 480px !important;
+    padding: 0 !important;
+}
+
+.ne-modal-header {
+    padding: 12px 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    min-height: 44px !important;
+}
+
+.ne-modal-body {
+    padding: 16px !important;
+}
+
+.ne-modal-footer {
+    padding: 12px 16px !important;
+    gap: 8px !important;
+    min-height: 52px !important;
+}
+
+.ne-modal-input-wrapper {
+    margin-bottom: 12px !important;
+}
+
+.ne-modal-label {
+    font-size: 10px !important;
+    margin-bottom: 6px !important;
+}
+
+.ne-modal-input,
+.ne-modal-textarea {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+    border-radius: 6px !important;
+}
+
+.ne-modal-textarea {
+    min-height: 80px !important;
+}
+
+.ne-modal-btn {
+    padding: 6px 14px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    min-height: 32px !important;
+}
+
+.modal-close-btn {
+    width: 28px !important;
+    height: 28px !important;
+}
+
+/* ============================================
+   SEARCH - COMPACT
+   ============================================ */
+
+.search-dropdown {
+    width: 360px !important;
+    border-radius: 8px !important;
+}
+
+.search-input-wrapper {
+    padding: 10px !important;
+}
+
+.search-input {
+    padding: 6px 36px 6px 36px !important;
+    font-size: 12px !important;
+}
+
+.search-icon {
+    left: 18px !important;
+    font-size: 16px !important;
+}
+
+.search-clear {
+    right: 18px !important;
+    padding: 2px !important;
+}
+
+.search-results {
+    max-height: 320px !important;
+    padding: 4px !important;
+}
+
+.search-result-item {
+    padding: 8px 10px !important;
+    gap: 10px !important;
+}
+
+.result-icon {
+    font-size: 18px !important;
+}
+
+.result-title {
+    font-size: 12px !important;
+}
+
+.result-subtitle {
+    font-size: 10px !important;
+}
+
+/* ============================================
+   RIGHT SIDEBAR - COMPACT
+   ============================================ */
+
+.ne-tab-header {
+    padding: 8px 12px !important;
+    font-size: 9px !important;
+    min-height: 32px !important;
+}
+
+.ne-tab-content {
+    padding: 12px !important;
+}
+
+.ne-simple-list {
+    gap: 4px !important;
+}
+
+.ne-list-item {
+    padding: 8px 12px !important;
+    min-height: 40px !important;
+    gap: 10px !important;
+}
+
+.ne-avatar-mini {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 18px !important;
+}
+
+.list-title {
+    font-size: 12px !important;
+}
+
+.list-sub {
+    font-size: 10px !important;
+}
+
+/* ============================================
+   STATS & METADATA - COMPACT
+   ============================================ */
+
+.ne-sync-status {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+}
+
+.sync-info {
+    gap: 12px !important;
+}
+
+.stat-item {
+    gap: 4px !important;
+}
+
+.stat-label {
+    font-size: 8px !important;
+}
+
+.stat-value {
+    font-size: 10px !important;
+}
+
+.stats-grid {
+    gap: 6px !important;
+    margin-bottom: 12px !important;
+}
+
+.stat-card-mini {
+    padding: 6px !important;
+}
+
+.stat-label-mini {
+    font-size: 8px !important;
+    margin-bottom: 3px !important;
+}
+
+.stat-value-mini {
+    font-size: 14px !important;
+}
+
+.goal-progress {
+    gap: 6px !important;
+}
+
+.goal-progress-bar {
+    height: 5px !important;
+}
+
+.goal-progress-text {
+    font-size: 10px !important;
+}
+
+/* ============================================
+   TAGS & ACTIONS - COMPACT
+   ============================================ */
+
+.chapter-actions-row {
+    gap: 6px !important;
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+}
+
+.tag-input {
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+    height: 24px !important;
+}
+
+.meta-action-btn {
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+    height: 24px !important;
+}
+
+.tag-badge {
+    padding: 2px 6px !important;
+    font-size: 9px !important;
+    height: 20px !important;
+}
+
+/* ============================================
+   PLOT POINTS - COMPACT
+   ============================================ */
+
+.ne-plot-points-section {
+    margin-top: 20px !important;
+    padding: 12px !important;
+}
+
+.ne-plot-points-header {
+    font-size: 9px !important;
+    margin-bottom: 12px !important;
+    padding: 6px 0 !important;
+}
+
+.ne-plot-points-grid {
+    gap: 10px !important;
+}
+
+.ne-plot-point-card {
+    padding: 10px !important;
+}
+
+.ne-plot-point-label {
+    font-size: 9px !important;
+    margin-bottom: 6px !important;
+}
+
+.plot-icon {
+    font-size: 16px !important;
+}
+
+.plot-point-subtitle {
+    font-size: 9px !important;
+    margin-bottom: 6px !important;
+}
+
+.ne-plot-point-input {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+    min-height: 60px !important;
+}
+
+/* ============================================
+   SUMMARY - COMPACT
+   ============================================ */
+
+.chapter-summary-section {
+    margin-bottom: 20px !important;
+    padding: 12px !important;
+}
+
+.summary-label {
+    font-size: 9px !important;
+    margin-bottom: 6px !important;
+    gap: 4px !important;
+}
+
+.summary-input {
+    padding: 8px !important;
+    font-size: 11px !important;
+    min-height: 60px !important;
+}
+
+/* ============================================
+   VERSION HISTORY - COMPACT
+   ============================================ */
+
+.version-history-modal {
+    width: 520px !important;
+    max-height: 75vh !important;
+}
+
+.version-history-body {
+    max-height: 55vh !important;
+    padding: 12px !important;
+}
+
+.version-history-list {
+    gap: 8px !important;
+}
+
+.version-item {
+    padding: 12px !important;
+}
+
+.version-header {
+    margin-bottom: 6px !important;
+}
+
+.version-title {
+    font-size: 13px !important;
+}
+
+.version-meta {
+    font-size: 10px !important;
+    gap: 4px !important;
+}
+
+.version-badge {
+    padding: 2px 6px !important;
+    font-size: 8px !important;
+}
+
+.version-description {
+    font-size: 11px !important;
+    margin-bottom: 8px !important;
+}
+
+.version-action-btn {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    gap: 4px !important;
+}
+
+.version-action-btn .material-symbols-outlined {
+    font-size: 14px !important;
+}
+
+/* ============================================
+   EMPTY STATES - COMPACT
+   ============================================ */
+
+.ne-empty-state {
+    padding: 48px 32px !important;
+}
+
+.empty-state-icon {
+    width: 64px !important;
+    height: 64px !important;
+    margin-bottom: 16px !important;
+}
+
+.empty-state-icon .material-symbols-outlined {
+    font-size: 32px !important;
+}
+
+.empty-state-title {
+    font-size: 16px !important;
+    margin-bottom: 6px !important;
+}
+
+.empty-state-text {
+    font-size: 12px !important;
+    margin-bottom: 20px !important;
+    max-width: 360px !important;
+}
+
+.empty-state-actions {
+    gap: 10px !important;
+}
+
+.empty-state-btn {
+    padding: 7px 14px !important;
+    font-size: 11px !important;
+    gap: 5px !important;
+}
+
+.ne-btn-primary {
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+    gap: 6px !important;
+}
+
+/* ============================================
+   AI & NOTES - COMPACT
+   ============================================ */
+
+.ne-ai-header {
+    font-size: 10px !important;
+    margin-bottom: 12px !important;
+    gap: 6px !important;
+}
+
+.icon-bolt {
+    font-size: 14px !important;
+}
+
+.btn-ai-primary {
+    padding: 8px !important;
+    font-size: 11px !important;
+    gap: 6px !important;
+    border-radius: 6px !important;
+}
+
+.btn-ai-sec {
+    padding: 6px !important;
+    font-size: 10px !important;
+    gap: 4px !important;
+}
+
+.ne-context-box {
+    margin-top: 16px !important;
+    padding: 12px !important;
+    border-radius: 6px !important;
+}
+
+.ctx-header {
+    font-size: 8px !important;
+    margin-bottom: 6px !important;
+}
+
+.ctx-input {
+    height: 50px !important;
+    font-size: 11px !important;
+}
+
+.btn-execute {
+    padding: 7px !important;
+    font-size: 10px !important;
+    gap: 5px !important;
+    margin-top: 6px !important;
+    border-radius: 6px !important;
+}
+
+.ne-note-item {
+    padding: 10px 12px !important;
+    gap: 10px !important;
+}
+
+.note-header {
+    margin-bottom: 6px !important;
+}
+
+.note-title {
+    font-size: 12px !important;
+}
+
+.note-meta {
+    font-size: 9px !important;
+    gap: 4px !important;
+}
+
+.note-delete {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 16px !important;
+}
+
+.note-body {
+    font-size: 11px !important;
+}
+
+/* ============================================
+   META PANEL - COMPACT
+   ============================================ */
+
+.ne-meta-content {
+    padding: 12px !important;
+    gap: 16px !important;
+}
+
+.meta-section label {
+    font-size: 8px !important;
+    margin-bottom: 5px !important;
+}
+
+.meta-text {
+    font-size: 12px !important;
+}
+
+.pills-row {
+    gap: 4px !important;
+}
+
+.meta-pill {
+    padding: 3px 8px !important;
+    font-size: 10px !important;
+}
+
+/* ============================================
+   MENTIONS - COMPACT
+   ============================================ */
+
+.mentions-group {
+    margin-top: 10px !important;
+}
+
+.mentions-label {
+    font-size: 9px !important;
+    margin-bottom: 5px !important;
+}
+
+.mentions-list {
+    gap: 4px !important;
+}
+
+.mention-badge {
+    padding: 3px 8px !important;
+    font-size: 10px !important;
+}
+
+/* ============================================
+   SIDEBAR TOGGLES - COMPACT
+   ============================================ */
+
+.sidebar-toggle {
+    width: 20px !important;
+    height: 40px !important;
+    border-radius: 0 4px 4px 0 !important;
+}
+
+.sidebar-toggle.right {
+    left: -20px !important;
+    border-radius: 4px 0 0 4px !important;
+    z-index: 101 !important;
+}
+
+/* Ensure right sidebar toggle is visible when collapsed */
+.ne-sidebar-right.collapsed .sidebar-toggle.right {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: absolute !important;
+    left: -20px !important;
+}
+
+.sidebar-toggle .material-symbols-outlined {
+    font-size: 16px !important;
+}
+
+/* ============================================
+   LOADING STATE - COMPACT
+   ============================================ */
+
+.ne-loading-state {
+    gap: 12px !important;
+}
+
+.loading-spinner {
+    width: 56px !important;
+    height: 56px !important;
+}
+
+.loading-spinner .material-symbols-outlined {
+    font-size: 28px !important;
+}
+
+.loading-text {
+    font-size: 12px !important;
+}
+
+/* ============================================
+   STRUCTURE VIEW - COMPACT
+   ============================================ */
+
+.ne-structure-section {
+    padding: 8px 0 !important;
+}
+
+.ne-structure-item {
+    padding: 8px 12px !important;
+    min-height: 36px !important;
+}
+
+.structure-item-title {
+    font-size: 12px !important;
+}
+
+.structure-item-type {
+    font-size: 9px !important;
+}
+
+/* ============================================
+   CONSISTENT BORDER RADIUS
+   ============================================ */
+
+.ne-modal,
+.search-dropdown,
+.add-dropdown-menu,
+.version-history-modal {
+    border-radius: 8px !important;
+}
+
+.ne-modal-btn,
+.ne-toolbar-btn,
+.toolbar-btn,
+.meta-action-btn,
+.version-action-btn,
+.empty-state-btn,
+.ne-btn-primary {
+    border-radius: 6px !important;
+}
+
+.tag-badge,
+.status-badge,
+.version-badge,
+.mention-badge,
+.meta-pill {
+    border-radius: 4px !important;
+}
+
+/* ============================================
+   CONSISTENT SHADOWS
+   ============================================ */
+
+.ne-modal,
+.search-dropdown,
+.add-dropdown-menu {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border-subtle) !important;
+}
+
+.version-history-modal {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-subtle) !important;
+}
+
 /* Collapsible Sidebars */
 .ne-sidebar-left.collapsed {
     width: 0;
@@ -2676,8 +3609,9 @@
 .ne-sidebar-right.collapsed {
     width: 0;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible; /* Allow toggle button to show */
     border-left: none;
+    position: relative; /* For absolute positioning of toggle */
 }
 
 .sidebar-toggle {
@@ -2705,6 +3639,23 @@
 .sidebar-toggle.right {
     left: -24px;
     border-radius: 4px 0 0 4px;
+    z-index: 101; /* Higher z-index to ensure visibility */
+}
+
+/* Right sidebar toggle specific positioning */
+.ne-sidebar-right .sidebar-toggle.right {
+    position: absolute;
+    left: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 101;
+}
+
+/* When right sidebar is collapsed, ensure toggle is visible */
+.ne-sidebar-right.collapsed .sidebar-toggle.right {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Edit Toolbar Styles */
