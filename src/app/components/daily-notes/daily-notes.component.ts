@@ -127,15 +127,31 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   });
 
   selectedNote = computed(() => {
+    // If no tabs are open, return null to show empty state
+    if (this.openNotes().length === 0) {
+      return null;
+    }
+    
     const list = this.filteredNotes();
     if (list.length === 0) {
       return null;
     }
-    if (!this.selectedEntryId()) {
-      return list[0];
+    
+    // Only return a note if it's in the open tabs
+    const selectedId = this.selectedEntryId();
+    if (!selectedId) {
+      // If no selection but tabs are open, select the first open tab
+      const firstOpenId = this.openNotes()[0];
+      return list.find(n => n.id === firstOpenId) || null;
     }
-    const found = list.find(n => n.id === this.selectedEntryId());
-    return found || list[0];
+    
+    const found = list.find(n => n.id === selectedId);
+    // Only return if the note is in open tabs
+    if (found && this.openNotes().includes(found.id)) {
+      return found;
+    }
+    
+    return null;
   });
 
   constructor() {

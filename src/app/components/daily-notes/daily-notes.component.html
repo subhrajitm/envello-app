@@ -509,8 +509,16 @@
         } @else {
         <div class="dn-empty-state">
             <span class="material-symbols-outlined empty-icon">note_add</span>
-            <h3>No note selected</h3>
-            <p>Select a note from the sidebar or create a new one to get started</p>
+            <h3>@if (openNotes().length === 0) {
+                All tabs closed
+            } @else {
+                No note selected
+            }</h3>
+            <p>@if (openNotes().length === 0) {
+                Create a new note to get started
+            } @else {
+                Select a note from the sidebar or create a new one to get started
+            }</p>
             <button class="empty-action-btn" (click)="handleNewNote()">
                 <span class="material-symbols-outlined">add</span>
                 Create new note
