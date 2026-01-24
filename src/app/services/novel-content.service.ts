@@ -31,6 +31,9 @@ export interface Chapter {
     status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
     wordCount: number;
     lastEdited: string;
+    summary?: string; // Chapter summary
+    tags?: string[]; // Tags for organization
+    template?: string; // Template used
     plotPoints?: {
         firstSlap?: string; // Inciting incident
         secondSlap?: string; // Midpoint
@@ -248,6 +251,42 @@ export class NovelContentService {
         });
     }
 
+    updateChapterTags(chapterId: string, tags: string[]) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const newChapters = novel.chapters.map(group => ({
+                ...group,
+                children: group.children.map(chap => {
+                    if (chap.id === chapterId) {
+                        return { ...chap, tags };
+                    }
+                    return chap;
+                })
+            }));
+
+            return { ...novel, chapters: newChapters };
+        });
+    }
+
+    updateChapterSummary(chapterId: string, summary: string) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+
+            const newChapters = novel.chapters.map(group => ({
+                ...group,
+                children: group.children.map(chap => {
+                    if (chap.id === chapterId) {
+                        return { ...chap, summary };
+                    }
+                    return chap;
+                })
+            }));
+
+            return { ...novel, chapters: newChapters };
+        });
+    }
+
     // Chapter Management
     addChapter(groupId: string, title: string = 'Untitled Chapter') {
         this.activeNovel.update(novel => {
@@ -323,6 +362,32 @@ export class NovelContentService {
             };
 
             return { ...novel, chapters: [...novel.chapters, newGroup] };
+        });
+    }
+
+    reorderChapterGroup(fromIndex: number, toIndex: number) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+            const groups = [...novel.chapters];
+            const [moved] = groups.splice(fromIndex, 1);
+            groups.splice(toIndex, 0, moved);
+            return { ...novel, chapters: groups };
+        });
+    }
+
+    reorderChapter(groupId: string, fromIndex: number, toIndex: number) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+            const newChapters = novel.chapters.map(group => {
+                if (group.id === groupId) {
+                    const children = [...group.children];
+                    const [moved] = children.splice(fromIndex, 1);
+                    children.splice(toIndex, 0, moved);
+                    return { ...group, children };
+                }
+                return group;
+            });
+            return { ...novel, chapters: newChapters };
         });
     }
 

@@ -1,12 +1,25 @@
-<div class="ne-layout">
+<div class="ne-layout" [class.fullscreen]="fullScreenMode()">
     <!-- Header Hidden as per request -->
     <!-- <header class="ne-header">...</header> -->
 
     <!-- Workspace -->
+    @if (isLoading()) {
+    <div class="ne-loading-state">
+        <div class="loading-spinner">
+            <span class="material-symbols-outlined">auto_awesome</span>
+        </div>
+        <p class="loading-text">Loading novel...</p>
+    </div>
+    } @else {
     <div class="ne-workspace">
         <!-- Left Sidebar: Chapters -->
         <!-- Left Sidebar: Chapters -->
-        <div class="ne-sidebar-left">
+        <div class="ne-sidebar-left" [class.collapsed]="leftSidebarCollapsed()">
+            @if (leftSidebarCollapsed()) {
+            <button class="sidebar-toggle" (click)="toggleLeftSidebar()" title="Show sidebar">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            }
             <!-- Sidebar Back Action -->
             <div class="ne-sidebar-header-action">
                 <button class="ne-btn-back-sidebar" (click)="goBack()">
@@ -21,26 +34,48 @@
             <div class="ne-chapters-section">
                 <div class="ne-chap-header">
                     CHAPTERS
-                    <div class="add-menu-wrapper" style="position: relative;">
-                        <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu(); $event.stopPropagation()"
-                            title="Add new item">add</span>
-                        @if (addMenuOpen()) {
-                        <div class="add-dropdown-menu">
-                            <button class="add-dropdown-option" (click)="addNewActOrPart(); $event.stopPropagation()">
-                                <span class="material-symbols-outlined option-icon">folder</span>
-                                <span class="option-label">Add Act/Part</span>
-                            </button>
-                            <button class="add-dropdown-option" (click)="addNewChapter(); $event.stopPropagation()">
-                                <span class="material-symbols-outlined option-icon">description</span>
-                                <span class="option-label">Add Chapter</span>
-                            </button>
-                        </div>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        @if (bulkMode()) {
+                        <button class="ne-toolbar-btn" (click)="bulkDeleteChapters()" 
+                                [disabled]="selectedChapters().size === 0"
+                                title="Delete selected">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Exit bulk mode">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                        } @else {
+                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Bulk select">
+                            <span class="material-symbols-outlined">checklist</span>
+                        </button>
                         }
+                        <div class="add-menu-wrapper" style="position: relative;">
+                            <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu(); $event.stopPropagation()"
+                                title="Add new item">add</span>
+                            @if (addMenuOpen()) {
+                            <div class="add-dropdown-menu">
+                                <button class="add-dropdown-option" (click)="addNewActOrPart(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">folder</span>
+                                    <span class="option-label">Add Act/Part</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addNewChapter(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">description</span>
+                                    <span class="option-label">Add Chapter</span>
+                                </button>
+                            </div>
+                            }
+                        </div>
                     </div>
                 </div>
                 <div class="ne-chapter-list">
-                    @for (group of novel()!.chapters; track group.id) {
-                    <div class="ne-chapter-group">
+                    @for (group of novel()!.chapters; track group.id; let i = $index) {
+                    <div class="ne-chapter-group" 
+                         [class.drag-over]="dragOverIndex() === i && dragStartIndex() !== null"
+                         draggable="true"
+                         (dragstart)="onDragStart($event, i, 'group')"
+                         (dragover)="onDragOver($event, i)"
+                         (dragend)="onDragEnd()"
+                         (drop)="onDrop($event, i, 'group')">
                         <div class="ne-chapter-item group-header" (click)="toggleChapter(group)">
                             <button class="ne-collapse-btn">
                                 <span class="material-symbols-outlined">
@@ -59,9 +94,24 @@
                         </div>
                         @if (group.expanded) {
                         <div class="ne-scene-list">
-                            @for (chap of group.children; track chap.id) {
-                            <div class="ne-chapter-item" [class.active]="activeChapterId() === chap.id"
-                                (click)="selectChapter(chap)">
+                            @for (chap of group.children; track chap.id; let j = $index) {
+                            <div class="ne-chapter-item" 
+                                 [class.active]="activeChapterId() === chap.id"
+                                 [class.selected]="selectedChapters().has(chap.id)"
+                                 [class.drag-over]="dragOverIndex() === j && dragStartIndex() !== null"
+                                 [draggable]="!bulkMode()"
+                                 (dragstart)="onDragStart($event, j, 'chapter')"
+                                 (dragover)="onDragOver($event, j)"
+                                 (dragend)="onDragEnd()"
+                                 (drop)="onDrop($event, j, 'chapter', group.id)"
+                                 (click)="bulkMode() ? toggleChapterSelection(chap.id) : selectChapter(chap)">
+                                @if (bulkMode()) {
+                                <input type="checkbox" 
+                                       [checked]="selectedChapters().has(chap.id)"
+                                       (click)="$event.stopPropagation()"
+                                       (change)="toggleChapterSelection(chap.id)"
+                                       class="bulk-checkbox" />
+                                }
                                 <div class="ne-chap-info">
                                     <div class="ne-chap-title">{{ chap.title }}</div>
                                     <div class="ne-chap-meta">
@@ -227,22 +277,34 @@
             <div class="ne-sync-status">
                 <div class="sync-line"></div>
                 <div class="sync-info">
-                    <div class="stat-item">
+                    <div class="stat-item" title="Current word count">
                         <span class="stat-label">WORDS</span>
                         <span class="stat-value">{{ wordCount() }}</span>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item" title="Session time">
                         <span class="stat-label">TIME</span>
                         <span class="stat-value">{{ getFormattedTime() }}</span>
                     </div>
+                    @if (activeChapterId()) {
+                    <div class="stat-item" title="Progress toward goal">
+                        <span class="stat-label">GOAL</span>
+                        <span class="stat-value">{{ getGoalProgress() }}%</span>
+                    </div>
+                    }
                 </div>
+                @if (!leftSidebarCollapsed()) {
+                <button class="sidebar-toggle right" (click)="toggleLeftSidebar()" title="Hide sidebar (⌘+←)">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                }
             </div>
         </div>
 
         <!-- Editor Canvas -->
-        <div class="ne-editor-area">
-            <!-- Top Tabs -->
-            <div class="ne-editor-tabs">
+        <div class="ne-editor-area" [class.focus-mode]="focusMode()">
+            <!-- Top Toolbar -->
+            <div class="ne-top-toolbar">
+                <div class="ne-editor-tabs" [class.hidden]="focusMode()">
                 <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
                     (click)="setActiveNav('manuscript')">
                     <span class="material-symbols-outlined tab-icon">description</span>
@@ -263,16 +325,186 @@
                     <span class="material-symbols-outlined tab-icon">public</span>
                     Locations
                 </button>
+                </div>
+                <div class="ne-toolbar-actions">
+                    <!-- Undo/Redo -->
+                    <div class="undo-redo-group">
+                        <button class="ne-toolbar-btn" 
+                                (click)="performUndo()" 
+                                [disabled]="!canUndo()"
+                                title="Undo (⌘+Z)">
+                            <span class="material-symbols-outlined">undo</span>
+                        </button>
+                        <button class="ne-toolbar-btn" 
+                                (click)="performRedo()" 
+                                [disabled]="!canRedo()"
+                                title="Redo (⌘+Shift+Z)">
+                            <span class="material-symbols-outlined">redo</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-sep-vertical"></div>
+                    <!-- Search -->
+                    <div class="search-wrapper" style="position: relative;">
+                        <button class="ne-toolbar-btn" (click)="toggleSearch()" title="Search (⌘+K)">
+                            <span class="material-symbols-outlined">search</span>
+                        </button>
+                        @if (searchOpen()) {
+                        <div class="search-dropdown">
+                            <div class="search-input-wrapper">
+                                <span class="material-symbols-outlined search-icon">search</span>
+                                <input 
+                                    type="text" 
+                                    class="search-input" 
+                                    [value]="searchQuery()"
+                                    (input)="searchQuery.set($any($event.target).value)"
+                                    placeholder="Search chapters, characters, locations..."
+                                    autofocus
+                                />
+                                @if (searchQuery()) {
+                                <button class="search-clear" (click)="searchQuery.set('')">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                                }
+                            </div>
+                            @if (filteredChapters() && filteredChapters()!.length > 0) {
+                            <div class="search-results">
+                                @for (result of filteredChapters()!; track result.id) {
+                                <button class="search-result-item" (click)="selectSearchResult(result)">
+                                    <span class="material-symbols-outlined result-icon">
+                                        @if (result.type === 'chapter') { description }
+                                        @else if (result.type === 'character') { account_circle }
+                                        @else if (result.type === 'location') { public }
+                                        @else if (result.type === 'frontMatter') { menu_book }
+                                        @else if (result.type === 'prologue') { menu_book }
+                                    </span>
+                                    <div class="result-content">
+                                        <div class="result-title">{{ result.title }}</div>
+                                        @if (result.subtitle) {
+                                        <div class="result-subtitle">{{ result.subtitle }}</div>
+                                        }
+                                    </div>
+                                </button>
+                                }
+                            </div>
+                            } @else if (searchQuery() && filteredChapters()?.length === 0) {
+                            <div class="search-empty">No results found</div>
+                            }
+                        </div>
+                        }
+                    </div>
+                    <!-- Focus Mode -->
+                    <button class="ne-toolbar-btn" (click)="toggleFocusMode()" [class.active]="focusMode()" title="Focus Mode (⌘+B)">
+                        <span class="material-symbols-outlined">center_focus_strong</span>
+                    </button>
+                    <!-- Full Screen -->
+                    <button class="ne-toolbar-btn" (click)="toggleFullScreen()" [class.active]="fullScreenMode()" title="Full Screen (F11)">
+                        <span class="material-symbols-outlined">fullscreen</span>
+                    </button>
+                    <!-- Version History -->
+                    <button class="ne-toolbar-btn" (click)="openVersionHistory()" title="Version History">
+                        <span class="material-symbols-outlined">history</span>
+                    </button>
+                    <!-- Export -->
+                    <div class="export-menu-wrapper" style="position: relative;">
+                        <button class="ne-toolbar-btn" (click)="toggleExportMenu()" title="Export">
+                            <span class="material-symbols-outlined">download</span>
+                        </button>
+                        @if (exportMenuOpen()) {
+                        <div class="add-dropdown-menu">
+                            <button class="add-dropdown-option" (click)="exportNovel('pdf'); exportMenuOpen.set(false)">
+                                <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
+                                <span class="option-label">Export as PDF</span>
+                            </button>
+                            <button class="add-dropdown-option" (click)="exportNovel('html'); exportMenuOpen.set(false)">
+                                <span class="material-symbols-outlined option-icon">code</span>
+                                <span class="option-label">Export as HTML</span>
+                            </button>
+                            <button class="add-dropdown-option" (click)="exportNovel('md'); exportMenuOpen.set(false)">
+                                <span class="material-symbols-outlined option-icon">description</span>
+                                <span class="option-label">Export as Markdown</span>
+                            </button>
+                        </div>
+                        }
+                    </div>
+                </div>
             </div>
 
             @if (activeNav() === 'manuscript') {
             <div class="ne-editor-canvas">
+                @if (!activeChapterId()) {
+                <div class="ne-empty-state">
+                    <div class="empty-state-icon">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <h3 class="empty-state-title">No Chapter Selected</h3>
+                    <p class="empty-state-text">Select a chapter from the sidebar to start writing, or create a new chapter to begin.</p>
+                    <button class="ne-btn-primary" (click)="addNewChapter()">
+                        <span class="material-symbols-outlined">add</span>
+                        Create New Chapter
+                    </button>
+                </div>
+                } @else {
                 <input type="text" class="ne-doc-title-input" [ngModel]="title()"
                     (ngModelChange)="onTitleChange($event)" placeholder="Chapter Title" />
 
                 <div class="ne-doc-meta">
-                    DRAFT 2 <span class="meta-sep">•</span> LAST EDITED TODAY <span class="meta-sep">•</span> TAGS:
-                    SCI-FI
+                    <div class="meta-row">
+                        <span class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()">{{ chapterStatus() }}</span>
+                        <span class="meta-sep">•</span>
+                        <span>LAST EDITED: {{ chapterLastEdited() }}</span>
+                        @if (chapterTags().length > 0) {
+                        <span class="meta-sep">•</span>
+                        <div class="tags-container">
+                            @for (tag of chapterTags(); track tag) {
+                            <span class="tag-badge">
+                                {{ tag }}
+                                <span class="material-symbols-outlined tag-remove" (click)="removeTagFromChapter(activeChapterId()!, tag); $event.stopPropagation()">close</span>
+                            </span>
+                            }
+                        </div>
+                        }
+                        <span class="meta-sep">•</span>
+                        <span class="save-indicator" [class.saving]="isSaving()">
+                            @if (isSaving()) {
+                            <span class="material-symbols-outlined" style="font-size: 12px;">sync</span>
+                            Saving...
+                            } @else if (lastSaved()) {
+                            <span class="material-symbols-outlined" style="font-size: 12px;">check_circle</span>
+                            Saved
+                            } @else {
+                            <span>Not saved</span>
+                            }
+                        </span>
+                    </div>
+                    @if (activeChapterId()) {
+                    <div class="chapter-actions-row">
+                        <div class="tags-input-wrapper">
+                            <input 
+                                type="text" 
+                                class="tag-input" 
+                                placeholder="Add tag..."
+                                (keydown.enter)="addTagFromInput($event)"
+                                #tagInput
+                            />
+                        </div>
+                        <div class="template-menu-wrapper" style="position: relative;">
+                            <button class="meta-action-btn" (click)="toggleTemplateMenu()" title="Apply Template">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">auto_awesome</span>
+                                Template
+                            </button>
+                            @if (templateMenuOpen()) {
+                            <div class="add-dropdown-menu">
+                                @for (template of chapterTemplates; track template.id) {
+                                <button class="add-dropdown-option" (click)="applyTemplate(template.id); templateMenuOpen.set(false)">
+                                    <span class="material-symbols-outlined option-icon">{{ template.icon }}</span>
+                                    <span class="option-label">{{ template.name }}</span>
+                                </button>
+                                }
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    }
                 </div>
 
                 <!-- Edit Toolbar -->
@@ -328,6 +560,23 @@
                             [class.active]="editor.isActive('blockquote')" title="Quote">
                             <span class="material-symbols-outlined">format_quote</span>
                         </button>
+                        <button class="toolbar-btn" (click)="editor.chain().focus().toggleCode().run()"
+                            [class.active]="editor.isActive('code')" title="Code">
+                            <span class="material-symbols-outlined">code</span>
+                        </button>
+                        <button class="toolbar-btn" (click)="editor.chain().focus().setHorizontalRule().run()"
+                            title="Horizontal Rule">
+                            <span class="material-symbols-outlined">remove</span>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-sep"></div>
+
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" (click)="openLinkModal()"
+                            [class.active]="editor.isActive('link')" title="Insert Link">
+                            <span class="material-symbols-outlined">link</span>
+                        </button>
                     </div>
 
                     <div class="toolbar-sep spacer"></div>
@@ -345,6 +594,23 @@
                 </div>
                 }
 
+                <!-- Chapter Summary -->
+                @if (activeChapterId()) {
+                <div class="chapter-summary-section">
+                    <label class="summary-label">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">summarize</span>
+                        CHAPTER SUMMARY
+                    </label>
+                    <textarea 
+                        class="summary-input" 
+                        [value]="chapterSummary()"
+                        (input)="updateChapterSummary(activeChapterId()!, $any($event.target).value)"
+                        placeholder="Brief summary of this chapter's events and purpose..."
+                        rows="3"
+                    ></textarea>
+                </div>
+                }
+
                 <!-- Tiptap Editor -->
                 <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
 
@@ -354,10 +620,16 @@
                         @for (chap of group.children; track chap.id) {
                             @if (chap.id === activeChapterId()) {
                             <div class="ne-plot-points-section">
-                                <div class="ne-plot-points-header">
-                                    <span class="material-symbols-outlined" style="font-size: 18px;">timeline</span>
-                                    PLOT POINTS
+                                <div class="ne-plot-points-header" (click)="togglePlotPoints()" style="cursor: pointer;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">timeline</span>
+                                        PLOT POINTS
+                                    </div>
+                                    <span class="material-symbols-outlined" [class.expanded]="plotPointsExpanded()" style="transition: transform 0.2s;">
+                                        expand_more
+                                    </span>
                                 </div>
+                                @if (plotPointsExpanded()) {
                                 <div class="ne-plot-points-grid">
                                     <div class="ne-plot-point-card">
                                         <div class="ne-plot-point-label">
@@ -393,10 +665,12 @@
                                             placeholder="The final confrontation and resolution..."></textarea>
                                     </div>
                                 </div>
+                                }
                             </div>
                             }
                         }
                     }
+                }
                 }
             </div>
             }
@@ -452,8 +726,23 @@
                     }
                 } @else {
                 <div class="ne-empty-state">
-                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--text-tertiary); opacity: 0.5;">menu_book</span>
-                    <p style="color: var(--text-tertiary); margin-top: 16px;">Select a Front Matter item or Prologue to edit</p>
+                    <div class="empty-state-icon">
+                        <span class="material-symbols-outlined">menu_book</span>
+                    </div>
+                    <h3 class="empty-state-title">No Item Selected</h3>
+                    <p class="empty-state-text">Select a Front Matter item or Prologue from the sidebar to start editing</p>
+                    <div class="empty-state-actions">
+                        <button class="empty-state-btn" (click)="addFrontMatterItem('title-page')">
+                            <span class="material-symbols-outlined">add</span>
+                            Add Title Page
+                        </button>
+                        @if (!novel()!.prologue) {
+                        <button class="empty-state-btn" (click)="addPrologue()">
+                            <span class="material-symbols-outlined">add</span>
+                            Add Prologue
+                        </button>
+                        }
+                    </div>
                 </div>
                 }
             </div>
@@ -508,9 +797,15 @@
                 </div>
                 } @else {
                 <div class="ne-empty-state">
-                    <span class="material-symbols-outlined">group</span>
-                    <p>Select a character to view details or create a new one.</p>
-                    <button class="ne-btn-primary" (click)="addNewCharacter()">Create Character</button>
+                    <div class="empty-state-icon">
+                        <span class="material-symbols-outlined">group</span>
+                    </div>
+                    <h3 class="empty-state-title">No Character Selected</h3>
+                    <p class="empty-state-text">Select a character from the sidebar to view and edit their details, or create a new character to get started.</p>
+                    <button class="ne-btn-primary" (click)="addNewCharacter()">
+                        <span class="material-symbols-outlined">add</span>
+                        Create Character
+                    </button>
                 </div>
                 }
             </div>
@@ -554,9 +849,15 @@
                 </div>
                 } @else {
                 <div class="ne-empty-state">
-                    <span class="material-symbols-outlined">public</span>
-                    <p>Select a location to view details or create a new one.</p>
-                    <button class="ne-btn-primary" (click)="addNewLocation()">Create Location</button>
+                    <div class="empty-state-icon">
+                        <span class="material-symbols-outlined">public</span>
+                    </div>
+                    <h3 class="empty-state-title">No Location Selected</h3>
+                    <p class="empty-state-text">Select a location from the sidebar to view and edit its details, or create a new location to build your world.</p>
+                    <button class="ne-btn-primary" (click)="addNewLocation()">
+                        <span class="material-symbols-outlined">add</span>
+                        Create Location
+                    </button>
                 </div>
                 }
             </div>
@@ -564,7 +865,12 @@
         </div>
 
         <!-- Right Sidebar: AI & Tools -->
-        <div class="ne-sidebar-right">
+        <div class="ne-sidebar-right" [class.collapsed]="rightSidebarCollapsed()">
+            @if (!rightSidebarCollapsed()) {
+            <button class="sidebar-toggle" (click)="toggleRightSidebar()" title="Hide sidebar">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            }
             <div class="ne-right-tabs">
                 @if (aiService.aiEnabled()) {
                 <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'ai'" (click)="setActiveTab('ai')">
@@ -672,29 +978,82 @@
                     </div>
 
                     <div class="ne-meta-content">
+                        <!-- Writing Statistics -->
+                        <div class="meta-section">
+                            <label>WRITING STATISTICS</label>
+                            <div class="stats-grid">
+                                <div class="stat-card-mini">
+                                    <div class="stat-label-mini">Total Words</div>
+                                    <div class="stat-value-mini">{{ totalNovelWords() | number }}</div>
+                                </div>
+                                <div class="stat-card-mini">
+                                    <div class="stat-label-mini">Avg Chapter</div>
+                                    <div class="stat-value-mini">{{ averageChapterLength() | number }}</div>
+                                </div>
+                                <div class="stat-card-mini">
+                                    <div class="stat-label-mini">Completed</div>
+                                    <div class="stat-value-mini">{{ chaptersCompleted() }}/{{ getTotalChapters() }}</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="meta-section">
                             <label>LOGLINE</label>
-                            <div class="meta-text">{{ novel()!.synopsis.logline }}</div>
+                            <div class="meta-text">{{ novel()!.synopsis.logline || 'No logline set' }}</div>
                         </div>
 
                         <div class="meta-section">
                             <label>THEME</label>
-                            <div class="meta-text">{{ novel()!.synopsis.theme }}</div>
+                            <div class="meta-text">{{ novel()!.synopsis.theme || 'No theme set' }}</div>
                         </div>
 
                         <div class="meta-section">
-                            <label>SCENE CHARACTERS</label>
-                            <div class="pills-row">
-                                <span class="meta-pill">Jara</span>
-                                <span class="meta-pill">Computer</span>
+                            <label>WRITING GOAL</label>
+                            <div class="goal-progress">
+                                <div class="goal-progress-bar">
+                                    <div class="goal-progress-fill" [style.width.%]="getGoalProgress()"></div>
+                                </div>
+                                <div class="goal-progress-text">{{ wordCount() }} / {{ targetWordCount() }} words</div>
                             </div>
                         </div>
+
+                        @if (activeChapterId() && (getMentionedCharacters().length > 0 || getMentionedLocations().length > 0)) {
+                        <div class="meta-section">
+                            <label>MENTIONS IN THIS CHAPTER</label>
+                            @if (getMentionedCharacters().length > 0) {
+                            <div class="mentions-group">
+                                <div class="mentions-label">Characters:</div>
+                                <div class="mentions-list">
+                                    @for (char of getMentionedCharacters(); track char) {
+                                    <span class="mention-badge character-mention">{{ char }}</span>
+                                    }
+                                </div>
+                            </div>
+                            }
+                            @if (getMentionedLocations().length > 0) {
+                            <div class="mentions-group">
+                                <div class="mentions-label">Locations:</div>
+                                <div class="mentions-list">
+                                    @for (loc of getMentionedLocations(); track loc) {
+                                    <span class="mention-badge location-mention">{{ loc }}</span>
+                                    }
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
                     </div>
                 </div>
                 }
             </div>
+            @if (rightSidebarCollapsed()) {
+            <button class="sidebar-toggle right" (click)="toggleRightSidebar()" title="Show sidebar">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            }
         </div>
     </div>
+    }
 
     <!-- Confirm Dialog -->
     @if (deleteModal().isOpen) {
@@ -714,29 +1073,153 @@
     </div>
     }
 
+    <!-- Link Insertion Dialog -->
+    @if (linkModalOpen()) {
+    <div class="ne-modal-overlay" (click)="cancelLinkModal()">
+        <div class="ne-modal" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">
+                Insert Link
+            </div>
+            <div class="ne-modal-body">
+                <div class="ne-modal-input-wrapper">
+                    <label class="ne-modal-label">Link Text</label>
+                    <input 
+                        type="text" 
+                        class="ne-modal-input" 
+                        [value]="linkText()"
+                        (input)="linkText.set($any($event.target).value)"
+                        placeholder="Link text (optional)"
+                    />
+                </div>
+                <div class="ne-modal-input-wrapper" style="margin-top: 16px;">
+                    <label class="ne-modal-label">URL</label>
+                    <input 
+                        type="url" 
+                        class="ne-modal-input" 
+                        [value]="linkUrl()"
+                        (input)="linkUrl.set($any($event.target).value)"
+                        placeholder="https://example.com"
+                        (keydown.enter)="insertLink()"
+                        autofocus
+                    />
+                </div>
+            </div>
+            <div class="ne-modal-footer">
+                <button class="ne-modal-btn cancel" (click)="cancelLinkModal()">Cancel</button>
+                <button class="ne-modal-btn confirm" (click)="insertLink()" [disabled]="!linkUrl().trim()">
+                    Insert
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Version History Modal -->
+    @if (versionHistoryOpen()) {
+    <div class="ne-modal-overlay" (click)="closeVersionHistory()">
+        <div class="ne-modal version-history-modal" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined">history</span>
+                    Version History
+                </div>
+                <button class="modal-close-btn" (click)="closeVersionHistory()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="ne-modal-body version-history-body">
+                @if (versionHistory().length === 0) {
+                <div class="version-history-empty">
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--text-tertiary); opacity: 0.5;">history</span>
+                    <p>No version history available</p>
+                    <p style="font-size: 12px; color: var(--text-tertiary);">Versions are automatically saved as you edit</p>
+                </div>
+                } @else {
+                <div class="version-history-list">
+                    @for (version of versionHistory(); track version.id) {
+                    <div class="version-item" [class.current]="$index === versionHistory().length - 1">
+                        <div class="version-header">
+                            <div class="version-info">
+                                <div class="version-title">
+                                    @if (version.title) {
+                                    {{ version.title }}
+                                    } @else {
+                                    <span style="color: var(--text-tertiary);">Untitled</span>
+                                    }
+                                </div>
+                                <div class="version-meta">
+                                    <span class="version-time">{{ versionHistoryService.formatTimestamp(version.timestamp) }}</span>
+                                    <span class="version-sep">•</span>
+                                    <span class="version-words">{{ version.wordCount }} words</span>
+                                </div>
+                            </div>
+                            @if ($index === versionHistory().length - 1) {
+                            <span class="version-badge current-badge">Current</span>
+                            }
+                        </div>
+                        @if (version.description) {
+                        <div class="version-description">{{ version.description }}</div>
+                        }
+                        <div class="version-actions">
+                            <button class="version-action-btn" (click)="restoreVersion(version.id)" title="Restore this version">
+                                <span class="material-symbols-outlined">restore</span>
+                                Restore
+                            </button>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+            <div class="ne-modal-footer">
+                <button class="ne-modal-btn cancel" (click)="closeVersionHistory()">Close</button>
+            </div>
+        </div>
+    </div>
+    }
+
     <!-- Add Item Dialog -->
     @if (addModal().isOpen) {
     <div class="ne-modal-overlay" (click)="cancelAdd()">
-        <div class="ne-modal" (click)="$event.stopPropagation()">
+        <div class="ne-modal" (click)="$event.stopPropagation()" [class.note-modal]="addModal().type === 'note'">
             <div class="ne-modal-header">
                 {{ addModal().title }}
             </div>
             <div class="ne-modal-body">
                 <div class="ne-modal-input-wrapper">
                     <label class="ne-modal-label">
-                        {{ addModal().type === 'act' ? 'Act/Part Title' : 'Chapter Title' }}
+                        @if (addModal().type === 'act') {
+                            Act/Part Title
+                        } @else if (addModal().type === 'chapter') {
+                            Chapter Title
+                        } @else if (addModal().type === 'note') {
+                            Note Title
+                        }
                     </label>
                     <input 
                         type="text" 
                         class="ne-modal-input" 
                         [value]="addModal().inputValue"
                         (input)="updateAddModalInput($any($event.target).value)"
-                        (keydown.enter)="confirmAdd()"
+                        (keydown.enter)="addModal().type === 'note' ? null : confirmAdd()"
                         (keydown.escape)="cancelAdd()"
                         #addInput
                         autofocus
                     />
                 </div>
+                @if (addModal().type === 'note') {
+                <div class="ne-modal-input-wrapper" style="margin-top: 16px;">
+                    <label class="ne-modal-label">Note Content</label>
+                    <textarea 
+                        class="ne-modal-textarea" 
+                        [value]="addModal().inputValue2 || ''"
+                        (input)="updateAddModalInput2($any($event.target).value)"
+                        (keydown.escape)="cancelAdd()"
+                        placeholder="Enter note content..."
+                        rows="4"
+                    ></textarea>
+                </div>
+                }
             </div>
             <div class="ne-modal-footer">
                 <button class="ne-modal-btn cancel" (click)="cancelAdd()">Cancel</button>

@@ -7,7 +7,7 @@ import { TiptapEditorDirective } from 'ngx-tiptap';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NovelContentService, Chapter, ChapterGroup } from '../../../services/novel-content.service';
-
+import { VersionHistoryService, VersionSnapshot } from '../../../services/version-history.service';
 import { AiService } from '../../../services/ai.service';
 
 @Component({
@@ -20,6 +20,7 @@ import { AiService } from '../../../services/ai.service';
 export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked {
   editor!: Editor;
   novelService = inject(NovelContentService);
+  versionHistoryService = inject(VersionHistoryService);
   aiService = inject(AiService); // Inject AI Service
   route = inject(ActivatedRoute);
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
@@ -36,13 +37,39 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   activeFrontMatterId = signal<string | null>(null);
   activePrologueId = signal<string | null>(null);
 
+  // UI State
+  focusMode = signal(false);
+  fullScreenMode = signal(false);
+  leftSidebarCollapsed = signal(false);
+  rightSidebarCollapsed = signal(false);
+  searchOpen = signal(false);
+  searchQuery = signal('');
+  plotPointsExpanded = signal(true);
+  exportMenuOpen = signal(false);
+  templateMenuOpen = signal(false);
+  
+  // Bulk selection
+  selectedChapters = signal<Set<string>>(new Set());
+  bulkMode = signal(false);
+
   // Time tracking
   sessionStartTime = Date.now();
   elapsedSeconds = signal(0);
   targetWordCount = signal(2500);
+  
+  // Auto-save state
+  isSaving = signal(false);
+  lastSaved = signal<Date | null>(null);
+
+  // Version history state
+  versionHistoryOpen = signal(false);
+  versionHistory = signal<VersionSnapshot[]>([]);
+  canUndo = signal(false);
+  canRedo = signal(false);
 
   // Computed signals from Service
   novel = this.novelService.activeNovel;
+  isLoading = signal(true);
 
   activeCharacter = computed(() => {
     const n = this.novel();
@@ -54,6 +81,34 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const n = this.novel();
     const id = this.selectedLocationId();
     return n?.locations.find(l => l.id === id);
+  });
+
+  activeChapter = computed(() => {
+    const chapterId = this.activeChapterId();
+    if (!chapterId) return null;
+    const novel = this.novel();
+    if (!novel) return null;
+    for (const group of novel.chapters) {
+      const chapter = group.children.find(c => c.id === chapterId);
+      if (chapter) return chapter;
+    }
+    return null;
+  });
+
+  chapterStatus = computed(() => {
+    return this.activeChapter()?.status || 'EMPTY';
+  });
+
+  chapterLastEdited = computed(() => {
+    return this.activeChapter()?.lastEdited || 'Never';
+  });
+
+  chapterTags = computed(() => {
+    return this.activeChapter()?.tags || [];
+  });
+
+  chapterSummary = computed(() => {
+    return this.activeChapter()?.summary || '';
   });
 
   constructor(private router: Router) {
@@ -72,6 +127,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             const text = this.editor.getText();
             const count = text.split(/\s+/).filter(w => w.length > 0).length;
             this.wordCount.set(count);
+            // Create initial snapshot if none exists
+            const versions = this.versionHistoryService.getVersions(chapterId, 'chapter');
+            if (versions.length === 0) {
+              this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
+            }
+            this.updateUndoRedoState(chapterId, 'chapter');
           }
         } else if (frontMatterId) {
           const novel = this.novel();
@@ -82,6 +143,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             const text = this.editor.getText();
             const count = text.split(/\s+/).filter(w => w.length > 0).length;
             this.wordCount.set(count);
+            const versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
+            if (versions.length === 0) {
+              this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', item.content, item.title, count, true);
+            }
+            this.updateUndoRedoState(frontMatterId, 'frontMatter');
           }
         } else if (prologueId) {
           const novel = this.novel();
@@ -92,11 +158,18 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             const text = this.editor.getText();
             const count = text.split(/\s+/).filter(w => w.length > 0).length;
             this.wordCount.set(count);
+            const versions = this.versionHistoryService.getVersions('prologue', 'prologue');
+            if (versions.length === 0) {
+              this.versionHistoryService.addVersion('prologue', 'prologue', prologue.content, prologue.title, count, true);
+            }
+            this.updateUndoRedoState('prologue', 'prologue');
           }
         } else if (!chapterId && !frontMatterId && !prologueId) {
           this.editor.commands.clearContent();
           this.title.set('');
           this.wordCount.set(0);
+          this.canUndo.set(false);
+          this.canRedo.set(false);
         }
       }
     });
@@ -128,7 +201,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id') || '1';
+    this.isLoading.set(true);
     this.novelService.loadNovel(id);
+    // Simulate loading - in real app, this would be based on actual loading state
+    setTimeout(() => {
+      this.isLoading.set(false);
+    }, 300);
 
     this.editor = new Editor({
       extensions: [
@@ -143,18 +221,34 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         const count = text.split(/\s+/).filter(w => w.length > 0).length;
         this.wordCount.set(count);
 
-        // Auto-save to service
-        const activeId = this.activeChapterId();
-        const frontMatterId = this.activeFrontMatterId();
-        const prologueId = this.activePrologueId();
-        
-        if (activeId) {
-          this.novelService.updateChapterContent(activeId, editor.getHTML(), count);
-        } else if (frontMatterId) {
-          this.novelService.updateFrontMatterContent(frontMatterId, editor.getHTML(), count);
-        } else if (prologueId) {
-          this.novelService.updatePrologueContent(editor.getHTML(), count);
-        }
+        // Auto-save to service with debouncing
+        this.isSaving.set(true);
+        clearTimeout((this as any).saveTimeout);
+        (this as any).saveTimeout = setTimeout(() => {
+          const activeId = this.activeChapterId();
+          const frontMatterId = this.activeFrontMatterId();
+          const prologueId = this.activePrologueId();
+          const content = editor.getHTML();
+          const title = this.title();
+          
+          if (activeId) {
+            this.novelService.updateChapterContent(activeId, content, count);
+            // Add version snapshot
+            this.versionHistoryService.addVersion(activeId, 'chapter', content, title, count);
+            this.updateUndoRedoState(activeId, 'chapter');
+          } else if (frontMatterId) {
+            this.novelService.updateFrontMatterContent(frontMatterId, content, count);
+            this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', content, title, count);
+            this.updateUndoRedoState(frontMatterId, 'frontMatter');
+          } else if (prologueId) {
+            this.novelService.updatePrologueContent(content, count);
+            this.versionHistoryService.addVersion('prologue', 'prologue', content, title, count);
+            this.updateUndoRedoState('prologue', 'prologue');
+          }
+          
+          this.isSaving.set(false);
+          this.lastSaved.set(new Date());
+        }, 1000); // 1 second debounce
       }
     });
   }
@@ -321,6 +415,67 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!target.closest('.add-menu-wrapper')) {
       this.addMenuOpen.set(false);
     }
+    if (!target.closest('.search-wrapper')) {
+      this.searchOpen.set(false);
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    // Cmd/Ctrl + K for search
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault();
+      this.toggleSearch();
+      return;
+    }
+
+    // Cmd/Ctrl + S to save (prevent default browser save)
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault();
+      // Auto-save is already handled, but we can show a toast/indicator
+      return;
+    }
+
+    // Cmd/Ctrl + Z for undo
+    if ((event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey) {
+      event.preventDefault();
+      this.performUndo();
+      return;
+    }
+
+    // Cmd/Ctrl + Shift + Z for redo
+    if ((event.metaKey || event.ctrlKey) && event.key === 'z' && event.shiftKey) {
+      event.preventDefault();
+      this.performRedo();
+      return;
+    }
+
+    // Escape to close modals
+    if (event.key === 'Escape') {
+      if (this.addModal().isOpen) {
+        this.cancelAdd();
+      }
+      if (this.deleteModal().isOpen) {
+        this.cancelDelete();
+      }
+      if (this.searchOpen()) {
+        this.searchOpen.set(false);
+      }
+    }
+
+    // Cmd/Ctrl + B for focus mode
+    if ((event.metaKey || event.ctrlKey) && event.key === 'b') {
+      event.preventDefault();
+      this.focusMode.update(v => !v);
+      return;
+    }
+
+    // F11 for fullscreen
+    if (event.key === 'F11') {
+      event.preventDefault();
+      this.toggleFullScreen();
+      return;
+    }
   }
 
   // Add menu state
@@ -329,14 +484,16 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   // Add Modal State
   addModal = signal<{
     isOpen: boolean;
-    type: 'act' | 'chapter' | null;
+    type: 'act' | 'chapter' | 'note' | null;
     title: string;
     inputValue: string;
+    inputValue2?: string; // For notes body
   }>({
     isOpen: false,
     type: null,
     title: '',
-    inputValue: ''
+    inputValue: '',
+    inputValue2: ''
   });
 
   // Chapter management
@@ -393,6 +550,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           }, 10);
         }
       }
+    } else if (modal.type === 'note') {
+      this.novelService.addNote(
+        modal.inputValue.trim(),
+        modal.inputValue2?.trim() || '',
+        this.activeChapterId() || undefined
+      );
     }
 
     this.cancelAdd();
@@ -403,7 +566,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       isOpen: false,
       type: null,
       title: '',
-      inputValue: ''
+      inputValue: '',
+      inputValue2: ''
     });
   }
 
@@ -411,6 +575,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.addModal.update(modal => ({
       ...modal,
       inputValue: value
+    }));
+  }
+
+  updateAddModalInput2(value: string) {
+    this.addModal.update(modal => ({
+      ...modal,
+      inputValue2: value
     }));
   }
 
@@ -439,10 +610,14 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // Note management
   addNewNote() {
-    const title = prompt('Note title:');
-    if (title) {
-      this.novelService.addNote(title, '', this.activeChapterId() || undefined);
-    }
+    this.addModal.set({
+      isOpen: true,
+      type: 'note',
+      title: 'Add New Note',
+      inputValue: '',
+      inputValue2: ''
+    });
+    this.shouldFocusInput = true;
   }
 
   deleteNote(noteId: string) {
@@ -501,6 +676,67 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
+  }
+
+  // Writing goals
+  getGoalProgress(): number {
+    const current = this.wordCount();
+    const target = this.targetWordCount();
+    if (target === 0) return 0;
+    return Math.min(Math.round((current / target) * 100), 100);
+  }
+
+  // Novel statistics
+  totalNovelWords = computed(() => {
+    const novel = this.novel();
+    if (!novel) return 0;
+    let total = 0;
+    novel.chapters.forEach(group => {
+      group.children.forEach(chap => {
+        total += chap.wordCount;
+      });
+    });
+    if (novel.prologue) total += novel.prologue.wordCount;
+    novel.frontMatter.forEach(item => {
+      total += item.wordCount;
+    });
+    return total;
+  });
+
+  averageChapterLength = computed(() => {
+    const novel = this.novel();
+    if (!novel) return 0;
+    let totalChapters = 0;
+    let totalWords = 0;
+    novel.chapters.forEach(group => {
+      group.children.forEach(chap => {
+        totalChapters++;
+        totalWords += chap.wordCount;
+      });
+    });
+    return totalChapters > 0 ? Math.round(totalWords / totalChapters) : 0;
+  });
+
+  chaptersCompleted = computed(() => {
+    const novel = this.novel();
+    if (!novel) return 0;
+    let completed = 0;
+    novel.chapters.forEach(group => {
+      group.children.forEach(chap => {
+        if (chap.status === 'DONE') completed++;
+      });
+    });
+    return completed;
+  });
+
+  getTotalChapters(): number {
+    const novel = this.novel();
+    if (!novel) return 0;
+    let total = 0;
+    novel.chapters.forEach(group => {
+      total += group.children.length;
+    });
+    return total;
   }
 
   // Front Matter Management
@@ -567,5 +803,577 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   // Plot Points
   updatePlotPoint(chapterId: string, plotPoint: 'firstSlap' | 'secondSlap' | 'climax', content: string) {
     this.novelService.updateChapterPlotPoint(chapterId, plotPoint, content);
+  }
+
+  // Chapter Templates
+  chapterTemplates = [
+    { id: 'action', name: 'Action Scene', icon: 'flash_on', content: '<h2>Action Scene</h2><p>Setting: </p><p>Characters: </p><p>Conflict: </p><p>Resolution: </p>' },
+    { id: 'dialogue', name: 'Dialogue Heavy', icon: 'chat_bubble', content: '<h2>Dialogue Scene</h2><p>Characters: </p><p>Topic: </p><p>Outcome: </p>' },
+    { id: 'introspection', name: 'Introspection', icon: 'psychology', content: '<h2>Character Reflection</h2><p>Character: </p><p>Internal Conflict: </p><p>Realization: </p>' },
+    { id: 'transition', name: 'Transition', icon: 'arrow_forward', content: '<h2>Scene Transition</h2><p>From: </p><p>To: </p><p>Time Passage: </p>' }
+  ];
+
+  applyTemplate(templateId: string) {
+    const template = this.chapterTemplates.find(t => t.id === templateId);
+    if (template && this.editor && this.activeChapterId()) {
+      this.editor.commands.setContent(template.content);
+      this.novelService.updateChapterContent(this.activeChapterId()!, template.content, 0);
+    }
+  }
+
+  // Tags management
+  addTagToChapter(chapterId: string, tag: string) {
+    const novel = this.novel();
+    if (!novel) return;
+    
+    for (const group of novel.chapters) {
+      const chapter = group.children.find(c => c.id === chapterId);
+      if (chapter) {
+        const currentTags = chapter.tags || [];
+        if (!currentTags.includes(tag)) {
+          this.novelService.updateChapterTags(chapterId, [...currentTags, tag]);
+        }
+        break;
+      }
+    }
+  }
+
+  removeTagFromChapter(chapterId: string, tag: string) {
+    const novel = this.novel();
+    if (!novel) return;
+    
+    for (const group of novel.chapters) {
+      const chapter = group.children.find(c => c.id === chapterId);
+      if (chapter) {
+        const currentTags = chapter.tags || [];
+        this.novelService.updateChapterTags(chapterId, currentTags.filter(t => t !== tag));
+        break;
+      }
+    }
+  }
+
+  // Chapter summary
+  updateChapterSummary(chapterId: string, summary: string) {
+    this.novelService.updateChapterSummary(chapterId, summary);
+  }
+
+  addTagFromInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const tag = input.value.trim();
+    if (tag && this.activeChapterId()) {
+      this.addTagToChapter(this.activeChapterId()!, tag);
+      input.value = '';
+    }
+  }
+
+  // Version History & Undo/Redo
+  updateUndoRedoState(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue') {
+    this.canUndo.set(this.versionHistoryService.canUndo(contentId, contentType));
+    this.canRedo.set(this.versionHistoryService.canRedo(contentId, contentType));
+  }
+
+  performUndo() {
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+
+    let snapshot: VersionSnapshot | null = null;
+
+    if (activeId) {
+      snapshot = this.versionHistoryService.undo(activeId, 'chapter');
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
+      }
+    } else if (frontMatterId) {
+      snapshot = this.versionHistoryService.undo(frontMatterId, 'frontMatter');
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
+      }
+    } else if (prologueId) {
+      snapshot = this.versionHistoryService.undo('prologue', 'prologue');
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
+      }
+    }
+
+    if (snapshot) {
+      const contentId = activeId || frontMatterId || 'prologue';
+      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
+      this.updateUndoRedoState(contentId, contentType);
+    }
+  }
+
+  performRedo() {
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+
+    let snapshot: VersionSnapshot | null = null;
+
+    if (activeId) {
+      snapshot = this.versionHistoryService.redo(activeId, 'chapter');
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
+      }
+    } else if (frontMatterId) {
+      snapshot = this.versionHistoryService.redo(frontMatterId, 'frontMatter');
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
+      }
+    } else if (prologueId) {
+      snapshot = this.versionHistoryService.redo('prologue', 'prologue');
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
+      }
+    }
+
+    if (snapshot) {
+      const contentId = activeId || frontMatterId || 'prologue';
+      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
+      this.updateUndoRedoState(contentId, contentType);
+    }
+  }
+
+  openVersionHistory() {
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+
+    let versions: VersionSnapshot[] = [];
+
+    if (activeId) {
+      versions = this.versionHistoryService.getVersions(activeId, 'chapter');
+    } else if (frontMatterId) {
+      versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
+    } else if (prologueId) {
+      versions = this.versionHistoryService.getVersions('prologue', 'prologue');
+    }
+
+    this.versionHistory.set(versions);
+    this.versionHistoryOpen.set(true);
+  }
+
+  closeVersionHistory() {
+    this.versionHistoryOpen.set(false);
+  }
+
+  restoreVersion(versionId: string) {
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+
+    let snapshot: VersionSnapshot | null = null;
+
+    if (activeId) {
+      snapshot = this.versionHistoryService.restoreVersion(activeId, 'chapter', versionId);
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
+        // Create immediate snapshot of restored version
+        this.versionHistoryService.addVersion(activeId, 'chapter', snapshot.content, snapshot.title, snapshot.wordCount, true);
+      }
+    } else if (frontMatterId) {
+      snapshot = this.versionHistoryService.restoreVersion(frontMatterId, 'frontMatter', versionId);
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
+        this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', snapshot.content, snapshot.title, snapshot.wordCount, true);
+      }
+    } else if (prologueId) {
+      snapshot = this.versionHistoryService.restoreVersion('prologue', 'prologue', versionId);
+      if (snapshot && this.editor) {
+        this.editor.commands.setContent(snapshot.content);
+        this.title.set(snapshot.title || '');
+        this.wordCount.set(snapshot.wordCount);
+        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
+        this.versionHistoryService.addVersion('prologue', 'prologue', snapshot.content, snapshot.title, snapshot.wordCount, true);
+      }
+    }
+
+    if (snapshot) {
+      const contentId = activeId || frontMatterId || 'prologue';
+      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
+      this.updateUndoRedoState(contentId, contentType);
+      this.closeVersionHistory();
+    }
+  }
+
+  // Character/Location Mentions
+  getMentionedCharacters(): string[] {
+    if (!this.activeChapterId() || !this.editor) return [];
+    const content = this.editor.getText().toLowerCase();
+    const novel = this.novel();
+    if (!novel) return [];
+    
+    return novel.characters
+      .filter(char => content.includes(char.name.toLowerCase()))
+      .map(char => char.name);
+  }
+
+  getMentionedLocations(): string[] {
+    if (!this.activeChapterId() || !this.editor) return [];
+    const content = this.editor.getText().toLowerCase();
+    const novel = this.novel();
+    if (!novel) return [];
+    
+    return novel.locations
+      .filter(loc => content.includes(loc.name.toLowerCase()))
+      .map(loc => loc.name);
+  }
+
+  // Drag & Drop for reordering
+  dragStartIndex = signal<number | null>(null);
+  dragOverIndex = signal<number | null>(null);
+
+  onDragStart(event: DragEvent, index: number, type: 'chapter' | 'group') {
+    this.dragStartIndex.set(index);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  onDragOver(event: DragEvent, index: number) {
+    event.preventDefault();
+    this.dragOverIndex.set(index);
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onDragEnd() {
+    this.dragStartIndex.set(null);
+    this.dragOverIndex.set(null);
+  }
+
+  onDrop(event: DragEvent, dropIndex: number, type: 'chapter' | 'group', groupId?: string) {
+    event.preventDefault();
+    const startIndex = this.dragStartIndex();
+    if (startIndex === null || startIndex === dropIndex) {
+      this.onDragEnd();
+      return;
+    }
+
+    if (type === 'group') {
+      this.novelService.reorderChapterGroup(startIndex, dropIndex);
+    } else if (type === 'chapter' && groupId) {
+      this.novelService.reorderChapter(groupId, startIndex, dropIndex);
+    }
+
+    this.onDragEnd();
+  }
+
+  togglePlotPoints() {
+    this.plotPointsExpanded.update(v => !v);
+  }
+
+  // Search functionality
+  filteredChapters = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    if (!query) return null;
+    
+    const novel = this.novel();
+    if (!novel) return null;
+
+    const results: Array<{type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue', id: string, title: string, subtitle?: string}> = [];
+
+    // Search chapters
+    novel.chapters.forEach(group => {
+      group.children.forEach(chap => {
+        if (chap.title.toLowerCase().includes(query) || chap.content.toLowerCase().includes(query)) {
+          results.push({
+            type: 'chapter',
+            id: chap.id,
+            title: chap.title,
+            subtitle: `Chapter in ${group.title}`
+          });
+        }
+      });
+    });
+
+    // Search characters
+    novel.characters.forEach(char => {
+      if (char.name.toLowerCase().includes(query) || char.description.toLowerCase().includes(query)) {
+        results.push({
+          type: 'character',
+          id: char.id,
+          title: char.name,
+          subtitle: char.role
+        });
+      }
+    });
+
+    // Search locations
+    novel.locations.forEach(loc => {
+      if (loc.name.toLowerCase().includes(query) || loc.description.toLowerCase().includes(query)) {
+        results.push({
+          type: 'location',
+          id: loc.id,
+          title: loc.name,
+          subtitle: loc.type
+        });
+      }
+    });
+
+    // Search front matter
+    novel.frontMatter.forEach(item => {
+      if (item.title.toLowerCase().includes(query) || item.content.toLowerCase().includes(query)) {
+        results.push({
+          type: 'frontMatter',
+          id: item.id,
+          title: item.title,
+          subtitle: this.getFrontMatterTypeLabel(item.type)
+        });
+      }
+    });
+
+    // Search prologue
+    if (novel.prologue) {
+      if (novel.prologue.title.toLowerCase().includes(query) || novel.prologue.content.toLowerCase().includes(query)) {
+        results.push({
+          type: 'prologue',
+          id: 'prologue',
+          title: novel.prologue.title,
+          subtitle: 'Prologue'
+        });
+      }
+    }
+
+    return results;
+  });
+
+  selectSearchResult(result: {type: string, id: string}) {
+    if (result.type === 'chapter') {
+      const novel = this.novel();
+      if (novel) {
+        for (const group of novel.chapters) {
+          const chapter = group.children.find(c => c.id === result.id);
+          if (chapter) {
+            this.selectChapter(chapter);
+            this.setActiveNav('manuscript');
+            break;
+          }
+        }
+      }
+    } else if (result.type === 'character') {
+      this.selectCharacter(result.id);
+      this.setActiveNav('characters');
+    } else if (result.type === 'location') {
+      this.selectLocation(result.id);
+      this.setActiveNav('locations');
+    } else if (result.type === 'frontMatter') {
+      this.selectFrontMatterItem(result.id);
+      this.setActiveNav('structure');
+    } else if (result.type === 'prologue') {
+      this.selectPrologue();
+      this.setActiveNav('structure');
+    }
+    this.searchOpen.set(false);
+    this.searchQuery.set('');
+  }
+
+  // Focus mode
+  toggleFocusMode() {
+    this.focusMode.update(v => !v);
+    if (this.focusMode()) {
+      this.leftSidebarCollapsed.set(true);
+      this.rightSidebarCollapsed.set(true);
+    }
+  }
+
+  // Full screen mode
+  toggleFullScreen() {
+    this.fullScreenMode.update(v => !v);
+    if (this.fullScreenMode()) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  // Bulk operations
+  toggleBulkMode() {
+    this.bulkMode.update(v => !v);
+    if (!this.bulkMode()) {
+      this.selectedChapters.set(new Set());
+    }
+  }
+
+  toggleChapterSelection(chapterId: string) {
+    const selected = new Set(this.selectedChapters());
+    if (selected.has(chapterId)) {
+      selected.delete(chapterId);
+    } else {
+      selected.add(chapterId);
+    }
+    this.selectedChapters.set(selected);
+  }
+
+  bulkDeleteChapters() {
+    const selected = Array.from(this.selectedChapters());
+    if (selected.length === 0) return;
+    
+    const novel = this.novel();
+    if (!novel) return;
+    
+    // Delete all selected chapters
+    selected.forEach(chapterId => {
+      this.novelService.deleteChapter(chapterId);
+      if (this.activeChapterId() === chapterId) {
+        this.activeChapterId.set(null);
+        this.title.set('');
+        this.editor.commands.clearContent();
+      }
+    });
+
+    this.selectedChapters.set(new Set());
+    this.bulkMode.set(false);
+  }
+
+  bulkMoveChapters(targetGroupId: string) {
+    const selected = Array.from(this.selectedChapters());
+    if (selected.length === 0) return;
+    
+    // Move logic would go here
+    this.selectedChapters.set(new Set());
+    this.bulkMode.set(false);
+  }
+
+  // Sidebar toggles
+  toggleLeftSidebar() {
+    this.leftSidebarCollapsed.update(v => !v);
+  }
+
+  toggleRightSidebar() {
+    this.rightSidebarCollapsed.update(v => !v);
+  }
+
+  // UI toggles
+  toggleSearch() {
+    this.searchOpen.update(v => !v);
+  }
+
+  toggleExportMenu() {
+    this.exportMenuOpen.update(v => !v);
+  }
+
+  toggleTemplateMenu() {
+    this.templateMenuOpen.update(v => !v);
+  }
+
+  // Link insertion
+  linkModalOpen = signal(false);
+  linkUrl = signal('');
+  linkText = signal('');
+
+  openLinkModal() {
+    if (!this.editor) return;
+    const selectedText = this.editor.state.selection.empty 
+      ? '' 
+      : this.editor.state.doc.textBetween(
+          this.editor.state.selection.from,
+          this.editor.state.selection.to
+        );
+    this.linkText.set(selectedText);
+    this.linkUrl.set('');
+    this.linkModalOpen.set(true);
+  }
+
+  insertLink() {
+    if (!this.editor || !this.linkUrl().trim()) return;
+    const url = this.linkUrl().trim();
+    const text = this.linkText().trim() || url;
+    
+    if (this.editor.state.selection.empty) {
+      this.editor.chain().focus().insertContent(`<a href="${url}">${text}</a>`).run();
+    } else {
+      this.editor.chain().focus().setLink({ href: url }).run();
+    }
+    
+    this.linkModalOpen.set(false);
+    this.linkUrl.set('');
+    this.linkText.set('');
+  }
+
+  cancelLinkModal() {
+    this.linkModalOpen.set(false);
+    this.linkUrl.set('');
+    this.linkText.set('');
+  }
+
+  // Export functionality
+  exportNovel(format: 'pdf' | 'docx' | 'md' | 'html') {
+    const novel = this.novel();
+    if (!novel) return;
+
+    let content = '';
+    let filename = novel.title.toLowerCase().replace(/\s+/g, '-');
+
+    if (format === 'html' || format === 'md') {
+      // Build HTML/Markdown content
+      content = `<h1>${novel.title}</h1>\n\n`;
+      
+      // Front Matter
+      if (novel.frontMatter.length > 0) {
+        content += '<h2>Front Matter</h2>\n';
+        novel.frontMatter.forEach(item => {
+          content += `<h3>${item.title}</h3>\n${item.content}\n\n`;
+        });
+      }
+
+      // Prologue
+      if (novel.prologue) {
+        content += `<h2>${novel.prologue.title}</h2>\n${novel.prologue.content}\n\n`;
+      }
+
+      // Chapters
+      novel.chapters.forEach(group => {
+        content += `<h2>${group.title}</h2>\n`;
+        group.children.forEach(chap => {
+          content += `<h3>${chap.title}</h3>\n${chap.content}\n\n`;
+        });
+      });
+
+      const blob = new Blob([content], { type: format === 'html' ? 'text/html' : 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'pdf') {
+      window.print();
+    } else if (format === 'docx') {
+      // For DOCX, we'd need a library like docx.js
+      // For now, export as HTML which can be opened in Word
+      const blob = new Blob([content], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   }
 }
