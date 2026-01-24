@@ -312,6 +312,7 @@
     display: flex;
     gap: 0;
     border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-app);
     padding: 0 16px;
     height: 36px;
