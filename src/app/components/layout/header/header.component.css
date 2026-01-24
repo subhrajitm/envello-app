@@ -201,7 +201,7 @@
     position: fixed;
     left: 0;
     top: 48px;
-    bottom: 0;
+    bottom: 24px; /* Account for footer height */
     width: 240px;
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
