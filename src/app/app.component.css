@@ -17,6 +17,15 @@
     flex-direction: column;
     gap: 12px;
     min-height: 0;
+    transition: margin-left 0.3s ease;
+}
+
+.dashboard-content.with-sidebar:not(.immersive-view) {
+    margin-left: 240px;
+}
+
+.dashboard-content.with-sidebar:not(.immersive-view).sidebar-collapsed {
+    margin-left: 64px;
 }
 
 .dashboard-content.no-padding {
@@ -64,5 +73,13 @@
 @media (max-width: 768px) {
     .dashboard-content {
         padding: 0;
+    }
+
+    .dashboard-content.with-sidebar {
+        margin-left: 56px;
+    }
+
+    .dashboard-content.with-sidebar.sidebar-collapsed {
+        margin-left: 56px;
     }
 }

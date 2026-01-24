@@ -1,4 +1,4 @@
-import { Component, Input, inject, ViewChild } from '@angular/core';
+import { Component, Input, inject, ViewChild, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../../services/theme.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -21,6 +21,7 @@ import { ProfileEditorComponent } from '../../profile-editor/profile-editor.comp
 export class HeaderComponent {
   @Input() activeTab = 'Overview';
   @Input() isImmersive = false;
+  @Output() sidebarCollapsedChange = new EventEmitter<boolean>();
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
   @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
@@ -37,6 +38,9 @@ export class HeaderComponent {
   unreadCount = this.notificationService.unreadCount;
   userInitials = this.userService.userInitials;
 
+  // Sidebar state - default to collapsed (minimized)
+  sidebarCollapsed = signal(true);
+
   tabs = [
     'Overview',
     'Daily Notes',
@@ -50,6 +54,21 @@ export class HeaderComponent {
     'Code Snippets',
     'Brainstorming',
   ];
+
+  // Icon mapping for each tab
+  tabIcons: Record<string, string> = {
+    'Overview': 'dashboard',
+    'Daily Notes': 'note',
+    'Novels/Fiction': 'menu_book',
+    'Journals': 'book',
+    'Research': 'science',
+    'Articles/Blogs': 'article',
+    'Meetings': 'groups',
+    'Tasks/Todos': 'checklist',
+    'Books/Reading': 'auto_stories',
+    'Code Snippets': 'code',
+    'Brainstorming': 'lightbulb',
+  };
 
   get theme(): Theme {
     return this.themeService.theme();
@@ -118,5 +137,14 @@ export class HeaderComponent {
 
   handleOpenProfile() {
     this.profileEditor?.open();
+  }
+
+  toggleSidebar() {
+    this.sidebarCollapsed.set(!this.sidebarCollapsed());
+    this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
+  }
+
+  getTabIcon(tab: string): string {
+    return this.tabIcons[tab] || 'circle';
   }
 }

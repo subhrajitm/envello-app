@@ -1,7 +1,16 @@
 <div class="dashboard">
-  <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"></app-header>
+  <app-header 
+    [activeTab]="currentTab()" 
+    [isImmersive]="isImmersive()"
+    (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
+  </app-header>
 
-  <div class="dashboard-content" [class.no-padding]="hasSidebar()" [class.immersive-view]="isImmersive()">
+  <div 
+    class="dashboard-content" 
+    [class.no-padding]="hasSidebar()" 
+    [class.immersive-view]="isImmersive()"
+    [class.with-sidebar]="!isImmersive()"
+    [class.sidebar-collapsed]="sidebarCollapsed()">
     <router-outlet></router-outlet>
   </div>
 

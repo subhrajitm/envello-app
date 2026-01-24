@@ -20,6 +20,7 @@ export class AppComponent implements OnInit {
   currentTab = signal('Overview');
   hasSidebar = signal(true);
   isImmersive = signal(false);
+  sidebarCollapsed = signal(true);
 
   ngOnInit() {
     this.router.events.pipe(
@@ -56,5 +57,9 @@ export class AppComponent implements OnInit {
       'bin': 'Bin'
     };
     return map[url] || 'Overview';
+  }
+
+  onSidebarCollapsedChange(collapsed: boolean) {
+    this.sidebarCollapsed.set(collapsed);
   }
 }
