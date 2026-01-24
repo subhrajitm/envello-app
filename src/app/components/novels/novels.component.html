@@ -27,12 +27,91 @@
                     <span class="material-symbols-outlined icon-sm">grid_view</span>
                 </button>
             </div>
-            <button class="control-btn-dark" (click)="toggleStatusFilter()">
-                Status: {{ statusFilter() }}
-            </button>
-            <button class="control-btn-dark" (click)="toggleSort()">
-                Sort: {{ sortBy() }}
-            </button>
+            <div class="custom-dropdown-wrapper">
+                <button class="custom-dropdown-trigger" (click)="toggleStatusDropdown()" [class.active]="statusDropdownOpen()">
+                    <span class="material-symbols-outlined dropdown-icon">{{ getStatusIcon(statusFilter()) }}</span>
+                    <span class="dropdown-label">{{ getStatusLabel(statusFilter()) }}</span>
+                    <span class="material-symbols-outlined dropdown-arrow" [class.open]="statusDropdownOpen()">expand_more</span>
+                </button>
+                @if (statusDropdownOpen()) {
+                <div class="custom-dropdown-menu">
+                    <button class="dropdown-option" [class.selected]="statusFilter() === 'ALL'" (click)="selectStatus('ALL')">
+                        <span class="material-symbols-outlined option-icon">filter_alt</span>
+                        <span class="option-label">All Statuses</span>
+                        @if (statusFilter() === 'ALL') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                    <button class="dropdown-option" [class.selected]="statusFilter() === 'DRAFTING'" (click)="selectStatus('DRAFTING')">
+                        <span class="material-symbols-outlined option-icon">edit</span>
+                        <span class="option-label">Drafting</span>
+                        @if (statusFilter() === 'DRAFTING') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                    <button class="dropdown-option" [class.selected]="statusFilter() === 'PLANNING'" (click)="selectStatus('PLANNING')">
+                        <span class="material-symbols-outlined option-icon">lightbulb</span>
+                        <span class="option-label">Planning</span>
+                        @if (statusFilter() === 'PLANNING') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                    <button class="dropdown-option" [class.selected]="statusFilter() === 'REVISING'" (click)="selectStatus('REVISING')">
+                        <span class="material-symbols-outlined option-icon">autorenew</span>
+                        <span class="option-label">Revising</span>
+                        @if (statusFilter() === 'REVISING') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                    <button class="dropdown-option" [class.selected]="statusFilter() === 'PUBLISHED'" (click)="selectStatus('PUBLISHED')">
+                        <span class="material-symbols-outlined option-icon">check_circle</span>
+                        <span class="option-label">Published</span>
+                        @if (statusFilter() === 'PUBLISHED') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                </div>
+                }
+            </div>
+            <div class="custom-dropdown-wrapper">
+                <button class="custom-dropdown-trigger" (click)="toggleSortDropdown()" [class.active]="sortDropdownOpen()">
+                    <span class="material-symbols-outlined dropdown-icon">{{ getSortIcon(sortBy()) }}</span>
+                    <span class="dropdown-label">{{ getSortLabel(sortBy()) }}</span>
+                    <span class="material-symbols-outlined dropdown-arrow" [class.open]="sortDropdownOpen()">expand_more</span>
+                </button>
+                @if (sortDropdownOpen()) {
+                <div class="custom-dropdown-menu">
+                    <button class="dropdown-option" [class.selected]="sortBy() === 'UPDATED'" (click)="selectSort('UPDATED')">
+                        <span class="material-symbols-outlined option-icon">schedule</span>
+                        <span class="option-label">Last Updated</span>
+                        @if (sortBy() === 'UPDATED') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                    <button class="dropdown-option" [class.selected]="sortBy() === 'CREATED'" (click)="selectSort('CREATED')">
+                        <span class="material-symbols-outlined option-icon">calendar_today</span>
+                        <span class="option-label">Date Created</span>
+                        @if (sortBy() === 'CREATED') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                    <button class="dropdown-option" [class.selected]="sortBy() === 'TITLE'" (click)="selectSort('TITLE')">
+                        <span class="material-symbols-outlined option-icon">sort_by_alpha</span>
+                        <span class="option-label">Title</span>
+                        @if (sortBy() === 'TITLE') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                    <button class="dropdown-option" [class.selected]="sortBy() === 'PROGRESS'" (click)="selectSort('PROGRESS')">
+                        <span class="material-symbols-outlined option-icon">trending_up</span>
+                        <span class="option-label">Progress</span>
+                        @if (sortBy() === 'PROGRESS') {
+                        <span class="material-symbols-outlined check-icon">check</span>
+                        }
+                    </button>
+                </div>
+                }
+            </div>
         </div>
     </div>
 

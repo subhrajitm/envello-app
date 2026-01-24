@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StoreService } from '../../services/store.service';
@@ -17,6 +17,8 @@ export class NovelsComponent {
   viewMode = signal<'LIST' | 'GRID'>('LIST');
   statusFilter = signal<'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED'>('ALL');
   sortBy = signal<'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'>('UPDATED');
+  statusDropdownOpen = signal(false);
+  sortDropdownOpen = signal(false);
 
   novels = computed(() => {
     let list = this.store.novels();
@@ -57,18 +59,63 @@ export class NovelsComponent {
     this.viewMode.set(mode);
   }
 
-  toggleStatusFilter() {
-    const states: any[] = ['ALL', 'DRAFTING', 'PLANNING', 'REVISING', 'PUBLISHED'];
-    const currentIdx = states.indexOf(this.statusFilter());
-    const nextIdx = (currentIdx + 1) % states.length;
-    this.statusFilter.set(states[nextIdx]);
+  toggleStatusDropdown() {
+    this.statusDropdownOpen.update(v => !v);
+    if (this.statusDropdownOpen()) {
+      this.sortDropdownOpen.set(false);
+    }
   }
 
-  toggleSort() {
-    const sorts: any[] = ['UPDATED', 'TITLE', 'PROGRESS'];
-    const currentIdx = sorts.indexOf(this.sortBy());
-    const nextIdx = (currentIdx + 1) % sorts.length;
-    this.sortBy.set(sorts[nextIdx]);
+  toggleSortDropdown() {
+    this.sortDropdownOpen.update(v => !v);
+    if (this.sortDropdownOpen()) {
+      this.statusDropdownOpen.set(false);
+    }
+  }
+
+  selectStatus(status: 'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED') {
+    this.statusFilter.set(status);
+    this.statusDropdownOpen.set(false);
+  }
+
+  selectSort(sort: 'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS') {
+    this.sortBy.set(sort);
+    this.sortDropdownOpen.set(false);
+  }
+
+  getStatusIcon(status: string): string {
+    switch (status) {
+      case 'ALL': return 'filter_alt';
+      case 'DRAFTING': return 'edit';
+      case 'PLANNING': return 'lightbulb';
+      case 'REVISING': return 'autorenew';
+      case 'PUBLISHED': return 'check_circle';
+      default: return 'filter_alt';
+    }
+  }
+
+  getStatusLabel(status: string): string {
+    return status;
+  }
+
+  getSortIcon(sort: string): string {
+    switch (sort) {
+      case 'UPDATED': return 'schedule';
+      case 'CREATED': return 'calendar_today';
+      case 'TITLE': return 'sort_by_alpha';
+      case 'PROGRESS': return 'trending_up';
+      default: return 'sort';
+    }
+  }
+
+  getSortLabel(sort: string): string {
+    switch (sort) {
+      case 'UPDATED': return 'Last Updated';
+      case 'CREATED': return 'Date Created';
+      case 'TITLE': return 'Title';
+      case 'PROGRESS': return 'Progress';
+      default: return sort;
+    }
   }
 
   getStatusColor(status: string) {
@@ -90,5 +137,14 @@ export class NovelsComponent {
 
   openNovel(id: string) {
     this.router.navigate(['/novels', id]);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.custom-dropdown-wrapper')) {
+      this.statusDropdownOpen.set(false);
+      this.sortDropdownOpen.set(false);
+    }
   }
 }
