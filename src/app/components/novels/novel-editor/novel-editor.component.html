@@ -31,705 +31,149 @@
 
             <!-- MANUSCRIPT VIEW -->
             @if (activeNav() === 'manuscript' && novel()) {
-            <div class="ne-chapters-section">
-                <div class="ne-chap-header">
-                    CHAPTERS
-                    <div style="display: flex; align-items: center; gap: 4px;">
-                        @if (bulkMode()) {
-                        <button class="ne-toolbar-btn" (click)="bulkDeleteChapters()" 
-                                [disabled]="selectedChapters().size === 0"
-                                title="Delete selected">
-                            <span class="material-symbols-outlined">delete</span>
-                        </button>
-                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Exit bulk mode">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                        } @else {
-                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Bulk select">
-                            <span class="material-symbols-outlined">checklist</span>
-                        </button>
-                        }
-                        <div class="add-menu-wrapper" style="position: relative;">
-                            <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu(); $event.stopPropagation()"
-                                title="Add new item">add</span>
-                            @if (addMenuOpen()) {
-                            <div class="add-dropdown-menu">
-                                <button class="add-dropdown-option" (click)="addNewActOrPart(); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">folder</span>
-                                    <span class="option-label">Add Act/Part</span>
-                                </button>
-                                <button class="add-dropdown-option" (click)="addNewChapter(); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">description</span>
-                                    <span class="option-label">Add Chapter</span>
-                                </button>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-                <div class="ne-chapter-list">
-                    @for (group of novel()!.chapters; track group.id; let i = $index) {
-                    <div class="ne-chapter-group" 
-                         [class.drag-over]="dragOverIndex() === i && dragStartIndex() !== null"
-                         draggable="true"
-                         (dragstart)="onDragStart($event, i, 'group')"
-                         (dragover)="onDragOver($event, i)"
-                         (dragend)="onDragEnd()"
-                         (drop)="onDrop($event, i, 'group')">
-                        <div class="ne-chapter-item group-header" (click)="toggleChapter(group)">
-                            <button class="ne-collapse-btn">
-                                <span class="material-symbols-outlined">
-                                    {{ group.expanded ? 'expand_more' : 'chevron_right' }}
-                                </span>
-                            </button>
-                            <div class="ne-chap-info">
-                                <div class="ne-chap-title"
-                                    style="font-weight: 700; font-size: 11px; text-transform: uppercase;">
-                                    {{ group.title }}
-                                </div>
-                            </div>
-                            <span class="material-symbols-outlined list-delete chapter-delete group-delete"
-                                (click)="deleteGroup(group.id, group.title); $event.stopPropagation()"
-                                title="Delete act/part">delete</span>
-                        </div>
-                        @if (group.expanded) {
-                        <div class="ne-scene-list">
-                            @for (chap of group.children; track chap.id; let j = $index) {
-                            <div class="ne-chapter-item" 
-                                 [class.active]="activeChapterId() === chap.id"
-                                 [class.selected]="selectedChapters().has(chap.id)"
-                                 [class.drag-over]="dragOverIndex() === j && dragStartIndex() !== null"
-                                 [draggable]="!bulkMode()"
-                                 (dragstart)="onDragStart($event, j, 'chapter')"
-                                 (dragover)="onDragOver($event, j)"
-                                 (dragend)="onDragEnd()"
-                                 (drop)="onDrop($event, j, 'chapter', group.id)"
-                                 (click)="bulkMode() ? toggleChapterSelection(chap.id) : selectChapter(chap)">
-                                @if (bulkMode()) {
-                                <input type="checkbox" 
-                                       [checked]="selectedChapters().has(chap.id)"
-                                       (click)="$event.stopPropagation()"
-                                       (change)="toggleChapterSelection(chap.id)"
-                                       class="bulk-checkbox" />
-                                }
-                                <div class="ne-chap-info">
-                                    <div class="ne-chap-title">{{ chap.title }}</div>
-                                    <div class="ne-chap-meta">
-                                        <span class="ne-draft-tag">{{ chap.status }}</span> • {{ chap.wordCount }} w
-                                    </div>
-                                </div>
-                                <span class="material-symbols-outlined list-delete chapter-delete"
-                                    (click)="deleteChapter(chap.id, chap.title); $event.stopPropagation()"
-                                    title="Delete chapter">delete</span>
-                            </div>
-                            }
-                        </div>
-                        }
-                    </div>
-                    }
-                </div>
-            </div>
+            <app-chapters-list
+                [chapters]="novel()!.chapters"
+                [activeChapterId]="activeChapterId()"
+                [bulkMode]="bulkMode()"
+                [selectedChapters]="selectedChapters()"
+                [addMenuOpen]="addMenuOpen()"
+                (selectChapter)="selectChapter($event)"
+                (toggleChapter)="toggleChapter($event)"
+                (deleteChapter)="deleteChapter($event.id, $event.title)"
+                (deleteGroup)="deleteGroup($event.id, $event.title)"
+                (toggleBulkMode)="toggleBulkMode()"
+                (bulkDelete)="bulkDeleteChapters()"
+                (toggleAddMenu)="toggleAddMenu()"
+                (addNewActOrPart)="addNewActOrPart()"
+                (addNewChapter)="addNewChapter()"
+                (toggleChapterSelection)="toggleChapterSelection($event)"
+            />
             }
 
             <!-- STRUCTURE VIEW -->
             @if (activeNav() === 'structure' && novel()) {
-            <div class="ne-chapters-section">
-                <!-- Front Matter Section -->
-                <div class="ne-structure-section">
-                    <div class="ne-chap-header">
-                        FRONT MATTER
-                        <div class="add-menu-wrapper" style="position: relative;">
-                            <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu(); $event.stopPropagation()"
-                                title="Add front matter">add</span>
-                            @if (addMenuOpen()) {
-                            <div class="add-dropdown-menu">
-                                <button class="add-dropdown-option" (click)="addFrontMatterItem('title-page'); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">title</span>
-                                    <span class="option-label">Title Page</span>
-                                </button>
-                                <button class="add-dropdown-option" (click)="addFrontMatterItem('copyright'); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">copyright</span>
-                                    <span class="option-label">Copyright Page</span>
-                                </button>
-                                <button class="add-dropdown-option" (click)="addFrontMatterItem('toc'); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">list</span>
-                                    <span class="option-label">Table of Contents</span>
-                                </button>
-                                <button class="add-dropdown-option" (click)="addFrontMatterItem('dedication'); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">favorite</span>
-                                    <span class="option-label">Dedication</span>
-                                </button>
-                                <button class="add-dropdown-option" (click)="addFrontMatterItem('foreword'); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">menu_book</span>
-                                    <span class="option-label">Foreword</span>
-                                </button>
-                                <button class="add-dropdown-option" (click)="addFrontMatterItem('preface'); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">description</span>
-                                    <span class="option-label">Preface</span>
-                                </button>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                    <div class="ne-chapter-list">
-                        @for (item of novel()!.frontMatter; track item.id) {
-                        <div class="ne-chapter-item" [class.active]="activeFrontMatterId() === item.id"
-                            (click)="selectFrontMatterItem(item.id)">
-                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-primary);">
-                                {{ getFrontMatterTypeIcon(item.type) }}
-                            </span>
-                            <div class="ne-chap-info">
-                                <div class="ne-chap-title">{{ item.title }}</div>
-                                <div class="ne-chap-meta">{{ item.wordCount }} w</div>
-                            </div>
-                            <span class="material-symbols-outlined list-delete chapter-delete"
-                                (click)="deleteFrontMatterItem(item.id, item.title); $event.stopPropagation()"
-                                title="Delete">delete</span>
-                        </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Prologue Section -->
-                <div class="ne-structure-section" style="margin-top: 24px;">
-                    <div class="ne-chap-header">
-                        PROLOGUE
-                        @if (!novel()!.prologue) {
-                        <span class="material-symbols-outlined icon-add" (click)="addPrologue()" title="Add prologue">add</span>
-                        }
-                    </div>
-                    @if (novel()!.prologue; as prologue) {
-                    <div class="ne-chapter-list">
-                        <div class="ne-chapter-item" [class.active]="activePrologueId() === 'prologue'"
-                            (click)="selectPrologue()">
-                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-primary);">menu_book</span>
-                            <div class="ne-chap-info">
-                                <div class="ne-chap-title">{{ prologue.title }}</div>
-                                <div class="ne-chap-meta">
-                                    <span class="ne-draft-tag">{{ prologue.status }}</span> • {{ prologue.wordCount }} w
-                                </div>
-                            </div>
-                            <span class="material-symbols-outlined list-delete chapter-delete"
-                                (click)="deletePrologue(); $event.stopPropagation()" title="Delete prologue">delete</span>
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
+            <app-structure-view
+                [frontMatter]="novel()!.frontMatter"
+                [prologue]="novel()!.prologue || null"
+                [activeFrontMatterId]="activeFrontMatterId()"
+                [activePrologueId]="activePrologueId()"
+                [addMenuOpen]="addMenuOpen()"
+                (selectFrontMatterItem)="selectFrontMatterItem($event)"
+                (selectPrologue)="selectPrologue()"
+                (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
+                (deletePrologue)="deletePrologue()"
+                (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()"
+                (toggleAddMenu)="toggleAddMenu()"
+            />
             }
 
             <!-- CHARACTERS VIEW -->
             @if (activeNav() === 'characters' && novel()) {
-            <div class="ne-list-section">
-                <div class="ne-chap-header">
-                    CAST LIST
-                    <span class="material-symbols-outlined icon-add" (click)="addNewCharacter()"
-                        title="Add new character">add</span>
-                </div>
-                <div class="ne-simple-list">
-                    @for (char of novel()!.characters; track char.id) {
-                    <div class="ne-list-item" (click)="selectCharacter(char.id)"
-                        [class.active]="selectedCharacterId() === char.id">
-                        <div class="ne-avatar-mini">
-                            <span class="material-symbols-outlined">account_circle</span>
-                        </div>
-                        <div class="list-info">
-                            <div class="list-title">{{ char.name }}</div>
-                            <div class="list-sub">{{ char.role }}</div>
-                        </div>
-                        <span class="material-symbols-outlined list-delete"
-                            (click)="deleteCharacter(char.id, char.name); $event.stopPropagation()"
-                            title="Delete character">delete</span>
-                    </div>
-                    }
-                </div>
-            </div>
+            <app-characters-list
+                [characters]="novel()!.characters"
+                [selectedCharacterId]="selectedCharacterId()"
+                (selectCharacter)="selectCharacter($event)"
+                (deleteCharacter)="deleteCharacter($event.id, $event.name)"
+                (addNewCharacter)="addNewCharacter()"
+            />
             }
 
             <!-- LOCATIONS VIEW -->
             @if (activeNav() === 'locations' && novel()) {
-            <div class="ne-list-section">
-                <div class="ne-chap-header">
-                    WORLD BUILDING
-                    <span class="material-symbols-outlined icon-add" (click)="addNewLocation()"
-                        title="Add new location">add</span>
-                </div>
-                <div class="ne-simple-list">
-                    @for (loc of novel()!.locations; track loc.id) {
-                    <div class="ne-list-item" (click)="selectLocation(loc.id)"
-                        [class.active]="selectedLocationId() === loc.id">
-                        <div class="ne-avatar-mini loc-mini">
-                            <span class="material-symbols-outlined">public</span>
-                        </div>
-                        <div class="list-info">
-                            <div class="list-title">{{ loc.name }}</div>
-                            <div class="list-sub">{{ loc.type }}</div>
-                        </div>
-                        <span class="material-symbols-outlined list-delete"
-                            (click)="deleteLocation(loc.id, loc.name); $event.stopPropagation()"
-                            title="Delete location">delete</span>
-                    </div>
-                    }
-                </div>
-            </div>
+            <app-locations-list
+                [locations]="novel()!.locations"
+                [selectedLocationId]="selectedLocationId()"
+                (selectLocation)="selectLocation($event)"
+                (deleteLocation)="deleteLocation($event.id, $event.name)"
+                (addNewLocation)="addNewLocation()"
+            />
             }
 
-            <div class="ne-sync-status">
-                <div class="sync-line"></div>
-                <div class="sync-info">
-                    <div class="stat-item" title="Current word count">
-                        <span class="stat-label">WORDS</span>
-                        <span class="stat-value">{{ wordCount() }}</span>
-                    </div>
-                    <div class="stat-item" title="Session time">
-                        <span class="stat-label">TIME</span>
-                        <span class="stat-value">{{ getFormattedTime() }}</span>
-                    </div>
-                    @if (activeChapterId()) {
-                    <div class="stat-item" title="Progress toward goal">
-                        <span class="stat-label">GOAL</span>
-                        <span class="stat-value">{{ getGoalProgress() }}%</span>
-                    </div>
-                    }
-                </div>
-                @if (!leftSidebarCollapsed()) {
-                <button class="sidebar-toggle right" (click)="toggleLeftSidebar()" title="Hide sidebar (⌘+←)">
-                    <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                }
-            </div>
+            <app-sync-status
+                [wordCount]="wordCount()"
+                [formattedTime]="getFormattedTime()"
+                [goalProgress]="activeChapterId() ? getGoalProgress() : null"
+                [leftSidebarCollapsed]="leftSidebarCollapsed()"
+                (toggleSidebar)="toggleLeftSidebar()"
+            />
         </div>
 
         <!-- Editor Canvas -->
         <div class="ne-editor-area" [class.focus-mode]="focusMode()">
-            <!-- Editor Header with Tabs -->
-            <div class="ne-editor-header">
-                <div class="ne-editor-tabs">
-                    <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
-                        (click)="setActiveNav('manuscript')">
-                        <span class="material-symbols-outlined tab-icon">description</span>
-                        Manuscript
-                    </button>
-                    <button class="ne-editor-tab" [class.active]="activeNav() === 'structure'"
-                        (click)="setActiveNav('structure')">
-                        <span class="material-symbols-outlined tab-icon">menu_book</span>
-                        Structure
-                    </button>
-                    <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
-                        (click)="setActiveNav('characters')">
-                        <span class="material-symbols-outlined tab-icon">group</span>
-                        Characters
-                    </button>
-                    <button class="ne-editor-tab" [class.active]="activeNav() === 'locations'"
-                        (click)="setActiveNav('locations')">
-                        <span class="material-symbols-outlined tab-icon">public</span>
-                        Locations
-                    </button>
-                </div>
-                <!-- Editor Actions (moved back to header) -->
-                <div class="ne-editor-actions">
-                    <!-- Undo/Redo -->
-                    <div class="undo-redo-group">
-                        <button class="action-btn" 
-                                (click)="performUndo()" 
-                                [disabled]="!canUndo()"
-                                title="Undo (⌘+Z)">
-                            <span class="material-symbols-outlined">undo</span>
-                        </button>
-                        <button class="action-btn" 
-                                (click)="performRedo()" 
-                                [disabled]="!canRedo()"
-                                title="Redo (⌘+Shift+Z)">
-                            <span class="material-symbols-outlined">redo</span>
-                        </button>
-                    </div>
-                    <div class="action-divider"></div>
-                    <!-- Search -->
-                    <div class="search-wrapper" style="position: relative;">
-                        <button class="action-btn" (click)="toggleSearch()" title="Search (⌘+K)">
-                            <span class="material-symbols-outlined">search</span>
-                        </button>
-                        @if (searchOpen()) {
-                        <div class="search-dropdown">
-                            <div class="search-input-wrapper">
-                                <span class="material-symbols-outlined search-icon">search</span>
-                                <input 
-                                    type="text" 
-                                    class="search-input" 
-                                    [value]="searchQuery()"
-                                    (input)="searchQuery.set($any($event.target).value)"
-                                    placeholder="Search chapters, characters, locations..."
-                                    autofocus
-                                />
-                                @if (searchQuery()) {
-                                <button class="search-clear" (click)="searchQuery.set('')">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                                }
-                            </div>
-                            @if (filteredChapters() && filteredChapters()!.length > 0) {
-                            <div class="search-results">
-                                @for (result of filteredChapters()!; track result.id) {
-                                <button class="search-result-item" (click)="selectSearchResult(result)">
-                                    <span class="material-symbols-outlined result-icon">
-                                        @if (result.type === 'chapter') { description }
-                                        @else if (result.type === 'character') { account_circle }
-                                        @else if (result.type === 'location') { public }
-                                        @else if (result.type === 'frontMatter') { menu_book }
-                                        @else if (result.type === 'prologue') { menu_book }
-                                    </span>
-                                    <div class="result-content">
-                                        <div class="result-title">{{ result.title }}</div>
-                                        @if (result.subtitle) {
-                                        <div class="result-subtitle">{{ result.subtitle }}</div>
-                                        }
-                                    </div>
-                                </button>
-                                }
-                            </div>
-                            } @else if (searchQuery() && filteredChapters()?.length === 0) {
-                            <div class="search-empty">No results found</div>
-                            }
-                        </div>
-                        }
-                    </div>
-                    <!-- Focus Mode -->
-                    <button class="action-btn" (click)="toggleFocusMode()" [class.active]="focusMode()" title="Focus Mode (⌘+B)">
-                        <span class="material-symbols-outlined">center_focus_strong</span>
-                    </button>
-                    <!-- Full Screen -->
-                    <button class="action-btn" (click)="toggleFullScreen()" [class.active]="fullScreenMode()" title="Full Screen (F11)">
-                        <span class="material-symbols-outlined">fullscreen</span>
-                    </button>
-                    <!-- Version History -->
-                    <button class="action-btn" (click)="openVersionHistory()" title="Version History">
-                        <span class="material-symbols-outlined">history</span>
-                    </button>
-                    <!-- Export -->
-                    <div class="export-menu-wrapper" style="position: relative;">
-                        <button class="action-btn" (click)="toggleExportMenu()" title="Export">
-                            <span class="material-symbols-outlined">download</span>
-                        </button>
-                        @if (exportMenuOpen()) {
-                        <div class="add-dropdown-menu">
-                            <button class="add-dropdown-option" (click)="exportNovel('pdf'); exportMenuOpen.set(false)">
-                                <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
-                                <span class="option-label">Export as PDF</span>
-                            </button>
-                            <button class="add-dropdown-option" (click)="exportNovel('html'); exportMenuOpen.set(false)">
-                                <span class="material-symbols-outlined option-icon">code</span>
-                                <span class="option-label">Export as HTML</span>
-                            </button>
-                            <button class="add-dropdown-option" (click)="exportNovel('md'); exportMenuOpen.set(false)">
-                                <span class="material-symbols-outlined option-icon">description</span>
-                                <span class="option-label">Export as Markdown</span>
-                            </button>
-                        </div>
-                        }
-                    </div>
-                </div>
-            </div>
+            <app-editor-header
+                [activeNav]="activeNav()"
+                [canUndo]="canUndo()"
+                [canRedo]="canRedo()"
+                [searchOpen]="searchOpen()"
+                [searchQuery]="searchQuery()"
+                [filteredResults]="filteredChapters()"
+                [focusMode]="focusMode()"
+                [fullScreenMode]="fullScreenMode()"
+                [exportMenuOpen]="exportMenuOpen()"
+                (setActiveNav)="setActiveNav($event)"
+                (performUndo)="performUndo()"
+                (performRedo)="performRedo()"
+                (toggleSearch)="toggleSearch()"
+                (searchQueryChange)="searchQuery.set($event)"
+                (selectSearchResult)="selectSearchResult($event)"
+                (toggleFocusMode)="toggleFocusMode()"
+                (toggleFullScreen)="toggleFullScreen()"
+                (openVersionHistory)="openVersionHistory()"
+                (toggleExportMenu)="toggleExportMenu()"
+                (exportNovel)="exportNovel($event)"
+            />
 
-            <!-- Editor Toolbar (below tabs) -->
-            @if (editor) {
-            <div class="ne-editor-toolbar">
-                <!-- Formatting Options -->
-                <div class="toolbar-group">
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
-                        [class.active]="editor.isActive('bold')" title="Bold">
-                        <span class="material-symbols-outlined">format_bold</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
-                        [class.active]="editor.isActive('italic')" title="Italic">
-                        <span class="material-symbols-outlined">format_italic</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleUnderline().run()"
-                        [class.active]="editor.isActive('underline')" title="Underline">
-                        <span class="material-symbols-outlined">format_underlined</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleStrike().run()"
-                        [class.active]="editor.isActive('strike')" title="Strikethrough">
-                        <span class="material-symbols-outlined">strikethrough_s</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleHighlight().run()"
-                        [class.active]="editor.isActive('highlight')" title="Highlight">
-                        <span class="material-symbols-outlined">ink_highlighter</span>
-                    </button>
-                </div>
-                <div class="toolbar-divider"></div>
-                <div class="toolbar-group">
-                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('left').run()"
-                        [class.active]="editor.isActive({ textAlign: 'left' })" title="Align Left">
-                        <span class="material-symbols-outlined">format_align_left</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('center').run()"
-                        [class.active]="editor.isActive({ textAlign: 'center' })" title="Align Center">
-                        <span class="material-symbols-outlined">format_align_center</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('right').run()"
-                        [class.active]="editor.isActive({ textAlign: 'right' })" title="Align Right">
-                        <span class="material-symbols-outlined">format_align_right</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('justify').run()"
-                        [class.active]="editor.isActive({ textAlign: 'justify' })" title="Justify">
-                        <span class="material-symbols-outlined">format_align_justify</span>
-                    </button>
-                </div>
-                <div class="toolbar-divider"></div>
-                <div class="toolbar-group">
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-                        [class.active]="editor.isActive('heading', { level: 1 })" title="H1">
-                        <span class="material-symbols-outlined">format_h1</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                        [class.active]="editor.isActive('heading', { level: 2 })" title="H2">
-                        <span class="material-symbols-outlined">format_h2</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleBulletList().run()"
-                        [class.active]="editor.isActive('bulletList')" title="Bullet list">
-                        <span class="material-symbols-outlined">format_list_bulleted</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleOrderedList().run()"
-                        [class.active]="editor.isActive('orderedList')" title="Numbered list">
-                        <span class="material-symbols-outlined">format_list_numbered</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleTaskList().run()"
-                        [class.active]="editor.isActive('taskList')" title="Checklist">
-                        <span class="material-symbols-outlined">check_box</span>
-                    </button>
-                </div>
-                <div class="toolbar-divider"></div>
-                <div class="toolbar-group">
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleCodeBlock().run()"
-                        [class.active]="editor.isActive('codeBlock')" title="Code block">
-                        <span class="material-symbols-outlined">code</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="editor.chain().focus().toggleBlockquote().run()"
-                        [class.active]="editor.isActive('blockquote')" title="Quote">
-                        <span class="material-symbols-outlined">format_quote</span>
-                    </button>
-                </div>
-                <div class="toolbar-divider"></div>
-                <div class="toolbar-group">
-                    <button class="toolbar-btn" (click)="openLinkModal()" [class.active]="editor.isActive('link')" title="Link">
-                        <span class="material-symbols-outlined">link</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="addImage()" title="Image">
-                        <span class="material-symbols-outlined">image</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="insertTable()" title="Table">
-                        <span class="material-symbols-outlined">table</span>
-                    </button>
-                    <button class="toolbar-btn" (click)="addYoutube()" title="YouTube">
-                        <span class="material-symbols-outlined">smart_display</span>
-                    </button>
-                </div>
-            </div>
+            @if (editor && (activeNav() === 'manuscript' || activeNav() === 'structure')) {
+            <app-editor-toolbar
+                [editor]="editor"
+                (openLinkModal)="openLinkModal()"
+                (addImage)="addImage()"
+                (insertTable)="insertTable()"
+                (addYoutube)="addYoutube()"
+            />
             }
 
             @if (activeNav() === 'manuscript') {
-            <div class="ne-editor-canvas">
-                @if (!activeChapterId()) {
-                <div class="ne-empty-state">
-                    <div class="empty-state-icon">
-                        <span class="material-symbols-outlined">description</span>
-                    </div>
-                    <h3 class="empty-state-title">No Chapter Selected</h3>
-                    <p class="empty-state-text">Select a chapter from the sidebar to start writing, or create a new chapter to begin.</p>
-                    <button class="ne-btn-primary" (click)="addNewChapter()">
-                        <span class="material-symbols-outlined">add</span>
-                        Create New Chapter
-                    </button>
-                </div>
-                } @else {
-                <input type="text" class="ne-doc-title-input" [ngModel]="title()"
-                    (ngModelChange)="onTitleChange($event)" placeholder="Chapter Title" />
-
-                <div class="ne-doc-meta">
-                    <div class="meta-row">
-                        <span class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()">{{ chapterStatus() }}</span>
-                        <span class="meta-sep">•</span>
-                        <span>LAST EDITED: {{ chapterLastEdited() }}</span>
-                        <span class="meta-sep">•</span>
-                        <span class="save-indicator" [class.saving]="isSaving()">
-                            @if (isSaving()) {
-                            <span class="material-symbols-outlined" style="font-size: 12px;">sync</span>
-                            Saving...
-                            } @else if (lastSaved()) {
-                            <span class="material-symbols-outlined" style="font-size: 12px;">check_circle</span>
-                            Saved
-                            } @else {
-                            <span>Not saved</span>
-                            }
-                        </span>
-                    </div>
-                </div>
-
-
-                <!-- Tiptap Editor -->
-                <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
-                }
-            </div>
+            <app-manuscript-editor
+                [editor]="editor"
+                [activeChapterId]="activeChapterId()"
+                [title]="title()"
+                [chapterStatus]="chapterStatus()"
+                [chapterLastEdited]="chapterLastEdited()"
+                [isSaving]="isSaving()"
+                [lastSaved]="lastSaved()"
+                (titleChange)="onTitleChange($event)"
+                (addNewChapter)="addNewChapter()"
+            />
             }
 
             @if (activeNav() === 'structure' && novel()) {
-            <div class="ne-editor-canvas">
-                @if (activeFrontMatterId() && novel()) {
-                    @for (item of novel()!.frontMatter; track item.id) {
-                        @if (item.id === activeFrontMatterId()) {
-                        <input type="text" class="ne-doc-title-input" [ngModel]="item.title"
-                            (ngModelChange)="novelService.updateFrontMatterTitle(item.id, $event)"
-                            [placeholder]="getFrontMatterTypeLabel(item.type)" />
-                        <div class="ne-doc-meta">{{ item.wordCount }} w</div>
-                        <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
-                        }
-                    }
-                } @else if (activePrologueId() && novel()?.prologue) {
-                    @if (novel()!.prologue; as prologue) {
-                    <input type="text" class="ne-doc-title-input" [ngModel]="prologue.title"
-                        (ngModelChange)="novelService.updatePrologueTitle($event)" placeholder="Prologue Title" />
-                    <div class="ne-doc-meta">
-                        <span class="ne-draft-tag">{{ prologue.status }}</span> • {{ prologue.wordCount }} w
-                    </div>
-                    <tiptap-editor [editor]="editor" class="ne-editor-text"></tiptap-editor>
-                    }
-                } @else {
-                <div class="ne-empty-state">
-                    <div class="empty-state-icon">
-                        <span class="material-symbols-outlined">menu_book</span>
-                    </div>
-                    <h3 class="empty-state-title">No Item Selected</h3>
-                    <p class="empty-state-text">Select a Front Matter item or Prologue from the sidebar to start editing</p>
-                    <div class="empty-state-actions">
-                        <button class="empty-state-btn" (click)="addFrontMatterItem('title-page')">
-                            <span class="material-symbols-outlined">add</span>
-                            Add Title Page
-                        </button>
-                        @if (!novel()!.prologue) {
-                        <button class="empty-state-btn" (click)="addPrologue()">
-                            <span class="material-symbols-outlined">add</span>
-                            Add Prologue
-                        </button>
-                        }
-                    </div>
-                </div>
-                }
-            </div>
+            <app-structure-editor
+                [editor]="editor"
+                [activeFrontMatterId]="activeFrontMatterId()"
+                [activePrologueId]="activePrologueId()"
+                [frontMatter]="novel()!.frontMatter"
+                [prologue]="novel()!.prologue || null"
+                (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()"
+            />
             }
 
             @if (activeNav() === 'characters' && novel()) {
-            <div class="ne-details-canvas">
-                @if (activeCharacter(); as activeChar) {
-                <div class="ne-ent-card">
-                    <div class="ne-ent-header-bg"></div>
-                    <div class="ne-ent-header-content">
-                        <div class="ne-ent-avatar-xl">
-                            <span class="material-symbols-outlined">account_circle</span>
-                        </div>
-                        <div class="ne-ent-title-group">
-                            <input type="text" class="ne-ent-title-input" [value]="activeChar.name"
-                                (input)="updateCharacterField(activeChar.id, 'name', $any($event.target).value)"
-                                placeholder="Character Name" />
-                            <div class="ne-ent-subtitle">CHARACTER PROFILE</div>
-                        </div>
-                    </div>
-
-                    <div class="ne-ent-body">
-                        <div class="ne-ent-grid-row">
-                            <div class="ne-ent-field">
-                                <label>ROLE IN STORY</label>
-                                <div class="input-wrapper">
-                                    <span class="material-symbols-outlined field-icon">badge</span>
-                                    <input type="text" [value]="activeChar.role"
-                                        (input)="updateCharacterField(activeChar.id, 'role', $any($event.target).value)"
-                                        placeholder="e.g. Protagonist" />
-                                </div>
-                            </div>
-                            <div class="ne-ent-field">
-                                <label>ARCHETYPE</label>
-                                <div class="input-wrapper">
-                                    <span class="material-symbols-outlined field-icon">category</span>
-                                    <input type="text" [value]="activeChar.archetype"
-                                        (input)="updateCharacterField(activeChar.id, 'archetype', $any($event.target).value)"
-                                        placeholder="e.g. The Hero" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="ne-ent-field full-width">
-                            <label>BIOGRAPHY & NOTES</label>
-                            <textarea class="ne-ent-textarea" [value]="activeChar.description"
-                                (input)="updateCharacterField(activeChar.id, 'description', $any($event.target).value)"
-                                placeholder="Describe their appearance, personality, and backstory..."></textarea>
-                        </div>
-                    </div>
-                </div>
-                } @else {
-                <div class="ne-empty-state">
-                    <div class="empty-state-icon">
-                        <span class="material-symbols-outlined">group</span>
-                    </div>
-                    <h3 class="empty-state-title">No Character Selected</h3>
-                    <p class="empty-state-text">Select a character from the sidebar to view and edit their details, or create a new character to get started.</p>
-                    <button class="ne-btn-primary" (click)="addNewCharacter()">
-                        <span class="material-symbols-outlined">add</span>
-                        Create Character
-                    </button>
-                </div>
-                }
-            </div>
+            <app-character-details
+                [character]="activeCharacter()"
+                (updateField)="onCharacterFieldUpdate($event)"
+                (addNewCharacter)="addNewCharacter()"
+            />
             }
 
             @if (activeNav() === 'locations' && novel()) {
-            <div class="ne-details-canvas">
-                @if (activeLocation(); as activeLoc) {
-                <div class="ne-ent-card">
-                    <div class="ne-ent-header-bg loc-bg"></div>
-                    <div class="ne-ent-header-content">
-                        <div class="ne-ent-avatar-xl loc-avatar">
-                            <span class="material-symbols-outlined">public</span>
-                        </div>
-                        <div class="ne-ent-title-group">
-                            <input type="text" class="ne-ent-title-input" [value]="activeLoc.name"
-                                (input)="updateLocationField(activeLoc.id, 'name', $any($event.target).value)"
-                                placeholder="Location Name" />
-                            <div class="ne-ent-subtitle">LOCATION DETAILS</div>
-                        </div>
-                    </div>
-
-                    <div class="ne-ent-body">
-                        <div class="ne-ent-field">
-                            <label>LOCATION TYPE</label>
-                            <div class="input-wrapper">
-                                <span class="material-symbols-outlined field-icon">terrain</span>
-                                <input type="text" [value]="activeLoc.type"
-                                    (input)="updateLocationField(activeLoc.id, 'type', $any($event.target).value)"
-                                    placeholder="e.g. City, Planet, Room" />
-                            </div>
-                        </div>
-
-                        <div class="ne-ent-field full-width">
-                            <label>DESCRIPTION & LORE</label>
-                            <textarea class="ne-ent-textarea" [value]="activeLoc.description"
-                                (input)="updateLocationField(activeLoc.id, 'description', $any($event.target).value)"
-                                placeholder="Describe the atmosphere, history, and key features..."></textarea>
-                        </div>
-                    </div>
-                </div>
-                } @else {
-                <div class="ne-empty-state">
-                    <div class="empty-state-icon">
-                        <span class="material-symbols-outlined">public</span>
-                    </div>
-                    <h3 class="empty-state-title">No Location Selected</h3>
-                    <p class="empty-state-text">Select a location from the sidebar to view and edit its details, or create a new location to build your world.</p>
-                    <button class="ne-btn-primary" (click)="addNewLocation()">
-                        <span class="material-symbols-outlined">add</span>
-                        Create Location
-                    </button>
-                </div>
-                }
-            </div>
+            <app-location-details
+                [location]="activeLocation()"
+                (updateField)="onLocationFieldUpdate($event)"
+                (addNewLocation)="addNewLocation()"
+            />
             }
         </div>
 
@@ -758,240 +202,49 @@
 
             <div class="ne-right-content">
                 @if (rightSidebarTab() === 'ai' && aiService.aiEnabled()) {
-                <div class="ne-ai-panel">
-                    <div class="ne-ai-header">
-                        <span class="material-symbols-outlined icon-bolt">bolt</span>
-                        AI COMPANION
-                        <div class="online-dot"></div>
-                        @if (aiMessages().length > 0) {
-                        <button class="clear-conversation-btn" (click)="clearAiConversation()" title="Clear conversation">
-                            <span class="material-symbols-outlined">delete_sweep</span>
-                        </button>
-                        }
-                    </div>
-
-                    <div class="ai-actions">
-                        <button class="btn-ai-primary" (click)="analyzeToneAndPacing()" [disabled]="aiLoading() || !activeChapter()">
-                            <span class="material-symbols-outlined">auto_fix_high</span>
-                            Analyze Tone & Pacing
-                        </button>
-                        <div class="ai-btn-row">
-                            <button class="btn-ai-sec" (click)="generateSuggestions()" [disabled]="aiLoading() || !activeChapter()">
-                                <span class="material-symbols-outlined">menu_book</span>
-                                Suggest
-                            </button>
-                            <button class="btn-ai-sec" (click)="summarizeChapter()" [disabled]="aiLoading() || !activeChapter()">
-                                <span class="material-symbols-outlined">short_text</span>
-                                Summarize
-                            </button>
-                        </div>
-                        <button class="btn-ai-sec btn-ai-full" (click)="continueWriting()" [disabled]="aiLoading() || !editor">
-                            <span class="material-symbols-outlined">arrow_forward</span>
-                            Continue Writing
-                        </button>
-                    </div>
-
-                    <!-- Chat Messages -->
-                    <div class="ai-chat-container">
-                        @if (aiMessages().length === 0 && !aiLoading()) {
-                        <div class="ai-chat-empty">
-                            <span class="material-symbols-outlined">chat_bubble_outline</span>
-                            <p>Start a conversation with AI</p>
-                            <p class="empty-hint">Ask questions, get suggestions, or use quick actions above</p>
-                        </div>
-                        }
-                        <div class="ai-messages" #aiMessagesContainer>
-                            @for (message of aiMessages(); track message.id) {
-                            <div class="ai-message" [class.user]="message.role === 'user'" [class.assistant]="message.role === 'assistant'">
-                                <div class="message-avatar">
-                                    @if (message.role === 'user') {
-                                    <span class="material-symbols-outlined">person</span>
-                                    } @else {
-                                    <span class="material-symbols-outlined">smart_toy</span>
-                                    }
-                                </div>
-                                <div class="message-content">
-                                    <div class="message-text" [innerHTML]="formatMessage(message.content)"></div>
-                                    <div class="message-time">{{ formatTime(message.timestamp) }}</div>
-                                </div>
-                            </div>
-                            }
-                            @if (aiLoading()) {
-                            <div class="ai-message assistant">
-                                <div class="message-avatar">
-                                    <span class="material-symbols-outlined">smart_toy</span>
-                                </div>
-                                <div class="message-content">
-                                    <div class="message-loading">
-                                        <span></span><span></span><span></span>
-                                    </div>
-                                </div>
-                            </div>
-                            }
-                        </div>
-                        @if (aiError()) {
-                        <div class="ai-error">
-                            <span class="material-symbols-outlined">error</span>
-                            {{ aiError() }}
-                        </div>
-                        }
-                    </div>
-
-                    <!-- Context Preview -->
-                    @if (showContextPreview()) {
-                    <div class="context-preview">
-                        <div class="ctx-header">
-                            <span>CONTEXT ({{ getTokenCount() }} tokens)</span>
-                            <button (click)="showContextPreview.set(false)">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
-                        <div class="context-content">{{ getCurrentContext() }}</div>
-                    </div>
-                    }
-
-                    <!-- Chat Input -->
-                    <div class="ai-chat-input-wrapper">
-                        <div class="context-toggle" (click)="showContextPreview.set(!showContextPreview())" title="Toggle context preview">
-                            <span class="material-symbols-outlined">info</span>
-                            <span>{{ getTokenCount() }} tokens</span>
-                        </div>
-                        <textarea 
-                            class="ai-chat-input" 
-                            [value]="aiPrompt()"
-                            (input)="aiPrompt.set($any($event.target).value)"
-                            (keydown.enter)="handleChatEnter($any($event))"
-                            placeholder="Ask AI to review, brainstorm, or expand..."
-                            rows="2"
-                            [disabled]="aiLoading()"
-                        ></textarea>
-                        <button class="btn-send" (click)="sendAiMessage()" [disabled]="aiLoading() || !aiPrompt().trim()">
-                            <span class="material-symbols-outlined">send</span>
-                        </button>
-                    </div>
-
-                    <!-- Suggestions -->
-                    @if (aiSuggestions().length > 0) {
-                    <div class="ne-suggestions-box">
-                        <div class="sugg-header">
-                            <span>SUGGESTIONS</span>
-                            <span class="clear-link" (click)="aiSuggestions.set([])">CLEAR</span>
-                        </div>
-                        @for (suggestion of aiSuggestions(); track suggestion.id) {
-                        <div class="sugg-card">
-                            <div class="sugg-content">{{ suggestion.content }}</div>
-                            <button class="sugg-apply" (click)="applySuggestion(suggestion)">
-                                <span class="material-symbols-outlined">check</span>
-                                Apply
-                            </button>
-                        </div>
-                        }
-                    </div>
-                    }
-                </div>
+                <app-ai-panel
+                    [aiMessages]="aiMessages()"
+                    [aiLoading]="aiLoading()"
+                    [aiError]="aiError()"
+                    [aiPrompt]="aiPrompt()"
+                    [aiSuggestions]="aiSuggestions()"
+                    [showContextPreview]="showContextPreview()"
+                    [tokenCount]="getTokenCount()"
+                    [context]="getCurrentContext()"
+                    [activeChapter]="activeChapter()"
+                    [editor]="editor"
+                    (sendMessage)="sendAiMessage()"
+                    (analyzeToneAndPacing)="analyzeToneAndPacing()"
+                    (generateSuggestions)="generateSuggestions()"
+                    (summarizeChapter)="summarizeChapter()"
+                    (continueWriting)="continueWriting()"
+                    (applySuggestion)="applySuggestion($event)"
+                    (clearConversation)="clearAiConversation()"
+                    (clearSuggestions)="aiSuggestions.set([])"
+                    (toggleContextPreview)="showContextPreview.update(v => !v)"
+                    (promptChange)="aiPrompt.set($event)"
+                />
                 } @else if (rightSidebarTab() === 'notes' && novel()) {
-                <div class="ne-notes-panel">
-                    <div class="ne-ai-header">
-                        <span class="material-symbols-outlined icon-bolt">sticky_note_2</span>
-                        CHAPTER NOTES
-                    </div>
-
-                    <div class="ne-notes-list">
-                        <div class="ne-add-btn-row">
-                            <button class="ne-btn-add-note" (click)="addNewNote()">
-                                <span class="material-symbols-outlined">add</span> New Note
-                            </button>
-                        </div>
-
-                        @for (note of novel()!.notes; track note.id) {
-                        <div class="ne-note-card">
-                            <div class="note-card-header">
-                                <span class="note-title">{{ note.title }}</span>
-                                <div class="note-actions">
-                                    <span class="note-time">{{ note.date }}</span>
-                                    <span class="material-symbols-outlined note-delete" (click)="deleteNote(note.id)"
-                                        title="Delete note">delete</span>
-                                </div>
-                            </div>
-                            <div class="note-body">{{ note.body }}</div>
-                        </div>
-                        }
-                    </div>
-                </div>
+                <app-notes-panel
+                    [notes]="novel()!.notes"
+                    (addNewNote)="addNewNote()"
+                    (deleteNote)="deleteNote($event)"
+                />
                 } @else if (rightSidebarTab() === 'manuscript' && novel()) {
-                <div class="ne-meta-panel">
-                    <div class="ne-ai-header">
-                        <span class="material-symbols-outlined icon-bolt">description</span>
-                        MANUSCRIPT DATA
-                    </div>
-
-                    <div class="ne-meta-content">
-                        <!-- Writing Statistics -->
-                        <div class="meta-section">
-                            <label>WRITING STATISTICS</label>
-                            <div class="stats-grid">
-                                <div class="stat-card-mini">
-                                    <div class="stat-label-mini">Total Words</div>
-                                    <div class="stat-value-mini">{{ totalNovelWords() | number }}</div>
-                                </div>
-                                <div class="stat-card-mini">
-                                    <div class="stat-label-mini">Avg Chapter</div>
-                                    <div class="stat-value-mini">{{ averageChapterLength() | number }}</div>
-                                </div>
-                                <div class="stat-card-mini">
-                                    <div class="stat-label-mini">Completed</div>
-                                    <div class="stat-value-mini">{{ chaptersCompleted() }}/{{ getTotalChapters() }}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="meta-section">
-                            <label>LOGLINE</label>
-                            <div class="meta-text">{{ novel()!.synopsis.logline || 'No logline set' }}</div>
-                        </div>
-
-                        <div class="meta-section">
-                            <label>THEME</label>
-                            <div class="meta-text">{{ novel()!.synopsis.theme || 'No theme set' }}</div>
-                        </div>
-
-                        <div class="meta-section">
-                            <label>WRITING GOAL</label>
-                            <div class="goal-progress">
-                                <div class="goal-progress-bar">
-                                    <div class="goal-progress-fill" [style.width.%]="getGoalProgress()"></div>
-                                </div>
-                                <div class="goal-progress-text">{{ wordCount() }} / {{ targetWordCount() }} words</div>
-                            </div>
-                        </div>
-
-                        @if (activeChapterId() && (mentionedCharacters().length > 0 || mentionedLocations().length > 0)) {
-                        <div class="meta-section">
-                            <label>MENTIONS IN THIS CHAPTER</label>
-                            @if (mentionedCharacters().length > 0) {
-                            <div class="mentions-group">
-                                <div class="mentions-label">Characters:</div>
-                                <div class="mentions-list">
-                                    @for (char of mentionedCharacters(); track char) {
-                                    <span class="mention-badge character-mention">{{ char }}</span>
-                                    }
-                                </div>
-                            </div>
-                            }
-                            @if (mentionedLocations().length > 0) {
-                            <div class="mentions-group">
-                                <div class="mentions-label">Locations:</div>
-                                <div class="mentions-list">
-                                    @for (loc of mentionedLocations(); track loc) {
-                                    <span class="mention-badge location-mention">{{ loc }}</span>
-                                    }
-                                </div>
-                            </div>
-                            }
-                        </div>
-                        }
-                    </div>
-                </div>
+                <app-manuscript-data
+                    [totalNovelWords]="totalNovelWords()"
+                    [averageChapterLength]="averageChapterLength()"
+                    [chaptersCompleted]="chaptersCompleted()"
+                    [totalChapters]="getTotalChapters()"
+                    [logline]="novel()!.synopsis.logline"
+                    [theme]="novel()!.synopsis.theme"
+                    [wordCount]="wordCount()"
+                    [targetWordCount]="targetWordCount()"
+                    [goalProgress]="getGoalProgress()"
+                    [activeChapterId]="activeChapterId()"
+                    [mentionedCharacters]="mentionedCharacters()"
+                    [mentionedLocations]="mentionedLocations()"
+                />
                 }
             </div>
             @if (rightSidebarCollapsed()) {
@@ -1003,180 +256,36 @@
     </div>
     }
 
-    <!-- Confirm Dialog -->
-    @if (deleteModal().isOpen) {
-    <div class="ne-modal-overlay">
-        <div class="ne-modal">
-            <div class="ne-modal-header">
-                {{ deleteModal().title }}
-            </div>
-            <div class="ne-modal-body">
-                {{ deleteModal().message }}
-            </div>
-            <div class="ne-modal-footer">
-                <button class="ne-modal-btn cancel" (click)="cancelDelete()">Cancel</button>
-                <button class="ne-modal-btn delete" (click)="confirmDelete()">Delete</button>
-            </div>
-        </div>
-    </div>
-    }
+    <!-- Modals -->
+    <app-delete-modal
+        [modal]="deleteModal()"
+        (confirm)="confirmDelete()"
+        (cancel)="cancelDelete()"
+    />
 
-    <!-- Link Insertion Dialog -->
-    @if (linkModalOpen()) {
-    <div class="ne-modal-overlay" (click)="cancelLinkModal()">
-        <div class="ne-modal" (click)="$event.stopPropagation()">
-            <div class="ne-modal-header">
-                Insert Link
-            </div>
-            <div class="ne-modal-body">
-                <div class="ne-modal-input-wrapper">
-                    <label class="ne-modal-label">Link Text</label>
-                    <input 
-                        type="text" 
-                        class="ne-modal-input" 
-                        [value]="linkText()"
-                        (input)="linkText.set($any($event.target).value)"
-                        placeholder="Link text (optional)"
-                    />
-                </div>
-                <div class="ne-modal-input-wrapper" style="margin-top: 16px;">
-                    <label class="ne-modal-label">URL</label>
-                    <input 
-                        type="url" 
-                        class="ne-modal-input" 
-                        [value]="linkUrl()"
-                        (input)="linkUrl.set($any($event.target).value)"
-                        placeholder="https://example.com"
-                        (keydown.enter)="insertLink()"
-                        autofocus
-                    />
-                </div>
-            </div>
-            <div class="ne-modal-footer">
-                <button class="ne-modal-btn cancel" (click)="cancelLinkModal()">Cancel</button>
-                <button class="ne-modal-btn confirm" (click)="insertLink()" [disabled]="!linkUrl().trim()">
-                    Insert
-                </button>
-            </div>
-        </div>
-    </div>
-    }
+    <app-link-modal
+        [isOpen]="linkModalOpen()"
+        [linkText]="linkText()"
+        [linkUrl]="linkUrl()"
+        (linkTextChange)="linkText.set($event)"
+        (linkUrlChange)="linkUrl.set($event)"
+        (insert)="insertLink()"
+        (cancel)="cancelLinkModal()"
+    />
 
-    <!-- Version History Modal -->
-    @if (versionHistoryOpen()) {
-    <div class="ne-modal-overlay" (click)="closeVersionHistory()">
-        <div class="ne-modal version-history-modal" (click)="$event.stopPropagation()">
-            <div class="ne-modal-header">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="material-symbols-outlined">history</span>
-                    Version History
-                </div>
-                <button class="modal-close-btn" (click)="closeVersionHistory()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="ne-modal-body version-history-body">
-                @if (versionHistory().length === 0) {
-                <div class="version-history-empty">
-                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--text-tertiary); opacity: 0.5;">history</span>
-                    <p>No version history available</p>
-                    <p style="font-size: 12px; color: var(--text-tertiary);">Versions are automatically saved as you edit</p>
-                </div>
-                } @else {
-                <div class="version-history-list">
-                    @for (version of versionHistory(); track version.id) {
-                    <div class="version-item" [class.current]="$index === versionHistory().length - 1">
-                        <div class="version-header">
-                            <div class="version-info">
-                                <div class="version-title">
-                                    @if (version.title) {
-                                    {{ version.title }}
-                                    } @else {
-                                    <span style="color: var(--text-tertiary);">Untitled</span>
-                                    }
-                                </div>
-                                <div class="version-meta">
-                                    <span class="version-time">{{ versionHistoryService.formatTimestamp(version.timestamp) }}</span>
-                                    <span class="version-sep">•</span>
-                                    <span class="version-words">{{ version.wordCount }} words</span>
-                                </div>
-                            </div>
-                            @if ($index === versionHistory().length - 1) {
-                            <span class="version-badge current-badge">Current</span>
-                            }
-                        </div>
-                        @if (version.description) {
-                        <div class="version-description">{{ version.description }}</div>
-                        }
-                        <div class="version-actions">
-                            <button class="version-action-btn" (click)="restoreVersion(version.id)" title="Restore this version">
-                                <span class="material-symbols-outlined">restore</span>
-                                Restore
-                            </button>
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-            <div class="ne-modal-footer">
-                <button class="ne-modal-btn cancel" (click)="closeVersionHistory()">Close</button>
-            </div>
-        </div>
-    </div>
-    }
+    <app-version-history-modal
+        [isOpen]="versionHistoryOpen()"
+        [versions]="versionHistory()"
+        (restore)="restoreVersion($event)"
+        (close)="closeVersionHistory()"
+    />
 
-    <!-- Add Item Dialog -->
-    @if (addModal().isOpen) {
-    <div class="ne-modal-overlay" (click)="cancelAdd()">
-        <div class="ne-modal" (click)="$event.stopPropagation()" [class.note-modal]="addModal().type === 'note'">
-            <div class="ne-modal-header">
-                {{ addModal().title }}
-            </div>
-            <div class="ne-modal-body">
-                <div class="ne-modal-input-wrapper">
-                    <label class="ne-modal-label">
-                        @if (addModal().type === 'act') {
-                            Act/Part Title
-                        } @else if (addModal().type === 'chapter') {
-                            Chapter Title
-                        } @else if (addModal().type === 'note') {
-                            Note Title
-                        }
-                    </label>
-                    <input 
-                        type="text" 
-                        class="ne-modal-input" 
-                        [value]="addModal().inputValue"
-                        (input)="updateAddModalInput($any($event.target).value)"
-                        (keydown.enter)="addModal().type === 'note' ? null : confirmAdd()"
-                        (keydown.escape)="cancelAdd()"
-                        #addInput
-                        autofocus
-                    />
-                </div>
-                @if (addModal().type === 'note') {
-                <div class="ne-modal-input-wrapper" style="margin-top: 16px;">
-                    <label class="ne-modal-label">Note Content</label>
-                    <textarea 
-                        class="ne-modal-textarea" 
-                        [value]="addModal().inputValue2 || ''"
-                        (input)="updateAddModalInput2($any($event.target).value)"
-                        (keydown.escape)="cancelAdd()"
-                        placeholder="Enter note content..."
-                        rows="4"
-                    ></textarea>
-                </div>
-                }
-            </div>
-            <div class="ne-modal-footer">
-                <button class="ne-modal-btn cancel" (click)="cancelAdd()">Cancel</button>
-                <button class="ne-modal-btn confirm" (click)="confirmAdd()" [disabled]="!addModal().inputValue.trim()">
-                    Add
-                </button>
-            </div>
-        </div>
-    </div>
-    }
+    <app-add-modal
+        [modal]="addModal()"
+        (inputValueChange)="updateAddModalInput($event)"
+        (inputValue2Change)="updateAddModalInput2($event)"
+        (confirm)="confirmAdd()"
+        (cancel)="cancelAdd()"
+    />
 
 </div>

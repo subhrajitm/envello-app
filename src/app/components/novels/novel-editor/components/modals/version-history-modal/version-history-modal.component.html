@@ -1,0 +1,62 @@
+@if (isOpen()) {
+<div class="ne-modal-overlay" (click)="close.emit()">
+    <div class="ne-modal version-history-modal" (click)="$event.stopPropagation()">
+        <div class="ne-modal-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined">history</span>
+                Version History
+            </div>
+            <button class="modal-close-btn" (click)="close.emit()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="ne-modal-body version-history-body">
+            @if (versions().length === 0) {
+            <div class="version-history-empty">
+                <span class="material-symbols-outlined" style="font-size: 48px; color: var(--text-tertiary); opacity: 0.5;">history</span>
+                <p>No version history available</p>
+                <p style="font-size: 12px; color: var(--text-tertiary);">Versions are automatically saved as you edit</p>
+            </div>
+            } @else {
+            <div class="version-history-list">
+                @for (version of versions(); track version.id; let i = $index) {
+                <div class="version-item" [class.current]="i === versions().length - 1">
+                    <div class="version-header">
+                        <div class="version-info">
+                            <div class="version-title">
+                                @if (version.title) {
+                                {{ version.title }}
+                                } @else {
+                                <span style="color: var(--text-tertiary);">Untitled</span>
+                                }
+                            </div>
+                            <div class="version-meta">
+                                <span class="version-time">{{ versionHistoryService.formatTimestamp(version.timestamp) }}</span>
+                                <span class="version-sep">•</span>
+                                <span class="version-words">{{ version.wordCount }} words</span>
+                            </div>
+                        </div>
+                        @if (i === versions().length - 1) {
+                        <span class="version-badge current-badge">Current</span>
+                        }
+                    </div>
+                    @if (version.description) {
+                    <div class="version-description">{{ version.description }}</div>
+                    }
+                    <div class="version-actions">
+                        <button class="version-action-btn" (click)="restore.emit(version.id)" title="Restore this version">
+                            <span class="material-symbols-outlined">restore</span>
+                            Restore
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+        <div class="ne-modal-footer">
+            <button class="ne-modal-btn cancel" (click)="close.emit()">Close</button>
+        </div>
+    </div>
+</div>
+}

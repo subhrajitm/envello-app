@@ -1,0 +1,83 @@
+<div class="ne-chapters-section">
+    <!-- Front Matter Section -->
+    <div class="ne-structure-section">
+        <div class="ne-chap-header">
+            FRONT MATTER
+            <div class="add-menu-wrapper" style="position: relative;">
+                <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu.emit(); $event.stopPropagation()"
+                    title="Add front matter">add</span>
+                @if (addMenuOpen()) {
+                <div class="add-dropdown-menu">
+                    <button class="add-dropdown-option" (click)="addFrontMatterItem.emit('title-page'); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">title</span>
+                        <span class="option-label">Title Page</span>
+                    </button>
+                    <button class="add-dropdown-option" (click)="addFrontMatterItem.emit('copyright'); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">copyright</span>
+                        <span class="option-label">Copyright Page</span>
+                    </button>
+                    <button class="add-dropdown-option" (click)="addFrontMatterItem.emit('toc'); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">list</span>
+                        <span class="option-label">Table of Contents</span>
+                    </button>
+                    <button class="add-dropdown-option" (click)="addFrontMatterItem.emit('dedication'); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">favorite</span>
+                        <span class="option-label">Dedication</span>
+                    </button>
+                    <button class="add-dropdown-option" (click)="addFrontMatterItem.emit('foreword'); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">menu_book</span>
+                        <span class="option-label">Foreword</span>
+                    </button>
+                    <button class="add-dropdown-option" (click)="addFrontMatterItem.emit('preface'); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">description</span>
+                        <span class="option-label">Preface</span>
+                    </button>
+                </div>
+                }
+            </div>
+        </div>
+        <div class="ne-chapter-list">
+            @for (item of frontMatter(); track item.id) {
+            <div class="ne-chapter-item" [class.active]="activeFrontMatterId() === item.id"
+                (click)="selectFrontMatterItem.emit(item.id)">
+                <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-primary);">
+                    {{ getFrontMatterTypeIcon(item.type) }}
+                </span>
+                <div class="ne-chap-info">
+                    <div class="ne-chap-title">{{ item.title }}</div>
+                    <div class="ne-chap-meta">{{ item.wordCount }} w</div>
+                </div>
+                <span class="material-symbols-outlined list-delete chapter-delete"
+                    (click)="deleteFrontMatterItem.emit({ id: item.id, title: item.title }); $event.stopPropagation()"
+                    title="Delete">delete</span>
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Prologue Section -->
+    <div class="ne-structure-section" style="margin-top: 24px;">
+        <div class="ne-chap-header">
+            PROLOGUE
+            @if (!prologue()) {
+            <span class="material-symbols-outlined icon-add" (click)="addPrologue.emit()" title="Add prologue">add</span>
+            }
+        </div>
+        @if (prologue(); as prologueData) {
+        <div class="ne-chapter-list">
+            <div class="ne-chapter-item" [class.active]="activePrologueId() === 'prologue'"
+                (click)="selectPrologue.emit()">
+                <span class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-primary);">menu_book</span>
+                <div class="ne-chap-info">
+                    <div class="ne-chap-title">{{ prologueData.title }}</div>
+                    <div class="ne-chap-meta">
+                        <span class="ne-draft-tag">{{ prologueData.status }}</span> • {{ prologueData.wordCount }} w
+                    </div>
+                </div>
+                <span class="material-symbols-outlined list-delete chapter-delete"
+                    (click)="deletePrologue.emit(); $event.stopPropagation()" title="Delete prologue">delete</span>
+            </div>
+        </div>
+        }
+    </div>
+</div>

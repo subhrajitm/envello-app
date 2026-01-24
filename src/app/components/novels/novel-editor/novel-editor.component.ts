@@ -10,10 +10,62 @@ import { NovelContentService, Chapter, ChapterGroup } from '../../../services/no
 import { VersionHistoryService, VersionSnapshot } from '../../../services/version-history.service';
 import { AiService, AiMessage, AiSuggestion } from '../../../services/ai.service';
 
+// Modals
+import { DeleteModalComponent, DeleteModalData } from './components/modals/delete-modal/delete-modal.component';
+import { AddModalComponent, AddModalData } from './components/modals/add-modal/add-modal.component';
+import { LinkModalComponent } from './components/modals/link-modal/link-modal.component';
+import { VersionHistoryModalComponent } from './components/modals/version-history-modal/version-history-modal.component';
+
+// Sidebar
+import { SyncStatusComponent } from './components/sidebar/sync-status/sync-status.component';
+import { ChaptersListComponent } from './components/sidebar/chapters-list/chapters-list.component';
+import { StructureViewComponent } from './components/sidebar/structure-view/structure-view.component';
+import { CharactersListComponent } from './components/sidebar/characters-list/characters-list.component';
+import { LocationsListComponent } from './components/sidebar/locations-list/locations-list.component';
+
+// Editor
+import { EditorHeaderComponent, SearchResult } from './components/editor/editor-header/editor-header.component';
+import { EditorToolbarComponent } from './components/editor/editor-toolbar/editor-toolbar.component';
+import { ManuscriptEditorComponent } from './components/editor/manuscript-editor/manuscript-editor.component';
+import { StructureEditorComponent } from './components/editor/structure-editor/structure-editor.component';
+import { CharacterDetailsComponent } from './components/editor/character-details/character-details.component';
+import { LocationDetailsComponent } from './components/editor/location-details/location-details.component';
+
+// Right Sidebar
+import { AiPanelComponent } from './components/right-sidebar/ai-panel/ai-panel.component';
+import { NotesPanelComponent } from './components/right-sidebar/notes-panel/notes-panel.component';
+import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-data/manuscript-data.component';
+
 @Component({
   selector: 'app-novel-editor',
   standalone: true,
-  imports: [CommonModule, TiptapEditorDirective, FormsModule],
+  imports: [
+    CommonModule, 
+    TiptapEditorDirective, 
+    FormsModule,
+    // Modals
+    DeleteModalComponent,
+    AddModalComponent,
+    LinkModalComponent,
+    VersionHistoryModalComponent,
+    // Sidebar
+    SyncStatusComponent,
+    ChaptersListComponent,
+    StructureViewComponent,
+    CharactersListComponent,
+    LocationsListComponent,
+    // Editor
+    EditorHeaderComponent,
+    EditorToolbarComponent,
+    ManuscriptEditorComponent,
+    StructureEditorComponent,
+    CharacterDetailsComponent,
+    LocationDetailsComponent,
+    // Right Sidebar
+    AiPanelComponent,
+    NotesPanelComponent,
+    ManuscriptDataComponent,
+  ],
   templateUrl: './novel-editor.component.html',
   styleUrl: './novel-editor.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -25,7 +77,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   aiService = inject(AiService); // Inject AI Service
   route = inject(ActivatedRoute);
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
-  @ViewChild('aiMessagesContainer') aiMessagesContainer!: ElementRef<HTMLDivElement>;
   private shouldFocusInput = false;
   private timeInterval?: number;
 
@@ -282,8 +333,19 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.novelService.toggleGroupExpand(group.id);
   }
 
-  selectChapter(chapter: Chapter) {
-    this.activeChapterId.set(chapter.id);
+  selectChapter(chapter: Chapter | { id: string }) {
+    if ('id' in chapter) {
+      const novel = this.novel();
+      if (novel) {
+        for (const group of novel.chapters) {
+          const found = group.children.find(c => c.id === chapter.id);
+          if (found) {
+            this.activeChapterId.set(found.id);
+            return;
+          }
+        }
+      }
+    }
   }
 
   setActiveTab(tab: 'ai' | 'notes' | 'manuscript') {
@@ -654,6 +716,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.novelService.updateCharacter(charId, { [field]: value });
   }
 
+  // Handler for component output
+  onCharacterFieldUpdate(data: { id: string; field: string; value: string }) {
+    this.updateCharacterField(data.id, data.field, data.value);
+  }
+
   deleteCharacter(charId: string, name?: string) {
     this.requestDelete('character', charId, name);
   }
@@ -673,6 +740,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   updateLocationField(locId: string, field: string, value: string) {
     this.novelService.updateLocation(locId, { [field]: value });
+  }
+
+  // Handler for component output
+  onLocationFieldUpdate(data: { id: string; field: string; value: string }) {
+    this.updateLocationField(data.id, data.field, data.value);
   }
 
   deleteLocation(locId: string, name?: string) {
@@ -1221,7 +1293,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         timestamp: new Date()
       };
       this.aiMessages.update(messages => [...messages, assistantMessage]);
-      this.scrollToBottom();
+      // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to get AI response. Please try again.');
       console.error('AI error:', error);
@@ -1261,7 +1333,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         timestamp: new Date()
       };
       this.aiMessages.update(messages => [...messages, assistantMessage]);
-      this.scrollToBottom();
+      // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to analyze chapter. Please try again.');
       console.error('Analysis error:', error);
@@ -1410,21 +1482,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     return date.toLocaleDateString();
   }
 
-  scrollToBottom() {
-    setTimeout(() => {
-      if (this.aiMessagesContainer) {
-        const container = this.aiMessagesContainer.nativeElement;
-        container.scrollTop = container.scrollHeight;
-      }
-    }, 100);
-  }
-
-  handleChatEnter(event: KeyboardEvent) {
-    if (!event.shiftKey) {
-      event.preventDefault();
-      this.sendAiMessage();
-    }
-  }
+  // scrollToBottom and handleChatEnter moved to AI panel component
 
   // Full screen mode
   toggleFullScreen() {

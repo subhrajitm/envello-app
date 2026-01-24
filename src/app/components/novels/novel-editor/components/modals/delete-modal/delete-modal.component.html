@@ -1,0 +1,16 @@
+@if (modal().isOpen) {
+<div class="ne-modal-overlay">
+    <div class="ne-modal">
+        <div class="ne-modal-header">
+            {{ modal().title }}
+        </div>
+        <div class="ne-modal-body">
+            {{ modal().message }}
+        </div>
+        <div class="ne-modal-footer">
+            <button class="ne-modal-btn cancel" (click)="cancel.emit()">Cancel</button>
+            <button class="ne-modal-btn delete" (click)="confirm.emit()">Delete</button>
+        </div>
+    </div>
+</div>
+}

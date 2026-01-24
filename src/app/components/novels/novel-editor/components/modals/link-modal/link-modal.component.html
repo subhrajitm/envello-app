@@ -1,0 +1,39 @@
+@if (isOpen()) {
+<div class="ne-modal-overlay" (click)="onCancel()">
+    <div class="ne-modal" (click)="$event.stopPropagation()">
+        <div class="ne-modal-header">
+            Insert Link
+        </div>
+        <div class="ne-modal-body">
+            <div class="ne-modal-input-wrapper">
+                <label class="ne-modal-label">Link Text</label>
+                <input 
+                    type="text" 
+                    class="ne-modal-input" 
+                    [value]="linkText()"
+                    (input)="linkTextChange.emit($any($event.target).value)"
+                    placeholder="Link text (optional)"
+                />
+            </div>
+            <div class="ne-modal-input-wrapper" style="margin-top: 16px;">
+                <label class="ne-modal-label">URL</label>
+                <input 
+                    type="url" 
+                    class="ne-modal-input" 
+                    [value]="linkUrl()"
+                    (input)="linkUrlChange.emit($any($event.target).value)"
+                    placeholder="https://example.com"
+                    (keydown.enter)="onInsert()"
+                    autofocus
+                />
+            </div>
+        </div>
+        <div class="ne-modal-footer">
+            <button class="ne-modal-btn cancel" (click)="onCancel()">Cancel</button>
+            <button class="ne-modal-btn confirm" (click)="onInsert()" [disabled]="!linkUrl().trim()">
+                Insert
+            </button>
+        </div>
+    </div>
+</div>
+}

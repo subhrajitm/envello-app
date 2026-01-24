@@ -1,0 +1,28 @@
+<div class="ne-notes-panel">
+    <div class="ne-ai-header">
+        <span class="material-symbols-outlined icon-bolt">sticky_note_2</span>
+        CHAPTER NOTES
+    </div>
+
+    <div class="ne-notes-list">
+        <div class="ne-add-btn-row">
+            <button class="ne-btn-add-note" (click)="addNewNote.emit()">
+                <span class="material-symbols-outlined">add</span> New Note
+            </button>
+        </div>
+
+        @for (note of notes(); track note.id) {
+        <div class="ne-note-card">
+            <div class="note-card-header">
+                <span class="note-title">{{ note.title }}</span>
+                <div class="note-actions">
+                    <span class="note-time">{{ note.date }}</span>
+                    <span class="material-symbols-outlined note-delete" (click)="deleteNote.emit(note.id)"
+                        title="Delete note">delete</span>
+                </div>
+            </div>
+            <div class="note-body">{{ note.body }}</div>
+        </div>
+        }
+    </div>
+</div>
