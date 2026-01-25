@@ -240,6 +240,13 @@
     transform: translate(-1px, -1px);
 }
 
+[data-theme="typewriter"] .status-badge {
+    background: transparent !important;
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+}
+
+
 * {
     margin: 0;
     padding: 0;

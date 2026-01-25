@@ -59,7 +59,8 @@ export class SettingsModalComponent {
     { value: 'enterprise-dark', label: 'Pro Dark', icon: 'dark_mode' },
     { value: 'enterprise-light', label: 'Pro Light', icon: 'wb_sunny' },
     { value: 'light', label: 'Paper', icon: 'light_mode' },
-    { value: 'colorful', label: 'Colorful', icon: 'palette' }
+    { value: 'colorful', label: 'Colorful', icon: 'palette' },
+    { value: 'typewriter', label: 'Typewriter', icon: 'article' }
   ];
 
   constructor() {
@@ -217,7 +218,7 @@ export class SettingsModalComponent {
       document.documentElement.style.removeProperty('--editor-font');
       document.documentElement.style.removeProperty('--editor-line-height');
       document.body.classList.remove('compact-mode', 'no-animations');
-      
+
       // Dispatch event to reset navigation layout
       window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
     }
