@@ -19,6 +19,8 @@ export interface UserProfile {
     totalDocuments: number;
     totalProjects: number;
     daysActive: number;
+    currentStreak: number;
+    lastLoginDate: string;
   };
 }
 
@@ -50,6 +52,8 @@ export class UserService {
     if (!this.currentUser()) {
       this.initializeDemoUser();
     }
+
+    this.checkStreak();
   }
 
   // Update user profile
@@ -169,11 +173,44 @@ export class UserService {
         totalWords: 142580,
         totalDocuments: 47,
         totalProjects: 12,
-        daysActive: 365
+        daysActive: 365,
+        currentStreak: 14,
+        lastLoginDate: new Date().toISOString()
       }
     };
 
     this.currentUser.set(demoUser);
     this.saveUser();
+  }
+  private checkStreak() {
+    const user = this.currentUser();
+    if (!user) return;
+
+    const today = new Date().toDateString();
+    const lastLogin = new Date(user.stats.lastLoginDate || new Date().toISOString()).toDateString();
+
+    if (today === lastLogin) {
+      return; // Already logged in today
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayString = yesterday.toDateString();
+
+    let newStreak = user.stats.currentStreak;
+
+    if (lastLogin === yesterdayString) {
+      // Login was yesterday, increment streak
+      newStreak++;
+    } else {
+      // Streak broken, reset to 1 (today is day 1)
+      newStreak = 1;
+    }
+
+    this.updateStats({
+      currentStreak: newStreak,
+      lastLoginDate: new Date().toISOString(),
+      daysActive: user.stats.daysActive + 1
+    });
   }
 }

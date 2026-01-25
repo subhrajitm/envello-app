@@ -11,6 +11,12 @@
     color: var(--text-tertiary);
     /* Ensure footer sticks to bottom if needed, or handled by layout */
     z-index: 100;
+    /* Ensure footer sticks to bottom if needed, or handled by layout */
+    z-index: 100;
+}
+
+.footer-spacer {
+    flex: 1;
 }
 
 .footer-item {
