@@ -1,6 +1,6 @@
 import { Injectable, signal, effect } from '@angular/core';
 
-export type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterprise-light';
+export type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterprise-light' | 'typewriter';
 
 @Injectable({
   providedIn: 'root'
@@ -14,8 +14,8 @@ export class ThemeService {
     if (savedTheme) {
       this.theme.set(savedTheme);
     } else {
-      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.theme.set(systemDark ? 'dark' : 'light');
+      // Default to typewriter theme as requested
+      this.theme.set('typewriter');
     }
 
     // Effect to update DOM and Storage when signal changes
@@ -32,6 +32,7 @@ export class ThemeService {
       if (t === 'enterprise-dark') return 'enterprise-light';
       if (t === 'enterprise-light') return 'light';
       if (t === 'light') return 'colorful';
+      if (t === 'colorful') return 'typewriter';
       return 'dark';
     });
   }
