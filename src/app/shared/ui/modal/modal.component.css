@@ -25,6 +25,7 @@
 .env-modal--sm { width: 90%; max-width: 400px; }
 .env-modal--md { width: 90%; max-width: 500px; }
 .env-modal--large { width: 90%; max-width: 700px; }
+.env-modal--xl { width: 90%; max-width: 800px; }
 
 .env-modal-header {
   display: flex;

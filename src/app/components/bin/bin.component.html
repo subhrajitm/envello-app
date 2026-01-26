@@ -8,10 +8,9 @@
     </div>
     <div class="bin-header-actions" *ngIf="items().length > 0">
       <span class="bin-count">{{ items().length }} items</span>
-      <button class="btn-empty" type="button" (click)="emptyBin()" [disabled]="items().length === 0">
-        <span class="material-symbols-outlined">delete_sweep</span>
-        <span>Empty Bin</span>
-      </button>
+      <env-button variant="danger" icon="delete_sweep" (clicked)="emptyBin()" [disabled]="items().length === 0">
+        Empty Bin
+      </env-button>
     </div>
   </header>
 
@@ -58,10 +57,9 @@
             </div>
           </td>
           <td class="actions">
-            <button type="button" class="btn-delete" (click)="permanentlyDelete(item.id)">
-              <span class="material-symbols-outlined">delete_forever</span>
-              <span>Delete</span>
-            </button>
+            <env-button variant="danger" icon="delete_forever" size="sm" (clicked)="permanentlyDelete(item.id)">
+              Delete
+            </env-button>
           </td>
         </tr>
       </tbody>
@@ -69,11 +67,11 @@
   </section>
 
   <ng-template #emptyState>
-    <div class="bin-empty">
-      <h2>No items in Bin</h2>
-      <p>Deleted notes, chapters, characters, and locations will appear here before permanent removal.</p>
-      <p class="bin-empty-caption">This acts as a safety net so teams can review destructive actions.</p>
-    </div>
+    <env-empty-state
+      icon="delete_outline"
+      title="No items in Bin"
+      description="Deleted notes, chapters, characters, and locations will appear here before permanent removal. This acts as a safety net so teams can review destructive actions."
+    />
   </ng-template>
 </div>
 

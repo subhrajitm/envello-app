@@ -61,7 +61,7 @@ Overlay modal with header, body, and footer slots.
 </env-modal>
 ```
 
-**Inputs:** `isOpen`, `title`, `size` (sm | md | large), `showClose`  
+**Inputs:** `isOpen`, `title`, `size` (sm | md | large | xl), `showClose`  
 **Outputs:** `closed`  
 **Slots:** `[header]`, `[body]`, `[footer]`. Use `[body]` and `[footer]` for main content and actions.
 
@@ -105,5 +105,8 @@ Add the components you need to your `imports` array (standalone).
 
 ## Migration
 
-- **Research**: "No Library Selected" uses `env-empty-state` + `env-button`; "Create Library" modal uses `env-modal` with `[body]` / `[footer]` and `env-button`. Form markup (`.form-group`, `.modal-input`, etc.) remains in the page component and continues to use existing CSS.
-- **Daily Notes, Journals, etc.**: Replace `modal-overlay` / `modal-container` with `env-modal`; `btn-primary` / `btn-secondary` with `env-button`; `empty-action-btn` with `env-empty-state` + `env-button` as you migrate.
+- **Research**: All modals (Create Library, Add Source, Create Summary, Topic Discovery, Research Plan) use `env-modal`. Empty states (No Library, No Sources, No Summaries) use `env-empty-state` + `env-button`. Sidebar add, header actions, AI close use `env-icon-button` / `env-button`.
+- **Daily Notes**: Single modal uses `env-modal`; empty state uses `env-empty-state` + `env-button`; footer actions use `env-button`.
+- **Journals**: New Entry, Project, Column, Export, Goals modals use `env-modal`; empty states use `env-empty-state` + `env-button`; sidebar add uses `env-icon-button`. Entry Detail and Search modals remain custom.
+- **Bin**: Empty state uses `env-empty-state`; Empty Bin / Delete use `env-button`.
+- **Profile editor**: Modal uses `env-modal`; footer and Change Photo use `env-button`.

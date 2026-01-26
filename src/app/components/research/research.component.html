@@ -9,9 +9,7 @@
                     [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
             </div>
             <div class="dropdown-wrapper">
-                <button class="add-btn" (click)="openLibraryModal()">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
+                <env-icon-button icon="add" variant="primary" [size]="28" title="Create library" (clicked)="openLibraryModal()" />
             </div>
         </div>
 
@@ -57,20 +55,12 @@
                 </button>
             </div>
             <div class="research-actions">
-                <button class="action-btn-icon" (click)="toggleAIPanel()" [class.active]="showAIPanel()"
-                    title="Toggle AI Assistant">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                </button>
+                <env-icon-button icon="auto_awesome" variant="ghost" [size]="32" [active]="showAIPanel()"
+                    title="Toggle AI Assistant" (clicked)="toggleAIPanel()" />
                 @if (viewMode() === 'sources') {
-                <button class="action-btn" (click)="openSourceModal()">
-                    <span class="material-symbols-outlined">add</span>
-                    Add Source
-                </button>
+                <env-button variant="primary" icon="add" (clicked)="openSourceModal()">Add Source</env-button>
                 } @else {
-                <button class="action-btn" (click)="openSummaryModal()">
-                    <span class="material-symbols-outlined">add</span>
-                    Create Summary
-                </button>
+                <env-button variant="primary" icon="add" (clicked)="openSummaryModal()">Create Summary</env-button>
                 }
             </div>
         </div>
@@ -141,20 +131,13 @@
                     </div>
                 </div>
                 } @empty {
-                <div class="content-empty-state">
-                    <span class="material-symbols-outlined">article</span>
-                    @if (sources().length === 0) {
-                    <h3>No Sources Yet</h3>
-                    <p>Add your first source to this library</p>
-                    } @else {
-                    <h3>No sources match</h3>
-                    <p>Try adjusting your search or filters</p>
-                    }
-                    <button class="empty-action-btn" (click)="openSourceModal()">
-                        <span class="material-symbols-outlined">add</span>
-                        Add Source
-                    </button>
-                </div>
+                <env-empty-state
+                    icon="article"
+                    [title]="sources().length === 0 ? 'No Sources Yet' : 'No sources match'"
+                    [description]="sources().length === 0 ? 'Add your first source to this library' : 'Try adjusting your search or filters'"
+                >
+                    <env-button variant="primary" icon="add" (clicked)="openSourceModal()">Add Source</env-button>
+                </env-empty-state>
                 }
             </div>
         </div>
@@ -181,15 +164,13 @@
                     </div>
                 </div>
                 } @empty {
-                <div class="content-empty-state">
-                    <span class="material-symbols-outlined">summarize</span>
-                    <h3>No Summaries Yet</h3>
-                    <p>Create a summary from your sources</p>
-                    <button class="empty-action-btn" (click)="openSummaryModal()">
-                        <span class="material-symbols-outlined">add</span>
-                        Create Summary
-                    </button>
-                </div>
+                <env-empty-state
+                    icon="summarize"
+                    title="No Summaries Yet"
+                    description="Create a summary from your sources"
+                >
+                    <env-button variant="primary" icon="add" (clicked)="openSummaryModal()">Create Summary</env-button>
+                </env-empty-state>
                 }
             </div>
         </div>
@@ -217,9 +198,7 @@
                 <span class="material-symbols-outlined">auto_awesome</span>
                 <span>AI Research Assistant</span>
             </div>
-            <button class="ai-close-btn" (click)="toggleAIPanel()" title="Close">
-                <span class="material-symbols-outlined">close</span>
-            </button>
+            <env-icon-button icon="close" variant="ghost" [size]="32" title="Close" (clicked)="toggleAIPanel()" />
         </div>
 
         <div class="ai-sidebar-content">
@@ -361,114 +340,92 @@
     </env-modal>
 
     <!-- Add Source Modal -->
-    @if (showSourceModal()) {
-    <div class="modal-overlay" (click)="closeSourceModal()">
-        <div class="modal-container" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Add Source</h3>
-                <button class="close-modal-btn" (click)="closeSourceModal()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+    <env-modal [isOpen]="showSourceModal()" (closed)="closeSourceModal()" title="Add Source" size="md">
+        <div body>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" class="modal-input" [ngModel]="newSourceTitle()"
+                    (ngModelChange)="newSourceTitle.set($event)" placeholder="Source title">
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" class="modal-input" [ngModel]="newSourceTitle()"
-                        (ngModelChange)="newSourceTitle.set($event)" placeholder="Source title">
+            <div class="form-group">
+                <label>URL (Optional)</label>
+                <input type="text" class="modal-input" [ngModel]="newSourceUrl()"
+                    (ngModelChange)="newSourceUrl.set($event)" placeholder="https://...">
+            </div>
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>Type</label>
+                    <select class="modal-select" [ngModel]="newSourceType()" (ngModelChange)="newSourceType.set($event)">
+                        <option value="WEB">Web Page</option>
+                        <option value="PDF">PDF Document</option>
+                        <option value="VIDEO">Video/Audio</option>
+                        <option value="INTERVIEW">Interview</option>
+                        <option value="PHYSICAL">Book/Physical</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label>URL (Optional)</label>
-                    <input type="text" class="modal-input" [ngModel]="newSourceUrl()"
-                        (ngModelChange)="newSourceUrl.set($event)" placeholder="https://...">
-                </div>
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label>Type</label>
-                        <select class="modal-select" [ngModel]="newSourceType()"
-                            (ngModelChange)="newSourceType.set($event)">
-                            <option value="WEB">Web Page</option>
-                            <option value="PDF">PDF Document</option>
-                            <option value="VIDEO">Video/Audio</option>
-                            <option value="INTERVIEW">Interview</option>
-                            <option value="PHYSICAL">Book/Physical</option>
-                        </select>
-                    </div>
-                    <div class="form-group half">
-                        <label>Author (Optional)</label>
-                        <input type="text" class="modal-input" [ngModel]="newSourceAuthor()"
-                            (ngModelChange)="newSourceAuthor.set($event)" placeholder="Author name">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Tags (comma separated)</label>
-                    <input type="text" class="modal-input" [ngModel]="newSourceTags()"
-                        (ngModelChange)="newSourceTags.set($event)" placeholder="history, architecture, research">
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea class="modal-textarea" [ngModel]="newSourceDesc()"
-                        (ngModelChange)="newSourceDesc.set($event)" rows="3"
-                        placeholder="Brief summary of this source..."></textarea>
+                <div class="form-group half">
+                    <label>Author (Optional)</label>
+                    <input type="text" class="modal-input" [ngModel]="newSourceAuthor()"
+                        (ngModelChange)="newSourceAuthor.set($event)" placeholder="Author name">
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" (click)="closeSourceModal()">Cancel</button>
-                <button class="btn-primary" (click)="saveSource()" [disabled]="!newSourceTitle()">Add Source</button>
+            <div class="form-group">
+                <label>Tags (comma separated)</label>
+                <input type="text" class="modal-input" [ngModel]="newSourceTags()"
+                    (ngModelChange)="newSourceTags.set($event)" placeholder="history, architecture, research">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea class="modal-textarea" [ngModel]="newSourceDesc()"
+                    (ngModelChange)="newSourceDesc.set($event)" rows="3"
+                    placeholder="Brief summary of this source..."></textarea>
             </div>
         </div>
-    </div>
-    }
+        <div footer>
+            <env-button variant="secondary" (clicked)="closeSourceModal()">Cancel</env-button>
+            <env-button variant="primary" (clicked)="saveSource()" [disabled]="!newSourceTitle()">Add Source</env-button>
+        </div>
+    </env-modal>
 
     <!-- Create Summary Modal -->
-    @if (showSummaryModal()) {
-    <div class="modal-overlay" (click)="closeSummaryModal()">
-        <div class="modal-container large" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Create Summary</h3>
-                <button class="close-modal-btn" (click)="closeSummaryModal()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+    <env-modal [isOpen]="showSummaryModal()" (closed)="closeSummaryModal()" title="Create Summary" size="large">
+        <div body>
+            <div class="form-group">
+                <label>Summary Title</label>
+                <input type="text" class="modal-input" [ngModel]="newSummaryTitle()"
+                    (ngModelChange)="newSummaryTitle.set($event)"
+                    placeholder="e.g., Victorian Architecture Overview">
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Summary Title</label>
-                    <input type="text" class="modal-input" [ngModel]="newSummaryTitle()"
-                        (ngModelChange)="newSummaryTitle.set($event)"
-                        placeholder="e.g., Victorian Architecture Overview">
-                </div>
-                <div class="form-group">
-                    <label>Select Sources</label>
-                    <div class="source-selection-list">
-                        @for (source of sources(); track source.id) {
-                        <div class="source-selection-item" [class.selected]="isSourceSelected(source.id)"
-                            (click)="toggleSourceSelection(source.id)">
-                            <input type="checkbox" [checked]="isSourceSelected(source.id)">
-                            <span class="material-symbols-outlined">{{ getSourceIcon(source.sourceType) }}</span>
-                            <span class="source-title">{{ source.title }}</span>
-                        </div>
-                        }
+            <div class="form-group">
+                <label>Select Sources</label>
+                <div class="source-selection-list">
+                    @for (source of sources(); track source.id) {
+                    <div class="source-selection-item" [class.selected]="isSourceSelected(source.id)"
+                        (click)="toggleSourceSelection(source.id)">
+                        <input type="checkbox" [checked]="isSourceSelected(source.id)">
+                        <span class="material-symbols-outlined">{{ getSourceIcon(source.sourceType) }}</span>
+                        <span class="source-title">{{ source.title }}</span>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>Summary Content</label>
-                    <textarea class="modal-textarea" [ngModel]="newSummaryContent()"
-                        (ngModelChange)="newSummaryContent.set($event)" rows="8"
-                        placeholder="Write your summary here..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Tags (comma separated)</label>
-                    <input type="text" class="modal-input" [ngModel]="newSummaryTags()"
-                        (ngModelChange)="newSummaryTags.set($event)" placeholder="summary, architecture, key-findings">
+                    }
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" (click)="closeSummaryModal()">Cancel</button>
-                <button class="btn-primary" (click)="saveSummary()" [disabled]="!newSummaryTitle()">Create
-                    Summary</button>
+            <div class="form-group">
+                <label>Summary Content</label>
+                <textarea class="modal-textarea" [ngModel]="newSummaryContent()"
+                    (ngModelChange)="newSummaryContent.set($event)" rows="8"
+                    placeholder="Write your summary here..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Tags (comma separated)</label>
+                <input type="text" class="modal-input" [ngModel]="newSummaryTags()"
+                    (ngModelChange)="newSummaryTags.set($event)" placeholder="summary, architecture, key-findings">
             </div>
         </div>
-    </div>
-    }
+        <div footer>
+            <env-button variant="secondary" (clicked)="closeSummaryModal()">Cancel</env-button>
+            <env-button variant="primary" (clicked)="saveSummary()" [disabled]="!newSummaryTitle()">Create Summary</env-button>
+        </div>
+    </env-modal>
 
     <!-- Source Detail Panel -->
     @if (showSourceDetailPanel() && selectedSource(); as source) {
@@ -543,8 +500,8 @@
                 </div>
 
                 <div class="detail-actions">
-                    <button class="btn-secondary" (click)="saveNotes()">Save Notes</button>
-                    <button class="btn-danger" (click)="deleteCurrentSource()">Delete Source</button>
+                    <env-button variant="secondary" (clicked)="saveNotes()">Save Notes</env-button>
+                    <env-button variant="danger" (clicked)="deleteCurrentSource()">Delete Source</env-button>
                 </div>
             </div>
         </div>
@@ -552,161 +509,129 @@
     }
 
     <!-- Topic Discovery Modal -->
-    @if (showTopicDiscovery()) {
-    <div class="modal-overlay" (click)="closeTopicDiscovery()">
-        <div class="modal-container large" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Discovered Research Topics</h3>
-                <button class="close-modal-btn" (click)="closeTopicDiscovery()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+    <env-modal [isOpen]="showTopicDiscovery()" (closed)="closeTopicDiscovery()" title="Discovered Research Topics" size="large">
+        <div body>
+            @if (aiLoading()) {
+            <div class="ai-loading">
+                <div class="loading-spinner"></div>
+                <p>Discovering topics...</p>
             </div>
-            <div class="modal-body">
+            } @else {
+            <div class="topics-list">
+                @for (topic of discoveredTopics(); track topic.topic) {
+                <div class="topic-item" (click)="searchByTopic(topic.topic)">
+                    <div class="topic-header">
+                        <h4>{{ topic.topic }}</h4>
+                        <span class="topic-relevance">{{ topic.relevance }}% relevant</span>
+                    </div>
+                    <div class="topic-meta">
+                        <span class="topic-sources">{{ topic.sources }} sources</span>
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+        <div footer>
+            <env-button variant="primary" (clicked)="closeTopicDiscovery()">Done</env-button>
+        </div>
+    </env-modal>
+
+    <!-- Research Plan Generator Modal -->
+    <env-modal [isOpen]="showResearchPlanModal()" (closed)="closeResearchPlanModal()" title="AI Research Plan Generator" size="xl">
+        <div body>
+            @if (!generatedPlan()) {
+            <div class="plan-input-section">
+                <p class="plan-intro">Enter a research topic and our AI will generate a comprehensive research plan
+                    with suggested sources, milestones, and a structured timeline.</p>
+                <div class="form-group">
+                    <label>Research Topic</label>
+                    <input type="text" class="modal-input" [ngModel]="researchPlanTopic()"
+                        (ngModelChange)="researchPlanTopic.set($event)"
+                        placeholder="e.g., Victorian Architecture, Climate Change, Ancient Rome"
+                        (keydown.enter)="generateResearchPlan()">
+                </div>
                 @if (aiLoading()) {
                 <div class="ai-loading">
                     <div class="loading-spinner"></div>
-                    <p>Discovering topics...</p>
+                    <p>Generating comprehensive research plan...</p>
                 </div>
-                } @else {
-                <div class="topics-list">
-                    @for (topic of discoveredTopics(); track topic.topic) {
-                    <div class="topic-item" (click)="searchByTopic(topic.topic)">
-                        <div class="topic-header">
-                            <h4>{{ topic.topic }}</h4>
-                            <span class="topic-relevance">{{ topic.relevance }}% relevant</span>
+                }
+            </div>
+            } @else {
+            <div class="research-plan-display">
+                <div class="plan-section">
+                    <h3>{{ generatedPlan()!.topic }}</h3>
+                    <p class="plan-overview">{{ generatedPlan()!.overview }}</p>
+                    <div class="plan-timeframe">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <strong>Estimated Timeframe:</strong> {{ generatedPlan()!.estimatedTimeframe }}
+                    </div>
+                </div>
+
+                <div class="plan-section">
+                    <h4><span class="material-symbols-outlined">timeline</span> Research Phases</h4>
+                    @for (phase of generatedPlan()!.phases; track phase.name) {
+                    <div class="phase-card">
+                        <div class="phase-header">
+                            <strong>{{ phase.name }}</strong>
+                            <span class="phase-duration">{{ phase.duration }}</span>
                         </div>
-                        <div class="topic-meta">
-                            <span class="topic-sources">{{ topic.sources }} sources</span>
-                            <span class="material-symbols-outlined">arrow_forward</span>
-                        </div>
+                        <ul class="phase-objectives">
+                            @for (objective of phase.objectives; track objective) {
+                            <li>{{ objective }}</li>
+                            }
+                        </ul>
                     </div>
                     }
                 </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button class="btn-primary" (click)="closeTopicDiscovery()">Done</button>
-            </div>
-        </div>
-    </div>
-    }
 
-    <!-- Research Plan Generator Modal -->
-    @if (showResearchPlanModal()) {
-    <div class="modal-overlay" (click)="closeResearchPlanModal()">
-        <div class="modal-container research-plan-modal" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h3>AI Research Plan Generator</h3>
-                <button class="close-modal-btn" (click)="closeResearchPlanModal()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                @if (!generatedPlan()) {
-                <!-- Input Phase -->
-                <div class="plan-input-section">
-                    <p class="plan-intro">Enter a research topic and our AI will generate a comprehensive research plan
-                        with suggested sources, milestones, and a structured timeline.</p>
-                    <div class="form-group">
-                        <label>Research Topic</label>
-                        <input type="text" class="modal-input" [ngModel]="researchPlanTopic()"
-                            (ngModelChange)="researchPlanTopic.set($event)"
-                            placeholder="e.g., Victorian Architecture, Climate Change, Ancient Rome"
-                            (keydown.enter)="generateResearchPlan()">
-                    </div>
-                    @if (aiLoading()) {
-                    <div class="ai-loading">
-                        <div class="loading-spinner"></div>
-                        <p>Generating comprehensive research plan...</p>
+                <div class="plan-section">
+                    <h4><span class="material-symbols-outlined">library_books</span> Suggested Sources ({{
+                        generatedPlan()!.suggestedSources.length }})</h4>
+                    @for (source of generatedPlan()!.suggestedSources; track source.title) {
+                    <div class="source-suggestion-card">
+                        <div class="source-suggestion-header">
+                            <div class="source-suggestion-title">
+                                <span class="material-symbols-outlined">{{ getSourceIcon(source.type) }}</span>
+                                <strong>{{ source.title }}</strong>
+                            </div>
+                            <span class="priority-badge" [class]="'priority-' + source.priority.toLowerCase()">{{ source.priority }}</span>
+                        </div>
+                        <p class="source-rationale">{{ source.rationale }}</p>
                     </div>
                     }
                 </div>
-                } @else {
-                <!-- Generated Plan Display -->
-                <div class="research-plan-display">
-                    <div class="plan-section">
-                        <h3>{{ generatedPlan()!.topic }}</h3>
-                        <p class="plan-overview">{{ generatedPlan()!.overview }}</p>
-                        <div class="plan-timeframe">
-                            <span class="material-symbols-outlined">schedule</span>
-                            <strong>Estimated Timeframe:</strong> {{ generatedPlan()!.estimatedTimeframe }}
-                        </div>
-                    </div>
 
-                    <div class="plan-section">
-                        <h4><span class="material-symbols-outlined">timeline</span> Research Phases</h4>
-                        @for (phase of generatedPlan()!.phases; track phase.name) {
-                        <div class="phase-card">
-                            <div class="phase-header">
-                                <strong>{{ phase.name }}</strong>
-                                <span class="phase-duration">{{ phase.duration }}</span>
-                            </div>
-                            <ul class="phase-objectives">
-                                @for (objective of phase.objectives; track objective) {
-                                <li>{{ objective }}</li>
-                                }
-                            </ul>
+                <div class="plan-section">
+                    <h4><span class="material-symbols-outlined">flag</span> Milestones</h4>
+                    @for (milestone of generatedPlan()!.milestones; track milestone.name) {
+                    <div class="milestone-card">
+                        <div class="milestone-header">
+                            <strong>{{ milestone.name }}</strong>
+                            <span class="milestone-deadline">{{ milestone.deadline }}</span>
                         </div>
-                        }
+                        <ul class="milestone-deliverables">
+                            @for (deliverable of milestone.deliverables; track deliverable) {
+                            <li>{{ deliverable }}</li>
+                            }
+                        </ul>
                     </div>
-
-                    <div class="plan-section">
-                        <h4><span class="material-symbols-outlined">library_books</span> Suggested Sources ({{
-                            generatedPlan()!.suggestedSources.length }})</h4>
-                        @for (source of generatedPlan()!.suggestedSources; track source.title) {
-                        <div class="source-suggestion-card">
-                            <div class="source-suggestion-header">
-                                <div class="source-suggestion-title">
-                                    <span class="material-symbols-outlined">{{ getSourceIcon(source.type) }}</span>
-                                    <strong>{{ source.title }}</strong>
-                                </div>
-                                <span class="priority-badge" [class]="'priority-' + source.priority.toLowerCase()">{{
-                                    source.priority }}</span>
-                            </div>
-                            <p class="source-rationale">{{ source.rationale }}</p>
-                        </div>
-                        }
-                    </div>
-
-                    <div class="plan-section">
-                        <h4><span class="material-symbols-outlined">flag</span> Milestones</h4>
-                        @for (milestone of generatedPlan()!.milestones; track milestone.name) {
-                        <div class="milestone-card">
-                            <div class="milestone-header">
-                                <strong>{{ milestone.name }}</strong>
-                                <span class="milestone-deadline">{{ milestone.deadline }}</span>
-                            </div>
-                            <ul class="milestone-deliverables">
-                                @for (deliverable of milestone.deliverables; track deliverable) {
-                                <li>{{ deliverable }}</li>
-                                }
-                            </ul>
-                        </div>
-                        }
-                    </div>
+                    }
                 </div>
-                }
             </div>
-            <div class="modal-footer">
-                @if (!generatedPlan()) {
-                <button class="btn-secondary" (click)="closeResearchPlanModal()">Cancel</button>
-                <button class="btn-primary" (click)="generateResearchPlan()"
-                    [disabled]="!researchPlanTopic() || aiLoading()">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                    Generate Plan
-                </button>
-                } @else {
-                <button class="btn-secondary" (click)="generatedPlan.set(null)">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                    New Topic
-                </button>
-                <button class="btn-primary" (click)="implementResearchPlan()" [disabled]="aiLoading()">
-                    <span class="material-symbols-outlined">check_circle</span>
-                    Implement Plan
-                </button>
-                }
-            </div>
+            }
         </div>
-    </div>
-    }
+        <div footer>
+            @if (!generatedPlan()) {
+            <env-button variant="secondary" (clicked)="closeResearchPlanModal()">Cancel</env-button>
+            <env-button variant="primary" icon="auto_awesome" (clicked)="generateResearchPlan()"
+                [disabled]="!researchPlanTopic() || aiLoading()">Generate Plan</env-button>
+            } @else {
+            <env-button variant="secondary" icon="arrow_back" (clicked)="generatedPlan.set(null)">New Topic</env-button>
+            <env-button variant="primary" icon="check_circle" (clicked)="implementResearchPlan()" [disabled]="aiLoading()">Implement Plan</env-button>
+            }
+        </div>
+    </env-modal>
 </div>

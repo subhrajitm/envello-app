@@ -1,11 +1,12 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BinService, BinItem } from '../../services/bin.service';
+import { ButtonComponent, EmptyStateComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-bin',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ButtonComponent, EmptyStateComponent],
   templateUrl: './bin.component.html',
   styleUrl: './bin.component.css'
 })

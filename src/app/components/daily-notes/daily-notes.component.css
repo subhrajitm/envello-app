@@ -1035,6 +1035,27 @@ li[data-type="taskItem"] input[type="checkbox"] {
     background: var(--bg-app);
 }
 
+.modal-share-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.modal-share-row .modal-input {
+    margin-top: 0;
+    flex: 1;
+}
+
+.modal-export-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.modal-export-row env-button {
+    flex: 1;
+}
+
 .btn-secondary {
     padding: 8px 16px;
     background: transparent;

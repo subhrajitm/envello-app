@@ -12,7 +12,7 @@ import { IconButtonComponent } from '../icon-button/icon-button.component';
 export class ModalComponent {
   @Input() isOpen = false;
   @Input() title = '';
-  @Input() size: 'sm' | 'md' | 'large' = 'md';
+  @Input() size: 'sm' | 'md' | 'large' | 'xl' = 'md';
   @Input() showClose = true;
 
   closed = output<void>();

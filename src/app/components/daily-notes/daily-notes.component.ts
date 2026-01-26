@@ -2,6 +2,7 @@ import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, e
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '../../services/store.service';
 import { FormsModule } from '@angular/forms';
+import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shared/ui';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -44,7 +45,7 @@ interface TagCategory {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, ModalComponent, EmptyStateComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css'
 })
@@ -92,6 +93,16 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   ]);
 
   showDropdown = signal<boolean>(false);
+
+  displayModalTitle = computed(() => {
+    const t = this.modalTitle();
+    if (t) return t;
+    const m = this.activeModal();
+    if (m === 'delete-confirm') return 'Delete Note';
+    if (m === 'share') return 'Share Note';
+    if (m === 'export') return 'Export Note';
+    return '';
+  });
 
   // Computed filtered notes
   filteredNotes = computed(() => {

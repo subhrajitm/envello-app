@@ -2,11 +2,12 @@ import { Component, signal, inject, ViewChild, ElementRef, HostListener } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
+import { ButtonComponent, ModalComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-profile-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ButtonComponent, ModalComponent],
   templateUrl: './profile-editor.component.html',
   styleUrl: './profile-editor.component.css'
 })
