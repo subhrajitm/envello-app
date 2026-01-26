@@ -382,33 +382,30 @@
 }
 
 .stat-badge {
-    padding: 3px 8px;
-    background: var(--bg-app);
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
+    padding: 2px 8px;
+    background: var(--bg-hover);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
     color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.4;
 }
 
 .stat-badge.unread {
-    background: rgba(248, 113, 113, 0.08);
-    border-color: rgba(248, 113, 113, 0.3);
-    color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
 }
 
 .stat-badge.reading {
-    background: rgba(250, 204, 21, 0.08);
-    border-color: rgba(250, 204, 21, 0.3);
-    color: #facc15;
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
 }
 
 .stat-badge.processed {
-    background: rgba(74, 222, 128, 0.08);
-    border-color: rgba(74, 222, 128, 0.3);
-    color: var(--accent-green);
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
 }
 
 /* Sources List */
@@ -636,7 +633,9 @@
 }
 
 .empty-action-btn .material-symbols-outlined {
-    font-size: 16px;
+    font-size: 18px;
+    line-height: 1;
+    display: block;
 }
 
 /* Modals */
@@ -646,23 +645,39 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    transition: opacity 0.2s;
 }
 
 .modal-container {
     background: var(--bg-panel);
     border: 1px solid var(--border-main);
-    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
     width: 90%;
     max-width: 500px;
-    max-height: 90vh;
+    max-height: 85vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modal-container.large {
@@ -675,6 +690,7 @@
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-subtle);
+    background: transparent;
 }
 
 .modal-header h3 {
@@ -689,8 +705,8 @@
     border: none;
     color: var(--text-tertiary);
     cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
+    padding: 6px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -716,8 +732,9 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    padding: 16px 20px;
+    padding: 12px 20px;
     border-top: 1px solid var(--border-subtle);
+    background: var(--bg-app);
 }
 
 .form-group {
