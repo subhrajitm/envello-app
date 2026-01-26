@@ -175,10 +175,10 @@
     --accent-yellow: #e5e5e5;
     --accent-pink: #000000;
 
-    /* Typewriter Fonts */
-    --font-sans: 'Courier Prime', 'Courier New', Courier, monospace;
-    --font-mono: 'Courier Prime', 'Courier New', Courier, monospace;
-    --font-serif: 'Courier Prime', 'Courier New', Courier, monospace;
+    /* Typewriter Fonts - Using Atkinson Hyperlegible for better readability */
+    --font-sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Atkinson Hyperlegible', monospace;
+    --font-serif: 'Atkinson Hyperlegible', serif;
 }
 
 [data-theme="enterprise-light"] {
