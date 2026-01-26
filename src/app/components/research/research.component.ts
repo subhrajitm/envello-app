@@ -1,7 +1,9 @@
 import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchEntry } from '../../services/research.service';
+import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary } from '../../services/research.service';
+
+type ViewMode = 'libraries' | 'sources' | 'summaries';
 
 @Component({
   selector: 'app-research',
@@ -11,144 +13,261 @@ import { ResearchService, ResearchEntry } from '../../services/research.service'
   styleUrl: './research.component.css'
 })
 export class ResearchComponent {
-  private researchService = inject(ResearchService);
+  researchService = inject(ResearchService);
 
   // UI State
-  showAddModal = signal(false);
-  showDetailPanel = signal(false);
-  selectedEntry = signal<ResearchEntry | null>(null);
+  viewMode = signal<ViewMode>('libraries');
+  selectedLibrary = signal<ResearchLibrary | null>(null);
 
-  // Filter & Search State
+  // Modals
+  showLibraryModal = signal(false);
+  showSourceModal = signal(false);
+  showSummaryModal = signal(false);
+  showSourceDetailPanel = signal(false);
+  selectedSource = signal<ResearchSource | null>(null);
+
+  // Filter & Search
   searchQuery = signal('');
   filterStatus = signal<'ALL' | 'UNREAD' | 'READING' | 'PROCESSED'>('ALL');
   filterType = signal<'ALL' | 'WEB' | 'PDF' | 'INTERVIEW'>('ALL');
 
-  // Input State for New Entry
-  newEntryTitle = signal('');
-  newEntryUrl = signal('');
-  newEntryType = signal<ResearchEntry['sourceType']>('WEB');
-  newEntryTags = signal(''); // comma separated
-  newEntryDesc = signal('');
+  // Form inputs - Library
+  newLibraryName = signal('');
+  newLibraryDesc = signal('');
+  newLibraryColor = signal('#8b5cf6');
 
-  // Editing State
-  editNotes = signal(''); // For the detail panel notes
+  // Form inputs - Source
+  newSourceTitle = signal('');
+  newSourceUrl = signal('');
+  newSourceType = signal<ResearchSource['sourceType']>('WEB');
+  newSourceTags = signal('');
+  newSourceDesc = signal('');
+  newSourceAuthor = signal('');
 
-  entries = this.researchService.entries;
+  // Form inputs - Summary
+  newSummaryTitle = signal('');
+  newSummaryContent = signal('');
+  newSummaryTags = signal('');
+  selectedSourceIds = signal<string[]>([]);
 
-  filteredEntries = computed(() => {
-    let list = this.entries();
+  // Editing
+  editNotes = signal('');
+
+  // Data
+  libraries = this.researchService.libraries;
+  sources = computed(() => {
+    const lib = this.selectedLibrary();
+    if (!lib) return [];
+    return this.researchService.getSourcesByLibrary(lib.id);
+  });
+  summaries = computed(() => {
+    const lib = this.selectedLibrary();
+    if (!lib) return [];
+    return this.researchService.getSummariesByLibrary(lib.id);
+  });
+
+  filteredSources = computed(() => {
+    let list = this.sources();
     const query = this.searchQuery().toLowerCase();
     const status = this.filterStatus();
     const type = this.filterType();
 
     if (query) {
-      list = list.filter(e =>
-        e.title.toLowerCase().includes(query) ||
-        e.tags.some(t => t.toLowerCase().includes(query)) ||
-        e.description?.toLowerCase().includes(query)
+      list = list.filter(s =>
+        s.title.toLowerCase().includes(query) ||
+        s.tags.some(t => t.toLowerCase().includes(query)) ||
+        s.description?.toLowerCase().includes(query)
       );
     }
 
     if (status !== 'ALL') {
-      list = list.filter(e => e.status === status);
+      list = list.filter(s => s.status === status);
     }
 
     if (type !== 'ALL') {
-      list = list.filter(e => e.sourceType === type);
+      list = list.filter(s => s.sourceType === type);
     }
 
     return list;
   });
 
-  // Analytics
-  stats = computed(() => {
-    const list = this.entries();
+  // Stats
+  sourceStats = computed(() => {
+    const list = this.sources();
     return {
       total: list.length,
-      unread: list.filter(e => e.status === 'UNREAD').length,
-      reading: list.filter(e => e.status === 'READING').length,
-      processed: list.filter(e => e.status === 'PROCESSED').length
+      unread: list.filter(s => s.status === 'UNREAD').length,
+      reading: list.filter(s => s.status === 'READING').length,
+      processed: list.filter(s => s.status === 'PROCESSED').length
     };
   });
 
-  openDetail(entry: ResearchEntry) {
-    this.selectedEntry.set(entry);
-    this.editNotes.set(entry.notes || '');
-    this.showDetailPanel.set(true);
+  // Library actions
+  openLibraryModal() {
+    this.newLibraryName.set('');
+    this.newLibraryDesc.set('');
+    this.newLibraryColor.set('#8b5cf6');
+    this.showLibraryModal.set(true);
   }
 
-  closeDetail() {
-    this.showDetailPanel.set(false);
-    this.selectedEntry.set(null);
+  closeLibraryModal() {
+    this.showLibraryModal.set(false);
   }
 
-  openAddModal() {
-    this.newEntryTitle.set('');
-    this.newEntryUrl.set('');
-    this.newEntryType.set('WEB');
-    this.newEntryTags.set('');
-    this.newEntryDesc.set('');
-    this.showAddModal.set(true);
+  saveLibrary() {
+    if (!this.newLibraryName()) return;
+    this.researchService.addLibrary({
+      name: this.newLibraryName(),
+      description: this.newLibraryDesc(),
+      color: this.newLibraryColor()
+    });
+    this.closeLibraryModal();
   }
 
-  closeAddModal() {
-    this.showAddModal.set(false);
+  selectLibrary(library: ResearchLibrary) {
+    this.selectedLibrary.set(library);
+    this.viewMode.set('sources');
   }
 
-  saveNewEntry() {
-    if (!this.newEntryTitle()) return;
+  backToLibraries() {
+    this.selectedLibrary.set(null);
+    this.viewMode.set('libraries');
+  }
 
-    this.researchService.addEntry({
-      title: this.newEntryTitle(),
-      url: this.newEntryUrl(),
-      sourceType: this.newEntryType(),
-      tags: this.newEntryTags().split(',').map(t => t.trim()).filter(t => t),
-      description: this.newEntryDesc(),
+  deleteLibrary(library: ResearchLibrary, event: Event) {
+    event.stopPropagation();
+    if (confirm(`Delete library "${library.name}" and all its sources?`)) {
+      this.researchService.deleteLibrary(library.id);
+      if (this.selectedLibrary()?.id === library.id) {
+        this.backToLibraries();
+      }
+    }
+  }
+
+  // Source actions
+  openSourceModal() {
+    this.newSourceTitle.set('');
+    this.newSourceUrl.set('');
+    this.newSourceType.set('WEB');
+    this.newSourceTags.set('');
+    this.newSourceDesc.set('');
+    this.newSourceAuthor.set('');
+    this.showSourceModal.set(true);
+  }
+
+  closeSourceModal() {
+    this.showSourceModal.set(false);
+  }
+
+  saveSource() {
+    const lib = this.selectedLibrary();
+    if (!this.newSourceTitle() || !lib) return;
+
+    this.researchService.addSource({
+      libraryId: lib.id,
+      title: this.newSourceTitle(),
+      url: this.newSourceUrl(),
+      sourceType: this.newSourceType(),
+      tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
+      description: this.newSourceDesc(),
+      author: this.newSourceAuthor(),
       status: 'UNREAD'
     });
 
-    this.closeAddModal();
+    this.closeSourceModal();
   }
 
-  updateEntryStatus(status: 'UNREAD' | 'READING' | 'PROCESSED') {
-    const current = this.selectedEntry();
+  openSourceDetail(source: ResearchSource) {
+    this.selectedSource.set(source);
+    this.editNotes.set(source.notes || '');
+    this.showSourceDetailPanel.set(true);
+  }
+
+  closeSourceDetail() {
+    this.showSourceDetailPanel.set(false);
+    this.selectedSource.set(null);
+  }
+
+  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED') {
+    const current = this.selectedSource();
     if (current) {
-      this.researchService.updateEntry(current.id, { status });
-      // Update local selected entry to reflect change immediately in UI if needed, 
-      // though signal selectedEntry relies on object ref, better to refresh it or let UI bind to service
-      this.selectedEntry.update(e => e ? { ...e, status } : null);
+      this.researchService.updateSource(current.id, { status });
+      this.selectedSource.update(s => s ? { ...s, status } : null);
     }
   }
 
   saveNotes() {
-    const current = this.selectedEntry();
+    const current = this.selectedSource();
     if (current) {
-      this.researchService.updateEntry(current.id, { notes: this.editNotes() });
+      this.researchService.updateSource(current.id, { notes: this.editNotes() });
     }
   }
 
-  deleteCurrentEntry() {
-    const current = this.selectedEntry();
-    if (current && confirm('Delete this research source?')) {
-      this.researchService.deleteEntry(current.id);
-      this.closeDetail();
+  deleteCurrentSource() {
+    const current = this.selectedSource();
+    if (current && confirm('Delete this source?')) {
+      this.researchService.deleteSource(current.id);
+      this.closeSourceDetail();
     }
   }
 
-  autoFillFromUrl() {
-    // Simulate AI/Scraper
-    if (this.newEntryUrl()) {
-      this.newEntryTitle.set('Auto-detected Title from URL');
-      this.newEntryDesc.set('Automatically captured description metadata from the provided link...');
-    }
+  // Summary actions
+  openSummaryModal() {
+    this.newSummaryTitle.set('');
+    this.newSummaryContent.set('');
+    this.newSummaryTags.set('');
+    this.selectedSourceIds.set([]);
+    this.showSummaryModal.set(true);
   }
 
-  // Helpers for UI
+  closeSummaryModal() {
+    this.showSummaryModal.set(false);
+  }
+
+  saveSummary() {
+    const lib = this.selectedLibrary();
+    if (!this.newSummaryTitle() || !lib) return;
+
+    this.researchService.addSummary({
+      libraryId: lib.id,
+      title: this.newSummaryTitle(),
+      content: this.newSummaryContent(),
+      sourceIds: this.selectedSourceIds(),
+      tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t)
+    });
+
+    this.closeSummaryModal();
+  }
+
+  toggleSourceSelection(sourceId: string) {
+    this.selectedSourceIds.update(ids => {
+      if (ids.includes(sourceId)) {
+        return ids.filter(id => id !== sourceId);
+      } else {
+        return [...ids, sourceId];
+      }
+    });
+  }
+
+  isSourceSelected(sourceId: string): boolean {
+    return this.selectedSourceIds().includes(sourceId);
+  }
+
+  // View switching
+  showSources() {
+    this.viewMode.set('sources');
+  }
+
+  showSummaries() {
+    this.viewMode.set('summaries');
+  }
+
+  // Helpers
   getStatusColor(status: string) {
     switch (status) {
-      case 'PROCESSED': return '#4ade80'; // Green
-      case 'READING': return '#facc15'; // Yellow
-      case 'UNREAD': return '#f87171'; // Red
+      case 'PROCESSED': return '#4ade80';
+      case 'READING': return '#facc15';
+      case 'UNREAD': return '#f87171';
       default: return '#9ca3af';
     }
   }

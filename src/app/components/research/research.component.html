@@ -1,133 +1,351 @@
 <div class="research-view">
-    <!-- Left Sidebar: Filters & Stats -->
+    <!-- Sidebar -->
     <div class="research-sidebar">
-        <div class="sidebar-header">
-            <span class="sidebar-title">Research Library</span>
+        <!-- Search Header with Dropdown -->
+        <div class="research-search-header">
+            <div class="search-container">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="research-search-input" placeholder="Search libraries, sources..."
+                    [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+            </div>
+            <div class="dropdown-wrapper">
+                <button class="add-btn" (click)="openLibraryModal()">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
         </div>
 
-        <div class="sidebar-content">
-            <!-- Stats Widget -->
-            <div class="stats-widget">
-                <div class="stat-row">
-                    <span class="stat-label">Total Sources</span>
-                    <span class="stat-number">{{ stats().total }}</span>
+        <!-- Libraries List -->
+        <div class="research-libraries-list">
+            @for (library of libraries(); track library.id) {
+            <div class="library-item" [class.active]="selectedLibrary()?.id === library.id"
+                (click)="selectLibrary(library)">
+                <div class="library-color-indicator" [style.background-color]="library.color"></div>
+                <div class="library-info">
+                    <span class="library-name">{{ library.name }}</span>
+                    <span class="library-count">{{ researchService.getSourcesByLibrary(library.id).length }}
+                        sources</span>
                 </div>
-                <div class="stat-progress-bar">
-                    <div class="stat-bar-segment green" [style.flex]="stats().processed"></div>
-                    <div class="stat-bar-segment yellow" [style.flex]="stats().reading"></div>
-                    <div class="stat-bar-segment red" [style.flex]="stats().unread"></div>
-                </div>
-                <div class="stat-legend">
-                    <span class="legend-item"><span class="dot green"></span> Processed</span>
-                    <span class="legend-item"><span class="dot yellow"></span> Reading</span>
-                    <span class="legend-item"><span class="dot red"></span> Unread</span>
-                </div>
+                <button class="library-delete-btn" (click)="deleteLibrary(library, $event)" title="Delete library">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
             </div>
+            } @empty {
+            <div class="sidebar-empty-state">
+                <span class="material-symbols-outlined">library_books</span>
+                <p>No libraries yet</p>
+            </div>
+            }
+        </div>
+    </div>
 
-            <div class="filter-group">
-                <div class="filter-label">Status</div>
-                <div class="filter-items">
+    <!-- Main Content -->
+    <div class="research-main">
+        @if (selectedLibrary(); as library) {
+        <!-- Header with Tabs -->
+        <div class="research-header">
+            <div class="research-tabs">
+                <button class="research-tab" [class.active]="viewMode() === 'sources'" (click)="showSources()">
+                    <span class="material-symbols-outlined tab-icon">article</span>
+                    <span class="tab-label">Sources</span>
+                    <span class="tab-count">{{ sources().length }}</span>
+                </button>
+                <button class="research-tab" [class.active]="viewMode() === 'summaries'" (click)="showSummaries()">
+                    <span class="material-symbols-outlined tab-icon">summarize</span>
+                    <span class="tab-label">Summaries</span>
+                    <span class="tab-count">{{ summaries().length }}</span>
+                </button>
+            </div>
+            <div class="research-actions">
+                @if (viewMode() === 'sources') {
+                <button class="action-btn" (click)="openSourceModal()">
+                    <span class="material-symbols-outlined">add</span>
+                    Add Source
+                </button>
+                } @else {
+                <button class="action-btn" (click)="openSummaryModal()">
+                    <span class="material-symbols-outlined">add</span>
+                    Create Summary
+                </button>
+                }
+            </div>
+        </div>
+
+        <!-- Sources View -->
+        @if (viewMode() === 'sources') {
+        <div class="research-content">
+            <!-- Filters Toolbar -->
+            <div class="filters-toolbar">
+                <div class="filter-group">
                     <button class="filter-btn" [class.active]="filterStatus() === 'ALL'"
                         (click)="filterStatus.set('ALL')">All</button>
                     <button class="filter-btn" [class.active]="filterStatus() === 'UNREAD'"
                         (click)="filterStatus.set('UNREAD')">To Read</button>
                     <button class="filter-btn" [class.active]="filterStatus() === 'READING'"
-                        (click)="filterStatus.set('READING')">In Progress</button>
+                        (click)="filterStatus.set('READING')">Reading</button>
                     <button class="filter-btn" [class.active]="filterStatus() === 'PROCESSED'"
                         (click)="filterStatus.set('PROCESSED')">Processed</button>
                 </div>
-            </div>
-
-            <div class="filter-group">
-                <div class="filter-label">Type</div>
-                <div class="filter-items">
-                    <button class="filter-btn" [class.active]="filterType() === 'ALL'"
-                        (click)="filterType.set('ALL')">Any Type</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'WEB'"
-                        (click)="filterType.set('WEB')">Web</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'PDF'"
-                        (click)="filterType.set('PDF')">PDF / Doc</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'INTERVIEW'"
-                        (click)="filterType.set('INTERVIEW')">Interviews</button>
+                <div class="stats-summary">
+                    <span class="stat-badge">{{ sourceStats().total }} total</span>
+                    <span class="stat-badge unread">{{ sourceStats().unread }} unread</span>
+                    <span class="stat-badge reading">{{ sourceStats().reading }} reading</span>
+                    <span class="stat-badge processed">{{ sourceStats().processed }} processed</span>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Main Content Area -->
-    <div class="research-main">
-        <div class="research-header">
-            <div class="research-header-left">
-                <div class="search-box">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Search sources, tags..." [ngModel]="searchQuery()"
-                        (ngModelChange)="searchQuery.set($event)">
-                </div>
-            </div>
-            <div class="research-header-right">
-                <button class="btn-primary" (click)="openAddModal()">
-                    <span class="material-symbols-outlined">add</span>
-                    Add Source
-                </button>
-            </div>
-        </div>
-
-        <div class="research-table-container">
-            <div class="r-table-header">
-                <div class="r-col-icon"></div>
-                <div class="r-col-title">Title & Description</div>
-                <div class="r-col-tags">Tags</div>
-                <div class="r-col-status">Status</div>
-                <div class="r-col-date">Added</div>
-            </div>
-
-            <div class="r-table-body">
-                @for (entry of filteredEntries(); track entry.id) {
-                <div class="r-table-row" (click)="openDetail(entry)">
-                    <div class="r-col-icon">
-                        <span class="material-symbols-outlined type-icon">{{ getSourceIcon(entry.sourceType) }}</span>
+            <!-- Sources List -->
+            <div class="sources-list">
+                @for (source of filteredSources(); track source.id) {
+                <div class="source-item" (click)="openSourceDetail(source)">
+                    <div class="source-icon">
+                        <span class="material-symbols-outlined">{{ getSourceIcon(source.sourceType) }}</span>
                     </div>
-                    <div class="r-col-title">
-                        <div class="entry-title">{{ entry.title }}</div>
-                        <div class="entry-desc">{{ entry.description || 'No description provided' }}</div>
-                        @if (entry.url) {
-                        <a [href]="entry.url" target="_blank" class="entry-link" (click)="$event.stopPropagation()">{{
-                            entry.url }}</a>
+                    <div class="source-content">
+                        <div class="source-header">
+                            <h4 class="source-title">{{ source.title }}</h4>
+                            <span class="status-badge" [style.background-color]="getStatusColor(source.status) + '20'"
+                                [style.color]="getStatusColor(source.status)">
+                                {{ source.status }}
+                            </span>
+                        </div>
+                        <p class="source-desc">{{ source.description || 'No description' }}</p>
+                        @if (source.author) {
+                        <p class="source-author">by {{ source.author }}</p>
                         }
+                        <div class="source-tags">
+                            @for (tag of source.tags; track tag) {
+                            <span class="tag">{{ tag }}</span>
+                            }
+                        </div>
                     </div>
-                    <div class="r-col-tags">
-                        @for (tag of entry.tags; track tag) {
-                        <span class="r-tag">{{ tag }}</span>
-                        }
-                    </div>
-                    <div class="r-col-status">
-                        <span class="status-badge" [style.background-color]="getStatusColor(entry.status) + '20'"
-                            [style.color]="getStatusColor(entry.status)">
-                            {{ entry.status }}
-                        </span>
-                    </div>
-                    <div class="r-col-date">{{ entry.createdDate }}</div>
                 </div>
                 } @empty {
-                <div class="empty-state">
-                    <span class="material-symbols-outlined">library_books</span>
-                    <p>No research sources found matching your filters.</p>
+                <div class="content-empty-state">
+                    <span class="material-symbols-outlined">article</span>
+                    <h3>No Sources Yet</h3>
+                    <p>Add your first source to this library</p>
+                    <button class="empty-action-btn" (click)="openSourceModal()">
+                        <span class="material-symbols-outlined">add</span>
+                        Add Source
+                    </button>
                 </div>
                 }
             </div>
         </div>
+        }
+
+        <!-- Summaries View -->
+        @if (viewMode() === 'summaries') {
+        <div class="research-content">
+            <div class="summaries-list">
+                @for (summary of summaries(); track summary.id) {
+                <div class="summary-item">
+                    <div class="summary-header">
+                        <h3>{{ summary.title }}</h3>
+                        <span class="summary-date">{{ summary.createdDate }}</span>
+                    </div>
+                    <p class="summary-content">{{ summary.content }}</p>
+                    <div class="summary-footer">
+                        <div class="summary-tags">
+                            @for (tag of summary.tags; track tag) {
+                            <span class="tag">{{ tag }}</span>
+                            }
+                        </div>
+                        <span class="summary-sources">{{ summary.sourceIds.length }} sources</span>
+                    </div>
+                </div>
+                } @empty {
+                <div class="content-empty-state">
+                    <span class="material-symbols-outlined">summarize</span>
+                    <h3>No Summaries Yet</h3>
+                    <p>Create a summary from your sources</p>
+                    <button class="empty-action-btn" (click)="openSummaryModal()">
+                        <span class="material-symbols-outlined">add</span>
+                        Create Summary
+                    </button>
+                </div>
+                }
+            </div>
+        </div>
+        }
+
+        } @else {
+        <!-- No Library Selected -->
+        <div class="research-empty-state">
+            <span class="material-symbols-outlined empty-icon">library_books</span>
+            <h3>No Library Selected</h3>
+            <p>Select a library from the sidebar or create a new one to get started</p>
+            <button class="empty-action-btn" (click)="openLibraryModal()">
+                <span class="material-symbols-outlined">add</span>
+                Create Library
+            </button>
+        </div>
+        }
     </div>
 
-    <!-- Detail Slide-over Panel -->
-    @if (showDetailPanel() && selectedEntry(); as entry) {
-    <div class="detail-panel-overlay" (click)="closeDetail()">
+    <!-- Create Library Modal -->
+    @if (showLibraryModal()) {
+    <div class="modal-overlay" (click)="closeLibraryModal()">
+        <div class="modal-container" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Create Research Library</h3>
+                <button class="close-modal-btn" (click)="closeLibraryModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Library Name</label>
+                    <input type="text" class="modal-input" [ngModel]="newLibraryName()"
+                        (ngModelChange)="newLibraryName.set($event)" placeholder="e.g., Victorian London Research">
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea class="modal-textarea" [ngModel]="newLibraryDesc()"
+                        (ngModelChange)="newLibraryDesc.set($event)" rows="3"
+                        placeholder="What is this library for?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-picker">
+                        @for (color of ['#8b5cf6', '#f97316', '#10b981', '#3b82f6', '#ec4899', '#f59e0b']; track color)
+                        {
+                        <button class="color-option" [class.active]="newLibraryColor() === color"
+                            [style.background-color]="color" (click)="newLibraryColor.set(color)"></button>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="closeLibraryModal()">Cancel</button>
+                <button class="btn-primary" (click)="saveLibrary()" [disabled]="!newLibraryName()">Create
+                    Library</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Add Source Modal -->
+    @if (showSourceModal()) {
+    <div class="modal-overlay" (click)="closeSourceModal()">
+        <div class="modal-container" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Add Source</h3>
+                <button class="close-modal-btn" (click)="closeSourceModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" class="modal-input" [ngModel]="newSourceTitle()"
+                        (ngModelChange)="newSourceTitle.set($event)" placeholder="Source title">
+                </div>
+                <div class="form-group">
+                    <label>URL (Optional)</label>
+                    <input type="text" class="modal-input" [ngModel]="newSourceUrl()"
+                        (ngModelChange)="newSourceUrl.set($event)" placeholder="https://...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label>Type</label>
+                        <select class="modal-select" [ngModel]="newSourceType()"
+                            (ngModelChange)="newSourceType.set($event)">
+                            <option value="WEB">Web Page</option>
+                            <option value="PDF">PDF Document</option>
+                            <option value="VIDEO">Video/Audio</option>
+                            <option value="INTERVIEW">Interview</option>
+                            <option value="PHYSICAL">Book/Physical</option>
+                        </select>
+                    </div>
+                    <div class="form-group half">
+                        <label>Author (Optional)</label>
+                        <input type="text" class="modal-input" [ngModel]="newSourceAuthor()"
+                            (ngModelChange)="newSourceAuthor.set($event)" placeholder="Author name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tags (comma separated)</label>
+                    <input type="text" class="modal-input" [ngModel]="newSourceTags()"
+                        (ngModelChange)="newSourceTags.set($event)" placeholder="history, architecture, research">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="modal-textarea" [ngModel]="newSourceDesc()"
+                        (ngModelChange)="newSourceDesc.set($event)" rows="3"
+                        placeholder="Brief summary of this source..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="closeSourceModal()">Cancel</button>
+                <button class="btn-primary" (click)="saveSource()" [disabled]="!newSourceTitle()">Add Source</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Create Summary Modal -->
+    @if (showSummaryModal()) {
+    <div class="modal-overlay" (click)="closeSummaryModal()">
+        <div class="modal-container large" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Create Summary</h3>
+                <button class="close-modal-btn" (click)="closeSummaryModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Summary Title</label>
+                    <input type="text" class="modal-input" [ngModel]="newSummaryTitle()"
+                        (ngModelChange)="newSummaryTitle.set($event)"
+                        placeholder="e.g., Victorian Architecture Overview">
+                </div>
+                <div class="form-group">
+                    <label>Select Sources</label>
+                    <div class="source-selection-list">
+                        @for (source of sources(); track source.id) {
+                        <div class="source-selection-item" [class.selected]="isSourceSelected(source.id)"
+                            (click)="toggleSourceSelection(source.id)">
+                            <input type="checkbox" [checked]="isSourceSelected(source.id)">
+                            <span class="material-symbols-outlined">{{ getSourceIcon(source.sourceType) }}</span>
+                            <span class="source-title">{{ source.title }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Summary Content</label>
+                    <textarea class="modal-textarea" [ngModel]="newSummaryContent()"
+                        (ngModelChange)="newSummaryContent.set($event)" rows="8"
+                        placeholder="Write your summary here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Tags (comma separated)</label>
+                    <input type="text" class="modal-input" [ngModel]="newSummaryTags()"
+                        (ngModelChange)="newSummaryTags.set($event)" placeholder="summary, architecture, key-findings">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="closeSummaryModal()">Cancel</button>
+                <button class="btn-primary" (click)="saveSummary()" [disabled]="!newSummaryTitle()">Create
+                    Summary</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Source Detail Panel -->
+    @if (showSourceDetailPanel() && selectedSource(); as source) {
+    <div class="modal-overlay" (click)="closeSourceDetail()">
         <div class="detail-panel" (click)="$event.stopPropagation()">
             <div class="detail-header">
                 <div class="detail-title-group">
-                    <span class="detail-type">{{ entry.sourceType }}</span>
-                    <h2>{{ entry.title }}</h2>
+                    <span class="detail-type">{{ source.sourceType }}</span>
+                    <h2>{{ source.title }}</h2>
                 </div>
-                <button class="btn-icon" (click)="closeDetail()">
+                <button class="close-modal-btn" (click)="closeSourceDetail()">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -136,30 +354,36 @@
                 <div class="detail-section">
                     <label>Status</label>
                     <div class="status-toggles">
-                        <button class="status-btn" [class.active]="entry.status === 'UNREAD'"
-                            (click)="updateEntryStatus('UNREAD')">Unread</button>
-                        <button class="status-btn" [class.active]="entry.status === 'READING'"
-                            (click)="updateEntryStatus('READING')">Reading</button>
-                        <button class="status-btn" [class.active]="entry.status === 'PROCESSED'"
-                            (click)="updateEntryStatus('PROCESSED')">Processed</button>
+                        <button class="status-btn" [class.active]="source.status === 'UNREAD'"
+                            (click)="updateSourceStatus('UNREAD')">Unread</button>
+                        <button class="status-btn" [class.active]="source.status === 'READING'"
+                            (click)="updateSourceStatus('READING')">Reading</button>
+                        <button class="status-btn" [class.active]="source.status === 'PROCESSED'"
+                            (click)="updateSourceStatus('PROCESSED')">Processed</button>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <label>Metadata</label>
-                    @if (entry.url) {
+                    @if (source.url) {
                     <div class="meta-row">
                         <span class="material-symbols-outlined">link</span>
-                        <a [href]="entry.url" target="_blank">{{ entry.url }}</a>
+                        <a [href]="source.url" target="_blank">{{ source.url }}</a>
+                    </div>
+                    }
+                    @if (source.author) {
+                    <div class="meta-row">
+                        <span class="material-symbols-outlined">person</span>
+                        <span>{{ source.author }}</span>
                     </div>
                     }
                     <div class="meta-row">
                         <span class="material-symbols-outlined">calendar_today</span>
-                        <span>Added: {{ entry.createdDate }}</span>
+                        <span>Added: {{ source.createdDate }}</span>
                     </div>
                     <div class="tag-row">
-                        @for (tag of entry.tags; track tag) {
-                        <span class="r-tag">{{ tag }}</span>
+                        @for (tag of source.tags; track tag) {
+                        <span class="tag">{{ tag }}</span>
                         }
                     </div>
                 </div>
@@ -172,74 +396,8 @@
 
                 <div class="detail-actions">
                     <button class="btn-secondary" (click)="saveNotes()">Save Notes</button>
-                    <button class="btn-danger" (click)="deleteCurrentEntry()">Delete Source</button>
+                    <button class="btn-danger" (click)="deleteCurrentSource()">Delete Source</button>
                 </div>
-
-                <!-- Enterprise Feature: AI Analysis Mock -->
-                <div class="ai-analysis-box">
-                    <div class="ai-header">
-                        <span class="material-symbols-outlined">auto_awesome</span>
-                        <span>AI Analysis</span>
-                    </div>
-                    <p class="ai-text">This source appears to be highly relevant to your project "Victorian London". It
-                        contains key references to architectural styles consistent with your timeline.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    }
-
-    <!-- Add Modal -->
-    @if (showAddModal()) {
-    <div class="modal-overlay" (click)="closeAddModal()">
-        <div class="modal-content" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Add New Source</h3>
-                <button class="btn-icon" (click)="closeAddModal()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>URL (Optional)</label>
-                    <div class="input-with-action">
-                        <input type="text" [ngModel]="newEntryUrl()" (ngModelChange)="newEntryUrl.set($event)"
-                            placeholder="https://..." (blur)="autoFillFromUrl()">
-                        <button class="btn-secondary small" (click)="autoFillFromUrl()"
-                            title="Auto-fill details">Auto</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" [ngModel]="newEntryTitle()" (ngModelChange)="newEntryTitle.set($event)"
-                        placeholder="Source Title">
-                </div>
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label>Type</label>
-                        <select [ngModel]="newEntryType()" (ngModelChange)="newEntryType.set($event)">
-                            <option value="WEB">Web Page</option>
-                            <option value="PDF">PDF Document</option>
-                            <option value="VIDEO">Video / Audio</option>
-                            <option value="INTERVIEW">Interview</option>
-                            <option value="PHYSICAL">Book / Physical</option>
-                        </select>
-                    </div>
-                    <div class="form-group half">
-                        <label>Tags</label>
-                        <input type="text" [ngModel]="newEntryTags()" (ngModelChange)="newEntryTags.set($event)"
-                            placeholder="Comma separated...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea [ngModel]="newEntryDesc()" (ngModelChange)="newEntryDesc.set($event)" rows="3"
-                        placeholder="Brief summary..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" (click)="closeAddModal()">Cancel</button>
-                <button class="btn-primary" (click)="saveNewEntry()" [disabled]="!newEntryTitle()">Add Source</button>
             </div>
         </div>
     </div>
