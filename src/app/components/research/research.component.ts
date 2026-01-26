@@ -5,6 +5,28 @@ import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary } fro
 
 type ViewMode = 'libraries' | 'sources' | 'summaries';
 
+interface ResearchPlan {
+  topic: string;
+  overview: string;
+  phases: Array<{
+    name: string;
+    duration: string;
+    objectives: string[];
+  }>;
+  suggestedSources: Array<{
+    title: string;
+    type: string;
+    priority: 'High' | 'Medium' | 'Low';
+    rationale: string;
+  }>;
+  milestones: Array<{
+    name: string;
+    deadline: string;
+    deliverables: string[];
+  }>;
+  estimatedTimeframe: string;
+}
+
 @Component({
   selector: 'app-research',
   standalone: true,
@@ -58,6 +80,11 @@ export class ResearchComponent {
   aiSourceAnalysis = signal('');
   showTopicDiscovery = signal(false);
   discoveredTopics = signal<Array<{ topic: string; relevance: number; sources: number }>>([]);
+
+  // Research Plan Generator
+  showResearchPlanModal = signal(false);
+  researchPlanTopic = signal('');
+  generatedPlan = signal<ResearchPlan | null>(null);
 
 
   // Editing
@@ -438,5 +465,216 @@ The integration of these sources reveals a coherent narrative about ${commonTags
   searchByTopic(topic: string) {
     this.searchQuery.set(topic);
     this.closeTopicDiscovery();
+  }
+
+  // Research Plan Generator
+  openResearchPlanModal() {
+    this.researchPlanTopic.set('');
+    this.generatedPlan.set(null);
+    this.showResearchPlanModal.set(true);
+  }
+
+  closeResearchPlanModal() {
+    this.showResearchPlanModal.set(false);
+    this.generatedPlan.set(null);
+  }
+
+  async generateResearchPlan() {
+    const topic = this.researchPlanTopic();
+    if (!topic) {
+      alert('Please enter a research topic');
+      return;
+    }
+
+    this.aiLoading.set(true);
+
+    // Simulate AI research plan generation
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    const plan: ResearchPlan = {
+      topic: topic,
+      overview: `A comprehensive research plan for studying ${topic}. This plan provides a structured approach to gathering, analyzing, and synthesizing information on this topic, ensuring thorough coverage of key aspects while maintaining focus on the most relevant sources and methodologies.`,
+
+      phases: [
+        {
+          name: 'Phase 1: Foundation & Context',
+          duration: '2 weeks',
+          objectives: [
+            'Establish baseline understanding of the topic',
+            'Identify key terminology and concepts',
+            'Map the historical context and development',
+            'Review existing literature and research'
+          ]
+        },
+        {
+          name: 'Phase 2: Deep Dive & Analysis',
+          duration: '3 weeks',
+          objectives: [
+            'Examine primary sources in detail',
+            'Conduct comparative analysis',
+            'Identify patterns and connections',
+            'Document key findings and insights'
+          ]
+        },
+        {
+          name: 'Phase 3: Synthesis & Integration',
+          duration: '2 weeks',
+          objectives: [
+            'Synthesize findings from multiple sources',
+            'Develop comprehensive understanding',
+            'Create connections between concepts',
+            'Prepare final documentation'
+          ]
+        }
+      ],
+
+      suggestedSources: [
+        {
+          title: `${topic}: A Comprehensive Overview (Academic Journal)`,
+          type: 'PDF',
+          priority: 'High',
+          rationale: 'Provides foundational understanding and current state of research'
+        },
+        {
+          title: `Historical Development of ${topic} (University Press)`,
+          type: 'PHYSICAL',
+          priority: 'High',
+          rationale: 'Essential for understanding historical context and evolution'
+        },
+        {
+          title: `Expert Interview: Leading Researcher on ${topic}`,
+          type: 'INTERVIEW',
+          priority: 'Medium',
+          rationale: 'Offers contemporary perspectives and emerging trends'
+        },
+        {
+          title: `${topic} Database and Archives (Online Repository)`,
+          type: 'WEB',
+          priority: 'High',
+          rationale: 'Access to primary sources and original documents'
+        },
+        {
+          title: `Case Studies in ${topic} (Research Collection)`,
+          type: 'PDF',
+          priority: 'Medium',
+          rationale: 'Provides practical examples and real-world applications'
+        },
+        {
+          title: `Documentary: ${topic} Explained (Educational Video)`,
+          type: 'VIDEO',
+          priority: 'Low',
+          rationale: 'Visual learning aid for complex concepts'
+        }
+      ],
+
+      milestones: [
+        {
+          name: 'Initial Research Complete',
+          deadline: 'Week 2',
+          deliverables: [
+            'Annotated bibliography of 10-15 key sources',
+            'Concept map of main themes',
+            'Research questions document'
+          ]
+        },
+        {
+          name: 'Analysis Phase Complete',
+          deadline: 'Week 5',
+          deliverables: [
+            'Detailed notes from all primary sources',
+            'Comparative analysis document',
+            'Preliminary findings report'
+          ]
+        },
+        {
+          name: 'Final Synthesis',
+          deadline: 'Week 7',
+          deliverables: [
+            'Comprehensive research summary',
+            'Key insights and conclusions',
+            'Recommendations for further study'
+          ]
+        }
+      ],
+
+      estimatedTimeframe: '7 weeks'
+    };
+
+    this.generatedPlan.set(plan);
+    this.aiLoading.set(false);
+  }
+
+  async implementResearchPlan() {
+    const plan = this.generatedPlan();
+    const lib = this.selectedLibrary();
+
+    if (!plan || !lib) return;
+
+    this.aiLoading.set(true);
+
+    // Create library if needed or use existing
+    let targetLibrary = lib;
+
+    // Add suggested sources to the library
+    for (const source of plan.suggestedSources) {
+      await new Promise(resolve => setTimeout(resolve, 200)); // Simulate adding sources
+
+      this.researchService.addSource({
+        libraryId: targetLibrary.id,
+        title: source.title,
+        sourceType: source.type as ResearchSource['sourceType'],
+        tags: [plan.topic, source.priority, 'Research Plan'],
+        description: source.rationale,
+        status: 'UNREAD'
+      });
+    }
+
+    // Create a summary with the research plan
+    this.researchService.addSummary({
+      libraryId: targetLibrary.id,
+      title: `Research Plan: ${plan.topic}`,
+      content: this.formatPlanAsSummary(plan),
+      sourceIds: [],
+      tags: ['Research Plan', plan.topic, 'Roadmap']
+    });
+
+    this.aiLoading.set(false);
+    this.closeResearchPlanModal();
+
+    // Switch to sources view to show added sources
+    this.viewMode.set('sources');
+  }
+
+  private formatPlanAsSummary(plan: ResearchPlan): string {
+    let summary = `# Research Plan: ${plan.topic}\n\n`;
+    summary += `## Overview\n${plan.overview}\n\n`;
+    summary += `**Estimated Timeframe:** ${plan.estimatedTimeframe}\n\n`;
+
+    summary += `## Research Phases\n\n`;
+    plan.phases.forEach((phase, idx) => {
+      summary += `### ${phase.name} (${phase.duration})\n`;
+      phase.objectives.forEach(obj => {
+        summary += `- ${obj}\n`;
+      });
+      summary += '\n';
+    });
+
+    summary += `## Milestones\n\n`;
+    plan.milestones.forEach(milestone => {
+      summary += `### ${milestone.name} - ${milestone.deadline}\n`;
+      milestone.deliverables.forEach(del => {
+        summary += `- ${del}\n`;
+      });
+      summary += '\n';
+    });
+
+    summary += `## Suggested Sources (${plan.suggestedSources.length})\n\n`;
+    plan.suggestedSources.forEach(source => {
+      summary += `**${source.title}** [${source.priority} Priority]\n`;
+      summary += `- Type: ${source.type}\n`;
+      summary += `- Rationale: ${source.rationale}\n\n`;
+    });
+
+    return summary;
   }
 }

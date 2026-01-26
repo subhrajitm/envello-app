@@ -99,6 +99,11 @@
                         <h4>Suggest Sources</h4>
                         <p>Get AI-recommended sources</p>
                     </button>
+                    <button class="ai-feature-card" (click)="openResearchPlanModal()" [disabled]="aiLoading()">
+                        <span class="material-symbols-outlined">route</span>
+                        <h4>Generate Research Plan</h4>
+                        <p>Create structured research roadmap</p>
+                    </button>
                     @if (viewMode() === 'summaries') {
                     <button class="ai-feature-card" (click)="generateAutoSummary()" [disabled]="aiLoading()">
                         <span class="material-symbols-outlined">summarize</span>
@@ -511,6 +516,125 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-primary" (click)="closeTopicDiscovery()">Done</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Research Plan Generator Modal -->
+    @if (showResearchPlanModal()) {
+    <div class="modal-overlay" (click)="closeResearchPlanModal()">
+        <div class="modal-container research-plan-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>AI Research Plan Generator</h3>
+                <button class="close-modal-btn" (click)="closeResearchPlanModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @if (!generatedPlan()) {
+                <!-- Input Phase -->
+                <div class="plan-input-section">
+                    <p class="plan-intro">Enter a research topic and our AI will generate a comprehensive research plan
+                        with suggested sources, milestones, and a structured timeline.</p>
+                    <div class="form-group">
+                        <label>Research Topic</label>
+                        <input type="text" class="modal-input" [ngModel]="researchPlanTopic()"
+                            (ngModelChange)="researchPlanTopic.set($event)"
+                            placeholder="e.g., Victorian Architecture, Climate Change, Ancient Rome"
+                            (keydown.enter)="generateResearchPlan()">
+                    </div>
+                    @if (aiLoading()) {
+                    <div class="ai-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Generating comprehensive research plan...</p>
+                    </div>
+                    }
+                </div>
+                } @else {
+                <!-- Generated Plan Display -->
+                <div class="research-plan-display">
+                    <div class="plan-section">
+                        <h3>{{ generatedPlan()!.topic }}</h3>
+                        <p class="plan-overview">{{ generatedPlan()!.overview }}</p>
+                        <div class="plan-timeframe">
+                            <span class="material-symbols-outlined">schedule</span>
+                            <strong>Estimated Timeframe:</strong> {{ generatedPlan()!.estimatedTimeframe }}
+                        </div>
+                    </div>
+
+                    <div class="plan-section">
+                        <h4><span class="material-symbols-outlined">timeline</span> Research Phases</h4>
+                        @for (phase of generatedPlan()!.phases; track phase.name) {
+                        <div class="phase-card">
+                            <div class="phase-header">
+                                <strong>{{ phase.name }}</strong>
+                                <span class="phase-duration">{{ phase.duration }}</span>
+                            </div>
+                            <ul class="phase-objectives">
+                                @for (objective of phase.objectives; track objective) {
+                                <li>{{ objective }}</li>
+                                }
+                            </ul>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="plan-section">
+                        <h4><span class="material-symbols-outlined">library_books</span> Suggested Sources ({{
+                            generatedPlan()!.suggestedSources.length }})</h4>
+                        @for (source of generatedPlan()!.suggestedSources; track source.title) {
+                        <div class="source-suggestion-card">
+                            <div class="source-suggestion-header">
+                                <div class="source-suggestion-title">
+                                    <span class="material-symbols-outlined">{{ getSourceIcon(source.type) }}</span>
+                                    <strong>{{ source.title }}</strong>
+                                </div>
+                                <span class="priority-badge" [class]="'priority-' + source.priority.toLowerCase()">{{
+                                    source.priority }}</span>
+                            </div>
+                            <p class="source-rationale">{{ source.rationale }}</p>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="plan-section">
+                        <h4><span class="material-symbols-outlined">flag</span> Milestones</h4>
+                        @for (milestone of generatedPlan()!.milestones; track milestone.name) {
+                        <div class="milestone-card">
+                            <div class="milestone-header">
+                                <strong>{{ milestone.name }}</strong>
+                                <span class="milestone-deadline">{{ milestone.deadline }}</span>
+                            </div>
+                            <ul class="milestone-deliverables">
+                                @for (deliverable of milestone.deliverables; track deliverable) {
+                                <li>{{ deliverable }}</li>
+                                }
+                            </ul>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+            <div class="modal-footer">
+                @if (!generatedPlan()) {
+                <button class="btn-secondary" (click)="closeResearchPlanModal()">Cancel</button>
+                <button class="btn-primary" (click)="generateResearchPlan()"
+                    [disabled]="!researchPlanTopic() || aiLoading()">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    Generate Plan
+                </button>
+                } @else {
+                <button class="btn-secondary" (click)="generatedPlan.set(null)">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    New Topic
+                </button>
+                <button class="btn-primary" (click)="implementResearchPlan()" [disabled]="aiLoading()">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Implement Plan
+                </button>
+                }
             </div>
         </div>
     </div>

@@ -1326,3 +1326,252 @@
     font-size: 18px;
     color: var(--text-tertiary);
 }
+
+/* Research Plan Generator */
+.research-plan-modal {
+    max-width: 800px;
+}
+
+.plan-input-section {
+    padding: 8px 0;
+}
+
+.plan-intro {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0 0 20px 0;
+    padding: 16px;
+    background: var(--bg-app);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: 4px;
+}
+
+.research-plan-display {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.plan-section {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.plan-section:last-child {
+    border-bottom: none;
+}
+
+.plan-section h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+}
+
+.plan-section h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plan-section h4 .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--accent-primary);
+}
+
+.plan-overview {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0 0 16px 0;
+}
+
+.plan-timeframe {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--accent-primary-dim);
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.plan-timeframe .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--accent-primary);
+}
+
+.phase-card {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.phase-card:last-child {
+    margin-bottom: 0;
+}
+
+.phase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.phase-header strong {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.phase-duration {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    background: var(--accent-primary-dim);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.phase-objectives {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.phase-objectives li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 6px;
+}
+
+.phase-objectives li:last-child {
+    margin-bottom: 0;
+}
+
+.source-suggestion-card {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 10px;
+}
+
+.source-suggestion-card:last-child {
+    margin-bottom: 0;
+}
+
+.source-suggestion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.source-suggestion-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.source-suggestion-title .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--text-secondary);
+}
+
+.source-suggestion-title strong {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.priority-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.priority-badge.priority-high {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--accent-red);
+}
+
+.priority-badge.priority-medium {
+    background: rgba(250, 204, 21, 0.15);
+    color: #facc15;
+}
+
+.priority-badge.priority-low {
+    background: rgba(74, 222, 128, 0.15);
+    color: var(--accent-green);
+}
+
+.source-rationale {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.milestone-card {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+
+.milestone-card:last-child {
+    margin-bottom: 0;
+}
+
+.milestone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.milestone-header strong {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.milestone-deadline {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    background: var(--accent-primary-dim);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.milestone-deliverables {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.milestone-deliverables li {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 4px;
+}
+
+.milestone-deliverables li:last-child {
+    margin-bottom: 0;
+}
