@@ -2,6 +2,7 @@ import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary } from '../../services/research.service';
+import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shared/ui';
 
 type ViewMode = 'libraries' | 'sources' | 'summaries';
 
@@ -30,7 +31,7 @@ interface ResearchPlan {
 @Component({
   selector: 'app-research',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ButtonComponent, ModalComponent, EmptyStateComponent],
   templateUrl: './research.component.html',
   styleUrl: './research.component.css'
 })

@@ -1,0 +1,14 @@
+<div class="env-input-wrap">
+  @if (label) {
+    <label class="env-input-label">{{ label }}</label>
+  }
+  <input
+    class="env-input"
+    [type]="type"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    [value]="value"
+    (input)="onInput($event)"
+    (blur)="onTouched()"
+  />
+</div>

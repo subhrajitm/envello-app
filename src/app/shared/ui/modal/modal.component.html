@@ -1,0 +1,36 @@
+@if (isOpen) {
+  <div class="env-modal-overlay" (click)="onOverlayClick()">
+    <div
+      [class]="['env-modal-container', 'env-modal--' + size]"
+      (click)="onContainerClick($event)"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="title ? 'env-modal-title' : null"
+    >
+      <div class="env-modal-header">
+        @if (title) {
+          <h2 id="env-modal-title" class="env-modal-title">{{ title }}</h2>
+        }
+        <ng-content select="[header]"></ng-content>
+        @if (showClose) {
+          <env-icon-button
+            icon="close"
+            variant="ghost"
+            [size]="32"
+            title="Close"
+            (clicked)="onClose()"
+            class="env-modal-close"
+          />
+        }
+      </div>
+      <div class="env-modal-body">
+        <ng-content select="[body]"></ng-content>
+        <!-- default slot for body content without [body] -->
+        <ng-content></ng-content>
+      </div>
+      <div class="env-modal-footer">
+        <ng-content select="[footer]"></ng-content>
+      </div>
+    </div>
+  </div>
+}

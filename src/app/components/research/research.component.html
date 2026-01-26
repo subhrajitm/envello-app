@@ -197,15 +197,15 @@
 
         } @else {
         <!-- No Library Selected -->
-        <div class="research-empty-state">
-            <span class="material-symbols-outlined empty-icon">library_books</span>
-            <h3>No Library Selected</h3>
-            <p>Select a library from the sidebar or create a new one to get started</p>
-            <button class="empty-action-btn" (click)="openLibraryModal()">
-                <span class="material-symbols-outlined">add</span>
+        <env-empty-state
+            icon="library_books"
+            title="No Library Selected"
+            description="Select a library from the sidebar or create a new one to get started"
+        >
+            <env-button variant="primary" icon="add" size="lg" (clicked)="openLibraryModal()">
                 Create Library
-            </button>
-        </div>
+            </env-button>
+        </env-empty-state>
         }
     </div>
 
@@ -324,46 +324,41 @@
     }
 
     <!-- Create Library Modal -->
-    @if (showLibraryModal()) {
-    <div class="modal-overlay" (click)="closeLibraryModal()">
-        <div class="modal-container" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h3>Create Research Library</h3>
-                <button class="close-modal-btn" (click)="closeLibraryModal()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+    <env-modal
+        [isOpen]="showLibraryModal()"
+        (closed)="closeLibraryModal()"
+        title="Create Research Library"
+        size="md"
+    >
+        <div body>
+            <div class="form-group">
+                <label>Library Name</label>
+                <input type="text" class="modal-input" [ngModel]="newLibraryName()"
+                    (ngModelChange)="newLibraryName.set($event)" placeholder="e.g., Victorian London Research">
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Library Name</label>
-                    <input type="text" class="modal-input" [ngModel]="newLibraryName()"
-                        (ngModelChange)="newLibraryName.set($event)" placeholder="e.g., Victorian London Research">
-                </div>
-                <div class="form-group">
-                    <label>Description (Optional)</label>
-                    <textarea class="modal-textarea" [ngModel]="newLibraryDesc()"
-                        (ngModelChange)="newLibraryDesc.set($event)" rows="3"
-                        placeholder="What is this library for?"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Color</label>
-                    <div class="color-picker">
-                        @for (color of ['#8b5cf6', '#f97316', '#10b981', '#3b82f6', '#ec4899', '#f59e0b']; track color)
-                        {
-                        <button class="color-option" [class.active]="newLibraryColor() === color"
-                            [style.background-color]="color" (click)="newLibraryColor.set(color)"></button>
-                        }
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea class="modal-textarea" [ngModel]="newLibraryDesc()"
+                    (ngModelChange)="newLibraryDesc.set($event)" rows="3"
+                    placeholder="What is this library for?"></textarea>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" (click)="closeLibraryModal()">Cancel</button>
-                <button class="btn-primary" (click)="saveLibrary()" [disabled]="!newLibraryName()">Create
-                    Library</button>
+            <div class="form-group">
+                <label>Color</label>
+                <div class="color-picker">
+                    @for (color of ['#8b5cf6', '#f97316', '#10b981', '#3b82f6', '#ec4899', '#f59e0b']; track color) {
+                    <button class="color-option" [class.active]="newLibraryColor() === color"
+                        [style.background-color]="color" (click)="newLibraryColor.set(color)"></button>
+                    }
+                </div>
             </div>
         </div>
-    </div>
-    }
+        <div footer>
+            <env-button variant="secondary" (clicked)="closeLibraryModal()">Cancel</env-button>
+            <env-button variant="primary" (clicked)="saveLibrary()" [disabled]="!newLibraryName()">
+                Create Library
+            </env-button>
+        </div>
+    </env-modal>
 
     <!-- Add Source Modal -->
     @if (showSourceModal()) {

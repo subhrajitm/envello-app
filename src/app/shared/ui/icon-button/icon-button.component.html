@@ -1,0 +1,10 @@
+<button
+  [attr.type]="type"
+  [attr.title]="title"
+  [attr.aria-label]="title || icon"
+  [class]="['env-icon-btn', 'env-icon-btn--' + variant, 'env-icon-btn--' + size, active ? 'env-icon-btn--active' : '']"
+  [disabled]="disabled"
+  (click)="onClick()"
+>
+  <span class="material-symbols-outlined">{{ icon }}</span>
+</button>

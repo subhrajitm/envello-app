@@ -1,0 +1,14 @@
+<button
+  [attr.type]="type"
+  [class]="['env-btn', 'env-btn--' + variant, 'env-btn--' + size]"
+  [disabled]="disabled"
+  (click)="onClick()"
+>
+  @if (icon && iconPos === 'left') {
+    <span class="material-symbols-outlined env-btn__icon env-btn__icon--left">{{ icon }}</span>
+  }
+  <span class="env-btn__label"><ng-content></ng-content></span>
+  @if (icon && iconPos === 'right') {
+    <span class="material-symbols-outlined env-btn__icon env-btn__icon--right">{{ icon }}</span>
+  }
+</button>

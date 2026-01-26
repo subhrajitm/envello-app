@@ -1,0 +1,50 @@
+.env-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-tertiary);
+  flex: 1;
+}
+
+.env-empty-state--compact {
+  padding: 24px 16px;
+}
+
+.env-empty-state__icon {
+  font-size: 64px;
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.env-empty-state--compact .env-empty-state__icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.env-empty-state__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.env-empty-state__description {
+  font-size: 14px;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.env-empty-state__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.env-empty-state__content ::ng-deep env-button,
+.env-empty-state__content ::ng-deep button {
+  margin-top: 0;
+}

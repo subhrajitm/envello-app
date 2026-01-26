@@ -1,0 +1,59 @@
+.env-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-app);
+  color: var(--text-secondary);
+  box-sizing: border-box;
+}
+
+.env-icon-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
+}
+
+.env-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.env-icon-btn .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.env-icon-btn--28 { width: 28px; height: 28px; min-width: 28px; min-height: 28px; }
+.env-icon-btn--32 { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
+
+.env-icon-btn--primary {
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+  border-color: var(--accent-primary);
+}
+
+.env-icon-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.env-icon-btn--ghost {
+  background: var(--bg-app);
+  border-color: var(--border-subtle);
+}
+
+.env-icon-btn--danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+.env-icon-btn--active {
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+  border-color: var(--accent-primary);
+}
