@@ -50,6 +50,16 @@ export class ResearchComponent {
   newSummaryTags = signal('');
   selectedSourceIds = signal<string[]>([]);
 
+  // AI Features
+  showAIPanel = signal(false);
+  aiLoading = signal(false);
+  aiSuggestions = signal<string[]>([]);
+  aiTopics = signal<string[]>([]);
+  aiSourceAnalysis = signal('');
+  showTopicDiscovery = signal(false);
+  discoveredTopics = signal<Array<{ topic: string; relevance: number; sources: number }>>([]);
+
+
   // Editing
   editNotes = signal('');
 
@@ -281,5 +291,152 @@ export class ResearchComponent {
       case 'PHYSICAL': return 'menu_book';
       default: return 'article';
     }
+  }
+
+  // AI Features
+  toggleAIPanel() {
+    this.showAIPanel.update(v => !v);
+  }
+
+  async discoverTopics() {
+    this.showTopicDiscovery.set(true);
+    this.aiLoading.set(true);
+
+    // Simulate AI topic discovery
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const mockTopics = [
+      { topic: 'Victorian Architecture', relevance: 95, sources: 3 },
+      { topic: 'Urban Planning', relevance: 87, sources: 2 },
+      { topic: 'Industrial Revolution', relevance: 78, sources: 2 },
+      { topic: 'Steam Technology', relevance: 72, sources: 1 },
+      { topic: 'Social History', relevance: 65, sources: 1 }
+    ];
+
+    this.discoveredTopics.set(mockTopics);
+    this.aiLoading.set(false);
+  }
+
+  async analyzeSource(source: ResearchSource) {
+    this.aiLoading.set(true);
+    this.aiSourceAnalysis.set('');
+
+    // Simulate AI analysis
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    const analysis = `**Key Insights:**
+• This source provides comprehensive coverage of ${source.title.toLowerCase()}
+• Highly relevant to your research on ${source.tags[0] || 'this topic'}
+• Contains valuable primary source material
+• Recommended reading priority: ${source.status === 'UNREAD' ? 'High' : 'Medium'}
+
+**Main Themes:**
+- Historical context and background
+- Technical specifications and details
+- Cultural and social implications
+
+**Suggested Actions:**
+- Cross-reference with sources on ${source.tags[1] || 'related topics'}
+- Extract key quotes for summary
+- Note contradictions with other sources`;
+
+    this.aiSourceAnalysis.set(analysis);
+    this.aiLoading.set(false);
+  }
+
+  async generateAutoSummary() {
+    const selectedSources = this.sources().filter(s =>
+      this.selectedSourceIds().includes(s.id)
+    );
+
+    if (selectedSources.length === 0) {
+      alert('Please select at least one source to generate a summary');
+      return;
+    }
+
+    this.aiLoading.set(true);
+
+    // Simulate AI summary generation
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const sourceTitles = selectedSources.map(s => s.title).join(', ');
+    const commonTags = this.findCommonTags(selectedSources);
+
+    const autoSummary = `Based on analysis of ${selectedSources.length} sources (${sourceTitles}), this research reveals several key findings:
+
+**Overview:**
+The selected sources provide comprehensive coverage of ${commonTags[0] || 'the research topic'}, with particular emphasis on historical context and contemporary applications.
+
+**Key Findings:**
+1. Primary evidence suggests significant developments in the field
+2. Multiple sources corroborate the importance of ${commonTags[1] || 'key themes'}
+3. Emerging patterns indicate future research directions
+
+**Synthesis:**
+The integration of these sources reveals a coherent narrative about ${commonTags[0] || 'the subject matter'}, highlighting both consensus and areas of ongoing debate.
+
+**Recommendations:**
+- Further investigation into ${commonTags[2] || 'related topics'}
+- Cross-reference with additional primary sources
+- Consider contemporary applications of historical findings`;
+
+    this.newSummaryContent.set(autoSummary);
+    this.newSummaryTitle.set(`AI Summary: ${commonTags[0] || 'Research Findings'}`);
+    this.newSummaryTags.set(commonTags.join(', '));
+
+    this.aiLoading.set(false);
+  }
+
+  async suggestSources() {
+    const lib = this.selectedLibrary();
+    if (!lib) return;
+
+    this.aiLoading.set(true);
+
+    // Simulate AI source suggestions
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const suggestions = [
+      'Victorian London: A Historical Atlas (British Library)',
+      'The Industrial Revolution in Britain (Cambridge Press)',
+      'Urban Development in 19th Century Europe (Oxford)',
+      'Steam Power and Society (MIT Press)',
+      'Architecture and Social Change (Yale)'
+    ];
+
+    this.aiSuggestions.set(suggestions);
+    this.aiLoading.set(false);
+  }
+
+  private findCommonTags(sources: ResearchSource[]): string[] {
+    const tagCounts = new Map<string, number>();
+
+    sources.forEach(source => {
+      source.tags.forEach(tag => {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+      });
+    });
+
+    return Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([tag]) => tag);
+  }
+
+  addSuggestedSource(suggestion: string) {
+    this.newSourceTitle.set(suggestion);
+    this.newSourceType.set('WEB');
+    this.openSourceModal();
+    this.aiSuggestions.set([]);
+  }
+
+  closeTopicDiscovery() {
+    this.showTopicDiscovery.set(false);
+    this.discoveredTopics.set([]);
+  }
+
+  searchByTopic(topic: string) {
+    this.searchQuery.set(topic);
+    this.closeTopicDiscovery();
   }
 }

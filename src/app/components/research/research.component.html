@@ -57,6 +57,10 @@
                 </button>
             </div>
             <div class="research-actions">
+                <button class="action-btn-secondary" (click)="toggleAIPanel()" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    AI Assistant
+                </button>
                 @if (viewMode() === 'sources') {
                 <button class="action-btn" (click)="openSourceModal()">
                     <span class="material-symbols-outlined">add</span>
@@ -70,6 +74,61 @@
                 }
             </div>
         </div>
+
+        <!-- AI Assistant Panel -->
+        @if (showAIPanel()) {
+        <div class="ai-assistant-panel">
+            <div class="ai-panel-header">
+                <div class="ai-header-title">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    <span>AI Research Assistant</span>
+                </div>
+                <button class="close-ai-btn" (click)="toggleAIPanel()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="ai-panel-content">
+                <div class="ai-feature-grid">
+                    <button class="ai-feature-card" (click)="discoverTopics()" [disabled]="aiLoading()">
+                        <span class="material-symbols-outlined">explore</span>
+                        <h4>Discover Topics</h4>
+                        <p>Find related research topics</p>
+                    </button>
+                    <button class="ai-feature-card" (click)="suggestSources()" [disabled]="aiLoading()">
+                        <span class="material-symbols-outlined">lightbulb</span>
+                        <h4>Suggest Sources</h4>
+                        <p>Get AI-recommended sources</p>
+                    </button>
+                    @if (viewMode() === 'summaries') {
+                    <button class="ai-feature-card" (click)="generateAutoSummary()" [disabled]="aiLoading()">
+                        <span class="material-symbols-outlined">summarize</span>
+                        <h4>Auto-Generate Summary</h4>
+                        <p>Create summary from sources</p>
+                    </button>
+                    }
+                </div>
+
+                @if (aiLoading()) {
+                <div class="ai-loading">
+                    <div class="loading-spinner"></div>
+                    <p>AI is analyzing...</p>
+                </div>
+                }
+
+                @if (aiSuggestions().length > 0) {
+                <div class="ai-suggestions">
+                    <h4>Suggested Sources</h4>
+                    @for (suggestion of aiSuggestions(); track suggestion) {
+                    <div class="suggestion-item" (click)="addSuggestedSource(suggestion)">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        <span>{{ suggestion }}</span>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+        }
 
         <!-- Sources View -->
         @if (viewMode() === 'sources') {
@@ -394,10 +453,64 @@
                         placeholder="Take notes on this source..."></textarea>
                 </div>
 
+                <!-- AI Analysis Section -->
+                <div class="detail-section">
+                    <label>AI Analysis</label>
+                    <button class="btn-ai-analyze" (click)="analyzeSource(source)" [disabled]="aiLoading()">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                        {{ aiLoading() ? 'Analyzing...' : 'Analyze with AI' }}
+                    </button>
+                    @if (aiSourceAnalysis()) {
+                    <div class="ai-analysis-result">
+                        <pre>{{ aiSourceAnalysis() }}</pre>
+                    </div>
+                    }
+                </div>
+
                 <div class="detail-actions">
                     <button class="btn-secondary" (click)="saveNotes()">Save Notes</button>
                     <button class="btn-danger" (click)="deleteCurrentSource()">Delete Source</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Topic Discovery Modal -->
+    @if (showTopicDiscovery()) {
+    <div class="modal-overlay" (click)="closeTopicDiscovery()">
+        <div class="modal-container large" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Discovered Research Topics</h3>
+                <button class="close-modal-btn" (click)="closeTopicDiscovery()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @if (aiLoading()) {
+                <div class="ai-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Discovering topics...</p>
+                </div>
+                } @else {
+                <div class="topics-list">
+                    @for (topic of discoveredTopics(); track topic.topic) {
+                    <div class="topic-item" (click)="searchByTopic(topic.topic)">
+                        <div class="topic-header">
+                            <h4>{{ topic.topic }}</h4>
+                            <span class="topic-relevance">{{ topic.relevance }}% relevant</span>
+                        </div>
+                        <div class="topic-meta">
+                            <span class="topic-sources">{{ topic.sources }} sources</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" (click)="closeTopicDiscovery()">Done</button>
             </div>
         </div>
     </div>
