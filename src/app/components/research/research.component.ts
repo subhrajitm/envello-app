@@ -48,6 +48,12 @@ export class ResearchComponent {
   showSummaryModal = signal(false);
   showSourceDetailPanel = signal(false);
   selectedSource = signal<ResearchSource | null>(null);
+  
+  // Delete Modals
+  showDeleteLibraryModal = signal(false);
+  showDeleteSourceModal = signal(false);
+  libraryToDelete = signal<ResearchLibrary | null>(null);
+  sourceToDelete = signal<ResearchSource | null>(null);
 
   // Filter & Search
   searchQuery = signal('');
@@ -185,12 +191,25 @@ export class ResearchComponent {
 
   deleteLibrary(library: ResearchLibrary, event: Event) {
     event.stopPropagation();
-    if (confirm(`Delete library "${library.name}" and all its sources?`)) {
+    this.libraryToDelete.set(library);
+    this.showDeleteLibraryModal.set(true);
+  }
+
+  confirmDeleteLibrary() {
+    const library = this.libraryToDelete();
+    if (library) {
       this.researchService.deleteLibrary(library.id);
       if (this.selectedLibrary()?.id === library.id) {
         this.backToLibraries();
       }
+      this.showDeleteLibraryModal.set(false);
+      this.libraryToDelete.set(null);
     }
+  }
+
+  cancelDeleteLibrary() {
+    this.showDeleteLibraryModal.set(false);
+    this.libraryToDelete.set(null);
   }
 
   // Source actions
@@ -254,10 +273,27 @@ export class ResearchComponent {
 
   deleteCurrentSource() {
     const current = this.selectedSource();
-    if (current && confirm('Delete this source?')) {
-      this.researchService.deleteSource(current.id);
-      this.closeSourceDetail();
+    if (current) {
+      this.sourceToDelete.set(current);
+      this.showDeleteSourceModal.set(true);
     }
+  }
+
+  confirmDeleteSource() {
+    const source = this.sourceToDelete();
+    if (source) {
+      this.researchService.deleteSource(source.id);
+      if (this.selectedSource()?.id === source.id) {
+        this.closeSourceDetail();
+      }
+      this.showDeleteSourceModal.set(false);
+      this.sourceToDelete.set(null);
+    }
+  }
+
+  cancelDeleteSource() {
+    this.showDeleteSourceModal.set(false);
+    this.sourceToDelete.set(null);
   }
 
   // Summary actions

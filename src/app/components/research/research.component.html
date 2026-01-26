@@ -616,4 +616,32 @@
             }
         </div>
     </env-modal>
+
+    <!-- Delete Library Confirmation Modal -->
+    <env-modal [isOpen]="showDeleteLibraryModal()" (closed)="cancelDeleteLibrary()" title="Delete Library" size="md">
+        <div body>
+            @if (libraryToDelete(); as library) {
+            <p>Are you sure you want to delete <strong>"{{ library.name }}"</strong> and all its sources?</p>
+            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">This action cannot be undone.</p>
+            }
+        </div>
+        <div footer>
+            <env-button variant="secondary" (clicked)="cancelDeleteLibrary()">Cancel</env-button>
+            <env-button variant="danger" (clicked)="confirmDeleteLibrary()">Delete Library</env-button>
+        </div>
+    </env-modal>
+
+    <!-- Delete Source Confirmation Modal -->
+    <env-modal [isOpen]="showDeleteSourceModal()" (closed)="cancelDeleteSource()" title="Delete Source" size="md">
+        <div body>
+            @if (sourceToDelete(); as source) {
+            <p>Are you sure you want to delete <strong>"{{ source.title }}"</strong>?</p>
+            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">This action cannot be undone.</p>
+            }
+        </div>
+        <div footer>
+            <env-button variant="secondary" (clicked)="cancelDeleteSource()">Cancel</env-button>
+            <env-button variant="danger" (clicked)="confirmDeleteSource()">Delete Source</env-button>
+        </div>
+    </env-modal>
 </div>
