@@ -94,10 +94,6 @@
 
 .add-btn .material-symbols-outlined {
     font-size: 18px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Libraries List */
@@ -319,12 +315,8 @@
 .action-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 6px;
     padding: 6px 14px;
-    min-height: 32px;
-    height: 32px;
-    box-sizing: border-box;
     background: var(--accent-primary);
     color: var(--accent-primary-text);
     border: 1px solid var(--accent-primary);
@@ -342,10 +334,9 @@
 
 .action-btn .material-symbols-outlined {
     font-size: 18px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-shrink: 0;
+    /* align icon with text baseline; Material Symbols often render slightly high */
+    transform: translateY(1px);
 }
 
 /* Content Area */
@@ -623,7 +614,7 @@
 }
 
 .content-empty-state .material-symbols-outlined,
-.research-empty-state .material-symbols-outlined,
+.research-empty-state .material-symbols-outlined1,
 .empty-icon {
     font-size: 64px;
     opacity: 0.3;
@@ -655,6 +646,7 @@
     border-radius: 4px;
     font-size: 14px;
     font-weight: 600;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s;
     margin-top: 16px;
@@ -662,14 +654,6 @@
 
 .empty-action-btn:hover {
     filter: brightness(1.1);
-}
-
-.empty-action-btn .material-symbols-outlined {
-    font-size: 20px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Modals */
