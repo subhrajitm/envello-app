@@ -57,9 +57,9 @@
                 </button>
             </div>
             <div class="research-actions">
-                <button class="action-btn-secondary" (click)="toggleAIPanel()" title="AI Assistant">
+                <button class="action-btn-icon" (click)="toggleAIPanel()" [class.active]="showAIPanel()"
+                    title="Toggle AI Assistant">
                     <span class="material-symbols-outlined">auto_awesome</span>
-                    AI Assistant
                 </button>
                 @if (viewMode() === 'sources') {
                 <button class="action-btn" (click)="openSourceModal()">
@@ -74,66 +74,6 @@
                 }
             </div>
         </div>
-
-        <!-- AI Assistant Panel -->
-        @if (showAIPanel()) {
-        <div class="ai-assistant-panel">
-            <div class="ai-panel-header">
-                <div class="ai-header-title">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                    <span>AI Research Assistant</span>
-                </div>
-                <button class="close-ai-btn" (click)="toggleAIPanel()">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="ai-panel-content">
-                <div class="ai-feature-grid">
-                    <button class="ai-feature-card" (click)="discoverTopics()" [disabled]="aiLoading()">
-                        <span class="material-symbols-outlined">explore</span>
-                        <h4>Discover Topics</h4>
-                        <p>Find related research topics</p>
-                    </button>
-                    <button class="ai-feature-card" (click)="suggestSources()" [disabled]="aiLoading()">
-                        <span class="material-symbols-outlined">lightbulb</span>
-                        <h4>Suggest Sources</h4>
-                        <p>Get AI-recommended sources</p>
-                    </button>
-                    <button class="ai-feature-card" (click)="openResearchPlanModal()" [disabled]="aiLoading()">
-                        <span class="material-symbols-outlined">route</span>
-                        <h4>Generate Research Plan</h4>
-                        <p>Create structured research roadmap</p>
-                    </button>
-                    @if (viewMode() === 'summaries') {
-                    <button class="ai-feature-card" (click)="generateAutoSummary()" [disabled]="aiLoading()">
-                        <span class="material-symbols-outlined">summarize</span>
-                        <h4>Auto-Generate Summary</h4>
-                        <p>Create summary from sources</p>
-                    </button>
-                    }
-                </div>
-
-                @if (aiLoading()) {
-                <div class="ai-loading">
-                    <div class="loading-spinner"></div>
-                    <p>AI is analyzing...</p>
-                </div>
-                }
-
-                @if (aiSuggestions().length > 0) {
-                <div class="ai-suggestions">
-                    <h4>Suggested Sources</h4>
-                    @for (suggestion of aiSuggestions(); track suggestion) {
-                    <div class="suggestion-item" (click)="addSuggestedSource(suggestion)">
-                        <span class="material-symbols-outlined">add_circle</span>
-                        <span>{{ suggestion }}</span>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-        </div>
-        }
 
         <!-- Sources View -->
         @if (viewMode() === 'sources') {
@@ -247,6 +187,120 @@
         </div>
         }
     </div>
+
+    <!-- AI Assistant Sidebar -->
+    @if (showAIPanel()) {
+    <div class="ai-sidebar">
+        <div class="ai-sidebar-header">
+            <div class="ai-header-left">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span>AI Research Assistant</span>
+            </div>
+            <button class="ai-close-btn" (click)="toggleAIPanel()" title="Close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="ai-sidebar-content">
+            <!-- AI Stats Card -->
+            <div class="ai-stats-card">
+                <div class="ai-stat-item">
+                    <span class="ai-stat-icon material-symbols-outlined">psychology</span>
+                    <div class="ai-stat-content">
+                        <span class="ai-stat-label">AI Powered</span>
+                        <span class="ai-stat-value">Ready</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="ai-section">
+                <div class="ai-section-header">
+                    <span class="material-symbols-outlined">bolt</span>
+                    <span>Quick Actions</span>
+                </div>
+                <div class="ai-feature-list">
+                    <button class="ai-feature-item" (click)="discoverTopics()" [disabled]="aiLoading()">
+                        <div class="ai-feature-icon">
+                            <span class="material-symbols-outlined">explore</span>
+                        </div>
+                        <div class="ai-feature-text">
+                            <strong>Discover Topics</strong>
+                            <p>AI-powered topic discovery</p>
+                        </div>
+                        <span class="ai-feature-arrow material-symbols-outlined">arrow_forward</span>
+                    </button>
+
+                    <button class="ai-feature-item" (click)="suggestSources()" [disabled]="aiLoading()">
+                        <div class="ai-feature-icon">
+                            <span class="material-symbols-outlined">lightbulb</span>
+                        </div>
+                        <div class="ai-feature-text">
+                            <strong>Suggest Sources</strong>
+                            <p>Get intelligent recommendations</p>
+                        </div>
+                        <span class="ai-feature-arrow material-symbols-outlined">arrow_forward</span>
+                    </button>
+
+                    <button class="ai-feature-item" (click)="openResearchPlanModal()" [disabled]="aiLoading()">
+                        <div class="ai-feature-icon">
+                            <span class="material-symbols-outlined">route</span>
+                        </div>
+                        <div class="ai-feature-text">
+                            <strong>Research Plan</strong>
+                            <p>Generate structured roadmap</p>
+                        </div>
+                        <span class="ai-feature-arrow material-symbols-outlined">arrow_forward</span>
+                    </button>
+
+                    @if (viewMode() === 'summaries') {
+                    <button class="ai-feature-item" (click)="generateAutoSummary()" [disabled]="aiLoading()">
+                        <div class="ai-feature-icon">
+                            <span class="material-symbols-outlined">summarize</span>
+                        </div>
+                        <div class="ai-feature-text">
+                            <strong>Auto-Summary</strong>
+                            <p>Synthesize from sources</p>
+                        </div>
+                        <span class="ai-feature-arrow material-symbols-outlined">arrow_forward</span>
+                    </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            @if (aiLoading()) {
+            <div class="ai-loading-section">
+                <div class="ai-loading-content">
+                    <div class="loading-spinner"></div>
+                    <div class="ai-loading-text">
+                        <strong>AI Processing</strong>
+                        <p>Analyzing your research...</p>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- Suggestions Section -->
+            @if (aiSuggestions().length > 0) {
+            <div class="ai-section">
+                <div class="ai-section-header">
+                    <span class="material-symbols-outlined">stars</span>
+                    <span>AI Suggestions</span>
+                </div>
+                <div class="ai-suggestions-list">
+                    @for (suggestion of aiSuggestions(); track suggestion) {
+                    <div class="ai-suggestion-card" (click)="addSuggestedSource(suggestion)">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        <span class="suggestion-text">{{ suggestion }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    }
 
     <!-- Create Library Modal -->
     @if (showLibraryModal()) {

@@ -73,7 +73,7 @@ export class ResearchComponent {
   selectedSourceIds = signal<string[]>([]);
 
   // AI Features
-  showAIPanel = signal(false);
+  showAIPanel = signal(true);
   aiLoading = signal(false);
   aiSuggestions = signal<string[]>([]);
   aiTopics = signal<string[]>([]);
