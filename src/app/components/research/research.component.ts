@@ -321,6 +321,42 @@ export class ResearchComponent {
     }
   }
 
+  getStatusVariant(status: string): 'default' | 'success' | 'warning' | 'error' {
+    switch (status) {
+      case 'PROCESSED': return 'success';
+      case 'READING': return 'warning';
+      case 'UNREAD': return 'error';
+      default: return 'default';
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'PROCESSED': return 'status-processed';
+      case 'READING': return 'status-reading';
+      case 'UNREAD': return 'status-unread';
+      default: return 'status-default';
+    }
+  }
+
+  getStatClass(stat: string): string {
+    switch (stat) {
+      case 'unread': return 'stat-unread';
+      case 'reading': return 'stat-reading';
+      case 'processed': return 'stat-processed';
+      default: return 'stat-default';
+    }
+  }
+
+  getPriorityVariant(priority: string): 'default' | 'success' | 'warning' | 'error' {
+    switch (priority?.toLowerCase()) {
+      case 'high': return 'error';
+      case 'medium': return 'warning';
+      case 'low': return 'success';
+      default: return 'default';
+    }
+  }
+
   getSourceIcon(type: string) {
     switch (type) {
       case 'WEB': return 'language';
@@ -330,6 +366,25 @@ export class ResearchComponent {
       case 'PHYSICAL': return 'menu_book';
       default: return 'article';
     }
+  }
+
+  getSourceTypeLabel(type: string): string {
+    switch (type) {
+      case 'WEB': return 'Web';
+      case 'PDF': return 'PDF';
+      case 'VIDEO': return 'Video';
+      case 'INTERVIEW': return 'Interview';
+      case 'PHYSICAL': return 'Physical';
+      default: return type || 'Source';
+    }
+  }
+
+  formatSourceMeta(source: ResearchSource): string {
+    const parts: string[] = [this.getSourceTypeLabel(source.sourceType)];
+    if (source.author) parts.push(source.author);
+    const date = source.lastAccessed || source.createdDate;
+    if (date) parts.push(new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }));
+    return parts.join(' · ');
   }
 
   // AI Features

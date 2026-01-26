@@ -81,26 +81,11 @@
                     <button class="filter-btn" [class.active]="filterStatus() === 'PROCESSED'"
                         (click)="filterStatus.set('PROCESSED')">Processed</button>
                 </div>
-                <div class="filter-group">
-                    <span class="filter-label">Type</span>
-                    <button class="filter-btn" [class.active]="filterType() === 'ALL'"
-                        (click)="filterType.set('ALL')">All</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'WEB'"
-                        (click)="filterType.set('WEB')">Web</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'PDF'"
-                        (click)="filterType.set('PDF')">PDF</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'VIDEO'"
-                        (click)="filterType.set('VIDEO')">Video</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'INTERVIEW'"
-                        (click)="filterType.set('INTERVIEW')">Interview</button>
-                    <button class="filter-btn" [class.active]="filterType() === 'PHYSICAL'"
-                        (click)="filterType.set('PHYSICAL')">Physical</button>
-                </div>
                 <div class="stats-summary">
-                    <span class="stat-badge">{{ sourceStats().total }} total</span>
-                    <span class="stat-badge unread">{{ sourceStats().unread }} unread</span>
-                    <span class="stat-badge reading">{{ sourceStats().reading }} reading</span>
-                    <span class="stat-badge processed">{{ sourceStats().processed }} processed</span>
+                    <span class="stat-badge-caps stat-default">{{ sourceStats().total }} total</span>
+                    <span class="stat-badge-caps stat-unread">{{ sourceStats().unread }} unread</span>
+                    <span class="stat-badge-caps stat-reading">{{ sourceStats().reading }} reading</span>
+                    <span class="stat-badge-caps stat-processed">{{ sourceStats().processed }} processed</span>
                 </div>
             </div>
 
@@ -114,20 +99,17 @@
                     <div class="source-content">
                         <div class="source-header">
                             <h4 class="source-title">{{ source.title }}</h4>
-                            <span class="status-badge" [style.background-color]="getStatusColor(source.status) + '20'"
-                                [style.color]="getStatusColor(source.status)">
-                                {{ source.status }}
-                            </span>
+                            <span class="status-badge-caps" [ngClass]="getStatusClass(source.status)">{{ source.status }}</span>
                         </div>
+                        <p class="source-meta">{{ formatSourceMeta(source) }}</p>
                         <p class="source-desc">{{ source.description || 'No description' }}</p>
-                        @if (source.author) {
-                        <p class="source-author">by {{ source.author }}</p>
-                        }
+                        @if (source.tags.length) {
                         <div class="source-tags">
                             @for (tag of source.tags; track tag) {
-                            <span class="tag">{{ tag }}</span>
+                            <span class="genre-tag">{{ tag }}</span>
                             }
                         </div>
+                        }
                     </div>
                 </div>
                 } @empty {
@@ -157,7 +139,7 @@
                     <div class="summary-footer">
                         <div class="summary-tags">
                             @for (tag of summary.tags; track tag) {
-                            <span class="tag">{{ tag }}</span>
+                            <span class="genre-tag">{{ tag }}</span>
                             }
                         </div>
                         <span class="summary-sources">{{ summary.sourceIds.length }} sources</span>
@@ -474,7 +456,7 @@
                     </div>
                     <div class="tag-row">
                         @for (tag of source.tags; track tag) {
-                        <span class="tag">{{ tag }}</span>
+                        <span class="genre-tag">{{ tag }}</span>
                         }
                     </div>
                 </div>
@@ -597,7 +579,7 @@
                                 <span class="material-symbols-outlined">{{ getSourceIcon(source.type) }}</span>
                                 <strong>{{ source.title }}</strong>
                             </div>
-                            <span class="priority-badge" [class]="'priority-' + source.priority.toLowerCase()">{{ source.priority }}</span>
+                            <span class="priority-badge-caps" [ngClass]="'priority-' + source.priority.toLowerCase()">{{ source.priority }}</span>
                         </div>
                         <p class="source-rationale">{{ source.rationale }}</p>
                     </div>
