@@ -17,7 +17,7 @@
 
         <!-- Libraries List -->
         <div class="research-libraries-list">
-            @for (library of libraries(); track library.id) {
+            @for (library of filteredLibraries(); track library.id) {
             <div class="library-item" [class.active]="selectedLibrary()?.id === library.id"
                 (click)="selectLibrary(library)">
                 <div class="library-color-indicator" [style.background-color]="library.color"></div>
@@ -33,7 +33,7 @@
             } @empty {
             <div class="sidebar-empty-state">
                 <span class="material-symbols-outlined">library_books</span>
-                <p>No libraries yet</p>
+                <p>{{ searchQuery() ? 'No libraries match your search' : 'No libraries yet' }}</p>
             </div>
             }
         </div>
@@ -81,6 +81,7 @@
             <!-- Filters Toolbar -->
             <div class="filters-toolbar">
                 <div class="filter-group">
+                    <span class="filter-label">Status</span>
                     <button class="filter-btn" [class.active]="filterStatus() === 'ALL'"
                         (click)="filterStatus.set('ALL')">All</button>
                     <button class="filter-btn" [class.active]="filterStatus() === 'UNREAD'"
@@ -89,6 +90,21 @@
                         (click)="filterStatus.set('READING')">Reading</button>
                     <button class="filter-btn" [class.active]="filterStatus() === 'PROCESSED'"
                         (click)="filterStatus.set('PROCESSED')">Processed</button>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Type</span>
+                    <button class="filter-btn" [class.active]="filterType() === 'ALL'"
+                        (click)="filterType.set('ALL')">All</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'WEB'"
+                        (click)="filterType.set('WEB')">Web</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'PDF'"
+                        (click)="filterType.set('PDF')">PDF</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'VIDEO'"
+                        (click)="filterType.set('VIDEO')">Video</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'INTERVIEW'"
+                        (click)="filterType.set('INTERVIEW')">Interview</button>
+                    <button class="filter-btn" [class.active]="filterType() === 'PHYSICAL'"
+                        (click)="filterType.set('PHYSICAL')">Physical</button>
                 </div>
                 <div class="stats-summary">
                     <span class="stat-badge">{{ sourceStats().total }} total</span>
@@ -127,8 +143,13 @@
                 } @empty {
                 <div class="content-empty-state">
                     <span class="material-symbols-outlined">article</span>
+                    @if (sources().length === 0) {
                     <h3>No Sources Yet</h3>
                     <p>Add your first source to this library</p>
+                    } @else {
+                    <h3>No sources match</h3>
+                    <p>Try adjusting your search or filters</p>
+                    }
                     <button class="empty-action-btn" (click)="openSourceModal()">
                         <span class="material-symbols-outlined">add</span>
                         Add Source

@@ -51,7 +51,7 @@ export class ResearchComponent {
   // Filter & Search
   searchQuery = signal('');
   filterStatus = signal<'ALL' | 'UNREAD' | 'READING' | 'PROCESSED'>('ALL');
-  filterType = signal<'ALL' | 'WEB' | 'PDF' | 'INTERVIEW'>('ALL');
+  filterType = signal<'ALL' | 'WEB' | 'PDF' | 'VIDEO' | 'INTERVIEW' | 'PHYSICAL'>('ALL');
 
   // Form inputs - Library
   newLibraryName = signal('');
@@ -92,6 +92,17 @@ export class ResearchComponent {
 
   // Data
   libraries = this.researchService.libraries;
+
+  filteredLibraries = computed(() => {
+    const list = this.libraries();
+    const q = this.searchQuery().toLowerCase().trim();
+    if (!q) return list;
+    return list.filter(lib =>
+      lib.name.toLowerCase().includes(q) ||
+      (lib.description ?? '').toLowerCase().includes(q)
+    );
+  });
+
   sources = computed(() => {
     const lib = this.selectedLibrary();
     if (!lib) return [];
