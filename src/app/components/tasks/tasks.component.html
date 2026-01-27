@@ -66,9 +66,11 @@
                 </div>
                 <div class="tasks-table-body">
                     @for (task of filteredTasks(); track task.id) {
-                    <div class="tasks-table-row">
+                    <div class="tasks-table-row" [class.tasks-completed]="task.status === 'COMPLETED'">
                         <div class="tasks-col-task">
-                            <input type="checkbox" class="tasks-table-checkbox" />
+                            <input type="checkbox" class="tasks-table-checkbox" 
+                                [checked]="task.status === 'COMPLETED'"
+                                (change)="toggleTaskStatus(task)" />
                             <div class="tasks-task-content">
                                 <div class="tasks-task-title">{{ task.title }}</div>
                             </div>
@@ -94,10 +96,10 @@
     <div class="tasks-sidebar">
         <div class="tasks-header-col">
             <div class="date-nav-minimal">
-                <div class="mn-header">OCT 2023</div>
+                <div class="mn-header">{{ calendarMonth() }}</div>
                 <div class="nav-arrows">
-                    <span class="material-symbols-outlined nav-arr">chevron_left</span>
-                    <span class="material-symbols-outlined nav-arr">chevron_right</span>
+                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('prev')">chevron_left</span>
+                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('next')">chevron_right</span>
                 </div>
             </div>
 
@@ -106,21 +108,14 @@
                     <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
                 </div>
                 <div class="cal-days-grid">
-                    <!-- Static calendar for minimal implementation as per original code -->
-                    <span class="c-day inactive">22</span>
-                    <span class="c-day inactive">23</span>
-                    <span class="c-day inactive">24</span>
-                    <span class="c-day inactive">25</span>
-                    <span class="c-day current">26</span>
-                    <span class="c-day">27</span>
-                    <span class="c-day">28</span>
-                    <span class="c-day">29</span>
-                    <span class="c-day">30</span>
-                    <span class="c-day">31</span>
-                    <span class="c-day active-yellow">12</span>
-                    <span class="c-day">1</span>
-                    <span class="c-day">2</span>
-                    <span class="c-day">3</span>
+                    @for (day of calendarDays(); track $index) {
+                    <span class="c-day" 
+                        [class.inactive]="!day.isCurrentMonth"
+                        [class.current]="day.isToday"
+                        [class.active-yellow]="day.isActive && day.isCurrentMonth">
+                        {{ day.day }}
+                    </span>
+                    }
                 </div>
             </div>
         </div>
@@ -128,52 +123,98 @@
         <div class="global-tasks-feed">
             <div class="feed-header">
                 <span class="feed-title">GLOBAL TASKS</span>
-                <span class="feed-count">4 ACTIVE</span>
+                <span class="feed-count">{{ activeTasksCountSidebar() }} ACTIVE</span>
             </div>
 
-            <div class="task-group">
-                <div class="group-toggle">
-                    <span class="material-symbols-outlined toggle-icon">expand_more</span>
+            <div class="task-group" [class.collapsed]="!isGroupExpanded('today')">
+                <div class="group-toggle" (click)="toggleTaskGroup('today')">
+                    <span class="material-symbols-outlined toggle-icon">
+                        {{ isGroupExpanded('today') ? 'expand_more' : 'chevron_right' }}
+                    </span>
                     <span class="group-label">TODAY</span>
-                    <span class="group-count">02</span>
+                    <span class="group-count">{{ todayTasks().length.toString().padStart(2, '0') }}</span>
                 </div>
+                @if (isGroupExpanded('today')) {
                 <div class="task-items">
-                    @for (task of store.tasks(); track task.id) {
+                    @for (task of todayTasks(); track task.id) {
                     <div class="task-card-minimal">
-                        <div class="task-check-box"></div>
+                        <div class="task-check-box" 
+                            [class.checked]="task.status === 'COMPLETED'"
+                            (click)="toggleTaskStatus(task)"></div>
                         <div class="task-min-content">
                             <div class="task-min-title">{{ task.title }}</div>
                             <div class="task-min-meta">
                                 <span class="p-badge">{{ task.priority }}</span>
                                 <span class="h-badge">{{ task.hours }}</span>
                             </div>
-                            @if (task.id === '2') {
+                            @if (task.due?.includes('14:00')) {
                             <div class="sub-meta-time">14:00 — 16:00</div>
                             }
                         </div>
                     </div>
                     }
                 </div>
+                }
             </div>
 
-            <div class="task-group collapsed">
-                <div class="group-toggle">
-                    <span class="material-symbols-outlined toggle-icon">chevron_right</span>
+            <div class="task-group" [class.collapsed]="!isGroupExpanded('upcoming')">
+                <div class="group-toggle" (click)="toggleTaskGroup('upcoming')">
+                    <span class="material-symbols-outlined toggle-icon">
+                        {{ isGroupExpanded('upcoming') ? 'expand_more' : 'chevron_right' }}
+                    </span>
                     <span class="group-label">UPCOMING</span>
-                    <span class="group-count">01</span>
+                    <span class="group-count">{{ upcomingTasks().length.toString().padStart(2, '0') }}</span>
                 </div>
+                @if (isGroupExpanded('upcoming')) {
+                <div class="task-items">
+                    @for (task of upcomingTasks(); track task.id) {
+                    <div class="task-card-minimal">
+                        <div class="task-check-box" 
+                            [class.checked]="task.status === 'COMPLETED'"
+                            (click)="toggleTaskStatus(task)"></div>
+                        <div class="task-min-content">
+                            <div class="task-min-title">{{ task.title }}</div>
+                            <div class="task-min-meta">
+                                <span class="p-badge">{{ task.priority }}</span>
+                                <span class="h-badge">{{ task.hours }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
             </div>
 
-            <div class="task-group collapsed">
-                <div class="group-toggle">
-                    <span class="material-symbols-outlined toggle-icon">chevron_right</span>
+            <div class="task-group" [class.collapsed]="!isGroupExpanded('noDueDate')">
+                <div class="group-toggle" (click)="toggleTaskGroup('noDueDate')">
+                    <span class="material-symbols-outlined toggle-icon">
+                        {{ isGroupExpanded('noDueDate') ? 'expand_more' : 'chevron_right' }}
+                    </span>
                     <span class="group-label">NO DUE DATE</span>
-                    <span class="group-count">01</span>
+                    <span class="group-count">{{ noDueDateTasks().length.toString().padStart(2, '0') }}</span>
                 </div>
+                @if (isGroupExpanded('noDueDate')) {
+                <div class="task-items">
+                    @for (task of noDueDateTasks(); track task.id) {
+                    <div class="task-card-minimal">
+                        <div class="task-check-box" 
+                            [class.checked]="task.status === 'COMPLETED'"
+                            (click)="toggleTaskStatus(task)"></div>
+                        <div class="task-min-content">
+                            <div class="task-min-title">{{ task.title }}</div>
+                            <div class="task-min-meta">
+                                <span class="p-badge">{{ task.priority }}</span>
+                                <span class="h-badge">{{ task.hours }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
             </div>
 
             <div class="new-task-entry">
-                <button class="btn-add-entry">
+                <button class="btn-add-entry" (click)="openNewTaskDialog()">
                     + NEW TASK ENTRY
                 </button>
                 <div class="version-info">V5.0.0-PRO // NANO_BANANA_CORE</div>

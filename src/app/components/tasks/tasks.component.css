@@ -213,10 +213,29 @@
     margin-top: 2px;
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
+    flex-shrink: 0;
 }
 
 .task-check-box:hover {
     border-color: var(--text-tertiary);
+}
+
+.task-check-box.checked {
+    background: #ffd700;
+    border-color: #ffd700;
+}
+
+.task-check-box.checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .task-min-content {
@@ -497,6 +516,14 @@
 
 .tasks-table-row:active {
     background: var(--bg-active);
+}
+
+.tasks-table-row.tasks-completed {
+    opacity: 0.6;
+}
+
+.tasks-table-row.tasks-completed .tasks-task-title {
+    text-decoration: line-through;
 }
 
 .tasks-col-task {

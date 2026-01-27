@@ -167,6 +167,30 @@ export class StoreService {
     this.addActivity('Task created: ' + task.title, 'system');
   }
 
+  updateTask(id: string, updates: Partial<Task>) {
+    this.tasks.update(tasks =>
+      tasks.map(task => task.id === id ? { ...task, ...updates } : task)
+    );
+    this.addActivity('Task updated', 'system');
+  }
+
+  deleteTask(id: string) {
+    const existingTasks = this.tasks();
+    const taskToDelete = existingTasks.find(t => t.id === id);
+
+    if (taskToDelete) {
+      this.bin.addToBin({
+        type: 'task',
+        originalId: taskToDelete.id,
+        title: taskToDelete.title,
+        payload: taskToDelete
+      });
+    }
+
+    this.tasks.set(existingTasks.filter(t => t.id !== id));
+    this.addActivity('Task deleted', 'system');
+  }
+
   addNote(note: Note) {
     this.notes.update(notes => [note, ...notes]);
     this.addActivity("Entry added to '" + note.title + "'", 'entry');
