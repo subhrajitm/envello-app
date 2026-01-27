@@ -48,6 +48,10 @@
 .env-sidebar-search-icon {
   position: absolute;
   left: 10px;
+  top: 50%;
+  /* Center vertically */
+  transform: translateY(-50%);
+  /* Center vertically */
   font-size: 16px;
   color: var(--text-tertiary);
   pointer-events: none;
