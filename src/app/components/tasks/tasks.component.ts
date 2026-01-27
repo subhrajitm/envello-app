@@ -135,6 +135,7 @@ export class TasksComponent {
     this.newTaskHasReminder.set(false);
     this.newTaskLabels.set([]);
     this.newTaskLabelInput.set('');
+    this.quickAddMode.set('do-now');
     this.newTaskModalOpen.set(true);
   }
 
@@ -152,6 +153,20 @@ export class TasksComponent {
       this.newTaskDue.set(undefined);
     } else {
       this.newTaskDue.set('Today, 12:00');
+    }
+  }
+
+  setQuickAddMode(mode: 'do-now' | 'do-later') {
+    this.quickAddMode.set(mode);
+    // Set defaults based on mode
+    if (mode === 'do-now') {
+      // For "Do Now", set due date to today if not already set
+      if (!this.newTaskDue()) {
+        this.newTaskDue.set('Today, 12:00');
+      }
+    } else {
+      // For "Do Later", clear due date to let user set it manually
+      // Keep it if already set
     }
   }
 

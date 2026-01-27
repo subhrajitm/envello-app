@@ -463,6 +463,24 @@
     </div>
     <div body>
         <div class="task-modal-shell">
+            <!-- Mode Selection: Do Now / Do Later -->
+            <div class="task-modal-mode-selector">
+                <button type="button"
+                        class="task-modal-mode-btn"
+                        [class.active]="quickAddMode() === 'do-now'"
+                        (click)="setQuickAddMode('do-now')">
+                    <span class="material-symbols-outlined">play_arrow</span>
+                    <span>Do Now</span>
+                </button>
+                <button type="button"
+                        class="task-modal-mode-btn"
+                        [class.active]="quickAddMode() === 'do-later'"
+                        (click)="setQuickAddMode('do-later')">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <span>Do Later</span>
+                </button>
+            </div>
+
             <!-- Title Input -->
             <div class="task-modal-field-group">
                 <label class="task-modal-field-label">Task Title</label>
@@ -476,18 +494,9 @@
                 />
             </div>
 
-            <!-- Essential Controls -->
+            <!-- Do Now Options -->
+            @if (quickAddMode() === 'do-now') {
             <div class="task-modal-controls-row">
-                <div class="task-modal-control-group">
-                    <label class="task-modal-control-label">Due Date</label>
-                    <button type="button"
-                            class="task-modal-control-btn"
-                            [class.active]="!!newTaskDue()"
-                            (click)="toggleNewTaskTodayDue()">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        <span>{{ newTaskDue() || 'Set date' }}</span>
-                    </button>
-                </div>
                 <div class="task-modal-control-group">
                     <label class="task-modal-control-label">Priority</label>
                     <div class="task-modal-priority-selector">
@@ -512,13 +521,50 @@
                     </div>
                 </div>
                 <div class="task-modal-control-group">
+                    <label class="task-modal-control-label">Due Date</label>
+                    <button type="button"
+                            class="task-modal-control-btn"
+                            [class.active]="!!newTaskDue()"
+                            (click)="toggleNewTaskTodayDue()">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        <span>{{ newTaskDue() || 'Today' }}</span>
+                    </button>
+                </div>
+            </div>
+            }
+
+            <!-- Do Later Options -->
+            @if (quickAddMode() === 'do-later') {
+            <div class="task-modal-controls-row">
+                <div class="task-modal-control-group">
+                    <label class="task-modal-control-label">Due Date</label>
+                    <button type="button"
+                            class="task-modal-control-btn"
+                            [class.active]="!!newTaskDue()"
+                            (click)="toggleNewTaskTodayDue()">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        <span>{{ newTaskDue() || 'Set date' }}</span>
+                    </button>
+                </div>
+                <div class="task-modal-control-group">
                     <label class="task-modal-control-label">List</label>
                     <button type="button" class="task-modal-folder-btn">
                         <span class="material-symbols-outlined">folder</span>
                         <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
                     </button>
                 </div>
+                <div class="task-modal-control-group">
+                    <label class="task-modal-control-label">Reminders</label>
+                    <button type="button"
+                            class="task-modal-control-btn"
+                            [class.active]="newTaskHasReminder()"
+                            (click)="toggleNewTaskReminder()">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span>{{ newTaskHasReminder() ? 'Enabled' : 'Disabled' }}</span>
+                    </button>
+                </div>
             </div>
+            }
         </div>
     </div>
 
