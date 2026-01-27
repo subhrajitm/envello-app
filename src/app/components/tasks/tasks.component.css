@@ -81,6 +81,15 @@
     transition: all 0.2s;
 }
 
+.view-btn[disabled],
+.view-btn[disabled]:hover {
+    opacity: 0.4;
+    cursor: default;
+    background: transparent;
+    color: var(--text-tertiary);
+    box-shadow: none;
+}
+
 .view-btn .material-symbols-outlined {
     font-size: 18px;
 }
@@ -150,6 +159,24 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+.btn-secondary.active {
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    background: rgba(var(--accent-primary-rgb), 0.08);
+}
+
+.btn-secondary .btn-label {
+    display: inline-flex;
+    align-items: center;
+}
+
+.filter-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--accent-primary);
 }
 
 .btn-secondary .material-symbols-outlined {
@@ -260,6 +287,11 @@
     gap: 2px;
     flex: 1;
     min-width: 0;
+}
+
+.metric-caption {
+    font-size: 10px;
+    color: var(--text-tertiary);
 }
 
 .metric-label {

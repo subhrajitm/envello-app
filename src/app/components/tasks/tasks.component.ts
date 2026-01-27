@@ -47,6 +47,18 @@ export class TasksComponent {
     }
   ]);
 
+  /**
+   * Derived UI state
+   * - Used to style the toolbar Filter button so users can see
+   *   when any filtering / scoping is active.
+   */
+  filtersActive = computed(() => {
+    const view = this.selectedView();
+    const query = this.sidebarSearch().trim();
+    // Inbox + no query == baseline, everything else is considered "filtered"
+    return view !== 'inbox' || !!query;
+  });
+
   onSidebarActiveChange(id: string) {
     this.selectedView.set(id as TaskViewFilter);
   }
@@ -109,6 +121,12 @@ export class TasksComponent {
   });
 
   filteredTasks = computed(() => this.viewTasks());
+
+  // Helper used by header checkbox to determine "all done" state
+  allVisibleTasksCompleted = computed(() => {
+    const tasks = this.filteredTasks();
+    return tasks.length > 0 && tasks.every(t => t.status === 'COMPLETED');
+  });
 
   // Calendar computed values
   calendarMonth = computed(() => {
@@ -206,9 +224,66 @@ export class TasksComponent {
     this.currentDate.set(newDate);
   }
 
+  /**
+   * Calendar day click:
+   * - Only reacts to days in the current month.
+   * - If the clicked day is today, switches to Today view.
+   * - Otherwise, switches to Upcoming as a lightweight "schedule" view.
+   */
+  onCalendarDayClick(day: { day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean }) {
+    if (!day.isCurrentMonth) {
+      return;
+    }
+
+    this.sidebarSearch.set('');
+
+    if (day.isToday) {
+      this.selectedView.set('today');
+    } else {
+      this.selectedView.set('upcoming');
+    }
+  }
+
+  /**
+   * Metric cards are clickable shortcuts into common views.
+   */
+  onMetricClick(metric: 'today' | 'completed' | 'active' | 'priority') {
+    this.sidebarSearch.set('');
+
+    if (metric === 'today') {
+      this.selectedView.set('today');
+    } else if (metric === 'completed') {
+      this.selectedView.set('completed');
+    } else {
+      // For "active" and "priority", keep inbox but ensure baseline view.
+      this.selectedView.set('inbox');
+    }
+  }
+
   toggleTaskStatus(task: Task) {
     const newStatus = task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
     this.store.updateTask(task.id, { status: newStatus });
+  }
+
+  /**
+   * Header checkbox helper:
+   * - If all visible tasks are completed, mark them ACTIVE.
+   * - Otherwise, mark all visible tasks COMPLETED.
+   */
+  toggleAllVisibleTasksStatus() {
+    const tasks = this.filteredTasks();
+    if (tasks.length === 0) {
+      return;
+    }
+
+    const allCompleted = this.allVisibleTasksCompleted();
+    const nextStatus: Task['status'] = allCompleted ? 'ACTIVE' : 'COMPLETED';
+
+    for (const task of tasks) {
+      if (task.status !== nextStatus) {
+        this.store.updateTask(task.id, { status: nextStatus });
+      }
+    }
   }
 
   toggleTaskGroup(group: 'today' | 'upcoming' | 'noDueDate') {

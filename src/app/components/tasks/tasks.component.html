@@ -1,7 +1,9 @@
 <div class="tasks-view-minimal">
     <!-- Left sidebar using shared env component -->
-    <env-left-sidebar class="tasks-left-sidebar-wrapper" [title]="'Tasks'" [subtitle]="store.tasks().length + ' total'"
-        [searchPlaceholder]="'Search tasks'" [searchQuery]="sidebarSearch()" (searchChange)="sidebarSearch.set($event)"
+    <env-left-sidebar class="tasks-left-sidebar-wrapper" [title]="'Tasks'"
+        [subtitle]="store.tasks().length + ' tasks total'"
+        [searchPlaceholder]="'Search views'" [searchQuery]="sidebarSearch()"
+        (searchChange)="sidebarSearch.set($event)"
         [items]="sidebarItems()" [activeId]="selectedView()" (activeIdChange)="onSidebarActiveChange($event)"
         [addIcon]="'add'" addTooltip="New task" [showFooter]="true">
 
@@ -22,7 +24,8 @@
                 @if (isGroupExpanded('today')) {
                 <div class="task-items">
                     @for (task of todayTasks(); track task.id) {
-                    <div class="task-card-minimal">
+                    <div class="task-card-minimal" role="button"
+                        aria-label="Toggle task status and focus in list">
                         <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
                             (click)="toggleTaskStatus(task)"></div>
                         <div class="task-min-content">
@@ -52,7 +55,8 @@
                 @if (isGroupExpanded('upcoming')) {
                 <div class="task-items">
                     @for (task of upcomingTasks(); track task.id) {
-                    <div class="task-card-minimal">
+                    <div class="task-card-minimal" role="button"
+                        aria-label="Toggle task status and focus in list">
                         <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
                             (click)="toggleTaskStatus(task)"></div>
                         <div class="task-min-content">
@@ -79,7 +83,8 @@
                 @if (isGroupExpanded('noDueDate')) {
                 <div class="task-items">
                     @for (task of noDueDateTasks(); track task.id) {
-                    <div class="task-card-minimal">
+                    <div class="task-card-minimal" role="button"
+                        aria-label="Toggle task status and focus in list">
                         <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
                             (click)="toggleTaskStatus(task)"></div>
                         <div class="task-min-content">
@@ -113,11 +118,12 @@
             <div class="toolbar-left">
                 <h2 class="view-title">{{ selectedView() | titlecase }}</h2>
                 <div class="toolbar-divider"></div>
-                <div class="view-switcher">
-                    <button class="view-btn active" title="List View">
+                <div class="view-switcher" aria-label="Change tasks layout" role="group">
+                    <button class="view-btn active" title="List view" aria-label="List view">
                         <span class="material-symbols-outlined">format_list_bulleted</span>
                     </button>
-                    <button class="view-btn" title="Board View (Coming Soon)">
+                    <button class="view-btn" title="Board view (coming soon)"
+                        aria-label="Board view coming soon" disabled>
                         <span class="material-symbols-outlined">grid_view</span>
                     </button>
                 </div>
@@ -130,11 +136,15 @@
                         (input)="sidebarSearch.set($any($event.target).value)"
                         placeholder="Search tasks, people, tags...">
                 </div>
-                <button class="btn-secondary">
+                <button class="btn-secondary" [ngClass]="{ 'active': filtersActive() }"
+                    aria-label="Filter tasks">
                     <span class="material-symbols-outlined">filter_list</span>
-                    Filter
+                    <span class="btn-label">Filter</span>
+                    @if (filtersActive()) {
+                    <span class="filter-dot" aria-hidden="true"></span>
+                    }
                 </button>
-                <button class="btn-primary" (click)="openNewTaskDialog()">
+                <button class="btn-primary" (click)="openNewTaskDialog()" aria-label="Create new task">
                     <span class="material-symbols-outlined">add</span>
                     New Task
                 </button>
@@ -143,17 +153,20 @@
 
         <!-- Metric Cards -->
         <div class="tasks-metrics-grid">
-            <div class="metric-card">
+            <div class="metric-card" role="button" tabindex="0"
+                (click)="onMetricClick('today')" aria-label="Show tasks due today">
                 <div class="metric-icon-wrapper blue">
                     <span class="material-symbols-outlined">event_available</span>
                 </div>
                 <div class="metric-content">
                     <span class="metric-label">Due Today</span>
                     <span class="metric-value">{{ todayTasksCount() }}</span>
+                    <span class="metric-caption">tasks</span>
                 </div>
             </div>
 
-            <div class="metric-card">
+            <div class="metric-card" role="button" tabindex="0"
+                (click)="onMetricClick('completed')" aria-label="Show completed tasks">
                 <div class="metric-icon-wrapper green">
                     <span class="material-symbols-outlined">check_circle</span>
                 </div>
@@ -162,6 +175,9 @@
                     <div class="metric-row">
                         <span class="metric-value">{{ completedTasksCount() }}</span>
                         <span class="metric-sub">/ {{ store.tasks().length }}</span>
+                        <span class="metric-sub">
+                            ({{ (completedTasksCount() / (store.tasks().length || 1) * 100) | number:'1.0-0' }}%)
+                        </span>
                     </div>
                 </div>
                 <!-- Mini progress bar -->
@@ -171,23 +187,27 @@
                 </div>
             </div>
 
-            <div class="metric-card">
+            <div class="metric-card" role="button" tabindex="0"
+                (click)="onMetricClick('active')" aria-label="Show active tasks">
                 <div class="metric-icon-wrapper purple">
                     <span class="material-symbols-outlined">work_history</span>
                 </div>
                 <div class="metric-content">
                     <span class="metric-label">Active</span>
                     <span class="metric-value">{{ activeTasksCount() }}</span>
+                    <span class="metric-caption">tasks</span>
                 </div>
             </div>
 
-            <div class="metric-card">
+            <div class="metric-card" role="button" tabindex="0"
+                (click)="onMetricClick('priority')" aria-label="Show high priority tasks">
                 <div class="metric-icon-wrapper orange">
                     <span class="material-symbols-outlined">flag</span>
                 </div>
                 <div class="metric-content">
                     <span class="metric-label">High Priority</span>
                     <span class="metric-value">{{ priorityTasksCount() }}</span>
+                    <span class="metric-caption">P01 tasks</span>
                 </div>
             </div>
         </div>
@@ -196,7 +216,11 @@
         <div class="tasks-grid-container">
             <div class="grid-header">
                 <div class="col-check">
-                    <span class="material-symbols-outlined small-icon">check_box_outline_blank</span>
+                    <label class="custom-checkbox" aria-label="Toggle completion for all visible tasks">
+                        <input type="checkbox" [checked]="allVisibleTasksCompleted()"
+                            (change)="toggleAllVisibleTasksStatus()">
+                        <span class="checkmark"></span>
+                    </label>
                 </div>
                 <div class="col-task">Task Name</div>
                 <div class="col-project">Project / Context</div>
@@ -213,10 +237,16 @@
                     <div class="empty-icon-circle">
                         <span class="material-symbols-outlined">task</span>
                     </div>
+                    @if (store.tasks().length === 0) {
+                    <h3>No tasks yet</h3>
+                    <p>Create your first task to get started.</p>
+                    <button class="btn-primary" (click)="openNewTaskDialog()">Create task</button>
+                    } @else {
                     <h3>No tasks found</h3>
                     <p>No tasks match the current filter or search criteria.</p>
                     <button class="btn-text" (click)="sidebarSearch.set(''); selectedView.set('inbox')">Clear
-                        Filters</button>
+                        filters</button>
+                    }
                 </div>
                 } @else {
                 @for (task of filteredTasks(); track task.id) {
@@ -284,8 +314,10 @@
             <div class="date-nav-minimal">
                 <div class="mn-header">{{ calendarMonth() }}</div>
                 <div class="nav-arrows">
-                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('prev')">chevron_left</span>
-                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('next')">chevron_right</span>
+                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('prev')"
+                        aria-label="Previous month" role="button">chevron_left</span>
+                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('next')"
+                        aria-label="Next month" role="button">chevron_right</span>
                 </div>
             </div>
 
@@ -296,7 +328,9 @@
                 <div class="cal-days-grid">
                     @for (day of calendarDays(); track $index) {
                     <span class="c-day" [class.inactive]="!day.isCurrentMonth" [class.current]="day.isToday"
-                        [class.active-yellow]="day.isActive && day.isCurrentMonth">
+                        [class.active-yellow]="day.isActive && day.isCurrentMonth"
+                        (click)="onCalendarDayClick(day)" role="button"
+                        [attr.aria-label]="day.isToday ? ('Today, ' + calendarMonth()) : ('Day ' + day.day)">
                         {{ day.day }}
                     </span>
                     }
