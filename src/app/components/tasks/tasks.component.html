@@ -1,94 +1,180 @@
 <div class="tasks-view-minimal">
+    <!-- Left sidebar using shared env component -->
+    <env-left-sidebar class="tasks-left-sidebar-wrapper" [title]="'Tasks'" [subtitle]="store.tasks().length + ' total'"
+        [searchPlaceholder]="'Search tasks'" [searchQuery]="sidebarSearch()" (searchChange)="sidebarSearch.set($event)"
+        [items]="sidebarItems()" [activeId]="selectedView()" (activeIdChange)="onSidebarActiveChange($event)"
+        [addIcon]="'add'" addTooltip="New task">
+    </env-left-sidebar>
+
+    <!-- Main content -->
     <div class="tasks-main-content">
-        <div class="tasks-metrics-bar">
-            <div class="tasks-metric-item">
-                <span class="tasks-metric-label">TODAY'S TASKS</span>
-                <span class="tasks-metric-value">
-                    {{ todayTasksCount() }}
-                    <span class="material-symbols-outlined tasks-metric-icon">event</span>
-                </span>
+        <!-- Enterprise Header / Toolbar -->
+        <div class="tasks-toolbar">
+            <div class="toolbar-left">
+                <h2 class="view-title">{{ selectedView() | titlecase }}</h2>
+                <div class="toolbar-divider"></div>
+                <div class="view-switcher">
+                    <button class="view-btn active" title="List View">
+                        <span class="material-symbols-outlined">format_list_bulleted</span>
+                    </button>
+                    <button class="view-btn" title="Board View (Coming Soon)">
+                        <span class="material-symbols-outlined">grid_view</span>
+                    </button>
+                </div>
             </div>
-            <div class="tasks-metric-item">
-                <span class="tasks-metric-label">COMPLETED</span>
-                <span class="tasks-metric-value">
-                    {{ completedTasksCount() }}
-                    <span class="tasks-metric-unit">/ {{ store.tasks().length }} total</span>
-                </span>
-            </div>
-            <div class="tasks-metric-item">
-                <span class="tasks-metric-label">ACTIVE</span>
-                <span class="tasks-metric-value">
-                    {{ activeTasksCount() }}
-                    <span class="material-symbols-outlined tasks-metric-icon">check_circle</span>
-                </span>
-            </div>
-            <div class="tasks-metric-item">
-                <span class="tasks-metric-label">PRIORITY</span>
-                <span class="tasks-metric-value">
-                    {{ priorityTasksCount() }}
-                    <span class="tasks-metric-unit">high priority</span>
-                </span>
+
+            <div class="toolbar-right">
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" class="toolbar-search" [value]="sidebarSearch()"
+                        (input)="sidebarSearch.set($any($event.target).value)"
+                        placeholder="Search tasks, people, tags...">
+                </div>
+                <button class="btn-secondary">
+                    <span class="material-symbols-outlined">filter_list</span>
+                    Filter
+                </button>
+                <button class="btn-primary" (click)="openNewTaskDialog()">
+                    <span class="material-symbols-outlined">add</span>
+                    New Task
+                </button>
             </div>
         </div>
 
-        <div class="tasks-main-section">
-            <div class="tasks-section-header">
-                <h3 class="tasks-section-title">
-                    <span class="material-symbols-outlined tasks-section-icon">task</span>
-                    ALL TASKS
-                </h3>
-                <div class="tasks-section-controls">
-                    <button class="tasks-filter-btn" [class.active]="selectedFilter() === 'All'"
-                        (click)="selectedFilter.set('All')">
-                        All
-                    </button>
-                    <button class="tasks-filter-btn" [class.active]="selectedFilter() === 'Today'"
-                        (click)="selectedFilter.set('Today')">
-                        Today
-                    </button>
-                    <button class="tasks-filter-btn" [class.active]="selectedFilter() === 'This Week'"
-                        (click)="selectedFilter.set('This Week')">
-                        This Week
-                    </button>
-                    <button class="tasks-icon-btn">
-                        <span class="material-symbols-outlined">filter_list</span>
-                    </button>
+        <!-- Metric Cards -->
+        <div class="tasks-metrics-grid">
+            <div class="metric-card">
+                <div class="metric-icon-wrapper blue">
+                    <span class="material-symbols-outlined">event_available</span>
+                </div>
+                <div class="metric-content">
+                    <span class="metric-label">Due Today</span>
+                    <span class="metric-value">{{ todayTasksCount() }}</span>
                 </div>
             </div>
 
-            <div class="tasks-detail-table">
-                <div class="tasks-table-header">
-                    <div class="tasks-col-task">TASK</div>
-                    <div class="tasks-col-project">PROJECT</div>
-                    <div class="tasks-col-priority">PRIORITY</div>
-                    <div class="tasks-col-time">TIME</div>
-                    <div class="tasks-col-due">DUE</div>
+            <div class="metric-card">
+                <div class="metric-icon-wrapper green">
+                    <span class="material-symbols-outlined">check_circle</span>
                 </div>
-                <div class="tasks-table-body">
-                    @for (task of filteredTasks(); track task.id) {
-                    <div class="tasks-table-row" [class.tasks-completed]="task.status === 'COMPLETED'">
-                        <div class="tasks-col-task">
-                            <input type="checkbox" class="tasks-table-checkbox" 
-                                [checked]="task.status === 'COMPLETED'"
-                                (change)="toggleTaskStatus(task)" />
-                            <div class="tasks-task-content">
-                                <div class="tasks-task-title">{{ task.title }}</div>
-                            </div>
-                        </div>
-                        <div class="tasks-col-project">{{ task.project || '—' }}</div>
-                        <div class="tasks-col-priority">
-                            <span class="tasks-priority-badge"
-                                [ngClass]="task.priority.toLowerCase().replace(' ', '-')">
-                                {{ task.priority }}
-                            </span>
-                        </div>
-                        <div class="tasks-col-time">{{ task.hours }}</div>
-                        <div class="tasks-col-due" [class.tasks-overdue]="task.due?.includes('Overdue')">
-                            {{ task.due || '—' }}
+                <div class="metric-content">
+                    <span class="metric-label">Completed</span>
+                    <div class="metric-row">
+                        <span class="metric-value">{{ completedTasksCount() }}</span>
+                        <span class="metric-sub">/ {{ store.tasks().length }}</span>
+                    </div>
+                </div>
+                <!-- Mini progress bar -->
+                <div class="metric-progress-bg">
+                    <div class="metric-progress-fill"
+                        [style.width.%]="(completedTasksCount() / (store.tasks().length || 1)) * 100"></div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon-wrapper purple">
+                    <span class="material-symbols-outlined">work_history</span>
+                </div>
+                <div class="metric-content">
+                    <span class="metric-label">Active</span>
+                    <span class="metric-value">{{ activeTasksCount() }}</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-icon-wrapper orange">
+                    <span class="material-symbols-outlined">flag</span>
+                </div>
+                <div class="metric-content">
+                    <span class="metric-label">High Priority</span>
+                    <span class="metric-value">{{ priorityTasksCount() }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task List / Data Grid -->
+        <div class="tasks-grid-container">
+            <div class="grid-header">
+                <div class="col-check">
+                    <span class="material-symbols-outlined small-icon">check_box_outline_blank</span>
+                </div>
+                <div class="col-task">Task Name</div>
+                <div class="col-project">Project / Context</div>
+                <div class="col-assignee">Assignee</div>
+                <div class="col-priority">Priority</div>
+                <div class="col-status">Status</div>
+                <div class="col-due">Due Date</div>
+                <div class="col-actions"></div>
+            </div>
+
+            <div class="grid-body">
+                @if(filteredTasks().length === 0) {
+                <div class="empty-state">
+                    <div class="empty-icon-circle">
+                        <span class="material-symbols-outlined">task</span>
+                    </div>
+                    <h3>No tasks found</h3>
+                    <p>No tasks match the current filter or search criteria.</p>
+                    <button class="btn-text" (click)="sidebarSearch.set(''); selectedView.set('inbox')">Clear
+                        Filters</button>
+                </div>
+                } @else {
+                @for (task of filteredTasks(); track task.id) {
+                <div class="grid-row" [class.completed-row]="task.status === 'COMPLETED'">
+                    <div class="col-check">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" [checked]="task.status === 'COMPLETED'"
+                                (change)="toggleTaskStatus(task)">
+                            <span class="checkmark"></span>
+                        </label>
+                    </div>
+                    <div class="col-task">
+                        <div class="task-title-text">{{ task.title }}</div>
+                        <div class="task-meta-mobile">{{ task.project }} • {{ task.due }}</div>
+                    </div>
+                    <div class="col-project">
+                        @if(task.project) {
+                        <span class="project-pill">{{ task.project }}</span>
+                        } @else {
+                        <span class="no-data">—</span>
+                        }
+                    </div>
+                    <div class="col-assignee">
+                        <div class="user-avatar" [title]="task.assignee || 'Unassigned'">
+                            {{ task.assignee ? task.assignee.substring(0, 2) : 'Un' }}
                         </div>
                     </div>
-                    }
+                    <div class="col-priority">
+                        <div class="priority-indicator" [ngClass]="{
+                                    'p1': task.priority === 'PRIORITY 01',
+                                    'p2': task.priority === 'PRIORITY 02',
+                                    'p3': task.priority === 'PRIORITY 03'
+                                }">
+                            <span class="p-dot"></span>
+                            {{ task.priority.replace('PRIORITY ', 'P') }}
+                        </div>
+                    </div>
+                    <div class="col-status">
+                        <span class="status-badge" [ngClass]="task.status.toLowerCase()">
+                            {{ task.status }}
+                        </span>
+                    </div>
+                    <div class="col-due" [class.overdue]="task.due?.includes('Overdue')">
+                        @if(task.due) {
+                        <span class="material-symbols-outlined due-icon">calendar_today</span>
+                        {{ task.due }}
+                        } @else {
+                        <span class="no-data">—</span>
+                        }
+                    </div>
+                    <div class="col-actions">
+                        <button class="btn-icon-only">
+                            <span class="material-symbols-outlined">more_horiz</span>
+                        </button>
+                    </div>
                 </div>
+                }
+                }
             </div>
         </div>
     </div>
@@ -109,9 +195,7 @@
                 </div>
                 <div class="cal-days-grid">
                     @for (day of calendarDays(); track $index) {
-                    <span class="c-day" 
-                        [class.inactive]="!day.isCurrentMonth"
-                        [class.current]="day.isToday"
+                    <span class="c-day" [class.inactive]="!day.isCurrentMonth" [class.current]="day.isToday"
                         [class.active-yellow]="day.isActive && day.isCurrentMonth">
                         {{ day.day }}
                     </span>
@@ -138,8 +222,7 @@
                 <div class="task-items">
                     @for (task of todayTasks(); track task.id) {
                     <div class="task-card-minimal">
-                        <div class="task-check-box" 
-                            [class.checked]="task.status === 'COMPLETED'"
+                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
                             (click)="toggleTaskStatus(task)"></div>
                         <div class="task-min-content">
                             <div class="task-min-title">{{ task.title }}</div>
@@ -169,8 +252,7 @@
                 <div class="task-items">
                     @for (task of upcomingTasks(); track task.id) {
                     <div class="task-card-minimal">
-                        <div class="task-check-box" 
-                            [class.checked]="task.status === 'COMPLETED'"
+                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
                             (click)="toggleTaskStatus(task)"></div>
                         <div class="task-min-content">
                             <div class="task-min-title">{{ task.title }}</div>
@@ -197,8 +279,7 @@
                 <div class="task-items">
                     @for (task of noDueDateTasks(); track task.id) {
                     <div class="task-card-minimal">
-                        <div class="task-check-box" 
-                            [class.checked]="task.status === 'COMPLETED'"
+                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
                             (click)="toggleTaskStatus(task)"></div>
                         <div class="task-min-content">
                             <div class="task-min-title">{{ task.title }}</div>

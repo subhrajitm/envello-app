@@ -1,1 +1,36 @@
-<p>sidebar works!</p>
+<aside class="env-sidebar">
+  <div class="env-sidebar-header">
+    <div class="env-sidebar-search">
+      <span class="material-symbols-outlined env-sidebar-search-icon">search</span>
+      <input type="text" class="env-sidebar-search-input" [placeholder]="searchPlaceholder" [value]="searchQuery"
+        (input)="onSearchInput(($any($event.target).value || '').trim())" />
+    </div>
+
+    @if (addIcon) {
+    <div class="env-sidebar-actions">
+      <button type="button" class="env-sidebar-add-btn" [attr.title]="addTooltip" (click)="onAddClick()">
+        <span class="material-symbols-outlined">{{ addIcon }}</span>
+      </button>
+    </div>
+    }
+  </div>
+
+  <nav class="env-sidebar-nav">
+    @for (item of items; track item.id) {
+    <button type="button" class="env-sidebar-nav-item" [class.active]="activeId === item.id"
+      (click)="onSelectItem(item.id)">
+      <span class="material-symbols-outlined env-sidebar-nav-icon">{{ item.icon }}</span>
+      <span class="env-sidebar-nav-label">{{ item.label }}</span>
+      @if (item.count !== undefined) {
+      <span class="env-sidebar-nav-count">{{ item.count }}</span>
+      }
+    </button>
+    }
+  </nav>
+
+  @if (showFooter) {
+  <div class="env-sidebar-footer">
+    <ng-content select="[env-sidebar-footer]"></ng-content>
+  </div>
+  }
+</aside>

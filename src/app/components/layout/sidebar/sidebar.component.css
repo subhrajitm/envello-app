@@ -1,0 +1,197 @@
+.env-sidebar {
+  width: 240px;
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  height: 100%;
+}
+
+/* Header Section */
+.env-sidebar-header {
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 46px;
+  /* Match Research Header Height */
+  height: 46px;
+  box-sizing: border-box;
+}
+
+.env-sidebar-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  display: none;
+  /* Hiding title row to match research search-only header style if desired, or keep it but minimal */
+}
+
+/* If we want to keep title but make it compact like Research doesn't really have one, it has search. 
+   Research layout: Search Input + Add Button. 
+   Sidebar layout: Search Input + Title? Let's make it look like Research's "research-search-header" 
+*/
+
+.env-sidebar-search {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.env-sidebar-search-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 16px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.env-sidebar-search-input {
+  width: 100%;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 10px 6px 32px;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  height: 28px;
+  /* Compact height */
+  box-sizing: border-box;
+}
+
+.env-sidebar-search-input:focus {
+  border-color: var(--border-highlight);
+}
+
+.env-sidebar-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.env-sidebar-actions {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.env-sidebar-add-btn {
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  /* Prevent shrinking */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.env-sidebar-add-btn:hover {
+  filter: brightness(1.1);
+  transform: none;
+  /* Reset unnecessary transform */
+  box-shadow: none;
+}
+
+.env-sidebar-add-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Nav Item List - Matching Research Libraries List */
+.env-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  /* Reset padding to matching research list */
+}
+
+/* Nav Item - Matching "library-item" */
+.env-sidebar-nav-item {
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  /* Left border indicator */
+  border-radius: 0;
+  /* Square edges for list look */
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  /* Match library-name weight */
+  min-height: 32px;
+  border-bottom: none;
+  border-top: none;
+  border-right: none;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.env-sidebar-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.env-sidebar-nav-item.active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border-left-color: var(--accent-primary);
+  /* Accent color border */
+}
+
+.env-sidebar-nav-icon {
+  font-size: 16px;
+  /* Slightly smaller to match compact look or keep 18 */
+  color: var(--text-tertiary);
+  display: flex;
+  /* Ensure it centers */
+}
+
+.env-sidebar-nav-item.active .env-sidebar-nav-icon {
+  color: var(--text-primary);
+  /* Active icon color */
+}
+
+/* Remove yellow overrides if we want strict research match, 
+   or keep them if the user likes yellow. 
+   Research uses --accent-primary. Let's stick to system vars. 
+*/
+
+.env-sidebar-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.env-sidebar-nav-count {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.env-sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px;
+}

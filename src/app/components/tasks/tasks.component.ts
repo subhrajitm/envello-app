@@ -1,55 +1,114 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task } from '../../services/store.service';
+import { SidebarComponent, SidebarNavItem } from '../layout/sidebar/sidebar.component';
+
+type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SidebarComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css'
 })
 export class TasksComponent {
   store = inject(StoreService);
+
+  // Left sidebar state
+  sidebarSearch = signal<string>('');
+  selectedView = signal<TaskViewFilter>('inbox');
+  quickAddMode = signal<'do-now' | 'do-later'>('do-now');
+
+  sidebarItems = computed<SidebarNavItem[]>(() => [
+    {
+      id: 'inbox',
+      icon: 'inbox',
+      label: 'Inbox',
+      count: this.inboxTasks().length
+    },
+    {
+      id: 'today',
+      icon: 'today',
+      label: 'Today',
+      count: this.todayTasksCount()
+    },
+    {
+      id: 'upcoming',
+      icon: 'upcoming',
+      label: 'Upcoming',
+      count: this.upcomingTasks().length
+    },
+    {
+      id: 'completed',
+      icon: 'task_alt',
+      label: 'Completed',
+      count: this.completedTasksCount()
+    }
+  ]);
+
+  onSidebarActiveChange(id: string) {
+    this.selectedView.set(id as TaskViewFilter);
+  }
+
+  // Legacy top filter buttons (kept but internally derive from selectedView)
   selectedFilter = signal<string>('All');
-  
+
   // Calendar state
   currentDate = signal<Date>(new Date());
-  
+
   // Task group collapse state
   todayGroupExpanded = signal<boolean>(true);
   upcomingGroupExpanded = signal<boolean>(false);
   noDueDateGroupExpanded = signal<boolean>(false);
 
-  todayTasksCount = computed(() => this.store.tasks().filter(t => t.due?.includes('Today')).length);
-  completedTasksCount = computed(() => this.store.tasks().filter(t => t.status === 'COMPLETED').length);
-  activeTasksCount = computed(() => this.store.tasks().filter(t => t.status === 'ACTIVE').length);
-  priorityTasksCount = computed(() => this.store.tasks().filter(t => t.priority === 'PRIORITY 01').length);
+  todayTasksCount = computed(
+    () => this.store.tasks().filter(t => t.due?.includes('Today')).length
+  );
+  completedTasksCount = computed(
+    () => this.store.tasks().filter(t => t.status === 'COMPLETED').length
+  );
+  activeTasksCount = computed(
+    () => this.store.tasks().filter(t => t.status === 'ACTIVE').length
+  );
+  priorityTasksCount = computed(
+    () => this.store.tasks().filter(t => t.priority === 'PRIORITY 01').length
+  );
 
-  filteredTasks = computed(() => {
-    const filter = this.selectedFilter();
-    const tasks = this.store.tasks();
-    
-    if (filter === 'All') {
-      return tasks;
-    } else if (filter === 'Today') {
-      return tasks.filter(t => t.due?.includes('Today'));
-    } else if (filter === 'This Week') {
-      const today = new Date();
-      const weekFromNow = new Date(today);
-      weekFromNow.setDate(today.getDate() + 7);
-      
-      return tasks.filter(t => {
+  // Inbox/Today/Upcoming/Completed views
+  inboxTasks = computed(() => this.store.tasks());
+
+  viewTasks = computed(() => {
+    const view = this.selectedView();
+    const query = this.sidebarSearch().trim().toLowerCase();
+
+    let base: Task[];
+    if (view === 'today') {
+      base = this.store.tasks().filter(t => t.due?.includes('Today'));
+    } else if (view === 'upcoming') {
+      base = this.store.tasks().filter(t => {
         if (!t.due) return false;
-        if (t.due.includes('Today')) return true;
-        if (t.due.includes('Overdue')) return true;
-        // Check if due date is within the next 7 days
-        // This is a simplified check - in a real app, you'd parse the date properly
-        return true; // For now, include all tasks with due dates
+        if (t.due.includes('Today')) return false;
+        if (t.due.includes('Overdue')) return false;
+        return true;
       });
+    } else if (view === 'completed') {
+      base = this.store.tasks().filter(t => t.status === 'COMPLETED');
+    } else {
+      // inbox
+      base = this.inboxTasks();
     }
-    return tasks;
+
+    if (!query) return base;
+
+    return base.filter(t => {
+      const haystack =
+        (t.title + ' ' + (t.project ?? '') + ' ' + (t.assignee ?? '')).toLowerCase();
+      return haystack.includes(query);
+    });
   });
+
+  filteredTasks = computed(() => this.viewTasks());
 
   // Calendar computed values
   calendarMonth = computed(() => {
@@ -61,33 +120,33 @@ export class TasksComponent {
     const date = this.currentDate();
     const year = date.getFullYear();
     const month = date.getMonth();
-    
+
     // First day of the month
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
+
     // Day of week for first day (0 = Sunday, 6 = Saturday)
     const startDay = firstDay.getDay();
-    
+
     // Days in the month
     const daysInMonth = lastDay.getDate();
-    
+
     // Previous month's days to show
     const prevMonth = new Date(year, month, 0);
     const daysInPrevMonth = prevMonth.getDate();
-    
+
     const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean }> = [];
-    
+
     // Add previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
       const day = daysInPrevMonth - i;
       days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
     }
-    
+
     // Add current month's days
     const today = new Date();
     const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday = isCurrentMonth && day === today.getDate();
       // Check if any task is due on this day (simplified - in real app, parse dates properly)
@@ -101,13 +160,13 @@ export class TasksComponent {
       });
       days.push({ day, isCurrentMonth: true, isToday, isActive });
     }
-    
+
     // Add next month's leading days to fill the grid (42 cells = 6 weeks)
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
     }
-    
+
     return days;
   });
 
@@ -137,13 +196,13 @@ export class TasksComponent {
   navigateMonth(direction: 'prev' | 'next') {
     const current = this.currentDate();
     const newDate = new Date(current);
-    
+
     if (direction === 'prev') {
       newDate.setMonth(current.getMonth() - 1);
     } else {
       newDate.setMonth(current.getMonth() + 1);
     }
-    
+
     this.currentDate.set(newDate);
   }
 
