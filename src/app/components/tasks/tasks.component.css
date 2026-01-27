@@ -968,6 +968,10 @@
     gap: 6px;
 }
 
+.task-modal-title-group {
+    margin-bottom: 4px;
+}
+
 .task-modal-field-label {
     font-size: 10px;
     font-weight: 600;
@@ -978,25 +982,36 @@
 
 .task-modal-title-input {
     width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
+    padding: 16px 18px;
+    border: 2px solid var(--border-subtle);
+    border-radius: 8px;
     background: var(--bg-panel);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 20px;
+    font-weight: 600;
     color: var(--text-primary);
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.task-modal-title-input:hover {
+    border-color: var(--border-highlight);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .task-modal-title-input:focus {
     border-color: var(--accent-primary);
+    border-width: 2px;
     outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.12);
+    background: var(--bg-app);
 }
 
 .task-modal-title-input::placeholder {
     color: var(--text-tertiary);
     font-weight: 400;
+    opacity: 0.6;
 }
 
 .task-modal-controls-row {

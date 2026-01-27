@@ -482,12 +482,11 @@
             </div>
 
             <!-- Title Input -->
-            <div class="task-modal-field-group">
-                <label class="task-modal-field-label">Task Title</label>
+            <div class="task-modal-field-group task-modal-title-group">
                 <input
                     type="text"
                     class="task-modal-title-input"
-                    placeholder="Enter task title..."
+                    placeholder="What needs to be done?"
                     [value]="newTaskTitle()"
                     (input)="newTaskTitle.set($any($event.target).value)"
                     autofocus
