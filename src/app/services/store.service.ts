@@ -10,6 +10,10 @@ export interface Task {
   project?: string;
   assignee?: string;
   due?: string;
+  /** Optional labels/tags associated with this task */
+  labels?: string[];
+  /** Optional reminders metadata (simple strings for now) */
+  reminders?: string[];
 }
 
 export interface Note {

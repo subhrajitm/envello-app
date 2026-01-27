@@ -321,9 +321,9 @@
                             <span class="material-symbols-outlined">done</span>
                         </button>
                         <button class="btn-icon-only"
-                            (click)="deleteTask(task)"
+                            (click)="requestDeleteTask(task, $event)"
                             [attr.aria-label]="'Delete task ' + task.title">
-                            <span class="material-symbols-outlined">more_horiz</span>
+                            <span class="material-symbols-outlined">delete</span>
                         </button>
                     </div>
                 </div>
@@ -403,9 +403,9 @@
                                 <span class="material-symbols-outlined">done</span>
                             </button>
                             <button class="btn-icon-only"
-                                (click)="deleteTask(task)"
+                                (click)="requestDeleteTask(task, $event)"
                                 [attr.aria-label]="'Delete task ' + task.title">
-                                <span class="material-symbols-outlined">more_horiz</span>
+                                <span class="material-symbols-outlined">delete</span>
                             </button>
                         </div>
                     </footer>
@@ -449,100 +449,165 @@
     </div>
 </div>
 
-@if (newTaskModalOpen()) {
-<div class="task-modal-backdrop">
-    <div class="task-modal">
-        <header class="task-modal-header">
-            <input class="task-modal-title-input"
-                   type="text"
-                   autofocus
-                   placeholder="Confirm catering by Fri at noon"
-                   [value]="newTaskTitle()"
-                   (input)="newTaskTitle.set($any($event.target).value)" />
-        </header>
+<!-- New Task Modal -->
+<env-modal
+    [isOpen]="newTaskModalOpen()"
+    (closed)="closeNewTaskDialog()"
+    title="New task"
+    size="md"
+>
+    <div body>
+        <div class="task-modal-main">
+            <input
+                type="text"
+                class="task-modal-title-input"
+                placeholder="Confirm catering by Fri at noon"
+                [value]="newTaskTitle()"
+                (input)="newTaskTitle.set($any($event.target).value)"
+                autofocus
+            />
 
-        <section class="task-modal-body">
-            <label class="task-modal-description-label">Description</label>
-            <textarea class="task-modal-description-input"
-                      rows="3"
-                      placeholder="Add more context for this task..."
-                      [value]="newTaskDescription()"
-                      (input)="newTaskDescription.set($any($event.target).value)">
-            </textarea>
-
-            <div class="task-modal-pill-row">
-                <button type="button"
-                        class="task-modal-pill-btn"
-                        [class.active]="!!newTaskDue()"
-                        (click)="toggleNewTaskTodayDue()">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    <span>Date</span>
-                </button>
-                <div class="task-modal-priority-group">
-                    <button type="button"
-                            class="task-modal-pill-btn"
-                            [class.active]="true">
-                        <span class="material-symbols-outlined">flag</span>
-                        <span>Priority</span>
-                    </button>
-                    <div class="task-modal-priority-options">
-                        <button type="button"
-                                class="priority-chip"
-                                [class.selected]="newTaskPriority() === 'PRIORITY 01'"
-                                (click)="setNewTaskPriority('PRIORITY 01')">
-                            P01
-                        </button>
-                        <button type="button"
-                                class="priority-chip"
-                                [class.selected]="newTaskPriority() === 'PRIORITY 02'"
-                                (click)="setNewTaskPriority('PRIORITY 02')">
-                            P02
-                        </button>
-                        <button type="button"
-                                class="priority-chip"
-                                [class.selected]="newTaskPriority() === 'PRIORITY 03'"
-                                (click)="setNewTaskPriority('PRIORITY 03')">
-                            P03
-                        </button>
-                    </div>
-                </div>
-                <button type="button"
-                        class="task-modal-pill-btn"
-                        [class.active]="newTaskHasReminder()"
-                        (click)="toggleNewTaskReminder()">
-                    <span class="material-symbols-outlined">notifications</span>
-                    <span>Reminders</span>
-                </button>
-                <button type="button"
-                        class="task-modal-pill-btn task-modal-pill-more">
-                    <span class="material-symbols-outlined">more_horiz</span>
-                </button>
+            <div class="task-modal-description-block">
+                <div class="task-modal-description-label">Description</div>
+                <textarea
+                    class="task-modal-description-input"
+                    rows="3"
+                    placeholder="Add more context for this task..."
+                    [value]="newTaskDescription()"
+                    (input)="newTaskDescription.set($any($event.target).value)"
+                ></textarea>
             </div>
-        </section>
+        </div>
 
-        <footer class="task-modal-footer">
-            <div class="task-modal-list-select">
+        <div class="task-modal-pill-row">
+            <button type="button"
+                    class="task-modal-pill-btn"
+                    [class.active]="!!newTaskDue()"
+                    (click)="toggleNewTaskTodayDue()">
+                <span class="material-symbols-outlined">calendar_today</span>
+                <span>Date</span>
+            </button>
+
+            <div class="task-modal-priority-group">
+                <button type="button"
+                        class="task-modal-pill-btn"
+                        [class.active]="true">
+                    <span class="material-symbols-outlined">flag</span>
+                    <span>Priority</span>
+                </button>
+                <div class="task-modal-priority-options">
+                    <button type="button"
+                            class="priority-chip"
+                            [class.selected]="newTaskPriority() === 'PRIORITY 01'"
+                            (click)="setNewTaskPriority('PRIORITY 01')">
+                        P01
+                    </button>
+                    <button type="button"
+                            class="priority-chip"
+                            [class.selected]="newTaskPriority() === 'PRIORITY 02'"
+                            (click)="setNewTaskPriority('PRIORITY 02')">
+                        P02
+                    </button>
+                    <button type="button"
+                            class="priority-chip"
+                            [class.selected]="newTaskPriority() === 'PRIORITY 03'"
+                            (click)="setNewTaskPriority('PRIORITY 03')">
+                        P03
+                    </button>
+                </div>
+            </div>
+
+            <button type="button"
+                    class="task-modal-pill-btn"
+                    [class.active]="newTaskHasReminder()"
+                    (click)="toggleNewTaskReminder()">
+                <span class="material-symbols-outlined">notifications</span>
+                <span>Reminders</span>
+            </button>
+        </div>
+
+        <div class="task-modal-meta-row">
+            <div class="task-modal-folder">
                 <button type="button" class="task-modal-list-btn">
                     <span class="material-symbols-outlined">waves</span>
-                    <span>{{ newTaskList() }}</span>
+                    <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
                     <span class="material-symbols-outlined caret">expand_more</span>
                 </button>
+                <input
+                    type="text"
+                    class="modal-input task-label-input"
+                    placeholder="Change folder name…"
+                    [value]="newTaskList()"
+                    (input)="newTaskList.set($any($event.target).value)"
+                />
             </div>
-            <div class="task-modal-footer-actions">
-                <button type="button"
-                        class="task-modal-btn task-modal-btn-secondary"
-                        (click)="closeNewTaskDialog()">
-                    Cancel
-                </button>
-                <button type="button"
-                        class="task-modal-btn task-modal-btn-primary"
-                        [class.disabled]="!newTaskTitle().trim()"
-                        [disabled]="!newTaskTitle().trim()"
-                        (click)="confirmNewTask()">
-                    Add task
-                </button>
+
+            <div class="task-labels-row">
+                <div class="task-label-chips" *ngIf="newTaskLabels().length">
+                    @for (label of newTaskLabels(); track label) {
+                    <span class="task-label-chip">
+                        <span class="material-symbols-outlined chip-icon">label</span>
+                        {{ label }}
+                        <button type="button" class="chip-remove" (click)="removeNewTaskLabel(label)">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </span>
+                    }
+                </div>
+                <input
+                    type="text"
+                    class="modal-input task-label-input"
+                    placeholder="Add a label and press Enter"
+                    [value]="newTaskLabelInput()"
+                    (input)="newTaskLabelInput.set($any($event.target).value)"
+                    (keydown.enter)="addNewTaskLabel()"
+                />
             </div>
-        </footer>
+        </div>
     </div>
-</div>
-}
+
+    <div footer class="task-modal-footer">
+        <div class="task-modal-footer-actions">
+            <button type="button"
+                    class="btn-secondary"
+                    (click)="closeNewTaskDialog()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="btn-primary"
+                    [disabled]="!newTaskTitle().trim()"
+                    (click)="confirmNewTask()">
+                Add task
+            </button>
+        </div>
+    </div>
+</env-modal>
+
+<!-- Delete Task Confirmation Modal -->
+<env-modal
+    [isOpen]="deleteModalOpen()"
+    (closed)="cancelDeleteTask()"
+    title="Delete task"
+    size="sm"
+>
+    <div body>
+        @if (taskPendingDelete(); as task) {
+        <p>Are you sure you want to delete the task "<strong>{{ task.title }}</strong>"?</p>
+        <p>This action moves the task to the bin.</p>
+        }
+    </div>
+    <div footer class="task-modal-footer">
+        <div class="task-modal-footer-actions">
+            <button type="button"
+                    class="btn-secondary"
+                    (click)="cancelDeleteTask()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="btn-primary"
+                    (click)="confirmDeleteTask()">
+                Delete
+            </button>
+        </div>
+    </div>
+</env-modal>

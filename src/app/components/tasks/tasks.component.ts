@@ -2,13 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task } from '../../services/store.service';
 import { SidebarComponent, SidebarNavItem } from '../layout/sidebar/sidebar.component';
+import { ModalComponent } from '../../shared/ui/modal/modal.component';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, SidebarComponent],
+  imports: [CommonModule, SidebarComponent, ModalComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css'
 })
@@ -34,6 +35,13 @@ export class TasksComponent {
   newTaskDue = signal<string | undefined>(undefined);
   newTaskList = signal<string>('Inbox');
   newTaskHasReminder = signal<boolean>(false);
+   // Labels for the new task
+  newTaskLabels = signal<string[]>([]);
+  newTaskLabelInput = signal<string>('');
+
+  // Delete confirmation modal state
+  deleteModalOpen = signal<boolean>(false);
+  taskPendingDelete = signal<Task | null>(null);
 
   sidebarItems = computed<SidebarNavItem[]>(() => [
     {
@@ -125,6 +133,8 @@ export class TasksComponent {
     this.newTaskDue.set(undefined);
     this.newTaskList.set('Inbox');
     this.newTaskHasReminder.set(false);
+    this.newTaskLabels.set([]);
+    this.newTaskLabelInput.set('');
     this.newTaskModalOpen.set(true);
   }
 
@@ -149,6 +159,34 @@ export class TasksComponent {
     this.newTaskHasReminder.update(v => !v);
   }
 
+  addNewTaskLabel() {
+    const raw = this.newTaskLabelInput().trim();
+    if (!raw) return;
+    const existing = this.newTaskLabels();
+    if (existing.includes(raw)) {
+      this.newTaskLabelInput.set('');
+      return;
+    }
+    this.newTaskLabels.set([...existing, raw]);
+    this.newTaskLabelInput.set('');
+  }
+
+  removeNewTaskLabel(label: string) {
+    this.newTaskLabels.set(this.newTaskLabels().filter(l => l !== label));
+  }
+
+  /** Open delete confirmation for a given task. */
+  requestDeleteTask(task: Task, event?: Event) {
+    event?.stopPropagation();
+    this.taskPendingDelete.set(task);
+    this.deleteModalOpen.set(true);
+  }
+
+  cancelDeleteTask() {
+    this.deleteModalOpen.set(false);
+    this.taskPendingDelete.set(null);
+  }
+
   confirmNewTask() {
     const title = this.newTaskTitle().trim();
     if (!title) {
@@ -162,7 +200,9 @@ export class TasksComponent {
       hours: '1.0H',
       status: 'ACTIVE',
       project: this.newTaskList() || undefined,
-      due: this.newTaskDue()
+      due: this.newTaskDue(),
+      labels: this.newTaskLabels().length ? this.newTaskLabels() : undefined,
+      reminders: this.newTaskHasReminder() ? ['Default reminder'] : undefined
     };
 
     this.store.addTask(newTask);
@@ -387,10 +427,17 @@ export class TasksComponent {
   }
 
   /**
-   * Delete a single task and push it into the bin via StoreService.
+   * Delete a single task (used by confirmation modal) and push it into the bin via StoreService.
    */
   deleteTask(task: Task) {
     this.store.deleteTask(task.id);
+  }
+
+  confirmDeleteTask() {
+    const task = this.taskPendingDelete();
+    if (!task) return;
+    this.deleteTask(task);
+    this.cancelDeleteTask();
   }
 
   /**
