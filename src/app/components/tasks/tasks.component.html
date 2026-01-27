@@ -453,120 +453,76 @@
 <env-modal
     [isOpen]="newTaskModalOpen()"
     (closed)="closeNewTaskDialog()"
-    title="New task"
     size="md"
 >
+    <div header>
+        <h2 class="env-modal-title">
+            <span class="material-symbols-outlined">add_task</span>
+            New task
+        </h2>
+    </div>
     <div body>
-        <div class="task-modal-main">
-            <input
-                type="text"
-                class="task-modal-title-input"
-                placeholder="Confirm catering by Fri at noon"
-                [value]="newTaskTitle()"
-                (input)="newTaskTitle.set($any($event.target).value)"
-                autofocus
-            />
-
-            <div class="task-modal-description-block">
-                <div class="task-modal-description-label">Description</div>
-                <textarea
-                    class="task-modal-description-input"
-                    rows="3"
-                    placeholder="Add more context for this task..."
-                    [value]="newTaskDescription()"
-                    (input)="newTaskDescription.set($any($event.target).value)"
-                ></textarea>
-            </div>
-        </div>
-
-        <div class="task-modal-pill-row">
-            <button type="button"
-                    class="task-modal-pill-btn"
-                    [class.active]="!!newTaskDue()"
-                    (click)="toggleNewTaskTodayDue()">
-                <span class="material-symbols-outlined">calendar_today</span>
-                <span>Date</span>
-            </button>
-
-            <div class="task-modal-priority-group">
-                <button type="button"
-                        class="task-modal-pill-btn"
-                        [class.active]="true">
-                    <span class="material-symbols-outlined">flag</span>
-                    <span>Priority</span>
-                </button>
-                <div class="task-modal-priority-options">
-                    <button type="button"
-                            class="priority-chip"
-                            [class.selected]="newTaskPriority() === 'PRIORITY 01'"
-                            (click)="setNewTaskPriority('PRIORITY 01')">
-                        P01
-                    </button>
-                    <button type="button"
-                            class="priority-chip"
-                            [class.selected]="newTaskPriority() === 'PRIORITY 02'"
-                            (click)="setNewTaskPriority('PRIORITY 02')">
-                        P02
-                    </button>
-                    <button type="button"
-                            class="priority-chip"
-                            [class.selected]="newTaskPriority() === 'PRIORITY 03'"
-                            (click)="setNewTaskPriority('PRIORITY 03')">
-                        P03
-                    </button>
-                </div>
-            </div>
-
-            <button type="button"
-                    class="task-modal-pill-btn"
-                    [class.active]="newTaskHasReminder()"
-                    (click)="toggleNewTaskReminder()">
-                <span class="material-symbols-outlined">notifications</span>
-                <span>Reminders</span>
-            </button>
-        </div>
-
-        <div class="task-modal-meta-row">
-            <div class="task-modal-folder">
-                <button type="button" class="task-modal-list-btn">
-                    <span class="material-symbols-outlined">waves</span>
-                    <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
-                    <span class="material-symbols-outlined caret">expand_more</span>
-                </button>
+        <div class="task-modal-shell">
+            <!-- Title Input -->
+            <div class="task-modal-field-group">
+                <label class="task-modal-field-label">Task Title</label>
                 <input
                     type="text"
-                    class="modal-input task-label-input"
-                    placeholder="Change folder name…"
-                    [value]="newTaskList()"
-                    (input)="newTaskList.set($any($event.target).value)"
+                    class="task-modal-title-input"
+                    placeholder="Enter task title..."
+                    [value]="newTaskTitle()"
+                    (input)="newTaskTitle.set($any($event.target).value)"
+                    autofocus
                 />
             </div>
 
-            <div class="task-labels-row">
-                <div class="task-label-chips" *ngIf="newTaskLabels().length">
-                    @for (label of newTaskLabels(); track label) {
-                    <span class="task-label-chip">
-                        <span class="material-symbols-outlined chip-icon">label</span>
-                        {{ label }}
-                        <button type="button" class="chip-remove" (click)="removeNewTaskLabel(label)">
-                            <span class="material-symbols-outlined">close</span>
+            <!-- Essential Controls -->
+            <div class="task-modal-controls-row">
+                <div class="task-modal-control-group">
+                    <label class="task-modal-control-label">Due Date</label>
+                    <button type="button"
+                            class="task-modal-control-btn"
+                            [class.active]="!!newTaskDue()"
+                            (click)="toggleNewTaskTodayDue()">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        <span>{{ newTaskDue() || 'Set date' }}</span>
+                    </button>
+                </div>
+                <div class="task-modal-control-group">
+                    <label class="task-modal-control-label">Priority</label>
+                    <div class="task-modal-priority-selector">
+                        <button type="button"
+                                class="priority-option"
+                                [class.selected]="newTaskPriority() === 'PRIORITY 01'"
+                                (click)="setNewTaskPriority('PRIORITY 01')">
+                            P01
                         </button>
-                    </span>
-                    }
+                        <button type="button"
+                                class="priority-option"
+                                [class.selected]="newTaskPriority() === 'PRIORITY 02'"
+                                (click)="setNewTaskPriority('PRIORITY 02')">
+                            P02
+                        </button>
+                        <button type="button"
+                                class="priority-option"
+                                [class.selected]="newTaskPriority() === 'PRIORITY 03'"
+                                (click)="setNewTaskPriority('PRIORITY 03')">
+                            P03
+                        </button>
+                    </div>
                 </div>
-                <input
-                    type="text"
-                    class="modal-input task-label-input"
-                    placeholder="Add a label and press Enter"
-                    [value]="newTaskLabelInput()"
-                    (input)="newTaskLabelInput.set($any($event.target).value)"
-                    (keydown.enter)="addNewTaskLabel()"
-                />
+                <div class="task-modal-control-group">
+                    <label class="task-modal-control-label">List</label>
+                    <button type="button" class="task-modal-folder-btn">
+                        <span class="material-symbols-outlined">folder</span>
+                        <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div footer class="task-modal-footer">
+    <div footer>
         <div class="task-modal-footer-actions">
             <button type="button"
                     class="btn-secondary"

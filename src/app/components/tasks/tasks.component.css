@@ -161,7 +161,7 @@
 
 .btn-secondary {
     height: 32px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 0 12px;
@@ -205,7 +205,7 @@
 
 .btn-primary {
     height: 32px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 0 16px;
@@ -470,6 +470,16 @@
     cursor: pointer;
 }
 
+.custom-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
 .checkmark {
     position: absolute;
     top: 0;
@@ -493,11 +503,15 @@
 }
 
 .custom-checkbox input:checked~.checkmark:after {
+    content: '';
+    position: absolute;
     left: 4px;
     top: 1px;
     width: 3px;
     height: 7px;
-    border-color: var(--accent-primary-text);
+    border: solid var(--accent-primary-text);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
 /* Task Title Compact */
@@ -853,12 +867,16 @@
     color: var(--accent-primary);
 }
 
-.task-modal-footer {
-    padding: 14px 24px 16px;
+/* Modal header with icon */
+.env-modal-title {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
+}
+
+.env-modal-title .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--accent-primary);
 }
 
 .task-modal-list-btn {
@@ -884,111 +902,205 @@
 
 .task-modal-footer-actions {
     display: flex;
+    flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
+    width: 100%;
 }
 
-/* New task modal main content */
-.task-modal-main {
+.task-modal-footer-actions button {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+/* New task modal - Simplified */
+.task-modal-shell {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.task-modal-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.task-modal-field-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .task-modal-title-input {
     width: 100%;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 20px;
-    font-weight: 600;
+    padding: 8px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    background: var(--bg-panel);
+    font-size: 14px;
+    font-weight: 500;
     color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.task-modal-title-input:focus {
+    border-color: var(--accent-primary);
+    outline: none;
 }
 
 .task-modal-title-input::placeholder {
     color: var(--text-tertiary);
+    font-weight: 400;
 }
 
-.task-modal-description-block {
+.task-modal-controls-row {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    gap: 10px;
+    align-items: flex-end;
 }
 
-.task-modal-description-label {
-    font-size: 12px;
-    color: var(--text-tertiary);
-}
-
-.task-modal-description-input {
-    width: 100%;
-    border: none;
-    outline: none;
-    resize: none;
-    background: transparent;
-    padding: 0;
-    font-size: 12px;
-    color: var(--text-secondary);
-    min-height: 40px;
-}
-
-.task-modal-description-input::placeholder {
-    color: var(--text-disabled);
-}
-
-.task-modal-meta-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 16px;
-}
-
-.task-modal-folder {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 0 0 40%;
-}
-
-.task-modal-list-label {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.task-labels-row {
+.task-modal-control-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
     flex: 1;
 }
 
-.task-label-input {
-    margin-bottom: 4px;
+.task-modal-control-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.task-modal-control-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.task-modal-control-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.task-modal-control-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+}
+
+.task-modal-control-btn.active {
+    background: rgba(var(--accent-primary-rgb), 0.08);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.task-modal-priority-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.priority-option {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.priority-option:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+}
+
+.priority-option.selected {
+    border-color: var(--accent-primary);
+    background: rgba(var(--accent-primary-rgb), 0.12);
+    color: var(--accent-primary);
+}
+
+.task-modal-folder-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.task-modal-folder-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.task-modal-folder-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+}
+
+.task-modal-list-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Responsive adjustments for task modal */
+@media (max-width: 768px) {
+    .task-modal-controls-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 .task-label-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
 }
 
 .task-label-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 8px;
-    border-radius: 999px;
+    padding: 3px 8px;
+    border-radius: 4px;
     background: var(--bg-active);
+    border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
-    font-size: 11px;
+    font-size: 10px;
+    font-weight: 500;
 }
 
 .chip-icon {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .chip-remove {
@@ -999,8 +1111,22 @@
     justify-content: center;
     padding: 0;
     margin: 0;
+    margin-left: 2px;
     cursor: pointer;
     color: var(--text-tertiary);
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    transition: background 0.15s;
+}
+
+.chip-remove:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.chip-remove .material-symbols-outlined {
+    font-size: 14px;
 }
 
 .task-modal-btn {
