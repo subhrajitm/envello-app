@@ -3,11 +3,111 @@
     <env-left-sidebar class="tasks-left-sidebar-wrapper" [title]="'Tasks'" [subtitle]="store.tasks().length + ' total'"
         [searchPlaceholder]="'Search tasks'" [searchQuery]="sidebarSearch()" (searchChange)="sidebarSearch.set($event)"
         [items]="sidebarItems()" [activeId]="selectedView()" (activeIdChange)="onSidebarActiveChange($event)"
-        [addIcon]="'add'" addTooltip="New task">
+        [addIcon]="'add'" addTooltip="New task" [showFooter]="true">
+
+        <div env-sidebar-footer class="global-tasks-feed">
+            <div class="feed-header">
+                <span class="feed-title">GLOBAL TASKS</span>
+                <span class="feed-count">{{ activeTasksCountSidebar() }} ACTIVE</span>
+            </div>
+
+            <div class="task-group" [class.collapsed]="!isGroupExpanded('today')">
+                <div class="group-toggle" (click)="toggleTaskGroup('today')">
+                    <span class="material-symbols-outlined toggle-icon">
+                        {{ isGroupExpanded('today') ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                    <span class="group-label">TODAY</span>
+                    <span class="group-count">{{ todayTasks().length.toString().padStart(2, '0') }}</span>
+                </div>
+                @if (isGroupExpanded('today')) {
+                <div class="task-items">
+                    @for (task of todayTasks(); track task.id) {
+                    <div class="task-card-minimal">
+                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
+                            (click)="toggleTaskStatus(task)"></div>
+                        <div class="task-min-content">
+                            <div class="task-min-title">{{ task.title }}</div>
+                            <div class="task-min-meta">
+                                <span class="p-badge">{{ task.priority }}</span>
+                                <span class="h-badge">{{ task.hours }}</span>
+                            </div>
+                            @if (task.due?.includes('14:00')) {
+                            <div class="sub-meta-time">14:00 — 16:00</div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+
+            <div class="task-group" [class.collapsed]="!isGroupExpanded('upcoming')">
+                <div class="group-toggle" (click)="toggleTaskGroup('upcoming')">
+                    <span class="material-symbols-outlined toggle-icon">
+                        {{ isGroupExpanded('upcoming') ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                    <span class="group-label">UPCOMING</span>
+                    <span class="group-count">{{ upcomingTasks().length.toString().padStart(2, '0') }}</span>
+                </div>
+                @if (isGroupExpanded('upcoming')) {
+                <div class="task-items">
+                    @for (task of upcomingTasks(); track task.id) {
+                    <div class="task-card-minimal">
+                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
+                            (click)="toggleTaskStatus(task)"></div>
+                        <div class="task-min-content">
+                            <div class="task-min-title">{{ task.title }}</div>
+                            <div class="task-min-meta">
+                                <span class="p-badge">{{ task.priority }}</span>
+                                <span class="h-badge">{{ task.hours }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+
+            <div class="task-group" [class.collapsed]="!isGroupExpanded('noDueDate')">
+                <div class="group-toggle" (click)="toggleTaskGroup('noDueDate')">
+                    <span class="material-symbols-outlined toggle-icon">
+                        {{ isGroupExpanded('noDueDate') ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                    <span class="group-label">NO DUE DATE</span>
+                    <span class="group-count">{{ noDueDateTasks().length.toString().padStart(2, '0') }}</span>
+                </div>
+                @if (isGroupExpanded('noDueDate')) {
+                <div class="task-items">
+                    @for (task of noDueDateTasks(); track task.id) {
+                    <div class="task-card-minimal">
+                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
+                            (click)="toggleTaskStatus(task)"></div>
+                        <div class="task-min-content">
+                            <div class="task-min-title">{{ task.title }}</div>
+                            <div class="task-min-meta">
+                                <span class="p-badge">{{ task.priority }}</span>
+                                <span class="h-badge">{{ task.hours }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+
+            <div class="new-task-entry">
+                <button class="btn-add-entry" (click)="openNewTaskDialog()">
+                    + NEW TASK ENTRY
+                </button>
+            </div>
+        </div>
     </env-left-sidebar>
 
     <!-- Main content -->
     <div class="tasks-main-content">
+
+        <!-- ... (toolbar and main content remains same) ... -->
+
         <!-- Enterprise Header / Toolbar -->
         <div class="tasks-toolbar">
             <div class="toolbar-left">
@@ -203,103 +303,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="global-tasks-feed">
-            <div class="feed-header">
-                <span class="feed-title">GLOBAL TASKS</span>
-                <span class="feed-count">{{ activeTasksCountSidebar() }} ACTIVE</span>
-            </div>
-
-            <div class="task-group" [class.collapsed]="!isGroupExpanded('today')">
-                <div class="group-toggle" (click)="toggleTaskGroup('today')">
-                    <span class="material-symbols-outlined toggle-icon">
-                        {{ isGroupExpanded('today') ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                    <span class="group-label">TODAY</span>
-                    <span class="group-count">{{ todayTasks().length.toString().padStart(2, '0') }}</span>
-                </div>
-                @if (isGroupExpanded('today')) {
-                <div class="task-items">
-                    @for (task of todayTasks(); track task.id) {
-                    <div class="task-card-minimal">
-                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
-                            (click)="toggleTaskStatus(task)"></div>
-                        <div class="task-min-content">
-                            <div class="task-min-title">{{ task.title }}</div>
-                            <div class="task-min-meta">
-                                <span class="p-badge">{{ task.priority }}</span>
-                                <span class="h-badge">{{ task.hours }}</span>
-                            </div>
-                            @if (task.due?.includes('14:00')) {
-                            <div class="sub-meta-time">14:00 — 16:00</div>
-                            }
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-
-            <div class="task-group" [class.collapsed]="!isGroupExpanded('upcoming')">
-                <div class="group-toggle" (click)="toggleTaskGroup('upcoming')">
-                    <span class="material-symbols-outlined toggle-icon">
-                        {{ isGroupExpanded('upcoming') ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                    <span class="group-label">UPCOMING</span>
-                    <span class="group-count">{{ upcomingTasks().length.toString().padStart(2, '0') }}</span>
-                </div>
-                @if (isGroupExpanded('upcoming')) {
-                <div class="task-items">
-                    @for (task of upcomingTasks(); track task.id) {
-                    <div class="task-card-minimal">
-                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
-                            (click)="toggleTaskStatus(task)"></div>
-                        <div class="task-min-content">
-                            <div class="task-min-title">{{ task.title }}</div>
-                            <div class="task-min-meta">
-                                <span class="p-badge">{{ task.priority }}</span>
-                                <span class="h-badge">{{ task.hours }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-
-            <div class="task-group" [class.collapsed]="!isGroupExpanded('noDueDate')">
-                <div class="group-toggle" (click)="toggleTaskGroup('noDueDate')">
-                    <span class="material-symbols-outlined toggle-icon">
-                        {{ isGroupExpanded('noDueDate') ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                    <span class="group-label">NO DUE DATE</span>
-                    <span class="group-count">{{ noDueDateTasks().length.toString().padStart(2, '0') }}</span>
-                </div>
-                @if (isGroupExpanded('noDueDate')) {
-                <div class="task-items">
-                    @for (task of noDueDateTasks(); track task.id) {
-                    <div class="task-card-minimal">
-                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
-                            (click)="toggleTaskStatus(task)"></div>
-                        <div class="task-min-content">
-                            <div class="task-min-title">{{ task.title }}</div>
-                            <div class="task-min-meta">
-                                <span class="p-badge">{{ task.priority }}</span>
-                                <span class="h-badge">{{ task.hours }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-
-            <div class="new-task-entry">
-                <button class="btn-add-entry" (click)="openNewTaskDialog()">
-                    + NEW TASK ENTRY
-                </button>
-                <div class="version-info">V5.0.0-PRO // NANO_BANANA_CORE</div>
-            </div>
-        </div>
+        <!-- Global Tasks Feed Removed (moved to left sidebar) -->
     </div>
 </div>

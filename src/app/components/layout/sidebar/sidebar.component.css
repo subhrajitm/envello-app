@@ -116,6 +116,8 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  /* Ensure items stack at top */
   min-height: 0;
   padding: 0;
   /* Reset padding to matching research list */
@@ -123,7 +125,7 @@
 
 /* Nav Item - Matching "library-item" */
 .env-sidebar-nav-item {
-  padding: 6px 14px;
+  padding: 5px 14px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -137,14 +139,20 @@
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
-  /* Match library-name weight */
-  min-height: 32px;
+  height: 32px;
+  /* Fixed height instead of min-height */
+  max-height: 32px;
+  flex: 0 0 32px;
+  /* Prevent growing or shrinking */
   border-bottom: none;
   border-top: none;
   border-right: none;
   width: 100%;
   box-sizing: border-box;
   text-align: left;
+  margin: 0;
+  appearance: none;
+  line-height: normal;
 }
 
 .env-sidebar-nav-item:hover {
@@ -193,5 +201,14 @@
 .env-sidebar-footer {
   margin-top: auto;
   border-top: 1px solid var(--border-subtle);
-  padding: 8px;
+  padding: 0;
+  /* Remove padding to let children handle it (e.g. scrollbars) */
+  display: flex;
+  flex-direction: column;
+  max-height: 45%;
+  /* Prevent it from taking over the entire sidebar */
+  overflow: hidden;
+  /* Ensure rounded corners or child scroll containment */
+  flex-shrink: 0;
+  /* Don't shrink below content min-size if possible, but max-height handles it */
 }
