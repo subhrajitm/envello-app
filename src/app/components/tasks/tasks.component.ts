@@ -19,6 +19,21 @@ export class TasksComponent {
   sidebarSearch = signal<string>('');
   selectedView = signal<TaskViewFilter>('inbox');
   quickAddMode = signal<'do-now' | 'do-later'>('do-now');
+  /**
+   * Main content layout mode for the center panel.
+   * - 'list'      → compact data grid (existing experience)
+   * - 'thumbnails' → card / thumbnail layout
+   */
+  viewMode = signal<'list' | 'thumbnails'>('list');
+
+  // New task modal state
+  newTaskModalOpen = signal<boolean>(false);
+  newTaskTitle = signal<string>('');
+  newTaskDescription = signal<string>('');
+  newTaskPriority = signal<Task['priority']>('PRIORITY 02');
+  newTaskDue = signal<string | undefined>(undefined);
+  newTaskList = signal<string>('Inbox');
+  newTaskHasReminder = signal<boolean>(false);
 
   sidebarItems = computed<SidebarNavItem[]>(() => [
     {
@@ -58,6 +73,101 @@ export class TasksComponent {
     // Inbox + no query == baseline, everything else is considered "filtered"
     return view !== 'inbox' || !!query;
   });
+
+  /**
+   * Human-readable view title used in the toolbar.
+   */
+  viewTitle = computed(() => {
+    const view = this.selectedView();
+    if (view === 'today') return 'Today';
+    if (view === 'upcoming') return 'Upcoming';
+    if (view === 'completed') return 'Completed';
+    return 'Inbox';
+  });
+
+  /**
+   * Compact summary line shown under the title.
+   * Example: "4 tasks • 2 due today • 1 overdue"
+   */
+  viewSubtitle = computed(() => {
+    const total = this.filteredTasks().length;
+    const dueToday = this.todayTasksCount();
+    const overdue = this.store
+      .tasks()
+      .filter(t => t.due?.includes('Overdue')).length;
+
+    const parts: string[] = [];
+    parts.push(`${total} task${total === 1 ? '' : 's'}`);
+    parts.push(`${dueToday} due today`);
+    parts.push(`${overdue} overdue`);
+
+    return parts.join(' • ');
+  });
+
+  /**
+   * Toolbar view switcher handlers.
+   */
+  setListView() {
+    this.viewMode.set('list');
+  }
+
+  setThumbnailsView() {
+    this.viewMode.set('thumbnails');
+  }
+
+  /**
+   * New Task Modal: open/reset + helpers
+   */
+  openNewTaskDialog() {
+    this.newTaskTitle.set('');
+    this.newTaskDescription.set('');
+    this.newTaskPriority.set('PRIORITY 02');
+    this.newTaskDue.set(undefined);
+    this.newTaskList.set('Inbox');
+    this.newTaskHasReminder.set(false);
+    this.newTaskModalOpen.set(true);
+  }
+
+  closeNewTaskDialog() {
+    this.newTaskModalOpen.set(false);
+  }
+
+  setNewTaskPriority(priority: Task['priority']) {
+    this.newTaskPriority.set(priority);
+  }
+
+  toggleNewTaskTodayDue() {
+    // Simple helper: toggle between no date and a generic "Today" label.
+    if (this.newTaskDue()) {
+      this.newTaskDue.set(undefined);
+    } else {
+      this.newTaskDue.set('Today, 12:00');
+    }
+  }
+
+  toggleNewTaskReminder() {
+    this.newTaskHasReminder.update(v => !v);
+  }
+
+  confirmNewTask() {
+    const title = this.newTaskTitle().trim();
+    if (!title) {
+      return;
+    }
+
+    const newTask: Task = {
+      id: Date.now().toString(),
+      title,
+      priority: this.newTaskPriority(),
+      hours: '1.0H',
+      status: 'ACTIVE',
+      project: this.newTaskList() || undefined,
+      due: this.newTaskDue()
+    };
+
+    this.store.addTask(newTask);
+    this.closeNewTaskDialog();
+  }
 
   onSidebarActiveChange(id: string) {
     this.selectedView.set(id as TaskViewFilter);
@@ -266,6 +376,24 @@ export class TasksComponent {
   }
 
   /**
+   * Quick row action: mark a single task as completed.
+   * If it's already completed, we leave it as-is to avoid accidental re-open.
+   */
+  onQuickComplete(task: Task) {
+    if (task.status === 'COMPLETED') {
+      return;
+    }
+    this.store.updateTask(task.id, { status: 'COMPLETED' });
+  }
+
+  /**
+   * Delete a single task and push it into the bin via StoreService.
+   */
+  deleteTask(task: Task) {
+    this.store.deleteTask(task.id);
+  }
+
+  /**
    * Header checkbox helper:
    * - If all visible tasks are completed, mark them ACTIVE.
    * - Otherwise, mark all visible tasks COMPLETED.
@@ -302,16 +430,5 @@ export class TasksComponent {
     return this.noDueDateGroupExpanded();
   }
 
-  openNewTaskDialog() {
-    // For now, create a simple task - in production, you'd open a modal/dialog
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title: 'NEW TASK',
-      priority: 'PRIORITY 03',
-      hours: '0.0H',
-      status: 'ACTIVE',
-      due: undefined
-    };
-    this.store.addTask(newTask);
-  }
+  // (legacy quick-create kept via confirmNewTask modal now)
 }
