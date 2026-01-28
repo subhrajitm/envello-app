@@ -1,86 +1,440 @@
 <div class="meetings-view">
+    <!-- Header with filters and actions -->
+    <div class="meetings-header">
+        <div class="header-left">
+            <!-- View filter tabs -->
+            <div class="view-tabs">
+                <button class="view-tab" [class.active]="viewFilter() === 'all'" (click)="viewFilter.set('all')">
+                    All
+                </button>
+                <button class="view-tab" [class.active]="viewFilter() === 'today'" (click)="viewFilter.set('today')">
+                    Today
+                    @if (stats().todayCount > 0) {
+                    <span class="tab-badge">{{ stats().todayCount }}</span>
+                    }
+                </button>
+                <button class="view-tab" [class.active]="viewFilter() === 'upcoming'" (click)="viewFilter.set('upcoming')">
+                    Upcoming
+                </button>
+                <button class="view-tab" [class.active]="viewFilter() === 'past'" (click)="viewFilter.set('past')">
+                    Past
+                </button>
+            </div>
+        </div>
+
+        <div class="header-right">
+            <!-- Search -->
+            <div class="search-container">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="search-input" placeholder="Search meetings..." [value]="searchQuery()"
+                    (input)="searchQuery.set($any($event.target).value)" />
+                @if (searchQuery()) {
+                <button class="search-clear" (click)="searchQuery.set('')">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+                }
+            </div>
+
+            <!-- View mode switcher -->
+            <div class="view-mode-switcher">
+                <button class="view-mode-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')"
+                    title="List View">
+                    <span class="material-symbols-outlined">view_list</span>
+                </button>
+                <button class="view-mode-btn" [class.active]="viewMode() === 'calendar'"
+                    (click)="viewMode.set('calendar')" title="Calendar View">
+                    <span class="material-symbols-outlined">calendar_month</span>
+                </button>
+                <button class="view-mode-btn" [class.active]="viewMode() === 'kanban'" (click)="viewMode.set('kanban')"
+                    title="Kanban View">
+                    <span class="material-symbols-outlined">view_kanban</span>
+                </button>
+            </div>
+
+            <!-- Create meeting button -->
+            <button class="create-meeting-btn" (click)="openCreateModal()">
+                <span class="material-symbols-outlined">add</span>
+                New Meeting
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters bar -->
     <div class="meetings-filters">
         <div class="filters-left">
-            <select class="filter-select" [ngModel]="selectedProject()" (ngModelChange)="selectedProject.set($event)">
-                <option>All Projects</option>
-                <option>Neon Orchard</option>
-                <option>Project Alpha</option>
+            <select class="filter-select" [value]="selectedProject()"
+                (change)="selectedProject.set($any($event.target).value)">
+                <option value="">All Projects</option>
+                @for (project of availableProjects(); track project) {
+                <option [value]="project">{{ project }}</option>
+                }
             </select>
-            <select class="filter-select" [ngModel]="selectedTimeRange()"
-                (ngModelChange)="selectedTimeRange.set($event)">
-                <option>Last 30 Days</option>
+            <select class="filter-select" [value]="selectedTimeRange()"
+                (change)="selectedTimeRange.set($any($event.target).value)">
+                <option>All Time</option>
                 <option>Last 7 Days</option>
+                <option>Last 30 Days</option>
                 <option>This Quarter</option>
             </select>
         </div>
         <div class="filters-right">
             <span class="sort-label">Sort by:</span>
-            <select class="sort-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
-                <option>Recent First</option>
-                <option>Alphabetical</option>
-                <option>Attendees</option>
+            <select class="sort-select" [value]="sortBy()" (change)="sortBy.set($any($event.target).value)">
+                <option value="date">Date</option>
+                <option value="title">Title</option>
+                <option value="attendees">Attendees</option>
             </select>
+            <button class="sort-direction-btn" (click)="sortDirection.set(sortDirection() === 'asc' ? 'desc' : 'asc')">
+                <span class="material-symbols-outlined">
+                    {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+            </button>
         </div>
     </div>
 
+    <!-- Main content -->
     <div class="meetings-content">
+        <!-- List View -->
+        @if (viewMode() === 'list') {
         <div class="meetings-table-container">
+            @if (filteredMeetings().length === 0) {
+            <div class="empty-state">
+                <span class="material-symbols-outlined empty-icon">calendar_month</span>
+                <h3>No meetings found</h3>
+                <p>{{ searchQuery() ? 'Try adjusting your search or filters' : 'Schedule your first meeting to get
+                    started' }}</p>
+                @if (!searchQuery()) {
+                <button class="empty-action-btn" (click)="openCreateModal()">
+                    <span class="material-symbols-outlined">add</span>
+                    Schedule Meeting
+                </button>
+                }
+            </div>
+            } @else {
             <table class="meetings-table">
                 <thead>
                     <tr>
                         <th class="col-title">Meeting Title & Context</th>
-                        <th class="col-date">Date</th>
+                        <th class="col-date">Date & Time</th>
                         <th class="col-attendees">Attendees</th>
                         <th class="col-action-items">Action Items</th>
-                        <th class="col-icon"></th>
+                        <th class="col-actions"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @for (meeting of meetings; track meeting.id) {
-                    <tr class="table-row">
+                    @for (meeting of filteredMeetings(); track meeting.id) {
+                    <tr class="table-row" [class.completed]="meeting.status === 'completed'"
+                        [class.cancelled]="meeting.status === 'cancelled'" (click)="openDetailsModal(meeting)">
                         <td class="col-title">
                             <div class="meeting-title-cell">
                                 <div class="meeting-title-row">
                                     <span class="meeting-dot" [style.backgroundColor]="meeting.color"></span>
                                     <span class="meeting-title">{{ meeting.title }}</span>
+                                    @if (meeting.status === 'cancelled') {
+                                    <span class="status-badge cancelled">Cancelled</span>
+                                    }
+                                    @if (meeting.status === 'completed') {
+                                    <span class="status-badge completed">Completed</span>
+                                    }
+                                    @if (meeting.priority === 'HIGH') {
+                                    <span class="priority-indicator high">
+                                        <span class="material-symbols-outlined">priority_high</span>
+                                    </span>
+                                    }
                                 </div>
-                                <span class="meeting-project">Project: {{ meeting.project }}</span>
+                                <div class="meeting-meta">
+                                    @if (meeting.project) {
+                                    <span class="meeting-project">{{ meeting.project }}</span>
+                                    }
+                                    @if (meeting.meetingType) {
+                                    <span class="meeting-type">
+                                        <span class="material-symbols-outlined">{{ getMeetingTypeIcon(meeting.meetingType)
+                                            }}</span>
+                                        {{ meeting.meetingType }}
+                                    </span>
+                                    }
+                                </div>
                             </div>
                         </td>
                         <td class="col-date">
-                            <span class="meeting-date">{{ meeting.month }} {{ meeting.day }} {{ meeting.time }} {{
-                                meeting.period }}</span>
+                            <div class="date-cell">
+                                <span class="meeting-date-relative">{{ getRelativeDate(meeting.date) }}</span>
+                                <span class="meeting-time">{{ formatTime(meeting.startTime) }}</span>
+                            </div>
                         </td>
                         <td class="col-attendees">
                             <div class="attendees-list">
-                                @for (attendee of meeting.attendees; track $index) {
-                                <div class="attendee-avatar"
+                                @for (attendee of meeting.attendees.slice(0, 4); track attendee.id) {
+                                <div class="attendee-avatar" [title]="attendee.name"
                                     [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
                                     @if (!attendee.avatar) {
-                                    <span class="attendee-count">{{ attendee.name }}</span>
+                                    <span class="attendee-initial">{{ attendee.name.charAt(0) }}</span>
                                     }
+                                </div>
+                                }
+                                @if (meeting.attendees.length > 4) {
+                                <div class="attendee-avatar attendee-more">
+                                    <span class="attendee-count">+{{ meeting.attendees.length - 4 }}</span>
                                 </div>
                                 }
                             </div>
                         </td>
                         <td class="col-action-items">
-                            @if (meeting.status === 'open') {
-                            <button class="action-items-btn">
-                                {{ meeting.actionItems }} OPEN
+                            @if (meeting.actionItems && meeting.actionItems.length > 0) {
+                            @if (getOpenActionItemsCount(meeting) > 0) {
+                            <button class="action-items-btn" (click)="$event.stopPropagation(); openDetailsModal(meeting); detailsTab.set('action-items')">
+                                {{ getOpenActionItemsCount(meeting) }} OPEN
                             </button>
                             } @else {
-                            <span class="action-items-complete">Complete</span>
+                            <span class="action-items-complete">
+                                <span class="material-symbols-outlined">check_circle</span>
+                                Complete
+                            </span>
+                            }
+                            } @else {
+                            <span class="action-items-none">—</span>
                             }
                         </td>
-                        <td class="col-icon">
-                            <span class="material-symbols-outlined icon-desc">description</span>
+                        <td class="col-actions">
+                            <div class="row-actions">
+                                @if (meeting.meetingLink) {
+                                <button class="row-action-btn join-btn" title="Join Meeting"
+                                    (click)="joinMeeting(meeting, $event)">
+                                    <span class="material-symbols-outlined">video_call</span>
+                                </button>
+                                }
+                                <button class="row-action-btn" title="More Actions"
+                                    (click)="toggleQuickActions(meeting.id, $event)">
+                                    <span class="material-symbols-outlined">more_vert</span>
+                                </button>
+                                @if (showQuickActions() === meeting.id) {
+                                <div class="quick-actions-dropdown">
+                                    <button (click)="openDetailsModal(meeting); showQuickActions.set(null)">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                        View Details
+                                    </button>
+                                    <button (click)="duplicateMeeting(meeting); showQuickActions.set(null)">
+                                        <span class="material-symbols-outlined">content_copy</span>
+                                        Duplicate
+                                    </button>
+                                    @if (meeting.status === 'scheduled') {
+                                    <button (click)="cancelMeeting(meeting); showQuickActions.set(null)">
+                                        <span class="material-symbols-outlined">event_busy</span>
+                                        Cancel Meeting
+                                    </button>
+                                    }
+                                    <button class="danger" (click)="deleteMeeting(meeting); showQuickActions.set(null)">
+                                        <span class="material-symbols-outlined">delete</span>
+                                        Delete
+                                    </button>
+                                </div>
+                                }
+                            </div>
                         </td>
                     </tr>
                     }
                 </tbody>
             </table>
+            }
         </div>
+        }
 
+        <!-- Calendar View -->
+        @if (viewMode() === 'calendar') {
+        <div class="calendar-view-container">
+            <div class="calendar-header">
+                <button class="calendar-nav-btn" (click)="previousMonth()">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <h2 class="calendar-title">
+                    {{ calendarDate() | date:'MMMM yyyy' }}
+                </h2>
+                <button class="calendar-nav-btn" (click)="nextMonth()">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+                <button class="calendar-today-btn" (click)="goToToday()">Today</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-weekdays">
+                    <div class="weekday">Sun</div>
+                    <div class="weekday">Mon</div>
+                    <div class="weekday">Tue</div>
+                    <div class="weekday">Wed</div>
+                    <div class="weekday">Thu</div>
+                    <div class="weekday">Fri</div>
+                    <div class="weekday">Sat</div>
+                </div>
+                <div class="calendar-days">
+                    @for (week of calendarWeeks(); track $index) {
+                    <div class="calendar-week">
+                        @for (day of week; track $index) {
+                        <div class="calendar-day" [class.other-month]="!isCurrentMonth(day)"
+                            [class.today]="isToday(day)" (click)="selectCalendarDate(day)">
+                            <span class="day-number">{{ day.getDate() }}</span>
+                            <div class="day-meetings">
+                                @for (meeting of getMeetingsForDate(day).slice(0, 3); track meeting.id) {
+                                <div class="day-meeting" [style.backgroundColor]="meeting.color"
+                                    (click)="openDetailsModal(meeting); $event.stopPropagation()" [title]="meeting.title">
+                                    <span class="day-meeting-time">{{ formatTime(meeting.startTime) }}</span>
+                                    <span class="day-meeting-title">{{ meeting.title }}</span>
+                                </div>
+                                }
+                                @if (getMeetingsForDate(day).length > 3) {
+                                <div class="day-more">
+                                    +{{ getMeetingsForDate(day).length - 3 }} more
+                                </div>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Kanban View -->
+        @if (viewMode() === 'kanban') {
+        <div class="kanban-view-container">
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <span class="column-dot" style="background-color: #3B82F6"></span>
+                    <span class="column-title">Scheduled</span>
+                    <span class="column-count">{{ meetingsByStatus().scheduled.length }}</span>
+                </div>
+                <div class="kanban-column-content">
+                    @for (meeting of meetingsByStatus().scheduled; track meeting.id) {
+                    <div class="kanban-card" [style.borderLeftColor]="meeting.color"
+                        (click)="openDetailsModal(meeting)">
+                        <div class="kanban-card-header">
+                            <span class="kanban-card-title">{{ meeting.title }}</span>
+                            @if (meeting.priority === 'HIGH') {
+                            <span class="priority-badge high">HIGH</span>
+                            }
+                        </div>
+                        <div class="kanban-card-meta">
+                            <span class="kanban-card-date">{{ getRelativeDate(meeting.date) }}, {{
+                                formatTime(meeting.startTime) }}</span>
+                        </div>
+                        @if (meeting.project) {
+                        <div class="kanban-card-project">{{ meeting.project }}</div>
+                        }
+                        <div class="kanban-card-footer">
+                            <div class="kanban-card-attendees">
+                                @for (attendee of meeting.attendees.slice(0, 3); track attendee.id) {
+                                <div class="mini-avatar" [title]="attendee.name"
+                                    [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
+                                    @if (!attendee.avatar) {
+                                    {{ attendee.name.charAt(0) }}
+                                    }
+                                </div>
+                                }
+                            </div>
+                            @if (getOpenActionItemsCount(meeting) > 0) {
+                            <span class="kanban-action-items">
+                                <span class="material-symbols-outlined">task_alt</span>
+                                {{ getOpenActionItemsCount(meeting) }}
+                            </span>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <span class="column-dot" style="background-color: #F97316"></span>
+                    <span class="column-title">In Progress</span>
+                    <span class="column-count">{{ meetingsByStatus().in_progress.length }}</span>
+                </div>
+                <div class="kanban-column-content">
+                    @for (meeting of meetingsByStatus().in_progress; track meeting.id) {
+                    <div class="kanban-card" [style.borderLeftColor]="meeting.color"
+                        (click)="openDetailsModal(meeting)">
+                        <div class="kanban-card-header">
+                            <span class="kanban-card-title">{{ meeting.title }}</span>
+                        </div>
+                        <div class="kanban-card-meta">
+                            <span class="kanban-card-date">{{ getRelativeDate(meeting.date) }}, {{
+                                formatTime(meeting.startTime) }}</span>
+                        </div>
+                        @if (meeting.project) {
+                        <div class="kanban-card-project">{{ meeting.project }}</div>
+                        }
+                        <div class="kanban-card-footer">
+                            <div class="kanban-card-attendees">
+                                @for (attendee of meeting.attendees.slice(0, 3); track attendee.id) {
+                                <div class="mini-avatar" [title]="attendee.name"
+                                    [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
+                                    @if (!attendee.avatar) {
+                                    {{ attendee.name.charAt(0) }}
+                                    }
+                                </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <span class="column-dot" style="background-color: #10B981"></span>
+                    <span class="column-title">Completed</span>
+                    <span class="column-count">{{ meetingsByStatus().completed.length }}</span>
+                </div>
+                <div class="kanban-column-content">
+                    @for (meeting of meetingsByStatus().completed; track meeting.id) {
+                    <div class="kanban-card completed" [style.borderLeftColor]="meeting.color"
+                        (click)="openDetailsModal(meeting)">
+                        <div class="kanban-card-header">
+                            <span class="kanban-card-title">{{ meeting.title }}</span>
+                        </div>
+                        <div class="kanban-card-meta">
+                            <span class="kanban-card-date">{{ formatDate(meeting.date) }}</span>
+                        </div>
+                        @if (meeting.actionItems && meeting.actionItems.length > 0) {
+                        <div class="kanban-card-progress">
+                            <div class="progress-bar-small">
+                                <div class="progress-fill-small"
+                                    [style.width.%]="getActionItemsProgress(meeting)"></div>
+                            </div>
+                            <span class="progress-text">{{ getCompletedActionItemsCount(meeting) }}/{{
+                                meeting.actionItems.length }}</span>
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="kanban-column-header">
+                    <span class="column-dot" style="background-color: #EF4444"></span>
+                    <span class="column-title">Cancelled</span>
+                    <span class="column-count">{{ meetingsByStatus().cancelled.length }}</span>
+                </div>
+                <div class="kanban-column-content">
+                    @for (meeting of meetingsByStatus().cancelled; track meeting.id) {
+                    <div class="kanban-card cancelled" [style.borderLeftColor]="meeting.color"
+                        (click)="openDetailsModal(meeting)">
+                        <div class="kanban-card-header">
+                            <span class="kanban-card-title">{{ meeting.title }}</span>
+                        </div>
+                        <div class="kanban-card-meta">
+                            <span class="kanban-card-date">{{ formatDate(meeting.date) }}</span>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Sidebar -->
         <aside class="meetings-sidebar">
             <div class="sidebar-section">
                 <div class="sidebar-header">
@@ -88,47 +442,805 @@
                     <span class="sidebar-badge">CALENDAR</span>
                 </div>
                 <div class="upcoming-syncs">
-                    @for (sync of upcomingSyncs; track $index) {
-                    <div class="sync-item" [class.sync-today]="sync.isToday">
-                        <div class="sync-time">{{ sync.time }}</div>
+                    @for (sync of upcomingSyncs(); track sync.id) {
+                    <div class="sync-item" [class.sync-today]="meetingsService.isMeetingToday(sync)"
+                        (click)="openDetailsModal(sync)">
+                        <div class="sync-time">{{ getRelativeDate(sync.date) }}, {{ formatTime(sync.startTime) }}</div>
                         <div class="sync-title">{{ sync.title }}</div>
-                        @if (sync.link) {
-                        <div class="sync-link">
+                        @if (sync.meetingLink) {
+                        <div class="sync-link" (click)="joinMeeting(sync, $event)">
                             <span class="material-symbols-outlined icon-link">link</span>
-                            {{ sync.link }}
+                            Join {{ sync.platform || 'Meeting' }}
                         </div>
-                        } @else {
+                        } @else if (sync.location) {
                         <div class="sync-location">{{ sync.location }}</div>
                         }
+                    </div>
+                    }
+                    @if (upcomingSyncs().length === 0) {
+                    <div class="empty-syncs">
+                        <span class="material-symbols-outlined">event_available</span>
+                        <p>No upcoming meetings</p>
                     </div>
                     }
                 </div>
             </div>
 
             <div class="sidebar-section sidebar-metrics">
-                <h3 class="metrics-title">Project PM Overview</h3>
+                <h3 class="metrics-title">Meeting Overview</h3>
                 <div class="metrics-grid">
                     <div class="metric-card">
-                        <div class="metric-label-small">Avg. Velocity</div>
-                        <div class="metric-value-large">
-                            2.4k<span class="metric-unit">w/d</span>
-                        </div>
+                        <div class="metric-label-small">Today</div>
+                        <div class="metric-value-large metric-primary">{{ stats().todayCount }}</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-label-small">Deadlines</div>
-                        <div class="metric-value-large metric-primary">02</div>
+                        <div class="metric-value-large">{{ stats().deadlines }}</div>
                     </div>
                     <div class="metric-card metric-card-wide">
                         <div class="metric-header">
-                            <div class="metric-label-small">Active Action Items</div>
-                            <div class="metric-count">15/42</div>
+                            <div class="metric-label-small">Action Items Progress</div>
+                            <div class="metric-count">{{ stats().openActionItems }}/{{ stats().totalActionItems }}</div>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 35.7%"></div>
+                            <div class="progress-fill"
+                                [style.width.%]="stats().totalActionItems > 0 ? ((stats().totalActionItems - stats().openActionItems) / stats().totalActionItems * 100) : 0">
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Keyboard shortcuts hint -->
+            <div class="sidebar-section sidebar-shortcuts">
+                <button class="shortcuts-btn" (click)="showShortcutsHelp.set(true)">
+                    <span class="material-symbols-outlined">keyboard</span>
+                    <span>Keyboard shortcuts</span>
+                    <kbd>⌘/</kbd>
+                </button>
+            </div>
         </aside>
     </div>
 </div>
+
+<!-- Create Meeting Modal -->
+@if (showCreateModal()) {
+<env-modal [isOpen]="showCreateModal()" (closed)="closeCreateModal()" [title]="'Schedule New Meeting'">
+    <div class="create-meeting-form">
+        <!-- Title -->
+        <div class="form-group">
+            <label class="form-label">Meeting Title *</label>
+            <input type="text" class="form-input" placeholder="Enter meeting title..."
+                [value]="newMeeting().title || ''" (input)="updateNewMeetingField('title', $any($event.target).value)"
+                autofocus />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" placeholder="Add meeting description..."
+                [value]="newMeeting().description || ''"
+                (input)="updateNewMeetingField('description', $any($event.target).value)"></textarea>
+        </div>
+
+        <!-- Date and Time -->
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Date *</label>
+                <input type="date" class="form-input" [value]="newMeeting().date"
+                    (input)="updateNewMeetingField('date', $any($event.target).value)" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Start Time *</label>
+                <input type="time" class="form-input" [value]="newMeeting().startTime"
+                    (input)="updateNewMeetingField('startTime', $any($event.target).value)" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">End Time</label>
+                <input type="time" class="form-input" [value]="newMeeting().endTime"
+                    (input)="updateNewMeetingField('endTime', $any($event.target).value)" />
+            </div>
+        </div>
+
+        <!-- Meeting Type and Platform -->
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Meeting Type</label>
+                <select class="form-select" [value]="newMeeting().meetingType"
+                    (change)="updateNewMeetingField('meetingType', $any($event.target).value)">
+                    <option value="video">Video Call</option>
+                    <option value="phone">Phone Call</option>
+                    <option value="in-person">In Person</option>
+                    <option value="hybrid">Hybrid</option>
+                </select>
+            </div>
+            @if (newMeeting().meetingType === 'video' || newMeeting().meetingType === 'hybrid') {
+            <div class="form-group">
+                <label class="form-label">Platform</label>
+                <select class="form-select" [value]="newMeeting().platform"
+                    (change)="updateNewMeetingField('platform', $any($event.target).value)">
+                    <option value="zoom">Zoom</option>
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="meet">Google Meet</option>
+                    <option value="discord">Discord</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            }
+        </div>
+
+        <!-- Location / Meeting Link -->
+        <div class="form-row">
+            @if (newMeeting().meetingType === 'video' || newMeeting().meetingType === 'hybrid') {
+            <div class="form-group form-group-full">
+                <label class="form-label">Meeting Link</label>
+                <input type="url" class="form-input" placeholder="https://..."
+                    [value]="newMeeting().meetingLink || ''"
+                    (input)="updateNewMeetingField('meetingLink', $any($event.target).value)" />
+            </div>
+            }
+            @if (newMeeting().meetingType === 'in-person' || newMeeting().meetingType === 'hybrid') {
+            <div class="form-group form-group-full">
+                <label class="form-label">Location</label>
+                <input type="text" class="form-input" placeholder="Room, address, etc."
+                    [value]="newMeeting().location || ''"
+                    (input)="updateNewMeetingField('location', $any($event.target).value)" />
+            </div>
+            }
+        </div>
+
+        <!-- Project -->
+        <div class="form-group">
+            <label class="form-label">Project</label>
+            <input type="text" class="form-input" placeholder="Enter or select project..."
+                [value]="newMeeting().project || ''" list="projects-list"
+                (input)="updateNewMeetingField('project', $any($event.target).value)" />
+            <datalist id="projects-list">
+                @for (project of availableProjects(); track project) {
+                <option [value]="project">{{ project }}</option>
+                }
+            </datalist>
+        </div>
+
+        <!-- Priority and Color -->
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select class="form-select" [value]="newMeeting().priority"
+                    (change)="updateNewMeetingField('priority', $any($event.target).value)">
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Color</label>
+                <div class="color-picker">
+                    @for (color of meetingColors; track color) {
+                    <button type="button" class="color-option" [style.backgroundColor]="color"
+                        [class.selected]="newMeeting().color === color"
+                        (click)="updateNewMeetingField('color', color)">
+                        @if (newMeeting().color === color) {
+                        <span class="material-symbols-outlined">check</span>
+                        }
+                    </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendees -->
+        <div class="form-group">
+            <label class="form-label">Attendees</label>
+            <div class="attendees-input-container">
+                <input type="text" class="form-input" placeholder="Add attendee name..."
+                    [value]="newAttendeeInput()" (input)="newAttendeeInput.set($any($event.target).value)"
+                    (keyup.enter)="addAttendeeToNew()" />
+                <button type="button" class="add-btn" (click)="addAttendeeToNew()"
+                    [disabled]="!newAttendeeInput().trim()">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
+            @if (newMeeting().attendees && newMeeting().attendees!.length > 0) {
+            <div class="attendees-chips">
+                @for (attendee of newMeeting().attendees!; track attendee.id) {
+                <div class="attendee-chip">
+                    <span>{{ attendee.name }}</span>
+                    <button type="button" class="chip-remove" (click)="removeAttendeeFromNew(attendee.id)">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- Agenda -->
+        <div class="form-group">
+            <label class="form-label">Agenda Items</label>
+            <div class="agenda-input-container">
+                <input type="text" class="form-input" placeholder="Add agenda item..."
+                    [value]="newAgendaInput()" (input)="newAgendaInput.set($any($event.target).value)"
+                    (keyup.enter)="addAgendaItemToNew()" />
+                <button type="button" class="add-btn" (click)="addAgendaItemToNew()"
+                    [disabled]="!newAgendaInput().trim()">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
+            @if (newMeeting().agenda && newMeeting().agenda!.length > 0) {
+            <div class="agenda-list">
+                @for (item of newMeeting().agenda!; track item.id; let i = $index) {
+                <div class="agenda-item-chip">
+                    <span class="agenda-number">{{ i + 1 }}</span>
+                    <span class="agenda-text">{{ item.title }}</span>
+                    <button type="button" class="chip-remove" (click)="removeAgendaItemFromNew(item.id)">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- Labels -->
+        <div class="form-group">
+            <label class="form-label">Labels</label>
+            <div class="labels-input-container">
+                <input type="text" class="form-input" placeholder="Add label..."
+                    [value]="newLabelInput()" (input)="newLabelInput.set($any($event.target).value)"
+                    (keyup.enter)="addLabelToNew()" />
+                <button type="button" class="add-btn" (click)="addLabelToNew()"
+                    [disabled]="!newLabelInput().trim()">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
+            @if (newMeeting().labels && newMeeting().labels!.length > 0) {
+            <div class="labels-chips">
+                @for (label of newMeeting().labels!; track label) {
+                <div class="label-chip">
+                    <span>#{{ label }}</span>
+                    <button type="button" class="chip-remove" (click)="removeLabelFromNew(label)">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- Recurring toggle -->
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" [checked]="showRecurringOptions()"
+                    (change)="showRecurringOptions.set($any($event.target).checked)" />
+                <span>Make this a recurring meeting</span>
+            </label>
+        </div>
+
+        @if (showRecurringOptions()) {
+        <div class="form-row recurring-options">
+            <div class="form-group">
+                <label class="form-label">Repeat</label>
+                <select class="form-select" [value]="recurringPattern()"
+                    (change)="recurringPattern.set($any($event.target).value)">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Number of occurrences</label>
+                <input type="number" class="form-input" min="2" max="52" [value]="recurringCount()"
+                    (input)="recurringCount.set(+$any($event.target).value)" />
+            </div>
+        </div>
+        }
+
+        <!-- Form actions -->
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="createMeeting()"
+                [disabled]="!newMeeting().title?.trim()">
+                {{ showRecurringOptions() ? 'Create Series' : 'Create Meeting' }}
+            </button>
+        </div>
+    </div>
+</env-modal>
+}
+
+<!-- Meeting Details Modal -->
+@if (showDetailsModal() && selectedMeeting()) {
+<env-modal [isOpen]="showDetailsModal()" (closed)="closeDetailsModal()" [title]="''" size="large">
+    <div class="meeting-details">
+        <!-- Header -->
+        <div class="details-header">
+            <div class="details-header-main">
+                <div class="meeting-color-bar" [style.backgroundColor]="selectedMeeting()!.color"></div>
+                <div class="details-title-section">
+                    @if (editingMeeting()) {
+                    <input type="text" class="details-title-input" [value]="editedMeeting().title"
+                        (input)="updateEditedMeetingField('title', $any($event.target).value)" />
+                    } @else {
+                    <h2 class="details-title">{{ selectedMeeting()!.title }}</h2>
+                    }
+                    <div class="details-status">
+                        <span class="status-indicator"
+                            [style.backgroundColor]="getStatusColor(selectedMeeting()!.status)"></span>
+                        <span>{{ selectedMeeting()!.status | titlecase }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="details-header-actions">
+                @if (editingMeeting()) {
+                <button class="action-btn" (click)="cancelEditing()">Cancel</button>
+                <button class="action-btn primary" (click)="saveEditing()">Save</button>
+                } @else {
+                <button class="action-btn" (click)="startEditing()">
+                    <span class="material-symbols-outlined">edit</span>
+                    Edit
+                </button>
+                @if (selectedMeeting()!.meetingLink) {
+                <button class="action-btn join" (click)="joinMeeting(selectedMeeting()!, $event)">
+                    <span class="material-symbols-outlined">video_call</span>
+                    Join
+                </button>
+                }
+                }
+            </div>
+        </div>
+
+        <!-- Details tabs -->
+        <div class="details-tabs">
+            <button class="details-tab" [class.active]="detailsTab() === 'overview'"
+                (click)="detailsTab.set('overview')">
+                Overview
+            </button>
+            <button class="details-tab" [class.active]="detailsTab() === 'agenda'" (click)="detailsTab.set('agenda')">
+                Agenda
+                @if (selectedMeeting()!.agenda?.length) {
+                <span class="tab-count">{{ selectedMeeting()!.agenda!.length }}</span>
+                }
+            </button>
+            <button class="details-tab" [class.active]="detailsTab() === 'notes'" (click)="detailsTab.set('notes')">
+                Notes
+                @if (selectedMeeting()!.notes?.length) {
+                <span class="tab-count">{{ selectedMeeting()!.notes!.length }}</span>
+                }
+            </button>
+            <button class="details-tab" [class.active]="detailsTab() === 'action-items'"
+                (click)="detailsTab.set('action-items')">
+                Action Items
+                @if (getOpenActionItemsCount(selectedMeeting()!) > 0) {
+                <span class="tab-count active">{{ getOpenActionItemsCount(selectedMeeting()!) }}</span>
+                }
+            </button>
+        </div>
+
+        <!-- Tab content -->
+        <div class="details-content">
+            <!-- Overview Tab -->
+            @if (detailsTab() === 'overview') {
+            <div class="overview-content">
+                <!-- Date & Time -->
+                <div class="detail-section">
+                    <div class="detail-icon">
+                        <span class="material-symbols-outlined">schedule</span>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-label">Date & Time</div>
+                        @if (editingMeeting()) {
+                        <div class="edit-row">
+                            <input type="date" class="form-input compact" [value]="editedMeeting().date"
+                                (input)="updateEditedMeetingField('date', $any($event.target).value)" />
+                            <input type="time" class="form-input compact" [value]="editedMeeting().startTime"
+                                (input)="updateEditedMeetingField('startTime', $any($event.target).value)" />
+                            <span>to</span>
+                            <input type="time" class="form-input compact" [value]="editedMeeting().endTime"
+                                (input)="updateEditedMeetingField('endTime', $any($event.target).value)" />
+                        </div>
+                        } @else {
+                        <div class="detail-value">{{ formatFullDate(selectedMeeting()!.date) }}</div>
+                        <div class="detail-subvalue">{{ formatTime(selectedMeeting()!.startTime) }}
+                            @if (selectedMeeting()!.endTime) { - {{ formatTime(selectedMeeting()!.endTime!) }} }
+                            @if (selectedMeeting()!.duration) { ({{ selectedMeeting()!.duration }}min) }
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Location / Link -->
+                <div class="detail-section">
+                    <div class="detail-icon">
+                        <span class="material-symbols-outlined">{{ getMeetingTypeIcon(selectedMeeting()!.meetingType)
+                            }}</span>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-label">{{ selectedMeeting()!.meetingType | titlecase }} Meeting</div>
+                        @if (editingMeeting()) {
+                        <div class="edit-row">
+                            <input type="text" class="form-input" placeholder="Meeting link or location"
+                                [value]="editedMeeting().meetingLink || editedMeeting().location || ''"
+                                (input)="updateEditedMeetingField(selectedMeeting()!.meetingLink ? 'meetingLink' : 'location', $any($event.target).value)" />
+                        </div>
+                        } @else {
+                        @if (selectedMeeting()!.meetingLink) {
+                        <a class="detail-link" [href]="selectedMeeting()!.meetingLink" target="_blank">
+                            {{ selectedMeeting()!.meetingLink }}
+                        </a>
+                        }
+                        @if (selectedMeeting()!.location) {
+                        <div class="detail-value">{{ selectedMeeting()!.location }}</div>
+                        }
+                        }
+                    </div>
+                </div>
+
+                <!-- Project -->
+                @if (selectedMeeting()!.project || editingMeeting()) {
+                <div class="detail-section">
+                    <div class="detail-icon">
+                        <span class="material-symbols-outlined">folder</span>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-label">Project</div>
+                        @if (editingMeeting()) {
+                        <input type="text" class="form-input" [value]="editedMeeting().project || ''"
+                            (input)="updateEditedMeetingField('project', $any($event.target).value)" />
+                        } @else {
+                        <div class="detail-value">{{ selectedMeeting()!.project }}</div>
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- Description -->
+                <div class="detail-section">
+                    <div class="detail-icon">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-label">Description</div>
+                        @if (editingMeeting()) {
+                        <textarea class="form-textarea" [value]="editedMeeting().description || ''"
+                            (input)="updateEditedMeetingField('description', $any($event.target).value)"
+                            placeholder="Add a description..."></textarea>
+                        } @else {
+                        <div class="detail-value">{{ selectedMeeting()!.description || 'No description' }}</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Attendees -->
+                <div class="detail-section">
+                    <div class="detail-icon">
+                        <span class="material-symbols-outlined">group</span>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-label">
+                            Attendees ({{ selectedMeeting()!.attendees.length }})
+                            @if (!editingMeeting()) {
+                            <button class="add-inline-btn" (click)="showAddAttendee.set(true)">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
+                            }
+                        </div>
+                        <div class="attendees-detail-list">
+                            @for (attendee of selectedMeeting()!.attendees; track attendee.id) {
+                            <div class="attendee-detail-item">
+                                <div class="attendee-detail-avatar"
+                                    [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
+                                    @if (!attendee.avatar) {
+                                    {{ attendee.name.charAt(0) }}
+                                    }
+                                </div>
+                                <div class="attendee-detail-info">
+                                    <span class="attendee-detail-name">{{ attendee.name }}</span>
+                                    @if (attendee.role) {
+                                    <span class="attendee-detail-role">{{ attendee.role }}</span>
+                                    }
+                                </div>
+                                @if (attendee.status) {
+                                <span class="attendee-status" [class]="attendee.status">
+                                    @switch (attendee.status) {
+                                    @case ('accepted') {
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                    }
+                                    @case ('declined') {
+                                    <span class="material-symbols-outlined">cancel</span>
+                                    }
+                                    @case ('tentative') {
+                                    <span class="material-symbols-outlined">help</span>
+                                    }
+                                    @default {
+                                    <span class="material-symbols-outlined">pending</span>
+                                    }
+                                    }
+                                </span>
+                                }
+                                @if (editingMeeting()) {
+                                <button class="remove-attendee-btn" (click)="removeAttendee(attendee.id)">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                                }
+                            </div>
+                            }
+                        </div>
+                        @if (showAddAttendee()) {
+                        <div class="add-attendee-form">
+                            <input type="text" class="form-input compact" placeholder="Name" [value]="newAttendeeName()"
+                                (input)="newAttendeeName.set($any($event.target).value)" />
+                            <input type="email" class="form-input compact" placeholder="Email (optional)"
+                                [value]="newAttendeeEmail()" (input)="newAttendeeEmail.set($any($event.target).value)" />
+                            <select class="form-select compact" [value]="newAttendeeRole()"
+                                (change)="newAttendeeRole.set($any($event.target).value)">
+                                <option value="required">Required</option>
+                                <option value="optional">Optional</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" (click)="addAttendeeToMeeting()"
+                                [disabled]="!newAttendeeName().trim()">Add</button>
+                            <button class="btn btn-sm" (click)="showAddAttendee.set(false)">Cancel</button>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Labels -->
+                @if (selectedMeeting()!.labels?.length) {
+                <div class="detail-section">
+                    <div class="detail-icon">
+                        <span class="material-symbols-outlined">label</span>
+                    </div>
+                    <div class="detail-content">
+                        <div class="detail-label">Labels</div>
+                        <div class="labels-list">
+                            @for (label of selectedMeeting()!.labels!; track label) {
+                            <span class="label-tag">#{{ label }}</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <!-- Quick actions -->
+                <div class="detail-actions">
+                    @if (selectedMeeting()!.status === 'scheduled') {
+                    <button class="detail-action-btn" (click)="completeMeeting(selectedMeeting()!)">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Mark Complete
+                    </button>
+                    <button class="detail-action-btn" (click)="cancelMeeting(selectedMeeting()!)">
+                        <span class="material-symbols-outlined">event_busy</span>
+                        Cancel Meeting
+                    </button>
+                    }
+                    <button class="detail-action-btn" (click)="duplicateMeeting(selectedMeeting()!)">
+                        <span class="material-symbols-outlined">content_copy</span>
+                        Duplicate
+                    </button>
+                    <button class="detail-action-btn danger" (click)="deleteMeeting(selectedMeeting()!)">
+                        <span class="material-symbols-outlined">delete</span>
+                        Delete
+                    </button>
+                </div>
+            </div>
+            }
+
+            <!-- Agenda Tab -->
+            @if (detailsTab() === 'agenda') {
+            <div class="agenda-content">
+                <div class="add-agenda-form">
+                    <input type="text" class="form-input" placeholder="Add agenda item..." [value]="newAgendaItemTitle()"
+                        (input)="newAgendaItemTitle.set($any($event.target).value)" (keyup.enter)="addAgendaItem()" />
+                    <input type="number" class="form-input compact" placeholder="Min" min="5" step="5"
+                        [value]="newAgendaItemDuration()"
+                        (input)="newAgendaItemDuration.set(+$any($event.target).value)" />
+                    <input type="text" class="form-input" placeholder="Presenter (optional)"
+                        [value]="newAgendaItemPresenter()"
+                        (input)="newAgendaItemPresenter.set($any($event.target).value)" />
+                    <button class="btn btn-primary btn-sm" (click)="addAgendaItem()"
+                        [disabled]="!newAgendaItemTitle().trim()">Add</button>
+                </div>
+
+                @if (selectedMeeting()!.agenda?.length) {
+                <div class="agenda-items-list">
+                    @for (item of selectedMeeting()!.agenda!; track item.id; let i = $index) {
+                    <div class="agenda-list-item" [class.completed]="item.completed">
+                        <button class="agenda-checkbox" (click)="toggleAgendaItem(item.id)">
+                            @if (item.completed) {
+                            <span class="material-symbols-outlined">check_circle</span>
+                            } @else {
+                            <span class="material-symbols-outlined">radio_button_unchecked</span>
+                            }
+                        </button>
+                        <span class="agenda-item-number">{{ i + 1 }}</span>
+                        <div class="agenda-item-content">
+                            <span class="agenda-item-title">{{ item.title }}</span>
+                            <div class="agenda-item-meta">
+                                @if (item.duration) {
+                                <span class="agenda-item-duration">{{ item.duration }} min</span>
+                                }
+                                @if (item.presenter) {
+                                <span class="agenda-item-presenter">{{ item.presenter }}</span>
+                                }
+                            </div>
+                        </div>
+                        <button class="agenda-item-delete" (click)="deleteAgendaItem(item.id)">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                    }
+                </div>
+                } @else {
+                <div class="empty-tab-content">
+                    <span class="material-symbols-outlined">list_alt</span>
+                    <p>No agenda items yet</p>
+                </div>
+                }
+            </div>
+            }
+
+            <!-- Notes Tab -->
+            @if (detailsTab() === 'notes') {
+            <div class="notes-content">
+                <div class="add-note-form">
+                    <textarea class="form-textarea" placeholder="Add a note..." [value]="newNoteInput()"
+                        (input)="newNoteInput.set($any($event.target).value)"></textarea>
+                    <button class="btn btn-primary btn-sm" (click)="addNote()"
+                        [disabled]="!newNoteInput().trim()">Add Note</button>
+                </div>
+
+                @if (selectedMeeting()!.notes?.length) {
+                <div class="notes-list">
+                    @for (note of selectedMeeting()!.notes!; track note.id) {
+                    <div class="note-item">
+                        <div class="note-header">
+                            <span class="note-time">{{ note.createdAt | date:'short' }}</span>
+                            @if (note.createdBy) {
+                            <span class="note-author">{{ note.createdBy }}</span>
+                            }
+                            <button class="note-delete" (click)="deleteNote(note.id)">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                        <div class="note-content">{{ note.content }}</div>
+                    </div>
+                    }
+                </div>
+                } @else {
+                <div class="empty-tab-content">
+                    <span class="material-symbols-outlined">note</span>
+                    <p>No notes yet</p>
+                </div>
+                }
+            </div>
+            }
+
+            <!-- Action Items Tab -->
+            @if (detailsTab() === 'action-items') {
+            <div class="action-items-content">
+                <div class="add-action-item-form">
+                    <input type="text" class="form-input" placeholder="Add action item..."
+                        [value]="newActionItemInput()" (input)="newActionItemInput.set($any($event.target).value)"
+                        (keyup.enter)="addActionItem()" />
+                    <input type="text" class="form-input compact" placeholder="Assignee"
+                        [value]="newActionItemAssignee()"
+                        (input)="newActionItemAssignee.set($any($event.target).value)" />
+                    <select class="form-select compact" [value]="newActionItemPriority()"
+                        (change)="newActionItemPriority.set($any($event.target).value)">
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" (click)="addActionItem()"
+                        [disabled]="!newActionItemInput().trim()">Add</button>
+                </div>
+
+                @if (selectedMeeting()!.actionItems?.length) {
+                <div class="action-items-list">
+                    @for (item of selectedMeeting()!.actionItems!; track item.id) {
+                    <div class="action-list-item" [class.completed]="item.status === 'completed'">
+                        <button class="action-checkbox" (click)="toggleActionItem(item.id)">
+                            @if (item.status === 'completed') {
+                            <span class="material-symbols-outlined">check_circle</span>
+                            } @else {
+                            <span class="material-symbols-outlined">radio_button_unchecked</span>
+                            }
+                        </button>
+                        <div class="action-item-content">
+                            <span class="action-item-title">{{ item.title }}</span>
+                            <div class="action-item-meta">
+                                @if (item.assignee) {
+                                <span class="action-item-assignee">
+                                    <span class="material-symbols-outlined">person</span>
+                                    {{ item.assignee }}
+                                </span>
+                                }
+                                @if (item.priority) {
+                                <span class="action-item-priority" [class]="item.priority.toLowerCase()">
+                                    {{ item.priority }}
+                                </span>
+                                }
+                                @if (item.linkedTaskId) {
+                                <span class="action-item-linked">
+                                    <span class="material-symbols-outlined">link</span>
+                                    Linked to task
+                                </span>
+                                }
+                            </div>
+                        </div>
+                        <div class="action-item-actions">
+                            @if (!item.linkedTaskId && item.status !== 'completed') {
+                            <button class="action-item-btn" title="Convert to Task" (click)="convertToTask(item)">
+                                <span class="material-symbols-outlined">task_alt</span>
+                            </button>
+                            }
+                            <button class="action-item-btn delete" (click)="deleteActionItem(item.id)">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    }
+                </div>
+                } @else {
+                <div class="empty-tab-content">
+                    <span class="material-symbols-outlined">task_alt</span>
+                    <p>No action items yet</p>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+</env-modal>
+}
+
+<!-- Keyboard Shortcuts Help Modal -->
+@if (showShortcutsHelp()) {
+<env-modal [isOpen]="showShortcutsHelp()" (closed)="showShortcutsHelp.set(false)" [title]="'Keyboard Shortcuts'">
+    <div class="shortcuts-content">
+        <div class="shortcuts-group">
+            <h4>Navigation</h4>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Switch to All view</span>
+                <kbd>1</kbd>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Switch to Today view</span>
+                <kbd>2</kbd>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Switch to Upcoming view</span>
+                <kbd>3</kbd>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Switch to Past view</span>
+                <kbd>4</kbd>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Cycle view modes</span>
+                <kbd>V</kbd>
+            </div>
+        </div>
+        <div class="shortcuts-group">
+            <h4>Actions</h4>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">New meeting</span>
+                <kbd>⌘</kbd> + <kbd>N</kbd>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Search</span>
+                <kbd>⌘</kbd> + <kbd>K</kbd>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Close modal</span>
+                <kbd>Esc</kbd>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-desc">Show shortcuts</span>
+                <kbd>⌘</kbd> + <kbd>/</kbd>
+            </div>
+        </div>
+    </div>
+</env-modal>
+}
