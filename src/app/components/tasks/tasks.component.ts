@@ -289,7 +289,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskHasReminder.set(false);
     this.newTaskLabels.set([]);
     this.newTaskLabelInput.set('');
-    this.quickAddMode.set('do-now');
     this.showDatePicker.set(false);
     this.showFolderDropdown.set(false);
     this.showCreateFolder.set(false);

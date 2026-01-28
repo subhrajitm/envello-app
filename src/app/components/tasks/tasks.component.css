@@ -21,18 +21,8 @@
 
 .tasks-sidebar-quick-btn {
     flex: 1;
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
-    background: var(--bg-app);
-    font-size: 11px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.15s;
+    padding-inline: 12px;
 }
 
 .tasks-sidebar-quick-btn .material-symbols-outlined {
@@ -79,7 +69,6 @@
 .view-header {
     display: flex;
     flex-direction: column;
-    gap: 2px;
 }
 
 .view-title {
@@ -89,12 +78,6 @@
     color: var(--text-primary);
     margin: 0;
     letter-spacing: -0.3px;
-}
-
-.view-subtitle {
-    margin: 0;
-    font-size: 11px;
-    color: var(--text-tertiary);
 }
 
 .toolbar-divider {

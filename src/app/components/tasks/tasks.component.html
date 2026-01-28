@@ -9,13 +9,13 @@
 
         <div env-sidebar-header class="tasks-sidebar-quick-actions">
             <button type="button"
-                    class="tasks-sidebar-quick-btn"
+                    class="btn-primary tasks-sidebar-quick-btn"
                     (click)="setQuickAddMode('do-now'); openNewTaskDialog()">
                 <span class="material-symbols-outlined">play_arrow</span>
                 <span>Do Now</span>
             </button>
             <button type="button"
-                    class="tasks-sidebar-quick-btn"
+                    class="btn-primary tasks-sidebar-quick-btn"
                     (click)="setQuickAddMode('do-later'); openNewTaskDialog()">
                 <span class="material-symbols-outlined">schedule</span>
                 <span>Do Later</span>
@@ -78,7 +78,6 @@
             <div class="toolbar-left">
                 <div class="view-header">
                     <h2 class="view-title">{{ viewTitle() }}</h2>
-                    <p class="view-subtitle">{{ viewSubtitle() }}</p>
                 </div>
                 <div class="toolbar-divider"></div>
                 <div class="view-switcher" aria-label="Change tasks layout" role="group">
@@ -166,10 +165,6 @@
                     </div>
                     }
                 </div>
-                <button class="btn-primary" (click)="openNewTaskDialog()" aria-label="Create new task">
-                    <span class="material-symbols-outlined">add</span>
-                    New Task
-                </button>
                 @if (bulkActionMode()) {
                 <div class="bulk-actions-bar">
                     <span class="bulk-selection-count">{{ selectedTasks().size }} selected</span>
@@ -892,23 +887,6 @@
     <div body>
         <div class="task-modal-shell">
             <!-- Mode Selection: Do Now / Do Later -->
-            <div class="task-modal-mode-selector">
-                <button type="button"
-                        class="task-modal-mode-btn"
-                        [class.active]="quickAddMode() === 'do-now'"
-                        (click)="setQuickAddMode('do-now')">
-                    <span class="material-symbols-outlined">play_arrow</span>
-                    <span>Do Now</span>
-                </button>
-                <button type="button"
-                        class="task-modal-mode-btn"
-                        [class.active]="quickAddMode() === 'do-later'"
-                        (click)="setQuickAddMode('do-later')">
-                    <span class="material-symbols-outlined">schedule</span>
-                    <span>Do Later</span>
-                </button>
-            </div>
-
             <!-- Title Input -->
             <div class="task-modal-field-group task-modal-title-group">
                 <input
