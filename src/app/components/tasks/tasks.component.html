@@ -4,7 +4,7 @@
         [subtitle]="store.tasks().length + ' tasks total'"
         [searchPlaceholder]="'Search views'" [searchQuery]="sidebarSearch()"
         (searchChange)="sidebarSearch.set($event)"
-        [items]="sidebarItems()" [activeId]="selectedView()" (activeIdChange)="onSidebarActiveChange($event)"
+        [items]="sidebarItems()" [activeId]="sidebarActiveId()" (activeIdChange)="onSidebarActiveChange($event)"
         [addIcon]="'add'" addTooltip="New task" [showFooter]="true">
 
         <div env-sidebar-header class="tasks-sidebar-quick-actions">

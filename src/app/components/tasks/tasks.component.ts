@@ -168,6 +168,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   newFolderNameSidebar = signal<string>('');
   // Currently selected project/context in sidebar; empty = all
   selectedFolder = signal<string>('');
+  // Active item in primary sidebar nav (Inbox/Today/Upcoming/Completed)
+  sidebarActiveId = signal<string | null>('inbox');
   
   // Available lists/folders
   availableLists = computed(() => {
@@ -187,7 +189,13 @@ export class TasksComponent implements OnInit, OnDestroy {
   
   // Sidebar folder methods
   selectFolderInSidebar(folderName: string) {
+    // When a project/context is selected, clear primary nav selection
+    this.sidebarActiveId.set(null);
+    // Always show inbox view but scoped by selectedFolder
+    this.selectedView.set('inbox');
     this.selectedFolder.set(folderName);
+    // Clear metric-based filters when explicitly scoping by project/context
+    this.metricFilter.set('none');
     // Filter tasks by folder
     this.sidebarSearch.set('');
   }
@@ -240,8 +248,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   filtersActive = computed(() => {
     const view = this.selectedView();
     const query = this.sidebarSearch().trim();
-    // Inbox + no query == baseline, everything else is considered "filtered"
-    return view !== 'inbox' || !!query;
+    const hasProjectScope = !!this.selectedFolder();
+    const metric = this.metricFilter();
+    // Inbox + no query + no project + no metric == baseline
+    return view !== 'inbox' || !!query || hasProjectScope || metric !== 'none';
   });
 
   /**
@@ -535,10 +545,26 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   onSidebarActiveChange(id: string) {
     this.selectedView.set(id as TaskViewFilter);
+    this.sidebarActiveId.set(id);
+    // Reset metric and project filters when switching primary view
+    this.metricFilter.set('none');
+
+    // When switching back to Inbox, clear filters and show all tasks
+    if (id === 'inbox') {
+      this.sidebarSearch.set('');
+      this.selectedFolder.set('');
+    } else {
+      // For non-inbox views, don't keep a project/context selection
+      this.selectedFolder.set('');
+    }
   }
 
   // Legacy top filter buttons (kept but internally derive from selectedView)
   selectedFilter = signal<string>('All');
+
+  // Metric-based filter from right-side KPIs
+  // 'none' = no extra filter, 'active' = only ACTIVE tasks, 'priority' = only HIGH priority
+  metricFilter = signal<'none' | 'active' | 'priority'>('none');
 
   // Calendar state
   currentDate = signal<Date>(new Date());
@@ -568,6 +594,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const view = this.selectedView();
     const query = this.sidebarSearch().trim().toLowerCase();
     const selectedFolder = this.selectedFolder();
+    const metric = this.metricFilter();
 
     let base: Task[];
     if (view === 'today') {
@@ -589,6 +616,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Apply Project / Context filter from sidebar (empty = all)
     if (selectedFolder) {
       base = base.filter(t => t.project === selectedFolder);
+    }
+
+    // Apply metric-based filters from KPI chips
+    if (metric === 'active') {
+      base = base.filter(t => t.status === 'ACTIVE');
+    } else if (metric === 'priority') {
+      base = base.filter(t => t.priority === 'HIGH');
     }
 
     if (!query) return base;
@@ -1208,14 +1242,22 @@ export class TasksComponent implements OnInit, OnDestroy {
    */
   onMetricClick(metric: 'today' | 'completed' | 'active' | 'priority') {
     this.sidebarSearch.set('');
+    this.selectedFolder.set('');
 
     if (metric === 'today') {
       this.selectedView.set('today');
+      this.metricFilter.set('none');
     } else if (metric === 'completed') {
       this.selectedView.set('completed');
-    } else {
-      // For "active" and "priority", keep inbox but ensure baseline view.
+      this.metricFilter.set('none');
+    } else if (metric === 'active') {
+      // Show only active tasks in inbox
       this.selectedView.set('inbox');
+      this.metricFilter.set('active');
+    } else if (metric === 'priority') {
+      // Show only high priority tasks in inbox
+      this.selectedView.set('inbox');
+      this.metricFilter.set('priority');
     }
   }
 
