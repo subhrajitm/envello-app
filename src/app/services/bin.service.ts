@@ -9,7 +9,9 @@ export type BinItemType =
   | 'novel-location'
   | 'journal-entry'
   | 'journal-project'
-  | 'task';
+  | 'task'
+  | 'meeting'
+  | 'book';
 
 export interface BinItem {
   /** Unique id for the bin entry itself */
