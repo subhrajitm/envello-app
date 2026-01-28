@@ -23,6 +23,7 @@
     flex: 1;
     justify-content: center;
     padding-inline: 12px;
+    border-radius: 4px;
 }
 
 .tasks-sidebar-quick-btn .material-symbols-outlined {
@@ -222,10 +223,10 @@
     height: 32px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     padding: 0 16px;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     background: var(--accent-primary);
     color: var(--accent-primary-text);
     font-size: 12px;
@@ -2221,7 +2222,7 @@
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
-    padding: 16px;
+    padding: 12px 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -2232,7 +2233,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .calendar-view-month {
@@ -2272,12 +2273,12 @@
 .calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    margin-bottom: 8px;
+    gap: 2px;
+    margin-bottom: 4px;
 }
 
 .calendar-weekday {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--text-tertiary);
     text-align: center;
@@ -2295,10 +2296,10 @@
 }
 
 .calendar-day-cell {
-    min-height: 100px;
+    min-height: 80px;
     border: 1px solid var(--border-subtle);
     border-radius: 4px;
-    padding: 6px;
+    padding: 4px 6px;
     background: var(--bg-app);
     display: flex;
     flex-direction: column;
@@ -2318,10 +2319,29 @@
 }
 
 .calendar-day-number {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-primary);
+}
+
+.calendar-day-number-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 4px;
+}
+
+.calendar-day-count {
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--bg-active);
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .calendar-day-tasks {
@@ -2334,7 +2354,7 @@
 
 .calendar-task-item {
     font-size: 10px;
-    padding: 3px 6px;
+    padding: 2px 4px;
     background: var(--bg-panel);
     border-radius: 3px;
     cursor: pointer;
@@ -2362,6 +2382,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.calendar-day-more {
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--text-tertiary);
 }
 
 /* Focus Mode */
@@ -3032,7 +3058,7 @@
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
-    padding: 16px;
+    padding: 12px 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3043,8 +3069,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -3118,7 +3144,7 @@
 }
 
 .timeline-sidebar {
-    width: 300px;
+    width: 260px;
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
@@ -3144,9 +3170,9 @@
 }
 
 .timeline-task-row {
-    padding: 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid var(--border-subtle);
-    min-height: 60px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     transition: all 0.15s;

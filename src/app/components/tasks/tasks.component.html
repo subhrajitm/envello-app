@@ -107,13 +107,6 @@
                         aria-label="Calendar view">
                         <span class="material-symbols-outlined">calendar_view_month</span>
                     </button>
-                    <button class="view-btn"
-                        [class.active]="viewMode() === 'timeline'"
-                        (click)="viewMode.set('timeline')"
-                        title="Timeline view"
-                        aria-label="Timeline view">
-                        <span class="material-symbols-outlined">timeline</span>
-                    </button>
                 </div>
             </div>
 
@@ -661,12 +654,19 @@
                 </div>
                 <div class="calendar-days-grid-view">
                     @for (day of getCalendarViewDays(); track $index) {
+                    @let dayTasks = getTasksForDate(day.date);
                     <div class="calendar-day-cell" 
                          [class.calendar-day-today]="day.isToday"
                          [class.calendar-day-other-month]="!day.isCurrentMonth">
-                        <div class="calendar-day-number">{{ day.day }}</div>
+                        <div class="calendar-day-number-row">
+                            <span class="calendar-day-number">{{ day.day }}</span>
+                            @if (dayTasks.length > 0) {
+                            <span class="calendar-day-count">{{ dayTasks.length }}</span>
+                            }
+                        </div>
                         <div class="calendar-day-tasks">
-                            @for (task of getTasksForDate(day.date); track task.id) {
+                            @for (task of dayTasks; track task.id; let idx = $index) {
+                            @if (idx < 2) {
                             <div class="calendar-task-item"
                                  [class.calendar-task-high]="task.priority === 'HIGH'"
                                  (click)="focusTask(task)">
@@ -678,99 +678,15 @@
                                 <span class="calendar-task-title">{{ task.title }}</span>
                             </div>
                             }
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
-        </div>
-        } @else if (viewMode() === 'timeline') {
-        <!-- Timeline/Gantt View -->
-        <div class="timeline-view-container">
-            <div class="timeline-header">
-                <div class="timeline-controls">
-                    <button class="timeline-zoom-btn" 
-                            [class.active]="timelineZoom() === 'day'"
-                            (click)="timelineZoom.set('day')">
-                        Day
-                    </button>
-                    <button class="timeline-zoom-btn"
-                            [class.active]="timelineZoom() === 'week'"
-                            (click)="timelineZoom.set('week')">
-                        Week
-                    </button>
-                    <button class="timeline-zoom-btn"
-                            [class.active]="timelineZoom() === 'month'"
-                            (click)="timelineZoom.set('month')">
-                        Month
-                    </button>
-                </div>
-                <div class="timeline-navigation">
-                    <button class="timeline-nav-btn" (click)="navigateTimeline('prev')">
-                        <span class="material-symbols-outlined">chevron_left</span>
-                    </button>
-                    <h2 class="timeline-title">{{ getTimelineTitle() }}</h2>
-                    <button class="timeline-nav-btn" (click)="navigateTimeline('next')">
-                        <span class="material-symbols-outlined">chevron_right</span>
-                    </button>
-                </div>
-            </div>
-            <div class="timeline-content">
-                <div class="timeline-sidebar">
-                    <div class="timeline-sidebar-header">
-                        <span>Task</span>
-                        <span>Duration</span>
-                    </div>
-                    <div class="timeline-task-list">
-                        @for (task of getTimelineTasks(); track task.id) {
-                        <div class="timeline-task-row" 
-                             [class.timeline-task-blocked]="isTaskBlocked(task)"
-                             [class.timeline-task-selected]="selectedTasks().has(task.id)">
-                            <div class="timeline-task-info">
-                                <div class="timeline-task-title">{{ task.title }}</div>
-                                <div class="timeline-task-meta">
-                                    @if (task.priority) {
-                                    <span class="timeline-priority" [ngClass]="{
-                                        'p1': task.priority === 'HIGH',
-                                        'p2': task.priority === 'MEDIUM',
-                                        'p3': task.priority === 'LOW'
-                                    }">{{ task.priority }}</span>
-                                    }
-                                    @if (task.estimatedDuration) {
-                                    <span class="timeline-duration">{{ task.estimatedDuration }}h</span>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                        }
-                    </div>
-                </div>
-                <div class="timeline-chart">
-                    <div class="timeline-chart-header">
-                        @for (date of getTimelineDates(); track $index) {
-                        <div class="timeline-date-cell" [class.timeline-date-today]="isToday(date)">
-                            <div class="timeline-date-day">{{ getDateDay(date) }}</div>
-                            <div class="timeline-date-weekday">{{ getDateWeekday(date) }}</div>
-                        </div>
-                        }
-                    </div>
-                    <div class="timeline-chart-body">
-                        @for (task of getTimelineTasks(); track task.id) {
-                        <div class="timeline-chart-row">
-                            @let bar = getTaskTimelineBar(task);
-                            @if (bar) {
-                            <div class="timeline-bar"
-                                 [style.left.%]="bar.startPercent"
-                                 [style.width.%]="bar.widthPercent"
-                                 [class.timeline-bar-high]="task.priority === 'HIGH'"
-                                 [class.timeline-bar-blocked]="isTaskBlocked(task)"
-                                 [title]="task.title + ' (' + bar.startDate + ' - ' + bar.endDate + ')'">
-                                <div class="timeline-bar-label">{{ task.title }}</div>
+                            }
+                            @if (dayTasks.length > 2) {
+                            <div class="calendar-day-more">
+                                +{{ dayTasks.length - 2 }} more
                             </div>
                             }
                         </div>
-                        }
                     </div>
+                    }
                 </div>
             </div>
         </div>

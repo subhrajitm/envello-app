@@ -166,11 +166,12 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Sidebar folder state
   showCreateFolderInSidebar = signal<boolean>(false);
   newFolderNameSidebar = signal<string>('');
-  selectedFolder = signal<string>('Inbox');
+  // Currently selected project/context in sidebar; empty = all
+  selectedFolder = signal<string>('');
   
   // Available lists/folders
   availableLists = computed(() => {
-    const lists = new Set<string>(['Inbox']);
+    const lists = new Set<string>();
     this.store.tasks().forEach(task => {
       if (task.project) {
         lists.add(task.project);
@@ -181,9 +182,6 @@ export class TasksComponent implements OnInit, OnDestroy {
   
   // Get task count for a folder
   getFolderTaskCount(folderName: string): number {
-    if (folderName === 'Inbox') {
-      return this.store.tasks().filter(t => !t.project || t.project === 'Inbox').length;
-    }
     return this.store.tasks().filter(t => t.project === folderName).length;
   }
   
@@ -588,11 +586,9 @@ export class TasksComponent implements OnInit, OnDestroy {
       base = this.inboxTasks();
     }
 
-    // Apply Project / Context filter from sidebar
-    if (selectedFolder && selectedFolder !== 'Inbox') {
+    // Apply Project / Context filter from sidebar (empty = all)
+    if (selectedFolder) {
       base = base.filter(t => t.project === selectedFolder);
-    } else if (selectedFolder === 'Inbox') {
-      base = base.filter(t => !t.project || t.project === 'Inbox');
     }
 
     if (!query) return base;
