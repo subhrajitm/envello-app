@@ -1944,6 +1944,43 @@
     color: var(--accent-primary);
 }
 
+/* Project / Context list – multi‑color accents per item */
+.folders-list .folder-item:nth-child(4n+1) .folder-icon {
+    color: var(--ugc-ruby);
+}
+
+.folders-list .folder-item:nth-child(4n+2) .folder-icon {
+    color: var(--ugc-sky);
+}
+
+.folders-list .folder-item:nth-child(4n+3) .folder-icon {
+    color: var(--ugc-teal);
+}
+
+.folders-list .folder-item:nth-child(4n+4) .folder-icon {
+    color: var(--ugc-amethyst);
+}
+
+.folders-list .folder-item:nth-child(4n+1) .folder-count {
+    background: var(--peach-25);
+    color: var(--ugc-amber);
+}
+
+.folders-list .folder-item:nth-child(4n+2) .folder-count {
+    background: var(--turq-25);
+    color: var(--ugc-cyan);
+}
+
+.folders-list .folder-item:nth-child(4n+3) .folder-count {
+    background: var(--green-25);
+    color: var(--ugc-leaf);
+}
+
+.folders-list .folder-item:nth-child(4n+4) .folder-count {
+    background: var(--lavender-25);
+    color: var(--ugc-violet);
+}
+
 /* Quick Add Bar */
 .quick-add-bar {
     background: var(--bg-panel);

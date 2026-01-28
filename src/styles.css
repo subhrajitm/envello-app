@@ -96,47 +96,82 @@
 }
 
 [data-theme="colorful"] {
-    /* Pastel Library Aesthetic */
-    --bg-app: linear-gradient(135deg, #f4efe6 0%, #faf7f2 50%, #f0ebe3 100%);
-    /* Natural warm gradient */
-    --bg-panel: #ffffff;
-    /* Clean white panels */
-    --bg-hover: #fef3e8;
-    /* Warm peachy hover */
-    --bg-active: #fde8d7;
-    /* Soft peach active */
+    /* Colorful theme on white background */
+    --primary: #000;
+    --secondary: #333;
+    --tertiary: #777;
+    --turq: #61dce2;
+    --turq-50: #b0edf0;
+    --turq-25: #d7f6f8;
+    --green: #8add8a;
+    --green-50: #c4eec4;
+    --green-25: #e2f6e2;
+    --lavender: #a49edb;
+    --lavender-50: #d1ceed;
+    --lavender-25: #e8e7f6;
+    --peach: #f2af97;
+    --peach-50: #f8d7cb;
+    --peach-25: #fcebe5;
+    --selection: #a7d4ff;
+    --selection-dark: #92c8fb;
+    --selection-light: #e9f5fe;
+    --grey-primary: #201d1d;
+    --grey-secondary: #686d79;
+    --grey-tertiary: #8a92a1;
+    --grey-3: #a6abb5;
+    --grey-2: #c9cdd3;
+    --grey-1: #dde0e4;
+    --grey-bg2: #eef0f1;
+    --grey-bg1: #f9fafa;
+    --grey-bg-0: #fff;
+    --line: var(--grey-tertiary);
+    --ugc-ruby: #f25881;
+    --ugc-amethyst: #a85caf;
+    --ugc-violet: #675caf;
+    --ugc-sky: #3099dd;
+    --ugc-cyan: #22b6c7;
+    --ugc-teal: #24b1a2;
+    --ugc-leaf: #3cba3e;
+    --ugc-amber: #f07d59;
+    --unsorted: #3a3e5e;
+    --shadow-s: 0px 2px 3px #a9b3c64d,0px 1px 3px #a9b3c680;
+    --shadow-m: 0px 1px 6px #a9b3c64d,0px 6px 10px #a9b3c680;
+    --shadow-l: 0px 3px 12px #a9b3c64d,0px 12px 18px #a9b3c680;
+    --shadow-s-dark: 0px 2px 3px #0000001a,0px 1px 3px #00000040;
+    --shadow-m-dark: 0px 1px 6px #00000040,0px 6px 10px #0000001a;
+    --shadow-l-dark: 0px 3px 12px #0000001a,0px 12px 18px #00000040;
+    --h-header: 60px;
+    --tone-explore-25: var(--turq-25);
+    --tone-explore-50: var(--turq-50);
+    --tone-filters-25: var(--lavender-25);
+    --tone-filters-50: var(--lavender-50);
+    --activity-success-dark: #288343;
+    --activity-success: #1daa47;
+    --activity-success-bg: #cef7dc;
+    --activity-important-dark: #ea8d00;
+    --activity-important: #f5c751;
+    --activity-important-bg: #fef1c5;
+    --activity-error: #d70000;
+    --activity-error-dark: #a10000;
+    --activity-error-bg: #fcebe5;
 
-    --border-subtle: #e8dfd0;
-    --border-main: #d8cfc0;
-    --border-highlight: #c8bfb0;
+    /* Map app-level tokens to colorful scheme with white background */
+    --bg-app: var(--grey-bg-0);
+    --bg-panel: var(--grey-bg1);
+    --bg-hover: var(--grey-bg2);
+    --bg-active: var(--selection-light);
 
-    --text-primary: #3a3a3a;
-    /* Soft black for readability */
-    --text-secondary: #6a6a6a;
-    --text-tertiary: #9a9a9a;
+    --border-subtle: var(--grey-1);
+    --border-main: var(--grey-2);
+    --border-highlight: var(--line);
 
-    --accent-primary: #e8a87c;
-    /* Warm terracotta */
-    --accent-primary-dim: rgba(232, 168, 124, 0.15);
+    --text-primary: var(--primary);
+    --text-secondary: var(--secondary);
+    --text-tertiary: var(--tertiary);
+
+    --accent-primary: var(--ugc-amber);
+    --accent-primary-dim: rgba(240, 125, 89, 0.12);
     --accent-primary-text: #ffffff;
-    --accent-blue: #7eb3d4;
-    /* Soft sky blue */
-    --accent-red: #e89090;
-    /* Soft coral */
-    --accent-green: #a8d5a8;
-    /* Pastel sage green */
-    --accent-purple: #c4a8d8;
-    /* Soft lavender */
-    --accent-pink: #f0b8d0;
-    /* Soft rose */
-    --accent-yellow: #f4e89c;
-    /* Soft butter yellow */
-
-    /* Pastel card colors from reference */
-    --card-green: #d4f4dd;
-    --card-purple: #e5d4f4;
-    --card-pink: #f4d4e5;
-    --card-yellow: #f9f4d4;
 }
 
 [data-theme="typewriter"] {
