@@ -2638,15 +2638,17 @@
 /* Advanced Options Section */
 .task-modal-advanced-section {
     margin-top: 12px;
-    border-top: 1px solid var(--border-subtle);
-    padding-top: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
 }
 
 .task-modal-advanced-toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px;
+    gap: 6px;
+    padding: 4px 0 6px 0;
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.15s;
@@ -2658,7 +2660,6 @@
 }
 
 .task-modal-advanced-toggle:hover {
-    background: var(--bg-hover);
     color: var(--text-primary);
 }
 
@@ -2668,10 +2669,12 @@
 }
 
 .task-modal-advanced-content {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border-subtle);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
 }
 
 .task-modal-recurring-controls {
@@ -3375,6 +3378,27 @@
     border-radius: 6px;
     border: 1px solid var(--border-subtle);
     font-size: 12px;
+}
+
+/* Text button (used for Description preview/edit toggle) */
+.btn-text {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-text:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
 }
 
 /* Attachments toolbar dropdown */

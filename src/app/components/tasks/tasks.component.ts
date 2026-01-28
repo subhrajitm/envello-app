@@ -569,6 +569,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   viewTasks = computed(() => {
     const view = this.selectedView();
     const query = this.sidebarSearch().trim().toLowerCase();
+    const selectedFolder = this.selectedFolder();
 
     let base: Task[];
     if (view === 'today') {
@@ -585,6 +586,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     } else {
       // inbox
       base = this.inboxTasks();
+    }
+
+    // Apply Project / Context filter from sidebar
+    if (selectedFolder && selectedFolder !== 'Inbox') {
+      base = base.filter(t => t.project === selectedFolder);
+    } else if (selectedFolder === 'Inbox') {
+      base = base.filter(t => !t.project || t.project === 'Inbox');
     }
 
     if (!query) return base;

@@ -1149,61 +1149,6 @@
                         }
                     </div>
                 </div>
-                <div class="task-modal-control-group task-modal-reminders-group">
-                    <label class="task-modal-control-label">Reminders</label>
-                    <div class="task-modal-reminders-controls">
-                        <button type="button"
-                                class="task-modal-control-btn"
-                                [class.active]="newTaskHasReminder()"
-                                (click)="toggleNewTaskReminder()">
-                            <span class="material-symbols-outlined">notifications</span>
-                            <span>{{ newTaskHasReminder() ? 'Enabled' : 'Disabled' }}</span>
-                        </button>
-                        @if (newTaskHasReminder()) {
-                        <div class="reminder-times-list">
-                            @for (time of newTaskReminderTimes(); track $index) {
-                            <div class="reminder-time-item">
-                                <span class="material-symbols-outlined">schedule</span>
-                                <span class="reminder-time-text">{{ time }}</span>
-                                <div class="reminder-time-actions">
-                                    <button type="button" 
-                                            class="reminder-snooze-btn"
-                                            (click)="showSnoozeOptions.set($index)"
-                                            title="Snooze">
-                                        <span class="material-symbols-outlined">snooze</span>
-                                    </button>
-                                    <button type="button" class="reminder-time-remove" (click)="removeReminderTime($index)">
-                                        <span class="material-symbols-outlined">close</span>
-                                    </button>
-                                </div>
-                                @if (showSnoozeOptions() === $index) {
-                                <div class="snooze-dropdown">
-                                    @for (option of snoozeOptions(); track option.id) {
-                                    <button type="button" 
-                                            class="snooze-option"
-                                            (click)="snoozeReminder($index, option.minutes)">
-                                        {{ option.label }}
-                                    </button>
-                                    }
-                                </div>
-                                }
-                            </div>
-                            }
-                            <div class="reminder-time-input-wrapper">
-                                <input type="text"
-                                       class="reminder-time-input"
-                                       placeholder="e.g., '1 hour before', '30 min before'..."
-                                       [value]="newReminderTimeInput()"
-                                       (input)="newReminderTimeInput.set($any($event.target).value)"
-                                       (keydown.enter)="addReminderTime()">
-                                <button type="button" class="reminder-time-add" (click)="addReminderTime()">
-                                    <span class="material-symbols-outlined">add</span>
-                                </button>
-                            </div>
-                        </div>
-                        }
-                    </div>
-                </div>
             </div>
             
             <!-- Advanced Options -->
@@ -1235,6 +1180,63 @@
                                 <option value="monthly">Monthly</option>
                                 <option value="yearly">Yearly</option>
                             </select>
+                            }
+                        </div>
+                    </div>
+                    
+                    <!-- Reminders -->
+                    <div class="task-modal-control-group task-modal-reminders-group">
+                        <label class="task-modal-control-label">Reminders</label>
+                        <div class="task-modal-reminders-controls">
+                            <button type="button"
+                                    class="task-modal-control-btn"
+                                    [class.active]="newTaskHasReminder()"
+                                    (click)="toggleNewTaskReminder()">
+                                <span class="material-symbols-outlined">notifications</span>
+                                <span>{{ newTaskHasReminder() ? 'Enabled' : 'Disabled' }}</span>
+                            </button>
+                            @if (newTaskHasReminder()) {
+                            <div class="reminder-times-list">
+                                @for (time of newTaskReminderTimes(); track $index) {
+                                <div class="reminder-time-item">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    <span class="reminder-time-text">{{ time }}</span>
+                                    <div class="reminder-time-actions">
+                                        <button type="button" 
+                                                class="reminder-snooze-btn"
+                                                (click)="showSnoozeOptions.set($index)"
+                                                title="Snooze">
+                                            <span class="material-symbols-outlined">snooze</span>
+                                        </button>
+                                        <button type="button" class="reminder-time-remove" (click)="removeReminderTime($index)">
+                                            <span class="material-symbols-outlined">close</span>
+                                        </button>
+                                    </div>
+                                    @if (showSnoozeOptions() === $index) {
+                                    <div class="snooze-dropdown">
+                                        @for (option of snoozeOptions(); track option.id) {
+                                        <button type="button" 
+                                                class="snooze-option"
+                                                (click)="snoozeReminder($index, option.minutes)">
+                                            {{ option.label }}
+                                        </button>
+                                        }
+                                    </div>
+                                    }
+                                </div>
+                                }
+                                <div class="reminder-time-input-wrapper">
+                                    <input type="text"
+                                           class="reminder-time-input"
+                                           placeholder="e.g., '1 hour before', '30 min before'..."
+                                           [value]="newReminderTimeInput()"
+                                           (input)="newReminderTimeInput.set($any($event.target).value)"
+                                           (keydown.enter)="addReminderTime()">
+                                    <button type="button" class="reminder-time-add" (click)="addReminderTime()">
+                                        <span class="material-symbols-outlined">add</span>
+                                    </button>
+                                </div>
+                            </div>
                             }
                         </div>
                     </div>
