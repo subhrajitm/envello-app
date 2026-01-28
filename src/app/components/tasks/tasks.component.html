@@ -70,12 +70,28 @@
                        (keydown.enter)="handleQuickAdd()"
                        (keydown.escape)="quickAddVisible.set(false); quickAddInput.set('')"
                        autofocus>
+                @if (isVoiceSupported()) {
+                <button type="button" 
+                        class="quick-add-voice"
+                        [class.recording]="isListening()"
+                        (click)="isListening() ? stopVoiceInput() : startVoiceInput()"
+                        [title]="isListening() ? 'Stop recording' : 'Start voice input'"
+                        aria-label="Voice input">
+                    <span class="material-symbols-outlined">{{ isListening() ? 'mic' : 'mic_none' }}</span>
+                </button>
+                }
                 <button type="button" 
                         class="quick-add-close"
                         (click)="quickAddVisible.set(false); quickAddInput.set('')">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
+            @if (isListening()) {
+            <div class="voice-recording-indicator">
+                <span class="material-symbols-outlined voice-pulse">mic</span>
+                <span>Listening...</span>
+            </div>
+            }
             @if (quickAddInput().trim()) {
             <div class="quick-add-preview">
                 @let parsed = parseNaturalLanguage(quickAddInput());
@@ -143,6 +159,13 @@
                         aria-label="Calendar view">
                         <span class="material-symbols-outlined">calendar_view_month</span>
                     </button>
+                    <button class="view-btn"
+                        [class.active]="viewMode() === 'timeline'"
+                        (click)="viewMode.set('timeline')"
+                        title="Timeline view"
+                        aria-label="Timeline view">
+                        <span class="material-symbols-outlined">timeline</span>
+                    </button>
                 </div>
             </div>
 
@@ -153,14 +176,6 @@
                         (input)="sidebarSearch.set($any($event.target).value)"
                         placeholder="Search tasks, people, tags...">
                 </div>
-                <button class="btn-secondary" [ngClass]="{ 'active': filtersActive() }"
-                    aria-label="Filter tasks">
-                    <span class="material-symbols-outlined">filter_list</span>
-                    <span class="btn-label">Filter</span>
-                    @if (filtersActive()) {
-                    <span class="filter-dot" aria-hidden="true"></span>
-                    }
-                </button>
                 <button class="btn-secondary" 
                         (click)="quickAddVisible.set(true)"
                         title="Quick add (⌘K)"
@@ -168,78 +183,64 @@
                     <span class="material-symbols-outlined">add</span>
                     <span class="btn-label">Quick Add</span>
                 </button>
+                @if (isVoiceSupported()) {
+                <button class="btn-icon-only" 
+                        [class.recording]="isListening()"
+                        (click)="isListening() ? stopVoiceInput() : startVoiceInput()"
+                        [title]="isListening() ? 'Stop recording' : 'Start voice input'"
+                        aria-label="Voice input">
+                    <span class="material-symbols-outlined">{{ isListening() ? 'mic' : 'mic_none' }}</span>
+                </button>
+                }
+                <button class="btn-icon-only" 
+                        (click)="openCameraCapture()"
+                        title="Capture photo"
+                        aria-label="Capture photo">
+                    <span class="material-symbols-outlined">camera_alt</span>
+                </button>
                 <button class="btn-primary" (click)="openNewTaskDialog()" aria-label="Create new task">
                     <span class="material-symbols-outlined">add</span>
                     New Task
                 </button>
-                <button class="btn-icon-only" 
-                        (click)="showShortcutsHelp.set(true)"
-                        title="Keyboard shortcuts (⌘/)"
-                        aria-label="Show keyboard shortcuts">
-                    <span class="material-symbols-outlined">keyboard</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Metric Cards -->
-        <div class="tasks-metrics-grid">
-            <div class="metric-card" role="button" tabindex="0"
-                (click)="onMetricClick('today')" aria-label="Show tasks due today">
-                <div class="metric-icon-wrapper blue">
-                    <span class="material-symbols-outlined">event_available</span>
+                @if (bulkActionMode()) {
+                <div class="bulk-actions-bar">
+                    <span class="bulk-selection-count">{{ selectedTasks().size }} selected</span>
+                    <button class="btn-secondary btn-sm" (click)="bulkCompleteTasks()">
+                        <span class="material-symbols-outlined">done_all</span>
+                        Complete
+                    </button>
+                    <button class="btn-secondary btn-sm" (click)="bulkChangePriority('HIGH')">
+                        <span class="material-symbols-outlined">flag</span>
+                        High Priority
+                    </button>
+                    <button class="btn-secondary btn-sm" (click)="bulkDeleteTasks()">
+                        <span class="material-symbols-outlined">delete</span>
+                        Delete
+                    </button>
+                    <button class="btn-icon-only" (click)="clearSelection()" title="Clear selection">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
                 </div>
-                <div class="metric-content">
-                    <span class="metric-label">Due Today</span>
-                    <span class="metric-value">{{ todayTasksCount() }}</span>
-                    <span class="metric-caption">tasks</span>
+                }
+                <div class="toolbar-actions-right">
+                    @if (canUndo()) {
+                    <button class="btn-icon-only" 
+                            (click)="undo()"
+                            title="Undo (Cmd+Z)"
+                            aria-label="Undo">
+                        <span class="material-symbols-outlined">undo</span>
+                    </button>
+                    }
+                    @if (canRedo()) {
+                    <button class="btn-icon-only" 
+                            (click)="redo()"
+                            title="Redo (Cmd+Shift+Z)"
+                            aria-label="Redo">
+                        <span class="material-symbols-outlined">redo</span>
+                    </button>
+                    }
                 </div>
-            </div>
-
-            <div class="metric-card" role="button" tabindex="0"
-                (click)="onMetricClick('completed')" aria-label="Show completed tasks">
-                <div class="metric-icon-wrapper green">
-                    <span class="material-symbols-outlined">check_circle</span>
                 </div>
-                <div class="metric-content">
-                    <span class="metric-label">Completed</span>
-                    <div class="metric-row">
-                        <span class="metric-value">{{ completedTasksCount() }}</span>
-                        <span class="metric-sub">/ {{ store.tasks().length }}</span>
-                        <span class="metric-sub">
-                            ({{ (completedTasksCount() / (store.tasks().length || 1) * 100) | number:'1.0-0' }}%)
-                        </span>
-                    </div>
-                </div>
-                <!-- Mini progress bar -->
-                <div class="metric-progress-bg">
-                    <div class="metric-progress-fill"
-                        [style.width.%]="(completedTasksCount() / (store.tasks().length || 1)) * 100"></div>
-                </div>
-            </div>
-
-            <div class="metric-card" role="button" tabindex="0"
-                (click)="onMetricClick('active')" aria-label="Show active tasks">
-                <div class="metric-icon-wrapper purple">
-                    <span class="material-symbols-outlined">work_history</span>
-                </div>
-                <div class="metric-content">
-                    <span class="metric-label">Active</span>
-                    <span class="metric-value">{{ activeTasksCount() }}</span>
-                    <span class="metric-caption">tasks</span>
-                </div>
-            </div>
-
-            <div class="metric-card" role="button" tabindex="0"
-                (click)="onMetricClick('priority')" aria-label="Show high priority tasks">
-                <div class="metric-icon-wrapper orange">
-                    <span class="material-symbols-outlined">flag</span>
-                </div>
-                <div class="metric-content">
-                    <span class="metric-label">High Priority</span>
-                    <span class="metric-value">{{ priorityTasksCount() }}</span>
-                    <span class="metric-caption">High priority tasks</span>
-                </div>
-            </div>
         </div>
 
         <!-- Task List / Data Grid + Thumbnails -->
@@ -262,8 +263,29 @@
                 <div class="col-actions"></div>
             </div>
 
-            <div class="grid-body">
-                @if(filteredTasks().length === 0) {
+            <div class="grid-body" 
+                 [class.virtual-scroll-container]="virtualScrollEnabled() && filteredTasks().length > 50"
+                 (scroll)="onScroll($event)"
+                 [style.height.px]="virtualScrollEnabled() && filteredTasks().length > 50 ? 600 : 'auto'"
+                 [style.overflow-y]="virtualScrollEnabled() && filteredTasks().length > 50 ? 'auto' : 'visible'">
+                @if (isLoading()) {
+                <!-- Skeleton Loaders -->
+                @for (i of [1,2,3,4,5]; track i) {
+                <div class="grid-row skeleton-row">
+                    <div class="col-check skeleton-checkbox"></div>
+                    <div class="col-task">
+                        <div class="skeleton-text" [style.width.%]="70 + (i * 5)"></div>
+                        <div class="skeleton-text skeleton-text-small" [style.width.%]="40"></div>
+                    </div>
+                    <div class="col-project skeleton-text" [style.width.%]="30"></div>
+                    <div class="col-assignee skeleton-avatar"></div>
+                    <div class="col-priority skeleton-badge"></div>
+                    <div class="col-status skeleton-badge"></div>
+                    <div class="col-due skeleton-text" [style.width.%]="25"></div>
+                    <div class="col-actions skeleton-actions"></div>
+                </div>
+                }
+                } @else if(filteredTasks().length === 0) {
                 <div class="empty-state">
                     <div class="empty-icon-circle">
                         <span class="material-symbols-outlined">task</span>
@@ -280,14 +302,19 @@
                     }
                 </div>
                 } @else {
-                @for (task of filteredTasks(); track task.id) {
+                @if (virtualScrollEnabled() && filteredTasks().length > 50) {
+                <!-- Virtual Scroll Spacer -->
+                <div [style.height.px]="visibleTaskRange().start * itemHeight"></div>
+                }
+                @for (task of visibleTasks(); track task.id) {
                 <div class="grid-row" 
                      [class.completed-row]="task.status === 'COMPLETED'"
                      [class.blocked-task]="isTaskBlocked(task)">
                     <div class="col-check">
                         <label class="custom-checkbox">
-                            <input type="checkbox" [checked]="task.status === 'COMPLETED'"
-                                (change)="toggleTaskStatus(task)">
+                            <input type="checkbox" 
+                                   [checked]="task.status === 'COMPLETED' || selectedTasks().has(task.id)"
+                                   (change)="bulkActionMode() ? toggleTaskSelection(task.id) : toggleTaskStatus(task)">
                             <span class="checkmark"></span>
                         </label>
                     </div>
@@ -372,6 +399,10 @@
                         </button>
                     </div>
                 </div>
+                }
+                @if (virtualScrollEnabled() && filteredTasks().length > 50) {
+                <!-- Virtual Scroll Spacer -->
+                <div [style.height.px]="(filteredTasks().length - visibleTaskRange().end) * itemHeight"></div>
                 }
                 }
             </div>
@@ -639,6 +670,96 @@
                 </div>
             </div>
         </div>
+        } @else if (viewMode() === 'timeline') {
+        <!-- Timeline/Gantt View -->
+        <div class="timeline-view-container">
+            <div class="timeline-header">
+                <div class="timeline-controls">
+                    <button class="timeline-zoom-btn" 
+                            [class.active]="timelineZoom() === 'day'"
+                            (click)="timelineZoom.set('day')">
+                        Day
+                    </button>
+                    <button class="timeline-zoom-btn"
+                            [class.active]="timelineZoom() === 'week'"
+                            (click)="timelineZoom.set('week')">
+                        Week
+                    </button>
+                    <button class="timeline-zoom-btn"
+                            [class.active]="timelineZoom() === 'month'"
+                            (click)="timelineZoom.set('month')">
+                        Month
+                    </button>
+                </div>
+                <div class="timeline-navigation">
+                    <button class="timeline-nav-btn" (click)="navigateTimeline('prev')">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <h2 class="timeline-title">{{ getTimelineTitle() }}</h2>
+                    <button class="timeline-nav-btn" (click)="navigateTimeline('next')">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-sidebar">
+                    <div class="timeline-sidebar-header">
+                        <span>Task</span>
+                        <span>Duration</span>
+                    </div>
+                    <div class="timeline-task-list">
+                        @for (task of getTimelineTasks(); track task.id) {
+                        <div class="timeline-task-row" 
+                             [class.timeline-task-blocked]="isTaskBlocked(task)"
+                             [class.timeline-task-selected]="selectedTasks().has(task.id)">
+                            <div class="timeline-task-info">
+                                <div class="timeline-task-title">{{ task.title }}</div>
+                                <div class="timeline-task-meta">
+                                    @if (task.priority) {
+                                    <span class="timeline-priority" [ngClass]="{
+                                        'p1': task.priority === 'HIGH',
+                                        'p2': task.priority === 'MEDIUM',
+                                        'p3': task.priority === 'LOW'
+                                    }">{{ task.priority }}</span>
+                                    }
+                                    @if (task.estimatedDuration) {
+                                    <span class="timeline-duration">{{ task.estimatedDuration }}h</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                <div class="timeline-chart">
+                    <div class="timeline-chart-header">
+                        @for (date of getTimelineDates(); track $index) {
+                        <div class="timeline-date-cell" [class.timeline-date-today]="isToday(date)">
+                            <div class="timeline-date-day">{{ getDateDay(date) }}</div>
+                            <div class="timeline-date-weekday">{{ getDateWeekday(date) }}</div>
+                        </div>
+                        }
+                    </div>
+                    <div class="timeline-chart-body">
+                        @for (task of getTimelineTasks(); track task.id) {
+                        <div class="timeline-chart-row">
+                            @let bar = getTaskTimelineBar(task);
+                            @if (bar) {
+                            <div class="timeline-bar"
+                                 [style.left.%]="bar.startPercent"
+                                 [style.width.%]="bar.widthPercent"
+                                 [class.timeline-bar-high]="task.priority === 'HIGH'"
+                                 [class.timeline-bar-blocked]="isTaskBlocked(task)"
+                                 [title]="task.title + ' (' + bar.startDate + ' - ' + bar.endDate + ')'">
+                                <div class="timeline-bar-label">{{ task.title }}</div>
+                            </div>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
         }
     </div>
 
@@ -667,6 +788,69 @@
                         {{ day.day }}
                     </span>
                     }
+                </div>
+            </div>
+        </div>
+        
+        <!-- KPIs Compact List -->
+        <div class="kpis-compact-list">
+            <div class="kpi-item" 
+                 role="button" 
+                 tabindex="0"
+                 (click)="onMetricClick('today')" 
+                 aria-label="Show tasks due today">
+                <div class="kpi-icon blue">
+                    <span class="material-symbols-outlined">event_available</span>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Due Today</span>
+                    <span class="kpi-value">{{ todayTasksCount() }}</span>
+                </div>
+            </div>
+
+            <div class="kpi-item" 
+                 role="button" 
+                 tabindex="0"
+                 (click)="onMetricClick('completed')" 
+                 aria-label="Show completed tasks">
+                <div class="kpi-icon green">
+                    <span class="material-symbols-outlined">check_circle</span>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Completed</span>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value">{{ completedTasksCount() }}</span>
+                        <span class="kpi-sub">/ {{ store.tasks().length }}</span>
+                        <span class="kpi-percent">({{ (completedTasksCount() / (store.tasks().length || 1) * 100) | number:'1.0-0' }}%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-item" 
+                 role="button" 
+                 tabindex="0"
+                 (click)="onMetricClick('active')" 
+                 aria-label="Show active tasks">
+                <div class="kpi-icon purple">
+                    <span class="material-symbols-outlined">work_history</span>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Active</span>
+                    <span class="kpi-value">{{ activeTasksCount() }}</span>
+                </div>
+            </div>
+
+            <div class="kpi-item" 
+                 role="button" 
+                 tabindex="0"
+                 (click)="onMetricClick('priority')" 
+                 aria-label="Show high priority tasks">
+                <div class="kpi-icon orange">
+                    <span class="material-symbols-outlined">flag</span>
+                </div>
+                <div class="kpi-content">
+                    <span class="kpi-label">High Priority</span>
+                    <span class="kpi-value">{{ priorityTasksCount() }}</span>
                 </div>
             </div>
         </div>
@@ -910,9 +1094,28 @@
                             <div class="reminder-time-item">
                                 <span class="material-symbols-outlined">schedule</span>
                                 <span class="reminder-time-text">{{ time }}</span>
-                                <button type="button" class="reminder-time-remove" (click)="removeReminderTime($index)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
+                                <div class="reminder-time-actions">
+                                    <button type="button" 
+                                            class="reminder-snooze-btn"
+                                            (click)="showSnoozeOptions.set($index)"
+                                            title="Snooze">
+                                        <span class="material-symbols-outlined">snooze</span>
+                                    </button>
+                                    <button type="button" class="reminder-time-remove" (click)="removeReminderTime($index)">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                                @if (showSnoozeOptions() === $index) {
+                                <div class="snooze-dropdown">
+                                    @for (option of snoozeOptions(); track option.id) {
+                                    <button type="button" 
+                                            class="snooze-option"
+                                            (click)="snoozeReminder($index, option.minutes)">
+                                        {{ option.label }}
+                                    </button>
+                                    }
+                                </div>
+                                }
                             </div>
                             }
                             <div class="reminder-time-input-wrapper">
@@ -1055,6 +1258,69 @@
                                 <option [value]="task.id">{{ task.title }}</option>
                                 }
                             </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Rich Description with Markdown -->
+                    <div class="task-modal-control-group">
+                        <div class="task-modal-description-header">
+                            <label class="task-modal-control-label">Description</label>
+                            <button type="button" 
+                                    class="btn-text btn-sm"
+                                    (click)="showMarkdownPreview.set(!showMarkdownPreview())">
+                                <span class="material-symbols-outlined">{{ showMarkdownPreview() ? 'edit' : 'preview' }}</span>
+                                {{ showMarkdownPreview() ? 'Edit' : 'Preview' }}
+                            </button>
+                        </div>
+                        @if (!showMarkdownPreview()) {
+                        <textarea class="task-modal-description-input"
+                                  placeholder="Add description... (Markdown supported: **bold**, *italic*, `code`, [links](url))"
+                                  [value]="newTaskDescription()"
+                                  (input)="newTaskDescription.set($any($event.target).value)"
+                                  rows="6"></textarea>
+                        } @else {
+                        <div class="task-modal-description-preview" [innerHTML]="renderMarkdown(newTaskDescription())"></div>
+                        }
+                    </div>
+                    
+                    <!-- File Attachments -->
+                    <div class="task-modal-control-group">
+                        <label class="task-modal-control-label">Attachments</label>
+                        <div class="task-modal-attachments">
+                            @if (filesToUpload().length > 0) {
+                            <div class="attachment-list">
+                                @for (file of filesToUpload(); track $index) {
+                                <div class="attachment-item">
+                                    @if (isImageFile(file)) {
+                                    <img [src]="getFilePreview(file)" 
+                                         class="attachment-preview-thumb"
+                                         (click)="previewImage(getFilePreview(file))"
+                                         [alt]="file.name">
+                                    } @else {
+                                    <span class="material-symbols-outlined">attach_file</span>
+                                    }
+                                    <span class="attachment-name">{{ file.name }}</span>
+                                    <span class="attachment-size">({{ formatFileSize(file.size) }})</span>
+                                    <button type="button" class="attachment-remove" (click)="removeFileToUpload($index)">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                                }
+                            </div>
+                            }
+                            <div class="attachment-upload-area"
+                                 (dragover)="$event.preventDefault()"
+                                 (drop)="handleFileDrop($event)">
+                                <input type="file" 
+                                       id="file-upload"
+                                       multiple
+                                       (change)="onFileSelected($event)"
+                                       style="display: none;">
+                                <label for="file-upload" class="attachment-upload-btn">
+                                    <span class="material-symbols-outlined">cloud_upload</span>
+                                    <span>Drop files here or click to upload</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1215,6 +1481,53 @@
                 <span>Submit forms</span>
             </div>
         </div>
+    </div>
+</div>
+}
+
+<!-- Camera Capture Modal -->
+@if (showCameraCapture()) {
+<div class="camera-capture-overlay" (click)="closeCameraCapture()">
+    <div class="camera-capture-modal" (click)="$event.stopPropagation()">
+        <div class="camera-capture-header">
+            <h2>Capture Photo</h2>
+            <button class="camera-capture-close" (click)="closeCameraCapture()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="camera-capture-content">
+            @if (capturedPhoto()) {
+            <div class="captured-photo-preview">
+                <img [src]="capturedPhoto()!" alt="Captured photo" class="captured-photo-img">
+                <div class="captured-photo-actions">
+                    <button class="btn-secondary" (click)="capturedPhoto.set(null)">Retake</button>
+                    <button class="btn-primary" (click)="closeCameraCapture()">Use Photo</button>
+                </div>
+            </div>
+            } @else {
+            <div class="camera-capture-placeholder">
+                <span class="material-symbols-outlined">camera_alt</span>
+                <p>Click the button below to capture a photo</p>
+                <button class="btn-primary" (click)="capturePhoto()">
+                    <span class="material-symbols-outlined">camera</span>
+                    Capture Photo
+                </button>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+}
+
+<!-- Error Toast -->
+@if (showError() && errorMessage()) {
+<div class="error-toast" [class.show]="showError()">
+    <div class="error-toast-content">
+        <span class="material-symbols-outlined error-icon">error</span>
+        <span class="error-message">{{ errorMessage() }}</span>
+        <button class="error-dismiss" (click)="dismissError()">
+            <span class="material-symbols-outlined">close</span>
+        </button>
     </div>
 </div>
 }

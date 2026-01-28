@@ -5,7 +5,7 @@ import { SidebarComponent, SidebarNavItem } from '../layout/sidebar/sidebar.comp
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
-type ViewMode = 'list' | 'thumbnails' | 'kanban' | 'calendar';
+type ViewMode = 'list' | 'thumbnails' | 'kanban' | 'calendar' | 'timeline';
 
 @Component({
   selector: 'app-tasks',
@@ -45,6 +45,70 @@ export class TasksComponent implements OnInit, OnDestroy {
   
   // Keyboard shortcuts help
   showShortcutsHelp = signal<boolean>(false);
+  
+  // Timeline/Gantt view state
+  timelineViewDate = signal<Date>(new Date());
+  timelineZoom = signal<'day' | 'week' | 'month'>('week');
+  
+  // Bulk operations
+  selectedTasks = signal<Set<string>>(new Set());
+  bulkActionMode = signal<boolean>(false);
+  
+  // Undo/Redo
+  actionHistory = signal<Array<{ type: string; task: Task; previousState?: Partial<Task> }>>([]);
+  historyIndex = signal<number>(-1);
+  
+  // Theme
+  theme = signal<'light' | 'dark'>('light');
+  
+  // File upload
+  uploadingFiles = signal<boolean>(false);
+  filesToUpload = signal<File[]>([]);
+  
+  // Markdown preview
+  showMarkdownPreview = signal<boolean>(false);
+  
+  // Loading states
+  isLoading = signal<boolean>(false);
+  
+  // Virtual scrolling
+  virtualScrollEnabled = signal<boolean>(true);
+  visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 50 });
+  itemHeight: number = 60; // Approximate height of each task row
+  
+  // Voice input
+  isListening = signal<boolean>(false);
+  voiceRecognition: any = null;
+  voiceTranscript = signal<string>('');
+  
+  // Photo capture
+  showCameraCapture = signal<boolean>(false);
+  capturedPhoto = signal<string | null>(null);
+  
+  // Error handling
+  errorMessage = signal<string | null>(null);
+  showError = signal<boolean>(false);
+  
+  // Image preview
+  previewingImage = signal<string | null>(null);
+  
+  // Snooze
+  snoozeOptions = signal<Array<{ id: string; label: string; minutes: number }>>([
+    { id: '5min', label: '5 minutes', minutes: 5 },
+    { id: '15min', label: '15 minutes', minutes: 15 },
+    { id: '30min', label: '30 minutes', minutes: 30 },
+    { id: '1hour', label: '1 hour', minutes: 60 },
+    { id: '2hours', label: '2 hours', minutes: 120 },
+    { id: 'tomorrow', label: 'Tomorrow', minutes: 24 * 60 }
+  ]);
+  
+  // Theme customization
+  fontSize = signal<'small' | 'medium' | 'large'>('medium');
+  customColors = signal<{ primary: string; secondary: string } | null>(null);
+  showThemeSettings = signal<boolean>(false);
+  
+  // Snooze
+  showSnoozeOptions = signal<number | null>(null);
 
   // New task modal state
   newTaskModalOpen = signal<boolean>(false);
@@ -228,6 +292,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskDependencies.set([]);
     this.newTaskReminderTimes.set([]);
     this.newReminderTimeInput.set('');
+    this.filesToUpload.set([]);
+    this.showMarkdownPreview.set(false);
     this.newTaskModalOpen.set(true);
   }
 
@@ -283,6 +349,23 @@ export class TasksComponent implements OnInit, OnDestroy {
     const times = this.newTaskReminderTimes();
     this.newTaskReminderTimes.set(times.filter((_, i) => i !== index));
   }
+  
+  snoozeReminder(index: number, minutes: number) {
+    const times = this.newTaskReminderTimes();
+    const currentTime = times[index];
+    
+    // Calculate new reminder time
+    const now = new Date();
+    const snoozeTime = new Date(now.getTime() + minutes * 60 * 1000);
+    const newTime = minutes >= 24 * 60 
+      ? 'Tomorrow, ' + snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      : snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    const updated = [...times];
+    updated[index] = newTime;
+    this.newTaskReminderTimes.set(updated);
+    this.showSnoozeOptions.set(null);
+  }
 
   addNewTaskLabel(label?: string) {
     const raw = (label || this.newTaskLabelInput()).trim();
@@ -330,13 +413,17 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.taskPendingDelete.set(null);
   }
 
-  confirmNewTask() {
+  async confirmNewTask() {
     const title = this.newTaskTitle().trim();
     if (!title) {
+      this.showErrorState('Task title is required');
       return;
     }
     
     const taskId = Date.now().toString();
+    
+    // Optimistic update - show loading state
+    this.isLoading.set(true);
 
     const subtasks: Task[] | undefined = this.newTaskSubtasks().length > 0
       ? this.newTaskSubtasks().map((st, idx) => ({
@@ -367,11 +454,58 @@ export class TasksComponent implements OnInit, OnDestroy {
         interval: 1,
         nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), 1)
       } : undefined,
-      dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined
+      dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined,
+      description: this.newTaskDescription() || undefined
     };
 
-    this.store.addTask(newTask);
-    this.closeNewTaskDialog();
+    try {
+      // Optimistic update
+      this.store.addTask(newTask);
+      
+      // Upload files if any
+      if (this.filesToUpload().length > 0) {
+        await this.uploadFiles(taskId);
+      }
+      
+      this.closeNewTaskDialog();
+      this.isLoading.set(false);
+    } catch (error) {
+      this.isLoading.set(false);
+      this.showErrorState('Failed to create task. Please try again.');
+      // Could implement rollback here if needed
+    }
+  }
+  
+  handleFileDrop(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer?.files) {
+      const files = Array.from(event.dataTransfer.files);
+      this.filesToUpload.set([...this.filesToUpload(), ...files]);
+    }
+  }
+  
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+  
+  isImageFile(file: File): boolean {
+    return file.type.startsWith('image/');
+  }
+  
+  getFilePreview(file: File): string {
+    return URL.createObjectURL(file);
+  }
+  
+  previewImage(url: string) {
+    this.previewingImage.set(url);
+  }
+  
+  closeImagePreview() {
+    this.previewingImage.set(null);
   }
   
   addSubtaskToNew() {
@@ -772,6 +906,24 @@ export class TasksComponent implements OnInit, OnDestroy {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const modKey = isMac ? event.metaKey : event.ctrlKey;
     
+    // Cmd/Ctrl + Z: Undo
+    if (modKey && event.key === 'z' && !event.shiftKey) {
+      event.preventDefault();
+      if (this.canUndo()) {
+        this.undo();
+      }
+      return;
+    }
+    
+    // Cmd/Ctrl + Shift + Z: Redo
+    if (modKey && event.key === 'z' && event.shiftKey) {
+      event.preventDefault();
+      if (this.canRedo()) {
+        this.redo();
+      }
+      return;
+    }
+    
     // Cmd/Ctrl + K: Quick add
     if (modKey && event.key === 'k' && !event.shiftKey) {
       event.preventDefault();
@@ -1030,7 +1182,18 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (task.status === 'COMPLETED') {
       return;
     }
-    this.store.updateTask(task.id, { status: 'COMPLETED' });
+    
+    // Optimistic update
+    const previousState = { status: task.status };
+    this.addToHistory('update', task, previousState);
+    
+    try {
+      this.store.updateTask(task.id, { status: 'COMPLETED' });
+    } catch (error) {
+      // Rollback on error
+      this.store.updateTask(task.id, previousState);
+      this.showErrorState('Failed to complete task. Please try again.');
+    }
   }
 
   /**
@@ -1043,8 +1206,17 @@ export class TasksComponent implements OnInit, OnDestroy {
   confirmDeleteTask() {
     const task = this.taskPendingDelete();
     if (!task) return;
-    this.deleteTask(task);
-    this.cancelDeleteTask();
+    
+    // Optimistic update
+    this.addToHistory('delete', task);
+    
+    try {
+      this.deleteTask(task);
+      this.cancelDeleteTask();
+    } catch (error) {
+      this.showErrorState('Failed to delete task. Please try again.');
+      // Could restore task here if needed
+    }
   }
 
   /**
@@ -1284,20 +1456,126 @@ export class TasksComponent implements OnInit, OnDestroy {
   pomodoroInterval: any = null;
   
   ngOnInit() {
-    // Start Pomodoro timer if active
-    if (this.pomodoroActive()) {
-      this.pomodoroInterval = setInterval(() => {
-        const current = this.pomodoroTime();
-        if (current > 0) {
-          this.pomodoroTime.set(current - 1);
-        } else {
-          this.stopPomodoro();
-          if (this.pomodoroInterval) {
-            clearInterval(this.pomodoroInterval);
-          }
-        }
-      }, 1000);
+    // Initialize theme
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      this.theme.set(savedTheme);
     }
+    document.documentElement.setAttribute('data-theme', this.theme());
+    
+    // Initialize font size
+    const savedFontSize = localStorage.getItem('fontSize') as 'small' | 'medium' | 'large' | null;
+    if (savedFontSize) {
+      this.fontSize.set(savedFontSize);
+    }
+    document.documentElement.setAttribute('data-font-size', this.fontSize());
+    
+    // Initialize voice recognition if available
+    this.initVoiceRecognition();
+  }
+  
+  initVoiceRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      this.voiceRecognition = new SpeechRecognition();
+      this.voiceRecognition.continuous = false;
+      this.voiceRecognition.interimResults = false;
+      this.voiceRecognition.lang = 'en-US';
+      
+      this.voiceRecognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        this.voiceTranscript.set(transcript);
+        if (this.quickAddVisible()) {
+          this.quickAddInput.set(transcript);
+        } else if (this.newTaskModalOpen()) {
+          this.newTaskTitle.set(transcript);
+        }
+        this.isListening.set(false);
+      };
+      
+      this.voiceRecognition.onerror = (event: any) => {
+        this.showErrorState('Voice recognition error: ' + event.error);
+        this.isListening.set(false);
+      };
+      
+      this.voiceRecognition.onend = () => {
+        this.isListening.set(false);
+      };
+    }
+  }
+  
+  startVoiceInput() {
+    if (!this.voiceRecognition) {
+      this.showErrorState('Voice recognition is not supported in your browser');
+      return;
+    }
+    
+    try {
+      this.isListening.set(true);
+      this.voiceTranscript.set('');
+      this.voiceRecognition.start();
+    } catch (error) {
+      this.showErrorState('Failed to start voice recognition');
+      this.isListening.set(false);
+    }
+  }
+  
+  stopVoiceInput() {
+    if (this.voiceRecognition && this.isListening()) {
+      this.voiceRecognition.stop();
+      this.isListening.set(false);
+    }
+  }
+  
+  isVoiceSupported(): boolean {
+    return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+  }
+  
+  // Photo capture
+  openCameraCapture() {
+    this.showCameraCapture.set(true);
+  }
+  
+  closeCameraCapture() {
+    this.showCameraCapture.set(false);
+    this.capturedPhoto.set(null);
+  }
+  
+  capturePhoto() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.capturedPhoto.set(e.target.result);
+          // Add as attachment
+          this.filesToUpload.set([...this.filesToUpload(), file]);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    
+    input.click();
+  }
+  
+  // Error handling
+  showErrorState(message: string) {
+    this.errorMessage.set(message);
+    this.showError.set(true);
+    setTimeout(() => {
+      this.showError.set(false);
+      setTimeout(() => this.errorMessage.set(null), 300);
+    }, 3000);
+  }
+  
+  dismissError() {
+    this.showError.set(false);
+    setTimeout(() => this.errorMessage.set(null), 300);
   }
   
   ngOnDestroy() {
@@ -1363,6 +1641,374 @@ export class TasksComponent implements OnInit, OnDestroy {
     });
     return Array.from(labels).sort();
   });
+  
+  // Timeline/Gantt view methods
+  navigateTimeline(direction: 'prev' | 'next') {
+    const current = this.timelineViewDate();
+    const newDate = new Date(current);
+    const zoom = this.timelineZoom();
+    
+    if (zoom === 'day') {
+      newDate.setDate(current.getDate() + (direction === 'next' ? 1 : -1));
+    } else if (zoom === 'week') {
+      newDate.setDate(current.getDate() + (direction === 'next' ? 7 : -7));
+    } else {
+      newDate.setMonth(current.getMonth() + (direction === 'next' ? 1 : -1));
+    }
+    
+    this.timelineViewDate.set(newDate);
+  }
+  
+  getTimelineTitle(): string {
+    const date = this.timelineViewDate();
+    const zoom = this.timelineZoom();
+    
+    if (zoom === 'day') {
+      return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    } else if (zoom === 'week') {
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+  }
+  
+  getTimelineTasks(): Task[] {
+    return this.filteredTasks().filter(task => {
+      if (!task.due && !task.startDate) return false;
+      const taskDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
+      if (!taskDate) return false;
+      
+      const viewDate = this.timelineViewDate();
+      const zoom = this.timelineZoom();
+      
+      if (zoom === 'day') {
+        return taskDate.toDateString() === viewDate.toDateString();
+      } else if (zoom === 'week') {
+        const weekStart = new Date(viewDate);
+        weekStart.setDate(viewDate.getDate() - viewDate.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        return taskDate >= weekStart && taskDate <= weekEnd;
+      } else {
+        return taskDate.getMonth() === viewDate.getMonth() && taskDate.getFullYear() === viewDate.getFullYear();
+      }
+    });
+  }
+  
+  getTimelineDates(): Date[] {
+    const dates: Date[] = [];
+    const start = new Date(this.timelineViewDate());
+    const zoom = this.timelineZoom();
+    
+    if (zoom === 'day') {
+      dates.push(start);
+    } else if (zoom === 'week') {
+      start.setDate(start.getDate() - start.getDay());
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        dates.push(date);
+      }
+    } else {
+      const firstDay = new Date(start.getFullYear(), start.getMonth(), 1);
+      const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+      for (let d = firstDay.getDate(); d <= lastDay.getDate(); d++) {
+        dates.push(new Date(start.getFullYear(), start.getMonth(), d));
+      }
+    }
+    
+    return dates;
+  }
+  
+  getDateDay(date: Date): string {
+    return date.getDate().toString();
+  }
+  
+  getDateWeekday(date: Date): string {
+    return date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
+  }
+  
+  isToday(date: Date): boolean {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  }
+  
+  getTaskTimelineBar(task: Task): { startPercent: number; widthPercent: number; startDate: string; endDate: string } | null {
+    const startDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
+    if (!startDate) return null;
+    
+    const duration = task.estimatedDuration || 1;
+    const endDate = new Date(startDate);
+    endDate.setHours(endDate.getHours() + duration);
+    
+    const dates = this.getTimelineDates();
+    if (dates.length === 0) return null;
+    
+    const timelineStart = dates[0];
+    const timelineEnd = dates[dates.length - 1];
+    timelineEnd.setHours(23, 59, 59);
+    
+    const totalMs = timelineEnd.getTime() - timelineStart.getTime();
+    const startMs = startDate.getTime() - timelineStart.getTime();
+    const endMs = endDate.getTime() - timelineStart.getTime();
+    
+    const startPercent = Math.max(0, (startMs / totalMs) * 100);
+    const endPercent = Math.min(100, (endMs / totalMs) * 100);
+    const widthPercent = Math.max(2, endPercent - startPercent);
+    
+    return {
+      startPercent,
+      widthPercent,
+      startDate: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      endDate: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+  }
+  
+  parseDateFromString(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    if (dateStr.includes('Today')) {
+      return new Date();
+    }
+    if (dateStr.includes('Tomorrow')) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow;
+    }
+    // Try to parse common date formats
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+  
+  // File attachment methods
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const files = Array.from(input.files);
+      this.filesToUpload.set([...this.filesToUpload(), ...files]);
+    }
+  }
+  
+  removeFileToUpload(index: number) {
+    const files = this.filesToUpload();
+    this.filesToUpload.set(files.filter((_, i) => i !== index));
+  }
+  
+  async uploadFiles(taskId: string): Promise<void> {
+    const files = this.filesToUpload();
+    if (files.length === 0) return;
+    
+    this.uploadingFiles.set(true);
+    
+    // Simulate file upload (in real app, upload to server)
+    const attachments = files.map((file, index) => ({
+      id: `${Date.now()}-${index}`,
+      name: file.name,
+      url: URL.createObjectURL(file), // In real app, this would be server URL
+      type: file.type,
+      size: file.size,
+      uploadedAt: new Date().toISOString()
+    }));
+    
+    const task = this.store.tasks().find(t => t.id === taskId);
+    if (task) {
+      const existingAttachments = task.attachments || [];
+      this.store.updateTask(taskId, {
+        attachments: [...existingAttachments, ...attachments]
+      });
+    }
+    
+    this.filesToUpload.set([]);
+    this.uploadingFiles.set(false);
+  }
+  
+  removeAttachment(taskId: string, attachmentId: string) {
+    const task = this.store.tasks().find(t => t.id === taskId);
+    if (task && task.attachments) {
+      const updated = task.attachments.filter(a => a.id !== attachmentId);
+      this.store.updateTask(taskId, { attachments: updated });
+    }
+  }
+  
+  // Bulk operations
+  toggleTaskSelection(taskId: string) {
+    const selected = new Set(this.selectedTasks());
+    if (selected.has(taskId)) {
+      selected.delete(taskId);
+    } else {
+      selected.add(taskId);
+    }
+    this.selectedTasks.set(selected);
+    this.bulkActionMode.set(selected.size > 0);
+  }
+  
+  selectAllTasks() {
+    const allTaskIds = new Set(this.filteredTasks().map(t => t.id));
+    this.selectedTasks.set(allTaskIds);
+    this.bulkActionMode.set(true);
+  }
+  
+  clearSelection() {
+    this.selectedTasks.set(new Set());
+    this.bulkActionMode.set(false);
+  }
+  
+  bulkCompleteTasks() {
+    const selected = this.selectedTasks();
+    selected.forEach(id => {
+      const task = this.store.tasks().find(t => t.id === id);
+      if (task && task.status !== 'COMPLETED') {
+        this.addToHistory('complete', task);
+        this.store.updateTask(id, { status: 'COMPLETED' });
+      }
+    });
+    this.clearSelection();
+  }
+  
+  bulkDeleteTasks() {
+    const selected = this.selectedTasks();
+    selected.forEach(id => {
+      const task = this.store.tasks().find(t => t.id === id);
+      if (task) {
+        this.addToHistory('delete', task);
+        this.store.deleteTask(id);
+      }
+    });
+    this.clearSelection();
+  }
+  
+  bulkChangePriority(priority: Task['priority']) {
+    const selected = this.selectedTasks();
+    selected.forEach(id => {
+      const task = this.store.tasks().find(t => t.id === id);
+      if (task) {
+        this.addToHistory('update', task, { priority: task.priority });
+        this.store.updateTask(id, { priority });
+      }
+    });
+    this.clearSelection();
+  }
+  
+  // Undo/Redo
+  addToHistory(type: string, task: Task, previousState?: Partial<Task>) {
+    const history = this.actionHistory();
+    const index = this.historyIndex();
+    
+    // Remove any history after current index
+    const newHistory = history.slice(0, index + 1);
+    newHistory.push({ type, task: { ...task }, previousState });
+    
+    this.actionHistory.set(newHistory);
+    this.historyIndex.set(newHistory.length - 1);
+    
+    // Limit history size
+    if (newHistory.length > 50) {
+      this.actionHistory.set(newHistory.slice(-50));
+      this.historyIndex.set(49);
+    }
+  }
+  
+  undo() {
+    const index = this.historyIndex();
+    if (index < 0) return;
+    
+    const history = this.actionHistory();
+    const action = history[index];
+    
+    if (action.type === 'delete') {
+      this.store.addTask(action.task);
+    } else if (action.type === 'complete') {
+      this.store.updateTask(action.task.id, { status: 'ACTIVE' });
+    } else if (action.type === 'update' && action.previousState) {
+      this.store.updateTask(action.task.id, action.previousState);
+    }
+    
+    this.historyIndex.set(index - 1);
+  }
+  
+  redo() {
+    const history = this.actionHistory();
+    const index = this.historyIndex();
+    if (index >= history.length - 1) return;
+    
+    const nextIndex = index + 1;
+    const action = history[nextIndex];
+    
+    if (action.type === 'delete') {
+      this.store.deleteTask(action.task.id);
+    } else if (action.type === 'complete') {
+      this.store.updateTask(action.task.id, { status: 'COMPLETED' });
+    } else if (action.type === 'update') {
+      // Re-apply the update (would need to store the new state)
+    }
+    
+    this.historyIndex.set(nextIndex);
+  }
+  
+  canUndo = computed(() => this.historyIndex() >= 0);
+  canRedo = computed(() => this.historyIndex() < this.actionHistory().length - 1);
+  
+  // Virtual scrolling - visible tasks
+  visibleTasks = computed(() => {
+    const tasks = this.filteredTasks();
+    if (!this.virtualScrollEnabled() || tasks.length <= 50) {
+      return tasks;
+    }
+    const range = this.visibleTaskRange();
+    return tasks.slice(range.start, range.end);
+  });
+  
+  onScroll(event: Event) {
+    const target = event.target as HTMLElement;
+    const scrollTop = target.scrollTop;
+    const containerHeight = target.clientHeight;
+    const scrollHeight = target.scrollHeight;
+    
+    const tasks = this.filteredTasks();
+    if (tasks.length <= 50) return;
+    
+    // Calculate visible range
+    const start = Math.floor(scrollTop / this.itemHeight);
+    const end = Math.min(start + Math.ceil(containerHeight / this.itemHeight) + 10, tasks.length);
+    
+    this.visibleTaskRange.set({ start: Math.max(0, start - 5), end });
+  }
+  
+  // Theme switching
+  toggleTheme() {
+    const current = this.theme();
+    const newTheme = current === 'light' ? 'dark' : 'light';
+    this.theme.set(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  }
+  
+  setFontSize(size: 'small' | 'medium' | 'large') {
+    this.fontSize.set(size);
+    document.documentElement.setAttribute('data-font-size', size);
+    localStorage.setItem('fontSize', size);
+  }
+  
+  // Markdown rendering (simple implementation)
+  renderMarkdown(text: string): string {
+    if (!text) return '';
+    
+    // Basic markdown parsing
+    let html = text
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+      .replace(/`(.*?)`/gim, '<code>$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>')
+      .replace(/\n/gim, '<br>');
+    
+    return html;
+  }
   
   // Task dependencies
   getTaskById(id: string): Task | undefined {

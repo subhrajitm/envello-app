@@ -32,7 +32,20 @@ export interface Task {
   /** Notes/description with markdown support */
   notes?: string;
   /** Attachments */
-  attachments?: string[];
+  attachments?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploadedAt: string;
+  }>;
+  /** Rich notes/description with markdown support */
+  description?: string;
+  /** Task start date for timeline view */
+  startDate?: string;
+  /** Estimated duration in hours */
+  estimatedDuration?: number;
 }
 
 export interface Note {
