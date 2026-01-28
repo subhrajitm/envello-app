@@ -365,7 +365,6 @@ code {
 
 /* Ensure all sidebars have full height */
 [class$="-sidebar"],
-[class*="-sidebar-"],
 [class$="sidebar-left"],
 [class$="sidebar-right"] {
     height: 100%;

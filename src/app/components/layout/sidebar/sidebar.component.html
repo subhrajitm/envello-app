@@ -1,4 +1,8 @@
 <aside class="env-sidebar">
+  <div class="env-sidebar-header">
+    <ng-content select="[env-sidebar-header]"></ng-content>
+  </div>
+
   <nav class="env-sidebar-nav">
     @for (item of items; track item.id) {
     <button type="button" class="env-sidebar-nav-item" [class.active]="activeId === item.id"

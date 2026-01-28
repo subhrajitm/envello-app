@@ -1,16 +1,31 @@
 <div class="tasks-view-minimal">
     <!-- Left sidebar using shared env component -->
-    <env-left-sidebar class="tasks-left-sidebar-wrapper" [title]="'Tasks'"
+    <env-left-sidebar class="tasks-left-sidebar-shell" [title]="'Tasks'"
         [subtitle]="store.tasks().length + ' tasks total'"
         [searchPlaceholder]="'Search views'" [searchQuery]="sidebarSearch()"
         (searchChange)="sidebarSearch.set($event)"
         [items]="sidebarItems()" [activeId]="selectedView()" (activeIdChange)="onSidebarActiveChange($event)"
         [addIcon]="'add'" addTooltip="New task" [showFooter]="true">
 
+        <div env-sidebar-header class="tasks-sidebar-quick-actions">
+            <button type="button"
+                    class="tasks-sidebar-quick-btn"
+                    (click)="setQuickAddMode('do-now'); openNewTaskDialog()">
+                <span class="material-symbols-outlined">play_arrow</span>
+                <span>Do Now</span>
+            </button>
+            <button type="button"
+                    class="tasks-sidebar-quick-btn"
+                    (click)="setQuickAddMode('do-later'); openNewTaskDialog()">
+                <span class="material-symbols-outlined">schedule</span>
+                <span>Do Later</span>
+            </button>
+        </div>
+
         <div env-sidebar-footer class="custom-folders-section">
             <div class="folders-header">
-                <span class="folders-title">FOLDERS</span>
-                <button class="folder-add-btn" (click)="showCreateFolderInSidebar.set(true)" title="Create new folder">
+                <span class="folders-title">PROJECTS / CONTEXT</span>
+                <button class="folder-add-btn" (click)="showCreateFolderInSidebar.set(true)" title="Create new project/context">
                     <span class="material-symbols-outlined">add</span>
                 </button>
             </div>
@@ -19,7 +34,7 @@
             <div class="folder-create-sidebar">
                 <input type="text"
                        class="folder-create-input-sidebar"
-                       placeholder="Folder name..."
+                       placeholder="Project / context name..."
                        [value]="newFolderNameSidebar()"
                        (input)="newFolderNameSidebar.set($any($event.target).value)"
                        (keydown.enter)="createFolderInSidebar()"
@@ -933,7 +948,7 @@
                     </div>
                 </div>
                 <div class="task-modal-control-group task-modal-folder-group">
-                    <label class="task-modal-control-label">List</label>
+                    <label class="task-modal-control-label">Project / Context</label>
                     <div class="task-modal-folder-wrapper">
                         <button type="button" 
                                 class="task-modal-folder-btn"
@@ -961,14 +976,14 @@
                                         class="folder-dropdown-item folder-dropdown-create"
                                         (click)="toggleCreateFolder()">
                                     <span class="material-symbols-outlined">add</span>
-                                    <span>Create new folder</span>
+                                    <span>Create new project/context</span>
                                 </button>
                             </div>
                             } @else {
                             <div class="folder-create-form">
                                 <input type="text"
                                        class="folder-create-input"
-                                       placeholder="Folder name..."
+                                       placeholder="Project / context name..."
                                        [value]="newFolderName()"
                                        (input)="newFolderName.set($any($event.target).value)"
                                        (keydown.enter)="createNewFolder()"
@@ -1097,7 +1112,7 @@
                     </div>
                 </div>
                 <div class="task-modal-control-group task-modal-folder-group">
-                    <label class="task-modal-control-label">List</label>
+                    <label class="task-modal-control-label">Project / Context</label>
                     <div class="task-modal-folder-wrapper">
                         <button type="button" 
                                 class="task-modal-folder-btn"
@@ -1125,14 +1140,14 @@
                                         class="folder-dropdown-item folder-dropdown-create"
                                         (click)="toggleCreateFolder()">
                                     <span class="material-symbols-outlined">add</span>
-                                    <span>Create new folder</span>
+                                    <span>Create new project/context</span>
                                 </button>
                             </div>
                             } @else {
                             <div class="folder-create-form">
                                 <input type="text"
                                        class="folder-create-input"
-                                       placeholder="Folder name..."
+                                       placeholder="Project / context name..."
                                        [value]="newFolderName()"
                                        (input)="newFolderName.set($any($event.target).value)"
                                        (keydown.enter)="createNewFolder()"

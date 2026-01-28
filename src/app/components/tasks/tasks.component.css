@@ -8,9 +8,41 @@
     background: var(--bg-app);
 }
 
-.tasks-left-sidebar-wrapper {
-    /* ensures correct height alignment inside tasks-view-minimal */
-    height: 100%;
+.tasks-left-sidebar-shell {
+    /* sidebar container inside tasks-view-minimal */
+    height: auto;
+}
+
+.tasks-sidebar-quick-actions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.tasks-sidebar-quick-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-app);
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.tasks-sidebar-quick-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.tasks-sidebar-quick-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+    color: var(--text-primary);
 }
 
 /* Main Content Styles - COMPACT ENTERPRISE MODE */
