@@ -258,27 +258,55 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   // Stats
   stats = computed(() => {
     const all = this.meetingsService.meetings();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
     
     const todayMeetings = all.filter(m => {
-      const meetingDate = new Date(m.date);
-      meetingDate.setHours(0, 0, 0, 0);
-      return meetingDate.getTime() === today.getTime() && m.status !== 'cancelled';
+      const d = new Date(m.date);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime() && m.status !== 'cancelled';
+    });
+    
+    const thisWeekMeetings = all.filter(m => {
+      const d = new Date(m.date);
+      d.setHours(0, 0, 0, 0);
+      return d >= today && d < weekEnd && m.status !== 'cancelled';
     });
     
     const totalActionItems = all.reduce((sum, m) => sum + (m.actionItems?.length ?? 0), 0);
     const openActionItems = all.reduce((sum, m) => 
       sum + (m.actionItems?.filter(a => a.status !== 'completed').length ?? 0), 0
     );
+    const actionItemsPct = totalActionItems > 0 
+      ? Math.round(((totalActionItems - openActionItems) / totalActionItems) * 100) 
+      : 0;
     
     return {
       todayCount: todayMeetings.length,
+      thisWeekCount: thisWeekMeetings.length,
       totalActionItems,
       openActionItems,
+      actionItemsPct,
       avgVelocity: '2.4k',
       deadlines: 2,
+      totalScheduled: all.filter(m => m.status === 'scheduled').length,
+      totalCompleted: all.filter(m => m.status === 'completed').length,
     };
+  });
+  
+  /** Meetings grouped by project for sidebar */
+  meetingsByProject = computed(() => {
+    const map = new Map<string, number>();
+    for (const m of this.meetingsService.meetings()) {
+      if (m.status === 'cancelled') continue;
+      const key = m.project || 'No project';
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
   });
   
   // Meetings by status for kanban

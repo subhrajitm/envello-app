@@ -188,29 +188,73 @@
         }
 
         <aside class="sidebar">
-            <div class="sidebar-block">
-                <div class="sidebar-hdr"><span>Upcoming</span><span class="badge">CAL</span></div>
-                <div class="sync-list">
+            <div class="sb-section sb-metrics">
+                <div class="sb-hdr">Overview</div>
+                <div class="sb-metrics-grid">
+                    <div class="sb-metric">
+                        <span class="sb-metric-val" [class.highlight]="stats().todayCount > 0">{{ stats().todayCount }}</span>
+                        <span class="sb-metric-lbl">Today</span>
+                    </div>
+                    <div class="sb-metric">
+                        <span class="sb-metric-val">{{ stats().thisWeekCount }}</span>
+                        <span class="sb-metric-lbl">This week</span>
+                    </div>
+                    <div class="sb-metric">
+                        <span class="sb-metric-val">{{ stats().totalScheduled }}</span>
+                        <span class="sb-metric-lbl">Scheduled</span>
+                    </div>
+                    <div class="sb-metric">
+                        <span class="sb-metric-val">{{ stats().totalCompleted }}</span>
+                        <span class="sb-metric-lbl">Done</span>
+                    </div>
+                </div>
+                <div class="sb-action-bar">
+                    <div class="sb-action-h"><span>Action items</span><span class="sb-action-n">{{ stats().openActionItems }}/{{ stats().totalActionItems }}</span></div>
+                    <div class="sb-progress"><div class="sb-progress-fill" [style.width.%]="stats().actionItemsPct"></div></div>
+                </div>
+            </div>
+            <div class="sb-section sb-upcoming">
+                <div class="sb-hdr">Upcoming <span class="sb-badge">LIVE</span></div>
+                <div class="sb-upcoming-list">
                     @for (sync of upcomingSyncs(); track sync.id) {
-                    <div class="sync-row" [class.today]="meetingsService.isMeetingToday(sync)" (click)="openDetailsModal(sync)">
-                        <span class="sync-dt">{{ getRelativeDate(sync.date) }} {{ formatTime(sync.startTime) }}</span>
-                        <span class="sync-ttl">{{ sync.title }}</span>
-                        @if (sync.meetingLink) { <button type="button" class="sync-join" (click)="joinMeeting(sync, $event); $event.stopPropagation()">Join</button> }
+                    <div class="sb-upcoming-row" [class.today]="meetingsService.isMeetingToday(sync)" (click)="openDetailsModal(sync)">
+                        <div class="sb-upcoming-main">
+                            <span class="sb-upcoming-time">{{ getRelativeDate(sync.date) }} · {{ formatTime(sync.startTime) }}</span>
+                            <span class="sb-upcoming-title">{{ sync.title }}</span>
+                            <div class="sb-upcoming-meta">
+                                @if (sync.duration) { <span class="sb-meta">{{ sync.duration }}m</span> }
+                                @if (sync.project) { <span class="sb-meta">{{ sync.project }}</span> }
+                                @if (sync.platform) { <span class="sb-platform" [title]="sync.platform"><span class="material-symbols-outlined">{{ getPlatformIcon(sync.platform) }}</span></span> }
+                            </div>
+                        </div>
+                        @if (sync.meetingLink) {
+                        <button type="button" class="sb-join" (click)="joinMeeting(sync, $event); $event.stopPropagation()">
+                            <span class="material-symbols-outlined">videocam</span>Join
+                        </button>
+                        }
                     </div>
                     }
-                    @if (upcomingSyncs().length === 0) { <div class="sync-empty"><span class="material-symbols-outlined">event_available</span>None</div> }
+                    @if (upcomingSyncs().length === 0) {
+                    <div class="sb-upcoming-empty"><span class="material-symbols-outlined">event_available</span><span>No upcoming</span></div>
+                    }
                 </div>
             </div>
-            <div class="sidebar-block metrics">
-                <div class="metric-row"><span>Today</span><strong>{{ stats().todayCount }}</strong></div>
-                <div class="metric-row"><span>Deadlines</span><strong>{{ stats().deadlines }}</strong></div>
-                <div class="metric-row wide">
-                    <span>Action Items</span>
-                    <span class="metric-val">{{ stats().openActionItems }}/{{ stats().totalActionItems }}</span>
+            @if (meetingsByProject().length > 0) {
+            <div class="sb-section sb-by-project">
+                <div class="sb-hdr">By project</div>
+                <div class="sb-project-list">
+                    @for (p of meetingsByProject(); track p[0]) {
+                    <div class="sb-project-row" [class.selected]="selectedProject() === p[0]" (click)="selectedProject.set(selectedProject() === p[0] ? '' : p[0]); viewFilter.set('all')">
+                        <span class="sb-project-name">{{ p[0] }}</span>
+                        <span class="sb-project-count">{{ p[1] }}</span>
+                    </div>
+                    }
                 </div>
-                <div class="progress-thin"><div class="progress-fill" [style.width.%]="stats().totalActionItems > 0 ? ((stats().totalActionItems - stats().openActionItems) / stats().totalActionItems * 100) : 0"></div></div>
             </div>
-            <button class="shortcut-hint" (click)="showShortcutsHelp.set(true)"><span class="material-symbols-outlined">keyboard</span>⌘/</button>
+            }
+            <div class="sb-footer">
+                <button type="button" class="sb-shortcut" (click)="showShortcutsHelp.set(true)"><span class="material-symbols-outlined">keyboard</span>⌘/</button>
+            </div>
         </aside>
     </div>
 </div>
