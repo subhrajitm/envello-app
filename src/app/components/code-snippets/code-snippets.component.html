@@ -1,135 +1,293 @@
-<div class="cs-layout">
-
-    <!-- LEFT SIDEBAR: LANGUAGES -->
-    <div class="cs-sidebar-left">
-        <div class="cs-sidebar-header">LANGUAGES</div>
-        <ul class="cs-lang-list">
-            <li class="cs-lang-item" [class.active]="activeLang() === 'Python'" (click)="activeLang.set('Python')">
-                <span class="lang-dot python"></span> Python
-            </li>
-            <li class="cs-lang-item">
-                <span class="lang-dot js"></span> JavaScript
-            </li>
-            <li class="cs-lang-item">
-                <span class="lang-dot md"></span> Markdown
-            </li>
-            <li class="cs-lang-item">
-                <span class="lang-dot sql"></span> SQL
-            </li>
-            <li class="cs-lang-item">
-                <span class="lang-dot ts"></span> TypeScript
-            </li>
-            <li class="cs-lang-item">
-                <span class="lang-dot html"></span> HTML/CSS
-            </li>
-        </ul>
-
-        <div class="cs-sidebar-section mt-auto">
-            <div class="cs-sidebar-header">RECENT TAGS</div>
-            <!-- Mock tags if needed, or collapsed -->
-            <span class="material-symbols-outlined expand-icon">expand_more</span>
-        </div>
-
-        <div class="cs-sidebar-footer">
-            <div class="footer-status-dot"></div>
-            <span class="footer-status-text">SYNC: UP TO DATE</span>
-        </div>
+<div class="snippets-view">
+  <div class="snippets-toolbar">
+    <div class="toolbar-left">
+      <div class="view-tabs">
+        <button type="button" class="view-tab active">All</button>
+      </div>
+      <div class="toolbar-divider"></div>
+      <select class="filter-select" [value]="snippetsService.selectedLang()" (change)="snippetsService.selectedLang.set($any($event.target).value)">
+        <option value="">All languages</option>
+        @for (l of LANGS; track l) { <option [value]="l">{{ l }}</option> }
+      </select>
+      <select class="filter-select" [value]="snippetsService.selectedTag()" (change)="snippetsService.selectedTag.set($any($event.target).value)">
+        <option value="">All tags</option>
+        @for (t of allTags(); track t) { <option [value]="t">{{ t }}</option> }
+      </select>
+      <div class="search-container">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input type="text" class="search-input snippets-search-input" placeholder="Search..." [value]="snippetsService.searchQuery()" (input)="snippetsService.searchQuery.set($any($event.target).value)" />
+        @if (snippetsService.searchQuery()) {
+        <env-icon-button icon="close" variant="ghost" [size]="28" title="Clear" (clicked)="snippetsService.searchQuery.set('')" class="search-clear"></env-icon-button>
+        }
+      </div>
     </div>
-
-    <!-- MIDDLE PANE: SNIPPET LIST -->
-    <div class="cs-list-pane">
-        <div class="cs-pane-header">
-            <div class="cs-header-title">
-                {{ activeLang() }} Snippets <span class="count-badge">24 items</span>
-            </div>
-            <div class="cs-header-controls">
-                <button class="cs-control-btn">Status: All <span
-                        class="material-symbols-outlined icon-xs">expand_more</span></button>
-                <button class="cs-control-btn">Sort: Last Modified</button>
-            </div>
-        </div>
-
-        <div class="cs-table-header">
-            <div class="col-title">TITLE</div>
-            <div class="col-lang">LANG</div>
-            <div class="col-tags">TAGS</div>
-            <div class="col-mod">LAST MODIFIED</div>
-        </div>
-
-        <div class="cs-snippet-list">
-            @for (snip of snippets; track snip.id) {
-            <div class="cs-snippet-row" [class.selected]="selectedSnippetId() === snip.id"
-                (click)="selectedSnippetId.set(snip.id)">
-                <div class="col-title">
-                    <span class="material-symbols-outlined file-icon">code</span>
-                    {{ snip.title }}
-                </div>
-                <div class="col-lang">
-                    <span class="cs-badge">{{ snip.lang }}</span>
-                </div>
-                <div class="col-tags">
-                    @for (t of snip.tags; track t) {
-                    <span class="cs-tag">#{{ t }}</span>
-                    }
-                </div>
-                <div class="col-mod">{{ snip.lastModified }}</div>
-            </div>
-            }
-        </div>
-
-        <div class="cs-list-footer">
-            <span class="material-symbols-outlined icon-xs">code</span> 1,284 SNIPPETS TOTAL
-        </div>
+    <div class="toolbar-right">
+      <select class="sort-select" [value]="snippetsService.sortBy()" (change)="snippetsService.sortBy.set($any($event.target).value)">
+        <option value="title">Title</option>
+        <option value="lastModified">Last modified</option>
+        <option value="lang">Language</option>
+        <option value="path">Path</option>
+      </select>
+      <env-icon-button [icon]="snippetsService.sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward'" variant="ghost" [size]="28" title="Sort" (clicked)="snippetsService.sortDirection.set(snippetsService.sortDirection() === 'asc' ? 'desc' : 'asc')"></env-icon-button>
+      <div class="toolbar-divider"></div>
+      <div class="view-mode-switcher">
+        <env-icon-button icon="view_list" variant="ghost" [size]="28" [active]="snippetsService.viewMode() === 'list'" title="List" (clicked)="snippetsService.viewMode.set('list')"></env-icon-button>
+        <env-icon-button icon="grid_view" variant="ghost" [size]="28" [active]="snippetsService.viewMode() === 'grid'" title="Grid" (clicked)="snippetsService.viewMode.set('grid')"></env-icon-button>
+      </div>
+      <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add snippet</env-button>
     </div>
+  </div>
 
-    <!-- RIGHT PANE: PREVIEW -->
-    <div class="cs-preview-pane">
-        <div class="cs-pane-header preview-header">
-            <div class="cs-header-title">SNIPPET PREVIEW</div>
-            <div class="cs-preview-actions">
-                <button class="cs-action-btn primary"><span
-                        class="material-symbols-outlined icon-xs">content_copy</span> Copy</button>
-                <button class="cs-action-btn"><span
-                        class="material-symbols-outlined icon-xs">open_in_full</span></button>
-                <button class="cs-action-btn"><span class="material-symbols-outlined icon-xs">edit</span></button>
-                <button class="cs-action-btn"><span class="material-symbols-outlined icon-xs">share</span></button>
-            </div>
-        </div>
-
-        <div class="cs-preview-content">
-            <div class="preview-meta">
-                <h2 class="preview-filename">{{ selectedSnippet().filename }}</h2>
-                <div class="preview-path">
-                    <span class="path-text">{{ selectedSnippet().path }}</span>
-                    <span class="meta-sep">•</span>
-                    <span class="creator-text">Created by {{ selectedSnippet().creator }}</span>
+  <div class="snippets-content">
+    @if (snippetsService.viewMode() === 'list') {
+    <div class="snippets-table-container" [class.snippets-table-container--empty]="filteredSnippets().length === 0">
+      @if (filteredSnippets().length === 0) {
+      <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
+        @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add snippet</env-button> }
+      </env-empty-state>
+      } @else {
+      <table class="snippets-table">
+        <thead>
+          <tr>
+            <th class="col-icon"></th>
+            <th class="col-title">Title / Path</th>
+            <th class="col-lang">Lang</th>
+            <th class="col-tags">Tags</th>
+            <th class="col-mod">Modified</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (snip of filteredSnippets(); track snip.id) {
+          <tr class="table-row" (click)="openDetailModal(snip)">
+            <td class="col-icon"><span class="material-symbols-outlined snip-icon" [style.color]="getLangColor(snip.lang)">code</span></td>
+            <td class="col-title">
+              <div class="snip-cell">
+                <span class="snip-title">{{ snip.title }}</span>
+                <span class="snip-path">{{ snip.path }}{{ snip.filename }}</span>
+              </div>
+            </td>
+            <td class="col-lang"><span class="lang-badge" [style.backgroundColor]="getLangColor(snip.lang) + '20'" [style.color]="getLangColor(snip.lang)">{{ snip.lang }}</span></td>
+            <td class="col-tags">
+              @for (t of snip.tags.slice(0, 3); track t) { <span class="tag-pill">#{{ t }}</span> }
+              @if (snip.tags.length > 3) { <span class="tag-more">+{{ snip.tags.length - 3 }}</span> }
+            </td>
+            <td class="col-mod"><span class="mod-text">{{ formatRelative(snip.updatedAt) }}</span></td>
+            <td class="col-actions">
+              <div class="row-actions">
+                <div (click)="$event.stopPropagation(); toggleQuickActions(snip.id, $event)"><env-icon-button icon="more_horiz" variant="ghost" [size]="28" title="More"></env-icon-button></div>
+                @if (showQuickActions() === snip.id) {
+                <div class="quick-dropdown" (click)="$event.stopPropagation()">
+                  <env-button variant="ghost" size="sm" icon="visibility" (clicked)="openDetailModal(snip); showQuickActions.set(null)">View</env-button>
+                  <env-button variant="ghost" size="sm" icon="content_copy" (clicked)="copySnippet(snip)">Copy</env-button>
+                  <env-button variant="danger" size="sm" icon="delete" (clicked)="deleteSnippet(snip); showQuickActions.set(null)">Delete</env-button>
                 </div>
-            </div>
-
-            <div class="code-editor-mock">
-                <div class="line-numbers">
-                    @for (line of getLineNumbers(selectedSnippet().content); track line) {
-                    <div>{{ line }}</div>
-                    }
-                </div>
-                <div class="code-content-wrapper">
-                    <!-- Basic code display without syntax highlighting library -->
-                    <pre><code>{{ selectedSnippet().content }}</code></pre>
-                </div>
-            </div>
-        </div>
-
-        <div class="cs-preview-footer">
-            <div class="assoc-header">ASSOCIATIONS</div>
-            <div class="assoc-chips">
-                <div class="assoc-chip">
-                    <span class="material-symbols-outlined link-icon">link</span>
-                    core-auth-lib
-                </div>
-            </div>
-            <div class="snippet-version-info">
-                V5.1.0-SNIPPET-HUB <span class="sep">|</span> Python 3.11
-            </div>
-        </div>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      }
     </div>
+    }
+
+    @if (snippetsService.viewMode() === 'grid') {
+    <div class="snippets-grid-container" [class.snippets-grid-container--empty]="filteredSnippets().length === 0">
+      @if (filteredSnippets().length === 0) {
+      <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
+        @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add snippet</env-button> }
+      </env-empty-state>
+      } @else {
+      <div class="snippets-grid">
+        @for (snip of filteredSnippets(); track snip.id) {
+        <div class="grid-card" (click)="openDetailModal(snip)">
+          <div class="card-icon" [style.color]="getLangColor(snip.lang)"><span class="material-symbols-outlined">code</span></div>
+          <div class="card-title">{{ snip.title }}</div>
+          <div class="card-path">{{ snip.path }}</div>
+          <div class="card-meta">
+            <span class="lang-badge" [style.backgroundColor]="getLangColor(snip.lang) + '20'" [style.color]="getLangColor(snip.lang)">{{ snip.lang }}</span>
+            @for (t of snip.tags.slice(0, 2); track t) { <span class="tag-pill">#{{ t }}</span> }
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    <aside class="snippets-sidebar">
+      <div class="sb-section sb-metrics">
+        <div class="sb-hdr">Overview</div>
+        <div class="sb-metrics-grid">
+          <div class="sb-metric"><span class="sb-metric-val">{{ stats().total }}</span><span class="sb-metric-lbl">Total</span></div>
+        </div>
+      </div>
+      @if (snippetsByLang().length > 0) {
+      <div class="sb-section sb-by-lang">
+        <div class="sb-hdr">By language</div>
+        <div class="sb-lang-list">
+          @for (entry of snippetsByLang(); track entry[0]) {
+          <div class="sb-lang-row" (click)="snippetsService.selectedLang.set(snippetsService.selectedLang() === entry[0] ? '' : entry[0])" [class.selected]="snippetsService.selectedLang() === entry[0]">
+            <span class="sb-lang-dot" [style.backgroundColor]="getLangColor(entry[0])"></span>
+            <span class="sb-lang-name">{{ entry[0] }}</span>
+            <span class="sb-lang-count">{{ entry[1] }}</span>
+          </div>
+          }
+        </div>
+      </div>
+      }
+      @if (allTags().length > 0) {
+      <div class="sb-section sb-tags">
+        <div class="sb-hdr">Tags</div>
+        <div class="sb-tag-list">
+          @for (t of allTags(); track t) {
+          <button type="button" class="sb-tag-chip" [class.selected]="snippetsService.selectedTag() === t" (click)="snippetsService.selectedTag.set(snippetsService.selectedTag() === t ? '' : t)">#{{ t }}</button>
+          }
+        </div>
+      </div>
+      }
+      <div class="sb-footer">
+        <button type="button" class="sb-shortcut" (click)="openShortcutsHelp()"><span class="material-symbols-outlined">keyboard</span>⌘/</button>
+      </div>
+    </aside>
+  </div>
 </div>
+
+<!-- Add snippet modal -->
+@if (showAddModal()) {
+<env-modal [isOpen]="showAddModal()" (closed)="closeAddModal()" title="Add snippet" size="large">
+  <div body>
+    <div class="add-snippet-form">
+      <div class="form-row">
+        <div class="form-group flex-2">
+          <label class="form-label">Title *</label>
+          <input type="text" class="form-input" placeholder="e.g. api-client.ts" [value]="newSnippet().title" (input)="updateNewSnippet('title', $any($event.target).value)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Language</label>
+          <select class="form-select" [value]="newSnippet().lang" (change)="updateNewSnippet('lang', $any($event.target).value)">
+            @for (l of LANGS; track l) { <option [value]="l">{{ l }}</option> }
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group flex-2">
+          <label class="form-label">Path</label>
+          <input type="text" class="form-input" placeholder="/lib/" [value]="newSnippet().path" (input)="updateNewSnippet('path', $any($event.target).value)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Filename</label>
+          <input type="text" class="form-input" placeholder="optional" [value]="newSnippet().filename" (input)="updateNewSnippet('filename', $any($event.target).value)" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags</label>
+        <div class="tags-input-row">
+          <input type="text" class="form-input" placeholder="Add tag (e.g. API) and press Enter" [value]="newTagInput()" (input)="newTagInput.set($any($event.target).value)" (keyup.enter)="addTagToNew()" />
+          <env-icon-button icon="add" variant="ghost" [size]="28" title="Add tag" (clicked)="addTagToNew()"></env-icon-button>
+        </div>
+        @if ((newSnippet().tags ?? []).length > 0) {
+        <div class="tags-chips">
+          @for (t of newSnippet().tags; track t) {
+          <span class="tag-chip">{{ t }} <button type="button" class="tag-remove" (click)="removeTagFromNew(t)"><span class="material-symbols-outlined">close</span></button></span>
+          }
+        </div>
+        }
+      </div>
+      <div class="form-group">
+        <label class="form-label">Code</label>
+        <textarea class="form-textarea code-textarea" placeholder="Paste or type code..." rows="10" [value]="newSnippet().content" (input)="updateNewSnippet('content', $any($event.target).value)"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Creator</label>
+        <input type="text" class="form-input" placeholder="@me" [value]="newSnippet().creator" (input)="updateNewSnippet('creator', $any($event.target).value)" />
+      </div>
+    </div>
+  </div>
+  <div footer>
+    <env-button variant="secondary" (clicked)="closeAddModal()">Cancel</env-button>
+    <env-button variant="primary" (clicked)="addSnippet()" [disabled]="!newSnippet().title?.trim()">Add snippet</env-button>
+  </div>
+</env-modal>
+}
+
+<!-- Detail modal -->
+@if (showDetailModal() && selectedSnippet()) {
+<env-modal [isOpen]="showDetailModal()" (closed)="closeDetailModal()" [title]="''" size="large">
+  <div header class="details-header-wrap">
+    <div class="details-header">
+      <div class="detail-color-bar" [style.backgroundColor]="getLangColor(selectedSnippet()!.lang)"></div>
+      <div class="details-title-section">
+        @if (editingSnippet()) {
+        <input type="text" class="details-title-input" [value]="editedSnippet().title" (input)="updateEditedSnippet('title', $any($event.target).value)" />
+        } @else {
+        <h2 class="details-title">{{ selectedSnippet()!.title }}</h2>
+        }
+        <div class="details-meta">{{ selectedSnippet()!.path }}{{ selectedSnippet()!.filename }} · {{ selectedSnippet()!.creator }}</div>
+      </div>
+    </div>
+  </div>
+  <div body>
+  <div class="detail-body">
+    @if (editingSnippet()) {
+    <div class="detail-section">
+      <label class="detail-label">Language</label>
+      <select class="form-select" [value]="editedSnippet().lang" (change)="updateEditedSnippet('lang', $any($event.target).value)">
+        @for (l of LANGS; track l) { <option [value]="l">{{ l }}</option> }
+      </select>
+    </div>
+    <div class="detail-section">
+      <label class="detail-label">Path</label>
+      <input type="text" class="form-input" [value]="editedSnippet().path" (input)="updateEditedSnippet('path', $any($event.target).value)" />
+    </div>
+    <div class="detail-section">
+      <label class="detail-label">Filename</label>
+      <input type="text" class="form-input" [value]="editedSnippet().filename" (input)="updateEditedSnippet('filename', $any($event.target).value)" />
+    </div>
+    <div class="detail-section">
+      <label class="detail-label">Code</label>
+      <textarea class="form-textarea code-textarea" rows="12" [value]="editedSnippet().content" (input)="updateEditedSnippet('content', $any($event.target).value)"></textarea>
+    </div>
+    } @else {
+    <div class="detail-section code-preview-section">
+      <div class="code-editor-mock">
+        <div class="line-numbers">
+          @for (line of getLineNumbers(selectedSnippet()!.content); track line) { <div>{{ line }}</div> }
+        </div>
+        <pre class="code-content"><code>{{ selectedSnippet()!.content || ' ' }}</code></pre>
+      </div>
+    </div>
+    }
+  </div>
+  </div>
+  <div footer class="details-footer">
+    @if (editingSnippet()) {
+    <env-button variant="secondary" size="sm" (clicked)="cancelEditing()">Cancel</env-button>
+    <env-button variant="primary" size="sm" (clicked)="saveEditing()">Save</env-button>
+    } @else {
+    <env-button variant="secondary" icon="content_copy" size="sm" (clicked)="copySnippet(selectedSnippet()!)">Copy</env-button>
+    <env-button variant="secondary" icon="edit" size="sm" (clicked)="startEditing()">Edit</env-button>
+    <env-button variant="danger" icon="delete" size="sm" (clicked)="deleteSnippet(selectedSnippet()!)">Delete</env-button>
+    }
+  </div>
+</env-modal>
+}
+
+<!-- Shortcuts help -->
+@if (showShortcutsHelp()) {
+<env-modal [isOpen]="showShortcutsHelp()" (closed)="closeShortcutsHelp()" title="Keyboard shortcuts" size="sm">
+  <div body>
+  <div class="shortcuts-content">
+    <div class="shortcuts-group">
+      <h4>Actions</h4>
+      <div class="shortcut-item"><span class="shortcut-desc">Add snippet</span><kbd>⌘</kbd> + <kbd>N</kbd></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Search</span><kbd>⌘</kbd> + <kbd>K</kbd></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Close</span><kbd>Esc</kbd></div>
+      <div class="shortcut-item"><span class="shortcut-desc">Shortcuts</span><kbd>⌘</kbd> + <kbd>/</kbd></div>
+    </div>
+  </div>
+  </div>
+</env-modal>
+}
