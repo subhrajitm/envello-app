@@ -95,6 +95,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Photo capture
   showCameraCapture = signal<boolean>(false);
   capturedPhoto = signal<string | null>(null);
+
+  // Toolbar attachments dropdown
+  showAttachmentsMenu = signal<boolean>(false);
   
   // Error handling
   errorMessage = signal<string | null>(null);

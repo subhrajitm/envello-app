@@ -3317,6 +3317,63 @@
     margin-left: auto;
 }
 
+/* Attachments toolbar dropdown */
+.attachments-toolbar-wrapper {
+    position: relative;
+}
+
+.attachments-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.attachments-toggle .material-symbols-outlined.caret {
+    font-size: 16px;
+}
+
+.attachments-menu {
+    position: absolute;
+    right: 0;
+    top: 110%;
+    min-width: 180px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 4px 0;
+    z-index: 1200;
+}
+
+.attachments-menu-item {
+    width: 100%;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+}
+
+.attachments-menu-item .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--text-tertiary);
+}
+
+.attachments-menu-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.attachments-menu-item:hover .material-symbols-outlined {
+    color: var(--accent-primary);
+}
+
 /* File Attachments */
 .task-modal-attachments {
     display: flex;

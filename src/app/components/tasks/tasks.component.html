@@ -119,12 +119,38 @@
                     <span class="material-symbols-outlined">{{ isListening() ? 'mic' : 'mic_none' }}</span>
                 </button>
                 }
-                <button class="btn-icon-only" 
-                        (click)="openCameraCapture()"
-                        title="Capture photo"
-                        aria-label="Capture photo">
-                    <span class="material-symbols-outlined">camera_alt</span>
-                </button>
+                <div class="attachments-toolbar-wrapper" (click)="$event.stopPropagation()">
+                    <button class="btn-icon-only attachments-toggle"
+                            (click)="showAttachmentsMenu.set(!showAttachmentsMenu())"
+                            title="Add attachments"
+                            aria-label="Add attachments"
+                            aria-haspopup="true"
+                            [attr.aria-expanded]="showAttachmentsMenu()">
+                        <span class="material-symbols-outlined">attach_file</span>
+                        <span class="material-symbols-outlined caret">expand_more</span>
+                    </button>
+                    @if (showAttachmentsMenu()) {
+                    <div class="attachments-menu">
+                        <button type="button"
+                                class="attachments-menu-item"
+                                (click)="toolbarFileInput.click(); showAttachmentsMenu.set(false)">
+                            <span class="material-symbols-outlined">description</span>
+                            <span>Attach files</span>
+                        </button>
+                        <button type="button"
+                                class="attachments-menu-item"
+                                (click)="openCameraCapture(); showAttachmentsMenu.set(false)">
+                            <span class="material-symbols-outlined">photo_camera</span>
+                            <span>Capture image</span>
+                        </button>
+                        <input #toolbarFileInput
+                               type="file"
+                               multiple
+                               class="sr-only"
+                               (change)="onFileSelected($event)">
+                    </div>
+                    }
+                </div>
                 <button class="btn-primary" (click)="openNewTaskDialog()" aria-label="Create new task">
                     <span class="material-symbols-outlined">add</span>
                     New Task
