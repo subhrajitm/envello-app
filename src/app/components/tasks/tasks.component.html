@@ -110,13 +110,6 @@
                         (input)="sidebarSearch.set($any($event.target).value)"
                         placeholder="Search tasks, people, tags...">
                 </div>
-                <button class="btn-secondary" 
-                        (click)="quickAddVisible.set(true)"
-                        title="Quick add (⌘K)"
-                        aria-label="Quick add task">
-                    <span class="material-symbols-outlined">add</span>
-                    <span class="btn-label">Quick Add</span>
-                </button>
                 @if (isVoiceSupported()) {
                 <button class="btn-icon-only" 
                         [class.recording]="isListening()"

@@ -1940,7 +1940,9 @@
 .quick-add-bar-inline {
     margin-top: 0;
     border-radius: 0 0 8px 8px;
+    border: none;
     border-top: 1px solid var(--border-subtle);
+    box-shadow: none;
 }
 
 .quick-add-input-wrapper {
@@ -1963,6 +1965,12 @@
     font-size: 14px;
     color: var(--text-primary);
     padding: 4px 0;
+}
+
+.quick-add-input:focus {
+    outline: none;
+    border: none;
+    box-shadow: none;
 }
 
 .quick-add-input::placeholder {
