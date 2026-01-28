@@ -12,12 +12,12 @@ import {
   MeetingViewFilter,
   MeetingViewMode
 } from '../../services/meetings.service';
-import { ModalComponent } from '../../shared/ui/modal/modal.component';
+import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -145,18 +145,44 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     }
     
     // Apply project filter
-    if (this.selectedProject()) {
-      meetings = meetings.filter(m => m.project === this.selectedProject());
+    const proj = this.selectedProject();
+    if (proj) {
+      meetings = meetings.filter(m =>
+        proj === 'No project' ? !m.project : m.project === proj
+      );
+    }
+    
+    // Apply time range filter (All Time | 7d | 30d | Quarter)
+    const range = this.selectedTimeRange();
+    if (range && range !== 'All Time') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      let days = 0;
+      if (range === '7d') days = 7;
+      else if (range === '30d') days = 30;
+      else if (range === 'Quarter') days = 90;
+      if (days > 0) {
+        const min = new Date(today);
+        min.setDate(min.getDate() - days);
+        const max = new Date(today);
+        max.setDate(max.getDate() + days);
+        meetings = meetings.filter(m => {
+          const d = new Date(m.date);
+          d.setHours(0, 0, 0, 0);
+          return d >= min && d <= max;
+        });
+      }
     }
     
     // Apply search
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
-      meetings = meetings.filter(m => 
+      meetings = meetings.filter(m =>
         m.title.toLowerCase().includes(query) ||
         m.description?.toLowerCase().includes(query) ||
         m.project?.toLowerCase().includes(query) ||
-        m.attendees.some(a => a.name.toLowerCase().includes(query))
+        m.attendees.some(a => a.name.toLowerCase().includes(query)) ||
+        (m.labels ?? []).some(l => l.toLowerCase().includes(query))
       );
     }
     
@@ -308,6 +334,9 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
   });
+
+  /** Whether any meetings have no project (for filter dropdown) */
+  hasNoProject = computed(() => this.meetingsByProject().some((p) => p[0] === 'No project'));
   
   // Meetings by status for kanban
   meetingsByStatus = computed(() => {
@@ -329,12 +358,20 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   }
   
   // Keyboard shortcuts
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.showQuickActions()) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.row-actions')) this.showQuickActions.set(null);
+    }
+  }
+
   @HostListener('document:keydown', ['$event'])
   handleKeyboardShortcuts(event: KeyboardEvent) {
     const target = event.target as HTMLElement;
     const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
     
-    // Escape to close modals
+    // Escape to close modals, shortcuts help, or quick dropdown
     if (event.key === 'Escape') {
       if (this.showCreateModal()) {
         this.closeCreateModal();
@@ -344,6 +381,9 @@ export class MeetingsComponent implements OnInit, OnDestroy {
         event.preventDefault();
       } else if (this.showShortcutsHelp()) {
         this.showShortcutsHelp.set(false);
+        event.preventDefault();
+      } else if (this.showQuickActions()) {
+        this.showQuickActions.set(null);
         event.preventDefault();
       }
       return;
@@ -416,6 +456,9 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     this.showCreateModal.set(false);
     this.showRecurringOptions.set(false);
   }
+
+  openShortcutsHelp() { this.showShortcutsHelp.set(true); }
+  closeShortcutsHelp() { this.showShortcutsHelp.set(false); }
   
   createMeeting() {
     const meeting = this.newMeeting();
@@ -880,8 +923,8 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     }
   }
   
-  joinMeeting(meeting: Meeting, event: Event) {
-    event.stopPropagation();
+  joinMeeting(meeting: Meeting, event?: Event) {
+    if (event) event.stopPropagation();
     if (meeting.meetingLink) {
       window.open(meeting.meetingLink, '_blank');
     }

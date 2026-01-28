@@ -119,88 +119,14 @@
 .search-input:focus { outline: none; border-color: var(--border-highlight); }
 .search-input::placeholder { color: var(--text-tertiary); }
 
-.search-clear {
+.search-container .search-clear {
   position: absolute;
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
-
-.search-clear:hover { color: var(--text-secondary); }
-.search-clear .material-symbols-outlined { font-size: 14px; }
 
 .view-mode-switcher { display: flex; gap: 4px; margin-right: 8px; padding-right: 8px; border-right: 1px solid var(--border-subtle); }
-
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
-  color: var(--text-secondary);
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  transition: all 0.15s;
-}
-
-.icon-btn:hover { border-color: var(--border-highlight); color: var(--text-primary); background: var(--bg-hover); }
-.icon-btn.active { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-highlight); }
-.icon-btn .material-symbols-outlined { font-size: 16px; }
-.icon-btn.sm { width: 26px; height: 26px; }
-.icon-btn.sm .material-symbols-outlined { font-size: 16px; }
-
-.btn-primary {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 8px;
-  height: 26px;
-  background: var(--accent-primary);
-  color: #000;
-  border: none;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-
-.btn-primary:hover { filter: brightness(1.05); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary .material-symbols-outlined { font-size: 14px; }
-.btn-primary.sm { padding: 4px 10px; font-size: 10px; height: 26px; }
-
-.btn-text {
-  padding: 4px 10px;
-  height: 26px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-
-.btn-text:hover { background: var(--bg-hover); border-color: var(--border-highlight); color: var(--text-primary); }
 
 /* Content */
 .meetings-content {
@@ -209,20 +135,11 @@
   overflow: hidden;
 }
 
-/* Empty state */
-.empty-state {
-  flex: 1;
+/* Empty state: use env-empty-state; container flex when empty */
+.meetings-table-container--empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  color: var(--text-tertiary);
 }
-
-.empty-state .material-symbols-outlined { font-size: 48px; }
-.empty-state p { margin: 0; font-size: 11px; }
 
 /* Table — same padding/gap as novels */
 .meetings-table-container {
@@ -398,27 +315,12 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.quick-dropdown button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* quick-dropdown uses env-button; full-width, left-aligned */
+:host ::ng-deep .quick-dropdown .env-btn {
   width: 100%;
-  padding: 6px 10px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 11px;
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.12s;
+  justify-content: flex-start;
+  min-width: 0;
 }
-
-.quick-dropdown button:hover { background: var(--bg-hover); }
-.quick-dropdown button.danger { color: #ef4444; }
-.quick-dropdown button.danger:hover { background: rgba(239,68,68,.1); }
-.quick-dropdown .material-symbols-outlined { font-size: 16px; }
 
 /* Calendar — novels-style spacing */
 .calendar-view {
@@ -585,7 +487,7 @@
 
 /* Sidebar — compact, informative, enterprise */
 .sidebar {
-  width: 260px;
+  width: 300px;
   flex-shrink: 0;
   background: var(--bg-panel);
   display: flex;
@@ -747,25 +649,7 @@
   color: var(--text-tertiary);
 }
 .sb-platform .material-symbols-outlined { font-size: 12px; }
-.sb-join {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--accent-primary);
-  color: #000;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: filter 0.12s;
-}
-.sb-join:hover { filter: brightness(1.08); }
-.sb-join .material-symbols-outlined { font-size: 12px; }
+.sb-join-wrap { flex-shrink: 0; }
 .sb-upcoming-empty {
   display: flex;
   align-items: center;
@@ -886,26 +770,9 @@
 .color-option.selected { border-color: var(--text-primary); }
 .color-option .material-symbols-outlined { font-size: 14px; color: #fff; }
 
-.attendees-input-container, .agenda-input-container, .labels-input-container { display: flex; gap: 8px; }
+.attendees-input-container, .agenda-input-container, .labels-input-container { display: flex; gap: 8px; align-items: center; }
 .attendees-input-container .form-input, .agenda-input-container .form-input, .labels-input-container .form-input { flex: 1; }
-
-.add-btn {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-primary);
-  color: #000;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0,0,0,.08);
-}
-.add-btn:hover:not(:disabled) { filter: brightness(1.05); }
-.add-btn:disabled { opacity: .5; cursor: not-allowed; }
-.add-btn .material-symbols-outlined { font-size: 16px; }
+.attendees-input-container env-icon-button, .agenda-input-container env-icon-button, .labels-input-container env-icon-button { flex-shrink: 0; }
 
 .attendees-chips, .labels-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .attendee-chip, .label-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg-hover); border: 1px solid var(--border-highlight); border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.3px; }
@@ -922,12 +789,7 @@
 
 .recurring-options { padding: 12px 16px; background: var(--bg-hover); border-radius: 4px; }
 
-.form-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
-
-.btn { padding: 6px 12px; height: 28px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; }
-.btn-secondary { background: var(--bg-panel); border: 1px solid var(--border-subtle); color: var(--text-secondary); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-.btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-highlight); }
-.btn-sm { padding: 4px 10px; font-size: 10px; height: 26px; }
+/* Modal footers and actions use env-button */
 
 /* Meeting details modal — novels-style spacing */
 .meeting-details { display: flex; flex-direction: column; max-height: 65vh; }
@@ -943,11 +805,6 @@
 .status-indicator { width: 6px; height: 6px; border-radius: 50%; }
 
 .details-header-actions { display: flex; gap: 8px; }
-.action-btn { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; height: 26px; background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-secondary); font-size: 10px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-.action-btn:hover { background: var(--bg-hover); border-color: var(--border-highlight); }
-.action-btn.primary { background: var(--accent-primary); color: #000; border-color: var(--accent-primary); }
-.action-btn.join { background: var(--accent-primary-dim); border-color: transparent; color: var(--accent-primary); }
-.action-btn .material-symbols-outlined { font-size: 14px; }
 
 .details-tabs { display: flex; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--border-subtle); }
 .details-tab { padding: 6px 12px; height: 28px; border: 1px solid transparent; background: transparent; color: var(--text-tertiary); font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 6px; }
@@ -991,18 +848,13 @@
 .label-tag { padding: 2px 8px; background: var(--bg-hover); border: 1px solid var(--border-highlight); border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.3px; }
 
 .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border-subtle); }
-.detail-action-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; height: 28px; background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-secondary); font-size: 11px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-.detail-action-btn:hover { background: var(--bg-hover); border-color: var(--border-highlight); }
-.detail-action-btn.danger { color: #ef4444; }
-.detail-action-btn.danger:hover { background: rgba(239,68,68,.1); }
-.detail-action-btn .material-symbols-outlined { font-size: 16px; }
 
 /* Agenda / Notes / Action items tabs — novels-style spacing */
 .agenda-content, .notes-content, .action-items-content { display: flex; flex-direction: column; gap: 12px; }
 .add-agenda-form, .add-action-item-form { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
 .add-agenda-form .form-input, .add-action-item-form .form-input, .add-action-item-form .form-select { flex: 1; min-width: 100px; }
 .add-note-form { display: flex; flex-direction: column; gap: 8px; }
-.add-note-form .btn { align-self: flex-end; }
+.add-note-form env-button { align-self: flex-end; }
 
 .agenda-items-list, .action-items-list { display: flex; flex-direction: column; gap: 8px; }
 .agenda-list-item, .action-list-item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 16px; background: var(--bg-hover); border-radius: 4px; border: 1px solid var(--border-subtle); }
