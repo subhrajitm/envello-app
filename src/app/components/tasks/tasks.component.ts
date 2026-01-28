@@ -912,9 +912,17 @@ export class TasksComponent implements OnInit, OnDestroy {
   
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+
+    // Close attachments menu if clicking outside
+    if (this.showAttachmentsMenu()) {
+      if (!target.closest('.attachments-toolbar-wrapper')) {
+        this.showAttachmentsMenu.set(false);
+      }
+    }
+
     // Close date picker if clicking outside
     if (this.showDatePicker()) {
-      const target = event.target as HTMLElement;
       if (!target.closest('.task-modal-date-picker') && 
           !target.closest('.task-modal-control-btn')) {
         this.showDatePicker.set(false);
@@ -924,7 +932,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     
     // Close folder dropdown if clicking outside
     if (this.showFolderDropdown()) {
-      const target = event.target as HTMLElement;
       if (!target.closest('.task-modal-folder-dropdown') && 
           !target.closest('.task-modal-folder-btn')) {
         this.showFolderDropdown.set(false);

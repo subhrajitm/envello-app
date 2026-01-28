@@ -256,7 +256,7 @@
 .kpis-compact-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0;
 }
 
 .kpi-item {
@@ -267,10 +267,6 @@
     cursor: pointer;
     transition: all 0.15s;
     border-bottom: 1px solid var(--border-subtle);
-}
-
-.kpi-item:last-child {
-    border-bottom: none;
 }
 
 .kpi-item:hover {
@@ -1167,7 +1163,7 @@
 .task-modal-controls-row {
     display: flex;
     gap: 10px;
-    align-items: flex-end;
+    align-items: stretch;
 }
 
 .task-modal-control-group {
@@ -1199,6 +1195,7 @@
     transition: all 0.15s ease;
     width: 100%;
     justify-content: flex-start;
+    min-height: 34px;
 }
 
 .task-modal-control-btn .material-symbols-outlined {
@@ -1234,6 +1231,10 @@
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: center;
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .priority-option:hover {
