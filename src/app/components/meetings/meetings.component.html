@@ -1,94 +1,44 @@
 <div class="meetings-view">
-    <!-- Header with filters and actions -->
-    <div class="meetings-header">
-        <div class="header-left">
-            <!-- View filter tabs -->
+    <!-- Compact toolbar: views, filters, search, actions -->
+    <div class="meetings-toolbar">
+        <div class="toolbar-left">
             <div class="view-tabs">
-                <button class="view-tab" [class.active]="viewFilter() === 'all'" (click)="viewFilter.set('all')">
-                    All
-                </button>
-                <button class="view-tab" [class.active]="viewFilter() === 'today'" (click)="viewFilter.set('today')">
-                    Today
-                    @if (stats().todayCount > 0) {
-                    <span class="tab-badge">{{ stats().todayCount }}</span>
-                    }
-                </button>
-                <button class="view-tab" [class.active]="viewFilter() === 'upcoming'" (click)="viewFilter.set('upcoming')">
-                    Upcoming
-                </button>
-                <button class="view-tab" [class.active]="viewFilter() === 'past'" (click)="viewFilter.set('past')">
-                    Past
-                </button>
+                <button class="view-tab" [class.active]="viewFilter() === 'all'" (click)="viewFilter.set('all')">All</button>
+                <button class="view-tab" [class.active]="viewFilter() === 'today'" (click)="viewFilter.set('today')">Today @if (stats().todayCount > 0) {<span class="tab-badge">{{ stats().todayCount }}</span>}</button>
+                <button class="view-tab" [class.active]="viewFilter() === 'upcoming'" (click)="viewFilter.set('upcoming')">Upcoming</button>
+                <button class="view-tab" [class.active]="viewFilter() === 'past'" (click)="viewFilter.set('past')">Past</button>
             </div>
-        </div>
-
-        <div class="header-right">
-            <!-- Search -->
+            <div class="toolbar-divider"></div>
+            <select class="filter-select" [value]="selectedProject()" (change)="selectedProject.set($any($event.target).value)">
+                <option value="">All Projects</option>
+                @for (project of availableProjects(); track project) { <option [value]="project">{{ project }}</option> }
+            </select>
+            <select class="filter-select" [value]="selectedTimeRange()" (change)="selectedTimeRange.set($any($event.target).value)">
+                <option>All Time</option>
+                <option>7d</option>
+                <option>30d</option>
+                <option>Quarter</option>
+            </select>
             <div class="search-container">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" class="search-input" placeholder="Search meetings..." [value]="searchQuery()"
-                    (input)="searchQuery.set($any($event.target).value)" />
-                @if (searchQuery()) {
-                <button class="search-clear" (click)="searchQuery.set('')">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-                }
+                <input type="text" class="search-input" placeholder="Search..." [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+                @if (searchQuery()) { <button class="search-clear" (click)="searchQuery.set('')"><span class="material-symbols-outlined">close</span></button> }
             </div>
-
-            <!-- View mode switcher -->
-            <div class="view-mode-switcher">
-                <button class="view-mode-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')"
-                    title="List View">
-                    <span class="material-symbols-outlined">view_list</span>
-                </button>
-                <button class="view-mode-btn" [class.active]="viewMode() === 'calendar'"
-                    (click)="viewMode.set('calendar')" title="Calendar View">
-                    <span class="material-symbols-outlined">calendar_month</span>
-                </button>
-                <button class="view-mode-btn" [class.active]="viewMode() === 'kanban'" (click)="viewMode.set('kanban')"
-                    title="Kanban View">
-                    <span class="material-symbols-outlined">view_kanban</span>
-                </button>
-            </div>
-
-            <!-- Create meeting button -->
-            <button class="create-meeting-btn" (click)="openCreateModal()">
-                <span class="material-symbols-outlined">add</span>
-                New Meeting
-            </button>
         </div>
-    </div>
-
-    <!-- Filters bar -->
-    <div class="meetings-filters">
-        <div class="filters-left">
-            <select class="filter-select" [value]="selectedProject()"
-                (change)="selectedProject.set($any($event.target).value)">
-                <option value="">All Projects</option>
-                @for (project of availableProjects(); track project) {
-                <option [value]="project">{{ project }}</option>
-                }
-            </select>
-            <select class="filter-select" [value]="selectedTimeRange()"
-                (change)="selectedTimeRange.set($any($event.target).value)">
-                <option>All Time</option>
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-                <option>This Quarter</option>
-            </select>
-        </div>
-        <div class="filters-right">
-            <span class="sort-label">Sort by:</span>
+        <div class="toolbar-right">
             <select class="sort-select" [value]="sortBy()" (change)="sortBy.set($any($event.target).value)">
                 <option value="date">Date</option>
                 <option value="title">Title</option>
                 <option value="attendees">Attendees</option>
             </select>
-            <button class="sort-direction-btn" (click)="sortDirection.set(sortDirection() === 'asc' ? 'desc' : 'asc')">
-                <span class="material-symbols-outlined">
-                    {{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
-                </span>
-            </button>
+            <button class="icon-btn" (click)="sortDirection.set(sortDirection() === 'asc' ? 'desc' : 'asc')" title="Sort direction"><span class="material-symbols-outlined">{{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</span></button>
+            <div class="toolbar-divider"></div>
+            <div class="view-mode-switcher">
+                <button class="icon-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')" title="List"><span class="material-symbols-outlined">view_list</span></button>
+                <button class="icon-btn" [class.active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')" title="Calendar"><span class="material-symbols-outlined">calendar_month</span></button>
+                <button class="icon-btn" [class.active]="viewMode() === 'kanban'" (click)="viewMode.set('kanban')" title="Kanban"><span class="material-symbols-outlined">view_kanban</span></button>
+            </div>
+            <button class="btn-primary" (click)="openCreateModal()"><span class="material-symbols-outlined">add</span>New</button>
         </div>
     </div>
 
@@ -99,134 +49,79 @@
         <div class="meetings-table-container">
             @if (filteredMeetings().length === 0) {
             <div class="empty-state">
-                <span class="material-symbols-outlined empty-icon">calendar_month</span>
-                <h3>No meetings found</h3>
-                <p>{{ searchQuery() ? 'Try adjusting your search or filters' : 'Schedule your first meeting to get
-                    started' }}</p>
-                @if (!searchQuery()) {
-                <button class="empty-action-btn" (click)="openCreateModal()">
-                    <span class="material-symbols-outlined">add</span>
-                    Schedule Meeting
-                </button>
-                }
+                <span class="material-symbols-outlined">event_busy</span>
+                <p>{{ searchQuery() ? 'No results. Adjust filters.' : 'No meetings' }}</p>
+                @if (!searchQuery()) { <button class="btn-primary sm" (click)="openCreateModal()"><span class="material-symbols-outlined">add</span>New</button> }
             </div>
             } @else {
             <table class="meetings-table">
                 <thead>
                     <tr>
-                        <th class="col-title">Meeting Title & Context</th>
-                        <th class="col-date">Date & Time</th>
+                        <th class="col-title">Title</th>
+                        <th class="col-date">Date / Time</th>
                         <th class="col-attendees">Attendees</th>
-                        <th class="col-action-items">Action Items</th>
+                        <th class="col-action-items">Items</th>
                         <th class="col-actions"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (meeting of filteredMeetings(); track meeting.id) {
-                    <tr class="table-row" [class.completed]="meeting.status === 'completed'"
-                        [class.cancelled]="meeting.status === 'cancelled'" (click)="openDetailsModal(meeting)">
+                    <tr class="table-row" [class.completed]="meeting.status === 'completed'" [class.cancelled]="meeting.status === 'cancelled'" (click)="openDetailsModal(meeting)">
                         <td class="col-title">
-                            <div class="meeting-title-cell">
-                                <div class="meeting-title-row">
-                                    <span class="meeting-dot" [style.backgroundColor]="meeting.color"></span>
+                            <div class="meeting-cell">
+                                <span class="meeting-dot" [style.backgroundColor]="meeting.color"></span>
+                                <div class="meeting-info">
                                     <span class="meeting-title">{{ meeting.title }}</span>
-                                    @if (meeting.status === 'cancelled') {
-                                    <span class="status-badge cancelled">Cancelled</span>
-                                    }
-                                    @if (meeting.status === 'completed') {
-                                    <span class="status-badge completed">Completed</span>
-                                    }
-                                    @if (meeting.priority === 'HIGH') {
-                                    <span class="priority-indicator high">
-                                        <span class="material-symbols-outlined">priority_high</span>
+                                    <span class="meeting-meta">
+                                        @if (meeting.project) { {{ meeting.project }} }
+                                        @if (meeting.project && meeting.meetingType) { · }
+                                        @if (meeting.meetingType) {
+                                        <span class="material-symbols-outlined meta-icon">{{ getMeetingTypeIcon(meeting.meetingType) }}</span>{{ meeting.meetingType }}
+                                        }
                                     </span>
-                                    }
                                 </div>
-                                <div class="meeting-meta">
-                                    @if (meeting.project) {
-                                    <span class="meeting-project">{{ meeting.project }}</span>
-                                    }
-                                    @if (meeting.meetingType) {
-                                    <span class="meeting-type">
-                                        <span class="material-symbols-outlined">{{ getMeetingTypeIcon(meeting.meetingType)
-                                            }}</span>
-                                        {{ meeting.meetingType }}
-                                    </span>
-                                    }
-                                </div>
+                                @if (meeting.status === 'cancelled') { <span class="status-badge cancelled">Can</span> }
+                                @if (meeting.status === 'completed') { <span class="status-badge completed">Done</span> }
+                                @if (meeting.priority === 'HIGH' && meeting.status !== 'cancelled') { <span class="priority-dot high"></span> }
                             </div>
                         </td>
                         <td class="col-date">
-                            <div class="date-cell">
-                                <span class="meeting-date-relative">{{ getRelativeDate(meeting.date) }}</span>
-                                <span class="meeting-time">{{ formatTime(meeting.startTime) }}</span>
-                            </div>
+                            <span class="date-text">{{ getRelativeDate(meeting.date) }}</span>
+                            <span class="time-text">{{ formatTime(meeting.startTime) }}</span>
                         </td>
                         <td class="col-attendees">
-                            <div class="attendees-list">
+                            <div class="attendees-stack">
                                 @for (attendee of meeting.attendees.slice(0, 4); track attendee.id) {
-                                <div class="attendee-avatar" [title]="attendee.name"
-                                    [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
-                                    @if (!attendee.avatar) {
-                                    <span class="attendee-initial">{{ attendee.name.charAt(0) }}</span>
-                                    }
-                                </div>
+                                <div class="attendee-avatar" [title]="attendee.name" [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">@if (!attendee.avatar) {<span>{{ attendee.name.charAt(0) }}</span>}</div>
                                 }
-                                @if (meeting.attendees.length > 4) {
-                                <div class="attendee-avatar attendee-more">
-                                    <span class="attendee-count">+{{ meeting.attendees.length - 4 }}</span>
-                                </div>
-                                }
+                                @if (meeting.attendees.length > 4) { <div class="attendee-more">+{{ meeting.attendees.length - 4 }}</div> }
                             </div>
                         </td>
                         <td class="col-action-items">
                             @if (meeting.actionItems && meeting.actionItems.length > 0) {
                             @if (getOpenActionItemsCount(meeting) > 0) {
-                            <button class="action-items-btn" (click)="$event.stopPropagation(); openDetailsModal(meeting); detailsTab.set('action-items')">
-                                {{ getOpenActionItemsCount(meeting) }} OPEN
-                            </button>
+                            <button class="items-badge open" (click)="$event.stopPropagation(); openDetailsModal(meeting); detailsTab.set('action-items')">{{ getOpenActionItemsCount(meeting) }}</button>
                             } @else {
-                            <span class="action-items-complete">
-                                <span class="material-symbols-outlined">check_circle</span>
-                                Complete
-                            </span>
+                            <span class="items-badge done"><span class="material-symbols-outlined">check</span></span>
                             }
                             } @else {
-                            <span class="action-items-none">—</span>
+                            <span class="items-none">—</span>
                             }
                         </td>
                         <td class="col-actions">
                             <div class="row-actions">
                                 @if (meeting.meetingLink) {
-                                <button class="row-action-btn join-btn" title="Join Meeting"
-                                    (click)="joinMeeting(meeting, $event)">
-                                    <span class="material-symbols-outlined">video_call</span>
-                                </button>
+                                <button class="icon-btn sm" title="Join" (click)="joinMeeting(meeting, $event)"><span class="material-symbols-outlined">videocam</span></button>
                                 }
-                                <button class="row-action-btn" title="More Actions"
-                                    (click)="toggleQuickActions(meeting.id, $event)">
-                                    <span class="material-symbols-outlined">more_vert</span>
-                                </button>
+                                <button class="icon-btn sm" title="More" (click)="toggleQuickActions(meeting.id, $event)"><span class="material-symbols-outlined">more_horiz</span></button>
                                 @if (showQuickActions() === meeting.id) {
-                                <div class="quick-actions-dropdown">
-                                    <button (click)="openDetailsModal(meeting); showQuickActions.set(null)">
-                                        <span class="material-symbols-outlined">visibility</span>
-                                        View Details
-                                    </button>
-                                    <button (click)="duplicateMeeting(meeting); showQuickActions.set(null)">
-                                        <span class="material-symbols-outlined">content_copy</span>
-                                        Duplicate
-                                    </button>
+                                <div class="quick-dropdown">
+                                    <button (click)="openDetailsModal(meeting); showQuickActions.set(null)"><span class="material-symbols-outlined">visibility</span>View</button>
+                                    <button (click)="duplicateMeeting(meeting); showQuickActions.set(null)"><span class="material-symbols-outlined">content_copy</span>Duplicate</button>
                                     @if (meeting.status === 'scheduled') {
-                                    <button (click)="cancelMeeting(meeting); showQuickActions.set(null)">
-                                        <span class="material-symbols-outlined">event_busy</span>
-                                        Cancel Meeting
-                                    </button>
+                                    <button (click)="cancelMeeting(meeting); showQuickActions.set(null)"><span class="material-symbols-outlined">event_busy</span>Cancel</button>
                                     }
-                                    <button class="danger" (click)="deleteMeeting(meeting); showQuickActions.set(null)">
-                                        <span class="material-symbols-outlined">delete</span>
-                                        Delete
-                                    </button>
+                                    <button class="danger" (click)="deleteMeeting(meeting); showQuickActions.set(null)"><span class="material-symbols-outlined">delete</span>Delete</button>
                                 </div>
                                 }
                             </div>
@@ -239,51 +134,27 @@
         </div>
         }
 
-        <!-- Calendar View -->
         @if (viewMode() === 'calendar') {
-        <div class="calendar-view-container">
-            <div class="calendar-header">
-                <button class="calendar-nav-btn" (click)="previousMonth()">
-                    <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                <h2 class="calendar-title">
-                    {{ calendarDate() | date:'MMMM yyyy' }}
-                </h2>
-                <button class="calendar-nav-btn" (click)="nextMonth()">
-                    <span class="material-symbols-outlined">chevron_right</span>
-                </button>
-                <button class="calendar-today-btn" (click)="goToToday()">Today</button>
+        <div class="calendar-view">
+            <div class="calendar-toolbar">
+                <button class="icon-btn" (click)="previousMonth()"><span class="material-symbols-outlined">chevron_left</span></button>
+                <h2 class="calendar-title">{{ calendarDate() | date:'MMMM yyyy' }}</h2>
+                <button class="icon-btn" (click)="nextMonth()"><span class="material-symbols-outlined">chevron_right</span></button>
+                <button class="btn-text" (click)="goToToday()">Today</button>
             </div>
             <div class="calendar-grid">
-                <div class="calendar-weekdays">
-                    <div class="weekday">Sun</div>
-                    <div class="weekday">Mon</div>
-                    <div class="weekday">Tue</div>
-                    <div class="weekday">Wed</div>
-                    <div class="weekday">Thu</div>
-                    <div class="weekday">Fri</div>
-                    <div class="weekday">Sat</div>
-                </div>
-                <div class="calendar-days">
+                <div class="cal-weekdays"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+                <div class="cal-days">
                     @for (week of calendarWeeks(); track $index) {
-                    <div class="calendar-week">
+                    <div class="cal-week">
                         @for (day of week; track $index) {
-                        <div class="calendar-day" [class.other-month]="!isCurrentMonth(day)"
-                            [class.today]="isToday(day)" (click)="selectCalendarDate(day)">
-                            <span class="day-number">{{ day.getDate() }}</span>
-                            <div class="day-meetings">
-                                @for (meeting of getMeetingsForDate(day).slice(0, 3); track meeting.id) {
-                                <div class="day-meeting" [style.backgroundColor]="meeting.color"
-                                    (click)="openDetailsModal(meeting); $event.stopPropagation()" [title]="meeting.title">
-                                    <span class="day-meeting-time">{{ formatTime(meeting.startTime) }}</span>
-                                    <span class="day-meeting-title">{{ meeting.title }}</span>
-                                </div>
+                        <div class="cal-day" [class.other]="!isCurrentMonth(day)" [class.today]="isToday(day)" (click)="selectCalendarDate(day)">
+                            <span class="day-num">{{ day.getDate() }}</span>
+                            <div class="day-events">
+                                @for (m of getMeetingsForDate(day).slice(0, 2); track m.id) {
+                                <div class="day-event" [style.borderLeftColor]="m.color" (click)="openDetailsModal(m); $event.stopPropagation()" [title]="m.title">{{ formatTime(m.startTime) }} {{ m.title }}</div>
                                 }
-                                @if (getMeetingsForDate(day).length > 3) {
-                                <div class="day-more">
-                                    +{{ getMeetingsForDate(day).length - 3 }} more
-                                </div>
-                                }
+                                @if (getMeetingsForDate(day).length > 2) { <div class="day-more">+{{ getMeetingsForDate(day).length - 2 }}</div> }
                             </div>
                         </div>
                         }
@@ -294,218 +165,59 @@
         </div>
         }
 
-        <!-- Kanban View -->
         @if (viewMode() === 'kanban') {
-        <div class="kanban-view-container">
-            <div class="kanban-column">
-                <div class="kanban-column-header">
-                    <span class="column-dot" style="background-color: #3B82F6"></span>
-                    <span class="column-title">Scheduled</span>
-                    <span class="column-count">{{ meetingsByStatus().scheduled.length }}</span>
-                </div>
-                <div class="kanban-column-content">
-                    @for (meeting of meetingsByStatus().scheduled; track meeting.id) {
-                    <div class="kanban-card" [style.borderLeftColor]="meeting.color"
-                        (click)="openDetailsModal(meeting)">
-                        <div class="kanban-card-header">
-                            <span class="kanban-card-title">{{ meeting.title }}</span>
-                            @if (meeting.priority === 'HIGH') {
-                            <span class="priority-badge high">HIGH</span>
-                            }
-                        </div>
-                        <div class="kanban-card-meta">
-                            <span class="kanban-card-date">{{ getRelativeDate(meeting.date) }}, {{
-                                formatTime(meeting.startTime) }}</span>
-                        </div>
-                        @if (meeting.project) {
-                        <div class="kanban-card-project">{{ meeting.project }}</div>
-                        }
-                        <div class="kanban-card-footer">
-                            <div class="kanban-card-attendees">
-                                @for (attendee of meeting.attendees.slice(0, 3); track attendee.id) {
-                                <div class="mini-avatar" [title]="attendee.name"
-                                    [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
-                                    @if (!attendee.avatar) {
-                                    {{ attendee.name.charAt(0) }}
-                                    }
-                                </div>
-                                }
-                            </div>
-                            @if (getOpenActionItemsCount(meeting) > 0) {
-                            <span class="kanban-action-items">
-                                <span class="material-symbols-outlined">task_alt</span>
-                                {{ getOpenActionItemsCount(meeting) }}
-                            </span>
-                            }
+        <div class="kanban-view">
+            @for (col of [{ id: 'scheduled', label: 'Scheduled', color: '#3B82F6', meetings: meetingsByStatus().scheduled }, { id: 'in_progress', label: 'In Progress', color: '#F97316', meetings: meetingsByStatus().in_progress }, { id: 'completed', label: 'Done', color: '#10B981', meetings: meetingsByStatus().completed }, { id: 'cancelled', label: 'Cancelled', color: '#EF4444', meetings: meetingsByStatus().cancelled }]; track col.id) {
+            <div class="kanban-col">
+                <div class="kanban-col-hdr"><span class="col-dot" [style.backgroundColor]="col.color"></span><span>{{ col.label }}</span><span class="col-count">{{ col.meetings.length }}</span></div>
+                <div class="kanban-col-body">
+                    @for (m of col.meetings; track m.id) {
+                    <div class="kanban-card" [class.done]="col.id === 'completed'" [class.cancelled]="col.id === 'cancelled'" [style.borderLeftColor]="m.color" (click)="openDetailsModal(m)">
+                        <div class="card-title">{{ m.title }}</div>
+                        <div class="card-meta">{{ getRelativeDate(m.date) }} · {{ formatTime(m.startTime) }}@if (m.project) { · {{ m.project }} }</div>
+                        <div class="card-footer">
+                            <div class="card-avatars">@for (a of m.attendees.slice(0, 3); track a.id) { <div class="ava" [title]="a.name" [style.backgroundImage]="a.avatar ? 'url(' + a.avatar + ')' : ''">@if (!a.avatar) { {{ a.name.charAt(0) }} }</div> }</div>
+                            @if (getOpenActionItemsCount(m) > 0) { <span class="card-items"><span class="material-symbols-outlined">task_alt</span>{{ getOpenActionItemsCount(m) }}</span> }
                         </div>
                     </div>
                     }
                 </div>
             </div>
-
-            <div class="kanban-column">
-                <div class="kanban-column-header">
-                    <span class="column-dot" style="background-color: #F97316"></span>
-                    <span class="column-title">In Progress</span>
-                    <span class="column-count">{{ meetingsByStatus().in_progress.length }}</span>
-                </div>
-                <div class="kanban-column-content">
-                    @for (meeting of meetingsByStatus().in_progress; track meeting.id) {
-                    <div class="kanban-card" [style.borderLeftColor]="meeting.color"
-                        (click)="openDetailsModal(meeting)">
-                        <div class="kanban-card-header">
-                            <span class="kanban-card-title">{{ meeting.title }}</span>
-                        </div>
-                        <div class="kanban-card-meta">
-                            <span class="kanban-card-date">{{ getRelativeDate(meeting.date) }}, {{
-                                formatTime(meeting.startTime) }}</span>
-                        </div>
-                        @if (meeting.project) {
-                        <div class="kanban-card-project">{{ meeting.project }}</div>
-                        }
-                        <div class="kanban-card-footer">
-                            <div class="kanban-card-attendees">
-                                @for (attendee of meeting.attendees.slice(0, 3); track attendee.id) {
-                                <div class="mini-avatar" [title]="attendee.name"
-                                    [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
-                                    @if (!attendee.avatar) {
-                                    {{ attendee.name.charAt(0) }}
-                                    }
-                                </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
-
-            <div class="kanban-column">
-                <div class="kanban-column-header">
-                    <span class="column-dot" style="background-color: #10B981"></span>
-                    <span class="column-title">Completed</span>
-                    <span class="column-count">{{ meetingsByStatus().completed.length }}</span>
-                </div>
-                <div class="kanban-column-content">
-                    @for (meeting of meetingsByStatus().completed; track meeting.id) {
-                    <div class="kanban-card completed" [style.borderLeftColor]="meeting.color"
-                        (click)="openDetailsModal(meeting)">
-                        <div class="kanban-card-header">
-                            <span class="kanban-card-title">{{ meeting.title }}</span>
-                        </div>
-                        <div class="kanban-card-meta">
-                            <span class="kanban-card-date">{{ formatDate(meeting.date) }}</span>
-                        </div>
-                        @if (meeting.actionItems && meeting.actionItems.length > 0) {
-                        <div class="kanban-card-progress">
-                            <div class="progress-bar-small">
-                                <div class="progress-fill-small"
-                                    [style.width.%]="getActionItemsProgress(meeting)"></div>
-                            </div>
-                            <span class="progress-text">{{ getCompletedActionItemsCount(meeting) }}/{{
-                                meeting.actionItems.length }}</span>
-                        </div>
-                        }
-                    </div>
-                    }
-                </div>
-            </div>
-
-            <div class="kanban-column">
-                <div class="kanban-column-header">
-                    <span class="column-dot" style="background-color: #EF4444"></span>
-                    <span class="column-title">Cancelled</span>
-                    <span class="column-count">{{ meetingsByStatus().cancelled.length }}</span>
-                </div>
-                <div class="kanban-column-content">
-                    @for (meeting of meetingsByStatus().cancelled; track meeting.id) {
-                    <div class="kanban-card cancelled" [style.borderLeftColor]="meeting.color"
-                        (click)="openDetailsModal(meeting)">
-                        <div class="kanban-card-header">
-                            <span class="kanban-card-title">{{ meeting.title }}</span>
-                        </div>
-                        <div class="kanban-card-meta">
-                            <span class="kanban-card-date">{{ formatDate(meeting.date) }}</span>
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
+            }
         </div>
         }
 
-        <!-- Sidebar -->
-        <aside class="meetings-sidebar">
-            <div class="sidebar-section">
-                <div class="sidebar-header">
-                    <h2 class="sidebar-title">Upcoming Syncs</h2>
-                    <span class="sidebar-badge">CALENDAR</span>
-                </div>
-                <div class="upcoming-syncs">
+        <aside class="sidebar">
+            <div class="sidebar-block">
+                <div class="sidebar-hdr"><span>Upcoming</span><span class="badge">CAL</span></div>
+                <div class="sync-list">
                     @for (sync of upcomingSyncs(); track sync.id) {
-                    <div class="sync-item" [class.sync-today]="meetingsService.isMeetingToday(sync)"
-                        (click)="openDetailsModal(sync)">
-                        <div class="sync-time">{{ getRelativeDate(sync.date) }}, {{ formatTime(sync.startTime) }}</div>
-                        <div class="sync-title">{{ sync.title }}</div>
-                        @if (sync.meetingLink) {
-                        <div class="sync-link" (click)="joinMeeting(sync, $event)">
-                            <span class="material-symbols-outlined icon-link">link</span>
-                            Join {{ sync.platform || 'Meeting' }}
-                        </div>
-                        } @else if (sync.location) {
-                        <div class="sync-location">{{ sync.location }}</div>
-                        }
+                    <div class="sync-row" [class.today]="meetingsService.isMeetingToday(sync)" (click)="openDetailsModal(sync)">
+                        <span class="sync-dt">{{ getRelativeDate(sync.date) }} {{ formatTime(sync.startTime) }}</span>
+                        <span class="sync-ttl">{{ sync.title }}</span>
+                        @if (sync.meetingLink) { <button type="button" class="sync-join" (click)="joinMeeting(sync, $event); $event.stopPropagation()">Join</button> }
                     </div>
                     }
-                    @if (upcomingSyncs().length === 0) {
-                    <div class="empty-syncs">
-                        <span class="material-symbols-outlined">event_available</span>
-                        <p>No upcoming meetings</p>
-                    </div>
-                    }
+                    @if (upcomingSyncs().length === 0) { <div class="sync-empty"><span class="material-symbols-outlined">event_available</span>None</div> }
                 </div>
             </div>
-
-            <div class="sidebar-section sidebar-metrics">
-                <h3 class="metrics-title">Meeting Overview</h3>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-label-small">Today</div>
-                        <div class="metric-value-large metric-primary">{{ stats().todayCount }}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label-small">Deadlines</div>
-                        <div class="metric-value-large">{{ stats().deadlines }}</div>
-                    </div>
-                    <div class="metric-card metric-card-wide">
-                        <div class="metric-header">
-                            <div class="metric-label-small">Action Items Progress</div>
-                            <div class="metric-count">{{ stats().openActionItems }}/{{ stats().totalActionItems }}</div>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill"
-                                [style.width.%]="stats().totalActionItems > 0 ? ((stats().totalActionItems - stats().openActionItems) / stats().totalActionItems * 100) : 0">
-                            </div>
-                        </div>
-                    </div>
+            <div class="sidebar-block metrics">
+                <div class="metric-row"><span>Today</span><strong>{{ stats().todayCount }}</strong></div>
+                <div class="metric-row"><span>Deadlines</span><strong>{{ stats().deadlines }}</strong></div>
+                <div class="metric-row wide">
+                    <span>Action Items</span>
+                    <span class="metric-val">{{ stats().openActionItems }}/{{ stats().totalActionItems }}</span>
                 </div>
+                <div class="progress-thin"><div class="progress-fill" [style.width.%]="stats().totalActionItems > 0 ? ((stats().totalActionItems - stats().openActionItems) / stats().totalActionItems * 100) : 0"></div></div>
             </div>
-
-            <!-- Keyboard shortcuts hint -->
-            <div class="sidebar-section sidebar-shortcuts">
-                <button class="shortcuts-btn" (click)="showShortcutsHelp.set(true)">
-                    <span class="material-symbols-outlined">keyboard</span>
-                    <span>Keyboard shortcuts</span>
-                    <kbd>⌘/</kbd>
-                </button>
-            </div>
+            <button class="shortcut-hint" (click)="showShortcutsHelp.set(true)"><span class="material-symbols-outlined">keyboard</span>⌘/</button>
         </aside>
     </div>
 </div>
 
 <!-- Create Meeting Modal -->
 @if (showCreateModal()) {
-<env-modal [isOpen]="showCreateModal()" (closed)="closeCreateModal()" [title]="'Schedule New Meeting'">
+<env-modal [isOpen]="showCreateModal()" (closed)="closeCreateModal()" [title]="'New Meeting'">
     <div class="create-meeting-form">
         <!-- Title -->
         <div class="form-group">
