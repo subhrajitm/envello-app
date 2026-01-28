@@ -57,72 +57,6 @@
 
     <!-- Main content -->
     <div class="tasks-main-content">
-        <!-- Quick Add Bar -->
-        @if (quickAddVisible()) {
-        <div class="quick-add-bar">
-            <div class="quick-add-input-wrapper">
-                <span class="material-symbols-outlined quick-add-icon">add_task</span>
-                <input type="text"
-                       class="quick-add-input"
-                       placeholder="Type a task... (e.g., 'Meeting tomorrow 3pm #work HIGH')"
-                       [value]="quickAddInput()"
-                       (input)="quickAddInput.set($any($event.target).value)"
-                       (keydown.enter)="handleQuickAdd()"
-                       (keydown.escape)="quickAddVisible.set(false); quickAddInput.set('')"
-                       autofocus>
-                @if (isVoiceSupported()) {
-                <button type="button" 
-                        class="quick-add-voice"
-                        [class.recording]="isListening()"
-                        (click)="isListening() ? stopVoiceInput() : startVoiceInput()"
-                        [title]="isListening() ? 'Stop recording' : 'Start voice input'"
-                        aria-label="Voice input">
-                    <span class="material-symbols-outlined">{{ isListening() ? 'mic' : 'mic_none' }}</span>
-                </button>
-                }
-                <button type="button" 
-                        class="quick-add-close"
-                        (click)="quickAddVisible.set(false); quickAddInput.set('')">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            @if (isListening()) {
-            <div class="voice-recording-indicator">
-                <span class="material-symbols-outlined voice-pulse">mic</span>
-                <span>Listening...</span>
-            </div>
-            }
-            @if (quickAddInput().trim()) {
-            <div class="quick-add-preview">
-                @let parsed = parseNaturalLanguage(quickAddInput());
-                <div class="preview-item">
-                    <span class="preview-label">Title:</span>
-                    <span class="preview-value">{{ parsed.title || quickAddInput() }}</span>
-                </div>
-                @if (parsed.due) {
-                <div class="preview-item">
-                    <span class="preview-label">Due:</span>
-                    <span class="preview-value">{{ parsed.due }}</span>
-                </div>
-                }
-                @if (parsed.priority) {
-                <div class="preview-item">
-                    <span class="preview-label">Priority:</span>
-                    <span class="preview-value">{{ parsed.priority }}</span>
-                </div>
-                }
-                @if (parsed.labels.length > 0) {
-                <div class="preview-item">
-                    <span class="preview-label">Labels:</span>
-                    @for (label of parsed.labels; track label) {
-                    <span class="preview-tag">#{{ label }}</span>
-                    }
-                </div>
-                }
-            </div>
-            }
-        </div>
-        }
 
         <!-- Enterprise Header / Toolbar -->
         <div class="tasks-toolbar">
@@ -397,6 +331,68 @@
                 <!-- Virtual Scroll Spacer -->
                 <div [style.height.px]="(filteredTasks().length - visibleTaskRange().end) * itemHeight"></div>
                 }
+                }
+            </div>
+            <div class="quick-add-bar quick-add-bar-inline">
+                <div class="quick-add-input-wrapper">
+                    <span class="material-symbols-outlined quick-add-icon">add_task</span>
+                    <input type="text"
+                           class="quick-add-input"
+                           placeholder="Type a task... (e.g., 'Meeting tomorrow 3pm #work HIGH')"
+                           [value]="quickAddInput()"
+                           (input)="quickAddInput.set($any($event.target).value)"
+                           (keydown.enter)="handleQuickAdd()"
+                           (keydown.escape)="quickAddInput.set('')">
+                    @if (isVoiceSupported()) {
+                    <button type="button" 
+                            class="quick-add-voice"
+                            [class.recording]="isListening()"
+                            (click)="isListening() ? stopVoiceInput() : startVoiceInput()"
+                            [title]="isListening() ? 'Stop recording' : 'Start voice input'"
+                            aria-label="Voice input">
+                        <span class="material-symbols-outlined">{{ isListening() ? 'mic' : 'mic_none' }}</span>
+                    </button>
+                    }
+                    <button type="button" 
+                            class="quick-add-close"
+                            (click)="quickAddInput.set('')">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                @if (isListening()) {
+                <div class="voice-recording-indicator">
+                    <span class="material-symbols-outlined voice-pulse">mic</span>
+                    <span>Listening...</span>
+                </div>
+                }
+                @if (quickAddInput().trim()) {
+                <div class="quick-add-preview">
+                    @let parsed = parseNaturalLanguage(quickAddInput());
+                    <div class="preview-item">
+                        <span class="preview-label">Title:</span>
+                        <span class="preview-value">{{ parsed.title || quickAddInput() }}</span>
+                    </div>
+                    @if (parsed.due) {
+                    <div class="preview-item">
+                        <span class="preview-label">Due:</span>
+                        <span class="preview-value">{{ parsed.due }}</span>
+                    </div>
+                    }
+                    @if (parsed.priority) {
+                    <div class="preview-item">
+                        <span class="preview-label">Priority:</span>
+                        <span class="preview-value">{{ parsed.priority }}</span>
+                    </div>
+                    }
+                    @if (parsed.labels.length > 0) {
+                    <div class="preview-item">
+                        <span class="preview-label">Labels:</span>
+                        @for (label of parsed.labels; track label) {
+                        <span class="preview-tag">#{{ label }}</span>
+                        }
+                    </div>
+                    }
+                </div>
                 }
             </div>
         </div>
