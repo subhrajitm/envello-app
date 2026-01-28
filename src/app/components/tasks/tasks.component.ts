@@ -38,6 +38,17 @@ export class TasksComponent implements OnInit, OnDestroy {
   focusMode = signal<boolean>(false);
   focusedTask = signal<Task | null>(null);
   
+  // Task details modal state
+  showTaskDetails = signal<boolean>(false);
+  selectedTaskForDetails = signal<Task | null>(null);
+  editingTaskDetails = signal<boolean>(false);
+  editedTaskTitle = signal<string>('');
+  editedTaskDescription = signal<string>('');
+  editedTaskPriority = signal<Task['priority']>('MEDIUM');
+  editedTaskDue = signal<string | undefined>(undefined);
+  editedTaskList = signal<string>('Inbox');
+  editedTaskLabels = signal<string[]>([]);
+  
   // Pomodoro timer state
   pomodoroActive = signal<boolean>(false);
   pomodoroTime = signal<number>(25 * 60); // 25 minutes in seconds
@@ -1446,6 +1457,106 @@ export class TasksComponent implements OnInit, OnDestroy {
   exitFocusMode() {
     this.focusMode.set(false);
     this.focusedTask.set(null);
+  }
+  
+  // Task details modal methods
+  openTaskDetails(task: Task) {
+    this.selectedTaskForDetails.set(task);
+    this.editedTaskTitle.set(task.title);
+    this.editedTaskDescription.set(task.description || task.notes || '');
+    this.editedTaskPriority.set(task.priority);
+    this.editedTaskDue.set(task.due);
+    this.editedTaskList.set(task.project || 'Inbox');
+    this.editedTaskLabels.set(task.labels || []);
+    this.editingTaskDetails.set(false);
+    this.showTaskDetails.set(true);
+  }
+  
+  closeTaskDetails() {
+    this.showTaskDetails.set(false);
+    this.selectedTaskForDetails.set(null);
+    this.editingTaskDetails.set(false);
+  }
+  
+  toggleEditTaskDetails() {
+    this.editingTaskDetails.update(v => !v);
+  }
+  
+  saveTaskDetails() {
+    const task = this.selectedTaskForDetails();
+    if (!task) return;
+    
+    const updates: Partial<Task> = {
+      title: this.editedTaskTitle().trim(),
+      description: this.editedTaskDescription().trim() || undefined,
+      priority: this.editedTaskPriority(),
+      due: this.editedTaskDue(),
+      project: this.editedTaskList() === 'Inbox' ? undefined : this.editedTaskList(),
+      labels: this.editedTaskLabels().length > 0 ? this.editedTaskLabels() : undefined
+    };
+    
+    this.store.updateTask(task.id, updates);
+    this.addToHistory('update', task, updates);
+    this.editingTaskDetails.set(false);
+    
+    // Update the selected task reference
+    const updatedTask = { ...task, ...updates };
+    this.selectedTaskForDetails.set(updatedTask);
+  }
+  
+  deleteTaskFromDetails() {
+    const task = this.selectedTaskForDetails();
+    if (task) {
+      this.closeTaskDetails();
+      this.requestDeleteTask(task);
+    }
+  }
+  
+  completeTaskFromDetails() {
+    const task = this.selectedTaskForDetails();
+    if (task) {
+      this.toggleTaskStatus(task);
+      // Update the selected task reference
+      const updatedTask = { ...task, status: task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED' as Task['status'] };
+      this.selectedTaskForDetails.set(updatedTask);
+    }
+  }
+  
+  startPomodoroFromDetails() {
+    const task = this.selectedTaskForDetails();
+    if (task) {
+      this.startPomodoro(task);
+    }
+  }
+  
+  addLabelToEdit(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const label = input.value.trim();
+    if (label && !this.editedTaskLabels().includes(label)) {
+      this.editedTaskLabels.set([...this.editedTaskLabels(), label]);
+      input.value = '';
+    }
+    event.preventDefault();
+  }
+  
+  removeLabelFromEdit(label: string) {
+    this.editedTaskLabels.set(this.editedTaskLabels().filter(l => l !== label));
+  }
+  
+  toggleSubtaskStatus(parentTask: Task, subtask: Task) {
+    const newStatus: Task['status'] = subtask.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
+    const updatedSubtasks = (parentTask.subtasks || []).map(st =>
+      st.id === subtask.id ? { ...st, status: newStatus } : st
+    );
+    this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
+    
+    // Update the selected task reference
+    const updatedTask = { ...parentTask, subtasks: updatedSubtasks };
+    this.selectedTaskForDetails.set(updatedTask);
+  }
+  
+  isAttachmentImage(attachment: { name: string; type: string }): boolean {
+    return attachment.type.startsWith('image/');
   }
   
   // Pomodoro timer

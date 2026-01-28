@@ -308,7 +308,7 @@
                 <div class="grid-row" 
                      [class.completed-row]="task.status === 'COMPLETED'"
                      [class.blocked-task]="isTaskBlocked(task)">
-                    <div class="col-check">
+                    <div class="col-check" (click)="$event.stopPropagation()">
                         <label class="custom-checkbox">
                             <input type="checkbox" 
                                    [checked]="task.status === 'COMPLETED' || selectedTasks().has(task.id)"
@@ -316,7 +316,7 @@
                             <span class="checkmark"></span>
                         </label>
                     </div>
-                    <div class="col-task">
+                    <div class="col-task" (click)="openTaskDetails(task)" style="cursor: pointer;">
                         <div class="task-title-row">
                             @if (task.dependencies && task.dependencies.length > 0) {
                             <span class="task-dependency-indicator" 
@@ -379,7 +379,7 @@
                         <span class="no-data">—</span>
                         }
                     </div>
-                    <div class="col-actions">
+                    <div class="col-actions" (click)="$event.stopPropagation()">
                         <button class="btn-icon-only btn-icon-complete"
                             (click)="onQuickComplete(task)"
                             [attr.aria-label]="'Mark ' + task.title + ' complete'">
@@ -422,7 +422,10 @@
             } @else {
             <div class="thumbs-grid">
                 @for (task of filteredTasks(); track task.id) {
-                <article class="thumb-card" [class.thumb-card-completed]="task.status === 'COMPLETED'">
+                <article class="thumb-card" 
+                         [class.thumb-card-completed]="task.status === 'COMPLETED'"
+                         (click)="openTaskDetails(task)"
+                         style="cursor: pointer;">
                     <header class="thumb-header">
                         <div class="thumb-title-row">
                             <h3 class="thumb-title">{{ task.title }}</h3>
@@ -456,7 +459,7 @@
                             }
                         </div>
                     </div>
-                    <footer class="thumb-footer">
+                    <footer class="thumb-footer" (click)="$event.stopPropagation()">
                         <div class="thumb-actions">
                             <button class="btn-icon-only btn-icon-complete"
                                 (click)="onQuickComplete(task)"
@@ -905,6 +908,66 @@
                                 (click)="setNewTaskPriority('LOW')">
                             Low
                         </button>
+                    </div>
+                </div>
+                <div class="task-modal-control-group task-modal-folder-group">
+                    <label class="task-modal-control-label">List</label>
+                    <div class="task-modal-folder-wrapper">
+                        <button type="button" 
+                                class="task-modal-folder-btn"
+                                (click)="toggleFolderDropdown($event)">
+                            <span class="material-symbols-outlined">folder</span>
+                            <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </button>
+                        @if (showFolderDropdown() && folderDropdownPosition()) {
+                        <div class="task-modal-folder-dropdown"
+                             [style.top.px]="folderDropdownPosition()!.top"
+                             [style.left.px]="folderDropdownPosition()!.left">
+                            @if (!showCreateFolder()) {
+                            <div class="folder-dropdown-list">
+                                @for (folder of availableLists(); track folder) {
+                                <button type="button"
+                                        class="folder-dropdown-item"
+                                        [class.active]="newTaskList() === folder"
+                                        (click)="selectFolder(folder)">
+                                    <span class="material-symbols-outlined">folder</span>
+                                    <span>{{ folder }}</span>
+                                </button>
+                                }
+                                <button type="button"
+                                        class="folder-dropdown-item folder-dropdown-create"
+                                        (click)="toggleCreateFolder()">
+                                    <span class="material-symbols-outlined">add</span>
+                                    <span>Create new folder</span>
+                                </button>
+                            </div>
+                            } @else {
+                            <div class="folder-create-form">
+                                <input type="text"
+                                       class="folder-create-input"
+                                       placeholder="Folder name..."
+                                       [value]="newFolderName()"
+                                       (input)="newFolderName.set($any($event.target).value)"
+                                       (keydown.enter)="createNewFolder()"
+                                       autofocus>
+                                <div class="folder-create-actions">
+                                    <button type="button"
+                                            class="btn-secondary btn-sm"
+                                            (click)="toggleCreateFolder()">
+                                        Cancel
+                                    </button>
+                                    <button type="button"
+                                            class="btn-primary btn-sm"
+                                            [disabled]="!newFolderName().trim()"
+                                            (click)="createNewFolder()">
+                                        Create
+                                    </button>
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
                     </div>
                 </div>
                 <div class="task-modal-control-group task-modal-date-group">
@@ -1523,4 +1586,311 @@
         </button>
     </div>
 </div>
+}
+
+<!-- Task Details Modal -->
+@if (selectedTaskForDetails(); as task) {
+<env-modal
+    [isOpen]="showTaskDetails()"
+    (closed)="closeTaskDetails()"
+    size="large"
+>
+    <div header>
+        <h2 class="env-modal-title">
+            <span class="material-symbols-outlined">assignment</span>
+            <span>Task Details</span>
+        </h2>
+    </div>
+    <div body>
+        <div class="task-details-container">
+            <!-- Compact Header -->
+            <div class="task-details-header-compact">
+                <div class="task-details-title-row">
+                    @if (!editingTaskDetails()) {
+                    <h2 class="task-details-title-compact">{{ task.title }}</h2>
+                    <button type="button" 
+                            class="btn-icon-compact"
+                            (click)="toggleEditTaskDetails()"
+                            title="Edit task">
+                        <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    } @else {
+                    <input type="text"
+                           class="task-details-title-input-compact"
+                           [value]="editedTaskTitle()"
+                           (input)="editedTaskTitle.set($any($event.target).value)"
+                           placeholder="Task title"
+                           autofocus>
+                    }
+                </div>
+                <div class="task-details-meta-row">
+                    <div class="task-details-status-badge-compact" [ngClass]="task.status.toLowerCase()">
+                        <span class="material-symbols-outlined status-icon">{{ task.status === 'COMPLETED' ? 'check_circle' : task.status === 'ACTIVE' ? 'play_circle' : 'schedule' }}</span>
+                        {{ task.status }}
+                    </div>
+                    <div class="task-details-priority-badge-compact" [ngClass]="{
+                        'priority-high': task.priority === 'HIGH',
+                        'priority-medium': task.priority === 'MEDIUM',
+                        'priority-low': task.priority === 'LOW'
+                    }">
+                        <span class="material-symbols-outlined priority-icon">flag</span>
+                        {{ task.priority }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compact Information Grid -->
+            <div class="task-details-grid-compact">
+                <!-- Project/List -->
+                <div class="task-details-info-item">
+                    <div class="info-item-icon">
+                        <span class="material-symbols-outlined">folder</span>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Project</div>
+                        @if (!editingTaskDetails()) {
+                        <div class="info-item-value">{{ task.project || 'Inbox' }}</div>
+                        } @else {
+                        <select class="info-item-select"
+                                [value]="editedTaskList()"
+                                (change)="editedTaskList.set($any($event.target).value)">
+                            @for (folder of availableLists(); track folder) {
+                            <option [value]="folder">{{ folder }}</option>
+                            }
+                        </select>
+                        }
+                    </div>
+                </div>
+
+                <!-- Due Date -->
+                <div class="task-details-info-item">
+                    <div class="info-item-icon">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Due Date</div>
+                        @if (!editingTaskDetails()) {
+                        <div class="info-item-value">{{ task.due || 'No due date' }}</div>
+                        } @else {
+                        <input type="text"
+                               class="info-item-input"
+                               [value]="editedTaskDue() || ''"
+                               (input)="editedTaskDue.set($any($event.target).value)"
+                               placeholder="e.g., Today, 12:00">
+                        }
+                    </div>
+                </div>
+
+                <!-- Priority (if editing) -->
+                @if (editingTaskDetails()) {
+                <div class="task-details-info-item">
+                    <div class="info-item-icon">
+                        <span class="material-symbols-outlined">flag</span>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Priority</div>
+                        <div class="task-modal-priority-selector-compact">
+                            <button type="button"
+                                    class="priority-option-compact"
+                                    [class.selected]="editedTaskPriority() === 'HIGH'"
+                                    (click)="editedTaskPriority.set('HIGH')">
+                                High
+                            </button>
+                            <button type="button"
+                                    class="priority-option-compact"
+                                    [class.selected]="editedTaskPriority() === 'MEDIUM'"
+                                    (click)="editedTaskPriority.set('MEDIUM')">
+                                Medium
+                            </button>
+                            <button type="button"
+                                    class="priority-option-compact"
+                                    [class.selected]="editedTaskPriority() === 'LOW'"
+                                    (click)="editedTaskPriority.set('LOW')">
+                                Low
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <!-- Labels -->
+                <div class="task-details-info-item task-details-info-item-full">
+                    <div class="info-item-icon">
+                        <span class="material-symbols-outlined">label</span>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Labels</div>
+                        @if (!editingTaskDetails()) {
+                        <div class="task-details-labels-compact">
+                            @if (task.labels && task.labels.length > 0) {
+                            @for (label of task.labels; track label) {
+                            <span class="task-label-chip-compact" [style.color]="getLabelColor(label)">
+                                #{{ label }}
+                            </span>
+                            }
+                            } @else {
+                            <span class="task-details-empty-compact">—</span>
+                            }
+                        </div>
+                        } @else {
+                        <div class="task-details-labels-edit-compact">
+                            @for (label of editedTaskLabels(); track label) {
+                            <span class="task-label-chip-compact">
+                                #{{ label }}
+                                <button type="button" 
+                                        class="chip-remove-compact"
+                                        (click)="removeLabelFromEdit(label)">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                            </span>
+                            }
+                            <input type="text"
+                                   class="task-label-input-compact"
+                                   placeholder="Add label..."
+                                   (keydown.enter)="addLabelToEdit($event)">
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="task-details-section">
+                <div class="section-header">
+                    <span class="material-symbols-outlined section-icon">description</span>
+                    <span class="section-title">Description</span>
+                </div>
+                @if (!editingTaskDetails()) {
+                <div class="task-details-description-content-compact" [innerHTML]="renderMarkdown(task.description || task.notes || '')"></div>
+                } @else {
+                <textarea class="task-details-textarea-compact"
+                          [value]="editedTaskDescription()"
+                          (input)="editedTaskDescription.set($any($event.target).value)"
+                          placeholder="Add description... (Markdown supported)"
+                          rows="4"></textarea>
+                }
+            </div>
+
+            <!-- Subtasks -->
+            @if (task.subtasks && task.subtasks.length > 0) {
+            <div class="task-details-section">
+                <div class="section-header">
+                    <span class="material-symbols-outlined section-icon">subdirectory_arrow_right</span>
+                    <span class="section-title">Subtasks</span>
+                    <span class="section-badge">{{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}</span>
+                </div>
+                <div class="task-details-subtasks-compact">
+                    @for (subtask of task.subtasks; track subtask.id) {
+                    <div class="subtask-item-compact">
+                        <label class="custom-checkbox-compact">
+                            <input type="checkbox"
+                                   [checked]="subtask.status === 'COMPLETED'"
+                                   (change)="toggleSubtaskStatus(task, subtask)">
+                            <span class="checkmark-compact"></span>
+                        </label>
+                        <span class="subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Dependencies -->
+            @if (task.dependencies && task.dependencies.length > 0) {
+            <div class="task-details-section">
+                <div class="section-header">
+                    <span class="material-symbols-outlined section-icon">link</span>
+                    <span class="section-title">Dependencies</span>
+                </div>
+                <div class="task-details-dependencies-compact">
+                    @for (depId of task.dependencies; track depId) {
+                    @let depTask = getTaskById(depId);
+                    @if (depTask) {
+                    <div class="dependency-item-compact" [class.blocked]="depTask.status !== 'COMPLETED'">
+                        <span class="material-symbols-outlined dependency-icon">{{ depTask.status === 'COMPLETED' ? 'check_circle' : 'link' }}</span>
+                        <span class="dependency-title" [class.completed]="depTask.status === 'COMPLETED'">{{ depTask.title }}</span>
+                        @if (depTask.status !== 'COMPLETED') {
+                        <span class="dependency-badge">Blocked</span>
+                        }
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Attachments -->
+            @if (task.attachments && task.attachments.length > 0) {
+            <div class="task-details-section">
+                <div class="section-header">
+                    <span class="material-symbols-outlined section-icon">attach_file</span>
+                    <span class="section-title">Attachments</span>
+                    <span class="section-badge">{{ task.attachments.length }}</span>
+                </div>
+                <div class="task-details-attachments-compact">
+                    @for (attachment of task.attachments; track attachment.id) {
+                    <div class="attachment-item-compact">
+                        @if (isAttachmentImage(attachment)) {
+                        <img [src]="attachment.url" 
+                             [alt]="attachment.name"
+                             class="attachment-preview-compact"
+                             (click)="previewImage(attachment.url)">
+                        } @else {
+                        <div class="attachment-icon-wrapper">
+                            <span class="material-symbols-outlined">description</span>
+                        </div>
+                        }
+                        <div class="attachment-info-compact">
+                            <span class="attachment-name-compact">{{ attachment.name }}</span>
+                            <span class="attachment-size-compact">{{ formatFileSize(attachment.size) }}</span>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div footer>
+        <div class="task-details-footer-compact">
+            <div class="task-details-actions-left-compact">
+                <button type="button"
+                        class="btn-action-compact"
+                        (click)="completeTaskFromDetails()">
+                    <span class="material-symbols-outlined">{{ task.status === 'COMPLETED' ? 'undo' : 'check_circle' }}</span>
+                    <span>{{ task.status === 'COMPLETED' ? 'Incomplete' : 'Complete' }}</span>
+                </button>
+                <button type="button"
+                        class="btn-action-compact"
+                        (click)="startPomodoroFromDetails()">
+                    <span class="material-symbols-outlined">timer</span>
+                    <span>Pomodoro</span>
+                </button>
+            </div>
+            <div class="task-details-actions-right-compact">
+                @if (editingTaskDetails()) {
+                <button type="button"
+                        class="btn-secondary-compact"
+                        (click)="toggleEditTaskDetails()">
+                    Cancel
+                </button>
+                <button type="button"
+                        class="btn-primary-compact"
+                        (click)="saveTaskDetails()">
+                    <span class="material-symbols-outlined">save</span>
+                    Save
+                </button>
+                } @else {
+                <button type="button"
+                        class="btn-danger-compact"
+                        (click)="deleteTaskFromDetails()">
+                    <span class="material-symbols-outlined">delete</span>
+                    Delete
+                </button>
+                }
+            </div>
+        </div>
+    </div>
+</env-modal>
 }
