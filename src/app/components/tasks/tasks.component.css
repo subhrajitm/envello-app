@@ -1128,11 +1128,241 @@
     white-space: nowrap;
 }
 
+/* Date Picker Dropdown */
+.task-modal-date-group {
+    position: relative;
+}
+
+.task-modal-date-wrapper {
+    position: relative;
+}
+
+.task-modal-control-btn .material-symbols-outlined:last-child {
+    margin-left: auto;
+    font-size: 18px;
+}
+
+.task-modal-date-picker {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    width: 280px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+}
+
+.date-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.date-picker-month {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+}
+
+.date-picker-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.date-picker-nav:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.date-picker-nav .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.date-picker-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.date-picker-days-header span {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+.date-picker-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.date-picker-day {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-picker-day:hover:not(.inactive) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.date-picker-day.inactive {
+    color: var(--text-disabled);
+    cursor: default;
+}
+
+.date-picker-day.today {
+    background: var(--accent-primary);
+    color: var(--accent-primary-text);
+    font-weight: 700;
+}
+
+/* Folder Dropdown */
+.task-modal-folder-group {
+    position: relative;
+}
+
+.task-modal-folder-wrapper {
+    position: relative;
+}
+
+.task-modal-folder-btn .material-symbols-outlined:last-child {
+    margin-left: auto;
+    font-size: 18px;
+}
+
+.task-modal-folder-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    width: 220px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.folder-dropdown-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.folder-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.folder-dropdown-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.folder-dropdown-item.active {
+    background: rgba(var(--accent-primary-rgb), 0.08);
+    color: var(--accent-primary);
+}
+
+.folder-dropdown-item .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.folder-dropdown-create {
+    border-top: 1px solid var(--border-subtle);
+    margin-top: 4px;
+    padding-top: 12px;
+    color: var(--accent-primary);
+}
+
+.folder-create-form {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.folder-create-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    background: var(--bg-app);
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.folder-create-input:focus {
+    border-color: var(--accent-primary);
+}
+
+.folder-create-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 11px;
+    height: 28px;
+}
+
 /* Responsive adjustments for task modal */
 @media (max-width: 768px) {
     .task-modal-controls-row {
         flex-direction: column;
         align-items: stretch;
+    }
+    
+    .task-modal-date-picker {
+        width: 100%;
+        left: 0;
+        right: 0;
+    }
+    
+    .task-modal-folder-dropdown {
+        width: 100%;
+        left: 0;
+        right: 0;
     }
 }
 

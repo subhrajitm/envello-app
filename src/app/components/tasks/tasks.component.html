@@ -519,15 +519,45 @@
                         </button>
                     </div>
                 </div>
-                <div class="task-modal-control-group">
+                <div class="task-modal-control-group task-modal-date-group">
                     <label class="task-modal-control-label">Due Date</label>
-                    <button type="button"
-                            class="task-modal-control-btn"
-                            [class.active]="!!newTaskDue()"
-                            (click)="toggleNewTaskTodayDue()">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        <span>{{ newTaskDue() || 'Today' }}</span>
-                    </button>
+                    <div class="task-modal-date-wrapper">
+                        <button type="button"
+                                class="task-modal-control-btn"
+                                [class.active]="!!newTaskDue()"
+                                (click)="toggleDatePicker()">
+                            <span class="material-symbols-outlined">calendar_today</span>
+                            <span>{{ newTaskDue() || 'Today' }}</span>
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </button>
+                        @if (showDatePicker()) {
+                        <div class="task-modal-date-picker">
+                            <div class="date-picker-header">
+                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
+                                    <span class="material-symbols-outlined">chevron_left</span>
+                                </button>
+                                <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
+                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </button>
+                            </div>
+                            <div class="date-picker-days-header">
+                                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                            </div>
+                            <div class="date-picker-days-grid">
+                                @for (day of getDatePickerDays(); track $index) {
+                                <button type="button"
+                                        class="date-picker-day"
+                                        [class.inactive]="!day.isCurrentMonth"
+                                        [class.today]="day.isToday"
+                                        (click)="selectDate(day.day, day.isCurrentMonth)">
+                                    {{ day.day }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
                 </div>
             </div>
             }
@@ -535,22 +565,103 @@
             <!-- Do Later Options -->
             @if (quickAddMode() === 'do-later') {
             <div class="task-modal-controls-row">
-                <div class="task-modal-control-group">
+                <div class="task-modal-control-group task-modal-date-group">
                     <label class="task-modal-control-label">Due Date</label>
-                    <button type="button"
-                            class="task-modal-control-btn"
-                            [class.active]="!!newTaskDue()"
-                            (click)="toggleNewTaskTodayDue()">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        <span>{{ newTaskDue() || 'Set date' }}</span>
-                    </button>
+                    <div class="task-modal-date-wrapper">
+                        <button type="button"
+                                class="task-modal-control-btn"
+                                [class.active]="!!newTaskDue()"
+                                (click)="toggleDatePicker()">
+                            <span class="material-symbols-outlined">calendar_today</span>
+                            <span>{{ newTaskDue() || 'Set date' }}</span>
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </button>
+                        @if (showDatePicker()) {
+                        <div class="task-modal-date-picker">
+                            <div class="date-picker-header">
+                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
+                                    <span class="material-symbols-outlined">chevron_left</span>
+                                </button>
+                                <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
+                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </button>
+                            </div>
+                            <div class="date-picker-days-header">
+                                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                            </div>
+                            <div class="date-picker-days-grid">
+                                @for (day of getDatePickerDays(); track $index) {
+                                <button type="button"
+                                        class="date-picker-day"
+                                        [class.inactive]="!day.isCurrentMonth"
+                                        [class.today]="day.isToday"
+                                        (click)="selectDate(day.day, day.isCurrentMonth)">
+                                    {{ day.day }}
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
                 </div>
-                <div class="task-modal-control-group">
+                <div class="task-modal-control-group task-modal-folder-group">
                     <label class="task-modal-control-label">List</label>
-                    <button type="button" class="task-modal-folder-btn">
-                        <span class="material-symbols-outlined">folder</span>
-                        <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
-                    </button>
+                    <div class="task-modal-folder-wrapper">
+                        <button type="button" 
+                                class="task-modal-folder-btn"
+                                (click)="toggleFolderDropdown()">
+                            <span class="material-symbols-outlined">folder</span>
+                            <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </button>
+                        @if (showFolderDropdown()) {
+                        <div class="task-modal-folder-dropdown">
+                            @if (!showCreateFolder()) {
+                            <div class="folder-dropdown-list">
+                                @for (folder of availableLists(); track folder) {
+                                <button type="button"
+                                        class="folder-dropdown-item"
+                                        [class.active]="newTaskList() === folder"
+                                        (click)="selectFolder(folder)">
+                                    <span class="material-symbols-outlined">folder</span>
+                                    <span>{{ folder }}</span>
+                                </button>
+                                }
+                                <button type="button"
+                                        class="folder-dropdown-item folder-dropdown-create"
+                                        (click)="toggleCreateFolder()">
+                                    <span class="material-symbols-outlined">add</span>
+                                    <span>Create new folder</span>
+                                </button>
+                            </div>
+                            } @else {
+                            <div class="folder-create-form">
+                                <input type="text"
+                                       class="folder-create-input"
+                                       placeholder="Folder name..."
+                                       [value]="newFolderName()"
+                                       (input)="newFolderName.set($any($event.target).value)"
+                                       (keydown.enter)="createNewFolder()"
+                                       autofocus>
+                                <div class="folder-create-actions">
+                                    <button type="button"
+                                            class="btn-secondary btn-sm"
+                                            (click)="toggleCreateFolder()">
+                                        Cancel
+                                    </button>
+                                    <button type="button"
+                                            class="btn-primary btn-sm"
+                                            [disabled]="!newFolderName().trim()"
+                                            (click)="createNewFolder()">
+                                        Create
+                                    </button>
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
+                    </div>
                 </div>
                 <div class="task-modal-control-group">
                     <label class="task-modal-control-label">Reminders</label>

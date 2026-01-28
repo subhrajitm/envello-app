@@ -38,6 +38,26 @@ export class TasksComponent {
    // Labels for the new task
   newTaskLabels = signal<string[]>([]);
   newTaskLabelInput = signal<string>('');
+  
+  // Calendar dropdown state
+  showDatePicker = signal<boolean>(false);
+  datePickerDate = signal<Date>(new Date());
+  
+  // Folder dropdown state
+  showFolderDropdown = signal<boolean>(false);
+  showCreateFolder = signal<boolean>(false);
+  newFolderName = signal<string>('');
+  
+  // Available lists/folders
+  availableLists = computed(() => {
+    const lists = new Set<string>(['Inbox']);
+    this.store.tasks().forEach(task => {
+      if (task.project) {
+        lists.add(task.project);
+      }
+    });
+    return Array.from(lists).sort();
+  });
 
   // Delete confirmation modal state
   deleteModalOpen = signal<boolean>(false);
@@ -136,6 +156,11 @@ export class TasksComponent {
     this.newTaskLabels.set([]);
     this.newTaskLabelInput.set('');
     this.quickAddMode.set('do-now');
+    this.showDatePicker.set(false);
+    this.showFolderDropdown.set(false);
+    this.showCreateFolder.set(false);
+    this.newFolderName.set('');
+    this.datePickerDate.set(new Date());
     this.newTaskModalOpen.set(true);
   }
 
@@ -407,6 +432,132 @@ export class TasksComponent {
     } else {
       this.selectedView.set('upcoming');
     }
+  }
+  
+  // Date picker methods
+  toggleDatePicker() {
+    this.showDatePicker.update(v => !v);
+    if (!this.showDatePicker()) {
+      this.datePickerDate.set(new Date());
+    }
+  }
+  
+  selectDate(day: number, isCurrentMonth: boolean) {
+    if (!isCurrentMonth) return;
+    
+    const selectedDate = new Date(this.datePickerDate());
+    selectedDate.setDate(day);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(selectedDate);
+    selected.setHours(0, 0, 0, 0);
+    
+    const diffTime = selected.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let dateString = '';
+    if (diffDays === 0) {
+      dateString = 'Today, 12:00';
+    } else if (diffDays === 1) {
+      dateString = 'Tomorrow, 12:00';
+    } else if (diffDays === -1) {
+      dateString = 'Yesterday, 12:00';
+    } else {
+      dateString = selectedDate.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+    
+    this.newTaskDue.set(dateString);
+    this.showDatePicker.set(false);
+  }
+  
+  navigateDatePickerMonth(direction: 'prev' | 'next') {
+    const current = this.datePickerDate();
+    const newDate = new Date(current);
+    
+    if (direction === 'prev') {
+      newDate.setMonth(current.getMonth() - 1);
+    } else {
+      newDate.setMonth(current.getMonth() + 1);
+    }
+    
+    this.datePickerDate.set(newDate);
+  }
+  
+  getDatePickerDays() {
+    const date = this.datePickerDate();
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+    
+    const prevMonth = new Date(year, month, 0);
+    const daysInPrevMonth = prevMonth.getDate();
+    
+    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean }> = [];
+    
+    // Previous month's trailing days
+    for (let i = startDay - 1; i >= 0; i--) {
+      days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false });
+    }
+    
+    // Current month's days
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isToday = today.getDate() === day && 
+                     today.getMonth() === month && 
+                     today.getFullYear() === year;
+      days.push({ day, isCurrentMonth: true, isToday });
+    }
+    
+    // Next month's leading days
+    const remainingDays = 42 - days.length;
+    for (let day = 1; day <= remainingDays; day++) {
+      days.push({ day, isCurrentMonth: false, isToday: false });
+    }
+    
+    return days;
+  }
+  
+  getDatePickerMonth() {
+    const date = this.datePickerDate();
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+  }
+  
+  // Folder methods
+  toggleFolderDropdown() {
+    this.showFolderDropdown.update(v => !v);
+    this.showCreateFolder.set(false);
+    this.newFolderName.set('');
+  }
+  
+  selectFolder(folderName: string) {
+    this.newTaskList.set(folderName);
+    this.showFolderDropdown.set(false);
+  }
+  
+  toggleCreateFolder() {
+    this.showCreateFolder.update(v => !v);
+    if (this.showCreateFolder()) {
+      this.newFolderName.set('');
+    }
+  }
+  
+  createNewFolder() {
+    const folderName = this.newFolderName().trim();
+    if (!folderName) return;
+    
+    this.newTaskList.set(folderName);
+    this.showCreateFolder.set(false);
+    this.showFolderDropdown.set(false);
+    this.newFolderName.set('');
   }
 
   /**
