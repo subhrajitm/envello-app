@@ -48,6 +48,11 @@ export class TasksComponent {
   showCreateFolder = signal<boolean>(false);
   newFolderName = signal<string>('');
   
+  // Sidebar folder state
+  showCreateFolderInSidebar = signal<boolean>(false);
+  newFolderNameSidebar = signal<string>('');
+  selectedFolder = signal<string>('Inbox');
+  
   // Available lists/folders
   availableLists = computed(() => {
     const lists = new Set<string>(['Inbox']);
@@ -58,6 +63,30 @@ export class TasksComponent {
     });
     return Array.from(lists).sort();
   });
+  
+  // Get task count for a folder
+  getFolderTaskCount(folderName: string): number {
+    if (folderName === 'Inbox') {
+      return this.store.tasks().filter(t => !t.project || t.project === 'Inbox').length;
+    }
+    return this.store.tasks().filter(t => t.project === folderName).length;
+  }
+  
+  // Sidebar folder methods
+  selectFolderInSidebar(folderName: string) {
+    this.selectedFolder.set(folderName);
+    // Filter tasks by folder
+    this.sidebarSearch.set('');
+  }
+  
+  createFolderInSidebar() {
+    const folderName = this.newFolderNameSidebar().trim();
+    if (!folderName) return;
+    
+    this.showCreateFolderInSidebar.set(false);
+    this.newFolderNameSidebar.set('');
+    this.selectedFolder.set(folderName);
+  }
 
   // Delete confirmation modal state
   deleteModalOpen = signal<boolean>(false);
@@ -160,6 +189,8 @@ export class TasksComponent {
     this.showFolderDropdown.set(false);
     this.showCreateFolder.set(false);
     this.newFolderName.set('');
+    this.showCreateFolderInSidebar.set(false);
+    this.newFolderNameSidebar.set('');
     this.datePickerDate.set(new Date());
     this.newTaskModalOpen.set(true);
   }

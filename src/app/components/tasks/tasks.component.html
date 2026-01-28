@@ -7,103 +7,50 @@
         [items]="sidebarItems()" [activeId]="selectedView()" (activeIdChange)="onSidebarActiveChange($event)"
         [addIcon]="'add'" addTooltip="New task" [showFooter]="true">
 
-        <div env-sidebar-footer class="global-tasks-feed">
-            <div class="feed-header">
-                <span class="feed-title">GLOBAL TASKS</span>
-                <span class="feed-count">{{ activeTasksCountSidebar() }} ACTIVE</span>
-            </div>
-
-            <div class="task-group" [class.collapsed]="!isGroupExpanded('today')">
-                <div class="group-toggle" (click)="toggleTaskGroup('today')">
-                    <span class="material-symbols-outlined toggle-icon">
-                        {{ isGroupExpanded('today') ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                    <span class="group-label">TODAY</span>
-                    <span class="group-count">{{ todayTasks().length.toString().padStart(2, '0') }}</span>
-                </div>
-                @if (isGroupExpanded('today')) {
-                <div class="task-items">
-                    @for (task of todayTasks(); track task.id) {
-                    <div class="task-card-minimal" role="button"
-                        aria-label="Toggle task status and focus in list">
-                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
-                            (click)="toggleTaskStatus(task)"></div>
-                        <div class="task-min-content">
-                            <div class="task-min-title">{{ task.title }}</div>
-                            <div class="task-min-meta">
-                                <span class="p-badge">{{ task.priority }}</span>
-                                <span class="h-badge">{{ task.hours }}</span>
-                            </div>
-                            @if (task.due?.includes('14:00')) {
-                            <div class="sub-meta-time">14:00 — 16:00</div>
-                            }
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-
-            <div class="task-group" [class.collapsed]="!isGroupExpanded('upcoming')">
-                <div class="group-toggle" (click)="toggleTaskGroup('upcoming')">
-                    <span class="material-symbols-outlined toggle-icon">
-                        {{ isGroupExpanded('upcoming') ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                    <span class="group-label">UPCOMING</span>
-                    <span class="group-count">{{ upcomingTasks().length.toString().padStart(2, '0') }}</span>
-                </div>
-                @if (isGroupExpanded('upcoming')) {
-                <div class="task-items">
-                    @for (task of upcomingTasks(); track task.id) {
-                    <div class="task-card-minimal" role="button"
-                        aria-label="Toggle task status and focus in list">
-                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
-                            (click)="toggleTaskStatus(task)"></div>
-                        <div class="task-min-content">
-                            <div class="task-min-title">{{ task.title }}</div>
-                            <div class="task-min-meta">
-                                <span class="p-badge">{{ task.priority }}</span>
-                                <span class="h-badge">{{ task.hours }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-
-            <div class="task-group" [class.collapsed]="!isGroupExpanded('noDueDate')">
-                <div class="group-toggle" (click)="toggleTaskGroup('noDueDate')">
-                    <span class="material-symbols-outlined toggle-icon">
-                        {{ isGroupExpanded('noDueDate') ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                    <span class="group-label">NO DUE DATE</span>
-                    <span class="group-count">{{ noDueDateTasks().length.toString().padStart(2, '0') }}</span>
-                </div>
-                @if (isGroupExpanded('noDueDate')) {
-                <div class="task-items">
-                    @for (task of noDueDateTasks(); track task.id) {
-                    <div class="task-card-minimal" role="button"
-                        aria-label="Toggle task status and focus in list">
-                        <div class="task-check-box" [class.checked]="task.status === 'COMPLETED'"
-                            (click)="toggleTaskStatus(task)"></div>
-                        <div class="task-min-content">
-                            <div class="task-min-title">{{ task.title }}</div>
-                            <div class="task-min-meta">
-                                <span class="p-badge">{{ task.priority }}</span>
-                                <span class="h-badge">{{ task.hours }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-
-            <div class="new-task-entry">
-                <button class="btn-add-entry" (click)="openNewTaskDialog()">
-                    + NEW TASK ENTRY
+        <div env-sidebar-footer class="custom-folders-section">
+            <div class="folders-header">
+                <span class="folders-title">FOLDERS</span>
+                <button class="folder-add-btn" (click)="showCreateFolderInSidebar.set(true)" title="Create new folder">
+                    <span class="material-symbols-outlined">add</span>
                 </button>
+            </div>
+
+            @if (showCreateFolderInSidebar()) {
+            <div class="folder-create-sidebar">
+                <input type="text"
+                       class="folder-create-input-sidebar"
+                       placeholder="Folder name..."
+                       [value]="newFolderNameSidebar()"
+                       (input)="newFolderNameSidebar.set($any($event.target).value)"
+                       (keydown.enter)="createFolderInSidebar()"
+                       (keydown.escape)="showCreateFolderInSidebar.set(false)"
+                       autofocus>
+                <div class="folder-create-actions-sidebar">
+                    <button type="button"
+                            class="btn-icon-sm"
+                            (click)="showCreateFolderInSidebar.set(false)">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                    <button type="button"
+                            class="btn-icon-sm btn-icon-primary"
+                            [disabled]="!newFolderNameSidebar().trim()"
+                            (click)="createFolderInSidebar()">
+                        <span class="material-symbols-outlined">check</span>
+                    </button>
+                </div>
+            </div>
+            }
+
+            <div class="folders-list">
+                @for (folder of availableLists(); track folder) {
+                <div class="folder-item" 
+                     [class.active]="selectedFolder() === folder"
+                     (click)="selectFolderInSidebar(folder)">
+                    <span class="material-symbols-outlined folder-icon">folder</span>
+                    <span class="folder-name">{{ folder }}</span>
+                    <span class="folder-count">{{ getFolderTaskCount(folder) }}</span>
+                </div>
+                }
             </div>
         </div>
     </env-left-sidebar>

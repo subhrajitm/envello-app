@@ -1146,7 +1146,7 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    z-index: 100;
+    z-index: 1001;
     width: 280px;
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
@@ -1261,7 +1261,7 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    z-index: 100;
+    z-index: 1001;
     width: 220px;
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
@@ -1555,18 +1555,17 @@
 }
 
 
-/* Global Tasks Feed Right Sidebar */
-.global-tasks-feed {
+/* Custom Folders Section */
+.custom-folders-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     padding: 0;
-    /* Reset padding, managed by children */
     overflow-y: auto;
     min-height: 0;
 }
 
-.feed-header {
+.folders-header {
     padding: 16px 16px 8px 16px;
     display: flex;
     justify-content: space-between;
@@ -1580,16 +1579,163 @@
     z-index: 5;
 }
 
-.feed-title {
+.folders-title {
     color: var(--text-secondary);
     text-transform: uppercase;
 }
 
-.feed-count {
+.folder-add-btn {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.folder-add-btn:hover {
+    background: var(--bg-hover);
     color: var(--accent-primary);
+}
+
+.folder-add-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.folder-create-sidebar {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-app);
+}
+
+.folder-create-input-sidebar {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    background: var(--bg-panel);
+    font-size: 11px;
+    color: var(--text-primary);
+    outline: none;
+    margin-bottom: 6px;
+}
+
+.folder-create-input-sidebar:focus {
+    border-color: var(--accent-primary);
+}
+
+.folder-create-actions-sidebar {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.btn-icon-sm {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.btn-icon-sm:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.btn-icon-sm .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.btn-icon-primary {
+    color: var(--accent-primary);
+}
+
+.btn-icon-primary:hover {
+    background: rgba(var(--accent-primary-rgb), 0.1);
+}
+
+.btn-icon-sm:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.folders-list {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+}
+
+.folder-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+}
+
+.folder-item:hover {
+    background: var(--bg-hover);
+    border-left-color: var(--border-highlight);
+}
+
+.folder-item.active {
+    background: var(--bg-active);
+    border-left-color: var(--accent-primary);
+}
+
+.folder-icon {
+    font-size: 16px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.folder-item.active .folder-icon {
+    color: var(--accent-primary);
+}
+
+.folder-name {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.folder-item.active .folder-name {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.folder-count {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
     padding: 2px 6px;
     background: var(--bg-active);
     border-radius: 4px;
+}
+
+.folder-item.active .folder-count {
+    background: rgba(var(--accent-primary-rgb), 0.15);
+    color: var(--accent-primary);
 }
 
 .task-group {
