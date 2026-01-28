@@ -57,8 +57,56 @@
 
     <!-- Main content -->
     <div class="tasks-main-content">
-
-        <!-- ... (toolbar and main content remains same) ... -->
+        <!-- Quick Add Bar -->
+        @if (quickAddVisible()) {
+        <div class="quick-add-bar">
+            <div class="quick-add-input-wrapper">
+                <span class="material-symbols-outlined quick-add-icon">add_task</span>
+                <input type="text"
+                       class="quick-add-input"
+                       placeholder="Type a task... (e.g., 'Meeting tomorrow 3pm #work HIGH')"
+                       [value]="quickAddInput()"
+                       (input)="quickAddInput.set($any($event.target).value)"
+                       (keydown.enter)="handleQuickAdd()"
+                       (keydown.escape)="quickAddVisible.set(false); quickAddInput.set('')"
+                       autofocus>
+                <button type="button" 
+                        class="quick-add-close"
+                        (click)="quickAddVisible.set(false); quickAddInput.set('')">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            @if (quickAddInput().trim()) {
+            <div class="quick-add-preview">
+                @let parsed = parseNaturalLanguage(quickAddInput());
+                <div class="preview-item">
+                    <span class="preview-label">Title:</span>
+                    <span class="preview-value">{{ parsed.title || quickAddInput() }}</span>
+                </div>
+                @if (parsed.due) {
+                <div class="preview-item">
+                    <span class="preview-label">Due:</span>
+                    <span class="preview-value">{{ parsed.due }}</span>
+                </div>
+                }
+                @if (parsed.priority) {
+                <div class="preview-item">
+                    <span class="preview-label">Priority:</span>
+                    <span class="preview-value">{{ parsed.priority }}</span>
+                </div>
+                }
+                @if (parsed.labels.length > 0) {
+                <div class="preview-item">
+                    <span class="preview-label">Labels:</span>
+                    @for (label of parsed.labels; track label) {
+                    <span class="preview-tag">#{{ label }}</span>
+                    }
+                </div>
+                }
+            </div>
+            }
+        </div>
+        }
 
         <!-- Enterprise Header / Toolbar -->
         <div class="tasks-toolbar">
@@ -70,16 +118,30 @@
                 <div class="toolbar-divider"></div>
                 <div class="view-switcher" aria-label="Change tasks layout" role="group">
                     <button class="view-btn" [class.active]="viewMode() === 'list'"
-                        (click)="setListView()"
+                        (click)="viewMode.set('list')"
                         title="List view" aria-label="List view">
                         <span class="material-symbols-outlined">format_list_bulleted</span>
                     </button>
                     <button class="view-btn"
                         [class.active]="viewMode() === 'thumbnails'"
-                        (click)="setThumbnailsView()"
+                        (click)="viewMode.set('thumbnails')"
                         title="Thumbnails view"
                         aria-label="Thumbnails view">
                         <span class="material-symbols-outlined">view_module</span>
+                    </button>
+                    <button class="view-btn"
+                        [class.active]="viewMode() === 'kanban'"
+                        (click)="viewMode.set('kanban')"
+                        title="Kanban view"
+                        aria-label="Kanban view">
+                        <span class="material-symbols-outlined">view_kanban</span>
+                    </button>
+                    <button class="view-btn"
+                        [class.active]="viewMode() === 'calendar'"
+                        (click)="viewMode.set('calendar')"
+                        title="Calendar view"
+                        aria-label="Calendar view">
+                        <span class="material-symbols-outlined">calendar_view_month</span>
                     </button>
                 </div>
             </div>
@@ -99,9 +161,22 @@
                     <span class="filter-dot" aria-hidden="true"></span>
                     }
                 </button>
+                <button class="btn-secondary" 
+                        (click)="quickAddVisible.set(true)"
+                        title="Quick add (⌘K)"
+                        aria-label="Quick add task">
+                    <span class="material-symbols-outlined">add</span>
+                    <span class="btn-label">Quick Add</span>
+                </button>
                 <button class="btn-primary" (click)="openNewTaskDialog()" aria-label="Create new task">
                     <span class="material-symbols-outlined">add</span>
                     New Task
+                </button>
+                <button class="btn-icon-only" 
+                        (click)="showShortcutsHelp.set(true)"
+                        title="Keyboard shortcuts (⌘/)"
+                        aria-label="Show keyboard shortcuts">
+                    <span class="material-symbols-outlined">keyboard</span>
                 </button>
             </div>
         </div>
@@ -162,7 +237,7 @@
                 <div class="metric-content">
                     <span class="metric-label">High Priority</span>
                     <span class="metric-value">{{ priorityTasksCount() }}</span>
-                    <span class="metric-caption">P01 tasks</span>
+                    <span class="metric-caption">High priority tasks</span>
                 </div>
             </div>
         </div>
@@ -206,7 +281,9 @@
                 </div>
                 } @else {
                 @for (task of filteredTasks(); track task.id) {
-                <div class="grid-row" [class.completed-row]="task.status === 'COMPLETED'">
+                <div class="grid-row" 
+                     [class.completed-row]="task.status === 'COMPLETED'"
+                     [class.blocked-task]="isTaskBlocked(task)">
                     <div class="col-check">
                         <label class="custom-checkbox">
                             <input type="checkbox" [checked]="task.status === 'COMPLETED'"
@@ -215,7 +292,22 @@
                         </label>
                     </div>
                     <div class="col-task">
-                        <div class="task-title-text">{{ task.title }}</div>
+                        <div class="task-title-row">
+                            @if (task.dependencies && task.dependencies.length > 0) {
+                            <span class="task-dependency-indicator" 
+                                  [title]="'Depends on: ' + getDependencyTitles(task).join(', ')">
+                                <span class="material-symbols-outlined">link</span>
+                            </span>
+                            }
+                            @if (task.subtasks && task.subtasks.length > 0) {
+                            <span class="task-subtask-indicator" 
+                                  [title]="getCompletedSubtasks(task) + '/' + task.subtasks.length + ' subtasks completed'">
+                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                                <span class="subtask-count-badge">{{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}</span>
+                            </span>
+                            }
+                            <div class="task-title-text">{{ task.title }}</div>
+                        </div>
                         <div class="task-meta-mobile">
                             @if(task.project) {
                             <span class="task-meta-project">{{ task.project }}</span>
@@ -223,6 +315,12 @@
                             @if(task.due) {
                             <span class="task-meta-separator">•</span>
                             <span class="task-meta-due">{{ task.due }}</span>
+                            }
+                            @if(task.labels && task.labels.length > 0) {
+                            <span class="task-meta-separator">•</span>
+                            @for (label of task.labels; track label) {
+                            <span class="task-meta-label" [style.color]="getLabelColor(label)">#{{ label }}</span>
+                            }
                             }
                         </div>
                     </div>
@@ -240,12 +338,12 @@
                     </div>
                     <div class="col-priority">
                         <div class="priority-indicator" [ngClass]="{
-                                    'p1': task.priority === 'PRIORITY 01',
-                                    'p2': task.priority === 'PRIORITY 02',
-                                    'p3': task.priority === 'PRIORITY 03'
+                                    'p1': task.priority === 'HIGH',
+                                    'p2': task.priority === 'MEDIUM',
+                                    'p3': task.priority === 'LOW'
                                 }">
                             <span class="p-dot"></span>
-                            {{ task.priority.replace('PRIORITY ', 'P') }}
+                            {{ task.priority }}
                         </div>
                     </div>
                     <div class="col-status">
@@ -278,7 +376,7 @@
                 }
             </div>
         </div>
-        } @else {
+        } @else if (viewMode() === 'thumbnails') {
         <!-- Thumbnails / Card View -->
         <div class="tasks-thumbnails-container">
             @if(filteredTasks().length === 0) {
@@ -313,11 +411,11 @@
                                 {{ task.status }}
                             </span>
                             <span class="thumb-priority" [ngClass]="{
-                                'p1': task.priority === 'PRIORITY 01',
-                                'p2': task.priority === 'PRIORITY 02',
-                                'p3': task.priority === 'PRIORITY 03'
+                                'p1': task.priority === 'HIGH',
+                                'p2': task.priority === 'MEDIUM',
+                                'p3': task.priority === 'LOW'
                             }">
-                                {{ task.priority.replace('PRIORITY ', 'P') }}
+                                {{ task.priority }}
                             </span>
                             @if(task.hours) {
                             <span class="thumb-hours">{{ task.hours }}</span>
@@ -360,6 +458,186 @@
                 }
             </div>
             }
+        </div>
+        } @else if (viewMode() === 'kanban') {
+        <!-- Kanban Board View -->
+        <div class="kanban-container">
+            <div class="kanban-column" [class.kanban-column-todo]="true">
+                <div class="kanban-column-header">
+                    <h3 class="kanban-column-title">To Do</h3>
+                    <span class="kanban-column-count">{{ getKanbanTasks('ACTIVE').length }}</span>
+                </div>
+                <div class="kanban-column-body"
+                 (dragover)="onKanbanDragOver($event)"
+                 (dragleave)="onKanbanDragLeave($event)"
+                 (drop)="onKanbanDrop($event, 'ACTIVE')"
+                 (dragenter)="$event.preventDefault()">
+                    @for (task of getKanbanTasks('ACTIVE'); track task.id) {
+                    <div class="kanban-card" 
+                         [class.kanban-card-high]="task.priority === 'HIGH'"
+                         draggable="true"
+                         (dragstart)="onKanbanDragStart($event, task)"
+                         (click)="focusTask(task)">
+                        <div class="kanban-card-header">
+                            <div class="kanban-card-title">{{ task.title }}</div>
+                            <div class="kanban-card-priority" [ngClass]="{
+                                'p1': task.priority === 'HIGH',
+                                'p2': task.priority === 'MEDIUM',
+                                'p3': task.priority === 'LOW'
+                            }">{{ task.priority }}</div>
+                        </div>
+                        @if (task.due) {
+                        <div class="kanban-card-due">
+                            <span class="material-symbols-outlined">schedule</span>
+                            {{ task.due }}
+                        </div>
+                        }
+                        @if (task.labels && task.labels.length > 0) {
+                        <div class="kanban-card-labels">
+                            @for (label of task.labels; track label) {
+                            <span class="kanban-label-tag">#{{ label }}</span>
+                            }
+                        </div>
+                        }
+                        <div class="kanban-card-footer">
+                            @if (task.subtasks && task.subtasks.length > 0) {
+                            <span class="kanban-subtask-count">
+                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                                {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
+                            </span>
+                            }
+                            @if (task.assignee) {
+                            <div class="kanban-assignee">{{ task.assignee.substring(0, 2) }}</div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            <div class="kanban-column" [class.kanban-column-progress]="true">
+                <div class="kanban-column-header">
+                    <h3 class="kanban-column-title">In Progress</h3>
+                    <span class="kanban-column-count">{{ getKanbanTasks('PENDING').length }}</span>
+                </div>
+                <div class="kanban-column-body"
+                 (dragover)="onKanbanDragOver($event)"
+                 (drop)="onKanbanDrop($event, 'PENDING')">
+                    @for (task of getKanbanTasks('PENDING'); track task.id) {
+                    <div class="kanban-card"
+                         [class.kanban-card-high]="task.priority === 'HIGH'"
+                         draggable="true"
+                         (dragstart)="onKanbanDragStart($event, task)"
+                         (click)="focusTask(task)">
+                        <div class="kanban-card-header">
+                            <div class="kanban-card-title">{{ task.title }}</div>
+                            <div class="kanban-card-priority" [ngClass]="{
+                                'p1': task.priority === 'HIGH',
+                                'p2': task.priority === 'MEDIUM',
+                                'p3': task.priority === 'LOW'
+                            }">{{ task.priority }}</div>
+                        </div>
+                        @if (task.due) {
+                        <div class="kanban-card-due">
+                            <span class="material-symbols-outlined">schedule</span>
+                            {{ task.due }}
+                        </div>
+                        }
+                        @if (task.labels && task.labels.length > 0) {
+                        <div class="kanban-card-labels">
+                            @for (label of task.labels; track label) {
+                            <span class="kanban-label-tag">#{{ label }}</span>
+                            }
+                        </div>
+                        }
+                        <div class="kanban-card-footer">
+                            @if (task.subtasks && task.subtasks.length > 0) {
+                            <span class="kanban-subtask-count">
+                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                                {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
+                            </span>
+                            }
+                            @if (task.assignee) {
+                            <div class="kanban-assignee">{{ task.assignee.substring(0, 2) }}</div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            <div class="kanban-column" [class.kanban-column-done]="true">
+                <div class="kanban-column-header">
+                    <h3 class="kanban-column-title">Done</h3>
+                    <span class="kanban-column-count">{{ getKanbanTasks('COMPLETED').length }}</span>
+                </div>
+                <div class="kanban-column-body"
+                 (dragover)="onKanbanDragOver($event)"
+                 (drop)="onKanbanDrop($event, 'COMPLETED')">
+                    @for (task of getKanbanTasks('COMPLETED'); track task.id) {
+                    <div class="kanban-card kanban-card-completed"
+                         draggable="true"
+                         (dragstart)="onKanbanDragStart($event, task)"
+                         (click)="focusTask(task)">
+                        <div class="kanban-card-header">
+                            <div class="kanban-card-title">{{ task.title }}</div>
+                        </div>
+                        @if (task.labels && task.labels.length > 0) {
+                        <div class="kanban-card-labels">
+                            @for (label of task.labels; track label) {
+                            <span class="kanban-label-tag">#{{ label }}</span>
+                            }
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+        } @else if (viewMode() === 'calendar') {
+        <!-- Calendar View -->
+        <div class="calendar-view-container">
+            <div class="calendar-view-header">
+                <button class="calendar-nav-btn" (click)="navigateCalendarView('prev')">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <h2 class="calendar-view-month">{{ getCalendarViewMonth() }}</h2>
+                <button class="calendar-nav-btn" (click)="navigateCalendarView('next')">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+            <div class="calendar-view-grid">
+                <div class="calendar-weekdays">
+                    <div class="calendar-weekday">Sun</div>
+                    <div class="calendar-weekday">Mon</div>
+                    <div class="calendar-weekday">Tue</div>
+                    <div class="calendar-weekday">Wed</div>
+                    <div class="calendar-weekday">Thu</div>
+                    <div class="calendar-weekday">Fri</div>
+                    <div class="calendar-weekday">Sat</div>
+                </div>
+                <div class="calendar-days-grid-view">
+                    @for (day of getCalendarViewDays(); track $index) {
+                    <div class="calendar-day-cell" 
+                         [class.calendar-day-today]="day.isToday"
+                         [class.calendar-day-other-month]="!day.isCurrentMonth">
+                        <div class="calendar-day-number">{{ day.day }}</div>
+                        <div class="calendar-day-tasks">
+                            @for (task of getTasksForDate(day.date); track task.id) {
+                            <div class="calendar-task-item"
+                                 [class.calendar-task-high]="task.priority === 'HIGH'"
+                                 (click)="focusTask(task)">
+                                @if (task.due?.includes(':')) {
+                                <span class="calendar-task-time">
+                                    {{ extractTime(task.due) }}
+                                </span>
+                                }
+                                <span class="calendar-task-title">{{ task.title }}</span>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
         </div>
         }
     </div>
@@ -448,21 +726,21 @@
                     <div class="task-modal-priority-selector">
                         <button type="button"
                                 class="priority-option"
-                                [class.selected]="newTaskPriority() === 'PRIORITY 01'"
-                                (click)="setNewTaskPriority('PRIORITY 01')">
-                            P01
+                                [class.selected]="newTaskPriority() === 'HIGH'"
+                                (click)="setNewTaskPriority('HIGH')">
+                            High
                         </button>
                         <button type="button"
                                 class="priority-option"
-                                [class.selected]="newTaskPriority() === 'PRIORITY 02'"
-                                (click)="setNewTaskPriority('PRIORITY 02')">
-                            P02
+                                [class.selected]="newTaskPriority() === 'MEDIUM'"
+                                (click)="setNewTaskPriority('MEDIUM')">
+                            Medium
                         </button>
                         <button type="button"
                                 class="priority-option"
-                                [class.selected]="newTaskPriority() === 'PRIORITY 03'"
-                                (click)="setNewTaskPriority('PRIORITY 03')">
-                            P03
+                                [class.selected]="newTaskPriority() === 'LOW'"
+                                (click)="setNewTaskPriority('LOW')">
+                            Low
                         </button>
                     </div>
                 </div>
@@ -472,13 +750,15 @@
                         <button type="button"
                                 class="task-modal-control-btn"
                                 [class.active]="!!newTaskDue()"
-                                (click)="toggleDatePicker()">
+                                (click)="toggleDatePicker($event)">
                             <span class="material-symbols-outlined">calendar_today</span>
                             <span>{{ newTaskDue() || 'Today' }}</span>
                             <span class="material-symbols-outlined">expand_more</span>
                         </button>
-                        @if (showDatePicker()) {
-                        <div class="task-modal-date-picker">
+                        @if (showDatePicker() && datePickerPosition()) {
+                        <div class="task-modal-date-picker" 
+                             [style.top.px]="datePickerPosition()!.top"
+                             [style.left.px]="datePickerPosition()!.left">
                             <div class="date-picker-header">
                                 <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
                                     <span class="material-symbols-outlined">chevron_left</span>
@@ -518,13 +798,15 @@
                         <button type="button"
                                 class="task-modal-control-btn"
                                 [class.active]="!!newTaskDue()"
-                                (click)="toggleDatePicker()">
+                                (click)="toggleDatePicker($event)">
                             <span class="material-symbols-outlined">calendar_today</span>
                             <span>{{ newTaskDue() || 'Set date' }}</span>
                             <span class="material-symbols-outlined">expand_more</span>
                         </button>
-                        @if (showDatePicker()) {
-                        <div class="task-modal-date-picker">
+                        @if (showDatePicker() && datePickerPosition()) {
+                        <div class="task-modal-date-picker" 
+                             [style.top.px]="datePickerPosition()!.top"
+                             [style.left.px]="datePickerPosition()!.left">
                             <div class="date-picker-header">
                                 <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
                                     <span class="material-symbols-outlined">chevron_left</span>
@@ -557,13 +839,15 @@
                     <div class="task-modal-folder-wrapper">
                         <button type="button" 
                                 class="task-modal-folder-btn"
-                                (click)="toggleFolderDropdown()">
+                                (click)="toggleFolderDropdown($event)">
                             <span class="material-symbols-outlined">folder</span>
                             <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
                             <span class="material-symbols-outlined">expand_more</span>
                         </button>
-                        @if (showFolderDropdown()) {
-                        <div class="task-modal-folder-dropdown">
+                        @if (showFolderDropdown() && folderDropdownPosition()) {
+                        <div class="task-modal-folder-dropdown"
+                             [style.top.px]="folderDropdownPosition()!.top"
+                             [style.left.px]="folderDropdownPosition()!.left">
                             @if (!showCreateFolder()) {
                             <div class="folder-dropdown-list">
                                 @for (folder of availableLists(); track folder) {
@@ -610,16 +894,171 @@
                         }
                     </div>
                 </div>
-                <div class="task-modal-control-group">
+                <div class="task-modal-control-group task-modal-reminders-group">
                     <label class="task-modal-control-label">Reminders</label>
-                    <button type="button"
-                            class="task-modal-control-btn"
-                            [class.active]="newTaskHasReminder()"
-                            (click)="toggleNewTaskReminder()">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span>{{ newTaskHasReminder() ? 'Enabled' : 'Disabled' }}</span>
-                    </button>
+                    <div class="task-modal-reminders-controls">
+                        <button type="button"
+                                class="task-modal-control-btn"
+                                [class.active]="newTaskHasReminder()"
+                                (click)="toggleNewTaskReminder()">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span>{{ newTaskHasReminder() ? 'Enabled' : 'Disabled' }}</span>
+                        </button>
+                        @if (newTaskHasReminder()) {
+                        <div class="reminder-times-list">
+                            @for (time of newTaskReminderTimes(); track $index) {
+                            <div class="reminder-time-item">
+                                <span class="material-symbols-outlined">schedule</span>
+                                <span class="reminder-time-text">{{ time }}</span>
+                                <button type="button" class="reminder-time-remove" (click)="removeReminderTime($index)">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            }
+                            <div class="reminder-time-input-wrapper">
+                                <input type="text"
+                                       class="reminder-time-input"
+                                       placeholder="e.g., '1 hour before', '30 min before'..."
+                                       [value]="newReminderTimeInput()"
+                                       (input)="newReminderTimeInput.set($any($event.target).value)"
+                                       (keydown.enter)="addReminderTime()">
+                                <button type="button" class="reminder-time-add" (click)="addReminderTime()">
+                                    <span class="material-symbols-outlined">add</span>
+                                </button>
+                            </div>
+                        </div>
+                        }
+                    </div>
                 </div>
+            </div>
+            
+            <!-- Advanced Options -->
+            <div class="task-modal-advanced-section">
+                <div class="task-modal-advanced-toggle" (click)="showAdvancedOptions.set(!showAdvancedOptions())">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span>Advanced Options</span>
+                    <span class="material-symbols-outlined">{{ showAdvancedOptions() ? 'expand_less' : 'expand_more' }}</span>
+                </div>
+                @if (showAdvancedOptions()) {
+                <div class="task-modal-advanced-content">
+                    <!-- Recurring Task -->
+                    <div class="task-modal-control-group">
+                        <label class="task-modal-control-label">Recurring</label>
+                        <div class="task-modal-recurring-controls">
+                            <button type="button"
+                                    class="task-modal-control-btn"
+                                    [class.active]="newTaskRecurring()"
+                                    (click)="newTaskRecurring.set(!newTaskRecurring())">
+                                <span class="material-symbols-outlined">repeat</span>
+                                <span>{{ newTaskRecurring() ? 'Enabled' : 'Disabled' }}</span>
+                            </button>
+                            @if (newTaskRecurring()) {
+                            <select class="task-modal-recurring-select"
+                                    [value]="newTaskRecurringPattern()"
+                                    (change)="newTaskRecurringPattern.set($any($event.target).value)">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                            }
+                        </div>
+                    </div>
+                    
+                    <!-- Subtasks -->
+                    <div class="task-modal-control-group task-modal-subtasks-group">
+                        <label class="task-modal-control-label">Subtasks</label>
+                        <div class="task-modal-subtasks-list">
+                            @for (subtask of newTaskSubtasks(); track $index) {
+                            <div class="subtask-item">
+                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                                <span class="subtask-text">{{ subtask }}</span>
+                                <button type="button" class="subtask-remove" (click)="removeSubtask($index)">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            }
+                            <div class="subtask-input-wrapper">
+                                <input type="text"
+                                       class="subtask-input"
+                                       placeholder="Add subtask..."
+                                       [value]="newSubtaskInput()"
+                                       (input)="newSubtaskInput.set($any($event.target).value)"
+                                       (keydown.enter)="addSubtaskToNew()"
+                                       (focus)="showLabelAutocomplete.set(false)">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Labels with Autocomplete -->
+                    <div class="task-modal-control-group task-modal-labels-group">
+                        <label class="task-modal-control-label">Labels</label>
+                        <div class="task-modal-labels-container-modal">
+                            @if (newTaskLabels().length > 0) {
+                            <div class="task-label-chips-modal">
+                                @for (label of newTaskLabels(); track label) {
+                                <span class="task-label-chip-modal" [style.border-left-color]="getLabelColor(label)">
+                                    <span class="material-symbols-outlined chip-icon">label</span>
+                                    {{ label }}
+                                    <button type="button" class="chip-remove" (click)="removeNewTaskLabel(label)">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </span>
+                                }
+                            </div>
+                            }
+                            <div class="task-modal-label-input-wrapper">
+                                <input type="text"
+                                       class="task-modal-label-input-modal"
+                                       placeholder="Add label (#work, #personal)..."
+                                       [value]="newTaskLabelInput()"
+                                       (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
+                                       (keydown.enter)="addNewTaskLabel()"
+                                       (focus)="showLabelAutocomplete.set(true)"
+                                       (blur)="hideLabelAutocomplete()">
+                                @if (showLabelAutocomplete() && getLabelSuggestions().length > 0) {
+                                <div class="task-modal-label-autocomplete">
+                                    @for (suggestion of getLabelSuggestions(); track suggestion) {
+                                    <div class="label-suggestion-item" (click)="addNewTaskLabel(suggestion)">
+                                        <span class="label-suggestion-color" [style.background-color]="getLabelColor(suggestion)"></span>
+                                        <span>{{ suggestion }}</span>
+                                    </div>
+                                    }
+                                </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Task Dependencies -->
+                    <div class="task-modal-control-group">
+                        <label class="task-modal-control-label">Dependencies</label>
+                        <div class="task-modal-dependencies-list">
+                            @if (newTaskDependencies().length > 0) {
+                            @for (depId of newTaskDependencies(); track depId) {
+                            @let depTask = getTaskById(depId);
+                            @if (depTask) {
+                            <div class="dependency-item">
+                                <span class="material-symbols-outlined">link</span>
+                                <span class="dependency-text">{{ depTask.title }}</span>
+                                <button type="button" class="dependency-remove" (click)="removeDependency(depId)">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            }
+                            }
+                            }
+                            <select class="task-modal-dependency-select"
+                                    (change)="addDependency($any($event.target).value); $any($event.target).value = ''">
+                                <option value="">Add dependency...</option>
+                                @for (task of getAvailableDependencyTasks(); track task.id) {
+                                <option [value]="task.id">{{ task.title }}</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                }
             </div>
             }
         </div>
@@ -670,3 +1109,112 @@
         </div>
     </div>
 </env-modal>
+
+<!-- Focus Mode Overlay -->
+@if (focusMode() && focusedTask()) {
+<div class="focus-mode-overlay">
+    <div class="focus-mode-container">
+        <div class="focus-mode-header">
+            <button class="focus-mode-close" (click)="exitFocusMode()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <h2 class="focus-mode-title">Focus Mode</h2>
+        </div>
+        <div class="focus-mode-content">
+            @if (focusedTask(); as task) {
+            <div class="focus-task-card">
+                <h1 class="focus-task-title">{{ task.title }}</h1>
+                @if (task.notes) {
+                <div class="focus-task-notes">{{ task.notes }}</div>
+                }
+                <div class="focus-task-meta">
+                    <div class="focus-meta-item">
+                        <span class="material-symbols-outlined">flag</span>
+                        <span>{{ task.priority }}</span>
+                    </div>
+                    @if (task.due) {
+                    <div class="focus-meta-item">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <span>{{ task.due }}</span>
+                    </div>
+                    }
+                    @if (task.hours) {
+                    <div class="focus-meta-item">
+                        <span class="material-symbols-outlined">timer</span>
+                        <span>{{ task.hours }}</span>
+                    </div>
+                    }
+                </div>
+                <div class="focus-actions">
+                    <button class="btn-primary" (click)="onQuickComplete(task); exitFocusMode()">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Mark Complete
+                    </button>
+                    <button class="btn-secondary" (click)="startPomodoro(task)">
+                        <span class="material-symbols-outlined">timer</span>
+                        Start Pomodoro
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+}
+
+<!-- Pomodoro Timer -->
+@if (pomodoroActive()) {
+<div class="pomodoro-timer">
+    <div class="pomodoro-content">
+        <div class="pomodoro-time">{{ formatPomodoroTime(pomodoroTime()) }}</div>
+        @if (pomodoroTask(); as task) {
+        <div class="pomodoro-task">{{ task.title }}</div>
+        }
+        <div class="pomodoro-controls">
+            <button class="pomodoro-btn" (click)="stopPomodoro()">
+                <span class="material-symbols-outlined">stop</span>
+            </button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Keyboard Shortcuts Help -->
+@if (showShortcutsHelp()) {
+<div class="shortcuts-help-overlay" (click)="showShortcutsHelp.set(false)">
+    <div class="shortcuts-help-modal" (click)="$event.stopPropagation()">
+        <div class="shortcuts-help-header">
+            <h2>Keyboard Shortcuts</h2>
+            <button class="shortcuts-help-close" (click)="showShortcutsHelp.set(false)">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="shortcuts-help-content">
+            <div class="shortcut-item">
+                <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd>
+                <span>Quick add task</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>⌘N</kbd> / <kbd>Ctrl+N</kbd>
+                <span>New task modal</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>⌘F</kbd> / <kbd>Ctrl+F</kbd>
+                <span>Focus search</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>⌘/</kbd> / <kbd>Ctrl+/</kbd>
+                <span>Show shortcuts</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>Esc</kbd>
+                <span>Close modals/dropdowns</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>Enter</kbd>
+                <span>Submit forms</span>
+            </div>
+        </div>
+    </div>
+</div>
+}

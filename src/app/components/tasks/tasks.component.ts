@@ -1,10 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task } from '../../services/store.service';
 import { SidebarComponent, SidebarNavItem } from '../layout/sidebar/sidebar.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
+type ViewMode = 'list' | 'thumbnails' | 'kanban' | 'calendar';
 
 @Component({
   selector: 'app-tasks',
@@ -13,7 +14,7 @@ type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css'
 })
-export class TasksComponent {
+export class TasksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
 
   // Left sidebar state
@@ -24,20 +25,55 @@ export class TasksComponent {
    * Main content layout mode for the center panel.
    * - 'list'      → compact data grid (existing experience)
    * - 'thumbnails' → card / thumbnail layout
+   * - 'kanban'    → kanban board view
+   * - 'calendar'  → calendar view
    */
-  viewMode = signal<'list' | 'thumbnails'>('list');
+  viewMode = signal<ViewMode>('list');
+  
+  // Quick add bar state
+  quickAddVisible = signal<boolean>(false);
+  quickAddInput = signal<string>('');
+  
+  // Focus mode state
+  focusMode = signal<boolean>(false);
+  focusedTask = signal<Task | null>(null);
+  
+  // Pomodoro timer state
+  pomodoroActive = signal<boolean>(false);
+  pomodoroTime = signal<number>(25 * 60); // 25 minutes in seconds
+  pomodoroTask = signal<Task | null>(null);
+  
+  // Keyboard shortcuts help
+  showShortcutsHelp = signal<boolean>(false);
 
   // New task modal state
   newTaskModalOpen = signal<boolean>(false);
   newTaskTitle = signal<string>('');
   newTaskDescription = signal<string>('');
-  newTaskPriority = signal<Task['priority']>('PRIORITY 02');
+  newTaskPriority = signal<Task['priority']>('MEDIUM');
   newTaskDue = signal<string | undefined>(undefined);
   newTaskList = signal<string>('Inbox');
   newTaskHasReminder = signal<boolean>(false);
+  newTaskReminderTimes = signal<string[]>([]);
+  newReminderTimeInput = signal<string>('');
    // Labels for the new task
   newTaskLabels = signal<string[]>([]);
   newTaskLabelInput = signal<string>('');
+  showLabelAutocomplete = signal<boolean>(false);
+  
+  // Recurring task state
+  newTaskRecurring = signal<boolean>(false);
+  newTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
+  
+  // Subtasks state
+  newTaskSubtasks = signal<string[]>([]);
+  newSubtaskInput = signal<string>('');
+  
+  // Advanced options
+  showAdvancedOptions = signal<boolean>(false);
+  
+  // Task dependencies
+  newTaskDependencies = signal<string[]>([]);
   
   // Calendar dropdown state
   showDatePicker = signal<boolean>(false);
@@ -162,23 +198,12 @@ export class TasksComponent {
   });
 
   /**
-   * Toolbar view switcher handlers.
-   */
-  setListView() {
-    this.viewMode.set('list');
-  }
-
-  setThumbnailsView() {
-    this.viewMode.set('thumbnails');
-  }
-
-  /**
    * New Task Modal: open/reset + helpers
    */
   openNewTaskDialog() {
     this.newTaskTitle.set('');
     this.newTaskDescription.set('');
-    this.newTaskPriority.set('PRIORITY 02');
+    this.newTaskPriority.set('MEDIUM');
     this.newTaskDue.set(undefined);
     this.newTaskList.set('Inbox');
     this.newTaskHasReminder.set(false);
@@ -192,6 +217,17 @@ export class TasksComponent {
     this.showCreateFolderInSidebar.set(false);
     this.newFolderNameSidebar.set('');
     this.datePickerDate.set(new Date());
+    this.datePickerPosition.set(null);
+    this.folderDropdownPosition.set(null);
+    this.newTaskSubtasks.set([]);
+    this.newSubtaskInput.set('');
+    this.newTaskRecurring.set(false);
+    this.newTaskRecurringPattern.set('weekly');
+    this.showAdvancedOptions.set(false);
+    this.showLabelAutocomplete.set(false);
+    this.newTaskDependencies.set([]);
+    this.newTaskReminderTimes.set([]);
+    this.newReminderTimeInput.set('');
     this.newTaskModalOpen.set(true);
   }
 
@@ -228,18 +264,54 @@ export class TasksComponent {
 
   toggleNewTaskReminder() {
     this.newTaskHasReminder.update(v => !v);
+    if (!this.newTaskHasReminder()) {
+      this.newTaskReminderTimes.set([]);
+    } else if (this.newTaskReminderTimes().length === 0) {
+      // Set default reminder
+      this.newTaskReminderTimes.set(['1 hour before']);
+    }
+  }
+  
+  addReminderTime() {
+    const time = this.newReminderTimeInput().trim();
+    if (!time) return;
+    this.newTaskReminderTimes.set([...this.newTaskReminderTimes(), time]);
+    this.newReminderTimeInput.set('');
+  }
+  
+  removeReminderTime(index: number) {
+    const times = this.newTaskReminderTimes();
+    this.newTaskReminderTimes.set(times.filter((_, i) => i !== index));
   }
 
-  addNewTaskLabel() {
-    const raw = this.newTaskLabelInput().trim();
+  addNewTaskLabel(label?: string) {
+    const raw = (label || this.newTaskLabelInput()).trim();
     if (!raw) return;
     const existing = this.newTaskLabels();
     if (existing.includes(raw)) {
       this.newTaskLabelInput.set('');
+      this.showLabelAutocomplete.set(false);
       return;
     }
     this.newTaskLabels.set([...existing, raw]);
     this.newTaskLabelInput.set('');
+    this.showLabelAutocomplete.set(false);
+  }
+  
+  getLabelSuggestions(): string[] {
+    const input = this.newTaskLabelInput().toLowerCase();
+    if (!input) return [];
+    return this.allLabels().filter(label => 
+      label.toLowerCase().includes(input) && 
+      !this.newTaskLabels().includes(label)
+    ).slice(0, 5);
+  }
+  
+  hideLabelAutocomplete() {
+    // Delay hiding to allow click events on suggestions
+    setTimeout(() => {
+      this.showLabelAutocomplete.set(false);
+    }, 200);
   }
 
   removeNewTaskLabel(label: string) {
@@ -263,9 +335,22 @@ export class TasksComponent {
     if (!title) {
       return;
     }
+    
+    const taskId = Date.now().toString();
+
+    const subtasks: Task[] | undefined = this.newTaskSubtasks().length > 0
+      ? this.newTaskSubtasks().map((st, idx) => ({
+          id: `${taskId}-${idx}`,
+          title: st,
+          priority: 'MEDIUM' as Task['priority'],
+          hours: '0.5H',
+          status: 'ACTIVE' as Task['status'],
+          parentId: taskId
+        }))
+      : undefined;
 
     const newTask: Task = {
-      id: Date.now().toString(),
+      id: taskId,
       title,
       priority: this.newTaskPriority(),
       hours: '1.0H',
@@ -273,11 +358,32 @@ export class TasksComponent {
       project: this.newTaskList() || undefined,
       due: this.newTaskDue(),
       labels: this.newTaskLabels().length ? this.newTaskLabels() : undefined,
-      reminders: this.newTaskHasReminder() ? ['Default reminder'] : undefined
+      reminders: this.newTaskHasReminder() && this.newTaskReminderTimes().length > 0 
+        ? this.newTaskReminderTimes() 
+        : undefined,
+      subtasks: subtasks,
+      recurring: this.newTaskRecurring() ? {
+        pattern: this.newTaskRecurringPattern(),
+        interval: 1,
+        nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), 1)
+      } : undefined,
+      dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined
     };
 
     this.store.addTask(newTask);
     this.closeNewTaskDialog();
+  }
+  
+  addSubtaskToNew() {
+    const input = this.newSubtaskInput().trim();
+    if (!input) return;
+    this.newTaskSubtasks.set([...this.newTaskSubtasks(), input]);
+    this.newSubtaskInput.set('');
+  }
+  
+  removeSubtask(index: number) {
+    const subtasks = this.newTaskSubtasks();
+    this.newTaskSubtasks.set(subtasks.filter((_, i) => i !== index));
   }
 
   onSidebarActiveChange(id: string) {
@@ -305,7 +411,7 @@ export class TasksComponent {
     () => this.store.tasks().filter(t => t.status === 'ACTIVE').length
   );
   priorityTasksCount = computed(
-    () => this.store.tasks().filter(t => t.priority === 'PRIORITY 01').length
+    () => this.store.tasks().filter(t => t.priority === 'HIGH').length
   );
 
   // Inbox/Today/Upcoming/Completed views
@@ -466,10 +572,33 @@ export class TasksComponent {
   }
   
   // Date picker methods
-  toggleDatePicker() {
-    this.showDatePicker.update(v => !v);
+  datePickerPosition = signal<{ top: number; left: number } | null>(null);
+  
+  // Folder dropdown position
+  folderDropdownPosition = signal<{ top: number; left: number } | null>(null);
+  
+  toggleDatePicker(event?: Event) {
+    this.showDatePicker.update(v => {
+      if (!v) {
+        // Calculate position when opening
+        setTimeout(() => {
+          const target = event?.target as HTMLElement;
+          const button = target?.closest('.task-modal-control-btn') as HTMLElement || 
+                        document.querySelector('.task-modal-control-btn') as HTMLElement;
+          if (button) {
+            const rect = button.getBoundingClientRect();
+            this.datePickerPosition.set({
+              top: rect.bottom + 8,
+              left: rect.left
+            });
+          }
+        }, 0);
+      }
+      return !v;
+    });
     if (!this.showDatePicker()) {
       this.datePickerDate.set(new Date());
+      this.datePickerPosition.set(null);
     }
   }
   
@@ -504,6 +633,7 @@ export class TasksComponent {
     
     this.newTaskDue.set(dateString);
     this.showDatePicker.set(false);
+    this.datePickerPosition.set(null);
   }
   
   navigateDatePickerMonth(direction: 'prev' | 'next') {
@@ -563,15 +693,36 @@ export class TasksComponent {
   }
   
   // Folder methods
-  toggleFolderDropdown() {
-    this.showFolderDropdown.update(v => !v);
-    this.showCreateFolder.set(false);
-    this.newFolderName.set('');
+  toggleFolderDropdown(event?: Event) {
+    this.showFolderDropdown.update(v => {
+      if (!v) {
+        // Calculate position when opening
+        setTimeout(() => {
+          const target = event?.target as HTMLElement;
+          const button = target?.closest('.task-modal-folder-btn') as HTMLElement || 
+                        document.querySelector('.task-modal-folder-btn') as HTMLElement;
+          if (button) {
+            const rect = button.getBoundingClientRect();
+            this.folderDropdownPosition.set({
+              top: rect.bottom + 8,
+              left: rect.left
+            });
+          }
+        }, 0);
+      }
+      return !v;
+    });
+    if (!this.showFolderDropdown()) {
+      this.showCreateFolder.set(false);
+      this.newFolderName.set('');
+      this.folderDropdownPosition.set(null);
+    }
   }
   
   selectFolder(folderName: string) {
     this.newTaskList.set(folderName);
     this.showFolderDropdown.set(false);
+    this.folderDropdownPosition.set(null);
   }
   
   toggleCreateFolder() {
@@ -589,6 +740,265 @@ export class TasksComponent {
     this.showCreateFolder.set(false);
     this.showFolderDropdown.set(false);
     this.newFolderName.set('');
+    this.folderDropdownPosition.set(null);
+  }
+  
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // Close date picker if clicking outside
+    if (this.showDatePicker()) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.task-modal-date-picker') && 
+          !target.closest('.task-modal-control-btn')) {
+        this.showDatePicker.set(false);
+        this.datePickerPosition.set(null);
+      }
+    }
+    
+    // Close folder dropdown if clicking outside
+    if (this.showFolderDropdown()) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.task-modal-folder-dropdown') && 
+          !target.closest('.task-modal-folder-btn')) {
+        this.showFolderDropdown.set(false);
+        this.showCreateFolder.set(false);
+        this.folderDropdownPosition.set(null);
+      }
+    }
+  }
+  
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modKey = isMac ? event.metaKey : event.ctrlKey;
+    
+    // Cmd/Ctrl + K: Quick add
+    if (modKey && event.key === 'k' && !event.shiftKey) {
+      event.preventDefault();
+      this.quickAddVisible.set(true);
+      setTimeout(() => {
+        const input = document.querySelector('.quick-add-input') as HTMLInputElement;
+        input?.focus();
+      }, 0);
+      return;
+    }
+    
+    // Cmd/Ctrl + N: New task modal
+    if (modKey && event.key === 'n') {
+      event.preventDefault();
+      this.openNewTaskDialog();
+      return;
+    }
+    
+    // Cmd/Ctrl + F: Focus search
+    if (modKey && event.key === 'f') {
+      event.preventDefault();
+      const searchInput = document.querySelector('.toolbar-search') as HTMLInputElement;
+      searchInput?.focus();
+      return;
+    }
+    
+    // Cmd/Ctrl + /: Show shortcuts help
+    if (modKey && event.key === '/') {
+      event.preventDefault();
+      this.showShortcutsHelp.set(!this.showShortcutsHelp());
+      return;
+    }
+    
+    // Escape: Close modals/dropdowns
+    if (event.key === 'Escape') {
+      if (this.newTaskModalOpen()) {
+        this.closeNewTaskDialog();
+      }
+      if (this.showDatePicker()) {
+        this.showDatePicker.set(false);
+        this.datePickerPosition.set(null);
+      }
+      if (this.showFolderDropdown()) {
+        this.showFolderDropdown.set(false);
+        this.folderDropdownPosition.set(null);
+      }
+      if (this.quickAddVisible()) {
+        this.quickAddVisible.set(false);
+        this.quickAddInput.set('');
+      }
+      if (this.showShortcutsHelp()) {
+        this.showShortcutsHelp.set(false);
+      }
+      if (this.focusMode()) {
+        this.focusMode.set(false);
+        this.focusedTask.set(null);
+      }
+      return;
+    }
+  }
+  
+  // Natural language parsing
+  parseNaturalLanguage(input: string): {
+    title: string;
+    due?: string;
+    priority?: Task['priority'];
+    labels: string[];
+    mentions: string[];
+  } {
+    let title = input.trim();
+    const labels: string[] = [];
+    const mentions: string[] = [];
+    let priority: Task['priority'] | undefined;
+    let due: string | undefined;
+    
+    // Extract hashtags (#work, #personal)
+    const hashtagRegex = /#(\w+)/g;
+    let match;
+    while ((match = hashtagRegex.exec(title)) !== null) {
+      labels.push(match[1]);
+      title = title.replace(match[0], '').trim();
+    }
+    
+    // Extract mentions (@john, @team)
+    const mentionRegex = /@(\w+)/g;
+    while ((match = mentionRegex.exec(title)) !== null) {
+      mentions.push(match[1]);
+      title = title.replace(match[0], '').trim();
+    }
+    
+    // Extract priority keywords
+    const priorityKeywords = {
+      high: ['high', 'urgent', 'important', 'critical', 'asap', 'priority'],
+      low: ['low', 'later', 'someday', 'optional']
+    };
+    
+    const lowerTitle = title.toLowerCase();
+    for (const [key, keywords] of Object.entries(priorityKeywords)) {
+      if (keywords.some(kw => lowerTitle.includes(kw))) {
+        priority = key.toUpperCase() as Task['priority'];
+        // Remove priority keyword from title
+        keywords.forEach(kw => {
+          title = title.replace(new RegExp(kw, 'gi'), '').trim();
+        });
+        break;
+      }
+    }
+    
+    // Extract dates
+    const datePatterns = [
+      { pattern: /tomorrow/i, value: this.getTomorrowDate() },
+      { pattern: /today/i, value: 'Today, 12:00' },
+      { pattern: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, 
+        value: (match: RegExpMatchArray) => this.getNextWeekday(match[1]) },
+      { pattern: /in\s+(\d+)\s+days?/i, 
+        value: (match: RegExpMatchArray) => this.getDateInDays(parseInt(match[1])) },
+      { pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
+        value: (match: RegExpMatchArray) => this.parseDate(match[1], match[2], match[3]) }
+    ];
+    
+    for (const { pattern, value } of datePatterns) {
+      const dateMatch = title.match(pattern);
+      if (dateMatch) {
+        due = typeof value === 'function' ? value(dateMatch) : value;
+        title = title.replace(pattern, '').trim();
+        break;
+      }
+    }
+    
+    // Extract time
+    const timePatterns = [
+      { pattern: /(\d{1,2}):(\d{2})\s*(am|pm)?/i, 
+        value: (match: RegExpMatchArray) => {
+          let hours = parseInt(match[1]);
+          const minutes = match[2];
+          const period = match[3]?.toLowerCase();
+          
+          if (period === 'pm' && hours !== 12) hours += 12;
+          if (period === 'am' && hours === 12) hours = 0;
+          
+          if (due) {
+            return due.replace(/\d{2}:\d{2}/, `${hours.toString().padStart(2, '0')}:${minutes}`);
+          }
+          return `Today, ${hours.toString().padStart(2, '0')}:${minutes}`;
+        }}
+    ];
+    
+    for (const { pattern, value } of timePatterns) {
+      const timeMatch = title.match(pattern);
+      if (timeMatch) {
+        const timeStr = value(timeMatch);
+        if (timeStr) {
+          due = timeStr;
+          title = title.replace(pattern, '').trim();
+        }
+      }
+    }
+    
+    // Clean up title (remove extra spaces)
+    title = title.replace(/\s+/g, ' ').trim();
+    
+    return { title, due, priority, labels, mentions };
+  }
+  
+  getTomorrowDate(): string {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  
+  getNextWeekday(dayName: string): string {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const targetDay = days.indexOf(dayName.toLowerCase());
+    const today = new Date();
+    const currentDay = today.getDay();
+    let daysUntil = (targetDay - currentDay + 7) % 7;
+    if (daysUntil === 0) daysUntil = 7;
+    
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + daysUntil);
+    return nextDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  
+  getDateInDays(days: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  
+  parseDate(month: string, day: string, year?: string): string {
+    const currentYear = new Date().getFullYear();
+    const y = year ? (year.length === 2 ? `20${year}` : year) : currentYear.toString();
+    const date = new Date(parseInt(y), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  
+  // Quick add functionality
+  handleQuickAdd() {
+    const input = this.quickAddInput().trim();
+    if (!input) return;
+    
+    const parsed = this.parseNaturalLanguage(input);
+    
+    if (!parsed.title) {
+      // If title is empty after parsing, use original input
+      parsed.title = input;
+    }
+    
+    // Set parsed values
+    this.newTaskTitle.set(parsed.title);
+    if (parsed.due) this.newTaskDue.set(parsed.due);
+    if (parsed.priority) this.newTaskPriority.set(parsed.priority);
+    if (parsed.labels.length > 0) {
+      this.newTaskLabels.set([...this.newTaskLabels(), ...parsed.labels]);
+    }
+    
+    // Create task immediately or open modal for confirmation
+    if (parsed.title && !parsed.due && !parsed.priority && parsed.labels.length === 0) {
+      // Simple task - create immediately
+      this.confirmNewTask();
+      this.quickAddInput.set('');
+      this.quickAddVisible.set(false);
+    } else {
+      // Complex task - open modal for confirmation
+      this.quickAddVisible.set(false);
+      this.newTaskModalOpen.set(true);
+    }
   }
 
   /**
@@ -672,6 +1082,307 @@ export class TasksComponent {
     if (group === 'today') return this.todayGroupExpanded();
     if (group === 'upcoming') return this.upcomingGroupExpanded();
     return this.noDueDateGroupExpanded();
+  }
+  
+  // Kanban view methods
+  getKanbanTasks(status: Task['status']): Task[] {
+    return this.filteredTasks().filter(t => t.status === status);
+  }
+  
+  kanbanDraggedTask = signal<Task | null>(null);
+  
+  onKanbanDragStart(event: DragEvent, task: Task) {
+    this.kanbanDraggedTask.set(task);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+  
+  onKanbanDrop(event: DragEvent, targetStatus: Task['status']) {
+    event.preventDefault();
+    const target = event.currentTarget as HTMLElement;
+    target.classList.remove('drag-over');
+    
+    const task = this.kanbanDraggedTask();
+    if (task) {
+      this.store.updateTask(task.id, { status: targetStatus });
+      this.kanbanDraggedTask.set(null);
+    }
+  }
+  
+  onKanbanDragOver(event: DragEvent) {
+    event.preventDefault();
+    const target = event.currentTarget as HTMLElement;
+    target.classList.add('drag-over');
+    
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+  
+  onKanbanDragLeave(event: DragEvent) {
+    const target = event.currentTarget as HTMLElement;
+    target.classList.remove('drag-over');
+  }
+  
+  // Calendar view methods
+  calendarViewDate = signal<Date>(new Date());
+  
+  navigateCalendarView(direction: 'prev' | 'next') {
+    const current = this.calendarViewDate();
+    const newDate = new Date(current);
+    if (direction === 'prev') {
+      newDate.setMonth(current.getMonth() - 1);
+    } else {
+      newDate.setMonth(current.getMonth() + 1);
+    }
+    this.calendarViewDate.set(newDate);
+  }
+  
+  getCalendarViewMonth(): string {
+    const date = this.calendarViewDate();
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+  
+  getCalendarViewDays() {
+    const date = this.calendarViewDate();
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+    
+    const prevMonth = new Date(year, month, 0);
+    const daysInPrevMonth = prevMonth.getDate();
+    
+    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; date: Date }> = [];
+    
+    // Previous month's trailing days
+    for (let i = startDay - 1; i >= 0; i--) {
+      const dayDate = new Date(year, month - 1, daysInPrevMonth - i);
+      days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false, date: dayDate });
+    }
+    
+    // Current month's days
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayDate = new Date(year, month, day);
+      const isToday = today.getDate() === day && 
+                     today.getMonth() === month && 
+                     today.getFullYear() === year;
+      days.push({ day, isCurrentMonth: true, isToday, date: dayDate });
+    }
+    
+    // Next month's leading days
+    const remainingDays = 42 - days.length;
+    for (let day = 1; day <= remainingDays; day++) {
+      const dayDate = new Date(year, month + 1, day);
+      days.push({ day, isCurrentMonth: false, isToday: false, date: dayDate });
+    }
+    
+    return days;
+  }
+  
+  getTasksForDate(date: Date): Task[] {
+    const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return this.filteredTasks().filter(t => {
+      if (!t.due) return false;
+      return t.due.includes(dateStr) || 
+             (date.toDateString() === new Date().toDateString() && t.due.includes('Today'));
+    });
+  }
+  
+  extractTime(dueString: string | undefined): string {
+    if (!dueString) return '';
+    const timeMatch = dueString.match(/(\d{1,2}):(\d{2})/);
+    if (timeMatch) {
+      return timeMatch[0];
+    }
+    return '';
+  }
+  
+  // Subtasks methods
+  getCompletedSubtasks(task: Task): number {
+    if (!task.subtasks) return 0;
+    return task.subtasks.filter(st => st.status === 'COMPLETED').length;
+  }
+  
+  getDependencyTitles(task: Task): string[] {
+    if (!task.dependencies) return [];
+    return task.dependencies
+      .map(id => this.getTaskById(id))
+      .filter(t => t !== undefined)
+      .map(t => t!.title);
+  }
+  
+  isTaskBlocked(task: Task): boolean {
+    if (!task.dependencies || task.dependencies.length === 0) return false;
+    return task.dependencies.some(depId => {
+      const depTask = this.getTaskById(depId);
+      return depTask && depTask.status !== 'COMPLETED';
+    });
+  }
+  
+  addSubtask(parentTask: Task, subtaskTitle: string) {
+    const newSubtask: Task = {
+      id: Date.now().toString(),
+      title: subtaskTitle,
+      priority: 'MEDIUM',
+      hours: '0.5H',
+      status: 'ACTIVE',
+      parentId: parentTask.id
+    };
+    
+    const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
+    this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
+  }
+  
+  // Focus mode
+  focusTask(task: Task) {
+    this.focusedTask.set(task);
+    this.focusMode.set(true);
+  }
+  
+  exitFocusMode() {
+    this.focusMode.set(false);
+    this.focusedTask.set(null);
+  }
+  
+  // Pomodoro timer
+  startPomodoro(task: Task) {
+    this.pomodoroTask.set(task);
+    this.pomodoroActive.set(true);
+    this.pomodoroTime.set(25 * 60);
+    
+    if (this.pomodoroInterval) {
+      clearInterval(this.pomodoroInterval);
+    }
+    
+    this.pomodoroInterval = setInterval(() => {
+      const current = this.pomodoroTime();
+      if (current > 0) {
+        this.pomodoroTime.set(current - 1);
+      } else {
+        this.stopPomodoro();
+      }
+    }, 1000);
+  }
+  
+  stopPomodoro() {
+    this.pomodoroActive.set(false);
+    this.pomodoroTask.set(null);
+  }
+  
+  formatPomodoroTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  
+  pomodoroInterval: any = null;
+  
+  ngOnInit() {
+    // Start Pomodoro timer if active
+    if (this.pomodoroActive()) {
+      this.pomodoroInterval = setInterval(() => {
+        const current = this.pomodoroTime();
+        if (current > 0) {
+          this.pomodoroTime.set(current - 1);
+        } else {
+          this.stopPomodoro();
+          if (this.pomodoroInterval) {
+            clearInterval(this.pomodoroInterval);
+          }
+        }
+      }, 1000);
+    }
+  }
+  
+  ngOnDestroy() {
+    if (this.pomodoroInterval) {
+      clearInterval(this.pomodoroInterval);
+    }
+  }
+  
+  // Recurring tasks
+  createRecurringTask(baseTask: Task, pattern: 'daily' | 'weekly' | 'monthly' | 'yearly', interval: number = 1) {
+    const recurringTask: Task = {
+      ...baseTask,
+      id: Date.now().toString(),
+      recurring: {
+        pattern,
+        interval,
+        nextDue: this.calculateNextDue(baseTask.due, pattern, interval)
+      }
+    };
+    this.store.addTask(recurringTask);
+  }
+  
+  calculateNextDue(currentDue: string | undefined, pattern: string, interval: number): string {
+    if (!currentDue) return '';
+    const today = new Date();
+    const next = new Date(today);
+    
+    switch (pattern) {
+      case 'daily':
+        next.setDate(today.getDate() + interval);
+        break;
+      case 'weekly':
+        next.setDate(today.getDate() + (7 * interval));
+        break;
+      case 'monthly':
+        next.setMonth(today.getMonth() + interval);
+        break;
+      case 'yearly':
+        next.setFullYear(today.getFullYear() + interval);
+        break;
+    }
+    
+    return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  
+  // Enhanced labels with colors
+  getLabelColor(label: string): string {
+    const colors = [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+      '#ec4899', '#06b6d4', '#84cc16'
+    ];
+    const index = label.charCodeAt(0) % colors.length;
+    return colors[index];
+  }
+  
+  // All available labels
+  allLabels = computed(() => {
+    const labels = new Set<string>();
+    this.store.tasks().forEach(task => {
+      if (task.labels) {
+        task.labels.forEach(label => labels.add(label));
+      }
+    });
+    return Array.from(labels).sort();
+  });
+  
+  // Task dependencies
+  getTaskById(id: string): Task | undefined {
+    return this.store.tasks().find(t => t.id === id);
+  }
+  
+  getAvailableDependencyTasks(): Task[] {
+    return this.store.tasks().filter(t => 
+      t.status !== 'COMPLETED' && 
+      t.id !== this.newTaskTitle() // Exclude self if editing
+    );
+  }
+  
+  addDependency(taskId: string) {
+    if (!taskId || this.newTaskDependencies().includes(taskId)) return;
+    this.newTaskDependencies.set([...this.newTaskDependencies(), taskId]);
+  }
+  
+  removeDependency(taskId: string) {
+    this.newTaskDependencies.set(this.newTaskDependencies().filter(id => id !== taskId));
   }
 
   // (legacy quick-create kept via confirmNewTask modal now)

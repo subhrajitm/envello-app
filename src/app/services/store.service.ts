@@ -4,7 +4,7 @@ import { BinService } from './bin.service';
 export interface Task {
   id: string;
   title: string;
-  priority: 'PRIORITY 01' | 'PRIORITY 02' | 'PRIORITY 03';
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
   hours: string;
   status: 'ACTIVE' | 'COMPLETED' | 'PENDING';
   project?: string;
@@ -14,6 +14,25 @@ export interface Task {
   labels?: string[];
   /** Optional reminders metadata (simple strings for now) */
   reminders?: string[];
+  /** Subtasks for nested task structure */
+  subtasks?: Task[];
+  /** Parent task ID if this is a subtask */
+  parentId?: string;
+  /** Task dependencies - IDs of tasks that must be completed first */
+  dependencies?: string[];
+  /** Recurring task pattern */
+  recurring?: {
+    pattern: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+    interval?: number;
+    endDate?: string;
+    nextDue?: string;
+  };
+  /** Time tracking */
+  timeSpent?: number; // in minutes
+  /** Notes/description with markdown support */
+  notes?: string;
+  /** Attachments */
+  attachments?: string[];
 }
 
 export interface Note {
@@ -59,10 +78,10 @@ export interface Novel {
 }
 
 const initialTasks: Task[] = [
-  { id: '1', title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2', priority: 'PRIORITY 01', hours: '1.5H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 17:00' },
-  { id: '2', title: 'DEEP WORK: DRAFTING SESSION CH. 4', priority: 'PRIORITY 01', hours: '3.0H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 14:00' },
-  { id: '3', title: 'SYNC WITH MARKETING TEAM', priority: 'PRIORITY 02', hours: '1.0H', status: 'PENDING', project: 'Neon Orchard', assignee: 'MT', due: 'Thu, 10:00' },
-  { id: '4', title: 'REVIEW DELAYED RESEARCH NOTE #42', priority: 'PRIORITY 01', hours: '2.0H', status: 'ACTIVE', project: 'Neon Orchard', assignee: 'MT', due: 'Overdue 2h' }
+    { id: '1', title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2', priority: 'HIGH', hours: '1.5H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 17:00' },
+    { id: '2', title: 'DEEP WORK: DRAFTING SESSION CH. 4', priority: 'HIGH', hours: '3.0H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 14:00' },
+    { id: '3', title: 'SYNC WITH MARKETING TEAM', priority: 'MEDIUM', hours: '1.0H', status: 'PENDING', project: 'Neon Orchard', assignee: 'MT', due: 'Thu, 10:00' },
+    { id: '4', title: 'REVIEW DELAYED RESEARCH NOTE #42', priority: 'HIGH', hours: '2.0H', status: 'ACTIVE', project: 'Neon Orchard', assignee: 'MT', due: 'Overdue 2h' }
 ];
 
 const initialNotes: Note[] = [
