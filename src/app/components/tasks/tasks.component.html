@@ -237,19 +237,26 @@
                 </div>
                 }
                 } @else if(filteredTasks().length === 0) {
-                <div class="empty-state">
-                    <div class="empty-icon-circle">
-                        <span class="material-symbols-outlined">task</span>
+                <div class="tasks-empty-state">
+                    <div class="tasks-empty-icon">
+                        <span class="material-symbols-outlined">task_alt</span>
                     </div>
                     @if (store.tasks().length === 0) {
-                    <h3>No tasks yet</h3>
-                    <p>Create your first task to get started.</p>
-                    <button class="btn-primary" (click)="openNewTaskDialog()">Create task</button>
+                    <h3 class="tasks-empty-title">You’re all set to start</h3>
+                    <p class="tasks-empty-body">Create your first task to kick off your workspace.</p>
+                    <button class="btn-primary" (click)="openNewTaskDialog()">+ New Task</button>
+                    } @else if (selectedView() === 'completed') {
+                    <h3 class="tasks-empty-title">No completed tasks yet</h3>
+                    <p class="tasks-empty-body">As you complete tasks, they’ll show up here for easy review.</p>
+                    <button class="btn-text" (click)="selectedView.set('today'); sidebarSearch.set('')">
+                        View today’s tasks
+                    </button>
                     } @else {
-                    <h3>No tasks found</h3>
-                    <p>No tasks match the current filter or search criteria.</p>
-                    <button class="btn-text" (click)="sidebarSearch.set(''); selectedView.set('inbox')">Clear
-                        filters</button>
+                    <h3 class="tasks-empty-title">No tasks found</h3>
+                    <p class="tasks-empty-body">No tasks match the current filter or search criteria.</p>
+                    <button class="btn-text" (click)="sidebarSearch.set(''); selectedView.set('inbox')">
+                        Clear filters
+                    </button>
                     }
                 </div>
                 } @else {

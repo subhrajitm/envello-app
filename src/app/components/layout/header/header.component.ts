@@ -49,13 +49,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   tabs = [
     'Overview',
+    'Tasks/Todos',
     'Daily Notes',
     'Novels/Fiction',
     'Journals',
     'Research',
     'Articles/Blogs',
     'Meetings',
-    'Tasks/Todos',
     'Books/Reading',
     'Code Snippets',
     'Brainstorming',
