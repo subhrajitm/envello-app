@@ -116,6 +116,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   newTaskDescription = signal<string>('');
   newTaskPriority = signal<Task['priority']>('MEDIUM');
   newTaskDue = signal<string | undefined>(undefined);
+  newTaskDueTime = signal<string>('12:00');
   newTaskList = signal<string>('Inbox');
   newTaskHasReminder = signal<boolean>(false);
   newTaskReminderTimes = signal<string[]>([]);
@@ -269,6 +270,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskDescription.set('');
     this.newTaskPriority.set('MEDIUM');
     this.newTaskDue.set(undefined);
+    this.newTaskDueTime.set('12:00');
     this.newTaskList.set('Inbox');
     this.newTaskHasReminder.set(false);
     this.newTaskLabels.set([]);
@@ -310,7 +312,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (this.newTaskDue()) {
       this.newTaskDue.set(undefined);
     } else {
-      this.newTaskDue.set('Today, 12:00');
+      this.newTaskDue.set(`Today, ${this.newTaskDueTime()}`);
     }
   }
 
@@ -320,7 +322,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (mode === 'do-now') {
       // For "Do Now", set due date to today if not already set
       if (!this.newTaskDue()) {
-        this.newTaskDue.set('Today, 12:00');
+        this.newTaskDue.set(`Today, ${this.newTaskDueTime()}`);
       }
     } else {
       // For "Do Later", clear due date to let user set it manually
@@ -576,7 +578,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     return base.filter(t => {
       const haystack =
-        (t.title + ' ' + (t.project ?? '') + ' ' + (t.assignee ?? '')).toLowerCase();
+        (t.title + ' ' + (t.project ?? '')).toLowerCase();
       return haystack.includes(query);
     });
   });
@@ -750,24 +752,41 @@ export class TasksComponent implements OnInit, OnDestroy {
     const diffTime = selected.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    const timeStr = this.newTaskDueTime();
     let dateString = '';
     if (diffDays === 0) {
-      dateString = 'Today, 12:00';
+      dateString = `Today, ${timeStr}`;
     } else if (diffDays === 1) {
-      dateString = 'Tomorrow, 12:00';
+      dateString = `Tomorrow, ${timeStr}`;
     } else if (diffDays === -1) {
-      dateString = 'Yesterday, 12:00';
+      dateString = `Yesterday, ${timeStr}`;
     } else {
-      dateString = selectedDate.toLocaleDateString('en-US', { 
+      dateString = `${selectedDate.toLocaleDateString('en-US', { 
         weekday: 'short', 
         month: 'short', 
         day: 'numeric' 
-      });
+      })}, ${timeStr}`;
     }
     
     this.newTaskDue.set(dateString);
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
+  }
+  
+  updateDueTime(time: string) {
+    this.newTaskDueTime.set(time);
+    // Update the existing due date string with the new time
+    const currentDue = this.newTaskDue();
+    if (currentDue) {
+      // Extract the date part (everything before the comma and time)
+      const dateMatch = currentDue.match(/^(.+?),\s*\d{1,2}:\d{2}$/);
+      if (dateMatch) {
+        this.newTaskDue.set(`${dateMatch[1]}, ${time}`);
+      } else {
+        // If format is unexpected, try to preserve what we can
+        this.newTaskDue.set(`${currentDue.split(',')[0]}, ${time}`);
+      }
+    }
   }
   
   navigateDatePickerMonth(direction: 'prev' | 'next') {
@@ -991,11 +1010,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     due?: string;
     priority?: Task['priority'];
     labels: string[];
-    mentions: string[];
   } {
     let title = input.trim();
     const labels: string[] = [];
-    const mentions: string[] = [];
     let priority: Task['priority'] | undefined;
     let due: string | undefined;
     
@@ -1004,13 +1021,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     let match;
     while ((match = hashtagRegex.exec(title)) !== null) {
       labels.push(match[1]);
-      title = title.replace(match[0], '').trim();
-    }
-    
-    // Extract mentions (@john, @team)
-    const mentionRegex = /@(\w+)/g;
-    while ((match = mentionRegex.exec(title)) !== null) {
-      mentions.push(match[1]);
       title = title.replace(match[0], '').trim();
     }
     
@@ -1034,20 +1044,29 @@ export class TasksComponent implements OnInit, OnDestroy {
     
     // Extract dates
     const datePatterns = [
-      { pattern: /tomorrow/i, value: this.getTomorrowDate() },
-      { pattern: /today/i, value: 'Today, 12:00' },
+      { pattern: /tomorrow/i, value: () => `Tomorrow, ${this.newTaskDueTime()}` },
+      { pattern: /today/i, value: () => `Today, ${this.newTaskDueTime()}` },
       { pattern: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, 
-        value: (match: RegExpMatchArray) => this.getNextWeekday(match[1]) },
+        value: (match: RegExpMatchArray) => `${this.getNextWeekday(match[1])}, ${this.newTaskDueTime()}` },
       { pattern: /in\s+(\d+)\s+days?/i, 
-        value: (match: RegExpMatchArray) => this.getDateInDays(parseInt(match[1])) },
+        value: (match: RegExpMatchArray) => `${this.getDateInDays(parseInt(match[1]))}, ${this.newTaskDueTime()}` },
       { pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
-        value: (match: RegExpMatchArray) => this.parseDate(match[1], match[2], match[3]) }
+        value: (match: RegExpMatchArray) => `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}` }
     ];
     
     for (const { pattern, value } of datePatterns) {
       const dateMatch = title.match(pattern);
       if (dateMatch) {
-        due = typeof value === 'function' ? value(dateMatch) : value;
+        if (typeof value === 'function') {
+          // Check if function expects a match parameter (has regex groups)
+          if (dateMatch.length > 1) {
+            due = (value as (match: RegExpMatchArray) => string)(dateMatch);
+          } else {
+            due = (value as () => string)();
+          }
+        } else {
+          due = value;
+        }
         title = title.replace(pattern, '').trim();
         break;
       }
@@ -1085,7 +1104,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Clean up title (remove extra spaces)
     title = title.replace(/\s+/g, ' ').trim();
     
-    return { title, due, priority, labels, mentions };
+    return { title, due, priority, labels };
   }
   
   getTomorrowDate(): string {
@@ -1134,7 +1153,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     
     // Set parsed values
     this.newTaskTitle.set(parsed.title);
-    if (parsed.due) this.newTaskDue.set(parsed.due);
+    if (parsed.due) {
+      this.newTaskDue.set(parsed.due);
+      // Extract time from parsed due date and update time input
+      const extractedTime = this.extractTime(parsed.due);
+      if (extractedTime) {
+        this.newTaskDueTime.set(extractedTime);
+      }
+    }
     if (parsed.priority) this.newTaskPriority.set(parsed.priority);
     if (parsed.labels.length > 0) {
       this.newTaskLabels.set([...this.newTaskLabels(), ...parsed.labels]);

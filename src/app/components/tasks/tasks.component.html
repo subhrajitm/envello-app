@@ -256,7 +256,6 @@
                 </div>
                 <div class="col-task">Task Name</div>
                 <div class="col-project">Project / Context</div>
-                <div class="col-assignee">Assignee</div>
                 <div class="col-priority">Priority</div>
                 <div class="col-status">Status</div>
                 <div class="col-due">Due Date</div>
@@ -278,7 +277,6 @@
                         <div class="skeleton-text skeleton-text-small" [style.width.%]="40"></div>
                     </div>
                     <div class="col-project skeleton-text" [style.width.%]="30"></div>
-                    <div class="col-assignee skeleton-avatar"></div>
                     <div class="col-priority skeleton-badge"></div>
                     <div class="col-status skeleton-badge"></div>
                     <div class="col-due skeleton-text" [style.width.%]="25"></div>
@@ -357,11 +355,6 @@
                         } @else {
                         <span class="no-data">—</span>
                         }
-                    </div>
-                    <div class="col-assignee">
-                        <div class="user-avatar" [title]="task.assignee || 'Unassigned'">
-                            {{ task.assignee ? task.assignee.substring(0, 2) : 'Un' }}
-                        </div>
                     </div>
                     <div class="col-priority">
                         <div class="priority-indicator" [ngClass]="{
@@ -464,14 +457,6 @@
                         </div>
                     </div>
                     <footer class="thumb-footer">
-                        <div class="thumb-assignee">
-                            <div class="user-avatar" [title]="task.assignee || 'Unassigned'">
-                                {{ task.assignee ? task.assignee.substring(0, 2) : 'Un' }}
-                            </div>
-                            <span class="thumb-assignee-name">
-                                {{ task.assignee || 'Unassigned' }}
-                            </span>
-                        </div>
                         <div class="thumb-actions">
                             <button class="btn-icon-only btn-icon-complete"
                                 (click)="onQuickComplete(task)"
@@ -537,9 +522,6 @@
                                 {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
                             </span>
                             }
-                            @if (task.assignee) {
-                            <div class="kanban-assignee">{{ task.assignee.substring(0, 2) }}</div>
-                            }
                         </div>
                     </div>
                     }
@@ -586,9 +568,6 @@
                                 <span class="material-symbols-outlined">subdirectory_arrow_right</span>
                                 {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
                             </span>
-                            }
-                            @if (task.assignee) {
-                            <div class="kanban-assignee">{{ task.assignee.substring(0, 2) }}</div>
                             }
                         </div>
                     </div>
@@ -930,44 +909,51 @@
                 </div>
                 <div class="task-modal-control-group task-modal-date-group">
                     <label class="task-modal-control-label">Due Date</label>
-                    <div class="task-modal-date-wrapper">
-                        <button type="button"
-                                class="task-modal-control-btn"
-                                [class.active]="!!newTaskDue()"
-                                (click)="toggleDatePicker($event)">
-                            <span class="material-symbols-outlined">calendar_today</span>
-                            <span>{{ newTaskDue() || 'Today' }}</span>
-                            <span class="material-symbols-outlined">expand_more</span>
-                        </button>
-                        @if (showDatePicker() && datePickerPosition()) {
-                        <div class="task-modal-date-picker" 
-                             [style.top.px]="datePickerPosition()!.top"
-                             [style.left.px]="datePickerPosition()!.left">
-                            <div class="date-picker-header">
-                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
-                                    <span class="material-symbols-outlined">chevron_left</span>
-                                </button>
-                                <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
-                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
-                                    <span class="material-symbols-outlined">chevron_right</span>
-                                </button>
+                    <div class="task-modal-date-time-wrapper">
+                        <div class="task-modal-date-wrapper">
+                            <button type="button"
+                                    class="task-modal-control-btn"
+                                    [class.active]="!!newTaskDue()"
+                                    (click)="toggleDatePicker($event)">
+                                <span class="material-symbols-outlined">calendar_today</span>
+                                <span>{{ newTaskDue() || 'Today' }}</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </button>
+                            @if (showDatePicker() && datePickerPosition()) {
+                            <div class="task-modal-date-picker" 
+                                 [style.top.px]="datePickerPosition()!.top"
+                                 [style.left.px]="datePickerPosition()!.left">
+                                <div class="date-picker-header">
+                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
+                                        <span class="material-symbols-outlined">chevron_left</span>
+                                    </button>
+                                    <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
+                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
+                                        <span class="material-symbols-outlined">chevron_right</span>
+                                    </button>
+                                </div>
+                                <div class="date-picker-days-header">
+                                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                                </div>
+                                <div class="date-picker-days-grid">
+                                    @for (day of getDatePickerDays(); track $index) {
+                                    <button type="button"
+                                            class="date-picker-day"
+                                            [class.inactive]="!day.isCurrentMonth"
+                                            [class.today]="day.isToday"
+                                            (click)="selectDate(day.day, day.isCurrentMonth)">
+                                        {{ day.day }}
+                                    </button>
+                                    }
+                                </div>
                             </div>
-                            <div class="date-picker-days-header">
-                                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                            </div>
-                            <div class="date-picker-days-grid">
-                                @for (day of getDatePickerDays(); track $index) {
-                                <button type="button"
-                                        class="date-picker-day"
-                                        [class.inactive]="!day.isCurrentMonth"
-                                        [class.today]="day.isToday"
-                                        (click)="selectDate(day.day, day.isCurrentMonth)">
-                                    {{ day.day }}
-                                </button>
-                                }
-                            </div>
+                            }
                         </div>
-                        }
+                        <input type="time"
+                               class="task-modal-time-input"
+                               [value]="newTaskDueTime()"
+                               (change)="updateDueTime($any($event.target).value)"
+                               aria-label="Due time" />
                     </div>
                 </div>
             </div>
@@ -978,44 +964,51 @@
             <div class="task-modal-controls-row">
                 <div class="task-modal-control-group task-modal-date-group">
                     <label class="task-modal-control-label">Due Date</label>
-                    <div class="task-modal-date-wrapper">
-                        <button type="button"
-                                class="task-modal-control-btn"
-                                [class.active]="!!newTaskDue()"
-                                (click)="toggleDatePicker($event)">
-                            <span class="material-symbols-outlined">calendar_today</span>
-                            <span>{{ newTaskDue() || 'Set date' }}</span>
-                            <span class="material-symbols-outlined">expand_more</span>
-                        </button>
-                        @if (showDatePicker() && datePickerPosition()) {
-                        <div class="task-modal-date-picker" 
-                             [style.top.px]="datePickerPosition()!.top"
-                             [style.left.px]="datePickerPosition()!.left">
-                            <div class="date-picker-header">
-                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
-                                    <span class="material-symbols-outlined">chevron_left</span>
-                                </button>
-                                <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
-                                <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
-                                    <span class="material-symbols-outlined">chevron_right</span>
-                                </button>
+                    <div class="task-modal-date-time-wrapper">
+                        <div class="task-modal-date-wrapper">
+                            <button type="button"
+                                    class="task-modal-control-btn"
+                                    [class.active]="!!newTaskDue()"
+                                    (click)="toggleDatePicker($event)">
+                                <span class="material-symbols-outlined">calendar_today</span>
+                                <span>{{ newTaskDue() || 'Set date' }}</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </button>
+                            @if (showDatePicker() && datePickerPosition()) {
+                            <div class="task-modal-date-picker" 
+                                 [style.top.px]="datePickerPosition()!.top"
+                                 [style.left.px]="datePickerPosition()!.left">
+                                <div class="date-picker-header">
+                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
+                                        <span class="material-symbols-outlined">chevron_left</span>
+                                    </button>
+                                    <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
+                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
+                                        <span class="material-symbols-outlined">chevron_right</span>
+                                    </button>
+                                </div>
+                                <div class="date-picker-days-header">
+                                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                                </div>
+                                <div class="date-picker-days-grid">
+                                    @for (day of getDatePickerDays(); track $index) {
+                                    <button type="button"
+                                            class="date-picker-day"
+                                            [class.inactive]="!day.isCurrentMonth"
+                                            [class.today]="day.isToday"
+                                            (click)="selectDate(day.day, day.isCurrentMonth)">
+                                        {{ day.day }}
+                                    </button>
+                                    }
+                                </div>
                             </div>
-                            <div class="date-picker-days-header">
-                                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                            </div>
-                            <div class="date-picker-days-grid">
-                                @for (day of getDatePickerDays(); track $index) {
-                                <button type="button"
-                                        class="date-picker-day"
-                                        [class.inactive]="!day.isCurrentMonth"
-                                        [class.today]="day.isToday"
-                                        (click)="selectDate(day.day, day.isCurrentMonth)">
-                                    {{ day.day }}
-                                </button>
-                                }
-                            </div>
+                            }
                         </div>
-                        }
+                        <input type="time"
+                               class="task-modal-time-input"
+                               [value]="newTaskDueTime()"
+                               (change)="updateDueTime($any($event.target).value)"
+                               aria-label="Due time" />
                     </div>
                 </div>
                 <div class="task-modal-control-group task-modal-folder-group">

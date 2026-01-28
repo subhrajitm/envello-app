@@ -612,10 +612,6 @@
     align-items: center;
 }
 
-.col-assignee {
-    display: flex;
-    align-items: center;
-}
 
 .col-priority {
     display: flex;
@@ -754,22 +750,6 @@
     background: var(--bg-hover);
 }
 
-/* User Avatar Compact */
-.user-avatar {
-    width: 22px;
-    /* Petite */
-    height: 22px;
-    border-radius: 50%;
-    background: #3b82f6;
-    color: white;
-    font-size: 9px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-    border: 1px solid var(--bg-panel);
-}
 
 /* Priority Indicator Compact */
 .priority-indicator {
@@ -959,21 +939,6 @@
     gap: 8px;
 }
 
-.thumb-assignee {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-}
-
-.thumb-assignee-name {
-    font-size: 11px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
-}
 
 .thumb-actions {
     display: flex;
@@ -1318,8 +1283,49 @@
     position: static;
 }
 
+.task-modal-date-time-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
 .task-modal-date-wrapper {
     position: static;
+    flex: 1;
+}
+
+.task-modal-time-input {
+    width: 100px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: var(--bg-app);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-mono);
+    transition: all 0.15s;
+    cursor: pointer;
+}
+
+.task-modal-time-input:hover {
+    border-color: var(--border-primary);
+    background: var(--bg-hover);
+}
+
+.task-modal-time-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-alpha);
+}
+
+.task-modal-time-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.task-modal-time-input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
 }
 
 .task-modal-control-btn .material-symbols-outlined:last-child {
@@ -2179,18 +2185,6 @@
     font-size: 14px;
 }
 
-.kanban-assignee {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--accent-primary);
-    color: white;
-    font-size: 9px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 /* Calendar View */
 .calendar-view-container {
@@ -4056,7 +4050,6 @@ textarea:focus-visible {
 .skeleton-checkbox,
 .skeleton-text,
 .skeleton-text-small,
-.skeleton-avatar,
 .skeleton-badge,
 .skeleton-actions {
     background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-active) 50%, var(--bg-hover) 75%);
@@ -4081,11 +4074,6 @@ textarea:focus-visible {
     margin-top: 6px;
 }
 
-.skeleton-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-}
 
 .skeleton-badge {
     height: 20px;

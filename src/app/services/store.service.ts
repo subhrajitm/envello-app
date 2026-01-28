@@ -8,7 +8,6 @@ export interface Task {
   hours: string;
   status: 'ACTIVE' | 'COMPLETED' | 'PENDING';
   project?: string;
-  assignee?: string;
   due?: string;
   /** Optional labels/tags associated with this task */
   labels?: string[];
@@ -91,10 +90,10 @@ export interface Novel {
 }
 
 const initialTasks: Task[] = [
-    { id: '1', title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2', priority: 'HIGH', hours: '1.5H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 17:00' },
-    { id: '2', title: 'DEEP WORK: DRAFTING SESSION CH. 4', priority: 'HIGH', hours: '3.0H', status: 'ACTIVE', project: 'Project Alpha', assignee: 'SJ', due: 'Today, 14:00' },
-    { id: '3', title: 'SYNC WITH MARKETING TEAM', priority: 'MEDIUM', hours: '1.0H', status: 'PENDING', project: 'Neon Orchard', assignee: 'MT', due: 'Thu, 10:00' },
-    { id: '4', title: 'REVIEW DELAYED RESEARCH NOTE #42', priority: 'HIGH', hours: '2.0H', status: 'ACTIVE', project: 'Neon Orchard', assignee: 'MT', due: 'Overdue 2h' }
+    { id: '1', title: 'REVIEW EDITOR COMMENTS ON CHAPTER 2', priority: 'HIGH', hours: '1.5H', status: 'ACTIVE', project: 'Project Alpha', due: 'Today, 17:00' },
+    { id: '2', title: 'DEEP WORK: DRAFTING SESSION CH. 4', priority: 'HIGH', hours: '3.0H', status: 'ACTIVE', project: 'Project Alpha', due: 'Today, 14:00' },
+    { id: '3', title: 'REVIEW MARKETING MATERIALS', priority: 'MEDIUM', hours: '1.0H', status: 'PENDING', project: 'Neon Orchard', due: 'Thu, 10:00' },
+    { id: '4', title: 'REVIEW DELAYED RESEARCH NOTE #42', priority: 'HIGH', hours: '2.0H', status: 'ACTIVE', project: 'Neon Orchard', due: 'Overdue 2h' }
 ];
 
 const initialNotes: Note[] = [
