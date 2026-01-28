@@ -499,8 +499,7 @@
 <!-- Meeting Details Modal -->
 @if (showDetailsModal() && selectedMeeting()) {
 <env-modal [isOpen]="showDetailsModal()" (closed)="closeDetailsModal()" [title]="''" size="large">
-    <div class="meeting-details">
-        <!-- Header -->
+    <div header class="details-header-wrap">
         <div class="details-header">
             <div class="details-header-main">
                 <div class="meeting-color-bar" [style.backgroundColor]="selectedMeeting()!.color"></div>
@@ -518,19 +517,10 @@
                     </div>
                 </div>
             </div>
-            <div class="details-header-actions">
-                @if (editingMeeting()) {
-                <env-button variant="secondary" size="sm" (clicked)="cancelEditing()">Cancel</env-button>
-                <env-button variant="primary" size="sm" (clicked)="saveEditing()">Save</env-button>
-                } @else {
-                <env-button variant="secondary" icon="edit" size="sm" (clicked)="startEditing()">Edit</env-button>
-                @if (selectedMeeting()!.meetingLink) {
-                <env-button variant="primary" icon="video_call" size="sm" (clicked)="joinMeeting(selectedMeeting()!)">Join</env-button>
-                }
-                }
-            </div>
         </div>
-
+    </div>
+    <div body>
+    <div class="meeting-details-body">
         <!-- Details tabs -->
                 <div class="details-tabs">
             <button type="button" class="details-tab" [class.active]="detailsTab() === 'overview'"
@@ -742,16 +732,6 @@
                     </div>
                 </div>
                 }
-
-                <!-- Quick actions -->
-                <div class="detail-actions">
-                    @if (selectedMeeting()!.status === 'scheduled') {
-                    <env-button variant="primary" icon="check_circle" size="sm" (clicked)="completeMeeting(selectedMeeting()!)">Mark Complete</env-button>
-                    <env-button variant="secondary" icon="event_busy" size="sm" (clicked)="cancelMeeting(selectedMeeting()!)">Cancel Meeting</env-button>
-                    }
-                    <env-button variant="secondary" icon="content_copy" size="sm" (clicked)="duplicateMeeting(selectedMeeting()!)">Duplicate</env-button>
-                    <env-button variant="danger" icon="delete" size="sm" (clicked)="deleteMeeting(selectedMeeting()!)">Delete</env-button>
-                </div>
             </div>
             }
 
@@ -920,6 +900,24 @@
             </div>
             }
         </div>
+    </div>
+    </div>
+    <div footer class="details-footer">
+        @if (editingMeeting()) {
+        <env-button variant="secondary" size="sm" (clicked)="cancelEditing()">Cancel</env-button>
+        <env-button variant="primary" size="sm" (clicked)="saveEditing()">Save</env-button>
+        } @else {
+        <env-button variant="secondary" icon="edit" size="sm" (clicked)="startEditing()">Edit</env-button>
+        @if (selectedMeeting()!.meetingLink) {
+        <env-button variant="primary" icon="video_call" size="sm" (clicked)="joinMeeting(selectedMeeting()!)">Join</env-button>
+        }
+        @if (selectedMeeting()!.status === 'scheduled') {
+        <env-button variant="primary" icon="check_circle" size="sm" (clicked)="completeMeeting(selectedMeeting()!)">Mark Complete</env-button>
+        <env-button variant="secondary" icon="event_busy" size="sm" (clicked)="cancelMeeting(selectedMeeting()!)">Cancel Meeting</env-button>
+        }
+        <env-button variant="secondary" icon="content_copy" size="sm" (clicked)="duplicateMeeting(selectedMeeting()!)">Duplicate</env-button>
+        <env-button variant="danger" icon="delete" size="sm" (clicked)="deleteMeeting(selectedMeeting()!)">Delete</env-button>
+        }
     </div>
 </env-modal>
 }
