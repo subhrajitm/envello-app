@@ -1,0 +1,44 @@
+.error-page {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.error-content {
+  text-align: center;
+  max-width: 24rem;
+}
+
+.error-icon {
+  font-size: 4rem;
+  opacity: 0.5;
+  font-family: 'Material Symbols Outlined', sans-serif;
+  color: var(--error, #dc2626);
+}
+
+.error-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.error-message {
+  color: var(--text-secondary, #666);
+  margin-bottom: 1.5rem;
+}
+
+.error-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--primary, #3b82f6);
+  color: white;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.error-link:hover {
+  opacity: 0.9;
+}

@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, OnDestroy, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../../services/user.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-footer',
@@ -29,6 +30,8 @@ export class FooterComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.stopSessionTimer();
   }
+
+  appVersion = environment.version;
 
   streakIndicator(index: number): boolean {
     // Logic to show visual streak progress (last 4 days active indicators)

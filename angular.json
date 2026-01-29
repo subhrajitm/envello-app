@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "angular-temp": {
+    "envello-app": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/angular-temp",
+            "outputPath": "dist/envello-app",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -41,11 +41,30 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "20kB",
-                  "maximumError": "40kB"
+                  "maximumWarning": "60kB",
+                  "maximumError": "80kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "staging": {
+              "budgets": [
+                { "type": "initial", "maximumWarning": "1MB", "maximumError": "2MB" },
+                { "type": "anyComponentStyle", "maximumWarning": "20kB", "maximumError": "40kB" }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.staging.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -59,10 +78,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "angular-temp:build:production"
+              "buildTarget": "envello-app:build:production"
             },
             "development": {
-              "buildTarget": "angular-temp:build:development"
+              "buildTarget": "envello-app:build:development"
             }
           },
           "defaultConfiguration": "development"

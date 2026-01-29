@@ -1,59 +1,61 @@
-# AngularTemp
+# Envello
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.19.
+Note-taking and productivity app (Angular 19, standalone components, signals).
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js 20+
+- npm 9+
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Install
 
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Development
 
 ```bash
-ng generate --help
+npm start
+# or
+npm run dev
 ```
 
-## Building
+Open [http://localhost:4200](http://localhost:4200). The app will reload on file changes.
 
-To build the project run:
+## Build
+
+| Command | Description |
+|--------|--------------|
+| `npm run build` | Development build (no env replacement) |
+| `npm run build:prod` | Production build (uses `environment.prod.ts`) |
+| `npm run build:staging` | Staging build (uses `environment.staging.ts`) |
+
+Output: `dist/envello-app/`
+
+## Tests
 
 ```bash
-ng build
+npm test
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Runs unit tests with Karma. Use `--no-watch --browsers=ChromeHeadless` for CI.
 
-## Running unit tests
+## Project structure
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+- `src/app/components/` – feature and layout components (lazy-loaded by route)
+- `src/app/core/` – services (API, auth, logging), guards, interceptors, global error handler
+- `src/app/services/` – domain services (store, articles, books, etc.)
+- `src/environments/` – dev, staging, prod config (no secrets)
 
-```bash
-ng test
-```
+## Enterprise roadmap
 
-## Running end-to-end tests
+See [ENTERPRISE_IMPROVEMENTS.md](./ENTERPRISE_IMPROVEMENTS.md) for production readiness (auth, backend API, CI/CD, accessibility, i18n, etc.).
 
-For end-to-end (e2e) testing, run:
+## Changelog
 
-```bash
-ng e2e
-```
+See [CHANGELOG.md](./CHANGELOG.md).
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## License
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Private.
