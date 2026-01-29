@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { TauriService } from '../core/services/tauri.service';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
 
@@ -18,6 +19,7 @@ export interface Notification {
   providedIn: 'root'
 })
 export class NotificationService {
+  private tauriService = inject(TauriService);
   private notifications = signal<Notification[]>([]);
 
   // Public read-only signal
@@ -160,6 +162,12 @@ export class NotificationService {
   }
 
   private showBrowserNotification(notification: Notification) {
+    // When running in Tauri, use native desktop notification
+    if (this.tauriService.isTauri()) {
+      this.tauriService.notify({ title: notification.title, body: notification.message }).catch(() => {});
+      return;
+    }
+
     // Check if browser notifications are enabled in settings
     const settings = localStorage.getItem('envello-settings');
     let desktopNotificationsEnabled = false;

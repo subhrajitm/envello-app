@@ -13,6 +13,7 @@ import {
   MeetingViewMode
 } from '../../services/meetings.service';
 import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '../../shared/ui';
+import { TauriService } from '../../core/services/tauri.service';
 
 @Component({
   selector: 'app-meetings',
@@ -23,6 +24,7 @@ import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalCompone
 })
 export class MeetingsComponent implements OnInit, OnDestroy {
   meetingsService = inject(MeetingsService);
+  private tauriService = inject(TauriService);
   
   // View state
   viewMode = signal<MeetingViewMode>('list');
@@ -926,7 +928,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   joinMeeting(meeting: Meeting, event?: Event) {
     if (event) event.stopPropagation();
     if (meeting.meetingLink) {
-      window.open(meeting.meetingLink, '_blank');
+      this.tauriService.openUrl(meeting.meetingLink).catch(() => {});
     }
     this.showQuickActions.set(null);
   }

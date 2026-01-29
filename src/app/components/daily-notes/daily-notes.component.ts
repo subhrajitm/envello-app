@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '../../services/store.service';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shared/ui';
+import { TauriService } from '../../core/services/tauri.service';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -51,6 +52,7 @@ interface TagCategory {
 })
 export class DailyNotesComponent implements OnInit, OnDestroy {
   private store = inject(StoreService);
+  private tauriService = inject(TauriService);
   editor!: Editor;
 
   // Connect to store signals
@@ -564,10 +566,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     });
   }
 
-  downloadExport(format: 'pdf' | 'md' | 'html') {
+  async downloadExport(format: 'pdf' | 'md' | 'html') {
     const content = this.editor?.getHTML() || '';
     const title = this.selectedNote()?.title || 'note';
     const filename = `${title.toLowerCase().replace(/\s+/g, '-')}`;
+
+    if (this.tauriService.isTauri() && (format === 'html' || format === 'md')) {
+      const ext = format === 'html' ? 'html' : 'md';
+      const path = await this.tauriService.saveFile({
+        defaultPath: `${filename}.${ext}`,
+        filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
+      });
+      if (path) {
+        await this.tauriService.writeTextFile(path, content);
+      }
+      this.closeModal();
+      return;
+    }
 
     if (format === 'html') {
       const blob = new Blob([content], { type: 'text/html' });
@@ -578,8 +593,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'md') {
-      // Basic HTML to Markdown (simplified)
-      // Ideally use a library, but for now we'll save the HTML content which is valid MD
       const blob = new Blob([content], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

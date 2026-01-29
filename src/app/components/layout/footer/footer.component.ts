@@ -1,6 +1,7 @@
-import { Component, signal, OnInit, OnDestroy, inject, computed } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../../services/user.service';
+import { TauriService } from '../../../core/services/tauri.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -12,6 +13,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class FooterComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
+  private tauriService = inject(TauriService);
 
   // Stats from User Service
   private userStats = computed(() => this.userService.user()?.stats);
@@ -19,9 +21,18 @@ export class FooterComponent implements OnInit, OnDestroy {
   // Signals for UI
   currentStreak = computed(() => this.userStats()?.daysActive || 0);
   sessionDuration = signal('00:00:00');
+  appVersion = signal(environment.version);
 
   private sessionStartTime: number = Date.now();
   private timerInterval: any;
+
+  constructor() {
+    effect(() => {
+      if (this.tauriService.isTauri()) {
+        this.tauriService.getVersion().then((v) => v && this.appVersion.set(v));
+      }
+    });
+  }
 
   ngOnInit() {
     this.startSessionTimer();
@@ -30,8 +41,6 @@ export class FooterComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.stopSessionTimer();
   }
-
-  appVersion = environment.version;
 
   streakIndicator(index: number): boolean {
     // Logic to show visual streak progress (last 4 days active indicators)

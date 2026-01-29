@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from './components/layout/header/header.component';
 import { FooterComponent } from './components/layout/footer/footer.component';
+import { TauriService } from './core/services/tauri.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
@@ -16,6 +17,8 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'envello-app';
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
+  private tauriService = inject(TauriService);
+  private unlistenFileDrop?: () => void;
 
   currentTab = signal('Overview');
   hasSidebar = signal(true);
@@ -49,7 +52,17 @@ export class AppComponent implements OnInit, OnDestroy {
 
       // Map path to Tab Name for Header
       const url = this.router.url.split('/')[1];
-      this.currentTab.set(this.mapUrlToTabName(url));
+      const tabName = this.mapUrlToTabName(url);
+      this.currentTab.set(tabName);
+      // Update window title when running in Tauri
+      this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => {});
+    });
+    this.setupTauriFileDrop();
+  }
+
+  private async setupTauriFileDrop(): Promise<void> {
+    this.unlistenFileDrop = await this.tauriService.onFileDrop((paths) => {
+      window.dispatchEvent(new CustomEvent('envello-file-drop', { detail: { paths } }));
     });
   }
 
@@ -57,6 +70,7 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.navigationLayoutListener) {
       window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
     }
+    this.unlistenFileDrop?.();
   }
 
   private loadNavigationLayout() {
