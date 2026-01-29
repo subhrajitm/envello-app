@@ -8,9 +8,8 @@ describe('OverviewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [OverviewComponent]
-    })
-    .compileComponents();
+      imports: [OverviewComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(OverviewComponent);
     component = fixture.componentInstance;
@@ -19,5 +18,16 @@ describe('OverviewComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should render overview layout', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.overview-layout')).toBeTruthy();
+  });
+
+  it('should have view mode and calendar', () => {
+    expect(component.viewMode()).toBe('MONTH');
+    component.setViewMode('2 WEEKS');
+    expect(component.viewMode()).toBe('2 WEEKS');
   });
 });
