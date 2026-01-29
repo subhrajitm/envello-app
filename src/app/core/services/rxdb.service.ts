@@ -20,6 +20,7 @@ import type { Book } from '../../services/books.service';
 import type { Meeting } from '../../services/meetings.service';
 import type { Article } from '../../services/article.service';
 import type { JournalProject, JournalEntry, JournalColumn } from '../../services/journal.service';
+import type { ResearchLibrary, ResearchSource, ResearchSummary } from '../../services/research.service';
 
 const DB_NAME = 'envello_db';
 
@@ -36,6 +37,9 @@ export type ArticleDoc = Article;
 export type JournalProjectDoc = JournalProject;
 export type JournalEntryDoc = JournalEntry;
 export type JournalColumnDoc = JournalColumn;
+export type ResearchLibraryDoc = ResearchLibrary;
+export type ResearchSourceDoc = ResearchSource;
+export type ResearchSummaryDoc = ResearchSummary;
 
 export interface NovelContentDoc {
   id: string;
@@ -57,6 +61,9 @@ export type EnvelloCollections = {
   journalProjects: RxCollection<JournalProjectDoc>;
   journalEntries: RxCollection<JournalEntryDoc>;
   journalColumns: RxCollection<JournalColumnDoc>;
+  researchLibraries: RxCollection<ResearchLibraryDoc>;
+  researchSources: RxCollection<ResearchSourceDoc>;
+  researchSummaries: RxCollection<ResearchSummaryDoc>;
 };
 
 export type EnvelloDatabase = RxDatabase<EnvelloCollections>;
@@ -363,6 +370,63 @@ const journalColumnSchema: RxJsonSchema<JournalColumnDoc> = {
   required: ['id', 'name', 'color', 'order'],
 };
 
+const researchLibrarySchema: RxJsonSchema<ResearchLibraryDoc> = {
+  title: 'research_libraries',
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 256 },
+    name: { type: 'string' },
+    description: { type: 'string' },
+    color: { type: 'string' },
+    createdDate: { type: 'string' },
+    lastModified: { type: 'string' },
+  },
+  required: ['id', 'name', 'createdDate', 'lastModified'],
+};
+
+const researchSourceSchema: RxJsonSchema<ResearchSourceDoc> = {
+  title: 'research_sources',
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 256 },
+    libraryId: { type: 'string' },
+    title: { type: 'string' },
+    sourceType: { type: 'string' },
+    url: { type: 'string' },
+    description: { type: 'string' },
+    author: { type: 'string' },
+    publishDate: { type: 'string' },
+    tags: { type: 'array', items: { type: 'string' } },
+    status: { type: 'string' },
+    notes: { type: 'string' },
+    createdDate: { type: 'string' },
+    lastAccessed: { type: 'string' },
+  },
+  required: ['id', 'libraryId', 'title', 'sourceType', 'tags', 'status', 'createdDate'],
+};
+
+const researchSummarySchema: RxJsonSchema<ResearchSummaryDoc> = {
+  title: 'research_summaries',
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
+  properties: {
+    id: { type: 'string', maxLength: 256 },
+    libraryId: { type: 'string' },
+    title: { type: 'string' },
+    content: { type: 'string' },
+    sourceIds: { type: 'array', items: { type: 'string' } },
+    tags: { type: 'array', items: { type: 'string' } },
+    createdDate: { type: 'string' },
+    lastModified: { type: 'string' },
+  },
+  required: ['id', 'libraryId', 'title', 'content', 'sourceIds', 'tags', 'createdDate', 'lastModified'],
+};
+
 @Injectable({ providedIn: 'root' })
 export class RxDBService {
   private db: EnvelloDatabase | null = null;
@@ -397,6 +461,9 @@ export class RxDBService {
       journalProjects: { schema: journalProjectSchema },
       journalEntries: { schema: journalEntrySchema },
       journalColumns: { schema: journalColumnSchema },
+      researchLibraries: { schema: researchLibrarySchema },
+      researchSources: { schema: researchSourceSchema },
+      researchSummaries: { schema: researchSummarySchema },
     });
 
     this.db = db;
@@ -747,6 +814,70 @@ export class RxDBService {
   async removeJournalColumn(id: string): Promise<void> {
     const d = await this.getDb();
     const doc = await d.journalColumns.findOne({ selector: { id } }).exec();
+    if (doc) await doc.remove();
+  }
+
+  // ─── Research libraries ─────────────────────────────────────────────────────
+  async getAllResearchLibraries(): Promise<ResearchLibraryDoc[]> {
+    const d = await this.getDb();
+    const docs = await d.researchLibraries.find().exec();
+    return docs.map((doc) => doc.toJSON() as ResearchLibraryDoc);
+  }
+
+  async upsertResearchLibrary(doc: ResearchLibraryDoc): Promise<void> {
+    const d = await this.getDb();
+    await d.researchLibraries.upsert(doc as RxDocumentData<ResearchLibraryDoc>);
+  }
+
+  async removeResearchLibrary(id: string): Promise<void> {
+    const d = await this.getDb();
+    const doc = await d.researchLibraries.findOne({ selector: { id } }).exec();
+    if (doc) await doc.remove();
+  }
+
+  // ─── Research sources ───────────────────────────────────────────────────────
+  async getAllResearchSources(): Promise<ResearchSourceDoc[]> {
+    const d = await this.getDb();
+    const docs = await d.researchSources.find().exec();
+    return docs.map((doc) => doc.toJSON() as ResearchSourceDoc);
+  }
+
+  async upsertResearchSource(doc: ResearchSourceDoc): Promise<void> {
+    const d = await this.getDb();
+    await d.researchSources.upsert(doc as RxDocumentData<ResearchSourceDoc>);
+  }
+
+  async upsertResearchSources(docs: ResearchSourceDoc[]): Promise<void> {
+    const d = await this.getDb();
+    await d.researchSources.bulkUpsert(docs.map((s) => s as RxDocumentData<ResearchSourceDoc>));
+  }
+
+  async removeResearchSource(id: string): Promise<void> {
+    const d = await this.getDb();
+    const doc = await d.researchSources.findOne({ selector: { id } }).exec();
+    if (doc) await doc.remove();
+  }
+
+  // ─── Research summaries ─────────────────────────────────────────────────────
+  async getAllResearchSummaries(): Promise<ResearchSummaryDoc[]> {
+    const d = await this.getDb();
+    const docs = await d.researchSummaries.find().exec();
+    return docs.map((doc) => doc.toJSON() as ResearchSummaryDoc);
+  }
+
+  async upsertResearchSummary(doc: ResearchSummaryDoc): Promise<void> {
+    const d = await this.getDb();
+    await d.researchSummaries.upsert(doc as RxDocumentData<ResearchSummaryDoc>);
+  }
+
+  async upsertResearchSummaries(docs: ResearchSummaryDoc[]): Promise<void> {
+    const d = await this.getDb();
+    await d.researchSummaries.bulkUpsert(docs.map((s) => s as RxDocumentData<ResearchSummaryDoc>));
+  }
+
+  async removeResearchSummary(id: string): Promise<void> {
+    const d = await this.getDb();
+    const doc = await d.researchSummaries.findOne({ selector: { id } }).exec();
     if (doc) await doc.remove();
   }
 }
