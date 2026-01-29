@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { RxDBService } from '../core/services/rxdb.service';
 
 export type BinItemType =
   | 'daily-note'
@@ -38,6 +39,21 @@ export class BinService {
   /** All items currently in the bin (most recent first). */
   readonly items = signal<BinItem[]>([]);
 
+  private rxdb = inject(RxDBService);
+
+  constructor() {
+    this.loadFromRxDB();
+  }
+
+  private async loadFromRxDB(): Promise<void> {
+    try {
+      const list = await this.rxdb.getAllBinItems();
+      this.items.set(list);
+    } catch (e) {
+      console.error('[BinService] loadFromRxDB failed', e);
+    }
+  }
+
   /** Add a new entry into the bin. */
   addToBin(item: Omit<BinItem, 'id' | 'deletedAt'>) {
     const now = new Date().toISOString();
@@ -47,16 +63,19 @@ export class BinService {
       ...item
     };
     this.items.update(list => [binItem, ...list]);
+    this.rxdb.upsertBinItem(binItem).catch(e => console.error('[BinService] persist bin item failed', e));
   }
 
   /** Permanently remove a single item from the bin. */
   permanentlyDelete(binItemId: string) {
     this.items.update(list => list.filter(i => i.id !== binItemId));
+    this.rxdb.removeBinItem(binItemId).catch(e => console.error('[BinService] remove bin item failed', e));
   }
 
   /** Empty the entire bin. This is irreversible. */
   emptyBin() {
     this.items.set([]);
+    this.rxdb.clearBin().catch(e => console.error('[BinService] clear bin failed', e));
   }
 }
 

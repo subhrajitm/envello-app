@@ -303,10 +303,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       }
     });
 
-    // Load novel data (synchronous, instant)
-    this.novelService.loadNovel(id);
-    // Loading is complete immediately since loadNovel is synchronous
-    this.isLoading.set(false);
+    // Load novel data from RxDB (async)
+    this.novelService.loadNovel(id).then(() => this.isLoading.set(false));
   }
 
   ngAfterViewChecked() {

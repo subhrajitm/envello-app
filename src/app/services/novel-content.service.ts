@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
 import { BinService } from './bin.service';
+import { RxDBService } from '../core/services/rxdb.service';
 
 export interface NovelContent {
     id: string; // Links to StoreService Novel.id
@@ -171,38 +172,55 @@ const INITIAL_DATA: Record<string, NovelContent> = {
     }
 };
 
+const PERSIST_DEBOUNCE_MS = 500;
+
 @Injectable({
     providedIn: 'root'
 })
 export class NovelContentService {
-    // Current active novel state
     activeNovel = signal<NovelContent | null>(null);
     store = inject(StoreService);
-  private bin = inject(BinService);
+    private bin = inject(BinService);
+    private rxdb = inject(RxDBService);
+    private persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() { }
 
-    loadNovel(id: string) {
-        // Simulate API Fetch - instant synchronous load
-        const data = INITIAL_DATA[id];
-        if (data) {
-            // Use structuredClone for fast deep copy (available in modern browsers)
-            // This is much faster than JSON.parse/JSON.stringify
-            if (typeof structuredClone !== 'undefined') {
-                try {
-                    this.activeNovel.set(structuredClone(data));
-                } catch (e) {
-                    // Fallback to JSON if structuredClone fails (rare edge cases)
-                    this.activeNovel.set(JSON.parse(JSON.stringify(data)));
-                }
-            } else {
-                // Fallback for older browsers: use JSON (slower but compatible)
-                this.activeNovel.set(JSON.parse(JSON.stringify(data)));
+    async loadNovel(id: string): Promise<void> {
+        this.activeNovel.set(null);
+        try {
+            const raw = await this.rxdb.getNovelContent(id);
+            if (raw) {
+                const data = JSON.parse(raw) as NovelContent;
+                this.activeNovel.set(data);
+                return;
             }
-        } else {
-            // Create empty/new if not found (or handle error)
-            this.activeNovel.set(this.createEmptyNovel(id));
+            const data = INITIAL_DATA[id]
+                ? (typeof structuredClone !== 'undefined'
+                    ? (structuredClone(INITIAL_DATA[id]) as NovelContent)
+                    : JSON.parse(JSON.stringify(INITIAL_DATA[id])))
+                : this.createEmptyNovel(id);
+            this.activeNovel.set(data);
+            await this.rxdb.setNovelContent(id, JSON.stringify(data));
+        } catch (e) {
+            console.error('[NovelContentService] loadNovel failed', e);
+            const fallback = INITIAL_DATA[id]
+                ? JSON.parse(JSON.stringify(INITIAL_DATA[id]))
+                : this.createEmptyNovel(id);
+            this.activeNovel.set(fallback);
         }
+    }
+
+    private schedulePersist(): void {
+        if (this.persistTimeout) clearTimeout(this.persistTimeout);
+        this.persistTimeout = setTimeout(() => {
+            this.persistTimeout = null;
+            const n = this.activeNovel();
+            if (!n) return;
+            this.rxdb.setNovelContent(n.id, JSON.stringify(n)).catch(e =>
+                console.error('[NovelContentService] persist failed', e)
+            );
+        }, PERSIST_DEBOUNCE_MS);
     }
 
     getChapter(chapterId: string): Chapter | undefined {
@@ -232,6 +250,7 @@ export class NovelContentService {
 
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     toggleGroupExpand(groupId: string) {
@@ -242,6 +261,7 @@ export class NovelContentService {
                 chapters: novel.chapters.map(g => g.id === groupId ? { ...g, expanded: !g.expanded } : g)
             };
         });
+        this.schedulePersist();
     }
 
     updateChapterTitle(chapterId: string, title: string) {
@@ -260,6 +280,7 @@ export class NovelContentService {
 
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     updateChapterTags(chapterId: string, tags: string[]) {
@@ -278,6 +299,7 @@ export class NovelContentService {
 
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     updateChapterSummary(chapterId: string, summary: string) {
@@ -296,6 +318,7 @@ export class NovelContentService {
 
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     // Chapter Management
@@ -320,6 +343,7 @@ export class NovelContentService {
             this.store.addActivity(`Created new chapter '${title}'`, 'entry');
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     deleteChapter(chapterId: string) {
@@ -359,6 +383,7 @@ export class NovelContentService {
             this.store.addActivity('Deleted chapter', 'system');
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     addChapterGroup(title: string = 'New Part') {
@@ -374,6 +399,7 @@ export class NovelContentService {
 
             return { ...novel, chapters: [...novel.chapters, newGroup] };
         });
+        this.schedulePersist();
     }
 
     reorderChapterGroup(fromIndex: number, toIndex: number) {
@@ -384,6 +410,7 @@ export class NovelContentService {
             groups.splice(toIndex, 0, moved);
             return { ...novel, chapters: groups };
         });
+        this.schedulePersist();
     }
 
     reorderChapter(groupId: string, fromIndex: number, toIndex: number) {
@@ -400,6 +427,7 @@ export class NovelContentService {
             });
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     deleteChapterGroup(groupId: string) {
@@ -438,6 +466,7 @@ export class NovelContentService {
             this.store.addActivity('Deleted act/part', 'system');
             return { ...novel, chapters: newChapters };
         });
+        this.schedulePersist();
     }
 
     // Note Management
@@ -455,6 +484,7 @@ export class NovelContentService {
             this.store.addActivity(`Added note '${title}'`, 'entry');
             return { ...novel, notes: [...novel.notes, newNote] };
         });
+        this.schedulePersist();
     }
 
     updateNote(noteId: string, title: string, body: string) {
@@ -467,6 +497,7 @@ export class NovelContentService {
 
             return { ...novel, notes: newNotes };
         });
+        this.schedulePersist();
     }
 
     deleteNote(noteId: string) {
@@ -486,6 +517,7 @@ export class NovelContentService {
 
             return { ...novel, notes: novel.notes.filter(note => note.id !== noteId) };
         });
+        this.schedulePersist();
     }
 
     // Character Management
@@ -503,6 +535,7 @@ export class NovelContentService {
             this.store.addActivity(`Added character '${name}'`, 'entry');
             return { ...novel, characters: [...novel.characters, newCharacter] };
         });
+        this.schedulePersist();
     }
 
     updateCharacter(characterId: string, updates: Partial<Character>) {
@@ -515,6 +548,7 @@ export class NovelContentService {
 
             return { ...novel, characters: newCharacters };
         });
+        this.schedulePersist();
     }
 
     deleteCharacter(characterId: string) {
@@ -534,6 +568,7 @@ export class NovelContentService {
 
             return { ...novel, characters: novel.characters.filter(char => char.id !== characterId) };
         });
+        this.schedulePersist();
     }
 
     // Location Management
@@ -550,6 +585,7 @@ export class NovelContentService {
             this.store.addActivity(`Added location '${name}'`, 'entry');
             return { ...novel, locations: [...novel.locations, newLocation] };
         });
+        this.schedulePersist();
     }
 
     updateLocation(locationId: string, updates: Partial<Location>) {
@@ -562,6 +598,7 @@ export class NovelContentService {
 
             return { ...novel, locations: newLocations };
         });
+        this.schedulePersist();
     }
 
     deleteLocation(locationId: string) {
@@ -581,6 +618,7 @@ export class NovelContentService {
 
             return { ...novel, locations: novel.locations.filter(loc => loc.id !== locationId) };
         });
+        this.schedulePersist();
     }
 
     // Novel Metadata
@@ -589,6 +627,7 @@ export class NovelContentService {
             if (!novel) return null;
             return { ...novel, title };
         });
+        this.schedulePersist();
     }
 
     updateSynopsis(logline: string, theme: string) {
@@ -596,6 +635,7 @@ export class NovelContentService {
             if (!novel) return null;
             return { ...novel, synopsis: { logline, theme } };
         });
+        this.schedulePersist();
     }
 
     // Front Matter Management
@@ -615,6 +655,7 @@ export class NovelContentService {
             this.store.addActivity(`Added ${title}`, 'entry');
             return { ...novel, frontMatter: [...novel.frontMatter, newItem] };
         });
+        this.schedulePersist();
     }
 
     updateFrontMatterContent(itemId: string, content: string, wordCount: number) {
@@ -629,6 +670,7 @@ export class NovelContentService {
 
             return { ...novel, frontMatter: updatedFrontMatter };
         });
+        this.schedulePersist();
     }
 
     updateFrontMatterTitle(itemId: string, title: string) {
@@ -641,6 +683,7 @@ export class NovelContentService {
 
             return { ...novel, frontMatter: updatedFrontMatter };
         });
+        this.schedulePersist();
     }
 
     deleteFrontMatterItem(itemId: string) {
@@ -661,6 +704,7 @@ export class NovelContentService {
             this.store.addActivity('Deleted front matter item', 'system');
             return { ...novel, frontMatter: novel.frontMatter.filter(item => item.id !== itemId) };
         });
+        this.schedulePersist();
     }
 
     // Prologue Management
@@ -680,6 +724,7 @@ export class NovelContentService {
             this.store.addActivity('Added prologue', 'entry');
             return { ...novel, prologue };
         });
+        this.schedulePersist();
     }
 
     updatePrologueContent(content: string, wordCount: number) {
@@ -696,6 +741,7 @@ export class NovelContentService {
                 }
             };
         });
+        this.schedulePersist();
     }
 
     updatePrologueTitle(title: string) {
@@ -707,6 +753,7 @@ export class NovelContentService {
                 prologue: { ...novel.prologue, title }
             };
         });
+        this.schedulePersist();
     }
 
     deletePrologue() {
@@ -725,6 +772,7 @@ export class NovelContentService {
             const { prologue, ...rest } = novel;
             return rest;
         });
+        this.schedulePersist();
     }
 
     // Plot Points Management
@@ -750,6 +798,7 @@ export class NovelContentService {
 
             return { ...novel, chapters: updatedChapters };
         });
+        this.schedulePersist();
     }
 
     // Helpers

@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
+import { RxDBService } from '../core/services/rxdb.service';
 
 export interface Task {
   id: string;
@@ -187,26 +188,72 @@ const initialNovels: Novel[] = [
   providedIn: 'root'
 })
 export class StoreService {
-  tasks = signal<Task[]>(initialTasks);
-  notes = signal<Note[]>(initialNotes);
-  planningItems = signal<PlanningItem[]>(initialPlanningItems);
-  activities = signal<Activity[]>(initialActivities);
-  novels = signal<Novel[]>(initialNovels);
+  tasks = signal<Task[]>([]);
+  notes = signal<Note[]>([]);
+  planningItems = signal<PlanningItem[]>([]);
+  activities = signal<Activity[]>([]);
+  novels = signal<Novel[]>([]);
 
   private bin = inject(BinService);
+  private rxdb = inject(RxDBService);
 
-  constructor() { }
+  constructor() {
+    this.loadFromRxDB();
+  }
+
+  private async loadFromRxDB(): Promise<void> {
+    try {
+      const [tasks, notes, planningItems, activities, novels] = await Promise.all([
+        this.rxdb.getAllTasks(),
+        this.rxdb.getAllNotes(),
+        this.rxdb.getAllPlanningItems(),
+        this.rxdb.getAllActivities(),
+        this.rxdb.getAllNovels(),
+      ]);
+
+      const seed = tasks.length === 0 && notes.length === 0;
+      if (seed) {
+        await Promise.all([
+          this.rxdb.upsertTasks(initialTasks),
+          this.rxdb.upsertNotes(initialNotes),
+          this.rxdb.upsertPlanningItems(initialPlanningItems),
+          this.rxdb.upsertActivities(initialActivities),
+          this.rxdb.upsertNovels(initialNovels),
+        ]);
+        this.tasks.set(initialTasks);
+        this.notes.set(initialNotes);
+        this.planningItems.set(initialPlanningItems);
+        this.activities.set(initialActivities);
+        this.novels.set(initialNovels);
+      } else {
+        this.tasks.set(tasks);
+        this.notes.set(notes);
+        this.planningItems.set(planningItems);
+        this.activities.set(activities.slice(0, 50));
+        this.novels.set(novels);
+      }
+    } catch (e) {
+      console.error('[StoreService] loadFromRxDB failed', e);
+      this.tasks.set(initialTasks);
+      this.notes.set(initialNotes);
+      this.planningItems.set(initialPlanningItems);
+      this.activities.set(initialActivities);
+      this.novels.set(initialNovels);
+    }
+  }
 
   addTask(task: Task) {
     this.tasks.update(tasks => [...tasks, task]);
     this.addActivity('Task created: ' + task.title, 'system');
+    this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   updateTask(id: string, updates: Partial<Task>) {
-    this.tasks.update(tasks =>
-      tasks.map(task => task.id === id ? { ...task, ...updates } : task)
-    );
+    const updated = this.tasks().map(t => t.id === id ? { ...t, ...updates } : t);
+    const task = updated.find(t => t.id === id);
+    this.tasks.set(updated);
     this.addActivity('Task updated', 'system');
+    if (task) this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   deleteTask(id: string) {
@@ -224,11 +271,13 @@ export class StoreService {
 
     this.tasks.set(existingTasks.filter(t => t.id !== id));
     this.addActivity('Task deleted', 'system');
+    this.rxdb.removeTask(id).catch(e => console.error('[StoreService] remove task failed', e));
   }
 
   addNote(note: Note) {
     this.notes.update(notes => [note, ...notes]);
     this.addActivity("Entry added to '" + note.title + "'", 'entry');
+    this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
   }
 
   updateNote(id: string, updates: Partial<Note>) {
@@ -242,6 +291,8 @@ export class StoreService {
         lastEdited: updates.lastEdited || timeString
       } : note)
     );
+    const note = this.notes().find(n => n.id === id);
+    if (note) this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
   }
 
   deleteNote(id: string) {
@@ -259,15 +310,18 @@ export class StoreService {
 
     this.notes.set(existingNotes.filter(n => n.id !== id));
     this.addActivity('Note deleted', 'system');
+    this.rxdb.removeNote(id).catch(e => console.error('[StoreService] remove note failed', e));
   }
 
   addPlanningItem(item: PlanningItem) {
     this.planningItems.update(items => [...items, item]);
+    this.rxdb.upsertPlanningItem(item).catch(e => console.error('[StoreService] persist planning item failed', e));
   }
 
   addNovel(novel: Novel) {
     this.novels.update(novels => [...novels, novel]);
     this.addActivity('Project started: ' + novel.title, 'system');
+    this.rxdb.upsertNovel(novel).catch(e => console.error('[StoreService] persist novel failed', e));
   }
 
   addActivity(text: string, type: Activity['type'] = 'entry') {
@@ -278,5 +332,6 @@ export class StoreService {
       type
     };
     this.activities.update(activities => [newActivity, ...activities.slice(0, 49)]); // Keep last 50
+    this.rxdb.upsertActivity(newActivity).catch(e => console.error('[StoreService] persist activity failed', e));
   }
 }
