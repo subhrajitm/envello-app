@@ -3,6 +3,7 @@ import { RxDBService } from '../core/services/rxdb.service';
 
 export type BinItemType =
   | 'daily-note'
+  | 'novel'
   | 'novel-chapter'
   | 'novel-group'
   | 'novel-note'

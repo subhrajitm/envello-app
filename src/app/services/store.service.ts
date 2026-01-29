@@ -213,6 +213,23 @@ export class StoreService {
     this.rxdb.upsertNovel(novel).catch(e => console.error('[StoreService] persist novel failed', e));
   }
 
+  deleteNovel(id: string) {
+    const existing = this.novels();
+    const novel = existing.find(n => n.id === id);
+    if (novel) {
+      this.bin.addToBin({
+        type: 'novel',
+        originalId: novel.id,
+        title: novel.title,
+        payload: novel,
+      });
+    }
+    this.novels.set(existing.filter(n => n.id !== id));
+    this.addActivity('Novel deleted', 'system');
+    this.rxdb.removeNovel(id).catch(e => console.error('[StoreService] remove novel failed', e));
+    this.rxdb.removeNovelContent(id).catch(e => console.error('[StoreService] remove novel content failed', e));
+  }
+
   addActivity(text: string, type: Activity['type'] = 'entry') {
     const newActivity: Activity = {
       id: Date.now().toString(),

@@ -42,6 +42,10 @@ export class NovelsComponent {
     { id: 'water_drop', label: 'Drop' },
   ] as const;
 
+  novelMenuOpen = signal<string | null>(null);
+  showDeleteModal = signal(false);
+  novelToDelete = signal<Novel | null>(null);
+
   novels = computed(() => {
     let list = this.store.novels();
 
@@ -161,6 +165,35 @@ export class NovelsComponent {
     this.router.navigate(['/novels', id]);
   }
 
+  toggleNovelMenu(novelId: string, e?: Event) {
+    e?.stopPropagation();
+    this.novelMenuOpen.update(id => (id === novelId ? null : novelId));
+  }
+
+  closeNovelMenu() {
+    this.novelMenuOpen.set(null);
+  }
+
+  openDeleteModal(novel: Novel, e?: Event) {
+    e?.stopPropagation();
+    this.novelToDelete.set(novel);
+    this.showDeleteModal.set(true);
+    this.closeNovelMenu();
+  }
+
+  cancelDeleteNovel() {
+    this.showDeleteModal.set(false);
+    this.novelToDelete.set(null);
+  }
+
+  confirmDeleteNovel() {
+    const novel = this.novelToDelete();
+    if (novel) {
+      this.store.deleteNovel(novel.id);
+      this.cancelDeleteNovel();
+    }
+  }
+
   openAddModal() {
     this.newNovel.set({
       title: '',
@@ -223,12 +256,17 @@ export class NovelsComponent {
       this.statusDropdownOpen.set(false);
       this.sortDropdownOpen.set(false);
     }
+    if (!target.closest('.novel-menu-wrapper')) {
+      this.closeNovelMenu();
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Escape' && this.showAddModal()) {
-      this.closeAddModal();
+    if (e.key === 'Escape') {
+      if (this.showDeleteModal()) this.cancelDeleteNovel();
+      else if (this.showAddModal()) this.closeAddModal();
+      else this.closeNovelMenu();
     }
   }
 }

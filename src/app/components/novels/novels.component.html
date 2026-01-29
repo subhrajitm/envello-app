@@ -199,9 +199,23 @@
                     </div>
                     <div class="col-last-updated">{{ novel.lastUpdated }}</div>
                     <div class="col-menu">
-                        <button class="menu-btn" (click)="$event.stopPropagation()">
-                            <span class="material-symbols-outlined icon-sm">more_vert</span>
-                        </button>
+                        <div class="novel-menu-wrapper">
+                            <button class="menu-btn" (click)="toggleNovelMenu(novel.id, $event)" title="Actions">
+                                <span class="material-symbols-outlined icon-sm">more_vert</span>
+                            </button>
+                            @if (novelMenuOpen() === novel.id) {
+                            <div class="novel-menu-dropdown">
+                                <button class="novel-menu-item" (click)="openNovel(novel.id); closeNovelMenu()">
+                                    <span class="material-symbols-outlined">open_in_new</span>
+                                    <span>Open</span>
+                                </button>
+                                <button class="novel-menu-item novel-menu-item--danger" (click)="openDeleteModal(novel, $event)">
+                                    <span class="material-symbols-outlined">delete</span>
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                            }
+                        </div>
                     </div>
                 </div>
                 }
@@ -211,13 +225,30 @@
         <!-- GRID VIEW -->
         <div class="novels-grid">
             @for (novel of novels(); track novel.id) {
-            <div class="novel-card" (click)="openNovel(novel.id)">
-                <div class="card-cover">
+            <div class="novel-card novel-card--has-menu">
+                <div class="card-cover" (click)="openNovel(novel.id)">
                     <span class="material-symbols-outlined card-icon">{{ novel.icon }}</span>
                     <span class="status-badge-caps card-status" [ngClass]="getStatusColor(novel.status)">{{ novel.status
                         }}</span>
                 </div>
-                <div class="card-body">
+                <div class="novel-menu-wrapper novel-card-menu">
+                    <button class="novel-card-menu-btn" (click)="toggleNovelMenu(novel.id, $event)" title="Actions">
+                        <span class="material-symbols-outlined icon-sm">more_vert</span>
+                    </button>
+                    @if (novelMenuOpen() === novel.id) {
+                    <div class="novel-menu-dropdown novel-menu-dropdown--card">
+                        <button class="novel-menu-item" (click)="openNovel(novel.id); closeNovelMenu()">
+                            <span class="material-symbols-outlined">open_in_new</span>
+                            <span>Open</span>
+                        </button>
+                        <button class="novel-menu-item novel-menu-item--danger" (click)="openDeleteModal(novel, $event)">
+                            <span class="material-symbols-outlined">delete</span>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                    }
+                </div>
+                <div class="card-body" (click)="openNovel(novel.id)">
                     <div class="card-title">{{ novel.title }}</div>
                     <div class="card-meta">
                         <span>{{ novel.chapters }} Ch</span>
@@ -298,6 +329,22 @@
       [disabled]="!newNovel().title.trim() || addModalSubmitting()">
       {{ addModalSubmitting() ? 'Creating…' : 'Add novel' }}
     </env-button>
+  </div>
+</env-modal>
+}
+
+<!-- Delete novel modal -->
+@if (showDeleteModal()) {
+<env-modal [isOpen]="showDeleteModal()" (closed)="cancelDeleteNovel()" title="Delete novel" size="md">
+  <div body>
+    @if (novelToDelete(); as novel) {
+    <p>Are you sure you want to delete <strong>"{{ novel.title }}"</strong>? It will be moved to the bin.</p>
+    <p class="delete-modal-hint">You can restore it from the bin later.</p>
+    }
+  </div>
+  <div footer>
+    <env-button variant="secondary" (clicked)="cancelDeleteNovel()">Cancel</env-button>
+    <env-button variant="danger" (clicked)="confirmDeleteNovel()">Delete novel</env-button>
   </div>
 </env-modal>
 }
