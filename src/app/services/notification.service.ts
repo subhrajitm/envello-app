@@ -29,11 +29,7 @@ export class NotificationService {
   unreadCount = signal(0);
 
   constructor() {
-    // Load notifications from localStorage
     this.loadNotifications();
-
-    // Add some demo notifications for testing
-    this.addDemoNotifications();
   }
 
   // Add a new notification
@@ -194,30 +190,4 @@ export class NotificationService {
     }
   }
 
-  private addDemoNotifications() {
-    // Only add demo notifications if there are no existing ones
-    if (this.notifications().length === 0) {
-      this.info(
-        'Welcome to Envello',
-        'Your all-in-one creative workspace is ready to use!',
-        { icon: 'celebration' }
-      );
-
-      this.success(
-        'Auto-save Enabled',
-        'Your work will be automatically saved every 30 seconds',
-        { icon: 'cloud_done' }
-      );
-
-      this.warning(
-        'Storage Warning',
-        'You are using 75% of your local storage quota',
-        {
-          icon: 'storage',
-          actionLabel: 'Manage Storage',
-          actionCallback: () => console.log('Navigate to storage settings')
-        }
-      );
-    }
-  }
 }

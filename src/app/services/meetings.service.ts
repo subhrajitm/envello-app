@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService, Task } from './store.service';
+import { RxDBService } from '../core/services/rxdb.service';
 
 export interface Attendee {
   id: string;
@@ -116,191 +117,6 @@ export const MEETING_COLORS = [
   '#06B6D4', // Cyan
 ];
 
-// Initial mock meetings
-const initialMeetings: Meeting[] = [
-  {
-    id: '1',
-    title: 'Agent Sync: Quarterly Review',
-    description: 'Quarterly review meeting to discuss progress and goals for the next quarter.',
-    project: 'Neon Orchard Chronicles',
-    date: '2026-01-28',
-    startTime: '10:00',
-    endTime: '11:00',
-    duration: 60,
-    meetingType: 'video',
-    platform: 'zoom',
-    meetingLink: 'https://zoom.us/j/123456789',
-    attendees: [
-      { id: '1', name: 'Sarah Chen', email: 'sarah@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBshAUhVwVYKH81jgOo3cSGYQ_03DK0vuUnPQRITWWOWer3u8KH7UyBLt54X4k4q22py2yS1R6Yvb2Hv0EOlUke0QBsXv-_vyaGANjV44gsMbwE0CBc3DnOTLuXl3Q-hG0DDpwvvwtQmTNBi1w5t0p8for1h6R9dxLm_MIGl-wZY6zx-57MqzYatU70ArayMd8OC-A8f8Rz9bJDe_7coc5sHD141iEvUys7ecDE14M_JswlCtpbZbN6oB2mBKoqgOQxj9SaQu3RA5-U', role: 'organizer', status: 'accepted' },
-      { id: '2', name: 'Mike Johnson', email: 'mike@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDV-e0vzaU8OnVjvi1c8je-Ulg79-URafS8W73HwjyD8qz9FuZDp2_kfk62ayt6UA6YPEQFXxLLRpWZnuQIyZgrgBmv0WnuBzwcVurJX08LI0qL95p4I8W-pNCRA4jWVjrZ1t9llgq52BJ8l5RNh0hQy_CEYBTnydt1cUPYtdAe-l4TWz9FZW_vLHImmjj4KnM1U2wzqE0BumUeCioAeQhpdsyNHzd4qlhZ5Mad2tUQq6OXpL2bVcE1TuB73Xc2mUQf0iSH-knDjukG', role: 'required', status: 'accepted' },
-      { id: '3', name: 'Emily Davis', email: 'emily@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBSkgMxJq7v06z31vv_d5-FZJvsBZUHEDG9EzciuEH91iF1_HWd0zN2dRCq0vThU3uHq9zSN_PM4QLzPpupJKXy9_lvhMeIIMncyd3Uye6etOu5KJiGi_J0YB93iCEPRp0Zz5J1c0B78Cd_9tub57KdXPka9o9NKNm7Eyk0M-Ich95TilOLe1eaGtjnZ9XHPm-S0fJyQyRVA--4a0GO1WOTYj_SzhG70YFMHuX4T75vPBWbNYw6aGQonGpZe3w2mK0S9mvg9LMjr1IS', role: 'optional', status: 'tentative' },
-    ],
-    agenda: [
-      { id: '1', title: 'Q4 Performance Review', duration: 20, presenter: 'Sarah Chen', completed: false },
-      { id: '2', title: 'Q1 Goals Discussion', duration: 25, presenter: 'Mike Johnson', completed: false },
-      { id: '3', title: 'Open Discussion', duration: 15, completed: false },
-    ],
-    actionItems: [
-      { id: '1', title: 'Update project timeline document', assignee: 'Sarah Chen', status: 'open', priority: 'HIGH' },
-      { id: '2', title: 'Review marketing budget', assignee: 'Mike Johnson', status: 'open', priority: 'MEDIUM' },
-      { id: '3', title: 'Schedule follow-up meeting', assignee: 'Emily Davis', status: 'open', priority: 'LOW' },
-      { id: '4', title: 'Compile Q4 metrics report', assignee: 'Sarah Chen', status: 'in_progress', priority: 'HIGH' },
-    ],
-    status: 'scheduled',
-    priority: 'HIGH',
-    color: '#E8D55A',
-    labels: ['quarterly', 'review'],
-    reminders: [
-      { time: 15, type: 'notification', sent: false },
-      { time: 60, type: 'email', sent: true },
-    ],
-    createdAt: '2026-01-15T08:00:00Z',
-    updatedAt: '2026-01-27T14:30:00Z',
-  },
-  {
-    id: '2',
-    title: 'Worldbuilding Workshop',
-    description: 'Collaborative workshop session to develop the world and setting.',
-    project: 'Project Alpha',
-    date: '2026-01-29',
-    startTime: '14:30',
-    endTime: '16:00',
-    duration: 90,
-    meetingType: 'video',
-    platform: 'discord',
-    meetingLink: 'https://discord.gg/workshop',
-    attendees: [
-      { id: '4', name: 'Alex Rivera', email: 'alex@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDmY1FcHM_75uao_XhmRPmF-Gklc9_QZUHQW36c2mN4OSF-QQiAyZHO50KgBDfssgrutG_L6e6siyAt-glKOsGoxIhes2ugdspfx_oTHFmLsgP2sPmi5En5uQ5jLrXG6sWdc-fWDfnvoJwytTmkcWDgHuIw3BVOCmpr6HU0T4HTsgzx3a4v0XYYpAcIIlf6YVOPRDp6P6mJNWOu0nehVYqPxedrpKvF-atGJScrb5GAcOQlO4ysfoTedimw2my6wknzO1hxoP5K7IfH', role: 'organizer', status: 'accepted' },
-      { id: '5', name: 'Jordan Lee', email: 'jordan@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC5bwBoFq2vASkLUfPSUXUewuFrCl8iphiIqA-MWuyRRnpwUjz83zlHfox_QvsvRbLst9sLMQ9x7Z2uGGu-wZyX_1sRF16AMBO_XwW74GSRcTSqhGikFHTbW2h_tf0hjD2sgXxjAz0200odqSpdyvkvGW5R8igE0aAB1NqqQyAU-mVjLpxOEZc4twOnh8x5MpX_z5NbysbwXfLmpvaWkIHUJoi_bKiAAmvI_g6VHRWmwHgoho2XCvrIIWTYzbMQ7j5UzpCkvJ8tDtwJ', role: 'required', status: 'accepted' },
-    ],
-    agenda: [
-      { id: '1', title: 'Geography and Map Review', duration: 30, completed: false },
-      { id: '2', title: 'Culture Development', duration: 30, completed: false },
-      { id: '3', title: 'Magic System Workshop', duration: 30, completed: false },
-    ],
-    actionItems: [
-      { id: '1', title: 'Create map sketches', assignee: 'Alex Rivera', status: 'open', priority: 'HIGH' },
-      { id: '2', title: 'Write culture document draft', assignee: 'Jordan Lee', status: 'open', priority: 'MEDIUM' },
-    ],
-    status: 'scheduled',
-    priority: 'MEDIUM',
-    color: '#3B82F6',
-    labels: ['workshop', 'creative'],
-    createdAt: '2026-01-20T10:00:00Z',
-    updatedAt: '2026-01-25T16:00:00Z',
-  },
-  {
-    id: '3',
-    title: 'Editorial Feedback Session',
-    description: 'Review editor feedback and discuss revisions.',
-    project: 'The Scent of Green',
-    date: '2026-01-25',
-    startTime: '09:15',
-    endTime: '10:15',
-    duration: 60,
-    meetingType: 'in-person',
-    location: 'Conference Room A',
-    attendees: [
-      { id: '6', name: 'Chris Taylor', email: 'chris@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCAopkW8tWTy_LepOvR9vwSVvSYlaWpfhTulaGYeBG5a8vREvZ-j4EmF2xLOMKjHpa2OeWv2n1RV2KDUgbrkHuSF5Jg9iaktjd52T0mzruQJ6tRSBJ7f8mtWfxJUaXEkWdvD_oTdO7NbrbgtMPpbPmy4-WkLZByKjdt4Phrpnm_99ESzO7rFPKSagl3vWMZ5nWNU17kCLfYzYyF8mLRAx0sxXTdSrirFxPLAv6y0Y2VwhneNOVkWeSiaioaFKdMfPIlr5TjG9tmuJnc', role: 'organizer', status: 'accepted' },
-      { id: '7', name: 'Sam Martinez', email: 'sam@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCtq6Uh1_arZuIO6y7E9-DEmV5B4ZiB68-5_yw-Ts5x9IsaXOyLE_HIw8WGqnJGCrg8EvEmJl_MSvS7nYMWpfbrKrnLDogQ1LJcOHVgoWfkz6A063wQQ-oYmEC1MXwP1FT0GxXbxp58fGPy_v4vSpNcVJ7roHDKy90jVa2LXk3ZA1-meqQWGPWGgH3o0BedFH0xCxhFuHrzoWxTaGDbmK8mw_2ptPrTKpaEuPuA5VSu8pFw209Uw0gO3E9ErERA6f5QpHF1tfxD25R_', role: 'required', status: 'accepted' },
-      { id: '8', name: 'Taylor Kim', email: 'taylor@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBt_6vO4woNQjkvVX2WaOXDrBLZAdj27mViNtQIn_rJJtGII5GPMRxiJhs1xKk6LY7NsttWUOQQwJ4B118XI7QA9KIEp0vH5i9ZVTuZ0VtpPPf4zHDXuNfAHMEG7yCqp9DmovgNDXA_cuRKXdbyrKfQoEyLIZjkDndLLayyRAZKrNwdkE-TW5KasM8rBHqJOoslOPp3tw_KeNLlFltA_PIwyJEj2-gL2TP1ESRLfJtK0uwlbQqY5ZL5IH2L0f3O69IjXNyI3uiKlBen', role: 'optional', status: 'accepted' },
-    ],
-    notes: [
-      { id: '1', content: 'Discussed chapter 3 pacing issues - agreed to restructure.', createdAt: '2026-01-25T09:30:00Z', createdBy: 'Chris Taylor' },
-      { id: '2', content: 'Character motivation needs strengthening in act 2.', createdAt: '2026-01-25T09:45:00Z', createdBy: 'Sam Martinez' },
-    ],
-    actionItems: [],
-    status: 'completed',
-    priority: 'MEDIUM',
-    color: '#10B981',
-    labels: ['editorial', 'feedback'],
-    createdAt: '2026-01-18T11:00:00Z',
-    updatedAt: '2026-01-25T10:15:00Z',
-  },
-  {
-    id: '4',
-    title: 'Plot Hole Triage',
-    description: 'Emergency session to address critical plot inconsistencies.',
-    project: 'Echoes of the Void',
-    date: '2026-01-30',
-    startTime: '11:00',
-    endTime: '12:30',
-    duration: 90,
-    meetingType: 'video',
-    platform: 'teams',
-    meetingLink: 'https://teams.microsoft.com/meeting',
-    attendees: [
-      { id: '9', name: 'Morgan Blake', email: 'morgan@example.com', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDCB-FU_FjpRVd4taX1MJNuIIUYHel8yOYTd5uaKFRpFuNQjzfJ3aSLjqzmXRgA-n-Ld_BjPqoj56Mp-tlXfrzA0J9misg2pikkWWi-QulRTUGTgwkJwM8q_L4jG1T2kD1V9tryZtZ_x5EO2WbKZwA0dgA7hWDnByAX8XY5lZhIgYaCO_g_vblUDYpsNiL0chaKKMQ3sp1ObWRo4gM1M6fG5hzI6934c_a2aiDsMnH719ienmdab1KZa9j7ZC4GijJ25U-V-0YQUR9h', role: 'organizer', status: 'accepted' },
-    ],
-    agenda: [
-      { id: '1', title: 'Identify critical plot holes', duration: 30, completed: false },
-      { id: '2', title: 'Brainstorm solutions', duration: 40, completed: false },
-      { id: '3', title: 'Prioritize fixes', duration: 20, completed: false },
-    ],
-    actionItems: [
-      { id: '1', title: 'Document timeline inconsistencies', assignee: 'Morgan Blake', status: 'open', priority: 'HIGH' },
-      { id: '2', title: 'Rewrite chapter 5 opening', assignee: 'Morgan Blake', status: 'open', priority: 'HIGH' },
-      { id: '3', title: 'Create character relationship chart', assignee: 'Morgan Blake', status: 'open', priority: 'MEDIUM' },
-      { id: '4', title: 'Review flashback sequences', assignee: 'Morgan Blake', status: 'open', priority: 'HIGH' },
-      { id: '5', title: 'Check location consistency', assignee: 'Morgan Blake', status: 'open', priority: 'MEDIUM' },
-      { id: '6', title: 'Verify magic system rules', assignee: 'Morgan Blake', status: 'open', priority: 'LOW' },
-      { id: '7', title: 'Update story bible', assignee: 'Morgan Blake', status: 'open', priority: 'LOW' },
-    ],
-    status: 'scheduled',
-    priority: 'HIGH',
-    color: '#F97316',
-    labels: ['urgent', 'plot'],
-    createdAt: '2026-01-22T09:00:00Z',
-    updatedAt: '2026-01-27T15:00:00Z',
-  },
-  {
-    id: '5',
-    title: 'Marketing Strategy',
-    description: 'Discuss marketing plans and promotional activities.',
-    project: 'Neon Orchard Chronicles',
-    date: '2026-01-28',
-    startTime: '16:00',
-    endTime: '17:00',
-    duration: 60,
-    meetingType: 'video',
-    platform: 'zoom',
-    meetingLink: 'https://zoom.us/j/987654321',
-    attendees: [
-      { id: '1', name: 'Sarah Chen', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBshAUhVwVYKH81jgOo3cSGYQ_03DK0vuUnPQRITWWOWer3u8KH7UyBLt54X4k4q22py2yS1R6Yvb2Hv0EOlUke0QBsXv-_vyaGANjV44gsMbwE0CBc3DnOTLuXl3Q-hG0DDpwvvwtQmTNBi1w5t0p8for1h6R9dxLm_MIGl-wZY6zx-57MqzYatU70ArayMd8OC-A8f8Rz9bJDe_7coc5sHD141iEvUys7ecDE14M_JswlCtpbZbN6oB2mBKoqgOQxj9SaQu3RA5-U', role: 'organizer', status: 'accepted' },
-      { id: '10', name: 'Casey Wong', avatar: '', role: 'required', status: 'pending' },
-    ],
-    status: 'scheduled',
-    priority: 'MEDIUM',
-    color: '#8B5CF6',
-    labels: ['marketing'],
-    createdAt: '2026-01-26T12:00:00Z',
-    updatedAt: '2026-01-27T09:00:00Z',
-  },
-  {
-    id: '6',
-    title: 'Character Arc Review',
-    description: 'Deep dive into protagonist character development.',
-    project: 'Project Alpha',
-    date: '2026-01-29',
-    startTime: '11:30',
-    endTime: '12:30',
-    duration: 60,
-    meetingType: 'hybrid',
-    location: 'Room 4B / Discord',
-    meetingLink: 'https://discord.gg/review',
-    attendees: [
-      { id: '4', name: 'Alex Rivera', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDmY1FcHM_75uao_XhmRPmF-Gklc9_QZUHQW36c2mN4OSF-QQiAyZHO50KgBDfssgrutG_L6e6siyAt-glKOsGoxIhes2ugdspfx_oTHFmLsgP2sPmi5En5uQ5jLrXG6sWdc-fWDfnvoJwytTmkcWDgHuIw3BVOCmpr6HU0T4HTsgzx3a4v0XYYpAcIIlf6YVOPRDp6P6mJNWOu0nehVYqPxedrpKvF-atGJScrb5GAcOQlO4ysfoTedimw2my6wknzO1hxoP5K7IfH', role: 'organizer', status: 'accepted' },
-      { id: '6', name: 'Chris Taylor', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCAopkW8tWTy_LepOvR9vwSVvSYlaWpfhTulaGYeBG5a8vREvZ-j4EmF2xLOMKjHpa2OeWv2n1RV2KDUgbrkHuSF5Jg9iaktjd52T0mzruQJ6tRSBJ7f8mtWfxJUaXEkWdvD_oTdO7NbrbgtMPpbPmy4-WkLZByKjdt4Phrpnm_99ESzO7rFPKSagl3vWMZ5nWNU17kCLfYzYyF8mLRAx0sxXTdSrirFxPLAv6y0Y2VwhneNOVkWeSiaioaFKdMfPIlr5TjG9tmuJnc', role: 'required', status: 'accepted' },
-    ],
-    status: 'scheduled',
-    priority: 'LOW',
-    color: '#EC4899',
-    labels: ['character', 'review'],
-    createdAt: '2026-01-25T14:00:00Z',
-    updatedAt: '2026-01-27T10:00:00Z',
-  },
-];
-
 export type MeetingViewFilter = 'all' | 'today' | 'upcoming' | 'past' | 'cancelled';
 export type MeetingViewMode = 'list' | 'calendar' | 'kanban';
 export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attendees';
@@ -311,9 +127,26 @@ export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attende
 export class MeetingsService {
   private bin = inject(BinService);
   private store = inject(StoreService);
-  
-  // Core state
-  meetings = signal<Meeting[]>(initialMeetings);
+  private rxdb = inject(RxDBService);
+
+  meetings = signal<Meeting[]>([]);
+
+  constructor() {
+    this.loadFromRxDB();
+  }
+
+  private async loadFromRxDB(): Promise<void> {
+    try {
+      const list = await this.rxdb.getAllMeetings();
+      this.meetings.set(list);
+    } catch (e) {
+      console.error('[MeetingsService] loadFromRxDB failed', e);
+    }
+  }
+
+  private persistMeeting(m: Meeting): void {
+    this.rxdb.upsertMeeting(m).catch(e => console.error('[MeetingsService] persist failed', e));
+  }
   
   // UI state
   selectedMeetingId = signal<string | null>(null);
@@ -523,35 +356,39 @@ export class MeetingsService {
     };
     this.meetings.update(meetings => [...meetings, newMeeting]);
     this.store.addActivity('Meeting created: ' + newMeeting.title, 'system');
+    this.persistMeeting(newMeeting);
     return newMeeting;
   }
-  
+
   updateMeeting(id: string, updates: Partial<Meeting>) {
     this.meetings.update(meetings =>
-      meetings.map(meeting => 
-        meeting.id === id 
-          ? { ...meeting, ...updates, updatedAt: new Date().toISOString() } 
+      meetings.map(meeting =>
+        meeting.id === id
+          ? { ...meeting, ...updates, updatedAt: new Date().toISOString() }
           : meeting
       )
     );
     this.store.addActivity('Meeting updated', 'system');
+    const m = this.meetings().find(x => x.id === id);
+    if (m) this.persistMeeting(m);
   }
-  
+
   deleteMeeting(id: string) {
     const existing = this.meetings();
     const meetingToDelete = existing.find(m => m.id === id);
-    
+
     if (meetingToDelete) {
       this.bin.addToBin({
-        type: 'meeting' as any,
+        type: 'meeting',
         originalId: meetingToDelete.id,
         title: meetingToDelete.title,
         payload: meetingToDelete
       });
     }
-    
+
     this.meetings.set(existing.filter(m => m.id !== id));
     this.store.addActivity('Meeting deleted', 'system');
+    this.rxdb.removeMeeting(id).catch(e => console.error('[MeetingsService] remove failed', e));
   }
   
   cancelMeeting(id: string) {

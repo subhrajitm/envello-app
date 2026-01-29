@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
+import { RxDBService } from '../core/services/rxdb.service';
 
 export type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
 export type BookStatus = 'reading' | 'completed' | 'queued';
@@ -32,74 +33,12 @@ export type BookViewFilter = 'all' | 'reading' | 'completed' | 'queued';
 export type BookViewMode = 'list' | 'grid';
 export type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'category';
 
-const initialBooks: Book[] = [
-  {
-    id: '1',
-    title: 'The Design of Everyday Things',
-    author: 'Don Norman',
-    category: 'DESIGN',
-    status: 'reading',
-    progress: 45,
-    notesCount: 14,
-    lastAccessed: '2026-01-24T14:20:00Z',
-    createdAt: '2025-06-01T00:00:00Z',
-    updatedAt: '2026-01-24T14:20:00Z',
-  },
-  {
-    id: '2',
-    title: 'Story: Substance, Structure, Style',
-    author: 'Robert McKee',
-    category: 'CREATIVE',
-    status: 'queued',
-    progress: 0,
-    notesCount: 0,
-    lastAccessed: '2026-01-22T09:15:00Z',
-    createdAt: '2025-08-10T00:00:00Z',
-    updatedAt: '2026-01-22T09:15:00Z',
-  },
-  {
-    id: '3',
-    title: 'Atomic Habits',
-    author: 'James Clear',
-    category: 'PRODUCTIVITY',
-    status: 'completed',
-    progress: 100,
-    notesCount: 86,
-    lastAccessed: '2026-01-20T18:44:00Z',
-    createdAt: '2025-03-15T00:00:00Z',
-    updatedAt: '2026-01-20T18:44:00Z',
-  },
-  {
-    id: '4',
-    title: 'Deep Work',
-    author: 'Cal Newport',
-    category: 'PRODUCTIVITY',
-    status: 'reading',
-    progress: 62,
-    notesCount: 22,
-    lastAccessed: '2026-01-27T10:00:00Z',
-    createdAt: '2025-09-01T00:00:00Z',
-    updatedAt: '2026-01-27T10:00:00Z',
-  },
-  {
-    id: '5',
-    title: 'Steal Like an Artist',
-    author: 'Austin Kleon',
-    category: 'CREATIVE',
-    status: 'completed',
-    progress: 100,
-    notesCount: 31,
-    lastAccessed: '2025-12-05T16:30:00Z',
-    createdAt: '2025-04-20T00:00:00Z',
-    updatedAt: '2025-12-05T16:30:00Z',
-  },
-];
-
 @Injectable({ providedIn: 'root' })
 export class BooksService {
   private bin = inject(BinService);
+  private rxdb = inject(RxDBService);
 
-  readonly books = signal<Book[]>(initialBooks);
+  readonly books = signal<Book[]>([]);
   selectedBookId = signal<string | null>(null);
   viewFilter = signal<BookViewFilter>('all');
   viewMode = signal<BookViewMode>('list');
@@ -107,6 +46,23 @@ export class BooksService {
   sortDirection = signal<'asc' | 'desc'>('desc');
   searchQuery = signal('');
   selectedCategory = signal<BookCategory | ''>('');
+
+  constructor() {
+    this.loadFromRxDB();
+  }
+
+  private async loadFromRxDB(): Promise<void> {
+    try {
+      const list = await this.rxdb.getAllBooks();
+      this.books.set(list);
+    } catch (e) {
+      console.error('[BooksService] loadFromRxDB failed', e);
+    }
+  }
+
+  private persistBook(b: Book): void {
+    this.rxdb.upsertBook(b).catch(e => console.error('[BooksService] persist failed', e));
+  }
 
   readonly selectedBook = computed(() => {
     const id = this.selectedBookId();
@@ -176,6 +132,7 @@ export class BooksService {
       notes: book.notes ?? [],
     };
     this.books.update(list => [...list, created]);
+    this.persistBook(created);
     return created;
   }
 
@@ -184,6 +141,8 @@ export class BooksService {
     this.books.update(list =>
       list.map(b => (b.id === id ? { ...b, ...patch, updatedAt: now } : b))
     );
+    const b = this.books().find(x => x.id === id);
+    if (b) this.persistBook(b);
   }
 
   deleteBook(id: string): void {
@@ -197,6 +156,7 @@ export class BooksService {
     });
     this.books.update(list => list.filter(b => b.id !== id));
     if (this.selectedBookId() === id) this.selectedBookId.set(null);
+    this.rxdb.removeBook(id).catch(e => console.error('[BooksService] remove failed', e));
   }
 
   setProgress(id: string, progress: number): void {
@@ -214,6 +174,8 @@ export class BooksService {
         return next;
       })
     );
+    const b = this.books().find(x => x.id === id);
+    if (b) this.persistBook(b);
   }
 
   addNote(bookId: string, content: string, page?: number): void {
@@ -231,6 +193,8 @@ export class BooksService {
         return { ...b, notes, notesCount: notes.length, updatedAt: now };
       })
     );
+    const b = this.books().find(x => x.id === bookId);
+    if (b) this.persistBook(b);
   }
 
   deleteNote(bookId: string, noteId: string): void {
@@ -242,6 +206,8 @@ export class BooksService {
         return { ...b, notes, notesCount: notes.length, updatedAt: now };
       })
     );
+    const b = this.books().find(x => x.id === bookId);
+    if (b) this.persistBook(b);
   }
 
   touchLastAccessed(id: string): void {

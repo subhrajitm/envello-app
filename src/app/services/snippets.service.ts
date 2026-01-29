@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
+import { RxDBService } from '../core/services/rxdb.service';
 
 export type SnippetLang =
   | 'Python'
@@ -32,86 +33,12 @@ export type SnippetSortBy = 'title' | 'lastModified' | 'lang' | 'path';
 
 const LANGS: SnippetLang[] = ['Python', 'JavaScript', 'TypeScript', 'Markdown', 'SQL', 'HTML', 'CSS', 'JSON', 'Shell', 'Other'];
 
-const initialSnippets: Snippet[] = [
-  {
-    id: '1',
-    title: 'sso_auth_provider.py',
-    lang: 'Python',
-    tags: ['AUTH'],
-    filename: 'sso_auth_provider.py',
-    path: '/infrastructure/auth/',
-    creator: '@j.smith',
-    content: `import boto3
-from botocore.exceptions import ClientError
-# AWS SSO Authentication Handler
-class SSOAuthProvider:
-    def __init__(self, region_name):
-        self.region = region_name
-        self.client = boto3.client('sso', region_name=region_name)
-
-    def get_token(self):
-        try:
-            return self.client.get_token()
-        except ClientError as e:
-            print(f"Error authenticating: {e}")
-            raise`,
-    createdAt: '2026-01-20T10:00:00Z',
-    updatedAt: '2026-01-28T12:00:00Z',
-  },
-  {
-    id: '2',
-    title: 'data_migration_util.py',
-    lang: 'Python',
-    tags: ['DB'],
-    filename: 'data_migration_util.py',
-    path: '/backend/utils/',
-    creator: '@m.doe',
-    content: `import pandas as pd
-# Migration utility functions`,
-    createdAt: '2026-01-22T08:00:00Z',
-    updatedAt: '2026-01-28T10:00:00Z',
-  },
-  {
-    id: '3',
-    title: 'api-client.ts',
-    lang: 'TypeScript',
-    tags: ['API', 'HTTP'],
-    filename: 'api-client.ts',
-    path: '/lib/',
-    creator: '@a.dev',
-    content: `export async function fetchApi<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(\`\${res.status}\`);
-  return res.json();
-}`,
-    createdAt: '2026-01-25T14:00:00Z',
-    updatedAt: '2026-01-27T16:00:00Z',
-  },
-  {
-    id: '4',
-    title: 'debounce.ts',
-    lang: 'TypeScript',
-    tags: ['util'],
-    filename: 'debounce.ts',
-    path: '/utils/',
-    creator: '@a.dev',
-    content: `export function debounce<T extends (...a: unknown[]) => void>(fn: T, ms: number): T {
-  let t: ReturnType<typeof setTimeout>;
-  return ((...a: Parameters<T>) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...a), ms);
-  }) as T;
-}`,
-    createdAt: '2026-01-18T09:00:00Z',
-    updatedAt: '2026-01-26T11:00:00Z',
-  },
-];
-
 @Injectable({ providedIn: 'root' })
 export class SnippetsService {
   private bin = inject(BinService);
+  private rxdb = inject(RxDBService);
 
-  readonly snippets = signal<Snippet[]>(initialSnippets);
+  readonly snippets = signal<Snippet[]>([]);
   selectedSnippetId = signal<string | null>(null);
   viewFilter = signal<SnippetViewFilter>('all');
   viewMode = signal<SnippetViewMode>('list');
@@ -122,6 +49,19 @@ export class SnippetsService {
   selectedTag = signal<string>('');
 
   readonly LANGS = LANGS;
+
+  constructor() {
+    this.loadFromRxDB();
+  }
+
+  private async loadFromRxDB(): Promise<void> {
+    try {
+      const list = await this.rxdb.getAllSnippets();
+      this.snippets.set(list);
+    } catch (e) {
+      console.error('[SnippetsService] loadFromRxDB failed', e);
+    }
+  }
 
   readonly selectedSnippet = computed(() => {
     const id = this.selectedSnippetId();
@@ -189,6 +129,7 @@ export class SnippetsService {
       updatedAt: now,
     };
     this.snippets.update(list => [...list, created]);
+    this.rxdb.upsertSnippet(created).catch(e => console.error('[SnippetsService] persist failed', e));
     return created;
   }
 
@@ -197,6 +138,8 @@ export class SnippetsService {
     this.snippets.update(list =>
       list.map(s => (s.id === id ? { ...s, ...patch, updatedAt: now } : s))
     );
+    const updated = this.snippets().find(s => s.id === id);
+    if (updated) this.rxdb.upsertSnippet(updated).catch(e => console.error('[SnippetsService] persist failed', e));
   }
 
   deleteSnippet(id: string): void {
@@ -205,6 +148,7 @@ export class SnippetsService {
     this.bin.addToBin({ type: 'snippet', originalId: id, title: s.title, payload: s });
     this.snippets.update(list => list.filter(x => x.id !== id));
     if (this.selectedSnippetId() === id) this.selectedSnippetId.set(null);
+    this.rxdb.removeSnippet(id).catch(e => console.error('[SnippetsService] remove failed', e));
   }
 
   copyContent(id: string): string | null {

@@ -83,95 +83,6 @@ export interface EditorNote {
     chapterId?: string; // Optional link to specific chapter
 }
 
-// Initial Mock Data Structure
-const INITIAL_DATA: Record<string, NovelContent> = {
-    '1': {
-        id: '1',
-        title: 'The Silent Echo',
-        synopsis: {
-            logline: 'A lone scientist discovers a structured signal from the void, triggering a protocol that was never meant to be activated.',
-            theme: 'Isolation vs. Duty'
-        },
-        frontMatter: [],
-        chapters: [
-            {
-                id: 'g1', title: 'Part I: The Awakening', expanded: true, children: [
-                    {
-                        id: 'c1', title: 'Chapter 1: Static Noise', status: 'DONE', wordCount: 3200, lastEdited: '2 days ago',
-                        content: `<h2>Chapter 1: Static Noise</h2>
-<p>The static was the only constant. It was a comfort, really. The predictable hiss of the universe expanding, cooling, dying. Jara adjusted the frequency dial with practiced precision, her eyes scanning the holographic display that floated before her in the dim control room.</p>
-<p>Twenty years. Twenty years of listening to nothing. Twenty years of cataloging cosmic background radiation, mapping dead zones, and filing reports that no one would ever read. The Outpost 42 was humanity's furthest listening post, a solitary beacon on the edge of explored space.</p>
-<p>"Computer, run diagnostic on array seven," she said, her voice hoarse from disuse. Days could pass without her speaking to anyone but the ship's AI.</p>
-<blockquote>"Array seven nominal. All systems functioning within expected parameters."</blockquote>
-<p>She nodded, satisfied. The routine was comforting. Predictable. Safe. Outside the reinforced windows, the void stretched endlessly, a canvas of absolute darkness punctuated by distant stars that would take lifetimes to reach.</p>
-<p>Jara stood, stretching muscles that had grown stiff from hours at the console. She walked to the observation deck, her footsteps echoing in the empty corridor. The station was designed for a crew of twelve. She was the only one who had stayed.</p>`
-                    },
-                    {
-                        id: 'c2', title: 'Chapter 2: The Signal', status: 'EDITING', wordCount: 2405, lastEdited: 'Just now',
-                        content: `<p>The signal was faint at first, barely a whisper against the background radiation of the cosmos. But it was there, a persistent rhythm that defied the random chaos of the void.</p>
-<p>Jara adjusted the gain on her receiver, her fingers dancing across the haptic interface. "Computer, isolate frequency band 402. Is that... is that structure?"</p>
-<blockquote>"Confirmed. Pattern analysis indicates artificial origin. Probability 99.9%."</blockquote>
-<p>She leaned back, the breath catching in her throat. For twenty years she had listened to the static. Twenty years of silence. And now, finally, a voice.</p>
-<p>Her hands trembled as she initiated the recording protocol. The signal pulsed with mathematical precision—three short bursts, two long, a pause, then the pattern repeated. It was deliberate. Intentional. Intelligent.</p>
-<p>"Computer, triangulate source."</p>
-<blockquote>"Source located in sector 7-7-Alpha. Distance: 4.2 light years. Origin point: The Void Expanse."</blockquote>
-<p>The Void Expanse. The dead zone. The region of space so empty, so devoid of matter, that it had been written off as a cosmic anomaly. Nothing could survive there. Nothing should exist there.</p>
-<p>And yet, something was calling out.</p>`
-                    },
-                    {
-                        id: 'c3', title: 'Chapter 3: The Protocol', status: 'DRAFT', wordCount: 1850, lastEdited: '1 day ago',
-                        content: `<p>The emergency protocol was buried deep in the station's archives, a relic from the early days of deep space exploration when humanity still feared what might be listening back.</p>
-<p>Jara pulled up the file, her eyes scanning the dense technical language. "First Contact Protocol Alpha-7: In the event of confirmed extraterrestrial intelligence signal..."</p>
-<p>Her finger hovered over the transmission button. Once she sent this, there would be no going back. Command would know. The military would mobilize. Her quiet life of solitude would end.</p>
-<p>But the signal continued, pulsing with patient insistence. Waiting.</p>
-<p>"What are you?" she whispered to the void.</p>`
-                    },
-                    {
-                        id: 'c4', title: 'Chapter 4: The Response', status: 'EMPTY', wordCount: 0, lastEdited: 'Never',
-                        content: ''
-                    }
-                ]
-            },
-            {
-                id: 'g2', title: 'Part II: Contact', expanded: false, children: [
-                    {
-                        id: 'c5', title: 'Chapter 5: Arrival', status: 'EMPTY', wordCount: 0, lastEdited: 'Never',
-                        content: ''
-                    },
-                    {
-                        id: 'c6', title: 'Chapter 6: Commander Rike', status: 'EMPTY', wordCount: 0, lastEdited: 'Never',
-                        content: ''
-                    }
-                ]
-            },
-            {
-                id: 'g3', title: 'Part III: The Truth', expanded: false, children: []
-            }
-        ],
-        characters: [
-            { id: 'ch1', name: 'Jara Vance', role: 'Protagonist', archetype: 'Scientist', description: 'A brilliant but isolated astrophysicist who has spent 20 years alone on Outpost 42. Driven by curiosity and haunted by the choice between duty and discovery.' },
-            { id: 'ch2', name: 'Commander Rike', role: 'Antagonist', archetype: 'Military Officer', description: 'Pragmatic military commander who sees the signal as a threat. Fearful of the unknown and willing to destroy what he cannot control.' },
-            { id: 'ch3', name: 'Unit 734', role: 'Support', archetype: 'AI Companion', description: 'The station\'s artificial intelligence. Logical, precise, and Jara\'s only companion for two decades. Develops unexpected empathy.' },
-            { id: 'ch4', name: 'Dr. Elena Marsh', role: 'Ally', archetype: 'Linguist', description: 'Expert in xenolinguistics sent to help decode the signal. Optimistic and idealistic, she believes the signal is a gift, not a threat.' },
-            { id: 'ch5', name: 'The Sender', role: 'Mystery', archetype: 'Unknown Entity', description: 'The source of the signal. Its true nature and intentions remain unclear until the final act.' }
-        ],
-        locations: [
-            { id: 'l1', name: 'Outpost 42', type: 'Space Station', description: 'A remote listening post on the edge of explored space. Designed for 12 crew members but currently operated by Jara alone. Features advanced sensor arrays and minimal life support.' },
-            { id: 'l2', name: 'The Void Expanse', type: 'Space Region', description: 'An impossibly empty region of space, devoid of stars, planets, or detectable matter. The source of the mysterious signal.' },
-            { id: 'l3', name: 'Control Room Alpha', type: 'Interior', description: 'The main operations center of Outpost 42. Filled with holographic displays, sensor readouts, and communication equipment.' },
-            { id: 'l4', name: 'Observation Deck', type: 'Interior', description: 'A quiet space with reinforced windows overlooking the void. Jara\'s refuge for contemplation.' },
-            { id: 'l5', name: 'UNSC Vigilant', type: 'Military Vessel', description: 'Commander Rike\'s flagship. A heavily armed destroyer sent to investigate and potentially neutralize the signal source.' }
-        ],
-        notes: [
-            { id: 'n1', title: 'The Signal Pattern', body: 'The signal follows a mathematical sequence: 3 short, 2 long, pause. Could be prime numbers? Need to analyze deeper structure.', date: '2h ago' },
-            { id: 'n2', title: 'Character Arc: Jara', body: 'She needs to hesitate before calling it in. The moment she transmits to Command is the moment her isolation ends. Make this decision weigh heavily.', date: 'Yesterday' },
-            { id: 'n3', title: 'Thematic Notes', body: 'Core theme: What do we owe to humanity vs. what do we owe to discovery? Jara represents curiosity, Rike represents fear. Both are valid responses to the unknown.', date: '3 days ago' },
-            { id: 'n4', title: 'Plot Twist Idea', body: 'What if the signal isn\'t a greeting, but a warning? Something is coming, and the sender is trying to help us prepare.', date: '1 week ago' },
-            { id: 'n5', title: 'Pacing Notes', body: 'Part I should be slow, contemplative. Part II introduces conflict and urgency. Part III reveals the truth and forces impossible choices.', date: '2 weeks ago' }
-        ]
-    }
-};
-
 const PERSIST_DEBOUNCE_MS = 500;
 
 @Injectable({
@@ -195,19 +106,12 @@ export class NovelContentService {
                 this.activeNovel.set(data);
                 return;
             }
-            const data = INITIAL_DATA[id]
-                ? (typeof structuredClone !== 'undefined'
-                    ? (structuredClone(INITIAL_DATA[id]) as NovelContent)
-                    : JSON.parse(JSON.stringify(INITIAL_DATA[id])))
-                : this.createEmptyNovel(id);
+            const data = this.createEmptyNovel(id);
             this.activeNovel.set(data);
             await this.rxdb.setNovelContent(id, JSON.stringify(data));
         } catch (e) {
             console.error('[NovelContentService] loadNovel failed', e);
-            const fallback = INITIAL_DATA[id]
-                ? JSON.parse(JSON.stringify(INITIAL_DATA[id]))
-                : this.createEmptyNovel(id);
-            this.activeNovel.set(fallback);
+            this.activeNovel.set(this.createEmptyNovel(id));
         }
     }
 

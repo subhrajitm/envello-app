@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService } from './store.service';
+import { RxDBService } from '../core/services/rxdb.service';
 
 export interface JournalEntry {
   id: string;
@@ -49,136 +50,6 @@ export interface JournalColumn {
   order: number;
 }
 
-const initialProjects: JournalProject[] = [
-  {
-    id: '1',
-    title: '2024 Morning Pages',
-    entriesCount: 142,
-    active: true,
-    wordCount: 125000,
-    targetWordCount: 150000,
-    progress: 83,
-    createdDate: 'Jan 1, 2024',
-    lastUpdated: '2 hours ago',
-    columns: ['IDEAS', 'DRAFTING', 'REVIEW']
-  },
-  {
-    id: '2',
-    title: 'Plot Ideas Log',
-    entriesCount: 86,
-    active: false,
-    wordCount: 45000,
-    createdDate: 'Mar 15, 2024',
-    lastUpdated: '1 week ago',
-    columns: ['IDEAS', 'DRAFTING', 'REVIEW']
-  },
-  {
-    id: '3',
-    title: 'Character Dev - SciFi',
-    entriesCount: 54,
-    active: false,
-    wordCount: 32000,
-    createdDate: 'Jun 1, 2024',
-    lastUpdated: '3 days ago',
-    columns: ['IDEAS', 'DRAFTING', 'REVIEW']
-  },
-  {
-    id: '4',
-    title: 'Dream Journal 2023',
-    entriesCount: 312,
-    active: false,
-    wordCount: 89000,
-    createdDate: 'Jan 1, 2023',
-    lastUpdated: '2 weeks ago',
-    columns: ['IDEAS', 'DRAFTING', 'REVIEW']
-  },
-  {
-    id: '5',
-    title: 'World Building Notes',
-    entriesCount: 24,
-    active: false,
-    wordCount: 18000,
-    createdDate: 'Aug 10, 2024',
-    lastUpdated: '5 days ago',
-    columns: ['IDEAS', 'DRAFTING', 'REVIEW']
-  },
-  {
-    id: '6',
-    title: 'Travel Reflections',
-    entriesCount: 18,
-    active: false,
-    wordCount: 12000,
-    createdDate: 'Sep 5, 2024',
-    lastUpdated: '1 month ago',
-    columns: ['IDEAS', 'DRAFTING', 'REVIEW']
-  },
-];
-
-const initialEntries: JournalEntry[] = [
-  {
-    id: 'e1',
-    projectId: '1',
-    title: 'Neon Noir Protagonist',
-    content: '<p>Initial sketches for the cybernetic detective character in Chapter 3.</p><p>The character should embody the duality of human emotion and machine logic.</p>',
-    preview: 'Initial sketches for the cybernetic detective character in Chapter 3.',
-    type: 'CONCEPT',
-    column: 'IDEAS',
-    wordCount: 45,
-    characterCount: 280,
-    createdDate: 'Jan 24, 2026',
-    lastEdited: '1h ago',
-    hasAi: true,
-    tags: ['character', 'protagonist']
-  },
-  {
-    id: 'e2',
-    projectId: '1',
-    title: 'Underground Bazaar',
-    content: '<p>The sensory details of the black market in Neo-Tokyo district.</p><p>Smells of ozone and street food. Neon signs flickering. Crowded alleys.</p>',
-    preview: 'The sensory details of the black market in Neo-Tokyo district.',
-    type: 'SETTING',
-    column: 'IDEAS',
-    wordCount: 38,
-    characterCount: 240,
-    createdDate: 'Jan 24, 2026',
-    lastEdited: '3h ago',
-    statusColor: '#4ade80',
-    tags: ['setting', 'location'],
-    isPinned: true
-  },
-  {
-    id: 'e3',
-    projectId: '1',
-    title: 'The Rain Never Stops',
-    content: '<p>Chapter opening scene. The rain creates a sense of melancholy and isolation.</p><p>Detective walks through the wet streets, reflecting on the case.</p>',
-    preview: 'Chapter opening scene. The rain creates a sense of melancholy.',
-    type: 'CHAPTER',
-    column: 'DRAFTING',
-    wordCount: 2450,
-    characterCount: 15200,
-    createdDate: 'Jan 23, 2026',
-    lastEdited: 'Active',
-    progress: 70,
-    meta: '2,450 words',
-    tags: ['chapter', 'draft']
-  },
-  {
-    id: 'e4',
-    projectId: '1',
-    title: 'Prologue Redux',
-    content: '<p>Tone consistency check required after AI expansion of opening scene.</p><p>Need to review the pacing and ensure the voice matches the rest of the novel.</p>',
-    preview: 'Tone consistency check required after AI expansion of opening scene.',
-    type: 'CRITICAL',
-    column: 'REVIEW',
-    wordCount: 120,
-    characterCount: 750,
-    createdDate: 'Jan 22, 2026',
-    lastEdited: 'Feedback Ready',
-    isAiEdited: true,
-    tags: ['review', 'feedback-ready']
-  },
-];
-
 const defaultColumns: JournalColumn[] = [
   { id: 'IDEAS', name: 'IDEAS', color: '#3b82f6', order: 0 },
   { id: 'DRAFTING', name: 'DRAFTING', color: '#f97316', order: 1 },
@@ -189,14 +60,49 @@ const defaultColumns: JournalColumn[] = [
   providedIn: 'root'
 })
 export class JournalService {
-  projects = signal<JournalProject[]>(initialProjects);
-  entries = signal<JournalEntry[]>(initialEntries);
+  projects = signal<JournalProject[]>([]);
+  entries = signal<JournalEntry[]>([]);
   columns = signal<JournalColumn[]>(defaultColumns);
 
   private bin = inject(BinService);
   private store = inject(StoreService);
+  private rxdb = inject(RxDBService);
 
-  constructor() { }
+  constructor() {
+    this.loadFromRxDB();
+  }
+
+  private async loadFromRxDB(): Promise<void> {
+    try {
+      const [projects, entries, cols] = await Promise.all([
+        this.rxdb.getAllJournalProjects(),
+        this.rxdb.getAllJournalEntries(),
+        this.rxdb.getAllJournalColumns(),
+      ]);
+      this.projects.set(projects);
+      this.entries.set(entries);
+      if (cols.length === 0) {
+        await this.rxdb.upsertJournalColumns(defaultColumns);
+        this.columns.set(defaultColumns);
+      } else {
+        this.columns.set(cols.sort((a, b) => a.order - b.order));
+      }
+    } catch (e) {
+      console.error('[JournalService] loadFromRxDB failed', e);
+    }
+  }
+
+  private persistProject(p: JournalProject): void {
+    this.rxdb.upsertJournalProject(p).catch(e => console.error('[JournalService] persist project failed', e));
+  }
+
+  private persistEntry(e: JournalEntry): void {
+    this.rxdb.upsertJournalEntry(e).catch(err => console.error('[JournalService] persist entry failed', err));
+  }
+
+  private persistColumn(c: JournalColumn): void {
+    this.rxdb.upsertJournalColumn(c).catch(e => console.error('[JournalService] persist column failed', e));
+  }
 
   // Project Management
   getProjects(): JournalProject[] {
@@ -216,6 +122,7 @@ export class JournalService {
       projects.map(p => ({ ...p, active: p.id === id }))
     );
     this.store.addActivity(`Switched to project: ${this.getProject(id)?.title}`, 'system');
+    this.projects().forEach(p => this.persistProject(p));
   }
 
   addProject(project: Omit<JournalProject, 'id' | 'entriesCount' | 'wordCount' | 'createdDate' | 'lastUpdated' | 'columns'>) {
@@ -231,6 +138,7 @@ export class JournalService {
     };
     this.projects.update(projects => [...projects, newProject]);
     this.store.addActivity(`Journal project created: ${newProject.title}`, 'system');
+    this.persistProject(newProject);
     return newProject;
   }
 
@@ -242,12 +150,13 @@ export class JournalService {
         lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       } : p)
     );
+    const p = this.getProject(id);
+    if (p) this.persistProject(p);
   }
 
   deleteProject(id: string) {
     const project = this.getProject(id);
     if (project) {
-      // Move entries to bin
       const projectEntries = this.entries().filter(e => e.projectId === id);
       projectEntries.forEach(entry => {
         this.bin.addToBin({
@@ -256,14 +165,13 @@ export class JournalService {
           title: entry.title,
           payload: entry
         });
+        this.rxdb.removeJournalEntry(entry.id).catch(() => {});
       });
 
-      // Delete entries
       this.entries.update(entries => entries.filter(e => e.projectId !== id));
-
-      // Delete project
       this.projects.update(projects => projects.filter(p => p.id !== id));
       this.store.addActivity(`Journal project deleted: ${project.title}`, 'system');
+      this.rxdb.removeJournalProject(id).catch(e => console.error('[JournalService] remove project failed', e));
     }
   }
 
@@ -300,11 +208,9 @@ export class JournalService {
     };
 
     this.entries.update(entries => [...entries, newEntry]);
-
-    // Update project stats
     this.updateProjectStats(entry.projectId);
-
     this.store.addActivity(`Entry added: ${newEntry.title}`, 'entry');
+    this.persistEntry(newEntry);
     return newEntry;
   }
 
@@ -313,8 +219,6 @@ export class JournalService {
     if (!entry) return;
 
     let finalUpdates = { ...updates };
-
-    // Recalculate word/character count if content changed
     if (updates.content) {
       const plainText = this.stripHtml(updates.content);
       finalUpdates.wordCount = plainText.split(/\s+/).filter(w => w.length > 0).length;
@@ -329,11 +233,9 @@ export class JournalService {
         lastEdited: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       } : e)
     );
-
-    // Update project stats if word count changed
-    if (updates.content) {
-      this.updateProjectStats(entry.projectId);
-    }
+    if (updates.content) this.updateProjectStats(entry.projectId);
+    const updated = this.getEntry(id);
+    if (updated) this.persistEntry(updated);
   }
 
   deleteEntry(id: string) {
@@ -345,10 +247,10 @@ export class JournalService {
         title: entry.title,
         payload: entry
       });
-
       this.entries.update(entries => entries.filter(e => e.id !== id));
       this.updateProjectStats(entry.projectId);
       this.store.addActivity(`Entry deleted: ${entry.title}`, 'system');
+      this.rxdb.removeJournalEntry(id).catch(e => console.error('[JournalService] remove entry failed', e));
     }
   }
 
@@ -367,6 +269,7 @@ export class JournalService {
       id: column.name.toUpperCase().replace(/\s+/g, '_')
     };
     this.columns.update(cols => [...cols, newColumn].sort((a, b) => a.order - b.order));
+    this.persistColumn(newColumn);
     return newColumn;
   }
 
@@ -374,15 +277,21 @@ export class JournalService {
     this.columns.update(cols =>
       cols.map(c => c.id === id ? { ...c, ...updates } : c)
     );
+    const c = this.columns().find(x => x.id === id);
+    if (c) this.persistColumn(c);
   }
 
   deleteColumn(id: string) {
-    // Move all entries from this column to IDEAS
+    const toMove = this.entries().filter(e => e.column === id);
     this.entries.update(entries =>
       entries.map(e => e.column === id ? { ...e, column: 'IDEAS' } : e)
     );
-
     this.columns.update(cols => cols.filter(c => c.id !== id));
+    toMove.forEach(entry => {
+      const updated = this.getEntry(entry.id);
+      if (updated) this.persistEntry(updated);
+    });
+    this.rxdb.removeJournalColumn(id).catch(e => console.error('[JournalService] remove column failed', e));
   }
 
   // Search

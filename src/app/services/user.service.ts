@@ -47,12 +47,6 @@ export class UserService {
 
   constructor() {
     this.loadUser();
-
-    // Initialize with demo user if no user exists
-    if (!this.currentUser()) {
-      this.initializeDemoUser();
-    }
-
     this.checkStreak();
   }
 
@@ -155,33 +149,6 @@ export class UserService {
     }
   }
 
-  private initializeDemoUser() {
-    const demoUser: UserProfile = {
-      id: 'demo-user-001',
-      name: 'Subhrajit Mandal',
-      email: 'subhrajit@envello.app',
-      bio: 'Creative writer and developer passionate about building tools for writers.',
-      role: 'Pro User',
-      joinedDate: new Date('2024-01-15'),
-      preferences: {
-        emailNotifications: true,
-        weeklyDigest: true,
-        autoBackup: true,
-        autoSchedule: false
-      },
-      stats: {
-        totalWords: 142580,
-        totalDocuments: 47,
-        totalProjects: 12,
-        daysActive: 365,
-        currentStreak: 14,
-        lastLoginDate: new Date().toISOString()
-      }
-    };
-
-    this.currentUser.set(demoUser);
-    this.saveUser();
-  }
   private checkStreak() {
     const user = this.currentUser();
     if (!user) return;

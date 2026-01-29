@@ -431,46 +431,16 @@ export class ResearchComponent {
   async discoverTopics() {
     this.showTopicDiscovery.set(true);
     this.aiLoading.set(true);
-
-    // Simulate AI topic discovery
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const mockTopics = [
-      { topic: 'Victorian Architecture', relevance: 95, sources: 3 },
-      { topic: 'Urban Planning', relevance: 87, sources: 2 },
-      { topic: 'Industrial Revolution', relevance: 78, sources: 2 },
-      { topic: 'Steam Technology', relevance: 72, sources: 1 },
-      { topic: 'Social History', relevance: 65, sources: 1 }
-    ];
-
-    this.discoveredTopics.set(mockTopics);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    this.discoveredTopics.set([]);
     this.aiLoading.set(false);
   }
 
-  async analyzeSource(source: ResearchSource) {
+  async analyzeSource(_source: ResearchSource) {
     this.aiLoading.set(true);
     this.aiSourceAnalysis.set('');
-
-    // Simulate AI analysis
-    await new Promise(resolve => setTimeout(resolve, 1200));
-
-    const analysis = `**Key Insights:**
-• This source provides comprehensive coverage of ${source.title.toLowerCase()}
-• Highly relevant to your research on ${source.tags[0] || 'this topic'}
-• Contains valuable primary source material
-• Recommended reading priority: ${source.status === 'UNREAD' ? 'High' : 'Medium'}
-
-**Main Themes:**
-- Historical context and background
-- Technical specifications and details
-- Cultural and social implications
-
-**Suggested Actions:**
-- Cross-reference with sources on ${source.tags[1] || 'related topics'}
-- Extract key quotes for summary
-- Note contradictions with other sources`;
-
-    this.aiSourceAnalysis.set(analysis);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    this.aiSourceAnalysis.set('AI is not configured. Connect an AI provider to analyze sources.');
     this.aiLoading.set(false);
   }
 
@@ -478,63 +448,22 @@ export class ResearchComponent {
     const selectedSources = this.sources().filter(s =>
       this.selectedSourceIds().includes(s.id)
     );
-
     if (selectedSources.length === 0) {
       alert('Please select at least one source to generate a summary');
       return;
     }
-
     this.aiLoading.set(true);
-
-    // Simulate AI summary generation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const sourceTitles = selectedSources.map(s => s.title).join(', ');
-    const commonTags = this.findCommonTags(selectedSources);
-
-    const autoSummary = `Based on analysis of ${selectedSources.length} sources (${sourceTitles}), this research reveals several key findings:
-
-**Overview:**
-The selected sources provide comprehensive coverage of ${commonTags[0] || 'the research topic'}, with particular emphasis on historical context and contemporary applications.
-
-**Key Findings:**
-1. Primary evidence suggests significant developments in the field
-2. Multiple sources corroborate the importance of ${commonTags[1] || 'key themes'}
-3. Emerging patterns indicate future research directions
-
-**Synthesis:**
-The integration of these sources reveals a coherent narrative about ${commonTags[0] || 'the subject matter'}, highlighting both consensus and areas of ongoing debate.
-
-**Recommendations:**
-- Further investigation into ${commonTags[2] || 'related topics'}
-- Cross-reference with additional primary sources
-- Consider contemporary applications of historical findings`;
-
-    this.newSummaryContent.set(autoSummary);
-    this.newSummaryTitle.set(`AI Summary: ${commonTags[0] || 'Research Findings'}`);
-    this.newSummaryTags.set(commonTags.join(', '));
-
+    await new Promise(resolve => setTimeout(resolve, 200));
+    alert('AI is not configured. Connect an AI provider to generate summaries.');
     this.aiLoading.set(false);
   }
 
   async suggestSources() {
     const lib = this.selectedLibrary();
     if (!lib) return;
-
     this.aiLoading.set(true);
-
-    // Simulate AI source suggestions
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const suggestions = [
-      'Victorian London: A Historical Atlas (British Library)',
-      'The Industrial Revolution in Britain (Cambridge Press)',
-      'Urban Development in 19th Century Europe (Oxford)',
-      'Steam Power and Society (MIT Press)',
-      'Architecture and Social Change (Yale)'
-    ];
-
-    this.aiSuggestions.set(suggestions);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    this.aiSuggestions.set([]);
     this.aiLoading.set(false);
   }
 
@@ -588,122 +517,10 @@ The integration of these sources reveals a coherent narrative about ${commonTags
       alert('Please enter a research topic');
       return;
     }
-
     this.aiLoading.set(true);
-
-    // Simulate AI research plan generation
-    await new Promise(resolve => setTimeout(resolve, 2500));
-
-    const plan: ResearchPlan = {
-      topic: topic,
-      overview: `A comprehensive research plan for studying ${topic}. This plan provides a structured approach to gathering, analyzing, and synthesizing information on this topic, ensuring thorough coverage of key aspects while maintaining focus on the most relevant sources and methodologies.`,
-
-      phases: [
-        {
-          name: 'Phase 1: Foundation & Context',
-          duration: '2 weeks',
-          objectives: [
-            'Establish baseline understanding of the topic',
-            'Identify key terminology and concepts',
-            'Map the historical context and development',
-            'Review existing literature and research'
-          ]
-        },
-        {
-          name: 'Phase 2: Deep Dive & Analysis',
-          duration: '3 weeks',
-          objectives: [
-            'Examine primary sources in detail',
-            'Conduct comparative analysis',
-            'Identify patterns and connections',
-            'Document key findings and insights'
-          ]
-        },
-        {
-          name: 'Phase 3: Synthesis & Integration',
-          duration: '2 weeks',
-          objectives: [
-            'Synthesize findings from multiple sources',
-            'Develop comprehensive understanding',
-            'Create connections between concepts',
-            'Prepare final documentation'
-          ]
-        }
-      ],
-
-      suggestedSources: [
-        {
-          title: `${topic}: A Comprehensive Overview (Academic Journal)`,
-          type: 'PDF',
-          priority: 'High',
-          rationale: 'Provides foundational understanding and current state of research'
-        },
-        {
-          title: `Historical Development of ${topic} (University Press)`,
-          type: 'PHYSICAL',
-          priority: 'High',
-          rationale: 'Essential for understanding historical context and evolution'
-        },
-        {
-          title: `Expert Interview: Leading Researcher on ${topic}`,
-          type: 'INTERVIEW',
-          priority: 'Medium',
-          rationale: 'Offers contemporary perspectives and emerging trends'
-        },
-        {
-          title: `${topic} Database and Archives (Online Repository)`,
-          type: 'WEB',
-          priority: 'High',
-          rationale: 'Access to primary sources and original documents'
-        },
-        {
-          title: `Case Studies in ${topic} (Research Collection)`,
-          type: 'PDF',
-          priority: 'Medium',
-          rationale: 'Provides practical examples and real-world applications'
-        },
-        {
-          title: `Documentary: ${topic} Explained (Educational Video)`,
-          type: 'VIDEO',
-          priority: 'Low',
-          rationale: 'Visual learning aid for complex concepts'
-        }
-      ],
-
-      milestones: [
-        {
-          name: 'Initial Research Complete',
-          deadline: 'Week 2',
-          deliverables: [
-            'Annotated bibliography of 10-15 key sources',
-            'Concept map of main themes',
-            'Research questions document'
-          ]
-        },
-        {
-          name: 'Analysis Phase Complete',
-          deadline: 'Week 5',
-          deliverables: [
-            'Detailed notes from all primary sources',
-            'Comparative analysis document',
-            'Preliminary findings report'
-          ]
-        },
-        {
-          name: 'Final Synthesis',
-          deadline: 'Week 7',
-          deliverables: [
-            'Comprehensive research summary',
-            'Key insights and conclusions',
-            'Recommendations for further study'
-          ]
-        }
-      ],
-
-      estimatedTimeframe: '7 weeks'
-    };
-
-    this.generatedPlan.set(plan);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    this.generatedPlan.set(null);
+    alert('AI is not configured. Connect an AI provider to generate research plans.');
     this.aiLoading.set(false);
   }
 
