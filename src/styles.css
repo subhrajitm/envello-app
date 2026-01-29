@@ -415,8 +415,7 @@ app-journals,
 app-meetings,
 app-books,
 app-articles,
-app-code-snippets,
-app-brainstorming {
+app-code-snippets {
     display: block;
     height: 100%;
     min-height: 0;

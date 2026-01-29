@@ -9,7 +9,6 @@ import { TasksComponent } from './components/tasks/tasks.component';
 import { MeetingsComponent } from './components/meetings/meetings.component';
 import { BooksComponent } from './components/books/books.component';
 import { CodeSnippetsComponent } from './components/code-snippets/code-snippets.component';
-import { BrainstormingComponent } from './components/brainstorming/brainstorming.component';
 import { NovelEditorComponent } from './components/novels/novel-editor/novel-editor.component';
 import { ActivityLogComponent } from './components/activity-log/activity-log.component';
 import { BinComponent } from './components/bin/bin.component';
@@ -28,7 +27,6 @@ export const routes: Routes = [
     { path: 'books', component: BooksComponent, data: { hasSidebar: true } },
     { path: 'snippets', component: CodeSnippetsComponent, data: { hasSidebar: true } },
     { path: 'activity-log', component: ActivityLogComponent, data: { hasSidebar: true } },
-    { path: 'brainstorming', component: BrainstormingComponent, data: { hasSidebar: true, immersive: true } },
     { path: 'bin', component: BinComponent, data: { hasSidebar: true } },
     // Wildcard
     { path: '**', redirectTo: 'overview' }

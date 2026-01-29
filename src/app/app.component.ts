@@ -83,7 +83,6 @@ export class AppComponent implements OnInit, OnDestroy {
       'meetings': 'Meetings',
       'books': 'Books/Reading',
       'snippets': 'Code Snippets',
-      'brainstorming': 'Brainstorming',
       'bin': 'Bin'
     };
     return map[url] || 'Overview';

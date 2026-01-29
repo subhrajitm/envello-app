@@ -58,7 +58,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     'Meetings',
     'Books/Reading',
     'Code Snippets',
-    'Brainstorming',
   ];
 
   // Icon mapping for each tab
@@ -73,7 +72,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     'Tasks/Todos': 'checklist',
     'Books/Reading': 'auto_stories',
     'Code Snippets': 'code',
-    'Brainstorming': 'lightbulb',
   };
 
   get theme(): Theme {
@@ -111,7 +109,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       'Meetings': 'meetings',
       'Books/Reading': 'books',
       'Code Snippets': 'snippets',
-      'Brainstorming': 'brainstorming',
     };
     const path = map[tab] || 'overview';
     this.router.navigate([path]);
