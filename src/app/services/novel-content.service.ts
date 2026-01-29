@@ -705,11 +705,16 @@ export class NovelContentService {
         this.schedulePersist();
     }
 
-    // Helpers
-    private createEmptyNovel(id: string): NovelContent {
+    /** Create and persist empty novel content (e.g. when adding a new novel from the list). */
+    async createAndPersistEmptyNovel(id: string, title: string): Promise<void> {
+        const data = this.createEmptyNovel(id, title);
+        await this.rxdb.setNovelContent(id, JSON.stringify(data));
+    }
+
+    private createEmptyNovel(id: string, title: string = 'Untitled Novel'): NovelContent {
         return {
             id,
-            title: 'Untitled Novel',
+            title,
             synopsis: { logline: '', theme: '' },
             frontMatter: [],
             chapters: [

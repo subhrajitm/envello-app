@@ -689,3 +689,58 @@
     font-size: 10px;
     color: var(--text-tertiary);
 }
+
+.novels-empty-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+}
+
+/* Add novel modal form */
+.add-novel-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.add-novel-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.add-novel-form .form-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+.add-novel-form .form-row {
+    display: flex;
+    gap: 12px;
+}
+.add-novel-form .form-row .form-group {
+    flex: 1;
+}
+.add-novel-form .form-input,
+.add-novel-form .form-select {
+    padding: 6px 10px;
+    height: 28px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.add-novel-form .form-input:focus,
+.add-novel-form .form-select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-dim);
+}
+.add-novel-form .form-select {
+    cursor: pointer;
+}

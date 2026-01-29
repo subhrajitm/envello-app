@@ -17,6 +17,7 @@
         </div>
 
         <div class="controls-group">
+            <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add novel</env-button>
             <div class="view-toggles">
                 <button class="control-icon-btn" [class.active]="viewMode() === 'LIST'" (click)="toggleView('LIST')"
                     title="List View">
@@ -116,7 +117,17 @@
     </div>
 
     <div class="novels-content-area">
-        @if (viewMode() === 'LIST') {
+        @if (novels().length === 0) {
+        <div class="novels-empty-wrap">
+            <env-empty-state
+                icon="menu_book"
+                title="No novels yet"
+                description="Create your first novel to start writing."
+            >
+                <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add novel</env-button>
+            </env-empty-state>
+        </div>
+        } @else if (viewMode() === 'LIST') {
         <div class="novels-table">
             <div class="table-header">
                 <div class="col-title">PROJECT TITLE</div>
@@ -232,3 +243,61 @@
         }
     </div>
 </div>
+
+<!-- Add novel modal -->
+@if (showAddModal()) {
+<env-modal [isOpen]="showAddModal()" (closed)="closeAddModal()" title="Add novel" size="md">
+  <div body>
+    <div class="add-novel-form">
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" class="form-input" placeholder="Novel title"
+          [value]="newNovel().title"
+          (input)="updateNewNovel('title', $any($event.target).value)" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select"
+            [value]="newNovel().status"
+            (change)="updateNewNovel('status', $any($event.target).value)">
+            <option value="PLANNING">Planning</option>
+            <option value="DRAFTING">Drafting</option>
+            <option value="REVISING">Revising</option>
+            <option value="PUBLISHED">Published</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target word count</label>
+          <input type="number" class="form-input" min="0" placeholder="e.g. 80000"
+            [value]="newNovel().targetWordCount"
+            (input)="updateNewNovel('targetWordCount', +$any($event.target).value || 0)" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Genre</label>
+        <input type="text" class="form-input" placeholder="Comma-separated, e.g. Sci-Fi, Thriller"
+          [value]="newNovel().genre"
+          (input)="updateNewNovel('genre', $any($event.target).value)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Icon</label>
+        <select class="form-select"
+          [value]="newNovel().icon"
+          (change)="updateNewNovel('icon', $any($event.target).value)">
+          @for (opt of novelIcons; track opt.id) {
+            <option [value]="opt.id">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+  <div footer>
+    <env-button variant="secondary" (clicked)="closeAddModal()">Cancel</env-button>
+    <env-button variant="primary" icon="add" (clicked)="addNovel()"
+      [disabled]="!newNovel().title.trim() || addModalSubmitting()">
+      {{ addModalSubmitting() ? 'Creating…' : 'Add novel' }}
+    </env-button>
+  </div>
+</env-modal>
+}

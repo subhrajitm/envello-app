@@ -1,24 +1,46 @@
 import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService } from '../../services/store.service';
+import { StoreService, type Novel } from '../../services/store.service';
+import { NovelContentService } from '../../services/novel-content.service';
+import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-novels',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ButtonComponent, ModalComponent, EmptyStateComponent],
   templateUrl: './novels.component.html',
   styleUrl: './novels.component.css'
 })
 export class NovelsComponent {
   private router = inject(Router);
   store = inject(StoreService);
+  private novelContent = inject(NovelContentService);
 
   viewMode = signal<'LIST' | 'GRID'>('LIST');
   statusFilter = signal<'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED'>('ALL');
   sortBy = signal<'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'>('UPDATED');
   statusDropdownOpen = signal(false);
   sortDropdownOpen = signal(false);
+
+  showAddModal = signal(false);
+  addModalSubmitting = signal(false);
+  newNovel = signal<{ title: string; status: Novel['status']; genre: string; targetWordCount: number; icon: string }>({
+    title: '',
+    status: 'PLANNING',
+    genre: '',
+    targetWordCount: 80000,
+    icon: 'menu_book'
+  });
+
+  readonly novelIcons = [
+    { id: 'menu_book', label: 'Book' },
+    { id: 'auto_stories', label: 'Story' },
+    { id: 'token', label: 'Token' },
+    { id: 'castle', label: 'Castle' },
+    { id: 'rocket_launch', label: 'Rocket' },
+    { id: 'water_drop', label: 'Drop' },
+  ] as const;
 
   novels = computed(() => {
     let list = this.store.novels();
@@ -139,12 +161,74 @@ export class NovelsComponent {
     this.router.navigate(['/novels', id]);
   }
 
+  openAddModal() {
+    this.newNovel.set({
+      title: '',
+      status: 'PLANNING',
+      genre: '',
+      targetWordCount: 80000,
+      icon: 'menu_book'
+    });
+    this.showAddModal.set(true);
+  }
+
+  closeAddModal() {
+    this.showAddModal.set(false);
+    this.addModalSubmitting.set(false);
+  }
+
+  updateNewNovel(key: 'title' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number) {
+    this.newNovel.update(n => ({ ...n, [key]: value }));
+  }
+
+  async addNovel() {
+    const form = this.newNovel();
+    const title = form.title.trim();
+    if (!title) return;
+    this.addModalSubmitting.set(true);
+    try {
+      const id = crypto.randomUUID();
+      const now = new Date();
+      const createdDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const genre = form.genre.trim() ? form.genre.split(',').map(s => s.trim()).filter(Boolean) : ['Fiction'];
+      const novel: Novel = {
+        id,
+        title,
+        icon: form.icon,
+        status: form.status,
+        wordCount: 0,
+        targetWordCount: Math.max(0, form.targetWordCount) || 80000,
+        progress: 0,
+        chapters: 0,
+        notesCount: 0,
+        createdDate,
+        lastUpdated: 'Just now',
+        genre,
+        isRecentlyUpdated: true
+      };
+      this.store.addNovel(novel);
+      await this.novelContent.createAndPersistEmptyNovel(id, title);
+      this.closeAddModal();
+      this.router.navigate(['/novels', id]);
+    } catch (e) {
+      console.error('[NovelsComponent] addNovel failed', e);
+      this.addModalSubmitting.set(false);
+    }
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (!target.closest('.custom-dropdown-wrapper')) {
       this.statusDropdownOpen.set(false);
       this.sortDropdownOpen.set(false);
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && this.showAddModal()) {
+      this.closeAddModal();
     }
   }
 }
