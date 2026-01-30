@@ -1,4 +1,4 @@
-<div class="journals-layout flex flex-col h-full">
+<div class="journals-layout flex flex-row h-full">
     <!-- Left Sidebar -->
     <div class="j-sidebar">
         <!-- Search Header -->
@@ -9,7 +9,8 @@
                     [ngModel]="projectSearchQuery()" (ngModelChange)="projectSearchQuery.set($event)" />
             </div>
             <div class="j-dropdown-wrapper">
-                <env-icon-button icon="add" variant="primary" [size]="28" title="New Project" (clicked)="toggleProjectDropdown()" />
+                <env-icon-button icon="add" variant="primary" [size]="28" title="New Project"
+                    (clicked)="toggleProjectDropdown()" />
                 @if (showProjectDropdown()) {
                 <div class="j-dropdown-menu">
                     <button class="j-dropdown-item"
@@ -30,13 +31,11 @@
         <div class="j-project-list" [class.j-project-list--empty]="filteredProjects().length === 0">
             @if (filteredProjects().length === 0) {
             @if (projectSearchQuery()) {
-            <env-empty-state icon="search_off" title="No projects found" description="Try a different search." [compact]="true" />
+            <env-empty-state icon="search_off" title="No projects found" description="Try a different search."
+                [compact]="true" />
             } @else {
-            <env-empty-state
-                icon="folder"
-                title="No projects yet"
-                description="Create your first journal project to get started."
-            >
+            <env-empty-state icon="folder" title="No projects yet"
+                description="Create your first journal project to get started.">
                 <env-button variant="primary" icon="add" (clicked)="showProjectModal.set(true)">
                     Create your first project
                 </env-button>
@@ -291,12 +290,14 @@
         </div>
         <div footer>
             <env-button variant="secondary" (clicked)="showEntryModal.set(false)">Cancel</env-button>
-            <env-button variant="primary" (clicked)="createEntry()" [disabled]="!newEntryTitle().trim()">Create</env-button>
+            <env-button variant="primary" (clicked)="createEntry()"
+                [disabled]="!newEntryTitle().trim()">Create</env-button>
         </div>
     </env-modal>
 
     <!-- New Project Modal -->
-    <env-modal [isOpen]="showProjectModal()" (closed)="showProjectModal.set(false)" title="New Journal Project" size="md">
+    <env-modal [isOpen]="showProjectModal()" (closed)="showProjectModal.set(false)" title="New Journal Project"
+        size="md">
         <div body>
             <div class="form-group">
                 <label>Project Title</label>
@@ -306,7 +307,8 @@
         </div>
         <div footer>
             <env-button variant="secondary" (clicked)="showProjectModal.set(false)">Cancel</env-button>
-            <env-button variant="primary" (clicked)="createProject()" [disabled]="!newProjectTitle().trim()">Create</env-button>
+            <env-button variant="primary" (clicked)="createProject()"
+                [disabled]="!newProjectTitle().trim()">Create</env-button>
         </div>
     </env-modal>
 
@@ -543,12 +545,14 @@
         </div>
         <div footer>
             <env-button variant="secondary" (clicked)="showColumnModal.set(false)">Cancel</env-button>
-            <env-button variant="primary" (clicked)="createColumn()" [disabled]="!newColumnName().trim()">Create</env-button>
+            <env-button variant="primary" (clicked)="createColumn()"
+                [disabled]="!newColumnName().trim()">Create</env-button>
         </div>
     </env-modal>
 
     <!-- Export Modal -->
-    <env-modal [isOpen]="showExportModal()" (closed)="showExportModal.set(false)" [title]="'Export ' + (exportEntryId() ? 'Entry' : 'Project')" size="md">
+    <env-modal [isOpen]="showExportModal()" (closed)="showExportModal.set(false)"
+        [title]="'Export ' + (exportEntryId() ? 'Entry' : 'Project')" size="md">
         <div body>
             <div class="form-group">
                 <label>Export Format</label>
@@ -583,7 +587,8 @@
             </div>
             <div class="form-group">
                 <label>Goal Period</label>
-                <select [ngModel]="writingGoalPeriod()" (ngModelChange)="writingGoalPeriod.set($event)" class="form-input">
+                <select [ngModel]="writingGoalPeriod()" (ngModelChange)="writingGoalPeriod.set($event)"
+                    class="form-input">
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>

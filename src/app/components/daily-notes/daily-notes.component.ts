@@ -144,12 +144,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (this.openNotes().length === 0) {
       return null;
     }
-    
+
     const list = this.filteredNotes();
     if (list.length === 0) {
       return null;
     }
-    
+
     // Only return a note if it's in the open tabs
     const selectedId = this.selectedEntryId();
     if (!selectedId) {
@@ -157,13 +157,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const firstOpenId = this.openNotes()[0];
       return list.find(n => n.id === firstOpenId) || null;
     }
-    
+
     const found = list.find(n => n.id === selectedId);
     // Only return if the note is in open tabs
     if (found && this.openNotes().includes(found.id)) {
       return found;
     }
-    
+
     return null;
   });
 
@@ -188,7 +188,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('document:keydown.escape', ['$event'])
-  handleEscape(event: KeyboardEvent) {
+  handleEscape(event: Event) {
     if (this.activeModal() !== 'none') {
       event.preventDefault();
       this.closeModal();

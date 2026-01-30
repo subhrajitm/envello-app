@@ -1,4 +1,4 @@
-<div class="research-view flex flex-col h-full">
+<div class="research-view flex flex-row h-full">
     <!-- Sidebar -->
     <div class="research-sidebar">
         <!-- Search Header with Dropdown -->
@@ -9,7 +9,8 @@
                     [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
             </div>
             <div class="dropdown-wrapper">
-                <env-icon-button icon="add" variant="primary" [size]="28" title="Create library" (clicked)="openLibraryModal()" />
+                <env-icon-button icon="add" variant="primary" [size]="28" title="Create library"
+                    (clicked)="openLibraryModal()" />
             </div>
         </div>
 
@@ -99,7 +100,8 @@
                     <div class="source-content">
                         <div class="source-header">
                             <h4 class="source-title">{{ source.title }}</h4>
-                            <span class="status-badge-caps" [ngClass]="getStatusClass(source.status)">{{ source.status }}</span>
+                            <span class="status-badge-caps" [ngClass]="getStatusClass(source.status)">{{ source.status
+                                }}</span>
                         </div>
                         <p class="source-meta">{{ formatSourceMeta(source) }}</p>
                         <p class="source-desc">{{ source.description || 'No description' }}</p>
@@ -113,11 +115,8 @@
                     </div>
                 </div>
                 } @empty {
-                <env-empty-state
-                    icon="article"
-                    [title]="sources().length === 0 ? 'No Sources Yet' : 'No sources match'"
-                    [description]="sources().length === 0 ? 'Add your first source to this library' : 'Try adjusting your search or filters'"
-                >
+                <env-empty-state icon="article" [title]="sources().length === 0 ? 'No Sources Yet' : 'No sources match'"
+                    [description]="sources().length === 0 ? 'Add your first source to this library' : 'Try adjusting your search or filters'">
                     <env-button variant="primary" icon="add" (clicked)="openSourceModal()">Add Source</env-button>
                 </env-empty-state>
                 }
@@ -146,11 +145,8 @@
                     </div>
                 </div>
                 } @empty {
-                <env-empty-state
-                    icon="summarize"
-                    title="No Summaries Yet"
-                    description="Create a summary from your sources"
-                >
+                <env-empty-state icon="summarize" title="No Summaries Yet"
+                    description="Create a summary from your sources">
                     <env-button variant="primary" icon="add" (clicked)="openSummaryModal()">Create Summary</env-button>
                 </env-empty-state>
                 }
@@ -161,11 +157,8 @@
         } @else {
         <!-- No Library Selected -->
         <div class="research-empty-wrap">
-            <env-empty-state
-                icon="library_books"
-                title="No Library Selected"
-                description="Select a library from the sidebar or create a new one to get started"
-            >
+            <env-empty-state icon="library_books" title="No Library Selected"
+                description="Select a library from the sidebar or create a new one to get started">
                 <env-button variant="primary" icon="add" (clicked)="openLibraryModal()">
                     Create Library
                 </env-button>
@@ -287,12 +280,7 @@
     }
 
     <!-- Create Library Modal -->
-    <env-modal
-        [isOpen]="showLibraryModal()"
-        (closed)="closeLibraryModal()"
-        title="Create Research Library"
-        size="md"
-    >
+    <env-modal [isOpen]="showLibraryModal()" (closed)="closeLibraryModal()" title="Create Research Library" size="md">
         <div body>
             <div class="form-group">
                 <label>Library Name</label>
@@ -339,7 +327,8 @@
             <div class="form-row">
                 <div class="form-group half">
                     <label>Type</label>
-                    <select class="modal-select" [ngModel]="newSourceType()" (ngModelChange)="newSourceType.set($event)">
+                    <select class="modal-select" [ngModel]="newSourceType()"
+                        (ngModelChange)="newSourceType.set($event)">
                         <option value="WEB">Web Page</option>
                         <option value="PDF">PDF Document</option>
                         <option value="VIDEO">Video/Audio</option>
@@ -360,14 +349,14 @@
             </div>
             <div class="form-group">
                 <label>Description</label>
-                <textarea class="modal-textarea" [ngModel]="newSourceDesc()"
-                    (ngModelChange)="newSourceDesc.set($event)" rows="3"
-                    placeholder="Brief summary of this source..."></textarea>
+                <textarea class="modal-textarea" [ngModel]="newSourceDesc()" (ngModelChange)="newSourceDesc.set($event)"
+                    rows="3" placeholder="Brief summary of this source..."></textarea>
             </div>
         </div>
         <div footer>
             <env-button variant="secondary" (clicked)="closeSourceModal()">Cancel</env-button>
-            <env-button variant="primary" (clicked)="saveSource()" [disabled]="!newSourceTitle()">Add Source</env-button>
+            <env-button variant="primary" (clicked)="saveSource()" [disabled]="!newSourceTitle()">Add
+                Source</env-button>
         </div>
     </env-modal>
 
@@ -377,8 +366,7 @@
             <div class="form-group">
                 <label>Summary Title</label>
                 <input type="text" class="modal-input" [ngModel]="newSummaryTitle()"
-                    (ngModelChange)="newSummaryTitle.set($event)"
-                    placeholder="e.g., Victorian Architecture Overview">
+                    (ngModelChange)="newSummaryTitle.set($event)" placeholder="e.g., Victorian Architecture Overview">
             </div>
             <div class="form-group">
                 <label>Select Sources</label>
@@ -407,7 +395,8 @@
         </div>
         <div footer>
             <env-button variant="secondary" (clicked)="closeSummaryModal()">Cancel</env-button>
-            <env-button variant="primary" (clicked)="saveSummary()" [disabled]="!newSummaryTitle()">Create Summary</env-button>
+            <env-button variant="primary" (clicked)="saveSummary()" [disabled]="!newSummaryTitle()">Create
+                Summary</env-button>
         </div>
     </env-modal>
 
@@ -493,7 +482,8 @@
     }
 
     <!-- Topic Discovery Modal -->
-    <env-modal [isOpen]="showTopicDiscovery()" (closed)="closeTopicDiscovery()" title="Discovered Research Topics" size="large">
+    <env-modal [isOpen]="showTopicDiscovery()" (closed)="closeTopicDiscovery()" title="Discovered Research Topics"
+        size="large">
         <div body>
             @if (aiLoading()) {
             <div class="ai-loading">
@@ -523,7 +513,8 @@
     </env-modal>
 
     <!-- Research Plan Generator Modal -->
-    <env-modal [isOpen]="showResearchPlanModal()" (closed)="closeResearchPlanModal()" title="AI Research Plan Generator" size="xl">
+    <env-modal [isOpen]="showResearchPlanModal()" (closed)="closeResearchPlanModal()" title="AI Research Plan Generator"
+        size="xl">
         <div body>
             @if (!generatedPlan()) {
             <div class="plan-input-section">
@@ -581,7 +572,8 @@
                                 <span class="material-symbols-outlined">{{ getSourceIcon(source.type) }}</span>
                                 <strong>{{ source.title }}</strong>
                             </div>
-                            <span class="priority-badge-caps" [ngClass]="'priority-' + source.priority.toLowerCase()">{{ source.priority }}</span>
+                            <span class="priority-badge-caps" [ngClass]="'priority-' + source.priority.toLowerCase()">{{
+                                source.priority }}</span>
                         </div>
                         <p class="source-rationale">{{ source.rationale }}</p>
                     </div>
@@ -614,7 +606,8 @@
                 [disabled]="!researchPlanTopic() || aiLoading()">Generate Plan</env-button>
             } @else {
             <env-button variant="secondary" icon="arrow_back" (clicked)="generatedPlan.set(null)">New Topic</env-button>
-            <env-button variant="primary" icon="check_circle" (clicked)="implementResearchPlan()" [disabled]="aiLoading()">Implement Plan</env-button>
+            <env-button variant="primary" icon="check_circle" (clicked)="implementResearchPlan()"
+                [disabled]="aiLoading()">Implement Plan</env-button>
             }
         </div>
     </env-modal>
