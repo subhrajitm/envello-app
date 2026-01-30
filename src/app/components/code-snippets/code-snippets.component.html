@@ -42,7 +42,7 @@
     @if (snippetsService.viewMode() === 'list') {
     <div class="snippets-table-container" [class.snippets-table-container--empty]="filteredSnippets().length === 0">
       @if (filteredSnippets().length === 0) {
-      <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
+      <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : 'Save code snippets for quick reference and reuse.'" [compact]="true">
         @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add snippet</env-button> }
       </env-empty-state>
       } @else {
@@ -96,7 +96,7 @@
     @if (snippetsService.viewMode() === 'grid') {
     <div class="snippets-grid-container" [class.snippets-grid-container--empty]="filteredSnippets().length === 0">
       @if (filteredSnippets().length === 0) {
-      <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
+      <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : 'Save code snippets for quick reference and reuse.'" [compact]="true">
         @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add snippet</env-button> }
       </env-empty-state>
       } @else {

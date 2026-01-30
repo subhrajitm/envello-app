@@ -1194,8 +1194,6 @@ li[data-type="taskItem"] input[type="checkbox"] {
     max-width: 800px;
     margin: 0 auto;
     padding: 0 40px;
-    /* More breathing room */
-    animation: fadeInContent 0.4s ease-out;
 }
 
 @keyframes fadeInContent {

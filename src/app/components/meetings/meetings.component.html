@@ -51,7 +51,7 @@
         @if (viewMode() === 'list') {
         <div class="meetings-table-container" [class.meetings-table-container--empty]="filteredMeetings().length === 0">
             @if (filteredMeetings().length === 0) {
-            <env-empty-state icon="event_busy" [title]="searchQuery() ? 'No results' : 'No meetings'" [description]="searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
+            <env-empty-state icon="event_busy" [title]="searchQuery() ? 'No results' : 'No meetings'" [description]="searchQuery() ? 'Adjust filters.' : 'Schedule meetings to track agendas, attendees, and action items.'" [compact]="true">
                 @if (!searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openCreateModal()">New</env-button> }
             </env-empty-state>
             } @else {

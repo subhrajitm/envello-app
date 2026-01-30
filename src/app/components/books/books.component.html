@@ -44,7 +44,7 @@
     @if (booksService.viewMode() === 'list') {
     <div class="books-table-container" [class.books-table-container--empty]="filteredBooks().length === 0">
       @if (filteredBooks().length === 0) {
-      <env-empty-state icon="menu_book" [title]="booksService.searchQuery() ? 'No results' : 'No books'" [description]="booksService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
+      <env-empty-state icon="menu_book" [title]="booksService.searchQuery() ? 'No results' : 'No books'" [description]="booksService.searchQuery() ? 'Adjust filters.' : 'Add books to track your reading progress and notes.'" [compact]="true">
         @if (!booksService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add book</env-button> }
       </env-empty-state>
       } @else {
@@ -103,7 +103,7 @@
     @if (booksService.viewMode() === 'grid') {
     <div class="books-grid-container" [class.books-grid-container--empty]="filteredBooks().length === 0">
       @if (filteredBooks().length === 0) {
-      <env-empty-state icon="menu_book" [title]="booksService.searchQuery() ? 'No results' : 'No books'" [description]="booksService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
+      <env-empty-state icon="menu_book" [title]="booksService.searchQuery() ? 'No results' : 'No books'" [description]="booksService.searchQuery() ? 'Adjust filters.' : 'Add books to track your reading progress and notes.'" [compact]="true">
         @if (!booksService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add book</env-button> }
       </env-empty-state>
       } @else {
