@@ -5,6 +5,9 @@
     min-height: 0;
     /* Important for flex-shrink/stretch behavior */
     height: 100%;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
 }
 
 /* Material Icons - Ensure font is available for all child components */
@@ -30,6 +33,9 @@
     /* Critical: Fill parent width */
     flex-direction: column;
     height: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
+    margin: 0;
     /* Fill available space from dashboard-content */
     background: var(--bg-app);
     color: var(--text-primary);

@@ -623,8 +623,10 @@ env-empty-state .env-empty-state__content {
 }
 
 /* Ensure all Angular components fill their containers */
+/* Ensure all Angular components fill their containers */
 app-overview,
 app-novels,
+app-novel-editor,
 app-research,
 app-tasks,
 app-daily-notes,
@@ -637,6 +639,15 @@ app-developer-settings {
     display: block;
     height: 100%;
     min-height: 0;
+}
+
+/* Explicit fix for novel editor alignment */
+app-novel-editor {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    background: var(--bg-app) !important;
 }
 
 /* Critical: All flex children with overflow-y: auto need min-height: 0 to allow scrolling */

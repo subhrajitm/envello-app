@@ -42,10 +42,14 @@
     /* Routed component fills and manages its own overflow */
 }
 
-.dashboard-content.no-padding > * {
+.dashboard-content.no-padding>*:not(router-outlet) {
     flex: 1 1 0;
     min-height: 0;
     overflow: hidden;
+}
+
+.dashboard-content.no-padding>router-outlet {
+    display: none;
 }
 
 .dashboard-content.immersive-view {
