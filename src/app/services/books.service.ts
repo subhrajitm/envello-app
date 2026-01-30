@@ -1,3 +1,4 @@
+import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { SqliteService } from '../core/services/sqlite.service';
@@ -56,12 +57,12 @@ export class BooksService {
       const list = await this.rxdb.getAllBooks();
       this.books.set(list);
     } catch (e) {
-      console.error('[BooksService] loadFromRxDB failed', e);
+      logIfTauri('[BooksService] loadFromRxDB failed', e);
     }
   }
 
   private persistBook(b: Book): void {
-    this.rxdb.upsertBook(b).catch(e => console.error('[BooksService] persist failed', e));
+    this.rxdb.upsertBook(b).catch(e => logIfTauri('[BooksService] persist failed', e));
   }
 
   readonly selectedBook = computed(() => {
@@ -156,7 +157,7 @@ export class BooksService {
     });
     this.books.update(list => list.filter(b => b.id !== id));
     if (this.selectedBookId() === id) this.selectedBookId.set(null);
-    this.rxdb.removeBook(id).catch(e => console.error('[BooksService] remove failed', e));
+    this.rxdb.removeBook(id).catch(e => logIfTauri('[BooksService] remove failed', e));
   }
 
   setProgress(id: string, progress: number): void {

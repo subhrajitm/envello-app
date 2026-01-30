@@ -5,7 +5,6 @@ import { HeaderComponent } from './components/layout/header/header.component';
 import { FooterComponent } from './components/layout/footer/footer.component';
 import { TauriService } from './core/services/tauri.service';
 import { SessionService } from './services/session.service';
-import { DataMigrationService } from './core/services/data-migration.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
@@ -21,7 +20,6 @@ export class AppComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
   private sessionService = inject(SessionService); // Initialize session tracking
-  private migrationService = inject(DataMigrationService);
   private unlistenFileDrop?: () => void;
 
   currentTab = signal('Overview');
@@ -33,11 +31,6 @@ export class AppComponent implements OnInit, OnDestroy {
   private navigationLayoutListener?: (event: CustomEvent) => void;
 
   ngOnInit() {
-    // Perform one-time data migration from RxDB to SQLite
-    this.migrationService.migrateAllData().catch(err => {
-      console.error('[AppComponent] Migration failed:', err);
-    });
-
     // Load navigation layout from localStorage
     this.loadNavigationLayout();
 

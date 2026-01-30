@@ -1,3 +1,4 @@
+import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService, Task } from './store.service';
@@ -142,12 +143,12 @@ export class MeetingsService {
       const list = await this.rxdb.getAllMeetings();
       this.meetings.set(list);
     } catch (e) {
-      console.error('[MeetingsService] loadFromRxDB failed', e);
+      logIfTauri('[MeetingsService] loadFromRxDB failed', e);
     }
   }
 
   private persistMeeting(m: Meeting): void {
-    this.rxdb.upsertMeeting(m).catch(e => console.error('[MeetingsService] persist failed', e));
+    this.rxdb.upsertMeeting(m).catch(e => logIfTauri('[MeetingsService] persist failed', e));
   }
 
   // UI state
@@ -390,7 +391,7 @@ export class MeetingsService {
 
     this.meetings.set(existing.filter(m => m.id !== id));
     this.store.addActivity('Meeting deleted', 'system');
-    this.rxdb.removeMeeting(id).catch(e => console.error('[MeetingsService] remove failed', e));
+    this.rxdb.removeMeeting(id).catch(e => logIfTauri('[MeetingsService] remove failed', e));
   }
 
   cancelMeeting(id: string) {

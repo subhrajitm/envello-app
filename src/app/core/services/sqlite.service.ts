@@ -76,27 +76,53 @@ export class SqliteService {
     private researchSummariesSubject = new BehaviorSubject<ResearchSummaryDoc[]>([]);
 
     constructor() {
-        this.initDb();
+        // Don't initialize eagerly - only init when first database operation is called
+        // This prevents errors in browser/non-Tauri environments
+    }
+
+    /**
+     * Check if running in Tauri environment
+     */
+    private isTauri(): boolean {
+        return typeof window !== 'undefined' && '__TAURI__' in window;
     }
 
     async getDb(): Promise<Database> {
         if (this.db) return this.db;
         if (this.initPromise) return this.initPromise;
-        this.initPromise = this.initDb();
-        return this.initPromise;
+
+        try {
+            this.initPromise = this.initDb();
+            return await this.initPromise;
+        } catch (error) {
+            // If initialization fails (e.g., not in Tauri), return a rejected promise
+            // This will be caught by individual methods
+            throw error;
+        }
     }
 
     private async initDb(): Promise<Database> {
         try {
+            // Check if running in Tauri environment
+            if (!this.isTauri()) {
+                // Silently fail in non-Tauri environments (browser)
+                // This is expected behavior when developing with ng serve
+                throw new Error('SQLite is only available in Tauri desktop app');
+            }
+
             const db = await Database.load(`sqlite:${DB_NAME}`);
             this.db = db;
 
             await this.createTables(db);
             await this.loadAllData(); // Load initial data into subjects
 
+            console.log('[SqliteService] Database initialized successfully');
             return db;
         } catch (error) {
-            console.error('Failed to initialize SQLite DB:', error);
+            // Only log errors if we're in Tauri (unexpected errors)
+            if (this.isTauri()) {
+                console.error('Failed to initialize SQLite DB:', error);
+            }
             throw error;
         }
     }

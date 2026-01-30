@@ -1,3 +1,4 @@
+import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { SqliteService } from '../core/services/sqlite.service';
 
@@ -39,7 +40,7 @@ export class ArticleService {
       const list = await this.rxdb.getAllArticles();
       this.articles.set(list);
     } catch (e) {
-      console.error('[ArticleService] loadFromRxDB failed', e);
+      logIfTauri('[ArticleService] loadFromRxDB failed', e);
     }
   }
 
@@ -59,7 +60,7 @@ export class ArticleService {
       lastUpdated: new Date().toISOString(),
     };
     this.articles.update(list => [newArticle, ...list]);
-    this.rxdb.upsertArticle(newArticle).catch(e => console.error('[ArticleService] persist failed', e));
+    this.rxdb.upsertArticle(newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
     return newArticle;
   }
 
@@ -68,12 +69,12 @@ export class ArticleService {
       list.map(a => a.id === id ? { ...a, ...updates, lastUpdated: new Date().toISOString() } : a)
     );
     const a = this.articles().find(x => x.id === id);
-    if (a) this.rxdb.upsertArticle(a).catch(e => console.error('[ArticleService] persist failed', e));
+    if (a) this.rxdb.upsertArticle(a).catch(e => logIfTauri('[ArticleService] persist failed', e));
   }
 
   deleteArticle(id: string): void {
     this.articles.update(list => list.filter(a => a.id !== id));
-    this.rxdb.removeArticle(id).catch(e => console.error('[ArticleService] remove failed', e));
+    this.rxdb.removeArticle(id).catch(e => logIfTauri('[ArticleService] remove failed', e));
   }
 
   getArticlesByPlatform(platform: string): Article[] {

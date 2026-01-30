@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { SqliteService } from '../core/services/sqlite.service';
+import { logIfTauri } from '../core/utils/tauri-helpers';
 
 export interface Task {
   id: string;
@@ -122,7 +123,10 @@ export class StoreService {
       this.activities.set(activities.slice(0, 50));
       this.novels.set(novels);
     } catch (e) {
-      console.error('[StoreService] loadFromRxDB failed', e);
+      // Only log errors in Tauri environment (browser failures are expected)
+      if (typeof window !== 'undefined' && '__TAURI__' in window) {
+        logIfTauri('[StoreService] loadFromRxDB failed', e);
+      }
       this.tasks.set([]);
       this.notes.set([]);
       this.planningItems.set([]);
@@ -134,7 +138,7 @@ export class StoreService {
   addTask(task: Task) {
     this.tasks.update(tasks => [...tasks, task]);
     this.addActivity('Task created: ' + task.title, 'system');
-    this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
+    this.rxdb.upsertTask(task).catch(e => logIfTauri('[StoreService] persist task failed', e));
   }
 
   updateTask(id: string, updates: Partial<Task>) {
@@ -142,7 +146,7 @@ export class StoreService {
     const task = updated.find(t => t.id === id);
     this.tasks.set(updated);
     this.addActivity('Task updated', 'system');
-    if (task) this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
+    if (task) this.rxdb.upsertTask(task).catch(e => logIfTauri('[StoreService] persist task failed', e));
   }
 
   deleteTask(id: string) {
@@ -160,13 +164,13 @@ export class StoreService {
 
     this.tasks.set(existingTasks.filter(t => t.id !== id));
     this.addActivity('Task deleted', 'system');
-    this.rxdb.removeTask(id).catch(e => console.error('[StoreService] remove task failed', e));
+    this.rxdb.removeTask(id).catch(e => logIfTauri('[StoreService] remove task failed', e));
   }
 
   addNote(note: Note) {
     this.notes.update(notes => [note, ...notes]);
     this.addActivity("Entry added to '" + note.title + "'", 'entry');
-    this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
+    this.rxdb.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
   }
 
   updateNote(id: string, updates: Partial<Note>) {
@@ -181,7 +185,7 @@ export class StoreService {
       } : note)
     );
     const note = this.notes().find(n => n.id === id);
-    if (note) this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
+    if (note) this.rxdb.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
   }
 
   deleteNote(id: string) {
@@ -199,18 +203,18 @@ export class StoreService {
 
     this.notes.set(existingNotes.filter(n => n.id !== id));
     this.addActivity('Note deleted', 'system');
-    this.rxdb.removeNote(id).catch(e => console.error('[StoreService] remove note failed', e));
+    this.rxdb.removeNote(id).catch(e => logIfTauri('[StoreService] remove note failed', e));
   }
 
   addPlanningItem(item: PlanningItem) {
     this.planningItems.update(items => [...items, item]);
-    this.rxdb.upsertPlanningItem(item).catch(e => console.error('[StoreService] persist planning item failed', e));
+    this.rxdb.upsertPlanningItem(item).catch(e => logIfTauri('[StoreService] persist planning item failed', e));
   }
 
   addNovel(novel: Novel) {
     this.novels.update(novels => [...novels, novel]);
     this.addActivity('Project started: ' + novel.title, 'system');
-    this.rxdb.upsertNovel(novel).catch(e => console.error('[StoreService] persist novel failed', e));
+    this.rxdb.upsertNovel(novel).catch(e => logIfTauri('[StoreService] persist novel failed', e));
   }
 
   deleteNovel(id: string) {
@@ -226,8 +230,8 @@ export class StoreService {
     }
     this.novels.set(existing.filter(n => n.id !== id));
     this.addActivity('Novel deleted', 'system');
-    this.rxdb.removeNovel(id).catch(e => console.error('[StoreService] remove novel failed', e));
-    this.rxdb.removeNovelContent(id).catch(e => console.error('[StoreService] remove novel content failed', e));
+    this.rxdb.removeNovel(id).catch(e => logIfTauri('[StoreService] remove novel failed', e));
+    this.rxdb.removeNovelContent(id).catch(e => logIfTauri('[StoreService] remove novel content failed', e));
   }
 
   addActivity(text: string, type: Activity['type'] = 'entry') {
@@ -238,6 +242,6 @@ export class StoreService {
       type
     };
     this.activities.update(activities => [newActivity, ...activities.slice(0, 49)]); // Keep last 50
-    this.rxdb.upsertActivity(newActivity).catch(e => console.error('[StoreService] persist activity failed', e));
+    this.rxdb.upsertActivity(newActivity).catch(e => logIfTauri('[StoreService] persist activity failed', e));
   }
 }

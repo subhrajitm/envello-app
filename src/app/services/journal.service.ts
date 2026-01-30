@@ -1,3 +1,4 @@
+import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService } from './store.service';
@@ -87,20 +88,23 @@ export class JournalService {
         this.columns.set(cols.sort((a, b) => a.order - b.order));
       }
     } catch (e) {
-      console.error('[JournalService] loadFromRxDB failed', e);
+      // Only log errors in Tauri environment (browser failures are expected)
+      if (typeof window !== 'undefined' && '__TAURI__' in window) {
+        logIfTauri('[JournalService] loadFromRxDB failed', e);
+      }
     }
   }
 
   private persistProject(p: JournalProject): void {
-    this.rxdb.upsertJournalProject(p).catch(e => console.error('[JournalService] persist project failed', e));
+    this.rxdb.upsertJournalProject(p).catch(e => logIfTauri('[JournalService] persist project failed', e));
   }
 
   private persistEntry(e: JournalEntry): void {
-    this.rxdb.upsertJournalEntry(e).catch(err => console.error('[JournalService] persist entry failed', err));
+    this.rxdb.upsertJournalEntry(e).catch(err => logIfTauri('[JournalService] persist entry failed', err));
   }
 
   private persistColumn(c: JournalColumn): void {
-    this.rxdb.upsertJournalColumn(c).catch(e => console.error('[JournalService] persist column failed', e));
+    this.rxdb.upsertJournalColumn(c).catch(e => logIfTauri('[JournalService] persist column failed', e));
   }
 
   // Project Management
@@ -170,7 +174,7 @@ export class JournalService {
       this.entries.update(entries => entries.filter(e => e.projectId !== id));
       this.projects.update(projects => projects.filter(p => p.id !== id));
       this.store.addActivity(`Journal project deleted: ${project.title}`, 'system');
-      this.rxdb.removeJournalProject(id).catch(e => console.error('[JournalService] remove project failed', e));
+      this.rxdb.removeJournalProject(id).catch(e => logIfTauri('[JournalService] remove project failed', e));
     }
   }
 
@@ -249,7 +253,7 @@ export class JournalService {
       this.entries.update(entries => entries.filter(e => e.id !== id));
       this.updateProjectStats(entry.projectId);
       this.store.addActivity(`Entry deleted: ${entry.title}`, 'system');
-      this.rxdb.removeJournalEntry(id).catch(e => console.error('[JournalService] remove entry failed', e));
+      this.rxdb.removeJournalEntry(id).catch(e => logIfTauri('[JournalService] remove entry failed', e));
     }
   }
 
@@ -290,7 +294,7 @@ export class JournalService {
       const updated = this.getEntry(entry.id);
       if (updated) this.persistEntry(updated);
     });
-    this.rxdb.removeJournalColumn(id).catch(e => console.error('[JournalService] remove column failed', e));
+    this.rxdb.removeJournalColumn(id).catch(e => logIfTauri('[JournalService] remove column failed', e));
   }
 
   // Search

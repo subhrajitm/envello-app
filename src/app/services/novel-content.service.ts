@@ -1,3 +1,4 @@
+import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
 import { BinService } from './bin.service';
@@ -110,7 +111,7 @@ export class NovelContentService {
             this.activeNovel.set(data);
             await this.rxdb.setNovelContent(id, JSON.stringify(data));
         } catch (e) {
-            console.error('[NovelContentService] loadNovel failed', e);
+            logIfTauri('[NovelContentService] loadNovel failed', e);
             this.activeNovel.set(this.createEmptyNovel(id));
         }
     }
@@ -122,7 +123,7 @@ export class NovelContentService {
             const n = this.activeNovel();
             if (!n) return;
             this.rxdb.setNovelContent(n.id, JSON.stringify(n)).catch(e =>
-                console.error('[NovelContentService] persist failed', e)
+                logIfTauri('[NovelContentService] persist failed', e)
             );
         }, PERSIST_DEBOUNCE_MS);
     }
