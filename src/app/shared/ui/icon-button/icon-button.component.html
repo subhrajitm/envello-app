@@ -2,7 +2,7 @@
   [attr.type]="type"
   [attr.title]="title"
   [attr.aria-label]="title || icon"
-  [class]="['env-icon-btn', 'env-icon-btn--' + variant, 'env-icon-btn--' + size, active ? 'env-icon-btn--active' : '']"
+  [class]="['env-icon-btn', 'env-icon-btn--' + variant, 'env-icon-btn--' + size, 'inline-flex items-center justify-center rounded-lg transition-colors', active ? 'env-icon-btn--active' : '']"
   [disabled]="disabled"
   (click)="onClick()"
 >

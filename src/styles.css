@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
     /* Enterprise Dark Theme Palette */
     --bg-app: #09090b;

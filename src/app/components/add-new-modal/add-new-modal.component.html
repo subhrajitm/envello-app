@@ -1,18 +1,18 @@
 @if (isOpen()) {
 <div 
-    class="add-new-backdrop" 
+    class="add-new-backdrop fixed inset-0 flex items-start justify-center z-[9999]" 
     (click)="onBackdropClick()"
     role="dialog"
     aria-modal="true"
     aria-labelledby="add-new-title">
-    <div class="add-new-modal" (click)="onModalClick($event)">
+    <div class="add-new-modal flex flex-col relative rounded-lg overflow-hidden shadow-xl" (click)="onModalClick($event)">
         <!-- Header -->
-        <div class="modal-header">
-            <div class="header-content">
+        <div class="modal-header flex items-center justify-between">
+            <div class="header-content flex items-center gap-2">
                 <span class="material-symbols-outlined header-icon">add_circle</span>
                 <h2 id="add-new-title">Create New Item</h2>
             </div>
-            <div class="header-actions">
+            <div class="header-actions flex items-center gap-2">
                 <kbd class="global-shortcut"><span class="shortcut-mod">⌘</span>N</kbd>
                 <button class="close-btn" (click)="close()" aria-label="Close" [disabled]="isCreating()">
                     <span class="material-symbols-outlined">close</span>
@@ -57,14 +57,14 @@
         }
 
         <!-- Two-pane layout -->
-        <div class="modal-body">
+        <div class="modal-body flex flex-1 min-h-0 overflow-hidden">
             <!-- Left: Categories -->
-            <nav class="sidebar">
-                <div class="sidebar-header">CATEGORIES</div>
-                <div class="sidebar-list">
+            <nav class="sidebar flex flex-col flex-shrink-0 overflow-y-auto">
+                <div class="sidebar-header text-xs font-bold uppercase tracking-wider">CATEGORIES</div>
+                <div class="sidebar-list flex-1">
                     @for (cat of visibleSidebarCategories(); track cat.id) {
                     <button
-                        class="sidebar-item"
+                        class="sidebar-item flex items-center gap-2 w-full rounded-lg transition-colors"
                         [class.sidebar-item--active]="selectedCategoryId() === cat.id"
                         (click)="selectCategory(cat.id)">
                         <span class="material-symbols-outlined sidebar-icon">{{ cat.icon }}</span>
@@ -75,13 +75,13 @@
             </nav>
 
             <!-- Right: Content -->
-            <div class="content-pane" #optionsContainer>
+            <div class="content-pane flex-1 min-h-0 overflow-y-auto" #optionsContainer>
                 @for (group of rightPaneOptions(); track group.label) {
                 <div class="content-group">
                     <div class="content-group-header">{{ group.label }}</div>
                     @for (option of group.options; track option.id) {
                     <button
-                        class="content-card"
+                        class="content-card flex items-center gap-3 w-full rounded-lg transition-all"
                         [class.content-card--focused]="isOptionFocused(option)"
                         (click)="selectOption(option)"
                         [disabled]="isCreating()"
@@ -117,13 +117,13 @@
         </div>
 
         <!-- Footer -->
-        <div class="modal-footer">
-            <div class="footer-left">
+        <div class="modal-footer flex items-center justify-between">
+            <div class="footer-left flex items-center gap-4">
                 <span class="shortcut-hint"><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
                 <span class="shortcut-hint"><kbd>Enter</kbd> Create</span>
                 <span class="shortcut-hint"><kbd>1</kbd>-<kbd>8</kbd> Quick create</span>
             </div>
-            <div class="footer-right">
+            <div class="footer-right flex items-center gap-4">
                 <span class="shortcut-hint"><kbd>Esc</kbd> Close</span>
             </div>
         </div>

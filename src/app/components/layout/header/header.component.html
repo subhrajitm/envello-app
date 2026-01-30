@@ -1,7 +1,7 @@
 <div class="header-wrapper">
     <header class="header">
-        <div class="header-top">
-            <div class="logo">
+        <div class="header-top flex items-center justify-between gap-4">
+            <div class="logo flex items-center gap-2">
                 <span class="material-symbols-outlined logo-icon">nutrition</span>
                 <span class="logo-text">ENVELLO</span>
             </div>
@@ -9,7 +9,7 @@
                 <span class="material-symbols-outlined search-icon">search</span>
                 <input type="text" placeholder="Quick find (Cmd + K)" class="search-input" readonly />
             </div>
-            <div class="header-actions">
+            <div class="header-actions flex items-center gap-2">
                 <button class="btn-new-project" (click)="openAddNew()">
                     <span class="material-symbols-outlined btn-icon-inner">add</span> <span>Add New</span>
                 </button>
