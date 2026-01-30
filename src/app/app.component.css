@@ -36,8 +36,16 @@
     padding: 0;
     gap: 0;
     overflow: hidden;
-    height: 100%;
-    /* Allow child components to manage their own overflow */
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* Routed component fills and manages its own overflow */
+}
+
+.dashboard-content.no-padding > * {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .dashboard-content.immersive-view {

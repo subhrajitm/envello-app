@@ -63,6 +63,11 @@ export class ProfileMenuComponent {
     this.close();
   }
 
+  openDeveloperSettings() {
+    this.router.navigate(['/developer-settings']);
+    this.close();
+  }
+
   openHelp() {
     console.log('Opening help & support...');
     this.close();

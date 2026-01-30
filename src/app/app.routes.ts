@@ -68,6 +68,11 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'developer-settings',
+    loadComponent: () => import('./components/developer-settings/developer-settings.component').then(m => m.DeveloperSettingsComponent),
+    data: { hasSidebar: true },
+  },
+  {
     path: 'not-found',
     loadComponent: () => import('./components/errors/not-found/not-found.component').then(m => m.NotFoundComponent),
     data: { hasSidebar: false },
