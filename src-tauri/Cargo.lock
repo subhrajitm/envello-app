@@ -830,7 +830,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "envello-app"
+name = "envello"
 version = "0.1.0"
 dependencies = [
  "serde",
