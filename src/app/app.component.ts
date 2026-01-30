@@ -4,6 +4,7 @@ import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/ro
 import { HeaderComponent } from './components/layout/header/header.component';
 import { FooterComponent } from './components/layout/footer/footer.component';
 import { TauriService } from './core/services/tauri.service';
+import { SessionService } from './services/session.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
@@ -18,6 +19,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
+  private sessionService = inject(SessionService); // Initialize session tracking
   private unlistenFileDrop?: () => void;
 
   currentTab = signal('Overview');

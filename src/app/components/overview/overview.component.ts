@@ -14,7 +14,6 @@ import { RecentActivityComponent } from '../dashboard/recent-activity/recent-act
 export class OverviewComponent {
   store = inject(StoreService);
   userService = inject(UserService);
-
   user = this.userService.user;
 
   // Stats

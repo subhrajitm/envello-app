@@ -14,7 +14,6 @@ import { environment } from '../../../../environments/environment';
 export class FooterComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private tauriService = inject(TauriService);
-
   // Stats from User Service
   private userStats = computed(() => this.userService.user()?.stats);
 
@@ -22,7 +21,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   currentStreak = computed(() => this.userStats()?.daysActive || 0);
   sessionDuration = signal('00:00:00');
   appVersion = signal(environment.version);
-
+  
   private sessionStartTime: number = Date.now();
   private timerInterval: any;
 
