@@ -9,6 +9,7 @@
     "frontendDist": "../dist/envello"
   },
   "app": {
+    "macOSPrivateApi": true,
     "withGlobalTauri": false,
     "security": {
       "csp": null

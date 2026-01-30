@@ -136,12 +136,12 @@
     --ugc-leaf: #3cba3e;
     --ugc-amber: #f07d59;
     --unsorted: #3a3e5e;
-    --shadow-s: 0px 2px 3px #a9b3c64d,0px 1px 3px #a9b3c680;
-    --shadow-m: 0px 1px 6px #a9b3c64d,0px 6px 10px #a9b3c680;
-    --shadow-l: 0px 3px 12px #a9b3c64d,0px 12px 18px #a9b3c680;
-    --shadow-s-dark: 0px 2px 3px #0000001a,0px 1px 3px #00000040;
-    --shadow-m-dark: 0px 1px 6px #00000040,0px 6px 10px #0000001a;
-    --shadow-l-dark: 0px 3px 12px #0000001a,0px 12px 18px #00000040;
+    --shadow-s: 0px 2px 3px #a9b3c64d, 0px 1px 3px #a9b3c680;
+    --shadow-m: 0px 1px 6px #a9b3c64d, 0px 6px 10px #a9b3c680;
+    --shadow-l: 0px 3px 12px #a9b3c64d, 0px 12px 18px #a9b3c680;
+    --shadow-s-dark: 0px 2px 3px #0000001a, 0px 1px 3px #00000040;
+    --shadow-m-dark: 0px 1px 6px #00000040, 0px 6px 10px #0000001a;
+    --shadow-l-dark: 0px 3px 12px #0000001a, 0px 12px 18px #00000040;
     --h-header: 60px;
     --tone-explore-25: var(--turq-25);
     --tone-explore-50: var(--turq-50);
@@ -347,14 +347,19 @@ code {
     margin-bottom: 16px;
 }
 
-.form-group:last-child { margin-bottom: 0; }
+.form-group:last-child {
+    margin-bottom: 0;
+}
 
 .form-row {
     display: flex;
     gap: 12px;
 }
 
-.form-row .form-group { flex: 1; margin-bottom: 0; }
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
 
 .form-label,
 .form-group label {
@@ -459,17 +464,18 @@ code {
 /* Empty states: center vertically and horizontally everywhere */
 env-empty-state,
 env-empty-state .env-empty-state {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
 }
+
 env-empty-state .env-empty-state__icon,
 env-empty-state .env-empty-state__title,
 env-empty-state .env-empty-state__description,
 env-empty-state .env-empty-state__content {
-  text-align: center !important;
+    text-align: center !important;
 }
 
 .dn-empty-wrap,
@@ -482,41 +488,42 @@ env-empty-state .env-empty-state__content {
 .snippets-grid-container--empty,
 .meetings-table-container--empty,
 .j-project-list--empty {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 280px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 280px;
 }
 
 .sidebar-empty-state {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
 }
 
 .sb-upcoming-empty {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
 }
 
 .sources-list:has(env-empty-state),
 .summaries-list:has(env-empty-state) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .bin-page:has(env-empty-state) {
-  min-height: 280px;
+    min-height: 280px;
 }
+
 .bin-page:has(env-empty-state) env-empty-state {
-  flex: 1;
+    flex: 1;
 }
 
 /* Shared Section Title */
@@ -625,7 +632,8 @@ app-journals,
 app-meetings,
 app-books,
 app-articles,
-app-code-snippets {
+app-code-snippets,
+app-developer-settings {
     display: block;
     height: 100%;
     min-height: 0;

@@ -1,31 +1,33 @@
 /* Host: fill parent for scroll chain */
 :host {
-    display: block;
-    flex: 1;
-    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
     height: 100%;
+    min-height: 0;
     overflow: hidden;
 }
 
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 .dev-settings-page {
-    padding: 12px 20px;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
+    min-height: 0;
+    overflow: hidden;
     background: var(--bg-app);
     color: var(--text-primary);
+    padding: 0;
+    margin: 0;
 }
 
 /* ─── Header: single row, fixed ───────────────────────────────────────────── */
 .dev-header {
     flex-shrink: 0;
-    padding-bottom: 10px;
-    margin-bottom: 8px;
+    padding: 12px 20px;
+    margin-bottom: 0;
     border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
 }
 
 .back-btn {
@@ -87,7 +89,7 @@
     font-weight: 600;
     padding: 4px 8px;
     border-radius: 4px;
-    background: var(--bg-panel);
+    background: var(--bg-subtle, #f5f5f5);
     border: 1px solid var(--border-subtle);
 }
 
@@ -105,7 +107,7 @@
 /* ─── Body: scrollable ────────────────────────────────────────────────────── */
 .dev-body {
     display: flex;
-    gap: 12px;
+    gap: 0;
     flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
@@ -116,11 +118,12 @@
 /* ─── Compact sidebar ────────────────────────────────────────────────────── */
 .dev-sidebar {
     flex-shrink: 0;
-    width: 180px;
+    width: 200px;
     background: var(--bg-panel);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    padding: 8px;
+    border: none;
+    border-right: 1px solid var(--border-subtle);
+    border-radius: 0;
+    padding: 12px;
     overflow-y: auto;
 }
 
@@ -155,7 +158,7 @@
     align-items: center;
     gap: 6px;
     width: 100%;
-    padding: 5px 8px;
+    padding: 6px 8px;
     margin-bottom: 1px;
     background: transparent;
     border: none;
@@ -175,8 +178,8 @@
 .dev-sidebar-item.active {
     background: var(--accent-primary-dim);
     color: var(--accent-primary);
-    border-left: 2px solid var(--accent-primary);
-    padding-left: 6px;
+    border-left: none;
+    padding-left: 8px;
 }
 
 .dev-sidebar-icon {
@@ -212,7 +215,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
 }
 
 /* ─── Compact toolbar ────────────────────────────────────────────────────── */
@@ -220,6 +223,9 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-app);
 }
 
 .dev-search-wrap {
@@ -329,10 +335,10 @@
     display: flex;
     flex-direction: column;
     background: var(--bg-panel);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
-    border-left: 2px solid var(--accent-primary);
+    border-left: none;
 }
 
 .dev-table-panel-header {
