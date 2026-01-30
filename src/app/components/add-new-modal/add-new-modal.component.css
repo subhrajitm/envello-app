@@ -175,29 +175,46 @@
 .creating-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(var(--bg-panel-rgb, 20, 20, 22), 0.96);
+    background: var(--bg-panel);
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: overlayFadeIn 0.2s ease-out;
 }
 
-.creating-content { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.creating-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    animation: contentScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes contentScaleIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
 
 .creating-spinner {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border: 2px solid var(--border-subtle);
     border-top-color: var(--accent-primary);
     border-radius: 50%;
-    animation: spin 0.7s linear infinite;
+    animation: spin 0.6s linear infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .creating-text { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 
-.success-icon { font-size: 18px; color: #10b981; }
+.success-icon { font-size: 20px; color: #10b981; }
 
 /* Two-pane body */
 .modal-body {
@@ -515,5 +532,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .add-new-backdrop, .add-new-modal, .creating-spinner { animation: none; }
+    .add-new-backdrop,
+    .add-new-modal,
+    .creating-overlay,
+    .creating-content,
+    .creating-spinner { animation: none; }
 }
