@@ -1,13 +1,13 @@
-<div class="activity-log-page">
+<div class="activity-log-page flex flex-col h-full">
     <div class="al-header">
-        <div class="al-header-top">
+        <div class="al-header-top flex items-center justify-between">
             <button class="back-btn" (click)="goBack()">
                 <span class="material-symbols-outlined">arrow_back</span>
                 BACK TO OVERVIEW
             </button>
             <div class="al-breadcrumbs">SYSTEM / LOGS / ACTIVITY</div>
         </div>
-        <div class="al-title-row">
+        <div class="al-title-row flex items-center justify-between">
             <h1>Activity Log</h1>
             <div class="al-controls">
                 <div class="search-input">
@@ -16,7 +16,7 @@
                 </div>
             </div>
         </div>
-        <div class="al-filters-row">
+        <div class="al-filters-row flex flex-wrap gap-2">
             <button class="filter-pill" [class.active]="activeFilter() === 'ALL'"
                 (click)="setFilter('ALL')">ALL</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'"

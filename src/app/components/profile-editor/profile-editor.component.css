@@ -121,48 +121,6 @@
     align-items: flex-start;
 }
 
-/* Form Styles */
-.form-group {
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.form-input,
-.form-textarea {
-    padding: 10px 12px;
-    background: var(--bg-app);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    color: var(--text-primary);
-    font-size: 14px;
-    transition: all 0.2s;
-    outline: none;
-}
-
-.form-textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-
-.form-input:focus,
-.form-textarea:focus {
-    border-color: var(--accent-primary);
-    background: var(--bg-hover);
-}
-
-.form-input:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
 .field-hint {
     font-size: 11px;
     color: var(--text-tertiary);

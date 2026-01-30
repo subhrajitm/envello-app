@@ -1,6 +1,6 @@
-<div class="recent-activity">
-    <div class="section-header">
-        <div class="section-title">
+<div class="recent-activity flex flex-col">
+    <div class="section-header flex items-center justify-between">
+        <div class="section-title flex items-center gap-2">
             <span class="material-symbols-outlined section-icon">schedule</span>
             RECENT ACTIVITY
         </div>
@@ -8,7 +8,7 @@
     </div>
     <div class="activity-list">
         @for (activity of activities(); track activity.id) {
-        <div class="activity-item">
+        <div class="activity-item flex items-start gap-3">
             <span class="material-symbols-outlined activity-icon">{{ activity.icon }}</span>
             <div class="activity-content">
                 <div class="activity-action">{{ activity.action }}</div>

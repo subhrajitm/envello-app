@@ -1,7 +1,7 @@
 <div class="ne-chapters-section">
     <div class="ne-chap-header">
         CHAPTERS
-        <div style="display: flex; align-items: center; gap: 4px;">
+        <div class="flex items-center gap-1">
             @if (bulkMode()) {
             <button class="ne-toolbar-btn" (click)="bulkDelete.emit()" 
                     [disabled]="selectedChapters().size === 0"
@@ -16,7 +16,7 @@
                 <span class="material-symbols-outlined">checklist</span>
             </button>
             }
-            <div class="add-menu-wrapper" style="position: relative;">
+            <div class="add-menu-wrapper relative">
                 <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu.emit(); $event.stopPropagation()"
                     title="Add new item">add</span>
                 @if (addMenuOpen()) {
@@ -50,8 +50,7 @@
                     </span>
                 </button>
                 <div class="ne-chap-info">
-                    <div class="ne-chap-title"
-                        style="font-weight: 700; font-size: 11px; text-transform: uppercase;">
+                    <div class="ne-chap-title font-bold text-[11px] uppercase">
                         {{ group.title }}
                     </div>
                 </div>

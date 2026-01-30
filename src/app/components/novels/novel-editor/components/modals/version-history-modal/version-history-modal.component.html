@@ -2,7 +2,7 @@
 <div class="ne-modal-overlay" (click)="close.emit()">
     <div class="ne-modal version-history-modal" (click)="$event.stopPropagation()">
         <div class="ne-modal-header">
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined">history</span>
                 Version History
             </div>
@@ -13,9 +13,9 @@
         <div class="ne-modal-body version-history-body">
             @if (versions().length === 0) {
             <div class="version-history-empty">
-                <span class="material-symbols-outlined" style="font-size: 48px; color: var(--text-tertiary); opacity: 0.5;">history</span>
+                <span class="material-symbols-outlined text-5xl text-[var(--text-tertiary)] opacity-50">history</span>
                 <p>No version history available</p>
-                <p style="font-size: 12px; color: var(--text-tertiary);">Versions are automatically saved as you edit</p>
+                <p class="text-xs text-[var(--text-tertiary)]">Versions are automatically saved as you edit</p>
             </div>
             } @else {
             <div class="version-history-list">
@@ -27,7 +27,7 @@
                                 @if (version.title) {
                                 {{ version.title }}
                                 } @else {
-                                <span style="color: var(--text-tertiary);">Untitled</span>
+                                <span class="text-[var(--text-tertiary)]">Untitled</span>
                                 }
                             </div>
                             <div class="version-meta">

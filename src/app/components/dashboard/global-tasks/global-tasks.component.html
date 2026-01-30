@@ -1,6 +1,6 @@
-<div class="global-tasks">
-    <div class="section-header">
-        <div class="section-title">
+<div class="global-tasks flex flex-col">
+    <div class="section-header flex items-center justify-between">
+        <div class="section-title flex items-center gap-2">
             <span class="material-symbols-outlined section-icon">task</span>
             GLOBAL TASKS
             @if (highPriorityCount() > 0) {
@@ -10,7 +10,7 @@
     </div>
     <div class="tasks-list">
         @for (task of tasks(); track task.id) {
-        <div class="task-item">
+        <div class="task-item flex items-start gap-3">
             <input type="checkbox" class="task-checkbox" />
             <div class="task-content">
                 <div class="task-title">{{ task.title }}</div>

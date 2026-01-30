@@ -1,13 +1,13 @@
 @if (isOpen) {
-  <div class="env-modal-overlay" (click)="onOverlayClick()">
+  <div class="env-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="onOverlayClick()">
     <div
-      [class]="['env-modal-container', 'env-modal--' + size]"
+      [class]="['env-modal-container', 'env-modal--' + size, 'flex flex-col rounded-lg shadow-xl']"
       (click)="onContainerClick($event)"
       role="dialog"
       aria-modal="true"
       [attr.aria-labelledby]="title ? 'env-modal-title' : null"
     >
-      <div class="env-modal-header">
+      <div class="env-modal-header flex items-center justify-between">
         @if (title) {
           <h2 id="env-modal-title" class="env-modal-title">{{ title }}</h2>
         }

@@ -1,13 +1,13 @@
 @if (modal().isOpen) {
-<div class="ne-modal-overlay">
-    <div class="ne-modal">
+<div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]">
+    <div class="ne-modal flex flex-col rounded-lg shadow-xl">
         <div class="ne-modal-header">
             {{ modal().title }}
         </div>
         <div class="ne-modal-body">
             {{ modal().message }}
         </div>
-        <div class="ne-modal-footer">
+        <div class="ne-modal-footer flex items-center justify-end gap-2">
             <button class="ne-modal-btn cancel" (click)="cancel.emit()">Cancel</button>
             <button class="ne-modal-btn delete" (click)="confirm.emit()">Delete</button>
         </div>

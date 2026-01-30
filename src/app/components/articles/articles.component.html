@@ -229,7 +229,7 @@
         <div body>
             @if (articleToDelete(); as article) {
             <p>Are you sure you want to delete <strong>"{{ article.title }}"</strong>?</p>
-            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">This action cannot be undone.</p>
+            <p class="text-muted-hint">This action cannot be undone.</p>
             }
         </div>
         <div footer>

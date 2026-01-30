@@ -41,7 +41,7 @@
                 <env-icon-button icon="calendar_month" variant="ghost" [size]="28" [active]="viewMode() === 'calendar'" title="Calendar" (clicked)="viewMode.set('calendar')"></env-icon-button>
                 <env-icon-button icon="view_kanban" variant="ghost" [size]="28" [active]="viewMode() === 'kanban'" title="Kanban" (clicked)="viewMode.set('kanban')"></env-icon-button>
             </div>
-            <env-button variant="primary" icon="add" size="sm" (clicked)="openCreateModal()">New</env-button>
+            <env-button variant="primary" icon="add" (clicked)="openCreateModal()">New</env-button>
         </div>
     </div>
 
@@ -52,7 +52,7 @@
         <div class="meetings-table-container" [class.meetings-table-container--empty]="filteredMeetings().length === 0">
             @if (filteredMeetings().length === 0) {
             <env-empty-state icon="event_busy" [title]="searchQuery() ? 'No results' : 'No meetings'" [description]="searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
-                @if (!searchQuery()) { <env-button variant="primary" icon="add" size="sm" (clicked)="openCreateModal()">New</env-button> }
+                @if (!searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openCreateModal()">New</env-button> }
             </env-empty-state>
             } @else {
             <table class="meetings-table">
@@ -747,7 +747,7 @@
                     <input type="text" class="form-input" placeholder="Presenter (optional)"
                         [value]="newAgendaItemPresenter()"
                         (input)="newAgendaItemPresenter.set($any($event.target).value)" />
-                    <env-button variant="primary" icon="add" size="sm" (clicked)="addAgendaItem()"
+                    <env-button variant="primary" icon="add" (clicked)="addAgendaItem()"
                         [disabled]="!newAgendaItemTitle().trim()">Add</env-button>
                 </div>
 
@@ -795,7 +795,7 @@
                 <div class="add-note-form">
                     <textarea class="form-textarea" placeholder="Add a note..." [value]="newNoteInput()"
                         (input)="newNoteInput.set($any($event.target).value)"></textarea>
-                    <env-button variant="primary" icon="add" size="sm" (clicked)="addNote()"
+                    <env-button variant="primary" icon="add" (clicked)="addNote()"
                         [disabled]="!newNoteInput().trim()">Add Note</env-button>
                 </div>
 
@@ -841,7 +841,7 @@
                         <option value="MEDIUM">Medium</option>
                         <option value="HIGH">High</option>
                     </select>
-                    <env-button variant="primary" icon="add" size="sm" (clicked)="addActionItem()"
+                    <env-button variant="primary" icon="add" (clicked)="addActionItem()"
                         [disabled]="!newActionItemInput().trim()">Add</env-button>
                 </div>
 

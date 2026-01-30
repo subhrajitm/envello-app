@@ -1,6 +1,6 @@
 @if (isOpen()) {
-<div class="ne-modal-overlay" (click)="onCancel()">
-    <div class="ne-modal" (click)="$event.stopPropagation()">
+<div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="onCancel()">
+    <div class="ne-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()">
         <div class="ne-modal-header">
             Insert Link
         </div>
@@ -15,7 +15,7 @@
                     placeholder="Link text (optional)"
                 />
             </div>
-            <div class="ne-modal-input-wrapper" style="margin-top: 16px;">
+            <div class="ne-modal-input-wrapper mt-4">
                 <label class="ne-modal-label">URL</label>
                 <input 
                     type="url" 
@@ -28,7 +28,7 @@
                 />
             </div>
         </div>
-        <div class="ne-modal-footer">
+        <div class="ne-modal-footer flex items-center justify-end gap-2">
             <button class="ne-modal-btn cancel" (click)="onCancel()">Cancel</button>
             <button class="ne-modal-btn confirm" (click)="onInsert()" [disabled]="!linkUrl().trim()">
                 Insert

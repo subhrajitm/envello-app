@@ -559,18 +559,7 @@
     font-style: italic;
 }
 
-/* Form Styles */
-.form-group {
-    margin-bottom: 16px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-}
+/* Form overrides - base styles from global styles.css */
 
 .modal-input,
 .modal-textarea,
@@ -593,18 +582,6 @@
     border-color: var(--accent-primary);
 }
 
-.modal-textarea {
-    resize: vertical;
-    min-height: 200px;
-    font-family: inherit;
-    line-height: 1.6;
-}
+.modal-textarea { min-height: 200px; line-height: 1.6; }
 
-.form-row {
-    display: flex;
-    gap: 12px;
-}
-
-.form-group.half {
-    flex: 1;
-}
+.form-group.half { flex: 1; }

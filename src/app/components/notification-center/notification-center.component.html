@@ -1,14 +1,14 @@
 <div class="notification-panel" *ngIf="isOpen()" [@slideIn]>
     <!-- Header -->
-    <div class="panel-header">
-        <div class="header-title">
+    <div class="panel-header flex items-center justify-between">
+        <div class="header-title flex items-center gap-2">
             <span class="material-symbols-outlined">notifications</span>
             <h3>Notifications</h3>
             @if (unreadCount() > 0) {
             <span class="unread-badge">{{ unreadCount() }}</span>
             }
         </div>
-        <div class="header-actions">
+        <div class="header-actions flex items-center gap-1">
             @if (notifications().length > 0) {
             <button class="action-btn" (click)="markAllAsRead()" title="Mark all as read">
                 <span class="material-symbols-outlined">done_all</span>

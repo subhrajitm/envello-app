@@ -520,7 +520,9 @@
     gap: 8px;
 }
 
-.btn-secondary,
+.action-buttons env-button { flex: 1; }
+
+/* Legacy button classes - kept for any remaining native buttons */
 .btn-danger-outline {
     width: 100%;
     padding: 10px 16px;

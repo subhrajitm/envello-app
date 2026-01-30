@@ -135,10 +135,13 @@
   overflow: hidden;
 }
 
-/* Empty state: use env-empty-state; container flex when empty */
+/* Empty state: use env-empty-state; center content */
 .meetings-table-container--empty {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
 }
 
 /* Table — same padding/gap as novels */
@@ -728,29 +731,8 @@
 /* Modal forms — novels-style spacing */
 .create-meeting-form { display: flex; flex-direction: column; gap: 16px; padding: 0; }
 
-.form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group-full { width: 100%; }
-.form-row { display: flex; gap: 12px; }
-.form-row .form-group { flex: 1; }
-
-.form-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); }
-
-.form-input, .form-select, .form-textarea {
-  padding: 6px 10px;
-  height: 28px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 11px;
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(0,0,0,.08);
-}
-
-.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-primary-dim); }
-.form-input.compact, .form-select.compact { padding: 4px 8px; font-size: 11px; height: 26px; }
-.form-textarea { min-height: 80px; height: auto; resize: vertical; }
-.form-select { cursor: pointer; }
+.form-input.compact, .form-select.compact { padding: 4px 8px; font-size: 11px; min-height: 26px; }
 
 .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; color: var(--text-secondary); cursor: pointer; }
 .checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent-primary); }

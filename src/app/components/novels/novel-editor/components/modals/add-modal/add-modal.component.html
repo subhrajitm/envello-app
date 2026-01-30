@@ -1,6 +1,6 @@
 @if (modal().isOpen) {
-<div class="ne-modal-overlay" (click)="onCancel()">
-    <div class="ne-modal" (click)="$event.stopPropagation()" [class.note-modal]="modal().type === 'note'">
+<div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="onCancel()">
+    <div class="ne-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()" [class.note-modal]="modal().type === 'note'">
         <div class="ne-modal-header">
             {{ modal().title }}
         </div>
@@ -26,7 +26,7 @@
                 />
             </div>
             @if (modal().type === 'note') {
-            <div class="ne-modal-input-wrapper" style="margin-top: 16px;">
+            <div class="ne-modal-input-wrapper mt-4">
                 <label class="ne-modal-label">Note Content</label>
                 <textarea 
                     class="ne-modal-textarea" 
@@ -39,7 +39,7 @@
             </div>
             }
         </div>
-        <div class="ne-modal-footer">
+        <div class="ne-modal-footer flex items-center justify-end gap-2">
             <button class="ne-modal-btn cancel" (click)="onCancel()">Cancel</button>
             <button class="ne-modal-btn confirm" (click)="onConfirm()" [disabled]="!modal().inputValue.trim()">
                 Add

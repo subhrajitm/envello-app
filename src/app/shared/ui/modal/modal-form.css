@@ -1,41 +1,7 @@
 /**
- * Optional form styles for use inside env-modal [body].
- * Import this in your component when using forms in modals, or use your own .form-group / .modal-input.
+ * Modal form overrides - base form styles are in global styles.css.
+ * Import this when using forms in env-modal [body] for any modal-specific overrides.
  */
-.env-modal-body .form-group {
-  margin-bottom: 16px;
-}
-
-.env-modal-body .form-group label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.env-modal-body .modal-input,
-.env-modal-body .modal-textarea,
-.env-modal-body .modal-select {
-  width: 100%;
-  background: var(--bg-app);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 10px 12px;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.env-modal-body .modal-input:focus,
-.env-modal-body .modal-textarea:focus,
-.env-modal-body .modal-select:focus {
-  border-color: var(--accent-primary);
-}
-
-.env-modal-body .modal-textarea {
-  resize: vertical;
-  min-height: 80px;
+.env-modal-body .form-group:last-child {
+  margin-bottom: 0;
 }

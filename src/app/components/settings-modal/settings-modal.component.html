@@ -1,22 +1,20 @@
 <div class="settings-backdrop" *ngIf="isOpen()" (click)="close()">
     <div class="settings-modal" (click)="$event.stopPropagation()">
         <!-- Header -->
-        <div class="modal-header">
+        <div class="modal-header flex items-center justify-between">
             <div class="header-content">
                 <span class="material-symbols-outlined header-icon">settings</span>
                 <h2>Settings</h2>
             </div>
-            <button class="close-btn" (click)="close()">
-                <span class="material-symbols-outlined">close</span>
-            </button>
+            <env-icon-button icon="close" variant="ghost" [size]="32" title="Close" (clicked)="close()"></env-icon-button>
         </div>
 
         <!-- Content -->
         <div class="settings-content">
             <!-- Sidebar -->
-            <div class="settings-sidebar">
+            <div class="settings-sidebar flex flex-col gap-1">
                 @for (section of sections; track section.id) {
-                <button class="settings-nav-item" [class.active]="activeSection() === section.id"
+                <button class="settings-nav-item flex items-center gap-2 w-full" [class.active]="activeSection() === section.id"
                     (click)="setActiveSection(section.id)">
                     <span class="material-symbols-outlined">{{ section.icon }}</span>
                     <span>{{ section.label }}</span>
@@ -34,7 +32,7 @@
                         <p>Customize the look and feel</p>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Theme</label>
                             <span class="setting-desc">Choose your preferred color scheme</span>
@@ -50,7 +48,7 @@
                         </div>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Font Size</label>
                             <span class="setting-desc">Adjust text size across the app</span>
@@ -62,7 +60,7 @@
                         </div>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Compact Mode</label>
                             <span class="setting-desc">Reduce spacing for more content</span>
@@ -73,7 +71,7 @@
                         </label>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Animations</label>
                             <span class="setting-desc">Enable smooth transitions</span>
@@ -84,7 +82,7 @@
                         </label>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Navigation Layout</label>
                             <span class="setting-desc">Choose how navigation is displayed</span>
@@ -118,7 +116,7 @@
                         <p>Configure your writing experience</p>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Editor Font</label>
                             <span class="setting-desc">Choose your writing font family</span>
@@ -130,7 +128,7 @@
                         </select>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Line Height</label>
                             <span class="setting-desc">Spacing between lines</span>
@@ -142,7 +140,7 @@
                         </div>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Auto-save</label>
                             <span class="setting-desc">Save work every 30 seconds</span>
@@ -153,7 +151,7 @@
                         </label>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Spell Check</label>
                             <span class="setting-desc">Check spelling as you type</span>
@@ -164,7 +162,7 @@
                         </label>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Focus Mode</label>
                             <span class="setting-desc">Dim inactive paragraphs</span>
@@ -185,7 +183,7 @@
                         <p>Configure automated features</p>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Enable AI Features</label>
                             <span class="setting-desc">Turn on/off AI assistance across the app</span>
@@ -204,7 +202,7 @@
                                 {{ aiService.aiEnabled() ? 'Active' : 'Disabled' }}
                             </span>
                         </div>
-                        <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 12px; line-height: 1.5;">
+                        <p class="text-muted-hint text-[11px] mt-3 leading-relaxed">
                             When enabled, Envello provides intelligent suggestions, summaries, and creative assistance.
                             All processing is done securely.
                         </p>
@@ -220,7 +218,7 @@
                         <p>Manage how you receive updates</p>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Desktop Notifications</label>
                             <span class="setting-desc">Show system notifications</span>
@@ -232,7 +230,7 @@
                         </label>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Sound Effects</label>
                             <span class="setting-desc">Play sounds for actions</span>
@@ -243,7 +241,7 @@
                         </label>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Daily Summary</label>
                             <span class="setting-desc">Receive daily progress report</span>
@@ -264,7 +262,7 @@
                         <p>Control your data and privacy</p>
                     </div>
 
-                    <div class="setting-item">
+                    <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Analytics</label>
                             <span class="setting-desc">Share anonymous usage data</span>
@@ -290,7 +288,7 @@
                         </div>
                     </div>
 
-                    <button class="btn-danger-outline">Clear All Data</button>
+                    <env-button variant="danger">Clear All Data</env-button>
                 </div>
                 }
 
@@ -332,10 +330,10 @@
                         </div>
                     </div>
 
-                    <div class="action-buttons">
-                        <button class="btn-secondary">Check Updates</button>
-                        <button class="btn-secondary">Documentation</button>
-                        <button class="btn-secondary">Report Issue</button>
+                    <div class="action-buttons flex gap-2">
+                        <env-button variant="secondary">Check Updates</env-button>
+                        <env-button variant="secondary">Documentation</env-button>
+                        <env-button variant="secondary">Report Issue</env-button>
                     </div>
                 </div>
                 }
@@ -344,10 +342,10 @@
 
         <!-- Footer -->
         <div class="modal-footer">
-            <button class="btn-text" (click)="resetToDefaults()">Reset to Defaults</button>
-            <div class="footer-actions">
-                <button class="btn-cancel" (click)="close()">Cancel</button>
-                <button class="btn-save" (click)="saveSettings()">Save Changes</button>
+            <env-button variant="ghost" (clicked)="resetToDefaults()">Reset to Defaults</env-button>
+            <div class="footer-actions flex gap-2">
+                <env-button variant="secondary" (clicked)="close()">Cancel</env-button>
+                <env-button variant="primary" (clicked)="saveSettings()">Save Changes</env-button>
             </div>
         </div>
     </div>

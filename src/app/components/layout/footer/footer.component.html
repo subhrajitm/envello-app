@@ -1,5 +1,5 @@
-<footer class="footer">
-    <div class="footer-item">
+<footer class="footer flex items-center justify-between gap-4">
+    <div class="footer-item flex items-center gap-2">
         <span class="material-symbols-outlined footer-icon">local_fire_department</span>
         <span class="footer-label">CURRENT STREAK:</span>
         <span class="footer-value">{{ currentStreak() }} Days</span>
@@ -11,7 +11,7 @@
         </div>
     </div>
     <div class="footer-spacer"></div>
-    <div class="footer-item">
+    <div class="footer-item flex items-center gap-2">
         <span class="material-symbols-outlined footer-icon">timer</span>
         <span class="footer-label">Session: {{ sessionDuration() }}</span>
     </div>

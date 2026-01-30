@@ -791,17 +791,7 @@
     background: var(--bg-app);
 }
 
-.form-group {
-    margin-bottom: 16px;
-}
 
-.form-group label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-}
 
 .modal-input,
 .modal-textarea,
@@ -824,10 +814,6 @@
     border-color: var(--accent-primary);
 }
 
-.modal-textarea {
-    resize: vertical;
-    min-height: 80px;
-}
 
 .form-row {
     display: flex;

@@ -36,7 +36,7 @@
         <env-icon-button icon="view_list" variant="ghost" [size]="28" [active]="booksService.viewMode() === 'list'" title="List" (clicked)="booksService.viewMode.set('list')"></env-icon-button>
         <env-icon-button icon="grid_view" variant="ghost" [size]="28" [active]="booksService.viewMode() === 'grid'" title="Grid" (clicked)="booksService.viewMode.set('grid')"></env-icon-button>
       </div>
-      <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add book</env-button>
+      <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add book</env-button>
     </div>
   </div>
 
@@ -45,7 +45,7 @@
     <div class="books-table-container" [class.books-table-container--empty]="filteredBooks().length === 0">
       @if (filteredBooks().length === 0) {
       <env-empty-state icon="menu_book" [title]="booksService.searchQuery() ? 'No results' : 'No books'" [description]="booksService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
-        @if (!booksService.searchQuery()) { <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add book</env-button> }
+        @if (!booksService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add book</env-button> }
       </env-empty-state>
       } @else {
       <table class="books-table">
@@ -104,7 +104,7 @@
     <div class="books-grid-container" [class.books-grid-container--empty]="filteredBooks().length === 0">
       @if (filteredBooks().length === 0) {
       <env-empty-state icon="menu_book" [title]="booksService.searchQuery() ? 'No results' : 'No books'" [description]="booksService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
-        @if (!booksService.searchQuery()) { <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add book</env-button> }
+        @if (!booksService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add book</env-button> }
       </env-empty-state>
       } @else {
       <div class="books-grid">
@@ -255,7 +255,7 @@
       <div class="add-note-form">
         <input type="text" class="form-input" placeholder="Add note..." [value]="newNoteInput()" (input)="newNoteInput.set($any($event.target).value)" (keyup.enter)="addNote()" />
         <input type="number" class="form-input compact" placeholder="Page" min="0" [value]="newNotePage() ?? ''" (input)="newNotePage.set($any($event.target).value !== '' ? +$any($event.target).value : undefined)" />
-        <env-button variant="primary" icon="add" size="sm" (clicked)="addNote()" [disabled]="!newNoteInput().trim()">Add</env-button>
+        <env-button variant="primary" icon="add" (clicked)="addNote()" [disabled]="!newNoteInput().trim()">Add</env-button>
       </div>
       @if (selectedBook()!.notes && selectedBook()!.notes!.length > 0) {
       <div class="notes-list">

@@ -1,10 +1,10 @@
-<div class="project-oversight">
-    <div class="section-header">
-        <div class="section-title">
+<div class="project-oversight flex flex-col">
+    <div class="section-header flex items-center justify-between">
+        <div class="section-title flex items-center gap-2">
             <span class="material-symbols-outlined section-icon">list</span>
             PROJECT OVERSIGHT
         </div>
-        <div class="section-controls">
+        <div class="section-controls flex items-center gap-2">
             <button class="control-btn">All Status</button>
             <button class="control-btn">
                 Sort by: Last Updated <span class="material-symbols-outlined filter-icon">expand_more</span>
@@ -23,7 +23,7 @@
         </div>
         <div class="table-body">
             @for (project of projects(); track project.id) {
-            <div class="table-row">
+            <div class="table-row flex items-center">
                 <div class="col-title">
                     <span class="material-symbols-outlined project-icon">{{ project.icon }}</span>
                     {{ project.title }}

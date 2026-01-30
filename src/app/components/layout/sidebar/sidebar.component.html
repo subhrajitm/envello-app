@@ -1,9 +1,9 @@
-<aside class="env-sidebar">
-  <div class="env-sidebar-header">
+<aside class="env-sidebar flex flex-col">
+  <div class="env-sidebar-header flex-shrink-0">
     <ng-content select="[env-sidebar-header]"></ng-content>
   </div>
 
-  <nav class="env-sidebar-nav">
+  <nav class="env-sidebar-nav flex flex-col flex-1 min-h-0">
     @for (item of items; track item.id) {
     <button type="button" class="env-sidebar-nav-item" [class.active]="activeId === item.id"
       (click)="onSelectItem(item.id)">

@@ -23,10 +23,10 @@
             <span class="meta-sep">•</span>
             <span class="save-indicator" [class.saving]="isSaving()">
                 @if (isSaving()) {
-                <span class="material-symbols-outlined" style="font-size: 12px;">sync</span>
+                <span class="material-symbols-outlined text-xs">sync</span>
                 Saving...
                 } @else if (lastSaved()) {
-                <span class="material-symbols-outlined" style="font-size: 12px;">check_circle</span>
+                <span class="material-symbols-outlined text-xs">check_circle</span>
                 Saved
                 } @else {
                 <span>Not saved</span>

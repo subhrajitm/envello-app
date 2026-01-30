@@ -1,38 +1,38 @@
 <env-modal [isOpen]="isOpen()" (closed)="close()" title="Edit Profile" size="md">
     <div body>
-        <div class="avatar-section">
-            <div class="current-avatar">
+        <div class="avatar-section flex flex-col items-center gap-4">
+            <div class="current-avatar flex-shrink-0">
                 @if (tempAvatar) {
                 <img [src]="tempAvatar" alt="Profile Avatar">
                 } @else {
                 <span class="avatar-initials">{{ userInitials() }}</span>
                 }
             </div>
-            <div class="avatar-actions">
+            <div class="avatar-actions flex items-center gap-2">
                 <env-button variant="secondary" icon="upload" (clicked)="triggerFileInput()">Change Photo</env-button>
-                <button type="button" class="btn-text" (click)="removePhoto()">Remove</button>
+                <env-button variant="ghost" (clicked)="removePhoto()">Remove</env-button>
                 <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept="image/*">
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group flex flex-col gap-2">
             <label>Full Name</label>
             <input type="text" [(ngModel)]="tempName" class="form-input" placeholder="Your name">
         </div>
 
-        <div class="form-group">
+        <div class="form-group flex flex-col gap-2">
             <label>Email</label>
             <input type="email" [value]="user()?.email" class="form-input" disabled title="Email cannot be changed">
             <span class="field-hint">Email cannot be changed</span>
         </div>
 
-        <div class="form-group">
+        <div class="form-group flex flex-col gap-2">
             <label>Bio</label>
             <textarea [(ngModel)]="tempBio" class="form-textarea" placeholder="Tell us about yourself..." rows="4"></textarea>
             <span class="char-count">{{ tempBio.length }}/200</span>
         </div>
     </div>
-    <div footer>
+    <div footer class="flex items-center justify-end gap-2">
         <env-button variant="secondary" (clicked)="close()">Cancel</env-button>
         <env-button variant="primary" (clicked)="save()">Save Changes</env-button>
     </div>

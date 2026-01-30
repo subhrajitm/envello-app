@@ -1,6 +1,6 @@
 <div class="profile-dropdown" *ngIf="isOpen()" [@slideDown]>
     <!-- User Info Section -->
-    <div class="profile-header">
+    <div class="profile-header flex items-center gap-3">
         <div class="profile-avatar-large">
             @if (user()?.avatar) {
             <img [src]="user()!.avatar" alt="Profile">
@@ -16,34 +16,34 @@
     </div>
 
     <!-- Quick Stats -->
-    <div class="quick-stats">
-        <div class="stat-item">
+    <div class="quick-stats flex items-center justify-around">
+        <div class="stat-item flex flex-col items-center">
             <span class="stat-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
             <span class="stat-label">Words</span>
         </div>
         <div class="stat-divider"></div>
-        <div class="stat-item">
+        <div class="stat-item flex flex-col items-center">
             <span class="stat-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
             <span class="stat-label">Documents</span>
         </div>
         <div class="stat-divider"></div>
-        <div class="stat-item">
+        <div class="stat-item flex flex-col items-center">
             <span class="stat-value">{{ user()?.stats?.daysActive || 0 }}</span>
             <span class="stat-label">Days Active</span>
         </div>
     </div>
 
     <!-- Menu Items -->
-    <div class="menu-section">
-        <button class="menu-item" (click)="openProfile()">
+    <div class="menu-section flex flex-col">
+        <button class="menu-item flex items-center gap-2 w-full" (click)="openProfile()">
             <span class="material-symbols-outlined">person</span>
             <span>My Profile</span>
         </button>
-        <button class="menu-item" (click)="openSettings()">
+        <button class="menu-item flex items-center gap-2 w-full" (click)="openSettings()">
             <span class="material-symbols-outlined">settings</span>
             <span>Settings</span>
         </button>
-        <button class="menu-item" (click)="openActivity()">
+        <button class="menu-item flex items-center gap-2 w-full" (click)="openActivity()">
             <span class="material-symbols-outlined">history</span>
             <span>Activity Log</span>
         </button>
@@ -52,15 +52,15 @@
     <div class="menu-divider"></div>
 
     <div class="menu-section">
-        <button class="menu-item" (click)="openHelp()">
+        <button class="menu-item flex items-center gap-2 w-full" (click)="openHelp()">
             <span class="material-symbols-outlined">help</span>
             <span>Help & Support</span>
         </button>
-        <button class="menu-item" (click)="openBin()">
+        <button class="menu-item flex items-center gap-2 w-full" (click)="openBin()">
             <span class="material-symbols-outlined">delete</span>
             <span>Bin</span>
         </button>
-        <button class="menu-item" (click)="openKeyboardShortcuts()">
+        <button class="menu-item flex items-center gap-2 w-full" (click)="openKeyboardShortcuts()">
             <span class="material-symbols-outlined">keyboard</span>
             <span>Keyboard Shortcuts</span>
         </button>

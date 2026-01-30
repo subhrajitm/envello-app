@@ -34,7 +34,7 @@
         <env-icon-button icon="view_list" variant="ghost" [size]="28" [active]="snippetsService.viewMode() === 'list'" title="List" (clicked)="snippetsService.viewMode.set('list')"></env-icon-button>
         <env-icon-button icon="grid_view" variant="ghost" [size]="28" [active]="snippetsService.viewMode() === 'grid'" title="Grid" (clicked)="snippetsService.viewMode.set('grid')"></env-icon-button>
       </div>
-      <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add snippet</env-button>
+      <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add snippet</env-button>
     </div>
   </div>
 
@@ -43,7 +43,7 @@
     <div class="snippets-table-container" [class.snippets-table-container--empty]="filteredSnippets().length === 0">
       @if (filteredSnippets().length === 0) {
       <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
-        @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add snippet</env-button> }
+        @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add snippet</env-button> }
       </env-empty-state>
       } @else {
       <table class="snippets-table">
@@ -97,7 +97,7 @@
     <div class="snippets-grid-container" [class.snippets-grid-container--empty]="filteredSnippets().length === 0">
       @if (filteredSnippets().length === 0) {
       <env-empty-state icon="code" [title]="snippetsService.searchQuery() ? 'No results' : 'No snippets'" [description]="snippetsService.searchQuery() ? 'Adjust filters.' : ''" [compact]="true">
-        @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" size="sm" (clicked)="openAddModal()">Add snippet</env-button> }
+        @if (!snippetsService.searchQuery()) { <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add snippet</env-button> }
       </env-empty-state>
       } @else {
       <div class="snippets-grid">

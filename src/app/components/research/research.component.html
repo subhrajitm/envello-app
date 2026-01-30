@@ -622,7 +622,7 @@
         <div body>
             @if (libraryToDelete(); as library) {
             <p>Are you sure you want to delete <strong>"{{ library.name }}"</strong> and all its sources?</p>
-            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">This action cannot be undone.</p>
+            <p class="text-muted-hint">This action cannot be undone.</p>
             }
         </div>
         <div footer>
@@ -636,7 +636,7 @@
         <div body>
             @if (sourceToDelete(); as source) {
             <p>Are you sure you want to delete <strong>"{{ source.title }}"</strong>?</p>
-            <p style="color: var(--text-tertiary); font-size: 12px; margin-top: 8px;">This action cannot be undone.</p>
+            <p class="text-muted-hint">This action cannot be undone.</p>
             }
         </div>
         <div footer>
