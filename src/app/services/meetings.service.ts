@@ -1,7 +1,9 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService, Task } from './store.service';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
+
+
 
 export interface Attendee {
   id: string;
@@ -43,35 +45,35 @@ export interface Meeting {
   title: string;
   description?: string;
   project?: string;
-  
+
   // Date and time
   date: string; // ISO date string
   startTime: string; // e.g., "10:00"
   endTime?: string; // e.g., "11:00"
   duration?: number; // in minutes
   timezone?: string;
-  
+
   // Location
   location?: string;
   meetingLink?: string;
   meetingType: 'video' | 'phone' | 'in-person' | 'hybrid';
   platform?: 'zoom' | 'teams' | 'meet' | 'discord' | 'other';
-  
+
   // Attendees
   attendees: Attendee[];
   organizer?: Attendee;
-  
+
   // Agenda and content
   agenda?: AgendaItem[];
   notes?: MeetingNote[];
   actionItems?: ActionItem[];
-  
+
   // Status and categorization
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'rescheduled';
   priority?: 'HIGH' | 'MEDIUM' | 'LOW';
   color: string;
   labels?: string[];
-  
+
   // Recurring meeting settings
   recurring?: {
     pattern: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly' | 'custom';
@@ -81,14 +83,14 @@ export interface Meeting {
     seriesId?: string;
     occurrenceNumber?: number;
   };
-  
+
   // Reminders
   reminders?: Array<{
     time: number; // minutes before meeting
     type: 'notification' | 'email';
     sent?: boolean;
   }>;
-  
+
   // Attachments
   attachments?: Array<{
     id: string;
@@ -98,7 +100,7 @@ export interface Meeting {
     size: number;
     uploadedAt: string;
   }>;
-  
+
   // Metadata
   createdAt: string;
   updatedAt: string;
@@ -127,7 +129,7 @@ export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attende
 export class MeetingsService {
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private rxdb = inject(RxDBService);
+  private rxdb = inject(SqliteService);
 
   meetings = signal<Meeting[]>([]);
 
@@ -147,7 +149,7 @@ export class MeetingsService {
   private persistMeeting(m: Meeting): void {
     this.rxdb.upsertMeeting(m).catch(e => console.error('[MeetingsService] persist failed', e));
   }
-  
+
   // UI state
   selectedMeetingId = signal<string | null>(null);
   viewFilter = signal<MeetingViewFilter>('all');
@@ -157,16 +159,16 @@ export class MeetingsService {
   searchQuery = signal<string>('');
   selectedProject = signal<string>('');
   selectedLabels = signal<string[]>([]);
-  
+
   // Calendar state
   calendarDate = signal<Date>(new Date());
-  
+
   // Computed values
   selectedMeeting = computed(() => {
     const id = this.selectedMeetingId();
     return id ? this.meetings().find(m => m.id === id) ?? null : null;
   });
-  
+
   // Get unique projects from meetings
   availableProjects = computed(() => {
     const projects = new Set<string>();
@@ -175,7 +177,7 @@ export class MeetingsService {
     });
     return Array.from(projects).sort();
   });
-  
+
   // Get unique labels from meetings
   availableLabels = computed(() => {
     const labels = new Set<string>();
@@ -184,13 +186,13 @@ export class MeetingsService {
     });
     return Array.from(labels).sort();
   });
-  
+
   // Filtered and sorted meetings
   filteredMeetings = computed(() => {
     let result = [...this.meetings()];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Apply view filter
     const filter = this.viewFilter();
     switch (filter) {
@@ -219,25 +221,25 @@ export class MeetingsService {
         result = result.filter(m => m.status === 'cancelled');
         break;
     }
-    
+
     // Apply project filter
     const project = this.selectedProject();
     if (project) {
       result = result.filter(m => m.project === project);
     }
-    
+
     // Apply labels filter
     const labels = this.selectedLabels();
     if (labels.length > 0) {
-      result = result.filter(m => 
+      result = result.filter(m =>
         labels.some(label => m.labels?.includes(label))
       );
     }
-    
+
     // Apply search
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
-      result = result.filter(m => 
+      result = result.filter(m =>
         m.title.toLowerCase().includes(query) ||
         m.description?.toLowerCase().includes(query) ||
         m.project?.toLowerCase().includes(query) ||
@@ -245,7 +247,7 @@ export class MeetingsService {
         m.labels?.some(l => l.toLowerCase().includes(query))
       );
     }
-    
+
     // Apply sorting
     const sortField = this.sortBy();
     const direction = this.sortDirection();
@@ -273,10 +275,10 @@ export class MeetingsService {
       }
       return direction === 'asc' ? comparison : -comparison;
     });
-    
+
     return result;
   });
-  
+
   // Meetings grouped by status (for kanban view)
   meetingsByStatus = computed(() => {
     const meetings = this.filteredMeetings();
@@ -288,36 +290,36 @@ export class MeetingsService {
       rescheduled: meetings.filter(m => m.status === 'rescheduled'),
     };
   });
-  
+
   // Meetings for calendar view
   getMeetingsForDate(date: Date): Meeting[] {
     const targetDate = date.toISOString().split('T')[0];
     return this.meetings().filter(m => m.date === targetDate && m.status !== 'cancelled');
   }
-  
+
   // Stats
   meetingStats = computed(() => {
     const all = this.meetings();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const todayMeetings = all.filter(m => {
       const meetingDate = new Date(m.date);
       meetingDate.setHours(0, 0, 0, 0);
       return meetingDate.getTime() === today.getTime() && m.status !== 'cancelled';
     });
-    
+
     const upcomingMeetings = all.filter(m => {
       const meetingDate = new Date(m.date);
       meetingDate.setHours(0, 0, 0, 0);
       return meetingDate.getTime() > today.getTime() && m.status === 'scheduled';
     });
-    
+
     const totalActionItems = all.reduce((sum, m) => sum + (m.actionItems?.length ?? 0), 0);
-    const openActionItems = all.reduce((sum, m) => 
+    const openActionItems = all.reduce((sum, m) =>
       sum + (m.actionItems?.filter(a => a.status !== 'completed').length ?? 0), 0
     );
-    
+
     return {
       total: all.length,
       today: todayMeetings.length,
@@ -328,7 +330,7 @@ export class MeetingsService {
       openActionItems,
     };
   });
-  
+
   // Upcoming syncs (next meetings)
   upcomingSyncs = computed(() => {
     const now = new Date();
@@ -344,9 +346,9 @@ export class MeetingsService {
       })
       .slice(0, 5);
   });
-  
+
   // CRUD Operations
-  
+
   addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>) {
     const newMeeting: Meeting = {
       ...meeting,
@@ -390,32 +392,32 @@ export class MeetingsService {
     this.store.addActivity('Meeting deleted', 'system');
     this.rxdb.removeMeeting(id).catch(e => console.error('[MeetingsService] remove failed', e));
   }
-  
+
   cancelMeeting(id: string) {
     this.updateMeeting(id, { status: 'cancelled' });
     this.store.addActivity('Meeting cancelled', 'system');
   }
-  
+
   completeMeeting(id: string) {
     this.updateMeeting(id, { status: 'completed' });
     this.store.addActivity('Meeting completed', 'system');
   }
-  
+
   rescheduleMeeting(id: string, newDate: string, newStartTime: string, newEndTime?: string) {
-    this.updateMeeting(id, { 
-      date: newDate, 
-      startTime: newStartTime, 
+    this.updateMeeting(id, {
+      date: newDate,
+      startTime: newStartTime,
       endTime: newEndTime,
-      status: 'rescheduled' 
+      status: 'rescheduled'
     });
     this.store.addActivity('Meeting rescheduled', 'system');
   }
-  
+
   // Duplicate a meeting (useful for recurring meetings or templates)
   duplicateMeeting(id: string, newDate?: string): Meeting | null {
     const original = this.meetings().find(m => m.id === id);
     if (!original) return null;
-    
+
     const duplicate: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'> = {
       ...original,
       date: newDate ?? original.date,
@@ -428,92 +430,92 @@ export class MeetingsService {
         linkedTaskId: undefined,
       })),
     };
-    
+
     return this.addMeeting(duplicate);
   }
-  
+
   // Agenda operations
-  
+
   addAgendaItem(meetingId: string, item: Omit<AgendaItem, 'id'>) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting) return;
-    
+
     const newItem: AgendaItem = {
       ...item,
       id: Date.now().toString(),
     };
-    
+
     this.updateMeeting(meetingId, {
       agenda: [...(meeting.agenda ?? []), newItem],
     });
   }
-  
+
   updateAgendaItem(meetingId: string, itemId: string, updates: Partial<AgendaItem>) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting?.agenda) return;
-    
+
     this.updateMeeting(meetingId, {
-      agenda: meeting.agenda.map(item => 
+      agenda: meeting.agenda.map(item =>
         item.id === itemId ? { ...item, ...updates } : item
       ),
     });
   }
-  
+
   deleteAgendaItem(meetingId: string, itemId: string) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting?.agenda) return;
-    
+
     this.updateMeeting(meetingId, {
       agenda: meeting.agenda.filter(item => item.id !== itemId),
     });
   }
-  
+
   // Action items operations
-  
+
   addActionItem(meetingId: string, item: Omit<ActionItem, 'id'>) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting) return null;
-    
+
     const newItem: ActionItem = {
       ...item,
       id: Date.now().toString(),
     };
-    
+
     this.updateMeeting(meetingId, {
       actionItems: [...(meeting.actionItems ?? []), newItem],
     });
-    
+
     return newItem;
   }
-  
+
   updateActionItem(meetingId: string, itemId: string, updates: Partial<ActionItem>) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting?.actionItems) return;
-    
+
     this.updateMeeting(meetingId, {
-      actionItems: meeting.actionItems.map(item => 
+      actionItems: meeting.actionItems.map(item =>
         item.id === itemId ? { ...item, ...updates } : item
       ),
     });
   }
-  
+
   deleteActionItem(meetingId: string, itemId: string) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting?.actionItems) return;
-    
+
     this.updateMeeting(meetingId, {
       actionItems: meeting.actionItems.filter(item => item.id !== itemId),
     });
   }
-  
+
   // Convert action item to task
   convertActionItemToTask(meetingId: string, actionItemId: string): void {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting) return;
-    
+
     const actionItem = meeting.actionItems?.find(ai => ai.id === actionItemId);
     if (!actionItem) return;
-    
+
     const task: Task = {
       id: Date.now().toString(),
       title: actionItem.title,
@@ -523,99 +525,99 @@ export class MeetingsService {
       project: meeting.project,
       due: actionItem.dueDate,
     };
-    
+
     this.store.addTask(task);
-    
+
     // Link the task to the action item
     this.updateActionItem(meetingId, actionItemId, { linkedTaskId: task.id });
   }
-  
+
   // Notes operations
-  
+
   addNote(meetingId: string, content: string, createdBy?: string) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting) return;
-    
+
     const newNote: MeetingNote = {
       id: Date.now().toString(),
       content,
       createdAt: new Date().toISOString(),
       createdBy,
     };
-    
+
     this.updateMeeting(meetingId, {
       notes: [...(meeting.notes ?? []), newNote],
     });
   }
-  
+
   updateNote(meetingId: string, noteId: string, content: string) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting?.notes) return;
-    
+
     this.updateMeeting(meetingId, {
-      notes: meeting.notes.map(note => 
+      notes: meeting.notes.map(note =>
         note.id === noteId ? { ...note, content } : note
       ),
     });
   }
-  
+
   deleteNote(meetingId: string, noteId: string) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting?.notes) return;
-    
+
     this.updateMeeting(meetingId, {
       notes: meeting.notes.filter(note => note.id !== noteId),
     });
   }
-  
+
   // Attendees operations
-  
+
   addAttendee(meetingId: string, attendee: Omit<Attendee, 'id'>) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting) return;
-    
+
     const newAttendee: Attendee = {
       ...attendee,
       id: Date.now().toString(),
     };
-    
+
     this.updateMeeting(meetingId, {
       attendees: [...meeting.attendees, newAttendee],
     });
   }
-  
+
   updateAttendee(meetingId: string, attendeeId: string, updates: Partial<Attendee>) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting) return;
-    
+
     this.updateMeeting(meetingId, {
-      attendees: meeting.attendees.map(a => 
+      attendees: meeting.attendees.map(a =>
         a.id === attendeeId ? { ...a, ...updates } : a
       ),
     });
   }
-  
+
   removeAttendee(meetingId: string, attendeeId: string) {
     const meeting = this.meetings().find(m => m.id === meetingId);
     if (!meeting) return;
-    
+
     this.updateMeeting(meetingId, {
       attendees: meeting.attendees.filter(a => a.id !== attendeeId),
     });
   }
-  
+
   // Recurring meeting operations
-  
+
   createRecurringSeries(
     baseMeeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>,
     count: number
   ): Meeting[] {
     const seriesId = Date.now().toString();
     const meetings: Meeting[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       const meetingDate = new Date(baseMeeting.date);
-      
+
       switch (baseMeeting.recurring?.pattern) {
         case 'daily':
           meetingDate.setDate(meetingDate.getDate() + i * (baseMeeting.recurring?.interval ?? 1));
@@ -633,7 +635,7 @@ export class MeetingsService {
           meetingDate.setFullYear(meetingDate.getFullYear() + i * (baseMeeting.recurring?.interval ?? 1));
           break;
       }
-      
+
       const meeting = this.addMeeting({
         ...baseMeeting,
         date: meetingDate.toISOString().split('T')[0],
@@ -645,31 +647,31 @@ export class MeetingsService {
       });
       meetings.push(meeting);
     }
-    
+
     return meetings;
   }
-  
+
   // Utility methods
-  
+
   formatMeetingTime(meeting: Meeting): string {
     const date = new Date(meeting.date);
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
     };
     const dateStr = date.toLocaleDateString('en-US', options);
     const timeStr = this.formatTime(meeting.startTime);
     return `${dateStr}, ${timeStr}`;
   }
-  
+
   formatTime(time: string): string {
     const [hours, minutes] = time.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   }
-  
+
   getMeetingDurationDisplay(meeting: Meeting): string {
     if (meeting.duration) {
       if (meeting.duration >= 60) {
@@ -681,42 +683,42 @@ export class MeetingsService {
     }
     return '';
   }
-  
+
   isMeetingToday(meeting: Meeting): boolean {
     const today = new Date();
     const meetingDate = new Date(meeting.date);
     return meetingDate.toDateString() === today.toDateString();
   }
-  
+
   isMeetingTomorrow(meeting: Meeting): boolean {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const meetingDate = new Date(meeting.date);
     return meetingDate.toDateString() === tomorrow.toDateString();
   }
-  
+
   getRelativeDateLabel(meeting: Meeting): string {
     if (this.isMeetingToday(meeting)) return 'Today';
     if (this.isMeetingTomorrow(meeting)) return 'Tomorrow';
-    
+
     const date = new Date(meeting.date);
     const today = new Date();
     const diffDays = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
       return Math.abs(diffDays) === 1 ? 'Yesterday' : `${Math.abs(diffDays)} days ago`;
     }
     if (diffDays <= 7) {
       return date.toLocaleDateString('en-US', { weekday: 'long' });
     }
-    
+
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
-  
+
   getOpenActionItemsCount(meeting: Meeting): number {
     return meeting.actionItems?.filter(ai => ai.status !== 'completed').length ?? 0;
   }
-  
+
   getTotalActionItemsCount(meeting: Meeting): number {
     return meeting.actionItems?.length ?? 0;
   }

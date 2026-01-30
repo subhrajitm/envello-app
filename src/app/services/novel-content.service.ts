@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
 import { BinService } from './bin.service';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
 
 export interface NovelContent {
     id: string; // Links to StoreService Novel.id
@@ -92,7 +92,7 @@ export class NovelContentService {
     activeNovel = signal<NovelContent | null>(null);
     store = inject(StoreService);
     private bin = inject(BinService);
-    private rxdb = inject(RxDBService);
+    private rxdb = inject(SqliteService);
     private persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() { }
@@ -340,7 +340,7 @@ export class NovelContentService {
 
             // Capture the group before removing it so we can move it to the bin
             const groupToDelete = novel.chapters.find(g => g.id === groupId);
-            
+
             if (groupToDelete) {
                 // Move all chapters in the group to bin
                 groupToDelete.children.forEach(chapter => {

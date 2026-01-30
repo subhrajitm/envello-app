@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
 
 export interface ResearchLibrary {
     id: string;
@@ -41,7 +41,7 @@ export interface ResearchSummary {
     providedIn: 'root'
 })
 export class ResearchService {
-    private rxdb = inject(RxDBService);
+    private rxdb = inject(SqliteService);
 
     libraries = signal<ResearchLibrary[]>([]);
     sources = signal<ResearchSource[]>([]);
@@ -102,8 +102,8 @@ export class ResearchService {
     async deleteLibrary(id: string) {
         const srcs = this.sources().filter(s => s.libraryId === id);
         const sums = this.summaries().filter(s => s.libraryId === id);
-        for (const s of srcs) await this.rxdb.removeResearchSource(s.id).catch(() => {});
-        for (const s of sums) await this.rxdb.removeResearchSummary(s.id).catch(() => {});
+        for (const s of srcs) await this.rxdb.removeResearchSource(s.id).catch(() => { });
+        for (const s of sums) await this.rxdb.removeResearchSummary(s.id).catch(() => { });
         this.sources.update(list => list.filter(s => s.libraryId !== id));
         this.summaries.update(list => list.filter(s => s.libraryId !== id));
         this.libraries.update(list => list.filter(lib => lib.id !== id));

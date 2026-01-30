@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
 
 export interface Task {
   id: string;
@@ -101,7 +101,7 @@ export class StoreService {
   novels = signal<Novel[]>([]);
 
   private bin = inject(BinService);
-  private rxdb = inject(RxDBService);
+  private rxdb = inject(SqliteService);
 
   constructor() {
     this.loadFromRxDB();

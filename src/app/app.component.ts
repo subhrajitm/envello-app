@@ -5,6 +5,7 @@ import { HeaderComponent } from './components/layout/header/header.component';
 import { FooterComponent } from './components/layout/footer/footer.component';
 import { TauriService } from './core/services/tauri.service';
 import { SessionService } from './services/session.service';
+import { DataMigrationService } from './core/services/data-migration.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
@@ -20,6 +21,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
   private sessionService = inject(SessionService); // Initialize session tracking
+  private migrationService = inject(DataMigrationService);
   private unlistenFileDrop?: () => void;
 
   currentTab = signal('Overview');
@@ -27,19 +29,24 @@ export class AppComponent implements OnInit, OnDestroy {
   isImmersive = signal(false);
   sidebarCollapsed = signal(true);
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
-  
+
   private navigationLayoutListener?: (event: CustomEvent) => void;
 
   ngOnInit() {
+    // Perform one-time data migration from RxDB to SQLite
+    this.migrationService.migrateAllData().catch(err => {
+      console.error('[AppComponent] Migration failed:', err);
+    });
+
     // Load navigation layout from localStorage
     this.loadNavigationLayout();
-    
+
     // Listen for navigation layout changes from settings
     this.navigationLayoutListener = (event: CustomEvent) => {
       this.navigationLayout.set(event.detail);
     };
     window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
-    
+
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       map(() => this.activatedRoute),
@@ -57,7 +64,7 @@ export class AppComponent implements OnInit, OnDestroy {
       const tabName = this.mapUrlToTabName(url);
       this.currentTab.set(tabName);
       // Update window title when running in Tauri
-      this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => {});
+      this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => { });
     });
     this.setupTauriFileDrop();
   }

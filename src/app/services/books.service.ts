@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
 
 export type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
 export type BookStatus = 'reading' | 'completed' | 'queued';
@@ -36,7 +36,7 @@ export type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'cat
 @Injectable({ providedIn: 'root' })
 export class BooksService {
   private bin = inject(BinService);
-  private rxdb = inject(RxDBService);
+  private rxdb = inject(SqliteService);
 
   readonly books = signal<Book[]>([]);
   selectedBookId = signal<string | null>(null);

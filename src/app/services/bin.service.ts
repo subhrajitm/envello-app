@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
 
 export type BinItemType =
   | 'daily-note'
@@ -40,7 +40,7 @@ export class BinService {
   /** All items currently in the bin (most recent first). */
   readonly items = signal<BinItem[]>([]);
 
-  private rxdb = inject(RxDBService);
+  private rxdb = inject(SqliteService);
 
   constructor() {
     this.loadFromRxDB();
@@ -79,4 +79,3 @@ export class BinService {
     this.rxdb.clearBin().catch(e => console.error('[BinService] clear bin failed', e));
   }
 }
-

@@ -1,8 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService } from './store.service';
-import { RxDBService } from '../core/services/rxdb.service';
-
+import { SqliteService } from '../core/services/sqlite.service';
 export interface JournalEntry {
   id: string;
   projectId: string;
@@ -66,7 +65,7 @@ export class JournalService {
 
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private rxdb = inject(RxDBService);
+  private rxdb = inject(SqliteService);
 
   constructor() {
     this.loadFromRxDB();
@@ -82,7 +81,7 @@ export class JournalService {
       this.projects.set(projects);
       this.entries.set(entries);
       if (cols.length === 0) {
-        await this.rxdb.upsertJournalColumns(defaultColumns);
+        await Promise.all(defaultColumns.map(c => this.rxdb.upsertJournalColumn(c)));
         this.columns.set(defaultColumns);
       } else {
         this.columns.set(cols.sort((a, b) => a.order - b.order));
@@ -165,7 +164,7 @@ export class JournalService {
           title: entry.title,
           payload: entry
         });
-        this.rxdb.removeJournalEntry(entry.id).catch(() => {});
+        this.rxdb.removeJournalEntry(entry.id).catch(() => { });
       });
 
       this.entries.update(entries => entries.filter(e => e.projectId !== id));

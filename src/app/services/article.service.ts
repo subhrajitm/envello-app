@@ -1,5 +1,5 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
 
 export interface Article {
   id: string;
@@ -26,7 +26,7 @@ export interface Article {
   providedIn: 'root'
 })
 export class ArticleService {
-  private rxdb = inject(RxDBService);
+  private rxdb = inject(SqliteService);
 
   articles = signal<Article[]>([]);
 

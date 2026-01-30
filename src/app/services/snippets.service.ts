@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { RxDBService } from '../core/services/rxdb.service';
+import { SqliteService } from '../core/services/sqlite.service';
 
 export type SnippetLang =
   | 'Python'
@@ -36,7 +36,7 @@ const LANGS: SnippetLang[] = ['Python', 'JavaScript', 'TypeScript', 'Markdown', 
 @Injectable({ providedIn: 'root' })
 export class SnippetsService {
   private bin = inject(BinService);
-  private rxdb = inject(RxDBService);
+  private rxdb = inject(SqliteService);
 
   readonly snippets = signal<Snippet[]>([]);
   selectedSnippetId = signal<string | null>(null);
