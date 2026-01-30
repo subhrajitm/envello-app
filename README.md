@@ -31,7 +31,7 @@ Open [http://localhost:4200](http://localhost:4200). The app will reload on file
 | `npm run build:prod` | Production build (uses `environment.prod.ts`) |
 | `npm run build:staging` | Staging build (uses `environment.staging.ts`) |
 
-Output: `dist/envello-app/`
+Output: `dist/envello/`
 
 ## Tests
 

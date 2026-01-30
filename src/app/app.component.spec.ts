@@ -16,10 +16,10 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should have the envello-app title', () => {
+  it('should have the envello title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('envello-app');
+    expect(app.title).toEqual('envello');
   });
 
   it('should render dashboard with header and footer', () => {

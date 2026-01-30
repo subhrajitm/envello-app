@@ -14,7 +14,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'envello-app';
+  title = 'envello';
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);

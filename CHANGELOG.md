@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - HTTP interceptors: auth (token attachment) and error/retry (retries, 5xx redirect)
   - App version displayed in footer (from environment)
 - **Project identity**
-  - Package renamed from `angular-temp` to `envello-app`
+  - Package renamed from `angular-temp` to `envello`
   - Version set to `0.1.0`; build scripts `build:staging` and `build:prod` added
 - **DevOps**
   - GitHub Actions CI workflow: build (production) and unit tests on push/PR to main/master
@@ -31,11 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Wildcard route now redirects to `/not-found` instead of `/overview`
-- `angular.json`: project name and output path updated to `envello-app`; production/staging fileReplacements for environments
+- `angular.json`: project name and output path updated to `envello`; production/staging fileReplacements for environments
 
 ### Security
 
 - No secrets in environment files; API base URL and feature flags only
 - Auth and HTTP interceptors prepared for token-based backend auth
 
-[0.1.0]: https://github.com/your-org/envello-app/releases/tag/v0.1.0
+[0.1.0]: https://github.com/your-org/envello/releases/tag/v0.1.0

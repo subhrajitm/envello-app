@@ -1,12 +1,12 @@
 {
-  "productName": "envello-app",
+  "productName": "Envello",
   "version": "0.1.0",
   "identifier": "com.envello.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:4200",
-    "frontendDist": "../dist/envello-app"
+    "frontendDist": "../dist/envello"
   },
   "app": {
     "withGlobalTauri": false,

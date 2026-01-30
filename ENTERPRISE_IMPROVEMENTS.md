@@ -221,7 +221,7 @@ Apply the same pattern for: overview, novels, novel-editor, research, articles, 
 - **Security**: how secrets and tokens are managed, and how to rotate them.
 
 ### 9.3 Naming and project identity
-- **Package name**: rename from `angular-temp` to e.g. `envello-app` or `@org/envello` in `package.json` and anywhere it’s referenced.
+- **Package name**: currently `envello` in `package.json` and anywhere it’s referenced.
 - **App title**: already “Envello” in index.html; keep branding consistent (About, emails, support).
 
 ---
