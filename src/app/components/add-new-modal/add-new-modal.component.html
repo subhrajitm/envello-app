@@ -1,44 +1,132 @@
-<div class="add-new-backdrop" *ngIf="isOpen()" (click)="onBackdropClick()">
+@if (isOpen()) {
+<div 
+    class="add-new-backdrop" 
+    (click)="onBackdropClick()"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="add-new-title">
     <div class="add-new-modal" (click)="onModalClick($event)">
         <!-- Header -->
         <div class="modal-header">
             <div class="header-content">
                 <span class="material-symbols-outlined header-icon">add_circle</span>
-                <h2>Create New</h2>
+                <h2 id="add-new-title">Create New Item</h2>
             </div>
-            <button class="close-btn" (click)="close()">
-                <span class="material-symbols-outlined">close</span>
-            </button>
+            <div class="header-actions">
+                <kbd class="global-shortcut"><span class="shortcut-mod">⌘</span>N</kbd>
+                <button class="close-btn" (click)="close()" aria-label="Close" [disabled]="isCreating()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
         </div>
 
-        <!-- Options Grid -->
-        <div class="options-grid">
-            @for (option of options; track option.id) {
-            <div class="option-card" (click)="selectOption(option)">
-                <div class="option-icon" [style.background-color]="option.color">
-                    <span class="material-symbols-outlined">{{ option.icon }}</span>
-                </div>
-                <div class="option-content">
-                    <div class="option-header">
-                        <h3 class="option-title">{{ option.title }}</h3>
-                        @if (option.count !== undefined) {
-                        <span class="option-count">{{ option.count }}</span>
-                        }
-                    </div>
-                    <p class="option-description">{{ option.description }}</p>
-                </div>
-                @if (option.shortcut) {
-                <kbd class="shortcut-key">{{ option.shortcut }}</kbd>
+        <!-- Search -->
+        <div class="search-container">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input
+                #searchInput
+                type="text"
+                class="search-input"
+                placeholder="Search creation templates or press 1-8..."
+                [value]="searchQuery()"
+                (input)="onSearchChange($event)"
+                autocomplete="off"
+                [disabled]="isCreating()">
+            @if (searchQuery()) {
+            <button class="clear-search-btn" (click)="clearSearch()" aria-label="Clear">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            }
+        </div>
+
+        <!-- Loading Overlay -->
+        @if (isCreating()) {
+        <div class="creating-overlay">
+            <div class="creating-content">
+                <div class="creating-spinner"></div>
+                @if (createdItem()) {
+                <span class="creating-text">
+                    <span class="material-symbols-outlined success-icon">check_circle</span>
+                    Created {{ createdItem() }}
+                </span>
+                } @else {
+                <span class="creating-text">Creating...</span>
                 }
             </div>
-            }
+        </div>
+        }
+
+        <!-- Two-pane layout -->
+        <div class="modal-body">
+            <!-- Left: Categories -->
+            <nav class="sidebar">
+                <div class="sidebar-header">CATEGORIES</div>
+                <div class="sidebar-list">
+                    @for (cat of visibleSidebarCategories(); track cat.id) {
+                    <button
+                        class="sidebar-item"
+                        [class.sidebar-item--active]="selectedCategoryId() === cat.id"
+                        (click)="selectCategory(cat.id)">
+                        <span class="material-symbols-outlined sidebar-icon">{{ cat.icon }}</span>
+                        <span class="sidebar-label">{{ cat.label }}</span>
+                    </button>
+                    }
+                </div>
+            </nav>
+
+            <!-- Right: Content -->
+            <div class="content-pane" #optionsContainer>
+                @for (group of rightPaneOptions(); track group.label) {
+                <div class="content-group">
+                    <div class="content-group-header">{{ group.label }}</div>
+                    @for (option of group.options; track option.id) {
+                    <button
+                        class="content-card"
+                        [class.content-card--focused]="isOptionFocused(option)"
+                        (click)="selectOption(option)"
+                        [disabled]="isCreating()"
+                        type="button">
+                        <div class="content-card-icon" [style.background-color]="option.color">
+                            <span class="material-symbols-outlined">{{ option.icon }}</span>
+                        </div>
+                        <div class="content-card-body">
+                            <div class="content-card-title">{{ option.title }}</div>
+                            <div class="content-card-meta">
+                                <span class="content-card-tag">{{ option.tag }}</span>
+                                <span class="content-card-desc">{{ option.description }}</span>
+                            </div>
+                        </div>
+                        <div class="content-card-actions">
+                            <span class="content-card-count">{{ getOptionCount(option.id) }}</span>
+                            <kbd class="content-card-shortcut">{{ option.shortcut }}</kbd>
+                        </div>
+                    </button>
+                    }
+                </div>
+                }
+
+                @if (filteredOptions().length === 0) {
+                <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">search_off</span>
+                    <p class="empty-title">No matching templates</p>
+                    <p class="empty-description">Try a different search term</p>
+                    <button class="empty-clear-btn" (click)="clearSearch()">Clear search</button>
+                </div>
+                }
+            </div>
         </div>
 
         <!-- Footer -->
         <div class="modal-footer">
-            <span class="footer-hint">
-                Press shortcut key or <kbd>ESC</kbd> to close
-            </span>
+            <div class="footer-left">
+                <span class="shortcut-hint"><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                <span class="shortcut-hint"><kbd>Enter</kbd> Create</span>
+                <span class="shortcut-hint"><kbd>1</kbd>-<kbd>8</kbd> Quick create</span>
+            </div>
+            <div class="footer-right">
+                <span class="shortcut-hint"><kbd>Esc</kbd> Close</span>
+            </div>
         </div>
     </div>
 </div>
+}
