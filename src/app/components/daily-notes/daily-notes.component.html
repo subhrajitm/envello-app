@@ -469,15 +469,17 @@
             </div>
         </div>
         } @else {
-        <env-empty-state
-            icon="note_add"
-            [title]="openNotes().length === 0 ? 'All tabs closed' : 'No note selected'"
-            [description]="openNotes().length === 0 ? 'Create a new note to get started' : 'Select a note from the sidebar or create a new one to get started'"
-        >
-            <env-button variant="primary" icon="add" size="lg" (clicked)="handleNewNote()">
-                Create new note
-            </env-button>
-        </env-empty-state>
+        <div class="dn-empty-wrap">
+            <env-empty-state
+                icon="note_add"
+                [title]="openNotes().length === 0 ? 'All tabs closed' : 'No note selected'"
+                [description]="openNotes().length === 0 ? 'Create a new note to get started' : 'Select a note from the sidebar or create a new one to get started'"
+            >
+                <env-button variant="primary" icon="add" (clicked)="handleNewNote()">
+                    Create new note
+                </env-button>
+            </env-empty-state>
+        </div>
         }
     </div>
 </div>

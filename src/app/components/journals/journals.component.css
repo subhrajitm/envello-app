@@ -148,6 +148,15 @@
     max-height: calc(100% - 40px);
 }
 
+.j-project-list--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+    padding: 24px 16px;
+}
+
 .j-empty-state {
     padding: 40px 20px;
     text-align: center;

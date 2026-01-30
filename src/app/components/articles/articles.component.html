@@ -84,6 +84,7 @@
 
     <div class="articles-content-area">
         @if (filteredArticles().length === 0) {
+        <div class="articles-empty-wrap">
         <env-empty-state
             icon="article"
             [title]="searchQuery() ? 'No articles found' : 'No articles yet'"
@@ -91,6 +92,7 @@
         >
             <env-button variant="primary" icon="add" (clicked)="openArticleModal()">Create Article</env-button>
         </env-empty-state>
+        </div>
         } @else {
         <div class="articles-table">
             <div class="table-header">

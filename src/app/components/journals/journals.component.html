@@ -27,7 +27,7 @@
         </div>
 
         <!-- Projects List -->
-        <div class="j-project-list">
+        <div class="j-project-list" [class.j-project-list--empty]="filteredProjects().length === 0">
             @if (filteredProjects().length === 0) {
             @if (projectSearchQuery()) {
             <env-empty-state icon="search_off" title="No projects found" description="Try a different search." [compact]="true" />

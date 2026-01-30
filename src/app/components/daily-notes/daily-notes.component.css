@@ -658,12 +658,24 @@
     overflow-y: auto;
     padding: 20px;
     position: relative;
+    display: flex;
+    flex-direction: column;
     z-index: 0;
 }
 
+.dn-empty-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+}
+
 .editor-container {
+    flex: 1;
     max-width: 800px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .dn-entry-heading-input {

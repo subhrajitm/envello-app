@@ -657,11 +657,13 @@
 .sb-upcoming-empty {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 10px;
   font-size: 10px;
   font-weight: 500;
   color: var(--text-tertiary);
+  text-align: center;
 }
 .sb-upcoming-empty .material-symbols-outlined { font-size: 16px; }
 

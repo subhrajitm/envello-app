@@ -187,7 +187,15 @@
     flex-direction: column;
     background: var(--bg-app);
     border-top: 1px solid var(--border-subtle);
-    /* Separate content area */
+    min-height: 0;
+}
+
+.articles-empty-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
 }
 
 .articles-table {

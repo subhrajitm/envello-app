@@ -456,6 +456,69 @@ code {
     font-size: 18px;
 }
 
+/* Empty states: center vertically and horizontally everywhere */
+env-empty-state,
+env-empty-state .env-empty-state {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+env-empty-state .env-empty-state__icon,
+env-empty-state .env-empty-state__title,
+env-empty-state .env-empty-state__description,
+env-empty-state .env-empty-state__content {
+  text-align: center !important;
+}
+
+.dn-empty-wrap,
+.articles-empty-wrap,
+.research-empty-wrap,
+.novels-empty-wrap,
+.books-table-container--empty,
+.books-grid-container--empty,
+.snippets-table-container--empty,
+.snippets-grid-container--empty,
+.meetings-table-container--empty,
+.j-project-list--empty {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 280px;
+}
+
+.sidebar-empty-state {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.sb-upcoming-empty {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.sources-list:has(env-empty-state),
+.summaries-list:has(env-empty-state) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bin-page:has(env-empty-state) {
+  min-height: 280px;
+}
+.bin-page:has(env-empty-state) env-empty-state {
+  flex: 1;
+}
+
 /* Shared Section Title */
 .env-section-title {
     font-size: var(--text-xs);

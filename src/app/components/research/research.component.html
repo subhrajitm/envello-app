@@ -160,15 +160,17 @@
 
         } @else {
         <!-- No Library Selected -->
-        <env-empty-state
-            icon="library_books"
-            title="No Library Selected"
-            description="Select a library from the sidebar or create a new one to get started"
-        >
-            <env-button variant="primary" icon="add" size="lg" (clicked)="openLibraryModal()">
-                Create Library
-            </env-button>
-        </env-empty-state>
+        <div class="research-empty-wrap">
+            <env-empty-state
+                icon="library_books"
+                title="No Library Selected"
+                description="Select a library from the sidebar or create a new one to get started"
+            >
+                <env-button variant="primary" icon="add" (clicked)="openLibraryModal()">
+                    Create Library
+                </env-button>
+            </env-empty-state>
+        </div>
         }
     </div>
 
