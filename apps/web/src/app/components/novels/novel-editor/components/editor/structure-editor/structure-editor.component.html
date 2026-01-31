@@ -1,0 +1,42 @@
+<div class="ne-editor-canvas">
+    @if (activeFrontMatterId() && frontMatter().length > 0) {
+        @for (item of frontMatter(); track item.id) {
+            @if (item.id === activeFrontMatterId()) {
+            <input type="text" class="ne-doc-title-input" [ngModel]="item.title"
+                (ngModelChange)="novelService.updateFrontMatterTitle(item.id, $event)"
+                [placeholder]="getFrontMatterTypeLabel(item.type)" />
+            <div class="ne-doc-meta">{{ item.wordCount }} w</div>
+            <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+            }
+        }
+    } @else if (activePrologueId() && prologue()) {
+        @if (prologue(); as prologueData) {
+        <input type="text" class="ne-doc-title-input" [ngModel]="prologueData.title"
+            (ngModelChange)="novelService.updatePrologueTitle($event)" placeholder="Prologue Title" />
+        <div class="ne-doc-meta">
+            <span class="ne-draft-tag">{{ prologueData.status }}</span> • {{ prologueData.wordCount }} w
+        </div>
+        <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+        }
+    } @else {
+    <div class="ne-empty-state">
+        <div class="empty-state-icon">
+            <span class="material-symbols-outlined">menu_book</span>
+        </div>
+        <h3 class="empty-state-title">No Item Selected</h3>
+        <p class="empty-state-text">Select a Front Matter item or Prologue from the sidebar to start editing</p>
+        <div class="empty-state-actions">
+            <button class="empty-state-btn" (click)="addFrontMatterItem.emit('title-page')">
+                <span class="material-symbols-outlined">add</span>
+                Add Title Page
+            </button>
+            @if (!prologue()) {
+            <button class="empty-state-btn" (click)="addPrologue.emit()">
+                <span class="material-symbols-outlined">add</span>
+                Add Prologue
+            </button>
+            }
+        </div>
+    </div>
+    }
+</div>

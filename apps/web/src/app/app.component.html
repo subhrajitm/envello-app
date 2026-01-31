@@ -1,0 +1,20 @@
+<div class="dashboard">
+  <app-header 
+    [activeTab]="currentTab()" 
+    [isImmersive]="isImmersive()"
+    (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
+  </app-header>
+
+  <div 
+    class="dashboard-content" 
+    [class.no-padding]="hasSidebar()" 
+    [class.immersive-view]="isImmersive()"
+    [class.with-sidebar]="!isImmersive() && navigationLayout() !== 'horizontal'"
+    [class.sidebar-collapsed]="sidebarCollapsed()"
+    [class.horizontal-nav]="navigationLayout() === 'horizontal'">
+    <router-outlet></router-outlet>
+  </div>
+
+  <app-footer></app-footer>
+</div>
+<!-- Command Palette to be added -->

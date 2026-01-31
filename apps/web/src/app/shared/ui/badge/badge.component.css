@@ -1,0 +1,41 @@
+.env-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.env-badge--pill {
+  border-radius: 12px;
+  padding: 4px 10px;
+}
+
+.env-badge--default {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.env-badge--success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+}
+
+.env-badge--warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.env-badge--error {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+.env-badge--accent {
+  background: var(--accent-primary-dim);
+  color: var(--accent-primary);
+}

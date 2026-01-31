@@ -1,0 +1,7 @@
+/**
+ * Modal form overrides - base form styles are in global styles.css.
+ * Import this when using forms in env-modal [body] for any modal-specific overrides.
+ */
+.env-modal-body .form-group:last-child {
+  margin-bottom: 0;
+}

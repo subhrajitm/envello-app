@@ -1,0 +1,77 @@
+<div class="bin-page flex flex-col h-full">
+  <header class="bin-header flex items-center justify-between">
+    <div class="bin-header-left">
+      <h1>Bin</h1>
+      <p class="bin-subtitle">
+        Soft‑deleted items from across Envello. Items are only permanently removed from here.
+      </p>
+    </div>
+    <div class="bin-header-actions" *ngIf="items().length > 0">
+      <span class="bin-count">{{ items().length }} items</span>
+      <env-button variant="danger" icon="delete_sweep" (clicked)="emptyBin()" [disabled]="items().length === 0">
+        Empty Bin
+      </env-button>
+    </div>
+  </header>
+
+  <section class="bin-content" *ngIf="items().length > 0; else emptyState">
+    <table class="bin-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Scope</th>
+          <th>Deleted</th>
+          <th class="col-actions"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of sortedItems(); trackBy: trackById">
+          <td>
+            <div class="bin-item-main">
+              <div class="bin-item-title">
+                {{ item.title || item.originalId }}
+              </div>
+              <div class="bin-item-meta">
+                <span class="type-pill type-{{ item.type }}">
+                  {{ formatType(item.type) }}
+                </span>
+                <span class="meta-separator">•</span>
+                <span class="meta-id">ID: {{ item.originalId }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="bin-scope">
+              <span class="scope-label">Context</span>
+              <span class="scope-value">{{ item.contextId || 'Global' }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="bin-deleted">
+              <span class="deleted-primary">
+                {{ item.deletedAt | date: 'medium' }}
+              </span>
+              <span class="deleted-secondary">
+                {{ item.deletedAt | date: 'shortTime' }}
+              </span>
+            </div>
+          </td>
+          <td class="actions">
+            <env-button variant="danger" icon="delete_forever" size="sm" (clicked)="permanentlyDelete(item.id)">
+              Delete
+            </env-button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <ng-template #emptyState>
+    <env-empty-state
+      icon="delete_outline"
+      title="No items in Bin"
+      description="Deleted notes, chapters, characters, and locations will appear here before permanent removal. This acts as a safety net so teams can review destructive actions."
+    />
+  </ng-template>
+</div>
+

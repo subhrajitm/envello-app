@@ -6,7 +6,7 @@
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:4200",
-    "frontendDist": "../dist/envello"
+    "frontendDist": "../dist/apps/desktop"
   },
   "app": {
     "macOSPrivateApi": true,

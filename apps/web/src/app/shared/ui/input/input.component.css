@@ -1,0 +1,37 @@
+.env-input-wrap {
+  margin-bottom: 16px;
+}
+
+.env-input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.env-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.env-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.env-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.env-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

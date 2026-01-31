@@ -1,0 +1,181 @@
+<div class="ne-layout flex flex-col h-full" [class.fullscreen]="fullScreenMode()">
+    <!-- Header Removed -->
+
+    <!-- Workspace -->
+    @if (isLoading()) {
+    <div class="ne-loading-state">
+        <div class="loading-spinner">
+            <span class="material-symbols-outlined">auto_awesome</span>
+        </div>
+        <p class="loading-text">Loading novel...</p>
+    </div>
+    } @else {
+    <div class="ne-workspace">
+        <!-- Left Sidebar: Chapters -->
+        <!-- Left Sidebar: Chapters -->
+        <div class="ne-sidebar-left" [class.collapsed]="leftSidebarCollapsed()">
+            @if (leftSidebarCollapsed()) {
+            <button class="sidebar-toggle" (click)="toggleLeftSidebar()" title="Show sidebar">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            }
+            <!-- Sidebar Back Action -->
+            <div class="ne-sidebar-header-action">
+                <button class="ne-btn-back-sidebar" (click)="goBack()">
+                    <span class="material-symbols-outlined text-sm">arrow_back</span>
+                    Back to Dashboard
+                </button>
+            </div>
+
+
+            <!-- MANUSCRIPT VIEW -->
+            @if (activeNav() === 'manuscript' && novel()) {
+            <app-chapters-list [chapters]="novel()!.chapters" [activeChapterId]="activeChapterId()"
+                [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()"
+                (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)"
+                (deleteChapter)="deleteChapter($event.id, $event.title)"
+                (deleteGroup)="deleteGroup($event.id, $event.title)" (toggleBulkMode)="toggleBulkMode()"
+                (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()"
+                (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
+                (toggleChapterSelection)="toggleChapterSelection($event)" />
+            }
+
+            <!-- STRUCTURE VIEW -->
+            @if (activeNav() === 'structure' && novel()) {
+            <app-structure-view [frontMatter]="novel()!.frontMatter" [prologue]="novel()!.prologue || null"
+                [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
+                [addMenuOpen]="addMenuOpen()" (selectFrontMatterItem)="selectFrontMatterItem($event)"
+                (selectPrologue)="selectPrologue()"
+                (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
+                (deletePrologue)="deletePrologue()" (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()" (toggleAddMenu)="toggleAddMenu()" />
+            }
+
+            <!-- CHARACTERS VIEW -->
+            @if (activeNav() === 'characters' && novel()) {
+            <app-characters-list [characters]="novel()!.characters" [selectedCharacterId]="selectedCharacterId()"
+                (selectCharacter)="selectCharacter($event)" (deleteCharacter)="deleteCharacter($event.id, $event.name)"
+                (addNewCharacter)="addNewCharacter()" />
+            }
+
+            <!-- LOCATIONS VIEW -->
+            @if (activeNav() === 'locations' && novel()) {
+            <app-locations-list [locations]="novel()!.locations" [selectedLocationId]="selectedLocationId()"
+                (selectLocation)="selectLocation($event)" (deleteLocation)="deleteLocation($event.id, $event.name)"
+                (addNewLocation)="addNewLocation()" />
+            }
+
+            <app-sync-status [wordCount]="wordCount()" [formattedTime]="getFormattedTime()"
+                [goalProgress]="activeChapterId() ? getGoalProgress() : null"
+                [leftSidebarCollapsed]="leftSidebarCollapsed()" (toggleSidebar)="toggleLeftSidebar()" />
+        </div>
+
+        <!-- Editor Canvas -->
+        <div class="ne-editor-area" [class.focus-mode]="focusMode()">
+            <app-editor-header [activeNav]="activeNav()" [canUndo]="canUndo()" [canRedo]="canRedo()"
+                [searchOpen]="searchOpen()" [searchQuery]="searchQuery()" [filteredResults]="filteredChapters()"
+                [focusMode]="focusMode()" [fullScreenMode]="fullScreenMode()" [exportMenuOpen]="exportMenuOpen()"
+                (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()"
+                (toggleSearch)="toggleSearch()" (searchQueryChange)="searchQuery.set($event)"
+                (selectSearchResult)="selectSearchResult($event)" (toggleFocusMode)="toggleFocusMode()"
+                (toggleFullScreen)="toggleFullScreen()" (openVersionHistory)="openVersionHistory()"
+                (toggleExportMenu)="toggleExportMenu()" (exportNovel)="exportNovel($event)" />
+
+            @if (editor && (activeNav() === 'manuscript' || activeNav() === 'structure')) {
+            <app-editor-toolbar [editor]="editor" (openLinkModal)="openLinkModal()" (addImage)="addImage()"
+                (insertTable)="insertTable()" (addYoutube)="addYoutube()" />
+            }
+
+            @if (activeNav() === 'manuscript') {
+            <app-manuscript-editor [editor]="editor" [activeChapterId]="activeChapterId()" [title]="title()"
+                [chapterStatus]="chapterStatus()" [chapterLastEdited]="chapterLastEdited()" [isSaving]="isSaving()"
+                [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)" (addNewChapter)="addNewChapter()" />
+            }
+
+            @if (activeNav() === 'structure' && novel()) {
+            <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
+                [activePrologueId]="activePrologueId()" [frontMatter]="novel()!.frontMatter"
+                [prologue]="novel()!.prologue || null" (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()" />
+            }
+
+            @if (activeNav() === 'characters' && novel()) {
+            <app-character-details [character]="activeCharacter()" (updateField)="onCharacterFieldUpdate($event)"
+                (addNewCharacter)="addNewCharacter()" />
+            }
+
+            @if (activeNav() === 'locations' && novel()) {
+            <app-location-details [location]="activeLocation()" (updateField)="onLocationFieldUpdate($event)"
+                (addNewLocation)="addNewLocation()" />
+            }
+        </div>
+
+        <!-- Right Sidebar: AI & Tools -->
+        <div class="ne-sidebar-right" [class.collapsed]="rightSidebarCollapsed()">
+            @if (!rightSidebarCollapsed()) {
+            <button class="sidebar-toggle" (click)="toggleRightSidebar()" title="Hide sidebar">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            }
+            <div class="ne-right-tabs">
+                @if (aiService.aiEnabled()) {
+                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'ai'" (click)="setActiveTab('ai')">
+                    <span class="material-symbols-outlined icon-tab">bolt</span>
+                </button>
+                }
+                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'notes'"
+                    (click)="setActiveTab('notes')">
+                    <span class="material-symbols-outlined icon-tab">sticky_note_2</span>
+                </button>
+                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'manuscript'"
+                    (click)="setActiveTab('manuscript')">
+                    <span class="material-symbols-outlined icon-tab">description</span>
+                </button>
+            </div>
+
+            <div class="ne-right-content">
+                @if (rightSidebarTab() === 'ai' && aiService.aiEnabled()) {
+                <app-ai-panel [aiMessages]="aiMessages()" [aiLoading]="aiLoading()" [aiError]="aiError()"
+                    [aiPrompt]="aiPrompt()" [aiSuggestions]="aiSuggestions()"
+                    [showContextPreview]="showContextPreview()" [tokenCount]="getTokenCount()"
+                    [context]="getCurrentContext()" [activeChapter]="activeChapter()" [editor]="editor"
+                    (sendMessage)="sendAiMessage()" (analyzeToneAndPacing)="analyzeToneAndPacing()"
+                    (generateSuggestions)="generateSuggestions()" (summarizeChapter)="summarizeChapter()"
+                    (continueWriting)="continueWriting()" (applySuggestion)="applySuggestion($event)"
+                    (clearConversation)="clearAiConversation()" (clearSuggestions)="aiSuggestions.set([])"
+                    (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)" />
+                } @else if (rightSidebarTab() === 'notes' && novel()) {
+                <app-notes-panel [notes]="novel()!.notes" (addNewNote)="addNewNote()"
+                    (deleteNote)="deleteNote($event)" />
+                } @else if (rightSidebarTab() === 'manuscript' && novel()) {
+                <app-manuscript-data [totalNovelWords]="totalNovelWords()"
+                    [averageChapterLength]="averageChapterLength()" [chaptersCompleted]="chaptersCompleted()"
+                    [totalChapters]="getTotalChapters()" [logline]="novel()!.synopsis.logline"
+                    [theme]="novel()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
+                    [goalProgress]="getGoalProgress()" [activeChapterId]="activeChapterId()"
+                    [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()" />
+                }
+            </div>
+            @if (rightSidebarCollapsed()) {
+            <button class="sidebar-toggle right" (click)="toggleRightSidebar()" title="Show sidebar">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            }
+        </div>
+    </div>
+    }
+
+    <!-- Modals -->
+    <app-delete-modal [modal]="deleteModal()" (confirm)="confirmDelete()" (cancel)="cancelDelete()" />
+
+    <app-link-modal [isOpen]="linkModalOpen()" [linkText]="linkText()" [linkUrl]="linkUrl()"
+        (linkTextChange)="linkText.set($event)" (linkUrlChange)="linkUrl.set($event)" (insert)="insertLink()"
+        (cancel)="cancelLinkModal()" />
+
+    <app-version-history-modal [isOpen]="versionHistoryOpen()" [versions]="versionHistory()"
+        (restore)="restoreVersion($event)" (close)="closeVersionHistory()" />
+
+    <app-add-modal [modal]="addModal()" (inputValueChange)="updateAddModalInput($event)"
+        (inputValue2Change)="updateAddModalInput2($event)" (confirm)="confirmAdd()" (cancel)="cancelAdd()" />
+
+</div>

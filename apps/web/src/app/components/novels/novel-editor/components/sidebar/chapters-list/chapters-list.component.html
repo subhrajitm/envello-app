@@ -1,0 +1,97 @@
+<div class="ne-chapters-section">
+    <div class="ne-chap-header">
+        CHAPTERS
+        <div class="flex items-center gap-1">
+            @if (bulkMode()) {
+            <button class="ne-toolbar-btn" (click)="bulkDelete.emit()" 
+                    [disabled]="selectedChapters().size === 0"
+                    title="Delete selected">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+            <button class="ne-toolbar-btn" (click)="toggleBulkMode.emit()" title="Exit bulk mode">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            } @else {
+            <button class="ne-toolbar-btn" (click)="toggleBulkMode.emit()" title="Bulk select">
+                <span class="material-symbols-outlined">checklist</span>
+            </button>
+            }
+            <div class="add-menu-wrapper relative">
+                <span class="material-symbols-outlined icon-add" (click)="toggleAddMenu.emit(); $event.stopPropagation()"
+                    title="Add new item">add</span>
+                @if (addMenuOpen()) {
+                <div class="add-dropdown-menu">
+                    <button class="add-dropdown-option" (click)="addNewActOrPart.emit(); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">folder</span>
+                        <span class="option-label">Add Act/Part</span>
+                    </button>
+                    <button class="add-dropdown-option" (click)="addNewChapter.emit(); $event.stopPropagation()">
+                        <span class="material-symbols-outlined option-icon">description</span>
+                        <span class="option-label">Add Chapter</span>
+                    </button>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="ne-chapter-list">
+        @for (group of chapters(); track group.id; let i = $index) {
+        <div class="ne-chapter-group" 
+             [class.drag-over]="dragOverIndex() === i && dragStartIndex() !== null"
+             draggable="true"
+             (dragstart)="onDragStart($event, i, 'group')"
+             (dragover)="onDragOver($event, i)"
+             (dragend)="onDragEnd()"
+             (drop)="onDrop($event, i, 'group')">
+            <div class="ne-chapter-item group-header" (click)="toggleChapter.emit(group)">
+                <button class="ne-collapse-btn">
+                    <span class="material-symbols-outlined">
+                        {{ group.expanded ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                </button>
+                <div class="ne-chap-info">
+                    <div class="ne-chap-title font-bold text-[11px] uppercase">
+                        {{ group.title }}
+                    </div>
+                </div>
+                <span class="material-symbols-outlined list-delete chapter-delete group-delete"
+                    (click)="deleteGroup.emit({ id: group.id, title: group.title }); $event.stopPropagation()"
+                    title="Delete act/part">delete</span>
+            </div>
+            @if (group.expanded) {
+            <div class="ne-scene-list">
+                @for (chap of group.children; track chap.id; let j = $index) {
+                <div class="ne-chapter-item" 
+                     [class.active]="activeChapterId() === chap.id"
+                     [class.selected]="selectedChapters().has(chap.id)"
+                     [class.drag-over]="dragOverIndex() === j && dragStartIndex() !== null"
+                     [draggable]="!bulkMode()"
+                     (dragstart)="onDragStart($event, j, 'chapter')"
+                     (dragover)="onDragOver($event, j)"
+                     (dragend)="onDragEnd()"
+                     (drop)="onDrop($event, j, 'chapter', group.id)"
+                     (click)="bulkMode() ? toggleChapterSelection.emit(chap.id) : selectChapter.emit(chap)">
+                    @if (bulkMode()) {
+                    <input type="checkbox" 
+                           [checked]="selectedChapters().has(chap.id)"
+                           (click)="$event.stopPropagation()"
+                           (change)="toggleChapterSelection.emit(chap.id)"
+                           class="bulk-checkbox" />
+                    }
+                    <div class="ne-chap-info">
+                        <div class="ne-chap-title">{{ chap.title }}</div>
+                        <div class="ne-chap-meta">
+                            <span class="ne-draft-tag">{{ chap.status }}</span> • {{ chap.wordCount }} w
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined list-delete chapter-delete"
+                        (click)="deleteChapter.emit({ id: chap.id, title: chap.title }); $event.stopPropagation()"
+                        title="Delete chapter">delete</span>
+                </div>
+                }
+            </div>
+            }
+        </div>
+        }
+    </div>
+</div>

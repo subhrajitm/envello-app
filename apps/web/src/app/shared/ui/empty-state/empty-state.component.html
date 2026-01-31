@@ -1,0 +1,12 @@
+<div [class]="['env-empty-state flex flex-col items-center justify-center text-center', compact ? 'env-empty-state--compact' : '']">
+  <span class="material-symbols-outlined env-empty-state__icon">{{ icon }}</span>
+  @if (title) {
+    <h3 class="env-empty-state__title">{{ title }}</h3>
+  }
+  @if (description) {
+    <p class="env-empty-state__description">{{ description }}</p>
+  }
+  <div class="env-empty-state__content">
+    <ng-content></ng-content>
+  </div>
+</div>

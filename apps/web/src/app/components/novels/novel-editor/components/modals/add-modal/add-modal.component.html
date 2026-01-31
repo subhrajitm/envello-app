@@ -1,0 +1,50 @@
+@if (modal().isOpen) {
+<div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="onCancel()">
+    <div class="ne-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()" [class.note-modal]="modal().type === 'note'">
+        <div class="ne-modal-header">
+            {{ modal().title }}
+        </div>
+        <div class="ne-modal-body">
+            <div class="ne-modal-input-wrapper">
+                <label class="ne-modal-label">
+                    @if (modal().type === 'act') {
+                        Act/Part Title
+                    } @else if (modal().type === 'chapter') {
+                        Chapter Title
+                    } @else if (modal().type === 'note') {
+                        Note Title
+                    }
+                </label>
+                <input 
+                    type="text" 
+                    class="ne-modal-input" 
+                    [value]="modal().inputValue"
+                    (input)="onInputChange($any($event.target).value)"
+                    (keydown)="onKeydown($event)"
+                    #addInput
+                    autofocus
+                />
+            </div>
+            @if (modal().type === 'note') {
+            <div class="ne-modal-input-wrapper mt-4">
+                <label class="ne-modal-label">Note Content</label>
+                <textarea 
+                    class="ne-modal-textarea" 
+                    [value]="modal().inputValue2 || ''"
+                    (input)="onInput2Change($any($event.target).value)"
+                    (keydown.escape)="onCancel()"
+                    placeholder="Enter note content..."
+                    rows="4"
+                ></textarea>
+            </div>
+            }
+        </div>
+        <div class="ne-modal-footer flex items-center justify-end gap-2">
+            <button class="ne-modal-btn cancel" (click)="onCancel()">Cancel</button>
+            <button class="ne-modal-btn confirm" (click)="onConfirm()" [disabled]="!modal().inputValue.trim()">
+                Add
+            </button>
+        </div>
+    </div>
+</div>
+}

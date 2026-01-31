@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "dev": "ng serve",
-    "build": "ng build",
-    "build:staging": "ng build --configuration staging",
-    "build:prod": "ng build --configuration production",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "start": "ng serve desktop",
+    "dev": "ng serve desktop",
+    "build": "ng build desktop",
+    "build:staging": "ng build desktop --configuration staging",
+    "build:prod": "ng build desktop --configuration production",
+    "watch": "ng build desktop --watch --configuration development",
+    "test": "ng test desktop",
+    "start:web": "ng serve web",
+    "build:web": "ng build web",
+    "test:web": "ng test web"
   },
   "private": true,
   "dependencies": {

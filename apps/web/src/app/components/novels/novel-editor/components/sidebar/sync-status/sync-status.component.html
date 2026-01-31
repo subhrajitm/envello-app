@@ -1,0 +1,24 @@
+<div class="ne-sync-status">
+    <div class="sync-line"></div>
+    <div class="sync-info">
+        <div class="stat-item" title="Current word count">
+            <span class="stat-label">WORDS</span>
+            <span class="stat-value">{{ wordCount() }}</span>
+        </div>
+        <div class="stat-item" title="Session time">
+            <span class="stat-label">TIME</span>
+            <span class="stat-value">{{ formattedTime() }}</span>
+        </div>
+        @if (goalProgress() !== null) {
+        <div class="stat-item" title="Progress toward goal">
+            <span class="stat-label">GOAL</span>
+            <span class="stat-value">{{ goalProgress() }}%</span>
+        </div>
+        }
+    </div>
+    @if (!leftSidebarCollapsed()) {
+    <button class="sidebar-toggle right" (click)="toggleSidebar.emit()" title="Hide sidebar (⌘+←)">
+        <span class="material-symbols-outlined">chevron_left</span>
+    </button>
+    }
+</div>
