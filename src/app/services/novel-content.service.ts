@@ -112,7 +112,21 @@ export class NovelContentService {
             await this.rxdb.setNovelContent(id, JSON.stringify(data));
         } catch (e) {
             logIfTauri('[NovelContentService] loadNovel failed', e);
-            this.activeNovel.set(this.createEmptyNovel(id));
+
+            // Fallback to LocalStorage for browser development
+            const localData = localStorage.getItem(`novel_content_${id}`);
+            if (localData) {
+                try {
+                    this.activeNovel.set(JSON.parse(localData));
+                } catch (parseError) {
+                    console.error('Failed to parse local storage novel data', parseError);
+                    this.activeNovel.set(this.createEmptyNovel(id));
+                }
+            } else {
+                const empty = this.createEmptyNovel(id);
+                this.activeNovel.set(empty);
+                localStorage.setItem(`novel_content_${id}`, JSON.stringify(empty));
+            }
         }
     }
 
@@ -122,9 +136,12 @@ export class NovelContentService {
             this.persistTimeout = null;
             const n = this.activeNovel();
             if (!n) return;
-            this.rxdb.setNovelContent(n.id, JSON.stringify(n)).catch(e =>
-                logIfTauri('[NovelContentService] persist failed', e)
-            );
+
+            this.rxdb.setNovelContent(n.id, JSON.stringify(n)).catch(e => {
+                logIfTauri('[NovelContentService] persist failed', e);
+                // Fallback to LocalStorage
+                localStorage.setItem(`novel_content_${n.id}`, JSON.stringify(n));
+            });
         }, PERSIST_DEBOUNCE_MS);
     }
 
@@ -709,7 +726,12 @@ export class NovelContentService {
     /** Create and persist empty novel content (e.g. when adding a new novel from the list). */
     async createAndPersistEmptyNovel(id: string, title: string): Promise<void> {
         const data = this.createEmptyNovel(id, title);
-        await this.rxdb.setNovelContent(id, JSON.stringify(data));
+        try {
+            await this.rxdb.setNovelContent(id, JSON.stringify(data));
+        } catch (e) {
+            logIfTauri('[NovelContentService] Persist failed, falling back to LocalStorage', e);
+            localStorage.setItem(`novel_content_${id}`, JSON.stringify(data));
+        }
     }
 
     private createEmptyNovel(id: string, title: string = 'Untitled Novel'): NovelContent {
