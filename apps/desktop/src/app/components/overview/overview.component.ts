@@ -1,5 +1,6 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { StoreService } from '../../services/store.service';
 import { UserService } from '../../services/user.service';
 import { RecentActivityComponent } from '../dashboard/recent-activity/recent-activity.component';
@@ -14,17 +15,24 @@ import { RecentActivityComponent } from '../dashboard/recent-activity/recent-act
 export class OverviewComponent {
   store = inject(StoreService);
   userService = inject(UserService);
+  private router = inject(Router);
+
   user = this.userService.user;
 
   // Stats
   wordCount = computed(() => this.formatNumber(this.user()?.stats.totalWords || 0));
   streak = computed(() => (this.user()?.stats.daysActive || 0) + 'd');
 
+  // Real stats from Store
+  activeTasksCount = computed(() => this.store.tasks().filter(t => t.status !== 'COMPLETED').length);
+  dueTodayCount = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return this.store.tasks().filter(t => t.due && t.due.startsWith(today) && t.status !== 'COMPLETED').length;
+  });
+  completedTasksCount = computed(() => this.store.tasks().filter(t => t.status === 'COMPLETED').length);
+
   streakClass = computed(() => {
     const days = this.user()?.stats.daysActive || 0;
-    if (days >= 365) return 'yellow'; // Keep yellow for top tier or change? User said 365d showing same... 
-    // Actually user complaint "color is showing same in all views" might mean they expect DIFFERENT colors for different ranges.
-    // I'll implement a tiered system.
     if (days >= 365) return 'streak-diamond';
     if (days >= 100) return 'streak-fire';
     if (days >= 30) return 'streak-gold';
@@ -39,18 +47,19 @@ export class OverviewComponent {
 
   planningItems = this.store.planningItems;
 
-
+  // Combine tasks and novels for global view if needed, but for now just tasks
+  globalTasks = computed(() => this.store.tasks().filter(t => t.priority === 'HIGH' && t.status !== 'COMPLETED').slice(0, 5));
 
   /* Fill empty cells for illustration */
-  calendarPlaceholders = new Array(3).fill(null);
+  calendarPlaceholders = new Array(0).fill(null); // Dynamic now
   weekDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
   constructor() {
-    this.generateCalendar();
-  }
-
-  get globalTasks() {
-    return this.store.tasks().slice(0, 5);
+    // Effect to regenerate calendar when tasks change
+    effect(() => {
+      this.store.tasks(); // dependency
+      this.generateCalendar();
+    });
   }
 
   toggleAutoSchedule() {
@@ -78,6 +87,7 @@ export class OverviewComponent {
   generateCalendar() {
     const viewDate = this.currentDate;
     const now = new Date(); // Real 'now' for today check
+    const tasks = this.store.tasks();
 
     // Set header display
     if (this.viewMode() === 'MONTH') {
@@ -107,29 +117,43 @@ export class OverviewComponent {
       for (let i = startDayOfWeek - 1; i >= 0; i--) {
         daysArray.push({
           date: prevMonthLastDay - i,
-          prevMonth: true
+          prevMonth: true,
+          events: []
         });
       }
 
       // Add current month's days
       for (let i = 1; i <= lastDay.getDate(); i++) {
+        const dateObj = new Date(year, month, i);
+        const dateStr = dateObj.toISOString().split('T')[0];
         const isToday = i === now.getDate() && month === now.getMonth() && year === now.getFullYear();
-        const events = [];
 
-        if (i === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
-        if (isToday) {
-          events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
-          events.push({ title: 'EMERALD EDIT', type: 'fiction' });
-        }
-        if (i === 14) events.push({ title: 'KYOTO RELEASE', type: 'deadline' });
+        // Find events for this day
+        const dayTasks = tasks.filter(t => t.due && t.due.startsWith(dateStr));
+
+        const events = dayTasks.map(t => ({
+          title: t.title,
+          type: t.priority === 'HIGH' ? 'deadline' : 'fiction' // Simplified mapping
+        }));
 
         daysArray.push({
           date: i,
           today: isToday,
           events: events,
-          hasAdd: i === now.getDate() + 1 && month === now.getMonth() && year === now.getFullYear()
+          hasAdd: isToday // Allow adding on today
         });
       }
+
+      // Fill remaining slots to keep grid consitent if needed, 
+      // but simplistic grid is fine for now
+      const totalCells = daysArray.length;
+      const remaining = 35 - totalCells; // 5 rows * 7 cols
+      if (remaining > 0) {
+        for (let j = 1; j <= remaining; j++) {
+          daysArray.push({ date: j, nextMonth: true, events: [] });
+        }
+      }
+
     } else {
       // 2 WEEKS MODE
       // Align to start of the week (Monday)
@@ -140,20 +164,21 @@ export class OverviewComponent {
       for (let i = 0; i < 14; i++) {
         const d = new Date(startDate);
         d.setDate(startDate.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
 
         const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        const events = [];
 
-        if (d.getDate() === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
-        if (isToday) {
-          events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
-        }
+        const dayTasks = tasks.filter(t => t.due && t.due.startsWith(dateStr));
+        const events = dayTasks.map(t => ({
+          title: t.title,
+          type: t.priority === 'HIGH' ? 'deadline' : 'fiction'
+        }));
 
         daysArray.push({
           date: d.getDate(),
           today: isToday,
           events: events,
-          hasAdd: false
+          hasAdd: isToday
         });
       }
     }
@@ -165,5 +190,9 @@ export class OverviewComponent {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
     return num.toString();
+  }
+
+  navigateTo(path: string) {
+    this.router.navigate([path]);
   }
 }

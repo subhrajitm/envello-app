@@ -1,19 +1,34 @@
 <div class="overview-layout">
     <!-- Left Sidebar: Daily Stats & Pool -->
     <div class="ov-sidebar-left">
-        <div class="ov-stats-header">DAILY STATS</div>
-        <div class="ov-stats-row">
+        <div class="user-welcome-card">
+            <div class="welcome-text">
+                <span class="greeting">Welcome back,</span>
+                <span class="username">{{ user()?.name || 'Writer' }}</span>
+            </div>
+            <div class="user-level-badge">LEVEL 1</div>
+        </div>
+
+        <div class="ov-stats-grid">
             <div class="stat-card">
-                <div class="stat-label">WORD COUNT</div>
                 <div class="stat-value">{{ wordCount() }}</div>
+                <div class="stat-label">WORDS</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">STREAK</div>
                 <div class="stat-value" [ngClass]="streakClass()">{{ streak() }}</div>
+                <div class="stat-label">STREAK</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value blue-text">{{ activeTasksCount() }}</div>
+                <div class="stat-label">ACTIVE TASKS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value red-text">{{ dueTodayCount() }}</div>
+                <div class="stat-label">DUE TODAY</div>
             </div>
         </div>
 
-        <div class="ov-section-header">
+        <div class="ov-section-header mt-6">
             PLANNING POOL <span class="material-symbols-outlined icon-xs">filter_list</span>
         </div>
         <div class="planning-list">
@@ -32,19 +47,23 @@
                 }
             </div>
             }
-        </div>
-
-        <div class="ov-section-header mt-4">GLOBAL TASKS</div>
-        <div class="global-tasks-list">
-            @for (t of globalTasks; track t.id) {
-            <div class="g-task-row">
-                <span class="material-symbols-outlined icon-xs">target</span>
-                {{ t.title }}
-            </div>
+            @if (planningItems().length === 0) {
+            <div class="empty-state-sm">No items in planning pool.</div>
             }
         </div>
 
-        <button class="show-assets-btn">SHOW ALL ASSETS</button>
+        <div class="ov-section-header mt-4">HIGH PRIORITY TASKS</div>
+        <div class="global-tasks-list">
+            @for (t of globalTasks(); track t.id) {
+            <div class="g-task-row" (click)="navigateTo('tasks')">
+                <span class="material-symbols-outlined icon-xs priority-high">priority_high</span>
+                <span class="g-task-title">{{ t.title }}</span>
+            </div>
+            }
+            @if (globalTasks().length === 0) {
+            <div class="empty-state-sm">No high priority tasks.</div>
+            }
+        </div>
     </div>
 
     <!-- Main Content: Calendar -->
@@ -60,7 +79,6 @@
 
             <div class="cal-legend">
                 <div class="legend-item"><span class="dot blue"></span> FICTION</div>
-                <div class="legend-item"><span class="dot purple"></span> MYSTERY</div>
                 <div class="legend-item"><span class="dot yellow"></span> DEADLINE</div>
             </div>
 
@@ -79,7 +97,7 @@
 
             <!-- Days Grid -->
             @for (day of days(); track $index) {
-            <div class="cal-cell" [class.prev-month]="day.prevMonth">
+            <div class="cal-cell" [class.prev-month]="day.prevMonth" [class.next-month]="day.nextMonth">
                 <div class="day-num-row">
                     <span class="day-num" [class.today]="day.today">{{ day.date }}</span>
                     @if (day.today) {
@@ -93,27 +111,40 @@
                     </div>
                     }
                     @if (day.hasAdd) {
-                    <div class="cal-add-placeholder">
-                        <span class="material-symbols-outlined">add_circle</span>
-                        DROP TO PLAN
+                    <div class="cal-add-placeholder" (click)="navigateTo('tasks')">
+                        <span class="material-symbols-outlined">add</span>
                     </div>
                     }
                 </div>
             </div>
-            }
-            <!-- Fill empty cells for illustration -->
-            @for (p of calendarPlaceholders; track $index) {
-            <div class="cal-cell"></div>
             }
         </div>
     </div>
 
     <!-- Right Sidebar: Activity -->
     <div class="ov-sidebar-right">
+        <div class="quick-actions-panel">
+            <div class="ov-section-header">QUICK ACTIONS</div>
+            <div class="qa-grid">
+                <button class="qa-btn" (click)="navigateTo('novels')">
+                    <span class="material-symbols-outlined">book</span>
+                    <span>New Novel</span>
+                </button>
+                <button class="qa-btn" (click)="navigateTo('tasks')">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    <span>New Task</span>
+                </button>
+                <button class="qa-btn" (click)="navigateTo('daily-notes')">
+                    <span class="material-symbols-outlined">edit_note</span>
+                    <span>Daily Note</span>
+                </button>
+            </div>
+        </div>
+
         <app-recent-activity></app-recent-activity>
 
         <div class="ov-config-panel">
-            <div class="config-header">WORKBENCH CONFIG</div>
+            <div class="config-header">WORKBENCH</div>
             <div class="config-row">
                 <span>Auto-Schedule Tasks</span>
                 <div class="switch-toggle" [class.on]="user()?.preferences?.autoSchedule"
