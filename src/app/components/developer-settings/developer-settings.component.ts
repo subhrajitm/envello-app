@@ -48,7 +48,7 @@ export class DeveloperSettingsComponent {
   tabs = computed<DataTab[]>(() => [
     this.makeTab('tasks', 'Tasks', 'checklist', 'Tasks', ['id', 'title', 'priority', 'status', 'project'], this.store.tasks()),
     this.makeTab('notes', 'Notes', 'note', 'Content', ['id', 'date', 'title', 'preview'], this.store.notes()),
-    this.makeTab('planning', 'Planning Items', 'planning', 'Tasks', ['id', 'title', 'tag', 'stage'], this.store.planningItems()),
+    this.makeTab('planning', 'Planning Items', 'timeline', 'Tasks', ['id', 'title', 'tag', 'stage'], this.store.planningItems()),
     this.makeTab('activities', 'Activities', 'history', 'System', ['id', 'text', 'time', 'type'], this.store.activities()),
     this.makeTab('novels', 'Novels', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.novels()),
     this.makeTab('snippets', 'Code Snippets', 'code', 'Content', ['id', 'title', 'lang', 'tags'], this.snippets.snippets()),
