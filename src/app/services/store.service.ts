@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { SqliteService } from '../core/services/sqlite.service';
 import { logIfTauri } from '../core/utils/tauri-helpers';
+import { FileSystemService } from '../core/services/file-system.service';
 
 export interface Task {
   id: string;
@@ -54,9 +55,11 @@ export interface Note {
   date: string;
   title: string;
   preview: string;
-  content: string; // HTML content for simplicity
+  content?: string; // HTML content (In-memory cache)
   tags?: string[];
   lastEdited?: string;
+  filePath?: string;
+  lastSynced?: string; // ISO date
 }
 
 export interface PlanningItem {
@@ -103,9 +106,31 @@ export class StoreService {
 
   private bin = inject(BinService);
   private rxdb = inject(SqliteService);
+  private fs = inject(FileSystemService);
+
+  private turndownService: any;
+  private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
     this.loadFromRxDB();
+    this.initMarkdown();
+  }
+
+  private async initMarkdown() {
+    if (typeof window !== 'undefined') {
+      try {
+        const TurndownService = (await import('turndown')).default;
+        if (TurndownService) {
+          this.turndownService = new TurndownService();
+          this.turndownService.addRule('strikethrough', {
+            filter: ['del', 's', 'strike'],
+            replacement: (content: string) => '~' + content + '~'
+          });
+        }
+      } catch (e) {
+        console.warn('Turndown service undefined', e);
+      }
+    }
   }
 
   private async loadFromRxDB(): Promise<void> {
@@ -123,7 +148,6 @@ export class StoreService {
       this.activities.set(activities.slice(0, 50));
       this.novels.set(novels);
     } catch (e) {
-      // Only log errors in Tauri environment (browser failures are expected)
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
         logIfTauri('[StoreService] loadFromRxDB failed', e);
       }
@@ -133,6 +157,33 @@ export class StoreService {
       this.activities.set([]);
       this.novels.set([]);
     }
+  }
+
+  async loadNoteContent(id: string): Promise<string> {
+    const note = this.notes().find(n => n.id === id);
+    if (!note) return '';
+    // Return cached if valid (length check to avoid empty strings from DB migration)
+    if (note.content && note.content.length > 5) return note.content;
+
+    let mdContent = await this.fs.readNote(id);
+
+    // Lazy Migration: If file missing but DB has content, write to file
+    if (mdContent === null && note.content && note.content.length > 0) {
+      console.log('[StoreService] Migrating note to file:', id);
+      await this.saveNoteContentToFile(id, note.content);
+      return note.content;
+    }
+
+    if (mdContent) {
+      // Convert Markdown -> HTML
+      const { marked } = await import('marked');
+      const html = await marked.parse(mdContent);
+      // Update Cache
+      this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html as string } : n));
+      return html as string;
+    }
+
+    return '';
   }
 
   addTask(task: Task) {
@@ -167,9 +218,13 @@ export class StoreService {
     this.rxdb.removeTask(id).catch(e => logIfTauri('[StoreService] remove task failed', e));
   }
 
-  addNote(note: Note) {
+  async addNote(note: Note) {
     this.notes.update(notes => [note, ...notes]);
     this.addActivity("Entry added to '" + note.title + "'", 'entry');
+
+    // Write initial file
+    await this.saveNoteContentToFile(note.id, note.content || '');
+
     this.rxdb.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
   }
 
@@ -177,6 +232,7 @@ export class StoreService {
     const timestamp = new Date();
     const timeString = timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+    // Update In-Memory State Immediately
     this.notes.update(notes =>
       notes.map(note => note.id === id ? {
         ...note,
@@ -184,8 +240,35 @@ export class StoreService {
         lastEdited: updates.lastEdited || timeString
       } : note)
     );
+
     const note = this.notes().find(n => n.id === id);
-    if (note) this.rxdb.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
+    if (!note) return;
+
+    // Persist Logic: If content changed, debounce write to file
+    if (updates.content !== undefined) {
+      if (this.saveTimeouts[id]) clearTimeout(this.saveTimeouts[id]);
+      this.saveTimeouts[id] = setTimeout(() => {
+        this.saveNoteContentToFile(id, updates.content || '');
+      }, 1000);
+    }
+
+    // Persist Metadata to DB (content is explicitly excluded/cleared in SqliteService upsert)
+    this.rxdb.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
+  }
+
+  private async saveNoteContentToFile(id: string, html: string) {
+    if (!this.turndownService) await this.initMarkdown();
+    if (!this.turndownService) return; // Guard
+
+    const md = this.turndownService.turndown(html);
+    const filePath = await this.fs.saveNote(id, md);
+
+    // Update filePath in DB if changed (or first time)
+    const note = this.notes().find(n => n.id === id);
+    if (note && note.filePath !== filePath) {
+      this.notes.update(ns => ns.map(n => n.id === id ? { ...n, filePath } : n));
+      this.rxdb.upsertNote({ ...note, filePath });
+    }
   }
 
   deleteNote(id: string) {
@@ -204,6 +287,7 @@ export class StoreService {
     this.notes.set(existingNotes.filter(n => n.id !== id));
     this.addActivity('Note deleted', 'system');
     this.rxdb.removeNote(id).catch(e => logIfTauri('[StoreService] remove note failed', e));
+    this.fs.deleteNote(id).catch(e => console.error('Failed to delete note file', e));
   }
 
   addPlanningItem(item: PlanningItem) {

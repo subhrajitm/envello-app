@@ -173,6 +173,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const firstNoteId = this.notes()[0].id;
       this.selectedEntryId.set(firstNoteId);
       this.openNotes.set([firstNoteId]);
+      // Trigger lazy load
+      this.store.loadNoteContent(firstNoteId);
     }
 
     // Effect to update editor content when selected note changes
@@ -180,8 +182,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const note = this.selectedNote();
       if (note && this.editor) {
         // Only update if content is different to avoid cursor jumps
-        if (this.editor.getHTML() !== note.content) {
-          this.editor.commands.setContent(note.content);
+        // use default '' if content undefined
+        const content = note.content || '';
+        if (this.editor.getHTML() !== content) {
+          this.editor.commands.setContent(content);
         }
       }
     });
@@ -291,6 +295,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   selectNote(id: string) {
     this.selectedEntryId.set(id);
+    // Trigger lazy load from file system
+    this.store.loadNoteContent(id);
+
     // Add to open notes if not already open
     if (!this.openNotes().includes(id)) {
       this.openNotes.update(tabs => [...tabs, id]);

@@ -542,6 +542,14 @@ export class SqliteService {
     // ─── Notes ─────────────────────────────────────────────────────────────────
     private async reloadNotes() {
         const db = await this.getDb();
+        try {
+            // Try to add columns if they don't exist (Migration)
+            await db.execute('ALTER TABLE notes ADD COLUMN filePath TEXT').catch(() => { });
+            await db.execute('ALTER TABLE notes ADD COLUMN lastSynced TEXT').catch(() => { });
+        } catch (e) {
+            // Ignore column exists errors
+        }
+
         const rows = await db.select<NoteDoc[]>('SELECT * FROM notes');
         const parsed = rows.map((r: any) => this.parseRow<NoteDoc>(r, ['tags']));
         this.notesSubject.next(parsed);
@@ -554,14 +562,20 @@ export class SqliteService {
     async upsertNote(note: NoteDoc): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM notes WHERE id = $1', [note.id]);
-        const jsonNote = { ...note, tags: this.toJson(note.tags) };
+
+        // Ensure we don't store large content in DB, but keep tags jsonified
+        const jsonNote = {
+            ...note,
+            tags: this.toJson(note.tags),
+            content: '' // CLEAR CONTENT FROM DB -> Source of truth is .md file
+        };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE notes SET date = $1, title = $2, preview = $3, content = $4, tags = $5, lastEdited = $6 WHERE id = $7`,
-                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.id]);
+            await db.execute(`UPDATE notes SET date = $1, title = $2, preview = $3, content = $4, tags = $5, lastEdited = $6, filePath = $7, lastSynced = $8 WHERE id = $9`,
+                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, jsonNote.id]);
         } else {
-            await db.execute(`INSERT INTO notes (id, date, title, preview, content, tags, lastEdited) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited]);
+            await db.execute(`INSERT INTO notes (id, date, title, preview, content, tags, lastEdited, filePath, lastSynced) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced]);
         }
         await this.reloadNotes();
     }
