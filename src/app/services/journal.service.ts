@@ -3,6 +3,8 @@ import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService } from './store.service';
 import { SqliteService } from '../core/services/sqlite.service';
+import { FileSystemService } from '../core/services/file-system.service';
+
 export interface JournalEntry {
   id: string;
   projectId: string;
@@ -25,6 +27,8 @@ export interface JournalEntry {
   linkedEntries?: string[]; // IDs of linked entries
   isPinned?: boolean;
   isFavorite?: boolean;
+  filePath?: string;
+  lastSynced?: string;
 }
 
 export interface JournalProject {
@@ -67,9 +71,21 @@ export class JournalService {
   private bin = inject(BinService);
   private store = inject(StoreService);
   private rxdb = inject(SqliteService);
+  private fs = inject(FileSystemService);
+
+  private turndownService: any;
+  private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
     this.loadFromRxDB();
+    this.initMarkdown();
+  }
+
+  private async initMarkdown() {
+    if (typeof window !== 'undefined') {
+      const TurndownService = (await import('turndown')).default;
+      this.turndownService = new TurndownService();
+    }
   }
 
   private async loadFromRxDB(): Promise<void> {
@@ -88,11 +104,34 @@ export class JournalService {
         this.columns.set(cols.sort((a, b) => a.order - b.order));
       }
     } catch (e) {
-      // Only log errors in Tauri environment (browser failures are expected)
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
         logIfTauri('[JournalService] loadFromRxDB failed', e);
       }
     }
+  }
+
+  async loadEntryContent(id: string): Promise<string> {
+    const entry = this.entries().find(e => e.id === id);
+    if (!entry) return '';
+    if (entry.content && entry.content.length > 20) return entry.content; // Return cached
+
+    let mdContent = await this.fs.readFile('journal', id);
+
+    // Migration
+    if (mdContent === null && entry.content && entry.content.length > 0) {
+      console.log('[JournalService] Migrating entry to file:', id);
+      await this.saveEntryContentToFile(id, entry.content);
+      return entry.content;
+    }
+
+    if (mdContent) {
+      const { marked } = await import('marked');
+      const html = await marked.parse(mdContent);
+      this.entries.update(es => es.map(e => e.id === id ? { ...e, content: html as string } : e));
+      return html as string;
+    }
+
+    return '';
   }
 
   private persistProject(p: JournalProject): void {
@@ -213,6 +252,9 @@ export class JournalService {
     this.entries.update(entries => [...entries, newEntry]);
     this.updateProjectStats(entry.projectId);
     this.store.addActivity(`Entry added: ${newEntry.title}`, 'entry');
+
+    // Write initial file
+    this.saveEntryContentToFile(newEntry.id, newEntry.content);
     this.persistEntry(newEntry);
     return newEntry;
   }
@@ -227,6 +269,12 @@ export class JournalService {
       finalUpdates.wordCount = plainText.split(/\s+/).filter(w => w.length > 0).length;
       finalUpdates.characterCount = plainText.length;
       finalUpdates.preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
+
+      // Debounce File Write
+      if (this.saveTimeouts[id]) clearTimeout(this.saveTimeouts[id]);
+      this.saveTimeouts[id] = setTimeout(() => {
+        this.saveEntryContentToFile(id, updates.content || '');
+      }, 1000);
     }
 
     this.entries.update(entries =>
@@ -239,6 +287,22 @@ export class JournalService {
     if (updates.content) this.updateProjectStats(entry.projectId);
     const updated = this.getEntry(id);
     if (updated) this.persistEntry(updated);
+  }
+
+  private async saveEntryContentToFile(id: string, html: string) {
+    if (!this.turndownService) await this.initMarkdown();
+    // guard for tests or ssr if initMarkdown fails or isn't called yet
+    if (!this.turndownService) return;
+
+    const md = this.turndownService.turndown(html);
+    const filePath = await this.fs.saveFile('journal', id, md);
+
+    // Update filePath in DB if changed (or first time)
+    const entry = this.entries().find(e => e.id === id);
+    if (entry && entry.filePath !== filePath) {
+      this.entries.update(es => es.map(e => e.id === id ? { ...e, filePath } : e));
+      this.rxdb.upsertJournalEntry({ ...entry, filePath });
+    }
   }
 
   deleteEntry(id: string) {
@@ -254,6 +318,7 @@ export class JournalService {
       this.updateProjectStats(entry.projectId);
       this.store.addActivity(`Entry deleted: ${entry.title}`, 'system');
       this.rxdb.removeJournalEntry(id).catch(e => logIfTauri('[JournalService] remove entry failed', e));
+      this.fs.deleteFile('journal', id).catch(e => console.error('Failed to delete journal file', e));
     }
   }
 
@@ -305,7 +370,7 @@ export class JournalService {
     return entries.filter(entry =>
       entry.title.toLowerCase().includes(lowerQuery) ||
       entry.preview.toLowerCase().includes(lowerQuery) ||
-      entry.content.toLowerCase().includes(lowerQuery) ||
+      (entry.content || '').toLowerCase().includes(lowerQuery) ||
       entry.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))
     );
   }
@@ -363,6 +428,7 @@ export class JournalService {
   }
 
   private stripHtml(html: string): string {
+    if (typeof document === 'undefined') return html; // SSR guard
     const tmp = document.createElement('DIV');
     tmp.innerHTML = html;
     return tmp.textContent || tmp.innerText || '';

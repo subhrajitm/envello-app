@@ -876,6 +876,11 @@ export class SqliteService {
     // ─── Articles ──────────────────────────────────────────────────────────────
     private async reloadArticles() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE articles ADD COLUMN filePath TEXT').catch(() => { });
+            await db.execute('ALTER TABLE articles ADD COLUMN lastSynced TEXT').catch(() => { });
+        } catch (e) { }
+
         const rows = await db.select<ArticleDoc[]>('SELECT * FROM articles');
         const parsed = rows.map((r: any) => this.parseRow<ArticleDoc>(r, ['engagement', 'tags']));
         this.articlesSubject.next(parsed);
@@ -885,17 +890,39 @@ export class SqliteService {
         return this.articlesSubject.getValue();
     }
 
-    async upsertArticle(doc: ArticleDoc): Promise<void> {
+    async upsertArticle(article: ArticleDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM articles WHERE id = $1', [doc.id]);
-        const jsonDoc = { ...doc, engagement: this.toJson(doc.engagement), tags: this.toJson(doc.tags) };
+        const exists = await db.select<any[]>('SELECT id FROM articles WHERE id = $1', [article.id]);
+
+        const articleAny = article as any;
+        const jsonArticle = {
+            ...article,
+            tags: this.toJson(article.tags),
+            engagement: this.toJson(article.engagement),
+            content: '', // Clear content for DB
+            filePath: articleAny.filePath,
+            lastSynced: articleAny.lastSynced
+        };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE articles SET title=$1, platform=$2, pipeline=$3, wordCount=$4, content=$5, url=$6, scheduledDate=$7, engagement=$8, tags=$9, lastUpdated=$10, createdDate=$11, icon=$12, excerpt=$13 WHERE id=$14`,
-                [jsonDoc.title, jsonDoc.platform, jsonDoc.pipeline, jsonDoc.wordCount, jsonDoc.content, jsonDoc.url, jsonDoc.scheduledDate, jsonDoc.engagement, jsonDoc.tags, jsonDoc.lastUpdated, jsonDoc.createdDate, jsonDoc.icon, jsonDoc.excerpt, jsonDoc.id]);
+            await db.execute(`
+            UPDATE articles SET 
+                title=$1, platform=$2, pipeline=$3, wordCount=$4, content=$5, url=$6, 
+                scheduledDate=$7, engagement=$8, tags=$9, lastUpdated=$10, createdDate=$11, icon=$12, excerpt=$13,
+                filePath=$14, lastSynced=$15
+            WHERE id=$16`,
+                [jsonArticle.title, jsonArticle.platform, jsonArticle.pipeline, jsonArticle.wordCount, jsonArticle.content, jsonArticle.url,
+                jsonArticle.scheduledDate, jsonArticle.engagement, jsonArticle.tags, jsonArticle.lastUpdated, jsonArticle.createdDate, jsonArticle.icon, jsonArticle.excerpt,
+                jsonArticle.filePath, jsonArticle.lastSynced, jsonArticle.id]);
         } else {
-            await db.execute(`INSERT INTO articles (id, title, platform, pipeline, wordCount, content, url, scheduledDate, engagement, tags, lastUpdated, createdDate, icon, excerpt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-                [jsonDoc.id, jsonDoc.title, jsonDoc.platform, jsonDoc.pipeline, jsonDoc.wordCount, jsonDoc.content, jsonDoc.url, jsonDoc.scheduledDate, jsonDoc.engagement, jsonDoc.tags, jsonDoc.lastUpdated, jsonDoc.createdDate, jsonDoc.icon, jsonDoc.excerpt]);
+            await db.execute(`
+            INSERT INTO articles (
+                id, title, platform, pipeline, wordCount, content, url, scheduledDate, engagement, tags, 
+                lastUpdated, createdDate, icon, excerpt, filePath, lastSynced
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+                [jsonArticle.id, jsonArticle.title, jsonArticle.platform, jsonArticle.pipeline, jsonArticle.wordCount, jsonArticle.content, jsonArticle.url,
+                jsonArticle.scheduledDate, jsonArticle.engagement, jsonArticle.tags, jsonArticle.lastUpdated, jsonArticle.createdDate, jsonArticle.icon, jsonArticle.excerpt,
+                jsonArticle.filePath, jsonArticle.lastSynced]);
         }
         await this.reloadArticles();
     }
@@ -942,22 +969,53 @@ export class SqliteService {
     // ─── Journal Entries ───────────────────────────────────────────────────────
     private async reloadJournalEntries() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE journal_entries ADD COLUMN filePath TEXT').catch(() => { });
+            await db.execute('ALTER TABLE journal_entries ADD COLUMN lastSynced TEXT').catch(() => { });
+        } catch (e) { }
+
         const rows = await db.select<JournalEntryDoc[]>('SELECT * FROM journal_entries');
         const parsed = rows.map((r: any) => this.parseRow<JournalEntryDoc>(r, ['tags', 'linkedEntries']));
         this.journalEntriesSubject.next(parsed);
     }
 
-    async upsertJournalEntry(doc: JournalEntryDoc): Promise<void> {
+    async upsertJournalEntry(entry: JournalEntryDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM journal_entries WHERE id = $1', [doc.id]);
-        const jsonDoc = { ...doc, tags: this.toJson(doc.tags), linkedEntries: this.toJson(doc.linkedEntries) };
+        const exists = await db.select<any[]>('SELECT id FROM journal_entries WHERE id = $1', [entry.id]);
+
+        const entryAny = entry as any;
+        const jsonEntry = {
+            ...entry,
+            tags: this.toJson(entry.tags),
+            linkedEntries: this.toJson(entry.linkedEntries),
+            content: '', // Clear content
+            filePath: entryAny.filePath,
+            lastSynced: entryAny.lastSynced
+        };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE journal_entries SET projectId=$1, title=$2, content=$3, preview=$4, type=$5, column=$6, tags=$7, wordCount=$8, characterCount=$9, createdDate=$10, lastEdited=$11, hasAi=$12, isAiEdited=$13, progress=$14, statusColor=$15, meta=$16, isLocked=$17, linkedEntries=$18, isPinned=$19, isFavorite=$20 WHERE id=$21`,
-                [jsonDoc.projectId, jsonDoc.title, jsonDoc.content, jsonDoc.preview, jsonDoc.type, jsonDoc.column, jsonDoc.tags, jsonDoc.wordCount, jsonDoc.characterCount, jsonDoc.createdDate, jsonDoc.lastEdited, jsonDoc.hasAi, jsonDoc.isAiEdited, jsonDoc.progress, jsonDoc.statusColor, jsonDoc.meta, jsonDoc.isLocked, jsonDoc.linkedEntries, jsonDoc.isPinned, jsonDoc.isFavorite, jsonDoc.id]);
+            await db.execute(`
+            UPDATE journal_entries SET 
+                projectId=$1, title=$2, content=$3, preview=$4, type=$5, column=$6, tags=$7, 
+                wordCount=$8, characterCount=$9, createdDate=$10, lastEdited=$11, hasAi=$12, 
+                isAiEdited=$13, progress=$14, statusColor=$15, meta=$16, isLocked=$17, 
+                linkedEntries=$18, isPinned=$19, isFavorite=$20, filePath=$21, lastSynced=$22
+            WHERE id=$23`,
+                [jsonEntry.projectId, jsonEntry.title, jsonEntry.content, jsonEntry.preview, jsonEntry.type, jsonEntry.column, jsonEntry.tags,
+                jsonEntry.wordCount, jsonEntry.characterCount, jsonEntry.createdDate, jsonEntry.lastEdited, jsonEntry.hasAi,
+                jsonEntry.isAiEdited, jsonEntry.progress, jsonEntry.statusColor, jsonEntry.meta, jsonEntry.isLocked,
+                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced, jsonEntry.id]);
         } else {
-            await db.execute(`INSERT INTO journal_entries(id, projectId, title, content, preview, type, column, tags, wordCount, characterCount, createdDate, lastEdited, hasAi, isAiEdited, progress, statusColor, meta, isLocked, linkedEntries, isPinned, isFavorite) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
-                [jsonDoc.id, jsonDoc.projectId, jsonDoc.title, jsonDoc.content, jsonDoc.preview, jsonDoc.type, jsonDoc.column, jsonDoc.tags, jsonDoc.wordCount, jsonDoc.characterCount, jsonDoc.createdDate, jsonDoc.lastEdited, jsonDoc.hasAi, jsonDoc.isAiEdited, jsonDoc.progress, jsonDoc.statusColor, jsonDoc.meta, jsonDoc.isLocked, jsonDoc.linkedEntries, jsonDoc.isPinned, jsonDoc.isFavorite]);
+            await db.execute(`
+            INSERT INTO journal_entries (
+                id, projectId, title, content, preview, type, column, tags, wordCount, characterCount, 
+                createdDate, lastEdited, hasAi, isAiEdited, progress, statusColor, meta, isLocked, 
+                linkedEntries, isPinned, isFavorite, filePath, lastSynced
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`,
+                [jsonEntry.id, jsonEntry.projectId, jsonEntry.title, jsonEntry.content, jsonEntry.preview, jsonEntry.type, jsonEntry.column, jsonEntry.tags,
+                jsonEntry.wordCount, jsonEntry.characterCount, jsonEntry.createdDate, jsonEntry.lastEdited, jsonEntry.hasAi,
+                jsonEntry.isAiEdited, jsonEntry.progress, jsonEntry.statusColor, jsonEntry.meta, jsonEntry.isLocked,
+                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced]);
         }
         await this.reloadJournalEntries();
     }

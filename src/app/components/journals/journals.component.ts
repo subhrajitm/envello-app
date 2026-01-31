@@ -373,15 +373,20 @@ export class JournalsComponent implements OnInit, OnDestroy {
     this.openEntryDetail(newEntry.id);
   }
 
-  openEntryDetail(entryId: string) {
+  async openEntryDetail(entryId: string) {
     const entry = this.journalService.getEntry(entryId);
     if (entry) {
       this.selectedEntry.set(entry);
-      this.editingEntry.set({ ...entry });
+
+      // Load full content from file system if needed
+      const fullContent = await this.journalService.loadEntryContent(entryId);
+
+      this.editingEntry.set({ ...entry, content: fullContent });
+
       // Update editor content after a brief delay to ensure editor is ready
       setTimeout(() => {
         if (this.editor) {
-          this.editor.commands.setContent(entry.content);
+          this.editor.commands.setContent(fullContent);
         }
       }, 100);
     }

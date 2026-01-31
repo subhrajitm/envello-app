@@ -89,13 +89,16 @@ export class ArticlesComponent {
   pipelines = ['All Statuses', 'PUBLISHED', 'DRAFT', 'REVIEW', 'SCHEDULED'] as const;
 
   // Methods
-  openArticleModal(article?: Article) {
+  async openArticleModal(article?: Article) {
     if (article) {
       this.editingArticle.set(article);
       this.newArticleTitle.set(article.title);
       this.newArticlePlatform.set(article.platform);
       this.newArticlePipeline.set(article.pipeline);
-      this.newArticleContent.set(article.content || '');
+      // Load content asynchronously
+      const content = await this.articleService.loadArticleContent(article.id);
+      this.newArticleContent.set(content || '');
+
       this.newArticleTags.set(article.tags.join(', '));
       this.newArticleUrl.set(article.url || '');
       this.newArticleScheduledDate.set(article.scheduledDate || '');
@@ -148,6 +151,7 @@ export class ArticlesComponent {
 
   openArticle(article: Article) {
     this.activeArticleId.set(article.id);
+    this.articleService.loadArticleContent(article.id);
   }
 
   closeArticle() {

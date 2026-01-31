@@ -9,7 +9,7 @@ import { mkdir, exists, writeTextFile, readTextFile, rename, remove } from '@tau
 export class FileSystemService {
     private tauri = inject(TauriService);
     private initialized = false;
-    private notesDir = '';
+    private baseDir = '';
 
     async init() {
         if (this.initialized) return;
@@ -17,16 +17,11 @@ export class FileSystemService {
 
         try {
             const docDir = await documentDir();
-            this.notesDir = await join(docDir, 'envello', 'notes');
+            this.baseDir = await join(docDir, 'envello');
 
-            const dirExists = await exists(this.notesDir);
+            const dirExists = await exists(this.baseDir);
             if (!dirExists) {
-                // Recursive true is not supported in all versions of fs plugin directly like node, 
-                // but let's assume we create envello then notes.
-                // Actually tauri-plugin-fs mkdir has options? checking docs or assuming simple.
-                // Let's safe bet: create parent then child or use recursive option if available.
-                // v2 plugin usually supports recursive
-                await mkdir(this.notesDir, { recursive: true });
+                await mkdir(this.baseDir, { recursive: true });
             }
             this.initialized = true;
         } catch (e) {
@@ -34,55 +29,85 @@ export class FileSystemService {
         }
     }
 
-    async saveNote(id: string, content: string): Promise<string> {
+    /**
+     * Generic save method for any content type
+     * @param category Subfolder (e.g. 'notes', 'journal', 'articles', 'novels/my-book')
+     * @param id Filename without extension
+     * @param content Text content
+     * @param extension File extension (default: md)
+     */
+    async saveFile(category: string, id: string, content: string, extension: string = 'md'): Promise<string> {
         if (!this.tauri.isTauri()) {
-            localStorage.setItem(`note_${id}`, content);
+            localStorage.setItem(`${category}_${id}`, content);
             return '';
         }
         await this.init();
 
-        const fileName = `${id}.md`;
-        const filePath = await join(this.notesDir, fileName);
-        const tempPath = await join(this.notesDir, `${id}.tmp`);
+        try {
+            const categoryDir = await join(this.baseDir, category);
+            if (!(await exists(categoryDir))) {
+                await mkdir(categoryDir, { recursive: true });
+            }
 
-        // Atomic write: Write to temp, then rename
-        await writeTextFile(tempPath, content);
-        await rename(tempPath, filePath);
+            const fileName = `${id}.${extension}`;
+            const filePath = await join(categoryDir, fileName);
+            const tempPath = await join(categoryDir, `${id}.tmp`);
 
-        return filePath;
+            // Atomic write
+            await writeTextFile(tempPath, content);
+            await rename(tempPath, filePath);
+
+            return filePath;
+        } catch (e) {
+            console.error(`[FileSystem] Failed to save ${category}/${id}`, e);
+            throw e;
+        }
     }
 
-    async readNote(id: string): Promise<string | null> {
+    async readFile(category: string, id: string, extension: string = 'md'): Promise<string | null> {
         if (!this.tauri.isTauri()) {
-            return localStorage.getItem(`note_${id}`);
+            return localStorage.getItem(`${category}_${id}`);
         }
         await this.init();
 
-        const filePath = await join(this.notesDir, `${id}.md`);
         try {
+            const filePath = await join(this.baseDir, category, `${id}.${extension}`);
             const fileExists = await exists(filePath);
             if (!fileExists) return null;
             return await readTextFile(filePath);
         } catch (e) {
-            console.error(`Failed to read note ${id}`, e);
+            console.error(`[FileSystem] Failed to read ${category}/${id}`, e);
             return null;
         }
     }
 
-    async deleteNote(id: string): Promise<void> {
+    async deleteFile(category: string, id: string, extension: string = 'md'): Promise<void> {
         if (!this.tauri.isTauri()) {
-            localStorage.removeItem(`note_${id}`);
+            localStorage.removeItem(`${category}_${id}`);
             return;
         }
         await this.init();
 
-        const filePath = await join(this.notesDir, `${id}.md`);
         try {
+            const filePath = await join(this.baseDir, category, `${id}.${extension}`);
             if (await exists(filePath)) {
                 await remove(filePath);
             }
         } catch (e) {
-            console.error(`Failed to delete note ${id}`, e);
+            console.error(`[FileSystem] Failed to delete ${category}/${id}`, e);
         }
+    }
+
+    // Legacy wrappers for existing StoreService
+    async saveNote(id: string, content: string): Promise<string> {
+        return this.saveFile('notes', id, content, 'md');
+    }
+
+    async readNote(id: string): Promise<string | null> {
+        return this.readFile('notes', id, 'md');
+    }
+
+    async deleteNote(id: string): Promise<void> {
+        return this.deleteFile('notes', id, 'md');
     }
 }
