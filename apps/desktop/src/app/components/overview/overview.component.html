@@ -1,156 +1,79 @@
-<div class="overview-layout">
-    <!-- Left Sidebar: Daily Stats & Pool -->
-    <div class="ov-sidebar-left">
-        <div class="user-welcome-card">
-            <div class="welcome-text">
-                <span class="greeting">Welcome back,</span>
-                <span class="username">{{ user()?.name || 'Writer' }}</span>
-            </div>
-            <div class="user-level-badge">LEVEL 1</div>
+<div class="voice-protocol-container">
+    <!-- Top Bar -->
+    <div class="vp-top-bar">
+        <div class="vp-brand">
+            <span class="status-dot"></span>
+            <span class="brand-text">EXECUTIVE VOICE PROTOCOL</span>
         </div>
-
-        <div class="ov-stats-grid">
-            <div class="stat-card">
-                <div class="stat-value">{{ wordCount() }}</div>
-                <div class="stat-label">WORDS</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" [ngClass]="streakClass()">{{ streak() }}</div>
-                <div class="stat-label">STREAK</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value blue-text">{{ activeTasksCount() }}</div>
-                <div class="stat-label">ACTIVE TASKS</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value red-text">{{ dueTodayCount() }}</div>
-                <div class="stat-label">DUE TODAY</div>
-            </div>
-        </div>
-
-        <div class="ov-section-header mt-6">
-            PLANNING POOL <span class="material-symbols-outlined icon-xs">filter_list</span>
-        </div>
-        <div class="planning-list">
-            @for (item of planningItems(); track item.id) {
-            <div class="planning-card" [class.active]="item.active">
-                <div class="plan-row-top">
-                    <span class="plan-title">{{ item.title }}</span>
-                    <span class="plan-tag" [ngClass]="item.tag.toLowerCase()">{{ item.tag }}</span>
-                </div>
-                <div class="plan-stage">
-                    <span class="material-symbols-outlined icon-tiny">drag_indicator</span>
-                    {{ item.stage }}
-                </div>
-                @if (item.active) {
-                <div class="active-indicator-bar"></div>
-                }
-            </div>
-            }
-            @if (planningItems().length === 0) {
-            <div class="empty-state-sm">No items in planning pool.</div>
-            }
-        </div>
-
-        <div class="ov-section-header mt-4">HIGH PRIORITY TASKS</div>
-        <div class="global-tasks-list">
-            @for (t of globalTasks(); track t.id) {
-            <div class="g-task-row" (click)="navigateTo('tasks')">
-                <span class="material-symbols-outlined icon-xs priority-high">priority_high</span>
-                <span class="g-task-title">{{ t.title }}</span>
-            </div>
-            }
-            @if (globalTasks().length === 0) {
-            <div class="empty-state-sm">No high priority tasks.</div>
-            }
+        <div class="vp-status">
+            <span class="status-item">STUDIO GRADE</span>
+            <span class="status-item active">
+                <span class="status-breathe"></span>
+                HYBRID ACTIVE
+            </span>
+            <button class="history-btn">
+                <span class="material-symbols-outlined">history</span>
+            </button>
         </div>
     </div>
 
-    <!-- Main Content: Calendar -->
-    <div class="ov-calendar-area">
-        <div class="calendar-header">
-            <h2 class="cal-title">{{ currentMonth() }}</h2>
-            <div class="cal-views">
-                <button class="cal-view-btn" [class.active]="viewMode() === 'MONTH'"
-                    (click)="setViewMode('MONTH')">MONTH</button>
-                <button class="cal-view-btn" [class.active]="viewMode() === '2 WEEKS'"
-                    (click)="setViewMode('2 WEEKS')">2 WEEKS</button>
+    <!-- Main Center Content -->
+    <div class="vp-center-stage">
+        <div class="protocol-badge">
+            <div class="audio-bars-mini">
+                <span></span><span></span><span></span>
             </div>
-
-            <div class="cal-legend">
-                <div class="legend-item"><span class="dot blue"></span> FICTION</div>
-                <div class="legend-item"><span class="dot yellow"></span> DEADLINE</div>
-            </div>
-
-            <div class="cal-nav">
-                <button class="cal-nav-btn" (click)="changeMonth(-1)"><span
-                        class="material-symbols-outlined">chevron_left</span></button>
-                <button class="cal-nav-btn" (click)="changeMonth(1)"><span
-                        class="material-symbols-outlined">chevron_right</span></button>
-            </div>
+            LIVE PROTOCOL
         </div>
 
-        <div class="calendar-grid">
-            @for (d of weekDays; track d) {
-            <div class="cal-day-header">{{ d }}</div>
-            }
+        <div class="command-display">
+            Create a new sprint retrospective for the
+            <span class="highlight">&#64;design-team</span> and
+            schedule it for <span class="highlight">#next-tuesday</span>.
+        </div>
 
-            <!-- Days Grid -->
-            @for (day of days(); track $index) {
-            <div class="cal-cell" [class.prev-month]="day.prevMonth" [class.next-month]="day.nextMonth">
-                <div class="day-num-row">
-                    <span class="day-num" [class.today]="day.today">{{ day.date }}</span>
-                    @if (day.today) {
-                    <span class="today-badge">TODAY</span>
-                    }
-                </div>
-                <div class="day-events">
-                    @for (ev of day.events; track $index) {
-                    <div class="cal-event" [ngClass]="ev.type">
-                        <div class="ev-title">{{ ev.title }}</div>
-                    </div>
-                    }
-                    @if (day.hasAdd) {
-                    <div class="cal-add-placeholder" (click)="navigateTo('tasks')">
-                        <span class="material-symbols-outlined">add</span>
-                    </div>
-                    }
-                </div>
-            </div>
-            }
+        <div class="waveform-visualizer">
+            <!-- Simulated Waveform Bars -->
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar active"></div>
+            <div class="bar active"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+
+        <div class="refinement-input-wrapper">
+            <input type="text" class="refinement-input" placeholder="Refine task details...">
+            <span class="material-symbols-outlined input-icon">keyboard</span>
+        </div>
+
+        <div class="vp-actions">
+            <button class="vp-btn primary" (click)="saveTask()">
+                <span class="cmd-key">ENTER</span>
+                SAVE TASK
+            </button>
+            <button class="vp-btn secondary" (click)="discardTask()">
+                <span class="cmd-key">ESC</span>
+                DISCARD
+            </button>
         </div>
     </div>
 
-    <!-- Right Sidebar: Activity -->
-    <div class="ov-sidebar-right">
-        <div class="quick-actions-panel">
-            <div class="ov-section-header">QUICK ACTIONS</div>
-            <div class="qa-grid">
-                <button class="qa-btn" (click)="navigateTo('novels')">
-                    <span class="material-symbols-outlined">book</span>
-                    <span>New Novel</span>
-                </button>
-                <button class="qa-btn" (click)="navigateTo('tasks')">
-                    <span class="material-symbols-outlined">check_circle</span>
-                    <span>New Task</span>
-                </button>
-                <button class="qa-btn" (click)="navigateTo('daily-notes')">
-                    <span class="material-symbols-outlined">edit_note</span>
-                    <span>Daily Note</span>
-                </button>
+    <!-- Bottom Bar -->
+    <div class="vp-bottom-bar">
+        <div class="vp-meta-left">
+            <span class="meta-label">CONFIDENCE</span>
+            <span class="meta-value">98%</span>
+            <div class="mini-chart">
+                <span></span><span></span><span></span>
             </div>
         </div>
-
-        <app-recent-activity></app-recent-activity>
-
-        <div class="ov-config-panel">
-            <div class="config-header">WORKBENCH</div>
-            <div class="config-row">
-                <span>Auto-Schedule Tasks</span>
-                <div class="switch-toggle" [class.on]="user()?.preferences?.autoSchedule"
-                    (click)="toggleAutoSchedule()"></div>
-            </div>
+        <div class="vp-meta-right">
+            PROTOCOL ACTIVE
         </div>
-
     </div>
+
+    <!-- Progress Line -->
+    <div class="vp-progress-line"></div>
 </div>

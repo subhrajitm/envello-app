@@ -1,14 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { OverviewComponent } from './overview.component';
+import { StoreService } from '../../services/store.service';
 
 describe('OverviewComponent', () => {
   let component: OverviewComponent;
   let fixture: ComponentFixture<OverviewComponent>;
 
+  // Mock StoreService
+  const storeServiceMock = {
+    tasks: () => [],
+    planningItems: () => []
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OverviewComponent],
+      providers: [
+        { provide: StoreService, useValue: storeServiceMock }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(OverviewComponent);
@@ -20,14 +30,8 @@ describe('OverviewComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render overview layout', () => {
+  it('should render voice protocol container', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.overview-layout')).toBeTruthy();
-  });
-
-  it('should have view mode and calendar', () => {
-    expect(component.viewMode()).toBe('MONTH');
-    component.setViewMode('2 WEEKS');
-    expect(component.viewMode()).toBe('2 WEEKS');
+    expect(compiled.querySelector('.voice-protocol-container')).toBeTruthy();
   });
 });
