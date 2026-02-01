@@ -8,6 +8,11 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'projects/:id',
+    loadComponent: () => import('./components/projects/project-details/project-details.component').then(m => m.ProjectDetailsComponent),
+    data: { hasSidebar: true }
+  },
+  {
     path: 'novels',
     loadComponent: () => import('./components/novels/novels.component').then(m => m.NovelsComponent),
     data: { hasSidebar: true },

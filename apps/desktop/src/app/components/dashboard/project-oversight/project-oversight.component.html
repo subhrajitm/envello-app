@@ -23,7 +23,7 @@
         </div>
         <div class="table-body">
             @for (project of projects(); track project.id) {
-            <div class="table-row flex items-center">
+            <div class="table-row flex items-center" [routerLink]="['/projects', project.id]" style="cursor: pointer;">
                 <div class="col-title">
                     <span class="material-symbols-outlined project-icon">{{ project.icon }}</span>
                     {{ project.title }}

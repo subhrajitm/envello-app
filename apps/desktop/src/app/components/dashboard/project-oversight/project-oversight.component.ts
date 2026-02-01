@@ -1,57 +1,19 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface Project {
-  id: string;
-  title: string;
-  status: 'DRAFTING' | 'PLANNING' | 'COMPLETE' | 'REVIEW';
-  words: string;
-  updated: string;
-  icon: string;
-}
+import { RouterLink } from '@angular/router';
+import { StoreService } from '../../../services/store.service';
 
 @Component({
   selector: 'app-project-oversight',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './project-oversight.component.html',
   styleUrl: './project-oversight.component.css'
 })
 export class ProjectOversightComponent {
-  projects = signal<Project[]>([
-    {
-      id: '1',
-      title: 'Project Alpha: Final Manuscript',
-      status: 'DRAFTING',
-      words: '48.2k',
-      updated: '2m ago',
-      icon: 'menu_book',
-    },
-    {
-      id: '2',
-      title: 'Neon Orchard Chronicles',
-      status: 'PLANNING',
-      words: '12.5k',
-      updated: '1h ago',
-      icon: 'description',
-    },
-    {
-      id: '3',
-      title: 'The Scent of Green',
-      status: 'COMPLETE',
-      words: '82.1k',
-      updated: 'Oct 24',
-      icon: 'check_circle',
-    },
-    {
-      id: '4',
-      title: 'Echoes of the Void',
-      status: 'REVIEW',
-      words: '35.0k',
-      updated: '2d ago',
-      icon: 'extension',
-    },
-  ]);
+  private store = inject(StoreService);
+  projects = this.store.projects;
+
 
   getStatusColor(status: string): string {
     switch (status) {

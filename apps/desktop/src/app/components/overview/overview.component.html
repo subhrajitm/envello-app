@@ -7,9 +7,9 @@
         </div>
         <div class="vp-status">
             <span class="status-item">STUDIO GRADE</span>
-            <span class="status-item active">
+            <span class="status-item" [class.active]="listening()">
                 <span class="status-breathe"></span>
-                HYBRID ACTIVE
+                {{ listening() ? 'LISTENING' : 'HYBRID ACTIVE' }}
             </span>
             <button class="history-btn">
                 <span class="material-symbols-outlined">history</span>
@@ -19,32 +19,44 @@
 
     <!-- Main Center Content -->
     <div class="vp-center-stage">
-        <div class="protocol-badge">
+        <div class="protocol-badge" [class.recording]="listening()">
             <div class="audio-bars-mini">
-                <span></span><span></span><span></span>
+                <span [class.active]="listening()"></span>
+                <span [class.active]="listening()"></span>
+                <span [class.active]="listening()"></span>
             </div>
-            LIVE PROTOCOL
+            {{ listening() ? 'ON AIR' : 'LIVE PROTOCOL' }}
+        </div>
+
+        <div class="mic-section">
+            <button class="mic-btn" [class.recording]="listening()" (click)="toggleVoice()">
+                <span class="material-symbols-outlined" style="font-size: 28px;">
+                    {{ listening() ? 'stop' : 'mic' }}
+                </span>
+            </button>
         </div>
 
         <div class="command-display">
-            Create a new sprint retrospective for the
-            <span class="highlight">&#64;design-team</span> and
-            schedule it for <span class="highlight">#next-tuesday</span>.
+            @if (liveTranscript()) {
+            <span class="highlight">{{ liveTranscript() }}</span>
+            } @else {
+            {{ processedScript() }}
+            }
         </div>
 
         <div class="waveform-visualizer">
             <!-- Simulated Waveform Bars -->
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar active"></div>
-            <div class="bar active"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
+            <div class="bar" [class.active]="listening()"></div>
+            <div class="bar" [class.active]="listening()"></div>
+            <div class="bar" [class.active]="listening()"></div>
+            <div class="bar" [class.active]="listening()"></div>
+            <div class="bar" [class.active]="listening()"></div>
+            <div class="bar" [class.active]="listening()"></div>
+            <div class="bar" [class.active]="listening()"></div>
         </div>
 
         <div class="refinement-input-wrapper">
-            <input type="text" class="refinement-input" placeholder="Refine task details...">
+            <input type="text" class="refinement-input" placeholder="Refine task details..." [(ngModel)]="inputText">
             <span class="material-symbols-outlined input-icon">keyboard</span>
         </div>
 
@@ -64,9 +76,11 @@
     <div class="vp-bottom-bar">
         <div class="vp-meta-left">
             <span class="meta-label">CONFIDENCE</span>
-            <span class="meta-value">98%</span>
+            <span class="meta-value">{{ confidence() }}%</span>
             <div class="mini-chart">
-                <span></span><span></span><span></span>
+                <span [style.height.%]="confidence()"></span>
+                <span [style.height.%]="confidence()"></span>
+                <span [style.height.%]="confidence()"></span>
             </div>
         </div>
         <div class="vp-meta-right">

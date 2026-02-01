@@ -94,6 +94,29 @@ export interface Novel {
   coverImage?: string; // For thumbnail view
 }
 
+export interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'DRAFTING' | 'PLANNING' | 'COMPLETE' | 'REVIEW';
+  words: string;
+  updated: string;
+  icon: string;
+  dueDate?: string;
+  priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+  progress?: number;
+  team?: string[];
+  tags?: string[];
+
+  // New fields for complex projects
+  type?: 'SINGLE' | 'MULTI'; // Single task oriented or multi-faceted
+  linkedResources?: {
+    novels?: string[]; // IDs of linked novels
+    journals?: string[]; // IDs of linked journals/notes
+    snippets?: string[]; // IDs of linked code snippets
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -103,6 +126,64 @@ export class StoreService {
   planningItems = signal<PlanningItem[]>([]);
   activities = signal<Activity[]>([]);
   novels = signal<Novel[]>([]);
+  projects = signal<Project[]>([
+    {
+      id: '1',
+      title: 'Project Alpha: Final Manuscript',
+      description: 'The final push for the Alpha manuscript, focusing on copyediting and layout.',
+      status: 'DRAFTING',
+      words: '48.2k',
+      updated: '2m ago',
+      icon: 'menu_book',
+      dueDate: '2023-12-01',
+      priority: 'HIGH',
+      progress: 65,
+      team: ['Alex', 'Sam'],
+      tags: ['Publication', 'Q4']
+    },
+    {
+      id: '2',
+      title: 'Neon Orchard Chronicles',
+      description: 'World building and initial character sketches for the Neon Orchard series.',
+      status: 'PLANNING',
+      words: '12.5k',
+      updated: '1h ago',
+      icon: 'description',
+      dueDate: '2024-01-15',
+      priority: 'MEDIUM',
+      progress: 20,
+      team: ['Jordan'],
+      tags: ['Sci-Fi', 'Concept']
+    },
+    {
+      id: '3',
+      title: 'The Scent of Green',
+      description: 'Completed draft ready for initial beta reader review.',
+      status: 'COMPLETE',
+      words: '82.1k',
+      updated: 'Oct 24',
+      icon: 'check_circle',
+      dueDate: '2023-10-30',
+      priority: 'LOW',
+      progress: 100,
+      team: ['Alex'],
+      tags: ['Fantasy']
+    },
+    {
+      id: '4',
+      title: 'Echoes of the Void',
+      description: 'Mid-stage review of the plot points and pacing.',
+      status: 'REVIEW',
+      words: '35.0k',
+      updated: '2d ago',
+      icon: 'extension',
+      dueDate: '2023-11-20',
+      priority: 'HIGH',
+      progress: 45,
+      team: ['Sam', 'Jordan'],
+      tags: ['Thriller']
+    },
+  ]);
 
   private bin = inject(BinService);
   private rxdb = inject(SqliteService);
@@ -299,6 +380,11 @@ export class StoreService {
     this.novels.update(novels => [...novels, novel]);
     this.addActivity('Project started: ' + novel.title, 'system');
     this.rxdb.upsertNovel(novel).catch(e => logIfTauri('[StoreService] persist novel failed', e));
+  }
+
+  addProject(project: Project) {
+    this.projects.update(projects => [...projects, project]);
+    this.addActivity('Project created: ' + project.title, 'system');
   }
 
   deleteNovel(id: string) {
