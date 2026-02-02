@@ -24,6 +24,64 @@
     color: var(--vp-text-primary);
 }
 
+/* Overview Dashboard Widgets */
+.vp-dashboard-widgets {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.dashboard-widget-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    height: 48px;
+    min-width: 160px;
+}
+
+.dashboard-widget-btn:hover {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.btn-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.btn-content .label {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(61, 52, 47, 0.5);
+    letter-spacing: 0.05em;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.btn-content .count {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-espresso);
+}
+
+.dashboard-widget-btn .icon {
+    font-size: 20px;
+    color: rgba(61, 52, 47, 0.3);
+}
+
+.dashboard-widget-btn:hover .icon {
+    color: var(--color-burnt-orange);
+}
+
 /* Top Bar */
 .vp-top-bar {
     display: flex;

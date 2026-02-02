@@ -13,7 +13,7 @@ import { StoreService, Project } from '../../services/store.service';
 })
 export class OverviewComponent {
   store = inject(StoreService);
-  private router = inject(Router);
+  public router = inject(Router);
 
   inputText = signal('');
 

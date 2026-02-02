@@ -5,14 +5,21 @@
             <span class="status-dot"></span>
             <span class="brand-text">EXECUTIVE VOICE PROTOCOL</span>
         </div>
-        <div class="vp-status">
-            <span class="status-item">STUDIO GRADE</span>
-            <span class="status-item" [class.active]="listening()">
-                <span class="status-breathe"></span>
-                {{ listening() ? 'LISTENING' : 'HYBRID ACTIVE' }}
-            </span>
-            <button class="history-btn">
-                <span class="material-symbols-outlined">history</span>
+        <div class="vp-dashboard-widgets">
+            <button class="dashboard-widget-btn" (click)="router.navigate(['/projects'])">
+                <div class="btn-content">
+                    <span class="label">ACTIVE PROJECTS</span>
+                    <span class="count">{{ store.projects().length }}</span>
+                </div>
+                <span class="material-symbols-outlined icon">dataset</span>
+            </button>
+
+            <button class="dashboard-widget-btn" (click)="router.navigate(['/activity-log'])">
+                <div class="btn-content">
+                    <span class="label">RECENT HISTORY</span>
+                    <span class="count">LOG</span>
+                </div>
+                <span class="material-symbols-outlined icon">history</span>
             </button>
         </div>
     </div>

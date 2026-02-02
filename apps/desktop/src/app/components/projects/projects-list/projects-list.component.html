@@ -1,0 +1,36 @@
+<div class="projects-container">
+    <header class="page-header">
+        <h1>All Projects</h1>
+        <button class="create-btn">
+            <span class="material-symbols-outlined">add</span>
+            New Project
+        </button>
+    </header>
+
+    <div class="projects-grid">
+        @for (project of store.projects(); track project.id) {
+        <div class="project-card" (click)="navigateToProject(project.id)">
+            <div class="card-icon">
+                <span class="material-symbols-outlined">{{ project.icon }}</span>
+            </div>
+            <div class="card-content">
+                <h3>{{ project.title }}</h3>
+                <div class="card-meta">
+                    <span class="status-badge" [ngClass]="project.status">{{ project.status }}</span>
+                    <span class="updated">Updated {{ project.updated }}</span>
+                </div>
+            </div>
+            <div class="card-actions">
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </div>
+        </div>
+        }
+        @if (store.projects().length === 0) {
+        <div class="empty-state">
+            <span class="material-symbols-outlined icon">rocket_launch</span>
+            <h3>No projects yet</h3>
+            <p>Create your first project to get started.</p>
+        </div>
+        }
+    </div>
+</div>
