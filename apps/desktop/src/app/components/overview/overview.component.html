@@ -26,55 +26,49 @@
 
     <!-- Main Center Content -->
     <div class="vp-center-stage">
-        <div class="protocol-badge" [class.recording]="listening()">
+        <div class="protocol-badge">
             <div class="audio-bars-mini">
-                <span [class.active]="listening()"></span>
-                <span [class.active]="listening()"></span>
-                <span [class.active]="listening()"></span>
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
-            {{ listening() ? 'ON AIR' : 'LIVE PROTOCOL' }}
+            SYSTEM READY
         </div>
 
         <div class="mic-section">
-            <button class="mic-btn" [class.recording]="listening()" (click)="toggleVoice()">
-                <span class="material-symbols-outlined" style="font-size: 28px;">
-                    {{ listening() ? 'stop' : 'mic' }}
-                </span>
+            <button class="mic-btn" (click)="toggleVoice()">
+                <span class="material-symbols-outlined" style="font-size: 28px;">mic_off</span>
             </button>
         </div>
 
         <div class="command-display">
-            @if (liveTranscript()) {
-            <span class="highlight">{{ liveTranscript() }}</span>
-            } @else {
-            {{ processedScript() }}
-            }
+            Awaiting Command via Global Voice Protocol...
         </div>
 
         <div class="waveform-visualizer">
-            <!-- Simulated Waveform Bars -->
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
+            <!-- Static Waveform Bars -->
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
         </div>
 
         <div class="refinement-input-wrapper">
-            <input type="text" class="refinement-input" placeholder="Refine task details..." [(ngModel)]="inputText">
+            <input type="text" class="refinement-input" placeholder="Manual command entry..." [(ngModel)]="inputText">
             <span class="material-symbols-outlined input-icon">keyboard</span>
         </div>
 
         <div class="vp-actions">
             <button class="vp-btn primary" (click)="saveTask()">
                 <span class="cmd-key">ENTER</span>
-                SAVE TASK
+                EXECUTE
             </button>
             <button class="vp-btn secondary" (click)="discardTask()">
                 <span class="cmd-key">ESC</span>
-                DISCARD
+                CLEAR
             </button>
         </div>
     </div>
@@ -82,13 +76,8 @@
     <!-- Bottom Bar -->
     <div class="vp-bottom-bar">
         <div class="vp-meta-left">
-            <span class="meta-label">CONFIDENCE</span>
-            <span class="meta-value">{{ confidence() }}%</span>
-            <div class="mini-chart">
-                <span [style.height.%]="confidence()"></span>
-                <span [style.height.%]="confidence()"></span>
-                <span [style.height.%]="confidence()"></span>
-            </div>
+            <span class="meta-label">SYSTEM STATUS</span>
+            <span class="meta-value">ONLINE</span>
         </div>
         <div class="vp-meta-right">
             PROTOCOL ACTIVE

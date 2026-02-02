@@ -21,6 +21,7 @@ export interface AiSuggestion {
 })
 export class AiService {
     aiEnabled = signal<boolean>(true); // Default to enabled
+    apiKey = signal<string>('');
 
     constructor() {
         // Initialize from storage
@@ -29,21 +30,72 @@ export class AiService {
             this.aiEnabled.set(saved === 'true');
         }
 
+        const key = localStorage.getItem('openai-apiKey');
+        if (key) {
+            this.apiKey.set(key);
+        }
+
         // Effect to update Storage when signal changes
         effect(() => {
             localStorage.setItem('ai-enabled', String(this.aiEnabled()));
         });
+
+        effect(() => {
+            if (this.apiKey()) {
+                localStorage.setItem('openai-apiKey', this.apiKey());
+            }
+        });
+    }
+
+    setApiKey(key: string) {
+        this.apiKey.set(key);
     }
 
     toggleAi() {
         this.aiEnabled.set(!this.aiEnabled());
     }
 
+    private pipeline: any = null;
+
+    async transcribeAudio(audioBlob: Blob): Promise<string> {
+        if (typeof window === 'undefined') {
+            throw new Error('Local transcription only supported in browser.');
+        }
+
+        // precise dynamic import
+        const { pipeline, env } = await import('@xenova/transformers');
+
+        // Configure to load from CDN/cache
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+
+        if (!this.pipeline) {
+            console.log('[AiService] Loading local Whisper model...');
+            // 'Xenova/whisper-tiny.en' is ~40MB quantized, very fast
+            this.pipeline = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+            console.log('[AiService] Whisper model loaded.');
+        }
+
+        const audio = await this.readAudioFromBlob(audioBlob);
+
+        // Run transcription
+        // @ts-ignore
+        const result = await this.pipeline(audio);
+        return result.text.trim();
+    }
+
+    private async readAudioFromBlob(blob: Blob): Promise<Float32Array> {
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioContext = new AudioContext({ sampleRate: 16000 });
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        return audioBuffer.getChannelData(0);
+    }
+
     // Simulate AI API calls - Replace with actual API integration
     async sendMessage(prompt: string, context?: string): Promise<string> {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1500));
-        
+
         // Mock response - Replace with actual API call
         const responses = [
             `Based on the context provided, I suggest focusing on character development in this section. The dialogue could be more natural, and the pacing might benefit from shorter paragraphs.`,
@@ -51,7 +103,7 @@ export class AiService {
             `The chapter structure is solid. I notice opportunities to deepen emotional connections between characters. The plot progression is clear and engaging.`,
             `This section demonstrates good narrative flow. To enhance it further, consider varying sentence length and adding more internal character thoughts.`
         ];
-        
+
         return responses[Math.floor(Math.random() * responses.length)];
     }
 

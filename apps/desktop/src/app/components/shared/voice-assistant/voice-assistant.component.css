@@ -1,0 +1,217 @@
+.voice-assistant-container {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    /* Bottom right corner usually safe */
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.voice-trigger-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1A1614;
+    /* Espresso */
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voice-trigger-btn:hover {
+    transform: scale(1.05);
+    background: #3D342F;
+    /* Chocolate */
+}
+
+.voice-trigger-btn.recording {
+    background: #BF5700;
+    /* Burnt Orange - active state */
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 rgba(191, 87, 0, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(191, 87, 0, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(191, 87, 0, 0);
+    }
+}
+
+.voice-trigger-btn .icon {
+    font-size: 24px;
+}
+
+/* Panel */
+.voice-panel {
+    background: white;
+    width: 300px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.panel-header {
+    background: #F9FAFB;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #9CA3AF;
+}
+
+.status-indicator.recording {
+    background: #EF4444;
+    /* Red for recording within panel */
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.status-text {
+    flex: 1;
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #6B7280;
+    letter-spacing: 0.05em;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: #9CA3AF;
+    cursor: pointer;
+    display: flex;
+    padding: 2px;
+}
+
+.close-btn:hover {
+    color: #111;
+}
+
+.transcript-area {
+    padding: 16px;
+    min-height: 80px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 14px;
+    color: #1F2937;
+    line-height: 1.5;
+}
+
+.placeholder {
+    color: #9CA3AF;
+    font-style: italic;
+}
+
+.error-msg {
+    color: #DC2626;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.panel-actions {
+    display: flex;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.action-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #4B5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.action-btn:not(:last-child) {
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.action-btn:hover {
+    background: #F3F4F6;
+    color: #111;
+}
+
+.waveform span {
+    display: inline-block;
+    width: 3px;
+    height: 10px;
+    background: #BF5700;
+    margin: 0 2px;
+    animation: wave 1s infinite;
+}
+
+.waveform span:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.waveform span:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.waveform span:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+@keyframes wave {
+
+    0%,
+    100% {
+        height: 10px;
+    }
+
+    50% {
+        height: 20px;
+    }
+}

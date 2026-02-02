@@ -7,10 +7,12 @@ import { TauriService } from './core/services/tauri.service';
 import { SessionService } from './services/session.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
+import { VoiceAssistantComponent } from './components/shared/voice-assistant/voice-assistant.component';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, VoiceAssistantComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

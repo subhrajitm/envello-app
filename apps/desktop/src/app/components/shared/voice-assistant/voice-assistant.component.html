@@ -1,0 +1,52 @@
+<div class="voice-assistant-container" [class.expanded]="isExpanded()">
+    <!-- Status & Output Area -->
+    @if (isExpanded()) {
+    <div class="voice-panel">
+        <div class="panel-header">
+            <span class="status-indicator" [class.recording]="voice.listening()"></span>
+            <span class="status-text">
+                {{ voice.listening() ? 'LISTENING' : (voice.liveStatus() || 'READY') }}
+            </span>
+            <button class="close-btn" (click)="discard()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="transcript-area">
+            @if (voice.processedText()) {
+            {{ voice.processedText() }}
+            } @else if (voice.listening()) {
+            <div class="waveform">
+                <span></span><span></span><span></span><span></span>
+            </div>
+            } @else {
+            <span class="placeholder">Speak a command or text...</span>
+            }
+
+            @if (voice.error(); as err) {
+            <div class="error-msg">{{ err }}</div>
+            }
+        </div>
+
+        @if (voice.processedText()) {
+        <div class="panel-actions">
+            <button class="action-btn" (click)="executeCommand()">
+                <span class="material-symbols-outlined">play_arrow</span>
+                Exec
+            </button>
+            <button class="action-btn" (click)="copyText()">
+                <span class="material-symbols-outlined">content_copy</span>
+                Copy
+            </button>
+        </div>
+        }
+    </div>
+    }
+
+    <!-- Main Trigger Button -->
+    <button class="voice-trigger-btn" [class.recording]="voice.listening()" (click)="toggleRecording()">
+        <span class="material-symbols-outlined icon">
+            {{ voice.listening() ? 'stop' : 'mic' }}
+        </span>
+    </button>
+</div>
