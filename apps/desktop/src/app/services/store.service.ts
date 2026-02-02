@@ -216,6 +216,9 @@ export class StoreService {
 
   private async loadFromRxDB(): Promise<void> {
     try {
+      // Ensure DB (or LocalStorage) is initialized
+      await this.rxdb.getDb();
+
       const [tasks, notes, planningItems, activities, novels] = await Promise.all([
         this.rxdb.getAllTasks(),
         this.rxdb.getAllNotes(),

@@ -16,6 +16,18 @@ export class VoiceService {
     private mediaRecorder: MediaRecorder | null = null;
     private audioChunks: Blob[] = [];
 
+    constructor() {
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', (e) => {
+                // Shortcut: Ctrl+Space for quick toggle
+                if (e.ctrlKey && e.code === 'Space') {
+                    e.preventDefault();
+                    this.toggleVoice();
+                }
+            });
+        }
+    }
+
     async toggleVoice() {
         if (this.listening()) {
             this.stopRecording();
@@ -24,8 +36,19 @@ export class VoiceService {
         }
     }
 
+    private lastActiveElement: HTMLElement | null = null;
+    private lastRange: Range | null = null;
+
     private async startRecording() {
         this.error.set(null);
+
+        // Capture Focus State
+        this.lastActiveElement = document.activeElement as HTMLElement;
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+            this.lastRange = selection.getRangeAt(0);
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.mediaRecorder = new MediaRecorder(stream);
@@ -41,15 +64,26 @@ export class VoiceService {
 
                 try {
                     const text = await this.aiService.transcribeAudio(audioBlob);
+
+                    if (!text) {
+                        this.liveStatus.set('');
+                        return;
+                    }
+
                     this.processedText.set(text);
                     this.liveStatus.set('');
+
+                    // Direct Insert Feature
+                    // Restore focus first
+                    this.restoreFocus();
+                    this.insertTextIntoActiveElement(text, this.lastActiveElement);
                 } catch (error: any) {
                     console.error('Transcription failed:', error);
                     this.liveStatus.set('');
                     this.error.set(error.message || 'Transcription failed');
                 }
 
-                // Stop all tracks to release mic
+                // Stop all tracks
                 stream.getTracks().forEach(track => track.stop());
             };
 
@@ -67,6 +101,44 @@ export class VoiceService {
         if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
             this.mediaRecorder.stop();
             this.listening.set(false);
+        }
+    }
+
+    private restoreFocus() {
+        if (this.lastActiveElement) {
+            this.lastActiveElement.focus();
+            // Restore selection for ContentEditable if possible
+            if (this.lastRange && this.lastActiveElement.isContentEditable) {
+                const selection = window.getSelection();
+                if (selection) {
+                    selection.removeAllRanges();
+                    selection.addRange(this.lastRange);
+                }
+            }
+        }
+    }
+
+    private insertTextIntoActiveElement(text: string, targetElement: HTMLElement | null = null) {
+        // Use provided target or fall back to current active element
+        const activeEl = targetElement || (document.activeElement as HTMLElement);
+        if (!activeEl) return;
+
+        // 1. ContentEditable (TipTap / Rich Text)
+        if (activeEl.isContentEditable) {
+            document.execCommand('insertText', false, text);
+            return;
+        }
+
+        // 2. Input / Textarea
+        if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
+            const start = activeEl.selectionStart || 0;
+            const end = activeEl.selectionEnd || 0;
+            const value = activeEl.value;
+            activeEl.value = value.substring(0, start) + text + value.substring(end);
+            activeEl.selectionStart = activeEl.selectionEnd = start + text.length;
+
+            activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+            activeEl.dispatchEvent(new Event('change', { bubbles: true })); // Ensure change detection
         }
     }
 }

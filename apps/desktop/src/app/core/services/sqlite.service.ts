@@ -105,9 +105,16 @@ export class SqliteService {
         try {
             // Check if running in Tauri environment
             if (!this.isTauri()) {
-                // Silently fail in non-Tauri environments (browser)
-                // This is expected behavior when developing with ng serve
-                throw new Error('SQLite is only available in Tauri desktop app');
+                console.log('[SqliteService] Browser Detected: Initializing LocalStorage persistence');
+                await this.loadAllData();
+                // Return a dummy object that mimics the DB interface enough to not crash strict null checks, 
+                // though methods should be guarded by !isTauri checks anyway.
+                return {
+                    execute: async () => ({ lastInsertId: 0, rowsAffected: 0 }),
+                    select: async () => [],
+                    load: async () => { },
+                    path: 'local'
+                } as unknown as Database;
             }
 
             const db = await Database.load(`sqlite:${DB_NAME}`);
@@ -123,7 +130,9 @@ export class SqliteService {
             if (this.isTauri()) {
                 console.error('Failed to initialize SQLite DB:', error);
             }
-            throw error;
+            // in browser, if something fails even with fallback, we might still want to proceed
+            console.warn('DB Init failed (or not supported), continuing:', error);
+            return {} as any;
         }
     }
 
@@ -422,7 +431,52 @@ export class SqliteService {
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
+    // LocalStorage Fallback Helpers for Browser Mode
+    private localStorageGet<T>(table: string): T[] {
+        try {
+            const data = localStorage.getItem(`envello_db_${table}`);
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            console.error('LocalStorage read error', e);
+            return [];
+        }
+    }
+
+    private async localStorageUpsert(table: string, item: any, pk: string = 'id') {
+        const items = this.localStorageGet<any>(table);
+        const index = items.findIndex(i => i[pk] === item[pk]);
+        if (index >= 0) {
+            items[index] = { ...items[index], ...item };
+        } else {
+            items.push(item);
+        }
+        localStorage.setItem(`envello_db_${table}`, JSON.stringify(items));
+    }
+
+    private async localStorageRemove(table: string, id: string, pk: string = 'id') {
+        const items = this.localStorageGet<any>(table);
+        const filtered = items.filter(i => i[pk] !== id);
+        localStorage.setItem(`envello_db_${table}`, JSON.stringify(filtered));
+    }
+
+    // Special handling for Novel Content (key-value store essentially)
+    private localStorageSetContent(id: string, data: string) {
+        const items = this.localStorageGet<any>('novel_content');
+        const index = items.findIndex(i => i.id === id);
+        if (index >= 0) {
+            items[index].data = data;
+        } else {
+            items.push({ id, data });
+        }
+        localStorage.setItem(`envello_db_novel_content`, JSON.stringify(items));
+    }
+
     private async loadAllData() {
+        // If in browser, ensure we load from LS, no need to init DB
+        if (!this.isTauri()) {
+            console.warn('[SqliteService] Running in Browser Mode - Using LocalStorage');
+        }
+
         await Promise.all([
             this.reloadTasks(),
             this.reloadNotes(),
@@ -478,6 +532,12 @@ export class SqliteService {
 
     // ─── Tasks ─────────────────────────────────────────────────────────────────
     private async reloadTasks() {
+        if (!this.isTauri()) {
+            const tasks = this.localStorageGet<TaskDoc>('tasks');
+            this.tasksSubject.next(tasks);
+            return;
+        }
+
         const db = await this.getDb();
         const rows = await db.select<TaskDoc[]>('SELECT * FROM tasks');
         const parsed = rows.map((r: any) => this.parseRow<TaskDoc>(r, ['labels', 'reminders', 'subtasks', 'dependencies', 'recurring', 'attachments']));
@@ -489,6 +549,12 @@ export class SqliteService {
     }
 
     async upsertTask(task: TaskDoc): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageUpsert('tasks', task);
+            await this.reloadTasks();
+            return;
+        }
+
         const db = await this.getDb();
         // Check if exists
         const exists = await db.select<any[]>('SELECT id FROM tasks WHERE id = $1', [task.id]);
@@ -530,6 +596,12 @@ export class SqliteService {
     }
 
     async removeTask(id: string): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageRemove('tasks', id);
+            await this.reloadTasks();
+            return;
+        }
+
         const db = await this.getDb();
         await db.execute('DELETE FROM tasks WHERE id = $1', [id]);
         await this.reloadTasks();
@@ -541,6 +613,12 @@ export class SqliteService {
 
     // ─── Notes ─────────────────────────────────────────────────────────────────
     private async reloadNotes() {
+        if (!this.isTauri()) {
+            const notes = this.localStorageGet<NoteDoc>('notes');
+            this.notesSubject.next(notes);
+            return;
+        }
+
         const db = await this.getDb();
         try {
             // Try to add columns if they don't exist (Migration)
@@ -560,6 +638,12 @@ export class SqliteService {
     }
 
     async upsertNote(note: NoteDoc): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageUpsert('notes', note);
+            await this.reloadNotes();
+            return;
+        }
+
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM notes WHERE id = $1', [note.id]);
 
@@ -581,6 +665,12 @@ export class SqliteService {
     }
 
     async removeNote(id: string): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageRemove('notes', id);
+            await this.reloadNotes();
+            return;
+        }
+
         const db = await this.getDb();
         await db.execute('DELETE FROM notes WHERE id = $1', [id]);
         await this.reloadNotes();
@@ -592,12 +682,24 @@ export class SqliteService {
 
     // ─── Planning Items ────────────────────────────────────────────────────────
     private async reloadPlanningItems() {
+        if (!this.isTauri()) {
+            const items = this.localStorageGet<PlanningItemDoc>('planning_items');
+            this.planningItemsSubject.next(items);
+            return;
+        }
+
         const db = await this.getDb();
         const rows = await db.select<PlanningItemDoc[]>('SELECT * FROM planning_items');
         this.planningItemsSubject.next(rows);
     }
 
     async upsertPlanningItem(item: PlanningItemDoc): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageUpsert('planning_items', item);
+            await this.reloadPlanningItems();
+            return;
+        }
+
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM planning_items WHERE id = $1', [item.id]);
 
@@ -621,12 +723,22 @@ export class SqliteService {
 
     // ─── Activities ────────────────────────────────────────────────────────────
     private async reloadActivities() {
+        if (!this.isTauri()) {
+            const items = this.localStorageGet<ActivityDoc>('activities');
+            this.activitiesSubject.next(items);
+            return;
+        }
         const db = await this.getDb();
         const rows = await db.select<ActivityDoc[]>('SELECT * FROM activities');
         this.activitiesSubject.next(rows);
     }
 
     async upsertActivity(act: ActivityDoc): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageUpsert('activities', act);
+            await this.reloadActivities();
+            return;
+        }
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM activities WHERE id = $1', [act.id]);
 
@@ -649,6 +761,11 @@ export class SqliteService {
     }
 
     async removeActivity(id: string): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageRemove('activities', id);
+            await this.reloadActivities();
+            return;
+        }
         const db = await this.getDb();
         await db.execute('DELETE FROM activities WHERE id = $1', [id]);
         await this.reloadActivities();
@@ -656,6 +773,12 @@ export class SqliteService {
 
     // ─── Novels ────────────────────────────────────────────────────────────────
     private async reloadNovels() {
+        if (!this.isTauri()) {
+            const novels = this.localStorageGet<NovelDoc>('novels');
+            this.novelsSubject.next(novels);
+            return;
+        }
+
         const db = await this.getDb();
         const rows = await db.select<NovelDoc[]>('SELECT * FROM novels');
         const parsed = rows.map((r: any) => this.parseRow<NovelDoc>(r, ['genre']));
@@ -663,6 +786,12 @@ export class SqliteService {
     }
 
     async upsertNovel(novel: NovelDoc): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageUpsert('novels', novel);
+            await this.reloadNovels();
+            return;
+        }
+
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM novels WHERE id = $1', [novel.id]);
         const jsonNovel = { ...novel, genre: this.toJson(novel.genre) };
@@ -693,6 +822,12 @@ export class SqliteService {
     }
 
     async removeNovel(id: string): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageRemove('novels', id);
+            await this.reloadNovels();
+            return;
+        }
+
         const db = await this.getDb();
         await db.execute('DELETE FROM novels WHERE id = $1', [id]);
         await this.reloadNovels();
@@ -700,12 +835,23 @@ export class SqliteService {
 
     // ─── Novel Content ─────────────────────────────────────────────────────────
     async getNovelContent(id: string): Promise<string | null> {
+        if (!this.isTauri()) {
+            const items = this.localStorageGet<any>('novel_content');
+            const item = items.find(i => i.id === id);
+            return item ? item.data : null;
+        }
+
         const db = await this.getDb();
         const rows = await db.select<NovelContentDoc[]>('SELECT * FROM novel_content WHERE id = $1', [id]);
         return rows.length > 0 ? rows[0].data : null;
     }
 
     async setNovelContent(id: string, data: string): Promise<void> {
+        if (!this.isTauri()) {
+            this.localStorageSetContent(id, data);
+            return;
+        }
+
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM novel_content WHERE id = $1', [id]);
         if (exists.length > 0) {
@@ -716,6 +862,11 @@ export class SqliteService {
     }
 
     async removeNovelContent(id: string): Promise<void> {
+        if (!this.isTauri()) {
+            await this.localStorageRemove('novel_content', id);
+            return;
+        }
+
         const db = await this.getDb();
         await db.execute('DELETE FROM novel_content WHERE id = $1', [id]);
     }

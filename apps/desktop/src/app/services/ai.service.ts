@@ -81,7 +81,14 @@ export class AiService {
         // Run transcription
         // @ts-ignore
         const result = await this.pipeline(audio);
-        return result.text.trim();
+        let text = result.text.trim();
+
+        // Filter known Whisper hallucinations for silence
+        if (text === '[BLANK_AUDIO]' || text === '') {
+            return '';
+        }
+
+        return text;
     }
 
     private async readAudioFromBlob(blob: Blob): Promise<Float32Array> {
