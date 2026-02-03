@@ -25,6 +25,7 @@ export class AppComponent implements OnInit, OnDestroy {
   currentTab = signal('Overview');
   hasSidebar = signal(true);
   isImmersive = signal(false);
+  isFullScreen = signal(false);
   sidebarCollapsed = signal(true);
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
@@ -51,6 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
     ).subscribe(data => {
       this.hasSidebar.set(data['hasSidebar'] !== false); // default to true if not specified? React logic was whitelist.
       this.isImmersive.set(!!data['immersive']);
+      this.isFullScreen.set(!!data['fullScreen']);
 
       // Map path to Tab Name for Header
       const url = this.router.url.split('/')[1];

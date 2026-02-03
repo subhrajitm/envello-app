@@ -2,13 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
-    selector: 'app-login',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  template: `
     <div class="min-h-screen bg-gray-900 flex items-center justify-center p-4 text-white">
       <div class="bg-gray-800 rounded-xl p-8 w-full max-w-md shadow-2xl border border-gray-700">
         <h2 class="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
@@ -55,9 +55,9 @@ import { Router } from '@angular/router';
 
           <div class="text-center text-sm text-gray-500 mt-4">
             Don't have an account? 
-            <button type="button" (click)="handleSignUp()" class="text-blue-400 hover:text-blue-300 ml-1 cursor-pointer">
+            <a routerLink="/sign-up" class="text-blue-400 hover:text-blue-300 ml-1 cursor-pointer">
                 Sign Up
-            </button>
+            </a>
           </div>
         </form>
       </div>
@@ -65,49 +65,49 @@ import { Router } from '@angular/router';
   `
 })
 export class LoginComponent {
-    authService = inject(AuthService);
-    router = inject(Router);
+  authService = inject(AuthService);
+  router = inject(Router);
 
-    email = '';
-    password = '';
-    loading = signal(false);
-    error = signal<string | null>(null);
+  email = '';
+  password = '';
+  loading = signal(false);
+  error = signal<string | null>(null);
 
-    async handleLogin() {
-        if (!this.email || !this.password) {
-            this.error.set('Please fill in all fields');
-            return;
-        }
-
-        this.loading.set(true);
-        this.error.set(null);
-
-        const success = await this.authService.login(this.email, this.password);
-
-        if (success) {
-            // Router navigation handled by auth state subscription or manually here
-        } else {
-            this.error.set('Invalid credentials or login failed.');
-        }
-        this.loading.set(false);
+  async handleLogin() {
+    if (!this.email || !this.password) {
+      this.error.set('Please fill in all fields');
+      return;
     }
 
-    async handleSignUp() {
-        if (!this.email || !this.password) {
-            this.error.set('Please fill in all fields to sign up');
-            return;
-        }
+    this.loading.set(true);
+    this.error.set(null);
 
-        this.loading.set(true);
-        this.error.set(null);
+    const success = await this.authService.login(this.email, this.password);
 
-        const success = await this.authService.signUp(this.email, this.password);
-
-        if (success) {
-            this.error.set('Account created! Please check your email to verify.');
-        } else {
-            this.error.set('Sign up failed. Please try again.');
-        }
-        this.loading.set(false);
+    if (success) {
+      // Router navigation handled by auth state subscription or manually here
+    } else {
+      this.error.set('Invalid credentials or login failed.');
     }
+    this.loading.set(false);
+  }
+
+  async handleSignUp() {
+    if (!this.email || !this.password) {
+      this.error.set('Please fill in all fields to sign up');
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    const success = await this.authService.signUp(this.email, this.password);
+
+    if (success) {
+      this.error.set('Account created! Please check your email to verify.');
+    } else {
+      this.error.set('Sign up failed. Please try again.');
+    }
+    this.loading.set(false);
+  }
 }
