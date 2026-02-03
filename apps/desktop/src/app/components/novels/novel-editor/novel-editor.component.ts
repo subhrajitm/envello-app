@@ -39,7 +39,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
   selector: 'app-novel-editor',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     FormsModule,
     // Modals
     DeleteModalComponent,
@@ -84,7 +84,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   wordCount = signal(0);
   rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
   activeNav = signal<'manuscript' | 'structure' | 'characters' | 'locations'>('manuscript');
-  
+
   // Structure view state
   activeFrontMatterId = signal<string | null>(null);
   activePrologueId = signal<string | null>(null);
@@ -97,7 +97,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   searchOpen = signal(false);
   searchQuery = signal('');
   exportMenuOpen = signal(false);
-  
+
   // Bulk selection
   selectedChapters = signal<Set<string>>(new Set());
   bulkMode = signal(false);
@@ -106,7 +106,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   sessionStartTime = Date.now();
   elapsedSeconds = signal(0);
   targetWordCount = signal(2500);
-  
+
   // Auto-save state
   isSaving = signal(false);
   lastSaved = signal<Date | null>(null);
@@ -177,7 +177,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       const chapterId = this.activeChapterId();
       const frontMatterId = this.activeFrontMatterId();
       const prologueId = this.activePrologueId();
-      
+
       if (this.editor) {
         if (chapterId) {
           const chapter = this.novelService.getChapter(chapterId);
@@ -258,7 +258,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id') || '1';
-    
+
     // Initialize editor first (non-blocking)
     this.editor = new Editor({
       extensions: [
@@ -281,7 +281,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           const prologueId = this.activePrologueId();
           const content = editor.getHTML();
           const title = this.title();
-          
+
           if (activeId) {
             this.novelService.updateChapterContent(activeId, content, count);
             // Add version snapshot
@@ -296,14 +296,14 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             this.versionHistoryService.addVersion('prologue', 'prologue', content, title, count);
             this.updateUndoRedoState('prologue', 'prologue');
           }
-          
+
           this.isSaving.set(false);
           this.lastSaved.set(new Date());
         }, 1000); // 1 second debounce
       }
     });
 
-    // Load novel data from RxDB (async)
+    // Load novel data from DB (async)
     this.novelService.loadNovel(id).then(() => this.isLoading.set(false));
   }
 
@@ -605,9 +605,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           // Store the current chapter count to identify the new one
           const targetGroup = novel.chapters.find(g => g.id === targetGroupId);
           const chapterCountBefore = targetGroup?.children.length || 0;
-          
+
           this.novelService.addChapter(targetGroupId, modal.inputValue.trim());
-          
+
           // Select the newly created chapter
           setTimeout(() => {
             const updatedNovel = this.novel();
@@ -1040,14 +1040,14 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   mentionedCharacters = computed(() => {
     const chapterId = this.activeChapterId();
     if (!chapterId || !this.editor) return [];
-    
+
     const chapter = this.activeChapter();
     if (!chapter) return [];
-    
+
     const content = chapter.content.toLowerCase();
     const novel = this.novel();
     if (!novel) return [];
-    
+
     return novel.characters
       .filter(char => content.includes(char.name.toLowerCase()))
       .map(char => char.name);
@@ -1056,14 +1056,14 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   mentionedLocations = computed(() => {
     const chapterId = this.activeChapterId();
     if (!chapterId || !this.editor) return [];
-    
+
     const chapter = this.activeChapter();
     if (!chapter) return [];
-    
+
     const content = chapter.content.toLowerCase();
     const novel = this.novel();
     if (!novel) return [];
-    
+
     return novel.locations
       .filter(loc => content.includes(loc.name.toLowerCase()))
       .map(loc => loc.name);
@@ -1115,11 +1115,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   filteredChapters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     if (!query || query.length < 2) return null; // Early return for short queries
-    
+
     const novel = this.novel();
     if (!novel) return null;
 
-    const results: Array<{type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue', id: string, title: string, subtitle?: string}> = [];
+    const results: Array<{ type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue', id: string, title: string, subtitle?: string }> = [];
 
     // Search chapters - only check title for performance (content search is expensive)
     for (const group of novel.chapters) {
@@ -1189,7 +1189,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     return results;
   });
 
-  selectSearchResult(result: {type: string, id: string}) {
+  selectSearchResult(result: { type: string, id: string }) {
     if (result.type === 'chapter') {
       const novel = this.novel();
       if (novel) {
@@ -1238,9 +1238,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const chapter = this.activeChapter();
     const novel = this.novel();
     if (!chapter || !novel) return '';
-    
+
     let context = `Chapter: ${chapter.title}\n\n${chapter.content}\n\n`;
-    
+
     // Add novel metadata
     if (novel.characters.length > 0) {
       context += `Characters: ${novel.characters.map(c => c.name).join(', ')}\n`;
@@ -1248,7 +1248,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (novel.locations.length > 0) {
       context += `Locations: ${novel.locations.map(l => l.name).join(', ')}\n`;
     }
-    
+
     return context;
   }
 
@@ -1284,7 +1284,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
     try {
       const response = await this.aiService.sendMessage(message, fullContext);
-      
+
       // Add assistant response
       const assistantMessage: AiMessage = {
         id: (Date.now() + 1).toString(),
@@ -1313,7 +1313,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
     try {
       const analysis = await this.aiService.analyzeToneAndPacing(chapter.content);
-      
+
       // Add user message
       const userMessage: AiMessage = {
         id: Date.now().toString(),
@@ -1323,7 +1323,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         context: this.getCurrentContext()
       };
       this.aiMessages.update(messages => [...messages, userMessage]);
-      
+
       // Add assistant response
       const assistantMessage: AiMessage = {
         id: (Date.now() + 1).toString(),
@@ -1353,7 +1353,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     try {
       const suggestions = await this.aiService.generateSuggestions(chapter.content);
       this.aiSuggestions.set(suggestions);
-      
+
       // Also add to chat
       const suggestionsText = suggestions.map(s => `- ${s.content}`).join('\n');
       const message: AiMessage = {
@@ -1410,10 +1410,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
     try {
       const continuation = await this.aiService.continueWriting(content, cursorPosition);
-      
+
       // Insert at cursor
       this.editor.chain().focus().insertContent(continuation).run();
-      
+
       const message: AiMessage = {
         id: Date.now().toString(),
         role: 'assistant',
@@ -1444,7 +1444,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     }
 
     // Remove suggestion
-    this.aiSuggestions.update(suggestions => 
+    this.aiSuggestions.update(suggestions =>
       suggestions.filter(s => s.id !== suggestion.id)
     );
   }
@@ -1472,7 +1472,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
-    
+
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);
@@ -1513,10 +1513,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   bulkDeleteChapters() {
     const selected = Array.from(this.selectedChapters());
     if (selected.length === 0) return;
-    
+
     const novel = this.novel();
     if (!novel) return;
-    
+
     // Delete all selected chapters
     selected.forEach(chapterId => {
       this.novelService.deleteChapter(chapterId);
@@ -1534,7 +1534,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   bulkMoveChapters(targetGroupId: string) {
     const selected = Array.from(this.selectedChapters());
     if (selected.length === 0) return;
-    
+
     // Move logic would go here
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
@@ -1566,12 +1566,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   openLinkModal() {
     if (!this.editor) return;
-    const selectedText = this.editor.state.selection.empty 
-      ? '' 
+    const selectedText = this.editor.state.selection.empty
+      ? ''
       : this.editor.state.doc.textBetween(
-          this.editor.state.selection.from,
-          this.editor.state.selection.to
-        );
+        this.editor.state.selection.from,
+        this.editor.state.selection.to
+      );
     this.linkText.set(selectedText);
     this.linkUrl.set('');
     this.linkModalOpen.set(true);
@@ -1581,13 +1581,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!this.editor || !this.linkUrl().trim()) return;
     const url = this.linkUrl().trim();
     const text = this.linkText().trim() || url;
-    
+
     if (this.editor.state.selection.empty) {
       this.editor.chain().focus().insertContent(`<a href="${url}">${text}</a>`).run();
     } else {
       this.editor.chain().focus().setLink({ href: url }).run();
     }
-    
+
     this.linkModalOpen.set(false);
     this.linkUrl.set('');
     this.linkText.set('');
@@ -1631,7 +1631,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (format === 'html' || format === 'md') {
       // Build HTML/Markdown content
       content = `<h1>${novel.title}</h1>\n\n`;
-      
+
       // Front Matter
       if (novel.frontMatter.length > 0) {
         content += '<h2>Front Matter</h2>\n';

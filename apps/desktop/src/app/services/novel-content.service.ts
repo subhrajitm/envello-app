@@ -93,7 +93,7 @@ export class NovelContentService {
     activeNovel = signal<NovelContent | null>(null);
     store = inject(StoreService);
     private bin = inject(BinService);
-    private rxdb = inject(SqliteService);
+    private db = inject(SqliteService);
     private persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() { }
@@ -101,7 +101,7 @@ export class NovelContentService {
     async loadNovel(id: string): Promise<void> {
         this.activeNovel.set(null);
         try {
-            const raw = await this.rxdb.getNovelContent(id);
+            const raw = await this.db.getNovelContent(id);
             if (raw) {
                 const data = JSON.parse(raw) as NovelContent;
                 this.activeNovel.set(data);
@@ -109,7 +109,7 @@ export class NovelContentService {
             }
             const data = this.createEmptyNovel(id);
             this.activeNovel.set(data);
-            await this.rxdb.setNovelContent(id, JSON.stringify(data));
+            await this.db.setNovelContent(id, JSON.stringify(data));
         } catch (e) {
             logIfTauri('[NovelContentService] loadNovel failed', e);
 
@@ -137,7 +137,7 @@ export class NovelContentService {
             const n = this.activeNovel();
             if (!n) return;
 
-            this.rxdb.setNovelContent(n.id, JSON.stringify(n)).catch(e => {
+            this.db.setNovelContent(n.id, JSON.stringify(n)).catch(e => {
                 logIfTauri('[NovelContentService] persist failed', e);
                 // Fallback to LocalStorage
                 localStorage.setItem(`novel_content_${n.id}`, JSON.stringify(n));
@@ -727,7 +727,7 @@ export class NovelContentService {
     async createAndPersistEmptyNovel(id: string, title: string): Promise<void> {
         const data = this.createEmptyNovel(id, title);
         try {
-            await this.rxdb.setNovelContent(id, JSON.stringify(data));
+            await this.db.setNovelContent(id, JSON.stringify(data));
         } catch (e) {
             logIfTauri('[NovelContentService] Persist failed, falling back to LocalStorage', e);
             localStorage.setItem(`novel_content_${id}`, JSON.stringify(data));

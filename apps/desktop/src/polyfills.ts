@@ -1,6 +1,5 @@
 /**
- * Polyfills for RxDB and other dependencies that assume Node.js globals.
- * Required when using RxDB with Angular / webpack-based builds.
+ * Polyfills for dependencies that assume Node.js globals.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 if (typeof window !== 'undefined') {

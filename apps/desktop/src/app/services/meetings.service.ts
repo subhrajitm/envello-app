@@ -130,25 +130,25 @@ export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attende
 export class MeetingsService {
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private rxdb = inject(SqliteService);
+  private db = inject(SqliteService);
 
   meetings = signal<Meeting[]>([]);
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllMeetings();
+      const list = await this.db.getAllMeetings();
       this.meetings.set(list);
     } catch (e) {
-      logIfTauri('[MeetingsService] loadFromRxDB failed', e);
+      logIfTauri('[MeetingsService] loadFromDb failed', e);
     }
   }
 
   private persistMeeting(m: Meeting): void {
-    this.rxdb.upsertMeeting(m).catch(e => logIfTauri('[MeetingsService] persist failed', e));
+    this.db.upsertMeeting(m).catch(e => logIfTauri('[MeetingsService] persist failed', e));
   }
 
   // UI state
@@ -391,7 +391,7 @@ export class MeetingsService {
 
     this.meetings.set(existing.filter(m => m.id !== id));
     this.store.addActivity('Meeting deleted', 'system');
-    this.rxdb.removeMeeting(id).catch(e => logIfTauri('[MeetingsService] remove failed', e));
+    this.db.removeMeeting(id).catch(e => logIfTauri('[MeetingsService] remove failed', e));
   }
 
   cancelMeeting(id: string) {

@@ -41,18 +41,18 @@ export class BinService {
   /** All items currently in the bin (most recent first). */
   readonly items = signal<BinItem[]>([]);
 
-  private rxdb = inject(SqliteService);
+  private db = inject(SqliteService);
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllBinItems();
+      const list = await this.db.getAllBinItems();
       this.items.set(list);
     } catch (e) {
-      logIfTauri('[BinService] loadFromRxDB failed', e);
+      logIfTauri('[BinService] loadFromDb failed', e);
     }
   }
 
@@ -65,18 +65,18 @@ export class BinService {
       ...item
     };
     this.items.update(list => [binItem, ...list]);
-    this.rxdb.upsertBinItem(binItem).catch(e => logIfTauri('[BinService] persist bin item failed', e));
+    this.db.upsertBinItem(binItem).catch(e => logIfTauri('[BinService] persist bin item failed', e));
   }
 
   /** Permanently remove a single item from the bin. */
   permanentlyDelete(binItemId: string) {
     this.items.update(list => list.filter(i => i.id !== binItemId));
-    this.rxdb.removeBinItem(binItemId).catch(e => logIfTauri('[BinService] remove bin item failed', e));
+    this.db.removeBinItem(binItemId).catch(e => logIfTauri('[BinService] remove bin item failed', e));
   }
 
   /** Empty the entire bin. This is irreversible. */
   emptyBin() {
     this.items.set([]);
-    this.rxdb.clearBin().catch(e => logIfTauri('[BinService] clear bin failed', e));
+    this.db.clearBin().catch(e => logIfTauri('[BinService] clear bin failed', e));
   }
 }

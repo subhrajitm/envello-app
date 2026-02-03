@@ -37,7 +37,7 @@ const LANGS: SnippetLang[] = ['Python', 'JavaScript', 'TypeScript', 'Markdown', 
 @Injectable({ providedIn: 'root' })
 export class SnippetsService {
   private bin = inject(BinService);
-  private rxdb = inject(SqliteService);
+  private db = inject(SqliteService);
 
   readonly snippets = signal<Snippet[]>([]);
   selectedSnippetId = signal<string | null>(null);
@@ -52,15 +52,15 @@ export class SnippetsService {
   readonly LANGS = LANGS;
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllSnippets();
+      const list = await this.db.getAllSnippets();
       this.snippets.set(list);
     } catch (e) {
-      logIfTauri('[SnippetsService] loadFromRxDB failed', e);
+      logIfTauri('[SnippetsService] loadFromDb failed', e);
     }
   }
 
@@ -130,7 +130,7 @@ export class SnippetsService {
       updatedAt: now,
     };
     this.snippets.update(list => [...list, created]);
-    this.rxdb.upsertSnippet(created).catch(e => logIfTauri('[SnippetsService] persist failed', e));
+    this.db.upsertSnippet(created).catch(e => logIfTauri('[SnippetsService] persist failed', e));
     return created;
   }
 
@@ -140,7 +140,7 @@ export class SnippetsService {
       list.map(s => (s.id === id ? { ...s, ...patch, updatedAt: now } : s))
     );
     const updated = this.snippets().find(s => s.id === id);
-    if (updated) this.rxdb.upsertSnippet(updated).catch(e => logIfTauri('[SnippetsService] persist failed', e));
+    if (updated) this.db.upsertSnippet(updated).catch(e => logIfTauri('[SnippetsService] persist failed', e));
   }
 
   deleteSnippet(id: string): void {
@@ -149,7 +149,7 @@ export class SnippetsService {
     this.bin.addToBin({ type: 'snippet', originalId: id, title: s.title, payload: s });
     this.snippets.update(list => list.filter(x => x.id !== id));
     if (this.selectedSnippetId() === id) this.selectedSnippetId.set(null);
-    this.rxdb.removeSnippet(id).catch(e => logIfTauri('[SnippetsService] remove failed', e));
+    this.db.removeSnippet(id).catch(e => logIfTauri('[SnippetsService] remove failed', e));
   }
 
   copyContent(id: string): string | null {

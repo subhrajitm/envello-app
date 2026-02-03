@@ -37,7 +37,7 @@ export type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'cat
 @Injectable({ providedIn: 'root' })
 export class BooksService {
   private bin = inject(BinService);
-  private rxdb = inject(SqliteService);
+  private db = inject(SqliteService);
 
   readonly books = signal<Book[]>([]);
   selectedBookId = signal<string | null>(null);
@@ -49,20 +49,20 @@ export class BooksService {
   selectedCategory = signal<BookCategory | ''>('');
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllBooks();
+      const list = await this.db.getAllBooks();
       this.books.set(list);
     } catch (e) {
-      logIfTauri('[BooksService] loadFromRxDB failed', e);
+      logIfTauri('[BooksService] loadFromDb failed', e);
     }
   }
 
   private persistBook(b: Book): void {
-    this.rxdb.upsertBook(b).catch(e => logIfTauri('[BooksService] persist failed', e));
+    this.db.upsertBook(b).catch(e => logIfTauri('[BooksService] persist failed', e));
   }
 
   readonly selectedBook = computed(() => {
@@ -157,7 +157,7 @@ export class BooksService {
     });
     this.books.update(list => list.filter(b => b.id !== id));
     if (this.selectedBookId() === id) this.selectedBookId.set(null);
-    this.rxdb.removeBook(id).catch(e => logIfTauri('[BooksService] remove failed', e));
+    this.db.removeBook(id).catch(e => logIfTauri('[BooksService] remove failed', e));
   }
 
   setProgress(id: string, progress: number): void {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import Database from '@tauri-apps/plugin-sql';
 import { BehaviorSubject, from, map, Observable } from 'rxjs';
 
-// Import Types (Same as RxdbService)
+// Import Types
 import type {
     Task,
     Note,
@@ -1038,7 +1038,7 @@ export class SqliteService {
     }
 
     async upsertJournalColumn(doc: JournalColumnDoc): Promise<void> {
-        // Not implemented in RxdbService either, based on previous view? Actually wait, previous view cut off.
+        // Not implemented in DB service either
         // But assuming similar pattern.
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM journal_columns WHERE id = $1', [doc.id]);

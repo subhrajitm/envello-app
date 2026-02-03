@@ -30,7 +30,7 @@ export interface Article {
   providedIn: 'root'
 })
 export class ArticleService {
-  private rxdb = inject(SqliteService);
+  private db = inject(SqliteService);
   private fs = inject(FileSystemService);
 
   articles = signal<Article[]>([]);
@@ -38,7 +38,7 @@ export class ArticleService {
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
     this.initMarkdown();
   }
 
@@ -49,13 +49,13 @@ export class ArticleService {
     }
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllArticles();
+      const list = await this.db.getAllArticles();
       this.articles.set(list);
     } catch (e) {
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
-        logIfTauri('[ArticleService] loadFromRxDB failed', e);
+        logIfTauri('[ArticleService] loadFromDb failed', e);
       }
     }
   }
@@ -102,7 +102,7 @@ export class ArticleService {
     // Initial file write
     this.saveArticleContentToFile(newArticle.id, newArticle.content || '');
 
-    this.rxdb.upsertArticle(newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    this.db.upsertArticle(newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
     return newArticle;
   }
 
@@ -122,7 +122,7 @@ export class ArticleService {
     }
 
     const a = this.articles().find(x => x.id === id);
-    if (a) this.rxdb.upsertArticle(a).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    if (a) this.db.upsertArticle(a).catch(e => logIfTauri('[ArticleService] persist failed', e));
   }
 
   private async saveArticleContentToFile(id: string, html: string) {
@@ -135,13 +135,13 @@ export class ArticleService {
     const article = this.articles().find(a => a.id === id);
     if (article && article.filePath !== filePath) {
       this.articles.update(as => as.map(a => a.id === id ? { ...a, filePath } : a));
-      this.rxdb.upsertArticle({ ...article, filePath });
+      this.db.upsertArticle({ ...article, filePath });
     }
   }
 
   deleteArticle(id: string): void {
     this.articles.update(list => list.filter(a => a.id !== id));
-    this.rxdb.removeArticle(id).catch(e => logIfTauri('[ArticleService] remove failed', e));
+    this.db.removeArticle(id).catch(e => logIfTauri('[ArticleService] remove failed', e));
     this.fs.deleteFile('articles', id).catch(e => console.error('Failed to delete article file', e));
   }
 

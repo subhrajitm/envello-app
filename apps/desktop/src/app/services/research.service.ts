@@ -42,41 +42,41 @@ export interface ResearchSummary {
     providedIn: 'root'
 })
 export class ResearchService {
-    private rxdb = inject(SqliteService);
+    private db = inject(SqliteService);
 
     libraries = signal<ResearchLibrary[]>([]);
     sources = signal<ResearchSource[]>([]);
     summaries = signal<ResearchSummary[]>([]);
 
     constructor() {
-        this.loadFromRxDB();
+        this.loadFromDb();
     }
 
-    private async loadFromRxDB(): Promise<void> {
+    private async loadFromDb(): Promise<void> {
         try {
             const [libs, srcs, sums] = await Promise.all([
-                this.rxdb.getAllResearchLibraries(),
-                this.rxdb.getAllResearchSources(),
-                this.rxdb.getAllResearchSummaries(),
+                this.db.getAllResearchLibraries(),
+                this.db.getAllResearchSources(),
+                this.db.getAllResearchSummaries(),
             ]);
             this.libraries.set(libs);
             this.sources.set(srcs);
             this.summaries.set(sums);
         } catch (e) {
-            logIfTauri('[ResearchService] loadFromRxDB failed', e);
+            logIfTauri('[ResearchService] loadFromDb failed', e);
         }
     }
 
     private persistLibrary(lib: ResearchLibrary): void {
-        this.rxdb.upsertResearchLibrary(lib).catch(e => logIfTauri('[ResearchService] persist library failed', e));
+        this.db.upsertResearchLibrary(lib).catch(e => logIfTauri('[ResearchService] persist library failed', e));
     }
 
     private persistSource(s: ResearchSource): void {
-        this.rxdb.upsertResearchSource(s).catch(e => logIfTauri('[ResearchService] persist source failed', e));
+        this.db.upsertResearchSource(s).catch(e => logIfTauri('[ResearchService] persist source failed', e));
     }
 
     private persistSummary(s: ResearchSummary): void {
-        this.rxdb.upsertResearchSummary(s).catch(e => logIfTauri('[ResearchService] persist summary failed', e));
+        this.db.upsertResearchSummary(s).catch(e => logIfTauri('[ResearchService] persist summary failed', e));
     }
 
     // Library methods
@@ -103,12 +103,12 @@ export class ResearchService {
     async deleteLibrary(id: string) {
         const srcs = this.sources().filter(s => s.libraryId === id);
         const sums = this.summaries().filter(s => s.libraryId === id);
-        for (const s of srcs) await this.rxdb.removeResearchSource(s.id).catch(() => { });
-        for (const s of sums) await this.rxdb.removeResearchSummary(s.id).catch(() => { });
+        for (const s of srcs) await this.db.removeResearchSource(s.id).catch(() => { });
+        for (const s of sums) await this.db.removeResearchSummary(s.id).catch(() => { });
         this.sources.update(list => list.filter(s => s.libraryId !== id));
         this.summaries.update(list => list.filter(s => s.libraryId !== id));
         this.libraries.update(list => list.filter(lib => lib.id !== id));
-        await this.rxdb.removeResearchLibrary(id).catch(e => logIfTauri('[ResearchService] remove library failed', e));
+        await this.db.removeResearchLibrary(id).catch(e => logIfTauri('[ResearchService] remove library failed', e));
     }
 
     // Source methods
@@ -139,7 +139,7 @@ export class ResearchService {
                 sourceIds: summary.sourceIds.filter(sid => sid !== id)
             }))
         );
-        this.rxdb.removeResearchSource(id).catch(e => logIfTauri('[ResearchService] remove source failed', e));
+        this.db.removeResearchSource(id).catch(e => logIfTauri('[ResearchService] remove source failed', e));
         this.summaries().filter(s => s.sourceIds.includes(id)).forEach(s => this.persistSummary(s));
     }
 
@@ -170,7 +170,7 @@ export class ResearchService {
 
     deleteSummary(id: string) {
         this.summaries.update(list => list.filter(s => s.id !== id));
-        this.rxdb.removeResearchSummary(id).catch(e => logIfTauri('[ResearchService] remove summary failed', e));
+        this.db.removeResearchSummary(id).catch(e => logIfTauri('[ResearchService] remove summary failed', e));
     }
 
     getSummariesByLibrary(libraryId: string) {

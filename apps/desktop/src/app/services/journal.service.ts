@@ -70,14 +70,14 @@ export class JournalService {
 
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private rxdb = inject(SqliteService);
+  private db = inject(SqliteService);
   private fs = inject(FileSystemService);
 
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
     this.initMarkdown();
   }
 
@@ -88,24 +88,24 @@ export class JournalService {
     }
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
       const [projects, entries, cols] = await Promise.all([
-        this.rxdb.getAllJournalProjects(),
-        this.rxdb.getAllJournalEntries(),
-        this.rxdb.getAllJournalColumns(),
+        this.db.getAllJournalProjects(),
+        this.db.getAllJournalEntries(),
+        this.db.getAllJournalColumns(),
       ]);
       this.projects.set(projects);
       this.entries.set(entries);
       if (cols.length === 0) {
-        await Promise.all(defaultColumns.map(c => this.rxdb.upsertJournalColumn(c)));
+        await Promise.all(defaultColumns.map(c => this.db.upsertJournalColumn(c)));
         this.columns.set(defaultColumns);
       } else {
         this.columns.set(cols.sort((a, b) => a.order - b.order));
       }
     } catch (e) {
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
-        logIfTauri('[JournalService] loadFromRxDB failed', e);
+        logIfTauri('[JournalService] loadFromDb failed', e);
       }
     }
   }
@@ -135,15 +135,15 @@ export class JournalService {
   }
 
   private persistProject(p: JournalProject): void {
-    this.rxdb.upsertJournalProject(p).catch(e => logIfTauri('[JournalService] persist project failed', e));
+    this.db.upsertJournalProject(p).catch(e => logIfTauri('[JournalService] persist project failed', e));
   }
 
   private persistEntry(e: JournalEntry): void {
-    this.rxdb.upsertJournalEntry(e).catch(err => logIfTauri('[JournalService] persist entry failed', err));
+    this.db.upsertJournalEntry(e).catch(err => logIfTauri('[JournalService] persist entry failed', err));
   }
 
   private persistColumn(c: JournalColumn): void {
-    this.rxdb.upsertJournalColumn(c).catch(e => logIfTauri('[JournalService] persist column failed', e));
+    this.db.upsertJournalColumn(c).catch(e => logIfTauri('[JournalService] persist column failed', e));
   }
 
   // Project Management
@@ -207,13 +207,13 @@ export class JournalService {
           title: entry.title,
           payload: entry
         });
-        this.rxdb.removeJournalEntry(entry.id).catch(() => { });
+        this.db.removeJournalEntry(entry.id).catch(() => { });
       });
 
       this.entries.update(entries => entries.filter(e => e.projectId !== id));
       this.projects.update(projects => projects.filter(p => p.id !== id));
       this.store.addActivity(`Journal project deleted: ${project.title}`, 'system');
-      this.rxdb.removeJournalProject(id).catch(e => logIfTauri('[JournalService] remove project failed', e));
+      this.db.removeJournalProject(id).catch(e => logIfTauri('[JournalService] remove project failed', e));
     }
   }
 
@@ -301,7 +301,7 @@ export class JournalService {
     const entry = this.entries().find(e => e.id === id);
     if (entry && entry.filePath !== filePath) {
       this.entries.update(es => es.map(e => e.id === id ? { ...e, filePath } : e));
-      this.rxdb.upsertJournalEntry({ ...entry, filePath });
+      this.db.upsertJournalEntry({ ...entry, filePath });
     }
   }
 
@@ -317,7 +317,7 @@ export class JournalService {
       this.entries.update(entries => entries.filter(e => e.id !== id));
       this.updateProjectStats(entry.projectId);
       this.store.addActivity(`Entry deleted: ${entry.title}`, 'system');
-      this.rxdb.removeJournalEntry(id).catch(e => logIfTauri('[JournalService] remove entry failed', e));
+      this.db.removeJournalEntry(id).catch(e => logIfTauri('[JournalService] remove entry failed', e));
       this.fs.deleteFile('journal', id).catch(e => console.error('Failed to delete journal file', e));
     }
   }
@@ -359,7 +359,7 @@ export class JournalService {
       const updated = this.getEntry(entry.id);
       if (updated) this.persistEntry(updated);
     });
-    this.rxdb.removeJournalColumn(id).catch(e => logIfTauri('[JournalService] remove column failed', e));
+    this.db.removeJournalColumn(id).catch(e => logIfTauri('[JournalService] remove column failed', e));
   }
 
   // Search
