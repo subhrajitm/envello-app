@@ -1,18 +1,15 @@
+/* Import Google Fonts if not already in global styles */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* CSS for Project Details */
+/* Mimicking the "CoreOS" or "Analyst Interface" Look */
+
 :host {
     display: block;
     height: 100vh;
     overflow: hidden;
     font-family: 'Inter', sans-serif;
     color: #1A1614;
-}
-
-/* CSS for Project Details */
-/* Mimicking the "CoreOS" or "Analyst Interface" Look */
-
-/* Import Google Fonts if not already in global styles */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
-
-:host {
     /* espresso */
     background-color: #FBFBF9;
     /* parchment */
