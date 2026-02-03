@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
+import { SupabaseService } from '../core/services/supabase.service';
+import { AuthService } from '../core/services/auth.service';
+import { User } from '@supabase/supabase-js';
 
 export interface UserProfile {
   id: string;
@@ -28,59 +31,180 @@ export interface UserProfile {
   providedIn: 'root'
 })
 export class UserService {
+  private supabase = inject(SupabaseService);
+  private authService = inject(AuthService);
+
   private currentUser = signal<UserProfile | null>(null);
 
   // Public read-only signals
   user = this.currentUser.asReadonly();
 
   // Computed values
-  isLoggedIn = computed(() => this.currentUser() !== null);
+  isLoggedIn = computed(() => !!this.currentUser());
   userName = computed(() => this.currentUser()?.name || 'Guest');
   userInitials = computed(() => {
-    const name = this.currentUser()?.name || 'G';
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    const name = this.currentUser()?.name;
+    const email = this.currentUser()?.email;
+    const identifier = name || email || 'Guest';
+
+    // If name exists, take initials
+    if (name) {
+      const parts = name.split(' ');
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
     }
-    return name.substring(0, 2).toUpperCase();
+    // Fallback to first 2 chars of identifier
+    return identifier.substring(0, 2).toUpperCase();
   });
 
   constructor() {
-    this.loadUser();
-    this.checkStreak();
+    // React to Auth Changes
+    effect(() => {
+      const authUser = this.authService.currentUser();
+      if (authUser) {
+        this.loadProfile(authUser);
+      } else {
+        this.currentUser.set(null);
+      }
+    });
+  }
+
+  private async loadProfile(authUser: User) {
+    try {
+      const { data, error } = await this.supabase.from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = JSON object not found (no profile yet)
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      if (data) {
+        // Map Supabase profile to UserProfile
+        const profile: UserProfile = {
+          id: data.id,
+          name: data.full_name || authUser.email?.split('@')[0] || 'User',
+          email: data.email || authUser.email!,
+          avatar: data.avatar_url,
+          bio: data.bio,
+          role: data.role || 'Writer',
+          joinedDate: new Date(data.joined_at || authUser.created_at),
+          preferences: data.preferences || {
+            emailNotifications: true,
+            weeklyDigest: false,
+            autoBackup: true,
+            autoSchedule: false
+          },
+          stats: data.stats || {
+            totalWords: 0,
+            totalDocuments: 0,
+            totalProjects: 0,
+            daysActive: 0,
+            currentStreak: 0,
+            lastLoginDate: new Date().toISOString()
+          }
+        };
+        this.currentUser.set(profile);
+        this.checkStreak(profile);
+      } else {
+        // Create default profile if none exists
+        await this.createProfile(authUser);
+      }
+    } catch (e) {
+      console.error('Failed to load profile', e);
+    }
+  }
+
+  private async createProfile(authUser: User) {
+    const newProfile: Partial<UserProfile> = {
+      id: authUser.id,
+      name: authUser.user_metadata?.['full_name'] || authUser.email?.split('@')[0] || 'User',
+      email: authUser.email!,
+      role: 'Writer',
+      joinedDate: new Date(),
+      preferences: {
+        emailNotifications: true,
+        weeklyDigest: false,
+        autoBackup: true,
+        autoSchedule: false
+      },
+      stats: {
+        totalWords: 0,
+        totalDocuments: 0,
+        totalProjects: 0,
+        daysActive: 1,
+        currentStreak: 1,
+        lastLoginDate: new Date().toISOString()
+      }
+    };
+
+    // DB Insert
+    const { error } = await this.supabase.from('profiles').insert({
+      id: newProfile.id,
+      email: newProfile.email,
+      full_name: newProfile.name,
+      preferences: newProfile.preferences,
+      stats: newProfile.stats,
+      joined_at: newProfile.joinedDate?.toISOString()
+    });
+
+    if (!error) {
+      this.currentUser.set(newProfile as UserProfile);
+    } else {
+      console.error('Error creating profile:', error);
+    }
   }
 
   // Update user profile
-  updateProfile(updates: Partial<UserProfile>) {
+  async updateProfile(updates: Partial<UserProfile>) {
     const current = this.currentUser();
-    if (current) {
-      this.currentUser.set({ ...current, ...updates });
-      this.saveUser();
+    if (!current) return;
+
+    // Optimistic update
+    const updatedProfile = { ...current, ...updates };
+    this.currentUser.set(updatedProfile);
+
+    // Sync to DB
+    const dbUpdates: any = {};
+    if (updates.name) dbUpdates.full_name = updates.name;
+    if (updates.email) dbUpdates.email = updates.email; // Usually emails shouldn't be updated this way
+    if (updates.avatar) dbUpdates.avatar_url = updates.avatar;
+    if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
+
+    if (Object.keys(dbUpdates).length > 0) {
+      await this.supabase.from('profiles').update(dbUpdates).eq('id', current.id);
     }
   }
 
   // Update preferences
-  updatePreferences(preferences: Partial<UserProfile['preferences']>) {
+  async updatePreferences(preferences: Partial<UserProfile['preferences']>) {
     const current = this.currentUser();
-    if (current) {
-      this.currentUser.set({
-        ...current,
-        preferences: { ...current.preferences, ...preferences }
-      });
-      this.saveUser();
-    }
+    if (!current) return;
+
+    const newPreferences = { ...current.preferences, ...preferences };
+
+    // Optimistic
+    this.currentUser.set({ ...current, preferences: newPreferences });
+
+    // DB
+    await this.supabase.from('profiles').update({ preferences: newPreferences }).eq('id', current.id);
   }
 
   // Update stats
-  updateStats(stats: Partial<UserProfile['stats']>) {
+  async updateStats(stats: Partial<UserProfile['stats']>) {
     const current = this.currentUser();
-    if (current) {
-      this.currentUser.set({
-        ...current,
-        stats: { ...current.stats, ...stats }
-      });
-      this.saveUser();
-    }
+    if (!current) return;
+
+    const newStats = { ...current.stats, ...stats };
+
+    // Optimistic
+    this.currentUser.set({ ...current, stats: newStats });
+
+    // DB
+    await this.supabase.from('profiles').update({ stats: newStats }).eq('id', current.id);
   }
 
   // Increment word count
@@ -88,7 +212,7 @@ export class UserService {
     const current = this.currentUser();
     if (current) {
       this.updateStats({
-        totalWords: current.stats.totalWords + count
+        totalWords: (current.stats.totalWords || 0) + count
       });
     }
   }
@@ -98,86 +222,39 @@ export class UserService {
     const current = this.currentUser();
     if (current) {
       this.updateStats({
-        totalDocuments: current.stats.totalDocuments + 1
+        totalDocuments: (current.stats.totalDocuments || 0) + 1
       });
     }
   }
 
-  // Set avatar
-  setAvatar(avatarUrl: string) {
-    this.updateProfile({ avatar: avatarUrl });
-  }
-
-  // Clear avatar
-  clearAvatar() {
-    this.updateProfile({ avatar: undefined });
-  }
-
   // Logout
   logout() {
-    if (confirm('Are you sure you want to logout?')) {
-      this.currentUser.set(null);
-      localStorage.removeItem('envello-user');
-      // Could redirect to login page here
-    }
+    this.authService.logout();
+    this.currentUser.set(null);
   }
 
-  // Private methods
-  private saveUser() {
-    const user = this.currentUser();
-    if (user) {
-      const data = {
-        ...user,
-        joinedDate: user.joinedDate.toISOString()
-      };
-      localStorage.setItem('envello-user', JSON.stringify(data));
-    }
-  }
-
-  private loadUser() {
-    const saved = localStorage.getItem('envello-user');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        this.currentUser.set({
-          ...data,
-          joinedDate: new Date(data.joinedDate)
-        });
-      } catch (e) {
-        console.error('Failed to load user:', e);
-      }
-    }
-  }
-
-  private checkStreak() {
-    const user = this.currentUser();
-    if (!user) return;
-
+  private checkStreak(profile: UserProfile) {
     const today = new Date().toDateString();
-    const lastLogin = new Date(user.stats.lastLoginDate || new Date().toISOString()).toDateString();
+    const lastLogin = new Date(profile.stats.lastLoginDate || new Date().toISOString()).toDateString();
 
-    if (today === lastLogin) {
-      return; // Already logged in today
-    }
+    if (today === lastLogin) return;
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayString = yesterday.toDateString();
 
-    let newStreak = user.stats.currentStreak;
+    let newStreak = profile.stats.currentStreak;
 
     if (lastLogin === yesterdayString) {
-      // Login was yesterday, increment streak
       newStreak++;
     } else {
-      // Streak broken, reset to 1 (today is day 1)
       newStreak = 1;
     }
 
     this.updateStats({
       currentStreak: newStreak,
       lastLoginDate: new Date().toISOString(),
-      daysActive: user.stats.daysActive + 1
+      daysActive: (profile.stats.daysActive || 0) + 1
     });
   }
 }

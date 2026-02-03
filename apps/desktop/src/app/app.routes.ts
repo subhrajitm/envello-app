@@ -1,7 +1,12 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'overview', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () => import('./components/auth/login/login.component').then(m => m.LoginComponent),
+    data: { hasSidebar: false }
+  },
   {
     path: 'overview',
     loadComponent: () => import('./components/overview/overview.component').then(m => m.OverviewComponent),
