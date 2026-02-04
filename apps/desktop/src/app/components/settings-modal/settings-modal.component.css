@@ -182,7 +182,7 @@
 /* Setting Items */
 .setting-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
     padding: 14px 0;
@@ -520,7 +520,9 @@
     gap: 8px;
 }
 
-.action-buttons env-button { flex: 1; }
+.action-buttons env-button {
+    flex: 1;
+}
 
 /* Legacy button classes - kept for any remaining native buttons */
 .btn-danger-outline {
