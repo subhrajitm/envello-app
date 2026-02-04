@@ -43,15 +43,20 @@ export class UserService {
   isLoggedIn = computed(() => !!this.currentUser());
   userName = computed(() => this.currentUser()?.name || 'Guest');
   userInitials = computed(() => {
-    const name = this.currentUser()?.name;
-    const email = this.currentUser()?.email;
+    const profile = this.currentUser();
+    const authUser = this.authService.currentUser();
+
+    const name = profile?.name || authUser?.user_metadata?.['full_name'] || authUser?.user_metadata?.['name'];
+    const email = profile?.email || authUser?.email;
     const identifier = name || email || 'Guest';
 
     // If name exists, take initials
     if (name) {
-      const parts = name.split(' ');
+      const parts = name.trim().split(/\s+/);
       if (parts.length >= 2) {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      } else if (parts.length === 1) {
+        return parts[0].substring(0, 2).toUpperCase();
       }
     }
     // Fallback to first 2 chars of identifier

@@ -1,6 +1,6 @@
 @if (authService.initialized()) {
 <div class="dashboard">
-  @if (!isFullScreen()) {
+  @if (!isFullScreen() && authService.isAuthenticated()) {
   <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
     (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
   </app-header>
@@ -14,7 +14,7 @@
     <router-outlet></router-outlet>
   </div>
 
-  @if (!isFullScreen()) {
+  @if (!isFullScreen() && authService.isAuthenticated()) {
   <app-footer></app-footer>
   }
 </div>
