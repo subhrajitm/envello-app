@@ -75,14 +75,6 @@ import { Router, RouterModule } from '@angular/router';
         </form>
       </div>
 
-      <!-- App Info -->
-      <div class="app-info">
-        <span class="status-indicator">
-          <span class="status-dot"></span>
-          Secure
-        </span>
-        <span class="version">v2.0.4</span>
-      </div>
     </div>
   `,
   styles: [`
@@ -275,43 +267,7 @@ import { Router, RouterModule } from '@angular/router';
       color: var(--accent-blue);
     }
 
-    .app-info {
-      position: absolute;
-      bottom: 16px;
-      left: 0;
-      right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      font-size: 10px;
-      color: var(--text-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
 
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .status-dot {
-      width: 5px;
-      height: 5px;
-      background: var(--accent-green);
-      border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .version {
-      opacity: 0.5;
-    }
   `]
 })
 export class LoginComponent {
