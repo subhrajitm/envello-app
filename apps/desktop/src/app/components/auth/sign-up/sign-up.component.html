@@ -1,4 +1,9 @@
 <div class="signup-container">
+    @if (!authService.initialized()) {
+    <div class="loading-overlay">
+        <div class="loading-spinner-large"></div>
+    </div>
+    } @else {
     <div class="signup-content">
         <!-- Header -->
         <div class="signup-header">
@@ -199,4 +204,5 @@
             </section>
         </div>
     </div>
+    }
 </div>

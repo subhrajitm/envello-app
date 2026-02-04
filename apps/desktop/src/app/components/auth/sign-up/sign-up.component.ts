@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -13,9 +13,17 @@ import { UserService } from '../../../services/user.service';
     styleUrls: ['./sign-up.component.css']
 })
 export class SignUpComponent {
-    private authService = inject(AuthService);
+    authService = inject(AuthService);
     private userService = inject(UserService);
     private router = inject(Router);
+
+    constructor() {
+        effect(() => {
+            if (this.authService.initialized() && this.authService.isAuthenticated()) {
+                this.router.navigate(['/overview']);
+            }
+        });
+    }
 
     currentStep = signal(1);
     totalSteps = 3;

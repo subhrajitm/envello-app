@@ -15,12 +15,16 @@ export class AuthService {
 
   isAuthenticated = computed(() => !!this._session());
   currentUser = computed(() => this._user());
+  initialized = computed(() => this._initialized());
+
+  private readonly _initialized = signal(false);
 
   constructor() {
     // Initial session load
     this.supabase.getSession().then(({ data: { session } }) => {
       this._session.set(session);
       this._user.set(session?.user ?? null);
+      this._initialized.set(true);
       this.logging.info('AuthService initialized', session ? 'Authenticated' : 'Guest');
     });
 

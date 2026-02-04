@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,7 +10,12 @@ import { Router, RouterModule } from '@angular/router';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="login-container">
-      <div class="login-content">
+      <!-- Loading State -->
+      <div *ngIf="!authService.initialized()" class="loading-overlay">
+        <div class="loading-spinner-large"></div>
+      </div>
+
+      <div *ngIf="authService.initialized()" class="login-content">
         <!-- Logo Section -->
         <div class="login-header">
           <div class="logo-wrapper">
@@ -87,6 +92,23 @@ import { Router, RouterModule } from '@angular/router';
       padding: 16px;
       position: relative;
     }
+    
+    .loading-overlay {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+    }
+
+    .loading-spinner-large {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-subtle);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
 
     .login-content {
       width: 100%;
@@ -96,6 +118,12 @@ import { Router, RouterModule } from '@angular/router';
       border-radius: 6px;
       padding: 28px 24px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .login-header {
@@ -278,6 +306,14 @@ export class LoginComponent {
   password = '';
   loading = signal(false);
   error = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      if (this.authService.initialized() && this.authService.isAuthenticated()) {
+        this.router.navigate(['/overview']);
+      }
+    });
+  }
 
   async handleLogin() {
     if (!this.email || !this.password) {
