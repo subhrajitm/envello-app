@@ -197,7 +197,7 @@ export class SettingsModalComponent {
 
   resetToDefaults() {
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
-      this.currentTheme.set('dark');
+      this.currentTheme.set('light');
       this.fontSize.set(14);
       this.compactMode.set(false);
       this.animations.set(true);
@@ -212,8 +212,9 @@ export class SettingsModalComponent {
       this.dailySummary.set(false);
       this.analytics.set(true);
 
-      this.themeService.theme.set('dark');
+      this.themeService.theme.set('light');
       localStorage.removeItem('envello-settings');
+      localStorage.setItem('theme', 'light');
 
       // Reset CSS variables
       document.documentElement.style.removeProperty('--base-font-size');
