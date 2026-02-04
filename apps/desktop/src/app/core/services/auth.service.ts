@@ -13,19 +13,34 @@ export class AuthService {
   private readonly _session = signal<Session | null>(null);
   private readonly _user = signal<User | null>(null);
 
-  isAuthenticated = computed(() => !!this._session());
+  isAuthenticated = computed(() => !!this._session() || this._isGuest());
   currentUser = computed(() => this._user());
   initialized = computed(() => this._initialized());
+  isGuest = computed(() => this._isGuest());
 
   private readonly _initialized = signal(false);
+  private readonly _isGuest = signal(false);
 
   constructor() {
     // Initial session load
     this.supabase.getSession().then(({ data: { session } }) => {
       this._session.set(session);
       this._user.set(session?.user ?? null);
+
+      // If no session, check for Guest Mode
+      if (!session) {
+        const isGuest = localStorage.getItem('envello-guest-mode') === 'true';
+        if (isGuest) {
+          this._isGuest.set(true);
+          this.logging.info('AuthService initialized', 'Guest Mode');
+        } else {
+          this.logging.info('AuthService initialized', 'Guest');
+        }
+      } else {
+        this.logging.info('AuthService initialized', 'Authenticated');
+      }
+
       this._initialized.set(true);
-      this.logging.info('AuthService initialized', session ? 'Authenticated' : 'Guest');
     });
 
     // Listen for changes
@@ -35,6 +50,12 @@ export class AuthService {
       this._user.set(session?.user ?? null);
 
       if (event === 'SIGNED_OUT') {
+        // Only clear guest mode if explicit logout happens (which clears both)
+        // But SIGNED_OUT comes from Supabase. 
+        // If we are guest, we are not interacting with Supabase auth changes usually.
+        // However, if we were signed in and signed out, we go to login.
+        this._isGuest.set(false);
+        localStorage.removeItem('envello-guest-mode');
         this.router.navigate(['/login']);
       }
     });
@@ -42,6 +63,12 @@ export class AuthService {
 
   getToken(): string | null {
     return this._session()?.access_token ?? null;
+  }
+
+  loginAsGuest() {
+    this._isGuest.set(true);
+    localStorage.setItem('envello-guest-mode', 'true');
+    this.router.navigate(['/overview']);
   }
 
   async login(email: string, password: string): Promise<boolean> {
@@ -74,6 +101,14 @@ export class AuthService {
 
   async logout(): Promise<void> {
     this.logging.info('AuthService.logout');
+
+    if (this._isGuest()) {
+      this._isGuest.set(false);
+      localStorage.removeItem('envello-guest-mode');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     const { error } = await this.supabase.signOut();
     if (error) {
       this.logging.error('Logout failed', error.message);

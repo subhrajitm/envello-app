@@ -69,6 +69,10 @@ import { Router, RouterModule } from '@angular/router';
           </button>
 
           <div class="login-footer">
+            <button type="button" class="btn-guest" (click)="continueAsGuest()">
+              Continue as Guest
+            </button>
+            <div class="footer-divider"></div>
             <span class="footer-text">Don't have an account?</span>
             <a routerLink="/sign-up" class="footer-link">Create Account</a>
           </div>
@@ -345,5 +349,9 @@ export class LoginComponent {
       this.error.set('Sign up failed. Please try again.');
     }
     this.loading.set(false);
+  }
+
+  continueAsGuest() {
+    this.authService.loginAsGuest();
   }
 }
