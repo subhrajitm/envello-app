@@ -6,7 +6,7 @@ export type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterpr
   providedIn: 'root'
 })
 export class ThemeService {
-  theme = signal<Theme>('dark'); // Default temporary, will init in constructor
+  theme = signal<Theme>('typewriter'); // Default temporary, will init in constructor
 
   constructor() {
     // Initialize theme from storage or system preference

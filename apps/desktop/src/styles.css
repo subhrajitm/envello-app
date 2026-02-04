@@ -1,11 +1,57 @@
 @import "tailwindcss";
 
 :root {
-    /* Enterprise Dark Theme Palette */
+    /* Typewriter / Nicheless Aesthetic (DEFAULT) */
+    /* Truly minimalist, paper-like */
+    --bg-app: #fdfbf7;
+    /* Warm paper white */
+    --bg-panel: #ffffff;
+    /* Stark white for panels */
+    --bg-hover: #f0f0f0;
+    --bg-active: #e5e5e5;
+
+    --bg-subtle: #f9f9f9;
+    --bg-element: #ffffff;
+
+    --border-subtle: #e5e5e5;
+    --border-main: #000000;
+    /* Solid black borders */
+    --border-highlight: #000000;
+
+    --text-primary: #111111;
+    /* Soft black */
+    --text-secondary: #444444;
+    --text-tertiary: #666666;
+    --text-disabled: #999999;
+
+    --accent-primary: #000000;
+    --accent-primary-dim: rgba(0, 0, 0, 0.05);
+    --accent-primary-text: #ffffff;
+
+    /* Monochrome Accents */
+    --accent-blue: #000000;
+    --accent-red: #000000;
+    --accent-green: #000000;
+    --accent-purple: #000000;
+    --accent-yellow: #e5e5e5;
+    --accent-pink: #000000;
+
+    /* Typewriter Fonts - Using Atkinson Hyperlegible for better readability */
+    --font-sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Atkinson Hyperlegible', monospace;
+    --font-serif: 'Atkinson Hyperlegible', serif;
+}
+
+[data-theme="dark"],
+[data-theme="enterprise-dark"] {
+    /* Enterprise Dark Theme */
     --bg-app: #09090b;
     --bg-panel: #121212;
     --bg-hover: #1e1e1e;
     --bg-active: #27272a;
+
+    --bg-subtle: #1f1f23;
+    --bg-element: #2d2d30;
 
     --border-subtle: #1f1f22;
     --border-main: #27272a;
@@ -14,53 +60,10 @@
     --text-primary: #ffffff;
     --text-secondary: #d4d4d8;
     --text-tertiary: #a1a1aa;
+    --text-disabled: #71717a;
 
     --accent-primary: #ffd700;
     --accent-primary-dim: rgba(255, 215, 0, 0.1);
-    --accent-primary-text: #000000;
-    --accent-blue: #60a5fa;
-    --accent-red: #f87171;
-    --accent-green: #4ade80;
-    --accent-purple: #a855f7;
-
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-    --font-serif: 'Georgia', 'Times New Roman', serif;
-}
-
-[data-theme="enterprise-dark"] {
-    /* Enterprise Dark Theme - Softer, Less Intense */
-    --bg-app: #18181b;
-    /* Zinc 900 - lighter than pure black */
-    --bg-panel: #27272a;
-    /* Zinc 800 */
-    --bg-hover: #3f3f46;
-    /* Zinc 700 */
-    --bg-active: #52525b;
-    /* Zinc 600 */
-
-    --bg-subtle: #1f1f23;
-    /* Between app and panel */
-    --bg-element: #2d2d30;
-
-    --border-subtle: #3f3f46;
-    /* Zinc 700 */
-    --border-main: #52525b;
-    /* Zinc 600 */
-    --border-highlight: #71717a;
-    /* Zinc 500 */
-
-    --text-primary: #fafafa;
-    /* Zinc 50 */
-    --text-secondary: #e4e4e7;
-    /* Zinc 200 */
-    --text-tertiary: #a1a1aa;
-    /* Zinc 400 */
-    --text-disabled: #71717a;
-
-    --accent-primary: #fbbf24;
-    /* Amber 400 - slightly softer than pure gold */
-    --accent-primary-dim: rgba(251, 191, 36, 0.1);
     --accent-primary-text: #000000;
     --accent-blue: #60a5fa;
     --accent-red: #f87171;
@@ -71,6 +74,37 @@
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     --font-serif: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="typewriter"] {
+    /* Explicit selector to allow overrides like border-radius: 0 */
+    /* Variables are inherited from :root if this is active, or redeclared here if needed */
+    /* We redeclare to be safe when toggling back to it from dark */
+    --bg-app: #fdfbf7;
+    --bg-panel: #ffffff;
+    --bg-hover: #f0f0f0;
+    --bg-active: #e5e5e5;
+    --bg-subtle: #f9f9f9;
+    --bg-element: #ffffff;
+    --border-subtle: #e5e5e5;
+    --border-main: #000000;
+    --border-highlight: #000000;
+    --text-primary: #111111;
+    --text-secondary: #444444;
+    --text-tertiary: #666666;
+    --text-disabled: #999999;
+    --accent-primary: #000000;
+    --accent-primary-dim: rgba(0, 0, 0, 0.05);
+    --accent-primary-text: #ffffff;
+    --accent-blue: #000000;
+    --accent-red: #000000;
+    --accent-green: #000000;
+    --accent-purple: #000000;
+    --accent-yellow: #e5e5e5;
+    --accent-pink: #000000;
+    --font-sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Atkinson Hyperlegible', monospace;
+    --font-serif: 'Atkinson Hyperlegible', serif;
 }
 
 [data-theme="light"] {
@@ -88,7 +122,7 @@
 
     --text-primary: #0f0f0f;
     /* E-ink black */
-    --text-secondary: #4a4a4a;
+    --text-secondary: #444444;
     --text-tertiary: #767676;
 
     --accent-primary: #b45309;
@@ -174,48 +208,6 @@
     --accent-primary: var(--ugc-amber);
     --accent-primary-dim: rgba(240, 125, 89, 0.12);
     --accent-primary-text: #ffffff;
-}
-
-[data-theme="typewriter"] {
-    /* Typewriter / Nicheless Aesthetic */
-    /* Truly minimalist, paper-like */
-    --bg-app: #fdfbf7;
-    /* Warm paper white */
-    --bg-panel: #ffffff;
-    /* Stark white for panels */
-    --bg-hover: #f0f0f0;
-    --bg-active: #e5e5e5;
-
-    --bg-subtle: #f9f9f9;
-    --bg-element: #ffffff;
-
-    --border-subtle: #e5e5e5;
-    --border-main: #000000;
-    /* Solid black borders */
-    --border-highlight: #000000;
-
-    --text-primary: #111111;
-    /* Soft black */
-    --text-secondary: #444444;
-    --text-tertiary: #666666;
-    --text-disabled: #999999;
-
-    --accent-primary: #000000;
-    --accent-primary-dim: rgba(0, 0, 0, 0.05);
-    --accent-primary-text: #ffffff;
-
-    /* Monochrome Accents */
-    --accent-blue: #000000;
-    --accent-red: #000000;
-    --accent-green: #000000;
-    --accent-purple: #000000;
-    --accent-yellow: #e5e5e5;
-    --accent-pink: #000000;
-
-    /* Typewriter Fonts - Using Atkinson Hyperlegible for better readability */
-    --font-sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'Atkinson Hyperlegible', monospace;
-    --font-serif: 'Atkinson Hyperlegible', serif;
 }
 
 [data-theme="enterprise-light"] {
