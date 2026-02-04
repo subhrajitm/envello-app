@@ -1,9 +1,10 @@
 import { Component, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { IconButtonComponent } from '../../shared/ui/icon-button/icon-button.component';
 import { ThemeService, Theme } from '../../services/theme.service';
-import { AiService } from '../../services/ai.service';
+import { AiService, AiProvider } from '../../services/ai.service';
 
 interface SettingsSection {
   id: string;
@@ -17,10 +18,16 @@ interface ThemeOption {
   icon: string;
 }
 
+interface AiProviderOption {
+  value: AiProvider;
+  label: string;
+  icon: string;
+}
+
 @Component({
   selector: 'app-settings-modal',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, IconButtonComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent],
   templateUrl: './settings-modal.component.html',
   styleUrl: './settings-modal.component.css'
 })
@@ -47,6 +54,11 @@ export class SettingsModalComponent {
   dailySummary = signal(false);
   analytics = signal(true);
 
+  // AI State
+  aiProvider = signal<AiProvider>('mock');
+  aiModel = signal('');
+  aiKey = signal('');
+
   sections: SettingsSection[] = [
     { id: 'appearance', label: 'Appearance', icon: 'palette' },
     { id: 'editor', label: 'Editor', icon: 'edit_note' },
@@ -65,12 +77,24 @@ export class SettingsModalComponent {
     { value: 'typewriter', label: 'Typewriter', icon: 'article' }
   ];
 
+  aiProviders: AiProviderOption[] = [
+    { value: 'mock', label: 'Demo Mode (Offline)', icon: 'science' },
+    { value: 'openai', label: 'OpenAI (GPT-4)', icon: 'psychology' },
+    { value: 'anthropic', label: 'Anthropic (Claude)', icon: 'smart_toy' },
+    { value: 'ollama', label: 'Ollama (Local)', icon: 'terminal' }
+  ];
+
   constructor() {
     // Load current theme
     this.currentTheme.set(this.themeService.theme());
 
     // Load settings from localStorage
     this.loadSettings();
+
+    // Load AI settings
+    this.aiProvider.set(this.aiService.provider());
+    this.aiModel.set(this.aiService.modelName());
+    this.aiKey.set(this.aiService.apiKey());
   }
 
   @HostListener('document:keydown.escape', ['$event'])
@@ -84,6 +108,12 @@ export class SettingsModalComponent {
   open() {
     this.isOpen.set(true);
     this.currentTheme.set(this.themeService.theme());
+
+    // Refresh AI settings from service in case they changed elsewhere
+    this.aiProvider.set(this.aiService.provider());
+    this.aiModel.set(this.aiService.modelName());
+    this.aiKey.set(this.aiService.apiKey());
+
     // Reload settings to get current navigation layout
     this.loadSettings();
   }
@@ -170,6 +200,15 @@ export class SettingsModalComponent {
     this.analytics.set(!this.analytics());
   }
 
+  // AI Actions
+  setAiProvider(provider: AiProvider) {
+    this.aiProvider.set(provider);
+    // Set default models
+    if (provider === 'openai') this.aiModel.set('gpt-4-turbo');
+    else if (provider === 'anthropic') this.aiModel.set('claude-3-opus-20240229');
+    else if (provider === 'ollama') this.aiModel.set('llama3');
+  }
+
   // Actions
   saveSettings() {
     const settings = {
@@ -190,6 +229,10 @@ export class SettingsModalComponent {
     };
 
     localStorage.setItem('envello-settings', JSON.stringify(settings));
+
+    // Save AI Config
+    this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
+
     // Dispatch event to notify header component
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: this.navigationLayout() }));
     this.close();
@@ -211,6 +254,12 @@ export class SettingsModalComponent {
       this.soundEffects.set(true);
       this.dailySummary.set(false);
       this.analytics.set(true);
+
+      // Reset AI
+      this.aiProvider.set('mock');
+      this.aiModel.set('gpt-4-turbo');
+      this.aiKey.set('');
+      this.aiService.updateConfig('mock', '', '');
 
       this.themeService.theme.set('light');
       localStorage.removeItem('envello-settings');
@@ -277,3 +326,4 @@ export class SettingsModalComponent {
     return fonts[font] || fonts['serif'];
   }
 }
+

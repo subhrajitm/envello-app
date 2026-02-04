@@ -6,7 +6,8 @@
                 <span class="material-symbols-outlined header-icon">settings</span>
                 <h2>Settings</h2>
             </div>
-            <env-icon-button icon="close" variant="ghost" [size]="32" title="Close" (clicked)="close()"></env-icon-button>
+            <env-icon-button icon="close" variant="ghost" [size]="32" title="Close"
+                (clicked)="close()"></env-icon-button>
         </div>
 
         <!-- Content -->
@@ -14,8 +15,8 @@
             <!-- Sidebar -->
             <div class="settings-sidebar flex flex-col gap-1">
                 @for (section of sections; track section.id) {
-                <button class="settings-nav-item flex items-center gap-2 w-full" [class.active]="activeSection() === section.id"
-                    (click)="setActiveSection(section.id)">
+                <button class="settings-nav-item flex items-center gap-2 w-full"
+                    [class.active]="activeSection() === section.id" (click)="setActiveSection(section.id)">
                     <span class="material-symbols-outlined">{{ section.icon }}</span>
                     <span>{{ section.label }}</span>
                 </button>
@@ -194,19 +195,62 @@
                         </label>
                     </div>
 
+                    @if (aiService.aiEnabled()) {
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>AI Provider</label>
+                            <span class="setting-desc">Select the AI model provider</span>
+                        </div>
+                        <div class="theme-selector">
+                            @for (provider of aiProviders; track provider.value) {
+                            <button class="theme-option" [class.active]="aiProvider() === provider.value"
+                                (click)="setAiProvider(provider.value)">
+                                <span class="material-symbols-outlined">{{ provider.icon }}</span>
+                                <span>{{ provider.label }}</span>
+                            </button>
+                            }
+                        </div>
+                    </div>
+
+                    @if (aiProvider() !== 'mock' && aiProvider() !== 'ollama') {
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>API Key</label>
+                            <span class="setting-desc">Enter your {{ aiProvider() | titlecase }} API Key</span>
+                        </div>
+                        <div class="setting-control w-full">
+                            <input type="password" [ngModel]="aiKey()" (ngModelChange)="aiKey.set($event)"
+                                class="form-input" placeholder="sk-..." spellcheck="false">
+                        </div>
+                    </div>
+                    }
+
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Model Name</label>
+                            <span class="setting-desc">Specific model identifier (e.g. gpt-4, claude-3)</span>
+                        </div>
+                        <div class="setting-control w-full">
+                            <input type="text" [ngModel]="aiModel()" (ngModelChange)="aiModel.set($event)"
+                                class="form-input" placeholder="gpt-4-turbo" spellcheck="false">
+                        </div>
+                    </div>
+
                     <div class="info-card">
                         <div class="info-row">
+                            <span class="info-label">Current Provider</span>
+                            <span class="info-value">{{ aiProvider() | titlecase }}</span>
+                        </div>
+                        <div class="info-row">
                             <span class="info-label">Status</span>
-                            <span class="info-value"
-                                [style.color]="aiService.aiEnabled() ? 'var(--accent-green)' : 'var(--text-tertiary)'">
-                                {{ aiService.aiEnabled() ? 'Active' : 'Disabled' }}
-                            </span>
+                            <span class="info-value" style="color: var(--accent-green)">Ready</span>
                         </div>
                         <p class="text-muted-hint text-[11px] mt-3 leading-relaxed">
-                            When enabled, Envello provides intelligent suggestions, summaries, and creative assistance.
-                            All processing is done securely.
+                            Envello uses LangChain to connect to various AI providers.
+                            Keys are stored locally on your device.
                         </p>
                     </div>
+                    }
                 </div>
                 }
 

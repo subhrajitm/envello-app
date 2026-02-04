@@ -1,4 +1,11 @@
 import { Injectable, signal, effect } from '@angular/core';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChatAnthropic } from '@langchain/anthropic';
+import { ChatOllama } from '@langchain/ollama';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+
+export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock';
 
 export interface AiMessage {
     id: string;
@@ -20,89 +27,157 @@ export interface AiSuggestion {
     providedIn: 'root'
 })
 export class AiService {
-    aiEnabled = signal<boolean>(true); // Default to enabled
+    aiEnabled = signal<boolean>(true);
+    provider = signal<AiProvider>('mock');
+    modelName = signal<string>('gpt-4-turbo');
+    apiKey = signal<string>('');
+
+    private chatModel?: BaseChatModel;
 
     constructor() {
         // Initialize from storage
-        const saved = localStorage.getItem('ai-enabled');
-        if (saved !== null) {
-            this.aiEnabled.set(saved === 'true');
-        }
+        const savedEnabled = localStorage.getItem('ai-enabled');
+        if (savedEnabled !== null) this.aiEnabled.set(savedEnabled === 'true');
 
-        // Effect to update Storage when signal changes
+        const savedProvider = localStorage.getItem('ai-provider') as AiProvider;
+        if (savedProvider) this.provider.set(savedProvider);
+
+        const savedModel = localStorage.getItem('ai-model');
+        if (savedModel) this.modelName.set(savedModel);
+
+        const savedKey = localStorage.getItem('ai-key');
+        if (savedKey) this.apiKey.set(savedKey);
+
+        // Initialize model
+        this.initModel();
+
+        // Effect to update Storage when signals change
         effect(() => {
             localStorage.setItem('ai-enabled', String(this.aiEnabled()));
+            localStorage.setItem('ai-provider', this.provider());
+            localStorage.setItem('ai-model', this.modelName());
+            localStorage.setItem('ai-key', this.apiKey());
         });
+    }
+
+    updateConfig(provider: AiProvider, model: string, key: string) {
+        this.provider.set(provider);
+        this.modelName.set(model);
+        this.apiKey.set(key);
+        this.initModel();
+    }
+
+    private initModel() {
+        const p = this.provider();
+        const k = this.apiKey();
+        const m = this.modelName();
+
+        try {
+            if (p === 'openai' && k) {
+                this.chatModel = new ChatOpenAI({ openAIApiKey: k, modelName: m });
+            } else if (p === 'anthropic' && k) {
+                this.chatModel = new ChatAnthropic({ anthropicApiKey: k, modelName: m });
+            } else if (p === 'ollama') {
+                this.chatModel = new ChatOllama({ model: m || 'llama3', baseUrl: 'http://localhost:11434' });
+            } else {
+                this.chatModel = undefined; // Fallback to mock
+            }
+        } catch (e) {
+            console.error('Failed to initialize AI model:', e);
+            this.chatModel = undefined;
+        }
     }
 
     toggleAi() {
         this.aiEnabled.set(!this.aiEnabled());
     }
 
-    // Simulate AI API calls - Replace with actual API integration
     async sendMessage(prompt: string, context?: string): Promise<string> {
-        // Simulate API delay
+        if (!this.aiEnabled()) return '';
+
+        if (this.chatModel) {
+            try {
+                const messages = [
+                    new SystemMessage(context || 'You are a helpful creative writing assistant.'),
+                    new HumanMessage(prompt)
+                ];
+                const response = await this.chatModel.invoke(messages);
+                return typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
+            } catch (e) {
+                console.error('AI Request failed:', e);
+                return this.getMockResponse();
+            }
+        }
+
+        return this.getMockResponse();
+    }
+
+    private async getMockResponse(): Promise<string> {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock response - Replace with actual API call
         const responses = [
-            `Based on the context provided, I suggest focusing on character development in this section. The dialogue could be more natural, and the pacing might benefit from shorter paragraphs.`,
-            `Your writing shows strong descriptive language. Consider adding more sensory details to immerse the reader further. The tension building is effective.`,
-            `The chapter structure is solid. I notice opportunities to deepen emotional connections between characters. The plot progression is clear and engaging.`,
-            `This section demonstrates good narrative flow. To enhance it further, consider varying sentence length and adding more internal character thoughts.`
+            `[MOCK] Based on the context provided, I suggest focusing on character development...`,
+            `[MOCK] Your writing shows strong descriptive language...`,
+            `[MOCK] The chapter structure is solid...`,
+            `[MOCK] This section demonstrates good narrative flow...`
         ];
-        
         return responses[Math.floor(Math.random() * responses.length)];
     }
 
     async analyzeToneAndPacing(content: string): Promise<string> {
+        if (this.chatModel) {
+            return this.sendMessage(`Analyze the tone and pacing of the following text:\n\n${content}`, 'You are an expert literary editor.');
+        }
+
         await new Promise(resolve => setTimeout(resolve, 2000));
-        return `**Tone Analysis:**\nThe overall tone is consistent and engaging. The narrative voice maintains a professional yet accessible style.\n\n**Pacing Analysis:**\nThe pacing is well-balanced. Action sequences move quickly, while reflective moments allow for character development. Consider adding a brief pause after the climax to let the impact settle.`;
+        return `**Tone Analysis:**\nThe overall tone is consistent and engaging.\n\n**Pacing Analysis:**\nThe pacing is well-balanced.`;
     }
 
     async generateSuggestions(content: string): Promise<AiSuggestion[]> {
+        if (this.chatModel) {
+            try {
+                const prompt = `Read the following text and provide 2 improvement suggestions in strictly valid JSON format. 
+                Output format: Array of objects with keys: id (string), type ("improvement"), content (string), originalText (string), position (number).
+                Text: "${content.substring(0, 500)}..."`;
+
+                const response = await this.sendMessage(prompt, 'You are a JSON-speaking writing assistant. Output ONLY JSON.');
+                // clean markdown code blocks if present
+                const cleanJson = response.replace(/```json/g, '').replace(/```/g, '').trim();
+                return JSON.parse(cleanJson);
+            } catch (e) {
+                console.error('Failed to parse AI JSON', e);
+            }
+        }
+
         await new Promise(resolve => setTimeout(resolve, 1500));
         return [
             {
                 id: '1',
                 type: 'improvement',
-                content: 'Consider increasing the tension by delaying the response to the signal.',
-                originalText: 'The signal came through immediately.',
-                position: 0
-            },
-            {
-                id: '2',
-                type: 'improvement',
-                content: 'Add more sensory details to this description to enhance immersion.',
-                originalText: 'The room was dark.',
+                content: 'Consider increasing the tension here.',
+                originalText: content.substring(0, 20),
                 position: 0
             }
         ];
     }
 
     async summarizeContent(content: string): Promise<string> {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const wordCount = content.split(/\s+/).length;
-        return `This chapter (approximately ${wordCount} words) focuses on character development and plot progression. The main events include key narrative moments that advance the story toward its climax.`;
+        return this.sendMessage(`Summarize the following content in 50 words or less:\n\n${content}`, 'You are a concise summarizer.');
     }
 
     async continueWriting(content: string, cursorPosition: number): Promise<string> {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return 'As if in response to his silent query, the air in the room shifted, growing heavier with the scent of ozone and old parchment. The shadows in the corner seemed to lengthen, stretching towards him like curious fingers.';
+        const preceding = content.substring(Math.max(0, cursorPosition - 1000), cursorPosition);
+        return this.sendMessage(`Continue the story from this point (write 2-3 sentences):\n\n${preceding}`, 'You are a creative fiction writer.');
     }
 
     async improveText(selectedText: string, context?: string): Promise<string> {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        return `**Improved version:**\n${selectedText}\n\n**Changes made:**\n- Enhanced descriptive language\n- Improved sentence flow\n- Added emotional depth`;
+        return this.sendMessage(`Rewrite the following text to improve flow and descriptive quality:\n\n${selectedText}`, 'You are a master editor.');
     }
 
     async expandIdea(idea: string, context?: string): Promise<string> {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return `**Expanded version:**\n${idea}\n\n**Additional context:**\nThis idea can be developed further by exploring the emotional implications, adding sensory details, and connecting it to the broader narrative themes.`;
+        return this.sendMessage(`Expand this idea into a full paragraph:\n\n${idea}`, 'You are a creative writer.');
     }
 
     estimateTokens(text: string): number {
-        // Rough estimation: ~4 characters per token
         return Math.ceil(text.length / 4);
     }
 }
