@@ -1,59 +1,56 @@
 @import "tailwindcss";
 
 :root {
-    /* Typewriter / Nicheless Aesthetic (DEFAULT) */
-    /* Truly minimalist, paper-like */
-    --bg-app: #fdfbf7;
-    /* Warm paper white */
+    /* Kindle Paperwhite Aesthetic (DEFAULT) */
+    /* Warm matte paper, e-ink feel */
+    --bg-app: #f7f7f5;
+    /* Warm matte paper */
     --bg-panel: #ffffff;
-    /* Stark white for panels */
-    --bg-hover: #f0f0f0;
-    --bg-active: #e5e5e5;
+    /* Clean white for contrast */
+    --bg-hover: #ebebeb;
+    --bg-active: #e2e2e2;
 
-    --bg-subtle: #f9f9f9;
+    --bg-subtle: #f0f0f0;
     --bg-element: #ffffff;
 
-    --border-subtle: #e5e5e5;
-    --border-main: #000000;
-    /* Solid black borders */
-    --border-highlight: #000000;
+    --border-subtle: #e5e5e0;
+    --border-main: #d6d6d0;
+    --border-highlight: #a3a3a3;
 
-    --text-primary: #111111;
-    /* Soft black */
+    --text-primary: #0f0f0f;
+    /* E-ink black */
     --text-secondary: #444444;
-    --text-tertiary: #666666;
-    --text-disabled: #999999;
+    --text-tertiary: #767676;
+    --text-disabled: #9ca3af;
 
-    --accent-primary: #000000;
-    --accent-primary-dim: rgba(0, 0, 0, 0.05);
+    --accent-primary: #b45309;
+    /* Amber-700 */
+    --accent-primary-dim: rgba(180, 83, 9, 0.1);
     --accent-primary-text: #ffffff;
 
-    /* Monochrome Accents */
-    --accent-blue: #000000;
-    --accent-red: #000000;
-    --accent-green: #000000;
-    --accent-purple: #000000;
-    --accent-yellow: #e5e5e5;
-    --accent-pink: #000000;
+    /* Monochrome Accents (or gentle colors for Light theme if preferred, but sticking to Paperwhite vibe defaults) */
+    --accent-blue: #2563eb;
+    --accent-red: #dc2626;
+    --accent-green: #16a34a;
+    --accent-purple: #9333ea;
+    --accent-yellow: #f59e0b;
+    --accent-pink: #db2777;
 
-    /* Typewriter Fonts - Using Atkinson Hyperlegible for better readability */
-    --font-sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'Atkinson Hyperlegible', monospace;
-    --font-serif: 'Atkinson Hyperlegible', serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-serif: 'Georgia', 'Times New Roman', serif;
 }
 
-[data-theme="dark"],
-[data-theme="enterprise-dark"] {
-    /* Enterprise Dark Theme */
-    --bg-app: #09090b;
-    --bg-panel: #121212;
-    --bg-hover: #1e1e1e;
-    --bg-active: #27272a;
+[data-theme="dark"] {
+    /* Midnight Dark (True Black) */
+    --bg-app: #000000;
+    --bg-panel: #0a0a0a;
+    --bg-hover: #121212;
+    --bg-active: #1a1a1a;
+    --bg-subtle: #0f0f0f;
+    --bg-element: #18181b;
 
-    --bg-subtle: #1f1f23;
-    --bg-element: #2d2d30;
-
-    --border-subtle: #1f1f22;
+    --border-subtle: #18181b;
     --border-main: #27272a;
     --border-highlight: #3f3f46;
 
@@ -64,6 +61,44 @@
 
     --accent-primary: #ffd700;
     --accent-primary-dim: rgba(255, 215, 0, 0.1);
+    --accent-primary-text: #000000;
+    --accent-blue: #60a5fa;
+    --accent-red: #f87171;
+    --accent-green: #4ade80;
+    --accent-purple: #a855f7;
+    --accent-yellow: #fcd34d;
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-serif: 'Georgia', 'Times New Roman', serif;
+}
+
+[data-theme="enterprise-dark"] {
+    /* Enterprise Dark Theme - Softer, Zinc-based */
+    --bg-app: #18181b;
+    /* Zinc 900 */
+    --bg-panel: #27272a;
+    /* Zinc 800 */
+    --bg-hover: #3f3f46;
+    /* Zinc 700 */
+    --bg-active: #52525b;
+    /* Zinc 600 */
+
+    --bg-subtle: #1f1f23;
+    --bg-element: #2d2d30;
+
+    --border-subtle: #3f3f46;
+    --border-main: #52525b;
+    --border-highlight: #71717a;
+
+    /* [Rest of Zinc colors preserved] */
+    --text-primary: #fafafa;
+    --text-secondary: #e4e4e7;
+    --text-tertiary: #a1a1aa;
+    --text-disabled: #71717a;
+
+    --accent-primary: #fbbf24;
+    --accent-primary-dim: rgba(251, 191, 36, 0.1);
     --accent-primary-text: #000000;
     --accent-blue: #60a5fa;
     --accent-red: #f87171;

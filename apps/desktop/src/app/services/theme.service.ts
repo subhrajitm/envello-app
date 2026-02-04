@@ -6,7 +6,7 @@ export type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterpr
   providedIn: 'root'
 })
 export class ThemeService {
-  theme = signal<Theme>('typewriter'); // Default temporary, will init in constructor
+  theme = signal<Theme>('light'); // Default temporary, will init in constructor
 
   constructor() {
     // Initialize theme from storage or system preference
@@ -14,26 +14,30 @@ export class ThemeService {
     if (savedTheme) {
       this.theme.set(savedTheme);
     } else {
-      // Default to typewriter theme as requested
-      this.theme.set('typewriter');
+      // Default to light theme as requested
+      this.theme.set('light');
     }
 
-    // Effect to update DOM and Storage when signal changes
+    // Effect to update DOM when signal changes
     effect(() => {
       const currentTheme = this.theme();
       document.documentElement.setAttribute('data-theme', currentTheme);
-      localStorage.setItem('theme', currentTheme);
     });
   }
 
   toggleTheme() {
     this.theme.update(t => {
-      if (t === 'dark') return 'enterprise-dark';
-      if (t === 'enterprise-dark') return 'enterprise-light';
-      if (t === 'enterprise-light') return 'light';
-      if (t === 'light') return 'colorful';
-      if (t === 'colorful') return 'typewriter';
-      return 'dark';
+      let newTheme: Theme = 'dark';
+      if (t === 'dark') newTheme = 'enterprise-dark';
+      else if (t === 'enterprise-dark') newTheme = 'enterprise-light';
+      else if (t === 'enterprise-light') newTheme = 'light';
+      else if (t === 'light') newTheme = 'colorful';
+      else if (t === 'colorful') newTheme = 'typewriter';
+      else newTheme = 'dark';
+
+      // Save user preference
+      localStorage.setItem('theme', newTheme);
+      return newTheme;
     });
   }
 }

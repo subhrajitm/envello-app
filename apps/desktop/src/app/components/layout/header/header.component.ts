@@ -40,10 +40,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   // Navigation layout: 'vertical' | 'horizontal' | 'minimized'
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
-  
+
   // Sidebar state - default to collapsed (minimized)
   sidebarCollapsed = signal(true);
-  
+
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
 
@@ -157,14 +157,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Load navigation layout from localStorage
     this.loadNavigationLayout();
-    
+
     // Listen for navigation layout changes from settings
     this.navigationLayoutListener = (event: CustomEvent) => {
       this.navigationLayout.set(event.detail);
       this.applyNavigationLayout();
     };
     window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
-    
+
     // Apply initial layout
     this.applyNavigationLayout();
   }
@@ -189,7 +189,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private applyNavigationLayout() {
     const layout = this.navigationLayout();
-    
+
     // Only set initial state when layout actually changes, not on every call
     if (this.previousLayout !== layout) {
       if (layout === 'minimized') {
@@ -200,7 +200,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.sidebarCollapsed.set(false);
       }
       // For horizontal, sidebar is not shown
-      
+
       this.previousLayout = layout;
       this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
     }
