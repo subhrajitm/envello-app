@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { AuthService } from './core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from './components/layout/header/header.component';
@@ -20,6 +21,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
   private sessionService = inject(SessionService); // Initialize session tracking
+  authService = inject(AuthService);
   private unlistenFileDrop?: () => void;
 
   currentTab = signal('Overview');

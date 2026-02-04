@@ -10,12 +10,7 @@ import { Router, RouterModule } from '@angular/router';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="login-container">
-      <!-- Loading State -->
-      <div *ngIf="!authService.initialized()" class="loading-overlay">
-        <div class="loading-spinner-large"></div>
-      </div>
-
-      <div *ngIf="authService.initialized()" class="login-content">
+      <div *ngIf="!authService.isAuthenticated()" class="login-content">
         <!-- Logo Section -->
         <div class="login-header">
           <div class="logo-wrapper">
@@ -79,7 +74,6 @@ import { Router, RouterModule } from '@angular/router';
           </div>
         </form>
       </div>
-
     </div>
   `,
   styles: [`

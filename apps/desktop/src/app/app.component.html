@@ -1,3 +1,4 @@
+@if (authService.initialized()) {
 <div class="dashboard">
   @if (!isFullScreen()) {
   <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
@@ -17,4 +18,13 @@
   <app-footer></app-footer>
   }
 </div>
+} @else {
+<div class="app-splash-screen">
+  <div class="splash-content">
+    <span class="material-symbols-outlined splash-icon">nutrition</span>
+    <h1 class="splash-title">ENVELLO</h1>
+    <div class="splash-loader"></div>
+  </div>
+</div>
+}
 <!-- Command Palette to be added -->
