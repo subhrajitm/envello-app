@@ -25,17 +25,18 @@ export class ThemeService {
     });
   }
 
+  setTheme(newTheme: Theme) {
+    this.theme.set(newTheme);
+    localStorage.setItem('theme', newTheme);
+  }
+
   toggleTheme() {
     this.theme.update(t => {
-      let newTheme: Theme = 'dark';
-      if (t === 'dark') newTheme = 'enterprise-dark';
-      else if (t === 'enterprise-dark') newTheme = 'enterprise-light';
-      else if (t === 'enterprise-light') newTheme = 'light';
-      else if (t === 'light') newTheme = 'colorful';
-      else if (t === 'colorful') newTheme = 'typewriter';
-      else newTheme = 'dark';
+      // Simple toggle between Light and Dark for quick access.
+      // Other themes are accessible via Settings.
+      const isDark = t === 'dark' || t === 'enterprise-dark';
+      const newTheme = isDark ? 'light' : 'dark';
 
-      // Save user preference
       localStorage.setItem('theme', newTheme);
       return newTheme;
     });

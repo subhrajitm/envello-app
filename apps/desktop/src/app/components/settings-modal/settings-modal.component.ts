@@ -99,7 +99,7 @@ export class SettingsModalComponent {
   // Appearance settings
   setTheme(theme: Theme) {
     this.currentTheme.set(theme);
-    this.themeService.theme.set(theme);
+    this.themeService.setTheme(theme);
   }
 
   setFontSize(event: Event) {

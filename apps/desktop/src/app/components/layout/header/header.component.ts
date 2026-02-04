@@ -80,16 +80,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   getThemeIcon(): string {
     const theme = this.theme;
-    if (theme === 'dark') return 'dark_mode';
-    if (theme === 'light') return 'light_mode';
-    return 'palette'; // colorful theme
+    if (theme === 'dark' || theme === 'enterprise-dark') return 'dark_mode';
+    if (theme === 'light' || theme === 'enterprise-light' || theme === 'typewriter') return 'light_mode';
+    return 'palette';
   }
 
   getNextTheme(): string {
     const theme = this.theme;
-    if (theme === 'dark') return 'Light';
-    if (theme === 'light') return 'Colorful';
-    return 'Dark';
+    // Helper to determine if we are currently "dark-ish"
+    const isDark = theme === 'dark' || theme === 'enterprise-dark';
+    return isDark ? 'Light Mode' : 'Dark Mode';
   }
 
   toggleTheme() {
