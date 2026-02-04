@@ -5,13 +5,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: 16px;
     position: relative;
 }
 
 .signup-content {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1000px;
 }
 
 /* Header */
@@ -19,44 +19,44 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 48px;
+    margin-bottom: 28px;
 }
 
 .logo-wrapper {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .logo-icon {
-    font-size: 28px;
+    font-size: 22px;
     color: var(--accent-primary);
 }
 
 .logo-text {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     color: var(--text-primary);
 }
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .header-text {
-    font-size: 13px;
+    font-size: 11px;
     color: var(--text-tertiary);
 }
 
 .header-link {
-    font-size: 13px;
+    font-size: 11px;
     color: var(--accent-primary);
     text-decoration: none;
     font-weight: 600;
-    transition: color 0.2s;
+    transition: color 0.15s;
 }
 
 .header-link:hover {
@@ -67,13 +67,19 @@
 .signup-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 32px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 @media (min-width: 768px) {
     .signup-grid {
-        grid-template-columns: 280px 1fr;
-        gap: 64px;
+        grid-template-columns: 220px 1fr;
+        gap: 40px;
+        padding: 28px 32px;
     }
 }
 
@@ -84,20 +90,20 @@
 }
 
 .sidebar-header {
-    margin-bottom: 32px;
+    margin-bottom: 20px;
 }
 
 .sidebar-subtitle {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-tertiary);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .sidebar-title {
-    font-size: 20px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -106,17 +112,17 @@
 .stepper {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 18px;
     position: relative;
 }
 
 .stepper::before {
     content: '';
     position: absolute;
-    left: 13px;
-    top: 32px;
-    bottom: 32px;
-    width: 2px;
+    left: 11px;
+    top: 24px;
+    bottom: 24px;
+    width: 1px;
     background: var(--border-subtle);
 }
 
@@ -129,23 +135,23 @@
 .step-item {
     display: flex;
     align-items: flex-start;
-    gap: 16px;
+    gap: 12px;
     position: relative;
 }
 
 .step-indicator {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
     border: 2px solid var(--border-subtle);
     background: var(--bg-panel);
     color: var(--text-tertiary);
-    transition: all 0.3s;
+    transition: all 0.2s;
     flex-shrink: 0;
     z-index: 1;
 }
@@ -154,7 +160,7 @@
     border-color: var(--accent-primary);
     background: var(--accent-primary);
     color: var(--accent-primary-text);
-    box-shadow: 0 0 0 4px var(--accent-primary-dim);
+    box-shadow: 0 0 0 3px var(--accent-primary-dim);
 }
 
 .step-item.completed .step-indicator {
@@ -164,21 +170,21 @@
 }
 
 .step-item.completed .step-indicator .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 14px;
 }
 
 .step-content {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-top: 2px;
+    gap: 2px;
+    padding-top: 1px;
 }
 
 .step-title {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-tertiary);
-    transition: color 0.3s;
+    transition: color 0.2s;
 }
 
 .step-item.active .step-title {
@@ -190,8 +196,10 @@
 }
 
 .step-status {
-    font-size: 11px;
+    font-size: 9px;
     color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -202,70 +210,73 @@
 }
 
 .form-container {
-    max-width: 560px;
+    max-width: 480px;
 }
 
 .step-content-wrapper {
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .step-heading {
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .step-description {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--text-tertiary);
-    margin-bottom: 32px;
+    margin-bottom: 20px;
 }
 
 /* Form Fields */
 .form-fields {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .form-label {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .form-input {
     width: 100%;
-    padding: 12px 16px;
+    padding: 9px 12px;
     background: var(--bg-app);
     border: 1px solid var(--border-subtle);
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--text-primary);
-    font-size: 14px;
-    transition: all 0.2s;
+    font-size: 13px;
+    transition: all 0.15s;
 }
 
 .form-input:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px var(--accent-primary-dim);
+    box-shadow: 0 0 0 2px var(--accent-primary-dim);
 }
 
 .form-input::placeholder {
     color: var(--text-tertiary);
+    font-size: 12px;
 }
 
 .form-row {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
 }
 
 @media (min-width: 640px) {
@@ -278,20 +289,22 @@
 .role-selection {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .role-label {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .role-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
 }
 
 @media (min-width: 640px) {
@@ -301,12 +314,12 @@
 }
 
 .role-card {
-    padding: 20px;
-    background: var(--bg-panel);
+    padding: 14px;
+    background: var(--bg-app);
     border: 2px solid var(--border-subtle);
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
     display: flex;
     flex-direction: column;
 }
@@ -325,11 +338,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .role-title {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -339,32 +352,32 @@
 }
 
 .role-indicator .material-symbols-outlined {
-    font-size: 20px;
+    font-size: 18px;
 }
 
 .role-description {
-    font-size: 13px;
+    font-size: 11px;
     color: var(--text-tertiary);
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 /* Preferences */
 .preferences-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .preference-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
-    background: var(--bg-panel);
+    padding: 12px;
+    background: var(--bg-app);
     border: 1px solid var(--border-subtle);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
 }
 
 .preference-item:hover {
@@ -375,39 +388,39 @@
 .preference-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .preference-icon {
-    font-size: 20px;
+    font-size: 18px;
     color: var(--text-tertiary);
 }
 
 .preference-text {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .preference-title {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-primary);
 }
 
 .preference-description {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-tertiary);
 }
 
 /* Toggle Switch */
 .toggle-switch {
     position: relative;
-    width: 44px;
-    height: 24px;
+    width: 38px;
+    height: 20px;
     background: var(--border-main);
-    border-radius: 12px;
-    transition: background 0.2s;
+    border-radius: 10px;
+    transition: background 0.15s;
     cursor: pointer;
 }
 
@@ -419,45 +432,49 @@
     position: absolute;
     top: 2px;
     left: 2px;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     background: white;
     border-radius: 50%;
-    transition: transform 0.2s;
+    transition: transform 0.15s;
 }
 
 .toggle-switch.active .toggle-slider {
-    transform: translateX(20px);
+    transform: translateX(18px);
 }
 
 /* Form Actions */
 .form-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-top: 32px;
-    padding-top: 24px;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
     border-top: 1px solid var(--border-subtle);
 }
 
 .btn-primary {
-    padding: 14px 24px;
+    padding: 10px 20px;
     background: var(--accent-primary);
     color: var(--accent-primary-text);
     border: none;
-    border-radius: 6px;
-    font-size: 14px;
+    border-radius: 4px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px var(--accent-primary-dim);
+    box-shadow: 0 3px 8px var(--accent-primary-dim);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .btn-primary:disabled {
@@ -466,22 +483,22 @@
 }
 
 .btn-primary .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .btn-secondary {
-    padding: 14px 24px;
+    padding: 10px 20px;
     background: transparent;
     color: var(--text-secondary);
     border: 1px solid var(--border-main);
-    border-radius: 6px;
-    font-size: 14px;
+    border-radius: 4px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .btn-secondary:hover {
@@ -491,12 +508,12 @@
 }
 
 .btn-secondary .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .loading-spinner {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border: 2px solid var(--accent-primary-text);
     border-top-color: transparent;
     border-radius: 50%;
@@ -514,31 +531,31 @@
 .error-message {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 6px;
+    padding: 8px 10px;
     background: rgba(248, 113, 113, 0.1);
     border: 1px solid rgba(248, 113, 113, 0.3);
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--accent-red);
-    font-size: 13px;
-    margin-top: 16px;
+    font-size: 11px;
+    margin-top: 12px;
 }
 
 .error-message .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 /* Page Footer */
 .page-footer {
-    position: fixed;
-    bottom: 24px;
+    position: absolute;
+    bottom: 16px;
     left: 0;
     right: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 24px;
-    font-size: 11px;
+    gap: 16px;
+    font-size: 10px;
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -547,12 +564,12 @@
 .footer-status {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .status-dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background: var(--accent-green);
     border-radius: 50%;
     animation: pulse 2s ease-in-out infinite;
@@ -570,11 +587,15 @@
     }
 }
 
+.footer-version {
+    opacity: 0.5;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
 
     to {
@@ -584,7 +605,7 @@
 }
 
 .animate-fadeIn {
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
 
 /* Screen reader only */

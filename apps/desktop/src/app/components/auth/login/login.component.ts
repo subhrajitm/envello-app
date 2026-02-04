@@ -18,13 +18,13 @@ import { Router, RouterModule } from '@angular/router';
             <span class="logo-text">ENVELLO</span>
           </div>
           <h1 class="login-title">Welcome Back</h1>
-          <p class="login-subtitle">Sign in to your workspace</p>
+          <p class="login-subtitle">Sign in to continue</p>
         </div>
         
         <!-- Login Form -->
         <form (ngSubmit)="handleLogin()" class="login-form">
           <div class="form-group">
-            <label class="form-label">Email Address</label>
+            <label class="form-label">Email</label>
             <input 
               type="email" 
               [(ngModel)]="email" 
@@ -43,7 +43,7 @@ import { Router, RouterModule } from '@angular/router';
               [(ngModel)]="password" 
               name="password"
               class="form-input"
-              placeholder="Enter your password"
+              placeholder="Enter password"
               required
             >
           </div>
@@ -75,13 +75,13 @@ import { Router, RouterModule } from '@angular/router';
         </form>
       </div>
 
-      <!-- Footer Info -->
-      <div class="page-footer">
-        <div class="footer-status">
+      <!-- App Info -->
+      <div class="app-info">
+        <span class="status-indicator">
           <span class="status-dot"></span>
-          <span>Secure Connection</span>
-        </div>
-        <div class="footer-version">v2.0.4</div>
+          Secure
+        </span>
+        <span class="version">v2.0.4</span>
       </div>
     </div>
   `,
@@ -92,131 +92,139 @@ import { Router, RouterModule } from '@angular/router';
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 16px;
       position: relative;
     }
 
     .login-content {
       width: 100%;
-      max-width: 420px;
+      max-width: 360px;
       background: var(--bg-panel);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 48px 40px;
+      border-radius: 6px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .login-header {
       text-align: center;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .logo-wrapper {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 24px;
+      gap: 6px;
+      margin-bottom: 16px;
     }
 
     .logo-icon {
-      font-size: 28px;
+      font-size: 22px;
       color: var(--accent-primary);
     }
 
     .logo-text {
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       color: var(--text-primary);
     }
 
     .login-title {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     .login-subtitle {
-      font-size: 14px;
+      font-size: 12px;
       color: var(--text-tertiary);
     }
 
     .login-form {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 14px;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .form-label {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .form-input {
       width: 100%;
-      padding: 12px 16px;
+      padding: 9px 12px;
       background: var(--bg-app);
       border: 1px solid var(--border-subtle);
-      border-radius: 6px;
+      border-radius: 4px;
       color: var(--text-primary);
-      font-size: 14px;
-      transition: all 0.2s;
+      font-size: 13px;
+      transition: all 0.15s;
     }
 
     .form-input:focus {
       outline: none;
       border-color: var(--accent-primary);
-      box-shadow: 0 0 0 3px var(--accent-primary-dim);
+      box-shadow: 0 0 0 2px var(--accent-primary-dim);
     }
 
     .form-input::placeholder {
       color: var(--text-tertiary);
+      font-size: 12px;
     }
 
     .error-message {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
+      gap: 6px;
+      padding: 8px 10px;
       background: rgba(248, 113, 113, 0.1);
       border: 1px solid rgba(248, 113, 113, 0.3);
-      border-radius: 6px;
+      border-radius: 4px;
       color: var(--accent-red);
-      font-size: 13px;
+      font-size: 11px;
     }
 
     .error-message .material-symbols-outlined {
-      font-size: 18px;
+      font-size: 16px;
     }
 
     .btn-primary {
       width: 100%;
-      padding: 14px 24px;
+      padding: 10px 20px;
       background: var(--accent-primary);
       color: var(--accent-primary-text);
       border: none;
-      border-radius: 6px;
-      font-size: 14px;
+      border-radius: 4px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
+      margin-top: 4px;
     }
 
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px var(--accent-primary-dim);
+      box-shadow: 0 3px 8px var(--accent-primary-dim);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
     }
 
     .btn-primary:disabled {
@@ -225,12 +233,12 @@ import { Router, RouterModule } from '@angular/router';
     }
 
     .btn-primary .material-symbols-outlined {
-      font-size: 18px;
+      font-size: 16px;
     }
 
     .loading-spinner {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       border: 2px solid var(--accent-primary-text);
       border-top-color: transparent;
       border-radius: 50%;
@@ -244,53 +252,53 @@ import { Router, RouterModule } from '@angular/router';
 
     .login-footer {
       text-align: center;
-      padding-top: 24px;
+      padding-top: 16px;
       border-top: 1px solid var(--border-subtle);
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
     .footer-text {
-      font-size: 13px;
+      font-size: 11px;
       color: var(--text-tertiary);
-      margin-right: 6px;
+      margin-right: 4px;
     }
 
     .footer-link {
-      font-size: 13px;
+      font-size: 11px;
       color: var(--accent-primary);
       text-decoration: none;
       font-weight: 600;
-      transition: color 0.2s;
+      transition: color 0.15s;
     }
 
     .footer-link:hover {
       color: var(--accent-blue);
     }
 
-    .page-footer {
-      position: fixed;
-      bottom: 24px;
+    .app-info {
+      position: absolute;
+      bottom: 16px;
       left: 0;
       right: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 24px;
-      font-size: 11px;
+      gap: 16px;
+      font-size: 10px;
       color: var(--text-tertiary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .footer-status {
+    .status-indicator {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       background: var(--accent-green);
       border-radius: 50%;
       animation: pulse 2s ease-in-out infinite;
@@ -299,6 +307,10 @@ import { Router, RouterModule } from '@angular/router';
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
+    }
+
+    .version {
+      opacity: 0.5;
     }
   `]
 })
