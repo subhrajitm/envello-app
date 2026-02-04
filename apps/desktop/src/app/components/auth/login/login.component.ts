@@ -303,7 +303,7 @@ export class LoginComponent {
 
   constructor() {
     effect(() => {
-      if (this.authService.initialized() && this.authService.isAuthenticated()) {
+      if (this.authService.isAuthenticated()) {
         this.router.navigate(['/overview']);
       }
     });

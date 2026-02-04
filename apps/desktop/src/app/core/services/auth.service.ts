@@ -34,10 +34,8 @@ export class AuthService {
       this._session.set(session);
       this._user.set(session?.user ?? null);
 
-      if (event === 'SIGNED_IN') {
-        this.router.navigate(['/overview']);
-      } else if (event === 'SIGNED_OUT') {
-        this.router.navigate(['/login']); // Assuming there is a login route, or overview
+      if (event === 'SIGNED_OUT') {
+        this.router.navigate(['/login']);
       }
     });
   }
