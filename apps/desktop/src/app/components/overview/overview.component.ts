@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal, effect } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { StoreService, Project } from '../../services/store.service';
+import { StoreService, Project, Task, Activity } from '../../services/store.service';
 
 @Component({
   selector: 'app-overview',
@@ -13,29 +13,105 @@ import { StoreService, Project } from '../../services/store.service';
 })
 export class OverviewComponent {
   store = inject(StoreService);
-  private router = inject(Router);
+  router = inject(Router);
 
+  // --- UI State ---
   inputText = signal('');
-
-  // Voice State
   listening = signal(false);
-  processedScript = signal("Create a new sprint retrospective for the @design-team and schedule it for #next-tuesday"); // Default/Placeholder
   liveTranscript = signal('');
   confidence = signal(0);
 
+  // --- Computed Dashboard Data ---
+
+  // 1. Projects Summary
+  activeProjects = computed(() => {
+    return this.store.projects().filter(p => p.status !== 'COMPLETE').slice(0, 4);
+  });
+
+  // 2. High Priority Tasks
+  upcomingTasks = computed(() => {
+    return this.store.tasks()
+      .filter(t => t.status !== 'COMPLETED')
+      .sort((a, b) => {
+        // Sort by priority (High first) then by due date if available
+        const pMap = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+        if (pMap[a.priority] !== pMap[b.priority]) return pMap[a.priority] - pMap[b.priority];
+        return (a.due || '9999').localeCompare(b.due || '9999');
+      })
+      .slice(0, 5);
+  });
+
+  // 3. Recent Activity Stream mapped to "Context Stream" cards
+  contextStream = computed(() => {
+    // Merge tasks and activities into a unified stream
+    const activities = this.store.activities().slice(0, 6).map(a => {
+      let type = 'LOG';
+      let tagClass = 'reference';
+      if (a.type === 'sync') { type = 'SYNC'; tagClass = 'sync'; }
+      if (a.type === 'system') { type = 'SYSTEM'; tagClass = 'system'; }
+      if (a.type === 'ai') { type = 'AI THOUGHT'; tagClass = 'note'; }
+
+      return {
+        type: type,
+        tagClass: tagClass,
+        content: `"${a.text}"`,
+        sub: 'System Log',
+        time: a.time,
+        tags: ['#log', '#' + a.type]
+      };
+    });
+
+    const tasks = this.store.tasks().slice(0, 3).map(t => ({
+      type: 'ACTION ITEM',
+      tagClass: 'action',
+      content: t.title + (t.description ? `. ${t.description}` : ''),
+      sub: 'Priority: ' + t.priority,
+      time: 'Just now',
+      tags: t.labels?.map(l => '#' + l) || ['#task']
+    }));
+
+    // Interleave
+    return [...tasks, ...activities].sort(() => Math.random() - 0.5);
+  });
+
+  // 4. Quick Stats
+  stats = computed(() => {
+    const tasks = this.store.tasks();
+    const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
+    const activeTasks = tasks.filter(t => t.status === 'ACTIVE').length;
+
+    const novels = this.store.novels();
+    const totalWords = novels.reduce((acc, n) => acc + n.wordCount, 0);
+
+    return {
+      activeProjects: this.store.projects().filter(p => p.status === 'PLANNING' || p.status === 'DRAFTING').length,
+      pendingTasks: activeTasks,
+      completedTasks: completedTasks,
+      totalWords: totalWords > 1000 ? (totalWords / 1000).toFixed(1) + 'k' : totalWords,
+      systemStatus: 'OPERATIONAL'
+    };
+  });
+
+  systemTime = signal(new Date());
+
+  // --- Voice Recognition Setup ---
   private recognition: any;
   private isBrowser = typeof window !== 'undefined';
 
   constructor() {
     if (this.isBrowser) {
       this.initSpeechRecognition();
+
+      // Update time every minute
+      setInterval(() => {
+        this.systemTime.set(new Date());
+      }, 60000);
     }
   }
 
   private initSpeechRecognition() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      console.warn('Speech Recognition not supported in this browser.');
       return;
     }
 
@@ -56,7 +132,6 @@ export class OverviewComponent {
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           final += event.results[i][0].transcript;
-          // Create a running confidence average or take the latest
           const conf = event.results[i][0].confidence;
           this.confidence.set(Math.round(conf * 100));
         } else {
@@ -64,10 +139,9 @@ export class OverviewComponent {
         }
       }
 
-      // Update the display with what's being said
       if (final) {
-        this.processedScript.set(final);
-        this.liveTranscript.set(''); // Clear interim
+        this.inputText.set(this.inputText() + (this.inputText() ? ' ' : '') + final);
+        this.liveTranscript.set('');
       } else if (interim) {
         this.liveTranscript.set(interim);
       }
@@ -85,120 +159,79 @@ export class OverviewComponent {
 
   toggleVoice() {
     if (!this.recognition) return;
-
     if (this.listening()) {
       this.recognition.stop();
     } else {
-      this.processedScript.set(''); // Clear previous on new start
       this.recognition.start();
     }
   }
 
-  saveTask() {
-    // Prefer manual input, then live transcript/result
-    const voiceInput = this.liveTranscript() || this.processedScript();
-    const finalInput = this.inputText().trim() || voiceInput;
+  // --- Actions ---
 
-    if (!finalInput || finalInput.length < 5) {
-      alert('Please provide a command or task description.');
-      return;
+  executeCommand() {
+    const rawInput = this.inputText().trim();
+    if (!rawInput) return;
+
+    // Simple parser for creating tasks/projects
+    const lower = rawInput.toLowerCase();
+
+    if (lower.startsWith('create project') || lower.startsWith('new project')) {
+      this.createProjectFromVoice(rawInput);
+    } else if (lower.startsWith('remind me') || lower.startsWith('add task') || lower.startsWith('todo')) {
+      this.createTaskFromVoice(rawInput);
+    } else {
+      // Default to a generic note or task
+      this.createTaskFromVoice("Task: " + rawInput);
     }
 
-    // AI Logic Simulation
-    const lowerInput = finalInput.toLowerCase();
-    const isNovelRequest = lowerInput.includes('novel') || lowerInput.includes('book') || lowerInput.includes('write a story');
-    const isJournalRequest = lowerInput.includes('journal') || lowerInput.includes('diary') || lowerInput.includes('note');
-    const isCodeRequest = lowerInput.includes('code') || lowerInput.includes('script') || lowerInput.includes('snippet') || lowerInput.includes('function');
-
-    const projectTitle = this.extractTitle(finalInput);
-    const projectId = crypto.randomUUID();
-    const linkedResources: any = { novels: [], journals: [], snippets: [] };
-    let projectType: 'SINGLE' | 'MULTI' = 'SINGLE';
-
-    // 1. Handle Novel Creation
-    if (isNovelRequest) {
-      const novelId = crypto.randomUUID();
-      this.store.addNovel({
-        id: novelId,
-        title: projectTitle + ' (Novel)',
-        icon: 'menu_book',
-        status: 'PLANNING',
-        wordCount: 0,
-        targetWordCount: 50000,
-        progress: 0,
-        chapters: 0,
-        notesCount: 0,
-        createdDate: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        genre: ['Fiction'],
-        isRecentlyUpdated: true
-      });
-      linkedResources.novels.push(novelId);
-      projectType = 'MULTI';
-    }
-
-    // 2. Handle Journal/Note Creation
-    if (isJournalRequest) {
-      const noteId = crypto.randomUUID();
-      this.store.addNote({
-        id: noteId,
-        title: 'Project Journal: ' + projectTitle,
-        date: new Date().toISOString(),
-        preview: 'Initial thoughts for project ' + projectTitle,
-        content: `<h1>${projectTitle} Journal</h1><p>Created automatically via voice command.</p>`,
-        tags: ['Project', 'Voice'],
-        lastEdited: new Date().toLocaleTimeString()
-      });
-      linkedResources.journals.push(noteId);
-      projectType = 'MULTI';
-    }
-
-    // 3. Handle Code Snippet (Mocking Service Interaction)
-    if (isCodeRequest) {
-      // In a real app, we'd inject SnippetsService, but for now we'll just tag it
-      // linkedResources.snippets.push('mock-snippet-id');
-      projectType = 'MULTI';
-    }
-
-    const newProject: Project = {
-      id: projectId,
-      title: projectTitle,
-      status: 'PLANNING',
-      words: '0',
-      updated: 'Just now',
-      icon: isNovelRequest ? 'auto_stories' : (isCodeRequest ? 'terminal' : 'rocket_launch'),
-      description: `Auto-generated ${projectType === 'MULTI' ? 'multi-resource ' : ''}project from command: "${finalInput}"`,
-      priority: 'MEDIUM',
-      progress: 0,
-      tags: ['Voice-Created', ...(projectType === 'MULTI' ? ['Complex'] : [])],
-      type: projectType,
-      linkedResources
-    };
-
-    this.store.addProject(newProject);
-    this.router.navigate(['/projects', newProject.id]);
+    this.inputText.set('');
+    this.liveTranscript.set('');
   }
 
-  discardTask() {
+  clearCommand() {
     this.inputText.set('');
-    this.processedScript.set("Create a new sprint retrospective for the @design-team and schedule it for #next-tuesday");
     this.liveTranscript.set('');
     if (this.listening()) {
       this.recognition.stop();
     }
   }
 
-  private extractTitle(text: string): string {
-    // Heuristic: Take first few words or split by common prepositions
-    const stopWords = [' for ', ' at ', ' on ', ' with ', ' about ', ' to '];
-    let title = text;
-    for (const word of stopWords) {
-      if (title.toLowerCase().includes(word)) {
-        title = title.split(new RegExp(word, 'i'))[0];
-        break;
-      }
-    }
-    // Remove "Create", "Start", "Write" verbs if present
-    return title.replace(/^(create|add|new|make|start|write) (a )?/i, '').trim();
+  private createProjectFromVoice(input: string) {
+    const title = input.replace(/^(create|new) project/i, '').trim() || 'New Project';
+    const newProject: Project = {
+      id: crypto.randomUUID(),
+      title: title,
+      status: 'PLANNING',
+      words: '0',
+      updated: new Date().toISOString(),
+      icon: 'rocket_launch',
+      description: 'Created via command center',
+      priority: 'MEDIUM',
+      progress: 0,
+      tags: ['Voice-Created'],
+      type: 'SINGLE'
+    };
+    this.store.addProject(newProject);
+  }
+
+  private createTaskFromVoice(input: string) {
+    const title = input.replace(/^(remind me to|add task|todo|task:)/i, '').trim();
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      title: title,
+      priority: 'MEDIUM',
+      hours: '0',
+      status: 'ACTIVE',
+      due: new Date().toISOString(), // Default to today
+      notes: 'Created via command center'
+    };
+    this.store.addTask(newTask);
+  }
+
+  getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning, Admin';
+    if (hour < 18) return 'Good Afternoon, Admin';
+    return 'Good Evening, Admin';
   }
 }

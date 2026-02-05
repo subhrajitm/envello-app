@@ -1,93 +1,112 @@
-<div class="voice-protocol-container">
-    <!-- Top Bar -->
-    <div class="vp-top-bar">
-        <div class="vp-brand">
-            <span class="status-dot"></span>
-            <span class="brand-text">EXECUTIVE VOICE PROTOCOL</span>
-        </div>
-        <div class="vp-status">
-            <span class="status-item">STUDIO GRADE</span>
-            <span class="status-item" [class.active]="listening()">
-                <span class="status-breathe"></span>
-                {{ listening() ? 'LISTENING' : 'HYBRID ACTIVE' }}
-            </span>
-            <button class="history-btn">
-                <span class="material-symbols-outlined">history</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Center Content -->
-    <div class="vp-center-stage">
-        <div class="protocol-badge" [class.recording]="listening()">
-            <div class="audio-bars-mini">
-                <span [class.active]="listening()"></span>
-                <span [class.active]="listening()"></span>
-                <span [class.active]="listening()"></span>
+<div class="dashboard-container compact-mode">
+    <div class="main-layout">
+        <!-- Main Workspace (Center) -->
+        <main class="workspace-area">
+            <div class="context-label">
+                <span class="material-symbols-outlined context-icon">contrast</span>
+                CONTEXTUAL WORKSPACE
             </div>
-            {{ listening() ? 'ON AIR' : 'LIVE PROTOCOL' }}
-        </div>
 
-        <div class="mic-section">
-            <button class="mic-btn" [class.recording]="listening()" (click)="toggleVoice()">
-                <span class="material-symbols-outlined" style="font-size: 28px;">
-                    {{ listening() ? 'stop' : 'mic' }}
-                </span>
-            </button>
-        </div>
+            <!-- Big Text Display -->
+            <!-- Big Text Display -->
+            <div class="big-input-display">
+                What's on your mind...
+            </div>
 
-        <div class="command-display">
-            @if (liveTranscript()) {
-            <span class="highlight">{{ liveTranscript() }}</span>
-            } @else {
-            {{ processedScript() }}
-            }
-        </div>
+            <!-- Command Input -->
+            <div class="command-input-row">
+                <input type="text" class="main-text-input" [(ngModel)]="inputText" (keydown.enter)="executeCommand()"
+                    [placeholder]="listening() ? 'Listening (' + liveTranscript() + ')...' : 'Command + K to capture or type thoughts...'">
+                <div class="input-icons">
+                    <span class="material-symbols-outlined icon-btn" [class.active]="listening()"
+                        (click)="toggleVoice()">mic</span>
+                    <span class="material-symbols-outlined icon-btn">shutter_speed</span>
+                    <span class="material-symbols-outlined icon-btn">attach_file</span>
+                </div>
+            </div>
 
-        <div class="waveform-visualizer">
-            <!-- Simulated Waveform Bars -->
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-            <div class="bar" [class.active]="listening()"></div>
-        </div>
+            <!-- Actions -->
+            <div class="action-row">
+                <button class="btn-black" (click)="executeCommand()">
+                    PROCESS ENTRY <span class="kbd">↵</span>
+                </button>
+                <button class="btn-ghost" (click)="clearCommand()">
+                    DISCARD <span class="kbd-light">ESC</span>
+                </button>
+            </div>
+        </main>
 
-        <div class="refinement-input-wrapper">
-            <input type="text" class="refinement-input" placeholder="Refine task details..." [(ngModel)]="inputText">
-            <span class="material-symbols-outlined input-icon">keyboard</span>
-        </div>
+        <!-- Right Sidebar -->
+        <aside class="sidebar">
+            <!-- Context Stream -->
+            <div class="sidebar-section full-height">
+                <div class="sidebar-header">
+                    <div class="section-title">
+                        <span class="material-symbols-outlined" style="font-size: 14px;">hub</span>
+                        CONTEXT STREAM
+                    </div>
+                    <div class="filter-btn">
+                        FILTER <span class="material-symbols-outlined" style="font-size: 14px;">tune</span>
+                    </div>
+                </div>
 
-        <div class="vp-actions">
-            <button class="vp-btn primary" (click)="saveTask()">
-                <span class="cmd-key">ENTER</span>
-                SAVE TASK
-            </button>
-            <button class="vp-btn secondary" (click)="discardTask()">
-                <span class="cmd-key">ESC</span>
-                DISCARD
-            </button>
-        </div>
+                <div class="stream-list">
+                    @for (item of contextStream(); track item.content) {
+                    <div class="stream-card">
+                        <div class="card-top">
+                            <span class="tag" [class]="item.tagClass.toLowerCase()">{{ item.type }}</span>
+                            <span class="timestamp">{{ item.time }}</span>
+                        </div>
+                        <div class="card-content">
+                            {{ item.content }}
+                        </div>
+                        <div class="card-meta">
+                            @for (t of item.tags; track t) {
+                            <span class="meta-pill">{{ t }}</span>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <!-- Bottom Bar -->
-    <div class="vp-bottom-bar">
-        <div class="vp-meta-left">
-            <span class="meta-label">CONFIDENCE</span>
-            <span class="meta-value">{{ confidence() }}%</span>
-            <div class="mini-chart">
-                <span [style.height.%]="confidence()"></span>
-                <span [style.height.%]="confidence()"></span>
-                <span [style.height.%]="confidence()"></span>
+    <!-- Bottom Status Bar -->
+    <footer class="status-bar">
+        <div class="sb-left">
+            <div class="active-item">
+                <span class="status-dot"></span>
+                INTELLIGENT CAPTURE v2.4
+            </div>
+            <div class="divider"></div>
+            <div class="active-item">
+                <span class="material-symbols-outlined" style="font-size: 12px;">bolt</span>
+                HIGH-PERFORMANCE
             </div>
         </div>
-        <div class="vp-meta-right">
-            PROTOCOL ACTIVE
-        </div>
-    </div>
 
-    <!-- Progress Line -->
-    <div class="vp-progress-line"></div>
+        <div class="sb-right">
+            <div class="linked-entities">
+                LINKED:
+                <div class="entity-circles">
+                    <span class="e-circle"></span>
+                    <span class="e-circle" style="background: #374151;"></span>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="active-item">
+                CPU
+                <div class="metric-bar">
+                    <div class="metric-fill" style="width: 12%"></div>
+                </div>
+            </div>
+            <div class="active-item">
+                LAT
+                <div class="metric-bar">
+                    <div class="metric-fill" style="width: 5%"></div>
+                </div>
+            </div>
+        </div>
+    </footer>
 </div>
