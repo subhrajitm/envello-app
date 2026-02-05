@@ -308,7 +308,7 @@ export class LoginComponent {
   constructor() {
     effect(() => {
       if (this.authService.isAuthenticated()) {
-        this.router.navigate(['/overview']);
+        this.router.navigate(['/workspace']);
       }
     });
   }

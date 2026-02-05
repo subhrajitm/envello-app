@@ -13,7 +13,7 @@ export const routes: Routes = [
     data: { hasSidebar: false, fullScreen: true }
   },
   {
-    path: 'overview',
+    path: 'workspace',
     loadComponent: () => import('./components/overview/overview.component').then(m => m.OverviewComponent),
     data: { hasSidebar: true },
   },

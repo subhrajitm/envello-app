@@ -68,7 +68,7 @@ export class AuthService {
   loginAsGuest() {
     this._isGuest.set(true);
     localStorage.setItem('envello-guest-mode', 'true');
-    this.router.navigate(['/overview']);
+    this.router.navigate(['/workspace']);
   }
 
   async login(email: string, password: string): Promise<boolean> {

@@ -20,7 +20,7 @@ export class SignUpComponent {
     constructor() {
         effect(() => {
             if (this.authService.isAuthenticated()) {
-                this.router.navigate(['/overview']);
+                this.router.navigate(['/workspace']);
             }
         });
     }
@@ -142,7 +142,7 @@ export class SignUpComponent {
                             autoBackup: this.formData.preferences.autoBackup
                         }
                     });
-                    this.router.navigate(['/overview']);
+                    this.router.navigate(['/workspace']);
                 } else {
                     // Likely email verification needed
                     this.error.set('Account created! Please verify your email before logging in.');

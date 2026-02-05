@@ -19,7 +19,7 @@ import { ProfileEditorComponent } from '../../profile-editor/profile-editor.comp
   styleUrl: './header.component.css'
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  @Input() activeTab = 'Overview';
+  @Input() activeTab = 'Workspace';
   @Input() isImmersive = false;
   @Output() sidebarCollapsedChange = new EventEmitter<boolean>();
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
@@ -48,7 +48,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
 
   tabs = [
-    'Overview',
+    'Workspace',
     'Tasks/Todos',
     'Daily Notes',
     'Novels/Fiction',
@@ -62,7 +62,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   // Icon mapping for each tab
   tabIcons: Record<string, string> = {
-    'Overview': 'dashboard',
+    'Workspace': 'dashboard',
     'Daily Notes': 'note',
     'Novels/Fiction': 'menu_book',
     'Journals': 'book',
@@ -99,7 +99,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   navigateTo(tab: string) {
     // Map tab name back to route path
     const map: Record<string, string> = {
-      'Overview': 'overview',
+      'Workspace': 'workspace',
       'Novels/Fiction': 'novels',
       'Research': 'research',
       'Articles/Blogs': 'articles',
@@ -110,7 +110,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       'Books/Reading': 'books',
       'Code Snippets': 'snippets',
     };
-    const path = map[tab] || 'overview';
+    const path = map[tab] || 'workspace';
     this.router.navigate([path]);
   }
 
