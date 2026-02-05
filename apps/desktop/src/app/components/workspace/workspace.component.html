@@ -78,7 +78,7 @@
                         @if (item.tasks && item.tasks.length > 0) {
                         <div class="stream-tasks">
                             @for (task of item.tasks; track task.id) {
-                            <div class="stream-task-row">
+                            <div class="stream-task-row" (click)="openTask(task, $event)" style="cursor: pointer;">
                                 <span class="material-symbols-outlined check-icon"
                                     [class.checked]="task.status === 'done'">
                                     {{ task.status === 'done' ? 'check_circle' : 'radio_button_unchecked' }}

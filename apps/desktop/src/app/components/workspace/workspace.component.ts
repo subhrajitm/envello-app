@@ -299,9 +299,16 @@ export class WorkspaceComponent {
     // Navigate based on item type
     if (item.type === 'ACTION ITEM') {
       this.router.navigate(['/tasks'], { queryParams: { focus: item.id } });
+    } else if (item.type === 'PROJECT') {
+      this.router.navigate(['/projects', item.id]);
     } else {
       this.router.navigate(['/activity-log']); // Fallback for logs
     }
+  }
+
+  openTask(task: any, event: Event) {
+    event.stopPropagation(); // Prevent opening the parent project
+    this.router.navigate(['/tasks'], { queryParams: { focus: task.id } });
   }
 
   private createProjectFromVoice(input: string) {
