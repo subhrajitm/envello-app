@@ -21,9 +21,22 @@
                     <span class="material-symbols-outlined icon-btn" [class.active]="listening()"
                         (click)="toggleVoice()">mic</span>
                     <span class="material-symbols-outlined icon-btn">shutter_speed</span>
-                    <span class="material-symbols-outlined icon-btn">attach_file</span>
+                    <span class="material-symbols-outlined icon-btn" (click)="triggerFileUpload()">attach_file</span>
                 </div>
             </div>
+
+            <!-- Attachment Preview List -->
+            @if (attachments().length > 0) {
+            <div class="attachment-list">
+                @for (file of attachments(); track file; let i = $index) {
+                <div class="attachment-pill">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">draft</span>
+                    {{ file }}
+                    <span class="remove-x" (click)="removeAttachment(i)">×</span>
+                </div>
+                }
+            </div>
+            }
 
             <!-- Actions -->
             <div class="action-row">
@@ -45,14 +58,15 @@
                         <span class="material-symbols-outlined" style="font-size: 14px;">hub</span>
                         CONTEXT STREAM
                     </div>
-                    <div class="filter-btn">
-                        FILTER <span class="material-symbols-outlined" style="font-size: 14px;">tune</span>
+                    <div class="filter-btn" (click)="toggleFilter()">
+                        {{ activeFilter() }} <span class="material-symbols-outlined"
+                            style="font-size: 14px;">tune</span>
                     </div>
                 </div>
 
                 <div class="stream-list">
                     @for (item of contextStream(); track item.content) {
-                    <div class="stream-card">
+                    <div class="stream-card" (click)="openItem(item)" style="cursor: pointer;">
                         <div class="card-top">
                             <span class="tag" [class]="item.tagClass.toLowerCase()">{{ item.type }}</span>
                             <span class="timestamp">{{ item.time }}</span>
@@ -98,13 +112,13 @@
             <div class="active-item">
                 CPU
                 <div class="metric-bar">
-                    <div class="metric-fill" style="width: 12%"></div>
+                    <div class="metric-fill" [style.width.%]="cpuUsage()"></div>
                 </div>
             </div>
             <div class="active-item">
                 LAT
                 <div class="metric-bar">
-                    <div class="metric-fill" style="width: 5%"></div>
+                    <div class="metric-fill" [style.width.%]="latency()"></div>
                 </div>
             </div>
         </div>

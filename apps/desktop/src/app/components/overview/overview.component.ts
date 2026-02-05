@@ -21,6 +21,16 @@ export class OverviewComponent {
   liveTranscript = signal('');
   confidence = signal(0);
 
+  // Filtering
+  activeFilter = signal<'ALL' | 'ACTION ITEM' | 'LOG' | 'SYNC' | 'SYSTEM' | 'AI THOUGHT'>('ALL');
+
+  // Attachments
+  attachments = signal<string[]>([]);
+
+  // Footer Metrics (Mock)
+  cpuUsage = signal(12);
+  latency = signal(24);
+
   // --- Computed Dashboard Data ---
 
   // 1. Projects Summary
@@ -44,7 +54,7 @@ export class OverviewComponent {
   // 3. Recent Activity Stream mapped to "Context Stream" cards
   contextStream = computed(() => {
     // Merge tasks and activities into a unified stream
-    const activities = this.store.activities().slice(0, 6).map(a => {
+    const activities = this.store.activities().slice(0, 10).map(a => {
       let type = 'LOG';
       let tagClass = 'reference';
       if (a.type === 'sync') { type = 'SYNC'; tagClass = 'sync'; }
@@ -52,6 +62,7 @@ export class OverviewComponent {
       if (a.type === 'ai') { type = 'AI THOUGHT'; tagClass = 'note'; }
 
       return {
+        id: a.id,
         type: type,
         tagClass: tagClass,
         content: `"${a.text}"`,
@@ -61,7 +72,8 @@ export class OverviewComponent {
       };
     });
 
-    const tasks = this.store.tasks().slice(0, 3).map(t => ({
+    const tasks = this.store.tasks().slice(0, 5).map(t => ({
+      id: t.id,
       type: 'ACTION ITEM',
       tagClass: 'action',
       content: t.title + (t.description ? `. ${t.description}` : ''),
@@ -71,7 +83,11 @@ export class OverviewComponent {
     }));
 
     // Interleave
-    return [...tasks, ...activities].sort(() => Math.random() - 0.5);
+    const merged = [...tasks, ...activities].sort(() => Math.random() - 0.5);
+
+    // Filter
+    if (this.activeFilter() === 'ALL') return merged;
+    return merged.filter(item => item.type === this.activeFilter());
   });
 
   // 4. Quick Stats
@@ -106,6 +122,12 @@ export class OverviewComponent {
       setInterval(() => {
         this.systemTime.set(new Date());
       }, 60000);
+
+      // Randomize Metrics periodically
+      setInterval(() => {
+        this.cpuUsage.set(Math.floor(Math.random() * 30) + 5); // 5-35%
+        this.latency.set(Math.floor(Math.random() * 50) + 10); // 10-60ms
+      }, 3000);
     }
   }
 
@@ -172,10 +194,14 @@ export class OverviewComponent {
     const rawInput = this.inputText().trim();
     if (!rawInput) return;
 
-    // Simple parser for creating tasks/projects
     const lower = rawInput.toLowerCase();
 
-    if (lower.startsWith('create project') || lower.startsWith('new project')) {
+    // 1. Navigation
+    if (lower.startsWith('go to') || lower.startsWith('open') || lower.startsWith('navigate to')) {
+      this.handleNavigationCommand(lower);
+    }
+    // 2. Creation
+    else if (lower.startsWith('create project') || lower.startsWith('new project')) {
       this.createProjectFromVoice(rawInput);
     } else if (lower.startsWith('remind me') || lower.startsWith('add task') || lower.startsWith('todo')) {
       this.createTaskFromVoice(rawInput);
@@ -186,13 +212,77 @@ export class OverviewComponent {
 
     this.inputText.set('');
     this.liveTranscript.set('');
+    this.attachments.set([]); // Clear attachments after processing
+  }
+
+  handleNavigationCommand(command: string) {
+    const target = command.replace(/^(go to|open|navigate to)/i, '').trim();
+    const routes: Record<string, string[]> = {
+      'novels': ['/novels'], 'fiction': ['/novels'],
+      'settings': ['/developer-settings'], 'dev': ['/developer-settings'],
+      'tasks': ['/tasks'], 'todos': ['/tasks'],
+      'notes': ['/daily-notes'], 'daily': ['/daily-notes'],
+      'research': ['/research'],
+      'profile': ['/profile'],
+      'logs': ['/activity-log'],
+      'bin': ['/bin']
+    };
+
+    const route = Object.keys(routes).find(key => target.includes(key));
+    if (route) {
+      this.router.navigate(routes[route]);
+    } else {
+      // Feedback?
+      console.warn('Unknown navigation target:', target);
+    }
   }
 
   clearCommand() {
     this.inputText.set('');
     this.liveTranscript.set('');
+    this.attachments.set([]);
     if (this.listening()) {
       this.recognition.stop();
+    }
+  }
+
+  triggerFileUpload() {
+    // Mock File Upload interaction
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.onchange = (e: any) => {
+      const files = Array.from(e.target.files) as File[];
+      this.handleFiles(files);
+    };
+    fileInput.click();
+  }
+
+  handleFiles(files: File[]) {
+    const current = this.attachments();
+    const newNames = files.map(f => f.name);
+    this.attachments.set([...current, ...newNames]);
+  }
+
+  removeAttachment(index: number) {
+    const current = this.attachments();
+    current.splice(index, 1);
+    this.attachments.set([...current]);
+  }
+
+  toggleFilter() {
+    const filters: ('ALL' | 'ACTION ITEM' | 'LOG' | 'SYNC' | 'SYSTEM' | 'AI THOUGHT')[] = ['ALL', 'ACTION ITEM', 'LOG', 'SYNC', 'SYSTEM', 'AI THOUGHT'];
+    const currentIndex = filters.indexOf(this.activeFilter());
+    const nextIndex = (currentIndex + 1) % filters.length;
+    this.activeFilter.set(filters[nextIndex]);
+  }
+
+  openItem(item: any) {
+    // Navigate based on item type
+    if (item.type === 'ACTION ITEM') {
+      this.router.navigate(['/tasks'], { queryParams: { focus: item.id } });
+    } else {
+      this.router.navigate(['/activity-log']); // Fallback for logs
     }
   }
 
@@ -216,14 +306,15 @@ export class OverviewComponent {
 
   private createTaskFromVoice(input: string) {
     const title = input.replace(/^(remind me to|add task|todo|task:)/i, '').trim();
+    const hasAttachments = this.attachments().length > 0;
     const newTask: Task = {
       id: crypto.randomUUID(),
-      title: title,
+      title: title + (hasAttachments ? ` [${this.attachments().length} attachments]` : ''),
       priority: 'MEDIUM',
       hours: '0',
       status: 'ACTIVE',
       due: new Date().toISOString(), // Default to today
-      notes: 'Created via command center'
+      notes: `Created via command center.\nAttachments: ${this.attachments().join(', ')}`
     };
     this.store.addTask(newTask);
   }

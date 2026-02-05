@@ -56,8 +56,8 @@
 }
 
 .context-label {
-    background: var(--text-primary);
-    color: white;
+    background: var(--accent-dim);
+    color: var(--accent);
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 1px;
@@ -149,6 +149,37 @@
     align-items: center;
 }
 
+.attachment-list {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.attachment-pill {
+    background: var(--bg-sidebar);
+    color: var(--text-primary);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    font-family: var(--font-sans);
+}
+
+.remove-x {
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-tertiary);
+    margin-left: 2px;
+}
+
+.remove-x:hover {
+    color: var(--alert);
+}
+
 .btn-black {
     background: var(--accent);
     color: #FFFFFF;
@@ -170,10 +201,7 @@
 }
 
 .btn-black:hover {
-    background: var(--text-primary);
-    /* Invert to Black (Light) or White (Dark) on hover */
-    color: var(--bg-page);
-    /* Text becomes page bg color for contrast */
+    filter: brightness(1.1);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
