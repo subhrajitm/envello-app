@@ -5,13 +5,13 @@ import { Router } from '@angular/router';
 import { StoreService, Project, Task, Activity } from '../../services/store.service';
 
 @Component({
-  selector: 'app-overview',
+  selector: 'app-workspace',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './overview.component.html',
-  styleUrl: './overview.component.css'
+  templateUrl: './workspace.component.html',
+  styleUrl: './workspace.component.css'
 })
-export class OverviewComponent {
+export class WorkspaceComponent {
   store = inject(StoreService);
   router = inject(Router);
 

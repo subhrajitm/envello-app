@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { OverviewComponent } from './overview.component';
+import { WorkspaceComponent } from './workspace.component';
 import { StoreService } from '../../services/store.service';
 
-describe('OverviewComponent', () => {
-  let component: OverviewComponent;
-  let fixture: ComponentFixture<OverviewComponent>;
+describe('WorkspaceComponent', () => {
+  let component: WorkspaceComponent;
+  let fixture: ComponentFixture<WorkspaceComponent>;
 
   // Mock StoreService
   const storeServiceMock = {
@@ -15,13 +14,13 @@ describe('OverviewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [OverviewComponent],
+      imports: [WorkspaceComponent],
       providers: [
         { provide: StoreService, useValue: storeServiceMock }
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(OverviewComponent);
+    fixture = TestBed.createComponent(WorkspaceComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

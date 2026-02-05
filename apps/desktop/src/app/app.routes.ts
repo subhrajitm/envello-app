@@ -14,7 +14,7 @@ export const routes: Routes = [
   },
   {
     path: 'workspace',
-    loadComponent: () => import('./components/overview/overview.component').then(m => m.OverviewComponent),
+    loadComponent: () => import('./components/workspace/workspace.component').then(m => m.WorkspaceComponent),
     data: { hasSidebar: true },
   },
   {
