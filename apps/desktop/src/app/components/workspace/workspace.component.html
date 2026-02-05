@@ -74,6 +74,21 @@
                         <div class="card-content">
                             {{ item.content }}
                         </div>
+
+                        @if (item.tasks && item.tasks.length > 0) {
+                        <div class="stream-tasks">
+                            @for (task of item.tasks; track task.id) {
+                            <div class="stream-task-row">
+                                <span class="material-symbols-outlined check-icon"
+                                    [class.checked]="task.status === 'done'">
+                                    {{ task.status === 'done' ? 'check_circle' : 'radio_button_unchecked' }}
+                                </span>
+                                <span class="task-text" [class.done]="task.status === 'done'">{{ task.title }}</span>
+                            </div>
+                            }
+                        </div>
+                        }
+
                         <div class="card-meta">
                             @for (t of item.tags; track t) {
                             <span class="meta-pill">{{ t }}</span>

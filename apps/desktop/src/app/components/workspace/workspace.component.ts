@@ -68,7 +68,8 @@ export class WorkspaceComponent {
         content: `"${a.text}"`,
         sub: 'System Log',
         time: a.time,
-        tags: ['#log', '#' + a.type]
+        tags: ['#log', '#' + a.type],
+        tasks: [] as any[]
       };
     });
 
@@ -79,11 +80,28 @@ export class WorkspaceComponent {
       content: t.title + (t.description ? `. ${t.description}` : ''),
       sub: 'Priority: ' + t.priority,
       time: 'Just now',
-      tags: t.labels?.map(l => '#' + l) || ['#task']
+      tags: t.labels?.map(l => '#' + l) || ['#task'],
+      tasks: [] as any[]
     }));
 
+    // Mock Project with Tasks
+    const mockProject = {
+      id: 'proj-1',
+      type: 'PROJECT',
+      tagClass: 'action', // Reusing action color for now
+      content: 'Refactor Authentication Module',
+      sub: 'High Priority Project',
+      time: '1h ago',
+      tags: ['#backend', '#auth'],
+      tasks: [
+        { id: 't1', title: 'Update JWT Strategy', status: 'done' },
+        { id: 't2', title: 'Migrate User Table', status: 'pending' },
+        { id: 't3', title: 'Fix Logout Bug', status: 'pending' }
+      ]
+    };
+
     // Interleave
-    const merged = [...tasks, ...activities].sort(() => Math.random() - 0.5);
+    const merged = [mockProject, ...tasks, ...activities].sort(() => Math.random() - 0.5);
 
     // Filter
     if (this.activeFilter() === 'ALL') return merged;
