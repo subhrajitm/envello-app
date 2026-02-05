@@ -1,19 +1,25 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, map, take } from 'rxjs/operators';
 
 /**
  * Protects routes so only authenticated users can access.
- * When auth is enabled, unauthenticated users are redirected to login (or overview for now).
+ * Waits for auth initialization before making a decision.
  */
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.isAuthenticated()) {
-    return true;
-  }
-  // Stub: no login page yet; redirect to overview. Replace with '/login' when auth UI exists.
-  router.navigate(['/login']).catch(() => { });
-  return false;
+  return toObservable(auth.initialized).pipe(
+    filter(isInit => isInit), // Wait for initialization to complete
+    take(1),
+    map(() => {
+      if (auth.isAuthenticated()) {
+        return true;
+      }
+      return router.createUrlTree(['/login']);
+    })
+  );
 };

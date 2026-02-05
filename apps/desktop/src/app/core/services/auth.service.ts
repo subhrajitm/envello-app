@@ -34,7 +34,7 @@ export class AuthService {
           this._isGuest.set(true);
           this.logging.info('AuthService initialized', 'Guest Mode');
         } else {
-          this.logging.info('AuthService initialized', 'Guest');
+          this.logging.info('AuthService initialized', 'Unauthenticated');
         }
       } else {
         this.logging.info('AuthService initialized', 'Authenticated');
