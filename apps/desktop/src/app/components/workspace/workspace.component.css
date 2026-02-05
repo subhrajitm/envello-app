@@ -182,8 +182,7 @@
 
 .btn-black {
     background: var(--accent);
-    color: #FFFFFF;
-    /* Force white text on orange */
+    color: var(--bg-app);
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1px;
@@ -316,7 +315,7 @@
 }
 
 .stream-card {
-    background: #FFFFFF;
+    background: transparent;
     padding: 12px;
     border-radius: 2px;
     border: 1px solid var(--border-color);
@@ -326,8 +325,9 @@
 
 .stream-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transform: translateY(-1px);
+    background: var(--bg-page);
 }
 
 .card-top {
@@ -353,13 +353,14 @@
 }
 
 .tag.reference {
-    background: #F3F4F6;
+    background: var(--bg-page);
     color: var(--text-secondary);
 }
 
 .tag.note {
-    background: #ECFDF5;
+    background: var(--bg-page);
     color: var(--success);
+    border: 1px solid var(--success);
 }
 
 .tag.sync {
@@ -368,8 +369,9 @@
 }
 
 .tag.system {
-    background: #FEF2F2;
+    background: var(--bg-page);
     color: var(--alert);
+    border: 1px solid var(--alert);
 }
 
 .timestamp {
