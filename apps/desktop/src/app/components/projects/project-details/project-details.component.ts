@@ -75,7 +75,7 @@ export class ProjectDetailsComponent {
 
     finalizeSession() {
         // Navigate back to project oversight or overview
-        this.router.navigate(['/overview']);
+        this.router.navigate(['/workspace']);
     }
 
     getStatusColor(status: string): string {

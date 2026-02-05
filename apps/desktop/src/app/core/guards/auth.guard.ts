@@ -14,6 +14,6 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
   // Stub: no login page yet; redirect to overview. Replace with '/login' when auth UI exists.
-  router.navigate(['/overview']).catch(() => {});
+  router.navigate(['/login']).catch(() => { });
   return false;
 };

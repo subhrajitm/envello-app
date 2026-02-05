@@ -56,7 +56,7 @@ export class ActivityLogComponent {
   visibleCount = computed(() => this.filteredActivities().length);
 
   goBack() {
-    this.router.navigate(['/overview']);
+    this.router.navigate(['/workspace']);
   }
 
   setFilter(filter: 'ALL' | 'ENTRY' | 'SYSTEM' | 'SYNC' | 'AI') {
