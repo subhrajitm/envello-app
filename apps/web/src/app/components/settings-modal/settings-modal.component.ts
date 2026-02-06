@@ -2,6 +2,7 @@ import { Component, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { IconButtonComponent } from '../../shared/ui/icon-button/icon-button.component';
+import { EnvLogoComponent } from '../../shared/ui/logo/logo.component';
 import { ThemeService, Theme } from '../../services/theme.service';
 import { AiService } from '../../services/ai.service';
 
@@ -20,7 +21,7 @@ interface ThemeOption {
 @Component({
   selector: 'app-settings-modal',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, IconButtonComponent],
+  imports: [CommonModule, ButtonComponent, IconButtonComponent, EnvLogoComponent],
   templateUrl: './settings-modal.component.html',
   styleUrl: './settings-modal.component.css'
 })

@@ -10,11 +10,12 @@ import { SettingsModalComponent } from '../../settings-modal/settings-modal.comp
 import { NotificationCenterComponent } from '../../notification-center/notification-center.component';
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
+import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, EnvLogoComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -40,10 +41,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   // Navigation layout: 'vertical' | 'horizontal' | 'minimized'
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
-  
+
   // Sidebar state - default to collapsed (minimized)
   sidebarCollapsed = signal(true);
-  
+
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
 
@@ -157,14 +158,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Load navigation layout from localStorage
     this.loadNavigationLayout();
-    
+
     // Listen for navigation layout changes from settings
     this.navigationLayoutListener = (event: CustomEvent) => {
       this.navigationLayout.set(event.detail);
       this.applyNavigationLayout();
     };
     window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
-    
+
     // Apply initial layout
     this.applyNavigationLayout();
   }
@@ -189,7 +190,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private applyNavigationLayout() {
     const layout = this.navigationLayout();
-    
+
     // Only set initial state when layout actually changes, not on every call
     if (this.previousLayout !== layout) {
       if (layout === 'minimized') {
@@ -200,7 +201,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.sidebarCollapsed.set(false);
       }
       // For horizontal, sidebar is not shown
-      
+
       this.previousLayout = layout;
       this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
     }

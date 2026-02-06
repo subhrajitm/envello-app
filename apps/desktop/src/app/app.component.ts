@@ -6,12 +6,13 @@ import { HeaderComponent } from './components/layout/header/header.component';
 import { FooterComponent } from './components/layout/footer/footer.component';
 import { TauriService } from './core/services/tauri.service';
 import { SessionService } from './services/session.service';
+import { EnvLogoComponent } from './shared/ui/logo/logo.component';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

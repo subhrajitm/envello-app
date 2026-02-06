@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../services/user.service';
+import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
 
 @Component({
     selector: 'app-sign-up',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule],
+    imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent],
     templateUrl: './sign-up.component.html',
     styleUrls: ['./sign-up.component.css']
 })

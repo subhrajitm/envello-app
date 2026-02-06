@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { IconButtonComponent } from '../../shared/ui/icon-button/icon-button.component';
+import { EnvLogoComponent } from '../../shared/ui/logo/logo.component';
 import { ThemeService, Theme } from '../../services/theme.service';
 import { AiService, AiProvider } from '../../services/ai.service';
 
@@ -27,7 +28,7 @@ interface AiProviderOption {
 @Component({
   selector: 'app-settings-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EnvLogoComponent],
   templateUrl: './settings-modal.component.html',
   styleUrl: './settings-modal.component.css'
 })
