@@ -2,6 +2,7 @@ import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { SqliteService } from '../core/services/sqlite.service';
+import { StoreService } from './store.service';
 
 export type SnippetLang =
   | 'Python'
@@ -38,6 +39,7 @@ const LANGS: SnippetLang[] = ['Python', 'JavaScript', 'TypeScript', 'Markdown', 
 export class SnippetsService {
   private bin = inject(BinService);
   private db = inject(SqliteService);
+  private store = inject(StoreService);
 
   readonly snippets = signal<Snippet[]>([]);
   selectedSnippetId = signal<string | null>(null);
@@ -131,6 +133,22 @@ export class SnippetsService {
     };
     this.snippets.update(list => [...list, created]);
     this.db.upsertSnippet(created).catch(e => logIfTauri('[SnippetsService] persist failed', e));
+
+    // Auto-create Project
+    const projectId = crypto.randomUUID();
+    this.store.addProject({
+      id: projectId,
+      title: created.title,
+      description: 'Snippet Project: ' + created.lang,
+      status: 'PLANNING',
+      words: '0',
+      updated: now,
+      icon: 'code',
+      linkedResources: {
+        snippets: [created.id]
+      }
+    });
+
     return created;
   }
 

@@ -131,6 +131,156 @@
                     }
                     }
 
+                    @if (linkedMeetings().length > 0) {
+                    <tr style="background: rgba(191, 87, 0, 0.05);">
+                        <td colspan="5"
+                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
+                            Linked Meetings</td>
+                    </tr>
+                    @for (meeting of linkedMeetings(); track meeting.id) {
+                    <tr>
+                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
+                        <td style="font-weight: 600;">
+                            <span class="material-symbols-outlined"
+                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">groups</span>
+                            {{ meeting.title }}
+                        </td>
+                        <td class="text-muted">Meeting</td>
+                        <td class="text-muted">{{ meeting.date }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <span class="material-symbols-outlined action-icon">edit</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+
+                    @if (linkedBooks().length > 0) {
+                    <tr style="background: rgba(191, 87, 0, 0.05);">
+                        <td colspan="5"
+                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
+                            Linked Books</td>
+                    </tr>
+                    @for (book of linkedBooks(); track book.id) {
+                    <tr>
+                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
+                        <td style="font-weight: 600;">
+                            <span class="material-symbols-outlined"
+                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">local_library</span>
+                            {{ book.title }}
+                        </td>
+                        <td class="text-muted">Book</td>
+                        <td class="text-muted">{{ book.status }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <span class="material-symbols-outlined action-icon">edit</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+
+                    @if (linkedResearch().length > 0) {
+                    <tr style="background: rgba(191, 87, 0, 0.05);">
+                        <td colspan="5"
+                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
+                            Linked Research</td>
+                    </tr>
+                    @for (lib of linkedResearch(); track lib.id) {
+                    <tr>
+                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
+                        <td style="font-weight: 600;">
+                            <span class="material-symbols-outlined"
+                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">science</span>
+                            {{ lib.name }}
+                        </td>
+                        <td class="text-muted">Library</td>
+                        <td class="text-muted">{{ lib.lastModified }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <span class="material-symbols-outlined action-icon">edit</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+
+                    @if (linkedSnippets().length > 0) {
+                    <tr style="background: rgba(191, 87, 0, 0.05);">
+                        <td colspan="5"
+                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
+                            Linked Snippets</td>
+                    </tr>
+                    @for (snippet of linkedSnippets(); track snippet.id) {
+                    <tr>
+                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
+                        <td style="font-weight: 600;">
+                            <span class="material-symbols-outlined"
+                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">code</span>
+                            {{ snippet.title }}
+                        </td>
+                        <td class="text-muted">{{ snippet.lang }}</td>
+                        <td class="text-muted">{{ snippet.updatedAt | date:'shortDate' }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <span class="material-symbols-outlined action-icon">edit</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+
+                    @if (linkedArticles().length > 0) {
+                    <tr style="background: rgba(191, 87, 0, 0.05);">
+                        <td colspan="5"
+                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
+                            Linked Articles</td>
+                    </tr>
+                    @for (article of linkedArticles(); track article.id) {
+                    <tr>
+                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
+                        <td style="font-weight: 600;">
+                            <span class="material-symbols-outlined"
+                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">article</span>
+                            {{ article.title }}
+                        </td>
+                        <td class="text-muted">{{ article.platform }}</td>
+                        <td class="text-muted">{{ article.lastUpdated | date:'shortDate' }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <span class="material-symbols-outlined action-icon">edit</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+
+                    @if (linkedJournalProjects().length > 0) {
+                    <tr style="background: rgba(191, 87, 0, 0.05);">
+                        <td colspan="5"
+                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
+                            Linked Journal Projects</td>
+                    </tr>
+                    @for (jp of linkedJournalProjects(); track jp.id) {
+                    <tr>
+                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
+                        <td style="font-weight: 600;">
+                            <span class="material-symbols-outlined"
+                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">book</span>
+                            {{ jp.title }}
+                        </td>
+                        <td class="text-muted">Journal</td>
+                        <td class="text-muted">{{ jp.lastUpdated }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <span class="material-symbols-outlined action-icon">edit</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+
                     <!-- Standard Tasks -->
                     @if (projectTasks().length > 0 || (linkedNovels().length === 0 && linkedJournals().length === 0)) {
                     @for (task of projectTasks(); track task.id) {

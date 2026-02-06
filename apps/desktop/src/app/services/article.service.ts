@@ -2,6 +2,7 @@ import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { SqliteService } from '../core/services/sqlite.service';
 import { FileSystemService } from '../core/services/file-system.service';
+import { StoreService } from './store.service';
 
 export interface Article {
   id: string;
@@ -32,6 +33,7 @@ export interface Article {
 export class ArticleService {
   private db = inject(SqliteService);
   private fs = inject(FileSystemService);
+  private store = inject(StoreService);
 
   articles = signal<Article[]>([]);
   private turndownService: any;
@@ -98,6 +100,21 @@ export class ArticleService {
       lastUpdated: new Date().toISOString(),
     };
     this.articles.update(list => [newArticle, ...list]);
+
+    // Auto-create Project
+    const projectId = crypto.randomUUID();
+    this.store.addProject({
+      id: projectId,
+      title: newArticle.title,
+      description: 'Article Project: ' + newArticle.platform,
+      status: 'PLANNING',
+      words: String(newArticle.wordCount),
+      updated: new Date().toISOString(),
+      icon: 'article',
+      linkedResources: {
+        articles: [newArticle.id]
+      }
+    });
 
     // Initial file write
     this.saveArticleContentToFile(newArticle.id, newArticle.content || '');

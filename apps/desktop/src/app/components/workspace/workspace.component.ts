@@ -330,18 +330,47 @@ export class WorkspaceComponent {
   }
 
   private createTaskFromVoice(input: string) {
-    const title = input.replace(/^(remind me to|add task|todo|task:)/i, '').trim();
-    const hasAttachments = this.attachments().length > 0;
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: title + (hasAttachments ? ` [${this.attachments().length} attachments]` : ''),
+    const rawContent = input.replace(/^(remind me to|add task|todo|task:)/i, '').trim();
+    if (!rawContent) return;
+
+    // Detect multiple tasks via newlines
+    const lines = rawContent.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const mainTitle = lines[0];
+
+    // Create a unique Project for this entry
+    const projectId = crypto.randomUUID();
+    const newProject: Project = {
+      id: projectId,
+      title: mainTitle,
+      description: lines.length > 1 ? 'Multi-task project from context stream' : 'Single-task project',
+      status: 'PLANNING',
+      words: '0',
+      updated: new Date().toISOString(),
+      icon: 'assignment', // distinct icon
       priority: 'MEDIUM',
-      hours: '0',
-      status: 'ACTIVE',
-      due: new Date().toISOString(), // Default to today
-      notes: `Created via command center.\nAttachments: ${this.attachments().join(', ')}`
+      progress: 0,
+      tags: ['Context-Stream'],
+      type: lines.length > 1 ? 'MULTI' : 'SINGLE'
     };
-    this.store.addTask(newTask);
+
+    // Add Project first
+    this.store.addProject(newProject);
+
+    // Create tasks linked to this Project
+    lines.forEach((line, index) => {
+      const hasAttachments = index === 0 && this.attachments().length > 0; // Attach to first task or all? Let's say first for now or just main logic
+      const newTask: Task = {
+        id: crypto.randomUUID(),
+        title: line + (hasAttachments ? ` [${this.attachments().length} attachments]` : ''),
+        priority: 'MEDIUM',
+        hours: '0',
+        status: 'ACTIVE',
+        project: projectId, // Link to the new unique project
+        due: new Date().toISOString(),
+        notes: `Task ${index + 1} of project "${mainTitle}".`
+      };
+      this.store.addTask(newTask);
+    });
   }
 
   getGreeting(): string {

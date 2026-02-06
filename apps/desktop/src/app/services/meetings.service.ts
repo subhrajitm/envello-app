@@ -351,15 +351,37 @@ export class MeetingsService {
   // CRUD Operations
 
   addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>) {
+    // Auto-project ID if not provided
+    const projectId = meeting.project || crypto.randomUUID();
+
     const newMeeting: Meeting = {
       ...meeting,
       id: Date.now().toString(),
+      project: projectId, // Ensure it's linked
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
     this.meetings.update(meetings => [...meetings, newMeeting]);
     this.store.addActivity('Meeting created: ' + newMeeting.title, 'system');
     this.persistMeeting(newMeeting);
+
+    // Create the Project container if we generated the ID
+    if (!meeting.project) {
+      this.store.addProject({
+        id: projectId,
+        title: newMeeting.title,
+        description: 'Meeting Project: ' + newMeeting.title,
+        status: 'PLANNING',
+        words: '0',
+        updated: new Date().toISOString(),
+        icon: 'groups',
+        linkedResources: {
+          meetings: [newMeeting.id]
+        }
+      });
+    }
+
     return newMeeting;
   }
 

@@ -2,6 +2,7 @@ import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { SqliteService } from '../core/services/sqlite.service';
+import { StoreService } from './store.service';
 
 export type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
 export type BookStatus = 'reading' | 'completed' | 'queued';
@@ -38,6 +39,7 @@ export type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'cat
 export class BooksService {
   private bin = inject(BinService);
   private db = inject(SqliteService);
+  private store = inject(StoreService);
 
   readonly books = signal<Book[]>([]);
   selectedBookId = signal<string | null>(null);
@@ -134,6 +136,22 @@ export class BooksService {
     };
     this.books.update(list => [...list, created]);
     this.persistBook(created);
+
+    // Auto-create Project
+    const projectId = crypto.randomUUID();
+    this.store.addProject({
+      id: projectId,
+      title: created.title,
+      description: 'Book Reading Project: ' + created.author,
+      status: 'PLANNING',
+      words: '0',
+      updated: now,
+      icon: 'local_library',
+      linkedResources: {
+        books: [created.id]
+      }
+    });
+
     return created;
   }
 

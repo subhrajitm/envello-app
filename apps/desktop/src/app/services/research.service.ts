@@ -1,6 +1,7 @@
 import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { SqliteService } from '../core/services/sqlite.service';
+import { StoreService } from './store.service';
 
 export interface ResearchLibrary {
     id: string;
@@ -43,6 +44,7 @@ export interface ResearchSummary {
 })
 export class ResearchService {
     private db = inject(SqliteService);
+    private store = inject(StoreService);
 
     libraries = signal<ResearchLibrary[]>([]);
     sources = signal<ResearchSource[]>([]);
@@ -89,6 +91,22 @@ export class ResearchService {
         };
         this.libraries.update(list => [newLibrary, ...list]);
         this.persistLibrary(newLibrary);
+
+        // Auto-create Project
+        const projectId = crypto.randomUUID();
+        this.store.addProject({
+            id: projectId,
+            title: newLibrary.name,
+            description: newLibrary.description || 'Research Library',
+            status: 'PLANNING',
+            words: '0',
+            updated: new Date().toISOString(),
+            icon: 'science',
+            linkedResources: {
+                research: [newLibrary.id]
+            }
+        });
+
         return newLibrary;
     }
 

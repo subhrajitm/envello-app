@@ -114,6 +114,10 @@ export interface Project {
     novels?: string[]; // IDs of linked novels
     journals?: string[]; // IDs of linked journals/notes
     snippets?: string[]; // IDs of linked code snippets
+    meetings?: string[]; // IDs of linked meetings
+    research?: string[]; // IDs of linked research sources/libraries
+    books?: string[]; // IDs of linked books
+    articles?: string[]; // IDs of linked articles
   };
 }
 
@@ -307,6 +311,21 @@ export class StoreService {
     await this.saveNoteContentToFile(note.id, note.content || '');
 
     this.db.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
+
+    // Auto-create Project for this Note/Journal
+    const projectId = crypto.randomUUID();
+    this.addProject({
+      id: projectId,
+      title: note.title || 'Untitled Note',
+      description: 'Auto-generated project from Note',
+      status: 'PLANNING',
+      words: '0',
+      updated: new Date().toISOString(),
+      icon: 'edit_note',
+      linkedResources: {
+        journals: [note.id]
+      }
+    });
   }
 
   updateNote(id: string, updates: Partial<Note>) {
@@ -380,11 +399,36 @@ export class StoreService {
     this.novels.update(novels => [...novels, novel]);
     this.addActivity('Project started: ' + novel.title, 'system');
     this.db.upsertNovel(novel).catch(e => logIfTauri('[StoreService] persist novel failed', e));
+
+    // Auto-create Project for this Novel
+    const projectId = crypto.randomUUID();
+    this.addProject({
+      id: projectId,
+      title: novel.title,
+      description: 'Auto-generated project from Novel',
+      status: (novel.status === 'REVISING' ? 'REVIEW' :
+        (novel.status === 'PUBLISHED' ? 'COMPLETE' :
+          (novel.status === 'DRAFTING' || novel.status === 'PLANNING' ? novel.status : 'PLANNING'))),
+      words: String(novel.wordCount || 0),
+      updated: new Date().toISOString(),
+      icon: 'menu_book',
+      linkedResources: {
+        novels: [novel.id]
+      }
+    });
   }
 
   addProject(project: Project) {
     this.projects.update(projects => [...projects, project]);
     this.addActivity('Project created: ' + project.title, 'system');
+    // TODO: Persist project to DB (mock for now or add to SqliteService)
+  }
+
+  updateProject(id: string, updates: Partial<Project>) {
+    this.projects.update(projects =>
+      projects.map(p => p.id === id ? { ...p, ...updates } : p)
+    );
+    // TODO: Persist
   }
 
   deleteNovel(id: string) {

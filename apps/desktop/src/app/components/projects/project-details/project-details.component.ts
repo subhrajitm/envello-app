@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StoreService } from '../../../services/store.service';
 import { Project } from '../../../services/store.service';
+import { MeetingsService } from '../../../services/meetings.service';
+import { BooksService } from '../../../services/books.service';
+import { ResearchService } from '../../../services/research.service';
+import { SnippetsService } from '../../../services/snippets.service';
+import { ArticleService } from '../../../services/article.service';
+import { JournalService } from '../../../services/journal.service';
 
 @Component({
     selector: 'app-project-details',
@@ -16,6 +22,13 @@ export class ProjectDetailsComponent {
     private route = inject(ActivatedRoute);
     public store = inject(StoreService);
     private router = inject(Router);
+
+    private meetingsService = inject(MeetingsService);
+    private booksService = inject(BooksService);
+    private researchService = inject(ResearchService);
+    private snippetsService = inject(SnippetsService);
+    private articleService = inject(ArticleService);
+    private journalService = inject(JournalService);
 
     projectId = signal<string | null>(null);
     newTaskTitle = signal('');
@@ -43,6 +56,45 @@ export class ProjectDetailsComponent {
         const p = this.project();
         if (!p || !p.linkedResources?.journals) return [];
         return this.store.notes().filter(n => p.linkedResources?.journals?.includes(n.id));
+    });
+
+    linkedMeetings = computed(() => {
+        const p = this.project();
+        if (!p || !p.linkedResources?.meetings) return [];
+        return this.meetingsService.meetings().filter(m => p.linkedResources?.meetings?.includes(m.id));
+    });
+
+    linkedBooks = computed(() => {
+        const p = this.project();
+        if (!p || !p.linkedResources?.books) return [];
+        return this.booksService.books().filter(b => p.linkedResources?.books?.includes(b.id));
+    });
+
+    linkedResearch = computed(() => {
+        const p = this.project();
+        // Assuming we link to Libraries, but code above supported linking to what?
+        // ResearchService addLibrary linked to library.id using 'research' key.
+        if (!p || !p.linkedResources?.research) return [];
+        return this.researchService.libraries().filter(lib => p.linkedResources?.research?.includes(lib.id));
+    });
+
+    linkedSnippets = computed(() => {
+        const p = this.project();
+        if (!p || !p.linkedResources?.snippets) return [];
+        return this.snippetsService.snippets().filter(s => p.linkedResources?.snippets?.includes(s.id));
+    });
+
+    linkedArticles = computed(() => {
+        const p = this.project();
+        if (!p || !p.linkedResources?.articles) return [];
+        return this.articleService.articles().filter(a => p.linkedResources?.articles?.includes(a.id));
+    });
+
+    linkedJournalProjects = computed(() => {
+        const p = this.project();
+        if (!p || !p.linkedResources?.journals) return [];
+        // Check JournalService for these IDs
+        return this.journalService.projects().filter(jp => p.linkedResources?.journals?.includes(jp.id));
     });
 
     constructor() {

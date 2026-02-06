@@ -181,6 +181,22 @@ export class JournalService {
     this.projects.update(projects => [...projects, newProject]);
     this.store.addActivity(`Journal project created: ${newProject.title}`, 'system');
     this.persistProject(newProject);
+
+    // Auto-create Project
+    const projectId = crypto.randomUUID();
+    this.store.addProject({
+      id: projectId,
+      title: newProject.title,
+      description: newProject.description || 'Journal Project',
+      status: 'PLANNING',
+      words: '0',
+      updated: new Date().toISOString(),
+      icon: 'book',
+      linkedResources: {
+        journals: [newProject.id]
+      }
+    });
+
     return newProject;
   }
 
