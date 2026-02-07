@@ -17,6 +17,7 @@ export class ButtonComponent {
   @Input() icon?: string;
   @Input() iconPos: 'left' | 'right' = 'left';
   @Input() disabled = false;
+  @Input() loading = false;
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
 
   clicked = output<void>();

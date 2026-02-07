@@ -59,7 +59,9 @@ export class ProfileEditorComponent {
   }
 
   removePhoto() {
-    this.tempAvatar = undefined;
+    if (confirm('Are you sure you want to remove your profile photo?')) {
+      this.tempAvatar = undefined;
+    }
   }
 
   save() {

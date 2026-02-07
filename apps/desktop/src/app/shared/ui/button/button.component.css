@@ -20,10 +20,18 @@
   flex-shrink: 0;
 }
 
-.env-btn__icon--left { margin-right: 2px; }
-.env-btn__icon--right { margin-left: 2px; }
+.env-btn__icon--left {
+  margin-right: 2px;
+}
 
-.env-btn__label { display: inline-flex; align-items: center; }
+.env-btn__icon--right {
+  margin-left: 2px;
+}
+
+.env-btn__label {
+  display: inline-flex;
+  align-items: center;
+}
 
 /* Sizes */
 .env-btn--sm {
@@ -31,21 +39,27 @@
   font-size: 11px;
 }
 
-.env-btn--sm .material-symbols-outlined { font-size: 14px; }
+.env-btn--sm .material-symbols-outlined {
+  font-size: 14px;
+}
 
 .env-btn--md {
   padding: 6px 14px;
   font-size: 13px;
 }
 
-.env-btn--md .material-symbols-outlined { font-size: 18px; }
+.env-btn--md .material-symbols-outlined {
+  font-size: 18px;
+}
 
 .env-btn--lg {
   padding: 10px 20px;
   font-size: 14px;
 }
 
-.env-btn--lg .material-symbols-outlined { font-size: 20px; }
+.env-btn--lg .material-symbols-outlined {
+  font-size: 20px;
+}
 
 /* Variants */
 .env-btn--primary {
@@ -93,4 +107,23 @@
 .env-btn--ghost:hover:not(:disabled) {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.env-btn__spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner 0.75s linear infinite;
+}
+
+@keyframes spinner {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
 import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
+import { ButtonComponent } from '../../../shared/ui/button/button.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent],
+  imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
   template: `
     <div class="login-container">
       <div *ngIf="!authService.isAuthenticated()" class="login-content">
@@ -53,25 +54,21 @@ import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
             <span>{{ error() }}</span>
           </div>
 
-          <button 
+          <env-button 
             type="submit" 
-            [disabled]="loading()"
-            class="btn-primary"
+            [loading]="loading()" 
+            icon="arrow_forward" 
+            iconPos="right" 
+            style="width: 100%; margin-top: 4px;"
+            class="w-full"
           >
-            <span *ngIf="loading()">
-              <span class="loading-spinner"></span>
-              Signing in...
-            </span>
-            <span *ngIf="!loading()">
-              Sign In
-              <span class="material-symbols-outlined">arrow_forward</span>
-            </span>
-          </button>
+            Sign In
+          </env-button>
 
           <div class="login-footer">
-            <button type="button" class="btn-guest" (click)="continueAsGuest()">
+            <env-button variant="ghost" (clicked)="continueAsGuest()">
               Continue as Guest
-            </button>
+            </env-button>
             <div class="footer-divider"></div>
             <span class="footer-text">Don't have an account?</span>
             <a routerLink="/sign-up" class="footer-link">Create Account</a>
@@ -218,55 +215,7 @@ import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
       font-size: 16px;
     }
 
-    .btn-primary {
-      width: 100%;
-      padding: 10px 20px;
-      background: var(--accent-primary);
-      color: var(--accent-primary-text);
-      border: none;
-      border-radius: 4px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 4px;
-    }
 
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 3px 8px var(--accent-primary-dim);
-    }
-
-    .btn-primary:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .btn-primary .material-symbols-outlined {
-      font-size: 16px;
-    }
-
-    .loading-spinner {
-      width: 12px;
-      height: 12px;
-      border: 2px solid var(--accent-primary-text);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
 
     .login-footer {
       text-align: center;
