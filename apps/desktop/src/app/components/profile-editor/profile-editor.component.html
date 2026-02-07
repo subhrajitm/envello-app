@@ -2,86 +2,30 @@
     <div body>
         <div class="avatar-section flex flex-col items-center gap-4">
             <div class="current-avatar flex-shrink-0">
-                @if (tempAvatar) {
-                <img [src]="tempAvatar" alt="Profile Avatar">
+                @if (tempAvatar()) {
+                @if (isImageLoading()) {
+                <div class="avatar-loader"></div>
+                }
+                <img [src]="tempAvatar()" alt="Profile Avatar" [style.display]="isImageLoading() ? 'none' : 'block'"
+                    (load)="onImageLoad()" (error)="onImageError()">
                 } @else {
                 <span class="avatar-initials">{{ userInitials() }}</span>
                 }
             </div>
-            <!-- Avatar Type Toggle -->
-            <div class="flex items-center justify-center gap-2 mt-4 mb-2">
-                <env-button size="sm" [variant]="tempAvatarType === 'image' ? 'primary' : 'secondary'"
-                    (clicked)="setType('image')" [disabled]="isSaving()">Graphic</env-button>
-                <env-button size="sm" [variant]="tempAvatarType === 'initials' ? 'primary' : 'secondary'"
-                    (clicked)="setType('initials')" [disabled]="isSaving()">Initials</env-button>
+            <div class="flex items-center justify-center gap-3 mt-2">
+                <env-button [variant]="tempAvatar() && tempGender === 'male' ? 'primary' : 'secondary'"
+                    (clicked)="setAvatarOption('male')" [disabled]="isSaving()">
+                    Male
+                </env-button>
+                <env-button [variant]="tempAvatar() && tempGender === 'female' ? 'primary' : 'secondary'"
+                    (clicked)="setAvatarOption('female')" [disabled]="isSaving()">
+                    Female
+                </env-button>
+                <env-button [variant]="!tempAvatar() ? 'primary' : 'secondary'" (clicked)="setAvatarOption('initials')"
+                    [disabled]="isSaving()">
+                    Initials
+                </env-button>
             </div>
-
-            @if (tempAvatarType === 'image') {
-            <div class="avatar-config flex flex-col gap-3 w-full px-4 text-sm">
-                <!-- Gender -->
-                <div class="config-row flex items-center justify-between">
-                    <span class="config-label font-bold text-gray-400 text-xs uppercase">Gender</span>
-                    <div class="flex gap-1">
-                        <env-button size="sm" [variant]="tempGender === 'male' ? 'primary' : 'ghost'"
-                            (clicked)="setGender('male')" [disabled]="isSaving()">Male</env-button>
-                        <env-button size="sm" [variant]="tempGender === 'female' ? 'primary' : 'ghost'"
-                            (clicked)="setGender('female')" [disabled]="isSaving()">Female</env-button>
-                    </div>
-                </div>
-
-                <!-- Age Group -->
-                <div class="config-row flex items-center justify-between">
-                    <span class="config-label font-bold text-gray-400 text-xs uppercase">Age</span>
-                    <div class="flex gap-1">
-                        <env-button size="sm" [variant]="tempAge === 'young' ? 'primary' : 'ghost'"
-                            (clicked)="setAge('young')" [disabled]="isSaving()">Young</env-button>
-                        <env-button size="sm" [variant]="tempAge === 'adult' ? 'primary' : 'ghost'"
-                            (clicked)="setAge('adult')" [disabled]="isSaving()">Adult</env-button>
-                        <env-button size="sm" [variant]="tempAge === 'senior' ? 'primary' : 'ghost'"
-                            (clicked)="setAge('senior')" [disabled]="isSaving()">Senior</env-button>
-                    </div>
-                </div>
-
-                <!-- Personality -->
-                <div class="config-row flex items-center justify-between">
-                    <span class="config-label font-bold text-gray-400 text-xs uppercase">Style</span>
-                    <div class="flex gap-1">
-                        <env-button size="sm" [variant]="tempPersonality === 'professional' ? 'primary' : 'ghost'"
-                            (clicked)="setPersonality('professional')" [disabled]="isSaving()">Pro</env-button>
-                        <env-button size="sm" [variant]="tempPersonality === 'casual' ? 'primary' : 'ghost'"
-                            (clicked)="setPersonality('casual')" [disabled]="isSaving()">Casual</env-button>
-                        <env-button size="sm" [variant]="tempPersonality === 'fun' ? 'primary' : 'ghost'"
-                            (clicked)="setPersonality('fun')" [disabled]="isSaving()">Fun</env-button>
-                    </div>
-                </div>
-
-                <!-- Variant -->
-                <div class="config-row flex items-center justify-between">
-                    <span class="config-label font-bold text-gray-400 text-xs uppercase">Variant</span>
-                    <div class="flex items-center gap-2">
-                        <env-button size="sm" variant="ghost" icon="chevron_left" (clicked)="cycleVariant(-1)"
-                            [disabled]="isSaving()"></env-button>
-                        <span class="text-xs font-mono text-gray-400">{{ tempVariant }}/5</span>
-                        <env-button size="sm" variant="ghost" icon="chevron_right" (clicked)="cycleVariant(1)"
-                            [disabled]="isSaving()"></env-button>
-                    </div>
-                </div>
-            </div>
-            } @else {
-            <div class="avatar-config flex flex-col items-center gap-3 w-full px-4">
-                <span class="config-label font-bold text-gray-400 text-xs uppercase">Background Color</span>
-                <div class="flex flex-wrap justify-center gap-2">
-                    @for (color of colors; track color) {
-                    <button
-                        class="w-6 h-6 rounded-full border-2 border-transparent transition-transform hover:scale-110"
-                        [style.background-color]="color" [class.selected]="tempInitialsColor === color"
-                        (click)="setColor(color)" [disabled]="isSaving()"
-                        [style.border-color]="tempInitialsColor === color ? 'white' : 'transparent'"
-                        [style.box-shadow]="tempInitialsColor === color ? '0 0 0 2px var(--color-primary)' : 'none'"></button>
-                    }
-                </div>
-            </div>
-            }
         </div>
 
         <div class="form-group flex flex-col gap-2">

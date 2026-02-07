@@ -25,19 +25,11 @@ export class ProfileEditorComponent {
   // Temp state for editing
   tempName = '';
   tempBio = '';
-  tempAvatar: string | undefined = undefined;
-
-  // Avatar Configuration State
-  tempAvatarType: 'image' | 'initials' = 'image';
+  tempAvatar = signal<string | undefined>(undefined);
   tempGender: 'male' | 'female' = 'male';
-  tempAge: 'young' | 'adult' | 'senior' = 'adult';
-  tempPersonality: 'professional' | 'casual' | 'fun' = 'professional';
-  tempVariant: number = 1;
-  tempInitialsColor: string = '#0ea5e9';
-
-  readonly colors = ['#0ea5e9', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#6366f1', '#1f2937'];
 
   isSaving = signal(false);
+  isImageLoading = signal(false);
 
   get isValid(): boolean {
     return this.tempName.trim().length > 0;
@@ -48,16 +40,16 @@ export class ProfileEditorComponent {
     if (currentUser) {
       this.tempName = currentUser.name;
       this.tempBio = currentUser.bio || '';
-      this.tempAvatar = currentUser.avatar;
+      this.tempGender = currentUser.preferences.gender || 'male';
 
-      // Load Preferences
-      const prefs = currentUser.preferences;
-      this.tempAvatarType = prefs.avatarType || 'image';
-      this.tempGender = prefs.gender || 'male';
-      this.tempAge = prefs.ageGroup || 'adult';
-      this.tempPersonality = prefs.personality || 'professional';
-      this.tempVariant = prefs.avatarVariant || 1;
-      this.tempInitialsColor = prefs.initialsColor || '#0ea5e9';
+      // Set loading state FIRST, then avatar to prevent flash
+      if (currentUser.avatar) {
+        this.isImageLoading.set(true);
+        this.tempAvatar.set(currentUser.avatar);
+      } else {
+        this.isImageLoading.set(false);
+        this.tempAvatar.set(undefined);
+      }
     }
     this.isOpen.set(true);
   }
@@ -66,49 +58,26 @@ export class ProfileEditorComponent {
     this.isOpen.set(false);
   }
 
-  setType(type: 'image' | 'initials') {
-    this.tempAvatarType = type;
-    this.updatePreview();
+  setAvatarOption(option: 'male' | 'female' | 'initials') {
+    if (option === 'initials') {
+      this.isImageLoading.set(false);
+      this.tempAvatar.set(undefined);
+    } else {
+      // Set loading FIRST, then change avatar
+      this.isImageLoading.set(true);
+      this.tempGender = option;
+      this.tempAvatar.set(this.userService.getAvatarForGender(option));
+    }
   }
 
-  setGender(gender: 'male' | 'female') {
-    this.tempGender = gender;
-    this.updatePreview();
+  onImageLoad() {
+    this.isImageLoading.set(false);
   }
 
-  setAge(age: 'young' | 'adult' | 'senior') {
-    this.tempAge = age;
-    this.updatePreview();
-  }
-
-  setPersonality(p: 'professional' | 'casual' | 'fun') {
-    this.tempPersonality = p;
-    this.updatePreview();
-  }
-
-  cycleVariant(direction: -1 | 1) {
-    let newVariant = this.tempVariant + direction;
-    if (newVariant < 1) newVariant = 5;
-    if (newVariant > 5) newVariant = 1;
-    this.tempVariant = newVariant;
-    this.updatePreview();
-  }
-
-  setColor(color: string) {
-    this.tempInitialsColor = color;
-    this.updatePreview();
-  }
-
-  private updatePreview() {
-    this.tempAvatar = this.userService.generateAvatarUrl({
-      type: this.tempAvatarType,
-      name: this.tempName || 'User',
-      gender: this.tempGender,
-      ageGroup: this.tempAge,
-      personality: this.tempPersonality,
-      variant: this.tempVariant,
-      color: this.tempInitialsColor
-    });
+  onImageError() {
+    // If image fails to load, fall back to initials
+    this.isImageLoading.set(false);
+    this.tempAvatar.set(undefined);
   }
 
   async save() {
@@ -121,15 +90,10 @@ export class ProfileEditorComponent {
         this.userService.updateProfile({
           name: this.tempName,
           bio: this.tempBio,
-          avatar: this.tempAvatar
+          avatar: this.tempAvatar()
         }),
         this.userService.updatePreferences({
-          gender: this.tempGender,
-          avatarType: this.tempAvatarType,
-          ageGroup: this.tempAge,
-          personality: this.tempPersonality,
-          avatarVariant: this.tempVariant,
-          initialsColor: this.tempInitialsColor
+          gender: this.tempGender
         })
       ]);
 

@@ -17,11 +17,6 @@ export interface UserProfile {
     autoBackup: boolean;
     autoSchedule: boolean;
     gender?: 'male' | 'female';
-    avatarType?: 'image' | 'initials';
-    ageGroup?: 'young' | 'adult' | 'senior';
-    personality?: 'professional' | 'casual' | 'fun';
-    avatarVariant?: number;
-    initialsColor?: string;
   };
   stats: {
     totalWords: number;
@@ -103,11 +98,12 @@ export class UserService {
           bio: data.bio,
           role: data.role || 'Writer',
           joinedDate: new Date(data.joined_at || authUser.created_at),
-          preferences: data.preferences || {
-            emailNotifications: true,
-            weeklyDigest: false,
-            autoBackup: true,
-            autoSchedule: false
+          preferences: {
+            emailNotifications: data.preferences?.emailNotifications ?? true,
+            weeklyDigest: data.preferences?.weeklyDigest ?? false,
+            autoBackup: data.preferences?.autoBackup ?? true,
+            autoSchedule: data.preferences?.autoSchedule ?? false,
+            gender: data.preferences?.gender || 'male'
           },
           stats: data.stats || {
             totalWords: 0,
@@ -141,12 +137,7 @@ export class UserService {
         weeklyDigest: false,
         autoBackup: true,
         autoSchedule: false,
-        gender: 'male',
-        avatarType: 'image',
-        ageGroup: 'adult',
-        personality: 'professional',
-        avatarVariant: 1,
-        initialsColor: '0ea5e9' // sky-500
+        gender: 'male' // Default
       },
       stats: {
         totalWords: 0,
@@ -189,12 +180,7 @@ export class UserService {
         weeklyDigest: false,
         autoBackup: false,
         autoSchedule: false,
-        gender: 'male',
-        avatarType: 'image',
-        ageGroup: 'adult',
-        personality: 'professional',
-        avatarVariant: 1,
-        initialsColor: '0ea5e9'
+        gender: 'male'
       },
       stats: {
         totalWords: 0,
@@ -207,25 +193,11 @@ export class UserService {
     });
   }
 
-  // Generate Avatar URL
-  generateAvatarUrl(options: {
-    type: 'image' | 'initials';
-    name: string;
-    gender?: 'male' | 'female';
-    ageGroup?: 'young' | 'adult' | 'senior';
-    personality?: 'professional' | 'casual' | 'fun';
-    variant?: number;
-    color?: string;
-  }): string {
-    if (options.type === 'initials') {
-      const bgColor = options.color?.replace('#', '') || '0ea5e9';
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(options.name)}&background=${bgColor}&color=fff&size=128&bold=true`;
-    } else {
-      // Construct seed from attributes
-      const seed = `${options.gender || 'male'}-${options.ageGroup || 'adult'}-${options.personality || 'professional'}-${options.variant || 1}`;
-      // Use 'avataaars' or 'micah' - avataaars has more variety for personality
-      return `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4`;
-    }
+  // Helper to get avatar by gender - uses local assets for instant loading
+  getAvatarForGender(gender: 'male' | 'female'): string {
+    return gender === 'male'
+      ? 'assets/avatars/male.svg'
+      : 'assets/avatars/female.svg';
   }
 
   // Update user profile
@@ -240,8 +212,9 @@ export class UserService {
     // Sync to DB
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.full_name = updates.name;
-    if (updates.email) dbUpdates.email = updates.email; // Usually emails shouldn't be updated this way
-    if (updates.avatar) dbUpdates.avatar_url = updates.avatar;
+    if (updates.email) dbUpdates.email = updates.email;
+    // Handle avatar: set to URL or null (for Initials)
+    if ('avatar' in updates) dbUpdates.avatar_url = updates.avatar || null;
     if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
 
     if (Object.keys(dbUpdates).length > 0) {

@@ -24,6 +24,11 @@
               {
                 "glob": "**/*",
                 "input": "apps/desktop/public"
+              },
+              {
+                "glob": "**/*",
+                "input": "apps/desktop/src/assets",
+                "output": "assets"
               }
             ],
             "styles": [

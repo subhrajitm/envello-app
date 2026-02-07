@@ -1,4 +1,4 @@
-import { Component, Input, inject, ViewChild, signal, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, inject, ViewChild, signal, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../../services/theme.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -43,6 +43,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   // Navigation layout: 'vertical' | 'horizontal' | 'minimized'
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
+  // Avatar loading state to prevent flash
+  isAvatarLoading = signal(true);
+
   // Sidebar state - default to collapsed (minimized)
   sidebarCollapsed = signal(true);
 
@@ -76,6 +79,23 @@ export class HeaderComponent implements OnInit, OnDestroy {
     'Code Snippets': 'code',
   };
 
+  private lastAvatarUrl: string | undefined = undefined;
+
+  constructor() {
+    // Reset loading state when avatar URL changes
+    effect(() => {
+      const currentAvatar = this.user()?.avatar;
+      if (currentAvatar !== this.lastAvatarUrl) {
+        this.lastAvatarUrl = currentAvatar;
+        if (currentAvatar) {
+          this.isAvatarLoading.set(true);
+        } else {
+          this.isAvatarLoading.set(false);
+        }
+      }
+    });
+  }
+
   get theme(): Theme {
     return this.themeService.theme();
   }
@@ -96,6 +116,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleTheme() {
     this.themeService.toggleTheme();
+  }
+
+  onAvatarLoad() {
+    this.isAvatarLoading.set(false);
+  }
+
+  onAvatarError() {
+    this.isAvatarLoading.set(false);
   }
 
   navigateTo(tab: string) {
