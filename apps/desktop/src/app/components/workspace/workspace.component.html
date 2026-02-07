@@ -10,18 +10,20 @@
             <!-- Big Text Display -->
             <!-- Big Text Display -->
             <div class="big-input-display">
-                What's on your mind...
+                {{ getGreeting() }}
             </div>
 
             <!-- Command Input -->
             <div class="command-input-row">
                 <input type="text" class="main-text-input" [(ngModel)]="inputText" (keydown.enter)="executeCommand()"
-                    [placeholder]="listening() ? 'Listening (' + liveTranscript() + ')...' : 'Command + K to capture or type thoughts...'">
+                    [placeholder]="listening() ? 'Listening (' + liveTranscript() + ')...' : 'Cmd + K to capture or type thoughts...'">
                 <div class="input-icons">
                     <span class="material-symbols-outlined icon-btn" [class.active]="listening()"
-                        (click)="toggleVoice()">mic</span>
-                    <span class="material-symbols-outlined icon-btn">shutter_speed</span>
-                    <span class="material-symbols-outlined icon-btn" (click)="triggerFileUpload()">attach_file</span>
+                        (click)="toggleVoice()" title="Voice Input">mic</span>
+                    <span class="material-symbols-outlined icon-btn" (click)="captureScreen()"
+                        title="Screenshot">shutter_speed</span>
+                    <span class="material-symbols-outlined icon-btn" (click)="triggerFileUpload()"
+                        title="Attach File">attach_file</span>
                 </div>
             </div>
 
@@ -118,10 +120,14 @@
         <div class="sb-right">
             <div class="linked-entities">
                 LINKED:
-                <div class="entity-circles">
-                    <span class="e-circle"></span>
-                    <span class="e-circle" style="background: #374151;"></span>
+                <div class="entity-circles"
+                    title="Projects: {{ linkedEntities().projects }}, Tasks: {{ linkedEntities().tasks }}">
+                    <span class="e-circle"
+                        [style.background]="linkedEntities().projects > 0 ? '#10b981' : '#374151'"></span>
+                    <span class="e-circle"
+                        [style.background]="linkedEntities().tasks > 0 ? '#3b82f6' : '#374151'"></span>
                 </div>
+                <span class="entity-count">{{ linkedEntities().projects + linkedEntities().tasks }}</span>
             </div>
             <div class="divider"></div>
             <div class="active-item">

@@ -508,6 +508,13 @@
     background: #444;
 }
 
+.entity-count {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-left: 4px;
+}
+
 .metric-bar {
     width: 32px;
     height: 3px;

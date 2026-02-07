@@ -1,8 +1,10 @@
-import { Component, computed, inject, signal, effect } from '@angular/core';
+import { Component, computed, inject, signal, effect, HostListener } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { StoreService, Project, Task, Activity } from '../../services/store.service';
+import { UserService } from '../../services/user.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-workspace',
@@ -14,6 +16,8 @@ import { StoreService, Project, Task, Activity } from '../../services/store.serv
 export class WorkspaceComponent {
   store = inject(StoreService);
   router = inject(Router);
+  userService = inject(UserService);
+  notificationService = inject(NotificationService);
 
   // --- UI State ---
   inputText = signal('');
@@ -51,9 +55,11 @@ export class WorkspaceComponent {
       .slice(0, 5);
   });
 
-  // 3. Recent Activity Stream mapped to "Context Stream" cards
+  // 3. Recent Activity Stream mapped to "Context Stream" cards - REAL DATA ONLY
   contextStream = computed(() => {
-    // Merge tasks and activities into a unified stream
+    // Merge projects, tasks, and activities into a unified stream
+
+    // Real activities from store
     const activities = this.store.activities().slice(0, 10).map(a => {
       let type = 'LOG';
       let tagClass = 'reference';
@@ -65,43 +71,60 @@ export class WorkspaceComponent {
         id: a.id,
         type: type,
         tagClass: tagClass,
-        content: `"${a.text}"`,
+        content: a.text,
         sub: 'System Log',
         time: a.time,
         tags: ['#log', '#' + a.type],
-        tasks: [] as any[]
+        tasks: [] as any[],
+        sortDate: new Date().getTime() // Activities don't have dates, use current
       };
     });
 
-    const tasks = this.store.tasks().slice(0, 5).map(t => ({
-      id: t.id,
-      type: 'ACTION ITEM',
-      tagClass: 'action',
-      content: t.title + (t.description ? `. ${t.description}` : ''),
-      sub: 'Priority: ' + t.priority,
-      time: 'Just now',
-      tags: t.labels?.map(l => '#' + l) || ['#task'],
-      tasks: [] as any[]
-    }));
+    // Real tasks from store
+    const taskItems = this.store.tasks().slice(0, 8).map(t => {
+      const dueDate = t.due ? new Date(t.due) : new Date();
+      return {
+        id: t.id,
+        type: 'ACTION ITEM',
+        tagClass: 'action',
+        content: t.title + (t.description ? `. ${t.description}` : ''),
+        sub: 'Priority: ' + t.priority,
+        time: this.formatRelativeTime(dueDate),
+        tags: t.labels?.map(l => '#' + l) || ['#task'],
+        tasks: [] as any[],
+        sortDate: dueDate.getTime()
+      };
+    });
 
-    // Mock Project with Tasks
-    const mockProject = {
-      id: 'proj-1',
-      type: 'PROJECT',
-      tagClass: 'action', // Reusing action color for now
-      content: 'Refactor Authentication Module',
-      sub: 'High Priority Project',
-      time: '1h ago',
-      tags: ['#backend', '#auth'],
-      tasks: [
-        { id: 't1', title: 'Update JWT Strategy', status: 'done' },
-        { id: 't2', title: 'Migrate User Table', status: 'pending' },
-        { id: 't3', title: 'Fix Logout Bug', status: 'pending' }
-      ]
-    };
+    // Real projects with their associated tasks
+    const projects = this.store.projects().slice(0, 5).map(p => {
+      // Get tasks associated with this project
+      const projectTasks = this.store.tasks()
+        .filter(t => t.project === p.id)
+        .slice(0, 4)
+        .map(t => ({
+          id: t.id,
+          title: t.title,
+          status: t.status === 'COMPLETED' ? 'done' : 'pending'
+        }));
 
-    // Interleave
-    const merged = [mockProject, ...tasks, ...activities].sort(() => Math.random() - 0.5);
+      const updatedDate = new Date(p.updated);
+      return {
+        id: p.id,
+        type: 'PROJECT',
+        tagClass: p.priority === 'HIGH' ? 'action' : 'reference',
+        content: p.title + (p.description ? `. ${p.description}` : ''),
+        sub: `Priority: ${p.priority} | Status: ${p.status}`,
+        time: this.formatRelativeTime(updatedDate),
+        tags: p.tags?.map(t => '#' + t) || ['#project'],
+        tasks: projectTasks,
+        sortDate: updatedDate.getTime()
+      };
+    });
+
+    // Merge and sort by date (most recent first)
+    const merged = [...projects, ...taskItems, ...activities]
+      .sort((a, b) => b.sortDate - a.sortDate);
 
     // Filter
     if (this.activeFilter() === 'ALL') return merged;
@@ -128,6 +151,31 @@ export class WorkspaceComponent {
 
   systemTime = signal(new Date());
 
+  // Linked entities (projects/tasks count)
+  linkedEntities = computed(() => {
+    const activeProjects = this.store.projects().filter(p => p.status !== 'COMPLETE').length;
+    const activeTasks = this.store.tasks().filter(t => t.status !== 'COMPLETED').length;
+    return { projects: activeProjects, tasks: activeTasks };
+  });
+
+  // User's name for personalized greeting
+  userName = computed(() => this.userService.userName());
+
+  // --- Keyboard Shortcuts ---
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboard(event: KeyboardEvent) {
+    // Cmd/Ctrl + K - Focus command input
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault();
+      const input = document.querySelector('.main-text-input') as HTMLInputElement;
+      input?.focus();
+    }
+    // Escape - Clear and stop
+    if (event.key === 'Escape') {
+      this.clearCommand();
+    }
+  }
+
   // --- Voice Recognition Setup ---
   private recognition: any;
   private isBrowser = typeof window !== 'undefined';
@@ -141,12 +189,48 @@ export class WorkspaceComponent {
         this.systemTime.set(new Date());
       }, 60000);
 
-      // Randomize Metrics periodically
+      // Update real performance metrics
+      this.updatePerformanceMetrics();
       setInterval(() => {
-        this.cpuUsage.set(Math.floor(Math.random() * 30) + 5); // 5-35%
-        this.latency.set(Math.floor(Math.random() * 50) + 10); // 10-60ms
-      }, 3000);
+        this.updatePerformanceMetrics();
+      }, 5000);
     }
+  }
+
+  // Real performance metrics using Performance API
+  private updatePerformanceMetrics() {
+    if (typeof performance !== 'undefined') {
+      // Get navigation timing for latency estimate
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      if (navigation) {
+        const latencyMs = Math.round(navigation.responseEnd - navigation.requestStart);
+        this.latency.set(Math.min(latencyMs, 100)); // Cap at 100 for display
+      }
+
+      // Estimate CPU from task processing (rough approximation)
+      const startTime = performance.now();
+      let sum = 0;
+      for (let i = 0; i < 1000; i++) sum += Math.sqrt(i);
+      const elapsed = performance.now() - startTime;
+      // Higher elapsed = slower CPU = higher usage representation
+      const cpuEstimate = Math.min(Math.round(elapsed * 10), 50);
+      this.cpuUsage.set(cpuEstimate > 0 ? cpuEstimate : 5);
+    }
+  }
+
+  // Format date to relative time string
+  private formatRelativeTime(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   }
 
   private initSpeechRecognition() {
@@ -375,8 +459,48 @@ export class WorkspaceComponent {
 
   getGreeting(): string {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning, Admin';
-    if (hour < 18) return 'Good Afternoon, Admin';
-    return 'Good Evening, Admin';
+    const name = this.userName() || 'there';
+    if (hour < 12) return `Good Morning, ${name}`;
+    if (hour < 18) return `Good Afternoon, ${name}`;
+    return `Good Evening, ${name}`;
+  }
+
+  // Screenshot/Capture functionality
+  async captureScreen() {
+    try {
+      // Check if we're in a context that supports screen capture
+      if (typeof navigator !== 'undefined' && 'mediaDevices' in navigator) {
+        const stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        await video.play();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d')?.drawImage(video, 0, 0);
+
+        // Stop the stream
+        stream.getTracks().forEach((track: any) => track.stop());
+
+        // Convert to blob and create URL
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `screenshot-${Date.now()}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            this.notificationService.success('Screenshot Saved', 'Your screenshot has been downloaded.');
+          }
+        }, 'image/png');
+      } else {
+        this.notificationService.info('Not Supported', 'Screen capture is not available in this environment.');
+      }
+    } catch (error) {
+      console.error('Screen capture failed:', error);
+      this.notificationService.error('Capture Failed', 'Unable to capture screen. Please try again.');
+    }
   }
 }
