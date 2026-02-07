@@ -64,7 +64,12 @@ export class UserService {
     return identifier.substring(0, 2).toUpperCase();
   });
 
+  private readonly PROFILE_CACHE_KEY = 'envello_user_profile';
+
   constructor() {
+    // Load cached profile immediately for instant avatar display
+    this.loadCachedProfile();
+
     // React to Auth Changes
     effect(() => {
       const authUser = this.authService.currentUser();
@@ -74,6 +79,30 @@ export class UserService {
         this.initializeGuestUser();
       }
     });
+  }
+
+  // Load from localStorage for instant display
+  private loadCachedProfile() {
+    try {
+      const cached = localStorage.getItem(this.PROFILE_CACHE_KEY);
+      if (cached) {
+        const profile = JSON.parse(cached) as UserProfile;
+        // Convert joinedDate back to Date object
+        profile.joinedDate = new Date(profile.joinedDate);
+        this.currentUser.set(profile);
+      }
+    } catch (e) {
+      console.warn('Failed to load cached profile:', e);
+    }
+  }
+
+  // Save to localStorage for next instant load
+  private cacheProfile(profile: UserProfile) {
+    try {
+      localStorage.setItem(this.PROFILE_CACHE_KEY, JSON.stringify(profile));
+    } catch (e) {
+      console.warn('Failed to cache profile:', e);
+    }
   }
 
   private async loadProfile(authUser: User) {
@@ -115,6 +144,7 @@ export class UserService {
           }
         };
         this.currentUser.set(profile);
+        this.cacheProfile(profile);  // Cache for instant load
         this.checkStreak(profile);
       } else {
         // Create default profile if none exists
@@ -161,6 +191,7 @@ export class UserService {
 
     if (!error) {
       this.currentUser.set(newProfile as UserProfile);
+      this.cacheProfile(newProfile as UserProfile);  // Cache for instant load
     } else {
       console.error('Error creating profile:', error);
     }
@@ -208,6 +239,7 @@ export class UserService {
     // Optimistic update
     const updatedProfile = { ...current, ...updates };
     this.currentUser.set(updatedProfile);
+    this.cacheProfile(updatedProfile);  // Cache for instant load
 
     // Sync to DB
     const dbUpdates: any = {};
@@ -231,6 +263,7 @@ export class UserService {
 
     // Optimistic
     this.currentUser.set({ ...current, preferences: newPreferences });
+    this.cacheProfile({ ...current, preferences: newPreferences });  // Cache
 
     // DB
     await this.supabase.from('profiles').update({ preferences: newPreferences }).eq('id', current.id);
@@ -274,6 +307,7 @@ export class UserService {
   logout() {
     this.authService.logout();
     this.currentUser.set(null);
+    localStorage.removeItem(this.PROFILE_CACHE_KEY);  // Clear cache
   }
 
   private checkStreak(profile: UserProfile) {
