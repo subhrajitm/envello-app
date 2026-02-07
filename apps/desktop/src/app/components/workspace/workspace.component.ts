@@ -464,43 +464,4 @@ export class WorkspaceComponent {
     if (hour < 18) return `Good Afternoon, ${name}`;
     return `Good Evening, ${name}`;
   }
-
-  // Screenshot/Capture functionality
-  async captureScreen() {
-    try {
-      // Check if we're in a context that supports screen capture
-      if (typeof navigator !== 'undefined' && 'mediaDevices' in navigator) {
-        const stream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        await video.play();
-
-        const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d')?.drawImage(video, 0, 0);
-
-        // Stop the stream
-        stream.getTracks().forEach((track: any) => track.stop());
-
-        // Convert to blob and create URL
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `screenshot-${Date.now()}.png`;
-            a.click();
-            URL.revokeObjectURL(url);
-            this.notificationService.success('Screenshot Saved', 'Your screenshot has been downloaded.');
-          }
-        }, 'image/png');
-      } else {
-        this.notificationService.info('Not Supported', 'Screen capture is not available in this environment.');
-      }
-    } catch (error) {
-      console.error('Screen capture failed:', error);
-      this.notificationService.error('Capture Failed', 'Unable to capture screen. Please try again.');
-    }
-  }
 }
