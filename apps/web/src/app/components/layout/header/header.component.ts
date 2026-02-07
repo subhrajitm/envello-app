@@ -11,11 +11,12 @@ import { NotificationCenterComponent } from '../../notification-center/notificat
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
 import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
+import { ButtonComponent, IconButtonComponent } from '../../../shared/ui';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, EnvLogoComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, EnvLogoComponent, ButtonComponent, IconButtonComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })

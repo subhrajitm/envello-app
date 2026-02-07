@@ -9,21 +9,25 @@
                 <input type="text" placeholder="Quick find (Cmd + K)" class="search-input" readonly />
             </div>
             <div class="header-actions flex items-center gap-2">
-                <button class="btn-new-project" (click)="openAddNew()">
-                    <span class="material-symbols-outlined btn-icon-inner">add</span> <span>Add New</span>
-                </button>
+                <env-button variant="primary" icon="add" (clicked)="openAddNew()">
+                    Add New
+                </env-button>
+
                 <div class="divider-vertical"></div>
-                <button class="icon-btn notification-btn" (click)="openNotifications()">
-                    <span class="material-symbols-outlined">notifications</span>
+
+                <div class="relative">
+                    <env-icon-button icon="notifications" variant="ghost" [size]="28" (clicked)="openNotifications()"
+                        title="Notifications">
+                    </env-icon-button>
                     @if (unreadCount() > 0) {
                     <span class="notification-badge">{{ unreadCount() }}</span>
                     }
-                </button>
-                <button class="icon-btn" (click)="toggleTheme()" [title]="'Switch to ' + getNextTheme() + ' Mode'">
-                    <span class="material-symbols-outlined">
-                        {{ getThemeIcon() }}
-                    </span>
-                </button>
+                </div>
+
+                <env-icon-button [icon]="getThemeIcon()" variant="ghost" [size]="28" (clicked)="toggleTheme()"
+                    [title]="'Switch to ' + getNextTheme() + ' Mode'">
+                </env-icon-button>
+
                 <div class="profile-menu" (click)="openProfileMenu()">
                     <div class="profile-avatar">
                         <span class="avatar-text">{{ userInitials() }}</span>

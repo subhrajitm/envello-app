@@ -14,6 +14,7 @@ export class ModalComponent {
   @Input() title = '';
   @Input() size: 'sm' | 'md' | 'large' | 'xl' = 'md';
   @Input() showClose = true;
+  @Input() noPadding = false;
 
   closed = output<void>();
 

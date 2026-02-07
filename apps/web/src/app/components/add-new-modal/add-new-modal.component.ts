@@ -2,6 +2,7 @@ import { Component, signal, HostListener, inject, computed, OnInit, OnDestroy, E
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ModalComponent } from '../../shared/ui';
 import { StoreService, Task, Note, Novel } from '../../services/store.service';
 import { ArticleService } from '../../services/article.service';
 import { JournalService } from '../../services/journal.service';
@@ -37,7 +38,7 @@ const MAX_RECENT_ITEMS = 4;
 @Component({
     selector: 'app-add-new-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, ModalComponent],
     templateUrl: './add-new-modal.component.html',
     styleUrl: './add-new-modal.component.css'
 })
@@ -349,7 +350,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.store.addNovel(newNovel);
         // Persist asynchronously (fire and forget)
-        this.novelContentService.createAndPersistEmptyNovel(id, newNovel.title).catch(err => 
+        this.novelContentService.createAndPersistEmptyNovel(id, newNovel.title).catch(err =>
             console.error('[AddNewModal] Failed to persist novel content:', err)
         );
         this.router.navigate(['/novels', id]);
@@ -436,20 +437,15 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         return options[this.focusedIndex()]?.id === option.id;
     }
 
-    onBackdropClick() {
-        this.close();
-    }
 
-    onModalClick(event: Event) {
-        event.stopPropagation();
-    }
 
     // Keyboard navigation
     @HostListener('document:keydown', ['$event'])
-    handleKeydown(event: KeyboardEvent) {
+    handleKeydown(event: Event) {
+        const e = event as KeyboardEvent;
         // Global shortcut: Cmd/Ctrl + N to open
-        if ((event.metaKey || event.ctrlKey) && event.key === 'n' && !this.isOpen()) {
-            event.preventDefault();
+        if ((e.metaKey || e.ctrlKey) && e.key === 'n' && !this.isOpen()) {
+            e.preventDefault();
             this.open();
             return;
         }
@@ -459,32 +455,32 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         const options = this.flatVisibleOptions();
         const currentIndex = this.focusedIndex();
 
-        switch (event.key) {
+        switch (e.key) {
             case 'Escape':
-                event.preventDefault();
+                e.preventDefault();
                 this.close();
                 break;
 
             case 'ArrowDown':
-                event.preventDefault();
+                e.preventDefault();
                 this.focusedIndex.set(Math.min(currentIndex + 1, options.length - 1));
                 this.scrollToFocused();
                 break;
 
             case 'ArrowUp':
-                event.preventDefault();
+                e.preventDefault();
                 this.focusedIndex.set(Math.max(currentIndex - 1, 0));
                 this.scrollToFocused();
                 break;
 
             case 'Enter':
-                event.preventDefault();
+                e.preventDefault();
                 this.selectFocusedOption();
                 break;
 
             case 'Tab':
-                event.preventDefault();
-                if (event.shiftKey) {
+                e.preventDefault();
+                if (e.shiftKey) {
                     this.focusedIndex.set(Math.max(currentIndex - 1, 0));
                 } else {
                     this.focusedIndex.set(Math.min(currentIndex + 1, options.length - 1));
@@ -505,9 +501,9 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                 if (document.activeElement === this.searchInput?.nativeElement && this.searchQuery()) {
                     return;
                 }
-                const option = this.options.find(o => o.shortcut === event.key);
+                const option = this.options.find(o => o.shortcut === e.key);
                 if (option) {
-                    event.preventDefault();
+                    e.preventDefault();
                     this.selectOption(option);
                 }
                 break;
