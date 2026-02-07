@@ -25,6 +25,7 @@ export class AppComponent implements OnInit, OnDestroy {
   currentTab = signal('Overview');
   hasSidebar = signal(true);
   isImmersive = signal(false);
+  isPublic = signal(false);
   sidebarCollapsed = signal(true);
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
@@ -49,7 +50,8 @@ export class AppComponent implements OnInit, OnDestroy {
       }),
       mergeMap(route => route.data)
     ).subscribe(data => {
-      this.hasSidebar.set(data['hasSidebar'] !== false); // default to true if not specified? React logic was whitelist.
+      this.isPublic.set(!!data['isPublic']);
+      this.hasSidebar.set(data['hasSidebar'] !== false);
       this.isImmersive.set(!!data['immersive']);
 
       // Map path to Tab Name for Header

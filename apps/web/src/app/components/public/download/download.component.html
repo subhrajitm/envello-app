@@ -1,0 +1,85 @@
+<div class="download-page">
+    <!-- Header -->
+    <header class="download-header">
+        <a routerLink="/" class="logo-link">
+            <env-logo height="32px"></env-logo>
+        </a>
+        <h1 class="page-title">Download Envello</h1>
+        <p class="page-subtitle">Choose your platform and get started</p>
+    </header>
+
+    <!-- Releases -->
+    <main class="releases-container">
+        @for (release of releases; track release.version) {
+        <div class="release-section" [class.expanded]="isExpanded(release.version)">
+            <!-- Release Header -->
+            <button class="release-header" (click)="toggleVersion(release.version)">
+                <div class="release-info">
+                    <span class="version-number">{{ release.version }}</span>
+                    @if (release.isLatest) {
+                    <span class="latest-badge">Latest</span>
+                    }
+                </div>
+                <span class="material-symbols-outlined expand-icon">
+                    {{ isExpanded(release.version) ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
+                </span>
+            </button>
+
+            <!-- Release Content -->
+            @if (isExpanded(release.version)) {
+            <div class="release-content">
+                <!-- Platform Grid -->
+                <div class="platforms-grid">
+                    @for (platform of release.platforms; track platform.name) {
+                    <div class="platform-section">
+                        <div class="platform-header">
+                            @if (platform.name === 'macOS') {
+                            <svg class="os-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
+                            </svg>
+                            } @else if (platform.name === 'Windows') {
+                            <svg class="os-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M3 12V6.75L9 5.43V11.91L3 12ZM20 3V11.5L10 11.5V5.29L20 3ZM3 13L9 13.09V19.9L3 18.75V13ZM10 13.25L20 13.5V22L10 20V13.25Z" />
+                            </svg>
+                            } @else {
+                            <svg class="os-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 2C10.67 2 9.6 3.13 9.6 4.5C9.6 5.5 10.18 6.35 11 6.78V8.41C9.65 8.73 8.4 9.44 7.43 10.41C6.4 9.44 5.18 8.73 3.83 8.41V6.78C4.65 6.35 5.23 5.5 5.23 4.5C5.23 3.13 4.16 2 2.83 2S0.43 3.13 0.43 4.5C0.43 5.5 1.01 6.35 1.83 6.78V9C1.83 9.55 2.28 10 2.83 10H6.17C6.22 10.03 6.27 10.06 6.32 10.09C5.07 11.29 4.33 12.99 4.33 14.77V18C4.33 20.76 6.57 23 9.33 23H14.67C17.43 23 19.67 20.76 19.67 18V14.77C19.67 12.99 18.93 11.29 17.68 10.09C17.73 10.06 17.78 10.03 17.83 10H21.17C21.72 10 22.17 9.55 22.17 9V6.78C22.99 6.35 23.57 5.5 23.57 4.5C23.57 3.13 22.5 2 21.17 2S18.77 3.13 18.77 4.5C18.77 5.5 19.35 6.35 20.17 6.78V8.41C18.82 8.73 17.6 9.44 16.57 10.41C15.6 9.44 14.35 8.73 13 8.41V6.78C13.82 6.35 14.4 5.5 14.4 4.5C14.4 3.13 13.33 2 12 2Z" />
+                            </svg>
+                            }
+                            <span class="platform-name">{{ platform.name }}</span>
+                        </div>
+                        <div class="download-links">
+                            @for (link of platform.links; track link.arch) {
+                            <a [href]="link.url" class="download-link">
+                                <span class="link-label">{{ link.label }}</span>
+                                <span class="material-symbols-outlined download-icon">download</span>
+                            </a>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+
+                <!-- Release Notes Link -->
+                <div class="release-notes-section">
+                    <a routerLink="/changelog" class="release-notes-link">
+                        View release notes →
+                    </a>
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </main>
+
+    <!-- Back Link -->
+    <footer class="download-footer">
+        <a routerLink="/" class="back-link">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Back to Home
+        </a>
+    </footer>
+</div>

@@ -1,0 +1,259 @@
+.download-page {
+    min-height: 100vh;
+    background: var(--bg-app);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.download-header {
+    padding: 48px 24px 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.logo-link {
+    display: inline-flex;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: var(--text-tertiary);
+}
+
+/* Releases Container */
+.releases-container {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Release Section */
+.release-section {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.release-section.expanded {
+    border-color: var(--border-main);
+}
+
+/* Release Header */
+.release-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: background 0.2s;
+}
+
+.release-header:hover {
+    background: var(--bg-hover);
+}
+
+.release-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.version-number {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.latest-badge {
+    padding: 4px 10px;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid var(--accent-primary);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.expand-icon {
+    font-size: 24px;
+    color: var(--text-tertiary);
+}
+
+/* Release Content */
+.release-content {
+    padding: 0 20px 20px;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Platforms Grid */
+.platforms-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.platform-section {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.platform-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.os-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+}
+
+.platform-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Download Links */
+.download-links {
+    display: flex;
+    flex-direction: column;
+}
+
+.download-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.download-link:last-child {
+    border-bottom: none;
+}
+
+.download-link:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.link-label {
+    font-size: 13px;
+}
+
+.download-icon {
+    font-size: 18px;
+    color: var(--text-tertiary);
+    transition: color 0.2s;
+}
+
+.download-link:hover .download-icon {
+    color: var(--accent-primary);
+}
+
+/* Release Notes Section */
+.release-notes-section {
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.release-notes-link {
+    font-size: 13px;
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.release-notes-link:hover {
+    opacity: 0.8;
+}
+
+/* Footer */
+.download-footer {
+    padding: 24px;
+    text-align: center;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-tertiary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+}
+
+.back-link .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .platforms-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .download-header {
+        padding: 32px 16px 24px;
+    }
+
+    .page-title {
+        font-size: 24px;
+    }
+
+    .releases-container {
+        padding: 16px;
+    }
+}

@@ -99,3 +99,14 @@
         margin-left: 56px;
     }
 }
+
+/* Public pages - no header/footer, full screen */
+.dashboard.public-page {
+    height: 100vh;
+}
+
+.dashboard-content.public-content {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}

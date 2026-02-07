@@ -1,20 +1,19 @@
-<div class="dashboard">
-  <app-header 
-    [activeTab]="currentTab()" 
-    [isImmersive]="isImmersive()"
+<div class="dashboard" [class.public-page]="isPublic()">
+  @if (!isPublic()) {
+  <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
     (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
   </app-header>
+  }
 
-  <div 
-    class="dashboard-content" 
-    [class.no-padding]="hasSidebar()" 
-    [class.immersive-view]="isImmersive()"
-    [class.with-sidebar]="!isImmersive() && navigationLayout() !== 'horizontal'"
-    [class.sidebar-collapsed]="sidebarCollapsed()"
-    [class.horizontal-nav]="navigationLayout() === 'horizontal'">
+  <div class="dashboard-content" [class.no-padding]="hasSidebar() && !isPublic()" [class.immersive-view]="isImmersive()"
+    [class.with-sidebar]="!isImmersive() && !isPublic() && navigationLayout() !== 'horizontal'"
+    [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"
+    [class.public-content]="isPublic()">
     <router-outlet></router-outlet>
   </div>
 
+  @if (!isPublic()) {
   <app-footer></app-footer>
+  }
 </div>
 <!-- Command Palette to be added -->

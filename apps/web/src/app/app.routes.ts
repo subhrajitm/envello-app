@@ -1,7 +1,24 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'overview', pathMatch: 'full' },
+  // Public Pages
+  {
+    path: '',
+    loadComponent: () => import('./components/public/landing/landing.component').then(m => m.LandingComponent),
+    data: { isPublic: true },
+    pathMatch: 'full'
+  },
+  {
+    path: 'download',
+    loadComponent: () => import('./components/public/download/download.component').then(m => m.DownloadComponent),
+    data: { isPublic: true },
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./components/auth/login/login.component').then(m => m.LoginComponent),
+    data: { isPublic: true },
+  },
+  // App Pages
   {
     path: 'overview',
     loadComponent: () => import('./components/overview/overview.component').then(m => m.OverviewComponent),
