@@ -26,7 +26,16 @@ export class ProfileEditorComponent {
   tempName = '';
   tempBio = '';
   tempAvatar: string | undefined = undefined;
+
+  // Avatar Configuration State
+  tempAvatarType: 'image' | 'initials' = 'image';
   tempGender: 'male' | 'female' = 'male';
+  tempAge: 'young' | 'adult' | 'senior' = 'adult';
+  tempPersonality: 'professional' | 'casual' | 'fun' = 'professional';
+  tempVariant: number = 1;
+  tempInitialsColor: string = '#0ea5e9';
+
+  readonly colors = ['#0ea5e9', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#6366f1', '#1f2937'];
 
   isSaving = signal(false);
 
@@ -40,7 +49,15 @@ export class ProfileEditorComponent {
       this.tempName = currentUser.name;
       this.tempBio = currentUser.bio || '';
       this.tempAvatar = currentUser.avatar;
-      this.tempGender = currentUser.preferences.gender || 'male';
+
+      // Load Preferences
+      const prefs = currentUser.preferences;
+      this.tempAvatarType = prefs.avatarType || 'image';
+      this.tempGender = prefs.gender || 'male';
+      this.tempAge = prefs.ageGroup || 'adult';
+      this.tempPersonality = prefs.personality || 'professional';
+      this.tempVariant = prefs.avatarVariant || 1;
+      this.tempInitialsColor = prefs.initialsColor || '#0ea5e9';
     }
     this.isOpen.set(true);
   }
@@ -49,9 +66,49 @@ export class ProfileEditorComponent {
     this.isOpen.set(false);
   }
 
+  setType(type: 'image' | 'initials') {
+    this.tempAvatarType = type;
+    this.updatePreview();
+  }
+
   setGender(gender: 'male' | 'female') {
     this.tempGender = gender;
-    this.tempAvatar = this.userService.getAvatarForGender(gender);
+    this.updatePreview();
+  }
+
+  setAge(age: 'young' | 'adult' | 'senior') {
+    this.tempAge = age;
+    this.updatePreview();
+  }
+
+  setPersonality(p: 'professional' | 'casual' | 'fun') {
+    this.tempPersonality = p;
+    this.updatePreview();
+  }
+
+  cycleVariant(direction: -1 | 1) {
+    let newVariant = this.tempVariant + direction;
+    if (newVariant < 1) newVariant = 5;
+    if (newVariant > 5) newVariant = 1;
+    this.tempVariant = newVariant;
+    this.updatePreview();
+  }
+
+  setColor(color: string) {
+    this.tempInitialsColor = color;
+    this.updatePreview();
+  }
+
+  private updatePreview() {
+    this.tempAvatar = this.userService.generateAvatarUrl({
+      type: this.tempAvatarType,
+      name: this.tempName || 'User',
+      gender: this.tempGender,
+      ageGroup: this.tempAge,
+      personality: this.tempPersonality,
+      variant: this.tempVariant,
+      color: this.tempInitialsColor
+    });
   }
 
   async save() {
@@ -67,7 +124,12 @@ export class ProfileEditorComponent {
           avatar: this.tempAvatar
         }),
         this.userService.updatePreferences({
-          gender: this.tempGender
+          gender: this.tempGender,
+          avatarType: this.tempAvatarType,
+          ageGroup: this.tempAge,
+          personality: this.tempPersonality,
+          avatarVariant: this.tempVariant,
+          initialsColor: this.tempInitialsColor
         })
       ]);
 

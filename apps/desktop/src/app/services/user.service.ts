@@ -17,6 +17,11 @@ export interface UserProfile {
     autoBackup: boolean;
     autoSchedule: boolean;
     gender?: 'male' | 'female';
+    avatarType?: 'image' | 'initials';
+    ageGroup?: 'young' | 'adult' | 'senior';
+    personality?: 'professional' | 'casual' | 'fun';
+    avatarVariant?: number;
+    initialsColor?: string;
   };
   stats: {
     totalWords: number;
@@ -136,7 +141,12 @@ export class UserService {
         weeklyDigest: false,
         autoBackup: true,
         autoSchedule: false,
-        gender: 'male' // Default
+        gender: 'male',
+        avatarType: 'image',
+        ageGroup: 'adult',
+        personality: 'professional',
+        avatarVariant: 1,
+        initialsColor: '0ea5e9' // sky-500
       },
       stats: {
         totalWords: 0,
@@ -179,7 +189,12 @@ export class UserService {
         weeklyDigest: false,
         autoBackup: false,
         autoSchedule: false,
-        gender: 'male'
+        gender: 'male',
+        avatarType: 'image',
+        ageGroup: 'adult',
+        personality: 'professional',
+        avatarVariant: 1,
+        initialsColor: '0ea5e9'
       },
       stats: {
         totalWords: 0,
@@ -192,11 +207,25 @@ export class UserService {
     });
   }
 
-  // Helper to get avatar by gender
-  getAvatarForGender(gender: 'male' | 'female'): string {
-    return gender === 'male'
-      ? 'https://api.dicebear.com/9.x/micah/svg?seed=Christopher&backgroundColor=f0f0f0'
-      : 'https://api.dicebear.com/9.x/micah/svg?seed=Jessica&backgroundColor=f0f0f0';
+  // Generate Avatar URL
+  generateAvatarUrl(options: {
+    type: 'image' | 'initials';
+    name: string;
+    gender?: 'male' | 'female';
+    ageGroup?: 'young' | 'adult' | 'senior';
+    personality?: 'professional' | 'casual' | 'fun';
+    variant?: number;
+    color?: string;
+  }): string {
+    if (options.type === 'initials') {
+      const bgColor = options.color?.replace('#', '') || '0ea5e9';
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(options.name)}&background=${bgColor}&color=fff&size=128&bold=true`;
+    } else {
+      // Construct seed from attributes
+      const seed = `${options.gender || 'male'}-${options.ageGroup || 'adult'}-${options.personality || 'professional'}-${options.variant || 1}`;
+      // Use 'avataaars' or 'micah' - avataaars has more variety for personality
+      return `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4`;
+    }
   }
 
   // Update user profile
