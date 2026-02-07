@@ -30,7 +30,11 @@
 
                 <div class="profile-menu" (click)="openProfileMenu()">
                     <div class="profile-avatar">
+                        @if (user()?.avatar) {
+                        <img [src]="user()!.avatar" alt="Profile" class="h-full w-full object-cover">
+                        } @else {
                         <span class="avatar-text">{{ userInitials() }}</span>
+                        }
                     </div>
                 </div>
             </div>

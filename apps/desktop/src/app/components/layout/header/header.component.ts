@@ -1,4 +1,4 @@
-import { Component, Input, inject, ViewChild, signal, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, inject, ViewChild, signal, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '../../../services/theme.service';
 import { NotificationService } from '../../../services/notification.service';
@@ -16,7 +16,8 @@ import { ProfileEditorComponent } from '../../profile-editor/profile-editor.comp
   standalone: true,
   imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.css'
+  styleUrl: './header.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   @Input() activeTab = 'Workspace';
@@ -36,6 +37,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   // Expose signals for template
   unreadCount = this.notificationService.unreadCount;
+  user = this.userService.user;
   userInitials = this.userService.userInitials;
 
   // Navigation layout: 'vertical' | 'horizontal' | 'minimized'

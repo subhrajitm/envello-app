@@ -75,9 +75,10 @@ export class SettingsModalComponent {
   }
 
   @HostListener('document:keydown.escape', ['$event'])
-  handleEscape(event: KeyboardEvent) {
+  handleEscape(event: Event) {
+    const e = event as KeyboardEvent;
     if (this.isOpen()) {
-      event.preventDefault();
+      e.preventDefault();
       this.close();
     }
   }

@@ -16,6 +16,7 @@ export interface UserProfile {
     weeklyDigest: boolean;
     autoBackup: boolean;
     autoSchedule: boolean;
+    gender?: 'male' | 'female';
   };
   stats: {
     totalWords: number;
@@ -70,7 +71,7 @@ export class UserService {
       if (authUser) {
         this.loadProfile(authUser);
       } else {
-        this.currentUser.set(null);
+        this.initializeGuestUser();
       }
     });
   }
@@ -134,7 +135,8 @@ export class UserService {
         emailNotifications: true,
         weeklyDigest: false,
         autoBackup: true,
-        autoSchedule: false
+        autoSchedule: false,
+        gender: 'male' // Default
       },
       stats: {
         totalWords: 0,
@@ -161,6 +163,40 @@ export class UserService {
     } else {
       console.error('Error creating profile:', error);
     }
+  }
+
+  // Initialize Guest User
+  private initializeGuestUser() {
+    this.currentUser.set({
+      id: 'guest',
+      name: 'Guest User',
+      email: 'guest@envello.app',
+      avatar: 'https://ui-avatars.com/api/?name=Guest+User&background=random',
+      role: 'Guest',
+      joinedDate: new Date(),
+      preferences: {
+        emailNotifications: false,
+        weeklyDigest: false,
+        autoBackup: false,
+        autoSchedule: false,
+        gender: 'male'
+      },
+      stats: {
+        totalWords: 0,
+        totalDocuments: 0,
+        totalProjects: 0,
+        daysActive: 1,
+        currentStreak: 0,
+        lastLoginDate: new Date().toISOString()
+      }
+    });
+  }
+
+  // Helper to get avatar by gender
+  getAvatarForGender(gender: 'male' | 'female'): string {
+    return gender === 'male'
+      ? 'https://api.dicebear.com/9.x/micah/svg?seed=Christopher&backgroundColor=f0f0f0'
+      : 'https://api.dicebear.com/9.x/micah/svg?seed=Jessica&backgroundColor=f0f0f0';
   }
 
   // Update user profile

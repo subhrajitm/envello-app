@@ -145,7 +145,10 @@ export class UserService {
         });
       } catch (e) {
         console.error('Failed to load user:', e);
+        this.initializeGuestUser();
       }
+    } else {
+      this.initializeGuestUser();
     }
   }
 
@@ -179,5 +182,31 @@ export class UserService {
       lastLoginDate: new Date().toISOString(),
       daysActive: user.stats.daysActive + 1
     });
+  }
+
+  private initializeGuestUser() {
+    this.currentUser.set({
+      id: 'guest-' + Date.now().toString(),
+      name: 'Guest User',
+      email: 'guest@envello.app',
+      avatar: 'https://ui-avatars.com/api/?name=Guest+User&background=random',
+      role: 'Guest',
+      joinedDate: new Date(),
+      preferences: {
+        emailNotifications: false,
+        weeklyDigest: false,
+        autoBackup: false,
+        autoSchedule: false
+      },
+      stats: {
+        totalWords: 0,
+        totalDocuments: 0,
+        totalProjects: 0,
+        daysActive: 1,
+        currentStreak: 0,
+        lastLoginDate: new Date().toISOString()
+      }
+    });
+    this.saveUser();
   }
 }

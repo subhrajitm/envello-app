@@ -38,6 +38,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   // Expose signals for template
   unreadCount = this.notificationService.unreadCount;
+  user = this.userService.user;
   userInitials = this.userService.userInitials;
 
   // Navigation layout: 'vertical' | 'horizontal' | 'minimized'
