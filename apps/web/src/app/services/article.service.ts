@@ -1,6 +1,6 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
+
 import { Injectable, signal, inject } from '@angular/core';
-import { SqliteService } from '../core/services/sqlite.service';
+import { RxdbService } from '../core/services/rxdb.service';
 import { FileSystemService } from '../core/services/file-system.service';
 
 export interface Article {
@@ -30,7 +30,7 @@ export interface Article {
   providedIn: 'root'
 })
 export class ArticleService {
-  private rxdb = inject(SqliteService);
+  private rxdb = inject(RxdbService);
   private fs = inject(FileSystemService);
 
   articles = signal<Article[]>([]);
@@ -55,7 +55,7 @@ export class ArticleService {
       this.articles.set(list);
     } catch (e) {
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
-        logIfTauri('[ArticleService] loadFromRxDB failed', e);
+        console.error('[ArticleService] loadFromRxDB failed', e);
       }
     }
   }
@@ -102,7 +102,7 @@ export class ArticleService {
     // Initial file write
     this.saveArticleContentToFile(newArticle.id, newArticle.content || '');
 
-    this.rxdb.upsertArticle(newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    this.rxdb.upsertArticle(newArticle).catch(e => console.error('[ArticleService] persist failed', e));
     return newArticle;
   }
 
@@ -122,7 +122,7 @@ export class ArticleService {
     }
 
     const a = this.articles().find(x => x.id === id);
-    if (a) this.rxdb.upsertArticle(a).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    if (a) this.rxdb.upsertArticle(a).catch(e => console.error('[ArticleService] persist failed', e));
   }
 
   private async saveArticleContentToFile(id: string, html: string) {
@@ -141,7 +141,7 @@ export class ArticleService {
 
   deleteArticle(id: string): void {
     this.articles.update(list => list.filter(a => a.id !== id));
-    this.rxdb.removeArticle(id).catch(e => logIfTauri('[ArticleService] remove failed', e));
+    this.rxdb.removeArticle(id).catch(e => console.error('[ArticleService] remove failed', e));
     this.fs.deleteFile('articles', id).catch(e => console.error('Failed to delete article file', e));
   }
 

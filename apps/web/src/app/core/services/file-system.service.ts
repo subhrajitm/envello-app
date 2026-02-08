@@ -2,12 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { TauriService } from './tauri.service';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { mkdir, exists, writeTextFile, readTextFile, rename, remove } from '@tauri-apps/plugin-fs';
+import { RxdbService } from './rxdb.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class FileSystemService {
     private tauri = inject(TauriService);
+    private rxdb = inject(RxdbService); // Inject RxDB
     private initialized = false;
     private baseDir = '';
 
@@ -37,10 +39,21 @@ export class FileSystemService {
      * @param extension File extension (default: md)
      */
     async saveFile(category: string, id: string, content: string, extension: string = 'md'): Promise<string> {
+        // Web: Save to RxDB (IndexedDB)
         if (!this.tauri.isTauri()) {
-            localStorage.setItem(`${category}_${id}`, content);
-            return '';
+            try {
+                // Fallback to localStorage removed. Using RxDB for limitless storage.
+                await this.rxdb.upsertFile(category, id, content);
+                return ''; // No path on web
+            } catch (e) {
+                console.error(`[FileSystem] Failed to save to RxDB ${category}/${id}`, e);
+                // Last resort fallback (optional)
+                localStorage.setItem(`${category}_${id}`, content);
+                return '';
+            }
         }
+
+        // Desktop: Save to Disk
         await this.init();
 
         try {
@@ -65,9 +78,27 @@ export class FileSystemService {
     }
 
     async readFile(category: string, id: string, extension: string = 'md'): Promise<string | null> {
+        // Web: Read from RxDB
         if (!this.tauri.isTauri()) {
-            return localStorage.getItem(`${category}_${id}`);
+            try {
+                const fileDoc = await this.rxdb.getFile(category, id);
+                if (fileDoc) return fileDoc.content;
+
+                // Migration: Check localStorage if not in DB
+                const local = localStorage.getItem(`${category}_${id}`);
+                if (local) {
+                    // Migrate to DB
+                    await this.rxdb.upsertFile(category, id, local);
+                    return local;
+                }
+                return null;
+            } catch (e) {
+                console.error(`[FileSystem] Failed to read from RxDB ${category}/${id}`, e);
+                return null;
+            }
         }
+
+        // Desktop: Read from Disk
         await this.init();
 
         try {
@@ -82,10 +113,18 @@ export class FileSystemService {
     }
 
     async deleteFile(category: string, id: string, extension: string = 'md'): Promise<void> {
+        // Web: Delete from RxDB
         if (!this.tauri.isTauri()) {
-            localStorage.removeItem(`${category}_${id}`);
+            try {
+                await this.rxdb.removeFile(category, id);
+                localStorage.removeItem(`${category}_${id}`); // Clean up legacy
+            } catch (e) {
+                console.error(`[FileSystem] Failed to delete from RxDB ${category}/${id}`, e);
+            }
             return;
         }
+
+        // Desktop: Delete from Disk
         await this.init();
 
         try {

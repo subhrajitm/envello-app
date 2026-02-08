@@ -1,8 +1,8 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
+import { RxdbService } from '../core/services/rxdb.service';
 import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
 import { BinService } from './bin.service';
-import { SqliteService } from '../core/services/sqlite.service';
+
 
 export interface NovelContent {
     id: string; // Links to StoreService Novel.id
@@ -93,7 +93,7 @@ export class NovelContentService {
     activeNovel = signal<NovelContent | null>(null);
     store = inject(StoreService);
     private bin = inject(BinService);
-    private rxdb = inject(SqliteService);
+    private rxdb = inject(RxdbService);
     private persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() { }
@@ -111,7 +111,7 @@ export class NovelContentService {
             this.activeNovel.set(data);
             await this.rxdb.setNovelContent(id, JSON.stringify(data));
         } catch (e) {
-            logIfTauri('[NovelContentService] loadNovel failed', e);
+            console.error('[NovelContentService] loadNovel failed', e);
 
             // Fallback to LocalStorage for browser development
             const localData = localStorage.getItem(`novel_content_${id}`);
@@ -138,7 +138,7 @@ export class NovelContentService {
             if (!n) return;
 
             this.rxdb.setNovelContent(n.id, JSON.stringify(n)).catch(e => {
-                logIfTauri('[NovelContentService] persist failed', e);
+                console.error('[NovelContentService] persist failed', e);
                 // Fallback to LocalStorage
                 localStorage.setItem(`novel_content_${n.id}`, JSON.stringify(n));
             });
@@ -729,7 +729,7 @@ export class NovelContentService {
         try {
             await this.rxdb.setNovelContent(id, JSON.stringify(data));
         } catch (e) {
-            logIfTauri('[NovelContentService] Persist failed, falling back to LocalStorage', e);
+            console.error('[NovelContentService] Persist failed, falling back to LocalStorage', e);
             localStorage.setItem(`novel_content_${id}`, JSON.stringify(data));
         }
     }

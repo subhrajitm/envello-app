@@ -1,6 +1,6 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
+
 import { Injectable, signal, inject } from '@angular/core';
-import { SqliteService } from '../core/services/sqlite.service';
+import { RxdbService } from '../core/services/rxdb.service';
 
 export type BinItemType =
   | 'daily-note'
@@ -41,7 +41,7 @@ export class BinService {
   /** All items currently in the bin (most recent first). */
   readonly items = signal<BinItem[]>([]);
 
-  private rxdb = inject(SqliteService);
+  private rxdb = inject(RxdbService);
 
   constructor() {
     this.loadFromRxDB();
@@ -52,7 +52,7 @@ export class BinService {
       const list = await this.rxdb.getAllBinItems();
       this.items.set(list);
     } catch (e) {
-      logIfTauri('[BinService] loadFromRxDB failed', e);
+      console.error('[BinService] loadFromRxDB failed', e);
     }
   }
 
@@ -65,18 +65,18 @@ export class BinService {
       ...item
     };
     this.items.update(list => [binItem, ...list]);
-    this.rxdb.upsertBinItem(binItem).catch(e => logIfTauri('[BinService] persist bin item failed', e));
+    this.rxdb.upsertBinItem(binItem).catch(e => console.error('[BinService] persist bin item failed', e));
   }
 
   /** Permanently remove a single item from the bin. */
   permanentlyDelete(binItemId: string) {
     this.items.update(list => list.filter(i => i.id !== binItemId));
-    this.rxdb.removeBinItem(binItemId).catch(e => logIfTauri('[BinService] remove bin item failed', e));
+    this.rxdb.removeBinItem(binItemId).catch(e => console.error('[BinService] remove bin item failed', e));
   }
 
   /** Empty the entire bin. This is irreversible. */
   emptyBin() {
     this.items.set([]);
-    this.rxdb.clearBin().catch(e => logIfTauri('[BinService] clear bin failed', e));
+    this.rxdb.clearBin().catch(e => console.error('[BinService] clear bin failed', e));
   }
 }

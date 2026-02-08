@@ -1,8 +1,7 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService } from './store.service';
-import { SqliteService } from '../core/services/sqlite.service';
+import { RxdbService } from '../core/services/rxdb.service';
 import { FileSystemService } from '../core/services/file-system.service';
 
 export interface JournalEntry {
@@ -70,7 +69,7 @@ export class JournalService {
 
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private rxdb = inject(SqliteService);
+  private rxdb = inject(RxdbService);
   private fs = inject(FileSystemService);
 
   private turndownService: any;
@@ -89,14 +88,27 @@ export class JournalService {
   }
 
   private async loadFromRxDB(): Promise<void> {
+    console.log('[JournalService] Loading journal data...');
+
+    // Load Projects
     try {
-      const [projects, entries, cols] = await Promise.all([
-        this.rxdb.getAllJournalProjects(),
-        this.rxdb.getAllJournalEntries(),
-        this.rxdb.getAllJournalColumns(),
-      ]);
+      const projects = await this.rxdb.getAllJournalProjects();
       this.projects.set(projects);
+    } catch (e) {
+      console.error('[JournalService] Failed to load projects:', e);
+    }
+
+    // Load Entries
+    try {
+      const entries = await this.rxdb.getAllJournalEntries();
       this.entries.set(entries);
+    } catch (e) {
+      console.error('[JournalService] Failed to load entries:', e);
+    }
+
+    // Load Columns
+    try {
+      const cols = await this.rxdb.getAllJournalColumns();
       if (cols.length === 0) {
         await Promise.all(defaultColumns.map(c => this.rxdb.upsertJournalColumn(c)));
         this.columns.set(defaultColumns);
@@ -104,9 +116,9 @@ export class JournalService {
         this.columns.set(cols.sort((a, b) => a.order - b.order));
       }
     } catch (e) {
-      if (typeof window !== 'undefined' && '__TAURI__' in window) {
-        logIfTauri('[JournalService] loadFromRxDB failed', e);
-      }
+      console.error('[JournalService] Failed to load columns:', e);
+      // Fallback to default columns if loading fails
+      this.columns.set(defaultColumns);
     }
   }
 
@@ -135,15 +147,15 @@ export class JournalService {
   }
 
   private persistProject(p: JournalProject): void {
-    this.rxdb.upsertJournalProject(p).catch(e => logIfTauri('[JournalService] persist project failed', e));
+    this.rxdb.upsertJournalProject(p).catch(e => console.error('[JournalService] persist project failed', e));
   }
 
   private persistEntry(e: JournalEntry): void {
-    this.rxdb.upsertJournalEntry(e).catch(err => logIfTauri('[JournalService] persist entry failed', err));
+    this.rxdb.upsertJournalEntry(e).catch(err => console.error('[JournalService] persist entry failed', err));
   }
 
   private persistColumn(c: JournalColumn): void {
-    this.rxdb.upsertJournalColumn(c).catch(e => logIfTauri('[JournalService] persist column failed', e));
+    this.rxdb.upsertJournalColumn(c).catch(e => console.error('[JournalService] persist column failed', e));
   }
 
   // Project Management
@@ -213,7 +225,7 @@ export class JournalService {
       this.entries.update(entries => entries.filter(e => e.projectId !== id));
       this.projects.update(projects => projects.filter(p => p.id !== id));
       this.store.addActivity(`Journal project deleted: ${project.title}`, 'system');
-      this.rxdb.removeJournalProject(id).catch(e => logIfTauri('[JournalService] remove project failed', e));
+      this.rxdb.removeJournalProject(id).catch(e => console.error('[JournalService] remove project failed', e));
     }
   }
 
@@ -317,7 +329,7 @@ export class JournalService {
       this.entries.update(entries => entries.filter(e => e.id !== id));
       this.updateProjectStats(entry.projectId);
       this.store.addActivity(`Entry deleted: ${entry.title}`, 'system');
-      this.rxdb.removeJournalEntry(id).catch(e => logIfTauri('[JournalService] remove entry failed', e));
+      this.rxdb.removeJournalEntry(id).catch(e => console.error('[JournalService] remove entry failed', e));
       this.fs.deleteFile('journal', id).catch(e => console.error('Failed to delete journal file', e));
     }
   }
@@ -359,7 +371,7 @@ export class JournalService {
       const updated = this.getEntry(entry.id);
       if (updated) this.persistEntry(updated);
     });
-    this.rxdb.removeJournalColumn(id).catch(e => logIfTauri('[JournalService] remove column failed', e));
+    this.rxdb.removeJournalColumn(id).catch(e => console.error('[JournalService] remove column failed', e));
   }
 
   // Search
