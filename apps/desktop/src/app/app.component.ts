@@ -29,6 +29,7 @@ export class AppComponent implements OnInit, OnDestroy {
   hasSidebar = signal(true);
   isImmersive = signal(false);
   isFullScreen = signal(false);
+  isPublic = signal(false);
   sidebarCollapsed = signal(true);
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
@@ -56,6 +57,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.hasSidebar.set(data['hasSidebar'] !== false); // default to true if not specified? React logic was whitelist.
       this.isImmersive.set(!!data['immersive']);
       this.isFullScreen.set(!!data['fullScreen']);
+      this.isPublic.set(!!data['isPublic']);
 
       // Map path to Tab Name for Header
       const url = this.router.url.split('/')[1];

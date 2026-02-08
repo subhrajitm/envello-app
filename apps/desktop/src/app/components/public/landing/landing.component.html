@@ -1,0 +1,67 @@
+<div class="landing-page">
+    <!-- Background Effects -->
+    <div class="bg-effects">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Hero Section -->
+    <main class="hero">
+        <div class="hero-content">
+            <!-- Logo -->
+            <div class="logo-container">
+                <env-logo height="48px"></env-logo>
+            </div>
+
+            <!-- Tagline -->
+            <h1 class="hero-title">
+                Your Personal <span class="highlight">Knowledge Hub</span>
+            </h1>
+            <p class="hero-subtitle">
+                Capture ideas, organize research, write novels, and manage your daily notes — all in one beautiful,
+                distraction-free space.
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="cta-buttons">
+                <env-button variant="primary" size="lg" icon="download" [routerLink]="['/download']">
+                    Download
+                </env-button>
+                <env-button variant="secondary" size="lg" icon="login" [routerLink]="['/login']">
+                    Sign In
+                </env-button>
+            </div>
+
+            <!-- Features Preview -->
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="material-symbols-outlined feature-icon">auto_stories</span>
+                    <h3>Novels & Fiction</h3>
+                    <p>Write your next masterpiece with a distraction-free editor</p>
+                </div>
+                <div class="feature-card">
+                    <span class="material-symbols-outlined feature-icon">science</span>
+                    <h3>Research</h3>
+                    <p>Organize sources, notes, and citations in one place</p>
+                </div>
+                <div class="feature-card">
+                    <span class="material-symbols-outlined feature-icon">edit_note</span>
+                    <h3>Daily Notes</h3>
+                    <p>Capture thoughts and ideas as they come to you</p>
+                </div>
+                <div class="feature-card">
+                    <span class="material-symbols-outlined feature-icon">task_alt</span>
+                    <h3>Tasks & Todos</h3>
+                    <p>Stay on top of your work with integrated task management</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <p class="version-text">Version 0.1.0</p>
+        <p class="copyright">© 2026 Envello. All rights reserved.</p>
+    </footer>
+</div>

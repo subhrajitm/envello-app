@@ -7,10 +7,10 @@ import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
-  template: `
+    selector: 'app-login',
+    standalone: true,
+    imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
+    template: `
     <div class="login-container">
       <!-- Wavy Background -->
       <div class="waves-bg">
@@ -82,9 +82,6 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
           </env-button>
 
           <div class="login-footer">
-            <env-button variant="ghost" (clicked)="continueAsGuest()" style="width: 100%; margin-bottom: 8px;">
-               Continue as Guest
-            </env-button>
             <span class="footer-text">Don't have an account?</span>
             <a routerLink="/sign-up" class="footer-link">Create Account</a>
           </div>
@@ -98,7 +95,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .login-container {
       min-height: 100vh;
       background: var(--bg-app, #0f172a); /* Fallback to dark bg */
@@ -311,46 +308,41 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
   `]
 })
 export class LoginComponent {
-  authService = inject(AuthService);
-  router = inject(Router);
+    private authService = inject(AuthService);
+    private router = inject(Router);
 
-  email = '';
-  password = '';
-  loading = signal(false);
-  error = signal<string | null>(null);
+    email = '';
+    password = '';
+    loading = signal(false);
+    error = signal<string | null>(null);
 
-  constructor() {
-    effect(() => {
-      if (this.authService.isAuthenticated()) {
-        this.router.navigate(['/workspace']);
-      }
-    });
-  }
-
-  async handleLogin() {
-    if (!this.email || !this.password) {
-      this.error.set('Please fill in all fields');
-      return;
+    constructor() {
+        effect(() => {
+            if (this.authService.isAuthenticated()) {
+                this.router.navigate(['/overview']);
+            }
+        });
     }
 
-    this.loading.set(true);
-    this.error.set(null);
+    async handleLogin() {
+        if (!this.email || !this.password) {
+            this.error.set('Please fill in all fields');
+            return;
+        }
 
-    // Simulate network delay for UX
-    await new Promise(resolve => setTimeout(resolve, 800));
+        this.loading.set(true);
+        this.error.set(null);
 
-    const success = await this.authService.login(this.email, this.password);
+        // Simulate network delay for UX
+        await new Promise(resolve => setTimeout(resolve, 800));
 
-    if (success) {
-      this.router.navigate(['/workspace']);
-    } else {
-      this.error.set('Invalid credentials or login failed.');
+        const success = await this.authService.login(this.email, this.password);
+
+        if (success) {
+            this.router.navigate(['/overview']);
+        } else {
+            this.error.set('Invalid credentials or login failed.');
+        }
+        this.loading.set(false);
     }
-    this.loading.set(false);
-  }
-
-  continueAsGuest() {
-    this.authService.loginAsGuest();
-    this.router.navigate(['/workspace']);
-  }
 }

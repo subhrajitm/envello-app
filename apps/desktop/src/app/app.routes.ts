@@ -2,16 +2,27 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  // Public Pages
+  {
+    path: '',
+    loadComponent: () => import('./components/public/landing/landing.component').then(m => m.LandingComponent),
+    data: { isPublic: true },
+    pathMatch: 'full'
+  },
   {
     path: 'login',
     loadComponent: () => import('./components/auth/login/login.component').then(m => m.LoginComponent),
-    data: { hasSidebar: false, fullScreen: true }
+    data: { isPublic: true },
+  },
+  {
+    path: 'download',
+    loadComponent: () => import('./components/public/download/download.component').then(m => m.DownloadComponent),
+    data: { isPublic: true },
   },
   {
     path: 'sign-up',
     loadComponent: () => import('./components/auth/sign-up/sign-up.component').then(m => m.SignUpComponent),
-    data: { hasSidebar: false, fullScreen: true }
+    data: { isPublic: true }
   },
   {
     path: 'workspace',

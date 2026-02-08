@@ -10,7 +10,7 @@ export class AuthService {
   private readonly logging = inject(LoggingService);
 
   /** In production: read from secure storage or httpOnly cookie. */
-  private readonly isAuthenticatedSignal = signal<boolean>(!environment.production);
+  private readonly isAuthenticatedSignal = signal<boolean>(false);
 
   isAuthenticated = computed(() => this.isAuthenticatedSignal());
 
@@ -28,7 +28,7 @@ export class AuthService {
   logout(): void {
     this.logging.info('AuthService.logout');
     this.isAuthenticatedSignal.set(false);
-    this.router.navigate(['/overview']).catch(() => {});
+    this.router.navigate(['/overview']).catch(() => { });
   }
 
   refreshToken(): Promise<boolean> {
