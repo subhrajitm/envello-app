@@ -1,8 +1,7 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
+
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { SqliteService } from '../core/services/sqlite.service';
-import { StoreService } from './store.service';
+import { RxdbService } from '../core/services/rxdb.service';
 
 export type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
 export type BookStatus = 'reading' | 'completed' | 'queued';
@@ -38,8 +37,7 @@ export type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'cat
 @Injectable({ providedIn: 'root' })
 export class BooksService {
   private bin = inject(BinService);
-  private db = inject(SqliteService);
-  private store = inject(StoreService);
+  private rxdb = inject(RxdbService);
 
   readonly books = signal<Book[]>([]);
   selectedBookId = signal<string | null>(null);
@@ -51,20 +49,20 @@ export class BooksService {
   selectedCategory = signal<BookCategory | ''>('');
 
   constructor() {
-    this.loadFromDb();
+    this.loadFromRxDB();
   }
 
-  private async loadFromDb(): Promise<void> {
+  private async loadFromRxDB(): Promise<void> {
     try {
-      const list = await this.db.getAllBooks();
+      const list = await this.rxdb.getAllBooks();
       this.books.set(list);
     } catch (e) {
-      logIfTauri('[BooksService] loadFromDb failed', e);
+      console.error('[BooksService] loadFromRxDB failed', e);
     }
   }
 
   private persistBook(b: Book): void {
-    this.db.upsertBook(b).catch(e => logIfTauri('[BooksService] persist failed', e));
+    this.rxdb.upsertBook(b).catch(e => console.error('[BooksService] persist failed', e));
   }
 
   readonly selectedBook = computed(() => {
@@ -136,22 +134,6 @@ export class BooksService {
     };
     this.books.update(list => [...list, created]);
     this.persistBook(created);
-
-    // Auto-create Project
-    const projectId = crypto.randomUUID();
-    this.store.addProject({
-      id: projectId,
-      title: created.title,
-      description: 'Book Reading Project: ' + created.author,
-      status: 'PLANNING',
-      words: '0',
-      updated: now,
-      icon: 'local_library',
-      linkedResources: {
-        books: [created.id]
-      }
-    });
-
     return created;
   }
 
@@ -175,7 +157,7 @@ export class BooksService {
     });
     this.books.update(list => list.filter(b => b.id !== id));
     if (this.selectedBookId() === id) this.selectedBookId.set(null);
-    this.db.removeBook(id).catch(e => logIfTauri('[BooksService] remove failed', e));
+    this.rxdb.removeBook(id).catch(e => console.error('[BooksService] remove failed', e));
   }
 
   setProgress(id: string, progress: number): void {

@@ -195,6 +195,61 @@
                         </label>
                     </div>
 
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>AI Provider</label>
+                            <span class="setting-desc">Choose which AI service to use</span>
+                        </div>
+                        <select class="select-input" [value]="aiConfig().provider" (change)="setAiProvider($event)">
+                            <option value="mock">Demo / Mock (Offline)</option>
+                            <option value="openai">OpenAI (GPT-3.5/4)</option>
+                            <option value="anthropic">Anthropic (Claude)</option>
+                            <option value="ollama">Ollama (Local LLM)</option>
+                        </select>
+                    </div>
+
+                    @if (aiConfig().provider === 'openai' || aiConfig().provider === 'anthropic') {
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>API Key</label>
+                            <span class="setting-desc">Enter your API key (stored locally)</span>
+                        </div>
+                        <input type="password" class="text-input" [value]="aiConfig().apiKey || ''" (input)="setAiApiKey($event)" placeholder="sk-...">
+                    </div>
+                    }
+
+                    @if (aiConfig().provider === 'ollama') {
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Base URL</label>
+                            <span class="setting-desc">URL of your Ollama instance</span>
+                        </div>
+                        <input type="text" class="text-input" [value]="aiConfig().baseUrl || 'http://localhost:11434'" (input)="setAiBaseUrl($event)">
+                    </div>
+                    }
+
+                    @if (aiConfig().provider !== 'mock') {
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Model Name</label>
+                            <span class="setting-desc">Specific model identifier (e.g. gpt-4, llama2)</span>
+                        </div>
+                        <input type="text" class="text-input" [value]="aiConfig().model || ''" (input)="setAiModel($event)" placeholder="gpt-3.5-turbo">
+                    </div>
+
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Creativity (Temperature)</label>
+                            <span class="setting-desc">Higher values make output more random</span>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" min="0" max="1" step="0.1" [value]="aiConfig().temperature || 0.7"
+                                (input)="setAiTemperature($event)" class="range-slider">
+                            <span class="control-value">{{ aiConfig().temperature || 0.7 }}</span>
+                        </div>
+                    </div>
+                    }
+
                     <div class="info-card">
                         <div class="info-row">
                             <span class="info-label">Status</span>
@@ -205,7 +260,7 @@
                         </div>
                         <p class="text-muted-hint text-[11px] mt-3 leading-relaxed">
                             When enabled, Envello provides intelligent suggestions, summaries, and creative assistance.
-                            All processing is done securely.
+                            All processing is done securely. API keys are stored only in your browser.
                         </p>
                     </div>
                 </div>

@@ -1,11 +1,10 @@
 import { Component, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { IconButtonComponent } from '../../shared/ui/icon-button/icon-button.component';
 import { EnvLogoComponent } from '../../shared/ui/logo/logo.component';
 import { ThemeService, Theme } from '../../services/theme.service';
-import { AiService, AiProvider } from '../../services/ai.service';
+import { AiService } from '../../services/ai.service';
 
 interface SettingsSection {
   id: string;
@@ -19,16 +18,10 @@ interface ThemeOption {
   icon: string;
 }
 
-interface AiProviderOption {
-  value: AiProvider;
-  label: string;
-  icon: string;
-}
-
 @Component({
   selector: 'app-settings-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EnvLogoComponent],
+  imports: [CommonModule, ButtonComponent, IconButtonComponent, EnvLogoComponent],
   templateUrl: './settings-modal.component.html',
   styleUrl: './settings-modal.component.css'
 })
@@ -55,11 +48,6 @@ export class SettingsModalComponent {
   dailySummary = signal(false);
   analytics = signal(true);
 
-  // AI State
-  aiProvider = signal<AiProvider>('mock');
-  aiModel = signal('');
-  aiKey = signal('');
-
   sections: SettingsSection[] = [
     { id: 'appearance', label: 'Appearance', icon: 'palette' },
     { id: 'editor', label: 'Editor', icon: 'edit_note' },
@@ -78,12 +66,8 @@ export class SettingsModalComponent {
     { value: 'typewriter', label: 'Typewriter', icon: 'article' }
   ];
 
-  aiProviders: AiProviderOption[] = [
-    { value: 'mock', label: 'Demo Mode (Offline)', icon: 'science' },
-    { value: 'openai', label: 'OpenAI (GPT-4)', icon: 'psychology' },
-    { value: 'anthropic', label: 'Anthropic (Claude)', icon: 'smart_toy' },
-    { value: 'ollama', label: 'Ollama (Local)', icon: 'terminal' }
-  ];
+  // AI Settings
+  aiConfig = signal<any>({});
 
   constructor() {
     // Load current theme
@@ -92,10 +76,8 @@ export class SettingsModalComponent {
     // Load settings from localStorage
     this.loadSettings();
 
-    // Load AI settings
-    this.aiProvider.set(this.aiService.provider());
-    this.aiModel.set(this.aiService.modelName());
-    this.aiKey.set(this.aiService.apiKey());
+    // Load AI config
+    this.aiConfig.set(this.aiService.config());
   }
 
   @HostListener('document:keydown.escape', ['$event'])
@@ -110,12 +92,7 @@ export class SettingsModalComponent {
   open() {
     this.isOpen.set(true);
     this.currentTheme.set(this.themeService.theme());
-
-    // Refresh AI settings from service in case they changed elsewhere
-    this.aiProvider.set(this.aiService.provider());
-    this.aiModel.set(this.aiService.modelName());
-    this.aiKey.set(this.aiService.apiKey());
-
+    this.aiConfig.set(this.aiService.config());
     // Reload settings to get current navigation layout
     this.loadSettings();
   }
@@ -131,7 +108,7 @@ export class SettingsModalComponent {
   // Appearance settings
   setTheme(theme: Theme) {
     this.currentTheme.set(theme);
-    this.themeService.setTheme(theme);
+    this.themeService.theme.set(theme);
   }
 
   setFontSize(event: Event) {
@@ -202,13 +179,30 @@ export class SettingsModalComponent {
     this.analytics.set(!this.analytics());
   }
 
-  // AI Actions
-  setAiProvider(provider: AiProvider) {
-    this.aiProvider.set(provider);
-    // Set default models
-    if (provider === 'openai') this.aiModel.set('gpt-4-turbo');
-    else if (provider === 'anthropic') this.aiModel.set('claude-3-opus-20240229');
-    else if (provider === 'ollama') this.aiModel.set('llama3');
+  // AI Settings
+  setAiProvider(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.aiConfig.update(c => ({ ...c, provider: value }));
+  }
+
+  setAiApiKey(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.aiConfig.update(c => ({ ...c, apiKey: value }));
+  }
+
+  setAiModel(event: Event) {
+    const value = (event.target as HTMLSelectElement | HTMLInputElement).value;
+    this.aiConfig.update(c => ({ ...c, model: value }));
+  }
+
+  setAiBaseUrl(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.aiConfig.update(c => ({ ...c, baseUrl: value }));
+  }
+
+  setAiTemperature(event: Event) {
+    const value = parseFloat((event.target as HTMLInputElement).value);
+    this.aiConfig.update(c => ({ ...c, temperature: value }));
   }
 
   // Actions
@@ -231,9 +225,7 @@ export class SettingsModalComponent {
     };
 
     localStorage.setItem('envello-settings', JSON.stringify(settings));
-
-    // Save AI Config
-    this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
+    this.aiService.updateConfig(this.aiConfig());
 
     // Dispatch event to notify header component
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: this.navigationLayout() }));
@@ -242,7 +234,7 @@ export class SettingsModalComponent {
 
   resetToDefaults() {
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
-      this.currentTheme.set('light');
+      this.currentTheme.set('dark');
       this.fontSize.set(14);
       this.compactMode.set(false);
       this.animations.set(true);
@@ -257,15 +249,17 @@ export class SettingsModalComponent {
       this.dailySummary.set(false);
       this.analytics.set(true);
 
-      // Reset AI
-      this.aiProvider.set('mock');
-      this.aiModel.set('gpt-4-turbo');
-      this.aiKey.set('');
-      this.aiService.updateConfig('mock', '', '');
-
-      this.themeService.theme.set('light');
+      this.themeService.theme.set('dark');
       localStorage.removeItem('envello-settings');
-      localStorage.setItem('theme', 'light');
+
+      this.aiService.updateConfig({
+        provider: 'mock',
+        model: 'gpt-3.5-turbo',
+        apiKey: '',
+        baseUrl: '',
+        temperature: 0.7
+      });
+      this.aiConfig.set(this.aiService.config());
 
       // Reset CSS variables
       document.documentElement.style.removeProperty('--base-font-size');
@@ -328,4 +322,3 @@ export class SettingsModalComponent {
     return fonts[font] || fonts['serif'];
   }
 }
-

@@ -715,3 +715,26 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Text Input */
+.text-input {
+    min-width: 200px;
+    padding: 8px 12px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.text-input:hover {
+    border-color: var(--border-main);
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}

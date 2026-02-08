@@ -203,7 +203,7 @@ export class UserService {
         totalDocuments: 0,
         totalProjects: 0,
         daysActive: 1,
-        currentStreak: 0,
+        currentStreak: 1,
         lastLoginDate: new Date().toISOString()
       }
     });

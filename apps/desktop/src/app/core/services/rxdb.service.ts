@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, isDevMode } from '@angular/core';
 import { createRxDatabase, RxDatabase, RxCollection, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
@@ -11,7 +11,7 @@ addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 
 // Enable dev mode in development
-if (process.env['NODE_ENV'] === 'development') {
+if (isDevMode()) {
     import('rxdb/plugins/dev-mode').then(module => {
         addRxPlugin(module.RxDBDevModePlugin);
     });

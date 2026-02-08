@@ -1,8 +1,8 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
+
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService, Task } from './store.service';
-import { SqliteService } from '../core/services/sqlite.service';
+import { RxdbService } from '../core/services/rxdb.service';
 
 
 
@@ -130,25 +130,25 @@ export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attende
 export class MeetingsService {
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private db = inject(SqliteService);
+  private rxdb = inject(RxdbService);
 
   meetings = signal<Meeting[]>([]);
 
   constructor() {
-    this.loadFromDb();
+    this.loadFromRxDB();
   }
 
-  private async loadFromDb(): Promise<void> {
+  private async loadFromRxDB(): Promise<void> {
     try {
-      const list = await this.db.getAllMeetings();
+      const list = await this.rxdb.getAllMeetings();
       this.meetings.set(list);
     } catch (e) {
-      logIfTauri('[MeetingsService] loadFromDb failed', e);
+      console.error('[MeetingsService] loadFromRxDB failed', e);
     }
   }
 
   private persistMeeting(m: Meeting): void {
-    this.db.upsertMeeting(m).catch(e => logIfTauri('[MeetingsService] persist failed', e));
+    this.rxdb.upsertMeeting(m).catch(e => console.error('[MeetingsService] persist failed', e));
   }
 
   // UI state
@@ -351,37 +351,15 @@ export class MeetingsService {
   // CRUD Operations
 
   addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>) {
-    // Auto-project ID if not provided
-    const projectId = meeting.project || crypto.randomUUID();
-
     const newMeeting: Meeting = {
       ...meeting,
       id: Date.now().toString(),
-      project: projectId, // Ensure it's linked
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-
     this.meetings.update(meetings => [...meetings, newMeeting]);
     this.store.addActivity('Meeting created: ' + newMeeting.title, 'system');
     this.persistMeeting(newMeeting);
-
-    // Create the Project container if we generated the ID
-    if (!meeting.project) {
-      this.store.addProject({
-        id: projectId,
-        title: newMeeting.title,
-        description: 'Meeting Project: ' + newMeeting.title,
-        status: 'PLANNING',
-        words: '0',
-        updated: new Date().toISOString(),
-        icon: 'groups',
-        linkedResources: {
-          meetings: [newMeeting.id]
-        }
-      });
-    }
-
     return newMeeting;
   }
 
@@ -413,7 +391,7 @@ export class MeetingsService {
 
     this.meetings.set(existing.filter(m => m.id !== id));
     this.store.addActivity('Meeting deleted', 'system');
-    this.db.removeMeeting(id).catch(e => logIfTauri('[MeetingsService] remove failed', e));
+    this.rxdb.removeMeeting(id).catch(e => console.error('[MeetingsService] remove failed', e));
   }
 
   cancelMeeting(id: string) {

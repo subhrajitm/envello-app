@@ -195,62 +195,74 @@
                         </label>
                     </div>
 
-                    @if (aiService.aiEnabled()) {
                     <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>AI Provider</label>
-                            <span class="setting-desc">Select the AI model provider</span>
+                            <span class="setting-desc">Choose which AI service to use</span>
                         </div>
-                        <div class="theme-selector">
-                            @for (provider of aiProviders; track provider.value) {
-                            <button class="theme-option" [class.active]="aiProvider() === provider.value"
-                                (click)="setAiProvider(provider.value)">
-                                <span class="material-symbols-outlined">{{ provider.icon }}</span>
-                                <span>{{ provider.label }}</span>
-                            </button>
-                            }
-                        </div>
+                        <select class="select-input" [value]="aiConfig().provider" (change)="setAiProvider($event)">
+                            <option value="mock">Demo / Mock (Offline)</option>
+                            <option value="openai">OpenAI (GPT-3.5/4)</option>
+                            <option value="anthropic">Anthropic (Claude)</option>
+                            <option value="ollama">Ollama (Local LLM)</option>
+                        </select>
                     </div>
 
-                    @if (aiProvider() !== 'mock' && aiProvider() !== 'ollama') {
+                    @if (aiConfig().provider === 'openai' || aiConfig().provider === 'anthropic') {
                     <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>API Key</label>
-                            <span class="setting-desc">Enter your {{ aiProvider() | titlecase }} API Key</span>
+                            <span class="setting-desc">Enter your API key (stored locally)</span>
                         </div>
-                        <div class="setting-control w-full">
-                            <input type="password" [ngModel]="aiKey()" (ngModelChange)="aiKey.set($event)"
-                                class="form-input" placeholder="sk-..." spellcheck="false">
-                        </div>
+                        <input type="password" class="text-input" [value]="aiConfig().apiKey || ''" (input)="setAiApiKey($event)" placeholder="sk-...">
                     </div>
                     }
 
+                    @if (aiConfig().provider === 'ollama') {
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Base URL</label>
+                            <span class="setting-desc">URL of your Ollama instance</span>
+                        </div>
+                        <input type="text" class="text-input" [value]="aiConfig().baseUrl || 'http://localhost:11434'" (input)="setAiBaseUrl($event)">
+                    </div>
+                    }
+
+                    @if (aiConfig().provider !== 'mock') {
                     <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Model Name</label>
-                            <span class="setting-desc">Specific model identifier (e.g. gpt-4, claude-3)</span>
+                            <span class="setting-desc">Specific model identifier (e.g. gpt-4, llama2)</span>
                         </div>
-                        <div class="setting-control w-full">
-                            <input type="text" [ngModel]="aiModel()" (ngModelChange)="aiModel.set($event)"
-                                class="form-input" placeholder="gpt-4-turbo" spellcheck="false">
+                        <input type="text" class="text-input" [value]="aiConfig().model || ''" (input)="setAiModel($event)" placeholder="gpt-3.5-turbo">
+                    </div>
+
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Creativity (Temperature)</label>
+                            <span class="setting-desc">Higher values make output more random</span>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" min="0" max="1" step="0.1" [value]="aiConfig().temperature || 0.7"
+                                (input)="setAiTemperature($event)" class="range-slider">
+                            <span class="control-value">{{ aiConfig().temperature || 0.7 }}</span>
                         </div>
                     </div>
+                    }
 
                     <div class="info-card">
                         <div class="info-row">
-                            <span class="info-label">Current Provider</span>
-                            <span class="info-value">{{ aiProvider() | titlecase }}</span>
-                        </div>
-                        <div class="info-row">
                             <span class="info-label">Status</span>
-                            <span class="info-value" style="color: var(--accent-green)">Ready</span>
+                            <span class="info-value"
+                                [style.color]="aiService.aiEnabled() ? 'var(--accent-green)' : 'var(--text-tertiary)'">
+                                {{ aiService.aiEnabled() ? 'Active' : 'Disabled' }}
+                            </span>
                         </div>
                         <p class="text-muted-hint text-[11px] mt-3 leading-relaxed">
-                            Envello uses LangChain to connect to various AI providers.
-                            Keys are stored locally on your device.
+                            When enabled, Envello provides intelligent suggestions, summaries, and creative assistance.
+                            All processing is done securely. API keys are stored only in your browser.
                         </p>
                     </div>
-                    }
                 </div>
                 }
 

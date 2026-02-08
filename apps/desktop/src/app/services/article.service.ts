@@ -1,8 +1,7 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
+
 import { Injectable, signal, inject } from '@angular/core';
-import { SqliteService } from '../core/services/sqlite.service';
+import { RxdbService } from '../core/services/rxdb.service';
 import { FileSystemService } from '../core/services/file-system.service';
-import { StoreService } from './store.service';
 
 export interface Article {
   id: string;
@@ -31,16 +30,15 @@ export interface Article {
   providedIn: 'root'
 })
 export class ArticleService {
-  private db = inject(SqliteService);
+  private rxdb = inject(RxdbService);
   private fs = inject(FileSystemService);
-  private store = inject(StoreService);
 
   articles = signal<Article[]>([]);
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
-    this.loadFromDb();
+    this.loadFromRxDB();
     this.initMarkdown();
   }
 
@@ -51,13 +49,13 @@ export class ArticleService {
     }
   }
 
-  private async loadFromDb(): Promise<void> {
+  private async loadFromRxDB(): Promise<void> {
     try {
-      const list = await this.db.getAllArticles();
+      const list = await this.rxdb.getAllArticles();
       this.articles.set(list);
     } catch (e) {
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
-        logIfTauri('[ArticleService] loadFromDb failed', e);
+        console.error('[ArticleService] loadFromRxDB failed', e);
       }
     }
   }
@@ -101,25 +99,10 @@ export class ArticleService {
     };
     this.articles.update(list => [newArticle, ...list]);
 
-    // Auto-create Project
-    const projectId = crypto.randomUUID();
-    this.store.addProject({
-      id: projectId,
-      title: newArticle.title,
-      description: 'Article Project: ' + newArticle.platform,
-      status: 'PLANNING',
-      words: String(newArticle.wordCount),
-      updated: new Date().toISOString(),
-      icon: 'article',
-      linkedResources: {
-        articles: [newArticle.id]
-      }
-    });
-
     // Initial file write
     this.saveArticleContentToFile(newArticle.id, newArticle.content || '');
 
-    this.db.upsertArticle(newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    this.rxdb.upsertArticle(newArticle).catch(e => console.error('[ArticleService] persist failed', e));
     return newArticle;
   }
 
@@ -139,7 +122,7 @@ export class ArticleService {
     }
 
     const a = this.articles().find(x => x.id === id);
-    if (a) this.db.upsertArticle(a).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    if (a) this.rxdb.upsertArticle(a).catch(e => console.error('[ArticleService] persist failed', e));
   }
 
   private async saveArticleContentToFile(id: string, html: string) {
@@ -152,13 +135,13 @@ export class ArticleService {
     const article = this.articles().find(a => a.id === id);
     if (article && article.filePath !== filePath) {
       this.articles.update(as => as.map(a => a.id === id ? { ...a, filePath } : a));
-      this.db.upsertArticle({ ...article, filePath });
+      this.rxdb.upsertArticle({ ...article, filePath });
     }
   }
 
   deleteArticle(id: string): void {
     this.articles.update(list => list.filter(a => a.id !== id));
-    this.db.removeArticle(id).catch(e => logIfTauri('[ArticleService] remove failed', e));
+    this.rxdb.removeArticle(id).catch(e => console.error('[ArticleService] remove failed', e));
     this.fs.deleteFile('articles', id).catch(e => console.error('Failed to delete article file', e));
   }
 

@@ -133,11 +133,12 @@ export class StoreService {
   }
 
   private async loadFromRxDB(): Promise<void> {
-    console.log('[StoreService] Loading data from RxDB...');
+    console.warn('[StoreService] Loading data from RxDB...', { dbName: 'envello_db_v5' });
 
     // Load Tasks
     try {
       const tasks = await this.rxdb.getAllTasks();
+      console.warn('[StoreService] Loaded tasks:', tasks.length);
       this.tasks.set(tasks);
     } catch (e) {
       console.error('[StoreService] Failed to load tasks:', e);
@@ -147,6 +148,7 @@ export class StoreService {
     // Load Notes
     try {
       const notes = await this.rxdb.getAllNotes();
+      console.warn('[StoreService] Loaded notes:', notes.length);
       this.notes.set(notes);
     } catch (e) {
       console.error('[StoreService] Failed to load notes:', e);
@@ -156,6 +158,7 @@ export class StoreService {
     // Load Planning Items
     try {
       const planningItems = await this.rxdb.getAllPlanningItems();
+      console.warn('[StoreService] Loaded planning items:', planningItems.length);
       this.planningItems.set(planningItems);
     } catch (e) {
       console.error('[StoreService] Failed to load planning items:', e);
@@ -165,6 +168,7 @@ export class StoreService {
     // Load Activities
     try {
       const activities = await this.rxdb.getAllActivities();
+      console.warn('[StoreService] Loaded activities:', activities.length);
       this.activities.set(activities.slice(0, 50));
     } catch (e) {
       console.error('[StoreService] Failed to load activities:', e);
@@ -174,13 +178,14 @@ export class StoreService {
     // Load Novels
     try {
       const novels = await this.rxdb.getAllNovels();
+      console.warn('[StoreService] Loaded novels:', novels.length);
       this.novels.set(novels);
     } catch (e) {
       console.error('[StoreService] Failed to load novels:', e);
       this.novels.set([]);
     }
 
-    console.log('[StoreService] Data loading complete');
+    console.warn('[StoreService] Data loading complete');
   }
 
   async loadNoteContent(id: string): Promise<string> {

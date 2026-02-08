@@ -1,7 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
-import { SqliteService } from '../core/services/sqlite.service';
-import { logIfTauri } from '../core/utils/tauri-helpers';
+import { RxdbService } from '../core/services/rxdb.service';
 import { FileSystemService } from '../core/services/file-system.service';
 
 export interface Task {
@@ -107,8 +106,6 @@ export interface Project {
   progress?: number;
   team?: string[];
   tags?: string[];
-
-  // New fields for complex projects
   type?: 'SINGLE' | 'MULTI'; // Single task oriented or multi-faceted
   linkedResources?: {
     novels?: string[]; // IDs of linked novels
@@ -172,32 +169,18 @@ export class StoreService {
       progress: 100,
       team: ['Alex'],
       tags: ['Fantasy']
-    },
-    {
-      id: '4',
-      title: 'Echoes of the Void',
-      description: 'Mid-stage review of the plot points and pacing.',
-      status: 'REVIEW',
-      words: '35.0k',
-      updated: '2d ago',
-      icon: 'extension',
-      dueDate: '2023-11-20',
-      priority: 'HIGH',
-      progress: 45,
-      team: ['Sam', 'Jordan'],
-      tags: ['Thriller']
-    },
+    }
   ]);
 
   private bin = inject(BinService);
-  private db = inject(SqliteService);
+  private rxdb = inject(RxdbService);
   private fs = inject(FileSystemService);
 
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
-    this.loadFromDb();
+    this.loadFromRxDB();
     this.initMarkdown();
   }
 
@@ -218,30 +201,60 @@ export class StoreService {
     }
   }
 
-  private async loadFromDb(): Promise<void> {
+  private async loadFromRxDB(): Promise<void> {
+    console.warn('[StoreService] Loading data from RxDB...', { dbName: 'envello_db_v5' });
+
+    // Load Tasks
     try {
-      const [tasks, notes, planningItems, activities, novels] = await Promise.all([
-        this.db.getAllTasks(),
-        this.db.getAllNotes(),
-        this.db.getAllPlanningItems(),
-        this.db.getAllActivities(),
-        this.db.getAllNovels(),
-      ]);
+      const tasks = await this.rxdb.getAllTasks();
+      console.warn('[StoreService] Loaded tasks:', tasks.length);
       this.tasks.set(tasks);
+    } catch (e) {
+      console.error('[StoreService] Failed to load tasks:', e);
+      this.tasks.set([]);
+    }
+
+    // Load Notes
+    try {
+      const notes = await this.rxdb.getAllNotes();
+      console.warn('[StoreService] Loaded notes:', notes.length);
       this.notes.set(notes);
+    } catch (e) {
+      console.error('[StoreService] Failed to load notes:', e);
+      this.notes.set([]);
+    }
+
+    // Load Planning Items
+    try {
+      const planningItems = await this.rxdb.getAllPlanningItems();
+      console.warn('[StoreService] Loaded planning items:', planningItems.length);
       this.planningItems.set(planningItems);
+    } catch (e) {
+      console.error('[StoreService] Failed to load planning items:', e);
+      this.planningItems.set([]);
+    }
+
+    // Load Activities
+    try {
+      const activities = await this.rxdb.getAllActivities();
+      console.warn('[StoreService] Loaded activities:', activities.length);
       this.activities.set(activities.slice(0, 50));
+    } catch (e) {
+      console.error('[StoreService] Failed to load activities:', e);
+      this.activities.set([]);
+    }
+
+    // Load Novels
+    try {
+      const novels = await this.rxdb.getAllNovels();
+      console.warn('[StoreService] Loaded novels:', novels.length);
       this.novels.set(novels);
     } catch (e) {
-      if (typeof window !== 'undefined' && '__TAURI__' in window) {
-        logIfTauri('[StoreService] loadFromDb failed', e);
-      }
-      this.tasks.set([]);
-      this.notes.set([]);
-      this.planningItems.set([]);
-      this.activities.set([]);
+      console.error('[StoreService] Failed to load novels:', e);
       this.novels.set([]);
     }
+
+    console.warn('[StoreService] Data loading complete');
   }
 
   async loadNoteContent(id: string): Promise<string> {
@@ -274,7 +287,7 @@ export class StoreService {
   addTask(task: Task) {
     this.tasks.update(tasks => [...tasks, task]);
     this.addActivity('Task created: ' + task.title, 'system');
-    this.db.upsertTask(task).catch(e => logIfTauri('[StoreService] persist task failed', e));
+    this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   updateTask(id: string, updates: Partial<Task>) {
@@ -282,7 +295,7 @@ export class StoreService {
     const task = updated.find(t => t.id === id);
     this.tasks.set(updated);
     this.addActivity('Task updated', 'system');
-    if (task) this.db.upsertTask(task).catch(e => logIfTauri('[StoreService] persist task failed', e));
+    if (task) this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   deleteTask(id: string) {
@@ -300,7 +313,7 @@ export class StoreService {
 
     this.tasks.set(existingTasks.filter(t => t.id !== id));
     this.addActivity('Task deleted', 'system');
-    this.db.removeTask(id).catch(e => logIfTauri('[StoreService] remove task failed', e));
+    this.rxdb.removeTask(id).catch(e => console.error('[StoreService] remove task failed', e));
   }
 
   async addNote(note: Note) {
@@ -310,22 +323,7 @@ export class StoreService {
     // Write initial file
     await this.saveNoteContentToFile(note.id, note.content || '');
 
-    this.db.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
-
-    // Auto-create Project for this Note/Journal
-    const projectId = crypto.randomUUID();
-    this.addProject({
-      id: projectId,
-      title: note.title || 'Untitled Note',
-      description: 'Auto-generated project from Note',
-      status: 'PLANNING',
-      words: '0',
-      updated: new Date().toISOString(),
-      icon: 'edit_note',
-      linkedResources: {
-        journals: [note.id]
-      }
-    });
+    this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
   }
 
   updateNote(id: string, updates: Partial<Note>) {
@@ -353,7 +351,7 @@ export class StoreService {
     }
 
     // Persist Metadata to DB (content is explicitly excluded/cleared in SqliteService upsert)
-    this.db.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
+    this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
   }
 
   private async saveNoteContentToFile(id: string, html: string) {
@@ -367,7 +365,7 @@ export class StoreService {
     const note = this.notes().find(n => n.id === id);
     if (note && note.filePath !== filePath) {
       this.notes.update(ns => ns.map(n => n.id === id ? { ...n, filePath } : n));
-      this.db.upsertNote({ ...note, filePath });
+      this.rxdb.upsertNote({ ...note, filePath });
     }
   }
 
@@ -386,49 +384,19 @@ export class StoreService {
 
     this.notes.set(existingNotes.filter(n => n.id !== id));
     this.addActivity('Note deleted', 'system');
-    this.db.removeNote(id).catch(e => logIfTauri('[StoreService] remove note failed', e));
+    this.rxdb.removeNote(id).catch(e => console.error('[StoreService] remove note failed', e));
     this.fs.deleteNote(id).catch(e => console.error('Failed to delete note file', e));
   }
 
   addPlanningItem(item: PlanningItem) {
     this.planningItems.update(items => [...items, item]);
-    this.db.upsertPlanningItem(item).catch(e => logIfTauri('[StoreService] persist planning item failed', e));
+    this.rxdb.upsertPlanningItem(item).catch(e => console.error('[StoreService] persist planning item failed', e));
   }
 
   addNovel(novel: Novel) {
     this.novels.update(novels => [...novels, novel]);
     this.addActivity('Project started: ' + novel.title, 'system');
-    this.db.upsertNovel(novel).catch(e => logIfTauri('[StoreService] persist novel failed', e));
-
-    // Auto-create Project for this Novel
-    const projectId = crypto.randomUUID();
-    this.addProject({
-      id: projectId,
-      title: novel.title,
-      description: 'Auto-generated project from Novel',
-      status: (novel.status === 'REVISING' ? 'REVIEW' :
-        (novel.status === 'PUBLISHED' ? 'COMPLETE' :
-          (novel.status === 'DRAFTING' || novel.status === 'PLANNING' ? novel.status : 'PLANNING'))),
-      words: String(novel.wordCount || 0),
-      updated: new Date().toISOString(),
-      icon: 'menu_book',
-      linkedResources: {
-        novels: [novel.id]
-      }
-    });
-  }
-
-  addProject(project: Project) {
-    this.projects.update(projects => [...projects, project]);
-    this.addActivity('Project created: ' + project.title, 'system');
-    // TODO: Persist project to DB (mock for now or add to SqliteService)
-  }
-
-  updateProject(id: string, updates: Partial<Project>) {
-    this.projects.update(projects =>
-      projects.map(p => p.id === id ? { ...p, ...updates } : p)
-    );
-    // TODO: Persist
+    this.rxdb.upsertNovel(novel).catch(e => console.error('[StoreService] persist novel failed', e));
   }
 
   deleteNovel(id: string) {
@@ -444,8 +412,8 @@ export class StoreService {
     }
     this.novels.set(existing.filter(n => n.id !== id));
     this.addActivity('Novel deleted', 'system');
-    this.db.removeNovel(id).catch(e => logIfTauri('[StoreService] remove novel failed', e));
-    this.db.removeNovelContent(id).catch(e => logIfTauri('[StoreService] remove novel content failed', e));
+    this.rxdb.removeNovel(id).catch(e => console.error('[StoreService] remove novel failed', e));
+    this.rxdb.removeNovelContent(id).catch(e => console.error('[StoreService] remove novel content failed', e));
   }
 
   addActivity(text: string, type: Activity['type'] = 'entry') {
@@ -456,6 +424,12 @@ export class StoreService {
       type
     };
     this.activities.update(activities => [newActivity, ...activities.slice(0, 49)]); // Keep last 50
-    this.db.upsertActivity(newActivity).catch(e => logIfTauri('[StoreService] persist activity failed', e));
+    this.rxdb.upsertActivity(newActivity).catch(e => console.error('[StoreService] persist activity failed', e));
+  }
+
+  addProject(project: Project) {
+    this.projects.update(projects => [...projects, project]);
+    this.addActivity('Project created: ' + project.title, 'system');
+    // TODO: Persist project to DB (mock for now or add to RxDB)
   }
 }

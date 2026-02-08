@@ -1,8 +1,7 @@
-import { logIfTauri } from '../core/utils/tauri-helpers';
+
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { SqliteService } from '../core/services/sqlite.service';
-import { StoreService } from './store.service';
+import { RxdbService } from '../core/services/rxdb.service';
 
 export type SnippetLang =
   | 'Python'
@@ -38,8 +37,7 @@ const LANGS: SnippetLang[] = ['Python', 'JavaScript', 'TypeScript', 'Markdown', 
 @Injectable({ providedIn: 'root' })
 export class SnippetsService {
   private bin = inject(BinService);
-  private db = inject(SqliteService);
-  private store = inject(StoreService);
+  private rxdb = inject(RxdbService);
 
   readonly snippets = signal<Snippet[]>([]);
   selectedSnippetId = signal<string | null>(null);
@@ -54,15 +52,15 @@ export class SnippetsService {
   readonly LANGS = LANGS;
 
   constructor() {
-    this.loadFromDb();
+    this.loadFromRxDB();
   }
 
-  private async loadFromDb(): Promise<void> {
+  private async loadFromRxDB(): Promise<void> {
     try {
-      const list = await this.db.getAllSnippets();
+      const list = await this.rxdb.getAllSnippets();
       this.snippets.set(list);
     } catch (e) {
-      logIfTauri('[SnippetsService] loadFromDb failed', e);
+      console.error('[SnippetsService] loadFromRxDB failed', e);
     }
   }
 
@@ -132,23 +130,7 @@ export class SnippetsService {
       updatedAt: now,
     };
     this.snippets.update(list => [...list, created]);
-    this.db.upsertSnippet(created).catch(e => logIfTauri('[SnippetsService] persist failed', e));
-
-    // Auto-create Project
-    const projectId = crypto.randomUUID();
-    this.store.addProject({
-      id: projectId,
-      title: created.title,
-      description: 'Snippet Project: ' + created.lang,
-      status: 'PLANNING',
-      words: '0',
-      updated: now,
-      icon: 'code',
-      linkedResources: {
-        snippets: [created.id]
-      }
-    });
-
+    this.rxdb.upsertSnippet(created).catch(e => console.error('[SnippetsService] persist failed', e));
     return created;
   }
 
@@ -158,7 +140,7 @@ export class SnippetsService {
       list.map(s => (s.id === id ? { ...s, ...patch, updatedAt: now } : s))
     );
     const updated = this.snippets().find(s => s.id === id);
-    if (updated) this.db.upsertSnippet(updated).catch(e => logIfTauri('[SnippetsService] persist failed', e));
+    if (updated) this.rxdb.upsertSnippet(updated).catch(e => console.error('[SnippetsService] persist failed', e));
   }
 
   deleteSnippet(id: string): void {
@@ -167,7 +149,7 @@ export class SnippetsService {
     this.bin.addToBin({ type: 'snippet', originalId: id, title: s.title, payload: s });
     this.snippets.update(list => list.filter(x => x.id !== id));
     if (this.selectedSnippetId() === id) this.selectedSnippetId.set(null);
-    this.db.removeSnippet(id).catch(e => logIfTauri('[SnippetsService] remove failed', e));
+    this.rxdb.removeSnippet(id).catch(e => console.error('[SnippetsService] remove failed', e));
   }
 
   copyContent(id: string): string | null {

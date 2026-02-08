@@ -66,12 +66,18 @@ export class SettingsModalComponent {
     { value: 'typewriter', label: 'Typewriter', icon: 'article' }
   ];
 
+  // AI Settings
+  aiConfig = signal<any>({});
+
   constructor() {
     // Load current theme
     this.currentTheme.set(this.themeService.theme());
 
     // Load settings from localStorage
     this.loadSettings();
+
+    // Load AI config
+    this.aiConfig.set(this.aiService.config());
   }
 
   @HostListener('document:keydown.escape', ['$event'])
@@ -86,6 +92,7 @@ export class SettingsModalComponent {
   open() {
     this.isOpen.set(true);
     this.currentTheme.set(this.themeService.theme());
+    this.aiConfig.set(this.aiService.config());
     // Reload settings to get current navigation layout
     this.loadSettings();
   }
@@ -172,6 +179,32 @@ export class SettingsModalComponent {
     this.analytics.set(!this.analytics());
   }
 
+  // AI Settings
+  setAiProvider(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.aiConfig.update(c => ({ ...c, provider: value }));
+  }
+
+  setAiApiKey(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.aiConfig.update(c => ({ ...c, apiKey: value }));
+  }
+
+  setAiModel(event: Event) {
+    const value = (event.target as HTMLSelectElement | HTMLInputElement).value;
+    this.aiConfig.update(c => ({ ...c, model: value }));
+  }
+
+  setAiBaseUrl(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.aiConfig.update(c => ({ ...c, baseUrl: value }));
+  }
+
+  setAiTemperature(event: Event) {
+    const value = parseFloat((event.target as HTMLInputElement).value);
+    this.aiConfig.update(c => ({ ...c, temperature: value }));
+  }
+
   // Actions
   saveSettings() {
     const settings = {
@@ -192,6 +225,8 @@ export class SettingsModalComponent {
     };
 
     localStorage.setItem('envello-settings', JSON.stringify(settings));
+    this.aiService.updateConfig(this.aiConfig());
+
     // Dispatch event to notify header component
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: this.navigationLayout() }));
     this.close();
@@ -216,6 +251,15 @@ export class SettingsModalComponent {
 
       this.themeService.theme.set('dark');
       localStorage.removeItem('envello-settings');
+
+      this.aiService.updateConfig({
+        provider: 'mock',
+        model: 'gpt-3.5-turbo',
+        apiKey: '',
+        baseUrl: '',
+        temperature: 0.7
+      });
+      this.aiConfig.set(this.aiService.config());
 
       // Reset CSS variables
       document.documentElement.style.removeProperty('--base-font-size');
