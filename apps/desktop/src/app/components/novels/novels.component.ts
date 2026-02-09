@@ -1,9 +1,10 @@
 import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService, type Novel } from '../../services/store.service';
-import { NovelContentService } from '../../services/novel-content.service';
+import { NovelStore } from '@envello/shared-state';
+import { NovelCommands, Novel, NovelContent } from '@envello/shared-domain';
 import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shared/ui';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
   selector: 'app-novels',
@@ -14,8 +15,8 @@ import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shar
 })
 export class NovelsComponent {
   private router = inject(Router);
-  store = inject(StoreService);
-  private novelContent = inject(NovelContentService);
+  novelStore = inject(NovelStore);
+  novelCommands = inject(NovelCommands);
 
   viewMode = signal<'LIST' | 'GRID'>('LIST');
   statusFilter = signal<'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED'>('ALL');
@@ -47,15 +48,15 @@ export class NovelsComponent {
   novelToDelete = signal<Novel | null>(null);
 
   novels = computed(() => {
-    let list = this.store.novels();
+    let list: Novel[] = (this.novelStore.novels() as any);
 
     // Filter
     if (this.statusFilter() !== 'ALL') {
-      list = list.filter(n => n.status === this.statusFilter());
+      list = list.filter((n: Novel) => n.status === this.statusFilter());
     }
 
     // Sort
-    return list.sort((a, b) => {
+    return list.sort((a: Novel, b: Novel) => {
       switch (this.sortBy()) {
         case 'UPDATED': return 0; // Keeping simple for demo as date strings are fuzzy
         case 'TITLE': return a.title.localeCompare(b.title);
@@ -67,17 +68,17 @@ export class NovelsComponent {
 
   // Metrics
   totalWords = computed(() => {
-    return this.store.novels().reduce((acc, curr) => acc + curr.wordCount, 0);
+    return (this.novelStore.novels() as any).reduce((acc: number, curr: Novel) => acc + curr.wordCount, 0);
   });
 
   activeDrafts = computed(() => {
-    return this.store.novels().filter(n => n.status !== 'PUBLISHED').length;
+    return (this.novelStore.novels() as any).filter((n: Novel) => n.status !== 'PUBLISHED').length;
   });
 
   avgCompletion = computed(() => {
-    const list = this.store.novels();
+    const list = (this.novelStore.novels() as any);
     if (list.length === 0) return 0;
-    const total = list.reduce((acc, curr) => acc + curr.progress, 0);
+    const total = list.reduce((acc: number, curr: Novel) => acc + curr.progress, 0);
     return Math.round(total / list.length);
   });
 
@@ -187,9 +188,9 @@ export class NovelsComponent {
   }
 
   confirmDeleteNovel() {
-    const novel = this.novelToDelete();
+    const novel = this.novelToDelete() as any;
     if (novel) {
-      this.store.deleteNovel(novel.id);
+      this.novelCommands.deleteNovel(novel.id);
       this.cancelDeleteNovel();
     }
   }
@@ -220,10 +221,11 @@ export class NovelsComponent {
     if (!title) return;
     this.addModalSubmitting.set(true);
     try {
-      const id = crypto.randomUUID();
+      const id = uuidv4();
       const now = new Date();
       const createdDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const genre = form.genre.trim() ? form.genre.split(',').map(s => s.trim()).filter(Boolean) : ['Fiction'];
+
       const novel: Novel = {
         id,
         title,
@@ -240,21 +242,26 @@ export class NovelsComponent {
         isRecentlyUpdated: true
       };
 
-      const initialContent: any = { // Type as NovelContent but allow specific structure
+      const initialContent: NovelContent = {
         id,
         title,
         synopsis: { logline: '', theme: '' },
         frontMatter: [],
         chapters: [
-          { id: 'g1', title: 'Part 1', expanded: true, children: [] }
+          {
+            id: uuidv4(),
+            title: 'Part 1',
+            expanded: true,
+            children: []
+          }
         ],
         characters: [],
         locations: [],
-        notes: []
+        notes: [],
+        timeline: []
       };
 
-      this.store.addNovel(novel, initialContent);
-      // await this.novelContent.createAndPersistEmptyNovel(id, title); // handled by effect now
+      this.novelCommands.createNovel(novel, initialContent);
       this.closeAddModal();
       this.router.navigate(['/novels', id]);
     } catch (e) {

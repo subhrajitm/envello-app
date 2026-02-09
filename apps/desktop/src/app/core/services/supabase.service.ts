@@ -11,7 +11,16 @@ export class SupabaseService {
     private supabase: SupabaseClient;
 
     constructor() {
-        this.supabase = createClient(environment.supabase.url, environment.supabase.key);
+        const options = {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                // Disable lock in development to prevent timeouts
+                ...(environment.production ? {} : { lock: false })
+            }
+        };
+        this.supabase = createClient(environment.supabase.url, environment.supabase.key, options as any);
     }
 
     get client() {
