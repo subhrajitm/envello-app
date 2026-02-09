@@ -29,6 +29,9 @@ export class EditorStore {
     setActiveNote(id: string | null): void {
         this._activeNoteId.set(id);
         this._isDirty.set(false);
+        this._wordCount.set(0);
+        this._characterCount.set(0);
+        this._lastSaved.set(null);
     }
 
     /**

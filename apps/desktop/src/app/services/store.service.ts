@@ -3,8 +3,8 @@ import { BinService } from './bin.service';
 import { SqliteService } from '../core/services/sqlite.service';
 import { logIfTauri } from '../core/utils/tauri-helpers';
 import { FileSystemService } from '../core/services/file-system.service';
-import { TaskStore } from '@envello/shared-state';
-import { TaskCommands } from '@envello/shared-domain';
+import { TaskStore, NoteStore } from '@envello/shared-state';
+import { TaskCommands, NoteCommands } from '@envello/shared-domain';
 
 export interface Task {
   id: string;
@@ -198,6 +198,8 @@ export class StoreService {
   // Event Bus architecture
   private taskStore = inject(TaskStore);
   private taskCommands = inject(TaskCommands);
+  private noteStore = inject(NoteStore);
+  private noteCommands = inject(NoteCommands);
 
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
@@ -209,6 +211,11 @@ export class StoreService {
     // Sync tasks signal with TaskStore for backward compatibility
     effect(() => {
       this.tasks.set(this.taskStore.tasks());
+    });
+
+    // Sync notes signal with NoteStore for backward compatibility
+    effect(() => {
+      this.notes.set(this.noteStore.notes());
     });
   }
 
@@ -238,8 +245,17 @@ export class StoreService {
         this.db.getAllActivities(),
         this.db.getAllNovels(),
       ]);
+      // NoteStore is initialized by NotePersistenceEffect, but we iterate here to sync initial state if needed?
+      // Actually NotePersistenceEffect loads data into NoteStore.
+      // So here we should NOT set this.notes() from DB directly if we want to rely on NoteStore.
+      // BUT `loadFromDb` runs in constructor. `NotePersistenceEffect` also runs on app init.
+      // They might race.
+      // Since we sync `this.notes` with `this.noteStore.notes()` in the effect above, 
+      // updating `this.notes` here might be overwritten or cause flicker.
+      // Best to let NoteStore drive it.
+
       this.tasks.set(tasks);
-      this.notes.set(notes);
+      // this.notes.set(notes); // Managed by NoteStore now
       this.planningItems.set(planningItems);
       this.activities.set(activities.slice(0, 50));
       this.novels.set(novels);
@@ -248,7 +264,7 @@ export class StoreService {
         logIfTauri('[StoreService] loadFromDb failed', e);
       }
       this.tasks.set([]);
-      this.notes.set([]);
+      // this.notes.set([]); // Managed by NoteStore
       this.planningItems.set([]);
       this.activities.set([]);
       this.novels.set([]);
@@ -256,27 +272,15 @@ export class StoreService {
   }
 
   async loadNoteContent(id: string): Promise<string> {
-    const note = this.notes().find(n => n.id === id);
-    if (!note) return '';
-    // Return cached if valid (length check to avoid empty strings from DB migration)
-    if (note.content && note.content.length > 5) return note.content;
+    this.noteCommands.loadNoteContent(id);
 
-    let mdContent = await this.fs.readNote(id);
-
-    // Lazy Migration: If file missing but DB has content, write to file
-    if (mdContent === null && note.content && note.content.length > 0) {
-      console.log('[StoreService] Migrating note to file:', id);
-      await this.saveNoteContentToFile(id, note.content);
-      return note.content;
-    }
-
-    if (mdContent) {
-      // Convert Markdown -> HTML
-      const { marked } = await import('marked');
-      const html = await marked.parse(mdContent);
-      // Update Cache
-      this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html as string } : n));
-      return html as string;
+    // Poll for content (backward compatibility for Promise-based callers)
+    // 2 second timeout
+    const start = Date.now();
+    while (Date.now() - start < 2000) {
+      const note = this.noteStore.noteById(id)();
+      if (note?.content) return note.content;
+      await new Promise(r => setTimeout(r, 50));
     }
 
     return '';
@@ -313,13 +317,9 @@ export class StoreService {
   }
 
   async addNote(note: Note) {
-    this.notes.update(notes => [note, ...notes]);
+    // Delegate to Event Bus
+    this.noteCommands.createNote(note);
     this.addActivity("Entry added to '" + note.title + "'", 'entry');
-
-    // Write initial file
-    await this.saveNoteContentToFile(note.id, note.content || '');
-
-    this.db.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
 
     // Auto-create Project for this Note/Journal
     const projectId = crypto.randomUUID();
@@ -338,46 +338,11 @@ export class StoreService {
   }
 
   updateNote(id: string, updates: Partial<Note>) {
-    const timestamp = new Date();
-    const timeString = timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-    // Update In-Memory State Immediately
-    this.notes.update(notes =>
-      notes.map(note => note.id === id ? {
-        ...note,
-        ...updates,
-        lastEdited: updates.lastEdited || timeString
-      } : note)
-    );
-
-    const note = this.notes().find(n => n.id === id);
-    if (!note) return;
-
-    // Persist Logic: If content changed, debounce write to file
-    if (updates.content !== undefined) {
-      if (this.saveTimeouts[id]) clearTimeout(this.saveTimeouts[id]);
-      this.saveTimeouts[id] = setTimeout(() => {
-        this.saveNoteContentToFile(id, updates.content || '');
-      }, 1000);
-    }
-
-    // Persist Metadata to DB (content is explicitly excluded/cleared in SqliteService upsert)
-    this.db.upsertNote(note).catch(e => logIfTauri('[StoreService] persist note failed', e));
+    this.noteCommands.updateNote(id, updates);
   }
 
   private async saveNoteContentToFile(id: string, html: string) {
-    if (!this.turndownService) await this.initMarkdown();
-    if (!this.turndownService) return; // Guard
-
-    const md = this.turndownService.turndown(html);
-    const filePath = await this.fs.saveNote(id, md);
-
-    // Update filePath in DB if changed (or first time)
-    const note = this.notes().find(n => n.id === id);
-    if (note && note.filePath !== filePath) {
-      this.notes.update(ns => ns.map(n => n.id === id ? { ...n, filePath } : n));
-      this.db.upsertNote({ ...note, filePath });
-    }
+    // Managed by NotePersistenceEffect now
   }
 
   deleteNote(id: string) {
@@ -393,10 +358,8 @@ export class StoreService {
       });
     }
 
-    this.notes.set(existingNotes.filter(n => n.id !== id));
+    this.noteCommands.deleteNote(id);
     this.addActivity('Note deleted', 'system');
-    this.db.removeNote(id).catch(e => logIfTauri('[StoreService] remove note failed', e));
-    this.fs.deleteNote(id).catch(e => console.error('Failed to delete note file', e));
   }
 
   addPlanningItem(item: PlanningItem) {

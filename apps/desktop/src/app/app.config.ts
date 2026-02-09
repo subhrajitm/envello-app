@@ -7,9 +7,9 @@ import { routes } from './app.routes';
 import { GlobalErrorHandler } from './core/errors/global-error.handler';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
-import { PersistenceAdapter, TaskPersistenceEffect } from '@envello/shared-data';
+import { PersistenceAdapter, TaskPersistenceEffect, NotePersistenceEffect } from '@envello/shared-data';
 import { SqlitePersistenceAdapter } from './data/adapters/sqlite-persistence.adapter';
-import { TaskReducer } from '@envello/shared-state';
+import { TaskReducer, NoteReducer } from '@envello/shared-state';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,5 +23,7 @@ export const appConfig: ApplicationConfig = {
     { provide: PersistenceAdapter, useClass: SqlitePersistenceAdapter },
     TaskReducer,
     TaskPersistenceEffect,
+    NoteReducer,
+    NotePersistenceEffect,
   ],
 };
