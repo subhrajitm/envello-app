@@ -3,8 +3,8 @@ import { BinService } from './bin.service';
 import { SqliteService } from '../core/services/sqlite.service';
 import { logIfTauri } from '../core/utils/tauri-helpers';
 import { FileSystemService } from '../core/services/file-system.service';
-import { TaskStore, NoteStore } from '@envello/shared-state';
-import { TaskCommands, NoteCommands } from '@envello/shared-domain';
+import { TaskStore, NoteStore, NovelStore } from '@envello/shared-state';
+import { TaskCommands, NoteCommands, NovelCommands } from '@envello/shared-domain';
 
 export interface Task {
   id: string;
@@ -205,6 +205,8 @@ export class StoreService {
   private taskCommands = inject(TaskCommands);
   private noteStore = inject(NoteStore);
   private noteCommands = inject(NoteCommands);
+  private novelStore = inject(NovelStore);
+  private novelCommands = inject(NovelCommands);
 
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
@@ -221,6 +223,11 @@ export class StoreService {
     // Sync notes signal with NoteStore for backward compatibility
     effect(() => {
       this.notes.set(this.noteStore.notes());
+    });
+
+    // Sync novels signal with NovelStore for backward compatibility
+    effect(() => {
+      this.novels.set(this.novelStore.novels());
     });
   }
 
@@ -243,12 +250,12 @@ export class StoreService {
 
   private async loadFromDb(): Promise<void> {
     try {
-      const [tasks, notes, planningItems, activities, novels] = await Promise.all([
+      const [tasks, notes, planningItems, activities] = await Promise.all([
         this.db.getAllTasks(),
         this.db.getAllNotes(),
         this.db.getAllPlanningItems(),
         this.db.getAllActivities(),
-        this.db.getAllNovels(),
+        // Novels are managed by NovelPersistenceEffect + NovelStore
       ]);
       // NoteStore is initialized by NotePersistenceEffect, but we iterate here to sync initial state if needed?
       // Actually NotePersistenceEffect loads data into NoteStore.
@@ -263,7 +270,7 @@ export class StoreService {
       // this.notes.set(notes); // Managed by NoteStore now
       this.planningItems.set(planningItems);
       this.activities.set(activities.slice(0, 50));
-      this.novels.set(novels);
+      // this.novels.set(novels); // Managed by NovelStore now
     } catch (e) {
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
         logIfTauri('[StoreService] loadFromDb failed', e);
@@ -372,10 +379,12 @@ export class StoreService {
     this.db.upsertPlanningItem(item).catch(e => logIfTauri('[StoreService] persist planning item failed', e));
   }
 
-  addNovel(novel: Novel) {
-    this.novels.update(novels => [...novels, novel]);
+  addNovel(novel: Novel, content?: any) {
+    // Delegate to Event Bus
+    // The Store sync effect will update this.novels()
+    // The PersistenceEffect will handle DB operations
+    this.novelCommands.createNovel(novel, content);
     this.addActivity('Project started: ' + novel.title, 'system');
-    this.db.upsertNovel(novel).catch(e => logIfTauri('[StoreService] persist novel failed', e));
 
     // Auto-create Project for this Novel
     const projectId = crypto.randomUUID();
@@ -419,10 +428,10 @@ export class StoreService {
         payload: novel,
       });
     }
-    this.novels.set(existing.filter(n => n.id !== id));
+
+    // Delegate to Event Bus
+    this.novelCommands.deleteNovel(id);
     this.addActivity('Novel deleted', 'system');
-    this.db.removeNovel(id).catch(e => logIfTauri('[StoreService] remove novel failed', e));
-    this.db.removeNovelContent(id).catch(e => logIfTauri('[StoreService] remove novel content failed', e));
   }
 
   addActivity(text: string, type: Activity['type'] = 'entry') {

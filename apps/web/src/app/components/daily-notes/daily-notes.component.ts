@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Note } from '../../services/store.service';
+import { NoteCommands, Note } from '@envello/shared-domain';
+import { NoteStore } from '@envello/shared-state';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shared/ui';
 import { TauriService } from '../../core/services/tauri.service';
@@ -51,12 +52,13 @@ interface TagCategory {
   styleUrl: './daily-notes.component.css'
 })
 export class DailyNotesComponent implements OnInit, OnDestroy {
-  private store = inject(StoreService);
+  private noteStore = inject(NoteStore);
+  private noteCommands = inject(NoteCommands);
   private tauriService = inject(TauriService);
   editor!: Editor;
 
   // Connect to store signals
-  notes = this.store.notes;
+  notes = this.noteStore.notes;
 
   wordCount = signal(0);
   characterCount = signal(0);
@@ -169,13 +171,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   constructor() {
     // Initialize selection if notes exist
-    if (this.notes().length > 0) {
-      const firstNoteId = this.notes()[0].id;
-      this.selectedEntryId.set(firstNoteId);
-      this.openNotes.set([firstNoteId]);
-      // Trigger lazy load
-      this.store.loadNoteContent(firstNoteId);
-    }
+    effect(() => {
+      // We need to use untracked or be careful with effects in constructor
+      // But actually, we want this to run once when notes are loaded or initially available
+      const currentNotes = this.notes();
+      if (currentNotes.length > 0 && !this.selectedEntryId()) {
+        // Only auto-select if nothing selected
+        const firstNoteId = currentNotes[0].id;
+        this.selectedEntryId.set(firstNoteId);
+        this.openNotes.set([firstNoteId]);
+        // Trigger lazy load
+        this.noteCommands.loadNoteContent(firstNoteId);
+      }
+    }, { allowSignalWrites: true });
 
     // Effect to update editor content when selected note changes
     effect(() => {
@@ -276,7 +284,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   updateNoteContent(content: string, preview: string) {
     const activeId = this.selectedEntryId();
     if (activeId) {
-      this.store.updateNote(activeId, { content, preview });
+      this.noteCommands.updateNote(activeId, { content, preview });
     }
   }
 
@@ -289,14 +297,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       content: '<p>Start writing your thoughts...</p>',
       tags: []
     };
-    this.store.addNote(newNote);
+    this.noteCommands.createNote(newNote);
     this.selectedEntryId.set(newNote.id);
   }
 
   selectNote(id: string) {
     this.selectedEntryId.set(id);
     // Trigger lazy load from file system
-    this.store.loadNoteContent(id);
+    this.noteCommands.loadNoteContent(id);
 
     // Add to open notes if not already open
     if (!this.openNotes().includes(id)) {
@@ -431,7 +439,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   updateNoteTitle(title: string) {
     const activeId = this.selectedEntryId();
     if (activeId) {
-      this.store.updateNote(activeId, { title });
+      this.noteCommands.updateNote(activeId, { title });
     }
   }
 
@@ -453,7 +461,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const activeId = this.tempNoteId();
     if (activeId) {
       this.closeNoteTab(activeId);
-      this.store.deleteNote(activeId);
+      this.noteCommands.deleteNote(activeId);
     }
     this.closeModal();
   }
@@ -463,7 +471,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (note) {
       const currentTags = note.tags || [];
       if (!currentTags.includes(tag)) {
-        this.store.updateNote(note.id, { tags: [...currentTags, tag] });
+        this.noteCommands.updateNote(note.id, { tags: [...currentTags, tag] });
       }
     }
   }
@@ -471,7 +479,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   removeTag(tag: string) {
     const note = this.selectedNote();
     if (note && note.tags) {
-      this.store.updateNote(note.id, { tags: note.tags.filter(t => t !== tag) });
+      this.noteCommands.updateNote(note.id, { tags: note.tags.filter(t => t !== tag) });
     }
   }
 

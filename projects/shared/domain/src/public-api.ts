@@ -9,3 +9,7 @@ export * from './lib/tasks/task.commands';
 export * from './lib/notes/note.model';
 export * from './lib/notes/note.events';
 export * from './lib/notes/note.commands';
+
+export * from './lib/novels/novel.model';
+export * from './lib/novels/novel.events';
+export * from './lib/novels/novel.commands';

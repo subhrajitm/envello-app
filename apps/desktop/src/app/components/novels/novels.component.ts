@@ -239,8 +239,22 @@ export class NovelsComponent {
         genre,
         isRecentlyUpdated: true
       };
-      this.store.addNovel(novel);
-      await this.novelContent.createAndPersistEmptyNovel(id, title);
+
+      const initialContent: any = { // Type as NovelContent but allow specific structure
+        id,
+        title,
+        synopsis: { logline: '', theme: '' },
+        frontMatter: [],
+        chapters: [
+          { id: 'g1', title: 'Part 1', expanded: true, children: [] }
+        ],
+        characters: [],
+        locations: [],
+        notes: []
+      };
+
+      this.store.addNovel(novel, initialContent);
+      // await this.novelContent.createAndPersistEmptyNovel(id, title); // handled by effect now
       this.closeAddModal();
       this.router.navigate(['/novels', id]);
     } catch (e) {

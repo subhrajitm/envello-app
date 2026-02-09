@@ -20,16 +20,16 @@
     "baseUrl": ".",
     "paths": {
       "@envello/shared-core": [
-        "dist/shared/core"
+        "projects/shared/core/src/public-api.ts"
       ],
       "@envello/shared-state": [
-        "dist/shared/state"
+        "projects/shared/state/src/public-api.ts"
       ],
       "@envello/shared-domain": [
-        "dist/shared/domain"
+        "projects/shared/domain/src/public-api.ts"
       ],
       "@envello/shared-data": [
-        "dist/shared/data"
+        "projects/shared/data/src/public-api.ts"
       ],
       "core": [
         "./dist/core"

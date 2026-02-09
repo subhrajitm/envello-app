@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { PersistenceAdapter } from '@envello/shared-data';
 import { RxdbService } from '../../core/services/rxdb.service';
 import { FileSystemService } from '../../core/services/file-system.service';
-import { Task, Note } from '@envello/shared-domain';
+import { Task, Note, Novel, NovelContent } from '@envello/shared-domain';
 
 /**
  * RxDB Persistence Adapter (Web)
@@ -51,5 +51,39 @@ export class RxdbPersistenceAdapter extends PersistenceAdapter {
 
     async removeNoteContent(id: string): Promise<void> {
         await this.fs.deleteNote(id);
+    }
+
+    // ─── Novels ────────────────────────────────────────────────────────────────
+
+    async loadNovels(): Promise<Novel[]> {
+        return this.rxdb.getAllNovels();
+    }
+
+    async upsertNovel(novel: Novel): Promise<void> {
+        await this.rxdb.upsertNovel(novel);
+    }
+
+    async removeNovel(id: string): Promise<void> {
+        await this.rxdb.removeNovel(id);
+    }
+
+    async loadNovelContent(id: string): Promise<NovelContent> {
+        const content = await this.rxdb.getNovelContent(id);
+        if (!content) throw new Error(`Novel content not found for id: ${id}`);
+        try {
+            return JSON.parse(content) as NovelContent;
+        } catch (e) {
+            console.error('Failed to parse novel content', e);
+            throw e;
+        }
+    }
+
+    async saveNovelContent(id: string, content: NovelContent): Promise<void> {
+        const data = JSON.stringify(content);
+        await this.rxdb.setNovelContent(id, data);
+    }
+
+    async removeNovelContent(id: string): Promise<void> {
+        await this.rxdb.removeNovelContent(id);
     }
 }

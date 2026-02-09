@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { PersistenceAdapter } from '@envello/shared-data';
 import { SqliteService } from '../../core/services/sqlite.service';
 import { FileSystemService } from '../../core/services/file-system.service';
-import { Task, Note } from '@envello/shared-domain';
+import { Task, Note, Novel, NovelContent } from '@envello/shared-domain';
 
 /**
  * SQLite Persistence Adapter (Desktop)
@@ -53,5 +53,39 @@ export class SqlitePersistenceAdapter extends PersistenceAdapter {
 
     async removeNoteContent(id: string): Promise<void> {
         await this.fs.deleteNote(id);
+    }
+
+    // ─── Novels ────────────────────────────────────────────────────────────────
+
+    async loadNovels(): Promise<Novel[]> {
+        return this.sqlite.getAllNovels();
+    }
+
+    async upsertNovel(novel: Novel): Promise<void> {
+        await this.sqlite.upsertNovel(novel);
+    }
+
+    async removeNovel(id: string): Promise<void> {
+        await this.sqlite.removeNovel(id);
+    }
+
+    async loadNovelContent(id: string): Promise<NovelContent> {
+        const data = await this.sqlite.getNovelContent(id);
+        if (!data) throw new Error(`Novel content not found for id: ${id}`);
+        try {
+            return JSON.parse(data) as NovelContent;
+        } catch (e) {
+            console.error('Failed to parse novel content', e);
+            throw e;
+        }
+    }
+
+    async saveNovelContent(id: string, content: NovelContent): Promise<void> {
+        const data = JSON.stringify(content);
+        await this.sqlite.setNovelContent(id, data);
+    }
+
+    async removeNovelContent(id: string): Promise<void> {
+        await this.sqlite.removeNovelContent(id);
     }
 }

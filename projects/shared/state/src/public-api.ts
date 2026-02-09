@@ -7,4 +7,6 @@ export * from './lib/reducers/task.reducer';
 
 export * from './lib/stores/note.store';
 export * from './lib/stores/editor.store';
+export * from './lib/stores/novel.store';
 export * from './lib/reducers/note.reducer';
+export * from './lib/reducers/novel.reducer';

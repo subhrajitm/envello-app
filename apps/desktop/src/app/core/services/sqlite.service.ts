@@ -512,6 +512,7 @@ export class SqliteService {
     }
 
     async getAllTasks(): Promise<TaskDoc[]> {
+        await this.getDb();
         return this.tasksSubject.getValue();
     }
 
@@ -585,6 +586,7 @@ export class SqliteService {
     }
 
     async getAllNotes(): Promise<NoteDoc[]> {
+        await this.getDb();
         return this.notesSubject.getValue();
     }
 
@@ -646,6 +648,7 @@ export class SqliteService {
     }
 
     async getAllPlanningItems(): Promise<PlanningItemDoc[]> {
+        await this.getDb();
         return this.planningItemsSubject.getValue();
     }
 
@@ -679,6 +682,7 @@ export class SqliteService {
     }
 
     async getAllActivities(): Promise<ActivityDoc[]> {
+        await this.getDb();
         return this.activitiesSubject.getValue();
     }
 
@@ -726,6 +730,7 @@ export class SqliteService {
     }
 
     async getAllNovels(): Promise<NovelDoc[]> {
+        await this.getDb();
         return this.novelsSubject.getValue();
     }
 
@@ -797,6 +802,7 @@ export class SqliteService {
     }
 
     async getAllBinItems(): Promise<BinItemDoc[]> {
+        await this.getDb();
         return this.binItemsSubject.getValue();
     }
 
@@ -830,6 +836,7 @@ export class SqliteService {
     }
 
     async getAllSnippets(): Promise<SnippetDoc[]> {
+        await this.getDb();
         return this.snippetsSubject.getValue();
     }
 
@@ -863,6 +870,7 @@ export class SqliteService {
     }
 
     async getAllBooks(): Promise<BookDoc[]> {
+        await this.getDb();
         return this.booksSubject.getValue();
     }
 
@@ -901,6 +909,7 @@ export class SqliteService {
     }
 
     async getAllMeetings(): Promise<MeetingDoc[]> {
+        await this.getDb();
         return this.meetingsSubject.getValue();
     }
 
@@ -924,6 +933,7 @@ export class SqliteService {
     }
 
     async getAllArticles(): Promise<ArticleDoc[]> {
+        await this.getDb();
         return this.articlesSubject.getValue();
     }
 
@@ -1003,6 +1013,7 @@ export class SqliteService {
     }
 
     async getAllJournalProjects(): Promise<JournalProjectDoc[]> {
+        await this.getDb();
         return this.journalProjectsSubject.getValue();
     }
 
@@ -1069,6 +1080,7 @@ export class SqliteService {
     }
 
     async getAllJournalEntries(): Promise<JournalEntryDoc[]> {
+        await this.getDb();
         return this.journalEntriesSubject.getValue();
     }
 
@@ -1104,6 +1116,7 @@ export class SqliteService {
     }
 
     async getAllJournalColumns(): Promise<JournalColumnDoc[]> {
+        await this.getDb();
         return this.journalColumnsSubject.getValue();
     }
 
@@ -1133,6 +1146,7 @@ export class SqliteService {
     }
 
     async getAllResearchLibraries(): Promise<ResearchLibraryDoc[]> {
+        await this.getDb();
         return this.researchLibrariesSubject.getValue();
     }
 
@@ -1170,6 +1184,7 @@ export class SqliteService {
     }
 
     async getAllResearchSources(): Promise<ResearchSourceDoc[]> {
+        await this.getDb();
         return this.researchSourcesSubject.getValue();
     }
 
@@ -1207,6 +1222,7 @@ export class SqliteService {
     }
 
     async getAllResearchSummaries(): Promise<ResearchSummaryDoc[]> {
+        await this.getDb();
         return this.researchSummariesSubject.getValue();
     }
 

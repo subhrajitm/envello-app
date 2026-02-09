@@ -1,15 +1,28 @@
-/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
-/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "types": [
       "jasmine"
-    ]
+    ],
+    "paths": {
+      "@envello/shared-core": [
+        "../../projects/shared/core/src/public-api.ts"
+      ],
+      "@envello/shared-state": [
+        "../../projects/shared/state/src/public-api.ts"
+      ],
+      "@envello/shared-domain": [
+        "../../projects/shared/domain/src/public-api.ts"
+      ],
+      "@envello/shared-data": [
+        "../../projects/shared/data/src/public-api.ts"
+      ]
+    }
   },
   "include": [
     "src/**/*.spec.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "../../projects/shared/**/*.spec.ts"
   ]
 }
