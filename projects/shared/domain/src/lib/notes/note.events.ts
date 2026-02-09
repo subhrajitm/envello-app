@@ -8,6 +8,7 @@ export const NoteEvents = {
     CREATED: 'note.created',
     UPDATED: 'note.updated',
     DELETED: 'note.deleted',
+    LOAD_CONTENT: 'note.load_content',
     CONTENT_LOADED: 'note.content_loaded',
     CONTENT_SAVED: 'note.content_saved',
     TAG_ADDED: 'note.tag_added',
@@ -39,7 +40,14 @@ export interface NoteDeletedPayload {
 }
 
 /**
- * Note Content Loaded Event Payload
+ * Note Load Content Event Payload (Request)
+ */
+export interface NoteLoadContentPayload {
+    id: string;
+}
+
+/**
+ * Note Content Loaded Event Payload (Response)
  */
 export interface NoteContentLoadedPayload {
     id: string;

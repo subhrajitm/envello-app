@@ -1,4 +1,4 @@
-import { Task } from '@envello/shared-domain';
+import { Task, Note } from '@envello/shared-domain';
 
 /**
  * Persistence Adapter Interface
@@ -11,8 +11,15 @@ export abstract class PersistenceAdapter {
     abstract upsertTask(task: Task): Promise<void>;
     abstract removeTask(id: string): Promise<void>;
 
+    // Note operations
+    abstract loadNotes(): Promise<Note[]>;
+    abstract upsertNote(note: Note): Promise<void>;
+    abstract removeNote(id: string): Promise<void>;
+    abstract loadNoteContent(id: string): Promise<string>;
+    abstract saveNoteContent(id: string, content: string): Promise<string>; // Returns filePath
+    abstract removeNoteContent(id: string): Promise<void>;
+
     // Future: Add methods for other domains
-    // abstract loadNotes(): Promise<Note[]>;
-    // abstract upsertNote(note: Note): Promise<void>;
+    // abstract loadJournals(): Promise<Journal[]>;
     // etc.
 }

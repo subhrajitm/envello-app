@@ -47,8 +47,8 @@ export class NoteCommands {
      */
     loadNoteContent(id: string): void {
         this.eventBus.dispatch({
-            type: NoteEvents.CONTENT_LOADED,
-            payload: { id, content: '' } // Content will be loaded by effect
+            type: NoteEvents.LOAD_CONTENT,
+            payload: { id }
         });
     }
 
