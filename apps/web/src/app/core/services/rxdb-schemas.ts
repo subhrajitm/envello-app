@@ -74,7 +74,7 @@ export const SCHEMAS = {
     },
     novels: {
         title: 'novels schema',
-        version: 0,
+        version: 1,
         primaryKey: 'id',
         type: 'object',
         properties: {
@@ -91,18 +91,9 @@ export const SCHEMAS = {
             lastUpdated: { type: 'string' },
             genre: { type: 'array', items: { type: 'string' } },
             isRecentlyUpdated: { type: 'boolean' },
-            coverImage: { type: 'string' }
-        },
-        required: ['id']
-    },
-    novel_content: {
-        title: 'novel content schema',
-        version: 0,
-        primaryKey: 'id',
-        type: 'object',
-        properties: {
-            id: { type: 'string', maxLength: 100 },
-            data: { type: 'string' }
+            coverImage: { type: 'string' },
+            // Consolidated: novel_content merged into novels
+            content: { type: 'string' }
         },
         required: ['id']
     },
@@ -224,124 +215,81 @@ export const SCHEMAS = {
         },
         required: ['id']
     },
-    journal_projects: {
-        title: 'journal projects schema',
+    journals: {
+        title: 'journals schema (consolidated)',
         version: 0,
         primaryKey: 'id',
         type: 'object',
         properties: {
             id: { type: 'string', maxLength: 100 },
+            entityType: { type: 'string' }, // 'project' | 'entry' | 'column'
+            // Common fields
             title: { type: 'string' },
+            createdDate: { type: 'string' },
+            lastUpdated: { type: 'string' },
+            // Project fields
             description: { type: 'string' },
             entriesCount: { type: 'number' },
             active: { type: 'boolean' },
             wordCount: { type: 'number' },
             targetWordCount: { type: 'number' },
             progress: { type: 'number' },
-            createdDate: { type: 'string' },
-            lastUpdated: { type: 'string' },
             columns: { type: 'array', items: { type: 'object' } },
             tags: { type: 'array', items: { type: 'string' } },
-            isLocked: { type: 'boolean' }
-        },
-        required: ['id']
-    },
-    journal_entries: {
-        title: 'journal entries schema',
-        version: 0,
-        primaryKey: 'id',
-        type: 'object',
-        properties: {
-            id: { type: 'string', maxLength: 100 },
+            isLocked: { type: 'boolean' },
+            // Entry fields
             projectId: { type: 'string' },
-            title: { type: 'string' },
             content: { type: 'string' },
             preview: { type: 'string' },
             type: { type: 'string' },
             column: { type: 'string' },
-            tags: { type: 'array', items: { type: 'string' } },
-            wordCount: { type: 'number' },
             characterCount: { type: 'number' },
-            createdDate: { type: 'string' },
             lastEdited: { type: 'string' },
             hasAi: { type: 'boolean' },
             isAiEdited: { type: 'boolean' },
-            progress: { type: 'number' },
             statusColor: { type: 'string' },
             meta: { type: 'object', additionalProperties: true },
-            isLocked: { type: 'boolean' },
             linkedEntries: { type: 'array', items: { type: 'string' } },
             isPinned: { type: 'boolean' },
-            isFavorite: { type: 'boolean' }
-        },
-        required: ['id']
-    },
-    journal_columns: {
-        title: 'journal columns schema',
-        version: 0,
-        primaryKey: 'id',
-        type: 'object',
-        properties: {
-            id: { type: 'string', maxLength: 100 },
+            isFavorite: { type: 'boolean' },
+            // Column fields
             name: { type: 'string' },
             color: { type: 'string' },
             order: { type: 'number' }
         },
-        required: ['id']
+        required: ['id', 'entityType']
     },
-    research_libraries: {
-        title: 'research libraries schema',
+    research: {
+        title: 'research schema (consolidated)',
         version: 0,
         primaryKey: 'id',
         type: 'object',
         properties: {
             id: { type: 'string', maxLength: 100 },
+            entityType: { type: 'string' }, // 'library' | 'source' | 'summary'
+            // Common fields
+            title: { type: 'string' },
             name: { type: 'string' },
             description: { type: 'string' },
-            color: { type: 'string' },
             createdDate: { type: 'string' },
-            lastModified: { type: 'string' }
-        },
-        required: ['id']
-    },
-    research_sources: {
-        title: 'research sources schema',
-        version: 0,
-        primaryKey: 'id',
-        type: 'object',
-        properties: {
-            id: { type: 'string', maxLength: 100 },
+            lastModified: { type: 'string' },
+            tags: { type: 'array', items: { type: 'string' } },
+            // Library fields
+            color: { type: 'string' },
+            // Source fields
             libraryId: { type: 'string' },
-            title: { type: 'string' },
             sourceType: { type: 'string' },
             url: { type: 'string' },
-            description: { type: 'string' },
             author: { type: 'string' },
             publishDate: { type: 'string' },
-            tags: { type: 'array', items: { type: 'string' } },
             status: { type: 'string' },
             notes: { type: 'string' },
-            createdDate: { type: 'string' },
-            lastAccessed: { type: 'string' }
-        },
-        required: ['id']
-    },
-    research_summaries: {
-        title: 'research summaries schema',
-        version: 0,
-        primaryKey: 'id',
-        type: 'object',
-        properties: {
-            id: { type: 'string', maxLength: 100 },
-            libraryId: { type: 'string' },
-            title: { type: 'string' },
+            lastAccessed: { type: 'string' },
+            // Summary fields
             content: { type: 'string' },
-            sourceIds: { type: 'array', items: { type: 'string' } },
-            tags: { type: 'array', items: { type: 'string' } },
-            createdDate: { type: 'string' },
-            lastModified: { type: 'string' }
+            sourceIds: { type: 'array', items: { type: 'string' } }
         },
-        required: ['id']
+        required: ['id', 'entityType']
     },
     files: {
         title: 'files schema',

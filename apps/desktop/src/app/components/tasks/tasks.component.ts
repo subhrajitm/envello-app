@@ -1,6 +1,8 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task } from '../../services/store.service';
+import { TaskStore } from '@envello/shared-state';
+import { TaskCommands } from '@envello/shared-domain';
 import { SidebarComponent, SidebarNavItem } from '../layout/sidebar/sidebar.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 
@@ -29,15 +31,15 @@ export class TasksComponent implements OnInit, OnDestroy {
    * - 'calendar'  → calendar view
    */
   viewMode = signal<ViewMode>('list');
-  
+
   // Quick add bar state
   quickAddVisible = signal<boolean>(false);
   quickAddInput = signal<string>('');
-  
+
   // Focus mode state
   focusMode = signal<boolean>(false);
   focusedTask = signal<Task | null>(null);
-  
+
   // Task details modal state
   showTaskDetails = signal<boolean>(false);
   selectedTaskForDetails = signal<Task | null>(null);
@@ -48,64 +50,64 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskDue = signal<string | undefined>(undefined);
   editedTaskList = signal<string>('Inbox');
   editedTaskLabels = signal<string[]>([]);
-  
+
   // Pomodoro timer state
   pomodoroActive = signal<boolean>(false);
   pomodoroTime = signal<number>(25 * 60); // 25 minutes in seconds
   pomodoroTask = signal<Task | null>(null);
-  
+
   // Keyboard shortcuts help
   showShortcutsHelp = signal<boolean>(false);
-  
+
   // Timeline/Gantt view state
   timelineViewDate = signal<Date>(new Date());
   timelineZoom = signal<'day' | 'week' | 'month'>('week');
-  
+
   // Bulk operations
   selectedTasks = signal<Set<string>>(new Set());
   bulkActionMode = signal<boolean>(false);
-  
+
   // Undo/Redo
   actionHistory = signal<Array<{ type: string; task: Task; previousState?: Partial<Task> }>>([]);
   historyIndex = signal<number>(-1);
-  
+
   // Theme
   theme = signal<'light' | 'dark'>('light');
-  
+
   // File upload
   uploadingFiles = signal<boolean>(false);
   filesToUpload = signal<File[]>([]);
-  
+
   // Markdown preview
   showMarkdownPreview = signal<boolean>(false);
-  
+
   // Loading states
   isLoading = signal<boolean>(false);
-  
+
   // Virtual scrolling
   virtualScrollEnabled = signal<boolean>(true);
   visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 50 });
   itemHeight: number = 60; // Approximate height of each task row
-  
+
   // Voice input
   isListening = signal<boolean>(false);
   voiceRecognition: any = null;
   voiceTranscript = signal<string>('');
-  
+
   // Photo capture
   showCameraCapture = signal<boolean>(false);
   capturedPhoto = signal<string | null>(null);
 
   // Toolbar attachments dropdown
   showAttachmentsMenu = signal<boolean>(false);
-  
+
   // Error handling
   errorMessage = signal<string | null>(null);
   showError = signal<boolean>(false);
-  
+
   // Image preview
   previewingImage = signal<string | null>(null);
-  
+
   // Snooze
   snoozeOptions = signal<Array<{ id: string; label: string; minutes: number }>>([
     { id: '5min', label: '5 minutes', minutes: 5 },
@@ -115,12 +117,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     { id: '2hours', label: '2 hours', minutes: 120 },
     { id: 'tomorrow', label: 'Tomorrow', minutes: 24 * 60 }
   ]);
-  
+
   // Theme customization
   fontSize = signal<'small' | 'medium' | 'large'>('medium');
   customColors = signal<{ primary: string; secondary: string } | null>(null);
   showThemeSettings = signal<boolean>(false);
-  
+
   // Snooze
   showSnoozeOptions = signal<number | null>(null);
 
@@ -135,34 +137,34 @@ export class TasksComponent implements OnInit, OnDestroy {
   newTaskHasReminder = signal<boolean>(false);
   newTaskReminderTimes = signal<string[]>([]);
   newReminderTimeInput = signal<string>('');
-   // Labels for the new task
+  // Labels for the new task
   newTaskLabels = signal<string[]>([]);
   newTaskLabelInput = signal<string>('');
   showLabelAutocomplete = signal<boolean>(false);
-  
+
   // Recurring task state
   newTaskRecurring = signal<boolean>(false);
   newTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
-  
+
   // Subtasks state
   newTaskSubtasks = signal<string[]>([]);
   newSubtaskInput = signal<string>('');
-  
+
   // Advanced options
   showAdvancedOptions = signal<boolean>(false);
-  
+
   // Task dependencies
   newTaskDependencies = signal<string[]>([]);
-  
+
   // Calendar dropdown state
   showDatePicker = signal<boolean>(false);
   datePickerDate = signal<Date>(new Date());
-  
+
   // Folder dropdown state
   showFolderDropdown = signal<boolean>(false);
   showCreateFolder = signal<boolean>(false);
   newFolderName = signal<string>('');
-  
+
   // Sidebar folder state
   showCreateFolderInSidebar = signal<boolean>(false);
   newFolderNameSidebar = signal<string>('');
@@ -170,7 +172,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   selectedFolder = signal<string>('');
   // Active item in primary sidebar nav (Inbox/Today/Upcoming/Completed)
   sidebarActiveId = signal<string | null>('inbox');
-  
+
   // Available lists/folders
   availableLists = computed(() => {
     const lists = new Set<string>();
@@ -181,12 +183,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     });
     return Array.from(lists).sort();
   });
-  
+
   // Get task count for a folder
   getFolderTaskCount(folderName: string): number {
     return this.store.tasks().filter(t => t.project === folderName).length;
   }
-  
+
   // Sidebar folder methods
   selectFolderInSidebar(folderName: string) {
     // When a project/context is selected, clear primary nav selection
@@ -199,11 +201,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Filter tasks by folder
     this.sidebarSearch.set('');
   }
-  
+
   createFolderInSidebar() {
     const folderName = this.newFolderNameSidebar().trim();
     if (!folderName) return;
-    
+
     this.showCreateFolderInSidebar.set(false);
     this.newFolderNameSidebar.set('');
     this.selectedFolder.set(folderName);
@@ -360,30 +362,30 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.newTaskReminderTimes.set(['1 hour before']);
     }
   }
-  
+
   addReminderTime() {
     const time = this.newReminderTimeInput().trim();
     if (!time) return;
     this.newTaskReminderTimes.set([...this.newTaskReminderTimes(), time]);
     this.newReminderTimeInput.set('');
   }
-  
+
   removeReminderTime(index: number) {
     const times = this.newTaskReminderTimes();
     this.newTaskReminderTimes.set(times.filter((_, i) => i !== index));
   }
-  
+
   snoozeReminder(index: number, minutes: number) {
     const times = this.newTaskReminderTimes();
     const currentTime = times[index];
-    
+
     // Calculate new reminder time
     const now = new Date();
     const snoozeTime = new Date(now.getTime() + minutes * 60 * 1000);
-    const newTime = minutes >= 24 * 60 
+    const newTime = minutes >= 24 * 60
       ? 'Tomorrow, ' + snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       : snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
+
     const updated = [...times];
     updated[index] = newTime;
     this.newTaskReminderTimes.set(updated);
@@ -403,16 +405,16 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskLabelInput.set('');
     this.showLabelAutocomplete.set(false);
   }
-  
+
   getLabelSuggestions(): string[] {
     const input = this.newTaskLabelInput().toLowerCase();
     if (!input) return [];
-    return this.allLabels().filter(label => 
-      label.toLowerCase().includes(input) && 
+    return this.allLabels().filter(label =>
+      label.toLowerCase().includes(input) &&
       !this.newTaskLabels().includes(label)
     ).slice(0, 5);
   }
-  
+
   hideLabelAutocomplete() {
     // Delay hiding to allow click events on suggestions
     setTimeout(() => {
@@ -442,21 +444,21 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.showErrorState('Task title is required');
       return;
     }
-    
+
     const taskId = Date.now().toString();
-    
+
     // Optimistic update - show loading state
     this.isLoading.set(true);
 
     const subtasks: Task[] | undefined = this.newTaskSubtasks().length > 0
       ? this.newTaskSubtasks().map((st, idx) => ({
-          id: `${taskId}-${idx}`,
-          title: st,
-          priority: 'MEDIUM' as Task['priority'],
-          hours: '0.5H',
-          status: 'ACTIVE' as Task['status'],
-          parentId: taskId
-        }))
+        id: `${taskId}-${idx}`,
+        title: st,
+        priority: 'MEDIUM' as Task['priority'],
+        hours: '0.5H',
+        status: 'ACTIVE' as Task['status'],
+        parentId: taskId
+      }))
       : undefined;
 
     const newTask: Task = {
@@ -468,8 +470,8 @@ export class TasksComponent implements OnInit, OnDestroy {
       project: this.newTaskList() || undefined,
       due: this.newTaskDue(),
       labels: this.newTaskLabels().length ? this.newTaskLabels() : undefined,
-      reminders: this.newTaskHasReminder() && this.newTaskReminderTimes().length > 0 
-        ? this.newTaskReminderTimes() 
+      reminders: this.newTaskHasReminder() && this.newTaskReminderTimes().length > 0
+        ? this.newTaskReminderTimes()
         : undefined,
       subtasks: subtasks,
       recurring: this.newTaskRecurring() ? {
@@ -484,12 +486,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     try {
       // Optimistic update
       this.store.addTask(newTask);
-      
+
       // Upload files if any
       if (this.filesToUpload().length > 0) {
         await this.uploadFiles(taskId);
       }
-      
+
       this.closeNewTaskDialog();
       this.isLoading.set(false);
     } catch (error) {
@@ -498,7 +500,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       // Could implement rollback here if needed
     }
   }
-  
+
   handleFileDrop(event: DragEvent) {
     event.preventDefault();
     if (event.dataTransfer?.files) {
@@ -506,7 +508,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.filesToUpload.set([...this.filesToUpload(), ...files]);
     }
   }
-  
+
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -514,30 +516,30 @@ export class TasksComponent implements OnInit, OnDestroy {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   }
-  
+
   isImageFile(file: File): boolean {
     return file.type.startsWith('image/');
   }
-  
+
   getFilePreview(file: File): string {
     return URL.createObjectURL(file);
   }
-  
+
   previewImage(url: string) {
     this.previewingImage.set(url);
   }
-  
+
   closeImagePreview() {
     this.previewingImage.set(null);
   }
-  
+
   addSubtaskToNew() {
     const input = this.newSubtaskInput().trim();
     if (!input) return;
     this.newTaskSubtasks.set([...this.newTaskSubtasks(), input]);
     this.newSubtaskInput.set('');
   }
-  
+
   removeSubtask(index: number) {
     const subtasks = this.newTaskSubtasks();
     this.newTaskSubtasks.set(subtasks.filter((_, i) => i !== index));
@@ -757,21 +759,21 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.selectedView.set('upcoming');
     }
   }
-  
+
   // Date picker methods
   datePickerPosition = signal<{ top: number; left: number } | null>(null);
-  
+
   // Folder dropdown position
   folderDropdownPosition = signal<{ top: number; left: number } | null>(null);
-  
+
   toggleDatePicker(event?: Event) {
     this.showDatePicker.update(v => {
       if (!v) {
         // Calculate position when opening
         setTimeout(() => {
           const target = event?.target as HTMLElement;
-          const button = target?.closest('.task-modal-control-btn') as HTMLElement || 
-                        document.querySelector('.task-modal-control-btn') as HTMLElement;
+          const button = target?.closest('.task-modal-control-btn') as HTMLElement ||
+            document.querySelector('.task-modal-control-btn') as HTMLElement;
           if (button) {
             const rect = button.getBoundingClientRect();
             this.datePickerPosition.set({
@@ -788,21 +790,21 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.datePickerPosition.set(null);
     }
   }
-  
+
   selectDate(day: number, isCurrentMonth: boolean) {
     if (!isCurrentMonth) return;
-    
+
     const selectedDate = new Date(this.datePickerDate());
     selectedDate.setDate(day);
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selected = new Date(selectedDate);
     selected.setHours(0, 0, 0, 0);
-    
+
     const diffTime = selected.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     const timeStr = this.newTaskDueTime();
     let dateString = '';
     if (diffDays === 0) {
@@ -812,18 +814,18 @@ export class TasksComponent implements OnInit, OnDestroy {
     } else if (diffDays === -1) {
       dateString = `Yesterday, ${timeStr}`;
     } else {
-      dateString = `${selectedDate.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
+      dateString = `${selectedDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
       })}, ${timeStr}`;
     }
-    
+
     this.newTaskDue.set(dateString);
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
   }
-  
+
   updateDueTime(time: string) {
     this.newTaskDueTime.set(time);
     // Update the existing due date string with the new time
@@ -839,63 +841,63 @@ export class TasksComponent implements OnInit, OnDestroy {
       }
     }
   }
-  
+
   navigateDatePickerMonth(direction: 'prev' | 'next') {
     const current = this.datePickerDate();
     const newDate = new Date(current);
-    
+
     if (direction === 'prev') {
       newDate.setMonth(current.getMonth() - 1);
     } else {
       newDate.setMonth(current.getMonth() + 1);
     }
-    
+
     this.datePickerDate.set(newDate);
   }
-  
+
   getDatePickerDays() {
     const date = this.datePickerDate();
     const year = date.getFullYear();
     const month = date.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDay = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
-    
+
     const prevMonth = new Date(year, month, 0);
     const daysInPrevMonth = prevMonth.getDate();
-    
+
     const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean }> = [];
-    
+
     // Previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
       days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false });
     }
-    
+
     // Current month's days
     const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = today.getDate() === day && 
-                     today.getMonth() === month && 
-                     today.getFullYear() === year;
+      const isToday = today.getDate() === day &&
+        today.getMonth() === month &&
+        today.getFullYear() === year;
       days.push({ day, isCurrentMonth: true, isToday });
     }
-    
+
     // Next month's leading days
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       days.push({ day, isCurrentMonth: false, isToday: false });
     }
-    
+
     return days;
   }
-  
+
   getDatePickerMonth() {
     const date = this.datePickerDate();
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
   }
-  
+
   // Folder methods
   toggleFolderDropdown(event?: Event) {
     this.showFolderDropdown.update(v => {
@@ -903,8 +905,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         // Calculate position when opening
         setTimeout(() => {
           const target = event?.target as HTMLElement;
-          const button = target?.closest('.task-modal-folder-btn') as HTMLElement || 
-                        document.querySelector('.task-modal-folder-btn') as HTMLElement;
+          const button = target?.closest('.task-modal-folder-btn') as HTMLElement ||
+            document.querySelector('.task-modal-folder-btn') as HTMLElement;
           if (button) {
             const rect = button.getBoundingClientRect();
             this.folderDropdownPosition.set({
@@ -922,31 +924,31 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.folderDropdownPosition.set(null);
     }
   }
-  
+
   selectFolder(folderName: string) {
     this.newTaskList.set(folderName);
     this.showFolderDropdown.set(false);
     this.folderDropdownPosition.set(null);
   }
-  
+
   toggleCreateFolder() {
     this.showCreateFolder.update(v => !v);
     if (this.showCreateFolder()) {
       this.newFolderName.set('');
     }
   }
-  
+
   createNewFolder() {
     const folderName = this.newFolderName().trim();
     if (!folderName) return;
-    
+
     this.newTaskList.set(folderName);
     this.showCreateFolder.set(false);
     this.showFolderDropdown.set(false);
     this.newFolderName.set('');
     this.folderDropdownPosition.set(null);
   }
-  
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
@@ -960,29 +962,29 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Close date picker if clicking outside
     if (this.showDatePicker()) {
-      if (!target.closest('.task-modal-date-picker') && 
-          !target.closest('.task-modal-control-btn')) {
+      if (!target.closest('.task-modal-date-picker') &&
+        !target.closest('.task-modal-control-btn')) {
         this.showDatePicker.set(false);
         this.datePickerPosition.set(null);
       }
     }
-    
+
     // Close folder dropdown if clicking outside
     if (this.showFolderDropdown()) {
-      if (!target.closest('.task-modal-folder-dropdown') && 
-          !target.closest('.task-modal-folder-btn')) {
+      if (!target.closest('.task-modal-folder-dropdown') &&
+        !target.closest('.task-modal-folder-btn')) {
         this.showFolderDropdown.set(false);
         this.showCreateFolder.set(false);
         this.folderDropdownPosition.set(null);
       }
     }
   }
-  
+
   @HostListener('document:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent) {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const modKey = isMac ? event.metaKey : event.ctrlKey;
-    
+
     // Cmd/Ctrl + Z: Undo
     if (modKey && event.key === 'z' && !event.shiftKey) {
       event.preventDefault();
@@ -991,7 +993,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    
+
     // Cmd/Ctrl + Shift + Z: Redo
     if (modKey && event.key === 'z' && event.shiftKey) {
       event.preventDefault();
@@ -1000,7 +1002,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    
+
     // Cmd/Ctrl + K: Quick add
     if (modKey && event.key === 'k' && !event.shiftKey) {
       event.preventDefault();
@@ -1011,14 +1013,14 @@ export class TasksComponent implements OnInit, OnDestroy {
       }, 0);
       return;
     }
-    
+
     // Cmd/Ctrl + N: New task modal
     if (modKey && event.key === 'n') {
       event.preventDefault();
       this.openNewTaskDialog();
       return;
     }
-    
+
     // Cmd/Ctrl + F: Focus search
     if (modKey && event.key === 'f') {
       event.preventDefault();
@@ -1026,14 +1028,14 @@ export class TasksComponent implements OnInit, OnDestroy {
       searchInput?.focus();
       return;
     }
-    
+
     // Cmd/Ctrl + /: Show shortcuts help
     if (modKey && event.key === '/') {
       event.preventDefault();
       this.showShortcutsHelp.set(!this.showShortcutsHelp());
       return;
     }
-    
+
     // Escape: Close modals/dropdowns
     if (event.key === 'Escape') {
       if (this.newTaskModalOpen()) {
@@ -1061,7 +1063,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       return;
     }
   }
-  
+
   // Natural language parsing
   parseNaturalLanguage(input: string): {
     title: string;
@@ -1073,7 +1075,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const labels: string[] = [];
     let priority: Task['priority'] | undefined;
     let due: string | undefined;
-    
+
     // Extract hashtags (#work, #personal)
     const hashtagRegex = /#(\w+)/g;
     let match;
@@ -1081,13 +1083,13 @@ export class TasksComponent implements OnInit, OnDestroy {
       labels.push(match[1]);
       title = title.replace(match[0], '').trim();
     }
-    
+
     // Extract priority keywords
     const priorityKeywords = {
       high: ['high', 'urgent', 'important', 'critical', 'asap', 'priority'],
       low: ['low', 'later', 'someday', 'optional']
     };
-    
+
     const lowerTitle = title.toLowerCase();
     for (const [key, keywords] of Object.entries(priorityKeywords)) {
       if (keywords.some(kw => lowerTitle.includes(kw))) {
@@ -1099,19 +1101,25 @@ export class TasksComponent implements OnInit, OnDestroy {
         break;
       }
     }
-    
+
     // Extract dates
     const datePatterns = [
       { pattern: /tomorrow/i, value: () => `Tomorrow, ${this.newTaskDueTime()}` },
       { pattern: /today/i, value: () => `Today, ${this.newTaskDueTime()}` },
-      { pattern: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, 
-        value: (match: RegExpMatchArray) => `${this.getNextWeekday(match[1])}, ${this.newTaskDueTime()}` },
-      { pattern: /in\s+(\d+)\s+days?/i, 
-        value: (match: RegExpMatchArray) => `${this.getDateInDays(parseInt(match[1]))}, ${this.newTaskDueTime()}` },
-      { pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
-        value: (match: RegExpMatchArray) => `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}` }
+      {
+        pattern: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+        value: (match: RegExpMatchArray) => `${this.getNextWeekday(match[1])}, ${this.newTaskDueTime()}`
+      },
+      {
+        pattern: /in\s+(\d+)\s+days?/i,
+        value: (match: RegExpMatchArray) => `${this.getDateInDays(parseInt(match[1]))}, ${this.newTaskDueTime()}`
+      },
+      {
+        pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
+        value: (match: RegExpMatchArray) => `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}`
+      }
     ];
-    
+
     for (const { pattern, value } of datePatterns) {
       const dateMatch = title.match(pattern);
       if (dateMatch) {
@@ -1129,25 +1137,27 @@ export class TasksComponent implements OnInit, OnDestroy {
         break;
       }
     }
-    
+
     // Extract time
     const timePatterns = [
-      { pattern: /(\d{1,2}):(\d{2})\s*(am|pm)?/i, 
+      {
+        pattern: /(\d{1,2}):(\d{2})\s*(am|pm)?/i,
         value: (match: RegExpMatchArray) => {
           let hours = parseInt(match[1]);
           const minutes = match[2];
           const period = match[3]?.toLowerCase();
-          
+
           if (period === 'pm' && hours !== 12) hours += 12;
           if (period === 'am' && hours === 12) hours = 0;
-          
+
           if (due) {
             return due.replace(/\d{2}:\d{2}/, `${hours.toString().padStart(2, '0')}:${minutes}`);
           }
           return `Today, ${hours.toString().padStart(2, '0')}:${minutes}`;
-        }}
+        }
+      }
     ];
-    
+
     for (const { pattern, value } of timePatterns) {
       const timeMatch = title.match(pattern);
       if (timeMatch) {
@@ -1158,19 +1168,19 @@ export class TasksComponent implements OnInit, OnDestroy {
         }
       }
     }
-    
+
     // Clean up title (remove extra spaces)
     title = title.replace(/\s+/g, ' ').trim();
-    
+
     return { title, due, priority, labels };
   }
-  
+
   getTomorrowDate(): string {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
-  
+
   getNextWeekday(dayName: string): string {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const targetDay = days.indexOf(dayName.toLowerCase());
@@ -1178,37 +1188,37 @@ export class TasksComponent implements OnInit, OnDestroy {
     const currentDay = today.getDay();
     let daysUntil = (targetDay - currentDay + 7) % 7;
     if (daysUntil === 0) daysUntil = 7;
-    
+
     const nextDate = new Date(today);
     nextDate.setDate(today.getDate() + daysUntil);
     return nextDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
-  
+
   getDateInDays(days: number): string {
     const date = new Date();
     date.setDate(date.getDate() + days);
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
-  
+
   parseDate(month: string, day: string, year?: string): string {
     const currentYear = new Date().getFullYear();
     const y = year ? (year.length === 2 ? `20${year}` : year) : currentYear.toString();
     const date = new Date(parseInt(y), parseInt(month) - 1, parseInt(day));
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
-  
+
   // Quick add functionality
   handleQuickAdd() {
     const input = this.quickAddInput().trim();
     if (!input) return;
-    
+
     const parsed = this.parseNaturalLanguage(input);
-    
+
     if (!parsed.title) {
       // If title is empty after parsing, use original input
       parsed.title = input;
     }
-    
+
     // Set parsed values
     this.newTaskTitle.set(parsed.title);
     if (parsed.due) {
@@ -1223,7 +1233,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (parsed.labels.length > 0) {
       this.newTaskLabels.set([...this.newTaskLabels(), ...parsed.labels]);
     }
-    
+
     // Create task immediately or open modal for confirmation
     if (parsed.title && !parsed.due && !parsed.priority && parsed.labels.length === 0) {
       // Simple task - create immediately
@@ -1274,11 +1284,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (task.status === 'COMPLETED') {
       return;
     }
-    
+
     // Optimistic update
     const previousState = { status: task.status };
     this.addToHistory('update', task, previousState);
-    
+
     try {
       this.store.updateTask(task.id, { status: 'COMPLETED' });
     } catch (error) {
@@ -1298,10 +1308,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   confirmDeleteTask() {
     const task = this.taskPendingDelete();
     if (!task) return;
-    
+
     // Optimistic update
     this.addToHistory('delete', task);
-    
+
     try {
       this.deleteTask(task);
       this.cancelDeleteTask();
@@ -1347,51 +1357,51 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (group === 'upcoming') return this.upcomingGroupExpanded();
     return this.noDueDateGroupExpanded();
   }
-  
+
   // Kanban view methods
   getKanbanTasks(status: Task['status']): Task[] {
     return this.filteredTasks().filter(t => t.status === status);
   }
-  
+
   kanbanDraggedTask = signal<Task | null>(null);
-  
+
   onKanbanDragStart(event: DragEvent, task: Task) {
     this.kanbanDraggedTask.set(task);
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
     }
   }
-  
+
   onKanbanDrop(event: DragEvent, targetStatus: Task['status']) {
     event.preventDefault();
     const target = event.currentTarget as HTMLElement;
     target.classList.remove('drag-over');
-    
+
     const task = this.kanbanDraggedTask();
     if (task) {
       this.store.updateTask(task.id, { status: targetStatus });
       this.kanbanDraggedTask.set(null);
     }
   }
-  
+
   onKanbanDragOver(event: DragEvent) {
     event.preventDefault();
     const target = event.currentTarget as HTMLElement;
     target.classList.add('drag-over');
-    
+
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
   }
-  
+
   onKanbanDragLeave(event: DragEvent) {
     const target = event.currentTarget as HTMLElement;
     target.classList.remove('drag-over');
   }
-  
+
   // Calendar view methods
   calendarViewDate = signal<Date>(new Date());
-  
+
   navigateCalendarView(direction: 'prev' | 'next') {
     const current = this.calendarViewDate();
     const newDate = new Date(current);
@@ -1402,62 +1412,62 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
     this.calendarViewDate.set(newDate);
   }
-  
+
   getCalendarViewMonth(): string {
     const date = this.calendarViewDate();
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
-  
+
   getCalendarViewDays() {
     const date = this.calendarViewDate();
     const year = date.getFullYear();
     const month = date.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDay = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
-    
+
     const prevMonth = new Date(year, month, 0);
     const daysInPrevMonth = prevMonth.getDate();
-    
+
     const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; date: Date }> = [];
-    
+
     // Previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
       const dayDate = new Date(year, month - 1, daysInPrevMonth - i);
       days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false, date: dayDate });
     }
-    
+
     // Current month's days
     const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
       const dayDate = new Date(year, month, day);
-      const isToday = today.getDate() === day && 
-                     today.getMonth() === month && 
-                     today.getFullYear() === year;
+      const isToday = today.getDate() === day &&
+        today.getMonth() === month &&
+        today.getFullYear() === year;
       days.push({ day, isCurrentMonth: true, isToday, date: dayDate });
     }
-    
+
     // Next month's leading days
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       const dayDate = new Date(year, month + 1, day);
       days.push({ day, isCurrentMonth: false, isToday: false, date: dayDate });
     }
-    
+
     return days;
   }
-  
+
   getTasksForDate(date: Date): Task[] {
     const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     return this.filteredTasks().filter(t => {
       if (!t.due) return false;
-      return t.due.includes(dateStr) || 
-             (date.toDateString() === new Date().toDateString() && t.due.includes('Today'));
+      return t.due.includes(dateStr) ||
+        (date.toDateString() === new Date().toDateString() && t.due.includes('Today'));
     });
   }
-  
+
   extractTime(dueString: string | undefined): string {
     if (!dueString) return '';
     const timeMatch = dueString.match(/(\d{1,2}):(\d{2})/);
@@ -1466,13 +1476,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
     return '';
   }
-  
+
   // Subtasks methods
   getCompletedSubtasks(task: Task): number {
     if (!task.subtasks) return 0;
     return task.subtasks.filter(st => st.status === 'COMPLETED').length;
   }
-  
+
   getDependencyTitles(task: Task): string[] {
     if (!task.dependencies) return [];
     return task.dependencies
@@ -1480,7 +1490,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       .filter(t => t !== undefined)
       .map(t => t!.title);
   }
-  
+
   isTaskBlocked(task: Task): boolean {
     if (!task.dependencies || task.dependencies.length === 0) return false;
     return task.dependencies.some(depId => {
@@ -1488,7 +1498,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       return depTask && depTask.status !== 'COMPLETED';
     });
   }
-  
+
   addSubtask(parentTask: Task, subtaskTitle: string) {
     const newSubtask: Task = {
       id: Date.now().toString(),
@@ -1498,22 +1508,22 @@ export class TasksComponent implements OnInit, OnDestroy {
       status: 'ACTIVE',
       parentId: parentTask.id
     };
-    
+
     const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
     this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
   }
-  
+
   // Focus mode
   focusTask(task: Task) {
     this.focusedTask.set(task);
     this.focusMode.set(true);
   }
-  
+
   exitFocusMode() {
     this.focusMode.set(false);
     this.focusedTask.set(null);
   }
-  
+
   // Task details modal methods
   openTaskDetails(task: Task) {
     this.selectedTaskForDetails.set(task);
@@ -1526,21 +1536,21 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.editingTaskDetails.set(false);
     this.showTaskDetails.set(true);
   }
-  
+
   closeTaskDetails() {
     this.showTaskDetails.set(false);
     this.selectedTaskForDetails.set(null);
     this.editingTaskDetails.set(false);
   }
-  
+
   toggleEditTaskDetails() {
     this.editingTaskDetails.update(v => !v);
   }
-  
+
   saveTaskDetails() {
     const task = this.selectedTaskForDetails();
     if (!task) return;
-    
+
     const updates: Partial<Task> = {
       title: this.editedTaskTitle().trim(),
       description: this.editedTaskDescription().trim() || undefined,
@@ -1549,16 +1559,16 @@ export class TasksComponent implements OnInit, OnDestroy {
       project: this.editedTaskList() === 'Inbox' ? undefined : this.editedTaskList(),
       labels: this.editedTaskLabels().length > 0 ? this.editedTaskLabels() : undefined
     };
-    
+
     this.store.updateTask(task.id, updates);
     this.addToHistory('update', task, updates);
     this.editingTaskDetails.set(false);
-    
+
     // Update the selected task reference
     const updatedTask = { ...task, ...updates };
     this.selectedTaskForDetails.set(updatedTask);
   }
-  
+
   deleteTaskFromDetails() {
     const task = this.selectedTaskForDetails();
     if (task) {
@@ -1566,7 +1576,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.requestDeleteTask(task);
     }
   }
-  
+
   completeTaskFromDetails() {
     const task = this.selectedTaskForDetails();
     if (task) {
@@ -1576,14 +1586,14 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.selectedTaskForDetails.set(updatedTask);
     }
   }
-  
+
   startPomodoroFromDetails() {
     const task = this.selectedTaskForDetails();
     if (task) {
       this.startPomodoro(task);
     }
   }
-  
+
   addLabelToEdit(event: Event) {
     const input = event.target as HTMLInputElement;
     const label = input.value.trim();
@@ -1593,37 +1603,37 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
     event.preventDefault();
   }
-  
+
   removeLabelFromEdit(label: string) {
     this.editedTaskLabels.set(this.editedTaskLabels().filter(l => l !== label));
   }
-  
+
   toggleSubtaskStatus(parentTask: Task, subtask: Task) {
     const newStatus: Task['status'] = subtask.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
     const updatedSubtasks = (parentTask.subtasks || []).map(st =>
       st.id === subtask.id ? { ...st, status: newStatus } : st
     );
     this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
-    
+
     // Update the selected task reference
     const updatedTask = { ...parentTask, subtasks: updatedSubtasks };
     this.selectedTaskForDetails.set(updatedTask);
   }
-  
+
   isAttachmentImage(attachment: { name: string; type: string }): boolean {
     return attachment.type.startsWith('image/');
   }
-  
+
   // Pomodoro timer
   startPomodoro(task: Task) {
     this.pomodoroTask.set(task);
     this.pomodoroActive.set(true);
     this.pomodoroTime.set(25 * 60);
-    
+
     if (this.pomodoroInterval) {
       clearInterval(this.pomodoroInterval);
     }
-    
+
     this.pomodoroInterval = setInterval(() => {
       const current = this.pomodoroTime();
       if (current > 0) {
@@ -1633,20 +1643,20 @@ export class TasksComponent implements OnInit, OnDestroy {
       }
     }, 1000);
   }
-  
+
   stopPomodoro() {
     this.pomodoroActive.set(false);
     this.pomodoroTask.set(null);
   }
-  
+
   formatPomodoroTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
-  
+
   pomodoroInterval: any = null;
-  
+
   ngOnInit() {
     // Initialize theme
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -1654,18 +1664,18 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.theme.set(savedTheme);
     }
     document.documentElement.setAttribute('data-theme', this.theme());
-    
+
     // Initialize font size
     const savedFontSize = localStorage.getItem('fontSize') as 'small' | 'medium' | 'large' | null;
     if (savedFontSize) {
       this.fontSize.set(savedFontSize);
     }
     document.documentElement.setAttribute('data-font-size', this.fontSize());
-    
+
     // Initialize voice recognition if available
     this.initVoiceRecognition();
   }
-  
+
   initVoiceRecognition() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1673,7 +1683,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.voiceRecognition.continuous = false;
       this.voiceRecognition.interimResults = false;
       this.voiceRecognition.lang = 'en-US';
-      
+
       this.voiceRecognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         this.voiceTranscript.set(transcript);
@@ -1684,24 +1694,24 @@ export class TasksComponent implements OnInit, OnDestroy {
         }
         this.isListening.set(false);
       };
-      
+
       this.voiceRecognition.onerror = (event: any) => {
         this.showErrorState('Voice recognition error: ' + event.error);
         this.isListening.set(false);
       };
-      
+
       this.voiceRecognition.onend = () => {
         this.isListening.set(false);
       };
     }
   }
-  
+
   startVoiceInput() {
     if (!this.voiceRecognition) {
       this.showErrorState('Voice recognition is not supported in your browser');
       return;
     }
-    
+
     try {
       this.isListening.set(true);
       this.voiceTranscript.set('');
@@ -1711,34 +1721,34 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.isListening.set(false);
     }
   }
-  
+
   stopVoiceInput() {
     if (this.voiceRecognition && this.isListening()) {
       this.voiceRecognition.stop();
       this.isListening.set(false);
     }
   }
-  
+
   isVoiceSupported(): boolean {
     return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
   }
-  
+
   // Photo capture
   openCameraCapture() {
     this.showCameraCapture.set(true);
   }
-  
+
   closeCameraCapture() {
     this.showCameraCapture.set(false);
     this.capturedPhoto.set(null);
   }
-  
+
   capturePhoto() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'environment';
-    
+
     input.onchange = (event: any) => {
       const file = event.target.files[0];
       if (file) {
@@ -1751,10 +1761,10 @@ export class TasksComponent implements OnInit, OnDestroy {
         reader.readAsDataURL(file);
       }
     };
-    
+
     input.click();
   }
-  
+
   // Error handling
   showErrorState(message: string) {
     this.errorMessage.set(message);
@@ -1764,18 +1774,18 @@ export class TasksComponent implements OnInit, OnDestroy {
       setTimeout(() => this.errorMessage.set(null), 300);
     }, 3000);
   }
-  
+
   dismissError() {
     this.showError.set(false);
     setTimeout(() => this.errorMessage.set(null), 300);
   }
-  
+
   ngOnDestroy() {
     if (this.pomodoroInterval) {
       clearInterval(this.pomodoroInterval);
     }
   }
-  
+
   // Recurring tasks
   createRecurringTask(baseTask: Task, pattern: 'daily' | 'weekly' | 'monthly' | 'yearly', interval: number = 1) {
     const recurringTask: Task = {
@@ -1789,12 +1799,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     };
     this.store.addTask(recurringTask);
   }
-  
+
   calculateNextDue(currentDue: string | undefined, pattern: string, interval: number): string {
     if (!currentDue) return '';
     const today = new Date();
     const next = new Date(today);
-    
+
     switch (pattern) {
       case 'daily':
         next.setDate(today.getDate() + interval);
@@ -1809,10 +1819,10 @@ export class TasksComponent implements OnInit, OnDestroy {
         next.setFullYear(today.getFullYear() + interval);
         break;
     }
-    
+
     return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }
-  
+
   // Enhanced labels with colors
   getLabelColor(label: string): string {
     const colors = [
@@ -1822,7 +1832,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const index = label.charCodeAt(0) % colors.length;
     return colors[index];
   }
-  
+
   // All available labels
   allLabels = computed(() => {
     const labels = new Set<string>();
@@ -1833,13 +1843,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     });
     return Array.from(labels).sort();
   });
-  
+
   // Timeline/Gantt view methods
   navigateTimeline(direction: 'prev' | 'next') {
     const current = this.timelineViewDate();
     const newDate = new Date(current);
     const zoom = this.timelineZoom();
-    
+
     if (zoom === 'day') {
       newDate.setDate(current.getDate() + (direction === 'next' ? 1 : -1));
     } else if (zoom === 'week') {
@@ -1847,14 +1857,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     } else {
       newDate.setMonth(current.getMonth() + (direction === 'next' ? 1 : -1));
     }
-    
+
     this.timelineViewDate.set(newDate);
   }
-  
+
   getTimelineTitle(): string {
     const date = this.timelineViewDate();
     const zoom = this.timelineZoom();
-    
+
     if (zoom === 'day') {
       return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     } else if (zoom === 'week') {
@@ -1867,16 +1877,16 @@ export class TasksComponent implements OnInit, OnDestroy {
       return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
   }
-  
+
   getTimelineTasks(): Task[] {
     return this.filteredTasks().filter(task => {
       if (!task.due && !task.startDate) return false;
       const taskDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
       if (!taskDate) return false;
-      
+
       const viewDate = this.timelineViewDate();
       const zoom = this.timelineZoom();
-      
+
       if (zoom === 'day') {
         return taskDate.toDateString() === viewDate.toDateString();
       } else if (zoom === 'week') {
@@ -1890,12 +1900,12 @@ export class TasksComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   getTimelineDates(): Date[] {
     const dates: Date[] = [];
     const start = new Date(this.timelineViewDate());
     const zoom = this.timelineZoom();
-    
+
     if (zoom === 'day') {
       dates.push(start);
     } else if (zoom === 'week') {
@@ -1912,46 +1922,46 @@ export class TasksComponent implements OnInit, OnDestroy {
         dates.push(new Date(start.getFullYear(), start.getMonth(), d));
       }
     }
-    
+
     return dates;
   }
-  
+
   getDateDay(date: Date): string {
     return date.getDate().toString();
   }
-  
+
   getDateWeekday(date: Date): string {
     return date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
   }
-  
+
   isToday(date: Date): boolean {
     const today = new Date();
     return date.toDateString() === today.toDateString();
   }
-  
+
   getTaskTimelineBar(task: Task): { startPercent: number; widthPercent: number; startDate: string; endDate: string } | null {
     const startDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
     if (!startDate) return null;
-    
+
     const duration = task.estimatedDuration || 1;
     const endDate = new Date(startDate);
     endDate.setHours(endDate.getHours() + duration);
-    
+
     const dates = this.getTimelineDates();
     if (dates.length === 0) return null;
-    
+
     const timelineStart = dates[0];
     const timelineEnd = dates[dates.length - 1];
     timelineEnd.setHours(23, 59, 59);
-    
+
     const totalMs = timelineEnd.getTime() - timelineStart.getTime();
     const startMs = startDate.getTime() - timelineStart.getTime();
     const endMs = endDate.getTime() - timelineStart.getTime();
-    
+
     const startPercent = Math.max(0, (startMs / totalMs) * 100);
     const endPercent = Math.min(100, (endMs / totalMs) * 100);
     const widthPercent = Math.max(2, endPercent - startPercent);
-    
+
     return {
       startPercent,
       widthPercent,
@@ -1959,7 +1969,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       endDate: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     };
   }
-  
+
   parseDateFromString(dateStr: string): Date | null {
     if (!dateStr) return null;
     if (dateStr.includes('Today')) {
@@ -1974,7 +1984,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const parsed = new Date(dateStr);
     return isNaN(parsed.getTime()) ? null : parsed;
   }
-  
+
   // File attachment methods
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -1983,18 +1993,18 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.filesToUpload.set([...this.filesToUpload(), ...files]);
     }
   }
-  
+
   removeFileToUpload(index: number) {
     const files = this.filesToUpload();
     this.filesToUpload.set(files.filter((_, i) => i !== index));
   }
-  
+
   async uploadFiles(taskId: string): Promise<void> {
     const files = this.filesToUpload();
     if (files.length === 0) return;
-    
+
     this.uploadingFiles.set(true);
-    
+
     // Simulate file upload (in real app, upload to server)
     const attachments = files.map((file, index) => ({
       id: `${Date.now()}-${index}`,
@@ -2004,7 +2014,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       size: file.size,
       uploadedAt: new Date().toISOString()
     }));
-    
+
     const task = this.store.tasks().find(t => t.id === taskId);
     if (task) {
       const existingAttachments = task.attachments || [];
@@ -2012,11 +2022,11 @@ export class TasksComponent implements OnInit, OnDestroy {
         attachments: [...existingAttachments, ...attachments]
       });
     }
-    
+
     this.filesToUpload.set([]);
     this.uploadingFiles.set(false);
   }
-  
+
   removeAttachment(taskId: string, attachmentId: string) {
     const task = this.store.tasks().find(t => t.id === taskId);
     if (task && task.attachments) {
@@ -2024,7 +2034,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       this.store.updateTask(taskId, { attachments: updated });
     }
   }
-  
+
   // Bulk operations
   toggleTaskSelection(taskId: string) {
     const selected = new Set(this.selectedTasks());
@@ -2036,18 +2046,18 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.selectedTasks.set(selected);
     this.bulkActionMode.set(selected.size > 0);
   }
-  
+
   selectAllTasks() {
     const allTaskIds = new Set(this.filteredTasks().map(t => t.id));
     this.selectedTasks.set(allTaskIds);
     this.bulkActionMode.set(true);
   }
-  
+
   clearSelection() {
     this.selectedTasks.set(new Set());
     this.bulkActionMode.set(false);
   }
-  
+
   bulkCompleteTasks() {
     const selected = this.selectedTasks();
     selected.forEach(id => {
@@ -2059,7 +2069,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     });
     this.clearSelection();
   }
-  
+
   bulkDeleteTasks() {
     const selected = this.selectedTasks();
     selected.forEach(id => {
@@ -2071,7 +2081,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     });
     this.clearSelection();
   }
-  
+
   bulkChangePriority(priority: Task['priority']) {
     const selected = this.selectedTasks();
     selected.forEach(id => {
@@ -2083,33 +2093,33 @@ export class TasksComponent implements OnInit, OnDestroy {
     });
     this.clearSelection();
   }
-  
+
   // Undo/Redo
   addToHistory(type: string, task: Task, previousState?: Partial<Task>) {
     const history = this.actionHistory();
     const index = this.historyIndex();
-    
+
     // Remove any history after current index
     const newHistory = history.slice(0, index + 1);
     newHistory.push({ type, task: { ...task }, previousState });
-    
+
     this.actionHistory.set(newHistory);
     this.historyIndex.set(newHistory.length - 1);
-    
+
     // Limit history size
     if (newHistory.length > 50) {
       this.actionHistory.set(newHistory.slice(-50));
       this.historyIndex.set(49);
     }
   }
-  
+
   undo() {
     const index = this.historyIndex();
     if (index < 0) return;
-    
+
     const history = this.actionHistory();
     const action = history[index];
-    
+
     if (action.type === 'delete') {
       this.store.addTask(action.task);
     } else if (action.type === 'complete') {
@@ -2117,18 +2127,18 @@ export class TasksComponent implements OnInit, OnDestroy {
     } else if (action.type === 'update' && action.previousState) {
       this.store.updateTask(action.task.id, action.previousState);
     }
-    
+
     this.historyIndex.set(index - 1);
   }
-  
+
   redo() {
     const history = this.actionHistory();
     const index = this.historyIndex();
     if (index >= history.length - 1) return;
-    
+
     const nextIndex = index + 1;
     const action = history[nextIndex];
-    
+
     if (action.type === 'delete') {
       this.store.deleteTask(action.task.id);
     } else if (action.type === 'complete') {
@@ -2136,13 +2146,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     } else if (action.type === 'update') {
       // Re-apply the update (would need to store the new state)
     }
-    
+
     this.historyIndex.set(nextIndex);
   }
-  
+
   canUndo = computed(() => this.historyIndex() >= 0);
   canRedo = computed(() => this.historyIndex() < this.actionHistory().length - 1);
-  
+
   // Virtual scrolling - visible tasks
   visibleTasks = computed(() => {
     const tasks = this.filteredTasks();
@@ -2152,23 +2162,23 @@ export class TasksComponent implements OnInit, OnDestroy {
     const range = this.visibleTaskRange();
     return tasks.slice(range.start, range.end);
   });
-  
+
   onScroll(event: Event) {
     const target = event.target as HTMLElement;
     const scrollTop = target.scrollTop;
     const containerHeight = target.clientHeight;
     const scrollHeight = target.scrollHeight;
-    
+
     const tasks = this.filteredTasks();
     if (tasks.length <= 50) return;
-    
+
     // Calculate visible range
     const start = Math.floor(scrollTop / this.itemHeight);
     const end = Math.min(start + Math.ceil(containerHeight / this.itemHeight) + 10, tasks.length);
-    
+
     this.visibleTaskRange.set({ start: Math.max(0, start - 5), end });
   }
-  
+
   // Theme switching
   toggleTheme() {
     const current = this.theme();
@@ -2177,17 +2187,17 @@ export class TasksComponent implements OnInit, OnDestroy {
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
   }
-  
+
   setFontSize(size: 'small' | 'medium' | 'large') {
     this.fontSize.set(size);
     document.documentElement.setAttribute('data-font-size', size);
     localStorage.setItem('fontSize', size);
   }
-  
+
   // Markdown rendering (simple implementation)
   renderMarkdown(text: string): string {
     if (!text) return '';
-    
+
     // Basic markdown parsing
     let html = text
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
@@ -2198,27 +2208,27 @@ export class TasksComponent implements OnInit, OnDestroy {
       .replace(/`(.*?)`/gim, '<code>$1</code>')
       .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>')
       .replace(/\n/gim, '<br>');
-    
+
     return html;
   }
-  
+
   // Task dependencies
   getTaskById(id: string): Task | undefined {
     return this.store.tasks().find(t => t.id === id);
   }
-  
+
   getAvailableDependencyTasks(): Task[] {
-    return this.store.tasks().filter(t => 
-      t.status !== 'COMPLETED' && 
+    return this.store.tasks().filter(t =>
+      t.status !== 'COMPLETED' &&
       t.id !== this.newTaskTitle() // Exclude self if editing
     );
   }
-  
+
   addDependency(taskId: string) {
     if (!taskId || this.newTaskDependencies().includes(taskId)) return;
     this.newTaskDependencies.set([...this.newTaskDependencies(), taskId]);
   }
-  
+
   removeDependency(taskId: string) {
     this.newTaskDependencies.set(this.newTaskDependencies().filter(id => id !== taskId));
   }

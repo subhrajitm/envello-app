@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, isDevMode } from '@angular/core';
 import { createRxDatabase, RxDatabase, RxCollection, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
@@ -11,7 +11,7 @@ addRxPlugin(RxDBQueryBuilderPlugin);
 addRxPlugin(RxDBUpdatePlugin);
 
 // Enable dev mode in development
-if (process.env['NODE_ENV'] === 'development') {
+if (isDevMode()) {
     import('rxdb/plugins/dev-mode').then(module => {
         addRxPlugin(module.RxDBDevModePlugin);
     });
@@ -37,7 +37,7 @@ export class RxdbService {
         console.log('[RxdbService] Initializing RxDB...');
         try {
             this.dbPromise = createRxDatabase({
-                name: 'envello_db_v3', // bumped to v3 to include 'files' collection
+                name: 'envello_db_v4', // bumped to v4 for consolidated collections
                 storage: getRxStorageDexie(),
                 multiInstance: true,
                 eventReduce: true
@@ -46,25 +46,20 @@ export class RxdbService {
             const db = await this.dbPromise;
             console.log('[RxdbService] Database created, adding collections...');
 
-            // Create Collections
+            // Create Collections (Consolidated: 18 → 13 collections)
             await db.addCollections({
                 tasks: { schema: SCHEMAS.tasks },
                 notes: { schema: SCHEMAS.notes },
                 planning_items: { schema: SCHEMAS.planning_items },
                 activities: { schema: SCHEMAS.activities },
-                novels: { schema: SCHEMAS.novels },
-                novel_content: { schema: SCHEMAS.novel_content },
+                novels: { schema: SCHEMAS.novels }, // Now includes content
                 bin_items: { schema: SCHEMAS.bin_items },
                 snippets: { schema: SCHEMAS.snippets },
                 books: { schema: SCHEMAS.books },
                 meetings: { schema: SCHEMAS.meetings },
                 articles: { schema: SCHEMAS.articles },
-                journal_projects: { schema: SCHEMAS.journal_projects },
-                journal_entries: { schema: SCHEMAS.journal_entries },
-                journal_columns: { schema: SCHEMAS.journal_columns },
-                research_libraries: { schema: SCHEMAS.research_libraries },
-                research_sources: { schema: SCHEMAS.research_sources },
-                research_dummies: { schema: SCHEMAS.research_summaries }, // Fallback to avoid error if extra key needed? No, better safe.
+                journals: { schema: SCHEMAS.journals }, // Consolidated: projects + entries + columns
+                research: { schema: SCHEMAS.research }, // Consolidated: libraries + sources + summaries
                 files: { schema: SCHEMAS.files }
             });
 
@@ -158,16 +153,152 @@ export class RxdbService {
         return this.remove('files', id);
     }
 
-    // Research
-    async getAllResearchLibraries(): Promise<any[]> { return this.getAll('research_libraries'); }
-    async upsertResearchLibrary(doc: any) { return this.upsert('research_libraries', doc); }
-    async removeResearchLibrary(id: string) { return this.remove('research_libraries', id); }
+    // ─── Consolidated Collection Helpers ───────────────────────────────────────
 
-    async getAllResearchSources(): Promise<any[]> { return this.getAll('research_sources'); }
-    async upsertResearchSource(doc: any) { return this.upsert('research_sources', doc); }
-    async removeResearchSource(id: string) { return this.remove('research_sources', id); }
+    // Journals (consolidated: projects + entries + columns)
+    async getAllJournalProjects(): Promise<any[]> {
+        const collection = await this.getCollection('journals');
+        const docs = await collection.find({ selector: { entityType: 'project' } }).exec();
+        return docs.map(d => d.toJSON());
+    }
 
-    async getAllResearchSummaries(): Promise<any[]> { return this.getAll('research_summaries'); }
-    async upsertResearchSummary(doc: any) { return this.upsert('research_summaries', doc); }
-    async removeResearchSummary(id: string) { return this.remove('research_summaries', id); }
+    async getAllJournalEntries(): Promise<any[]> {
+        const collection = await this.getCollection('journals');
+        const docs = await collection.find({ selector: { entityType: 'entry' } }).exec();
+        return docs.map(d => d.toJSON());
+    }
+
+    async getAllJournalColumns(): Promise<any[]> {
+        const collection = await this.getCollection('journals');
+        const docs = await collection.find({ selector: { entityType: 'column' } }).exec();
+        return docs.map(d => d.toJSON());
+    }
+
+    async upsertJournalProject(doc: any) {
+        return this.upsert('journals', { ...doc, entityType: 'project' });
+    }
+
+    async upsertJournalEntry(doc: any) {
+        return this.upsert('journals', { ...doc, entityType: 'entry' });
+    }
+
+    async upsertJournalColumn(doc: any) {
+        return this.upsert('journals', { ...doc, entityType: 'column' });
+    }
+
+    async removeJournalProject(id: string) { return this.remove('journals', id); }
+    async removeJournalEntry(id: string) { return this.remove('journals', id); }
+    async removeJournalColumn(id: string) { return this.remove('journals', id); }
+
+    // Research (consolidated: libraries + sources + summaries)
+    async getAllResearchLibraries(): Promise<any[]> {
+        const collection = await this.getCollection('research');
+        const docs = await collection.find({ selector: { entityType: 'library' } }).exec();
+        return docs.map(d => d.toJSON());
+    }
+
+    async getAllResearchSources(): Promise<any[]> {
+        const collection = await this.getCollection('research');
+        const docs = await collection.find({ selector: { entityType: 'source' } }).exec();
+        return docs.map(d => d.toJSON());
+    }
+
+    async getAllResearchSummaries(): Promise<any[]> {
+        const collection = await this.getCollection('research');
+        const docs = await collection.find({ selector: { entityType: 'summary' } }).exec();
+        return docs.map(d => d.toJSON());
+    }
+
+    async upsertResearchLibrary(doc: any) {
+        return this.upsert('research', { ...doc, entityType: 'library' });
+    }
+
+    async upsertResearchSource(doc: any) {
+        return this.upsert('research', { ...doc, entityType: 'source' });
+    }
+
+    async upsertResearchSummary(doc: any) {
+        return this.upsert('research', { ...doc, entityType: 'summary' });
+    }
+
+    async removeResearchLibrary(id: string) { return this.remove('research', id); }
+    async removeResearchSource(id: string) { return this.remove('research', id); }
+    async removeResearchSummary(id: string) { return this.remove('research', id); }
+
+    // Novels (now includes content)
+    async getAllNovels(): Promise<any[]> { return this.getAll('novels'); }
+    async upsertNovel(doc: any) { return this.upsert('novels', doc); }
+    async removeNovel(id: string) { return this.remove('novels', id); }
+
+    // Novel content is now part of novels collection
+    async getNovelContent(id: string): Promise<string | null> {
+        const collection = await this.getCollection('novels');
+        const doc = await collection.findOne(id).exec();
+        return doc ? (doc.toJSON().content || null) : null;
+    }
+
+    async upsertNovelContent(id: string, content: string): Promise<void> {
+        const collection = await this.getCollection('novels');
+        const doc = await collection.findOne(id).exec();
+        if (doc) {
+            await doc.update({ $set: { content } });
+        }
+    }
+
+    async removeNovelContent(id: string): Promise<void> {
+        // Content is part of novel, just clear it
+        const collection = await this.getCollection('novels');
+        const doc = await collection.findOne(id).exec();
+        if (doc) {
+            await doc.update({ $set: { content: '' } });
+        }
+    }
+
+    // Other collections (unchanged)
+    async getAllTasks(): Promise<any[]> { return this.getAll('tasks'); }
+    async upsertTask(doc: any) { return this.upsert('tasks', doc); }
+    async removeTask(id: string) { return this.remove('tasks', id); }
+
+    async getAllNotes(): Promise<any[]> { return this.getAll('notes'); }
+    async upsertNote(doc: any) { return this.upsert('notes', doc); }
+    async removeNote(id: string) { return this.remove('notes', id); }
+
+    async getAllPlanningItems(): Promise<any[]> { return this.getAll('planning_items'); }
+    async upsertPlanningItem(doc: any) { return this.upsert('planning_items', doc); }
+    async removePlanningItem(id: string) { return this.remove('planning_items', id); }
+
+    async getAllActivities(): Promise<any[]> { return this.getAll('activities'); }
+    async upsertActivity(doc: any) { return this.upsert('activities', doc); }
+    async removeActivity(id: string) { return this.remove('activities', id); }
+
+    async getAllBooks(): Promise<any[]> { return this.getAll('books'); }
+    async upsertBook(doc: any) { return this.upsert('books', doc); }
+    async removeBook(id: string) { return this.remove('books', id); }
+
+    async getAllMeetings(): Promise<any[]> { return this.getAll('meetings'); }
+    async upsertMeeting(doc: any) { return this.upsert('meetings', doc); }
+    async removeMeeting(id: string) { return this.remove('meetings', id); }
+
+    async getAllSnippets(): Promise<any[]> { return this.getAll('snippets'); }
+    async upsertSnippet(doc: any) { return this.upsert('snippets', doc); }
+    async removeSnippet(id: string) { return this.remove('snippets', id); }
+
+    async getAllArticles(): Promise<any[]> { return this.getAll('articles'); }
+    async upsertArticle(doc: any) { return this.upsert('articles', doc); }
+    async removeArticle(id: string) { return this.remove('articles', id); }
+
+    async getAllBinItems(): Promise<any[]> { return this.getAll('bin_items'); }
+    async upsertBinItem(doc: any) { return this.upsert('bin_items', doc); }
+    async removeBinItem(id: string) { return this.remove('bin_items', id); }
+
+    async clearBin(): Promise<void> {
+        const collection = await this.getCollection('bin_items');
+        const docs = await collection.find().exec();
+        await Promise.all(docs.map(doc => doc.remove()));
+    }
+
+    // Alias for novel content setter (used by novel-content.service)
+    async setNovelContent(id: string, content: string): Promise<void> {
+        return this.upsertNovelContent(id, content);
+    }
 }

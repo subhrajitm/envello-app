@@ -1,7 +1,9 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, effect } from '@angular/core';
 import { BinService } from './bin.service';
 import { RxdbService } from '../core/services/rxdb.service';
 import { FileSystemService } from '../core/services/file-system.service';
+import { TaskStore } from '@envello/shared-state';
+import { TaskCommands } from '@envello/shared-domain';
 
 export interface Task {
   id: string;
@@ -107,12 +109,21 @@ export class StoreService {
   private rxdb = inject(RxdbService);
   private fs = inject(FileSystemService);
 
+  // Event Bus architecture
+  private taskStore = inject(TaskStore);
+  private taskCommands = inject(TaskCommands);
+
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
     this.loadFromRxDB();
     this.initMarkdown();
+
+    // Sync tasks signal with TaskStore for backward compatibility
+    effect(() => {
+      this.tasks.set(this.taskStore.tasks());
+    });
   }
 
   private async initMarkdown() {
@@ -211,17 +222,15 @@ export class StoreService {
   }
 
   addTask(task: Task) {
-    this.tasks.update(tasks => [...tasks, task]);
+    // Delegate to Event Bus architecture
+    this.taskCommands.createTask(task);
     this.addActivity('Task created: ' + task.title, 'system');
-    this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   updateTask(id: string, updates: Partial<Task>) {
-    const updated = this.tasks().map(t => t.id === id ? { ...t, ...updates } : t);
-    const task = updated.find(t => t.id === id);
-    this.tasks.set(updated);
+    // Delegate to Event Bus architecture
+    this.taskCommands.updateTask(id, updates);
     this.addActivity('Task updated', 'system');
-    if (task) this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   deleteTask(id: string) {
@@ -237,9 +246,9 @@ export class StoreService {
       });
     }
 
-    this.tasks.set(existingTasks.filter(t => t.id !== id));
+    // Delegate to Event Bus architecture
+    this.taskCommands.deleteTask(id);
     this.addActivity('Task deleted', 'system');
-    this.rxdb.removeTask(id).catch(e => console.error('[StoreService] remove task failed', e));
   }
 
   async addNote(note: Note) {
