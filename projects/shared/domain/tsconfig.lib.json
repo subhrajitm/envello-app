@@ -1,0 +1,19 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../../out-tsc/lib",
+        "declaration": true,
+        "declarationMap": true,
+        "inlineSources": true,
+        "types": [],
+        "baseUrl": "../../..",
+        "paths": {
+            "@envello/shared-core": [
+                "dist/shared/core"
+            ]
+        }
+    },
+    "exclude": [
+        "**/*.spec.ts"
+    ]
+}

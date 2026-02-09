@@ -1,0 +1,25 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../../out-tsc/lib",
+        "declaration": true,
+        "declarationMap": true,
+        "inlineSources": true,
+        "types": [],
+        "baseUrl": "../../..",
+        "paths": {
+            "@envello/shared-core": [
+                "dist/shared/core"
+            ],
+            "@envello/shared-domain": [
+                "dist/shared/domain"
+            ],
+            "@envello/shared-state": [
+                "dist/shared/state"
+            ]
+        }
+    },
+    "exclude": [
+        "**/*.spec.ts"
+    ]
+}

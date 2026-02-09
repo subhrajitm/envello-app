@@ -239,6 +239,62 @@
           }
         }
       }
+    },
+    "shared-core": {
+      "projectType": "library",
+      "root": "projects/shared/core",
+      "sourceRoot": "projects/shared/core/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/shared/core/ng-package.json"
+          }
+        }
+      }
+    },
+    "shared-state": {
+      "projectType": "library",
+      "root": "projects/shared/state",
+      "sourceRoot": "projects/shared/state/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/shared/state/ng-package.json"
+          }
+        }
+      }
+    },
+    "shared-domain": {
+      "projectType": "library",
+      "root": "projects/shared/domain",
+      "sourceRoot": "projects/shared/domain/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/shared/domain/ng-package.json"
+          }
+        }
+      }
+    },
+    "shared-data": {
+      "projectType": "library",
+      "root": "projects/shared/data",
+      "sourceRoot": "projects/shared/data/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/shared/data/ng-package.json"
+          }
+        }
+      }
     }
   }
 }

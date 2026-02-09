@@ -1,10 +1,25 @@
 /* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
 /* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": []
+    "types": [],
+    "baseUrl": "../../",
+    "paths": {
+      "@envello/shared-core": [
+        "dist/shared/core"
+      ],
+      "@envello/shared-state": [
+        "dist/shared/state"
+      ],
+      "@envello/shared-domain": [
+        "dist/shared/domain"
+      ],
+      "@envello/shared-data": [
+        "dist/shared/data"
+      ]
+    }
   },
   "files": [
     "src/main.ts"

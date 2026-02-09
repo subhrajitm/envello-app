@@ -1,0 +1,16 @@
+{
+    "$schema": "../../../node_modules/ng-packagr/package.schema.json",
+    "name": "@envello/shared-state",
+    "version": "0.0.1",
+    "peerDependencies": {
+        "@angular/common": "^19.0.0",
+        "@angular/core": "^19.0.0",
+        "@envello/shared-core": "*",
+        "@envello/shared-domain": "*",
+        "rxjs": "^7.8.0"
+    },
+    "dependencies": {
+        "tslib": "^2.3.0"
+    },
+    "sideEffects": false
+}

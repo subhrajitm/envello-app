@@ -16,12 +16,38 @@
     "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
-    "module": "ES2022"
+    "module": "ES2022",
+    "baseUrl": ".",
+    "paths": {
+      "@envello/shared-core": [
+        "dist/shared/core"
+      ],
+      "@envello/shared-state": [
+        "dist/shared/state"
+      ],
+      "@envello/shared-domain": [
+        "dist/shared/domain"
+      ],
+      "@envello/shared-data": [
+        "dist/shared/data"
+      ],
+      "core": [
+        "./dist/core"
+      ]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
     "strictTemplates": true
-  }
+  },
+  "references": [
+    {
+      "path": "./projects/core/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/core/tsconfig.spec.json"
+    }
+  ]
 }
