@@ -29,6 +29,7 @@ export interface JournalEntry {
   isFavorite?: boolean;
   filePath?: string;
   lastSynced?: string;
+  updated_at?: string;
 }
 
 export interface JournalProject {
@@ -45,6 +46,7 @@ export interface JournalProject {
   columns: string[]; // Custom column IDs
   tags?: string[];
   isLocked?: boolean;
+  updated_at?: string;
 }
 
 export interface JournalColumn {
@@ -52,6 +54,7 @@ export interface JournalColumn {
   name: string;
   color: string;
   order: number;
+  updated_at?: string;
 }
 
 const defaultColumns: JournalColumn[] = [

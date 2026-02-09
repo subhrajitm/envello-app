@@ -22,6 +22,9 @@
                     <span class="material-symbols-outlined btn-icon-inner">add</span> <span>Add New</span>
                 </button>
                 <div class="divider-vertical"></div>
+                <button class="icon-btn sync-btn" (click)="sync()" title="Sync now">
+                    <span class="material-symbols-outlined">sync</span>
+                </button>
                 <button class="icon-btn notification-btn" (click)="openNotifications()">
                     <span class="material-symbols-outlined">notifications</span>
                     @if (unreadCount() > 0) {

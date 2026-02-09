@@ -128,6 +128,18 @@ export class SqliteService {
     }
 
     private async createTables(db: Database) {
+        // Sync State
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS sync_state (
+                collection TEXT PRIMARY KEY,
+                last_sync TEXT,
+                last_push TEXT
+            )
+        `);
+        try {
+            await db.execute('ALTER TABLE sync_state ADD COLUMN last_push TEXT').catch(() => { });
+        } catch (e) { }
+
         // Tasks
         await db.execute(`
       CREATE TABLE IF NOT EXISTS tasks (
@@ -149,7 +161,8 @@ export class SqliteService {
         attachments TEXT,
         description TEXT,
         startDate TEXT,
-        estimatedDuration REAL
+        estimatedDuration REAL,
+        updated_at TEXT
       )
     `);
 
@@ -162,7 +175,8 @@ export class SqliteService {
         preview TEXT,
         content TEXT,
         tags TEXT,
-        lastEdited TEXT
+        lastEdited TEXT,
+        updated_at TEXT
       )
     `);
 
@@ -183,7 +197,8 @@ export class SqliteService {
         id TEXT PRIMARY KEY,
         text TEXT,
         time TEXT,
-        type TEXT
+        type TEXT,
+        updated_at TEXT
       )
     `);
 
@@ -203,7 +218,8 @@ export class SqliteService {
         lastUpdated TEXT,
         genre TEXT,
         isRecentlyUpdated BOOLEAN,
-        coverImage TEXT
+        coverImage TEXT,
+        updated_at TEXT
       )
     `);
 
@@ -333,7 +349,8 @@ export class SqliteService {
         lastUpdated TEXT,
         columns TEXT,
         tags TEXT,
-        isLocked BOOLEAN
+        isLocked BOOLEAN,
+        updated_at TEXT
       )
     `);
 
@@ -360,7 +377,9 @@ export class SqliteService {
         isLocked BOOLEAN,
         linkedEntries TEXT,
         isPinned BOOLEAN,
-        isFavorite BOOLEAN
+        isPinned BOOLEAN,
+        isFavorite BOOLEAN,
+        updated_at TEXT
       )
     `);
 
@@ -382,7 +401,8 @@ export class SqliteService {
         description TEXT,
         color TEXT,
         createdDate TEXT,
-        lastModified TEXT
+        lastModified TEXT,
+        updated_at TEXT
       )
     `);
 
@@ -401,7 +421,9 @@ export class SqliteService {
         status TEXT,
         notes TEXT,
         createdDate TEXT,
-        lastAccessed TEXT
+        createdDate TEXT,
+        lastAccessed TEXT,
+        updated_at TEXT
       )
     `);
 
@@ -415,7 +437,8 @@ export class SqliteService {
         sourceIds TEXT,
         tags TEXT,
         createdDate TEXT,
-        lastModified TEXT
+        lastModified TEXT,
+        updated_at TEXT
       )
     `);
     }
@@ -479,6 +502,10 @@ export class SqliteService {
     // ─── Tasks ─────────────────────────────────────────────────────────────────
     private async reloadTasks() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE tasks ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
+
         const rows = await db.select<TaskDoc[]>('SELECT * FROM tasks');
         const parsed = rows.map((r: any) => this.parseRow<TaskDoc>(r, ['labels', 'reminders', 'subtasks', 'dependencies', 'recurring', 'attachments']));
         this.tasksSubject.next(parsed);
@@ -488,7 +515,7 @@ export class SqliteService {
         return this.tasksSubject.getValue();
     }
 
-    async upsertTask(task: TaskDoc): Promise<void> {
+    async upsertTask(task: TaskDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         // Check if exists
         const exists = await db.select<any[]>('SELECT id FROM tasks WHERE id = $1', [task.id]);
@@ -499,7 +526,8 @@ export class SqliteService {
             subtasks: this.toJson(task.subtasks),
             dependencies: this.toJson(task.dependencies),
             recurring: this.toJson(task.recurring),
-            attachments: this.toJson(task.attachments)
+            attachments: this.toJson(task.attachments),
+            updated_at: options.isSync && task.updated_at ? task.updated_at : new Date().toISOString()
         };
 
         if (exists.length > 0) {
@@ -508,22 +536,22 @@ export class SqliteService {
                 title = $1, priority = $2, hours = $3, status = $4, project = $5, due = $6, 
                 labels = $7, reminders = $8, subtasks = $9, parentId = $10, dependencies = $11, 
                 recurring = $12, timeSpent = $13, notes = $14, attachments = $15, description = $16, 
-                startDate = $17, estimatedDuration = $18
-            WHERE id = $19`,
+                startDate = $17, estimatedDuration = $18, updated_at = $19
+            WHERE id = $20`,
                 [jsonTask.title, jsonTask.priority, jsonTask.hours, jsonTask.status, jsonTask.project, jsonTask.due,
                 jsonTask.labels, jsonTask.reminders, jsonTask.subtasks, jsonTask.parentId, jsonTask.dependencies,
                 jsonTask.recurring, jsonTask.timeSpent, jsonTask.notes, jsonTask.attachments, jsonTask.description,
-                jsonTask.startDate, jsonTask.estimatedDuration, jsonTask.id]);
+                jsonTask.startDate, jsonTask.estimatedDuration, jsonTask.updated_at, jsonTask.id]);
         } else {
             await db.execute(`
             INSERT INTO tasks (
                 id, title, priority, hours, status, project, due, labels, reminders, subtasks, 
-                parentId, dependencies, recurring, timeSpent, notes, attachments, description, startDate, estimatedDuration
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+                parentId, dependencies, recurring, timeSpent, notes, attachments, description, startDate, estimatedDuration, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
                 [jsonTask.id, jsonTask.title, jsonTask.priority, jsonTask.hours, jsonTask.status, jsonTask.project, jsonTask.due,
                 jsonTask.labels, jsonTask.reminders, jsonTask.subtasks, jsonTask.parentId, jsonTask.dependencies,
                 jsonTask.recurring, jsonTask.timeSpent, jsonTask.notes, jsonTask.attachments, jsonTask.description,
-                jsonTask.startDate, jsonTask.estimatedDuration]
+                jsonTask.startDate, jsonTask.estimatedDuration, jsonTask.updated_at]
             );
         }
         await this.reloadTasks();
@@ -546,6 +574,7 @@ export class SqliteService {
             // Try to add columns if they don't exist (Migration)
             await db.execute('ALTER TABLE notes ADD COLUMN filePath TEXT').catch(() => { });
             await db.execute('ALTER TABLE notes ADD COLUMN lastSynced TEXT').catch(() => { });
+            await db.execute('ALTER TABLE notes ADD COLUMN updated_at TEXT').catch(() => { });
         } catch (e) {
             // Ignore column exists errors
         }
@@ -559,7 +588,7 @@ export class SqliteService {
         return this.notesSubject.getValue();
     }
 
-    async upsertNote(note: NoteDoc): Promise<void> {
+    async upsertNote(note: NoteDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM notes WHERE id = $1', [note.id]);
 
@@ -567,15 +596,16 @@ export class SqliteService {
         const jsonNote = {
             ...note,
             tags: this.toJson(note.tags),
-            content: '' // CLEAR CONTENT FROM DB -> Source of truth is .md file
+            content: '', // CLEAR CONTENT FROM DB -> Source of truth is .md file
+            updated_at: options.isSync && note.updated_at ? note.updated_at : new Date().toISOString()
         };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE notes SET date = $1, title = $2, preview = $3, content = $4, tags = $5, lastEdited = $6, filePath = $7, lastSynced = $8 WHERE id = $9`,
-                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, jsonNote.id]);
+            await db.execute(`UPDATE notes SET date = $1, title = $2, preview = $3, content = $4, tags = $5, lastEdited = $6, filePath = $7, lastSynced = $8, updated_at = $9 WHERE id = $10`,
+                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, jsonNote.updated_at, jsonNote.id]);
         } else {
-            await db.execute(`INSERT INTO notes (id, date, title, preview, content, tags, lastEdited, filePath, lastSynced) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced]);
+            await db.execute(`INSERT INTO notes (id, date, title, preview, content, tags, lastEdited, filePath, lastSynced, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, jsonNote.updated_at]);
         }
         await this.reloadNotes();
     }
@@ -622,20 +652,24 @@ export class SqliteService {
     // ─── Activities ────────────────────────────────────────────────────────────
     private async reloadActivities() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE activities ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
         const rows = await db.select<ActivityDoc[]>('SELECT * FROM activities');
         this.activitiesSubject.next(rows);
     }
 
-    async upsertActivity(act: ActivityDoc): Promise<void> {
+    async upsertActivity(act: ActivityDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM activities WHERE id = $1', [act.id]);
 
+        const updatedAt = options.isSync && act.updated_at ? act.updated_at : new Date().toISOString();
         if (exists.length > 0) {
-            await db.execute(`UPDATE activities SET text = $1, time = $2, type = $3 WHERE id = $4`,
-                [act.text, act.time, act.type, act.id]);
+            await db.execute(`UPDATE activities SET text = $1, time = $2, type = $3, updated_at = $4 WHERE id = $5`,
+                [act.text, act.time, act.type, updatedAt, act.id]);
         } else {
-            await db.execute(`INSERT INTO activities (id, text, time, type) VALUES ($1, $2, $3, $4)`,
-                [act.id, act.text, act.time, act.type]);
+            await db.execute(`INSERT INTO activities (id, text, time, type, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+                [act.id, act.text, act.time, act.type, updatedAt]);
         }
         await this.reloadActivities();
     }
@@ -657,29 +691,32 @@ export class SqliteService {
     // ─── Novels ────────────────────────────────────────────────────────────────
     private async reloadNovels() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE novels ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
         const rows = await db.select<NovelDoc[]>('SELECT * FROM novels');
         const parsed = rows.map((r: any) => this.parseRow<NovelDoc>(r, ['genre']));
         this.novelsSubject.next(parsed);
     }
 
-    async upsertNovel(novel: NovelDoc): Promise<void> {
+    async upsertNovel(novel: NovelDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM novels WHERE id = $1', [novel.id]);
-        const jsonNovel = { ...novel, genre: this.toJson(novel.genre) };
+        const jsonNovel = { ...novel, genre: this.toJson(novel.genre), updated_at: options.isSync && novel.updated_at ? novel.updated_at : new Date().toISOString() };
 
         if (exists.length > 0) {
             await db.execute(`
         UPDATE novels SET title=$1, icon=$2, status=$3, wordCount=$4, targetWordCount=$5, progress=$6, 
-        chapters=$7, notesCount=$8, createdDate=$9, lastUpdated=$10, genre=$11, isRecentlyUpdated=$12, coverImage=$13
-        WHERE id=$14`,
+        chapters=$7, notesCount=$8, createdDate=$9, lastUpdated=$10, genre=$11, isRecentlyUpdated=$12, coverImage=$13, updated_at=$14
+        WHERE id=$15`,
                 [jsonNovel.title, jsonNovel.icon, jsonNovel.status, jsonNovel.wordCount, jsonNovel.targetWordCount, jsonNovel.progress,
-                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage, jsonNovel.id]);
+                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage, jsonNovel.updated_at, jsonNovel.id]);
         } else {
             await db.execute(`
-        INSERT INTO novels (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        INSERT INTO novels (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
                 [jsonNovel.id, jsonNovel.title, jsonNovel.icon, jsonNovel.status, jsonNovel.wordCount, jsonNovel.targetWordCount, jsonNovel.progress,
-                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage]);
+                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage, jsonNovel.updated_at]);
         }
         await this.reloadNovels();
     }
@@ -936,22 +973,25 @@ export class SqliteService {
     // ─── Journal Projects ──────────────────────────────────────────────────────
     private async reloadJournalProjects() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE journal_projects ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
         const rows = await db.select<JournalProjectDoc[]>('SELECT * FROM journal_projects');
         const parsed = rows.map((r: any) => this.parseRow<JournalProjectDoc>(r, ['columns', 'tags']));
         this.journalProjectsSubject.next(parsed);
     }
 
-    async upsertJournalProject(doc: JournalProjectDoc): Promise<void> {
+    async upsertJournalProject(doc: JournalProjectDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM journal_projects WHERE id = $1', [doc.id]);
-        const jsonDoc = { ...doc, columns: this.toJson(doc.columns), tags: this.toJson(doc.tags) };
+        const jsonDoc = { ...doc, columns: this.toJson(doc.columns), tags: this.toJson(doc.tags), updated_at: options.isSync && doc.updated_at ? doc.updated_at : new Date().toISOString() };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE journal_projects SET title=$1, description=$2, entriesCount=$3, active=$4, wordCount=$5, targetWordCount=$6, progress=$7, createdDate=$8, lastUpdated=$9, columns=$10, tags=$11, isLocked=$12 WHERE id=$13`,
-                [jsonDoc.title, jsonDoc.description, jsonDoc.entriesCount, jsonDoc.active, jsonDoc.wordCount, jsonDoc.targetWordCount, jsonDoc.progress, jsonDoc.createdDate, jsonDoc.lastUpdated, jsonDoc.columns, jsonDoc.tags, jsonDoc.isLocked, jsonDoc.id]);
+            await db.execute(`UPDATE journal_projects SET title=$1, description=$2, entriesCount=$3, active=$4, wordCount=$5, targetWordCount=$6, progress=$7, createdDate=$8, lastUpdated=$9, columns=$10, tags=$11, isLocked=$12, updated_at=$13 WHERE id=$14`,
+                [jsonDoc.title, jsonDoc.description, jsonDoc.entriesCount, jsonDoc.active, jsonDoc.wordCount, jsonDoc.targetWordCount, jsonDoc.progress, jsonDoc.createdDate, jsonDoc.lastUpdated, jsonDoc.columns, jsonDoc.tags, jsonDoc.isLocked, jsonDoc.updated_at, jsonDoc.id]);
         } else {
-            await db.execute(`INSERT INTO journal_projects (id, title, description, entriesCount, active, wordCount, targetWordCount, progress, createdDate, lastUpdated, columns, tags, isLocked) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                [jsonDoc.id, jsonDoc.title, jsonDoc.description, jsonDoc.entriesCount, jsonDoc.active, jsonDoc.wordCount, jsonDoc.targetWordCount, jsonDoc.progress, jsonDoc.createdDate, jsonDoc.lastUpdated, jsonDoc.columns, jsonDoc.tags, jsonDoc.isLocked]);
+            await db.execute(`INSERT INTO journal_projects (id, title, description, entriesCount, active, wordCount, targetWordCount, progress, createdDate, lastUpdated, columns, tags, isLocked, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+                [jsonDoc.id, jsonDoc.title, jsonDoc.description, jsonDoc.entriesCount, jsonDoc.active, jsonDoc.wordCount, jsonDoc.targetWordCount, jsonDoc.progress, jsonDoc.createdDate, jsonDoc.lastUpdated, jsonDoc.columns, jsonDoc.tags, jsonDoc.isLocked, jsonDoc.updated_at]);
         }
         await this.reloadJournalProjects();
     }
@@ -972,6 +1012,7 @@ export class SqliteService {
         try {
             await db.execute('ALTER TABLE journal_entries ADD COLUMN filePath TEXT').catch(() => { });
             await db.execute('ALTER TABLE journal_entries ADD COLUMN lastSynced TEXT').catch(() => { });
+            await db.execute('ALTER TABLE journal_entries ADD COLUMN updated_at TEXT').catch(() => { });
         } catch (e) { }
 
         const rows = await db.select<JournalEntryDoc[]>('SELECT * FROM journal_entries');
@@ -979,7 +1020,7 @@ export class SqliteService {
         this.journalEntriesSubject.next(parsed);
     }
 
-    async upsertJournalEntry(entry: JournalEntryDoc): Promise<void> {
+    async upsertJournalEntry(entry: JournalEntryDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM journal_entries WHERE id = $1', [entry.id]);
 
@@ -990,7 +1031,8 @@ export class SqliteService {
             linkedEntries: this.toJson(entry.linkedEntries),
             content: '', // Clear content
             filePath: entryAny.filePath,
-            lastSynced: entryAny.lastSynced
+            lastSynced: entryAny.lastSynced,
+            updated_at: options.isSync && entry.updated_at ? entry.updated_at : new Date().toISOString()
         };
 
         if (exists.length > 0) {
@@ -999,23 +1041,23 @@ export class SqliteService {
                 projectId=$1, title=$2, content=$3, preview=$4, type=$5, column=$6, tags=$7, 
                 wordCount=$8, characterCount=$9, createdDate=$10, lastEdited=$11, hasAi=$12, 
                 isAiEdited=$13, progress=$14, statusColor=$15, meta=$16, isLocked=$17, 
-                linkedEntries=$18, isPinned=$19, isFavorite=$20, filePath=$21, lastSynced=$22
-            WHERE id=$23`,
+                linkedEntries=$18, isPinned=$19, isFavorite=$20, filePath=$21, lastSynced=$22, updated_at=$23
+            WHERE id=$24`,
                 [jsonEntry.projectId, jsonEntry.title, jsonEntry.content, jsonEntry.preview, jsonEntry.type, jsonEntry.column, jsonEntry.tags,
                 jsonEntry.wordCount, jsonEntry.characterCount, jsonEntry.createdDate, jsonEntry.lastEdited, jsonEntry.hasAi,
                 jsonEntry.isAiEdited, jsonEntry.progress, jsonEntry.statusColor, jsonEntry.meta, jsonEntry.isLocked,
-                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced, jsonEntry.id]);
+                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced, jsonEntry.updated_at, jsonEntry.id]);
         } else {
             await db.execute(`
             INSERT INTO journal_entries (
                 id, projectId, title, content, preview, type, column, tags, wordCount, characterCount, 
                 createdDate, lastEdited, hasAi, isAiEdited, progress, statusColor, meta, isLocked, 
-                linkedEntries, isPinned, isFavorite, filePath, lastSynced
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`,
+                linkedEntries, isPinned, isFavorite, filePath, lastSynced, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
                 [jsonEntry.id, jsonEntry.projectId, jsonEntry.title, jsonEntry.content, jsonEntry.preview, jsonEntry.type, jsonEntry.column, jsonEntry.tags,
                 jsonEntry.wordCount, jsonEntry.characterCount, jsonEntry.createdDate, jsonEntry.lastEdited, jsonEntry.hasAi,
                 jsonEntry.isAiEdited, jsonEntry.progress, jsonEntry.statusColor, jsonEntry.meta, jsonEntry.isLocked,
-                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced]);
+                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced, jsonEntry.updated_at]);
         }
         await this.reloadJournalEntries();
     }
@@ -1033,20 +1075,24 @@ export class SqliteService {
     // ─── Journal Columns ───────────────────────────────────────────────────────
     private async reloadJournalColumns() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE journal_columns ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
         const rows = await db.select<JournalColumnDoc[]>('SELECT * FROM journal_columns');
         this.journalColumnsSubject.next(rows);
     }
 
-    async upsertJournalColumn(doc: JournalColumnDoc): Promise<void> {
+    async upsertJournalColumn(doc: JournalColumnDoc, options: { isSync?: boolean } = {}): Promise<void> {
         // Not implemented in DB service either
         // But assuming similar pattern.
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM journal_columns WHERE id = $1', [doc.id]);
 
+        const updatedAt = options.isSync && (doc as any).updated_at ? (doc as any).updated_at : new Date().toISOString();
         if (exists.length > 0) {
-            await db.execute('UPDATE journal_columns SET name=$1, color=$2, "order"=$3 WHERE id=$4', [doc.name, doc.color, doc.order, doc.id]);
+            await db.execute('UPDATE journal_columns SET name=$1, color=$2, "order"=$3, updated_at=$4 WHERE id=$5', [doc.name, doc.color, doc.order, updatedAt, doc.id]);
         } else {
-            await db.execute('INSERT INTO journal_columns (id, name, color, "order") VALUES ($1, $2, $3, $4)', [doc.id, doc.name, doc.color, doc.order]);
+            await db.execute('INSERT INTO journal_columns (id, name, color, "order", updated_at) VALUES ($1, $2, $3, $4, $5)', [doc.id, doc.name, doc.color, doc.order, updatedAt]);
         }
         await this.reloadJournalColumns();
     }
@@ -1064,20 +1110,24 @@ export class SqliteService {
     // ─── Research Libraries ────────────────────────────────────────────────────
     private async reloadResearchLibraries() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE research_libraries ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
         const rows = await db.select<ResearchLibraryDoc[]>('SELECT * FROM research_libraries');
         this.researchLibrariesSubject.next(rows);
     }
 
-    async upsertResearchLibrary(doc: ResearchLibraryDoc): Promise<void> {
+    async upsertResearchLibrary(doc: ResearchLibraryDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM research_libraries WHERE id = $1', [doc.id]);
 
+        const updatedAt = options.isSync && (doc as any).updated_at ? (doc as any).updated_at : new Date().toISOString();
         if (exists.length > 0) {
-            await db.execute('UPDATE research_libraries SET name=$1, description=$2, color=$3, createdDate=$4, lastModified=$5 WHERE id=$6',
-                [doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified, doc.id]);
+            await db.execute('UPDATE research_libraries SET name=$1, description=$2, color=$3, createdDate=$4, lastModified=$5, updated_at=$6 WHERE id=$7',
+                [doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified, updatedAt, doc.id]);
         } else {
-            await db.execute('INSERT INTO research_libraries (id, name, description, color, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6)',
-                [doc.id, doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified]);
+            await db.execute('INSERT INTO research_libraries (id, name, description, color, createdDate, lastModified, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+                [doc.id, doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified, updatedAt]);
         }
         await this.reloadResearchLibraries();
     }
@@ -1095,22 +1145,26 @@ export class SqliteService {
     // ─── Research Sources ──────────────────────────────────────────────────────
     private async reloadResearchSources() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE research_sources ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
         const rows = await db.select<ResearchSourceDoc[]>('SELECT * FROM research_sources');
         const parsed = rows.map((r: any) => this.parseRow<ResearchSourceDoc>(r, ['tags']));
         this.researchSourcesSubject.next(parsed);
     }
 
-    async upsertResearchSource(doc: ResearchSourceDoc): Promise<void> {
+    async upsertResearchSource(doc: ResearchSourceDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM research_sources WHERE id = $1', [doc.id]);
         const jsonDoc = { ...doc, tags: this.toJson(doc.tags) };
 
+        const updatedAt = options.isSync && (doc as any).updated_at ? (doc as any).updated_at : new Date().toISOString();
         if (exists.length > 0) {
-            await db.execute(`UPDATE research_sources SET libraryId=$1, title=$2, sourceType=$3, url=$4, description=$5, author=$6, publishDate=$7, tags=$8, status=$9, notes=$10, createdDate=$11, lastAccessed=$12 WHERE id=$13`,
-                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed, jsonDoc.id]);
+            await db.execute(`UPDATE research_sources SET libraryId=$1, title=$2, sourceType=$3, url=$4, description=$5, author=$6, publishDate=$7, tags=$8, status=$9, notes=$10, createdDate=$11, lastAccessed=$12, updated_at=$13 WHERE id=$14`,
+                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed, updatedAt, jsonDoc.id]);
         } else {
-            await db.execute(`INSERT INTO research_sources (id, libraryId, title, sourceType, url, description, author, publishDate, tags, status, notes, createdDate, lastAccessed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed]);
+            await db.execute(`INSERT INTO research_sources (id, libraryId, title, sourceType, url, description, author, publishDate, tags, status, notes, createdDate, lastAccessed, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed, updatedAt]);
         }
         await this.reloadResearchSources();
     }
@@ -1128,22 +1182,26 @@ export class SqliteService {
     // ─── Research Summaries ────────────────────────────────────────────────────
     private async reloadResearchSummaries() {
         const db = await this.getDb();
+        try {
+            await db.execute('ALTER TABLE research_summaries ADD COLUMN updated_at TEXT').catch(() => { });
+        } catch (e) { }
         const rows = await db.select<ResearchSummaryDoc[]>('SELECT * FROM research_summaries');
         const parsed = rows.map((r: any) => this.parseRow<ResearchSummaryDoc>(r, ['sourceIds', 'tags']));
         this.researchSummariesSubject.next(parsed);
     }
 
-    async upsertResearchSummary(doc: ResearchSummaryDoc): Promise<void> {
+    async upsertResearchSummary(doc: ResearchSummaryDoc, options: { isSync?: boolean } = {}): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM research_summaries WHERE id = $1', [doc.id]);
         const jsonDoc = { ...doc, sourceIds: this.toJson(doc.sourceIds), tags: this.toJson(doc.tags) };
 
+        const updatedAt = options.isSync && (doc as any).updated_at ? (doc as any).updated_at : new Date().toISOString();
         if (exists.length > 0) {
-            await db.execute('UPDATE research_summaries SET libraryId=$1, title=$2, content=$3, sourceIds=$4, tags=$5, createdDate=$6, lastModified=$7 WHERE id=$8',
-                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified, jsonDoc.id]);
+            await db.execute('UPDATE research_summaries SET libraryId=$1, title=$2, content=$3, sourceIds=$4, tags=$5, createdDate=$6, lastModified=$7, updated_at=$8 WHERE id=$9',
+                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified, updatedAt, jsonDoc.id]);
         } else {
-            await db.execute('INSERT INTO research_summaries (id, libraryId, title, content, sourceIds, tags, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified]);
+            await db.execute('INSERT INTO research_summaries (id, libraryId, title, content, sourceIds, tags, createdDate, lastModified, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified, updatedAt]);
         }
         await this.reloadResearchSummaries();
     }
@@ -1156,5 +1214,58 @@ export class SqliteService {
         const db = await this.getDb();
         await db.execute('DELETE FROM research_summaries WHERE id = $1', [id]);
         await this.reloadResearchSummaries();
+    }
+
+    // ─── Sync State Management ─────────────────────────────────────────────────
+    async getLastSync(collection: string): Promise<string> {
+        const db = await this.getDb();
+        try {
+            const res = await db.select<any[]>('SELECT last_sync FROM sync_state WHERE collection = $1', [collection]);
+            if (res.length > 0 && res[0].last_sync) {
+                return res[0].last_sync;
+            }
+        } catch (e) {
+            // Table might not exist yet
+        }
+        return new Date(0).toISOString(); // Epoch if never synced
+    }
+
+    async setLastSync(collection: string, timestamp: string): Promise<void> {
+        const db = await this.getDb();
+        try {
+            await db.execute(`
+                INSERT INTO sync_state (collection, last_sync, last_push) 
+                VALUES ($1, $2, $2) 
+                ON CONFLICT(collection) DO UPDATE SET last_sync = $2`,
+                [collection, timestamp]);
+        } catch (e) {
+            console.error('Failed to set last sync', e);
+        }
+    }
+
+    async getLastPush(collection: string): Promise<string> {
+        const db = await this.getDb();
+        try {
+            const res = await db.select<any[]>('SELECT last_push FROM sync_state WHERE collection = $1', [collection]);
+            if (res.length > 0 && res[0].last_push) {
+                return res[0].last_push;
+            }
+        } catch (e) {
+            // Column might not exist yet if migration failed, fallback
+        }
+        return new Date(0).toISOString();
+    }
+
+    async setLastPush(collection: string, timestamp: string): Promise<void> {
+        const db = await this.getDb();
+        try {
+            await db.execute(`
+                INSERT INTO sync_state (collection, last_sync, last_push) 
+                VALUES ($1, $2, $2) 
+                ON CONFLICT(collection) DO UPDATE SET last_push = $2`,
+                [collection, timestamp]);
+        } catch (e) {
+            console.error('Failed to set last push', e);
+        }
     }
 }

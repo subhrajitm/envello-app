@@ -1,10 +1,12 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable, isDevMode, inject } from '@angular/core';
 import { createRxDatabase, RxDatabase, RxCollection, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
+import { replicateRxCollection } from 'rxdb/plugins/replication';
 import { SCHEMAS } from './rxdb-schemas';
-import { BehaviorSubject, Observable, from } from 'rxjs'; // For compatibility API
+import { BehaviorSubject, Observable, from, firstValueFrom } from 'rxjs'; // For compatibility API
+import { SupabaseService } from './supabase.service';
 
 // Add plugins
 addRxPlugin(RxDBQueryBuilderPlugin);
@@ -22,6 +24,8 @@ if (isDevMode()) {
 })
 export class RxdbService {
     private dbPromise: Promise<RxDatabase> | null = null;
+    private supabase = inject(SupabaseService);
+    private replicationStates: any[] = [];
 
     // Compatibility Subjects (Optional: RxDB is reactive by default)
     // We maintain these to minimize changes in consumers if they rely on these specific subjects
@@ -29,6 +33,15 @@ export class RxdbService {
 
     constructor() {
         this.initDb();
+
+        // Start sync when user is authenticated
+        this.supabase.currentUser$.subscribe(user => {
+            if (user) {
+                this.startSync();
+            } else {
+                this.stopSync();
+            }
+        });
     }
 
     async initDb() {
@@ -84,6 +97,115 @@ export class RxdbService {
             throw e;
         }
     }
+
+    // ─── Sync Logic ────────────────────────────────────────────────────────────
+
+    async startSync() {
+        console.log('[RxdbService] Starting Sync...');
+        const collections = [
+            'tasks', 'notes', 'journals', 'research', 'novels', 'activities'
+        ];
+
+        for (const name of collections) {
+            await this.syncCollection(name);
+        }
+    }
+
+    async stopSync() {
+        console.log('[RxdbService] Stopping Sync...');
+        this.replicationStates.forEach(state => state.cancel());
+        this.replicationStates = [];
+    }
+
+    private async syncCollection(name: string) {
+        const collection = await this.getCollection(name);
+        // Capture service instance
+        const supabaseService = this.supabase;
+        const user = supabaseService.user;
+        if (!user) return;
+
+        console.log(`[RxdbService] Setting up replication for ${name}`);
+
+        const replicationState = replicateRxCollection({
+            collection,
+            replicationIdentifier: `supabase-${name}`,
+            live: true,
+            retryTime: 5000,
+            autoStart: true,
+            pull: {
+                async handler(lastCheckpoint, batchSize) {
+                    const checkpoint = lastCheckpoint as { updated_at: string } | undefined;
+                    const minTimestamp = checkpoint ? checkpoint.updated_at : new Date(0).toISOString();
+
+                    const { data, error } = await supabaseService.client
+                        .from(name)
+                        .select('*')
+                        .gt('updated_at', minTimestamp)
+                        .order('updated_at', { ascending: true })
+                        .limit(batchSize);
+
+                    if (error) {
+                        console.error(`Pull failed for ${name}`, error);
+                        throw error;
+                    };
+
+                    return {
+                        documents: data || [],
+                        checkpoint: data && data.length > 0 ? { updated_at: data[data.length - 1].updated_at } : lastCheckpoint
+                    };
+                }
+            },
+            push: {
+                async handler(rows) {
+                    const upsertData = rows.map(row => {
+                        const doc = row.newDocumentState as any;
+                        // Determine payload for consolidated or complex tables
+                        // This is a simplification; for complex types we might need to stringify specific fields
+                        // based on the schema mapping to Supabase columns.
+                        // For now, assume Supabase tables match RxDB schema or use JSONB 'payload' column.
+
+                        // Strategy: Map top-level fields to columns, or put everything in payload?
+                        // The schema I defined has specific columns AND a payload jsonb.
+                        // Ideally we map known columns.
+
+                        const { id, title, updated_at, ...rest } = doc;
+
+                        // Basic mapping
+                        const record: any = {
+                            id,
+                            user_id: user.id,
+                            title: title || 'Untitled', // Ensure required fields
+                            updated_at: new Date().toISOString()
+                        };
+
+                        // Add specific fields based on collection if they exist in schema
+                        if (doc.entityType) record.entity_type = doc.entityType;
+                        if (doc.content) record.content = doc.content;
+                        if (doc.status) record.status = doc.status;
+
+                        // Everything else goes to payload
+                        record.payload = rest;
+
+                        return record;
+                    });
+
+                    const { error } = await supabaseService.client
+                        .from(name)
+                        .upsert(upsertData);
+
+                    if (error) {
+                        console.error(`Push failed for ${name}`, error);
+                        throw error;
+                    }
+
+                    return []; // Success, no conflicts handled here yet
+                }
+            }
+        });
+
+        this.replicationStates.push(replicationState);
+    }
+
 
     // ─── Generic Helpers ───────────────────────────────────────────────────────
 

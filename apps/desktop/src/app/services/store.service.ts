@@ -50,6 +50,7 @@ export interface Task {
   startDate?: string;
   /** Estimated duration in hours */
   estimatedDuration?: number;
+  updated_at?: string;
 }
 
 export interface Note {
@@ -62,6 +63,7 @@ export interface Note {
   lastEdited?: string;
   filePath?: string;
   lastSynced?: string; // ISO date
+  updated_at?: string;
 }
 
 export interface PlanningItem {
@@ -70,6 +72,7 @@ export interface PlanningItem {
   tag: string;
   stage: string;
   active: boolean;
+  updated_at?: string;
 }
 
 export interface Activity {
@@ -77,6 +80,7 @@ export interface Activity {
   text: string;
   time: string;
   type: 'entry' | 'sync' | 'ai' | 'system';
+  updated_at?: string;
 }
 
 export interface Novel {
@@ -94,6 +98,7 @@ export interface Novel {
   genre: string[];
   isRecentlyUpdated: boolean;
   coverImage?: string; // For thumbnail view
+  updated_at?: string;
 }
 
 export interface Project {

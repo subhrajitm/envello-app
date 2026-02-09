@@ -1,38 +1,54 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoggingService } from './logging.service';
-import { environment } from '../../../environments/environment';
+import { SupabaseService } from './supabase.service';
+import { User, Session } from '@supabase/supabase-js';
 
-/** Stub: replace with real auth when backend exists (JWT, refresh, httpOnly cookies). */
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class AuthService {
   private readonly router = inject(Router);
-  private readonly logging = inject(LoggingService);
+  private readonly supabase = inject(SupabaseService);
 
-  /** In production: read from secure storage or httpOnly cookie. */
-  private readonly isAuthenticatedSignal = signal<boolean>(!environment.production);
+  private readonly _user = signal<User | null>(null);
+  private readonly _session = signal<Session | null>(null);
 
-  isAuthenticated = computed(() => this.isAuthenticatedSignal());
+  readonly user = computed(() => this._user());
+  readonly isAuthenticated = computed(() => !!this._user());
 
   getToken(): string | null {
-    // Stub: no real token. When backend exists: return from secure storage or cookie.
-    return null;
+    return this._session()?.access_token || null;
   }
 
-  login(_email: string, _password: string): Promise<boolean> {
-    this.logging.info('AuthService.login (stub)');
-    this.isAuthenticatedSignal.set(true);
-    return Promise.resolve(true);
+  constructor() {
+    // Initialize state from Supabase service
+    this.supabase.currentUser$.subscribe(user => {
+      this._user.set(user);
+    });
+
+    this.supabase.getSession().then(({ data }) => {
+      this._session.set(data.session);
+    });
+
+    // Listen for auth changes and update router if needed
+    this.supabase.authChanges((event: string, session: Session | null) => {
+      this._session.set(session);
+      if (event === 'SIGNED_OUT') {
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
-  logout(): void {
-    this.logging.info('AuthService.logout');
-    this.isAuthenticatedSignal.set(false);
-    this.router.navigate(['/overview']).catch(() => {});
+  async signInWithGoogle() {
+    return this.supabase.signInWithGoogle();
   }
 
-  refreshToken(): Promise<boolean> {
-    this.logging.debug('AuthService.refreshToken (stub)');
-    return Promise.resolve(true);
+  async signInWithGithub() {
+    return this.supabase.signInWithGithub();
+  }
+
+  async signOut() {
+    await this.supabase.signOut();
+    this.router.navigate(['/login']);
   }
 }

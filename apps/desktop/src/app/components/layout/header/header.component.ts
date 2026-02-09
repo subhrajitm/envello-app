@@ -11,6 +11,8 @@ import { NotificationCenterComponent } from '../../notification-center/notificat
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
 
+import { SyncService } from '../../../core/services/sync.service';
+
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -33,6 +35,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   themeService = inject(ThemeService);
   notificationService = inject(NotificationService);
   userService = inject(UserService);
+  syncService = inject(SyncService);
   private router = inject(Router);
 
   // Expose signals for template
@@ -162,6 +165,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   openProfileMenu() {
     this.profileMenu?.toggle();
+  }
+
+  async sync() {
+    await this.syncService.syncAll();
   }
 
   handleOpenSettings() {

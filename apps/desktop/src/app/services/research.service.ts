@@ -10,6 +10,7 @@ export interface ResearchLibrary {
     color?: string;
     createdDate: string;
     lastModified: string;
+    updated_at?: string;
 }
 
 export interface ResearchSource {
@@ -26,6 +27,7 @@ export interface ResearchSource {
     notes?: string;
     createdDate: string;
     lastAccessed?: string;
+    updated_at?: string;
 }
 
 export interface ResearchSummary {
@@ -37,6 +39,7 @@ export interface ResearchSummary {
     tags: string[];
     createdDate: string;
     lastModified: string;
+    updated_at?: string;
 }
 
 @Injectable({
