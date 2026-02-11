@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Database from '@tauri-apps/plugin-sql';
+import { readTextFile } from '@tauri-apps/plugin-fs';
 import { BehaviorSubject, from, map, Observable } from 'rxjs';
 
 // Import Types
@@ -1156,5 +1157,51 @@ export class SqliteService {
         const db = await this.getDb();
         await db.execute('DELETE FROM research_summaries WHERE id = $1', [id]);
         await this.reloadResearchSummaries();
+    }
+
+    // ─── Export ────────────────────────────────────────────────────────────────
+    async exportAllData(): Promise<any> {
+        const data: any = {
+            version: 1,
+            timestamp: new Date().toISOString(),
+            data: {}
+        };
+
+        data.data.tasks = await this.getAllTasks();
+
+        // Notes: Populate content from files
+        const notes = await this.getAllNotes();
+        for (const note of notes) {
+            if (note.filePath) {
+                try {
+                    note.content = await readTextFile(note.filePath);
+                } catch (e) {
+                    console.warn(`[SqliteService] Failed to read note content for ${note.id}`, e);
+                }
+            }
+        }
+        data.data.notes = notes;
+
+        data.data.planning_items = await this.getAllPlanningItems();
+        data.data.activities = await this.getAllActivities();
+        data.data.novels = await this.getAllNovels();
+        data.data.bin_items = await this.getAllBinItems();
+        data.data.snippets = await this.getAllSnippets();
+        data.data.books = await this.getAllBooks();
+        data.data.meetings = await this.getAllMeetings();
+        data.data.articles = await this.getAllArticles();
+        data.data.journal_projects = await this.getAllJournalProjects();
+        data.data.journal_entries = await this.getAllJournalEntries();
+        data.data.journal_columns = await this.getAllJournalColumns();
+        data.data.research_libraries = await this.getAllResearchLibraries();
+        data.data.research_sources = await this.getAllResearchSources();
+        data.data.research_summaries = await this.getAllResearchSummaries();
+
+        // Novel Content
+        const db = await this.getDb();
+        const contentRows = await db.select<NovelContentDoc[]>('SELECT * FROM novel_content');
+        data.data.novel_content = contentRows;
+
+        return data;
     }
 }

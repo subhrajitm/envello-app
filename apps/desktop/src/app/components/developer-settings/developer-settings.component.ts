@@ -11,6 +11,8 @@ import { MeetingsService } from '../../services/meetings.service';
 import { ArticleService } from '../../services/article.service';
 import { JournalService } from '../../services/journal.service';
 import { ResearchService } from '../../services/research.service';
+import { SqliteService } from '../../core/services/sqlite.service';
+import { TauriService } from '../../core/services/tauri.service';
 
 export interface DataTab {
   id: string;
@@ -41,6 +43,10 @@ export class DeveloperSettingsComponent {
   private articles = inject(ArticleService);
   private journal = inject(JournalService);
   private research = inject(ResearchService);
+  private sqlite = inject(SqliteService);
+  private tauri = inject(TauriService);
+
+  isExporting = signal(false);
 
   activeTab = signal<string>('tasks');
   searchQuery = signal('');
@@ -196,6 +202,29 @@ export class DeveloperSettingsComponent {
       setTimeout(() => this.copyFeedback.set(false), 1500);
     } catch {
       console.warn('Clipboard copy failed');
+    }
+  }
+
+  async exportData() {
+    this.isExporting.set(true);
+    try {
+      const data = await this.sqlite.exportAllData();
+      const content = JSON.stringify(data, null, 2);
+
+      const path = await this.tauri.saveFile({
+        defaultPath: `envello-backup-${new Date().toISOString().split('T')[0]}.json`,
+        filters: [{ name: 'JSON', extensions: ['json'] }]
+      });
+
+      if (path) {
+        await this.tauri.writeTextFile(path, content);
+        await this.tauri.notify({ title: 'Export Successful', body: `Data saved to ${path}` });
+      }
+    } catch (e) {
+      console.error('Export failed', e);
+      await this.tauri.notify({ title: 'Export Failed', body: String(e) });
+    } finally {
+      this.isExporting.set(false);
     }
   }
 }

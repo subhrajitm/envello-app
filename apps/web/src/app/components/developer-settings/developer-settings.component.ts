@@ -11,6 +11,7 @@ import { MeetingsService } from '../../services/meetings.service';
 import { ArticleService } from '../../services/article.service';
 import { JournalService } from '../../services/journal.service';
 import { ResearchService } from '../../services/research.service';
+import { DatabaseService } from '../../core/services/database.service';
 
 export interface DataTab {
   id: string;
@@ -41,6 +42,9 @@ export class DeveloperSettingsComponent {
   private articles = inject(ArticleService);
   private journal = inject(JournalService);
   private research = inject(ResearchService);
+  private db = inject(DatabaseService);
+
+  isImporting = signal(false);
 
   activeTab = signal<string>('tasks');
   searchQuery = signal('');
@@ -196,6 +200,32 @@ export class DeveloperSettingsComponent {
       setTimeout(() => this.copyFeedback.set(false), 1500);
     } catch {
       console.warn('Clipboard copy failed');
+    }
+  }
+
+
+  async onImportFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const file = input.files[0];
+    this.isImporting.set(true);
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (confirm(`Are you sure you want to import data from "${file.name}"? This will overwrite existing data.`)) {
+        await this.db.importData(data);
+        alert('Import successful! Please reload the page.');
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error('Import failed', e);
+      alert('Import failed: ' + String(e));
+    } finally {
+      this.isImporting.set(false);
+      input.value = ''; // Reset input
     }
   }
 }
