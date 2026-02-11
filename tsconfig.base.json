@@ -9,6 +9,15 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@envello/data": [
+        "libs/data/src/index.ts"
+      ],
+      "@envello/domain": [
+        "libs/domain/src/index.ts"
+      ],
+      "@envello/state": [
+        "libs/state/src/index.ts"
+      ],
       "ui": [
         "libs/ui/src/index.ts"
       ]

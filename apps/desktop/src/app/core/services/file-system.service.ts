@@ -3,10 +3,12 @@ import { TauriService } from './tauri.service';
 import { documentDir, join } from '@tauri-apps/api/path';
 import { mkdir, exists, writeTextFile, readTextFile, rename, remove } from '@tauri-apps/plugin-fs';
 
+import { IFileSystem } from '@envello/domain';
+
 @Injectable({
     providedIn: 'root'
 })
-export class FileSystemService {
+export class FileSystemService implements IFileSystem {
     private tauri = inject(TauriService);
     private initialized = false;
     private baseDir = '';

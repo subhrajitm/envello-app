@@ -7,6 +7,10 @@ import { routes } from './app.routes';
 import { GlobalErrorHandler } from './core/errors/global-error.handler';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
+import { DataService } from '@envello/data';
+import { FILE_SYSTEM } from '@envello/state';
+import { DatabaseService } from './core/services/database.service';
+import { FileSystemService } from './core/services/file-system.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,5 +19,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, errorRetryInterceptor])),
     provideAnimations(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    { provide: DataService, useExisting: DatabaseService },
+    { provide: FILE_SYSTEM, useExisting: FileSystemService }
   ],
 };

@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import PouchDB from 'pouchdb';
+import { DataService } from '@envello/data';
 
 @Injectable({
     providedIn: 'root'
 })
-export class DatabaseService {
+export class DatabaseService implements DataService {
     private dbs: { [key: string]: PouchDB.Database } = {};
 
     constructor() {
