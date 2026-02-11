@@ -16,7 +16,7 @@ export class SqliteDataService implements DataService {
             case 'planning_items': return await this.sqlite.getAllPlanningItems() as unknown as T[];
             case 'activities': return await this.sqlite.getAllActivities() as unknown as T[];
             case 'novels': return await this.sqlite.getAllNovels() as unknown as T[];
-            case 'bin': return await this.sqlite.getAllBinItems() as unknown as T[];
+            case 'bin_items': return await this.sqlite.getAllBinItems() as unknown as T[];
             // Projects not yet implemented in SqliteService, returning empty for now
             case 'projects': return [] as T[];
             default:
@@ -32,7 +32,7 @@ export class SqliteDataService implements DataService {
             case 'planning_items': return await this.sqlite.upsertPlanningItem(item as unknown as PlanningItem);
             case 'activities': return await this.sqlite.upsertActivity(item as unknown as Activity);
             case 'novels': return await this.sqlite.upsertNovel(item as unknown as Novel);
-            case 'bin': return await this.sqlite.upsertBinItem(item as unknown as unknown as any); // Typo in BinItem type vs what Sqlite expects? Let's check
+            case 'bin_items': return await this.sqlite.upsertBinItem(item as unknown as unknown as any); // Typo in BinItem type vs what Sqlite expects? Let's check
             // Projects todo
             case 'projects': break;
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
@@ -45,7 +45,7 @@ export class SqliteDataService implements DataService {
             case 'notes': return await this.sqlite.removeNote(id);
             // Planning items remove method? Check SqliteService
             case 'novels': return await this.sqlite.removeNovel(id);
-            case 'bin': return await this.sqlite.removeBinItem(id);
+            case 'bin_items': return await this.sqlite.removeBinItem(id);
             case 'novel_content': return await this.sqlite.removeNovelContent(id);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for remove`);
         }

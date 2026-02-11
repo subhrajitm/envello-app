@@ -15,7 +15,7 @@ export class BinService {
 
     private async loadFromDb(): Promise<void> {
         try {
-            const list = await this.db.getAll<BinItem>('bin');
+            const list = await this.db.getAll<BinItem>('bin_items');
             this.items.set(list);
         } catch (e) {
             console.error('[BinService] loadFromDb failed', e);
@@ -30,12 +30,12 @@ export class BinService {
             ...item
         };
         this.items.update(list => [binItem, ...list]);
-        this.db.upsert('bin', binItem).catch(e => console.error('[BinService] persist bin item failed', e));
+        this.db.upsert('bin_items', binItem).catch(e => console.error('[BinService] persist bin item failed', e));
     }
 
     permanentlyDelete(binItemId: string) {
         this.items.update(list => list.filter(i => i.id !== binItemId));
-        this.db.remove('bin', binItemId).catch(e => console.error('[BinService] remove bin item failed', e));
+        this.db.remove('bin_items', binItemId).catch(e => console.error('[BinService] remove bin item failed', e));
     }
 
     emptyBin() {
