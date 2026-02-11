@@ -1,6 +1,6 @@
 
 import { Injectable, signal, inject } from '@angular/core';
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 import { FileSystemService } from '../core/services/file-system.service';
 
 export interface Article {
@@ -30,7 +30,7 @@ export interface Article {
   providedIn: 'root'
 })
 export class ArticleService {
-  private rxdb = inject(RxdbService);
+  private db = inject(DatabaseService);
   private fs = inject(FileSystemService);
 
   articles = signal<Article[]>([]);
@@ -38,7 +38,7 @@ export class ArticleService {
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
     this.initMarkdown();
   }
 
@@ -49,13 +49,13 @@ export class ArticleService {
     }
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllArticles();
+      const list = await this.db.getAll<Article>('articles');
       this.articles.set(list);
     } catch (e) {
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
-        console.error('[ArticleService] loadFromRxDB failed', e);
+        console.error('[ArticleService] loadFromDb failed', e);
       }
     }
   }
@@ -102,7 +102,7 @@ export class ArticleService {
     // Initial file write
     this.saveArticleContentToFile(newArticle.id, newArticle.content || '');
 
-    this.rxdb.upsertArticle(newArticle).catch(e => console.error('[ArticleService] persist failed', e));
+    this.db.upsert('articles', newArticle).catch(e => console.error('[ArticleService] persist failed', e));
     return newArticle;
   }
 
@@ -122,7 +122,7 @@ export class ArticleService {
     }
 
     const a = this.articles().find(x => x.id === id);
-    if (a) this.rxdb.upsertArticle(a).catch(e => console.error('[ArticleService] persist failed', e));
+    if (a) this.db.upsert('articles', a).catch(e => console.error('[ArticleService] persist failed', e));
   }
 
   private async saveArticleContentToFile(id: string, html: string) {
@@ -135,13 +135,13 @@ export class ArticleService {
     const article = this.articles().find(a => a.id === id);
     if (article && article.filePath !== filePath) {
       this.articles.update(as => as.map(a => a.id === id ? { ...a, filePath } : a));
-      this.rxdb.upsertArticle({ ...article, filePath });
+      this.db.upsert('articles', { ...article, filePath });
     }
   }
 
   deleteArticle(id: string): void {
     this.articles.update(list => list.filter(a => a.id !== id));
-    this.rxdb.removeArticle(id).catch(e => console.error('[ArticleService] remove failed', e));
+    this.db.remove('articles', id).catch(e => console.error('[ArticleService] remove failed', e));
     this.fs.deleteFile('articles', id).catch(e => console.error('Failed to delete article file', e));
   }
 

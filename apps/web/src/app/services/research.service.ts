@@ -1,6 +1,6 @@
 
 import { Injectable, signal, inject } from '@angular/core';
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 
 export interface ResearchLibrary {
     id: string;
@@ -42,41 +42,41 @@ export interface ResearchSummary {
     providedIn: 'root'
 })
 export class ResearchService {
-    private rxdb = inject(RxdbService);
+    private db = inject(DatabaseService);
 
     libraries = signal<ResearchLibrary[]>([]);
     sources = signal<ResearchSource[]>([]);
     summaries = signal<ResearchSummary[]>([]);
 
     constructor() {
-        this.loadFromRxDB();
+        this.loadFromDb();
     }
 
-    private async loadFromRxDB(): Promise<void> {
+    private async loadFromDb(): Promise<void> {
         try {
             const [libs, srcs, sums] = await Promise.all([
-                this.rxdb.getAllResearchLibraries(),
-                this.rxdb.getAllResearchSources(),
-                this.rxdb.getAllResearchSummaries(),
+                this.db.getAll<ResearchLibrary>('research_libraries'),
+                this.db.getAll<ResearchSource>('research_sources'),
+                this.db.getAll<ResearchSummary>('research_summaries'),
             ]);
             this.libraries.set(libs);
             this.sources.set(srcs);
             this.summaries.set(sums);
         } catch (e) {
-            console.error('[ResearchService] loadFromRxDB failed', e);
+            console.error('[ResearchService] loadFromDb failed', e);
         }
     }
 
     private persistLibrary(lib: ResearchLibrary): void {
-        this.rxdb.upsertResearchLibrary(lib).catch(e => console.error('[ResearchService] persist library failed', e));
+        this.db.upsert('research_libraries', lib).catch(e => console.error('[ResearchService] persist library failed', e));
     }
 
     private persistSource(s: ResearchSource): void {
-        this.rxdb.upsertResearchSource(s).catch(e => console.error('[ResearchService] persist source failed', e));
+        this.db.upsert('research_sources', s).catch(e => console.error('[ResearchService] persist source failed', e));
     }
 
     private persistSummary(s: ResearchSummary): void {
-        this.rxdb.upsertResearchSummary(s).catch(e => console.error('[ResearchService] persist summary failed', e));
+        this.db.upsert('research_summaries', s).catch(e => console.error('[ResearchService] persist summary failed', e));
     }
 
     // Library methods
@@ -103,12 +103,12 @@ export class ResearchService {
     async deleteLibrary(id: string) {
         const srcs = this.sources().filter(s => s.libraryId === id);
         const sums = this.summaries().filter(s => s.libraryId === id);
-        for (const s of srcs) await this.rxdb.removeResearchSource(s.id).catch(() => { });
-        for (const s of sums) await this.rxdb.removeResearchSummary(s.id).catch(() => { });
+        for (const s of srcs) await this.db.remove('research_sources', s.id).catch(() => { });
+        for (const s of sums) await this.db.remove('research_summaries', s.id).catch(() => { });
         this.sources.update(list => list.filter(s => s.libraryId !== id));
         this.summaries.update(list => list.filter(s => s.libraryId !== id));
         this.libraries.update(list => list.filter(lib => lib.id !== id));
-        await this.rxdb.removeResearchLibrary(id).catch(e => console.error('[ResearchService] remove library failed', e));
+        await this.db.remove('research_libraries', id).catch(e => console.error('[ResearchService] remove library failed', e));
     }
 
     // Source methods
@@ -139,7 +139,7 @@ export class ResearchService {
                 sourceIds: summary.sourceIds.filter(sid => sid !== id)
             }))
         );
-        this.rxdb.removeResearchSource(id).catch(e => console.error('[ResearchService] remove source failed', e));
+        this.db.remove('research_sources', id).catch(e => console.error('[ResearchService] remove source failed', e));
         this.summaries().filter(s => s.sourceIds.includes(id)).forEach(s => this.persistSummary(s));
     }
 
@@ -170,7 +170,7 @@ export class ResearchService {
 
     deleteSummary(id: string) {
         this.summaries.update(list => list.filter(s => s.id !== id));
-        this.rxdb.removeResearchSummary(id).catch(e => console.error('[ResearchService] remove summary failed', e));
+        this.db.remove('research_summaries', id).catch(e => console.error('[ResearchService] remove summary failed', e));
     }
 
     getSummariesByLibrary(libraryId: string) {

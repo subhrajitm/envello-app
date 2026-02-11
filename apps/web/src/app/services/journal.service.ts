@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService } from './store.service';
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 import { FileSystemService } from '../core/services/file-system.service';
 
 export interface JournalEntry {
@@ -69,14 +69,14 @@ export class JournalService {
 
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private rxdb = inject(RxdbService);
+  private db = inject(DatabaseService);
   private fs = inject(FileSystemService);
 
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
     this.initMarkdown();
   }
 
@@ -87,12 +87,12 @@ export class JournalService {
     }
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     console.log('[JournalService] Loading journal data...');
 
     // Load Projects
     try {
-      const projects = await this.rxdb.getAllJournalProjects();
+      const projects = await this.db.getAll<JournalProject>('journal_projects');
       this.projects.set(projects);
     } catch (e) {
       console.error('[JournalService] Failed to load projects:', e);
@@ -100,7 +100,7 @@ export class JournalService {
 
     // Load Entries
     try {
-      const entries = await this.rxdb.getAllJournalEntries();
+      const entries = await this.db.getAll<JournalEntry>('journal_entries');
       this.entries.set(entries);
     } catch (e) {
       console.error('[JournalService] Failed to load entries:', e);
@@ -108,9 +108,9 @@ export class JournalService {
 
     // Load Columns
     try {
-      const cols = await this.rxdb.getAllJournalColumns();
+      const cols = await this.db.getAll<JournalColumn>('journal_columns');
       if (cols.length === 0) {
-        await Promise.all(defaultColumns.map(c => this.rxdb.upsertJournalColumn(c)));
+        await Promise.all(defaultColumns.map(c => this.db.upsert('journal_columns', c)));
         this.columns.set(defaultColumns);
       } else {
         this.columns.set(cols.sort((a, b) => a.order - b.order));
@@ -147,15 +147,15 @@ export class JournalService {
   }
 
   private persistProject(p: JournalProject): void {
-    this.rxdb.upsertJournalProject(p).catch(e => console.error('[JournalService] persist project failed', e));
+    this.db.upsert('journal_projects', p).catch(e => console.error('[JournalService] persist project failed', e));
   }
 
   private persistEntry(e: JournalEntry): void {
-    this.rxdb.upsertJournalEntry(e).catch(err => console.error('[JournalService] persist entry failed', err));
+    this.db.upsert('journal_entries', e).catch(err => console.error('[JournalService] persist entry failed', err));
   }
 
   private persistColumn(c: JournalColumn): void {
-    this.rxdb.upsertJournalColumn(c).catch(e => console.error('[JournalService] persist column failed', e));
+    this.db.upsert('journal_columns', c).catch(e => console.error('[JournalService] persist column failed', e));
   }
 
   // Project Management
@@ -219,13 +219,13 @@ export class JournalService {
           title: entry.title,
           payload: entry
         });
-        this.rxdb.removeJournalEntry(entry.id).catch(() => { });
+        this.db.remove('journal_entries', entry.id).catch(() => { });
       });
 
       this.entries.update(entries => entries.filter(e => e.projectId !== id));
       this.projects.update(projects => projects.filter(p => p.id !== id));
       this.store.addActivity(`Journal project deleted: ${project.title}`, 'system');
-      this.rxdb.removeJournalProject(id).catch(e => console.error('[JournalService] remove project failed', e));
+      this.db.remove('journal_projects', id).catch(e => console.error('[JournalService] remove project failed', e));
     }
   }
 
@@ -313,7 +313,7 @@ export class JournalService {
     const entry = this.entries().find(e => e.id === id);
     if (entry && entry.filePath !== filePath) {
       this.entries.update(es => es.map(e => e.id === id ? { ...e, filePath } : e));
-      this.rxdb.upsertJournalEntry({ ...entry, filePath });
+      this.db.upsert('journal_entries', { ...entry, filePath });
     }
   }
 
@@ -329,7 +329,7 @@ export class JournalService {
       this.entries.update(entries => entries.filter(e => e.id !== id));
       this.updateProjectStats(entry.projectId);
       this.store.addActivity(`Entry deleted: ${entry.title}`, 'system');
-      this.rxdb.removeJournalEntry(id).catch(e => console.error('[JournalService] remove entry failed', e));
+      this.db.remove('journal_entries', id).catch(e => console.error('[JournalService] remove entry failed', e));
       this.fs.deleteFile('journal', id).catch(e => console.error('Failed to delete journal file', e));
     }
   }
@@ -371,7 +371,7 @@ export class JournalService {
       const updated = this.getEntry(entry.id);
       if (updated) this.persistEntry(updated);
     });
-    this.rxdb.removeJournalColumn(id).catch(e => console.error('[JournalService] remove column failed', e));
+    this.db.remove('journal_columns', id).catch(e => console.error('[JournalService] remove column failed', e));
   }
 
   // Search

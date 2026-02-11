@@ -1,4 +1,4 @@
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
 import { BinService } from './bin.service';
@@ -93,7 +93,7 @@ export class NovelContentService {
     activeNovel = signal<NovelContent | null>(null);
     store = inject(StoreService);
     private bin = inject(BinService);
-    private rxdb = inject(RxdbService);
+    private db = inject(DatabaseService);
     private persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() { }
@@ -101,15 +101,14 @@ export class NovelContentService {
     async loadNovel(id: string): Promise<void> {
         this.activeNovel.set(null);
         try {
-            const raw = await this.rxdb.getNovelContent(id);
-            if (raw) {
-                const data = JSON.parse(raw) as NovelContent;
+            const data = await this.db.get<NovelContent>('novel_content', id);
+            if (data) {
                 this.activeNovel.set(data);
                 return;
             }
-            const data = this.createEmptyNovel(id);
-            this.activeNovel.set(data);
-            await this.rxdb.setNovelContent(id, JSON.stringify(data));
+            const empty = this.createEmptyNovel(id);
+            this.activeNovel.set(empty);
+            await this.db.upsert('novel_content', empty);
         } catch (e) {
             console.error('[NovelContentService] loadNovel failed', e);
 
@@ -137,7 +136,7 @@ export class NovelContentService {
             const n = this.activeNovel();
             if (!n) return;
 
-            this.rxdb.setNovelContent(n.id, JSON.stringify(n)).catch(e => {
+            this.db.upsert('novel_content', n).catch(e => {
                 console.error('[NovelContentService] persist failed', e);
                 // Fallback to LocalStorage
                 localStorage.setItem(`novel_content_${n.id}`, JSON.stringify(n));
@@ -727,7 +726,7 @@ export class NovelContentService {
     async createAndPersistEmptyNovel(id: string, title: string): Promise<void> {
         const data = this.createEmptyNovel(id, title);
         try {
-            await this.rxdb.setNovelContent(id, JSON.stringify(data));
+            await this.db.upsert('novel_content', data);
         } catch (e) {
             console.error('[NovelContentService] Persist failed, falling back to LocalStorage', e);
             localStorage.setItem(`novel_content_${id}`, JSON.stringify(data));

@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 import { FileSystemService } from '../core/services/file-system.service';
 
 export interface Task {
@@ -104,14 +104,14 @@ export class StoreService {
   novels = signal<Novel[]>([]);
 
   private bin = inject(BinService);
-  private rxdb = inject(RxdbService);
+  private db = inject(DatabaseService);
   private fs = inject(FileSystemService);
 
   private turndownService: any;
   private saveTimeouts: { [id: string]: any } = {};
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
     this.initMarkdown();
   }
 
@@ -132,12 +132,12 @@ export class StoreService {
     }
   }
 
-  private async loadFromRxDB(): Promise<void> {
-    console.log('[StoreService] Loading data from RxDB...');
+  private async loadFromDb(): Promise<void> {
+    console.log('[StoreService] Loading data from Database...');
 
     // Load Tasks
     try {
-      const tasks = await this.rxdb.getAllTasks();
+      const tasks = await this.db.getAll<Task>('tasks');
       this.tasks.set(tasks);
     } catch (e) {
       console.error('[StoreService] Failed to load tasks:', e);
@@ -146,7 +146,7 @@ export class StoreService {
 
     // Load Notes
     try {
-      const notes = await this.rxdb.getAllNotes();
+      const notes = await this.db.getAll<Note>('notes');
       this.notes.set(notes);
     } catch (e) {
       console.error('[StoreService] Failed to load notes:', e);
@@ -155,7 +155,7 @@ export class StoreService {
 
     // Load Planning Items
     try {
-      const planningItems = await this.rxdb.getAllPlanningItems();
+      const planningItems = await this.db.getAll<PlanningItem>('planning_items');
       this.planningItems.set(planningItems);
     } catch (e) {
       console.error('[StoreService] Failed to load planning items:', e);
@@ -164,7 +164,7 @@ export class StoreService {
 
     // Load Activities
     try {
-      const activities = await this.rxdb.getAllActivities();
+      const activities = await this.db.getAll<Activity>('activities');
       this.activities.set(activities.slice(0, 50));
     } catch (e) {
       console.error('[StoreService] Failed to load activities:', e);
@@ -173,7 +173,7 @@ export class StoreService {
 
     // Load Novels
     try {
-      const novels = await this.rxdb.getAllNovels();
+      const novels = await this.db.getAll<Novel>('novels');
       this.novels.set(novels);
     } catch (e) {
       console.error('[StoreService] Failed to load novels:', e);
@@ -213,7 +213,7 @@ export class StoreService {
   addTask(task: Task) {
     this.tasks.update(tasks => [...tasks, task]);
     this.addActivity('Task created: ' + task.title, 'system');
-    this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
+    this.db.upsert('tasks', task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   updateTask(id: string, updates: Partial<Task>) {
@@ -221,7 +221,7 @@ export class StoreService {
     const task = updated.find(t => t.id === id);
     this.tasks.set(updated);
     this.addActivity('Task updated', 'system');
-    if (task) this.rxdb.upsertTask(task).catch(e => console.error('[StoreService] persist task failed', e));
+    if (task) this.db.upsert('tasks', task).catch(e => console.error('[StoreService] persist task failed', e));
   }
 
   deleteTask(id: string) {
@@ -239,7 +239,7 @@ export class StoreService {
 
     this.tasks.set(existingTasks.filter(t => t.id !== id));
     this.addActivity('Task deleted', 'system');
-    this.rxdb.removeTask(id).catch(e => console.error('[StoreService] remove task failed', e));
+    this.db.remove('tasks', id).catch(e => console.error('[StoreService] remove task failed', e));
   }
 
   async addNote(note: Note) {
@@ -249,7 +249,7 @@ export class StoreService {
     // Write initial file
     await this.saveNoteContentToFile(note.id, note.content || '');
 
-    this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
+    this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
   }
 
   updateNote(id: string, updates: Partial<Note>) {
@@ -277,7 +277,7 @@ export class StoreService {
     }
 
     // Persist Metadata to DB (content is explicitly excluded/cleared in SqliteService upsert)
-    this.rxdb.upsertNote(note).catch(e => console.error('[StoreService] persist note failed', e));
+    this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
   }
 
   private async saveNoteContentToFile(id: string, html: string) {
@@ -291,7 +291,7 @@ export class StoreService {
     const note = this.notes().find(n => n.id === id);
     if (note && note.filePath !== filePath) {
       this.notes.update(ns => ns.map(n => n.id === id ? { ...n, filePath } : n));
-      this.rxdb.upsertNote({ ...note, filePath });
+      this.db.upsert('notes', { ...note, filePath });
     }
   }
 
@@ -310,19 +310,19 @@ export class StoreService {
 
     this.notes.set(existingNotes.filter(n => n.id !== id));
     this.addActivity('Note deleted', 'system');
-    this.rxdb.removeNote(id).catch(e => console.error('[StoreService] remove note failed', e));
+    this.db.remove('notes', id).catch(e => console.error('[StoreService] remove note failed', e));
     this.fs.deleteNote(id).catch(e => console.error('Failed to delete note file', e));
   }
 
   addPlanningItem(item: PlanningItem) {
     this.planningItems.update(items => [...items, item]);
-    this.rxdb.upsertPlanningItem(item).catch(e => console.error('[StoreService] persist planning item failed', e));
+    this.db.upsert('planning_items', item).catch(e => console.error('[StoreService] persist planning item failed', e));
   }
 
   addNovel(novel: Novel) {
     this.novels.update(novels => [...novels, novel]);
     this.addActivity('Project started: ' + novel.title, 'system');
-    this.rxdb.upsertNovel(novel).catch(e => console.error('[StoreService] persist novel failed', e));
+    this.db.upsert('novels', novel).catch(e => console.error('[StoreService] persist novel failed', e));
   }
 
   deleteNovel(id: string) {
@@ -338,8 +338,8 @@ export class StoreService {
     }
     this.novels.set(existing.filter(n => n.id !== id));
     this.addActivity('Novel deleted', 'system');
-    this.rxdb.removeNovel(id).catch(e => console.error('[StoreService] remove novel failed', e));
-    this.rxdb.removeNovelContent(id).catch(e => console.error('[StoreService] remove novel content failed', e));
+    this.db.remove('novels', id).catch(e => console.error('[StoreService] remove novel failed', e));
+    this.db.remove('novel_content', id).catch(e => console.error('[StoreService] remove novel content failed', e));
   }
 
   addActivity(text: string, type: Activity['type'] = 'entry') {
@@ -350,6 +350,6 @@ export class StoreService {
       type
     };
     this.activities.update(activities => [newActivity, ...activities.slice(0, 49)]); // Keep last 50
-    this.rxdb.upsertActivity(newActivity).catch(e => console.error('[StoreService] persist activity failed', e));
+    this.db.upsert('activities', newActivity).catch(e => console.error('[StoreService] persist activity failed', e));
   }
 }

@@ -1,7 +1,7 @@
 
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 
 export type SnippetLang =
   | 'Python'
@@ -37,7 +37,7 @@ const LANGS: SnippetLang[] = ['Python', 'JavaScript', 'TypeScript', 'Markdown', 
 @Injectable({ providedIn: 'root' })
 export class SnippetsService {
   private bin = inject(BinService);
-  private rxdb = inject(RxdbService);
+  private db = inject(DatabaseService);
 
   readonly snippets = signal<Snippet[]>([]);
   selectedSnippetId = signal<string | null>(null);
@@ -52,15 +52,15 @@ export class SnippetsService {
   readonly LANGS = LANGS;
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllSnippets();
+      const list = await this.db.getAll<Snippet>('snippets');
       this.snippets.set(list);
     } catch (e) {
-      console.error('[SnippetsService] loadFromRxDB failed', e);
+      console.error('[SnippetsService] loadFromDb failed', e);
     }
   }
 
@@ -130,7 +130,7 @@ export class SnippetsService {
       updatedAt: now,
     };
     this.snippets.update(list => [...list, created]);
-    this.rxdb.upsertSnippet(created).catch(e => console.error('[SnippetsService] persist failed', e));
+    this.db.upsert('snippets', created).catch(e => console.error('[SnippetsService] persist failed', e));
     return created;
   }
 
@@ -140,7 +140,7 @@ export class SnippetsService {
       list.map(s => (s.id === id ? { ...s, ...patch, updatedAt: now } : s))
     );
     const updated = this.snippets().find(s => s.id === id);
-    if (updated) this.rxdb.upsertSnippet(updated).catch(e => console.error('[SnippetsService] persist failed', e));
+    if (updated) this.db.upsert('snippets', updated).catch(e => console.error('[SnippetsService] persist failed', e));
   }
 
   deleteSnippet(id: string): void {
@@ -149,7 +149,7 @@ export class SnippetsService {
     this.bin.addToBin({ type: 'snippet', originalId: id, title: s.title, payload: s });
     this.snippets.update(list => list.filter(x => x.id !== id));
     if (this.selectedSnippetId() === id) this.selectedSnippetId.set(null);
-    this.rxdb.removeSnippet(id).catch(e => console.error('[SnippetsService] remove failed', e));
+    this.db.remove('snippets', id).catch(e => console.error('[SnippetsService] remove failed', e));
   }
 
   copyContent(id: string): string | null {

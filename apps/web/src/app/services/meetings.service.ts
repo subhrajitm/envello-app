@@ -2,7 +2,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService, Task } from './store.service';
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 
 
 
@@ -130,25 +130,25 @@ export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attende
 export class MeetingsService {
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private rxdb = inject(RxdbService);
+  private db = inject(DatabaseService);
 
   meetings = signal<Meeting[]>([]);
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllMeetings();
+      const list = await this.db.getAll<Meeting>('meetings');
       this.meetings.set(list);
     } catch (e) {
-      console.error('[MeetingsService] loadFromRxDB failed', e);
+      console.error('[MeetingsService] loadFromDb failed', e);
     }
   }
 
   private persistMeeting(m: Meeting): void {
-    this.rxdb.upsertMeeting(m).catch(e => console.error('[MeetingsService] persist failed', e));
+    this.db.upsert('meetings', m).catch(e => console.error('[MeetingsService] persist failed', e));
   }
 
   // UI state
@@ -391,7 +391,7 @@ export class MeetingsService {
 
     this.meetings.set(existing.filter(m => m.id !== id));
     this.store.addActivity('Meeting deleted', 'system');
-    this.rxdb.removeMeeting(id).catch(e => console.error('[MeetingsService] remove failed', e));
+    this.db.remove('meetings', id).catch(e => console.error('[MeetingsService] remove failed', e));
   }
 
   cancelMeeting(id: string) {

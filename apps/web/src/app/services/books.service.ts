@@ -1,7 +1,7 @@
 
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { RxdbService } from '../core/services/rxdb.service';
+import { DatabaseService } from '../core/services/database.service';
 
 export type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
 export type BookStatus = 'reading' | 'completed' | 'queued';
@@ -37,7 +37,7 @@ export type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'cat
 @Injectable({ providedIn: 'root' })
 export class BooksService {
   private bin = inject(BinService);
-  private rxdb = inject(RxdbService);
+  private db = inject(DatabaseService);
 
   readonly books = signal<Book[]>([]);
   selectedBookId = signal<string | null>(null);
@@ -49,20 +49,20 @@ export class BooksService {
   selectedCategory = signal<BookCategory | ''>('');
 
   constructor() {
-    this.loadFromRxDB();
+    this.loadFromDb();
   }
 
-  private async loadFromRxDB(): Promise<void> {
+  private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.rxdb.getAllBooks();
+      const list = await this.db.getAll<Book>('books');
       this.books.set(list);
     } catch (e) {
-      console.error('[BooksService] loadFromRxDB failed', e);
+      console.error('[BooksService] loadFromDb failed', e);
     }
   }
 
   private persistBook(b: Book): void {
-    this.rxdb.upsertBook(b).catch(e => console.error('[BooksService] persist failed', e));
+    this.db.upsert('books', b).catch(e => console.error('[BooksService] persist failed', e));
   }
 
   readonly selectedBook = computed(() => {
@@ -157,7 +157,7 @@ export class BooksService {
     });
     this.books.update(list => list.filter(b => b.id !== id));
     if (this.selectedBookId() === id) this.selectedBookId.set(null);
-    this.rxdb.removeBook(id).catch(e => console.error('[BooksService] remove failed', e));
+    this.db.remove('books', id).catch(e => console.error('[BooksService] remove failed', e));
   }
 
   setProgress(id: string, progress: number): void {
