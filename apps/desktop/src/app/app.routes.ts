@@ -5,12 +5,12 @@ export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'login',
-    loadComponent: () => import('./components/auth/login/login.component').then(m => m.LoginComponent),
+    loadComponent: () => import('@envello/ui').then(m => m.LoginComponent),
     data: { hasSidebar: false, fullScreen: true }
   },
   {
     path: 'sign-up',
-    loadComponent: () => import('./components/auth/sign-up/sign-up.component').then(m => m.SignUpComponent),
+    loadComponent: () => import('@envello/ui').then(m => m.SignUpComponent),
     data: { hasSidebar: false, fullScreen: true }
   },
   {
