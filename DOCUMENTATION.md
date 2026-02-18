@@ -66,11 +66,11 @@ The repository follows a standard Nx Monorepo layout.
 │   ├── admin/              # Admin dashboard
 │   └── landing/            # Public marketing site
 ├── libs/                   # Shared libraries
-│   ├── core/               # Utilities, Guards, Interceptors (@envello/core)
+│   ├── core/               # Singleton Services (Auth, SQLite, Logging, Utilities)
 │   ├── data/               # Abstract Data Services (@envello/data)
 │   ├── domain/             # Types, Interfaces, Models (@envello/domain)
 │   ├── state/              # Business Logic & Signals (@envello/state)
-│   └── ui/                 # Reusable Components (@envello/ui)
+│   └── ui/                 # Shared Components (Auth, Layout, Modals, Widgets)
 ├── src-tauri/              # Rust backend for Desktop app
 │   ├── src/                # Rust source code
 │   ├── tauri.conf.json     # Tauri configuration
