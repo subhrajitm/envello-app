@@ -1,8 +1,8 @@
 import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary } from '../../services/research.service';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '../../shared/ui';
+import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary } from '@envello/core';
+import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '@envello/ui';
 
 type ViewMode = 'libraries' | 'sources' | 'summaries';
 

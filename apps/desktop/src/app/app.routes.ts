@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard } from '@envello/core';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -15,7 +15,7 @@ export const routes: Routes = [
   },
   {
     path: 'workspace',
-    loadComponent: () => import('./components/workspace/workspace.component').then(m => m.WorkspaceComponent),
+    loadComponent: () => import('@envello/feature-workspace').then(m => m.WorkspaceComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
@@ -27,13 +27,13 @@ export const routes: Routes = [
   },
   {
     path: 'novels',
-    loadComponent: () => import('./components/novels/novels.component').then(m => m.NovelsComponent),
+    loadComponent: () => import('@envello/feature-novels').then(m => m.NovelsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
     path: 'novels/:id',
-    loadComponent: () => import('./components/novels/novel-editor/novel-editor.component').then(m => m.NovelEditorComponent),
+    loadComponent: () => import('@envello/feature-novels').then(m => m.NovelEditorComponent),
     canActivate: [authGuard],
     data: { immersive: true },
   },
@@ -63,7 +63,7 @@ export const routes: Routes = [
   },
   {
     path: 'tasks',
-    loadComponent: () => import('./components/tasks/tasks.component').then(m => m.TasksComponent),
+    loadComponent: () => import('@envello/feature-tasks').then(m => m.TasksComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

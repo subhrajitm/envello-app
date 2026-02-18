@@ -1,17 +1,17 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService } from '../../services/store.service';
-import { BinService } from '../../services/bin.service';
-import { SessionService } from '../../services/session.service';
-import { UserService } from '../../services/user.service';
-import { SnippetsService } from '../../services/snippets.service';
-import { BooksService } from '../../services/books.service';
-import { MeetingsService } from '../../services/meetings.service';
-import { ArticleService } from '../../services/article.service';
-import { JournalService } from '../../services/journal.service';
-import { ResearchService } from '../../services/research.service';
-import { DatabaseService } from '../../core/services/database.service';
+import { StoreService } from '@envello/core';
+import { BinService } from '@envello/core';
+import { SessionService } from '@envello/core';
+import { UserService } from '@envello/core';
+import { SnippetsService } from '@envello/core';
+import { BooksService } from '@envello/core';
+import { MeetingsService } from '@envello/core';
+import { ArticleService } from '@envello/core';
+import { JournalService } from '@envello/core';
+import { ResearchService } from '@envello/core';
+import { SqliteDataService as DatabaseService } from '@envello/core';
 
 export interface DataTab {
   id: string;

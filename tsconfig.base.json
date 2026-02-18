@@ -18,8 +18,20 @@
       "@envello/state": [
         "libs/state/src/index.ts"
       ],
-      "ui": [
+      "@envello/ui": [
         "libs/ui/src/index.ts"
+      ],
+      "@envello/feature-tasks": [
+        "libs/feature-tasks/src/index.ts"
+      ],
+      "@envello/feature-workspace": [
+        "libs/feature-workspace/src/index.ts"
+      ],
+      "@envello/feature-novels": [
+        "libs/feature-novels/src/index.ts"
+      ],
+      "@envello/core": [
+        "libs/core/src/index.ts"
       ]
     }
   }

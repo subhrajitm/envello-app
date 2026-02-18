@@ -13,13 +13,13 @@ import {
   SnippetsService,
   Snippet,
   SnippetLang,
-} from '../../services/snippets.service';
+} from '@envello/core';
 import {
   ButtonComponent,
   IconButtonComponent,
   EmptyStateComponent,
   ModalComponent,
-} from '../../shared/ui';
+} from '@envello/ui';
 
 @Component({
   selector: 'app-code-snippets',

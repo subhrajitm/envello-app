@@ -1,7 +1,7 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BinService, BinItem } from '../../services/bin.service';
-import { ButtonComponent, EmptyStateComponent } from '../../shared/ui';
+import { BinService, BinItem } from '@envello/core';
+import { ButtonComponent, EmptyStateComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-bin',

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ArticlesComponent } from './articles.component';
-import { ArticleService } from '../../services/article.service';
+import { ArticleService } from '@envello/core';
 
 describe('ArticlesComponent', () => {
   let component: ArticlesComponent;

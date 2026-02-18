@@ -15,13 +15,13 @@ import {
   BookCategory,
   BookStatus,
   BookNote,
-} from '../../services/books.service';
+} from '@envello/core';
 import {
   ButtonComponent,
   IconButtonComponent,
   EmptyStateComponent,
   ModalComponent,
-} from '../../shared/ui';
+} from '@envello/ui';
 
 @Component({
   selector: 'app-books',

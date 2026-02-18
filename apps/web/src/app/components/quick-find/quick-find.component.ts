@@ -2,7 +2,7 @@ import { Component, inject, signal, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { StoreService, Note, Task } from '../../services/store.service';
+import { StoreService, Note, Task } from '@envello/core';
 
 interface QuickFindResult {
     id: string;

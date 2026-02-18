@@ -9,8 +9,8 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from '@envello/state';
-import { SqliteDataService } from './core/services/sqlite-data.service';
-import { FileSystemService } from './core/services/file-system.service';
+import { SqliteDataService } from '@envello/core';
+import { FileSystemService } from '@envello/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [

@@ -2,7 +2,7 @@ import { Component, signal, inject, output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { UserService } from '../../services/user.service';
+import { UserService } from '@envello/core';
 
 @Component({
   selector: 'app-profile-menu',

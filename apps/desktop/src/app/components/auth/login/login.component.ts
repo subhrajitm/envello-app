@@ -1,10 +1,10 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService } from '@envello/core';
 import { Router, RouterModule } from '@angular/router';
-import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
-import { ButtonComponent } from '../../../shared/ui/button/button.component';
+import { EnvLogoComponent } from '@envello/ui';
+import { ButtonComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-login',

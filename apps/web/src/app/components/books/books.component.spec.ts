@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BooksComponent } from './books.component';
-import { BooksService } from '../../services/books.service';
+import { BooksService } from '@envello/core';
 
 describe('BooksComponent', () => {
   let component: BooksComponent;

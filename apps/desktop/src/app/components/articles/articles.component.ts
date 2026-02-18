@@ -1,8 +1,8 @@
 import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ArticleService, Article } from '../../services/article.service';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '../../shared/ui';
+import { ArticleService, Article } from '@envello/core';
+import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-articles',

@@ -2,14 +2,14 @@ import { Component, signal, HostListener, inject, computed, OnInit, OnDestroy, E
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ModalComponent } from '../../shared/ui';
-import { StoreService, Task, Note, Novel } from '../../services/store.service';
-import { ArticleService } from '../../services/article.service';
-import { JournalService } from '../../services/journal.service';
-import { ResearchService } from '../../services/research.service';
-import { MeetingsService, MEETING_COLORS } from '../../services/meetings.service';
-import { SnippetsService } from '../../services/snippets.service';
-import { NovelContentService } from '../../services/novel-content.service';
+import { ModalComponent } from '@envello/ui';
+import { StoreService, Task, Note, Novel } from '@envello/core';
+import { ArticleService } from '@envello/core';
+import { JournalService } from '@envello/core';
+import { ResearchService } from '@envello/core';
+import { MeetingsService, MEETING_COLORS } from '@envello/core';
+import { SnippetsService } from '@envello/core';
+import { NovelContentService } from '@envello/core';
 
 type OptionCategory = 'writing' | 'productivity' | 'organization';
 type SidebarCategoryId = 'all' | 'recent' | OptionCategory;

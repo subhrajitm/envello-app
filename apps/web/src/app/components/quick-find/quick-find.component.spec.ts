@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { QuickFindComponent } from './quick-find.component';
-import { StoreService } from '../../services/store.service';
+import { StoreService } from '@envello/core';
 
 describe('QuickFindComponent', () => {
   let component: QuickFindComponent;

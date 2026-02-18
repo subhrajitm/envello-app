@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ActivityLogComponent } from './activity-log.component';
-import { StoreService } from '../../services/store.service';
+import { StoreService } from '@envello/core';
 
 describe('ActivityLogComponent', () => {
   let component: ActivityLogComponent;

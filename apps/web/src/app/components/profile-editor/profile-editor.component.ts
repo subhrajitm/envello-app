@@ -1,8 +1,8 @@
 import { Component, signal, inject, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UserService } from '../../services/user.service';
-import { ButtonComponent, ModalComponent } from '../../shared/ui';
+import { UserService } from '@envello/core';
+import { ButtonComponent, ModalComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-profile-editor',

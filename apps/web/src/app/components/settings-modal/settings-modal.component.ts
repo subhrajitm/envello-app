@@ -1,10 +1,10 @@
 import { Component, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ButtonComponent } from '../../shared/ui/button/button.component';
-import { IconButtonComponent } from '../../shared/ui/icon-button/icon-button.component';
-import { EnvLogoComponent } from '../../shared/ui/logo/logo.component';
-import { ThemeService, Theme } from '../../services/theme.service';
-import { AiService } from '../../services/ai.service';
+import { ButtonComponent } from '@envello/ui';
+import { IconButtonComponent } from '@envello/ui';
+import { EnvLogoComponent } from '@envello/ui';
+import { ThemeService, Theme } from '@envello/core';
+import { AiService } from '@envello/core';
 
 interface SettingsSection {
   id: string;

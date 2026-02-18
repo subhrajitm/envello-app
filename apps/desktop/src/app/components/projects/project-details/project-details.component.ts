@@ -2,14 +2,14 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { StoreService } from '../../../services/store.service';
-import { Project } from '../../../services/store.service';
-import { MeetingsService } from '../../../services/meetings.service';
-import { BooksService } from '../../../services/books.service';
-import { ResearchService } from '../../../services/research.service';
-import { SnippetsService } from '../../../services/snippets.service';
-import { ArticleService } from '../../../services/article.service';
-import { JournalService } from '../../../services/journal.service';
+import { StoreService } from '@envello/core';
+import { Project } from '@envello/core';
+import { MeetingsService } from '@envello/core';
+import { BooksService } from '@envello/core';
+import { ResearchService } from '@envello/core';
+import { SnippetsService } from '@envello/core';
+import { ArticleService } from '@envello/core';
+import { JournalService } from '@envello/core';
 
 @Component({
     selector: 'app-project-details',

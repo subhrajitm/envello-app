@@ -1,9 +1,9 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Note } from '../../services/store.service';
+import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent, ModalComponent, EmptyStateComponent } from '../../shared/ui';
-import { TauriService } from '../../core/services/tauri.service';
+import { ButtonComponent, ModalComponent, EmptyStateComponent } from '@envello/ui';
+import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';

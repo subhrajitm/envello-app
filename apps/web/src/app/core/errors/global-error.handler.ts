@@ -1,6 +1,6 @@
 import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoggingService } from '../services/logging.service';
+import { LoggingService } from '@envello/core';
 import { environment } from '../../../environments/environment';
 
 @Injectable()

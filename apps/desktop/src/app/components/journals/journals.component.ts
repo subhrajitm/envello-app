@@ -17,9 +17,9 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import { TiptapEditorDirective } from 'ngx-tiptap';
-import { JournalService, JournalProject, JournalEntry, JournalColumn } from '../../services/journal.service';
-import { AiService } from '../../services/ai.service';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '../../shared/ui';
+import { JournalService, JournalProject, JournalEntry, JournalColumn } from '@envello/core';
+import { AiService } from '@envello/core';
+import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-journals',

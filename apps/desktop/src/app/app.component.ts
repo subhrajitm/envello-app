@@ -1,12 +1,9 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { AuthService } from './core/services/auth.service';
+import { AuthService } from '@envello/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { HeaderComponent } from './components/layout/header/header.component';
-import { FooterComponent } from './components/layout/footer/footer.component';
-import { TauriService } from './core/services/tauri.service';
-import { SessionService } from './services/session.service';
-import { EnvLogoComponent } from './shared/ui/logo/logo.component';
+import { TauriService, SessionService } from '@envello/core';
+import { HeaderComponent, FooterComponent, EnvLogoComponent } from '@envello/ui';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({

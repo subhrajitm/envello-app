@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CodeSnippetsComponent } from './code-snippets.component';
-import { SnippetsService } from '../../services/snippets.service';
+import { SnippetsService } from '@envello/core';
 
 describe('CodeSnippetsComponent', () => {
   let component: CodeSnippetsComponent;

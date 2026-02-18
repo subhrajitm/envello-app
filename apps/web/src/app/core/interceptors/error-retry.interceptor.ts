@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, retry, throwError, timer } from 'rxjs';
-import { LoggingService } from '../services/logging.service';
+import { LoggingService } from '@envello/core';
 import { Router } from '@angular/router';
 
 const MAX_RETRIES = 2;

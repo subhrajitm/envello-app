@@ -11,9 +11,9 @@ import {
   MEETING_COLORS,
   MeetingViewFilter,
   MeetingViewMode
-} from '../../services/meetings.service';
-import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '../../shared/ui';
-import { TauriService } from '../../core/services/tauri.service';
+} from '@envello/core';
+import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '@envello/ui';
+import { TauriService } from '@envello/core';
 
 @Component({
   selector: 'app-meetings',

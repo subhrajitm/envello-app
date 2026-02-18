@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService } from '../../services/store.service';
-import { UserService } from '../../services/user.service';
+import { StoreService } from '@envello/core';
+import { UserService } from '@envello/core';
 import { RecentActivityComponent } from '../dashboard/recent-activity/recent-activity.component';
 
 @Component({

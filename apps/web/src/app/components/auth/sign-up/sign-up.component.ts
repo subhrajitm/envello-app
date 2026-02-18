@@ -2,9 +2,9 @@ import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
-import { UserService } from '../../../services/user.service';
-import { EnvLogoComponent } from '../../../shared/ui/logo/logo.component';
+import { AuthService } from '@envello/core';
+import { UserService } from '@envello/core';
+import { EnvLogoComponent } from '@envello/ui';
 
 @Component({
     selector: 'app-sign-up',
