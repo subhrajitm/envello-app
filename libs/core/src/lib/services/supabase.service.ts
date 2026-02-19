@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { createClient, SupabaseClient, User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { environment } from '../environments/environment';
 import { from, Observable } from 'rxjs';
@@ -9,24 +10,33 @@ import { map } from 'rxjs/operators';
 })
 export class SupabaseService {
     private supabase: SupabaseClient;
+    private platformId = inject(PLATFORM_ID);
 
     constructor() {
-        this.supabase = createClient(environment.supabase.url, environment.supabase.key);
+        const isBrowser = isPlatformBrowser(this.platformId);
+
+        this.supabase = createClient(environment.supabase.url, environment.supabase.key, {
+            auth: {
+                persistSession: isBrowser,
+                autoRefreshToken: isBrowser,
+                detectSessionInUrl: isBrowser
+            }
+        });
     }
 
-    get client() {
+    get client(): SupabaseClient {
         return this.supabase;
     }
 
-    get auth() {
+    get auth(): any {
         return this.supabase.auth;
     }
 
-    get from() {
+    get from(): any {
         return this.supabase.from.bind(this.supabase);
     }
 
-    get storage() {
+    get storage(): any {
         return this.supabase.storage;
     }
 
