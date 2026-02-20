@@ -12,6 +12,21 @@ import { ButtonComponent } from '../../button/button.component';
   imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
   template: `
     <div class="login-container">
+      <div class="wave-bg">
+        <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+        viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+          <defs>
+            <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+          </defs>
+          <g class="parallax">
+            <use xlink:href="#gentle-wave" x="48" y="0" />
+            <use xlink:href="#gentle-wave" x="48" y="3" />
+            <use xlink:href="#gentle-wave" x="48" y="5" />
+            <use xlink:href="#gentle-wave" x="48" y="7" />
+          </g>
+        </svg>
+      </div>
+      
       <div *ngIf="!authService.isAuthenticated()" class="login-content">
         <!-- Logo Section -->
         <div class="login-header">
@@ -112,8 +127,64 @@ import { ButtonComponent } from '../../button/button.component';
       border: 1px solid var(--border-subtle);
       border-radius: 6px;
       padding: 28px 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
       animation: fadeIn 0.3s ease-out;
+      position: relative;
+      z-index: 10;
+    }
+    
+    .wave-bg {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 35vh;
+      min-height: 200px;
+      overflow: hidden;
+      z-index: 1;
+      pointer-events: none;
+    }
+    
+    .waves {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100px;
+      max-height: 250px;
+    }
+    
+    .parallax > use {
+      animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+    }
+    .parallax > use:nth-child(1) {
+      animation-delay: -2s;
+      animation-duration: 7s;
+      fill: var(--text-tertiary);
+      opacity: 0.1;
+    }
+    .parallax > use:nth-child(2) {
+      animation-delay: -3s;
+      animation-duration: 10s;
+      fill: var(--accent-primary-dim);
+      opacity: 0.2;
+    }
+    .parallax > use:nth-child(3) {
+      animation-delay: -4s;
+      animation-duration: 13s;
+      fill: var(--accent-primary);
+      opacity: 0.15;
+    }
+    .parallax > use:nth-child(4) {
+      animation-delay: -5s;
+      animation-duration: 20s;
+      fill: var(--accent-primary);
+      opacity: 0.3;
+    }
+    
+    @keyframes move-forever {
+      0% { transform: translate3d(-90px, 0, 0); }
+      100% { transform: translate3d(85px, 0, 0); }
     }
 
     @keyframes fadeIn {
