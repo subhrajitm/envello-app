@@ -20,7 +20,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService); // Initialize session tracking
   private unlistenFileDrop?: () => void;
 
-  currentTab = signal('Overview');
+  currentTab = signal('Workspace');
   hasSidebar = signal(true);
   isImmersive = signal(false);
   isFullScreen = signal(false);
@@ -89,7 +89,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
-      'overview': 'Overview',
+      'workspace': 'Workspace',
       'novels': 'Novels/Fiction',
       'research': 'Research',
       'articles': 'Articles/Blogs',
@@ -103,7 +103,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'activity-log': 'Activity Log',
       'developer-settings': 'Developer Settings'
     };
-    return map[url] || 'Overview';
+    return map[url] || 'Workspace';
   }
 
   onSidebarCollapsedChange(collapsed: boolean) {
