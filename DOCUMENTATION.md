@@ -36,8 +36,8 @@ The project follows a **Clean Architecture** approach using shared libraries to 
 -   **Data Interchange**: Custom JSON Export/Import format
 
 ### AI & Intelligence
--   **Orchestration**: LangChain.js (`@langchain/core`, `@langchain/openai`, `@langchain/ollama`) for managing AI interactions.
--   **Models**: Support for OpenAI, Anthropic, and Local Models (Ollama).
+-   **Orchestration**: LangChain.js (`@langchain/core`, `@langchain/openai`, `@langchain/anthropic`, `@langchain/google-genai`, `@langchain/xai`, `@langchain/ollama`) for managing AI interactions.
+-   **Models**: Support for OpenAI, Anthropic, Google Gemini, xAI (Grok), and Local Models (Ollama).
 
 ### Productivity Tools
 -   **Rich Text Editor**: Tiptap (`@tiptap/core`, `ngx-tiptap`) with extensions for tables, tasks, code blocks, and markdown shortcuts.

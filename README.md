@@ -17,8 +17,7 @@ Envello is organized into specialized modules to cater to different creative and
 -   **💻 Code Snippets:** Store and manage useful code blocks.
 -   **📔 Journals:** Personal journaling and reflection.
 -   **✍️ Articles/Blogs:** Draft and manage blog posts and articles.
--   **🤖 AI Assistance:** Integrated AI tools for drafting and brainstorming.
-
+-   **🤖 AI Assistance:** Integrated advanced AI models (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, Ollama) for drafting, rewriting, and brainstorming inside your notes.
 ## 🏗 Architecture & Tech Stack
 
 Envello uses a hybrid architecture leveraging the robustness of Rust and the agility of Angular.
