@@ -1,6 +1,6 @@
 import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
-import { SqliteService } from './sqlite.service';
+import { DataService } from '@envello/data';
 import { FileSystemService } from './file-system.service';
 import { StoreService } from './store.service';
 
@@ -31,7 +31,7 @@ export interface Article {
   providedIn: 'root'
 })
 export class ArticleService {
-  private db = inject(SqliteService);
+  private db = inject(DataService);
   private fs = inject(FileSystemService);
   private store = inject(StoreService);
 
@@ -53,7 +53,7 @@ export class ArticleService {
 
   private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.db.getAllArticles();
+      const list = await this.db.getAll<Article>('articles');
       this.articles.set(list);
     } catch (e) {
       if (typeof window !== 'undefined' && '__TAURI__' in window) {
@@ -119,7 +119,7 @@ export class ArticleService {
     // Initial file write
     this.saveArticleContentToFile(newArticle.id, newArticle.content || '');
 
-    this.db.upsertArticle(newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    this.db.upsert('articles', newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
     return newArticle;
   }
 
@@ -139,7 +139,7 @@ export class ArticleService {
     }
 
     const a = this.articles().find(x => x.id === id);
-    if (a) this.db.upsertArticle(a).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    if (a) this.db.upsert('articles', a).catch(e => logIfTauri('[ArticleService] persist failed', e));
   }
 
   private async saveArticleContentToFile(id: string, html: string) {
@@ -152,13 +152,13 @@ export class ArticleService {
     const article = this.articles().find(a => a.id === id);
     if (article && article.filePath !== filePath) {
       this.articles.update(as => as.map(a => a.id === id ? { ...a, filePath } : a));
-      this.db.upsertArticle({ ...article, filePath });
+      this.db.upsert('articles', { ...article, filePath });
     }
   }
 
   deleteArticle(id: string): void {
     this.articles.update(list => list.filter(a => a.id !== id));
-    this.db.removeArticle(id).catch(e => logIfTauri('[ArticleService] remove failed', e));
+    this.db.remove('articles', id).catch(e => logIfTauri('[ArticleService] remove failed', e));
     this.fs.deleteFile('articles', id).catch(e => console.error('Failed to delete article file', e));
   }
 

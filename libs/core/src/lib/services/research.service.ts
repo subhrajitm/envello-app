@@ -1,6 +1,6 @@
 import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
-import { SqliteService } from './sqlite.service';
+import { DataService } from '@envello/data';
 import { StoreService } from './store.service';
 
 export interface ResearchLibrary {
@@ -43,7 +43,7 @@ export interface ResearchSummary {
     providedIn: 'root'
 })
 export class ResearchService {
-    private db = inject(SqliteService);
+    private db = inject(DataService);
     private store = inject(StoreService);
 
     libraries = signal<ResearchLibrary[]>([]);
@@ -57,9 +57,9 @@ export class ResearchService {
     private async loadFromDb(): Promise<void> {
         try {
             const [libs, srcs, sums] = await Promise.all([
-                this.db.getAllResearchLibraries(),
-                this.db.getAllResearchSources(),
-                this.db.getAllResearchSummaries(),
+                this.db.getAll<ResearchLibrary>('research_libraries'),
+                this.db.getAll<ResearchSource>('research_sources'),
+                this.db.getAll<ResearchSummary>('research_summaries'),
             ]);
             this.libraries.set(libs);
             this.sources.set(srcs);
@@ -70,15 +70,15 @@ export class ResearchService {
     }
 
     private persistLibrary(lib: ResearchLibrary): void {
-        this.db.upsertResearchLibrary(lib).catch(e => logIfTauri('[ResearchService] persist library failed', e));
+        this.db.upsert('research_libraries', lib).catch(e => logIfTauri('[ResearchService] persist library failed', e));
     }
 
     private persistSource(s: ResearchSource): void {
-        this.db.upsertResearchSource(s).catch(e => logIfTauri('[ResearchService] persist source failed', e));
+        this.db.upsert('research_sources', s).catch(e => logIfTauri('[ResearchService] persist source failed', e));
     }
 
     private persistSummary(s: ResearchSummary): void {
-        this.db.upsertResearchSummary(s).catch(e => logIfTauri('[ResearchService] persist summary failed', e));
+        this.db.upsert('research_summaries', s).catch(e => logIfTauri('[ResearchService] persist summary failed', e));
     }
 
     // Library methods
@@ -121,12 +121,12 @@ export class ResearchService {
     async deleteLibrary(id: string) {
         const srcs = this.sources().filter(s => s.libraryId === id);
         const sums = this.summaries().filter(s => s.libraryId === id);
-        for (const s of srcs) await this.db.removeResearchSource(s.id).catch(() => { });
-        for (const s of sums) await this.db.removeResearchSummary(s.id).catch(() => { });
+        for (const s of srcs) await this.db.remove('research_sources', s.id).catch(() => { });
+        for (const s of sums) await this.db.remove('research_summaries', s.id).catch(() => { });
         this.sources.update(list => list.filter(s => s.libraryId !== id));
         this.summaries.update(list => list.filter(s => s.libraryId !== id));
         this.libraries.update(list => list.filter(lib => lib.id !== id));
-        await this.db.removeResearchLibrary(id).catch(e => logIfTauri('[ResearchService] remove library failed', e));
+        await this.db.remove('research_libraries', id).catch(e => logIfTauri('[ResearchService] remove library failed', e));
     }
 
     // Source methods
@@ -157,7 +157,7 @@ export class ResearchService {
                 sourceIds: summary.sourceIds.filter(sid => sid !== id)
             }))
         );
-        this.db.removeResearchSource(id).catch(e => logIfTauri('[ResearchService] remove source failed', e));
+        this.db.remove('research_sources', id).catch(e => logIfTauri('[ResearchService] remove source failed', e));
         this.summaries().filter(s => s.sourceIds.includes(id)).forEach(s => this.persistSummary(s));
     }
 
@@ -188,7 +188,7 @@ export class ResearchService {
 
     deleteSummary(id: string) {
         this.summaries.update(list => list.filter(s => s.id !== id));
-        this.db.removeResearchSummary(id).catch(e => logIfTauri('[ResearchService] remove summary failed', e));
+        this.db.remove('research_summaries', id).catch(e => logIfTauri('[ResearchService] remove summary failed', e));
     }
 
     getSummariesByLibrary(libraryId: string) {

@@ -2,7 +2,7 @@ import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService, Task } from './store.service';
-import { SqliteService } from './sqlite.service';
+import { DataService } from '@envello/data';
 
 
 
@@ -130,7 +130,7 @@ export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attende
 export class MeetingsService {
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private db = inject(SqliteService);
+  private db = inject(DataService);
 
   meetings = signal<Meeting[]>([]);
 
@@ -140,7 +140,7 @@ export class MeetingsService {
 
   private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.db.getAllMeetings();
+      const list = await this.db.getAll<Meeting>('meetings');
       this.meetings.set(list);
     } catch (e) {
       logIfTauri('[MeetingsService] loadFromDb failed', e);
@@ -148,7 +148,7 @@ export class MeetingsService {
   }
 
   private persistMeeting(m: Meeting): void {
-    this.db.upsertMeeting(m).catch(e => logIfTauri('[MeetingsService] persist failed', e));
+    this.db.upsert('meetings', m).catch(e => logIfTauri('[MeetingsService] persist failed', e));
   }
 
   // UI state
@@ -413,7 +413,7 @@ export class MeetingsService {
 
     this.meetings.set(existing.filter(m => m.id !== id));
     this.store.addActivity('Meeting deleted', 'system');
-    this.db.removeMeeting(id).catch(e => logIfTauri('[MeetingsService] remove failed', e));
+    this.db.remove('meetings', id).catch(e => logIfTauri('[MeetingsService] remove failed', e));
   }
 
   cancelMeeting(id: string) {

@@ -2,7 +2,7 @@ import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { StoreService } from './store.service';
-import { SqliteService } from './sqlite.service';
+import { DataService } from '@envello/data';
 import { FileSystemService } from './file-system.service';
 
 export interface JournalEntry {
@@ -70,7 +70,7 @@ export class JournalService {
 
   private bin = inject(BinService);
   private store = inject(StoreService);
-  private db = inject(SqliteService);
+  private db = inject(DataService);
   private fs = inject(FileSystemService);
 
   private turndownService: any;
@@ -91,14 +91,14 @@ export class JournalService {
   private async loadFromDb(): Promise<void> {
     try {
       const [projects, entries, cols] = await Promise.all([
-        this.db.getAllJournalProjects(),
-        this.db.getAllJournalEntries(),
-        this.db.getAllJournalColumns(),
+        this.db.getAll<JournalProject>('journal_projects'),
+        this.db.getAll<JournalEntry>('journal_entries'),
+        this.db.getAll<JournalColumn>('journal_columns'),
       ]);
       this.projects.set(projects);
       this.entries.set(entries);
       if (cols.length === 0) {
-        await Promise.all(defaultColumns.map(c => this.db.upsertJournalColumn(c)));
+        await Promise.all(defaultColumns.map(c => this.db.upsert('journal_columns', c)));
         this.columns.set(defaultColumns);
       } else {
         this.columns.set(cols.sort((a, b) => a.order - b.order));
@@ -135,15 +135,15 @@ export class JournalService {
   }
 
   private persistProject(p: JournalProject): void {
-    this.db.upsertJournalProject(p).catch(e => logIfTauri('[JournalService] persist project failed', e));
+    this.db.upsert('journal_projects', p).catch(e => logIfTauri('[JournalService] persist project failed', e));
   }
 
   private persistEntry(e: JournalEntry): void {
-    this.db.upsertJournalEntry(e).catch(err => logIfTauri('[JournalService] persist entry failed', err));
+    this.db.upsert('journal_entries', e).catch(err => logIfTauri('[JournalService] persist entry failed', err));
   }
 
   private persistColumn(c: JournalColumn): void {
-    this.db.upsertJournalColumn(c).catch(e => logIfTauri('[JournalService] persist column failed', e));
+    this.db.upsert('journal_columns', c).catch(e => logIfTauri('[JournalService] persist column failed', e));
   }
 
   // Project Management
@@ -223,13 +223,13 @@ export class JournalService {
           title: entry.title,
           payload: entry
         });
-        this.db.removeJournalEntry(entry.id).catch(() => { });
+        this.db.remove('journal_entries', entry.id).catch(() => { });
       });
 
       this.entries.update(entries => entries.filter(e => e.projectId !== id));
       this.projects.update(projects => projects.filter(p => p.id !== id));
       this.store.addActivity(`Journal project deleted: ${project.title}`, 'system');
-      this.db.removeJournalProject(id).catch(e => logIfTauri('[JournalService] remove project failed', e));
+      this.db.remove('journal_projects', id).catch(e => logIfTauri('[JournalService] remove project failed', e));
     }
   }
 
@@ -317,7 +317,7 @@ export class JournalService {
     const entry = this.entries().find(e => e.id === id);
     if (entry && entry.filePath !== filePath) {
       this.entries.update(es => es.map(e => e.id === id ? { ...e, filePath } : e));
-      this.db.upsertJournalEntry({ ...entry, filePath });
+      this.db.upsert('journal_entries', { ...entry, filePath });
     }
   }
 
@@ -333,7 +333,7 @@ export class JournalService {
       this.entries.update(entries => entries.filter(e => e.id !== id));
       this.updateProjectStats(entry.projectId);
       this.store.addActivity(`Entry deleted: ${entry.title}`, 'system');
-      this.db.removeJournalEntry(id).catch(e => logIfTauri('[JournalService] remove entry failed', e));
+      this.db.remove('journal_entries', id).catch(e => logIfTauri('[JournalService] remove entry failed', e));
       this.fs.deleteFile('journal', id).catch(e => console.error('Failed to delete journal file', e));
     }
   }
@@ -375,7 +375,7 @@ export class JournalService {
       const updated = this.getEntry(entry.id);
       if (updated) this.persistEntry(updated);
     });
-    this.db.removeJournalColumn(id).catch(e => logIfTauri('[JournalService] remove column failed', e));
+    this.db.remove('journal_columns', id).catch(e => logIfTauri('[JournalService] remove column failed', e));
   }
 
   // Search

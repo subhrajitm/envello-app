@@ -39,6 +39,16 @@ export class SqliteDataService implements DataService {
             case 'activities': return await this.sqlite.getAllActivities() as unknown as T[];
             case 'novels': return await this.sqlite.getAllNovels() as unknown as T[];
             case 'bin_items': return await this.sqlite.getAllBinItems() as unknown as T[];
+            case 'snippets': return await this.sqlite.getAllSnippets() as unknown as T[];
+            case 'books': return await this.sqlite.getAllBooks() as unknown as T[];
+            case 'meetings': return await this.sqlite.getAllMeetings() as unknown as T[];
+            case 'articles': return await this.sqlite.getAllArticles() as unknown as T[];
+            case 'journal_projects': return await this.sqlite.getAllJournalProjects() as unknown as T[];
+            case 'journal_entries': return await this.sqlite.getAllJournalEntries() as unknown as T[];
+            case 'journal_columns': return await this.sqlite.getAllJournalColumns() as unknown as T[];
+            case 'research_libraries': return await this.sqlite.getAllResearchLibraries() as unknown as T[];
+            case 'research_sources': return await this.sqlite.getAllResearchSources() as unknown as T[];
+            case 'research_summaries': return await this.sqlite.getAllResearchSummaries() as unknown as T[];
             // Projects not yet implemented in SqliteService, returning empty for now
             case 'projects': return [] as T[];
             default:
@@ -71,6 +81,16 @@ export class SqliteDataService implements DataService {
             case 'activities': return await this.sqlite.upsertActivity(item as unknown as Activity);
             case 'novels': return await this.sqlite.upsertNovel(item as unknown as Novel);
             case 'bin_items': return await this.sqlite.upsertBinItem(item as unknown as BinItem);
+            case 'snippets': return await this.sqlite.upsertSnippet(item as any);
+            case 'books': return await this.sqlite.upsertBook(item as any);
+            case 'meetings': return await this.sqlite.upsertMeeting(item as any);
+            case 'articles': return await this.sqlite.upsertArticle(item as any);
+            case 'journal_projects': return await this.sqlite.upsertJournalProject(item as any);
+            case 'journal_entries': return await this.sqlite.upsertJournalEntry(item as any);
+            case 'journal_columns': return await this.sqlite.upsertJournalColumn(item as any);
+            case 'research_libraries': return await this.sqlite.upsertResearchLibrary(item as any);
+            case 'research_sources': return await this.sqlite.upsertResearchSource(item as any);
+            case 'research_summaries': return await this.sqlite.upsertResearchSummary(item as any);
             // Projects todo
             case 'projects': break;
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
@@ -96,6 +116,16 @@ export class SqliteDataService implements DataService {
             case 'novels': return await this.sqlite.removeNovel(id);
             case 'bin_items': return await this.sqlite.removeBinItem(id);
             case 'novel_content': return await this.sqlite.removeNovelContent(id);
+            case 'snippets': return await this.sqlite.removeSnippet(id);
+            case 'books': return await this.sqlite.removeBook(id);
+            case 'meetings': return await this.sqlite.removeMeeting(id);
+            case 'articles': return await this.sqlite.removeArticle(id);
+            case 'journal_projects': return await this.sqlite.removeJournalProject(id);
+            case 'journal_entries': return await this.sqlite.removeJournalEntry(id);
+            case 'journal_columns': return await this.sqlite.removeJournalColumn(id);
+            case 'research_libraries': return await this.sqlite.removeResearchLibrary(id);
+            case 'research_sources': return await this.sqlite.removeResearchSource(id);
+            case 'research_summaries': return await this.sqlite.removeResearchSummary(id);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for remove`);
         }
     }

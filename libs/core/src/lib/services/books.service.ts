@@ -1,7 +1,7 @@
 import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { SqliteService } from './sqlite.service';
+import { DataService } from '@envello/data';
 import { StoreService } from './store.service';
 
 export type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
@@ -38,7 +38,7 @@ export type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'cat
 @Injectable({ providedIn: 'root' })
 export class BooksService {
   private bin = inject(BinService);
-  private db = inject(SqliteService);
+  private db = inject(DataService);
   private store = inject(StoreService);
 
   readonly books = signal<Book[]>([]);
@@ -56,7 +56,7 @@ export class BooksService {
 
   private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.db.getAllBooks();
+      const list = await this.db.getAll<Book>('books');
       this.books.set(list);
     } catch (e) {
       logIfTauri('[BooksService] loadFromDb failed', e);
@@ -64,7 +64,7 @@ export class BooksService {
   }
 
   private persistBook(b: Book): void {
-    this.db.upsertBook(b).catch(e => logIfTauri('[BooksService] persist failed', e));
+    this.db.upsert('books', b).catch(e => logIfTauri('[BooksService] persist failed', e));
   }
 
   readonly selectedBook = computed(() => {
@@ -175,7 +175,7 @@ export class BooksService {
     });
     this.books.update(list => list.filter(b => b.id !== id));
     if (this.selectedBookId() === id) this.selectedBookId.set(null);
-    this.db.removeBook(id).catch(e => logIfTauri('[BooksService] remove failed', e));
+    this.db.remove('books', id).catch(e => logIfTauri('[BooksService] remove failed', e));
   }
 
   setProgress(id: string, progress: number): void {

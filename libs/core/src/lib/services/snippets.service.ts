@@ -1,7 +1,7 @@
 import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { BinService } from './bin.service';
-import { SqliteService } from './sqlite.service';
+import { DataService } from '@envello/data';
 import { StoreService } from './store.service';
 
 export type SnippetLang =
@@ -38,7 +38,7 @@ const LANGS: SnippetLang[] = ['Python', 'JavaScript', 'TypeScript', 'Markdown', 
 @Injectable({ providedIn: 'root' })
 export class SnippetsService {
   private bin = inject(BinService);
-  private db = inject(SqliteService);
+  private db = inject(DataService);
   private store = inject(StoreService);
 
   readonly snippets = signal<Snippet[]>([]);
@@ -59,7 +59,7 @@ export class SnippetsService {
 
   private async loadFromDb(): Promise<void> {
     try {
-      const list = await this.db.getAllSnippets();
+      const list = await this.db.getAll<Snippet>('snippets');
       this.snippets.set(list);
     } catch (e) {
       logIfTauri('[SnippetsService] loadFromDb failed', e);
@@ -132,7 +132,7 @@ export class SnippetsService {
       updatedAt: now,
     };
     this.snippets.update(list => [...list, created]);
-    this.db.upsertSnippet(created).catch(e => logIfTauri('[SnippetsService] persist failed', e));
+    this.db.upsert('snippets', created).catch(e => logIfTauri('[SnippetsService] persist failed', e));
 
     // Auto-create Project
     const projectId = crypto.randomUUID();
@@ -158,7 +158,7 @@ export class SnippetsService {
       list.map(s => (s.id === id ? { ...s, ...patch, updatedAt: now } : s))
     );
     const updated = this.snippets().find(s => s.id === id);
-    if (updated) this.db.upsertSnippet(updated).catch(e => logIfTauri('[SnippetsService] persist failed', e));
+    if (updated) this.db.upsert('snippets', updated).catch(e => logIfTauri('[SnippetsService] persist failed', e));
   }
 
   deleteSnippet(id: string): void {
@@ -167,7 +167,7 @@ export class SnippetsService {
     this.bin.addToBin({ type: 'snippet', originalId: id, title: s.title, payload: s });
     this.snippets.update(list => list.filter(x => x.id !== id));
     if (this.selectedSnippetId() === id) this.selectedSnippetId.set(null);
-    this.db.removeSnippet(id).catch(e => logIfTauri('[SnippetsService] remove failed', e));
+    this.db.remove('snippets', id).catch(e => logIfTauri('[SnippetsService] remove failed', e));
   }
 
   copyContent(id: string): string | null {
