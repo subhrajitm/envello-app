@@ -175,6 +175,18 @@ export class JournalsComponent implements OnInit, OnDestroy {
 
   draggedEntry: { entry: JournalEntry, sourceCol: string } | null = null;
 
+  constructor() {
+    // Effect to update editor content when selected entry changes
+    effect(() => {
+      const entry = this.editingEntry();
+      if (entry && this.editor) {
+        if (this.editor.getHTML() !== entry.content) {
+          this.editor.commands.setContent(entry.content);
+        }
+      }
+    });
+  }
+
   ngOnInit() {
     // Ensure at least one project is active
     if (!this.activeProject()) {
@@ -228,16 +240,6 @@ export class JournalsComponent implements OnInit, OnDestroy {
         this.wordCount.set(editor.storage.characterCount.words());
         this.characterCount.set(editor.storage.characterCount.characters());
       },
-    });
-
-    // Effect to update editor content when selected entry changes
-    effect(() => {
-      const entry = this.editingEntry();
-      if (entry && this.editor) {
-        if (this.editor.getHTML() !== entry.content) {
-          this.editor.commands.setContent(entry.content);
-        }
-      }
     });
   }
 

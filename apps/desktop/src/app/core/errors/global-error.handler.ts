@@ -10,6 +10,12 @@ export class GlobalErrorHandler implements ErrorHandler {
 
   handleError(error: unknown): void {
     const message = error instanceof Error ? error.message : String(error);
+
+    // Suppress benign Supabase lock timeout errors during dev/HMR
+    if (message.includes('NavigatorLockAcquireTimeoutError') || String(error).includes('NavigatorLockAcquireTimeoutError')) {
+      return;
+    }
+
     const stack = error instanceof Error ? error.stack : undefined;
 
     this.logging.error('Unhandled error', error);
@@ -19,7 +25,7 @@ export class GlobalErrorHandler implements ErrorHandler {
       this.router.navigate(['/server-error'], {
         queryParams: { message: 'Something went wrong. Please try again.' },
         skipLocationChange: true,
-      }).catch(() => {});
+      }).catch(() => { });
     } else if (stack) {
       console.error('Stack trace:', stack);
     }
