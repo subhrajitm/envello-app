@@ -126,7 +126,7 @@ export class ProjectDetailsComponent {
     }
 
     finalizeSession() {
-        // Navigate back to project oversight or overview
+        // Navigate back to project oversight or workspace
         this.router.navigate(['/workspace']);
     }
 

@@ -147,7 +147,7 @@ export class DeveloperSettingsComponent {
   }
 
   goBack() {
-    this.router.navigate(['/overview']);
+    this.router.navigate(['/workspace']);
   }
 
   onSearchInput(e: Event) {
