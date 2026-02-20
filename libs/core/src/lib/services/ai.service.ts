@@ -4,8 +4,10 @@ import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOllama } from '@langchain/ollama';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatXAI } from '@langchain/xai';
 
-export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock';
+export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini';
 
 export interface AiMessage {
     id: string;
@@ -79,6 +81,10 @@ export class AiService {
                 this.chatModel = new ChatAnthropic({ anthropicApiKey: k, modelName: m });
             } else if (p === 'ollama') {
                 this.chatModel = new ChatOllama({ model: m || 'llama3', baseUrl: 'http://localhost:11434' });
+            } else if (p === 'grok' && k) {
+                this.chatModel = new ChatXAI({ apiKey: k, model: m });
+            } else if (p === 'gemini' && k) {
+                this.chatModel = new ChatGoogleGenerativeAI({ apiKey: k, model: m });
             } else {
                 this.chatModel = undefined; // Fallback to mock
             }

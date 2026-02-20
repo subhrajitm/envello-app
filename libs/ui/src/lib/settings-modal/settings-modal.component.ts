@@ -80,8 +80,10 @@ export class SettingsModalComponent {
 
   aiProviders: AiProviderOption[] = [
     { value: 'mock', label: 'Demo Mode (Offline)', icon: 'science' },
-    { value: 'openai', label: 'OpenAI (GPT-4)', icon: 'psychology' },
+    { value: 'openai', label: 'OpenAI (GPT)', icon: 'psychology' },
     { value: 'anthropic', label: 'Anthropic (Claude)', icon: 'smart_toy' },
+    { value: 'gemini', label: 'Google (Gemini)', icon: 'auto_awesome' },
+    { value: 'grok', label: 'xAI (Grok)', icon: 'bolt' },
     { value: 'ollama', label: 'Ollama (Local)', icon: 'terminal' }
   ];
 
@@ -206,9 +208,12 @@ export class SettingsModalComponent {
   setAiProvider(provider: AiProvider) {
     this.aiProvider.set(provider);
     // Set default models
-    if (provider === 'openai') this.aiModel.set('gpt-4-turbo');
-    else if (provider === 'anthropic') this.aiModel.set('claude-3-opus-20240229');
-    else if (provider === 'ollama') this.aiModel.set('llama3');
+    if (provider === 'openai') this.aiModel.set('gpt-5.2');
+    else if (provider === 'anthropic') this.aiModel.set('claude-4.6-sonnet');
+    else if (provider === 'gemini') this.aiModel.set('gemini-3.1-pro');
+    else if (provider === 'grok') this.aiModel.set('grok-4.1');
+    else if (provider === 'ollama') this.aiModel.set('llama4-scout');
+    else this.aiModel.set('mock-model');
   }
 
   // Actions
@@ -259,7 +264,7 @@ export class SettingsModalComponent {
 
       // Reset AI
       this.aiProvider.set('mock');
-      this.aiModel.set('gpt-4-turbo');
+      this.aiModel.set('mock-model');
       this.aiKey.set('');
       this.aiService.updateConfig('mock', '', '');
 
