@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { SqliteService } from './sqlite.service';
+import { TauriService } from './tauri.service';
 import { Task, Note, PlanningItem, Activity, Novel, BinItem } from '@envello/domain';
 
 @Injectable({
@@ -8,8 +9,29 @@ import { Task, Note, PlanningItem, Activity, Novel, BinItem } from '@envello/dom
 })
 export class SqliteDataService implements DataService {
     private sqlite = inject(SqliteService);
+    private tauri = inject(TauriService);
+
+    private getFallbackKey(collection: string) {
+        return `envello_local_${collection}`;
+    }
 
     async getAll<T>(collection: string): Promise<T[]> {
+        if (!this.tauri.isTauri()) {
+            try {
+                const data = localStorage.getItem(this.getFallbackKey(collection));
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.warn(`[SqliteDataService fallback] Error parsing ${collection}`, e);
+                return [];
+            }
+        }
+
+        try {
+            await this.sqlite.getDb();
+        } catch (e) {
+            console.warn('[SqliteDataService] getDb failed, skipping local load', e);
+        }
+
         switch (collection) {
             case 'tasks': return await this.sqlite.getAllTasks() as unknown as T[];
             case 'notes': return await this.sqlite.getAllNotes() as unknown as T[];
@@ -26,13 +48,29 @@ export class SqliteDataService implements DataService {
     }
 
     async upsert<T>(collection: string, item: T): Promise<void> {
+        if (!this.tauri.isTauri()) {
+            try {
+                const items = await this.getAll<T>(collection);
+                const index = items.findIndex((i: any) => i.id === (item as any).id);
+                if (index >= 0) {
+                    items[index] = item;
+                } else {
+                    items.push(item);
+                }
+                localStorage.setItem(this.getFallbackKey(collection), JSON.stringify(items));
+            } catch (e) {
+                console.warn(`[SqliteDataService fallback] Error upserting ${collection}`, e);
+            }
+            return;
+        }
+
         switch (collection) {
             case 'tasks': return await this.sqlite.upsertTask(item as unknown as Task);
             case 'notes': return await this.sqlite.upsertNote(item as unknown as Note);
             case 'planning_items': return await this.sqlite.upsertPlanningItem(item as unknown as PlanningItem);
             case 'activities': return await this.sqlite.upsertActivity(item as unknown as Activity);
             case 'novels': return await this.sqlite.upsertNovel(item as unknown as Novel);
-            case 'bin_items': return await this.sqlite.upsertBinItem(item as unknown as unknown as any); // Typo in BinItem type vs what Sqlite expects? Let's check
+            case 'bin_items': return await this.sqlite.upsertBinItem(item as unknown as BinItem);
             // Projects todo
             case 'projects': break;
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
@@ -40,6 +78,17 @@ export class SqliteDataService implements DataService {
     }
 
     async remove(collection: string, id: string): Promise<void> {
+        if (!this.tauri.isTauri()) {
+            try {
+                const items = await this.getAll<any>(collection);
+                const filtered = items.filter((i: any) => i.id !== id);
+                localStorage.setItem(this.getFallbackKey(collection), JSON.stringify(filtered));
+            } catch (e) {
+                console.warn(`[SqliteDataService fallback] Error removing ${collection}`, e);
+            }
+            return;
+        }
+
         switch (collection) {
             case 'tasks': return await this.sqlite.removeTask(id);
             case 'notes': return await this.sqlite.removeNote(id);
@@ -54,8 +103,5 @@ export class SqliteDataService implements DataService {
     async importData(data: any): Promise<void> {
         // Sqlite export/import logic is in SqliteService
         // If we need import logic here, we can delegate or implement
-        // For now the requirement was just DataService interface fulfillment
-        // But SqliteService has exportAllData, maybe we add importAllData there?
-        // This is primarily for Web. Desktop exports.
     }
 }

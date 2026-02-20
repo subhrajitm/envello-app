@@ -19,5 +19,6 @@ export * from './lib/services/auth.service';
 export * from './lib/services/supabase.service';
 export * from './lib/services/sqlite.service';
 export * from './lib/services/sqlite-data.service';
+export * from './lib/services/pouchdb-data.service';
 export * from './lib/services/file-system.service';
 export * from './lib/guards/auth.guard';
