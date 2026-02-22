@@ -281,35 +281,98 @@
                     }
                     }
 
-                    <!-- Standard Tasks -->
-                    @if (projectTasks().length > 0 || (linkedNovels().length === 0 && linkedJournals().length === 0)) {
-                    @for (task of projectTasks(); track task.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">{{ task.title }}</td>
-                        <td class="text-muted">{{ task.project || '---' }}</td>
-                        <td class="text-muted">{{ task.due || '---' }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                                <span class="material-symbols-outlined action-icon delete"
-                                    (click)="deleteTask(task.id)">delete</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    } @else {
-                    <!-- Fallback / Demo Data if no tasks are present -->
-                    <tr style="opacity: 0.6;">
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox"></td>
-                        <td style="font-weight: 600; font-style: italic;">Drafting quarterly goals...</td>
-                        <td class="text-muted">---</td>
-                        <td class="text-muted">---</td>
-                        <td></td>
-                    </tr>
-                    }
                 </tbody>
             </table>
+        </div>
+
+        <div class="tasks-sections-container">
+            <h2 class="section-title">Tasks & Sections</h2>
+            
+            <div class="task-sections-grid">
+                <!-- Pending -->
+                <div class="task-section">
+                    <div class="section-header pending-header">
+                        <h3>Pending</h3>
+                        <span class="task-count">{{ pendingTasks().length }}</span>
+                    </div>
+                    <div class="section-content">
+                        @for (task of pendingTasks(); track task.id) {
+                            <div class="task-card">
+                                <label class="task-checkbox">
+                                    <input type="checkbox" (change)="task.status = 'COMPLETED'">
+                                    <span class="custom-chk"></span>
+                                </label>
+                                <div class="task-details">
+                                    <span class="task-title">{{ task.title }}</span>
+                                    @if (task.due) {
+                                        <span class="task-due"><span class="material-symbols-outlined icon-small">calendar_today</span> {{ task.due }}</span>
+                                    }
+                                </div>
+                                <span class="material-symbols-outlined action-icon delete" (click)="deleteTask(task.id)">delete</span>
+                            </div>
+                        }
+                        @if (pendingTasks().length === 0) {
+                            <div class="empty-section">No pending tasks</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Active -->
+                <div class="task-section">
+                    <div class="section-header active-header">
+                        <h3>Active</h3>
+                        <span class="task-count">{{ activeTasks().length }}</span>
+                    </div>
+                    <div class="section-content">
+                        @for (task of activeTasks(); track task.id) {
+                            <div class="task-card">
+                                <label class="task-checkbox">
+                                    <input type="checkbox" (change)="task.status = 'COMPLETED'">
+                                    <span class="custom-chk"></span>
+                                </label>
+                                <div class="task-details">
+                                    <span class="task-title">{{ task.title }}</span>
+                                    @if (task.due) {
+                                        <span class="task-due"><span class="material-symbols-outlined icon-small">calendar_today</span> {{ task.due }}</span>
+                                    }
+                                </div>
+                                <span class="material-symbols-outlined action-icon delete" (click)="deleteTask(task.id)">delete</span>
+                            </div>
+                        }
+                        @if (activeTasks().length === 0) {
+                            <div class="empty-section">No active tasks</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Completed -->
+                <div class="task-section">
+                    <div class="section-header completed-header">
+                        <h3>Completed</h3>
+                        <span class="task-count">{{ completedTasks().length }}</span>
+                    </div>
+                    <div class="section-content">
+                        @for (task of completedTasks(); track task.id) {
+                            <div class="task-card completed">
+                                <label class="task-checkbox">
+                                    <input type="checkbox" checked (change)="task.status = 'ACTIVE'">
+                                    <span class="custom-chk"></span>
+                                </label>
+                                <div class="task-details">
+                                    <span class="task-title">{{ task.title }}</span>
+                                    @if (task.due) {
+                                        <span class="task-due"><span class="material-symbols-outlined icon-small">calendar_today</span> {{ task.due }}</span>
+                                    }
+                                </div>
+                                <span class="material-symbols-outlined action-icon delete" (click)="deleteTask(task.id)">delete</span>
+                            </div>
+                        }
+                        @if (completedTasks().length === 0) {
+                            <div class="empty-section">No completed tasks</div>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 

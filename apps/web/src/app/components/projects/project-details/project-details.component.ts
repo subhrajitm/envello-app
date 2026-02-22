@@ -46,6 +46,10 @@ export class ProjectDetailsComponent {
         return this.store.tasks().filter(t => t.project === p.id);
     });
 
+    activeTasks = computed(() => this.projectTasks().filter(t => t.status === 'ACTIVE'));
+    pendingTasks = computed(() => this.projectTasks().filter(t => t.status === 'PENDING'));
+    completedTasks = computed(() => this.projectTasks().filter(t => t.status === 'COMPLETED'));
+
     linkedNovels = computed(() => {
         const p = this.project();
         if (!p || !p.linkedResources?.novels) return [];

@@ -1,0 +1,49 @@
+<div class="page-container">
+  <div class="header-container">
+    <div class="header-title">
+        <span class="material-symbols-outlined">folder_special</span>
+        <h1>Projects</h1>
+    </div>
+    <div class="header-actions">
+        <button class="btn-primary" (click)="createNewProject()">
+            <span class="material-symbols-outlined">add</span>
+            New Project
+        </button>
+    </div>
+  </div>
+
+  <div class="content-area">
+    <div class="projects-grid">
+      @for (project of projects(); track project.id) {
+        <div class="project-card" (click)="openProject(project.id)">
+          <div class="card-header">
+            <h3>
+                <span class="material-symbols-outlined card-icon">{{ project.icon || 'folder' }}</span>
+                {{ project.title }}
+            </h3>
+            <span class="status-badge" [ngClass]="project.status.toLowerCase() || 'planning'">
+              {{ project.status || 'Planning' | titlecase }}
+            </span>
+          </div>
+          <p class="description">{{ project.description || 'No description provided.' }}</p>
+          <div class="card-footer">
+            <span class="meta-item">
+              <span class="material-symbols-outlined">update</span>
+              {{ project.updated | date:'mediumDate' }}
+            </span>
+            <span class="meta-item">
+              <span class="material-symbols-outlined">article</span>
+              {{ project.words }} words
+            </span>
+          </div>
+        </div>
+      }
+      @if (projects().length === 0) {
+        <div class="empty-state">
+          <span class="material-symbols-outlined">folder_open</span>
+          <p>No projects found. Create one to get started.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

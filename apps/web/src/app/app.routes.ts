@@ -20,6 +20,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'projects',
+    loadComponent: () => import('./components/projects/projects.component').then(m => m.ProjectsComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true }
+  },
+  {
     path: 'projects/:id',
     loadComponent: () => import('./components/projects/project-details/project-details.component').then(m => m.ProjectDetailsComponent),
     canActivate: [authGuard],
