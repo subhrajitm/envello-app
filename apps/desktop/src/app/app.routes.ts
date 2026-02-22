@@ -21,13 +21,13 @@ export const routes: Routes = [
   },
   {
     path: 'projects',
-    loadComponent: () => import('./components/projects/projects.component').then(m => m.ProjectsComponent),
+    loadComponent: () => import('@envello/feature-projects').then(m => m.ProjectsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true }
   },
   {
     path: 'projects/:id',
-    loadComponent: () => import('./components/projects/project-details/project-details.component').then(m => m.ProjectDetailsComponent),
+    loadComponent: () => import('@envello/feature-projects').then(m => m.ProjectDetailsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true }
   },
