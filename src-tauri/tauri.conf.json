@@ -1,9 +1,9 @@
 {
   "productName": "Envello",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.envello.app",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "CI=true npm run dev",
     "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:4200",
     "frontendDist": "../dist/apps/desktop"
