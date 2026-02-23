@@ -49,6 +49,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   // Sidebar state - default to collapsed (minimized)
   sidebarCollapsed = signal(true);
 
+  // Voice state
+  isVoiceActive = signal(false);
+
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
 
@@ -116,6 +119,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleTheme() {
     this.themeService.toggleTheme();
+  }
+
+  toggleVoice() {
+    this.isVoiceActive.set(!this.isVoiceActive());
   }
 
   onAvatarLoad() {
