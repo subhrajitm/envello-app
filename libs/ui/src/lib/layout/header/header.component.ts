@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '@envello/core';
 import { NotificationService } from '@envello/core';
 import { UserService } from '@envello/core';
+import { VoiceService } from '@envello/core';
 import { Router } from '@angular/router';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
 import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.component';
@@ -49,8 +50,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   // Sidebar state - default to collapsed (minimized)
   sidebarCollapsed = signal(true);
 
-  // Voice state
-  isVoiceActive = signal(false);
+  voiceService = inject(VoiceService);
+  isVoiceActive = this.voiceService.isVoiceActive;
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
@@ -122,7 +123,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   toggleVoice() {
-    this.isVoiceActive.set(!this.isVoiceActive());
+    this.voiceService.toggleVoice();
   }
 
   onAvatarLoad() {
