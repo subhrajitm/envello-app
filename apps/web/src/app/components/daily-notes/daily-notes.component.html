@@ -36,6 +36,9 @@
             @if (activeModal() === 'delete-confirm') {
             <p>Are you sure you want to delete this note? This action cannot be undone.</p>
             }
+            @if (activeModal() === 'delete-folder-confirm') {
+            <p>Are you sure you want to delete this folder? All notes within it will be removed from this view. This action cannot be undone.</p>
+            }
             @if (activeModal() === 'share') {
             <p>Share this note via link or email.</p>
             <div class="modal-share-row">
@@ -73,7 +76,10 @@
             <env-button variant="primary" (clicked)="confirmAddYoutube()">Insert Video</env-button>
             }
             @if (activeModal() === 'delete-confirm') {
-            <env-button variant="danger" (clicked)="confirmDeleteNote()">Delete</env-button>
+            <env-button variant="danger" (clicked)="confirmDeleteNote()">Delete Note</env-button>
+            }
+            @if (activeModal() === 'delete-folder-confirm') {
+            <env-button variant="danger" (clicked)="confirmDeleteFolder()">Delete Folder</env-button>
             }
             }
         </div>
@@ -145,20 +151,34 @@
                     </span>
                     <span class="folder-name">{{ group.name }}</span>
                     <span class="folder-count">{{ filteredNotes().length }}</span>
+                    <button class="folder-delete-btn" title="Delete folder"
+                        (click)="requestDeleteFolder(group.id, $event)">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
                 </div>
 
                 @if (group.expanded) {
                 <div class="folder-items">
-                    @for (entry of filteredNotes(); track entry.id) {
-                    <div class="note-item" [class.active]="selectedNote()?.id === entry.id"
-                        (click)="selectNote(entry.id)">
-                        <span class="material-symbols-outlined note-icon">description</span>
-                        <span class="note-title">{{ entry.title }}</span>
-                        <button class="note-delete-btn" title="Delete note"
-                            (click)="requestDeleteNote(entry.id, $event)">
-                            <span class="material-symbols-outlined">delete</span>
-                        </button>
-                    </div>
+                    @for (bucket of bucketedFilteredNotes(); track bucket.label) {
+                        <div class="time-bucket-section">
+                            <div class="time-bucket-label">{{ bucket.label }}</div>
+                            @for (entry of bucket.notes; track entry.id) {
+                            <div class="note-card-item" [class.active]="selectedNote()?.id === entry.id"
+                                (click)="selectNote(entry.id)">
+                                <div class="note-card-header">
+                                    <span class="note-card-title">{{ entry.title }}</span>
+                                    <button class="note-delete-btn" title="Delete note"
+                                        (click)="requestDeleteNote(entry.id, $event)">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
+                                <div class="note-card-meta">
+                                    <span class="note-card-time">{{ formatTime(entry.id, entry.lastEdited) }}</span>
+                                    <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
+                                </div>
+                            </div>
+                            }
+                        </div>
                     }
                 </div>
                 }

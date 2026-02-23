@@ -62,11 +62,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   characterCount = signal(0);
 
   // Modal State
-  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'share' | 'export' | 'youtube'>('none');
+  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'delete-folder-confirm' | 'share' | 'export' | 'youtube'>('none');
   modalInputValue = signal<string>('');
   modalInputPlaceholder = signal<string>('');
   modalTitle = signal<string>('');
   tempNoteId = signal<string>(''); // For storing ID during confirmation flow
+  tempFolderId = signal<string>(''); // For storing Folder ID during confirmation flow
 
 
   selectedEntryId = signal<string>('');
@@ -77,11 +78,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   // Track open notes as tabs
   openNotes = signal<string[]>([]);
 
-  // Note groups for organization
+  // Note groups for organization (Custom folders only)
   noteGroups = signal<NoteGroup[]>([
-    { id: 'today', name: 'Today', icon: 'today', count: 0, expanded: true, noteIds: [] },
-    { id: 'this-week', name: 'This Week', icon: 'calendar_month', count: 0, expanded: false, noteIds: [] },
-    { id: 'older', name: 'Older Notes', icon: 'history', count: 0, expanded: false, noteIds: [] },
+    { id: 'personal', name: 'Personal', icon: 'folder', count: 0, expanded: true, noteIds: [] }
   ]);
 
   // Tag categories with colors
@@ -101,6 +100,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (t) return t;
     const m = this.activeModal();
     if (m === 'delete-confirm') return 'Delete Note';
+    if (m === 'delete-folder-confirm') return 'Delete Folder';
     if (m === 'share') return 'Share Note';
     if (m === 'export') return 'Export Note';
     return '';
@@ -130,6 +130,89 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
     return list;
   });
+
+  bucketedFilteredNotes = computed(() => {
+    return this.getBucketedNotes(this.filteredNotes());
+  });
+
+  getBucketedNotes(notes: Note[]): { label: string, notes: Note[] }[] {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    const buckets = {
+      today: [] as Note[],
+      yesterday: [] as Note[],
+      previous7Days: [] as Note[],
+      previous30Days: [] as Note[],
+      older: [] as Note[]
+    };
+
+    // Sort notes newest to oldest first
+    const sortedNotes = [...notes].sort((a, b) => {
+      let aTime = parseInt(a.id, 10);
+      let bTime = parseInt(b.id, 10);
+      if (isNaN(aTime)) aTime = new Date(a.date).getTime();
+      if (isNaN(bTime)) bTime = new Date(b.date).getTime();
+      return bTime - aTime;
+    });
+
+    for (const note of sortedNotes) {
+      let noteDate: Date;
+      const timestamp = parseInt(note.id, 10);
+      if (!isNaN(timestamp) && timestamp > 1000000000000) {
+        noteDate = new Date(timestamp);
+      } else {
+        noteDate = new Date(note.date);
+        if (isNaN(noteDate.getTime())) {
+          noteDate = new Date();
+        }
+      }
+      
+      const timeOnly = new Date(noteDate);
+      timeOnly.setHours(0, 0, 0, 0);
+
+      if (timeOnly.getTime() === today.getTime()) {
+        buckets.today.push(note);
+      } else if (timeOnly.getTime() === yesterday.getTime()) {
+        buckets.yesterday.push(note);
+      } else if (timeOnly.getTime() > sevenDaysAgo.getTime()) {
+        buckets.previous7Days.push(note);
+      } else if (timeOnly.getTime() > thirtyDaysAgo.getTime()) {
+        buckets.previous30Days.push(note);
+      } else {
+        buckets.older.push(note);
+      }
+    }
+
+    const result = [];
+    if (buckets.today.length > 0) result.push({ label: 'Today', notes: buckets.today });
+    if (buckets.yesterday.length > 0) result.push({ label: 'Yesterday', notes: buckets.yesterday });
+    if (buckets.previous7Days.length > 0) result.push({ label: 'Previous 7 Days', notes: buckets.previous7Days });
+    if (buckets.previous30Days.length > 0) result.push({ label: 'Previous 30 Days', notes: buckets.previous30Days });
+    if (buckets.older.length > 0) result.push({ label: 'Older Notes', notes: buckets.older });
+
+    return result;
+  }
+
+  formatTime(id: string, lastEdited?: string): string {
+    const timestamp = parseInt(id, 10);
+    if (!isNaN(timestamp) && timestamp > 1000000000000) {
+      return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+    return lastEdited || '12:00 PM';
+  }
+
+  getPreviewText(preview: string): string {
+    if (!preview || preview.trim() === '') return 'No additional text';
+    if (preview === "Start writing...") return "No additional text";
+    return preview;
+  }
 
   allGroupsCollapsed = computed(() => {
     return this.noteGroups().every(g => !g.expanded);
@@ -458,6 +541,21 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.closeModal();
   }
 
+  requestDeleteFolder(folderId: string, event: Event) {
+    event.stopPropagation();
+    this.tempFolderId.set(folderId);
+    this.activeModal.set('delete-folder-confirm');
+  }
+
+  confirmDeleteFolder() {
+    const folderId = this.tempFolderId();
+    if (folderId) {
+      // In a real app we might also delete all associated notes or handle them
+      this.noteGroups.update(groups => groups.filter(g => g.id !== folderId));
+    }
+    this.closeModal();
+  }
+
   addTag(tag: string) {
     const note = this.selectedNote();
     if (note) {
@@ -617,5 +715,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.activeModal.set('none');
     this.modalInputValue.set('');
     this.tempNoteId.set('');
+    this.tempFolderId.set('');
   }
 }

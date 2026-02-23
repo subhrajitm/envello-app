@@ -250,44 +250,94 @@
     text-align: center;
 }
 
-/* Folder Items */
+.folder-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.folder-header:hover .folder-delete-btn {
+    opacity: 1;
+}
+
+.folder-delete-btn:hover {
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--accent-red);
+}
+
+.folder-delete-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* Folder Items & Time Buckets */
 .folder-items {
     display: flex;
     flex-direction: column;
-    padding-left: 24px;
+    padding-left: 12px; /* reduced indent for folders since they hold cards now */
 }
 
-.note-item {
-    padding: 5px 14px;
+/* Time Buckets */
+.time-bucket-section {
+    margin-bottom: 12px;
+}
+
+.time-bucket-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 8px 14px 8px 8px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 8px;
+    margin-left: 6px;
+}
+
+/* Note Card Item */
+.note-card-item {
+    padding: 10px 14px;
+    margin: 4px 6px;
+    border-radius: 8px;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 4px;
     cursor: pointer;
-    transition: background 0.15s;
-    border-left: 2px solid transparent;
+    transition: background 0.15s, box-shadow 0.15s;
+    background: transparent;
+    border: 1px solid transparent;
 }
 
-.note-item:hover {
+.note-card-item:hover {
     background: var(--bg-hover);
 }
 
-.note-item.active {
-    background: var(--bg-active);
-    border-left-color: var(--accent-primary);
+.note-card-item.active {
+    background: var(--bg-hover); /* Or var(--bg-active) */
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.note-icon {
-    font-size: 16px;
-    color: var(--text-tertiary);
+.note-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.note-title {
-    flex: 1;
-    font-size: 12px;
+.note-card-title {
+    font-size: 13px;
+    font-weight: 600;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-grow: 1;
 }
 
 .note-delete-btn {
@@ -305,7 +355,7 @@
     flex-shrink: 0;
 }
 
-.note-item:hover .note-delete-btn {
+.note-card-item:hover .note-delete-btn {
     opacity: 1;
 }
 
@@ -316,6 +366,27 @@
 
 .note-delete-btn .material-symbols-outlined {
     font-size: 16px;
+}
+
+.note-card-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.note-card-time {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.note-card-preview {
+    color: var(--text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Tag Categories */
