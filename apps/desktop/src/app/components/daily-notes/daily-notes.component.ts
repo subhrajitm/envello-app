@@ -290,7 +290,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       tags: []
     };
     this.store.addNote(newNote);
-    this.selectedEntryId.set(newNote.id);
+    this.selectNote(newNote.id);
   }
 
   selectNote(id: string) {
