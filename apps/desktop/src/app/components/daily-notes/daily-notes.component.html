@@ -141,14 +141,17 @@
         </div>
 
         <!-- Notes List with Hierarchical Folders -->
-        <div class="dn-entries-list">
+        <div class="dn-entries-list"
+            (dragover)="onListDragOver($event)"
+            (dragleave)="onListDragLeave($event)"
+            (drop)="onListDrop($event)">
             @if (activeView() === 'folders') {
             @for (group of noteGroups(); track group.id) {
             <div class="folder-group">
                 <div class="folder-header" [class.drop-target]="dragOverFolderId() === group.id"
                     (click)="toggleGroup(group.id)"
                     (dragover)="onFolderDragOver(group.id, $event)"
-                    (dragleave)="onFolderDragLeave()"
+                    (dragleave)="onFolderDragLeave($event)"
                     (drop)="onFolderDrop(group.id, $event)">
                     <span class="material-symbols-outlined folder-icon">
                         {{ group.expanded ? 'folder_open' : 'folder' }}
@@ -162,7 +165,10 @@
                 </div>
 
                 @if (group.expanded) {
-                <div class="folder-items">
+                <div class="folder-items" [class.drop-target]="dragOverFolderId() === group.id"
+                    (dragover)="onFolderDragOver(group.id, $event)"
+                    (dragleave)="onFolderDragLeave($event)"
+                    (drop)="onFolderDrop(group.id, $event)">
                     @for (bucket of getBucketedNotesForFolder(group.id); track bucket.label) {
                         <div class="time-bucket-section">
                             <div class="time-bucket-label">{{ bucket.label }}</div>

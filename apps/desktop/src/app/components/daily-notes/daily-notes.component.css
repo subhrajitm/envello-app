@@ -292,6 +292,13 @@
     outline-offset: -2px;
 }
 
+.folder-items.drop-target {
+    background: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.06);
+    border-radius: 6px;
+    outline: 2px dashed var(--accent-primary);
+    outline-offset: -2px;
+}
+
 /* Folder Items & Time Buckets */
 .folder-items {
     display: flex;

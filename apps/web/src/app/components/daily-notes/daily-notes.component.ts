@@ -437,15 +437,40 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.dragOverFolderId.set(folderId);
   }
 
-  onFolderDragLeave() {
+  onFolderDragLeave(event?: DragEvent) {
+    const related = event?.relatedTarget as HTMLElement;
+    if (related?.closest?.('.folder-group, .dn-entries-list')) return;
     this.dragOverFolderId.set(null);
   }
 
   onFolderDrop(folderId: string, event: DragEvent) {
     event.preventDefault();
+    event.stopPropagation();
     this.dragOverFolderId.set(null);
     const noteId = event.dataTransfer?.getData('text/plain');
     if (noteId) this.moveNoteToFolder(noteId, folderId);
+  }
+
+  onListDragOver(event: DragEvent) {
+    if ((event.target as HTMLElement)?.closest?.('.folder-group')) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    const firstId = this.noteGroups()[0]?.id ?? 'personal';
+    this.dragOverFolderId.set(firstId);
+  }
+
+  onListDragLeave(event: DragEvent) {
+    if ((event.relatedTarget as HTMLElement)?.closest?.('.dn-entries-list')) return;
+    this.dragOverFolderId.set(null);
+  }
+
+  onListDrop(event: DragEvent) {
+    if ((event.target as HTMLElement)?.closest?.('.folder-group')) return;
+    event.preventDefault();
+    this.dragOverFolderId.set(null);
+    const noteId = event.dataTransfer?.getData('text/plain');
+    const firstId = this.noteGroups()[0]?.id ?? 'personal';
+    if (noteId) this.moveNoteToFolder(noteId, firstId);
   }
 
   selectNote(id: string) {
