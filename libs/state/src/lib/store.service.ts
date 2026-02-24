@@ -13,6 +13,8 @@ export class StoreService {
     planningItems = signal<PlanningItem[]>([]);
     activities = signal<Activity[]>([]);
     novels = signal<Novel[]>([]);
+    /** Persisted folder definitions for daily notes; loaded from DB on init. */
+    noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
     projects = signal<Project[]>([
         {
             id: '1',
@@ -103,18 +105,33 @@ export class StoreService {
 
     private async loadFromDb(): Promise<void> {
         try {
-            const [tasks, notes, planningItems, activities, novels] = await Promise.all([
+            const [tasks, notes, planningItems, activities, novels, folders] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
                 this.db.getAll<Note>('notes'),
                 this.db.getAll<PlanningItem>('planning_items'),
                 this.db.getAll<Activity>('activities'),
                 this.db.getAll<Novel>('novels'),
+                this.db.getAll<{ id: string; name: string; icon: string }>('note_folders'),
             ]);
             this.tasks.set(tasks || []);
             this.notes.set(notes || []);
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
             this.novels.set(novels || []);
+
+            if (folders?.length) {
+                this.noteFolders.set(folders);
+            } else {
+                const defaultFolders: { id: string; name: string; icon: string }[] = [
+                    { id: 'personal', name: 'Personal', icon: 'folder' },
+                ];
+                this.noteFolders.set(defaultFolders);
+                for (const f of defaultFolders) {
+                    this.db.upsert('note_folders', f).catch((e) =>
+                        console.error('[StoreService] persist note_folders failed', e)
+                    );
+                }
+            }
         } catch (e) {
             console.error('[StoreService] loadFromDb failed', e);
             this.tasks.set([]);
@@ -122,6 +139,7 @@ export class StoreService {
             this.planningItems.set([]);
             this.activities.set([]);
             this.novels.set([]);
+            this.noteFolders.set([{ id: 'personal', name: 'Personal', icon: 'folder' }]);
         }
     }
 
@@ -327,5 +345,19 @@ export class StoreService {
         };
         this.activities.update(activities => [newActivity, ...activities.slice(0, 49)]);
         this.db.upsert('activities', newActivity).catch(e => console.error('[StoreService] persist activity failed', e));
+    }
+
+    addNoteFolder(folder: { id: string; name: string; icon: string }) {
+        this.noteFolders.update(list => [...list, folder]);
+        this.db.upsert('note_folders', folder).catch(e =>
+            console.error('[StoreService] persist note_folders failed', e)
+        );
+    }
+
+    removeNoteFolder(id: string) {
+        this.noteFolders.update(list => list.filter(f => f.id !== id));
+        this.db.remove('note_folders', id).catch(e =>
+            console.error('[StoreService] remove note_folder failed', e)
+        );
     }
 }

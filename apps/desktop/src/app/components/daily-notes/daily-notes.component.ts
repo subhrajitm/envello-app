@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
@@ -78,10 +78,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   // Track open notes as tabs
   openNotes = signal<string[]>([]);
 
-  // Note groups for organization (Custom folders only)
-  noteGroups = signal<NoteGroup[]>([
-    { id: 'personal', name: 'Personal', icon: 'folder', count: 0, expanded: true, noteIds: [] }
-  ]);
+  // Note groups for organization (synced from store so they persist across reloads)
+  noteGroups = signal<NoteGroup[]>([]);
 
   // Tag categories with colors
   tagCategories = signal<TagCategory[]>([
@@ -251,6 +249,24 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
+    // Sync folder list from store (persisted); preserves expanded state when store updates.
+    // Use untracked for noteGroups so we only re-run when noteFolders changes (avoids infinite loop).
+    effect(() => {
+      const folders = this.store.noteFolders();
+      if (folders.length === 0) return;
+      const current = untracked(() => this.noteGroups());
+      const next: NoteGroup[] = folders.map((f) => {
+        const cur = current.find((c) => c.id === f.id);
+        return {
+          ...f,
+          expanded: cur?.expanded ?? true,
+          noteIds: cur?.noteIds ?? [],
+          count: cur?.count ?? 0,
+        };
+      });
+      this.noteGroups.set(next);
+    });
+
     // Initialize selection if notes exist
     if (this.notes().length > 0) {
       const firstNoteId = this.notes()[0].id;
@@ -437,15 +453,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   confirmNewFolder() {
     const folderName = this.modalInputValue();
     if (folderName) {
-      const newGroup: NoteGroup = {
-        id: folderName.toLowerCase().replace(/\s+/g, '-'),
-        name: folderName,
-        icon: 'folder',
-        count: 0,
-        expanded: true,
-        noteIds: []
-      };
-      this.noteGroups.update(groups => [...groups, newGroup]);
+      const id = folderName.toLowerCase().replace(/\s+/g, '-');
+      const folder = { id, name: folderName, icon: 'folder' };
+      this.store.addNoteFolder(folder);
+      // noteGroups will update via effect when noteFolders() changes
     }
     this.closeModal();
   }
@@ -550,8 +561,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   confirmDeleteFolder() {
     const folderId = this.tempFolderId();
     if (folderId) {
-      // In a real app we might also delete all associated notes or handle them
-      this.noteGroups.update(groups => groups.filter(g => g.id !== folderId));
+      this.store.removeNoteFolder(folderId);
+      // noteGroups will update via effect when noteFolders() changes
     }
     this.closeModal();
   }
