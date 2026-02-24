@@ -61,6 +61,8 @@ export interface Note {
     lastEdited?: string;
     filePath?: string;
     lastSynced?: string; // ISO date
+    /** Folder id for daily-notes organization; defaults to first folder if missing */
+    folderId?: string;
 }
 
 export interface PlanningItem {

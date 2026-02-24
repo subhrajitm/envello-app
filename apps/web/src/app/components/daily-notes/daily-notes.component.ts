@@ -92,6 +92,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   ]);
 
   showDropdown = signal<boolean>(false);
+  /** Folder id currently being dragged over (for drop target styling) */
+  dragOverFolderId = signal<string | null>(null);
+  /** Note id being dragged */
+  draggingNoteId = signal<string | null>(null);
 
   displayModalTitle = computed(() => {
     const t = this.modalTitle();
@@ -132,6 +136,22 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   bucketedFilteredNotes = computed(() => {
     return this.getBucketedNotes(this.filteredNotes());
   });
+
+  private effectiveFolderId(note: Note): string {
+    const firstFolderId = this.noteGroups()[0]?.id ?? 'personal';
+    const fid = note.folderId ?? firstFolderId;
+    return this.noteGroups().some((g) => g.id === fid) ? fid : firstFolderId;
+  }
+
+  /** Notes in a folder (filtered by folderId); notes without folderId or orphaned go to first folder */
+  getBucketedNotesForFolder(folderId: string): { label: string; notes: Note[] }[] {
+    const inFolder = this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId);
+    return this.getBucketedNotes(inFolder);
+  }
+
+  getNotesCountForFolder(folderId: string): number {
+    return this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId).length;
+  }
 
   getBucketedNotes(notes: Note[]): { label: string, notes: Note[] }[] {
     const today = new Date();
@@ -380,16 +400,52 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   handleNewNote() {
+    const firstFolderId = this.noteGroups()[0]?.id ?? 'personal';
     const newNote: Note = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       title: 'New Daily Note',
       preview: 'Start writing...',
       content: '<p>Start writing your thoughts...</p>',
-      tags: []
+      tags: [],
+      folderId: firstFolderId,
     };
     this.store.addNote(newNote);
     this.selectNote(newNote.id);
+  }
+
+  moveNoteToFolder(noteId: string, targetFolderId: string) {
+    this.store.updateNote(noteId, { folderId: targetFolderId });
+  }
+
+  onNoteDragStart(noteId: string, event: DragEvent) {
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('text/plain', noteId);
+      event.dataTransfer.effectAllowed = 'move';
+    }
+    this.draggingNoteId.set(noteId);
+  }
+
+  onNoteDragEnd() {
+    this.draggingNoteId.set(null);
+    this.dragOverFolderId.set(null);
+  }
+
+  onFolderDragOver(folderId: string, event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dragOverFolderId.set(folderId);
+  }
+
+  onFolderDragLeave() {
+    this.dragOverFolderId.set(null);
+  }
+
+  onFolderDrop(folderId: string, event: DragEvent) {
+    event.preventDefault();
+    this.dragOverFolderId.set(null);
+    const noteId = event.dataTransfer?.getData('text/plain');
+    if (noteId) this.moveNoteToFolder(noteId, folderId);
   }
 
   selectNote(id: string) {
@@ -561,8 +617,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   confirmDeleteFolder() {
     const folderId = this.tempFolderId();
     if (folderId) {
+      const targetFolderId =
+        this.noteGroups().find((g) => g.id !== folderId)?.id ??
+        this.noteGroups()[0]?.id ??
+        'personal';
+      this.notes()
+        .filter((n) => this.effectiveFolderId(n) === folderId)
+        .forEach((n) => this.store.updateNote(n.id, { folderId: targetFolderId }));
       this.store.removeNoteFolder(folderId);
-      // noteGroups will update via effect when noteFolders() changes
     }
     this.closeModal();
   }

@@ -145,12 +145,16 @@
             @if (activeView() === 'folders') {
             @for (group of noteGroups(); track group.id) {
             <div class="folder-group">
-                <div class="folder-header" (click)="toggleGroup(group.id)">
+                <div class="folder-header" [class.drop-target]="dragOverFolderId() === group.id"
+                    (click)="toggleGroup(group.id)"
+                    (dragover)="onFolderDragOver(group.id, $event)"
+                    (dragleave)="onFolderDragLeave()"
+                    (drop)="onFolderDrop(group.id, $event)">
                     <span class="material-symbols-outlined folder-icon">
                         {{ group.expanded ? 'folder_open' : 'folder' }}
                     </span>
                     <span class="folder-name">{{ group.name }}</span>
-                    <span class="folder-count">{{ filteredNotes().length }}</span>
+                    <span class="folder-count">{{ getNotesCountForFolder(group.id) }}</span>
                     <button class="folder-delete-btn" title="Delete folder"
                         (click)="requestDeleteFolder(group.id, $event)">
                         <span class="material-symbols-outlined">delete</span>
@@ -159,22 +163,29 @@
 
                 @if (group.expanded) {
                 <div class="folder-items">
-                    @for (bucket of bucketedFilteredNotes(); track bucket.label) {
+                    @for (bucket of getBucketedNotesForFolder(group.id); track bucket.label) {
                         <div class="time-bucket-section">
                             <div class="time-bucket-label">{{ bucket.label }}</div>
                             @for (entry of bucket.notes; track entry.id) {
                             <div class="note-card-item" [class.active]="selectedNote()?.id === entry.id"
-                                (click)="selectNote(entry.id)">
-                                <div class="note-card-header">
-                                    <span class="note-card-title">{{ entry.title }}</span>
-                                    <button class="note-delete-btn" title="Delete note"
-                                        (click)="requestDeleteNote(entry.id, $event)">
-                                        <span class="material-symbols-outlined">delete</span>
-                                    </button>
-                                </div>
-                                <div class="note-card-meta">
-                                    <span class="note-card-time">{{ formatTime(entry.id, entry.lastEdited) }}</span>
-                                    <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
+                                [class.dragging]="draggingNoteId() === entry.id"
+                                draggable="true"
+                                (click)="selectNote(entry.id)"
+                                (dragstart)="onNoteDragStart(entry.id, $event)"
+                                (dragend)="onNoteDragEnd()">
+                                <span class="note-card-icon material-symbols-outlined">description</span>
+                                <div class="note-card-body">
+                                    <div class="note-card-header">
+                                        <span class="note-card-title">{{ entry.title }}</span>
+                                        <button class="note-delete-btn" title="Delete note"
+                                            (click)="requestDeleteNote(entry.id, $event)">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </div>
+                                    <div class="note-card-meta">
+                                        <span class="note-card-time">{{ formatTime(entry.id, entry.lastEdited) }}</span>
+                                        <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
+                                    </div>
                                 </div>
                             </div>
                             }

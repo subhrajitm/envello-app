@@ -5,26 +5,25 @@
     background: var(--bg-app);
 }
 
-/* Sidebar */
+/* Sidebar - Enterprise sidebar */
 .dn-sidebar {
-    width: 240px;
+    width: 260px;
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     background: var(--bg-panel);
     height: 100%;
+    box-shadow: 1px 0 0 0 rgba(0, 0, 0, 0.03);
 }
 
 /* Search Header with Dropdown */
 .dn-search-header {
-    padding: 0 14px;
+    padding: 8px 12px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-shrink: 0;
-    height: 46px;
-    /* Matched to editor header */
     box-sizing: border-box;
 }
 
@@ -37,8 +36,8 @@
 
 .search-icon {
     position: absolute;
-    left: 10px;
-    font-size: 16px;
+    left: 12px;
+    font-size: 18px;
     color: var(--text-tertiary);
     pointer-events: none;
 }
@@ -48,15 +47,16 @@
     background: var(--bg-app);
     border: 1px solid var(--border-subtle);
     padding: 6px 10px 6px 32px;
-    border-radius: 4px;
+    border-radius: 6px;
     color: var(--text-primary);
-    font-size: 12px;
+    font-size: 13px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .dn-search-input:focus {
     border-color: var(--border-highlight);
+    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.08);
 }
 
 .dn-search-input::placeholder {
@@ -72,18 +72,22 @@
     background: var(--accent-primary);
     color: var(--accent-primary-text);
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     width: 28px;
     height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: filter 0.2s;
+    transition: filter 0.2s, transform 0.15s;
 }
 
 .add-btn:hover {
-    filter: brightness(1.1);
+    filter: brightness(1.08);
+}
+
+.add-btn:active {
+    transform: scale(0.96);
 }
 
 .add-btn .material-symbols-outlined {
@@ -92,13 +96,13 @@
 
 .dropdown-menu {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     right: 0;
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    min-width: 160px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+    min-width: 180px;
     z-index: 1000;
     overflow: hidden;
 }
@@ -132,11 +136,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 14px;
+    padding: 6px 12px;
     border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
-    height: 46px;
-    /* Match formatting toolbar */
     box-sizing: border-box;
 }
 
@@ -200,28 +202,31 @@
     font-size: 16px;
 }
 
-/* Notes List */
+/* Notes List - Enterprise note list */
 .dn-entries-list {
     flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
+    padding: 4px 0;
 }
 
 /* Folder Groups */
 .folder-group {
-    margin: 4px 0;
+    margin: 0 0 2px 0;
 }
 
 .folder-header {
-    padding: 6px 14px;
+    padding: 5px 10px;
+    margin: 0 6px;
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: all 0.2s ease;
     user-select: none;
+    border-radius: 6px;
 }
 
 .folder-header:hover {
@@ -229,24 +234,27 @@
 }
 
 .folder-icon {
-    font-size: 18px;
+    font-size: 16px;
     color: var(--text-secondary);
+    opacity: 0.85;
 }
 
 .folder-name {
     flex: 1;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--text-primary);
+    letter-spacing: -0.01em;
 }
 
 .folder-count {
-    font-size: 11px;
+    font-size: 10px;
+    font-weight: 500;
     color: var(--text-tertiary);
     background: var(--bg-app);
-    padding: 2px 6px;
-    border-radius: 10px;
-    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    min-width: 18px;
     text-align: center;
 }
 
@@ -255,13 +263,13 @@
     border: none;
     color: var(--text-tertiary);
     cursor: pointer;
-    padding: 2px;
+    padding: 4px;
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    transition: opacity 0.2s, background 0.2s, color 0.2s;
     flex-shrink: 0;
 }
 
@@ -270,7 +278,7 @@
 }
 
 .folder-delete-btn:hover {
-    background: rgba(248, 113, 113, 0.1);
+    background: rgba(248, 113, 113, 0.12);
     color: var(--accent-red);
 }
 
@@ -278,40 +286,63 @@
     font-size: 16px;
 }
 
+.folder-header.drop-target {
+    background: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.08);
+    outline: 2px dashed var(--accent-primary);
+    outline-offset: -2px;
+}
+
 /* Folder Items & Time Buckets */
 .folder-items {
     display: flex;
     flex-direction: column;
-    padding-left: 12px; /* reduced indent for folders since they hold cards now */
+    padding-left: 10px;
+    margin-top: 1px;
+    border-left: 1px solid var(--border-subtle);
+    margin-left: 16px;
 }
 
 /* Time Buckets */
 .time-bucket-section {
-    margin-bottom: 12px;
+    margin-bottom: 4px;
 }
 
 .time-bucket-label {
-    font-size: 13px;
+    font-size: 9px;
     font-weight: 700;
-    color: var(--text-primary);
-    padding: 8px 14px 8px 8px;
-    border-bottom: 1px solid var(--border-subtle);
-    margin-bottom: 8px;
-    margin-left: 6px;
+    color: var(--text-tertiary);
+    padding: 4px 10px 2px 0;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
-/* Note Card Item */
+/* Note Card Item - Enterprise card */
 .note-card-item {
-    padding: 10px 14px;
-    margin: 4px 6px;
-    border-radius: 8px;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 10px;
+    margin: 1px 6px 1px 0;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s;
+    transition: all 0.2s ease;
     background: transparent;
     border: 1px solid transparent;
+    position: relative;
+}
+
+.note-card-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    background: var(--accent-primary);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.2s ease, height 0.2s ease;
 }
 
 .note-card-item:hover {
@@ -319,25 +350,52 @@
 }
 
 .note-card-item.active {
-    background: var(--bg-hover); /* Or var(--bg-active) */
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background: var(--bg-hover);
+    border-color: var(--border-subtle);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.note-card-item.active::before {
+    width: 3px;
+    height: 60%;
+}
+
+.note-card-item.dragging {
+    opacity: 0.5;
+}
+
+.note-card-icon {
+    font-size: 16px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.note-card-item.active .note-card-icon {
+    color: var(--accent-primary);
+}
+
+.note-card-body {
+    flex: 1;
+    min-width: 0;
 }
 
 .note-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 8px;
 }
 
 .note-card-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-primary);
+    line-height: 1.35;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex-grow: 1;
+    flex: 1;
 }
 
 .note-delete-btn {
@@ -351,16 +409,17 @@
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    transition: opacity 0.2s, background 0.2s, color 0.2s;
     flex-shrink: 0;
 }
 
-.note-card-item:hover .note-delete-btn {
+.note-card-item:hover .note-delete-btn,
+.note-card-item.active .note-delete-btn {
     opacity: 1;
 }
 
 .note-delete-btn:hover {
-    background: rgba(248, 113, 113, 0.1);
+    background: rgba(248, 113, 113, 0.12);
     color: var(--accent-red);
 }
 
@@ -370,23 +429,23 @@
 
 .note-card-meta {
     display: flex;
-    gap: 8px;
-    font-size: 12px;
+    gap: 6px;
+    font-size: 10px;
     align-items: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    margin-top: 2px;
+    color: var(--text-tertiary);
 }
 
 .note-card-time {
-    color: var(--text-primary);
     font-weight: 500;
+    flex-shrink: 0;
 }
 
 .note-card-preview {
-    color: var(--text-tertiary);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 130px;
 }
 
 /* Tag Categories */
