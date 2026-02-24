@@ -97,6 +97,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   /** Note id being dragged */
   draggingNoteId = signal<string | null>(null);
 
+  private readonly SELECTION_KEY = 'envello-daily-notes-selection';
+
   displayModalTitle = computed(() => {
     const t = this.modalTitle();
     if (t) return t;
@@ -287,14 +289,34 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       this.noteGroups.set(next);
     });
 
-    // Initialize selection if notes exist
-    if (this.notes().length > 0) {
-      const firstNoteId = this.notes()[0].id;
-      this.selectedEntryId.set(firstNoteId);
-      this.openNotes.set([firstNoteId]);
-      // Trigger lazy load
-      this.store.loadNoteContent(firstNoteId);
-    }
+    // Restore or initialize selection when notes load
+    effect(() => {
+      const notes = this.notes();
+      if (notes.length === 0) return;
+      const selectedId = this.selectedEntryId();
+      const openIds = this.openNotes();
+      const noteIds = new Set(notes.map((n) => n.id));
+      const hasValidSelection = selectedId && noteIds.has(selectedId);
+      const hasValidTabs = openIds.length > 0 && openIds.some((id) => noteIds.has(id));
+      if (hasValidSelection && hasValidTabs) return;
+
+      const saved = this.loadSelectionFromStorage();
+      const validOpen = (saved?.openNotes ?? openIds).filter((id) => noteIds.has(id));
+      const validSelected = saved?.selectedId && noteIds.has(saved.selectedId) ? saved.selectedId : validOpen[0] ?? notes[0].id;
+      const finalOpen = validOpen.length > 0 ? validOpen : [validSelected];
+
+      this.selectedEntryId.set(validSelected);
+      this.openNotes.set(finalOpen);
+      this.store.loadNoteContent(validSelected);
+    });
+
+    // Persist selection when it changes
+    effect(() => {
+      const selectedId = this.selectedEntryId();
+      const openIds = this.openNotes();
+      if (!selectedId && openIds.length === 0) return;
+      this.saveSelectionToStorage(selectedId, openIds);
+    });
 
     // Effect to update editor content when selected note changes
     effect(() => {
@@ -471,6 +493,30 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const noteId = event.dataTransfer?.getData('text/plain');
     const firstId = this.noteGroups()[0]?.id ?? 'personal';
     if (noteId) this.moveNoteToFolder(noteId, firstId);
+  }
+
+  private loadSelectionFromStorage(): { selectedId: string; openNotes: string[] } | null {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(this.SELECTION_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw) as { selectedId?: string; openNotes?: string[] };
+      if (data?.openNotes && Array.isArray(data.openNotes)) {
+        return { selectedId: data.selectedId ?? data.openNotes[0], openNotes: data.openNotes };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private saveSelectionToStorage(selectedId: string, openNotes: string[]) {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(this.SELECTION_KEY, JSON.stringify({ selectedId, openNotes }));
+    } catch {
+      /* ignore */
+    }
   }
 
   selectNote(id: string) {
