@@ -40,6 +40,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @Input() activeTab = 'Workspace';
   @Input() isImmersive = false;
   @Output() sidebarCollapsedChange = new EventEmitter<boolean>();
+  @Output() subNavVisibleChange = new EventEmitter<boolean>();
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
   @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
@@ -166,6 +167,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    // Notify parent when sub-nav visibility changes
+    effect(() => {
+      const section = this.activeSectionForSubNav();
+      const visible = !!section && section.items.length > 1;
+      this.subNavVisibleChange.emit(visible);
+    });
   }
 
   get theme(): Theme {
@@ -275,12 +283,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     // Apply initial layout
     this.applyNavigationLayout();
+
+    // Seed the route segment from the current URL immediately
+    this.currentRouteSegment.set(this.router.url.split('/')[1]?.split('?')[0] ?? '');
+
+    // Keep currentRouteSegment in sync with every navigation
+    this.routeSub = this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        const url = (e as NavigationEnd).urlAfterRedirects;
+        this.currentRouteSegment.set(url.split('/')[1]?.split('?')[0] ?? '');
+      });
   }
 
   ngOnDestroy() {
     if (this.navigationLayoutListener) {
       window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
     }
+    this.routeSub?.unsubscribe();
   }
 
   private loadNavigationLayout() {

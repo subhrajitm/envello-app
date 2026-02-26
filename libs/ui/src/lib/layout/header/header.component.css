@@ -604,3 +604,105 @@
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Section Sub-Nav Bar
+   Appears below the header/sidebar as a fixed breadcrumb
+   strip showing sibling pages of the current section.
+═══════════════════════════════════════════════════════ */
+.section-sub-nav {
+  position: fixed;
+  top: 48px; /* sits flush below the main header bar */
+  left: 0;
+  right: 0;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 16px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 90;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.section-sub-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Shift right when sidebar is visible (expanded) */
+.section-sub-nav.sub-nav-with-sidebar {
+  left: 240px;
+}
+
+/* Shift right when sidebar is icon-only (collapsed) */
+.section-sub-nav.sub-nav-sidebar-collapsed {
+  left: 64px;
+}
+
+/* Section label pill on the left */
+.sub-nav-section-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  padding-right: 2px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.sub-nav-section-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Breadcrumb chevron separator */
+.sub-nav-chevron {
+  font-size: 14px;
+  color: var(--text-disabled);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+/* Each sibling page tab */
+.sub-nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 14px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.sub-nav-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.sub-nav-tab.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+  font-weight: 700;
+  background: var(--bg-active);
+}
+
+.sub-nav-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1;
+}

@@ -27,6 +27,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isImmersive = signal(false);
   isFullScreen = signal(false);
   sidebarCollapsed = signal(true);
+  subNavVisible = signal(false);
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
@@ -111,5 +112,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   onSidebarCollapsedChange(collapsed: boolean) {
     this.sidebarCollapsed.set(collapsed);
+  }
+
+  onSubNavVisibleChange(visible: boolean) {
+    this.subNavVisible.set(visible);
   }
 }
