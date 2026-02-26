@@ -10,7 +10,7 @@ import { MeetingsService, MEETING_COLORS } from '@envello/core';
 import { SnippetsService } from '@envello/core';
 import { NovelContentService } from '@envello/core';
 
-type OptionCategory = 'writing' | 'productivity' | 'organization';
+type OptionCategory = 'create' | 'plan' | 'library';
 type SidebarCategoryId = 'all' | 'recent' | OptionCategory;
 
 interface AddNewOption {
@@ -63,28 +63,32 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     selectedCategoryId = signal<SidebarCategoryId>('all');
 
     readonly categories: { id: OptionCategory; label: string; icon: string }[] = [
-        { id: 'writing', label: 'Writing', icon: 'edit_note' },
-        { id: 'productivity', label: 'Productivity', icon: 'task_alt' },
-        { id: 'organization', label: 'Organization', icon: 'folder_open' }
+        { id: 'plan',    label: 'Plan',    icon: 'task_alt' },
+        { id: 'library', label: 'Library', icon: 'local_library' },
+        { id: 'create',  label: 'Create',  icon: 'edit_note' }
     ];
 
     readonly options: AddNewOption[] = [
-        { id: 'note', title: 'Daily Note', description: 'Quick note or journal entry', icon: 'description', route: '/daily-notes', color: '#e8a87c', category: 'writing', shortcut: '1', keywords: ['note', 'daily', 'journal'], tag: 'NOTE' },
-        { id: 'task', title: 'Task', description: 'Add a new task or to-do', icon: 'check_circle', route: '/tasks', color: '#7eb3d4', category: 'productivity', shortcut: '2', keywords: ['task', 'todo', 'checklist'], tag: 'TASK' },
-        { id: 'novel', title: 'Novel', description: 'Start a new writing project', icon: 'menu_book', route: '/novels', color: '#c4a8d8', category: 'writing', shortcut: '3', keywords: ['novel', 'book', 'story'], tag: 'PROJECT' },
-        { id: 'article', title: 'Article', description: 'Write a new article or blog post', icon: 'article', route: '/articles', color: '#a8d5a8', category: 'writing', shortcut: '4', keywords: ['article', 'blog', 'post'], tag: 'DOCS' },
-        { id: 'journal', title: 'Journal Project', description: 'Create a new journal project', icon: 'auto_stories', route: '/journals', color: '#f0b8d0', category: 'writing', shortcut: '5', keywords: ['journal', 'project'], tag: 'PROJECT' },
-        { id: 'research', title: 'Research Library', description: 'Create a new research library', icon: 'science', route: '/research', color: '#f4e89c', category: 'organization', shortcut: '6', keywords: ['research', 'library'], tag: 'RESEARCH' },
-        { id: 'meeting', title: 'Meeting', description: 'Schedule a new meeting', icon: 'groups', route: '/meetings', color: '#d89090', category: 'productivity', shortcut: '7', keywords: ['meeting', 'schedule'], tag: 'COLLAB' },
-        { id: 'snippet', title: 'Code Snippet', description: 'Save a code snippet', icon: 'code', route: '/snippets', color: '#b8d8e8', category: 'organization', shortcut: '8', keywords: ['code', 'snippet'], tag: 'DEV' }
+        // Plan (Action Layer)
+        { id: 'task',    title: 'Task',    description: 'Add a new task or to-do',       icon: 'check_circle', route: '/tasks',       color: '#7eb3d4', category: 'plan',    shortcut: '1', keywords: ['task', 'todo', 'checklist'], tag: 'TASK' },
+        { id: 'meeting', title: 'Meeting', description: 'Schedule a new meeting',         icon: 'groups',       route: '/meetings',    color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],       tag: 'COLLAB' },
+        // Today (Focus Layer) — note
+        { id: 'note',    title: 'Note',    description: 'Quick note for today',           icon: 'description',  route: '/daily-notes', color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],    tag: 'NOTE' },
+        // Library (Knowledge Layer)
+        { id: 'research',title: 'Research', description: 'Create a new research library', icon: 'science',      route: '/research',    color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],       tag: 'RESEARCH' },
+        { id: 'journal', title: 'Journal',  description: 'Start a new journal project',   icon: 'auto_stories', route: '/journals',    color: '#f0b8d0', category: 'library', shortcut: '5', keywords: ['journal', 'project'],        tag: 'JOURNAL' },
+        { id: 'snippet', title: 'Snippet',  description: 'Save a code snippet',           icon: 'code',         route: '/snippets',    color: '#b8d8e8', category: 'library', shortcut: '6', keywords: ['code', 'snippet'],           tag: 'DEV' },
+        // Create (Creation Layer)
+        { id: 'article', title: 'Draft',    description: 'Write a new article or draft',  icon: 'article',      route: '/articles',    color: '#a8d5a8', category: 'create',  shortcut: '7', keywords: ['article', 'blog', 'draft'],  tag: 'DRAFT' },
+        { id: 'novel',   title: 'Writing',  description: 'Start a new writing project',   icon: 'menu_book',    route: '/novels',      color: '#c4a8d8', category: 'create',  shortcut: '8', keywords: ['novel', 'book', 'story'],    tag: 'WRITING' },
     ];
 
     readonly sidebarCategories: { id: SidebarCategoryId; label: string; icon: string }[] = [
-        { id: 'all', label: 'All Templates', icon: 'grid_view' },
-        { id: 'recent', label: 'Recent', icon: 'history' },
-        { id: 'writing', label: 'Writing', icon: 'edit_note' },
-        { id: 'productivity', label: 'Productivity', icon: 'task_alt' },
-        { id: 'organization', label: 'Organization', icon: 'folder_open' }
+        { id: 'all',     label: 'All Templates', icon: 'grid_view' },
+        { id: 'recent',  label: 'Recent',        icon: 'history' },
+        { id: 'plan',    label: 'Plan',           icon: 'task_alt' },
+        { id: 'library', label: 'Library',        icon: 'local_library' },
+        { id: 'create',  label: 'Create',         icon: 'edit_note' },
     ];
 
     // Computed: item counts for each type

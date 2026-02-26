@@ -99,34 +99,85 @@
     @if (navigationLayout() === 'horizontal') {
       <!-- Horizontal Navigation -->
       <nav class="header-nav">
-        @for (tab of tabs; track tab) {
+        <!-- Workspace pinned first -->
+        <button
+          class="nav-tab nav-tab-workspace"
+          [class.active]="isWorkspaceActive()"
+          (click)="navigateTo('workspace')"
+        >
+          <span class="material-symbols-outlined nav-tab-icon">dashboard</span>
+          Workspace
+        </button>
+        <div class="nav-divider-v"></div>
+        <!-- Section group headers (top-level labels) -->
+        @for (section of navSections; track section.id) {
           <button
-            class="nav-tab"
-            [class.active]="activeTab === tab"
-            (click)="navigateTo(tab)"
+            class="nav-tab nav-tab-section"
+            [class.active]="isSectionActive(section)"
+            (click)="navigateTo(section.items[0].route)"
+            [title]="section.layer"
           >
-            {{ tab }}
+            <span class="material-symbols-outlined nav-tab-icon">{{ section.icon }}</span>
+            {{ section.label }}
           </button>
         }
       </nav>
     } @else {
-      <!-- Vertical Sidebar -->
+      <!-- Vertical Sidebar — Workspace + grouped sections -->
       <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
         <nav class="sidebar-nav">
-          @for (tab of tabs; track tab) {
+
+          <!-- ── Workspace (pinned top-level) ── -->
+          <button
+            class="sidebar-nav-item sidebar-workspace-item"
+            [class.active]="isWorkspaceActive()"
+            (click)="navigateTo('workspace')"
+            [title]="sidebarCollapsed() ? 'Workspace' : ''"
+          >
+            <span class="material-symbols-outlined sidebar-icon">dashboard</span>
+            @if (!sidebarCollapsed()) {
+              <span class="sidebar-label">Workspace</span>
+            }
+          </button>
+
+          @if (!sidebarCollapsed()) {
+            <div class="sidebar-divider"></div>
+          }
+
+          <!-- ── Grouped sections ── -->
+          @for (section of navSections; track section.id) {
+            <!-- Section header -->
             <button
-              class="sidebar-nav-item"
-              [class.active]="activeTab === tab"
-              (click)="navigateTo(tab)"
-              [title]="sidebarCollapsed() ? tab : ''"
+              type="button"
+              class="sidebar-section-header"
+              [class.active-section]="isSectionActive(section)"
+              (click)="sidebarCollapsed() ? navigateTo(section.items[0].route) : toggleSection(section.id)"
+              [title]="sidebarCollapsed() ? section.label : section.layer"
             >
-              <span class="material-symbols-outlined sidebar-icon">{{
-                getTabIcon(tab)
-              }}</span>
+              <span class="material-symbols-outlined sidebar-icon sidebar-section-icon">{{ section.icon }}</span>
               @if (!sidebarCollapsed()) {
-                <span class="sidebar-label">{{ tab }}</span>
+                <span class="sidebar-section-label">{{ section.label }}</span>
+                <span class="sidebar-section-layer">{{ section.layer }}</span>
+                <span class="material-symbols-outlined sidebar-section-chevron">
+                  {{ isSectionCollapsed(section.id) ? 'chevron_right' : 'expand_more' }}
+                </span>
               }
             </button>
+
+            <!-- Section items -->
+            @if (!sidebarCollapsed() && !isSectionCollapsed(section.id)) {
+              @for (item of section.items; track item.id) {
+                <button
+                  class="sidebar-nav-item sidebar-sub-item"
+                  [class.active]="isItemActive(item)"
+                  (click)="navigateTo(item.route)"
+                  [title]="item.label"
+                >
+                  <span class="material-symbols-outlined sidebar-icon sidebar-sub-icon">{{ item.icon }}</span>
+                  <span class="sidebar-label">{{ item.label }}</span>
+                </button>
+              }
+            }
           }
         </nav>
         @if (
@@ -147,6 +198,32 @@
     }
   }
 </div>
+
+<!-- ── Section Sub-Nav Bar ─────────────────────────────────── -->
+<!-- Shows sibling links when user is inside a section's page  -->
+@if (!isImmersive && activeSectionForSubNav() && activeSectionForSubNav()!.items.length > 1) {
+  <nav class="section-sub-nav"
+       [class.sub-nav-with-sidebar]="navigationLayout() !== 'horizontal' && !sidebarCollapsed()"
+       [class.sub-nav-sidebar-collapsed]="navigationLayout() !== 'horizontal' && sidebarCollapsed()">
+    <!-- Section name as label -->
+    <span class="sub-nav-section-name">
+      <span class="material-symbols-outlined sub-nav-section-icon">{{ activeSectionForSubNav()!.icon }}</span>
+      {{ activeSectionForSubNav()!.label }}
+    </span>
+    <span class="material-symbols-outlined sub-nav-chevron">chevron_right</span>
+    <!-- Sibling page tabs -->
+    @for (item of activeSectionForSubNav()!.items; track item.id) {
+      <button
+        class="sub-nav-tab"
+        [class.active]="isItemActive(item)"
+        (click)="navigateTo(item.route)"
+      >
+        <span class="material-symbols-outlined sub-nav-icon">{{ item.icon }}</span>
+        {{ item.label }}
+      </button>
+    }
+  </nav>
+}
 
 <!-- Quick Find Modal -->
 <app-quick-find></app-quick-find>

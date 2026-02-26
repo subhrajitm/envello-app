@@ -92,17 +92,18 @@ export class AppComponent implements OnInit, OnDestroy {
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
       'workspace': 'Workspace',
-      'novels': 'Novels/Fiction',
-      'research': 'Research',
-      'articles': 'Articles/Blogs',
-      'journals': 'Journals',
-      'daily-notes': 'Daily Notes',
-      'tasks': 'Tasks/Todos',
-      'meetings': 'Meetings',
-      'books': 'Books/Reading',
-      'snippets': 'Code Snippets',
-      'bin': 'Bin',
-      'activity-log': 'Activity Log',
+      'tasks':     'Tasks',
+      'meetings':  'Meetings',
+      'daily-notes': 'Notes',
+      'research':  'Research',
+      'books':     'Reading',
+      'journals':  'Journal',
+      'snippets':  'Snippets',
+      'articles':  'Drafts',
+      'novels':    'Writing',
+      'projects':  'Projects',
+      'bin':           'Bin',
+      'activity-log':  'Activity Log',
       'developer-settings': 'Developer Settings'
     };
     return map[url] || 'Workspace';
