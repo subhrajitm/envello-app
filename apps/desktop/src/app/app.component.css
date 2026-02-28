@@ -193,13 +193,15 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Push content down when the section sub-nav bar is showing */
-.dashboard-content.sub-nav-open {
-    padding-top: 36px;
-}
-
-/* no-padding pages manage their own layout; sub-nav handled by inner scroll */
-.dashboard-content.no-padding.sub-nav-open {
-    padding-top: 0;
-    margin-top: 36px;
+/* ── Sub-nav spacer ───────────────────────────────────────────
+   A 36px flex-shrink-0 block inserted at the top of
+   dashboard-content when the section sub-nav is visible.
+   This reserves space beneath the fixed sub-nav bar so
+   page content is never hidden behind it — works for all
+   page types including no-padding feature pages.
+─────────────────────────────────────────────────────────── */
+.sub-nav-spacer {
+    height: 36px;
+    flex-shrink: 0;
+    width: 100%;
 }

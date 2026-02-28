@@ -146,39 +146,75 @@
 
           <!-- ── Grouped sections ── -->
           @for (section of navSections; track section.id) {
-            <!-- Section header -->
-            <button
-              type="button"
-              class="sidebar-section-header"
-              [class.active-section]="isSectionActive(section)"
-              (click)="sidebarCollapsed() ? navigateTo(section.items[0].route) : toggleSection(section.id)"
-              [title]="sidebarCollapsed() ? section.label : section.layer"
+            <!-- Each section has a flyout wrapper; mouseenter/leave control open state -->
+            <div
+              class="sidebar-section-flyout-wrapper"
+              (mouseenter)="sidebarCollapsed() && openFlyout(section.id)"
+              (mouseleave)="sidebarCollapsed() && scheduleFlyoutClose()"
             >
-              <span class="material-symbols-outlined sidebar-icon sidebar-section-icon">{{ section.icon }}</span>
-              @if (!sidebarCollapsed()) {
-                <span class="sidebar-section-label">{{ section.label }}</span>
-                <span class="sidebar-section-layer">{{ section.layer }}</span>
-                <span class="material-symbols-outlined sidebar-section-chevron">
-                  {{ isSectionCollapsed(section.id) ? 'chevron_right' : 'expand_more' }}
-                </span>
-              }
-            </button>
 
-            <!-- Section items -->
-            @if (!sidebarCollapsed() && !isSectionCollapsed(section.id)) {
-              @for (item of section.items; track item.id) {
-                <button
-                  class="sidebar-nav-item sidebar-sub-item"
-                  [class.active]="isItemActive(item)"
-                  (click)="navigateTo(item.route)"
-                  [title]="item.label"
+              <!-- Section header button -->
+              <button
+                type="button"
+                class="sidebar-section-header"
+                [class.active-section]="isSectionActive(section)"
+                (click)="sidebarCollapsed() ? navigateTo(section.items[0].route) : toggleSection(section.id)"
+                [title]="sidebarCollapsed() ? section.label : section.layer"
+              >
+                <span class="material-symbols-outlined sidebar-icon sidebar-section-icon">{{ section.icon }}</span>
+                @if (!sidebarCollapsed()) {
+                  <span class="sidebar-section-label">{{ section.label }}</span>
+                  <span class="sidebar-section-layer">{{ section.layer }}</span>
+                  <span class="material-symbols-outlined sidebar-section-chevron">
+                    {{ isSectionCollapsed(section.id) ? 'chevron_right' : 'expand_more' }}
+                  </span>
+                }
+              </button>
+
+              <!-- Flyout panel — collapsed mode, visibility controlled by openFlyoutId signal -->
+              @if (sidebarCollapsed()) {
+                <div
+                  class="sidebar-flyout"
+                  [class.flyout-open]="openFlyoutId() === section.id"
+                  role="menu"
                 >
-                  <span class="material-symbols-outlined sidebar-icon sidebar-sub-icon">{{ item.icon }}</span>
-                  <span class="sidebar-label">{{ item.label }}</span>
-                </button>
+                  <div class="sidebar-flyout-title">
+                    <span class="material-symbols-outlined sidebar-flyout-title-icon">{{ section.icon }}</span>
+                    <span>{{ section.label }}</span>
+                    <small class="sidebar-flyout-layer">{{ section.layer }}</small>
+                  </div>
+                  @for (item of section.items; track item.id) {
+                    <button
+                      class="sidebar-flyout-item"
+                      [class.active]="isItemActive(item)"
+                      (click)="navigateTo(item.route)"
+                      role="menuitem"
+                    >
+                      <span class="material-symbols-outlined sidebar-flyout-icon">{{ item.icon }}</span>
+                      {{ item.label }}
+                    </button>
+                  }
+                </div>
               }
-            }
+
+              <!-- Section items — expanded mode only -->
+              @if (!sidebarCollapsed() && !isSectionCollapsed(section.id)) {
+                @for (item of section.items; track item.id) {
+                  <button
+                    class="sidebar-nav-item sidebar-sub-item"
+                    [class.active]="isItemActive(item)"
+                    (click)="navigateTo(item.route)"
+                    [title]="item.label"
+                  >
+                    <span class="material-symbols-outlined sidebar-icon sidebar-sub-icon">{{ item.icon }}</span>
+                    <span class="sidebar-label">{{ item.label }}</span>
+                  </button>
+                }
+              }
+
+            </div><!-- /.sidebar-section-flyout-wrapper -->
           }
+
         </nav>
         @if (
           navigationLayout() === 'vertical' ||
@@ -199,9 +235,9 @@
   }
 </div>
 
-<!-- ── Section Sub-Nav Bar ─────────────────────────────────── -->
-<!-- Shows sibling links when user is inside a section's page  -->
-@if (!isImmersive && activeSectionForSubNav() && activeSectionForSubNav()!.items.length > 1) {
+<!-- ── Section Sub-Nav Bar ─────────────────────────────────────────── -->
+<!-- Only shown when sidebar is NOT collapsed (flyout handles minimized mode) -->
+@if (!isImmersive && !sidebarCollapsed() && activeSectionForSubNav() && activeSectionForSubNav()!.items.length > 1) {
   <nav class="section-sub-nav"
        [class.sub-nav-with-sidebar]="navigationLayout() !== 'horizontal' && !sidebarCollapsed()"
        [class.sub-nav-sidebar-collapsed]="navigationLayout() !== 'horizontal' && sidebarCollapsed()">

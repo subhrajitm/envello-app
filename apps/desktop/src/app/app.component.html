@@ -2,8 +2,7 @@
 <div class="dashboard">
   @if (!isFullScreen() && authService.isAuthenticated()) {
   <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
-    (sidebarCollapsedChange)="onSidebarCollapsedChange($event)"
-    (subNavVisibleChange)="onSubNavVisibleChange($event)">
+    (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
   </app-header>
   }
 
@@ -13,6 +12,10 @@
     [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"
     [class.fullscreen-content]="isFullScreen()"
     [class.sub-nav-open]="subNavVisible() && !isImmersive() && !isFullScreen()">
+    <!-- Spacer that reserves 36px for the fixed sub-nav bar when it's visible -->
+    @if (subNavVisible() && !isImmersive() && !isFullScreen()) {
+      <div class="sub-nav-spacer"></div>
+    }
     <router-outlet></router-outlet>
   </div>
 

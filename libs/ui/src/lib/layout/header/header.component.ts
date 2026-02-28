@@ -152,6 +152,36 @@ export class HeaderComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Flyout open/close state (minimized sidebar) ────────────────
+  openFlyoutId = signal<string | null>(null);
+  private flyoutCloseTimer?: ReturnType<typeof setTimeout>;
+
+  /** Open the flyout for a section (clears any pending close timer) */
+  openFlyout(sectionId: string) {
+    if (this.flyoutCloseTimer) {
+      clearTimeout(this.flyoutCloseTimer);
+      this.flyoutCloseTimer = undefined;
+    }
+    this.openFlyoutId.set(sectionId);
+  }
+
+  /** Delay closing by 300ms — lets the mouse cross the gap to the panel */
+  scheduleFlyoutClose() {
+    this.flyoutCloseTimer = setTimeout(() => {
+      this.openFlyoutId.set(null);
+      this.flyoutCloseTimer = undefined;
+    }, 300);
+  }
+
+  /** Close immediately (used on navigation / clicking any item) */
+  closeFlyout() {
+    if (this.flyoutCloseTimer) {
+      clearTimeout(this.flyoutCloseTimer);
+      this.flyoutCloseTimer = undefined;
+    }
+    this.openFlyoutId.set(null);
+  }
+
   private lastAvatarUrl: string | undefined = undefined;
 
   constructor() {
@@ -211,6 +241,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   navigateTo(route: string) {
+    this.closeFlyout();          // always dismiss flyout on navigation
     this.router.navigate([route]);
   }
 
