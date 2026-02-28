@@ -13,7 +13,7 @@ const SUB_NAV_ROUTES = new Set([
   // Plan section
   'tasks', 'meetings',
   // Library section
-  'research', 'books', 'journals', 'snippets',
+  'research', 'journals',
   // Create section
   'articles', 'novels', 'projects',
 ]);
@@ -123,9 +123,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'meetings':    'Meetings',
       'daily-notes': 'Notes',
       'research':    'Research',
-      'books':       'Reading',
       'journals':    'Journal',
-      'snippets':    'Snippets',
       'articles':    'Drafts',
       'novels':      'Writing',
       'projects':    'Projects',

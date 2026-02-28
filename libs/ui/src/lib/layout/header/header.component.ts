@@ -109,10 +109,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
       layer: 'Knowledge Layer',
       icon: 'local_library',
       items: [
-        { id: 'research',  label: 'Research', icon: 'science',      route: 'research' },
-        { id: 'books',     label: 'Reading',  icon: 'auto_stories', route: 'books' },
-        { id: 'journals',  label: 'Journal',  icon: 'book',         route: 'journals' },
-        { id: 'snippets',  label: 'Snippets', icon: 'code',         route: 'snippets' },
+        { id: 'research',  label: 'Research', icon: 'science', route: 'research' },
+        { id: 'journals',  label: 'Journal',  icon: 'book',    route: 'journals' },
       ]
     },
     {

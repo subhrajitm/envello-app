@@ -79,18 +79,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-  {
-    path: 'books',
-    loadComponent: () => import('./components/books/books.component').then(m => m.BooksComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
-    path: 'snippets',
-    loadComponent: () => import('./components/code-snippets/code-snippets.component').then(m => m.CodeSnippetsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
+
   {
     path: 'activity-log',
     loadComponent: () => import('./components/activity-log/activity-log.component').then(m => m.ActivityLogComponent),
