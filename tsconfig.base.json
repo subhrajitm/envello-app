@@ -16,9 +16,7 @@
       "@envello/feature-tasks": ["libs/feature-tasks/src/index.ts"],
       "@envello/feature-workspace": ["libs/feature-workspace/src/index.ts"],
       "@envello/feature-novels": ["libs/feature-novels/src/index.ts"],
-      "@envello/core": ["libs/core/src/index.ts"],
-      "feature-projects": ["libs/feature-projects/src/index.ts"],
-      "@envello/feature-projects": ["libs/feature-projects/src/index.ts"]
+      "@envello/core": ["libs/core/src/index.ts"]
     }
   }
 }

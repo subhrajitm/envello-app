@@ -148,3 +148,40 @@ export interface BinItem {
     deletedAt: string;
     payload: unknown;
 }
+
+// ---------------------------------------------------------
+// HYBRID EXECUTION ENGINE (PRD v1.0)
+// ---------------------------------------------------------
+
+export type ItemType = 'task' | 'writing';
+export type ItemStatus = 'todo' | 'in-progress' | 'done';
+
+export interface Item {
+    /** UUID */
+    id: string;
+    /** string */
+    title: string;
+    /** text */
+    content: string;
+    /** enum: task | writing */
+    type: ItemType;
+    /** enum: todo | in-progress | done */
+    status: ItemStatus;
+    /** integer 0-100 */
+    progress: number;
+    /** timestamp, optional */
+    deadline?: string;
+    /** timestamp */
+    created_at: string;
+    /** timestamp */
+    last_edited_at: string;
+    /** boolean */
+    ai_generated: boolean;
+
+    /** JSON */
+    metadata?: Record<string, unknown>;
+
+    // Derived Fields (Calculated at query/display time, optionally cached)
+    momentum_score?: number;
+    unfinished_priority_score?: number;
+}

@@ -1,0 +1,145 @@
+<div class="execution-view">
+  <!-- Header -->
+  <header class="execution-header">
+    <div class="header-left">
+      <h1 class="plan-title">{{ getGreeting() }}.</h1>
+      <p class="plan-subtitle">Here is your focus for today.</p>
+    </div>
+  </header>
+
+  @if (successMessage()) {
+  <div class="toast-notification">
+    <span class="material-symbols-outlined icon">check_circle</span>
+    <span class="toast-text">{{ successMessage() }}</span>
+  </div>
+  }
+
+  <!-- Quick Capture -->
+  <div class="quick-capture-section">
+    <div class="capture-input-wrap">
+      <span class="material-symbols-outlined capture-icon">sparkles</span>
+      <input 
+        type="text" 
+        class="capture-input" 
+        [(ngModel)]="captureInput" 
+        (keyup.enter)="submitCapture()"
+        placeholder="Type a task or start a draft... (AI will categorise)"
+        [disabled]="isCapturing()"
+      />
+      @if (captureInput().trim() && !isCapturing()) {
+         <button class="capture-btn" (click)="submitCapture()">
+            <span class="material-symbols-outlined">send</span>
+         </button>
+      }
+      @if (isCapturing()) {
+        <span class="capture-loading"></span>
+      }
+    </div>
+  </div>
+
+  <div class="execution-layout">
+    
+    <!-- Main Focus & In Progress Column -->
+    <div class="main-column">
+      
+      <!-- Focus Section -->
+      <section class="execution-section">
+        <h3 class="section-title text-accent">Top Focus</h3>
+        @if (focusItems().length > 0) {
+          <div class="item-list">
+            @for (item of focusItems(); track item.id) {
+               <div class="execution-item focus-item" [class.writing-item]="item.type === 'writing'">
+                 <div class="item-header">
+                   <div class="item-type-badge">
+                      <span class="material-symbols-outlined badge-icon">{{ item.type === 'writing' ? 'edit_document' : 'task_alt' }}</span>
+                      {{ item.type | titlecase }}
+                   </div>
+                   @if (item.deadline) {
+                     <span class="item-deadline">Due {{ item.deadline | date:'shortDate' }}</span>
+                   }
+                 </div>
+                 <h4 class="item-title">{{ item.title }}</h4>
+                 
+                 @if (item.type === 'writing') {
+                   <div class="progress-wrap">
+                     <div class="progress-bar">
+                        <div class="progress-fill" [style.width.%]="item.progress"></div>
+                     </div>
+                     <span class="progress-text">{{ item.progress }}%</span>
+                   </div>
+                   <div class="item-actions">
+                     <env-button variant="primary" (clicked)="updateProgress(item.id, item.progress + 10)">Write (+10%)</env-button>
+                     <env-button variant="secondary" (clicked)="markCompleted(item.id)">Finish</env-button>
+                   </div>
+                 } @else {
+                   <div class="item-actions">
+                     <env-button variant="primary" (clicked)="markCompleted(item.id)">Mark Done</env-button>
+                   </div>
+                 }
+               </div>
+            }
+          </div>
+        } @else {
+          <env-empty-state icon="check_circle" title="All caught up!" description="You have no pressing items in focus." [compact]="true"></env-empty-state>
+        }
+      </section>
+
+      <!-- In Progress Section -->
+      <section class="execution-section mt-32">
+        <h3 class="section-title">In Progress</h3>
+        @if (inProgressItems().length > 0) {
+          <div class="item-list compact-list">
+            @for (item of inProgressItems(); track item.id) {
+               <div class="execution-item in-progress-item">
+                 <div class="compact-flex">
+                   <span class="material-symbols-outlined type-icon" [title]="item.type">
+                     {{ item.type === 'writing' ? 'article' : 'radio_button_unchecked' }}
+                   </span>
+                   <div class="item-details">
+                     <span class="compact-title">{{ item.title }}</span>
+                     @if(item.type === 'writing') {
+                       <span class="compact-meta">{{ item.progress }}%</span>
+                     }
+                   </div>
+                   <button class="icon-btn" (click)="markCompleted(item.id)" title="Complete">
+                     <span class="material-symbols-outlined">done</span>
+                   </button>
+                 </div>
+               </div>
+            }
+          </div>
+        } @else {
+           <p class="muted-text">No other items in progress.</p>
+        }
+      </section>
+
+    </div>
+
+    <!-- Right Sidebar Column (Suggestions) -->
+    <div class="sidebar-column">
+      <section class="execution-section">
+        <h3 class="section-title text-brand">Writing Suggestions</h3>
+        
+        @if (suggestions().length > 0) {
+           <div class="suggestions-list">
+             @for (sug of suggestions(); track sug.id) {
+               <div class="suggestion-card">
+                 <div class="sug-header">
+                   <span class="material-symbols-outlined text-brand">lightbulb</span>
+                   <span>Unfinished Draft</span>
+                 </div>
+                 <p class="sug-text">You haven't edited <strong>"{{ sug.title }}"</strong> recently. You're already {{ sug.progress }}% done.</p>
+                 <div class="sug-actions">
+                    <button class="text-btn" (click)="updateProgress(sug.id, sug.progress)">Resume Draft</button>
+                 </div>
+               </div>
+             }
+           </div>
+        } @else {
+           <env-empty-state icon="auto_awesome" title="No nudges" description="Your writing habits are solid." [compact]="true"></env-empty-state>
+        }
+      </section>
+    </div>
+
+  </div>
+</div>

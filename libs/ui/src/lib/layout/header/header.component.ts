@@ -85,43 +85,35 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   navSections: NavSection[] = [
     {
-      id: 'plan',
-      label: 'Plan',
-      layer: 'Action Layer',
-      icon: 'task_alt',
-      items: [
-        { id: 'tasks',    label: 'Tasks',    icon: 'checklist', route: 'tasks' },
-        { id: 'meetings', label: 'Meetings', icon: 'groups',    route: 'meetings' },
-      ]
-    },
-    {
       id: 'today',
       label: 'Today',
       layer: 'Focus Layer',
       icon: 'today',
       items: [
-        { id: 'daily-notes', label: 'Notes', icon: 'note', route: 'daily-notes' },
+        { id: 'daily-notes', label: 'Daily Notes', icon: 'note', route: 'daily-notes' },
+        { id: 'today-tasks', label: 'Today\'s Tasks', icon: 'checklist', route: 'tasks' },
       ]
     },
     {
-      id: 'library',
-      label: 'Library',
-      layer: 'Knowledge Layer',
-      icon: 'local_library',
+      id: 'tasks',
+      label: 'Tasks',
+      layer: 'Action Layer',
+      icon: 'task_alt',
       items: [
-        { id: 'research',  label: 'Research', icon: 'science', route: 'research' },
-        { id: 'journals',  label: 'Journal',  icon: 'book',    route: 'journals' },
+        { id: 'tasks-active', label: 'Active', icon: 'play_arrow', route: 'tasks' },
+        { id: 'tasks-upcoming', label: 'Upcoming', icon: 'schedule', route: 'tasks' },
+        { id: 'tasks-completed', label: 'Completed', icon: 'done_all', route: 'tasks' },
       ]
     },
     {
-      id: 'create',
-      label: 'Create',
+      id: 'writing',
+      label: 'Writing',
       layer: 'Creation Layer',
       icon: 'edit_note',
       items: [
-        { id: 'articles', label: 'Drafts',   icon: 'article',   route: 'articles' },
-        { id: 'novels',   label: 'Writing',  icon: 'menu_book', route: 'novels' },
-        { id: 'projects', label: 'Projects', icon: 'folder',    route: 'projects' },
+        { id: 'writing-drafts', label: 'Drafts', icon: 'article', route: 'articles' },
+        { id: 'writing-active', label: 'Active Pieces', icon: 'menu_book', route: 'novels' },
+        { id: 'writing-published', label: 'Published / Done', icon: 'publish', route: 'novels' },
       ]
     },
   ];

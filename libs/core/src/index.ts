@@ -22,4 +22,5 @@ export * from './lib/services/sqlite-data.service';
 export * from './lib/services/pouchdb-data.service';
 export * from './lib/services/file-system.service';
 export * from './lib/services/voice.service';
+export * from './lib/services/execution.service';
 export * from './lib/guards/auth.guard';

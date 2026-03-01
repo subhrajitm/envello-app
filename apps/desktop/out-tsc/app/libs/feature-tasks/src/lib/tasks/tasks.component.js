@@ -1,0 +1,1980 @@
+import { __decorate } from "tslib";
+import { Component, computed, inject, signal, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { StoreService } from '@envello/core';
+import { SidebarComponent, ModalComponent } from '@envello/ui';
+let TasksComponent = class TasksComponent {
+    store = inject(StoreService);
+    // Left sidebar state
+    sidebarSearch = signal('');
+    selectedView = signal('inbox');
+    quickAddMode = signal('do-now');
+    /**
+     * Main content layout mode for the center panel.
+     * - 'list'      → compact data grid (existing experience)
+     * - 'thumbnails' → card / thumbnail layout
+     * - 'kanban'    → kanban board view
+     * - 'calendar'  → calendar view
+     */
+    viewMode = signal('list');
+    // Quick add bar state
+    quickAddVisible = signal(false);
+    quickAddInput = signal('');
+    // Focus mode state
+    focusMode = signal(false);
+    focusedTask = signal(null);
+    // Task details modal state
+    showTaskDetails = signal(false);
+    selectedTaskForDetails = signal(null);
+    editingTaskDetails = signal(false);
+    editedTaskTitle = signal('');
+    editedTaskDescription = signal('');
+    editedTaskPriority = signal('MEDIUM');
+    editedTaskDue = signal(undefined);
+    editedTaskList = signal('Inbox');
+    editedTaskLabels = signal([]);
+    // Pomodoro timer state
+    pomodoroActive = signal(false);
+    pomodoroTime = signal(25 * 60); // 25 minutes in seconds
+    pomodoroTask = signal(null);
+    // Keyboard shortcuts help
+    showShortcutsHelp = signal(false);
+    // Timeline/Gantt view state
+    timelineViewDate = signal(new Date());
+    timelineZoom = signal('week');
+    // Bulk operations
+    selectedTasks = signal(new Set());
+    bulkActionMode = signal(false);
+    // Undo/Redo
+    actionHistory = signal([]);
+    historyIndex = signal(-1);
+    // Theme
+    theme = signal('light');
+    // File upload
+    uploadingFiles = signal(false);
+    filesToUpload = signal([]);
+    // Markdown preview
+    showMarkdownPreview = signal(false);
+    // Loading states
+    isLoading = signal(false);
+    // Virtual scrolling
+    virtualScrollEnabled = signal(true);
+    visibleTaskRange = signal({ start: 0, end: 50 });
+    itemHeight = 60; // Approximate height of each task row
+    // Voice input
+    isListening = signal(false);
+    voiceRecognition = null;
+    voiceTranscript = signal('');
+    // Photo capture
+    showCameraCapture = signal(false);
+    capturedPhoto = signal(null);
+    // Toolbar attachments dropdown
+    showAttachmentsMenu = signal(false);
+    // Error handling
+    errorMessage = signal(null);
+    showError = signal(false);
+    // Image preview
+    previewingImage = signal(null);
+    // Snooze
+    snoozeOptions = signal([
+        { id: '5min', label: '5 minutes', minutes: 5 },
+        { id: '15min', label: '15 minutes', minutes: 15 },
+        { id: '30min', label: '30 minutes', minutes: 30 },
+        { id: '1hour', label: '1 hour', minutes: 60 },
+        { id: '2hours', label: '2 hours', minutes: 120 },
+        { id: 'tomorrow', label: 'Tomorrow', minutes: 24 * 60 }
+    ]);
+    // Theme customization
+    fontSize = signal('medium');
+    customColors = signal(null);
+    showThemeSettings = signal(false);
+    // Snooze
+    showSnoozeOptions = signal(null);
+    // New task modal state
+    newTaskModalOpen = signal(false);
+    newTaskTitle = signal('');
+    newTaskDescription = signal('');
+    newTaskPriority = signal('MEDIUM');
+    newTaskDue = signal(undefined);
+    newTaskDueTime = signal('12:00');
+    newTaskList = signal('Inbox');
+    newTaskHasReminder = signal(false);
+    newTaskReminderTimes = signal([]);
+    newReminderTimeInput = signal('');
+    // Labels for the new task
+    newTaskLabels = signal([]);
+    newTaskLabelInput = signal('');
+    showLabelAutocomplete = signal(false);
+    // Recurring task state
+    newTaskRecurring = signal(false);
+    newTaskRecurringPattern = signal('weekly');
+    // Subtasks state
+    newTaskSubtasks = signal([]);
+    newSubtaskInput = signal('');
+    // Advanced options
+    showAdvancedOptions = signal(false);
+    // Task dependencies
+    newTaskDependencies = signal([]);
+    // Calendar dropdown state
+    showDatePicker = signal(false);
+    datePickerDate = signal(new Date());
+    // Folder dropdown state
+    showFolderDropdown = signal(false);
+    showCreateFolder = signal(false);
+    newFolderName = signal('');
+    // Sidebar folder state
+    showCreateFolderInSidebar = signal(false);
+    newFolderNameSidebar = signal('');
+    // Currently selected project/context in sidebar; empty = all
+    selectedFolder = signal('');
+    // Active item in primary sidebar nav (Inbox/Today/Upcoming/Completed)
+    sidebarActiveId = signal('inbox');
+    // Available lists/folders
+    availableLists = computed(() => {
+        const lists = new Set();
+        this.store.tasks().forEach(task => {
+            if (task.project) {
+                lists.add(task.project);
+            }
+        });
+        return Array.from(lists).sort();
+    });
+    // Get task count for a folder
+    getFolderTaskCount(folderName) {
+        return this.store.tasks().filter(t => t.project === folderName).length;
+    }
+    // Sidebar folder methods
+    selectFolderInSidebar(folderName) {
+        // When a project/context is selected, clear primary nav selection
+        this.sidebarActiveId.set(null);
+        // Always show inbox view but scoped by selectedFolder
+        this.selectedView.set('inbox');
+        this.selectedFolder.set(folderName);
+        // Clear metric-based filters when explicitly scoping by project/context
+        this.metricFilter.set('none');
+        // Filter tasks by folder
+        this.sidebarSearch.set('');
+    }
+    createFolderInSidebar() {
+        const folderName = this.newFolderNameSidebar().trim();
+        if (!folderName)
+            return;
+        this.showCreateFolderInSidebar.set(false);
+        this.newFolderNameSidebar.set('');
+        this.selectedFolder.set(folderName);
+    }
+    // Delete confirmation modal state
+    deleteModalOpen = signal(false);
+    taskPendingDelete = signal(null);
+    sidebarItems = computed(() => [
+        {
+            id: 'inbox',
+            icon: 'inbox',
+            label: 'Inbox',
+            count: this.inboxTasks().length
+        },
+        {
+            id: 'today',
+            icon: 'today',
+            label: 'Today',
+            count: this.todayTasksCount()
+        },
+        {
+            id: 'upcoming',
+            icon: 'upcoming',
+            label: 'Upcoming',
+            count: this.upcomingTasks().length
+        },
+        {
+            id: 'completed',
+            icon: 'task_alt',
+            label: 'Completed',
+            count: this.completedTasksCount()
+        }
+    ]);
+    /**
+     * Derived UI state
+     * - Used to style the toolbar Filter button so users can see
+     *   when any filtering / scoping is active.
+     */
+    filtersActive = computed(() => {
+        const view = this.selectedView();
+        const query = this.sidebarSearch().trim();
+        const hasProjectScope = !!this.selectedFolder();
+        const metric = this.metricFilter();
+        // Inbox + no query + no project + no metric == baseline
+        return view !== 'inbox' || !!query || hasProjectScope || metric !== 'none';
+    });
+    /**
+     * Human-readable view title used in the toolbar.
+     */
+    viewTitle = computed(() => {
+        const view = this.selectedView();
+        if (view === 'today')
+            return 'Today';
+        if (view === 'upcoming')
+            return 'Upcoming';
+        if (view === 'completed')
+            return 'Completed';
+        return 'Inbox';
+    });
+    /**
+     * Compact summary line shown under the title.
+     * Example: "4 tasks • 2 due today • 1 overdue"
+     */
+    viewSubtitle = computed(() => {
+        const total = this.filteredTasks().length;
+        const dueToday = this.todayTasksCount();
+        const overdue = this.store
+            .tasks()
+            .filter(t => t.due?.includes('Overdue')).length;
+        const parts = [];
+        parts.push(`${total} task${total === 1 ? '' : 's'}`);
+        parts.push(`${dueToday} due today`);
+        parts.push(`${overdue} overdue`);
+        return parts.join(' • ');
+    });
+    /**
+     * New Task Modal: open/reset + helpers
+     */
+    openNewTaskDialog() {
+        this.newTaskTitle.set('');
+        this.newTaskDescription.set('');
+        this.newTaskPriority.set('MEDIUM');
+        this.newTaskDue.set(undefined);
+        this.newTaskDueTime.set('12:00');
+        this.newTaskList.set('Inbox');
+        this.newTaskHasReminder.set(false);
+        this.newTaskLabels.set([]);
+        this.newTaskLabelInput.set('');
+        this.showDatePicker.set(false);
+        this.showFolderDropdown.set(false);
+        this.showCreateFolder.set(false);
+        this.newFolderName.set('');
+        this.showCreateFolderInSidebar.set(false);
+        this.newFolderNameSidebar.set('');
+        this.datePickerDate.set(new Date());
+        this.datePickerPosition.set(null);
+        this.folderDropdownPosition.set(null);
+        this.newTaskSubtasks.set([]);
+        this.newSubtaskInput.set('');
+        this.newTaskRecurring.set(false);
+        this.newTaskRecurringPattern.set('weekly');
+        this.showAdvancedOptions.set(false);
+        this.showLabelAutocomplete.set(false);
+        this.newTaskDependencies.set([]);
+        this.newTaskReminderTimes.set([]);
+        this.newReminderTimeInput.set('');
+        this.filesToUpload.set([]);
+        this.showMarkdownPreview.set(false);
+        this.newTaskModalOpen.set(true);
+    }
+    closeNewTaskDialog() {
+        this.newTaskModalOpen.set(false);
+    }
+    setNewTaskPriority(priority) {
+        this.newTaskPriority.set(priority);
+    }
+    toggleNewTaskTodayDue() {
+        // Simple helper: toggle between no date and a generic "Today" label.
+        if (this.newTaskDue()) {
+            this.newTaskDue.set(undefined);
+        }
+        else {
+            this.newTaskDue.set(`Today, ${this.newTaskDueTime()}`);
+        }
+    }
+    setQuickAddMode(mode) {
+        this.quickAddMode.set(mode);
+        // Set defaults based on mode
+        if (mode === 'do-now') {
+            // For "Do Now", set due date to today if not already set
+            if (!this.newTaskDue()) {
+                this.newTaskDue.set(`Today, ${this.newTaskDueTime()}`);
+            }
+        }
+        else {
+            // For "Do Later", clear due date to let user set it manually
+            // Keep it if already set
+        }
+    }
+    toggleNewTaskReminder() {
+        this.newTaskHasReminder.update(v => !v);
+        if (!this.newTaskHasReminder()) {
+            this.newTaskReminderTimes.set([]);
+        }
+        else if (this.newTaskReminderTimes().length === 0) {
+            // Set default reminder
+            this.newTaskReminderTimes.set(['1 hour before']);
+        }
+    }
+    addReminderTime() {
+        const time = this.newReminderTimeInput().trim();
+        if (!time)
+            return;
+        this.newTaskReminderTimes.set([...this.newTaskReminderTimes(), time]);
+        this.newReminderTimeInput.set('');
+    }
+    removeReminderTime(index) {
+        const times = this.newTaskReminderTimes();
+        this.newTaskReminderTimes.set(times.filter((_, i) => i !== index));
+    }
+    snoozeReminder(index, minutes) {
+        const times = this.newTaskReminderTimes();
+        const currentTime = times[index];
+        // Calculate new reminder time
+        const now = new Date();
+        const snoozeTime = new Date(now.getTime() + minutes * 60 * 1000);
+        const newTime = minutes >= 24 * 60
+            ? 'Tomorrow, ' + snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+            : snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const updated = [...times];
+        updated[index] = newTime;
+        this.newTaskReminderTimes.set(updated);
+        this.showSnoozeOptions.set(null);
+    }
+    addNewTaskLabel(label) {
+        const raw = (label || this.newTaskLabelInput()).trim();
+        if (!raw)
+            return;
+        const existing = this.newTaskLabels();
+        if (existing.includes(raw)) {
+            this.newTaskLabelInput.set('');
+            this.showLabelAutocomplete.set(false);
+            return;
+        }
+        this.newTaskLabels.set([...existing, raw]);
+        this.newTaskLabelInput.set('');
+        this.showLabelAutocomplete.set(false);
+    }
+    getLabelSuggestions() {
+        const input = this.newTaskLabelInput().toLowerCase();
+        if (!input)
+            return [];
+        return this.allLabels().filter(label => label.toLowerCase().includes(input) &&
+            !this.newTaskLabels().includes(label)).slice(0, 5);
+    }
+    hideLabelAutocomplete() {
+        // Delay hiding to allow click events on suggestions
+        setTimeout(() => {
+            this.showLabelAutocomplete.set(false);
+        }, 200);
+    }
+    removeNewTaskLabel(label) {
+        this.newTaskLabels.set(this.newTaskLabels().filter(l => l !== label));
+    }
+    /** Open delete confirmation for a given task. */
+    requestDeleteTask(task, event) {
+        event?.stopPropagation();
+        this.taskPendingDelete.set(task);
+        this.deleteModalOpen.set(true);
+    }
+    cancelDeleteTask() {
+        this.deleteModalOpen.set(false);
+        this.taskPendingDelete.set(null);
+    }
+    async confirmNewTask() {
+        const title = this.newTaskTitle().trim();
+        if (!title) {
+            this.showErrorState('Task title is required');
+            return;
+        }
+        const taskId = Date.now().toString();
+        // Optimistic update - show loading state
+        this.isLoading.set(true);
+        const subtasks = this.newTaskSubtasks().length > 0
+            ? this.newTaskSubtasks().map((st, idx) => ({
+                id: `${taskId}-${idx}`,
+                title: st,
+                priority: 'MEDIUM',
+                hours: '0.5H',
+                status: 'ACTIVE',
+                parentId: taskId
+            }))
+            : undefined;
+        const newTask = {
+            id: taskId,
+            title,
+            priority: this.newTaskPriority(),
+            hours: '1.0H',
+            status: 'ACTIVE',
+            project: this.newTaskList() || undefined,
+            due: this.newTaskDue(),
+            labels: this.newTaskLabels().length ? this.newTaskLabels() : undefined,
+            reminders: this.newTaskHasReminder() && this.newTaskReminderTimes().length > 0
+                ? this.newTaskReminderTimes()
+                : undefined,
+            subtasks: subtasks,
+            recurring: this.newTaskRecurring() ? {
+                pattern: this.newTaskRecurringPattern(),
+                interval: 1,
+                nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), 1)
+            } : undefined,
+            dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined,
+            description: this.newTaskDescription() || undefined
+        };
+        try {
+            // Optimistic update
+            this.store.addTask(newTask);
+            // Upload files if any
+            if (this.filesToUpload().length > 0) {
+                await this.uploadFiles(taskId);
+            }
+            this.closeNewTaskDialog();
+            this.isLoading.set(false);
+        }
+        catch (error) {
+            this.isLoading.set(false);
+            this.showErrorState('Failed to create task. Please try again.');
+            // Could implement rollback here if needed
+        }
+    }
+    handleFileDrop(event) {
+        event.preventDefault();
+        if (event.dataTransfer?.files) {
+            const files = Array.from(event.dataTransfer.files);
+            this.filesToUpload.set([...this.filesToUpload(), ...files]);
+        }
+    }
+    formatFileSize(bytes) {
+        if (bytes === 0)
+            return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    isImageFile(file) {
+        return file.type.startsWith('image/');
+    }
+    getFilePreview(file) {
+        return URL.createObjectURL(file);
+    }
+    previewImage(url) {
+        this.previewingImage.set(url);
+    }
+    closeImagePreview() {
+        this.previewingImage.set(null);
+    }
+    addSubtaskToNew() {
+        const input = this.newSubtaskInput().trim();
+        if (!input)
+            return;
+        this.newTaskSubtasks.set([...this.newTaskSubtasks(), input]);
+        this.newSubtaskInput.set('');
+    }
+    removeSubtask(index) {
+        const subtasks = this.newTaskSubtasks();
+        this.newTaskSubtasks.set(subtasks.filter((_, i) => i !== index));
+    }
+    onSidebarActiveChange(id) {
+        this.selectedView.set(id);
+        this.sidebarActiveId.set(id);
+        // Reset metric and project filters when switching primary view
+        this.metricFilter.set('none');
+        // When switching back to Inbox, clear filters and show all tasks
+        if (id === 'inbox') {
+            this.sidebarSearch.set('');
+            this.selectedFolder.set('');
+        }
+        else {
+            // For non-inbox views, don't keep a project/context selection
+            this.selectedFolder.set('');
+        }
+    }
+    // Legacy top filter buttons (kept but internally derive from selectedView)
+    selectedFilter = signal('All');
+    // Metric-based filter from right-side KPIs
+    // 'none' = no extra filter, 'active' = only ACTIVE tasks, 'priority' = only HIGH priority
+    metricFilter = signal('none');
+    // Calendar state
+    currentDate = signal(new Date());
+    // Task group collapse state
+    todayGroupExpanded = signal(true);
+    upcomingGroupExpanded = signal(false);
+    noDueDateGroupExpanded = signal(false);
+    todayTasksCount = computed(() => this.store.tasks().filter(t => t.due?.includes('Today')).length);
+    completedTasksCount = computed(() => this.store.tasks().filter(t => t.status === 'COMPLETED').length);
+    activeTasksCount = computed(() => this.store.tasks().filter(t => t.status === 'ACTIVE').length);
+    priorityTasksCount = computed(() => this.store.tasks().filter(t => t.priority === 'HIGH').length);
+    // Inbox/Today/Upcoming/Completed views
+    inboxTasks = computed(() => this.store.tasks());
+    viewTasks = computed(() => {
+        const view = this.selectedView();
+        const query = this.sidebarSearch().trim().toLowerCase();
+        const selectedFolder = this.selectedFolder();
+        const metric = this.metricFilter();
+        let base;
+        if (view === 'today') {
+            base = this.store.tasks().filter(t => t.due?.includes('Today'));
+        }
+        else if (view === 'upcoming') {
+            base = this.store.tasks().filter(t => {
+                if (!t.due)
+                    return false;
+                if (t.due.includes('Today'))
+                    return false;
+                if (t.due.includes('Overdue'))
+                    return false;
+                return true;
+            });
+        }
+        else if (view === 'completed') {
+            base = this.store.tasks().filter(t => t.status === 'COMPLETED');
+        }
+        else {
+            // inbox
+            base = this.inboxTasks();
+        }
+        // Apply Project / Context filter from sidebar (empty = all)
+        if (selectedFolder) {
+            base = base.filter(t => t.project === selectedFolder);
+        }
+        // Apply metric-based filters from KPI chips
+        if (metric === 'active') {
+            base = base.filter(t => t.status === 'ACTIVE');
+        }
+        else if (metric === 'priority') {
+            base = base.filter(t => t.priority === 'HIGH');
+        }
+        if (!query)
+            return base;
+        return base.filter(t => {
+            const haystack = (t.title + ' ' + (t.project ?? '')).toLowerCase();
+            return haystack.includes(query);
+        });
+    });
+    filteredTasks = computed(() => this.viewTasks());
+    // Helper used by header checkbox to determine "all done" state
+    allVisibleTasksCompleted = computed(() => {
+        const tasks = this.filteredTasks();
+        return tasks.length > 0 && tasks.every(t => t.status === 'COMPLETED');
+    });
+    // Calendar computed values
+    calendarMonth = computed(() => {
+        const date = this.currentDate();
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+    });
+    calendarDays = computed(() => {
+        const date = this.currentDate();
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        // First day of the month
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        // Day of week for first day (0 = Sunday, 6 = Saturday)
+        const startDay = firstDay.getDay();
+        // Days in the month
+        const daysInMonth = lastDay.getDate();
+        // Previous month's days to show
+        const prevMonth = new Date(year, month, 0);
+        const daysInPrevMonth = prevMonth.getDate();
+        const days = [];
+        // Add previous month's trailing days
+        for (let i = startDay - 1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
+        }
+        // Add current month's days
+        const today = new Date();
+        const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = isCurrentMonth && day === today.getDate();
+            // Check if any task is due on this day (simplified - in real app, parse dates properly)
+            const isActive = this.store.tasks().some(t => {
+                if (!t.due)
+                    return false;
+                // Simple check - in production, you'd parse the date properly
+                // Check if task is due today or has a date that matches
+                if (t.due.includes('Today') && isToday)
+                    return true;
+                // For other dates, we'd need proper date parsing
+                return false;
+            });
+            days.push({ day, isCurrentMonth: true, isToday, isActive });
+        }
+        // Add next month's leading days to fill the grid (42 cells = 6 weeks)
+        const remainingDays = 42 - days.length;
+        for (let day = 1; day <= remainingDays; day++) {
+            days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
+        }
+        return days;
+    });
+    // Task groups
+    todayTasks = computed(() => {
+        return this.store.tasks().filter(t => t.due?.includes('Today'));
+    });
+    upcomingTasks = computed(() => {
+        return this.store.tasks().filter(t => {
+            if (!t.due)
+                return false;
+            if (t.due.includes('Today'))
+                return false;
+            if (t.due.includes('Overdue'))
+                return false;
+            return true;
+        });
+    });
+    noDueDateTasks = computed(() => {
+        return this.store.tasks().filter(t => !t.due);
+    });
+    activeTasksCountSidebar = computed(() => {
+        return this.store.tasks().filter(t => t.status === 'ACTIVE').length;
+    });
+    // Methods
+    navigateMonth(direction) {
+        const current = this.currentDate();
+        const newDate = new Date(current);
+        if (direction === 'prev') {
+            newDate.setMonth(current.getMonth() - 1);
+        }
+        else {
+            newDate.setMonth(current.getMonth() + 1);
+        }
+        this.currentDate.set(newDate);
+    }
+    /**
+     * Calendar day click:
+     * - Only reacts to days in the current month.
+     * - If the clicked day is today, switches to Today view.
+     * - Otherwise, switches to Upcoming as a lightweight "schedule" view.
+     */
+    onCalendarDayClick(day) {
+        if (!day.isCurrentMonth) {
+            return;
+        }
+        this.sidebarSearch.set('');
+        if (day.isToday) {
+            this.selectedView.set('today');
+        }
+        else {
+            this.selectedView.set('upcoming');
+        }
+    }
+    // Date picker methods
+    datePickerPosition = signal(null);
+    // Folder dropdown position
+    folderDropdownPosition = signal(null);
+    toggleDatePicker(event) {
+        this.showDatePicker.update(v => {
+            if (!v) {
+                // Calculate position when opening
+                setTimeout(() => {
+                    const target = event?.target;
+                    const button = target?.closest('.task-modal-control-btn') ||
+                        document.querySelector('.task-modal-control-btn');
+                    if (button) {
+                        const rect = button.getBoundingClientRect();
+                        this.datePickerPosition.set({
+                            top: rect.bottom + 8,
+                            left: rect.left
+                        });
+                    }
+                }, 0);
+            }
+            return !v;
+        });
+        if (!this.showDatePicker()) {
+            this.datePickerDate.set(new Date());
+            this.datePickerPosition.set(null);
+        }
+    }
+    selectDate(day, isCurrentMonth) {
+        if (!isCurrentMonth)
+            return;
+        const selectedDate = new Date(this.datePickerDate());
+        selectedDate.setDate(day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selected = new Date(selectedDate);
+        selected.setHours(0, 0, 0, 0);
+        const diffTime = selected.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const timeStr = this.newTaskDueTime();
+        let dateString = '';
+        if (diffDays === 0) {
+            dateString = `Today, ${timeStr}`;
+        }
+        else if (diffDays === 1) {
+            dateString = `Tomorrow, ${timeStr}`;
+        }
+        else if (diffDays === -1) {
+            dateString = `Yesterday, ${timeStr}`;
+        }
+        else {
+            dateString = `${selectedDate.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            })}, ${timeStr}`;
+        }
+        this.newTaskDue.set(dateString);
+        this.showDatePicker.set(false);
+        this.datePickerPosition.set(null);
+    }
+    updateDueTime(time) {
+        this.newTaskDueTime.set(time);
+        // Update the existing due date string with the new time
+        const currentDue = this.newTaskDue();
+        if (currentDue) {
+            // Extract the date part (everything before the comma and time)
+            const dateMatch = currentDue.match(/^(.+?),\s*\d{1,2}:\d{2}$/);
+            if (dateMatch) {
+                this.newTaskDue.set(`${dateMatch[1]}, ${time}`);
+            }
+            else {
+                // If format is unexpected, try to preserve what we can
+                this.newTaskDue.set(`${currentDue.split(',')[0]}, ${time}`);
+            }
+        }
+    }
+    navigateDatePickerMonth(direction) {
+        const current = this.datePickerDate();
+        const newDate = new Date(current);
+        if (direction === 'prev') {
+            newDate.setMonth(current.getMonth() - 1);
+        }
+        else {
+            newDate.setMonth(current.getMonth() + 1);
+        }
+        this.datePickerDate.set(newDate);
+    }
+    getDatePickerDays() {
+        const date = this.datePickerDate();
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDay = firstDay.getDay();
+        const daysInMonth = lastDay.getDate();
+        const prevMonth = new Date(year, month, 0);
+        const daysInPrevMonth = prevMonth.getDate();
+        const days = [];
+        // Previous month's trailing days
+        for (let i = startDay - 1; i >= 0; i--) {
+            days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false });
+        }
+        // Current month's days
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = today.getDate() === day &&
+                today.getMonth() === month &&
+                today.getFullYear() === year;
+            days.push({ day, isCurrentMonth: true, isToday });
+        }
+        // Next month's leading days
+        const remainingDays = 42 - days.length;
+        for (let day = 1; day <= remainingDays; day++) {
+            days.push({ day, isCurrentMonth: false, isToday: false });
+        }
+        return days;
+    }
+    getDatePickerMonth() {
+        const date = this.datePickerDate();
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+    }
+    // Folder methods
+    toggleFolderDropdown(event) {
+        this.showFolderDropdown.update(v => {
+            if (!v) {
+                // Calculate position when opening
+                setTimeout(() => {
+                    const target = event?.target;
+                    const button = target?.closest('.task-modal-folder-btn') ||
+                        document.querySelector('.task-modal-folder-btn');
+                    if (button) {
+                        const rect = button.getBoundingClientRect();
+                        this.folderDropdownPosition.set({
+                            top: rect.bottom + 8,
+                            left: rect.left
+                        });
+                    }
+                }, 0);
+            }
+            return !v;
+        });
+        if (!this.showFolderDropdown()) {
+            this.showCreateFolder.set(false);
+            this.newFolderName.set('');
+            this.folderDropdownPosition.set(null);
+        }
+    }
+    selectFolder(folderName) {
+        this.newTaskList.set(folderName);
+        this.showFolderDropdown.set(false);
+        this.folderDropdownPosition.set(null);
+    }
+    toggleCreateFolder() {
+        this.showCreateFolder.update(v => !v);
+        if (this.showCreateFolder()) {
+            this.newFolderName.set('');
+        }
+    }
+    createNewFolder() {
+        const folderName = this.newFolderName().trim();
+        if (!folderName)
+            return;
+        this.newTaskList.set(folderName);
+        this.showCreateFolder.set(false);
+        this.showFolderDropdown.set(false);
+        this.newFolderName.set('');
+        this.folderDropdownPosition.set(null);
+    }
+    onDocumentClick(event) {
+        const target = event.target;
+        // Close attachments menu if clicking outside
+        if (this.showAttachmentsMenu()) {
+            if (!target.closest('.attachments-toolbar-wrapper')) {
+                this.showAttachmentsMenu.set(false);
+            }
+        }
+        // Close date picker if clicking outside
+        if (this.showDatePicker()) {
+            if (!target.closest('.task-modal-date-picker') &&
+                !target.closest('.task-modal-control-btn')) {
+                this.showDatePicker.set(false);
+                this.datePickerPosition.set(null);
+            }
+        }
+        // Close folder dropdown if clicking outside
+        if (this.showFolderDropdown()) {
+            if (!target.closest('.task-modal-folder-dropdown') &&
+                !target.closest('.task-modal-folder-btn')) {
+                this.showFolderDropdown.set(false);
+                this.showCreateFolder.set(false);
+                this.folderDropdownPosition.set(null);
+            }
+        }
+    }
+    onKeyDown(event) {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modKey = isMac ? event.metaKey : event.ctrlKey;
+        // Cmd/Ctrl + Z: Undo
+        if (modKey && event.key === 'z' && !event.shiftKey) {
+            event.preventDefault();
+            if (this.canUndo()) {
+                this.undo();
+            }
+            return;
+        }
+        // Cmd/Ctrl + Shift + Z: Redo
+        if (modKey && event.key === 'z' && event.shiftKey) {
+            event.preventDefault();
+            if (this.canRedo()) {
+                this.redo();
+            }
+            return;
+        }
+        // Cmd/Ctrl + K: Quick add
+        if (modKey && event.key === 'k' && !event.shiftKey) {
+            event.preventDefault();
+            this.quickAddVisible.set(true);
+            setTimeout(() => {
+                const input = document.querySelector('.quick-add-input');
+                input?.focus();
+            }, 0);
+            return;
+        }
+        // Cmd/Ctrl + N: New task modal
+        if (modKey && event.key === 'n') {
+            event.preventDefault();
+            this.openNewTaskDialog();
+            return;
+        }
+        // Cmd/Ctrl + F: Focus search
+        if (modKey && event.key === 'f') {
+            event.preventDefault();
+            const searchInput = document.querySelector('.toolbar-search');
+            searchInput?.focus();
+            return;
+        }
+        // Cmd/Ctrl + /: Show shortcuts help
+        if (modKey && event.key === '/') {
+            event.preventDefault();
+            this.showShortcutsHelp.set(!this.showShortcutsHelp());
+            return;
+        }
+        // Escape: Close modals/dropdowns
+        if (event.key === 'Escape') {
+            if (this.newTaskModalOpen()) {
+                this.closeNewTaskDialog();
+            }
+            if (this.showDatePicker()) {
+                this.showDatePicker.set(false);
+                this.datePickerPosition.set(null);
+            }
+            if (this.showFolderDropdown()) {
+                this.showFolderDropdown.set(false);
+                this.folderDropdownPosition.set(null);
+            }
+            if (this.quickAddVisible()) {
+                this.quickAddVisible.set(false);
+                this.quickAddInput.set('');
+            }
+            if (this.showShortcutsHelp()) {
+                this.showShortcutsHelp.set(false);
+            }
+            if (this.focusMode()) {
+                this.focusMode.set(false);
+                this.focusedTask.set(null);
+            }
+            return;
+        }
+    }
+    // Natural language parsing
+    parseNaturalLanguage(input) {
+        let title = input.trim();
+        const labels = [];
+        let priority;
+        let due;
+        // Extract hashtags (#work, #personal)
+        const hashtagRegex = /#(\w+)/g;
+        let match;
+        while ((match = hashtagRegex.exec(title)) !== null) {
+            labels.push(match[1]);
+            title = title.replace(match[0], '').trim();
+        }
+        // Extract priority keywords
+        const priorityKeywords = {
+            high: ['high', 'urgent', 'important', 'critical', 'asap', 'priority'],
+            low: ['low', 'later', 'someday', 'optional']
+        };
+        const lowerTitle = title.toLowerCase();
+        for (const [key, keywords] of Object.entries(priorityKeywords)) {
+            if (keywords.some(kw => lowerTitle.includes(kw))) {
+                priority = key.toUpperCase();
+                // Remove priority keyword from title
+                keywords.forEach(kw => {
+                    title = title.replace(new RegExp(kw, 'gi'), '').trim();
+                });
+                break;
+            }
+        }
+        // Extract dates
+        const datePatterns = [
+            { pattern: /tomorrow/i, value: () => `Tomorrow, ${this.newTaskDueTime()}` },
+            { pattern: /today/i, value: () => `Today, ${this.newTaskDueTime()}` },
+            {
+                pattern: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+                value: (match) => `${this.getNextWeekday(match[1])}, ${this.newTaskDueTime()}`
+            },
+            {
+                pattern: /in\s+(\d+)\s+days?/i,
+                value: (match) => `${this.getDateInDays(parseInt(match[1]))}, ${this.newTaskDueTime()}`
+            },
+            {
+                pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
+                value: (match) => `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}`
+            }
+        ];
+        for (const { pattern, value } of datePatterns) {
+            const dateMatch = title.match(pattern);
+            if (dateMatch) {
+                if (typeof value === 'function') {
+                    // Check if function expects a match parameter (has regex groups)
+                    if (dateMatch.length > 1) {
+                        due = value(dateMatch);
+                    }
+                    else {
+                        due = value();
+                    }
+                }
+                else {
+                    due = value;
+                }
+                title = title.replace(pattern, '').trim();
+                break;
+            }
+        }
+        // Extract time
+        const timePatterns = [
+            {
+                pattern: /(\d{1,2}):(\d{2})\s*(am|pm)?/i,
+                value: (match) => {
+                    let hours = parseInt(match[1]);
+                    const minutes = match[2];
+                    const period = match[3]?.toLowerCase();
+                    if (period === 'pm' && hours !== 12)
+                        hours += 12;
+                    if (period === 'am' && hours === 12)
+                        hours = 0;
+                    if (due) {
+                        return due.replace(/\d{2}:\d{2}/, `${hours.toString().padStart(2, '0')}:${minutes}`);
+                    }
+                    return `Today, ${hours.toString().padStart(2, '0')}:${minutes}`;
+                }
+            }
+        ];
+        for (const { pattern, value } of timePatterns) {
+            const timeMatch = title.match(pattern);
+            if (timeMatch) {
+                const timeStr = value(timeMatch);
+                if (timeStr) {
+                    due = timeStr;
+                    title = title.replace(pattern, '').trim();
+                }
+            }
+        }
+        // Clean up title (remove extra spaces)
+        title = title.replace(/\s+/g, ' ').trim();
+        return { title, due, priority, labels };
+    }
+    getTomorrowDate() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    getNextWeekday(dayName) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const targetDay = days.indexOf(dayName.toLowerCase());
+        const today = new Date();
+        const currentDay = today.getDay();
+        let daysUntil = (targetDay - currentDay + 7) % 7;
+        if (daysUntil === 0)
+            daysUntil = 7;
+        const nextDate = new Date(today);
+        nextDate.setDate(today.getDate() + daysUntil);
+        return nextDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    getDateInDays(days) {
+        const date = new Date();
+        date.setDate(date.getDate() + days);
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    parseDate(month, day, year) {
+        const currentYear = new Date().getFullYear();
+        const y = year ? (year.length === 2 ? `20${year}` : year) : currentYear.toString();
+        const date = new Date(parseInt(y), parseInt(month) - 1, parseInt(day));
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    // Quick add functionality
+    handleQuickAdd() {
+        const input = this.quickAddInput().trim();
+        if (!input)
+            return;
+        const parsed = this.parseNaturalLanguage(input);
+        if (!parsed.title) {
+            // If title is empty after parsing, use original input
+            parsed.title = input;
+        }
+        // Set parsed values
+        this.newTaskTitle.set(parsed.title);
+        if (parsed.due) {
+            this.newTaskDue.set(parsed.due);
+            // Extract time from parsed due date and update time input
+            const extractedTime = this.extractTime(parsed.due);
+            if (extractedTime) {
+                this.newTaskDueTime.set(extractedTime);
+            }
+        }
+        if (parsed.priority)
+            this.newTaskPriority.set(parsed.priority);
+        if (parsed.labels.length > 0) {
+            this.newTaskLabels.set([...this.newTaskLabels(), ...parsed.labels]);
+        }
+        // Create task immediately or open modal for confirmation
+        if (parsed.title && !parsed.due && !parsed.priority && parsed.labels.length === 0) {
+            // Simple task - create immediately
+            this.confirmNewTask();
+            this.quickAddInput.set('');
+            this.quickAddVisible.set(false);
+        }
+        else {
+            // Complex task - open modal for confirmation
+            this.quickAddVisible.set(false);
+            this.newTaskModalOpen.set(true);
+        }
+    }
+    /**
+     * Metric cards are clickable shortcuts into common views.
+     */
+    onMetricClick(metric) {
+        this.sidebarSearch.set('');
+        this.selectedFolder.set('');
+        if (metric === 'today') {
+            this.selectedView.set('today');
+            this.metricFilter.set('none');
+        }
+        else if (metric === 'completed') {
+            this.selectedView.set('completed');
+            this.metricFilter.set('none');
+        }
+        else if (metric === 'active') {
+            // Show only active tasks in inbox
+            this.selectedView.set('inbox');
+            this.metricFilter.set('active');
+        }
+        else if (metric === 'priority') {
+            // Show only high priority tasks in inbox
+            this.selectedView.set('inbox');
+            this.metricFilter.set('priority');
+        }
+    }
+    toggleTaskStatus(task) {
+        const newStatus = task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
+        this.store.updateTask(task.id, { status: newStatus });
+    }
+    /**
+     * Quick row action: mark a single task as completed.
+     * If it's already completed, we leave it as-is to avoid accidental re-open.
+     */
+    onQuickComplete(task) {
+        if (task.status === 'COMPLETED') {
+            return;
+        }
+        // Optimistic update
+        const previousState = { status: task.status };
+        this.addToHistory('update', task, previousState);
+        try {
+            this.store.updateTask(task.id, { status: 'COMPLETED' });
+        }
+        catch (error) {
+            // Rollback on error
+            this.store.updateTask(task.id, previousState);
+            this.showErrorState('Failed to complete task. Please try again.');
+        }
+    }
+    /**
+     * Delete a single task (used by confirmation modal) and push it into the bin via StoreService.
+     */
+    deleteTask(task) {
+        this.store.deleteTask(task.id);
+    }
+    confirmDeleteTask() {
+        const task = this.taskPendingDelete();
+        if (!task)
+            return;
+        // Optimistic update
+        this.addToHistory('delete', task);
+        try {
+            this.deleteTask(task);
+            this.cancelDeleteTask();
+        }
+        catch (error) {
+            this.showErrorState('Failed to delete task. Please try again.');
+            // Could restore task here if needed
+        }
+    }
+    /**
+     * Header checkbox helper:
+     * - If all visible tasks are completed, mark them ACTIVE.
+     * - Otherwise, mark all visible tasks COMPLETED.
+     */
+    toggleAllVisibleTasksStatus() {
+        const tasks = this.filteredTasks();
+        if (tasks.length === 0) {
+            return;
+        }
+        const allCompleted = this.allVisibleTasksCompleted();
+        const nextStatus = allCompleted ? 'ACTIVE' : 'COMPLETED';
+        for (const task of tasks) {
+            if (task.status !== nextStatus) {
+                this.store.updateTask(task.id, { status: nextStatus });
+            }
+        }
+    }
+    toggleTaskGroup(group) {
+        if (group === 'today') {
+            this.todayGroupExpanded.update(v => !v);
+        }
+        else if (group === 'upcoming') {
+            this.upcomingGroupExpanded.update(v => !v);
+        }
+        else if (group === 'noDueDate') {
+            this.noDueDateGroupExpanded.update(v => !v);
+        }
+    }
+    isGroupExpanded(group) {
+        if (group === 'today')
+            return this.todayGroupExpanded();
+        if (group === 'upcoming')
+            return this.upcomingGroupExpanded();
+        return this.noDueDateGroupExpanded();
+    }
+    // Kanban view methods
+    getKanbanTasks(status) {
+        return this.filteredTasks().filter(t => t.status === status);
+    }
+    kanbanDraggedTask = signal(null);
+    onKanbanDragStart(event, task) {
+        this.kanbanDraggedTask.set(task);
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+        }
+    }
+    onKanbanDrop(event, targetStatus) {
+        event.preventDefault();
+        const target = event.currentTarget;
+        target.classList.remove('drag-over');
+        const task = this.kanbanDraggedTask();
+        if (task) {
+            this.store.updateTask(task.id, { status: targetStatus });
+            this.kanbanDraggedTask.set(null);
+        }
+    }
+    onKanbanDragOver(event) {
+        event.preventDefault();
+        const target = event.currentTarget;
+        target.classList.add('drag-over');
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+    }
+    onKanbanDragLeave(event) {
+        const target = event.currentTarget;
+        target.classList.remove('drag-over');
+    }
+    // Calendar view methods
+    calendarViewDate = signal(new Date());
+    navigateCalendarView(direction) {
+        const current = this.calendarViewDate();
+        const newDate = new Date(current);
+        if (direction === 'prev') {
+            newDate.setMonth(current.getMonth() - 1);
+        }
+        else {
+            newDate.setMonth(current.getMonth() + 1);
+        }
+        this.calendarViewDate.set(newDate);
+    }
+    getCalendarViewMonth() {
+        const date = this.calendarViewDate();
+        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+    getCalendarViewDays() {
+        const date = this.calendarViewDate();
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDay = firstDay.getDay();
+        const daysInMonth = lastDay.getDate();
+        const prevMonth = new Date(year, month, 0);
+        const daysInPrevMonth = prevMonth.getDate();
+        const days = [];
+        // Previous month's trailing days
+        for (let i = startDay - 1; i >= 0; i--) {
+            const dayDate = new Date(year, month - 1, daysInPrevMonth - i);
+            days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false, date: dayDate });
+        }
+        // Current month's days
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayDate = new Date(year, month, day);
+            const isToday = today.getDate() === day &&
+                today.getMonth() === month &&
+                today.getFullYear() === year;
+            days.push({ day, isCurrentMonth: true, isToday, date: dayDate });
+        }
+        // Next month's leading days
+        const remainingDays = 42 - days.length;
+        for (let day = 1; day <= remainingDays; day++) {
+            const dayDate = new Date(year, month + 1, day);
+            days.push({ day, isCurrentMonth: false, isToday: false, date: dayDate });
+        }
+        return days;
+    }
+    getTasksForDate(date) {
+        const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        return this.filteredTasks().filter(t => {
+            if (!t.due)
+                return false;
+            return t.due.includes(dateStr) ||
+                (date.toDateString() === new Date().toDateString() && t.due.includes('Today'));
+        });
+    }
+    extractTime(dueString) {
+        if (!dueString)
+            return '';
+        const timeMatch = dueString.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+            return timeMatch[0];
+        }
+        return '';
+    }
+    // Subtasks methods
+    getCompletedSubtasks(task) {
+        if (!task.subtasks)
+            return 0;
+        return task.subtasks.filter(st => st.status === 'COMPLETED').length;
+    }
+    getDependencyTitles(task) {
+        if (!task.dependencies)
+            return [];
+        return task.dependencies
+            .map(id => this.getTaskById(id))
+            .filter(t => t !== undefined)
+            .map(t => t.title);
+    }
+    isTaskBlocked(task) {
+        if (!task.dependencies || task.dependencies.length === 0)
+            return false;
+        return task.dependencies.some(depId => {
+            const depTask = this.getTaskById(depId);
+            return depTask && depTask.status !== 'COMPLETED';
+        });
+    }
+    addSubtask(parentTask, subtaskTitle) {
+        const newSubtask = {
+            id: Date.now().toString(),
+            title: subtaskTitle,
+            priority: 'MEDIUM',
+            hours: '0.5H',
+            status: 'ACTIVE',
+            parentId: parentTask.id
+        };
+        const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
+        this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
+    }
+    // Focus mode
+    focusTask(task) {
+        this.focusedTask.set(task);
+        this.focusMode.set(true);
+    }
+    exitFocusMode() {
+        this.focusMode.set(false);
+        this.focusedTask.set(null);
+    }
+    // Task details modal methods
+    openTaskDetails(task) {
+        this.selectedTaskForDetails.set(task);
+        this.editedTaskTitle.set(task.title);
+        this.editedTaskDescription.set(task.description || task.notes || '');
+        this.editedTaskPriority.set(task.priority);
+        this.editedTaskDue.set(task.due);
+        this.editedTaskList.set(task.project || 'Inbox');
+        this.editedTaskLabels.set(task.labels || []);
+        this.editingTaskDetails.set(false);
+        this.showTaskDetails.set(true);
+    }
+    closeTaskDetails() {
+        this.showTaskDetails.set(false);
+        this.selectedTaskForDetails.set(null);
+        this.editingTaskDetails.set(false);
+    }
+    toggleEditTaskDetails() {
+        this.editingTaskDetails.update(v => !v);
+    }
+    saveTaskDetails() {
+        const task = this.selectedTaskForDetails();
+        if (!task)
+            return;
+        const updates = {
+            title: this.editedTaskTitle().trim(),
+            description: this.editedTaskDescription().trim() || undefined,
+            priority: this.editedTaskPriority(),
+            due: this.editedTaskDue(),
+            project: this.editedTaskList() === 'Inbox' ? undefined : this.editedTaskList(),
+            labels: this.editedTaskLabels().length > 0 ? this.editedTaskLabels() : undefined
+        };
+        this.store.updateTask(task.id, updates);
+        this.addToHistory('update', task, updates);
+        this.editingTaskDetails.set(false);
+        // Update the selected task reference
+        const updatedTask = { ...task, ...updates };
+        this.selectedTaskForDetails.set(updatedTask);
+    }
+    deleteTaskFromDetails() {
+        const task = this.selectedTaskForDetails();
+        if (task) {
+            this.closeTaskDetails();
+            this.requestDeleteTask(task);
+        }
+    }
+    completeTaskFromDetails() {
+        const task = this.selectedTaskForDetails();
+        if (task) {
+            this.toggleTaskStatus(task);
+            // Update the selected task reference
+            const updatedTask = { ...task, status: task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED' };
+            this.selectedTaskForDetails.set(updatedTask);
+        }
+    }
+    startPomodoroFromDetails() {
+        const task = this.selectedTaskForDetails();
+        if (task) {
+            this.startPomodoro(task);
+        }
+    }
+    addLabelToEdit(event) {
+        const input = event.target;
+        const label = input.value.trim();
+        if (label && !this.editedTaskLabels().includes(label)) {
+            this.editedTaskLabels.set([...this.editedTaskLabels(), label]);
+            input.value = '';
+        }
+        event.preventDefault();
+    }
+    removeLabelFromEdit(label) {
+        this.editedTaskLabels.set(this.editedTaskLabels().filter(l => l !== label));
+    }
+    toggleSubtaskStatus(parentTask, subtask) {
+        const newStatus = subtask.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
+        const updatedSubtasks = (parentTask.subtasks || []).map(st => st.id === subtask.id ? { ...st, status: newStatus } : st);
+        this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
+        // Update the selected task reference
+        const updatedTask = { ...parentTask, subtasks: updatedSubtasks };
+        this.selectedTaskForDetails.set(updatedTask);
+    }
+    isAttachmentImage(attachment) {
+        return attachment.type.startsWith('image/');
+    }
+    // Pomodoro timer
+    startPomodoro(task) {
+        this.pomodoroTask.set(task);
+        this.pomodoroActive.set(true);
+        this.pomodoroTime.set(25 * 60);
+        if (this.pomodoroInterval) {
+            clearInterval(this.pomodoroInterval);
+        }
+        this.pomodoroInterval = setInterval(() => {
+            const current = this.pomodoroTime();
+            if (current > 0) {
+                this.pomodoroTime.set(current - 1);
+            }
+            else {
+                this.stopPomodoro();
+            }
+        }, 1000);
+    }
+    stopPomodoro() {
+        this.pomodoroActive.set(false);
+        this.pomodoroTask.set(null);
+    }
+    formatPomodoroTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    pomodoroInterval = null;
+    ngOnInit() {
+        // Initialize theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            this.theme.set(savedTheme);
+        }
+        document.documentElement.setAttribute('data-theme', this.theme());
+        // Initialize font size
+        const savedFontSize = localStorage.getItem('fontSize');
+        if (savedFontSize) {
+            this.fontSize.set(savedFontSize);
+        }
+        document.documentElement.setAttribute('data-font-size', this.fontSize());
+        // Initialize voice recognition if available
+        this.initVoiceRecognition();
+    }
+    initVoiceRecognition() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.voiceRecognition = new SpeechRecognition();
+            this.voiceRecognition.continuous = false;
+            this.voiceRecognition.interimResults = false;
+            this.voiceRecognition.lang = 'en-US';
+            this.voiceRecognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                this.voiceTranscript.set(transcript);
+                if (this.quickAddVisible()) {
+                    this.quickAddInput.set(transcript);
+                }
+                else if (this.newTaskModalOpen()) {
+                    this.newTaskTitle.set(transcript);
+                }
+                this.isListening.set(false);
+            };
+            this.voiceRecognition.onerror = (event) => {
+                this.showErrorState('Voice recognition error: ' + event.error);
+                this.isListening.set(false);
+            };
+            this.voiceRecognition.onend = () => {
+                this.isListening.set(false);
+            };
+        }
+    }
+    startVoiceInput() {
+        if (!this.voiceRecognition) {
+            this.showErrorState('Voice recognition is not supported in your browser');
+            return;
+        }
+        try {
+            this.isListening.set(true);
+            this.voiceTranscript.set('');
+            this.voiceRecognition.start();
+        }
+        catch (error) {
+            this.showErrorState('Failed to start voice recognition');
+            this.isListening.set(false);
+        }
+    }
+    stopVoiceInput() {
+        if (this.voiceRecognition && this.isListening()) {
+            this.voiceRecognition.stop();
+            this.isListening.set(false);
+        }
+    }
+    isVoiceSupported() {
+        return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+    }
+    // Photo capture
+    openCameraCapture() {
+        this.showCameraCapture.set(true);
+    }
+    closeCameraCapture() {
+        this.showCameraCapture.set(false);
+        this.capturedPhoto.set(null);
+    }
+    capturePhoto() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+        input.onchange = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.capturedPhoto.set(e.target.result);
+                    // Add as attachment
+                    this.filesToUpload.set([...this.filesToUpload(), file]);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        input.click();
+    }
+    // Error handling
+    showErrorState(message) {
+        this.errorMessage.set(message);
+        this.showError.set(true);
+        setTimeout(() => {
+            this.showError.set(false);
+            setTimeout(() => this.errorMessage.set(null), 300);
+        }, 3000);
+    }
+    dismissError() {
+        this.showError.set(false);
+        setTimeout(() => this.errorMessage.set(null), 300);
+    }
+    ngOnDestroy() {
+        if (this.pomodoroInterval) {
+            clearInterval(this.pomodoroInterval);
+        }
+    }
+    // Recurring tasks
+    createRecurringTask(baseTask, pattern, interval = 1) {
+        const recurringTask = {
+            ...baseTask,
+            id: Date.now().toString(),
+            recurring: {
+                pattern,
+                interval,
+                nextDue: this.calculateNextDue(baseTask.due, pattern, interval)
+            }
+        };
+        this.store.addTask(recurringTask);
+    }
+    calculateNextDue(currentDue, pattern, interval) {
+        if (!currentDue)
+            return '';
+        const today = new Date();
+        const next = new Date(today);
+        switch (pattern) {
+            case 'daily':
+                next.setDate(today.getDate() + interval);
+                break;
+            case 'weekly':
+                next.setDate(today.getDate() + (7 * interval));
+                break;
+            case 'monthly':
+                next.setMonth(today.getMonth() + interval);
+                break;
+            case 'yearly':
+                next.setFullYear(today.getFullYear() + interval);
+                break;
+        }
+        return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    // Enhanced labels with colors
+    getLabelColor(label) {
+        const colors = [
+            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#ec4899', '#06b6d4', '#84cc16'
+        ];
+        const index = label.charCodeAt(0) % colors.length;
+        return colors[index];
+    }
+    // All available labels
+    allLabels = computed(() => {
+        const labels = new Set();
+        this.store.tasks().forEach(task => {
+            if (task.labels) {
+                task.labels.forEach(label => labels.add(label));
+            }
+        });
+        return Array.from(labels).sort();
+    });
+    // Timeline/Gantt view methods
+    navigateTimeline(direction) {
+        const current = this.timelineViewDate();
+        const newDate = new Date(current);
+        const zoom = this.timelineZoom();
+        if (zoom === 'day') {
+            newDate.setDate(current.getDate() + (direction === 'next' ? 1 : -1));
+        }
+        else if (zoom === 'week') {
+            newDate.setDate(current.getDate() + (direction === 'next' ? 7 : -7));
+        }
+        else {
+            newDate.setMonth(current.getMonth() + (direction === 'next' ? 1 : -1));
+        }
+        this.timelineViewDate.set(newDate);
+    }
+    getTimelineTitle() {
+        const date = this.timelineViewDate();
+        const zoom = this.timelineZoom();
+        if (zoom === 'day') {
+            return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        }
+        else if (zoom === 'week') {
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - date.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        }
+        else {
+            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+    }
+    getTimelineTasks() {
+        return this.filteredTasks().filter(task => {
+            if (!task.due && !task.startDate)
+                return false;
+            const taskDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
+            if (!taskDate)
+                return false;
+            const viewDate = this.timelineViewDate();
+            const zoom = this.timelineZoom();
+            if (zoom === 'day') {
+                return taskDate.toDateString() === viewDate.toDateString();
+            }
+            else if (zoom === 'week') {
+                const weekStart = new Date(viewDate);
+                weekStart.setDate(viewDate.getDate() - viewDate.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                return taskDate >= weekStart && taskDate <= weekEnd;
+            }
+            else {
+                return taskDate.getMonth() === viewDate.getMonth() && taskDate.getFullYear() === viewDate.getFullYear();
+            }
+        });
+    }
+    getTimelineDates() {
+        const dates = [];
+        const start = new Date(this.timelineViewDate());
+        const zoom = this.timelineZoom();
+        if (zoom === 'day') {
+            dates.push(start);
+        }
+        else if (zoom === 'week') {
+            start.setDate(start.getDate() - start.getDay());
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(start);
+                date.setDate(start.getDate() + i);
+                dates.push(date);
+            }
+        }
+        else {
+            const firstDay = new Date(start.getFullYear(), start.getMonth(), 1);
+            const lastDay = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+            for (let d = firstDay.getDate(); d <= lastDay.getDate(); d++) {
+                dates.push(new Date(start.getFullYear(), start.getMonth(), d));
+            }
+        }
+        return dates;
+    }
+    getDateDay(date) {
+        return date.getDate().toString();
+    }
+    getDateWeekday(date) {
+        return date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
+    }
+    isToday(date) {
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+    }
+    getTaskTimelineBar(task) {
+        const startDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
+        if (!startDate)
+            return null;
+        const duration = task.estimatedDuration || 1;
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + duration);
+        const dates = this.getTimelineDates();
+        if (dates.length === 0)
+            return null;
+        const timelineStart = dates[0];
+        const timelineEnd = dates[dates.length - 1];
+        timelineEnd.setHours(23, 59, 59);
+        const totalMs = timelineEnd.getTime() - timelineStart.getTime();
+        const startMs = startDate.getTime() - timelineStart.getTime();
+        const endMs = endDate.getTime() - timelineStart.getTime();
+        const startPercent = Math.max(0, (startMs / totalMs) * 100);
+        const endPercent = Math.min(100, (endMs / totalMs) * 100);
+        const widthPercent = Math.max(2, endPercent - startPercent);
+        return {
+            startPercent,
+            widthPercent,
+            startDate: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            endDate: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        };
+    }
+    parseDateFromString(dateStr) {
+        if (!dateStr)
+            return null;
+        if (dateStr.includes('Today')) {
+            return new Date();
+        }
+        if (dateStr.includes('Tomorrow')) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return tomorrow;
+        }
+        // Try to parse common date formats
+        const parsed = new Date(dateStr);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    // File attachment methods
+    onFileSelected(event) {
+        const input = event.target;
+        if (input.files && input.files.length > 0) {
+            const files = Array.from(input.files);
+            this.filesToUpload.set([...this.filesToUpload(), ...files]);
+        }
+    }
+    removeFileToUpload(index) {
+        const files = this.filesToUpload();
+        this.filesToUpload.set(files.filter((_, i) => i !== index));
+    }
+    async uploadFiles(taskId) {
+        const files = this.filesToUpload();
+        if (files.length === 0)
+            return;
+        this.uploadingFiles.set(true);
+        // Simulate file upload (in real app, upload to server)
+        const attachments = files.map((file, index) => ({
+            id: `${Date.now()}-${index}`,
+            name: file.name,
+            url: URL.createObjectURL(file), // In real app, this would be server URL
+            type: file.type,
+            size: file.size,
+            uploadedAt: new Date().toISOString()
+        }));
+        const task = this.store.tasks().find(t => t.id === taskId);
+        if (task) {
+            const existingAttachments = task.attachments || [];
+            this.store.updateTask(taskId, {
+                attachments: [...existingAttachments, ...attachments]
+            });
+        }
+        this.filesToUpload.set([]);
+        this.uploadingFiles.set(false);
+    }
+    removeAttachment(taskId, attachmentId) {
+        const task = this.store.tasks().find(t => t.id === taskId);
+        if (task && task.attachments) {
+            const updated = task.attachments.filter(a => a.id !== attachmentId);
+            this.store.updateTask(taskId, { attachments: updated });
+        }
+    }
+    // Bulk operations
+    toggleTaskSelection(taskId) {
+        const selected = new Set(this.selectedTasks());
+        if (selected.has(taskId)) {
+            selected.delete(taskId);
+        }
+        else {
+            selected.add(taskId);
+        }
+        this.selectedTasks.set(selected);
+        this.bulkActionMode.set(selected.size > 0);
+    }
+    selectAllTasks() {
+        const allTaskIds = new Set(this.filteredTasks().map(t => t.id));
+        this.selectedTasks.set(allTaskIds);
+        this.bulkActionMode.set(true);
+    }
+    clearSelection() {
+        this.selectedTasks.set(new Set());
+        this.bulkActionMode.set(false);
+    }
+    bulkCompleteTasks() {
+        const selected = this.selectedTasks();
+        selected.forEach(id => {
+            const task = this.store.tasks().find(t => t.id === id);
+            if (task && task.status !== 'COMPLETED') {
+                this.addToHistory('complete', task);
+                this.store.updateTask(id, { status: 'COMPLETED' });
+            }
+        });
+        this.clearSelection();
+    }
+    bulkDeleteTasks() {
+        const selected = this.selectedTasks();
+        selected.forEach(id => {
+            const task = this.store.tasks().find(t => t.id === id);
+            if (task) {
+                this.addToHistory('delete', task);
+                this.store.deleteTask(id);
+            }
+        });
+        this.clearSelection();
+    }
+    bulkChangePriority(priority) {
+        const selected = this.selectedTasks();
+        selected.forEach(id => {
+            const task = this.store.tasks().find(t => t.id === id);
+            if (task) {
+                this.addToHistory('update', task, { priority: task.priority });
+                this.store.updateTask(id, { priority });
+            }
+        });
+        this.clearSelection();
+    }
+    // Undo/Redo
+    addToHistory(type, task, previousState) {
+        const history = this.actionHistory();
+        const index = this.historyIndex();
+        // Remove any history after current index
+        const newHistory = history.slice(0, index + 1);
+        newHistory.push({ type, task: { ...task }, previousState });
+        this.actionHistory.set(newHistory);
+        this.historyIndex.set(newHistory.length - 1);
+        // Limit history size
+        if (newHistory.length > 50) {
+            this.actionHistory.set(newHistory.slice(-50));
+            this.historyIndex.set(49);
+        }
+    }
+    undo() {
+        const index = this.historyIndex();
+        if (index < 0)
+            return;
+        const history = this.actionHistory();
+        const action = history[index];
+        if (action.type === 'delete') {
+            this.store.addTask(action.task);
+        }
+        else if (action.type === 'complete') {
+            this.store.updateTask(action.task.id, { status: 'ACTIVE' });
+        }
+        else if (action.type === 'update' && action.previousState) {
+            this.store.updateTask(action.task.id, action.previousState);
+        }
+        this.historyIndex.set(index - 1);
+    }
+    redo() {
+        const history = this.actionHistory();
+        const index = this.historyIndex();
+        if (index >= history.length - 1)
+            return;
+        const nextIndex = index + 1;
+        const action = history[nextIndex];
+        if (action.type === 'delete') {
+            this.store.deleteTask(action.task.id);
+        }
+        else if (action.type === 'complete') {
+            this.store.updateTask(action.task.id, { status: 'COMPLETED' });
+        }
+        else if (action.type === 'update') {
+            // Re-apply the update (would need to store the new state)
+        }
+        this.historyIndex.set(nextIndex);
+    }
+    canUndo = computed(() => this.historyIndex() >= 0);
+    canRedo = computed(() => this.historyIndex() < this.actionHistory().length - 1);
+    // Virtual scrolling - visible tasks
+    visibleTasks = computed(() => {
+        const tasks = this.filteredTasks();
+        if (!this.virtualScrollEnabled() || tasks.length <= 50) {
+            return tasks;
+        }
+        const range = this.visibleTaskRange();
+        return tasks.slice(range.start, range.end);
+    });
+    onScroll(event) {
+        const target = event.target;
+        const scrollTop = target.scrollTop;
+        const containerHeight = target.clientHeight;
+        const scrollHeight = target.scrollHeight;
+        const tasks = this.filteredTasks();
+        if (tasks.length <= 50)
+            return;
+        // Calculate visible range
+        const start = Math.floor(scrollTop / this.itemHeight);
+        const end = Math.min(start + Math.ceil(containerHeight / this.itemHeight) + 10, tasks.length);
+        this.visibleTaskRange.set({ start: Math.max(0, start - 5), end });
+    }
+    // Theme switching
+    toggleTheme() {
+        const current = this.theme();
+        const newTheme = current === 'light' ? 'dark' : 'light';
+        this.theme.set(newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+    setFontSize(size) {
+        this.fontSize.set(size);
+        document.documentElement.setAttribute('data-font-size', size);
+        localStorage.setItem('fontSize', size);
+    }
+    // Markdown rendering (simple implementation)
+    renderMarkdown(text) {
+        if (!text)
+            return '';
+        // Basic markdown parsing
+        let html = text
+            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+            .replace(/`(.*?)`/gim, '<code>$1</code>')
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>')
+            .replace(/\n/gim, '<br>');
+        return html;
+    }
+    // Task dependencies
+    getTaskById(id) {
+        return this.store.tasks().find(t => t.id === id);
+    }
+    getAvailableDependencyTasks() {
+        return this.store.tasks().filter(t => t.status !== 'COMPLETED' &&
+            t.id !== this.newTaskTitle() // Exclude self if editing
+        );
+    }
+    addDependency(taskId) {
+        if (!taskId || this.newTaskDependencies().includes(taskId))
+            return;
+        this.newTaskDependencies.set([...this.newTaskDependencies(), taskId]);
+    }
+    removeDependency(taskId) {
+        this.newTaskDependencies.set(this.newTaskDependencies().filter(id => id !== taskId));
+    }
+};
+__decorate([
+    HostListener('document:click', ['$event'])
+], TasksComponent.prototype, "onDocumentClick", null);
+__decorate([
+    HostListener('document:keydown', ['$event'])
+], TasksComponent.prototype, "onKeyDown", null);
+TasksComponent = __decorate([
+    Component({
+        selector: 'app-tasks',
+        standalone: true,
+        imports: [CommonModule, SidebarComponent, ModalComponent],
+        templateUrl: './tasks.component.html',
+        styleUrl: './tasks.component.css'
+    })
+], TasksComponent);
+export { TasksComponent };
