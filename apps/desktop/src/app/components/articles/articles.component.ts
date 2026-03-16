@@ -2,7 +2,12 @@ import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ArticleService, Article } from '@envello/core';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '@envello/ui';
+import {
+  ButtonComponent,
+  ModalComponent,
+  EmptyStateComponent,
+  IconButtonComponent,
+} from '@envello/ui';
 
 @Component({
   selector: 'app-articles',
@@ -13,10 +18,10 @@ import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonCompone
     ButtonComponent,
     ModalComponent,
     EmptyStateComponent,
-    IconButtonComponent
+    IconButtonComponent,
   ],
   templateUrl: './articles.component.html',
-  styleUrl: './articles.component.css'
+  styleUrl: './articles.component.css',
 })
 export class ArticlesComponent {
   articleService = inject(ArticleService);
@@ -48,21 +53,22 @@ export class ArticlesComponent {
 
     // Filter by platform
     if (this.selectedPlatform() !== 'All Platforms') {
-      list = list.filter(a => a.platform === this.selectedPlatform());
+      list = list.filter((a) => a.platform === this.selectedPlatform());
     }
 
     // Filter by pipeline
     if (this.selectedPipeline() !== 'All Statuses') {
-      list = list.filter(a => a.pipeline === this.selectedPipeline());
+      list = list.filter((a) => a.pipeline === this.selectedPipeline());
     }
 
     // Search
     if (this.searchQuery().trim()) {
       const query = this.searchQuery().toLowerCase();
-      list = list.filter(a =>
-        a.title.toLowerCase().includes(query) ||
-        a.tags.some(tag => tag.toLowerCase().includes(query)) ||
-        a.excerpt?.toLowerCase().includes(query)
+      list = list.filter(
+        (a) =>
+          a.title.toLowerCase().includes(query) ||
+          a.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+          a.excerpt?.toLowerCase().includes(query),
       );
     }
 
@@ -78,15 +84,29 @@ export class ArticlesComponent {
     const list = this.articles();
     return {
       total: list.length,
-      published: list.filter(a => a.pipeline === 'PUBLISHED').length,
-      draft: list.filter(a => a.pipeline === 'DRAFT').length,
-      review: list.filter(a => a.pipeline === 'REVIEW').length,
-      scheduled: list.filter(a => a.pipeline === 'SCHEDULED').length,
+      published: list.filter((a) => a.pipeline === 'PUBLISHED').length,
+      draft: list.filter((a) => a.pipeline === 'DRAFT').length,
+      review: list.filter((a) => a.pipeline === 'REVIEW').length,
+      scheduled: list.filter((a) => a.pipeline === 'SCHEDULED').length,
     };
   });
 
-  platforms = ['All Platforms', 'Medium', 'Substack', 'Blog', 'Dev.to', 'Hashnode', 'Custom'] as const;
-  pipelines = ['All Statuses', 'PUBLISHED', 'DRAFT', 'REVIEW', 'SCHEDULED'] as const;
+  platforms = [
+    'All Platforms',
+    'Medium',
+    'Substack',
+    'Blog',
+    'Dev.to',
+    'Hashnode',
+    'Custom',
+  ] as const;
+  pipelines = [
+    'All Statuses',
+    'PUBLISHED',
+    'DRAFT',
+    'REVIEW',
+    'SCHEDULED',
+  ] as const;
 
   // Methods
   async openArticleModal(article?: Article) {
@@ -124,8 +144,13 @@ export class ArticlesComponent {
   saveArticle() {
     if (!this.newArticleTitle().trim()) return;
 
-    const tags = this.newArticleTags().split(',').map(t => t.trim()).filter(t => t);
-    const wordCount = this.newArticleContent().split(/\s+/).filter(w => w).length;
+    const tags = this.newArticleTags()
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t);
+    const wordCount = this.newArticleContent()
+      .split(/\s+/)
+      .filter((w) => w).length;
 
     const articleData: Omit<Article, 'id' | 'createdDate' | 'lastUpdated'> = {
       title: this.newArticleTitle(),
@@ -183,21 +208,31 @@ export class ArticlesComponent {
 
   getPipelineColor(pipeline: string): string {
     switch (pipeline) {
-      case 'PUBLISHED': return 'pipeline-green';
-      case 'DRAFT': return 'pipeline-yellow';
-      case 'REVIEW': return 'pipeline-blue';
-      case 'SCHEDULED': return 'pipeline-orange';
-      default: return 'pipeline-gray';
+      case 'PUBLISHED':
+        return 'pipeline-green';
+      case 'DRAFT':
+        return 'pipeline-yellow';
+      case 'REVIEW':
+        return 'pipeline-blue';
+      case 'SCHEDULED':
+        return 'pipeline-orange';
+      default:
+        return 'pipeline-gray';
     }
   }
 
   getIconForPipeline(pipeline: Article['pipeline']): string {
     switch (pipeline) {
-      case 'PUBLISHED': return 'description';
-      case 'DRAFT': return 'edit';
-      case 'REVIEW': return 'chat_bubble';
-      case 'SCHEDULED': return 'calendar_today';
-      default: return 'article';
+      case 'PUBLISHED':
+        return 'description';
+      case 'DRAFT':
+        return 'edit';
+      case 'REVIEW':
+        return 'chat_bubble';
+      case 'SCHEDULED':
+        return 'calendar_today';
+      default:
+        return 'article';
     }
   }
 
@@ -210,11 +245,32 @@ export class ArticlesComponent {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays === 1) return 'Yesterday, ' + date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-    if (diffDays < 7) return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    if (diffMins < 60)
+      return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1)
+      return (
+        'Yesterday, ' +
+        date.toLocaleTimeString(undefined, {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      );
+    if (diffDays < 7)
+      return date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   formatWordCount(count: number): string {

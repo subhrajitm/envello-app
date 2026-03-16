@@ -12,7 +12,10 @@ export class GlobalErrorHandler implements ErrorHandler {
     const message = error instanceof Error ? error.message : String(error);
 
     // Suppress benign Supabase lock timeout errors during dev/HMR
-    if (message.includes('NavigatorLockAcquireTimeoutError') || String(error).includes('NavigatorLockAcquireTimeoutError')) {
+    if (
+      message.includes('NavigatorLockAcquireTimeoutError') ||
+      String(error).includes('NavigatorLockAcquireTimeoutError')
+    ) {
       return;
     }
 
@@ -22,10 +25,12 @@ export class GlobalErrorHandler implements ErrorHandler {
 
     if (environment.production) {
       // Do not expose stack or internal details in production
-      this.router.navigate(['/server-error'], {
-        queryParams: { message: 'Something went wrong. Please try again.' },
-        skipLocationChange: true,
-      }).catch(() => { });
+      this.router
+        .navigate(['/server-error'], {
+          queryParams: { message: 'Something went wrong. Please try again.' },
+          skipLocationChange: true,
+        })
+        .catch(() => {});
     } else if (stack) {
       console.error('Stack trace:', stack);
     }

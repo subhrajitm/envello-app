@@ -17,7 +17,7 @@ const RETRY_DELAY_MS = 1000;
  */
 export const errorRetryInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
-  next: HttpHandlerFn
+  next: HttpHandlerFn,
 ) => {
   const logging = inject(LoggingService);
   const router = inject(Router);
@@ -39,13 +39,15 @@ export const errorRetryInterceptor: HttpInterceptorFn = (
       if (error instanceof HttpErrorResponse) {
         logging.error(`HTTP ${error.status} ${error.url}`, error);
         if (error.status >= 500) {
-          router.navigate(['/server-error'], {
-            queryParams: { message: 'Server error. Please try again later.' },
-            skipLocationChange: true,
-          }).catch(() => {});
+          router
+            .navigate(['/server-error'], {
+              queryParams: { message: 'Server error. Please try again later.' },
+              skipLocationChange: true,
+            })
+            .catch(() => {});
         }
       }
       return throwError(() => error);
-    })
+    }),
   );
 };

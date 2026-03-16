@@ -1,2 +1,1 @@
-export class DataService {
-}
+export class DataService {}

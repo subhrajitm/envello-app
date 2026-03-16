@@ -11,13 +11,15 @@ import { FILE_SYSTEM } from '@envello/state';
 import { PouchDbDataService as DatabaseService } from '@envello/core';
 import { FileSystemService } from '@envello/core';
 export const appConfig = {
-    providers: [
-        provideZoneChangeDetection({ eventCoalescing: true }),
-        provideRouter(routes),
-        provideHttpClient(withInterceptors([authInterceptor, errorRetryInterceptor])),
-        provideAnimations(),
-        { provide: ErrorHandler, useClass: GlobalErrorHandler },
-        { provide: DataService, useExisting: DatabaseService },
-        { provide: FILE_SYSTEM, useExisting: FileSystemService }
-    ],
+  providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
+    provideHttpClient(
+      withInterceptors([authInterceptor, errorRetryInterceptor]),
+    ),
+    provideAnimations(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    { provide: DataService, useExisting: DatabaseService },
+    { provide: FILE_SYSTEM, useExisting: FileSystemService },
+  ],
 };

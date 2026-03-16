@@ -1,7 +1,14 @@
 @if (isOpen) {
-  <div class="env-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="onOverlayClick()">
+  <div
+    class="env-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]"
+    (click)="onOverlayClick()"
+  >
     <div
-      [class]="['env-modal-container', 'env-modal--' + size, 'flex flex-col rounded-lg shadow-xl']"
+      [class]="[
+        'env-modal-container',
+        'env-modal--' + size,
+        'flex flex-col rounded-lg shadow-xl',
+      ]"
       (click)="onContainerClick($event)"
       role="dialog"
       aria-modal="true"

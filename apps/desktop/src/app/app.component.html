@@ -1,35 +1,49 @@
 @if (authService.initialized()) {
-<div class="dashboard">
-  @if (!isFullScreen() && authService.isAuthenticated()) {
-  <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
-    (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
-  </app-header>
-  }
-
-  <div class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
-    [class.immersive-view]="isImmersive()"
-    [class.with-sidebar]="!isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'"
-    [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"
-    [class.fullscreen-content]="isFullScreen()"
-    [class.sub-nav-open]="subNavVisible() && !isImmersive() && !isFullScreen()">
-    <!-- Spacer that reserves 36px for the fixed sub-nav bar when it's visible -->
-    @if (subNavVisible() && !isImmersive() && !isFullScreen()) {
-      <div class="sub-nav-spacer"></div>
+  <div class="dashboard">
+    @if (!isFullScreen() && authService.isAuthenticated()) {
+      <app-header
+        [activeTab]="currentTab()"
+        [isImmersive]="isImmersive()"
+        (sidebarCollapsedChange)="onSidebarCollapsedChange($event)"
+      >
+      </app-header>
     }
-    <router-outlet></router-outlet>
-  </div>
 
-  @if (!isFullScreen() && authService.isAuthenticated()) {
-  <app-footer></app-footer>
-  }
-</div>
-} @else {
-<div class="app-splash-screen">
-  <div class="splash-content">
-    <env-logo width="240px" height="auto"
-      style="margin-bottom: 24px; color: var(--primary-color, currentColor);"></env-logo>
-    <div class="splash-loader"></div>
+    <div
+      class="dashboard-content"
+      [class.no-padding]="hasSidebar() || isFullScreen()"
+      [class.immersive-view]="isImmersive()"
+      [class.with-sidebar]="
+        !isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'
+      "
+      [class.sidebar-collapsed]="sidebarCollapsed()"
+      [class.horizontal-nav]="navigationLayout() === 'horizontal'"
+      [class.fullscreen-content]="isFullScreen()"
+      [class.sub-nav-open]="
+        subNavVisible() && !isImmersive() && !isFullScreen()
+      "
+    >
+      <!-- Spacer that reserves 36px for the fixed sub-nav bar when it's visible -->
+      @if (subNavVisible() && !isImmersive() && !isFullScreen()) {
+        <div class="sub-nav-spacer"></div>
+      }
+      <router-outlet></router-outlet>
+    </div>
+
+    @if (!isFullScreen() && authService.isAuthenticated()) {
+      <app-footer></app-footer>
+    }
   </div>
-</div>
+} @else {
+  <div class="app-splash-screen">
+    <div class="splash-content">
+      <env-logo
+        width="240px"
+        height="auto"
+        style="margin-bottom: 24px; color: var(--primary-color, currentColor)"
+      ></env-logo>
+      <div class="splash-loader"></div>
+    </div>
+  </div>
 }
 <!-- Command Palette to be added -->

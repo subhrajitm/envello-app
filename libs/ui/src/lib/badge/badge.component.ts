@@ -1,7 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'accent';
+export type BadgeVariant =
+  | 'default'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'accent';
 
 @Component({
   selector: 'env-badge',

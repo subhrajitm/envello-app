@@ -9,11 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  SnippetsService,
-  Snippet,
-  SnippetLang,
-} from '@envello/core';
+import { SnippetsService, Snippet, SnippetLang } from '@envello/core';
 import {
   ButtonComponent,
   IconButtonComponent,
@@ -94,7 +90,9 @@ export class CodeSnippetsComponent implements OnInit, OnDestroy {
     }
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
-      (document.querySelector('.snippets-search-input') as HTMLInputElement)?.focus();
+      (
+        document.querySelector('.snippets-search-input') as HTMLInputElement
+      )?.focus();
     }
     if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
@@ -126,14 +124,18 @@ export class CodeSnippetsComponent implements OnInit, OnDestroy {
     const tags = (n.tags ?? []).slice();
     const tagStr = this.newTagInput().trim();
     if (tagStr) {
-      tagStr.split(/[\s,]+/).forEach(t => { const x = t.replace(/^#/, '').trim(); if (x && !tags.includes(x)) tags.push(x); });
+      tagStr.split(/[\s,]+/).forEach((t) => {
+        const x = t.replace(/^#/, '').trim();
+        if (x && !tags.includes(x)) tags.push(x);
+      });
     }
     this.snippetsService.addSnippet({
       title: n.title.trim(),
       lang: (n.lang as SnippetLang) ?? 'Other',
       tags,
       content: (n.content ?? '').trim(),
-      filename: (n.filename ?? n.title ?? '').trim() || (n.title ?? '') + '.txt',
+      filename:
+        (n.filename ?? n.title ?? '').trim() || (n.title ?? '') + '.txt',
       path: (n.path ?? '').trim() || '/',
       creator: (n.creator ?? '').trim() || '@me',
     });
@@ -193,7 +195,7 @@ export class CodeSnippetsComponent implements OnInit, OnDestroy {
 
   toggleQuickActions(id: string, ev: Event) {
     ev.stopPropagation();
-    this.showQuickActions.update(v => (v === id ? null : id));
+    this.showQuickActions.update((v) => (v === id ? null : id));
   }
 
   getLangColor(lang: SnippetLang): string {
@@ -232,11 +234,11 @@ export class CodeSnippetsComponent implements OnInit, OnDestroy {
   }
 
   updateNewSnippet<K extends keyof Snippet>(key: K, value: Snippet[K]) {
-    this.newSnippet.update(n => ({ ...n, [key]: value }));
+    this.newSnippet.update((n) => ({ ...n, [key]: value }));
   }
 
   updateEditedSnippet<K extends keyof Snippet>(key: K, value: Snippet[K]) {
-    this.editedSnippet.update(e => ({ ...e, [key]: value }));
+    this.editedSnippet.update((e) => ({ ...e, [key]: value }));
   }
 
   addTagToNew() {
@@ -245,14 +247,14 @@ export class CodeSnippetsComponent implements OnInit, OnDestroy {
     const tags = [...(this.newSnippet().tags ?? [])];
     if (tags.includes(t)) return;
     tags.push(t);
-    this.newSnippet.update(n => ({ ...n, tags }));
+    this.newSnippet.update((n) => ({ ...n, tags }));
     this.newTagInput.set('');
   }
 
   removeTagFromNew(tag: string) {
-    this.newSnippet.update(n => ({
+    this.newSnippet.update((n) => ({
       ...n,
-      tags: (n.tags ?? []).filter(x => x !== tag),
+      tags: (n.tags ?? []).filter((x) => x !== tag),
     }));
   }
 

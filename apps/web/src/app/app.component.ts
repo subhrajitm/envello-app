@@ -1,6 +1,11 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import {
+  RouterOutlet,
+  Router,
+  NavigationEnd,
+  ActivatedRoute,
+} from '@angular/router';
 import { HeaderComponent, FooterComponent } from '@envello/ui';
 import { TauriService, SessionService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
@@ -10,7 +15,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
   standalone: true,
   imports: [RouterOutlet, HeaderComponent, FooterComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'envello';
@@ -25,7 +30,9 @@ export class AppComponent implements OnInit, OnDestroy {
   isImmersive = signal(false);
   isFullScreen = signal(false);
   sidebarCollapsed = signal(true);
-  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
+  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>(
+    'minimized',
+  );
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
 
@@ -37,40 +44,50 @@ export class AppComponent implements OnInit, OnDestroy {
     this.navigationLayoutListener = (event: CustomEvent) => {
       this.navigationLayout.set(event.detail);
     };
-    window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+    window.addEventListener(
+      'navigationLayoutChanged',
+      this.navigationLayoutListener as EventListener,
+    );
 
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd),
-      map(() => this.activatedRoute),
-      map(route => {
-        while (route.firstChild) route = route.firstChild;
-        return route;
-      }),
-      mergeMap(route => route.data)
-    ).subscribe(data => {
-      this.hasSidebar.set(data['hasSidebar'] !== false); // default to true if not specified? React logic was whitelist.
-      this.isImmersive.set(!!data['immersive']);
-      this.isFullScreen.set(!!data['fullScreen']);
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        map(() => this.activatedRoute),
+        map((route) => {
+          while (route.firstChild) route = route.firstChild;
+          return route;
+        }),
+        mergeMap((route) => route.data),
+      )
+      .subscribe((data) => {
+        this.hasSidebar.set(data['hasSidebar'] !== false); // default to true if not specified? React logic was whitelist.
+        this.isImmersive.set(!!data['immersive']);
+        this.isFullScreen.set(!!data['fullScreen']);
 
-      // Map path to Tab Name for Header
-      const url = this.router.url.split('/')[1];
-      const tabName = this.mapUrlToTabName(url);
-      this.currentTab.set(tabName);
-      // Update window title when running in Tauri
-      this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => { });
-    });
+        // Map path to Tab Name for Header
+        const url = this.router.url.split('/')[1];
+        const tabName = this.mapUrlToTabName(url);
+        this.currentTab.set(tabName);
+        // Update window title when running in Tauri
+        this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => {});
+      });
     this.setupTauriFileDrop();
   }
 
   private async setupTauriFileDrop(): Promise<void> {
     this.unlistenFileDrop = await this.tauriService.onFileDrop((paths) => {
-      window.dispatchEvent(new CustomEvent('envello-file-drop', { detail: { paths } }));
+      window.dispatchEvent(
+        new CustomEvent('envello-file-drop', { detail: { paths } }),
+      );
     });
   }
 
   ngOnDestroy() {
     if (this.navigationLayoutListener) {
-      window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+      window.removeEventListener(
+        'navigationLayoutChanged',
+        this.navigationLayoutListener as EventListener,
+      );
     }
     this.unlistenFileDrop?.();
   }
@@ -89,19 +106,19 @@ export class AppComponent implements OnInit, OnDestroy {
 
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
-      'workspace': 'Workspace',
-      'novels': 'Novels/Fiction',
-      'research': 'Research',
-      'articles': 'Articles/Blogs',
-      'journals': 'Journals',
+      workspace: 'Workspace',
+      novels: 'Novels/Fiction',
+      research: 'Research',
+      articles: 'Articles/Blogs',
+      journals: 'Journals',
       'daily-notes': 'Daily Notes',
-      'tasks': 'Tasks/Todos',
-      'meetings': 'Meetings',
-      'books': 'Books/Reading',
-      'snippets': 'Code Snippets',
-      'bin': 'Bin',
+      tasks: 'Tasks/Todos',
+      meetings: 'Meetings',
+      books: 'Books/Reading',
+      snippets: 'Code Snippets',
+      bin: 'Bin',
       'activity-log': 'Activity Log',
-      'developer-settings': 'Developer Settings'
+      'developer-settings': 'Developer Settings',
     };
     return map[url] || 'Workspace';
   }

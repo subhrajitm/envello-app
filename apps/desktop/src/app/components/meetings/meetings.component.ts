@@ -1,46 +1,66 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  HostListener,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { 
-  MeetingsService, 
-  Meeting, 
-  Attendee, 
-  AgendaItem, 
-  ActionItem, 
+import {
+  MeetingsService,
+  Meeting,
+  Attendee,
+  AgendaItem,
+  ActionItem,
   MeetingNote,
   MEETING_COLORS,
   MeetingViewFilter,
-  MeetingViewMode
+  MeetingViewMode,
 } from '@envello/core';
-import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '@envello/ui';
+import {
+  ButtonComponent,
+  IconButtonComponent,
+  EmptyStateComponent,
+  ModalComponent,
+} from '@envello/ui';
 import { TauriService } from '@envello/core';
 
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonComponent,
+    IconButtonComponent,
+    EmptyStateComponent,
+    ModalComponent,
+  ],
   templateUrl: './meetings.component.html',
-  styleUrl: './meetings.component.css'
+  styleUrl: './meetings.component.css',
 })
 export class MeetingsComponent implements OnInit, OnDestroy {
   meetingsService = inject(MeetingsService);
   private tauriService = inject(TauriService);
-  
+
   // View state
   viewMode = signal<MeetingViewMode>('list');
   viewFilter = signal<MeetingViewFilter>('all');
-  
+
   // Filters
   selectedProject = signal('');
   selectedTimeRange = signal('All Time');
   sortBy = signal<'date' | 'title' | 'attendees'>('date');
   sortDirection = signal<'asc' | 'desc'>('asc');
   searchQuery = signal('');
-  
+
   // Calendar view state
   calendarDate = signal<Date>(new Date());
   calendarView = signal<'month' | 'week'>('month');
-  
+
   // Create meeting modal
   showCreateModal = signal(false);
   newMeeting = signal<Partial<Meeting>>({
@@ -66,94 +86,107 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   newAgendaInput = signal('');
   newLabelInput = signal('');
   showRecurringOptions = signal(false);
-  recurringPattern = signal<'daily' | 'weekly' | 'biweekly' | 'monthly'>('weekly');
+  recurringPattern = signal<'daily' | 'weekly' | 'biweekly' | 'monthly'>(
+    'weekly',
+  );
   recurringCount = signal(4);
-  
+
   // Meeting details modal
   showDetailsModal = signal(false);
   selectedMeeting = signal<Meeting | null>(null);
   editingMeeting = signal(false);
   editedMeeting = signal<Partial<Meeting>>({});
-  
+
   // Details tabs
-  detailsTab = signal<'overview' | 'agenda' | 'notes' | 'action-items'>('overview');
-  
+  detailsTab = signal<'overview' | 'agenda' | 'notes' | 'action-items'>(
+    'overview',
+  );
+
   // Action items
   newActionItemInput = signal('');
   newActionItemAssignee = signal('');
   newActionItemPriority = signal<'HIGH' | 'MEDIUM' | 'LOW'>('MEDIUM');
-  
+
   // Notes
   newNoteInput = signal('');
-  
+
   // Agenda editing
   newAgendaItemTitle = signal('');
   newAgendaItemDuration = signal(15);
   newAgendaItemPresenter = signal('');
   editingAgendaItem = signal<string | null>(null);
-  
+
   // Attendee editing
   showAddAttendee = signal(false);
   newAttendeeName = signal('');
   newAttendeeEmail = signal('');
   newAttendeeRole = signal<'required' | 'optional'>('required');
-  
+
   // Date picker
   showDatePicker = signal(false);
   datePickerDate = signal<Date>(new Date());
-  
+
   // Quick actions dropdown
   showQuickActions = signal<string | null>(null);
-  
+
   // Keyboard shortcuts help
   showShortcutsHelp = signal(false);
-  
+
   // Available colors for meetings
   meetingColors = MEETING_COLORS;
-  
+
   // Computed values
   filteredMeetings = computed(() => {
     let meetings = [...this.meetingsService.meetings()];
-    
+
     // Apply view filter
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     switch (this.viewFilter()) {
       case 'today':
-        meetings = meetings.filter(m => {
+        meetings = meetings.filter((m) => {
           const meetingDate = new Date(m.date);
           meetingDate.setHours(0, 0, 0, 0);
-          return meetingDate.getTime() === today.getTime() && m.status !== 'cancelled';
+          return (
+            meetingDate.getTime() === today.getTime() &&
+            m.status !== 'cancelled'
+          );
         });
         break;
       case 'upcoming':
-        meetings = meetings.filter(m => {
+        meetings = meetings.filter((m) => {
           const meetingDate = new Date(m.date);
           meetingDate.setHours(0, 0, 0, 0);
-          return meetingDate.getTime() >= today.getTime() && m.status !== 'cancelled' && m.status !== 'completed';
+          return (
+            meetingDate.getTime() >= today.getTime() &&
+            m.status !== 'cancelled' &&
+            m.status !== 'completed'
+          );
         });
         break;
       case 'past':
-        meetings = meetings.filter(m => {
+        meetings = meetings.filter((m) => {
           const meetingDate = new Date(m.date);
           meetingDate.setHours(0, 0, 0, 0);
-          return meetingDate.getTime() < today.getTime() || m.status === 'completed';
+          return (
+            meetingDate.getTime() < today.getTime() || m.status === 'completed'
+          );
         });
         break;
       case 'cancelled':
-        meetings = meetings.filter(m => m.status === 'cancelled');
+        meetings = meetings.filter((m) => m.status === 'cancelled');
         break;
     }
-    
+
     // Apply project filter
     const proj = this.selectedProject();
     if (proj) {
-      meetings = meetings.filter(m =>
-        proj === 'No project' ? !m.project : m.project === proj
+      meetings = meetings.filter((m) =>
+        proj === 'No project' ? !m.project : m.project === proj,
       );
     }
-    
+
     // Apply time range filter (All Time | 7d | 30d | Quarter)
     const range = this.selectedTimeRange();
     if (range && range !== 'All Time') {
@@ -168,26 +201,27 @@ export class MeetingsComponent implements OnInit, OnDestroy {
         min.setDate(min.getDate() - days);
         const max = new Date(today);
         max.setDate(max.getDate() + days);
-        meetings = meetings.filter(m => {
+        meetings = meetings.filter((m) => {
           const d = new Date(m.date);
           d.setHours(0, 0, 0, 0);
           return d >= min && d <= max;
         });
       }
     }
-    
+
     // Apply search
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
-      meetings = meetings.filter(m =>
-        m.title.toLowerCase().includes(query) ||
-        m.description?.toLowerCase().includes(query) ||
-        m.project?.toLowerCase().includes(query) ||
-        m.attendees.some(a => a.name.toLowerCase().includes(query)) ||
-        (m.labels ?? []).some(l => l.toLowerCase().includes(query))
+      meetings = meetings.filter(
+        (m) =>
+          m.title.toLowerCase().includes(query) ||
+          m.description?.toLowerCase().includes(query) ||
+          m.project?.toLowerCase().includes(query) ||
+          m.attendees.some((a) => a.name.toLowerCase().includes(query)) ||
+          (m.labels ?? []).some((l) => l.toLowerCase().includes(query)),
       );
     }
-    
+
     // Apply sorting
     meetings.sort((a, b) => {
       let comparison = 0;
@@ -206,29 +240,29 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       }
       return this.sortDirection() === 'asc' ? comparison : -comparison;
     });
-    
+
     return meetings;
   });
-  
+
   // Calendar data
   calendarWeeks = computed(() => {
     const date = this.calendarDate();
     const year = date.getFullYear();
     const month = date.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
+
     const weeks: Date[][] = [];
     let currentWeek: Date[] = [];
-    
+
     // Fill in days from previous month
     const startDay = firstDay.getDay();
     for (let i = startDay - 1; i >= 0; i--) {
       const prevDate = new Date(year, month, -i);
       currentWeek.push(prevDate);
     }
-    
+
     // Fill in days of current month
     for (let day = 1; day <= lastDay.getDate(); day++) {
       currentWeek.push(new Date(year, month, day));
@@ -237,7 +271,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
         currentWeek = [];
       }
     }
-    
+
     // Fill in days from next month
     if (currentWeek.length > 0) {
       let nextDay = 1;
@@ -246,32 +280,33 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       }
       weeks.push(currentWeek);
     }
-    
+
     return weeks;
   });
-  
+
   // Get meetings for a specific date (for calendar view)
   getMeetingsForDate(date: Date): Meeting[] {
     const dateStr = date.toISOString().split('T')[0];
-    return this.meetingsService.meetings().filter(m => 
-      m.date === dateStr && m.status !== 'cancelled'
-    );
+    return this.meetingsService
+      .meetings()
+      .filter((m) => m.date === dateStr && m.status !== 'cancelled');
   }
-  
+
   // Get unique projects
   availableProjects = computed(() => {
     const projects = new Set<string>();
-    this.meetingsService.meetings().forEach(m => {
+    this.meetingsService.meetings().forEach((m) => {
       if (m.project) projects.add(m.project);
     });
     return Array.from(projects).sort();
   });
-  
+
   // Upcoming syncs
   upcomingSyncs = computed(() => {
     const now = new Date();
-    return this.meetingsService.meetings()
-      .filter(m => {
+    return this.meetingsService
+      .meetings()
+      .filter((m) => {
         const meetingDateTime = new Date(`${m.date}T${m.startTime}`);
         return meetingDateTime >= now && m.status === 'scheduled';
       })
@@ -282,7 +317,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       })
       .slice(0, 5);
   });
-  
+
   // Stats
   stats = computed(() => {
     const all = this.meetingsService.meetings();
@@ -290,27 +325,36 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    
-    const todayMeetings = all.filter(m => {
+
+    const todayMeetings = all.filter((m) => {
       const d = new Date(m.date);
       d.setHours(0, 0, 0, 0);
       return d.getTime() === today.getTime() && m.status !== 'cancelled';
     });
-    
-    const thisWeekMeetings = all.filter(m => {
+
+    const thisWeekMeetings = all.filter((m) => {
       const d = new Date(m.date);
       d.setHours(0, 0, 0, 0);
       return d >= today && d < weekEnd && m.status !== 'cancelled';
     });
-    
-    const totalActionItems = all.reduce((sum, m) => sum + (m.actionItems?.length ?? 0), 0);
-    const openActionItems = all.reduce((sum, m) => 
-      sum + (m.actionItems?.filter(a => a.status !== 'completed').length ?? 0), 0
+
+    const totalActionItems = all.reduce(
+      (sum, m) => sum + (m.actionItems?.length ?? 0),
+      0,
     );
-    const actionItemsPct = totalActionItems > 0 
-      ? Math.round(((totalActionItems - openActionItems) / totalActionItems) * 100) 
-      : 0;
-    
+    const openActionItems = all.reduce(
+      (sum, m) =>
+        sum +
+        (m.actionItems?.filter((a) => a.status !== 'completed').length ?? 0),
+      0,
+    );
+    const actionItemsPct =
+      totalActionItems > 0
+        ? Math.round(
+            ((totalActionItems - openActionItems) / totalActionItems) * 100,
+          )
+        : 0;
+
     return {
       todayCount: todayMeetings.length,
       thisWeekCount: thisWeekMeetings.length,
@@ -319,11 +363,11 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       actionItemsPct,
       avgVelocity: '2.4k',
       deadlines: 2,
-      totalScheduled: all.filter(m => m.status === 'scheduled').length,
-      totalCompleted: all.filter(m => m.status === 'completed').length,
+      totalScheduled: all.filter((m) => m.status === 'scheduled').length,
+      totalCompleted: all.filter((m) => m.status === 'completed').length,
     };
   });
-  
+
   /** Meetings grouped by project for sidebar */
   meetingsByProject = computed(() => {
     const map = new Map<string, number>();
@@ -338,27 +382,29 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   });
 
   /** Whether any meetings have no project (for filter dropdown) */
-  hasNoProject = computed(() => this.meetingsByProject().some((p) => p[0] === 'No project'));
-  
+  hasNoProject = computed(() =>
+    this.meetingsByProject().some((p) => p[0] === 'No project'),
+  );
+
   // Meetings by status for kanban
   meetingsByStatus = computed(() => {
     const meetings = this.filteredMeetings();
     return {
-      scheduled: meetings.filter(m => m.status === 'scheduled'),
-      in_progress: meetings.filter(m => m.status === 'in_progress'),
-      completed: meetings.filter(m => m.status === 'completed'),
-      cancelled: meetings.filter(m => m.status === 'cancelled'),
+      scheduled: meetings.filter((m) => m.status === 'scheduled'),
+      in_progress: meetings.filter((m) => m.status === 'in_progress'),
+      completed: meetings.filter((m) => m.status === 'completed'),
+      cancelled: meetings.filter((m) => m.status === 'cancelled'),
     };
   });
-  
+
   ngOnInit() {
     // Initialize any needed state
   }
-  
+
   ngOnDestroy() {
     // Cleanup
   }
-  
+
   // Keyboard shortcuts
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
@@ -371,8 +417,11 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown', ['$event'])
   handleKeyboardShortcuts(event: KeyboardEvent) {
     const target = event.target as HTMLElement;
-    const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-    
+    const isInputFocused =
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable;
+
     // Escape to close modals, shortcuts help, or quick dropdown
     if (event.key === 'Escape') {
       if (this.showCreateModal()) {
@@ -390,38 +439,40 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       }
       return;
     }
-    
+
     // Don't handle shortcuts if input is focused
     if (isInputFocused) return;
-    
+
     // Cmd/Ctrl + N: New meeting
     if ((event.metaKey || event.ctrlKey) && event.key === 'n') {
       this.openCreateModal();
       event.preventDefault();
       return;
     }
-    
+
     // Cmd/Ctrl + K: Quick search
     if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-      const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+      const searchInput = document.querySelector(
+        '.search-input',
+      ) as HTMLInputElement;
       if (searchInput) searchInput.focus();
       event.preventDefault();
       return;
     }
-    
+
     // Cmd/Ctrl + /: Show shortcuts
     if ((event.metaKey || event.ctrlKey) && event.key === '/') {
       this.showShortcutsHelp.set(true);
       event.preventDefault();
       return;
     }
-    
+
     // 1-4: Switch view filters
     if (event.key === '1') this.viewFilter.set('all');
     if (event.key === '2') this.viewFilter.set('today');
     if (event.key === '3') this.viewFilter.set('upcoming');
     if (event.key === '4') this.viewFilter.set('past');
-    
+
     // V: Cycle view modes
     if (event.key === 'v') {
       const modes: MeetingViewMode[] = ['list', 'calendar', 'kanban'];
@@ -429,7 +480,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       this.viewMode.set(modes[(currentIndex + 1) % modes.length]);
     }
   }
-  
+
   // Modal methods
   openCreateModal() {
     this.newMeeting.set({
@@ -453,26 +504,30 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     });
     this.showCreateModal.set(true);
   }
-  
+
   closeCreateModal() {
     this.showCreateModal.set(false);
     this.showRecurringOptions.set(false);
   }
 
-  openShortcutsHelp() { this.showShortcutsHelp.set(true); }
-  closeShortcutsHelp() { this.showShortcutsHelp.set(false); }
-  
+  openShortcutsHelp() {
+    this.showShortcutsHelp.set(true);
+  }
+  closeShortcutsHelp() {
+    this.showShortcutsHelp.set(false);
+  }
+
   createMeeting() {
     const meeting = this.newMeeting();
     if (!meeting.title?.trim()) return;
-    
+
     // Calculate duration if not set
     if (meeting.startTime && meeting.endTime) {
       const [startH, startM] = meeting.startTime.split(':').map(Number);
       const [endH, endM] = meeting.endTime.split(':').map(Number);
-      meeting.duration = (endH * 60 + endM) - (startH * 60 + startM);
+      meeting.duration = endH * 60 + endM - (startH * 60 + startM);
     }
-    
+
     if (this.showRecurringOptions()) {
       // Create recurring series
       const baseMeeting = {
@@ -482,18 +537,20 @@ export class MeetingsComponent implements OnInit, OnDestroy {
           interval: 1,
         },
       } as Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>;
-      
+
       this.meetingsService.createRecurringSeries(
         baseMeeting,
-        this.recurringCount()
+        this.recurringCount(),
       );
     } else {
-      this.meetingsService.addMeeting(meeting as Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>);
+      this.meetingsService.addMeeting(
+        meeting as Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>,
+      );
     }
-    
+
     this.closeCreateModal();
   }
-  
+
   openDetailsModal(meeting: Meeting) {
     this.selectedMeeting.set(meeting);
     this.editedMeeting.set({ ...meeting });
@@ -501,13 +558,13 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     this.detailsTab.set('overview');
     this.showDetailsModal.set(true);
   }
-  
+
   closeDetailsModal() {
     this.showDetailsModal.set(false);
     this.selectedMeeting.set(null);
     this.editingMeeting.set(false);
   }
-  
+
   startEditing() {
     const meeting = this.selectedMeeting();
     if (meeting) {
@@ -515,7 +572,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       this.editingMeeting.set(true);
     }
   }
-  
+
   saveEditing() {
     const meeting = this.selectedMeeting();
     const edited = this.editedMeeting();
@@ -525,7 +582,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       this.editingMeeting.set(false);
     }
   }
-  
+
   cancelEditing() {
     const meeting = this.selectedMeeting();
     if (meeting) {
@@ -533,7 +590,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     }
     this.editingMeeting.set(false);
   }
-  
+
   // Meeting actions
   deleteMeeting(meeting: Meeting) {
     if (confirm('Are you sure you want to delete this meeting?')) {
@@ -541,17 +598,17 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       this.closeDetailsModal();
     }
   }
-  
+
   cancelMeeting(meeting: Meeting) {
     this.meetingsService.cancelMeeting(meeting.id);
     this.selectedMeeting.set({ ...meeting, status: 'cancelled' });
   }
-  
+
   completeMeeting(meeting: Meeting) {
     this.meetingsService.completeMeeting(meeting.id);
     this.selectedMeeting.set({ ...meeting, status: 'completed' });
   }
-  
+
   duplicateMeeting(meeting: Meeting) {
     const duplicated = this.meetingsService.duplicateMeeting(meeting.id);
     if (duplicated) {
@@ -559,19 +616,19 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       this.openDetailsModal(duplicated);
     }
   }
-  
+
   // Attendee methods
   addAttendeeToNew() {
     const input = this.newAttendeeInput().trim();
     if (!input) return;
-    
+
     const newAttendee: Attendee = {
       id: Date.now().toString(),
       name: input,
       role: 'required',
       status: 'pending',
     };
-    
+
     const current = this.newMeeting();
     this.newMeeting.set({
       ...current,
@@ -579,56 +636,60 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     });
     this.newAttendeeInput.set('');
   }
-  
+
   removeAttendeeFromNew(attendeeId: string) {
     const current = this.newMeeting();
     this.newMeeting.set({
       ...current,
-      attendees: current.attendees?.filter(a => a.id !== attendeeId) ?? [],
+      attendees: current.attendees?.filter((a) => a.id !== attendeeId) ?? [],
     });
   }
-  
+
   addAttendeeToMeeting() {
     const meeting = this.selectedMeeting();
     if (!meeting || !this.newAttendeeName().trim()) return;
-    
+
     this.meetingsService.addAttendee(meeting.id, {
       name: this.newAttendeeName().trim(),
       email: this.newAttendeeEmail().trim() || undefined,
       role: this.newAttendeeRole(),
       status: 'pending',
     });
-    
+
     // Refresh selected meeting
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
-    
+
     this.newAttendeeName.set('');
     this.newAttendeeEmail.set('');
     this.showAddAttendee.set(false);
   }
-  
+
   removeAttendee(attendeeId: string) {
     const meeting = this.selectedMeeting();
     if (!meeting) return;
-    
+
     this.meetingsService.removeAttendee(meeting.id, attendeeId);
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
   }
-  
+
   // Agenda methods
   addAgendaItemToNew() {
     const title = this.newAgendaInput().trim();
     if (!title) return;
-    
+
     const newItem: AgendaItem = {
       id: Date.now().toString(),
       title,
       duration: 15,
       completed: false,
     };
-    
+
     const current = this.newMeeting();
     this.newMeeting.set({
       ...current,
@@ -636,133 +697,155 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     });
     this.newAgendaInput.set('');
   }
-  
+
   removeAgendaItemFromNew(itemId: string) {
     const current = this.newMeeting();
     this.newMeeting.set({
       ...current,
-      agenda: current.agenda?.filter(a => a.id !== itemId) ?? [],
+      agenda: current.agenda?.filter((a) => a.id !== itemId) ?? [],
     });
   }
-  
+
   addAgendaItem() {
     const meeting = this.selectedMeeting();
     if (!meeting || !this.newAgendaItemTitle().trim()) return;
-    
+
     this.meetingsService.addAgendaItem(meeting.id, {
       title: this.newAgendaItemTitle().trim(),
       duration: this.newAgendaItemDuration(),
       presenter: this.newAgendaItemPresenter().trim() || undefined,
       completed: false,
     });
-    
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
-    
+
     this.newAgendaItemTitle.set('');
     this.newAgendaItemDuration.set(15);
     this.newAgendaItemPresenter.set('');
   }
-  
+
   toggleAgendaItem(itemId: string) {
     const meeting = this.selectedMeeting();
     if (!meeting) return;
-    
-    const item = meeting.agenda?.find(a => a.id === itemId);
+
+    const item = meeting.agenda?.find((a) => a.id === itemId);
     if (item) {
-      this.meetingsService.updateAgendaItem(meeting.id, itemId, { completed: !item.completed });
-      const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+      this.meetingsService.updateAgendaItem(meeting.id, itemId, {
+        completed: !item.completed,
+      });
+      const updated = this.meetingsService
+        .meetings()
+        .find((m) => m.id === meeting.id);
       if (updated) this.selectedMeeting.set(updated);
     }
   }
-  
+
   deleteAgendaItem(itemId: string) {
     const meeting = this.selectedMeeting();
     if (!meeting) return;
-    
+
     this.meetingsService.deleteAgendaItem(meeting.id, itemId);
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
   }
-  
+
   // Action items methods
   addActionItem() {
     const meeting = this.selectedMeeting();
     if (!meeting || !this.newActionItemInput().trim()) return;
-    
+
     this.meetingsService.addActionItem(meeting.id, {
       title: this.newActionItemInput().trim(),
       assignee: this.newActionItemAssignee().trim() || undefined,
       status: 'open',
       priority: this.newActionItemPriority(),
     });
-    
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
-    
+
     this.newActionItemInput.set('');
     this.newActionItemAssignee.set('');
     this.newActionItemPriority.set('MEDIUM');
   }
-  
+
   toggleActionItem(itemId: string) {
     const meeting = this.selectedMeeting();
     if (!meeting) return;
-    
-    const item = meeting.actionItems?.find(a => a.id === itemId);
+
+    const item = meeting.actionItems?.find((a) => a.id === itemId);
     if (item) {
       const newStatus = item.status === 'completed' ? 'open' : 'completed';
-      this.meetingsService.updateActionItem(meeting.id, itemId, { status: newStatus });
-      const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+      this.meetingsService.updateActionItem(meeting.id, itemId, {
+        status: newStatus,
+      });
+      const updated = this.meetingsService
+        .meetings()
+        .find((m) => m.id === meeting.id);
       if (updated) this.selectedMeeting.set(updated);
     }
   }
-  
+
   deleteActionItem(itemId: string) {
     const meeting = this.selectedMeeting();
     if (!meeting) return;
-    
+
     this.meetingsService.deleteActionItem(meeting.id, itemId);
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
   }
-  
+
   convertToTask(actionItem: ActionItem) {
     const meeting = this.selectedMeeting();
     if (!meeting) return;
-    
+
     this.meetingsService.convertActionItemToTask(meeting.id, actionItem.id);
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
   }
-  
+
   // Notes methods
   addNote() {
     const meeting = this.selectedMeeting();
     if (!meeting || !this.newNoteInput().trim()) return;
-    
+
     this.meetingsService.addNote(meeting.id, this.newNoteInput().trim());
-    
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
-    
+
     this.newNoteInput.set('');
   }
-  
+
   deleteNote(noteId: string) {
     const meeting = this.selectedMeeting();
     if (!meeting) return;
-    
+
     this.meetingsService.deleteNote(meeting.id, noteId);
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+    const updated = this.meetingsService
+      .meetings()
+      .find((m) => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
   }
-  
+
   // Labels methods
   addLabelToNew() {
     const label = this.newLabelInput().trim().toLowerCase();
     if (!label) return;
-    
+
     const current = this.newMeeting();
     if (!current.labels?.includes(label)) {
       this.newMeeting.set({
@@ -772,39 +855,43 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     }
     this.newLabelInput.set('');
   }
-  
+
   removeLabelFromNew(label: string) {
     const current = this.newMeeting();
     this.newMeeting.set({
       ...current,
-      labels: current.labels?.filter(l => l !== label) ?? [],
+      labels: current.labels?.filter((l) => l !== label) ?? [],
     });
   }
-  
+
   // Calendar methods
   previousMonth() {
     const current = this.calendarDate();
-    this.calendarDate.set(new Date(current.getFullYear(), current.getMonth() - 1, 1));
+    this.calendarDate.set(
+      new Date(current.getFullYear(), current.getMonth() - 1, 1),
+    );
   }
-  
+
   nextMonth() {
     const current = this.calendarDate();
-    this.calendarDate.set(new Date(current.getFullYear(), current.getMonth() + 1, 1));
+    this.calendarDate.set(
+      new Date(current.getFullYear(), current.getMonth() + 1, 1),
+    );
   }
-  
+
   goToToday() {
     this.calendarDate.set(new Date());
   }
-  
+
   isToday(date: Date): boolean {
     const today = new Date();
     return date.toDateString() === today.toDateString();
   }
-  
+
   isCurrentMonth(date: Date): boolean {
     return date.getMonth() === this.calendarDate().getMonth();
   }
-  
+
   selectCalendarDate(date: Date) {
     // If in create modal, set the date
     if (this.showDatePicker()) {
@@ -816,7 +903,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       this.showDatePicker.set(false);
     }
   }
-  
+
   // Utility methods
   formatTime(time: string): string {
     const [hours, minutes] = time.split(':').map(Number);
@@ -824,97 +911,124 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     const displayHours = hours % 12 || 12;
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   }
-  
+
   formatDate(dateStr: string): string {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-US', {
       weekday: 'short',
-      month: 'short', 
-      day: 'numeric' 
+      month: 'short',
+      day: 'numeric',
     });
   }
-  
+
   formatFullDate(dateStr: string): string {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
-      month: 'long', 
+      month: 'long',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   }
-  
+
   getRelativeDate(dateStr: string): string {
     const date = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     date.setHours(0, 0, 0, 0);
-    
-    const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
+    const diffDays = Math.round(
+      (date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
     if (diffDays === -1) return 'Yesterday';
-    if (diffDays > 0 && diffDays <= 7) return date.toLocaleDateString('en-US', { weekday: 'long' });
-    
+    if (diffDays > 0 && diffDays <= 7)
+      return date.toLocaleDateString('en-US', { weekday: 'long' });
+
     return this.formatDate(dateStr);
   }
-  
+
   getMeetingTypeIcon(type: string): string {
     switch (type) {
-      case 'video': return 'videocam';
-      case 'phone': return 'phone';
-      case 'in-person': return 'meeting_room';
-      case 'hybrid': return 'groups';
-      default: return 'event';
+      case 'video':
+        return 'videocam';
+      case 'phone':
+        return 'phone';
+      case 'in-person':
+        return 'meeting_room';
+      case 'hybrid':
+        return 'groups';
+      default:
+        return 'event';
     }
   }
-  
+
   getPlatformIcon(platform?: string): string {
     switch (platform) {
-      case 'zoom': return 'video_call';
-      case 'teams': return 'video_camera_front';
-      case 'meet': return 'duo';
-      case 'discord': return 'headphones';
-      default: return 'link';
+      case 'zoom':
+        return 'video_call';
+      case 'teams':
+        return 'video_camera_front';
+      case 'meet':
+        return 'duo';
+      case 'discord':
+        return 'headphones';
+      default:
+        return 'link';
     }
   }
-  
+
   getStatusColor(status: string): string {
     switch (status) {
-      case 'scheduled': return '#3B82F6';
-      case 'in_progress': return '#F97316';
-      case 'completed': return '#10B981';
-      case 'cancelled': return '#EF4444';
-      case 'rescheduled': return '#8B5CF6';
-      default: return '#6B7280';
+      case 'scheduled':
+        return '#3B82F6';
+      case 'in_progress':
+        return '#F97316';
+      case 'completed':
+        return '#10B981';
+      case 'cancelled':
+        return '#EF4444';
+      case 'rescheduled':
+        return '#8B5CF6';
+      default:
+        return '#6B7280';
     }
   }
-  
+
   getPriorityColor(priority?: string): string {
     switch (priority) {
-      case 'HIGH': return '#EF4444';
-      case 'MEDIUM': return '#F97316';
-      case 'LOW': return '#10B981';
-      default: return '#6B7280';
+      case 'HIGH':
+        return '#EF4444';
+      case 'MEDIUM':
+        return '#F97316';
+      case 'LOW':
+        return '#10B981';
+      default:
+        return '#6B7280';
     }
   }
-  
+
   getOpenActionItemsCount(meeting: Meeting): number {
-    return meeting.actionItems?.filter(a => a.status !== 'completed').length ?? 0;
+    return (
+      meeting.actionItems?.filter((a) => a.status !== 'completed').length ?? 0
+    );
   }
-  
+
   getCompletedActionItemsCount(meeting: Meeting): number {
-    return meeting.actionItems?.filter(a => a.status === 'completed').length ?? 0;
+    return (
+      meeting.actionItems?.filter((a) => a.status === 'completed').length ?? 0
+    );
   }
-  
+
   getActionItemsProgress(meeting: Meeting): number {
     const total = meeting.actionItems?.length ?? 0;
     if (total === 0) return 0;
     const completed = this.getCompletedActionItemsCount(meeting);
     return Math.round((completed / total) * 100);
   }
-  
+
   // Quick actions
   toggleQuickActions(meetingId: string, event: Event) {
     event.stopPropagation();
@@ -924,7 +1038,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       this.showQuickActions.set(meetingId);
     }
   }
-  
+
   joinMeeting(meeting: Meeting, event?: Event) {
     if (event) event.stopPropagation();
     if (meeting.meetingLink) {
@@ -932,36 +1046,36 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     }
     this.showQuickActions.set(null);
   }
-  
+
   // Update new meeting field
   updateNewMeetingField(field: keyof Meeting, value: any) {
     const current = this.newMeeting();
     this.newMeeting.set({ ...current, [field]: value });
   }
-  
+
   // Update edited meeting field
   updateEditedMeetingField(field: keyof Meeting, value: any) {
     const current = this.editedMeeting();
     this.editedMeeting.set({ ...current, [field]: value });
   }
-  
+
   // Track by functions
   trackByMeetingId(index: number, meeting: Meeting): string {
     return meeting.id;
   }
-  
+
   trackByAttendeeId(index: number, attendee: Attendee): string {
     return attendee.id;
   }
-  
+
   trackByAgendaId(index: number, item: AgendaItem): string {
     return item.id;
   }
-  
+
   trackByActionId(index: number, item: ActionItem): string {
     return item.id;
   }
-  
+
   trackByNoteId(index: number, note: MeetingNote): string {
     return note.id;
   }

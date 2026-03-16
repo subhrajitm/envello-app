@@ -1,4 +1,12 @@
-import { Component, signal, OnInit, OnDestroy, inject, computed, effect } from '@angular/core';
+import {
+  Component,
+  signal,
+  OnInit,
+  OnDestroy,
+  inject,
+  computed,
+  effect,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserService, TauriService } from '@envello/core';
 // import { environment } from '../../../../environments/environment'; // Environment might not be accessible easily from libs, assume injected or ignore for now
@@ -8,7 +16,7 @@ import { UserService, TauriService } from '@envello/core';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './footer.component.html',
-  styleUrl: './footer.component.css'
+  styleUrl: './footer.component.css',
 })
 export class FooterComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);

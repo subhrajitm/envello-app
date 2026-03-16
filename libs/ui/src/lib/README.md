@@ -5,6 +5,7 @@ Reusable UI components used across the Envello app. All components use design to
 ## Components
 
 ### `env-button`
+
 Primary, secondary, danger, and ghost buttons with optional icon.
 
 ```html
@@ -20,11 +21,11 @@ Primary, secondary, danger, and ghost buttons with optional icon.
 ---
 
 ### `env-icon-button`
+
 Icon-only button (add, close, etc.).
 
 ```html
-<env-icon-button icon="add" variant="primary" (clicked)="open()" title="Add" />
-<env-icon-button icon="close" variant="ghost" [active]="isActive" />
+<env-icon-button icon="add" variant="primary" (clicked)="open()" title="Add" /> <env-icon-button icon="close" variant="ghost" [active]="isActive" />
 ```
 
 **Inputs:** `icon`, `variant` (primary | ghost | danger), `size` (28 | 32), `disabled`, `active`, `title`  
@@ -33,6 +34,7 @@ Icon-only button (add, close, etc.).
 ---
 
 ### `env-badge`
+
 Small labels for status, counts, or tags.
 
 ```html
@@ -47,6 +49,7 @@ Small labels for status, counts, or tags.
 ---
 
 ### `env-modal`
+
 Overlay modal with header, body, and footer slots.
 
 ```html
@@ -68,14 +71,11 @@ Overlay modal with header, body, and footer slots.
 ---
 
 ### `env-empty-state`
+
 Centered empty state with icon, title, description, and optional action.
 
 ```html
-<env-empty-state
-  icon="library_books"
-  title="No Library Selected"
-  description="Select a library from the sidebar or create a new one."
->
+<env-empty-state icon="library_books" title="No Library Selected" description="Select a library from the sidebar or create a new one.">
   <env-button variant="primary" icon="add" (clicked)="create()">Create Library</env-button>
 </env-empty-state>
 ```
@@ -85,6 +85,7 @@ Centered empty state with icon, title, description, and optional action.
 ---
 
 ### `env-input`
+
 Form input with label; supports `ngModel` / `formControlName`.
 
 ```html

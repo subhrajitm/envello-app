@@ -109,7 +109,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-   /* Ensure all inner text/content sits exactly centered vertically */
+  /* Ensure all inner text/content sits exactly centered vertically */
   line-height: 1;
   cursor: pointer;
   transition: all 0.15s;

@@ -1,24 +1,37 @@
 <div class="ne-list-section">
-    <div class="ne-chap-header">
-        WORLD BUILDING
-        <span class="material-symbols-outlined icon-add" (click)="addNewLocation.emit()"
-            title="Add new location">add</span>
-    </div>
-    <div class="ne-simple-list">
-        @for (loc of locations(); track loc.id) {
-        <div class="ne-list-item" (click)="selectLocation.emit(loc.id)"
-            [class.active]="selectedLocationId() === loc.id">
-            <div class="ne-avatar-mini loc-mini">
-                <span class="material-symbols-outlined">public</span>
-            </div>
-            <div class="list-info">
-                <div class="list-title">{{ loc.name }}</div>
-                <div class="list-sub">{{ loc.type }}</div>
-            </div>
-            <span class="material-symbols-outlined list-delete"
-                (click)="deleteLocation.emit({ id: loc.id, name: loc.name }); $event.stopPropagation()"
-                title="Delete location">delete</span>
+  <div class="ne-chap-header">
+    WORLD BUILDING
+    <span
+      class="material-symbols-outlined icon-add"
+      (click)="addNewLocation.emit()"
+      title="Add new location"
+      >add</span
+    >
+  </div>
+  <div class="ne-simple-list">
+    @for (loc of locations(); track loc.id) {
+      <div
+        class="ne-list-item"
+        (click)="selectLocation.emit(loc.id)"
+        [class.active]="selectedLocationId() === loc.id"
+      >
+        <div class="ne-avatar-mini loc-mini">
+          <span class="material-symbols-outlined">public</span>
         </div>
-        }
-    </div>
+        <div class="list-info">
+          <div class="list-title">{{ loc.name }}</div>
+          <div class="list-sub">{{ loc.type }}</div>
+        </div>
+        <span
+          class="material-symbols-outlined list-delete"
+          (click)="
+            deleteLocation.emit({ id: loc.id, name: loc.name });
+            $event.stopPropagation()
+          "
+          title="Delete location"
+          >delete</span
+        >
+      </div>
+    }
+  </div>
 </div>

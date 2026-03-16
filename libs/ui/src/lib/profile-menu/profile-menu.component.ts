@@ -14,13 +14,19 @@ import { UserService } from '@envello/core';
     trigger('slideDown', [
       transition(':enter', [
         style({ transform: 'translateY(-10px)', opacity: 0 }),
-        animate('200ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
+        animate(
+          '200ms ease-out',
+          style({ transform: 'translateY(0)', opacity: 1 }),
+        ),
       ]),
       transition(':leave', [
-        animate('150ms ease-in', style({ transform: 'translateY(-10px)', opacity: 0 }))
-      ])
-    ])
-  ]
+        animate(
+          '150ms ease-in',
+          style({ transform: 'translateY(-10px)', opacity: 0 }),
+        ),
+      ]),
+    ]),
+  ],
 })
 export class ProfileMenuComponent {
   private userService = inject(UserService);
@@ -86,14 +92,14 @@ export class ProfileMenuComponent {
   toggleEmailNotifications() {
     const current = this.user()?.preferences.emailNotifications;
     this.userService.updatePreferences({
-      emailNotifications: !current
+      emailNotifications: !current,
     });
   }
 
   toggleAutoBackup() {
     const current = this.user()?.preferences.autoBackup;
     this.userService.updatePreferences({
-      autoBackup: !current
+      autoBackup: !current,
     });
   }
 
@@ -118,7 +124,7 @@ export class ProfileMenuComponent {
 
     return joinedDate.toLocaleDateString('en-US', {
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
   }
 

@@ -20,27 +20,27 @@ export interface SessionData {
 
 const STORAGE_KEY = 'envello-session-data';
 const PAGE_MAP: Record<string, string> = {
-  'overview': 'Overview',
-  'novels': 'Novels/Fiction',
-  'research': 'Research',
-  'articles': 'Articles/Blogs',
-  'journals': 'Journals',
+  overview: 'Overview',
+  novels: 'Novels/Fiction',
+  research: 'Research',
+  articles: 'Articles/Blogs',
+  journals: 'Journals',
   'daily-notes': 'Daily Notes',
-  'tasks': 'Tasks/Todos',
-  'meetings': 'Meetings',
-  'books': 'Books/Reading',
-  'snippets': 'Code Snippets',
-  'bin': 'Bin'
+  tasks: 'Tasks/Todos',
+  meetings: 'Meetings',
+  books: 'Books/Reading',
+  snippets: 'Code Snippets',
+  bin: 'Bin',
 };
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SessionService implements OnDestroy {
   private router = inject(Router);
   private routerSub?: Subscription;
   private intervalId?: ReturnType<typeof setInterval>;
-  
+
   private currentPage = signal<string>('');
   private pageStartTime = signal<number>(0);
   private sessionData = signal<SessionData>(this.loadSessionData());
@@ -48,7 +48,9 @@ export class SessionService implements OnDestroy {
   // Computed stats
   pageStats = computed(() => {
     const data = this.sessionData();
-    return Object.values(data.pages).sort((a, b) => b.totalTimeMs - a.totalTimeMs);
+    return Object.values(data.pages).sort(
+      (a, b) => b.totalTimeMs - a.totalTimeMs,
+    );
   });
 
   todayTime = computed(() => {
@@ -70,14 +72,14 @@ export class SessionService implements OnDestroy {
 
   private initTracking(): void {
     // Track route changes
-    this.routerSub = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event) => {
-      const navEnd = event as NavigationEnd;
-      const urlPath = navEnd.urlAfterRedirects.split('/')[1] || 'overview';
-      const pageName = PAGE_MAP[urlPath] || 'Overview';
-      this.onPageChange(pageName);
-    });
+    this.routerSub = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        const navEnd = event as NavigationEnd;
+        const urlPath = navEnd.urlAfterRedirects.split('/')[1] || 'overview';
+        const pageName = PAGE_MAP[urlPath] || 'Overview';
+        this.onPageChange(pageName);
+      });
 
     // Update time every second while on a page
     this.intervalId = setInterval(() => {
@@ -104,14 +106,17 @@ export class SessionService implements OnDestroy {
   private cleanup(): void {
     // Save current page time before cleanup
     this.saveCurrentPageTime();
-    
+
     if (this.routerSub) {
       this.routerSub.unsubscribe();
     }
     if (this.intervalId) {
       clearInterval(this.intervalId);
     }
-    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    document.removeEventListener(
+      'visibilitychange',
+      this.handleVisibilityChange,
+    );
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
   }
 
@@ -132,42 +137,42 @@ export class SessionService implements OnDestroy {
   private onPageChange(newPage: string): void {
     // Save time for the previous page
     this.saveCurrentPageTime();
-    
+
     // Set up tracking for new page
     this.currentPage.set(newPage);
     this.pageStartTime.set(Date.now());
-    
+
     // Increment visit count for new page
-    this.sessionData.update(data => {
+    this.sessionData.update((data) => {
       const pages = { ...data.pages };
       const existing = pages[newPage] || {
         page: newPage,
         totalTimeMs: 0,
         visits: 0,
-        lastVisited: new Date().toISOString()
+        lastVisited: new Date().toISOString(),
       };
-      
+
       pages[newPage] = {
         ...existing,
         visits: existing.visits + 1,
-        lastVisited: new Date().toISOString()
+        lastVisited: new Date().toISOString(),
       };
-      
+
       return { ...data, pages };
     });
-    
+
     this.persistSessionData();
   }
 
   private updateCurrentPageTime(): void {
     if (document.hidden) return;
-    
+
     const page = this.currentPage();
     const startTime = this.pageStartTime();
     if (!page || !startTime) return;
-    
+
     const elapsed = Date.now() - startTime;
-    
+
     // Only update if at least 1 second has passed
     if (elapsed >= 1000) {
       this.addTimeToPage(page, 1000);
@@ -179,7 +184,7 @@ export class SessionService implements OnDestroy {
     const page = this.currentPage();
     const startTime = this.pageStartTime();
     if (!page || !startTime) return;
-    
+
     const elapsed = Date.now() - startTime;
     if (elapsed > 0) {
       this.addTimeToPage(page, elapsed);
@@ -189,22 +194,22 @@ export class SessionService implements OnDestroy {
 
   private addTimeToPage(page: string, timeMs: number): void {
     const today = new Date().toISOString().split('T')[0];
-    
-    this.sessionData.update(data => {
+
+    this.sessionData.update((data) => {
       const pages = { ...data.pages };
       const existing = pages[page] || {
         page,
         totalTimeMs: 0,
         visits: 0,
-        lastVisited: new Date().toISOString()
+        lastVisited: new Date().toISOString(),
       };
-      
+
       pages[page] = {
         ...existing,
         totalTimeMs: existing.totalTimeMs + timeMs,
-        lastVisited: new Date().toISOString()
+        lastVisited: new Date().toISOString(),
       };
-      
+
       // Reset today's time if it's a new day
       let todayTimeMs = data.todayTimeMs;
       let todayDate = data.todayDate;
@@ -213,16 +218,16 @@ export class SessionService implements OnDestroy {
         todayDate = today;
       }
       todayTimeMs += timeMs;
-      
+
       return {
         ...data,
         pages,
         totalSessionTimeMs: data.totalSessionTimeMs + timeMs,
         todayTimeMs,
-        todayDate
+        todayDate,
       };
     });
-    
+
     this.persistSessionData();
   }
 
@@ -242,7 +247,7 @@ export class SessionService implements OnDestroy {
     } catch (e) {
       console.error('[SessionService] Failed to load session data:', e);
     }
-    
+
     return this.createEmptySessionData();
   }
 
@@ -252,7 +257,7 @@ export class SessionService implements OnDestroy {
       sessionStart: new Date().toISOString(),
       totalSessionTimeMs: 0,
       todayTimeMs: 0,
-      todayDate: new Date().toISOString().split('T')[0]
+      todayDate: new Date().toISOString().split('T')[0],
     };
   }
 
@@ -280,7 +285,7 @@ export class SessionService implements OnDestroy {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -294,7 +299,7 @@ export class SessionService implements OnDestroy {
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }

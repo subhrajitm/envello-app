@@ -58,14 +58,20 @@ export class TauriService {
   }
 
   /** Show native save dialog and return selected path, or null if cancelled (Tauri only). */
-  async saveFile(options: { defaultPath?: string; filters?: { name: string; extensions: string[] }[] }): Promise<string | null> {
+  async saveFile(options: {
+    defaultPath?: string;
+    filters?: { name: string; extensions: string[] }[];
+  }): Promise<string | null> {
     if (!this._isTauri()) return null;
     const { save } = await import('@tauri-apps/plugin-dialog');
     return save(options);
   }
 
   /** Show native open file dialog and return selected path(s) (Tauri only). */
-  async openFile(options: { multiple?: boolean; filters?: { name: string; extensions: string[] }[] }): Promise<string | string[] | null> {
+  async openFile(options: {
+    multiple?: boolean;
+    filters?: { name: string; extensions: string[] }[];
+  }): Promise<string | string[] | null> {
     if (!this._isTauri()) return null;
     const { open } = await import('@tauri-apps/plugin-dialog');
     return open({ ...options, directory: false });
@@ -89,7 +95,10 @@ export class TauriService {
   async onFileDrop(callback: (paths: string[]) => void): Promise<() => void> {
     if (!this._isTauri()) return () => {};
     const { listen } = await import('@tauri-apps/api/event');
-    const unlisten = await listen<{ paths: string[] }>('tauri://file-drop', (e) => callback(e.payload.paths));
+    const unlisten = await listen<{ paths: string[] }>(
+      'tauri://file-drop',
+      (e) => callback(e.payload.paths),
+    );
     return () => {
       unlisten();
     };
@@ -98,15 +107,18 @@ export class TauriService {
   /** Send native desktop notification (Tauri only). */
   async notify(options: { title: string; body?: string }): Promise<void> {
     if (!this._isTauri()) return;
-    const { isPermissionGranted, requestPermission, sendNotification } = await import('@tauri-apps/plugin-notification');
+    const { isPermissionGranted, requestPermission, sendNotification } =
+      await import('@tauri-apps/plugin-notification');
     let granted = await isPermissionGranted();
     if (!granted) {
       const permission = await requestPermission();
       granted = permission === 'granted';
     }
     if (granted) {
-      await sendNotification({ title: options.title, body: options.body ?? '' });
+      await sendNotification({
+        title: options.title,
+        body: options.body ?? '',
+      });
     }
   }
-
 }

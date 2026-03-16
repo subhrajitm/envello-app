@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class VoiceService {
   isVoiceActive = signal(false);
@@ -25,8 +25,10 @@ export class VoiceService {
     if (typeof window === 'undefined') return;
 
     // Type casting to avoid TypeScript errors for Web Speech API
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
       this.recognition.continuous = true;
@@ -41,11 +43,11 @@ export class VoiceService {
         // If VoiceService says it should be active but recognition ended
         // we can try to restart it if the user is still long pressing
         if (this.isVoiceActive()) {
-           try {
-             this.recognition.start();
-           } catch (e) {
-             console.error('Error restarting speech recognition:', e);
-           }
+          try {
+            this.recognition.start();
+          } catch (e) {
+            console.error('Error restarting speech recognition:', e);
+          }
         }
       };
 
@@ -56,9 +58,9 @@ export class VoiceService {
             transcript += event.results[i][0].transcript;
           }
         }
-        
+
         if (transcript) {
-           this.insertTextAtCursor(transcript);
+          this.insertTextAtCursor(transcript);
         }
       };
 
@@ -91,41 +93,54 @@ export class VoiceService {
   }
 
   private insertTextAtCursor(text: string) {
-    const activeEl = document.activeElement as HTMLElement | HTMLInputElement | HTMLTextAreaElement;
+    const activeEl = document.activeElement as
+      | HTMLElement
+      | HTMLInputElement
+      | HTMLTextAreaElement;
     if (!activeEl) return;
 
     // Check if the element is an input or textarea
-    if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
-        // Prevent editing read only or disabled fields
-        if (activeEl.readOnly || activeEl.disabled) return;
-        
-        const start = activeEl.selectionStart || 0;
-        const end = activeEl.selectionEnd || 0;
-        const value = activeEl.value;
-        const textToInsert = (start > 0 && value[start - 1] !== ' ' && !text.startsWith(' ')) ? ' ' + text : text;
-        
-        activeEl.value = value.substring(0, start) + textToInsert + value.substring(end);
-        activeEl.selectionStart = activeEl.selectionEnd = start + textToInsert.length;
-        
-        // Dispatch input event for Angular
-        activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+    if (
+      activeEl instanceof HTMLInputElement ||
+      activeEl instanceof HTMLTextAreaElement
+    ) {
+      // Prevent editing read only or disabled fields
+      if (activeEl.readOnly || activeEl.disabled) return;
+
+      const start = activeEl.selectionStart || 0;
+      const end = activeEl.selectionEnd || 0;
+      const value = activeEl.value;
+      const textToInsert =
+        start > 0 && value[start - 1] !== ' ' && !text.startsWith(' ')
+          ? ' ' + text
+          : text;
+
+      activeEl.value =
+        value.substring(0, start) + textToInsert + value.substring(end);
+      activeEl.selectionStart = activeEl.selectionEnd =
+        start + textToInsert.length;
+
+      // Dispatch input event for Angular
+      activeEl.dispatchEvent(new Event('input', { bubbles: true }));
     } else if (activeEl.isContentEditable) {
-        // For rich text editors or contenteditable div
-        // Ensure starting space if needed
-        const selection = window.getSelection();
-        let addSpace = true;
-        if (selection && selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            if (range.startContainer && range.startOffset > 0) {
-              const prevText = range.startContainer.textContent;
-              if (prevText && prevText[range.startOffset - 1] === ' ') addSpace = false;
-            } else {
-              addSpace = false;
-            }
+      // For rich text editors or contenteditable div
+      // Ensure starting space if needed
+      const selection = window.getSelection();
+      let addSpace = true;
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        if (range.startContainer && range.startOffset > 0) {
+          const prevText = range.startContainer.textContent;
+          if (prevText && prevText[range.startOffset - 1] === ' ')
+            addSpace = false;
+        } else {
+          addSpace = false;
         }
-        
-        const textToInsert = (addSpace && !text.startsWith(' ')) ? ' ' + text : text;
-        document.execCommand('insertText', false, textToInsert);
+      }
+
+      const textToInsert =
+        addSpace && !text.startsWith(' ') ? ' ' + text : text;
+      document.execCommand('insertText', false, textToInsert);
     }
   }
 

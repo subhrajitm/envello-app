@@ -9,7 +9,7 @@ import { RecentActivityComponent } from '../dashboard/recent-activity/recent-act
   standalone: true,
   imports: [CommonModule, RecentActivityComponent],
   templateUrl: './overview.component.html',
-  styleUrl: './overview.component.css'
+  styleUrl: './overview.component.css',
 })
 export class OverviewComponent {
   store = inject(StoreService);
@@ -17,12 +17,14 @@ export class OverviewComponent {
   user = this.userService.user;
 
   // Stats
-  wordCount = computed(() => this.formatNumber(this.user()?.stats.totalWords || 0));
+  wordCount = computed(() =>
+    this.formatNumber(this.user()?.stats.totalWords || 0),
+  );
   streak = computed(() => (this.user()?.stats.daysActive || 0) + 'd');
 
   streakClass = computed(() => {
     const days = this.user()?.stats.daysActive || 0;
-    if (days >= 365) return 'yellow'; // Keep yellow for top tier or change? User said 365d showing same... 
+    if (days >= 365) return 'yellow'; // Keep yellow for top tier or change? User said 365d showing same...
     // Actually user complaint "color is showing same in all views" might mean they expect DIFFERENT colors for different ranges.
     // I'll implement a tiered system.
     if (days >= 365) return 'streak-diamond';
@@ -39,11 +41,17 @@ export class OverviewComponent {
 
   planningItems = this.store.planningItems;
 
-
-
   /* Fill empty cells for illustration */
   calendarPlaceholders = new Array(3).fill(null);
-  weekDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  weekDays = [
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY',
+  ];
 
   constructor() {
     this.generateCalendar();
@@ -69,7 +77,7 @@ export class OverviewComponent {
       newDate.setMonth(newDate.getMonth() + delta);
     } else {
       // Move by 2 weeks
-      newDate.setDate(newDate.getDate() + (delta * 14));
+      newDate.setDate(newDate.getDate() + delta * 14);
     }
     this.currentDate = newDate;
     this.generateCalendar();
@@ -81,12 +89,22 @@ export class OverviewComponent {
 
     // Set header display
     if (this.viewMode() === 'MONTH') {
-      this.currentMonth.set(viewDate.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase());
+      this.currentMonth.set(
+        viewDate
+          .toLocaleString('default', { month: 'long', year: 'numeric' })
+          .toUpperCase(),
+      );
     } else {
       const endDate = new Date(viewDate);
       endDate.setDate(viewDate.getDate() + 13);
-      const startStr = viewDate.toLocaleString('default', { month: 'short', day: 'numeric' });
-      const endStr = endDate.toLocaleString('default', { month: 'short', day: 'numeric' });
+      const startStr = viewDate.toLocaleString('default', {
+        month: 'short',
+        day: 'numeric',
+      });
+      const endStr = endDate.toLocaleString('default', {
+        month: 'short',
+        day: 'numeric',
+      });
       this.currentMonth.set(`${startStr} - ${endStr}`.toUpperCase());
     }
 
@@ -107,16 +125,24 @@ export class OverviewComponent {
       for (let i = startDayOfWeek - 1; i >= 0; i--) {
         daysArray.push({
           date: prevMonthLastDay - i,
-          prevMonth: true
+          prevMonth: true,
         });
       }
 
       // Add current month's days
       for (let i = 1; i <= lastDay.getDate(); i++) {
-        const isToday = i === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+        const isToday =
+          i === now.getDate() &&
+          month === now.getMonth() &&
+          year === now.getFullYear();
         const events = [];
 
-        if (i === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
+        if (i === 1)
+          events.push({
+            title: 'DRAFT 2 SESSION',
+            time: '09:00 - 11:30',
+            type: 'fiction',
+          });
         if (isToday) {
           events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
           events.push({ title: 'EMERALD EDIT', type: 'fiction' });
@@ -127,7 +153,10 @@ export class OverviewComponent {
           date: i,
           today: isToday,
           events: events,
-          hasAdd: i === now.getDate() + 1 && month === now.getMonth() && year === now.getFullYear()
+          hasAdd:
+            i === now.getDate() + 1 &&
+            month === now.getMonth() &&
+            year === now.getFullYear(),
         });
       }
     } else {
@@ -141,10 +170,18 @@ export class OverviewComponent {
         const d = new Date(startDate);
         d.setDate(startDate.getDate() + i);
 
-        const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        const isToday =
+          d.getDate() === now.getDate() &&
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear();
         const events = [];
 
-        if (d.getDate() === 1) events.push({ title: 'DRAFT 2 SESSION', time: '09:00 - 11:30', type: 'fiction' });
+        if (d.getDate() === 1)
+          events.push({
+            title: 'DRAFT 2 SESSION',
+            time: '09:00 - 11:30',
+            type: 'fiction',
+          });
         if (isToday) {
           events.push({ title: 'CHARACTER ARC DUE', type: 'deadline' });
         }
@@ -153,7 +190,7 @@ export class OverviewComponent {
           date: d.getDate(),
           today: isToday,
           events: events,
-          hasAdd: false
+          hasAdd: false,
         });
       }
     }

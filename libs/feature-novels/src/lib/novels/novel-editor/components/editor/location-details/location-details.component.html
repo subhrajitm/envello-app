@@ -1,49 +1,80 @@
 <div class="ne-details-canvas">
-    @if (location(); as activeLoc) {
+  @if (location(); as activeLoc) {
     <div class="ne-ent-card">
-        <div class="ne-ent-header-bg loc-bg"></div>
-        <div class="ne-ent-header-content">
-            <div class="ne-ent-avatar-xl loc-avatar">
-                <span class="material-symbols-outlined">public</span>
-            </div>
-            <div class="ne-ent-title-group">
-                <input type="text" class="ne-ent-title-input" [value]="activeLoc.name"
-                    (input)="updateField.emit({ id: activeLoc.id, field: 'name', value: $any($event.target).value })"
-                    placeholder="Location Name" />
-                <div class="ne-ent-subtitle">LOCATION DETAILS</div>
-            </div>
+      <div class="ne-ent-header-bg loc-bg"></div>
+      <div class="ne-ent-header-content">
+        <div class="ne-ent-avatar-xl loc-avatar">
+          <span class="material-symbols-outlined">public</span>
+        </div>
+        <div class="ne-ent-title-group">
+          <input
+            type="text"
+            class="ne-ent-title-input"
+            [value]="activeLoc.name"
+            (input)="
+              updateField.emit({
+                id: activeLoc.id,
+                field: 'name',
+                value: $any($event.target).value,
+              })
+            "
+            placeholder="Location Name"
+          />
+          <div class="ne-ent-subtitle">LOCATION DETAILS</div>
+        </div>
+      </div>
+
+      <div class="ne-ent-body">
+        <div class="ne-ent-field">
+          <label>LOCATION TYPE</label>
+          <div class="input-wrapper">
+            <span class="material-symbols-outlined field-icon">terrain</span>
+            <input
+              type="text"
+              [value]="activeLoc.type"
+              (input)="
+                updateField.emit({
+                  id: activeLoc.id,
+                  field: 'type',
+                  value: $any($event.target).value,
+                })
+              "
+              placeholder="e.g. City, Planet, Room"
+            />
+          </div>
         </div>
 
-        <div class="ne-ent-body">
-            <div class="ne-ent-field">
-                <label>LOCATION TYPE</label>
-                <div class="input-wrapper">
-                    <span class="material-symbols-outlined field-icon">terrain</span>
-                    <input type="text" [value]="activeLoc.type"
-                        (input)="updateField.emit({ id: activeLoc.id, field: 'type', value: $any($event.target).value })"
-                        placeholder="e.g. City, Planet, Room" />
-                </div>
-            </div>
-
-            <div class="ne-ent-field full-width">
-                <label>DESCRIPTION & LORE</label>
-                <textarea class="ne-ent-textarea" [value]="activeLoc.description"
-                    (input)="updateField.emit({ id: activeLoc.id, field: 'description', value: $any($event.target).value })"
-                    placeholder="Describe the atmosphere, history, and key features..."></textarea>
-            </div>
+        <div class="ne-ent-field full-width">
+          <label>DESCRIPTION & LORE</label>
+          <textarea
+            class="ne-ent-textarea"
+            [value]="activeLoc.description"
+            (input)="
+              updateField.emit({
+                id: activeLoc.id,
+                field: 'description',
+                value: $any($event.target).value,
+              })
+            "
+            placeholder="Describe the atmosphere, history, and key features..."
+          ></textarea>
         </div>
+      </div>
     </div>
-    } @else {
+  } @else {
     <div class="ne-empty-state">
-        <div class="empty-state-icon">
-            <span class="material-symbols-outlined">public</span>
-        </div>
-        <h3 class="empty-state-title">No Location Selected</h3>
-        <p class="empty-state-text">Select a location from the sidebar to view and edit its details, or create a new location to build your world.</p>
-        <button class="ne-btn-primary" (click)="addNewLocation.emit()">
-            <span class="material-symbols-outlined">add</span>
-            Create Location
-        </button>
+      <div class="empty-state-icon">
+        <span class="material-symbols-outlined">public</span>
+      </div>
+      <h3 class="empty-state-title">No Location Selected</h3>
+      <p class="empty-state-text">
+        Select a location from the sidebar to view and edit its details, or
+        create a new location to build your world.
+      </p>
+      <button class="ne-btn-primary" (click)="addNewLocation.emit()">
+        <span class="material-symbols-outlined">add</span>
+        Create Location
+      </button>
     </div>
-    }
+  }
 </div>

@@ -3,12 +3,14 @@
 ## ✅ Created Components (12/18)
 
 ### Modals (4/4) ✅
+
 - `DeleteModalComponent`
 - `AddModalComponent`
 - `LinkModalComponent`
 - `VersionHistoryModalComponent`
 
 ### Left Sidebar (5/5) ✅
+
 - `SyncStatusComponent`
 - `ChaptersListComponent`
 - `StructureViewComponent`
@@ -16,6 +18,7 @@
 - `LocationsListComponent`
 
 ### Editor (3/6)
+
 - ✅ `EditorHeaderComponent`
 - ✅ `EditorToolbarComponent`
 - ✅ `ManuscriptEditorComponent`
@@ -24,6 +27,7 @@
 - ⏳ `LocationDetailsComponent`
 
 ### Right Sidebar (0/3)
+
 - ⏳ `AiPanelComponent`
 - ⏳ `NotesPanelComponent`
 - ⏳ `ManuscriptDataComponent`
@@ -52,8 +56,8 @@ import { ManuscriptEditorComponent } from './components/editor/manuscript-editor
   selector: 'app-novel-editor',
   standalone: true,
   imports: [
-    CommonModule, 
-    TiptapEditorDirective, 
+    CommonModule,
+    TiptapEditorDirective,
     FormsModule,
     // Modals
     DeleteModalComponent,
@@ -80,91 +84,31 @@ import { ManuscriptEditorComponent } from './components/editor/manuscript-editor
 Replace sections in `novel-editor.component.html`:
 
 #### Left Sidebar Example:
+
 ```html
 <!-- MANUSCRIPT VIEW -->
 @if (activeNav() === 'manuscript' && novel()) {
-  <app-chapters-list
-    [chapters]="novel()!.chapters"
-    [activeChapterId]="activeChapterId()"
-    [bulkMode]="bulkMode()"
-    [selectedChapters]="selectedChapters()"
-    [addMenuOpen]="addMenuOpen()"
-    (selectChapter)="selectChapter($event)"
-    (toggleChapter)="toggleChapter($event)"
-    (deleteChapter)="deleteChapter($event.id, $event.title)"
-    (deleteGroup)="deleteGroup($event.id, $event.title)"
-    (toggleBulkMode)="toggleBulkMode()"
-    (bulkDelete)="bulkDeleteChapters()"
-    (toggleAddMenu)="toggleAddMenu()"
-    (addNewActOrPart)="addNewActOrPart()"
-    (addNewChapter)="addNewChapter()"
-    (toggleChapterSelection)="toggleChapterSelection($event)"
-  />
+<app-chapters-list [chapters]="novel()!.chapters" [activeChapterId]="activeChapterId()" [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()" (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)" (deleteChapter)="deleteChapter($event.id, $event.title)" (deleteGroup)="deleteGroup($event.id, $event.title)" (toggleBulkMode)="toggleBulkMode()" (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()" (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()" (toggleChapterSelection)="toggleChapterSelection($event)" />
 }
 ```
 
 #### Modals Example:
-```html
-<app-delete-modal
-  [modal]="deleteModal()"
-  (confirm)="confirmDelete()"
-  (cancel)="cancelDelete()"
-/>
 
-<app-add-modal
-  [modal]="addModal()"
-  (inputValueChange)="updateAddModalInput($event)"
-  (inputValue2Change)="updateAddModalInput2($event)"
-  (confirm)="confirmAdd()"
-  (cancel)="cancelAdd()"
-/>
+```html
+<app-delete-modal [modal]="deleteModal()" (confirm)="confirmDelete()" (cancel)="cancelDelete()" />
+
+<app-add-modal [modal]="addModal()" (inputValueChange)="updateAddModalInput($event)" (inputValue2Change)="updateAddModalInput2($event)" (confirm)="confirmAdd()" (cancel)="cancelAdd()" />
 ```
 
 #### Editor Example:
+
 ```html
-<app-editor-header
-  [activeNav]="activeNav()"
-  [canUndo]="canUndo()"
-  [canRedo]="canRedo()"
-  [searchOpen]="searchOpen()"
-  [searchQuery]="searchQuery()"
-  [filteredResults]="filteredChapters()"
-  [focusMode]="focusMode()"
-  [fullScreenMode]="fullScreenMode()"
-  [exportMenuOpen]="exportMenuOpen()"
-  (setActiveNav)="setActiveNav($event)"
-  (performUndo)="performUndo()"
-  (performRedo)="performRedo()"
-  (toggleSearch)="toggleSearch()"
-  (searchQueryChange)="searchQuery.set($event)"
-  (selectSearchResult)="selectSearchResult($event)"
-  (toggleFocusMode)="toggleFocusMode()"
-  (toggleFullScreen)="toggleFullScreen()"
-  (openVersionHistory)="openVersionHistory()"
-  (toggleExportMenu)="toggleExportMenu()"
-  (exportNovel)="exportNovel($event)"
-/>
+<app-editor-header [activeNav]="activeNav()" [canUndo]="canUndo()" [canRedo]="canRedo()" [searchOpen]="searchOpen()" [searchQuery]="searchQuery()" [filteredResults]="filteredChapters()" [focusMode]="focusMode()" [fullScreenMode]="fullScreenMode()" [exportMenuOpen]="exportMenuOpen()" (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()" (toggleSearch)="toggleSearch()" (searchQueryChange)="searchQuery.set($event)" (selectSearchResult)="selectSearchResult($event)" (toggleFocusMode)="toggleFocusMode()" (toggleFullScreen)="toggleFullScreen()" (openVersionHistory)="openVersionHistory()" (toggleExportMenu)="toggleExportMenu()" (exportNovel)="exportNovel($event)" />
 
 @if (editor && activeNav() === 'manuscript') {
-  <app-editor-toolbar
-    [editor]="editor"
-    (openLinkModal)="openLinkModal()"
-    (addImage)="addImage()"
-    (insertTable)="insertTable()"
-    (addYoutube)="addYoutube()"
-  />
-  
-  <app-manuscript-editor
-    [editor]="editor"
-    [activeChapterId]="activeChapterId()"
-    [title]="title()"
-    [chapterStatus]="chapterStatus()"
-    [chapterLastEdited]="chapterLastEdited()"
-    [isSaving]="isSaving()"
-    [lastSaved]="lastSaved()"
-    (titleChange)="onTitleChange($event)"
-    (addNewChapter)="addNewChapter()"
-  />
+<app-editor-toolbar [editor]="editor" (openLinkModal)="openLinkModal()" (addImage)="addImage()" (insertTable)="insertTable()" (addYoutube)="addYoutube()" />
+
+<app-manuscript-editor [editor]="editor" [activeChapterId]="activeChapterId()" [title]="title()" [chapterStatus]="chapterStatus()" [chapterLastEdited]="chapterLastEdited()" [isSaving]="isSaving()" [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)" (addNewChapter)="addNewChapter()" />
 }
 ```
 
@@ -182,6 +126,7 @@ deleteChapter(data: { id: string; title?: string }) {
 ### 4. Complete Remaining Components
 
 Follow the same pattern for:
+
 - `StructureEditorComponent` - Similar to ManuscriptEditor but for front matter/prologue
 - `CharacterDetailsComponent` - Character editing form
 - `LocationDetailsComponent` - Location editing form

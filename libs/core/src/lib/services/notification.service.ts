@@ -16,7 +16,7 @@ export interface Notification {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NotificationService {
   private tauriService = inject(TauriService);
@@ -39,10 +39,13 @@ export class NotificationService {
       ...notification,
       id,
       timestamp: new Date(),
-      read: false
+      read: false,
     };
 
-    this.notifications.update(notifications => [newNotification, ...notifications]);
+    this.notifications.update((notifications) => [
+      newNotification,
+      ...notifications,
+    ]);
     this.updateUnreadCount();
     this.saveNotifications();
 
@@ -71,8 +74,8 @@ export class NotificationService {
 
   // Mark notification as read
   markAsRead(id: string) {
-    this.notifications.update(notifications =>
-      notifications.map(n => n.id === id ? { ...n, read: true } : n)
+    this.notifications.update((notifications) =>
+      notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
     this.updateUnreadCount();
     this.saveNotifications();
@@ -80,8 +83,8 @@ export class NotificationService {
 
   // Mark all as read
   markAllAsRead() {
-    this.notifications.update(notifications =>
-      notifications.map(n => ({ ...n, read: true }))
+    this.notifications.update((notifications) =>
+      notifications.map((n) => ({ ...n, read: true })),
     );
     this.updateUnreadCount();
     this.saveNotifications();
@@ -89,8 +92,8 @@ export class NotificationService {
 
   // Delete notification
   delete(id: string) {
-    this.notifications.update(notifications =>
-      notifications.filter(n => n.id !== id)
+    this.notifications.update((notifications) =>
+      notifications.filter((n) => n.id !== id),
     );
     this.updateUnreadCount();
     this.saveNotifications();
@@ -105,8 +108,8 @@ export class NotificationService {
 
   // Clear read notifications
   clearRead() {
-    this.notifications.update(notifications =>
-      notifications.filter(n => !n.read)
+    this.notifications.update((notifications) =>
+      notifications.filter((n) => !n.read),
     );
     this.updateUnreadCount();
     this.saveNotifications();
@@ -114,12 +117,12 @@ export class NotificationService {
 
   // Get notification by ID
   getById(id: string): Notification | undefined {
-    return this.notifications().find(n => n.id === id);
+    return this.notifications().find((n) => n.id === id);
   }
 
   // Get unread notifications
   getUnread(): Notification[] {
-    return this.notifications().filter(n => !n.read);
+    return this.notifications().filter((n) => !n.read);
   }
 
   // Private methods
@@ -128,14 +131,14 @@ export class NotificationService {
   }
 
   private updateUnreadCount() {
-    const count = this.notifications().filter(n => !n.read).length;
+    const count = this.notifications().filter((n) => !n.read).length;
     this.unreadCount.set(count);
   }
 
   private saveNotifications() {
-    const data = this.notifications().map(n => ({
+    const data = this.notifications().map((n) => ({
       ...n,
-      timestamp: n.timestamp.toISOString()
+      timestamp: n.timestamp.toISOString(),
     }));
     localStorage.setItem('envello-notifications', JSON.stringify(data));
   }
@@ -147,7 +150,7 @@ export class NotificationService {
         const data = JSON.parse(saved);
         const notifications = data.map((n: any) => ({
           ...n,
-          timestamp: new Date(n.timestamp)
+          timestamp: new Date(n.timestamp),
         }));
         this.notifications.set(notifications);
         this.updateUnreadCount();
@@ -160,7 +163,9 @@ export class NotificationService {
   private showBrowserNotification(notification: Notification) {
     // When running in Tauri, use native desktop notification
     if (this.tauriService.isTauri()) {
-      this.tauriService.notify({ title: notification.title, body: notification.message }).catch(() => {});
+      this.tauriService
+        .notify({ title: notification.title, body: notification.message })
+        .catch(() => {});
       return;
     }
 
@@ -185,9 +190,8 @@ export class NotificationService {
       new Notification(notification.title, {
         body: notification.message,
         icon: '/favicon.ico',
-        badge: '/favicon.ico'
+        badge: '/favicon.ico',
       });
     }
   }
-
 }

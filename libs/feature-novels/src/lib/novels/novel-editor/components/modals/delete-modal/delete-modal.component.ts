@@ -1,4 +1,10 @@
-import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface DeleteModalData {
@@ -16,10 +22,10 @@ export interface DeleteModalData {
   templateUrl: './delete-modal.component.html',
   styleUrls: [
     './delete-modal.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class DeleteModalComponent {
   modal = input.required<DeleteModalData>();

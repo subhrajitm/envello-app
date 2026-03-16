@@ -1,7 +1,17 @@
-import { Component, signal, computed, inject, HostListener } from '@angular/core';
+import {
+  Component,
+  signal,
+  computed,
+  inject,
+  HostListener,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { NotificationService, Notification, NotificationType } from '@envello/core';
+import {
+  NotificationService,
+  Notification,
+  NotificationType,
+} from '@envello/core';
 
 @Component({
   selector: 'app-notification-center',
@@ -13,13 +23,19 @@ import { NotificationService, Notification, NotificationType } from '@envello/co
     trigger('slideIn', [
       transition(':enter', [
         style({ transform: 'translateX(100%)', opacity: 0 }),
-        animate('200ms ease-out', style({ transform: 'translateX(0)', opacity: 1 }))
+        animate(
+          '200ms ease-out',
+          style({ transform: 'translateX(0)', opacity: 1 }),
+        ),
       ]),
       transition(':leave', [
-        animate('200ms ease-in', style({ transform: 'translateX(100%)', opacity: 0 }))
-      ])
-    ])
-  ]
+        animate(
+          '200ms ease-in',
+          style({ transform: 'translateX(100%)', opacity: 0 }),
+        ),
+      ]),
+    ]),
+  ],
 })
 export class NotificationCenterComponent {
   private notificationService = inject(NotificationService);
@@ -35,7 +51,7 @@ export class NotificationCenterComponent {
   filteredNotifications = computed(() => {
     const all = this.notifications();
     if (this.activeTab() === 'unread') {
-      return all.filter(n => !n.read);
+      return all.filter((n) => !n.read);
     }
     return all;
   });
@@ -97,7 +113,7 @@ export class NotificationCenterComponent {
       info: 'info',
       success: 'check_circle',
       warning: 'warning',
-      error: 'error'
+      error: 'error',
     };
     return icons[type];
   }

@@ -1,350 +1,544 @@
 <div class="novels-view flex flex-col h-full">
-    <!-- Sub-Header / Metrics Bar -->
-    <div class="novels-sub-header">
-        <div class="metrics-group">
-            <div class="metric-item">
-                <span class="metric-label">TOTAL WORDS IN NOVELS</span>
-                <span class="metric-value-lg text-yellow">{{ totalWords() | number }}</span>
-            </div>
-            <div class="metric-item">
-                <span class="metric-label">ACTIVE DRAFTS</span>
-                <span class="metric-value-lg">{{ activeDrafts() | number:'2.0-0' }}</span>
-            </div>
-            <div class="metric-item">
-                <span class="metric-label">AVG. COMPLETION</span>
-                <span class="metric-value-lg">{{ avgCompletion() }}%</span>
-            </div>
-        </div>
-
-        <div class="controls-group">
-            <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add novel</env-button>
-            <div class="view-toggles">
-                <button class="control-icon-btn" [class.active]="viewMode() === 'LIST'" (click)="toggleView('LIST')"
-                    title="List View">
-                    <span class="material-symbols-outlined icon-sm">format_list_bulleted</span>
-                </button>
-                <button class="control-icon-btn" [class.active]="viewMode() === 'GRID'" (click)="toggleView('GRID')"
-                    title="Grid View">
-                    <span class="material-symbols-outlined icon-sm">grid_view</span>
-                </button>
-            </div>
-            <div class="custom-dropdown-wrapper">
-                <button class="custom-dropdown-trigger" (click)="toggleStatusDropdown()" [class.active]="statusDropdownOpen()">
-                    <span class="material-symbols-outlined dropdown-icon">{{ getStatusIcon(statusFilter()) }}</span>
-                    <span class="dropdown-label">{{ getStatusLabel(statusFilter()) }}</span>
-                    <span class="material-symbols-outlined dropdown-arrow" [class.open]="statusDropdownOpen()">expand_more</span>
-                </button>
-                @if (statusDropdownOpen()) {
-                <div class="custom-dropdown-menu">
-                    <button class="dropdown-option" [class.selected]="statusFilter() === 'ALL'" (click)="selectStatus('ALL')">
-                        <span class="material-symbols-outlined option-icon">filter_alt</span>
-                        <span class="option-label">All Statuses</span>
-                        @if (statusFilter() === 'ALL') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                    <button class="dropdown-option" [class.selected]="statusFilter() === 'DRAFTING'" (click)="selectStatus('DRAFTING')">
-                        <span class="material-symbols-outlined option-icon">edit</span>
-                        <span class="option-label">Drafting</span>
-                        @if (statusFilter() === 'DRAFTING') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                    <button class="dropdown-option" [class.selected]="statusFilter() === 'PLANNING'" (click)="selectStatus('PLANNING')">
-                        <span class="material-symbols-outlined option-icon">lightbulb</span>
-                        <span class="option-label">Planning</span>
-                        @if (statusFilter() === 'PLANNING') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                    <button class="dropdown-option" [class.selected]="statusFilter() === 'REVISING'" (click)="selectStatus('REVISING')">
-                        <span class="material-symbols-outlined option-icon">autorenew</span>
-                        <span class="option-label">Revising</span>
-                        @if (statusFilter() === 'REVISING') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                    <button class="dropdown-option" [class.selected]="statusFilter() === 'PUBLISHED'" (click)="selectStatus('PUBLISHED')">
-                        <span class="material-symbols-outlined option-icon">check_circle</span>
-                        <span class="option-label">Published</span>
-                        @if (statusFilter() === 'PUBLISHED') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                </div>
-                }
-            </div>
-            <div class="custom-dropdown-wrapper">
-                <button class="custom-dropdown-trigger" (click)="toggleSortDropdown()" [class.active]="sortDropdownOpen()">
-                    <span class="material-symbols-outlined dropdown-icon">{{ getSortIcon(sortBy()) }}</span>
-                    <span class="dropdown-label">{{ getSortLabel(sortBy()) }}</span>
-                    <span class="material-symbols-outlined dropdown-arrow" [class.open]="sortDropdownOpen()">expand_more</span>
-                </button>
-                @if (sortDropdownOpen()) {
-                <div class="custom-dropdown-menu">
-                    <button class="dropdown-option" [class.selected]="sortBy() === 'UPDATED'" (click)="selectSort('UPDATED')">
-                        <span class="material-symbols-outlined option-icon">schedule</span>
-                        <span class="option-label">Last Updated</span>
-                        @if (sortBy() === 'UPDATED') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                    <button class="dropdown-option" [class.selected]="sortBy() === 'CREATED'" (click)="selectSort('CREATED')">
-                        <span class="material-symbols-outlined option-icon">calendar_today</span>
-                        <span class="option-label">Date Created</span>
-                        @if (sortBy() === 'CREATED') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                    <button class="dropdown-option" [class.selected]="sortBy() === 'TITLE'" (click)="selectSort('TITLE')">
-                        <span class="material-symbols-outlined option-icon">sort_by_alpha</span>
-                        <span class="option-label">Title</span>
-                        @if (sortBy() === 'TITLE') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                    <button class="dropdown-option" [class.selected]="sortBy() === 'PROGRESS'" (click)="selectSort('PROGRESS')">
-                        <span class="material-symbols-outlined option-icon">trending_up</span>
-                        <span class="option-label">Progress</span>
-                        @if (sortBy() === 'PROGRESS') {
-                        <span class="material-symbols-outlined check-icon">check</span>
-                        }
-                    </button>
-                </div>
-                }
-            </div>
-        </div>
+  <!-- Sub-Header / Metrics Bar -->
+  <div class="novels-sub-header">
+    <div class="metrics-group">
+      <div class="metric-item">
+        <span class="metric-label">TOTAL WORDS IN NOVELS</span>
+        <span class="metric-value-lg text-yellow">{{
+          totalWords() | number
+        }}</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">ACTIVE DRAFTS</span>
+        <span class="metric-value-lg">{{
+          activeDrafts() | number: '2.0-0'
+        }}</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">AVG. COMPLETION</span>
+        <span class="metric-value-lg">{{ avgCompletion() }}%</span>
+      </div>
     </div>
 
-    <div class="novels-content-area">
-        @if (novels().length === 0) {
-        <div class="novels-empty-wrap">
-            <env-empty-state
-                icon="menu_book"
-                title="No novels yet"
-                description="Create your first novel to start writing."
+    <div class="controls-group">
+      <env-button variant="primary" icon="add" (clicked)="openAddModal()"
+        >Add novel</env-button
+      >
+      <div class="view-toggles">
+        <button
+          class="control-icon-btn"
+          [class.active]="viewMode() === 'LIST'"
+          (click)="toggleView('LIST')"
+          title="List View"
+        >
+          <span class="material-symbols-outlined icon-sm"
+            >format_list_bulleted</span
+          >
+        </button>
+        <button
+          class="control-icon-btn"
+          [class.active]="viewMode() === 'GRID'"
+          (click)="toggleView('GRID')"
+          title="Grid View"
+        >
+          <span class="material-symbols-outlined icon-sm">grid_view</span>
+        </button>
+      </div>
+      <div class="custom-dropdown-wrapper">
+        <button
+          class="custom-dropdown-trigger"
+          (click)="toggleStatusDropdown()"
+          [class.active]="statusDropdownOpen()"
+        >
+          <span class="material-symbols-outlined dropdown-icon">{{
+            getStatusIcon(statusFilter())
+          }}</span>
+          <span class="dropdown-label">{{
+            getStatusLabel(statusFilter())
+          }}</span>
+          <span
+            class="material-symbols-outlined dropdown-arrow"
+            [class.open]="statusDropdownOpen()"
+            >expand_more</span
+          >
+        </button>
+        @if (statusDropdownOpen()) {
+          <div class="custom-dropdown-menu">
+            <button
+              class="dropdown-option"
+              [class.selected]="statusFilter() === 'ALL'"
+              (click)="selectStatus('ALL')"
             >
-                <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add novel</env-button>
-            </env-empty-state>
-        </div>
-        } @else if (viewMode() === 'LIST') {
-        <div class="novels-table">
-            <div class="table-header">
-                <div class="col-title">PROJECT TITLE</div>
-                <div class="col-chapters">CHAPTERS</div>
-                <div class="col-genre">GENRE</div>
-                <div class="col-status">STATUS</div>
-                <div class="col-word-count">WORD COUNT / TARGET</div>
-                <div class="col-progress">PROGRESS</div>
-                <div class="col-last-updated">LAST UPDATED</div>
-                <div class="col-menu"></div>
-            </div>
-            <div class="table-body">
-                @for (novel of novels(); track novel.id) {
-                <div class="table-row" (click)="openNovel(novel.id)">
-                    <div class="col-title">
-                        <span class="material-symbols-outlined project-icon">{{ novel.icon }}</span>
-                        <div class="title-content">
-                            <div class="title-main">
-                                {{ novel.title }}
-                                @if (novel.isRecentlyUpdated) {
-                                <span class="recent-indicator" title="Recently updated"></span>
-                                }
-                            </div>
-                            <div class="title-meta">
-                                Created {{ novel.createdDate }} • {{ novel.notesCount }} notes
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-chapters">
-                        <div class="chapter-badge">
-                            <span class="material-symbols-outlined chapter-icon">menu_book</span>
-                            <span class="chapter-count">{{ novel.chapters }}</span>
-                        </div>
-                    </div>
-                    <div class="col-genre">
-                        @for (tag of novel.genre; track tag) {
-                        <span class="genre-tag">{{ tag }}</span>
-                        }
-                    </div>
-                    <div class="col-status">
-                        <span class="status-badge-caps" [ngClass]="getStatusColor(novel.status)">
-                            {{ novel.status }}
-                        </span>
-                    </div>
-                    <div class="col-word-count">
-                        <div class="word-count-content">
-                            <div class="word-count-display">
-                                <span class="word-count-value">{{ novel.wordCount | number }}</span>
-                                <span class="word-count-separator">/</span>
-                                <span class="word-count-target">{{ novel.targetWordCount | number }}</span>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" [style.width.%]="novel.progress"
-                                    [style.background-color]="getProgressColor(novel.status)">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-progress">
-                        <div class="circular-progress">
-                            <svg class="progress-ring" width="40" height="40">
-                                <circle class="progress-ring-bg" cx="20" cy="20" r="16" />
-                                <circle class="progress-ring-fill" cx="20" cy="20" r="16"
-                                    [style.stroke]="getProgressColor(novel.status)" [style.stroke-dasharray]="100.53"
-                                    [style.stroke-dashoffset]="100.53 - (100.53 * novel.progress / 100)" />
-                            </svg>
-                            <span class="progress-text">{{ novel.progress }}%</span>
-                        </div>
-                    </div>
-                    <div class="col-last-updated">{{ novel.lastUpdated }}</div>
-                    <div class="col-menu">
-                        <div class="novel-menu-wrapper">
-                            <button class="menu-btn" (click)="toggleNovelMenu(novel.id, $event)" title="Actions">
-                                <span class="material-symbols-outlined icon-sm">more_vert</span>
-                            </button>
-                            @if (novelMenuOpen() === novel.id) {
-                            <div class="novel-menu-dropdown">
-                                <button class="novel-menu-item" (click)="openNovel(novel.id); closeNovelMenu()">
-                                    <span class="material-symbols-outlined">open_in_new</span>
-                                    <span>Open</span>
-                                </button>
-                                <button class="novel-menu-item novel-menu-item--danger" (click)="openDeleteModal(novel, $event)">
-                                    <span class="material-symbols-outlined">delete</span>
-                                    <span>Delete</span>
-                                </button>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-                }
-            </div>
-        </div>
-        } @else {
-        <!-- GRID VIEW -->
-        <div class="novels-grid">
-            @for (novel of novels(); track novel.id) {
-            <div class="novel-card novel-card--has-menu">
-                <div class="card-cover" (click)="openNovel(novel.id)">
-                    <span class="material-symbols-outlined card-icon">{{ novel.icon }}</span>
-                    <span class="status-badge-caps card-status" [ngClass]="getStatusColor(novel.status)">{{ novel.status
-                        }}</span>
-                </div>
-                <div class="novel-menu-wrapper novel-card-menu">
-                    <button class="novel-card-menu-btn" (click)="toggleNovelMenu(novel.id, $event)" title="Actions">
-                        <span class="material-symbols-outlined icon-sm">more_vert</span>
-                    </button>
-                    @if (novelMenuOpen() === novel.id) {
-                    <div class="novel-menu-dropdown novel-menu-dropdown--card">
-                        <button class="novel-menu-item" (click)="openNovel(novel.id); closeNovelMenu()">
-                            <span class="material-symbols-outlined">open_in_new</span>
-                            <span>Open</span>
-                        </button>
-                        <button class="novel-menu-item novel-menu-item--danger" (click)="openDeleteModal(novel, $event)">
-                            <span class="material-symbols-outlined">delete</span>
-                            <span>Delete</span>
-                        </button>
-                    </div>
-                    }
-                </div>
-                <div class="card-body" (click)="openNovel(novel.id)">
-                    <div class="card-title">{{ novel.title }}</div>
-                    <div class="card-meta">
-                        <span>{{ novel.chapters }} Ch</span>
-                        <span class="dot">•</span>
-                        <span>{{ novel.wordCount | number }} W</span>
-                    </div>
-                    <div class="card-progress-bar">
-                        <div class="prog-fill" [style.width.%]="novel.progress"
-                            [style.background-color]="getProgressColor(novel.status)"></div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="card-genre">
-                            @for (tag of novel.genre.slice(0, 2); track tag) {
-                            <span class="genre-tag">{{ tag }}</span>
-                            }
-                        </div>
-                        <div class="card-updated">{{ novel.lastUpdated }}</div>
-                    </div>
-                </div>
-            </div>
-            }
-        </div>
+              <span class="material-symbols-outlined option-icon"
+                >filter_alt</span
+              >
+              <span class="option-label">All Statuses</span>
+              @if (statusFilter() === 'ALL') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+            <button
+              class="dropdown-option"
+              [class.selected]="statusFilter() === 'DRAFTING'"
+              (click)="selectStatus('DRAFTING')"
+            >
+              <span class="material-symbols-outlined option-icon">edit</span>
+              <span class="option-label">Drafting</span>
+              @if (statusFilter() === 'DRAFTING') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+            <button
+              class="dropdown-option"
+              [class.selected]="statusFilter() === 'PLANNING'"
+              (click)="selectStatus('PLANNING')"
+            >
+              <span class="material-symbols-outlined option-icon"
+                >lightbulb</span
+              >
+              <span class="option-label">Planning</span>
+              @if (statusFilter() === 'PLANNING') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+            <button
+              class="dropdown-option"
+              [class.selected]="statusFilter() === 'REVISING'"
+              (click)="selectStatus('REVISING')"
+            >
+              <span class="material-symbols-outlined option-icon"
+                >autorenew</span
+              >
+              <span class="option-label">Revising</span>
+              @if (statusFilter() === 'REVISING') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+            <button
+              class="dropdown-option"
+              [class.selected]="statusFilter() === 'PUBLISHED'"
+              (click)="selectStatus('PUBLISHED')"
+            >
+              <span class="material-symbols-outlined option-icon"
+                >check_circle</span
+              >
+              <span class="option-label">Published</span>
+              @if (statusFilter() === 'PUBLISHED') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+          </div>
         }
+      </div>
+      <div class="custom-dropdown-wrapper">
+        <button
+          class="custom-dropdown-trigger"
+          (click)="toggleSortDropdown()"
+          [class.active]="sortDropdownOpen()"
+        >
+          <span class="material-symbols-outlined dropdown-icon">{{
+            getSortIcon(sortBy())
+          }}</span>
+          <span class="dropdown-label">{{ getSortLabel(sortBy()) }}</span>
+          <span
+            class="material-symbols-outlined dropdown-arrow"
+            [class.open]="sortDropdownOpen()"
+            >expand_more</span
+          >
+        </button>
+        @if (sortDropdownOpen()) {
+          <div class="custom-dropdown-menu">
+            <button
+              class="dropdown-option"
+              [class.selected]="sortBy() === 'UPDATED'"
+              (click)="selectSort('UPDATED')"
+            >
+              <span class="material-symbols-outlined option-icon"
+                >schedule</span
+              >
+              <span class="option-label">Last Updated</span>
+              @if (sortBy() === 'UPDATED') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+            <button
+              class="dropdown-option"
+              [class.selected]="sortBy() === 'CREATED'"
+              (click)="selectSort('CREATED')"
+            >
+              <span class="material-symbols-outlined option-icon"
+                >calendar_today</span
+              >
+              <span class="option-label">Date Created</span>
+              @if (sortBy() === 'CREATED') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+            <button
+              class="dropdown-option"
+              [class.selected]="sortBy() === 'TITLE'"
+              (click)="selectSort('TITLE')"
+            >
+              <span class="material-symbols-outlined option-icon"
+                >sort_by_alpha</span
+              >
+              <span class="option-label">Title</span>
+              @if (sortBy() === 'TITLE') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+            <button
+              class="dropdown-option"
+              [class.selected]="sortBy() === 'PROGRESS'"
+              (click)="selectSort('PROGRESS')"
+            >
+              <span class="material-symbols-outlined option-icon"
+                >trending_up</span
+              >
+              <span class="option-label">Progress</span>
+              @if (sortBy() === 'PROGRESS') {
+                <span class="material-symbols-outlined check-icon">check</span>
+              }
+            </button>
+          </div>
+        }
+      </div>
     </div>
+  </div>
+
+  <div class="novels-content-area">
+    @if (novels().length === 0) {
+      <div class="novels-empty-wrap">
+        <env-empty-state
+          icon="menu_book"
+          title="No novels yet"
+          description="Create your first novel to start writing."
+        >
+          <env-button variant="primary" icon="add" (clicked)="openAddModal()"
+            >Add novel</env-button
+          >
+        </env-empty-state>
+      </div>
+    } @else if (viewMode() === 'LIST') {
+      <div class="novels-table">
+        <div class="table-header">
+          <div class="col-title">PROJECT TITLE</div>
+          <div class="col-chapters">CHAPTERS</div>
+          <div class="col-genre">GENRE</div>
+          <div class="col-status">STATUS</div>
+          <div class="col-word-count">WORD COUNT / TARGET</div>
+          <div class="col-progress">PROGRESS</div>
+          <div class="col-last-updated">LAST UPDATED</div>
+          <div class="col-menu"></div>
+        </div>
+        <div class="table-body">
+          @for (novel of novels(); track novel.id) {
+            <div class="table-row" (click)="openNovel(novel.id)">
+              <div class="col-title">
+                <span class="material-symbols-outlined project-icon">{{
+                  novel.icon
+                }}</span>
+                <div class="title-content">
+                  <div class="title-main">
+                    {{ novel.title }}
+                    @if (novel.isRecentlyUpdated) {
+                      <span
+                        class="recent-indicator"
+                        title="Recently updated"
+                      ></span>
+                    }
+                  </div>
+                  <div class="title-meta">
+                    Created {{ novel.createdDate }} •
+                    {{ novel.notesCount }} notes
+                  </div>
+                </div>
+              </div>
+              <div class="col-chapters">
+                <div class="chapter-badge">
+                  <span class="material-symbols-outlined chapter-icon"
+                    >menu_book</span
+                  >
+                  <span class="chapter-count">{{ novel.chapters }}</span>
+                </div>
+              </div>
+              <div class="col-genre">
+                @for (tag of novel.genre; track tag) {
+                  <span class="genre-tag">{{ tag }}</span>
+                }
+              </div>
+              <div class="col-status">
+                <span
+                  class="status-badge-caps"
+                  [ngClass]="getStatusColor(novel.status)"
+                >
+                  {{ novel.status }}
+                </span>
+              </div>
+              <div class="col-word-count">
+                <div class="word-count-content">
+                  <div class="word-count-display">
+                    <span class="word-count-value">{{
+                      novel.wordCount | number
+                    }}</span>
+                    <span class="word-count-separator">/</span>
+                    <span class="word-count-target">{{
+                      novel.targetWordCount | number
+                    }}</span>
+                  </div>
+                  <div class="progress-bar-container">
+                    <div
+                      class="progress-bar"
+                      [style.width.%]="novel.progress"
+                      [style.background-color]="getProgressColor(novel.status)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-progress">
+                <div class="circular-progress">
+                  <svg class="progress-ring" width="40" height="40">
+                    <circle class="progress-ring-bg" cx="20" cy="20" r="16" />
+                    <circle
+                      class="progress-ring-fill"
+                      cx="20"
+                      cy="20"
+                      r="16"
+                      [style.stroke]="getProgressColor(novel.status)"
+                      [style.stroke-dasharray]="100.53"
+                      [style.stroke-dashoffset]="
+                        100.53 - (100.53 * novel.progress) / 100
+                      "
+                    />
+                  </svg>
+                  <span class="progress-text">{{ novel.progress }}%</span>
+                </div>
+              </div>
+              <div class="col-last-updated">{{ novel.lastUpdated }}</div>
+              <div class="col-menu">
+                <div class="novel-menu-wrapper">
+                  <button
+                    class="menu-btn"
+                    (click)="toggleNovelMenu(novel.id, $event)"
+                    title="Actions"
+                  >
+                    <span class="material-symbols-outlined icon-sm"
+                      >more_vert</span
+                    >
+                  </button>
+                  @if (novelMenuOpen() === novel.id) {
+                    <div class="novel-menu-dropdown">
+                      <button
+                        class="novel-menu-item"
+                        (click)="openNovel(novel.id); closeNovelMenu()"
+                      >
+                        <span class="material-symbols-outlined"
+                          >open_in_new</span
+                        >
+                        <span>Open</span>
+                      </button>
+                      <button
+                        class="novel-menu-item novel-menu-item--danger"
+                        (click)="openDeleteModal(novel, $event)"
+                      >
+                        <span class="material-symbols-outlined">delete</span>
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    } @else {
+      <!-- GRID VIEW -->
+      <div class="novels-grid">
+        @for (novel of novels(); track novel.id) {
+          <div class="novel-card novel-card--has-menu">
+            <div class="card-cover" (click)="openNovel(novel.id)">
+              <span class="material-symbols-outlined card-icon">{{
+                novel.icon
+              }}</span>
+              <span
+                class="status-badge-caps card-status"
+                [ngClass]="getStatusColor(novel.status)"
+                >{{ novel.status }}</span
+              >
+            </div>
+            <div class="novel-menu-wrapper novel-card-menu">
+              <button
+                class="novel-card-menu-btn"
+                (click)="toggleNovelMenu(novel.id, $event)"
+                title="Actions"
+              >
+                <span class="material-symbols-outlined icon-sm">more_vert</span>
+              </button>
+              @if (novelMenuOpen() === novel.id) {
+                <div class="novel-menu-dropdown novel-menu-dropdown--card">
+                  <button
+                    class="novel-menu-item"
+                    (click)="openNovel(novel.id); closeNovelMenu()"
+                  >
+                    <span class="material-symbols-outlined">open_in_new</span>
+                    <span>Open</span>
+                  </button>
+                  <button
+                    class="novel-menu-item novel-menu-item--danger"
+                    (click)="openDeleteModal(novel, $event)"
+                  >
+                    <span class="material-symbols-outlined">delete</span>
+                    <span>Delete</span>
+                  </button>
+                </div>
+              }
+            </div>
+            <div class="card-body" (click)="openNovel(novel.id)">
+              <div class="card-title">{{ novel.title }}</div>
+              <div class="card-meta">
+                <span>{{ novel.chapters }} Ch</span>
+                <span class="dot">•</span>
+                <span>{{ novel.wordCount | number }} W</span>
+              </div>
+              <div class="card-progress-bar">
+                <div
+                  class="prog-fill"
+                  [style.width.%]="novel.progress"
+                  [style.background-color]="getProgressColor(novel.status)"
+                ></div>
+              </div>
+              <div class="card-footer">
+                <div class="card-genre">
+                  @for (tag of novel.genre.slice(0, 2); track tag) {
+                    <span class="genre-tag">{{ tag }}</span>
+                  }
+                </div>
+                <div class="card-updated">{{ novel.lastUpdated }}</div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 </div>
 
 <!-- Add novel modal -->
 @if (showAddModal()) {
-<env-modal [isOpen]="showAddModal()" (closed)="closeAddModal()" title="Add novel" size="md">
-  <div body>
-    <div class="add-novel-form">
-      <div class="form-group">
-        <label class="form-label">Title *</label>
-        <input type="text" class="form-input" placeholder="Novel title"
-          [value]="newNovel().title"
-          (input)="updateNewNovel('title', $any($event.target).value)" />
-      </div>
-      <div class="form-row">
+  <env-modal
+    [isOpen]="showAddModal()"
+    (closed)="closeAddModal()"
+    title="Add novel"
+    size="md"
+  >
+    <div body>
+      <div class="add-novel-form">
         <div class="form-group">
-          <label class="form-label">Status</label>
-          <select class="form-select"
-            [value]="newNovel().status"
-            (change)="updateNewNovel('status', $any($event.target).value)">
-            <option value="PLANNING">Planning</option>
-            <option value="DRAFTING">Drafting</option>
-            <option value="REVISING">Revising</option>
-            <option value="PUBLISHED">Published</option>
+          <label class="form-label">Title *</label>
+          <input
+            type="text"
+            class="form-input"
+            placeholder="Novel title"
+            [value]="newNovel().title"
+            (input)="updateNewNovel('title', $any($event.target).value)"
+          />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select
+              class="form-select"
+              [value]="newNovel().status"
+              (change)="updateNewNovel('status', $any($event.target).value)"
+            >
+              <option value="PLANNING">Planning</option>
+              <option value="DRAFTING">Drafting</option>
+              <option value="REVISING">Revising</option>
+              <option value="PUBLISHED">Published</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target word count</label>
+            <input
+              type="number"
+              class="form-input"
+              min="0"
+              placeholder="e.g. 80000"
+              [value]="newNovel().targetWordCount"
+              (input)="
+                updateNewNovel(
+                  'targetWordCount',
+                  +$any($event.target).value || 0
+                )
+              "
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Genre</label>
+          <input
+            type="text"
+            class="form-input"
+            placeholder="Comma-separated, e.g. Sci-Fi, Thriller"
+            [value]="newNovel().genre"
+            (input)="updateNewNovel('genre', $any($event.target).value)"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icon</label>
+          <select
+            class="form-select"
+            [value]="newNovel().icon"
+            (change)="updateNewNovel('icon', $any($event.target).value)"
+          >
+            @for (opt of novelIcons; track opt.id) {
+              <option [value]="opt.id">{{ opt.label }}</option>
+            }
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Target word count</label>
-          <input type="number" class="form-input" min="0" placeholder="e.g. 80000"
-            [value]="newNovel().targetWordCount"
-            (input)="updateNewNovel('targetWordCount', +$any($event.target).value || 0)" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Genre</label>
-        <input type="text" class="form-input" placeholder="Comma-separated, e.g. Sci-Fi, Thriller"
-          [value]="newNovel().genre"
-          (input)="updateNewNovel('genre', $any($event.target).value)" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Icon</label>
-        <select class="form-select"
-          [value]="newNovel().icon"
-          (change)="updateNewNovel('icon', $any($event.target).value)">
-          @for (opt of novelIcons; track opt.id) {
-            <option [value]="opt.id">{{ opt.label }}</option>
-          }
-        </select>
       </div>
     </div>
-  </div>
-  <div footer>
-    <env-button variant="secondary" (clicked)="closeAddModal()">Cancel</env-button>
-    <env-button variant="primary" icon="add" (clicked)="addNovel()"
-      [disabled]="!newNovel().title.trim() || addModalSubmitting()">
-      {{ addModalSubmitting() ? 'Creating…' : 'Add novel' }}
-    </env-button>
-  </div>
-</env-modal>
+    <div footer>
+      <env-button variant="secondary" (clicked)="closeAddModal()"
+        >Cancel</env-button
+      >
+      <env-button
+        variant="primary"
+        icon="add"
+        (clicked)="addNovel()"
+        [disabled]="!newNovel().title.trim() || addModalSubmitting()"
+      >
+        {{ addModalSubmitting() ? 'Creating…' : 'Add novel' }}
+      </env-button>
+    </div>
+  </env-modal>
 }
 
 <!-- Delete novel modal -->
 @if (showDeleteModal()) {
-<env-modal [isOpen]="showDeleteModal()" (closed)="cancelDeleteNovel()" title="Delete novel" size="md">
-  <div body>
-    @if (novelToDelete(); as novel) {
-    <p>Are you sure you want to delete <strong>"{{ novel.title }}"</strong>? It will be moved to the bin.</p>
-    <p class="delete-modal-hint">You can restore it from the bin later.</p>
-    }
-  </div>
-  <div footer>
-    <env-button variant="secondary" (clicked)="cancelDeleteNovel()">Cancel</env-button>
-    <env-button variant="danger" (clicked)="confirmDeleteNovel()">Delete novel</env-button>
-  </div>
-</env-modal>
+  <env-modal
+    [isOpen]="showDeleteModal()"
+    (closed)="cancelDeleteNovel()"
+    title="Delete novel"
+    size="md"
+  >
+    <div body>
+      @if (novelToDelete(); as novel) {
+        <p>
+          Are you sure you want to delete <strong>"{{ novel.title }}"</strong>?
+          It will be moved to the bin.
+        </p>
+        <p class="delete-modal-hint">You can restore it from the bin later.</p>
+      }
+    </div>
+    <div footer>
+      <env-button variant="secondary" (clicked)="cancelDeleteNovel()"
+        >Cancel</env-button
+      >
+      <env-button variant="danger" (clicked)="confirmDeleteNovel()"
+        >Delete novel</env-button
+      >
+    </div>
+  </env-modal>
 }

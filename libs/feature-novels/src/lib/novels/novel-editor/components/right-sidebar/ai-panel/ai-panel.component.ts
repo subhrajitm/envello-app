@@ -1,4 +1,13 @@
-import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ViewChild,
+  ElementRef,
+  AfterViewChecked,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
@@ -11,10 +20,10 @@ import { AiMessage, AiSuggestion } from '@envello/core';
   templateUrl: './ai-panel.component.html',
   styleUrls: [
     './ai-panel.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class AiPanelComponent implements AfterViewChecked {
   aiMessages = input.required<AiMessage[]>();
@@ -27,9 +36,10 @@ export class AiPanelComponent implements AfterViewChecked {
   context = input.required<string>();
   activeChapter = input<any>(null);
   editor = input<Editor | null>(null);
-  
-  @ViewChild('aiMessagesContainer') aiMessagesContainer!: ElementRef<HTMLDivElement>;
-  
+
+  @ViewChild('aiMessagesContainer')
+  aiMessagesContainer!: ElementRef<HTMLDivElement>;
+
   sendMessage = output<string | void>();
   analyzeToneAndPacing = output<void>();
   generateSuggestions = output<void>();
@@ -40,7 +50,7 @@ export class AiPanelComponent implements AfterViewChecked {
   clearSuggestions = output<void>();
   toggleContextPreview = output<void>();
   promptChange = output<string>();
-  
+
   formatMessage(content: string): string {
     return content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -52,7 +62,7 @@ export class AiPanelComponent implements AfterViewChecked {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
-    
+
     if (minutes < 1) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);

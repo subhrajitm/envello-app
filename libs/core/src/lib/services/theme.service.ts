@@ -1,9 +1,15 @@
 import { Injectable, signal, effect } from '@angular/core';
 
-export type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterprise-light' | 'typewriter';
+export type Theme =
+  | 'dark'
+  | 'enterprise-dark'
+  | 'light'
+  | 'colorful'
+  | 'enterprise-light'
+  | 'typewriter';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ThemeService {
   theme = signal<Theme>('light'); // Default temporary, will init in constructor
@@ -31,7 +37,7 @@ export class ThemeService {
   }
 
   toggleTheme() {
-    this.theme.update(t => {
+    this.theme.update((t) => {
       // Simple toggle between Light and Dark for quick access.
       // Other themes are accessible via Settings.
       const isDark = t === 'dark' || t === 'enterprise-dark';

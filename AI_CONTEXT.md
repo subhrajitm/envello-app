@@ -5,6 +5,7 @@ This document is auto-generated to provide an LLM or AI agent with the entire st
 ## File: /dist/shared/core/index.d.ts
 
 ### Class: EventBus
+
 ```typescript
 class EventBus {
   ɵfac: i0.ɵɵFactoryDeclaration<EventBus, never>;
@@ -18,12 +19,13 @@ class EventBus {
 ```
 
 ### Class: EventLogComponent
+
 ```typescript
 class EventLogComponent {
   events: i0.Signal<_envello_shared_core.DomainEvent[]>;
   isMinimized: boolean;
   ɵfac: i0.ɵɵFactoryDeclaration<EventLogComponent, never>;
-  ɵcmp: i0.ɵɵComponentDeclaration<EventLogComponent, "app-event-log", never, {}, {}, never, never, true, never>;
+  ɵcmp: i0.ɵɵComponentDeclaration<EventLogComponent, 'app-event-log', never, {}, {}, never, never, true, never>;
   formatTime(timestamp: number): string;
   formatPayload(payload: any): string;
   clear(): void;
@@ -33,6 +35,7 @@ class EventLogComponent {
 ```
 
 ### Interface: DomainEvent
+
 ```typescript
 interface DomainEvent {
   type: string;
@@ -48,6 +51,7 @@ interface DomainEvent {
 ## File: /dist/shared/data/index.d.ts
 
 ### Class: PersistenceAdapter
+
 ```typescript
 class PersistenceAdapter {
   loadTasks(): Promise<Task[]>;
@@ -63,6 +67,7 @@ class PersistenceAdapter {
 ```
 
 ### Class: TaskPersistenceEffect
+
 ```typescript
 class TaskPersistenceEffect {
   ɵfac: i0.ɵɵFactoryDeclaration<TaskPersistenceEffect, never>;
@@ -71,6 +76,7 @@ class TaskPersistenceEffect {
 ```
 
 ### Class: NotePersistenceEffect
+
 ```typescript
 class NotePersistenceEffect {
   ɵfac: i0.ɵɵFactoryDeclaration<NotePersistenceEffect, never>;
@@ -83,6 +89,7 @@ class NotePersistenceEffect {
 ## File: /dist/shared/domain/index.d.ts
 
 ### Class: TaskCommands
+
 ```typescript
 class TaskCommands {
   ɵfac: i0.ɵɵFactoryDeclaration<TaskCommands, never>;
@@ -98,6 +105,7 @@ class TaskCommands {
 ```
 
 ### Class: NoteCommands
+
 ```typescript
 class NoteCommands {
   ɵfac: i0.ɵɵFactoryDeclaration<NoteCommands, never>;
@@ -112,6 +120,7 @@ class NoteCommands {
 ```
 
 ### Interface: Task
+
 ```typescript
 interface Task {
   id: string;
@@ -127,21 +136,21 @@ interface Task {
   parentId?: string;
   dependencies?: string[];
   recurring?: {
-        pattern: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
-        interval?: number;
-        endDate?: string;
-        nextDue?: string;
-    };
+    pattern: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+    interval?: number;
+    endDate?: string;
+    nextDue?: string;
+  };
   timeSpent?: number;
   notes?: string;
   attachments?: Array<{
-        id: string;
-        name: string;
-        url: string;
-        type: string;
-        size: number;
-        uploadedAt: string;
-    }>;
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploadedAt: string;
+  }>;
   description?: string;
   startDate?: string;
   estimatedDuration?: number;
@@ -149,6 +158,7 @@ interface Task {
 ```
 
 ### Interface: TaskCreatedPayload
+
 ```typescript
 interface TaskCreatedPayload {
   task: Task;
@@ -156,6 +166,7 @@ interface TaskCreatedPayload {
 ```
 
 ### Interface: TaskUpdatedPayload
+
 ```typescript
 interface TaskUpdatedPayload {
   id: string;
@@ -165,6 +176,7 @@ interface TaskUpdatedPayload {
 ```
 
 ### Interface: TaskDeletedPayload
+
 ```typescript
 interface TaskDeletedPayload {
   id: string;
@@ -173,6 +185,7 @@ interface TaskDeletedPayload {
 ```
 
 ### Interface: TaskStatusChangedPayload
+
 ```typescript
 interface TaskStatusChangedPayload {
   id: string;
@@ -182,6 +195,7 @@ interface TaskStatusChangedPayload {
 ```
 
 ### Interface: TaskPriorityChangedPayload
+
 ```typescript
 interface TaskPriorityChangedPayload {
   id: string;
@@ -191,6 +205,7 @@ interface TaskPriorityChangedPayload {
 ```
 
 ### Interface: Note
+
 ```typescript
 interface Note {
   id: string;
@@ -206,6 +221,7 @@ interface Note {
 ```
 
 ### Interface: NoteCreatedPayload
+
 ```typescript
 interface NoteCreatedPayload {
   note: Note;
@@ -213,6 +229,7 @@ interface NoteCreatedPayload {
 ```
 
 ### Interface: NoteUpdatedPayload
+
 ```typescript
 interface NoteUpdatedPayload {
   id: string;
@@ -222,6 +239,7 @@ interface NoteUpdatedPayload {
 ```
 
 ### Interface: NoteDeletedPayload
+
 ```typescript
 interface NoteDeletedPayload {
   id: string;
@@ -230,6 +248,7 @@ interface NoteDeletedPayload {
 ```
 
 ### Interface: NoteLoadContentPayload
+
 ```typescript
 interface NoteLoadContentPayload {
   id: string;
@@ -237,6 +256,7 @@ interface NoteLoadContentPayload {
 ```
 
 ### Interface: NoteContentLoadedPayload
+
 ```typescript
 interface NoteContentLoadedPayload {
   id: string;
@@ -245,6 +265,7 @@ interface NoteContentLoadedPayload {
 ```
 
 ### Interface: NoteContentSavedPayload
+
 ```typescript
 interface NoteContentSavedPayload {
   id: string;
@@ -253,6 +274,7 @@ interface NoteContentSavedPayload {
 ```
 
 ### Interface: NoteTagAddedPayload
+
 ```typescript
 interface NoteTagAddedPayload {
   id: string;
@@ -261,6 +283,7 @@ interface NoteTagAddedPayload {
 ```
 
 ### Interface: NoteTagRemovedPayload
+
 ```typescript
 interface NoteTagRemovedPayload {
   id: string;
@@ -273,6 +296,7 @@ interface NoteTagRemovedPayload {
 ## File: /dist/shared/state/index.d.ts
 
 ### Class: TaskStore
+
 ```typescript
 class TaskStore {
   tasks: _angular_core.Signal<Task[]>;
@@ -296,6 +320,7 @@ class TaskStore {
 ```
 
 ### Class: TaskReducer
+
 ```typescript
 class TaskReducer {
   ɵfac: _angular_core.ɵɵFactoryDeclaration<TaskReducer, never>;
@@ -304,6 +329,7 @@ class TaskReducer {
 ```
 
 ### Class: NoteStore
+
 ```typescript
 class NoteStore {
   notes: _angular_core.Signal<Note[]>;
@@ -324,6 +350,7 @@ class NoteStore {
 ```
 
 ### Class: EditorStore
+
 ```typescript
 class EditorStore {
   activeNoteId: _angular_core.Signal<string>;
@@ -342,6 +369,7 @@ class EditorStore {
 ```
 
 ### Class: NoteReducer
+
 ```typescript
 class NoteReducer {
   ɵfac: _angular_core.ɵɵFactoryDeclaration<NoteReducer, never>;
@@ -354,9 +382,9 @@ class NoteReducer {
 ## File: /apps/admin/src/app/app.ts
 
 ### Class: App
+
 ```typescript
-class App {
-}
+class App {}
 ```
 
 ---
@@ -364,9 +392,9 @@ class App {
 ## File: /apps/admin/src/app/nx-welcome.ts
 
 ### Class: NxWelcome
+
 ```typescript
-class NxWelcome {
-}
+class NxWelcome {}
 ```
 
 ---
@@ -374,6 +402,7 @@ class NxWelcome {
 ## File: /apps/desktop/src/app/app.component.ts
 
 ### Class: AppComponent
+
 ```typescript
 class AppComponent {
   title: any;
@@ -396,9 +425,9 @@ class AppComponent {
 ## File: /apps/landing/src/app/app.ts
 
 ### Class: App
+
 ```typescript
-class App {
-}
+class App {}
 ```
 
 ---
@@ -406,9 +435,9 @@ class App {
 ## File: /apps/landing/src/app/nx-welcome.ts
 
 ### Class: NxWelcome
+
 ```typescript
-class NxWelcome {
-}
+class NxWelcome {}
 ```
 
 ---
@@ -416,6 +445,7 @@ class NxWelcome {
 ## File: /apps/web/src/app/app.component.ts
 
 ### Class: AppComponent
+
 ```typescript
 class AppComponent {
   title: any;
@@ -437,6 +467,7 @@ class AppComponent {
 ## File: /libs/data/src/lib/data.service.ts
 
 ### Class: DataService
+
 ```typescript
 class DataService {
   getAll(collection: string): Promise<T[]>;
@@ -451,6 +482,7 @@ class DataService {
 ## File: /libs/domain/src/lib/models.ts
 
 ### Interface: IFileSystem
+
 ```typescript
 interface IFileSystem {
   saveNote(id: string, content: string): Promise<string>;
@@ -460,6 +492,7 @@ interface IFileSystem {
 ```
 
 ### Interface: Task
+
 ```typescript
 interface Task {
   id: string;
@@ -475,21 +508,21 @@ interface Task {
   parentId?: string;
   dependencies?: string[];
   recurring?: {
-        pattern: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
-        interval?: number;
-        endDate?: string;
-        nextDue?: string;
-    };
+    pattern: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+    interval?: number;
+    endDate?: string;
+    nextDue?: string;
+  };
   timeSpent?: number;
   notes?: string;
   attachments?: Array<{
-        id: string;
-        name: string;
-        url: string;
-        type: string;
-        size: number;
-        uploadedAt: string;
-    }>;
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploadedAt: string;
+  }>;
   description?: string;
   startDate?: string;
   estimatedDuration?: number;
@@ -497,6 +530,7 @@ interface Task {
 ```
 
 ### Interface: Note
+
 ```typescript
 interface Note {
   id: string;
@@ -512,6 +546,7 @@ interface Note {
 ```
 
 ### Interface: PlanningItem
+
 ```typescript
 interface PlanningItem {
   id: string;
@@ -523,6 +558,7 @@ interface PlanningItem {
 ```
 
 ### Interface: Activity
+
 ```typescript
 interface Activity {
   id: string;
@@ -533,6 +569,7 @@ interface Activity {
 ```
 
 ### Interface: Novel
+
 ```typescript
 interface Novel {
   id: string;
@@ -553,6 +590,7 @@ interface Novel {
 ```
 
 ### Interface: Project
+
 ```typescript
 interface Project {
   id: string;
@@ -569,18 +607,19 @@ interface Project {
   tags?: string[];
   type?: 'SINGLE' | 'MULTI';
   linkedResources?: {
-        novels?: string[]; // IDs of linked novels
-        journals?: string[]; // IDs of linked journals/notes
-        snippets?: string[]; // IDs of linked code snippets
-        meetings?: string[]; // IDs of linked meetings
-        research?: string[]; // IDs of linked research sources/libraries
-        books?: string[]; // IDs of linked books
-        articles?: string[]; // IDs of linked articles
-    };
+    novels?: string[]; // IDs of linked novels
+    journals?: string[]; // IDs of linked journals/notes
+    snippets?: string[]; // IDs of linked code snippets
+    meetings?: string[]; // IDs of linked meetings
+    research?: string[]; // IDs of linked research sources/libraries
+    books?: string[]; // IDs of linked books
+    articles?: string[]; // IDs of linked articles
+  };
 }
 ```
 
 ### Interface: BinItem
+
 ```typescript
 interface BinItem {
   id: string;
@@ -594,20 +633,9 @@ interface BinItem {
 ```
 
 ### Type: BinItemType
+
 ```typescript
-type BinItemType = | 'daily-note'
-    | 'novel'
-    | 'novel-chapter'
-    | 'novel-group'
-    | 'novel-note'
-    | 'novel-character'
-    | 'novel-location'
-    | 'journal-entry'
-    | 'journal-project'
-    | 'task'
-    | 'meeting'
-    | 'book'
-    | 'snippet';
+type BinItemType = 'daily-note' | 'novel' | 'novel-chapter' | 'novel-group' | 'novel-note' | 'novel-character' | 'novel-location' | 'journal-entry' | 'journal-project' | 'task' | 'meeting' | 'book' | 'snippet';
 ```
 
 ---
@@ -615,6 +643,7 @@ type BinItemType = | 'daily-note'
 ## File: /libs/state/src/lib/bin.service.ts
 
 ### Class: BinService
+
 ```typescript
 class BinService {
   items: any;
@@ -629,6 +658,7 @@ class BinService {
 ## File: /libs/state/src/lib/store.service.ts
 
 ### Class: StoreService
+
 ```typescript
 class StoreService {
   tasks: any;
@@ -658,9 +688,9 @@ class StoreService {
 ## File: /libs/core/src/lib/core/core.ts
 
 ### Class: Core
+
 ```typescript
-class Core {
-}
+class Core {}
 ```
 
 ---
@@ -668,6 +698,7 @@ class Core {
 ## File: /libs/core/src/lib/services/ai.service.ts
 
 ### Class: AiService
+
 ```typescript
 class AiService {
   aiEnabled: any;
@@ -688,6 +719,7 @@ class AiService {
 ```
 
 ### Interface: AiMessage
+
 ```typescript
 interface AiMessage {
   id: string;
@@ -699,6 +731,7 @@ interface AiMessage {
 ```
 
 ### Interface: AiSuggestion
+
 ```typescript
 interface AiSuggestion {
   id: string;
@@ -710,6 +743,7 @@ interface AiSuggestion {
 ```
 
 ### Type: AiProvider
+
 ```typescript
 type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock';
 ```
@@ -719,6 +753,7 @@ type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock';
 ## File: /libs/core/src/lib/services/api.service.ts
 
 ### Class: ApiService
+
 ```typescript
 class ApiService {
   get(path: string, params: Record<string, string | number | boolean>): Observable<T>;
@@ -734,6 +769,7 @@ class ApiService {
 ## File: /libs/core/src/lib/services/article.service.ts
 
 ### Class: ArticleService
+
 ```typescript
 class ArticleService {
   articles: any;
@@ -750,6 +786,7 @@ class ArticleService {
 ```
 
 ### Interface: Article
+
 ```typescript
 interface Article {
   id: string;
@@ -780,6 +817,7 @@ interface Article {
 ## File: /libs/core/src/lib/services/auth.service.ts
 
 ### Class: AuthService
+
 ```typescript
 class AuthService {
   isAuthenticated: any;
@@ -800,6 +838,7 @@ class AuthService {
 ## File: /libs/core/src/lib/services/books.service.ts
 
 ### Class: BooksService
+
 ```typescript
 class BooksService {
   books: any;
@@ -827,6 +866,7 @@ class BooksService {
 ```
 
 ### Interface: BookNote
+
 ```typescript
 interface BookNote {
   id: string;
@@ -837,6 +877,7 @@ interface BookNote {
 ```
 
 ### Interface: Book
+
 ```typescript
 interface Book {
   id: string;
@@ -857,26 +898,31 @@ interface Book {
 ```
 
 ### Type: BookCategory
+
 ```typescript
 type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
 ```
 
 ### Type: BookStatus
+
 ```typescript
 type BookStatus = 'reading' | 'completed' | 'queued';
 ```
 
 ### Type: BookViewFilter
+
 ```typescript
 type BookViewFilter = 'all' | 'reading' | 'completed' | 'queued';
 ```
 
 ### Type: BookViewMode
+
 ```typescript
 type BookViewMode = 'list' | 'grid';
 ```
 
 ### Type: BookSortBy
+
 ```typescript
 type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'category';
 ```
@@ -886,6 +932,7 @@ type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'category';
 ## File: /libs/core/src/lib/services/file-system.service.ts
 
 ### Class: FileSystemService
+
 ```typescript
 class FileSystemService {
   init(): any;
@@ -903,6 +950,7 @@ class FileSystemService {
 ## File: /libs/core/src/lib/services/journal.service.ts
 
 ### Class: JournalService
+
 ```typescript
 class JournalService {
   projects: any;
@@ -935,6 +983,7 @@ class JournalService {
 ```
 
 ### Interface: JournalEntry
+
 ```typescript
 interface JournalEntry {
   id: string;
@@ -964,6 +1013,7 @@ interface JournalEntry {
 ```
 
 ### Interface: JournalProject
+
 ```typescript
 interface JournalProject {
   id: string;
@@ -983,6 +1033,7 @@ interface JournalProject {
 ```
 
 ### Interface: JournalColumn
+
 ```typescript
 interface JournalColumn {
   id: string;
@@ -997,6 +1048,7 @@ interface JournalColumn {
 ## File: /libs/core/src/lib/services/logging.service.ts
 
 ### Class: LoggingService
+
 ```typescript
 class LoggingService {
   setCorrelationId(id: string | null): void;
@@ -1008,6 +1060,7 @@ class LoggingService {
 ```
 
 ### Type: LogLevel
+
 ```typescript
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 ```
@@ -1017,6 +1070,7 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 ## File: /libs/core/src/lib/services/meetings.service.ts
 
 ### Class: MeetingsService
+
 ```typescript
 class MeetingsService {
   meetings: any;
@@ -1070,6 +1124,7 @@ class MeetingsService {
 ```
 
 ### Interface: Attendee
+
 ```typescript
 interface Attendee {
   id: string;
@@ -1082,6 +1137,7 @@ interface Attendee {
 ```
 
 ### Interface: AgendaItem
+
 ```typescript
 interface AgendaItem {
   id: string;
@@ -1094,6 +1150,7 @@ interface AgendaItem {
 ```
 
 ### Interface: MeetingNote
+
 ```typescript
 interface MeetingNote {
   id: string;
@@ -1104,6 +1161,7 @@ interface MeetingNote {
 ```
 
 ### Interface: ActionItem
+
 ```typescript
 interface ActionItem {
   id: string;
@@ -1117,6 +1175,7 @@ interface ActionItem {
 ```
 
 ### Interface: Meeting
+
 ```typescript
 interface Meeting {
   id: string;
@@ -1169,16 +1228,19 @@ interface Meeting {
 ```
 
 ### Type: MeetingViewFilter
+
 ```typescript
 type MeetingViewFilter = 'all' | 'today' | 'upcoming' | 'past' | 'cancelled';
 ```
 
 ### Type: MeetingViewMode
+
 ```typescript
 type MeetingViewMode = 'list' | 'calendar' | 'kanban';
 ```
 
 ### Type: MeetingSortBy
+
 ```typescript
 type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attendees';
 ```
@@ -1188,6 +1250,7 @@ type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attendees';
 ## File: /libs/core/src/lib/services/notification.service.ts
 
 ### Class: NotificationService
+
 ```typescript
 class NotificationService {
   allNotifications: any;
@@ -1208,6 +1271,7 @@ class NotificationService {
 ```
 
 ### Interface: Notification
+
 ```typescript
 interface Notification {
   id: string;
@@ -1223,6 +1287,7 @@ interface Notification {
 ```
 
 ### Type: NotificationType
+
 ```typescript
 type NotificationType = 'info' | 'success' | 'warning' | 'error';
 ```
@@ -1232,6 +1297,7 @@ type NotificationType = 'info' | 'success' | 'warning' | 'error';
 ## File: /libs/core/src/lib/services/novel-content.service.ts
 
 ### Class: NovelContentService
+
 ```typescript
 class NovelContentService {
   activeNovel: any;
@@ -1274,14 +1340,15 @@ class NovelContentService {
 ```
 
 ### Interface: NovelContent
+
 ```typescript
 interface NovelContent {
   id: string;
   title: string;
   synopsis: {
-        logline: string;
-        theme: string;
-    };
+    logline: string;
+    theme: string;
+  };
   frontMatter: FrontMatterItem[];
   prologue?: Prologue;
   chapters: ChapterGroup[];
@@ -1292,6 +1359,7 @@ interface NovelContent {
 ```
 
 ### Interface: ChapterGroup
+
 ```typescript
 interface ChapterGroup {
   id: string;
@@ -1302,6 +1370,7 @@ interface ChapterGroup {
 ```
 
 ### Interface: Chapter
+
 ```typescript
 interface Chapter {
   id: string;
@@ -1314,14 +1383,15 @@ interface Chapter {
   tags?: string[];
   template?: string;
   plotPoints?: {
-        firstSlap?: string; // Inciting incident
-        secondSlap?: string; // Midpoint
-        climax?: string; // Resolution
-    };
+    firstSlap?: string; // Inciting incident
+    secondSlap?: string; // Midpoint
+    climax?: string; // Resolution
+  };
 }
 ```
 
 ### Interface: FrontMatterItem
+
 ```typescript
 interface FrontMatterItem {
   id: string;
@@ -1334,6 +1404,7 @@ interface FrontMatterItem {
 ```
 
 ### Interface: Prologue
+
 ```typescript
 interface Prologue {
   id: string;
@@ -1346,6 +1417,7 @@ interface Prologue {
 ```
 
 ### Interface: Character
+
 ```typescript
 interface Character {
   id: string;
@@ -1357,6 +1429,7 @@ interface Character {
 ```
 
 ### Interface: Location
+
 ```typescript
 interface Location {
   id: string;
@@ -1367,6 +1440,7 @@ interface Location {
 ```
 
 ### Interface: EditorNote
+
 ```typescript
 interface EditorNote {
   id: string;
@@ -1382,6 +1456,7 @@ interface EditorNote {
 ## File: /libs/core/src/lib/services/research.service.ts
 
 ### Class: ResearchService
+
 ```typescript
 class ResearchService {
   libraries: any;
@@ -1402,6 +1477,7 @@ class ResearchService {
 ```
 
 ### Interface: ResearchLibrary
+
 ```typescript
 interface ResearchLibrary {
   id: string;
@@ -1414,6 +1490,7 @@ interface ResearchLibrary {
 ```
 
 ### Interface: ResearchSource
+
 ```typescript
 interface ResearchSource {
   id: string;
@@ -1433,6 +1510,7 @@ interface ResearchSource {
 ```
 
 ### Interface: ResearchSummary
+
 ```typescript
 interface ResearchSummary {
   id: string;
@@ -1451,6 +1529,7 @@ interface ResearchSummary {
 ## File: /libs/core/src/lib/services/session.service.ts
 
 ### Class: SessionService
+
 ```typescript
 class SessionService {
   pageStats: any;
@@ -1467,6 +1546,7 @@ class SessionService {
 ```
 
 ### Interface: PageSession
+
 ```typescript
 interface PageSession {
   page: string;
@@ -1477,6 +1557,7 @@ interface PageSession {
 ```
 
 ### Interface: SessionData
+
 ```typescript
 interface SessionData {
   pages: Record<string, PageSession>;
@@ -1492,6 +1573,7 @@ interface SessionData {
 ## File: /libs/core/src/lib/services/snippets.service.ts
 
 ### Class: SnippetsService
+
 ```typescript
 class SnippetsService {
   snippets: any;
@@ -1517,6 +1599,7 @@ class SnippetsService {
 ```
 
 ### Interface: Snippet
+
 ```typescript
 interface Snippet {
   id: string;
@@ -1533,30 +1616,25 @@ interface Snippet {
 ```
 
 ### Type: SnippetLang
+
 ```typescript
-type SnippetLang = | 'Python'
-  | 'JavaScript'
-  | 'TypeScript'
-  | 'Markdown'
-  | 'SQL'
-  | 'HTML'
-  | 'CSS'
-  | 'JSON'
-  | 'Shell'
-  | 'Other';
+type SnippetLang = 'Python' | 'JavaScript' | 'TypeScript' | 'Markdown' | 'SQL' | 'HTML' | 'CSS' | 'JSON' | 'Shell' | 'Other';
 ```
 
 ### Type: SnippetViewFilter
+
 ```typescript
 type SnippetViewFilter = 'all' | SnippetLang;
 ```
 
 ### Type: SnippetViewMode
+
 ```typescript
 type SnippetViewMode = 'list' | 'grid';
 ```
 
 ### Type: SnippetSortBy
+
 ```typescript
 type SnippetSortBy = 'title' | 'lastModified' | 'lang' | 'path';
 ```
@@ -1566,6 +1644,7 @@ type SnippetSortBy = 'title' | 'lastModified' | 'lang' | 'path';
 ## File: /libs/core/src/lib/services/sqlite-data.service.ts
 
 ### Class: SqliteDataService
+
 ```typescript
 class SqliteDataService {
   getAll(collection: string): Promise<T[]>;
@@ -1580,6 +1659,7 @@ class SqliteDataService {
 ## File: /libs/core/src/lib/services/sqlite.service.ts
 
 ### Class: SqliteService
+
 ```typescript
 class SqliteService {
   getDb(): Promise<Database>;
@@ -1645,6 +1725,7 @@ class SqliteService {
 ```
 
 ### Interface: NovelContentDoc
+
 ```typescript
 interface NovelContentDoc {
   id: string;
@@ -1653,81 +1734,97 @@ interface NovelContentDoc {
 ```
 
 ### Type: TaskDoc
+
 ```typescript
 type TaskDoc = Task;
 ```
 
 ### Type: NoteDoc
+
 ```typescript
 type NoteDoc = Note;
 ```
 
 ### Type: PlanningItemDoc
+
 ```typescript
 type PlanningItemDoc = PlanningItem;
 ```
 
 ### Type: ActivityDoc
+
 ```typescript
 type ActivityDoc = Activity;
 ```
 
 ### Type: NovelDoc
+
 ```typescript
 type NovelDoc = Novel;
 ```
 
 ### Type: BinItemDoc
+
 ```typescript
 type BinItemDoc = BinItem;
 ```
 
 ### Type: SnippetDoc
+
 ```typescript
 type SnippetDoc = Snippet;
 ```
 
 ### Type: BookDoc
+
 ```typescript
 type BookDoc = Book;
 ```
 
 ### Type: MeetingDoc
+
 ```typescript
 type MeetingDoc = Meeting;
 ```
 
 ### Type: ArticleDoc
+
 ```typescript
 type ArticleDoc = Article;
 ```
 
 ### Type: JournalProjectDoc
+
 ```typescript
 type JournalProjectDoc = JournalProject;
 ```
 
 ### Type: JournalEntryDoc
+
 ```typescript
 type JournalEntryDoc = JournalEntry;
 ```
 
 ### Type: JournalColumnDoc
+
 ```typescript
 type JournalColumnDoc = JournalColumn;
 ```
 
 ### Type: ResearchLibraryDoc
+
 ```typescript
 type ResearchLibraryDoc = ResearchLibrary;
 ```
 
 ### Type: ResearchSourceDoc
+
 ```typescript
 type ResearchSourceDoc = ResearchSource;
 ```
 
 ### Type: ResearchSummaryDoc
+
 ```typescript
 type ResearchSummaryDoc = ResearchSummary;
 ```
@@ -1737,6 +1834,7 @@ type ResearchSummaryDoc = ResearchSummary;
 ## File: /libs/core/src/lib/services/supabase.service.ts
 
 ### Class: SupabaseService
+
 ```typescript
 class SupabaseService {
   getSession(): Promise<{ data: { session: Session | null }; error: any }>;
@@ -1753,6 +1851,7 @@ class SupabaseService {
 ## File: /libs/core/src/lib/services/tauri.service.ts
 
 ### Class: TauriService
+
 ```typescript
 class TauriService {
   isTauri: any;
@@ -1774,6 +1873,7 @@ class TauriService {
 ## File: /libs/core/src/lib/services/theme.service.ts
 
 ### Class: ThemeService
+
 ```typescript
 class ThemeService {
   theme: any;
@@ -1783,6 +1883,7 @@ class ThemeService {
 ```
 
 ### Type: Theme
+
 ```typescript
 type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterprise-light' | 'typewriter';
 ```
@@ -1792,6 +1893,7 @@ type Theme = 'dark' | 'enterprise-dark' | 'light' | 'colorful' | 'enterprise-lig
 ## File: /libs/core/src/lib/services/user.service.ts
 
 ### Class: UserService
+
 ```typescript
 class UserService {
   user: any;
@@ -1809,6 +1911,7 @@ class UserService {
 ```
 
 ### Interface: UserProfile
+
 ```typescript
 interface UserProfile {
   id: string;
@@ -1841,6 +1944,7 @@ interface UserProfile {
 ## File: /libs/core/src/lib/services/version-history.service.ts
 
 ### Class: VersionHistoryService
+
 ```typescript
 class VersionHistoryService {
   createSnapshot(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue', content: string, title: string, wordCount: number, description: string): VersionSnapshot;
@@ -1859,6 +1963,7 @@ class VersionHistoryService {
 ```
 
 ### Interface: VersionSnapshot
+
 ```typescript
 interface VersionSnapshot {
   id: string;
@@ -1873,6 +1978,7 @@ interface VersionSnapshot {
 ```
 
 ### Interface: VersionHistory
+
 ```typescript
 interface VersionHistory {
   contentId: string;
@@ -1887,18 +1993,21 @@ interface VersionHistory {
 ## File: /libs/core/src/lib/utils/tauri-helpers.ts
 
 ### Function: isTauriEnvironment
+
 ```typescript
-function isTauriEnvironment(): boolean
+function isTauriEnvironment(): boolean;
 ```
 
 ### Function: logIfTauri
+
 ```typescript
-function logIfTauri(message: string, error: any): void
+function logIfTauri(message: string, error: any): void;
 ```
 
 ### Function: createTauriErrorHandler
+
 ```typescript
-function createTauriErrorHandler(message: string): (error: any) => void
+function createTauriErrorHandler(message: string): (error: any) => void;
 ```
 
 ---
@@ -1906,6 +2015,7 @@ function createTauriErrorHandler(message: string): (error: any) => void
 ## File: /libs/feature-novels/src/lib/novels/novels.component.ts
 
 ### Class: NovelsComponent
+
 ```typescript
 class NovelsComponent {
   store: any;
@@ -1956,6 +2066,7 @@ class NovelsComponent {
 ## File: /libs/feature-tasks/src/lib/tasks/tasks.component.ts
 
 ### Class: TasksComponent
+
 ```typescript
 class TasksComponent {
   store: any;
@@ -2215,6 +2326,7 @@ class TasksComponent {
 ## File: /libs/feature-workspace/src/lib/workspace/workspace.component.ts
 
 ### Class: WorkspaceComponent
+
 ```typescript
 class WorkspaceComponent {
   store: any;
@@ -2256,6 +2368,7 @@ class WorkspaceComponent {
 ## File: /libs/ui/src/lib/add-new-modal/add-new-modal.component.ts
 
 ### Class: AddNewModalComponent
+
 ```typescript
 class AddNewModalComponent {
   searchInput: ElementRef<HTMLInputElement>;
@@ -2300,6 +2413,7 @@ class AddNewModalComponent {
 ## File: /libs/ui/src/lib/badge/badge.component.ts
 
 ### Class: BadgeComponent
+
 ```typescript
 class BadgeComponent {
   variant: BadgeVariant;
@@ -2308,6 +2422,7 @@ class BadgeComponent {
 ```
 
 ### Type: BadgeVariant
+
 ```typescript
 type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'accent';
 ```
@@ -2317,6 +2432,7 @@ type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'accent';
 ## File: /libs/ui/src/lib/button/button.component.ts
 
 ### Class: ButtonComponent
+
 ```typescript
 class ButtonComponent {
   variant: ButtonVariant;
@@ -2332,11 +2448,13 @@ class ButtonComponent {
 ```
 
 ### Type: ButtonVariant
+
 ```typescript
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 ```
 
 ### Type: ButtonSize
+
 ```typescript
 type ButtonSize = 'sm' | 'md' | 'lg';
 ```
@@ -2346,6 +2464,7 @@ type ButtonSize = 'sm' | 'md' | 'lg';
 ## File: /libs/ui/src/lib/empty-state/empty-state.component.ts
 
 ### Class: EmptyStateComponent
+
 ```typescript
 class EmptyStateComponent {
   icon: any;
@@ -2360,6 +2479,7 @@ class EmptyStateComponent {
 ## File: /libs/ui/src/lib/icon-button/icon-button.component.ts
 
 ### Class: IconButtonComponent
+
 ```typescript
 class IconButtonComponent {
   icon: any;
@@ -2375,6 +2495,7 @@ class IconButtonComponent {
 ```
 
 ### Type: IconButtonVariant
+
 ```typescript
 type IconButtonVariant = 'primary' | 'ghost' | 'danger';
 ```
@@ -2384,6 +2505,7 @@ type IconButtonVariant = 'primary' | 'ghost' | 'danger';
 ## File: /libs/ui/src/lib/input/input.component.ts
 
 ### Class: InputComponent
+
 ```typescript
 class InputComponent {
   label: any;
@@ -2406,6 +2528,7 @@ class InputComponent {
 ## File: /libs/ui/src/lib/logo/logo.component.ts
 
 ### Class: EnvLogoComponent
+
 ```typescript
 class EnvLogoComponent {
   height: any;
@@ -2418,6 +2541,7 @@ class EnvLogoComponent {
 ## File: /libs/ui/src/lib/modal/modal.component.ts
 
 ### Class: ModalComponent
+
 ```typescript
 class ModalComponent {
   isOpen: any;
@@ -2436,6 +2560,7 @@ class ModalComponent {
 ## File: /libs/ui/src/lib/notification-center/notification-center.component.ts
 
 ### Class: NotificationCenterComponent
+
 ```typescript
 class NotificationCenterComponent {
   isOpen: any;
@@ -2465,6 +2590,7 @@ class NotificationCenterComponent {
 ## File: /libs/ui/src/lib/profile-editor/profile-editor.component.ts
 
 ### Class: ProfileEditorComponent
+
 ```typescript
 class ProfileEditorComponent {
   isOpen: any;
@@ -2491,6 +2617,7 @@ class ProfileEditorComponent {
 ## File: /libs/ui/src/lib/profile-menu/profile-menu.component.ts
 
 ### Class: ProfileMenuComponent
+
 ```typescript
 class ProfileMenuComponent {
   isOpen: any;
@@ -2522,6 +2649,7 @@ class ProfileMenuComponent {
 ## File: /libs/ui/src/lib/quick-find/quick-find.component.ts
 
 ### Class: QuickFindComponent
+
 ```typescript
 class QuickFindComponent {
   isOpen: any;
@@ -2544,6 +2672,7 @@ class QuickFindComponent {
 ## File: /libs/ui/src/lib/settings-modal/settings-modal.component.ts
 
 ### Class: SettingsModalComponent
+
 ```typescript
 class SettingsModalComponent {
   aiService: any;
@@ -2598,9 +2727,9 @@ class SettingsModalComponent {
 ## File: /libs/ui/src/lib/ui/ui.ts
 
 ### Class: Ui
+
 ```typescript
-class Ui {
-}
+class Ui {}
 ```
 
 ---
@@ -2608,6 +2737,7 @@ class Ui {
 ## File: /apps/desktop/src/app/components/activity-log/activity-log.component.ts
 
 ### Class: ActivityLogComponent
+
 ```typescript
 class ActivityLogComponent {
   searchQuery: any;
@@ -2629,6 +2759,7 @@ class ActivityLogComponent {
 ## File: /apps/desktop/src/app/components/articles/articles.component.ts
 
 ### Class: ArticlesComponent
+
 ```typescript
 class ArticlesComponent {
   articleService: any;
@@ -2674,6 +2805,7 @@ class ArticlesComponent {
 ## File: /apps/desktop/src/app/components/bin/bin.component.ts
 
 ### Class: BinComponent
+
 ```typescript
 class BinComponent {
   items: any;
@@ -2690,6 +2822,7 @@ class BinComponent {
 ## File: /apps/desktop/src/app/components/books/books.component.ts
 
 ### Class: BooksComponent
+
 ```typescript
 class BooksComponent {
   booksService: any;
@@ -2741,6 +2874,7 @@ class BooksComponent {
 ## File: /apps/desktop/src/app/components/code-snippets/code-snippets.component.ts
 
 ### Class: CodeSnippetsComponent
+
 ```typescript
 class CodeSnippetsComponent {
   snippetsService: any;
@@ -2790,6 +2924,7 @@ class CodeSnippetsComponent {
 ## File: /apps/desktop/src/app/components/daily-notes/daily-notes.component.ts
 
 ### Class: DailyNotesComponent
+
 ```typescript
 class DailyNotesComponent {
   editor: Editor;
@@ -2868,6 +3003,7 @@ class DailyNotesComponent {
 ## File: /apps/desktop/src/app/components/developer-settings/developer-settings.component.ts
 
 ### Class: DeveloperSettingsComponent
+
 ```typescript
 class DeveloperSettingsComponent {
   isExporting: any;
@@ -2892,6 +3028,7 @@ class DeveloperSettingsComponent {
 ```
 
 ### Interface: DataTab
+
 ```typescript
 interface DataTab {
   id: string;
@@ -2909,6 +3046,7 @@ interface DataTab {
 ## File: /apps/desktop/src/app/components/journals/journals.component.ts
 
 ### Class: JournalsComponent
+
 ```typescript
 class JournalsComponent {
   journalService: any;
@@ -2951,7 +3089,7 @@ class JournalsComponent {
   filteredEntries: any;
   timelineEntries: any;
   projectStats: any;
-  draggedEntry: { entry: JournalEntry, sourceCol: string } | null;
+  draggedEntry: { entry: JournalEntry; sourceCol: string } | null;
   filteredProjects: any;
   totalProjects: any;
   totalEntries: any;
@@ -3008,6 +3146,7 @@ class JournalsComponent {
 ## File: /apps/desktop/src/app/components/meetings/meetings.component.ts
 
 ### Class: MeetingsComponent
+
 ```typescript
 class MeetingsComponent {
   meetingsService: any;
@@ -3128,6 +3267,7 @@ class MeetingsComponent {
 ## File: /apps/desktop/src/app/components/research/research.component.ts
 
 ### Class: ResearchComponent
+
 ```typescript
 class ResearchComponent {
   researchService: any;
@@ -3228,6 +3368,7 @@ class ResearchComponent {
 ## File: /apps/desktop/src/app/core/errors/global-error.handler.ts
 
 ### Class: GlobalErrorHandler
+
 ```typescript
 class GlobalErrorHandler {
   handleError(error: unknown): void;
@@ -3239,18 +3380,21 @@ class GlobalErrorHandler {
 ## File: /apps/desktop/src/app/core/utils/tauri-helpers.ts
 
 ### Function: isTauriEnvironment
+
 ```typescript
-function isTauriEnvironment(): boolean
+function isTauriEnvironment(): boolean;
 ```
 
 ### Function: logIfTauri
+
 ```typescript
-function logIfTauri(message: string, error: any): void
+function logIfTauri(message: string, error: any): void;
 ```
 
 ### Function: createTauriErrorHandler
+
 ```typescript
-function createTauriErrorHandler(message: string): (error: any) => void
+function createTauriErrorHandler(message: string): (error: any) => void;
 ```
 
 ---
@@ -3258,6 +3402,7 @@ function createTauriErrorHandler(message: string): (error: any) => void
 ## File: /apps/web/src/app/components/activity-log/activity-log.component.ts
 
 ### Class: ActivityLogComponent
+
 ```typescript
 class ActivityLogComponent {
   searchQuery: any;
@@ -3279,6 +3424,7 @@ class ActivityLogComponent {
 ## File: /apps/web/src/app/components/articles/articles.component.ts
 
 ### Class: ArticlesComponent
+
 ```typescript
 class ArticlesComponent {
   articleService: any;
@@ -3324,6 +3470,7 @@ class ArticlesComponent {
 ## File: /apps/web/src/app/components/bin/bin.component.ts
 
 ### Class: BinComponent
+
 ```typescript
 class BinComponent {
   items: any;
@@ -3340,6 +3487,7 @@ class BinComponent {
 ## File: /apps/web/src/app/components/books/books.component.ts
 
 ### Class: BooksComponent
+
 ```typescript
 class BooksComponent {
   booksService: any;
@@ -3391,6 +3539,7 @@ class BooksComponent {
 ## File: /apps/web/src/app/components/code-snippets/code-snippets.component.ts
 
 ### Class: CodeSnippetsComponent
+
 ```typescript
 class CodeSnippetsComponent {
   snippetsService: any;
@@ -3440,6 +3589,7 @@ class CodeSnippetsComponent {
 ## File: /apps/web/src/app/components/daily-notes/daily-notes.component.ts
 
 ### Class: DailyNotesComponent
+
 ```typescript
 class DailyNotesComponent {
   editor: Editor;
@@ -3518,6 +3668,7 @@ class DailyNotesComponent {
 ## File: /apps/web/src/app/components/developer-settings/developer-settings.component.ts
 
 ### Class: DeveloperSettingsComponent
+
 ```typescript
 class DeveloperSettingsComponent {
   isImporting: any;
@@ -3542,6 +3693,7 @@ class DeveloperSettingsComponent {
 ```
 
 ### Interface: DataTab
+
 ```typescript
 interface DataTab {
   id: string;
@@ -3559,6 +3711,7 @@ interface DataTab {
 ## File: /apps/web/src/app/components/journals/journals.component.ts
 
 ### Class: JournalsComponent
+
 ```typescript
 class JournalsComponent {
   journalService: any;
@@ -3601,7 +3754,7 @@ class JournalsComponent {
   filteredEntries: any;
   timelineEntries: any;
   projectStats: any;
-  draggedEntry: { entry: JournalEntry, sourceCol: string } | null;
+  draggedEntry: { entry: JournalEntry; sourceCol: string } | null;
   filteredProjects: any;
   totalProjects: any;
   totalEntries: any;
@@ -3658,6 +3811,7 @@ class JournalsComponent {
 ## File: /apps/web/src/app/components/meetings/meetings.component.ts
 
 ### Class: MeetingsComponent
+
 ```typescript
 class MeetingsComponent {
   meetingsService: any;
@@ -3778,6 +3932,7 @@ class MeetingsComponent {
 ## File: /apps/web/src/app/components/overview/overview.component.ts
 
 ### Class: OverviewComponent
+
 ```typescript
 class OverviewComponent {
   store: any;
@@ -3806,6 +3961,7 @@ class OverviewComponent {
 ## File: /apps/web/src/app/components/research/research.component.ts
 
 ### Class: ResearchComponent
+
 ```typescript
 class ResearchComponent {
   researchService: any;
@@ -3906,6 +4062,7 @@ class ResearchComponent {
 ## File: /apps/web/src/app/core/errors/global-error.handler.ts
 
 ### Class: GlobalErrorHandler
+
 ```typescript
 class GlobalErrorHandler {
   handleError(error: unknown): void;
@@ -3917,18 +4074,21 @@ class GlobalErrorHandler {
 ## File: /apps/web/src/app/core/utils/tauri-helpers.ts
 
 ### Function: isTauriEnvironment
+
 ```typescript
-function isTauriEnvironment(): boolean
+function isTauriEnvironment(): boolean;
 ```
 
 ### Function: logIfTauri
+
 ```typescript
-function logIfTauri(message: string, error: any): void
+function logIfTauri(message: string, error: any): void;
 ```
 
 ### Function: createTauriErrorHandler
+
 ```typescript
-function createTauriErrorHandler(message: string): (error: any) => void
+function createTauriErrorHandler(message: string): (error: any) => void;
 ```
 
 ---
@@ -3936,6 +4096,7 @@ function createTauriErrorHandler(message: string): (error: any) => void
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/novel-editor.component.ts
 
 ### Class: NovelEditorComponent
+
 ```typescript
 class NovelEditorComponent {
   editor: Editor;
@@ -4055,7 +4216,7 @@ class NovelEditorComponent {
   onDragOver(event: DragEvent, index: number): any;
   onDragEnd(): any;
   onDrop(event: DragEvent, dropIndex: number, type: 'chapter' | 'group', groupId: string): any;
-  selectSearchResult(result: { type: string, id: string }): any;
+  selectSearchResult(result: { type: string; id: string }): any;
   toggleFocusMode(): any;
   getCurrentContext(): string;
   getSelectedText(): string;
@@ -4093,6 +4254,7 @@ class NovelEditorComponent {
 ## File: /libs/ui/src/lib/auth/login/login.component.ts
 
 ### Class: LoginComponent
+
 ```typescript
 class LoginComponent {
   authService: any;
@@ -4112,6 +4274,7 @@ class LoginComponent {
 ## File: /libs/ui/src/lib/auth/sign-up/sign-up.component.ts
 
 ### Class: SignUpComponent
+
 ```typescript
 class SignUpComponent {
   authService: any;
@@ -4135,6 +4298,7 @@ class SignUpComponent {
 ## File: /libs/ui/src/lib/layout/footer/footer.component.ts
 
 ### Class: FooterComponent
+
 ```typescript
 class FooterComponent {
   currentStreak: any;
@@ -4151,6 +4315,7 @@ class FooterComponent {
 ## File: /libs/ui/src/lib/layout/header/header.component.ts
 
 ### Class: HeaderComponent
+
 ```typescript
 class HeaderComponent {
   activeTab: any;
@@ -4198,6 +4363,7 @@ class HeaderComponent {
 ## File: /libs/ui/src/lib/layout/sidebar/sidebar.component.ts
 
 ### Class: SidebarComponent
+
 ```typescript
 class SidebarComponent {
   title: any;
@@ -4219,6 +4385,7 @@ class SidebarComponent {
 ```
 
 ### Interface: SidebarNavItem
+
 ```typescript
 interface SidebarNavItem {
   id: string;
@@ -4233,6 +4400,7 @@ interface SidebarNavItem {
 ## File: /apps/desktop/src/app/components/dashboard/global-tasks/global-tasks.component.ts
 
 ### Class: GlobalTasksComponent
+
 ```typescript
 class GlobalTasksComponent {
   tasks: any;
@@ -4246,9 +4414,9 @@ class GlobalTasksComponent {
 ## File: /apps/desktop/src/app/components/dashboard/metrics/metrics.component.ts
 
 ### Class: MetricsComponent
+
 ```typescript
-class MetricsComponent {
-}
+class MetricsComponent {}
 ```
 
 ---
@@ -4256,6 +4424,7 @@ class MetricsComponent {
 ## File: /apps/desktop/src/app/components/dashboard/project-oversight/project-oversight.component.ts
 
 ### Class: ProjectOversightComponent
+
 ```typescript
 class ProjectOversightComponent {
   projects: any;
@@ -4268,6 +4437,7 @@ class ProjectOversightComponent {
 ## File: /apps/desktop/src/app/components/dashboard/recent-activity/recent-activity.component.ts
 
 ### Class: RecentActivityComponent
+
 ```typescript
 class RecentActivityComponent {
   activities: any;
@@ -4280,9 +4450,9 @@ class RecentActivityComponent {
 ## File: /apps/desktop/src/app/components/errors/not-found/not-found.component.ts
 
 ### Class: NotFoundComponent
+
 ```typescript
-class NotFoundComponent {
-}
+class NotFoundComponent {}
 ```
 
 ---
@@ -4290,6 +4460,7 @@ class NotFoundComponent {
 ## File: /apps/desktop/src/app/components/errors/server-error/server-error.component.ts
 
 ### Class: ServerErrorComponent
+
 ```typescript
 class ServerErrorComponent {
   message: any;
@@ -4301,6 +4472,7 @@ class ServerErrorComponent {
 ## File: /apps/desktop/src/app/components/projects/project-details/project-details.component.ts
 
 ### Class: ProjectDetailsComponent
+
 ```typescript
 class ProjectDetailsComponent {
   store: any;
@@ -4329,6 +4501,7 @@ class ProjectDetailsComponent {
 ## File: /apps/web/src/app/components/dashboard/global-tasks/global-tasks.component.ts
 
 ### Class: GlobalTasksComponent
+
 ```typescript
 class GlobalTasksComponent {
   tasks: any;
@@ -4342,9 +4515,9 @@ class GlobalTasksComponent {
 ## File: /apps/web/src/app/components/dashboard/metrics/metrics.component.ts
 
 ### Class: MetricsComponent
+
 ```typescript
-class MetricsComponent {
-}
+class MetricsComponent {}
 ```
 
 ---
@@ -4352,6 +4525,7 @@ class MetricsComponent {
 ## File: /apps/web/src/app/components/dashboard/project-oversight/project-oversight.component.ts
 
 ### Class: ProjectOversightComponent
+
 ```typescript
 class ProjectOversightComponent {
   projects: any;
@@ -4364,6 +4538,7 @@ class ProjectOversightComponent {
 ## File: /apps/web/src/app/components/dashboard/recent-activity/recent-activity.component.ts
 
 ### Class: RecentActivityComponent
+
 ```typescript
 class RecentActivityComponent {
   activities: any;
@@ -4376,9 +4551,9 @@ class RecentActivityComponent {
 ## File: /apps/web/src/app/components/errors/not-found/not-found.component.ts
 
 ### Class: NotFoundComponent
+
 ```typescript
-class NotFoundComponent {
-}
+class NotFoundComponent {}
 ```
 
 ---
@@ -4386,6 +4561,7 @@ class NotFoundComponent {
 ## File: /apps/web/src/app/components/errors/server-error/server-error.component.ts
 
 ### Class: ServerErrorComponent
+
 ```typescript
 class ServerErrorComponent {
   message: any;
@@ -4397,6 +4573,7 @@ class ServerErrorComponent {
 ## File: /apps/web/src/app/components/projects/project-details/project-details.component.ts
 
 ### Class: ProjectDetailsComponent
+
 ```typescript
 class ProjectDetailsComponent {
   store: any;
@@ -4425,6 +4602,7 @@ class ProjectDetailsComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/character-details/character-details.component.ts
 
 ### Class: CharacterDetailsComponent
+
 ```typescript
 class CharacterDetailsComponent {
   character: any;
@@ -4438,6 +4616,7 @@ class CharacterDetailsComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/editor-header/editor-header.component.ts
 
 ### Class: EditorHeaderComponent
+
 ```typescript
 class EditorHeaderComponent {
   activeNav: any;
@@ -4464,6 +4643,7 @@ class EditorHeaderComponent {
 ```
 
 ### Interface: SearchResult
+
 ```typescript
 interface SearchResult {
   type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue';
@@ -4478,6 +4658,7 @@ interface SearchResult {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/editor-toolbar/editor-toolbar.component.ts
 
 ### Class: EditorToolbarComponent
+
 ```typescript
 class EditorToolbarComponent {
   editor: any;
@@ -4493,6 +4674,7 @@ class EditorToolbarComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/location-details/location-details.component.ts
 
 ### Class: LocationDetailsComponent
+
 ```typescript
 class LocationDetailsComponent {
   location: any;
@@ -4506,6 +4688,7 @@ class LocationDetailsComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/manuscript-editor/manuscript-editor.component.ts
 
 ### Class: ManuscriptEditorComponent
+
 ```typescript
 class ManuscriptEditorComponent {
   editor: any;
@@ -4525,6 +4708,7 @@ class ManuscriptEditorComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/structure-editor/structure-editor.component.ts
 
 ### Class: StructureEditorComponent
+
 ```typescript
 class StructureEditorComponent {
   editor: any;
@@ -4543,6 +4727,7 @@ class StructureEditorComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/add-modal/add-modal.component.ts
 
 ### Class: AddModalComponent
+
 ```typescript
 class AddModalComponent {
   modal: any;
@@ -4561,6 +4746,7 @@ class AddModalComponent {
 ```
 
 ### Interface: AddModalData
+
 ```typescript
 interface AddModalData {
   isOpen: boolean;
@@ -4576,6 +4762,7 @@ interface AddModalData {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/delete-modal/delete-modal.component.ts
 
 ### Class: DeleteModalComponent
+
 ```typescript
 class DeleteModalComponent {
   modal: any;
@@ -4585,6 +4772,7 @@ class DeleteModalComponent {
 ```
 
 ### Interface: DeleteModalData
+
 ```typescript
 interface DeleteModalData {
   isOpen: boolean;
@@ -4600,6 +4788,7 @@ interface DeleteModalData {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/link-modal/link-modal.component.ts
 
 ### Class: LinkModalComponent
+
 ```typescript
 class LinkModalComponent {
   isOpen: any;
@@ -4619,6 +4808,7 @@ class LinkModalComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/version-history-modal/version-history-modal.component.ts
 
 ### Class: VersionHistoryModalComponent
+
 ```typescript
 class VersionHistoryModalComponent {
   isOpen: any;
@@ -4633,6 +4823,7 @@ class VersionHistoryModalComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/right-sidebar/ai-panel/ai-panel.component.ts
 
 ### Class: AiPanelComponent
+
 ```typescript
 class AiPanelComponent {
   aiMessages: any;
@@ -4668,6 +4859,7 @@ class AiPanelComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/right-sidebar/manuscript-data/manuscript-data.component.ts
 
 ### Class: ManuscriptDataComponent
+
 ```typescript
 class ManuscriptDataComponent {
   totalNovelWords: any;
@@ -4690,6 +4882,7 @@ class ManuscriptDataComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/right-sidebar/notes-panel/notes-panel.component.ts
 
 ### Class: NotesPanelComponent
+
 ```typescript
 class NotesPanelComponent {
   notes: any;
@@ -4703,6 +4896,7 @@ class NotesPanelComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/chapters-list/chapters-list.component.ts
 
 ### Class: ChaptersListComponent
+
 ```typescript
 class ChaptersListComponent {
   chapters: any;
@@ -4734,6 +4928,7 @@ class ChaptersListComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/characters-list/characters-list.component.ts
 
 ### Class: CharactersListComponent
+
 ```typescript
 class CharactersListComponent {
   characters: any;
@@ -4749,6 +4944,7 @@ class CharactersListComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/locations-list/locations-list.component.ts
 
 ### Class: LocationsListComponent
+
 ```typescript
 class LocationsListComponent {
   locations: any;
@@ -4764,6 +4960,7 @@ class LocationsListComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/structure-view/structure-view.component.ts
 
 ### Class: StructureViewComponent
+
 ```typescript
 class StructureViewComponent {
   frontMatter: any;
@@ -4787,6 +4984,7 @@ class StructureViewComponent {
 ## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/sync-status/sync-status.component.ts
 
 ### Class: SyncStatusComponent
+
 ```typescript
 class SyncStatusComponent {
   wordCount: any;
@@ -4798,4 +4996,3 @@ class SyncStatusComponent {
 ```
 
 ---
-

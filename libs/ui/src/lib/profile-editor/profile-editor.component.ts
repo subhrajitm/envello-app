@@ -1,4 +1,12 @@
-import { Component, signal, inject, ViewChild, ElementRef, HostListener, NgZone } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  ViewChild,
+  ElementRef,
+  HostListener,
+  NgZone,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '@envello/core';
@@ -11,7 +19,7 @@ import { ModalComponent } from '../modal/modal.component';
   standalone: true,
   imports: [CommonModule, FormsModule, ButtonComponent, ModalComponent],
   templateUrl: './profile-editor.component.html',
-  styleUrl: './profile-editor.component.css'
+  styleUrl: './profile-editor.component.css',
 })
 export class ProfileEditorComponent {
   private userService = inject(UserService);
@@ -91,18 +99,24 @@ export class ProfileEditorComponent {
         this.userService.updateProfile({
           name: this.tempName,
           bio: this.tempBio,
-          avatar: this.tempAvatar()
+          avatar: this.tempAvatar(),
         }),
         this.userService.updatePreferences({
-          gender: this.tempGender
-        })
+          gender: this.tempGender,
+        }),
       ]);
 
-      this.notificationService.success('Profile Updated', 'Your changes have been saved successfully.');
+      this.notificationService.success(
+        'Profile Updated',
+        'Your changes have been saved successfully.',
+      );
       this.close();
     } catch (e) {
       console.error('Failed to save profile:', e);
-      this.notificationService.error('Save Failed', 'Could not update profile. Please try again.');
+      this.notificationService.error(
+        'Save Failed',
+        'Could not update profile. Please try again.',
+      );
     } finally {
       this.isSaving.set(false);
     }

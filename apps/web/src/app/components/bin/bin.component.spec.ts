@@ -26,9 +26,13 @@ describe('BinComponent', () => {
   ]);
 
   beforeEach(async () => {
-    const binSpy = jasmine.createSpyObj('BinService', ['permanentlyDelete', 'emptyBin'], {
-      items: mockItems,
-    });
+    const binSpy = jasmine.createSpyObj(
+      'BinService',
+      ['permanentlyDelete', 'emptyBin'],
+      {
+        items: mockItems,
+      },
+    );
 
     await TestBed.configureTestingModule({
       imports: [BinComponent],
@@ -93,7 +97,8 @@ describe('BinComponent', () => {
 
   it('should return early when emptyBin is called with no items', () => {
     const emptyItems = signal([]);
-    (binService as unknown as { items: ReturnType<typeof signal> }).items = emptyItems;
+    (binService as unknown as { items: ReturnType<typeof signal> }).items =
+      emptyItems;
     fixture = TestBed.createComponent(BinComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

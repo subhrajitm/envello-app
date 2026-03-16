@@ -1,54 +1,99 @@
-<env-modal [isOpen]="isOpen()" (closed)="close()" title="Edit Profile" size="md">
-    <div body>
-        <div class="avatar-section flex flex-col items-center gap-4">
-            <div class="current-avatar flex-shrink-0">
-                @if (tempAvatar()) {
-                @if (isImageLoading()) {
-                <div class="avatar-loader"></div>
-                }
-                <img [src]="tempAvatar()" alt="Profile Avatar" [style.display]="isImageLoading() ? 'none' : 'block'"
-                    (load)="onImageLoad()" (error)="onImageError()">
-                } @else {
-                <span class="avatar-initials">{{ userInitials() }}</span>
-                }
-            </div>
-            <div class="flex items-center justify-center gap-3 mt-2">
-                <env-button [variant]="tempAvatar() && tempGender === 'male' ? 'primary' : 'secondary'"
-                    (clicked)="setAvatarOption('male')" [disabled]="isSaving()">
-                    Male
-                </env-button>
-                <env-button [variant]="tempAvatar() && tempGender === 'female' ? 'primary' : 'secondary'"
-                    (clicked)="setAvatarOption('female')" [disabled]="isSaving()">
-                    Female
-                </env-button>
-                <env-button [variant]="!tempAvatar() ? 'primary' : 'secondary'" (clicked)="setAvatarOption('initials')"
-                    [disabled]="isSaving()">
-                    Initials
-                </env-button>
-            </div>
-        </div>
-
-        <div class="form-group flex flex-col gap-2">
-            <label>Full Name</label>
-            <input type="text" [(ngModel)]="tempName" class="form-input" placeholder="Your name">
-        </div>
-
-        <div class="form-group flex flex-col gap-2">
-            <label>Email</label>
-            <input type="email" [value]="user()?.email" class="form-input" disabled title="Email cannot be changed">
-            <span class="field-hint">Email cannot be changed</span>
-        </div>
-
-        <div class="form-group flex flex-col gap-2">
-            <label>Bio</label>
-            <textarea [(ngModel)]="tempBio" class="form-textarea" placeholder="Tell us about yourself..."
-                rows="4"></textarea>
-            <span class="char-count">{{ tempBio.length }}/200</span>
-        </div>
+<env-modal
+  [isOpen]="isOpen()"
+  (closed)="close()"
+  title="Edit Profile"
+  size="md"
+>
+  <div body>
+    <div class="avatar-section flex flex-col items-center gap-4">
+      <div class="current-avatar flex-shrink-0">
+        @if (tempAvatar()) {
+          @if (isImageLoading()) {
+            <div class="avatar-loader"></div>
+          }
+          <img
+            [src]="tempAvatar()"
+            alt="Profile Avatar"
+            [style.display]="isImageLoading() ? 'none' : 'block'"
+            (load)="onImageLoad()"
+            (error)="onImageError()"
+          />
+        } @else {
+          <span class="avatar-initials">{{ userInitials() }}</span>
+        }
+      </div>
+      <div class="flex items-center justify-center gap-3 mt-2">
+        <env-button
+          [variant]="
+            tempAvatar() && tempGender === 'male' ? 'primary' : 'secondary'
+          "
+          (clicked)="setAvatarOption('male')"
+          [disabled]="isSaving()"
+        >
+          Male
+        </env-button>
+        <env-button
+          [variant]="
+            tempAvatar() && tempGender === 'female' ? 'primary' : 'secondary'
+          "
+          (clicked)="setAvatarOption('female')"
+          [disabled]="isSaving()"
+        >
+          Female
+        </env-button>
+        <env-button
+          [variant]="!tempAvatar() ? 'primary' : 'secondary'"
+          (clicked)="setAvatarOption('initials')"
+          [disabled]="isSaving()"
+        >
+          Initials
+        </env-button>
+      </div>
     </div>
-    <div footer class="flex items-center justify-end gap-2">
-        <env-button variant="secondary" (clicked)="close()" [disabled]="isSaving()">Cancel</env-button>
-        <env-button variant="primary" (clicked)="save()" [disabled]="!isValid || isSaving()" [loading]="isSaving()">Save
-            Changes</env-button>
+
+    <div class="form-group flex flex-col gap-2">
+      <label>Full Name</label>
+      <input
+        type="text"
+        [(ngModel)]="tempName"
+        class="form-input"
+        placeholder="Your name"
+      />
     </div>
+
+    <div class="form-group flex flex-col gap-2">
+      <label>Email</label>
+      <input
+        type="email"
+        [value]="user()?.email"
+        class="form-input"
+        disabled
+        title="Email cannot be changed"
+      />
+      <span class="field-hint">Email cannot be changed</span>
+    </div>
+
+    <div class="form-group flex flex-col gap-2">
+      <label>Bio</label>
+      <textarea
+        [(ngModel)]="tempBio"
+        class="form-textarea"
+        placeholder="Tell us about yourself..."
+        rows="4"
+      ></textarea>
+      <span class="char-count">{{ tempBio.length }}/200</span>
+    </div>
+  </div>
+  <div footer class="flex items-center justify-end gap-2">
+    <env-button variant="secondary" (clicked)="close()" [disabled]="isSaving()"
+      >Cancel</env-button
+    >
+    <env-button
+      variant="primary"
+      (clicked)="save()"
+      [disabled]="!isValid || isSaving()"
+      [loading]="isSaving()"
+      >Save Changes</env-button
+    >
+  </div>
 </env-modal>

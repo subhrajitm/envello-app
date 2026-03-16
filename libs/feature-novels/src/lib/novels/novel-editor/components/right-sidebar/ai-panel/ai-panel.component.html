@@ -1,131 +1,168 @@
 <div class="ne-ai-panel">
-    <div class="ne-ai-header">
-        <span class="material-symbols-outlined icon-bolt">bolt</span>
-        AI COMPANION
-        <div class="online-dot"></div>
-        @if (aiMessages().length > 0) {
-        <button class="clear-conversation-btn" (click)="clearConversation.emit()" title="Clear conversation">
-            <span class="material-symbols-outlined">delete_sweep</span>
-        </button>
-        }
-    </div>
+  <div class="ne-ai-header">
+    <span class="material-symbols-outlined icon-bolt">bolt</span>
+    AI COMPANION
+    <div class="online-dot"></div>
+    @if (aiMessages().length > 0) {
+      <button
+        class="clear-conversation-btn"
+        (click)="clearConversation.emit()"
+        title="Clear conversation"
+      >
+        <span class="material-symbols-outlined">delete_sweep</span>
+      </button>
+    }
+  </div>
 
-    <div class="ai-actions">
-        <button class="btn-ai-primary" (click)="analyzeToneAndPacing.emit()" [disabled]="aiLoading() || !activeChapter()">
-            <span class="material-symbols-outlined">auto_fix_high</span>
-            Analyze Tone & Pacing
-        </button>
-        <div class="ai-btn-row">
-            <button class="btn-ai-sec" (click)="generateSuggestions.emit()" [disabled]="aiLoading() || !activeChapter()">
-                <span class="material-symbols-outlined">menu_book</span>
-                Suggest
-            </button>
-            <button class="btn-ai-sec" (click)="summarizeChapter.emit()" [disabled]="aiLoading() || !activeChapter()">
-                <span class="material-symbols-outlined">short_text</span>
-                Summarize
-            </button>
-        </div>
-        <button class="btn-ai-sec btn-ai-full" (click)="continueWriting.emit()" [disabled]="aiLoading() || !editor()">
-            <span class="material-symbols-outlined">arrow_forward</span>
-            Continue Writing
-        </button>
+  <div class="ai-actions">
+    <button
+      class="btn-ai-primary"
+      (click)="analyzeToneAndPacing.emit()"
+      [disabled]="aiLoading() || !activeChapter()"
+    >
+      <span class="material-symbols-outlined">auto_fix_high</span>
+      Analyze Tone & Pacing
+    </button>
+    <div class="ai-btn-row">
+      <button
+        class="btn-ai-sec"
+        (click)="generateSuggestions.emit()"
+        [disabled]="aiLoading() || !activeChapter()"
+      >
+        <span class="material-symbols-outlined">menu_book</span>
+        Suggest
+      </button>
+      <button
+        class="btn-ai-sec"
+        (click)="summarizeChapter.emit()"
+        [disabled]="aiLoading() || !activeChapter()"
+      >
+        <span class="material-symbols-outlined">short_text</span>
+        Summarize
+      </button>
     </div>
+    <button
+      class="btn-ai-sec btn-ai-full"
+      (click)="continueWriting.emit()"
+      [disabled]="aiLoading() || !editor()"
+    >
+      <span class="material-symbols-outlined">arrow_forward</span>
+      Continue Writing
+    </button>
+  </div>
 
-    <!-- Chat Messages -->
-    <div class="ai-chat-container">
-        @if (aiMessages().length === 0 && !aiLoading()) {
-        <div class="ai-chat-empty">
-            <span class="material-symbols-outlined">chat_bubble_outline</span>
-            <p>Start a conversation with AI</p>
-            <p class="empty-hint">Ask questions, get suggestions, or use quick actions above</p>
-        </div>
-        }
-        <div class="ai-messages" #aiMessagesContainer>
-            @for (message of aiMessages(); track message.id) {
-            <div class="ai-message" [class.user]="message.role === 'user'" [class.assistant]="message.role === 'assistant'">
-                <div class="message-avatar">
-                    @if (message.role === 'user') {
-                    <span class="material-symbols-outlined">person</span>
-                    } @else {
-                    <span class="material-symbols-outlined">smart_toy</span>
-                    }
-                </div>
-                <div class="message-content">
-                    <div class="message-text" [innerHTML]="formatMessage(message.content)"></div>
-                    <div class="message-time">{{ formatTime(message.timestamp) }}</div>
-                </div>
-            </div>
+  <!-- Chat Messages -->
+  <div class="ai-chat-container">
+    @if (aiMessages().length === 0 && !aiLoading()) {
+      <div class="ai-chat-empty">
+        <span class="material-symbols-outlined">chat_bubble_outline</span>
+        <p>Start a conversation with AI</p>
+        <p class="empty-hint">
+          Ask questions, get suggestions, or use quick actions above
+        </p>
+      </div>
+    }
+    <div class="ai-messages" #aiMessagesContainer>
+      @for (message of aiMessages(); track message.id) {
+        <div
+          class="ai-message"
+          [class.user]="message.role === 'user'"
+          [class.assistant]="message.role === 'assistant'"
+        >
+          <div class="message-avatar">
+            @if (message.role === 'user') {
+              <span class="material-symbols-outlined">person</span>
+            } @else {
+              <span class="material-symbols-outlined">smart_toy</span>
             }
-            @if (aiLoading()) {
-            <div class="ai-message assistant">
-                <div class="message-avatar">
-                    <span class="material-symbols-outlined">smart_toy</span>
-                </div>
-                <div class="message-content">
-                    <div class="message-loading">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
+          </div>
+          <div class="message-content">
+            <div
+              class="message-text"
+              [innerHTML]="formatMessage(message.content)"
+            ></div>
+            <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+          </div>
+        </div>
+      }
+      @if (aiLoading()) {
+        <div class="ai-message assistant">
+          <div class="message-avatar">
+            <span class="material-symbols-outlined">smart_toy</span>
+          </div>
+          <div class="message-content">
+            <div class="message-loading">
+              <span></span><span></span><span></span>
             </div>
-            }
+          </div>
         </div>
-        @if (aiError()) {
-        <div class="ai-error">
-            <span class="material-symbols-outlined">error</span>
-            {{ aiError() }}
-        </div>
-        }
+      }
     </div>
+    @if (aiError()) {
+      <div class="ai-error">
+        <span class="material-symbols-outlined">error</span>
+        {{ aiError() }}
+      </div>
+    }
+  </div>
 
-    <!-- Context Preview -->
-    @if (showContextPreview()) {
+  <!-- Context Preview -->
+  @if (showContextPreview()) {
     <div class="context-preview">
-        <div class="ctx-header">
-            <span>CONTEXT ({{ tokenCount() }} tokens)</span>
-            <button (click)="toggleContextPreview.emit()">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        <div class="context-content">{{ context() }}</div>
-    </div>
-    }
-
-    <!-- Chat Input -->
-    <div class="ai-chat-input-wrapper">
-        <div class="context-toggle" (click)="toggleContextPreview.emit()" title="Toggle context preview">
-            <span class="material-symbols-outlined">info</span>
-            <span>{{ tokenCount() }} tokens</span>
-        </div>
-        <textarea 
-            class="ai-chat-input" 
-            [value]="aiPrompt()"
-            (input)="promptChange.emit($any($event.target).value)"
-            (keydown.enter)="handleChatEnter($any($event))"
-            placeholder="Ask AI to review, brainstorm, or expand..."
-            rows="2"
-            [disabled]="aiLoading()"
-        ></textarea>
-        <button class="btn-send" (click)="sendMessage.emit()" [disabled]="aiLoading() || !aiPrompt().trim()">
-            <span class="material-symbols-outlined">send</span>
+      <div class="ctx-header">
+        <span>CONTEXT ({{ tokenCount() }} tokens)</span>
+        <button (click)="toggleContextPreview.emit()">
+          <span class="material-symbols-outlined">close</span>
         </button>
+      </div>
+      <div class="context-content">{{ context() }}</div>
     </div>
+  }
 
-    <!-- Suggestions -->
-    @if (aiSuggestions().length > 0) {
-    <div class="ne-suggestions-box">
-        <div class="sugg-header">
-            <span>SUGGESTIONS</span>
-            <span class="clear-link" (click)="clearSuggestions.emit()">CLEAR</span>
-        </div>
-        @for (suggestion of aiSuggestions(); track suggestion.id) {
-        <div class="sugg-card">
-            <div class="sugg-content">{{ suggestion.content }}</div>
-            <button class="sugg-apply" (click)="applySuggestion.emit(suggestion)">
-                <span class="material-symbols-outlined">check</span>
-                Apply
-            </button>
-        </div>
-        }
+  <!-- Chat Input -->
+  <div class="ai-chat-input-wrapper">
+    <div
+      class="context-toggle"
+      (click)="toggleContextPreview.emit()"
+      title="Toggle context preview"
+    >
+      <span class="material-symbols-outlined">info</span>
+      <span>{{ tokenCount() }} tokens</span>
     </div>
-    }
+    <textarea
+      class="ai-chat-input"
+      [value]="aiPrompt()"
+      (input)="promptChange.emit($any($event.target).value)"
+      (keydown.enter)="handleChatEnter($any($event))"
+      placeholder="Ask AI to review, brainstorm, or expand..."
+      rows="2"
+      [disabled]="aiLoading()"
+    ></textarea>
+    <button
+      class="btn-send"
+      (click)="sendMessage.emit()"
+      [disabled]="aiLoading() || !aiPrompt().trim()"
+    >
+      <span class="material-symbols-outlined">send</span>
+    </button>
+  </div>
+
+  <!-- Suggestions -->
+  @if (aiSuggestions().length > 0) {
+    <div class="ne-suggestions-box">
+      <div class="sugg-header">
+        <span>SUGGESTIONS</span>
+        <span class="clear-link" (click)="clearSuggestions.emit()">CLEAR</span>
+      </div>
+      @for (suggestion of aiSuggestions(); track suggestion.id) {
+        <div class="sugg-card">
+          <div class="sugg-content">{{ suggestion.content }}</div>
+          <button class="sugg-apply" (click)="applySuggestion.emit(suggestion)">
+            <span class="material-symbols-outlined">check</span>
+            Apply
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>

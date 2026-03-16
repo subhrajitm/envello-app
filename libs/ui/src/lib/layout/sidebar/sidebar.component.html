@@ -5,20 +5,26 @@
 
   <nav class="env-sidebar-nav flex flex-col flex-1 min-h-0">
     @for (item of items; track item.id) {
-    <button type="button" class="env-sidebar-nav-item" [class.active]="activeId === item.id"
-      (click)="onSelectItem(item.id)">
-      <span class="material-symbols-outlined env-sidebar-nav-icon">{{ item.icon }}</span>
-      <span class="env-sidebar-nav-label">{{ item.label }}</span>
-      @if (item.count !== undefined) {
-      <span class="env-sidebar-nav-count">{{ item.count }}</span>
-      }
-    </button>
+      <button
+        type="button"
+        class="env-sidebar-nav-item"
+        [class.active]="activeId === item.id"
+        (click)="onSelectItem(item.id)"
+      >
+        <span class="material-symbols-outlined env-sidebar-nav-icon">{{
+          item.icon
+        }}</span>
+        <span class="env-sidebar-nav-label">{{ item.label }}</span>
+        @if (item.count !== undefined) {
+          <span class="env-sidebar-nav-count">{{ item.count }}</span>
+        }
+      </button>
     }
   </nav>
 
   @if (showFooter) {
-  <div class="env-sidebar-footer">
-    <ng-content select="[env-sidebar-footer]"></ng-content>
-  </div>
+    <div class="env-sidebar-footer">
+      <ng-content select="[env-sidebar-footer]"></ng-content>
+    </div>
   }
 </aside>

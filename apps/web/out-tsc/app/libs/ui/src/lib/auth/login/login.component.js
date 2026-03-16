@@ -1,4 +1,4 @@
-import { __decorate } from "tslib";
+import { __decorate } from 'tslib';
 import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,61 +7,66 @@ import { Router, RouterModule } from '@angular/router';
 import { EnvLogoComponent } from '../../logo/logo.component';
 import { ButtonComponent } from '../../button/button.component';
 let LoginComponent = class LoginComponent {
-    authService = inject(AuthService);
-    router = inject(Router);
-    email = '';
-    password = '';
-    loading = signal(false);
-    error = signal(null);
-    constructor() {
-        effect(() => {
-            if (this.authService.isAuthenticated()) {
-                this.router.navigate(['/workspace']);
-            }
-        });
+  authService = inject(AuthService);
+  router = inject(Router);
+  email = '';
+  password = '';
+  loading = signal(false);
+  error = signal(null);
+  constructor() {
+    effect(() => {
+      if (this.authService.isAuthenticated()) {
+        this.router.navigate(['/workspace']);
+      }
+    });
+  }
+  async handleLogin() {
+    if (!this.email || !this.password) {
+      this.error.set('Please fill in all fields');
+      return;
     }
-    async handleLogin() {
-        if (!this.email || !this.password) {
-            this.error.set('Please fill in all fields');
-            return;
-        }
-        this.loading.set(true);
-        this.error.set(null);
-        const success = await this.authService.login(this.email, this.password);
-        if (success) {
-            // Router navigation handled by auth state subscription or manually here
-        }
-        else {
-            this.error.set('Invalid credentials or login failed.');
-        }
-        this.loading.set(false);
+    this.loading.set(true);
+    this.error.set(null);
+    const success = await this.authService.login(this.email, this.password);
+    if (success) {
+      // Router navigation handled by auth state subscription or manually here
+    } else {
+      this.error.set('Invalid credentials or login failed.');
     }
-    async handleSignUp() {
-        if (!this.email || !this.password) {
-            this.error.set('Please fill in all fields to sign up');
-            return;
-        }
-        this.loading.set(true);
-        this.error.set(null);
-        const success = await this.authService.signUp(this.email, this.password);
-        if (success) {
-            this.error.set('Account created! Please check your email to verify.');
-        }
-        else {
-            this.error.set('Sign up failed. Please try again.');
-        }
-        this.loading.set(false);
+    this.loading.set(false);
+  }
+  async handleSignUp() {
+    if (!this.email || !this.password) {
+      this.error.set('Please fill in all fields to sign up');
+      return;
     }
-    continueAsGuest() {
-        this.authService.loginAsGuest();
+    this.loading.set(true);
+    this.error.set(null);
+    const success = await this.authService.signUp(this.email, this.password);
+    if (success) {
+      this.error.set('Account created! Please check your email to verify.');
+    } else {
+      this.error.set('Sign up failed. Please try again.');
     }
+    this.loading.set(false);
+  }
+  continueAsGuest() {
+    this.authService.loginAsGuest();
+  }
 };
-LoginComponent = __decorate([
+LoginComponent = __decorate(
+  [
     Component({
-        selector: 'app-login',
-        standalone: true,
-        imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
-        template: `
+      selector: 'app-login',
+      standalone: true,
+      imports: [
+        CommonModule,
+        FormsModule,
+        RouterModule,
+        EnvLogoComponent,
+        ButtonComponent,
+      ],
+      template: `
     <div class="login-container">
       <div class="wave-bg">
         <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -143,7 +148,8 @@ LoginComponent = __decorate([
       </div>
     </div>
   `,
-        styles: [`
+      styles: [
+        `
     .login-container {
       min-height: 100vh;
       background: var(--bg-app);
@@ -365,7 +371,10 @@ LoginComponent = __decorate([
     }
 
 
-  `]
-    })
-], LoginComponent);
+  `,
+      ],
+    }),
+  ],
+  LoginComponent,
+);
 export { LoginComponent };

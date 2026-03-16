@@ -28,8 +28,18 @@
   line-height: 1;
 }
 
-.env-icon-btn--28 { width: 28px; height: 28px; min-width: 28px; min-height: 28px; }
-.env-icon-btn--32 { width: 32px; height: 32px; min-width: 32px; min-height: 32px; }
+.env-icon-btn--28 {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+}
+.env-icon-btn--32 {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+}
 
 .env-icon-btn--primary {
   background: var(--accent-primary);

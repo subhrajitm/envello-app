@@ -1,22 +1,19 @@
-import { __decorate } from "tslib";
+import { __decorate } from 'tslib';
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 let EnvLogoComponent = class EnvLogoComponent {
-    height = '28px';
-    width = 'auto';
+  height = '28px';
+  width = 'auto';
 };
-__decorate([
-    Input()
-], EnvLogoComponent.prototype, "height", void 0);
-__decorate([
-    Input()
-], EnvLogoComponent.prototype, "width", void 0);
-EnvLogoComponent = __decorate([
+__decorate([Input()], EnvLogoComponent.prototype, 'height', void 0);
+__decorate([Input()], EnvLogoComponent.prototype, 'width', void 0);
+EnvLogoComponent = __decorate(
+  [
     Component({
-        selector: 'env-logo',
-        standalone: true,
-        imports: [CommonModule],
-        template: `
+      selector: 'env-logo',
+      standalone: true,
+      imports: [CommonModule],
+      template: `
     <svg 
       viewBox="0 0 1615 544" 
       [style.height]="height" 
@@ -33,7 +30,9 @@ EnvLogoComponent = __decorate([
         </g>
       </g>
     </svg>
-  `
-    })
-], EnvLogoComponent);
+  `,
+    }),
+  ],
+  EnvLogoComponent,
+);
 export { EnvLogoComponent };

@@ -28,7 +28,7 @@ export interface DataTab {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './developer-settings.component.html',
-  styleUrl: './developer-settings.component.css'
+  styleUrl: './developer-settings.component.css',
 })
 export class DeveloperSettingsComponent {
   private router = inject(Router);
@@ -50,22 +50,134 @@ export class DeveloperSettingsComponent {
   searchQuery = signal('');
 
   tabs = computed<DataTab[]>(() => [
-    this.makeTab('tasks', 'Tasks', 'checklist', 'Tasks', ['id', 'title', 'priority', 'status', 'project'], this.store.tasks()),
-    this.makeTab('notes', 'Notes', 'note', 'Content', ['id', 'date', 'title', 'preview'], this.store.notes()),
-    this.makeTab('planning', 'Planning Items', 'timeline', 'Tasks', ['id', 'title', 'tag', 'stage'], this.store.planningItems()),
-    this.makeTab('activities', 'Activities', 'history', 'System', ['id', 'text', 'time', 'type'], this.store.activities()),
-    this.makeTab('novels', 'Novels', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.novels()),
-    this.makeTab('snippets', 'Code Snippets', 'code', 'Content', ['id', 'title', 'lang', 'tags'], this.snippets.snippets()),
-    this.makeTab('books', 'Books', 'menu_book', 'Content', ['id', 'title', 'author', 'status', 'progress'], this.books.books()),
-    this.makeTab('meetings', 'Meetings', 'event', 'Content', ['id', 'title', 'date', 'startTime', 'status'], this.meetings.meetings()),
-    this.makeTab('articles', 'Articles', 'article', 'Content', ['id', 'title', 'platform', 'pipeline', 'wordCount'], this.articles.articles()),
-    this.makeTab('journal-projects', 'Journal Projects', 'folder', 'Content', ['id', 'title', 'entriesCount', 'active'], this.journal.projects()),
-    this.makeTab('journal-entries', 'Journal Entries', 'description', 'Content', ['id', 'projectId', 'title', 'type', 'column'], this.journal.entries()),
-    this.makeTab('journal-columns', 'Journal Columns', 'view_column', 'Content', ['id', 'name', 'color', 'order'], this.journal.columns()),
-    this.makeTab('research-libraries', 'Research Libraries', 'folder', 'Research', ['id', 'name', 'description'], this.research.libraries()),
-    this.makeTab('research-sources', 'Research Sources', 'source', 'Research', ['id', 'libraryId', 'title', 'sourceType'], this.research.sources()),
-    this.makeTab('research-summaries', 'Research Summaries', 'summarize', 'Research', ['id', 'libraryId', 'title', 'sourceIds'], this.research.summaries()),
-    this.makeTab('bin', 'Bin Items', 'delete', 'System', ['id', 'type', 'originalId', 'title', 'deletedAt'], this.bin.items()),
+    this.makeTab(
+      'tasks',
+      'Tasks',
+      'checklist',
+      'Tasks',
+      ['id', 'title', 'priority', 'status', 'project'],
+      this.store.tasks(),
+    ),
+    this.makeTab(
+      'notes',
+      'Notes',
+      'note',
+      'Content',
+      ['id', 'date', 'title', 'preview'],
+      this.store.notes(),
+    ),
+    this.makeTab(
+      'planning',
+      'Planning Items',
+      'timeline',
+      'Tasks',
+      ['id', 'title', 'tag', 'stage'],
+      this.store.planningItems(),
+    ),
+    this.makeTab(
+      'activities',
+      'Activities',
+      'history',
+      'System',
+      ['id', 'text', 'time', 'type'],
+      this.store.activities(),
+    ),
+    this.makeTab(
+      'novels',
+      'Novels',
+      'menu_book',
+      'Content',
+      ['id', 'title', 'status', 'wordCount', 'chapters'],
+      this.store.novels(),
+    ),
+    this.makeTab(
+      'snippets',
+      'Code Snippets',
+      'code',
+      'Content',
+      ['id', 'title', 'lang', 'tags'],
+      this.snippets.snippets(),
+    ),
+    this.makeTab(
+      'books',
+      'Books',
+      'menu_book',
+      'Content',
+      ['id', 'title', 'author', 'status', 'progress'],
+      this.books.books(),
+    ),
+    this.makeTab(
+      'meetings',
+      'Meetings',
+      'event',
+      'Content',
+      ['id', 'title', 'date', 'startTime', 'status'],
+      this.meetings.meetings(),
+    ),
+    this.makeTab(
+      'articles',
+      'Articles',
+      'article',
+      'Content',
+      ['id', 'title', 'platform', 'pipeline', 'wordCount'],
+      this.articles.articles(),
+    ),
+    this.makeTab(
+      'journal-projects',
+      'Journal Projects',
+      'folder',
+      'Content',
+      ['id', 'title', 'entriesCount', 'active'],
+      this.journal.projects(),
+    ),
+    this.makeTab(
+      'journal-entries',
+      'Journal Entries',
+      'description',
+      'Content',
+      ['id', 'projectId', 'title', 'type', 'column'],
+      this.journal.entries(),
+    ),
+    this.makeTab(
+      'journal-columns',
+      'Journal Columns',
+      'view_column',
+      'Content',
+      ['id', 'name', 'color', 'order'],
+      this.journal.columns(),
+    ),
+    this.makeTab(
+      'research-libraries',
+      'Research Libraries',
+      'folder',
+      'Research',
+      ['id', 'name', 'description'],
+      this.research.libraries(),
+    ),
+    this.makeTab(
+      'research-sources',
+      'Research Sources',
+      'source',
+      'Research',
+      ['id', 'libraryId', 'title', 'sourceType'],
+      this.research.sources(),
+    ),
+    this.makeTab(
+      'research-summaries',
+      'Research Summaries',
+      'summarize',
+      'Research',
+      ['id', 'libraryId', 'title', 'sourceIds'],
+      this.research.summaries(),
+    ),
+    this.makeTab(
+      'bin',
+      'Bin Items',
+      'delete',
+      'System',
+      ['id', 'type', 'originalId', 'title', 'deletedAt'],
+      this.bin.items(),
+    ),
     this.makeSessionTab(),
     this.makeUserTab(),
   ]);
@@ -77,15 +189,25 @@ export class DeveloperSettingsComponent {
       list.push(tab);
       groups.set(tab.group, list);
     }
-    return Array.from(groups.entries()).map(([name, items]) => ({ name, items }));
+    return Array.from(groups.entries()).map(([name, items]) => ({
+      name,
+      items,
+    }));
   });
 
   activeTabData = computed(() => {
     const id = this.activeTab();
-    return this.tabs().find(t => t.id === id) ?? this.tabs()[0];
+    return this.tabs().find((t) => t.id === id) ?? this.tabs()[0];
   });
 
-  private makeTab(id: string, label: string, icon: string, group: string, columns: string[], data: unknown[]): DataTab {
+  private makeTab(
+    id: string,
+    label: string,
+    icon: string,
+    group: string,
+    columns: string[],
+    data: unknown[],
+  ): DataTab {
     return {
       id,
       label,
@@ -93,18 +215,18 @@ export class DeveloperSettingsComponent {
       group,
       columns,
       data: [...data],
-      count: data.length
+      count: data.length,
     };
   }
 
   private makeSessionTab(): DataTab {
     const stats = this.session.pageStats();
-    const sessionRows = stats.map(p => ({
+    const sessionRows = stats.map((p) => ({
       page: p.page,
       totalTimeMs: p.totalTimeMs,
       totalTime: this.session.formatTime(p.totalTimeMs),
       visits: p.visits,
-      lastVisited: p.lastVisited
+      lastVisited: p.lastVisited,
     }));
     return {
       id: 'session',
@@ -113,29 +235,41 @@ export class DeveloperSettingsComponent {
       group: 'System',
       columns: ['page', 'totalTime', 'totalTimeMs', 'visits', 'lastVisited'],
       data: sessionRows,
-      count: sessionRows.length
+      count: sessionRows.length,
     };
   }
 
   private makeUserTab(): DataTab {
     const u = this.userService.user();
-    const userRows = u ? [{
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      joinedDate: u.joinedDate,
-      stats: JSON.stringify(u.stats),
-      preferences: JSON.stringify(u.preferences)
-    }] : [];
+    const userRows = u
+      ? [
+          {
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role,
+            joinedDate: u.joinedDate,
+            stats: JSON.stringify(u.stats),
+            preferences: JSON.stringify(u.preferences),
+          },
+        ]
+      : [];
     return {
       id: 'user',
       label: 'User Profile',
       icon: 'person',
       group: 'System',
-      columns: ['id', 'name', 'email', 'role', 'joinedDate', 'stats', 'preferences'],
+      columns: [
+        'id',
+        'name',
+        'email',
+        'role',
+        'joinedDate',
+        'stats',
+        'preferences',
+      ],
       data: userRows,
-      count: userRows.length
+      count: userRows.length,
     };
   }
 
@@ -158,13 +292,20 @@ export class DeveloperSettingsComponent {
   }
 
   formatColumnName(col: string): string {
-    return col.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+    return col
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (s) => s.toUpperCase())
+      .trim();
   }
 
   getCellValue(row: Record<string, unknown>, col: string): string {
     const val = row[col];
     if (val === null || val === undefined) return '—';
-    if (typeof val === 'object') return JSON.stringify(val).slice(0, 80) + (JSON.stringify(val).length > 80 ? '…' : '');
+    if (typeof val === 'object')
+      return (
+        JSON.stringify(val).slice(0, 80) +
+        (JSON.stringify(val).length > 80 ? '…' : '')
+      );
     if (typeof val === 'boolean') return val ? 'Yes' : 'No';
     if (val instanceof Date) return val.toISOString();
     return String(val);
@@ -175,10 +316,14 @@ export class DeveloperSettingsComponent {
     const tab = this.activeTabData();
     const query = this.searchQuery().toLowerCase();
     let rows = tab.data.map((row) =>
-      tab.columns.map((col) => this.getCellValue(row as Record<string, unknown>, col))
+      tab.columns.map((col) =>
+        this.getCellValue(row as Record<string, unknown>, col),
+      ),
     );
     if (query) {
-      rows = rows.filter((row) => row.some((cell) => cell.toLowerCase().includes(query)));
+      rows = rows.filter((row) =>
+        row.some((cell) => cell.toLowerCase().includes(query)),
+      );
     }
     return rows;
   });
@@ -203,7 +348,6 @@ export class DeveloperSettingsComponent {
     }
   }
 
-
   async onImportFile(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
@@ -215,7 +359,11 @@ export class DeveloperSettingsComponent {
       const text = await file.text();
       const data = JSON.parse(text);
 
-      if (confirm(`Are you sure you want to import data from "${file.name}"? This will overwrite existing data.`)) {
+      if (
+        confirm(
+          `Are you sure you want to import data from "${file.name}"? This will overwrite existing data.`,
+        )
+      ) {
         await this.db.importData(data);
         alert('Import successful! Please reload the page.');
         window.location.reload();

@@ -28,9 +28,15 @@ interface AiProviderOption {
 @Component({
   selector: 'app-settings-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EnvLogoComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonComponent,
+    IconButtonComponent,
+    EnvLogoComponent,
+  ],
   templateUrl: './settings-modal.component.html',
-  styleUrl: './settings-modal.component.css'
+  styleUrl: './settings-modal.component.css',
 })
 export class SettingsModalComponent {
   private themeService = inject(ThemeService);
@@ -44,7 +50,9 @@ export class SettingsModalComponent {
   fontSize = signal(14);
   compactMode = signal(false);
   animations = signal(true);
-  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
+  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>(
+    'minimized',
+  );
   editorFont = signal('serif');
   lineHeight = signal(1.8);
   autoSave = signal(true);
@@ -66,7 +74,7 @@ export class SettingsModalComponent {
     { id: 'ai', label: 'AI & Intelligence', icon: 'smart_toy' },
     { id: 'notifications', label: 'Notifications', icon: 'notifications' },
     { id: 'privacy', label: 'Privacy & Data', icon: 'shield' },
-    { id: 'about', label: 'About', icon: 'info' }
+    { id: 'about', label: 'About', icon: 'info' },
   ];
 
   themes: ThemeOption[] = [
@@ -75,7 +83,7 @@ export class SettingsModalComponent {
     { value: 'enterprise-light', label: 'Pro Light', icon: 'wb_sunny' },
     { value: 'light', label: 'Paper', icon: 'light_mode' },
     { value: 'colorful', label: 'Colorful', icon: 'palette' },
-    { value: 'typewriter', label: 'Typewriter', icon: 'article' }
+    { value: 'typewriter', label: 'Typewriter', icon: 'article' },
   ];
 
   aiProviders: AiProviderOption[] = [
@@ -84,7 +92,7 @@ export class SettingsModalComponent {
     { value: 'anthropic', label: 'Anthropic (Claude)', icon: 'smart_toy' },
     { value: 'gemini', label: 'Google (Gemini)', icon: 'auto_awesome' },
     { value: 'grok', label: 'xAI (Grok)', icon: 'bolt' },
-    { value: 'ollama', label: 'Ollama (Local)', icon: 'terminal' }
+    { value: 'ollama', label: 'Ollama (Local)', icon: 'terminal' },
   ];
 
   constructor() {
@@ -139,7 +147,10 @@ export class SettingsModalComponent {
   setFontSize(event: Event) {
     const value = parseInt((event.target as HTMLInputElement).value);
     this.fontSize.set(value);
-    document.documentElement.style.setProperty('--base-font-size', `${value}px`);
+    document.documentElement.style.setProperty(
+      '--base-font-size',
+      `${value}px`,
+    );
   }
 
   toggleCompactMode() {
@@ -155,20 +166,28 @@ export class SettingsModalComponent {
   setNavigationLayout(layout: 'vertical' | 'horizontal' | 'minimized') {
     this.navigationLayout.set(layout);
     // Dispatch custom event to notify header component
-    window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: layout }));
+    window.dispatchEvent(
+      new CustomEvent('navigationLayoutChanged', { detail: layout }),
+    );
   }
 
   // Editor settings
   setEditorFont(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.editorFont.set(value);
-    document.documentElement.style.setProperty('--editor-font', this.getFontFamily(value));
+    document.documentElement.style.setProperty(
+      '--editor-font',
+      this.getFontFamily(value),
+    );
   }
 
   setLineHeight(event: Event) {
     const value = parseFloat((event.target as HTMLInputElement).value);
     this.lineHeight.set(value);
-    document.documentElement.style.setProperty('--editor-line-height', value.toString());
+    document.documentElement.style.setProperty(
+      '--editor-line-height',
+      value.toString(),
+    );
   }
 
   toggleAutoSave() {
@@ -232,16 +251,24 @@ export class SettingsModalComponent {
       desktopNotifications: this.desktopNotifications(),
       soundEffects: this.soundEffects(),
       dailySummary: this.dailySummary(),
-      analytics: this.analytics()
+      analytics: this.analytics(),
     };
 
     localStorage.setItem('envello-settings', JSON.stringify(settings));
 
     // Save AI Config
-    this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
+    this.aiService.updateConfig(
+      this.aiProvider(),
+      this.aiModel(),
+      this.aiKey(),
+    );
 
     // Dispatch event to notify header component
-    window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: this.navigationLayout() }));
+    window.dispatchEvent(
+      new CustomEvent('navigationLayoutChanged', {
+        detail: this.navigationLayout(),
+      }),
+    );
     this.close();
   }
 
@@ -279,7 +306,9 @@ export class SettingsModalComponent {
       document.body.classList.remove('compact-mode', 'no-animations');
 
       // Dispatch event to reset navigation layout
-      window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
+      window.dispatchEvent(
+        new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }),
+      );
     }
   }
 
@@ -304,13 +333,22 @@ export class SettingsModalComponent {
 
         // Apply saved settings
         if (settings.fontSize) {
-          document.documentElement.style.setProperty('--base-font-size', `${settings.fontSize}px`);
+          document.documentElement.style.setProperty(
+            '--base-font-size',
+            `${settings.fontSize}px`,
+          );
         }
         if (settings.editorFont) {
-          document.documentElement.style.setProperty('--editor-font', this.getFontFamily(settings.editorFont));
+          document.documentElement.style.setProperty(
+            '--editor-font',
+            this.getFontFamily(settings.editorFont),
+          );
         }
         if (settings.lineHeight) {
-          document.documentElement.style.setProperty('--editor-line-height', settings.lineHeight.toString());
+          document.documentElement.style.setProperty(
+            '--editor-line-height',
+            settings.lineHeight.toString(),
+          );
         }
         if (settings.compactMode) {
           document.body.classList.add('compact-mode');
@@ -326,11 +364,10 @@ export class SettingsModalComponent {
 
   private getFontFamily(font: string): string {
     const fonts: Record<string, string> = {
-      'serif': 'var(--font-serif)',
-      'sans': 'var(--font-sans)',
-      'mono': 'var(--font-mono)'
+      serif: 'var(--font-serif)',
+      sans: 'var(--font-sans)',
+      mono: 'var(--font-mono)',
     };
     return fonts[font] || fonts['serif'];
   }
 }
-

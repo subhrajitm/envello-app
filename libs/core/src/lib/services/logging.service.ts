@@ -26,7 +26,11 @@ export class LoggingService {
     return LEVEL_ORDER[level] >= this.minOrder;
   }
 
-  private formatMessage(level: LogLevel, message: string, ...args: unknown[]): string {
+  private formatMessage(
+    level: LogLevel,
+    message: string,
+    ...args: unknown[]
+  ): string {
     const prefix = this.correlationId
       ? `[${level.toUpperCase()}] [${this.correlationId}]`
       : `[${level.toUpperCase()}]`;

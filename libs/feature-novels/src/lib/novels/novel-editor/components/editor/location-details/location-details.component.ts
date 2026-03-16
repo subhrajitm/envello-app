@@ -1,4 +1,10 @@
-import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Location } from '@envello/core';
 
@@ -9,14 +15,14 @@ import { Location } from '@envello/core';
   templateUrl: './location-details.component.html',
   styleUrls: [
     './location-details.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class LocationDetailsComponent {
   location = input<Location | null>(null);
-  
+
   updateField = output<{ id: string; field: string; value: string }>();
   addNewLocation = output<void>();
 }

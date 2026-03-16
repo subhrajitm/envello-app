@@ -1,7 +1,16 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  HostListener,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task } from '@envello/core';
-import { SidebarComponent, SidebarNavItem, ModalComponent } from '@envello/ui';
+import { SidebarNavItem, ModalComponent } from '@envello/ui';
+import { ActivatedRoute } from '@angular/router';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'kanban' | 'calendar' | 'timeline';
@@ -9,12 +18,13 @@ type ViewMode = 'list' | 'thumbnails' | 'kanban' | 'calendar' | 'timeline';
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, SidebarComponent, ModalComponent],
+  imports: [CommonModule, ModalComponent],
   templateUrl: './tasks.component.html',
-  styleUrl: './tasks.component.css'
+  styleUrl: './tasks.component.css',
 })
 export class TasksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
+  private route = inject(ActivatedRoute);
 
   // Left sidebar state
   sidebarSearch = signal<string>('');
@@ -65,7 +75,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   bulkActionMode = signal<boolean>(false);
 
   // Undo/Redo
-  actionHistory = signal<Array<{ type: string; task: Task; previousState?: Partial<Task> }>>([]);
+  actionHistory = signal<
+    Array<{ type: string; task: Task; previousState?: Partial<Task> }>
+  >([]);
   historyIndex = signal<number>(-1);
 
   // Theme
@@ -83,7 +95,10 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Virtual scrolling
   virtualScrollEnabled = signal<boolean>(true);
-  visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 50 });
+  visibleTaskRange = signal<{ start: number; end: number }>({
+    start: 0,
+    end: 50,
+  });
   itemHeight: number = 60; // Approximate height of each task row
 
   // Voice input
@@ -106,14 +121,16 @@ export class TasksComponent implements OnInit, OnDestroy {
   previewingImage = signal<string | null>(null);
 
   // Snooze
-  snoozeOptions = signal<Array<{ id: string; label: string; minutes: number }>>([
-    { id: '5min', label: '5 minutes', minutes: 5 },
-    { id: '15min', label: '15 minutes', minutes: 15 },
-    { id: '30min', label: '30 minutes', minutes: 30 },
-    { id: '1hour', label: '1 hour', minutes: 60 },
-    { id: '2hours', label: '2 hours', minutes: 120 },
-    { id: 'tomorrow', label: 'Tomorrow', minutes: 24 * 60 }
-  ]);
+  snoozeOptions = signal<Array<{ id: string; label: string; minutes: number }>>(
+    [
+      { id: '5min', label: '5 minutes', minutes: 5 },
+      { id: '15min', label: '15 minutes', minutes: 15 },
+      { id: '30min', label: '30 minutes', minutes: 30 },
+      { id: '1hour', label: '1 hour', minutes: 60 },
+      { id: '2hours', label: '2 hours', minutes: 120 },
+      { id: 'tomorrow', label: 'Tomorrow', minutes: 24 * 60 },
+    ],
+  );
 
   // Theme customization
   fontSize = signal<'small' | 'medium' | 'large'>('medium');
@@ -141,7 +158,9 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Recurring task state
   newTaskRecurring = signal<boolean>(false);
-  newTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
+  newTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>(
+    'weekly',
+  );
 
   // Subtasks state
   newTaskSubtasks = signal<string[]>([]);
@@ -173,7 +192,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Available lists/folders
   availableLists = computed(() => {
     const lists = new Set<string>();
-    this.store.tasks().forEach(task => {
+    this.store.tasks().forEach((task) => {
       if (task.project) {
         lists.add(task.project);
       }
@@ -183,7 +202,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Get task count for a folder
   getFolderTaskCount(folderName: string): number {
-    return this.store.tasks().filter(t => t.project === folderName).length;
+    return this.store.tasks().filter((t) => t.project === folderName).length;
   }
 
   // Sidebar folder methods
@@ -217,26 +236,26 @@ export class TasksComponent implements OnInit, OnDestroy {
       id: 'inbox',
       icon: 'inbox',
       label: 'Inbox',
-      count: this.inboxTasks().length
+      count: this.inboxTasks().length,
     },
     {
       id: 'today',
       icon: 'today',
       label: 'Today',
-      count: this.todayTasksCount()
+      count: this.todayTasksCount(),
     },
     {
       id: 'upcoming',
       icon: 'upcoming',
       label: 'Upcoming',
-      count: this.upcomingTasks().length
+      count: this.upcomingTasks().length,
     },
     {
       id: 'completed',
       icon: 'task_alt',
       label: 'Completed',
-      count: this.completedTasksCount()
-    }
+      count: this.completedTasksCount(),
+    },
   ]);
 
   /**
@@ -273,7 +292,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const dueToday = this.todayTasksCount();
     const overdue = this.store
       .tasks()
-      .filter(t => t.due?.includes('Overdue')).length;
+      .filter((t) => t.due?.includes('Overdue')).length;
 
     const parts: string[] = [];
     parts.push(`${total} task${total === 1 ? '' : 's'}`);
@@ -351,7 +370,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   toggleNewTaskReminder() {
-    this.newTaskHasReminder.update(v => !v);
+    this.newTaskHasReminder.update((v) => !v);
     if (!this.newTaskHasReminder()) {
       this.newTaskReminderTimes.set([]);
     } else if (this.newTaskReminderTimes().length === 0) {
@@ -379,9 +398,17 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Calculate new reminder time
     const now = new Date();
     const snoozeTime = new Date(now.getTime() + minutes * 60 * 1000);
-    const newTime = minutes >= 24 * 60
-      ? 'Tomorrow, ' + snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      : snoozeTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const newTime =
+      minutes >= 24 * 60
+        ? 'Tomorrow, ' +
+          snoozeTime.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : snoozeTime.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
 
     const updated = [...times];
     updated[index] = newTime;
@@ -406,10 +433,13 @@ export class TasksComponent implements OnInit, OnDestroy {
   getLabelSuggestions(): string[] {
     const input = this.newTaskLabelInput().toLowerCase();
     if (!input) return [];
-    return this.allLabels().filter(label =>
-      label.toLowerCase().includes(input) &&
-      !this.newTaskLabels().includes(label)
-    ).slice(0, 5);
+    return this.allLabels()
+      .filter(
+        (label) =>
+          label.toLowerCase().includes(input) &&
+          !this.newTaskLabels().includes(label),
+      )
+      .slice(0, 5);
   }
 
   hideLabelAutocomplete() {
@@ -420,7 +450,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   removeNewTaskLabel(label: string) {
-    this.newTaskLabels.set(this.newTaskLabels().filter(l => l !== label));
+    this.newTaskLabels.set(this.newTaskLabels().filter((l) => l !== label));
   }
 
   /** Open delete confirmation for a given task. */
@@ -447,16 +477,17 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Optimistic update - show loading state
     this.isLoading.set(true);
 
-    const subtasks: Task[] | undefined = this.newTaskSubtasks().length > 0
-      ? this.newTaskSubtasks().map((st, idx) => ({
-        id: `${taskId}-${idx}`,
-        title: st,
-        priority: 'MEDIUM' as Task['priority'],
-        hours: '0.5H',
-        status: 'ACTIVE' as Task['status'],
-        parentId: taskId
-      }))
-      : undefined;
+    const subtasks: Task[] | undefined =
+      this.newTaskSubtasks().length > 0
+        ? this.newTaskSubtasks().map((st, idx) => ({
+            id: `${taskId}-${idx}`,
+            title: st,
+            priority: 'MEDIUM' as Task['priority'],
+            hours: '0.5H',
+            status: 'ACTIVE' as Task['status'],
+            parentId: taskId,
+          }))
+        : undefined;
 
     const newTask: Task = {
       id: taskId,
@@ -467,17 +498,27 @@ export class TasksComponent implements OnInit, OnDestroy {
       project: this.newTaskList() || undefined,
       due: this.newTaskDue(),
       labels: this.newTaskLabels().length ? this.newTaskLabels() : undefined,
-      reminders: this.newTaskHasReminder() && this.newTaskReminderTimes().length > 0
-        ? this.newTaskReminderTimes()
-        : undefined,
+      reminders:
+        this.newTaskHasReminder() && this.newTaskReminderTimes().length > 0
+          ? this.newTaskReminderTimes()
+          : undefined,
       subtasks: subtasks,
-      recurring: this.newTaskRecurring() ? {
-        pattern: this.newTaskRecurringPattern(),
-        interval: 1,
-        nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), 1)
-      } : undefined,
-      dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined,
-      description: this.newTaskDescription() || undefined
+      recurring: this.newTaskRecurring()
+        ? {
+            pattern: this.newTaskRecurringPattern(),
+            interval: 1,
+            nextDue: this.calculateNextDue(
+              this.newTaskDue(),
+              this.newTaskRecurringPattern(),
+              1,
+            ),
+          }
+        : undefined,
+      dependencies:
+        this.newTaskDependencies().length > 0
+          ? this.newTaskDependencies()
+          : undefined,
+      description: this.newTaskDescription() || undefined,
     };
 
     try {
@@ -511,7 +552,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   isImageFile(file: File): boolean {
@@ -574,16 +615,16 @@ export class TasksComponent implements OnInit, OnDestroy {
   noDueDateGroupExpanded = signal<boolean>(false);
 
   todayTasksCount = computed(
-    () => this.store.tasks().filter(t => t.due?.includes('Today')).length
+    () => this.store.tasks().filter((t) => t.due?.includes('Today')).length,
   );
   completedTasksCount = computed(
-    () => this.store.tasks().filter(t => t.status === 'COMPLETED').length
+    () => this.store.tasks().filter((t) => t.status === 'COMPLETED').length,
   );
   activeTasksCount = computed(
-    () => this.store.tasks().filter(t => t.status === 'ACTIVE').length
+    () => this.store.tasks().filter((t) => t.status === 'ACTIVE').length,
   );
   priorityTasksCount = computed(
-    () => this.store.tasks().filter(t => t.priority === 'HIGH').length
+    () => this.store.tasks().filter((t) => t.priority === 'HIGH').length,
   );
 
   // Inbox/Today/Upcoming/Completed views
@@ -597,16 +638,16 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     let base: Task[];
     if (view === 'today') {
-      base = this.store.tasks().filter(t => t.due?.includes('Today'));
+      base = this.store.tasks().filter((t) => t.due?.includes('Today'));
     } else if (view === 'upcoming') {
-      base = this.store.tasks().filter(t => {
+      base = this.store.tasks().filter((t) => {
         if (!t.due) return false;
         if (t.due.includes('Today')) return false;
         if (t.due.includes('Overdue')) return false;
         return true;
       });
     } else if (view === 'completed') {
-      base = this.store.tasks().filter(t => t.status === 'COMPLETED');
+      base = this.store.tasks().filter((t) => t.status === 'COMPLETED');
     } else {
       // inbox
       base = this.inboxTasks();
@@ -614,21 +655,20 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Apply Project / Context filter from sidebar (empty = all)
     if (selectedFolder) {
-      base = base.filter(t => t.project === selectedFolder);
+      base = base.filter((t) => t.project === selectedFolder);
     }
 
     // Apply metric-based filters from KPI chips
     if (metric === 'active') {
-      base = base.filter(t => t.status === 'ACTIVE');
+      base = base.filter((t) => t.status === 'ACTIVE');
     } else if (metric === 'priority') {
-      base = base.filter(t => t.priority === 'HIGH');
+      base = base.filter((t) => t.priority === 'HIGH');
     }
 
     if (!query) return base;
 
-    return base.filter(t => {
-      const haystack =
-        (t.title + ' ' + (t.project ?? '')).toLowerCase();
+    return base.filter((t) => {
+      const haystack = (t.title + ' ' + (t.project ?? '')).toLowerCase();
       return haystack.includes(query);
     });
   });
@@ -638,13 +678,15 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Helper used by header checkbox to determine "all done" state
   allVisibleTasksCompleted = computed(() => {
     const tasks = this.filteredTasks();
-    return tasks.length > 0 && tasks.every(t => t.status === 'COMPLETED');
+    return tasks.length > 0 && tasks.every((t) => t.status === 'COMPLETED');
   });
 
   // Calendar computed values
   calendarMonth = computed(() => {
     const date = this.currentDate();
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+    return date
+      .toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      .toUpperCase();
   });
 
   calendarDays = computed(() => {
@@ -666,22 +708,33 @@ export class TasksComponent implements OnInit, OnDestroy {
     const prevMonth = new Date(year, month, 0);
     const daysInPrevMonth = prevMonth.getDate();
 
-    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean }> = [];
+    const days: Array<{
+      day: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+      isActive: boolean;
+    }> = [];
 
     // Add previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
       const day = daysInPrevMonth - i;
-      days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
+      days.push({
+        day,
+        isCurrentMonth: false,
+        isToday: false,
+        isActive: false,
+      });
     }
 
     // Add current month's days
     const today = new Date();
-    const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+    const isCurrentMonth =
+      today.getMonth() === month && today.getFullYear() === year;
 
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday = isCurrentMonth && day === today.getDate();
       // Check if any task is due on this day (simplified - in real app, parse dates properly)
-      const isActive = this.store.tasks().some(t => {
+      const isActive = this.store.tasks().some((t) => {
         if (!t.due) return false;
         // Simple check - in production, you'd parse the date properly
         // Check if task is due today or has a date that matches
@@ -695,7 +748,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Add next month's leading days to fill the grid (42 cells = 6 weeks)
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
-      days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
+      days.push({
+        day,
+        isCurrentMonth: false,
+        isToday: false,
+        isActive: false,
+      });
     }
 
     return days;
@@ -703,11 +761,11 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task groups
   todayTasks = computed(() => {
-    return this.store.tasks().filter(t => t.due?.includes('Today'));
+    return this.store.tasks().filter((t) => t.due?.includes('Today'));
   });
 
   upcomingTasks = computed(() => {
-    return this.store.tasks().filter(t => {
+    return this.store.tasks().filter((t) => {
       if (!t.due) return false;
       if (t.due.includes('Today')) return false;
       if (t.due.includes('Overdue')) return false;
@@ -716,11 +774,11 @@ export class TasksComponent implements OnInit, OnDestroy {
   });
 
   noDueDateTasks = computed(() => {
-    return this.store.tasks().filter(t => !t.due);
+    return this.store.tasks().filter((t) => !t.due);
   });
 
   activeTasksCountSidebar = computed(() => {
-    return this.store.tasks().filter(t => t.status === 'ACTIVE').length;
+    return this.store.tasks().filter((t) => t.status === 'ACTIVE').length;
   });
 
   // Methods
@@ -743,7 +801,12 @@ export class TasksComponent implements OnInit, OnDestroy {
    * - If the clicked day is today, switches to Today view.
    * - Otherwise, switches to Upcoming as a lightweight "schedule" view.
    */
-  onCalendarDayClick(day: { day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean }) {
+  onCalendarDayClick(day: {
+    day: number;
+    isCurrentMonth: boolean;
+    isToday: boolean;
+    isActive: boolean;
+  }) {
     if (!day.isCurrentMonth) {
       return;
     }
@@ -764,18 +827,19 @@ export class TasksComponent implements OnInit, OnDestroy {
   folderDropdownPosition = signal<{ top: number; left: number } | null>(null);
 
   toggleDatePicker(event?: Event) {
-    this.showDatePicker.update(v => {
+    this.showDatePicker.update((v) => {
       if (!v) {
         // Calculate position when opening
         setTimeout(() => {
           const target = event?.target as HTMLElement;
-          const button = target?.closest('.task-modal-control-btn') as HTMLElement ||
-            document.querySelector('.task-modal-control-btn') as HTMLElement;
+          const button =
+            (target?.closest('.task-modal-control-btn') as HTMLElement) ||
+            (document.querySelector('.task-modal-control-btn') as HTMLElement);
           if (button) {
             const rect = button.getBoundingClientRect();
             this.datePickerPosition.set({
               top: rect.bottom + 8,
-              left: rect.left
+              left: rect.left,
             });
           }
         }, 0);
@@ -814,7 +878,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       dateString = `${selectedDate.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       })}, ${timeStr}`;
     }
 
@@ -865,17 +929,26 @@ export class TasksComponent implements OnInit, OnDestroy {
     const prevMonth = new Date(year, month, 0);
     const daysInPrevMonth = prevMonth.getDate();
 
-    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean }> = [];
+    const days: Array<{
+      day: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+    }> = [];
 
     // Previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
-      days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false });
+      days.push({
+        day: daysInPrevMonth - i,
+        isCurrentMonth: false,
+        isToday: false,
+      });
     }
 
     // Current month's days
     const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = today.getDate() === day &&
+      const isToday =
+        today.getDate() === day &&
         today.getMonth() === month &&
         today.getFullYear() === year;
       days.push({ day, isCurrentMonth: true, isToday });
@@ -892,23 +965,26 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   getDatePickerMonth() {
     const date = this.datePickerDate();
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+    return date
+      .toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      .toUpperCase();
   }
 
   // Folder methods
   toggleFolderDropdown(event?: Event) {
-    this.showFolderDropdown.update(v => {
+    this.showFolderDropdown.update((v) => {
       if (!v) {
         // Calculate position when opening
         setTimeout(() => {
           const target = event?.target as HTMLElement;
-          const button = target?.closest('.task-modal-folder-btn') as HTMLElement ||
-            document.querySelector('.task-modal-folder-btn') as HTMLElement;
+          const button =
+            (target?.closest('.task-modal-folder-btn') as HTMLElement) ||
+            (document.querySelector('.task-modal-folder-btn') as HTMLElement);
           if (button) {
             const rect = button.getBoundingClientRect();
             this.folderDropdownPosition.set({
               top: rect.bottom + 8,
-              left: rect.left
+              left: rect.left,
             });
           }
         }, 0);
@@ -929,7 +1005,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   toggleCreateFolder() {
-    this.showCreateFolder.update(v => !v);
+    this.showCreateFolder.update((v) => !v);
     if (this.showCreateFolder()) {
       this.newFolderName.set('');
     }
@@ -959,8 +1035,10 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Close date picker if clicking outside
     if (this.showDatePicker()) {
-      if (!target.closest('.task-modal-date-picker') &&
-        !target.closest('.task-modal-control-btn')) {
+      if (
+        !target.closest('.task-modal-date-picker') &&
+        !target.closest('.task-modal-control-btn')
+      ) {
         this.showDatePicker.set(false);
         this.datePickerPosition.set(null);
       }
@@ -968,8 +1046,10 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Close folder dropdown if clicking outside
     if (this.showFolderDropdown()) {
-      if (!target.closest('.task-modal-folder-dropdown') &&
-        !target.closest('.task-modal-folder-btn')) {
+      if (
+        !target.closest('.task-modal-folder-dropdown') &&
+        !target.closest('.task-modal-folder-btn')
+      ) {
         this.showFolderDropdown.set(false);
         this.showCreateFolder.set(false);
         this.folderDropdownPosition.set(null);
@@ -1005,7 +1085,9 @@ export class TasksComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.quickAddVisible.set(true);
       setTimeout(() => {
-        const input = document.querySelector('.quick-add-input') as HTMLInputElement;
+        const input = document.querySelector(
+          '.quick-add-input',
+        ) as HTMLInputElement;
         input?.focus();
       }, 0);
       return;
@@ -1021,7 +1103,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Cmd/Ctrl + F: Focus search
     if (modKey && event.key === 'f') {
       event.preventDefault();
-      const searchInput = document.querySelector('.toolbar-search') as HTMLInputElement;
+      const searchInput = document.querySelector(
+        '.toolbar-search',
+      ) as HTMLInputElement;
       searchInput?.focus();
       return;
     }
@@ -1084,15 +1168,15 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Extract priority keywords
     const priorityKeywords = {
       high: ['high', 'urgent', 'important', 'critical', 'asap', 'priority'],
-      low: ['low', 'later', 'someday', 'optional']
+      low: ['low', 'later', 'someday', 'optional'],
     };
 
     const lowerTitle = title.toLowerCase();
     for (const [key, keywords] of Object.entries(priorityKeywords)) {
-      if (keywords.some(kw => lowerTitle.includes(kw))) {
+      if (keywords.some((kw) => lowerTitle.includes(kw))) {
         priority = key.toUpperCase() as Task['priority'];
         // Remove priority keyword from title
-        keywords.forEach(kw => {
+        keywords.forEach((kw) => {
           title = title.replace(new RegExp(kw, 'gi'), '').trim();
         });
         break;
@@ -1101,20 +1185,27 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Extract dates
     const datePatterns = [
-      { pattern: /tomorrow/i, value: () => `Tomorrow, ${this.newTaskDueTime()}` },
+      {
+        pattern: /tomorrow/i,
+        value: () => `Tomorrow, ${this.newTaskDueTime()}`,
+      },
       { pattern: /today/i, value: () => `Today, ${this.newTaskDueTime()}` },
       {
-        pattern: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
-        value: (match: RegExpMatchArray) => `${this.getNextWeekday(match[1])}, ${this.newTaskDueTime()}`
+        pattern:
+          /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+        value: (match: RegExpMatchArray) =>
+          `${this.getNextWeekday(match[1])}, ${this.newTaskDueTime()}`,
       },
       {
         pattern: /in\s+(\d+)\s+days?/i,
-        value: (match: RegExpMatchArray) => `${this.getDateInDays(parseInt(match[1]))}, ${this.newTaskDueTime()}`
+        value: (match: RegExpMatchArray) =>
+          `${this.getDateInDays(parseInt(match[1]))}, ${this.newTaskDueTime()}`,
       },
       {
         pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
-        value: (match: RegExpMatchArray) => `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}`
-      }
+        value: (match: RegExpMatchArray) =>
+          `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}`,
+      },
     ];
 
     for (const { pattern, value } of datePatterns) {
@@ -1148,11 +1239,14 @@ export class TasksComponent implements OnInit, OnDestroy {
           if (period === 'am' && hours === 12) hours = 0;
 
           if (due) {
-            return due.replace(/\d{2}:\d{2}/, `${hours.toString().padStart(2, '0')}:${minutes}`);
+            return due.replace(
+              /\d{2}:\d{2}/,
+              `${hours.toString().padStart(2, '0')}:${minutes}`,
+            );
           }
           return `Today, ${hours.toString().padStart(2, '0')}:${minutes}`;
-        }
-      }
+        },
+      },
     ];
 
     for (const { pattern, value } of timePatterns) {
@@ -1175,11 +1269,23 @@ export class TasksComponent implements OnInit, OnDestroy {
   getTomorrowDate(): string {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return tomorrow.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   getNextWeekday(dayName: string): string {
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const days = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
     const targetDay = days.indexOf(dayName.toLowerCase());
     const today = new Date();
     const currentDay = today.getDay();
@@ -1188,20 +1294,36 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     const nextDate = new Date(today);
     nextDate.setDate(today.getDate() + daysUntil);
-    return nextDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return nextDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   getDateInDays(days: number): string {
     const date = new Date();
     date.setDate(date.getDate() + days);
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   parseDate(month: string, day: string, year?: string): string {
     const currentYear = new Date().getFullYear();
-    const y = year ? (year.length === 2 ? `20${year}` : year) : currentYear.toString();
+    const y = year
+      ? year.length === 2
+        ? `20${year}`
+        : year
+      : currentYear.toString();
     const date = new Date(parseInt(y), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   // Quick add functionality
@@ -1232,7 +1354,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
 
     // Create task immediately or open modal for confirmation
-    if (parsed.title && !parsed.due && !parsed.priority && parsed.labels.length === 0) {
+    if (
+      parsed.title &&
+      !parsed.due &&
+      !parsed.priority &&
+      parsed.labels.length === 0
+    ) {
       // Simple task - create immediately
       this.confirmNewTask();
       this.quickAddInput.set('');
@@ -1341,11 +1468,11 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   toggleTaskGroup(group: 'today' | 'upcoming' | 'noDueDate') {
     if (group === 'today') {
-      this.todayGroupExpanded.update(v => !v);
+      this.todayGroupExpanded.update((v) => !v);
     } else if (group === 'upcoming') {
-      this.upcomingGroupExpanded.update(v => !v);
+      this.upcomingGroupExpanded.update((v) => !v);
     } else if (group === 'noDueDate') {
-      this.noDueDateGroupExpanded.update(v => !v);
+      this.noDueDateGroupExpanded.update((v) => !v);
     }
   }
 
@@ -1357,7 +1484,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Kanban view methods
   getKanbanTasks(status: Task['status']): Task[] {
-    return this.filteredTasks().filter(t => t.status === status);
+    return this.filteredTasks().filter((t) => t.status === status);
   }
 
   kanbanDraggedTask = signal<Task | null>(null);
@@ -1428,19 +1555,30 @@ export class TasksComponent implements OnInit, OnDestroy {
     const prevMonth = new Date(year, month, 0);
     const daysInPrevMonth = prevMonth.getDate();
 
-    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; date: Date }> = [];
+    const days: Array<{
+      day: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+      date: Date;
+    }> = [];
 
     // Previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
       const dayDate = new Date(year, month - 1, daysInPrevMonth - i);
-      days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false, date: dayDate });
+      days.push({
+        day: daysInPrevMonth - i,
+        isCurrentMonth: false,
+        isToday: false,
+        date: dayDate,
+      });
     }
 
     // Current month's days
     const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
       const dayDate = new Date(year, month, day);
-      const isToday = today.getDate() === day &&
+      const isToday =
+        today.getDate() === day &&
         today.getMonth() === month &&
         today.getFullYear() === year;
       days.push({ day, isCurrentMonth: true, isToday, date: dayDate });
@@ -1457,11 +1595,18 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   getTasksForDate(date: Date): Task[] {
-    const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    return this.filteredTasks().filter(t => {
+    const dateStr = date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+    return this.filteredTasks().filter((t) => {
       if (!t.due) return false;
-      return t.due.includes(dateStr) ||
-        (date.toDateString() === new Date().toDateString() && t.due.includes('Today'));
+      return (
+        t.due.includes(dateStr) ||
+        (date.toDateString() === new Date().toDateString() &&
+          t.due.includes('Today'))
+      );
     });
   }
 
@@ -1477,20 +1622,20 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Subtasks methods
   getCompletedSubtasks(task: Task): number {
     if (!task.subtasks) return 0;
-    return task.subtasks.filter(st => st.status === 'COMPLETED').length;
+    return task.subtasks.filter((st) => st.status === 'COMPLETED').length;
   }
 
   getDependencyTitles(task: Task): string[] {
     if (!task.dependencies) return [];
     return task.dependencies
-      .map(id => this.getTaskById(id))
-      .filter(t => t !== undefined)
-      .map(t => t!.title);
+      .map((id) => this.getTaskById(id))
+      .filter((t) => t !== undefined)
+      .map((t) => t!.title);
   }
 
   isTaskBlocked(task: Task): boolean {
     if (!task.dependencies || task.dependencies.length === 0) return false;
-    return task.dependencies.some(depId => {
+    return task.dependencies.some((depId) => {
       const depTask = this.getTaskById(depId);
       return depTask && depTask.status !== 'COMPLETED';
     });
@@ -1503,7 +1648,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       priority: 'MEDIUM',
       hours: '0.5H',
       status: 'ACTIVE',
-      parentId: parentTask.id
+      parentId: parentTask.id,
     };
 
     const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
@@ -1541,7 +1686,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   toggleEditTaskDetails() {
-    this.editingTaskDetails.update(v => !v);
+    this.editingTaskDetails.update((v) => !v);
   }
 
   saveTaskDetails() {
@@ -1553,8 +1698,12 @@ export class TasksComponent implements OnInit, OnDestroy {
       description: this.editedTaskDescription().trim() || undefined,
       priority: this.editedTaskPriority(),
       due: this.editedTaskDue(),
-      project: this.editedTaskList() === 'Inbox' ? undefined : this.editedTaskList(),
-      labels: this.editedTaskLabels().length > 0 ? this.editedTaskLabels() : undefined
+      project:
+        this.editedTaskList() === 'Inbox' ? undefined : this.editedTaskList(),
+      labels:
+        this.editedTaskLabels().length > 0
+          ? this.editedTaskLabels()
+          : undefined,
     };
 
     this.store.updateTask(task.id, updates);
@@ -1579,7 +1728,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (task) {
       this.toggleTaskStatus(task);
       // Update the selected task reference
-      const updatedTask = { ...task, status: task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED' as Task['status'] };
+      const updatedTask = {
+        ...task,
+        status:
+          task.status === 'COMPLETED'
+            ? 'ACTIVE'
+            : ('COMPLETED' as Task['status']),
+      };
       this.selectedTaskForDetails.set(updatedTask);
     }
   }
@@ -1602,13 +1757,16 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   removeLabelFromEdit(label: string) {
-    this.editedTaskLabels.set(this.editedTaskLabels().filter(l => l !== label));
+    this.editedTaskLabels.set(
+      this.editedTaskLabels().filter((l) => l !== label),
+    );
   }
 
   toggleSubtaskStatus(parentTask: Task, subtask: Task) {
-    const newStatus: Task['status'] = subtask.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
-    const updatedSubtasks = (parentTask.subtasks || []).map(st =>
-      st.id === subtask.id ? { ...st, status: newStatus } : st
+    const newStatus: Task['status'] =
+      subtask.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
+    const updatedSubtasks = (parentTask.subtasks || []).map((st) =>
+      st.id === subtask.id ? { ...st, status: newStatus } : st,
     );
     this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
 
@@ -1655,6 +1813,26 @@ export class TasksComponent implements OnInit, OnDestroy {
   pomodoroInterval: any = null;
 
   ngOnInit() {
+    // Listen to route changes to update sidebar focus
+    this.route.url.subscribe((url) => {
+      if (url.length > 0) {
+        const path = url[url.length - 1].path;
+        let viewToSelect: TaskViewFilter = 'inbox';
+
+        if (path === 'tasks') {
+          // Default to inbox/active or look for query params if needed
+          // For now, mapping 'active' to list of active tasks, etc. is handled by header routes potentially containing suffixes or query params.
+          // Let's check queryParams map.
+        }
+      }
+    });
+
+    this.route.queryParams.subscribe((params) => {
+      if (params['view']) {
+        this.onSidebarActiveChange(params['view']);
+      }
+    });
+
     // Initialize theme
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     if (savedTheme) {
@@ -1663,7 +1841,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     document.documentElement.setAttribute('data-theme', this.theme());
 
     // Initialize font size
-    const savedFontSize = localStorage.getItem('fontSize') as 'small' | 'medium' | 'large' | null;
+    const savedFontSize = localStorage.getItem('fontSize') as
+      | 'small'
+      | 'medium'
+      | 'large'
+      | null;
     if (savedFontSize) {
       this.fontSize.set(savedFontSize);
     }
@@ -1675,7 +1857,9 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   initVoiceRecognition() {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
       this.voiceRecognition = new SpeechRecognition();
       this.voiceRecognition.continuous = false;
       this.voiceRecognition.interimResults = false;
@@ -1784,20 +1968,28 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   // Recurring tasks
-  createRecurringTask(baseTask: Task, pattern: 'daily' | 'weekly' | 'monthly' | 'yearly', interval: number = 1) {
+  createRecurringTask(
+    baseTask: Task,
+    pattern: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    interval: number = 1,
+  ) {
     const recurringTask: Task = {
       ...baseTask,
       id: Date.now().toString(),
       recurring: {
         pattern,
         interval,
-        nextDue: this.calculateNextDue(baseTask.due, pattern, interval)
-      }
+        nextDue: this.calculateNextDue(baseTask.due, pattern, interval),
+      },
     };
     this.store.addTask(recurringTask);
   }
 
-  calculateNextDue(currentDue: string | undefined, pattern: string, interval: number): string {
+  calculateNextDue(
+    currentDue: string | undefined,
+    pattern: string,
+    interval: number,
+  ): string {
     if (!currentDue) return '';
     const today = new Date();
     const next = new Date(today);
@@ -1807,7 +1999,7 @@ export class TasksComponent implements OnInit, OnDestroy {
         next.setDate(today.getDate() + interval);
         break;
       case 'weekly':
-        next.setDate(today.getDate() + (7 * interval));
+        next.setDate(today.getDate() + 7 * interval);
         break;
       case 'monthly':
         next.setMonth(today.getMonth() + interval);
@@ -1817,14 +2009,24 @@ export class TasksComponent implements OnInit, OnDestroy {
         break;
     }
 
-    return next.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return next.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   // Enhanced labels with colors
   getLabelColor(label: string): string {
     const colors = [
-      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-      '#ec4899', '#06b6d4', '#84cc16'
+      '#3b82f6',
+      '#10b981',
+      '#f59e0b',
+      '#ef4444',
+      '#8b5cf6',
+      '#ec4899',
+      '#06b6d4',
+      '#84cc16',
     ];
     const index = label.charCodeAt(0) % colors.length;
     return colors[index];
@@ -1833,9 +2035,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   // All available labels
   allLabels = computed(() => {
     const labels = new Set<string>();
-    this.store.tasks().forEach(task => {
+    this.store.tasks().forEach((task) => {
       if (task.labels) {
-        task.labels.forEach(label => labels.add(label));
+        task.labels.forEach((label) => labels.add(label));
       }
     });
     return Array.from(labels).sort();
@@ -1863,7 +2065,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     const zoom = this.timelineZoom();
 
     if (zoom === 'day') {
-      return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
     } else if (zoom === 'week') {
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay());
@@ -1871,14 +2078,19 @@ export class TasksComponent implements OnInit, OnDestroy {
       weekEnd.setDate(weekStart.getDate() + 6);
       return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
     } else {
-      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return date.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric',
+      });
     }
   }
 
   getTimelineTasks(): Task[] {
-    return this.filteredTasks().filter(task => {
+    return this.filteredTasks().filter((task) => {
       if (!task.due && !task.startDate) return false;
-      const taskDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
+      const taskDate = task.startDate
+        ? new Date(task.startDate)
+        : this.parseDateFromString(task.due || '');
       if (!taskDate) return false;
 
       const viewDate = this.timelineViewDate();
@@ -1893,7 +2105,10 @@ export class TasksComponent implements OnInit, OnDestroy {
         weekEnd.setDate(weekStart.getDate() + 6);
         return taskDate >= weekStart && taskDate <= weekEnd;
       } else {
-        return taskDate.getMonth() === viewDate.getMonth() && taskDate.getFullYear() === viewDate.getFullYear();
+        return (
+          taskDate.getMonth() === viewDate.getMonth() &&
+          taskDate.getFullYear() === viewDate.getFullYear()
+        );
       }
     });
   }
@@ -1928,7 +2143,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   getDateWeekday(date: Date): string {
-    return date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
+    return date
+      .toLocaleDateString('en-US', { weekday: 'short' })
+      .substring(0, 1);
   }
 
   isToday(date: Date): boolean {
@@ -1936,8 +2153,15 @@ export class TasksComponent implements OnInit, OnDestroy {
     return date.toDateString() === today.toDateString();
   }
 
-  getTaskTimelineBar(task: Task): { startPercent: number; widthPercent: number; startDate: string; endDate: string } | null {
-    const startDate = task.startDate ? new Date(task.startDate) : this.parseDateFromString(task.due || '');
+  getTaskTimelineBar(task: Task): {
+    startPercent: number;
+    widthPercent: number;
+    startDate: string;
+    endDate: string;
+  } | null {
+    const startDate = task.startDate
+      ? new Date(task.startDate)
+      : this.parseDateFromString(task.due || '');
     if (!startDate) return null;
 
     const duration = task.estimatedDuration || 1;
@@ -1962,8 +2186,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     return {
       startPercent,
       widthPercent,
-      startDate: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      endDate: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      startDate: startDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      endDate: endDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
     };
   }
 
@@ -2009,14 +2239,14 @@ export class TasksComponent implements OnInit, OnDestroy {
       url: URL.createObjectURL(file), // In real app, this would be server URL
       type: file.type,
       size: file.size,
-      uploadedAt: new Date().toISOString()
+      uploadedAt: new Date().toISOString(),
     }));
 
-    const task = this.store.tasks().find(t => t.id === taskId);
+    const task = this.store.tasks().find((t) => t.id === taskId);
     if (task) {
       const existingAttachments = task.attachments || [];
       this.store.updateTask(taskId, {
-        attachments: [...existingAttachments, ...attachments]
+        attachments: [...existingAttachments, ...attachments],
       });
     }
 
@@ -2025,9 +2255,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   removeAttachment(taskId: string, attachmentId: string) {
-    const task = this.store.tasks().find(t => t.id === taskId);
+    const task = this.store.tasks().find((t) => t.id === taskId);
     if (task && task.attachments) {
-      const updated = task.attachments.filter(a => a.id !== attachmentId);
+      const updated = task.attachments.filter((a) => a.id !== attachmentId);
       this.store.updateTask(taskId, { attachments: updated });
     }
   }
@@ -2045,7 +2275,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   selectAllTasks() {
-    const allTaskIds = new Set(this.filteredTasks().map(t => t.id));
+    const allTaskIds = new Set(this.filteredTasks().map((t) => t.id));
     this.selectedTasks.set(allTaskIds);
     this.bulkActionMode.set(true);
   }
@@ -2057,8 +2287,8 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   bulkCompleteTasks() {
     const selected = this.selectedTasks();
-    selected.forEach(id => {
-      const task = this.store.tasks().find(t => t.id === id);
+    selected.forEach((id) => {
+      const task = this.store.tasks().find((t) => t.id === id);
       if (task && task.status !== 'COMPLETED') {
         this.addToHistory('complete', task);
         this.store.updateTask(id, { status: 'COMPLETED' });
@@ -2069,8 +2299,8 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   bulkDeleteTasks() {
     const selected = this.selectedTasks();
-    selected.forEach(id => {
-      const task = this.store.tasks().find(t => t.id === id);
+    selected.forEach((id) => {
+      const task = this.store.tasks().find((t) => t.id === id);
       if (task) {
         this.addToHistory('delete', task);
         this.store.deleteTask(id);
@@ -2081,8 +2311,8 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   bulkChangePriority(priority: Task['priority']) {
     const selected = this.selectedTasks();
-    selected.forEach(id => {
-      const task = this.store.tasks().find(t => t.id === id);
+    selected.forEach((id) => {
+      const task = this.store.tasks().find((t) => t.id === id);
       if (task) {
         this.addToHistory('update', task, { priority: task.priority });
         this.store.updateTask(id, { priority });
@@ -2148,7 +2378,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   canUndo = computed(() => this.historyIndex() >= 0);
-  canRedo = computed(() => this.historyIndex() < this.actionHistory().length - 1);
+  canRedo = computed(
+    () => this.historyIndex() < this.actionHistory().length - 1,
+  );
 
   // Virtual scrolling - visible tasks
   visibleTasks = computed(() => {
@@ -2171,7 +2403,10 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Calculate visible range
     const start = Math.floor(scrollTop / this.itemHeight);
-    const end = Math.min(start + Math.ceil(containerHeight / this.itemHeight) + 10, tasks.length);
+    const end = Math.min(
+      start + Math.ceil(containerHeight / this.itemHeight) + 10,
+      tasks.length,
+    );
 
     this.visibleTaskRange.set({ start: Math.max(0, start - 5), end });
   }
@@ -2211,13 +2446,12 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task dependencies
   getTaskById(id: string): Task | undefined {
-    return this.store.tasks().find(t => t.id === id);
+    return this.store.tasks().find((t) => t.id === id);
   }
 
   getAvailableDependencyTasks(): Task[] {
-    return this.store.tasks().filter(t =>
-      t.status !== 'COMPLETED' &&
-      t.id !== this.newTaskTitle() // Exclude self if editing
+    return this.store.tasks().filter(
+      (t) => t.status !== 'COMPLETED' && t.id !== this.newTaskTitle(), // Exclude self if editing
     );
   }
 
@@ -2227,7 +2461,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   removeDependency(taskId: string) {
-    this.newTaskDependencies.set(this.newTaskDependencies().filter(id => id !== taskId));
+    this.newTaskDependencies.set(
+      this.newTaskDependencies().filter((id) => id !== taskId),
+    );
   }
 
   // (legacy quick-create kept via confirmNewTask modal now)

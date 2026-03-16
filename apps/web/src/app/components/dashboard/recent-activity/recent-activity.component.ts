@@ -8,18 +8,21 @@ import { StoreService } from '@envello/core';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './recent-activity.component.html',
-  styleUrl: './recent-activity.component.css'
+  styleUrl: './recent-activity.component.css',
 })
 export class RecentActivityComponent {
   private store = inject(StoreService);
 
   activities = computed(() => {
-    return this.store.activities().map(activity => ({
-      id: activity.id,
-      action: activity.text,
-      time: activity.time,
-      icon: this.getIconForType(activity.type)
-    })).slice(0, 5);
+    return this.store
+      .activities()
+      .map((activity) => ({
+        id: activity.id,
+        action: activity.text,
+        time: activity.time,
+        icon: this.getIconForType(activity.type),
+      }))
+      .slice(0, 5);
   });
 
   private router = inject(Router);
@@ -30,11 +33,16 @@ export class RecentActivityComponent {
 
   private getIconForType(type: string): string {
     switch (type) {
-      case 'entry': return 'edit_note';
-      case 'sync': return 'cloud_sync';
-      case 'ai': return 'smart_toy';
-      case 'system': return 'settings';
-      default: return 'info';
+      case 'entry':
+        return 'edit_note';
+      case 'sync':
+        return 'cloud_sync';
+      case 'ai':
+        return 'smart_toy';
+      case 'system':
+        return 'settings';
+      default:
+        return 'info';
     }
   }
 }

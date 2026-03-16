@@ -1,4 +1,17 @@
-import { Component, Input, inject, ViewChild, signal, computed, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy, effect } from '@angular/core';
+import {
+  Component,
+  Input,
+  inject,
+  ViewChild,
+  signal,
+  computed,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  effect,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, Theme } from '@envello/core';
 import { NotificationService } from '@envello/core';
@@ -25,16 +38,25 @@ export interface NavSection {
   label: string;
   layer: string;
   icon: string;
-  items: NavItem[];
+  items?: NavItem[];
+  route?: string;
 }
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
+  imports: [
+    CommonModule,
+    QuickFindComponent,
+    AddNewModalComponent,
+    SettingsModalComponent,
+    NotificationCenterComponent,
+    ProfileMenuComponent,
+    ProfileEditorComponent,
+  ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   @Input() activeTab = 'Workspace';
@@ -44,7 +66,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
   @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
-  @ViewChild(NotificationCenterComponent) notificationCenter?: NotificationCenterComponent;
+  @ViewChild(NotificationCenterComponent)
+  notificationCenter?: NotificationCenterComponent;
   @ViewChild(ProfileMenuComponent) profileMenu?: ProfileMenuComponent;
   @ViewChild(ProfileEditorComponent) profileEditor?: ProfileEditorComponent;
 
@@ -59,7 +82,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   userInitials = this.userService.userInitials;
 
   // Navigation layout: 'vertical' | 'horizontal' | 'minimized'
-  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
+  navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>(
+    'minimized',
+  );
 
   // Avatar loading state to prevent flash
   isAvatarLoading = signal(true);
@@ -77,10 +102,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private routeSub?: Subscription;
   currentRouteSegment = signal<string>('');
 
-  // The section whose items the current route belongs to (drives sub-nav bar)
   activeSectionForSubNav = computed<NavSection | null>(() => {
     const seg = this.currentRouteSegment();
-    return this.navSections.find(s => s.items.some(i => i.route === seg)) ?? null;
+    return (
+      this.navSections.find(
+        (s) => s.route === seg || s.items?.some((i) => i.route === seg),
+      ) ?? null
+    );
   });
 
   navSections: NavSection[] = [
@@ -90,20 +118,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
       layer: 'Focus Layer',
       icon: 'today',
       items: [
-        { id: 'daily-notes', label: 'Daily Notes', icon: 'note', route: 'daily-notes' },
-        { id: 'today-tasks', label: 'Today\'s Tasks', icon: 'checklist', route: 'tasks' },
-      ]
+        {
+          id: 'daily-notes',
+          label: 'Daily Notes',
+          icon: 'note',
+          route: 'daily-notes',
+        },
+        {
+          id: 'today-tasks',
+          label: "Today's Tasks",
+          icon: 'checklist',
+          route: 'tasks',
+        },
+      ],
     },
     {
       id: 'tasks',
       label: 'Tasks',
       layer: 'Action Layer',
       icon: 'task_alt',
-      items: [
-        { id: 'tasks-active', label: 'Active', icon: 'play_arrow', route: 'tasks' },
-        { id: 'tasks-upcoming', label: 'Upcoming', icon: 'schedule', route: 'tasks' },
-        { id: 'tasks-completed', label: 'Completed', icon: 'done_all', route: 'tasks' },
-      ]
+      route: 'tasks',
     },
     {
       id: 'writing',
@@ -111,16 +145,31 @@ export class HeaderComponent implements OnInit, OnDestroy {
       layer: 'Creation Layer',
       icon: 'edit_note',
       items: [
-        { id: 'writing-drafts', label: 'Drafts', icon: 'article', route: 'articles' },
-        { id: 'writing-active', label: 'Active Pieces', icon: 'menu_book', route: 'novels' },
-        { id: 'writing-published', label: 'Published / Done', icon: 'publish', route: 'novels' },
-      ]
+        {
+          id: 'writing-drafts',
+          label: 'Drafts',
+          icon: 'article',
+          route: 'articles',
+        },
+        {
+          id: 'writing-active',
+          label: 'Active Pieces',
+          icon: 'menu_book',
+          route: 'novels',
+        },
+        {
+          id: 'writing-published',
+          label: 'Published / Done',
+          icon: 'publish',
+          route: 'novels',
+        },
+      ],
     },
   ];
 
   // All flat items (for activeTab matching across sections)
   get allNavItems(): NavItem[] {
-    return this.navSections.flatMap(s => s.items);
+    return this.navSections.flatMap((s) => s.items || []);
   }
 
   // Section collapse state (signal for change detection)
@@ -131,7 +180,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   toggleSection(sectionId: string) {
-    this.collapsedSections.update(set => {
+    this.collapsedSections.update((set) => {
       const next = new Set(set);
       if (next.has(sectionId)) {
         next.delete(sectionId);
@@ -191,7 +240,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Notify parent when sub-nav visibility changes
     effect(() => {
       const section = this.activeSectionForSubNav();
-      const visible = !!section && section.items.length > 1;
+      const visible = !!section && (section.items?.length ?? 0) > 1;
       this.subNavVisibleChange.emit(visible);
     });
   }
@@ -203,7 +252,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   getThemeIcon(): string {
     const theme = this.theme;
     if (theme === 'dark' || theme === 'enterprise-dark') return 'dark_mode';
-    if (theme === 'light' || theme === 'enterprise-light' || theme === 'typewriter') return 'light_mode';
+    if (
+      theme === 'light' ||
+      theme === 'enterprise-light' ||
+      theme === 'typewriter'
+    )
+      return 'light_mode';
     return 'palette';
   }
 
@@ -230,18 +284,42 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.isAvatarLoading.set(false);
   }
 
-  navigateTo(route: string) {
-    this.closeFlyout();          // always dismiss flyout on navigation
-    this.router.navigate([route]);
+  navigateTo(route: string, viewParam?: string) {
+    this.closeFlyout(); // always dismiss flyout on navigation
+    // if a view query param is provided, pass it.
+    if (viewParam) {
+      this.router.navigate([route], { queryParams: { view: viewParam } });
+    } else {
+      this.router.navigate([route]);
+    }
   }
 
   getTabIcon(tab: string): string {
-    return this.allNavItems.find(i => i.label === tab || i.id === tab)?.icon || 'circle';
+    return (
+      this.allNavItems.find((i) => i.label === tab || i.id === tab)?.icon ||
+      'circle'
+    );
   }
 
   isItemActive(item: NavItem): boolean {
-    const currentSegment = this.router.url.split('/')[1]?.split('?')[0];
-    return currentSegment === item.route;
+    const currentUrlTree = this.router.parseUrl(this.router.url);
+    const currentSegment =
+      currentUrlTree.root.children['primary']?.segments[0]?.path;
+    const currentView = currentUrlTree.queryParams['view'];
+
+    if (currentSegment !== item.route) return false;
+
+    // Specific match for tasks tabs to avoid all Highlighting at once
+    if (item.id === 'tasks-active' && currentView === 'inbox') return true;
+    if (item.id === 'tasks-upcoming' && currentView === 'upcoming') return true;
+    if (item.id === 'tasks-completed' && currentView === 'completed')
+      return true;
+
+    // For non-task sections or defaults
+    if (!currentView && item.id.includes('tasks'))
+      return item.id === 'tasks-active'; // fallback
+
+    return true; // Match by route segment only for simple pages
   }
 
   isWorkspaceActive(): boolean {
@@ -250,7 +328,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   isSectionActive(section: NavSection): boolean {
-    return section.items.some(i => this.isItemActive(i));
+    if (
+      this.currentRouteSegment() &&
+      section.route === this.currentRouteSegment()
+    )
+      return true;
+    if (!section.items) return false;
+    return section.items.some((i) => this.isItemActive(i));
   }
 
   openQuickFind() {
@@ -283,13 +367,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleSidebar() {
     // Allow toggling in both minimized and vertical modes
-    if (this.navigationLayout() === 'minimized' || this.navigationLayout() === 'vertical') {
+    if (
+      this.navigationLayout() === 'minimized' ||
+      this.navigationLayout() === 'vertical'
+    ) {
       this.sidebarCollapsed.set(!this.sidebarCollapsed());
       this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
     }
   }
-
-
 
   ngOnInit() {
     // Load navigation layout from localStorage
@@ -300,17 +385,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.navigationLayout.set(event.detail);
       this.applyNavigationLayout();
     };
-    window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+    window.addEventListener(
+      'navigationLayoutChanged',
+      this.navigationLayoutListener as EventListener,
+    );
 
     // Apply initial layout
     this.applyNavigationLayout();
 
     // Seed the route segment from the current URL immediately
-    this.currentRouteSegment.set(this.router.url.split('/')[1]?.split('?')[0] ?? '');
+    this.currentRouteSegment.set(
+      this.router.url.split('/')[1]?.split('?')[0] ?? '',
+    );
 
     // Keep currentRouteSegment in sync with every navigation
     this.routeSub = this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
+      .pipe(filter((e) => e instanceof NavigationEnd))
       .subscribe((e) => {
         const url = (e as NavigationEnd).urlAfterRedirects;
         this.currentRouteSegment.set(url.split('/')[1]?.split('?')[0] ?? '');
@@ -319,7 +409,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.navigationLayoutListener) {
-      window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+      window.removeEventListener(
+        'navigationLayoutChanged',
+        this.navigationLayoutListener as EventListener,
+      );
     }
     this.routeSub?.unsubscribe();
   }

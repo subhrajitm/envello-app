@@ -1,203 +1,279 @@
 <div class="signup-container">
-    @if (!authService.isAuthenticated()) {
+  @if (!authService.isAuthenticated()) {
     <div class="signup-content">
-        <!-- Header -->
-        <div class="signup-header">
-            <div class="logo-wrapper">
-                <env-logo height="28px"></env-logo>
-            </div>
-            <div class="header-actions">
-                <span class="header-text">Already have an account?</span>
-                <a routerLink="/login" class="header-link">Sign In</a>
-            </div>
+      <!-- Header -->
+      <div class="signup-header">
+        <div class="logo-wrapper">
+          <env-logo height="28px"></env-logo>
         </div>
-
-        <!-- Main Content Grid -->
-        <div class="signup-grid">
-            <!-- Left: Progress Stepper -->
-            <aside class="signup-sidebar">
-                <div class="sidebar-header">
-                    <p class="sidebar-subtitle">Account Setup</p>
-                    <h2 class="sidebar-title">Getting Started</h2>
-                </div>
-
-                <nav class="stepper">
-                    @for (step of steps; track step.number) {
-                    <div class="step-item" [class.active]="step.status === 'active'"
-                        [class.completed]="step.status === 'completed'">
-                        <div class="step-indicator">
-                            @if (step.status === 'completed') {
-                            <span class="material-symbols-outlined">check</span>
-                            } @else {
-                            <span>{{ step.number }}</span>
-                            }
-                        </div>
-                        <div class="step-content">
-                            <span class="step-title">{{ step.title }}</span>
-                            @if (step.status === 'active') {
-                            <span class="step-status">In Progress</span>
-                            }
-                        </div>
-                    </div>
-                    }
-                </nav>
-            </aside>
-
-            <!-- Right: Form Content -->
-            <section class="signup-main">
-                <div class="form-container">
-                    <!-- Step 1: Credentials -->
-                    @if (currentStep() === 1) {
-                    <div class="step-content-wrapper animate-fadeIn">
-                        <h1 class="step-heading">Create Your Account</h1>
-                        <p class="step-description">Enter your credentials to get started with Envello</p>
-
-                        <div class="form-fields">
-                            <div class="form-group">
-                                <label class="form-label">Email Address</label>
-                                <input type="email" [(ngModel)]="formData.email" placeholder="name@company.com"
-                                    autofocus class="form-input" />
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Password</label>
-                                    <input type="password" [(ngModel)]="formData.password" placeholder="••••••••"
-                                        class="form-input" />
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Confirm Password</label>
-                                    <input type="password" [(ngModel)]="formData.confirmPassword" placeholder="••••••••"
-                                        class="form-input" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    }
-
-                    <!-- Step 2: Personal Info -->
-                    @if (currentStep() === 2) {
-                    <div class="step-content-wrapper animate-fadeIn">
-                        <h1 class="step-heading">Personal Information</h1>
-                        <p class="step-description">Tell us about yourself and choose your role</p>
-
-                        <div class="form-fields">
-                            <div class="form-group">
-                                <label class="form-label">Full Name</label>
-                                <input type="text" [(ngModel)]="formData.fullName" placeholder="John Doe"
-                                    class="form-input" />
-                            </div>
-
-                            <div class="role-selection">
-                                <label class="role-label">Choose Your Role</label>
-                                <div class="role-grid">
-                                    <label class="role-card" [class.selected]="formData.role === 'Writer'">
-                                        <input type="radio" name="role" class="sr-only" (click)="selectRole('Writer')"
-                                            [checked]="formData.role === 'Writer'" />
-                                        <div class="role-header">
-                                            <span class="role-title">Writer</span>
-                                            <div class="role-indicator">
-                                                @if (formData.role === 'Writer') {
-                                                <span class="material-symbols-outlined">check_circle</span>
-                                                }
-                                            </div>
-                                        </div>
-                                        <p class="role-description">Create manuscripts, journals, and build immersive
-                                            worlds</p>
-                                    </label>
-
-                                    <label class="role-card" [class.selected]="formData.role === 'Reader'">
-                                        <input type="radio" name="role" class="sr-only" (click)="selectRole('Reader')"
-                                            [checked]="formData.role === 'Reader'" />
-                                        <div class="role-header">
-                                            <span class="role-title">Reader</span>
-                                            <div class="role-indicator">
-                                                @if (formData.role === 'Reader') {
-                                                <span class="material-symbols-outlined">check_circle</span>
-                                                }
-                                            </div>
-                                        </div>
-                                        <p class="role-description">Review drafts, provide feedback, and beta read</p>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    }
-
-                    <!-- Step 3: Preferences -->
-                    @if (currentStep() === 3) {
-                    <div class="step-content-wrapper animate-fadeIn">
-                        <h1 class="step-heading">Preferences</h1>
-                        <p class="step-description">Customize your workspace settings</p>
-
-                        <div class="form-fields">
-                            <div class="preferences-list">
-                                <label class="preference-item">
-                                    <div class="preference-info">
-                                        <span class="material-symbols-outlined preference-icon">notifications</span>
-                                        <div class="preference-text">
-                                            <span class="preference-title">Email Notifications</span>
-                                            <span class="preference-description">Receive updates about your
-                                                projects</span>
-                                        </div>
-                                    </div>
-                                    <div class="toggle-switch" [class.active]="formData.preferences.emailNotifications">
-                                        <input type="checkbox" class="sr-only"
-                                            [(ngModel)]="formData.preferences.emailNotifications" />
-                                        <span class="toggle-slider"></span>
-                                    </div>
-                                </label>
-
-                                <label class="preference-item">
-                                    <div class="preference-info">
-                                        <span class="material-symbols-outlined preference-icon">backup</span>
-                                        <div class="preference-text">
-                                            <span class="preference-title">Auto Backup</span>
-                                            <span class="preference-description">Automatically sync your work to the
-                                                cloud</span>
-                                        </div>
-                                    </div>
-                                    <div class="toggle-switch" [class.active]="formData.preferences.autoBackup">
-                                        <input type="checkbox" class="sr-only"
-                                            [(ngModel)]="formData.preferences.autoBackup" />
-                                        <span class="toggle-slider"></span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    }
-
-                    <!-- Navigation -->
-                    <div class="form-actions">
-                        @if (currentStep() > 1) {
-                        <button (click)="prevStep()" class="btn-secondary">
-                            <span class="material-symbols-outlined">arrow_back</span>
-                            Back
-                        </button>
-                        }
-
-                        <button (click)="nextStep()" [disabled]="loading()" class="btn-primary">
-                            @if (loading()) {
-                            <span class="loading-spinner"></span>
-                            <span>Processing...</span>
-                            } @else {
-                            <span>{{ currentStep() === totalSteps ? 'Complete Setup' : 'Continue' }}</span>
-                            <span class="material-symbols-outlined">arrow_forward</span>
-                            }
-                        </button>
-                    </div>
-
-                    @if (error()) {
-                    <div class="error-message">
-                        <span class="material-symbols-outlined">error</span>
-                        <span>{{ error() }}</span>
-                    </div>
-                    }
-                </div>
-            </section>
+        <div class="header-actions">
+          <span class="header-text">Already have an account?</span>
+          <a routerLink="/login" class="header-link">Sign In</a>
         </div>
+      </div>
+
+      <!-- Main Content Grid -->
+      <div class="signup-grid">
+        <!-- Left: Progress Stepper -->
+        <aside class="signup-sidebar">
+          <div class="sidebar-header">
+            <p class="sidebar-subtitle">Account Setup</p>
+            <h2 class="sidebar-title">Getting Started</h2>
+          </div>
+
+          <nav class="stepper">
+            @for (step of steps; track step.number) {
+              <div
+                class="step-item"
+                [class.active]="step.status === 'active'"
+                [class.completed]="step.status === 'completed'"
+              >
+                <div class="step-indicator">
+                  @if (step.status === 'completed') {
+                    <span class="material-symbols-outlined">check</span>
+                  } @else {
+                    <span>{{ step.number }}</span>
+                  }
+                </div>
+                <div class="step-content">
+                  <span class="step-title">{{ step.title }}</span>
+                  @if (step.status === 'active') {
+                    <span class="step-status">In Progress</span>
+                  }
+                </div>
+              </div>
+            }
+          </nav>
+        </aside>
+
+        <!-- Right: Form Content -->
+        <section class="signup-main">
+          <div class="form-container">
+            <!-- Step 1: Credentials -->
+            @if (currentStep() === 1) {
+              <div class="step-content-wrapper animate-fadeIn">
+                <h1 class="step-heading">Create Your Account</h1>
+                <p class="step-description">
+                  Enter your credentials to get started with Envello
+                </p>
+
+                <div class="form-fields">
+                  <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input
+                      type="email"
+                      [(ngModel)]="formData.email"
+                      placeholder="name@company.com"
+                      autofocus
+                      class="form-input"
+                    />
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Password</label>
+                      <input
+                        type="password"
+                        [(ngModel)]="formData.password"
+                        placeholder="••••••••"
+                        class="form-input"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Confirm Password</label>
+                      <input
+                        type="password"
+                        [(ngModel)]="formData.confirmPassword"
+                        placeholder="••••••••"
+                        class="form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Step 2: Personal Info -->
+            @if (currentStep() === 2) {
+              <div class="step-content-wrapper animate-fadeIn">
+                <h1 class="step-heading">Personal Information</h1>
+                <p class="step-description">
+                  Tell us about yourself and choose your role
+                </p>
+
+                <div class="form-fields">
+                  <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="formData.fullName"
+                      placeholder="John Doe"
+                      class="form-input"
+                    />
+                  </div>
+
+                  <div class="role-selection">
+                    <label class="role-label">Choose Your Role</label>
+                    <div class="role-grid">
+                      <label
+                        class="role-card"
+                        [class.selected]="formData.role === 'Writer'"
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          class="sr-only"
+                          (click)="selectRole('Writer')"
+                          [checked]="formData.role === 'Writer'"
+                        />
+                        <div class="role-header">
+                          <span class="role-title">Writer</span>
+                          <div class="role-indicator">
+                            @if (formData.role === 'Writer') {
+                              <span class="material-symbols-outlined"
+                                >check_circle</span
+                              >
+                            }
+                          </div>
+                        </div>
+                        <p class="role-description">
+                          Create manuscripts, journals, and build immersive
+                          worlds
+                        </p>
+                      </label>
+
+                      <label
+                        class="role-card"
+                        [class.selected]="formData.role === 'Reader'"
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          class="sr-only"
+                          (click)="selectRole('Reader')"
+                          [checked]="formData.role === 'Reader'"
+                        />
+                        <div class="role-header">
+                          <span class="role-title">Reader</span>
+                          <div class="role-indicator">
+                            @if (formData.role === 'Reader') {
+                              <span class="material-symbols-outlined"
+                                >check_circle</span
+                              >
+                            }
+                          </div>
+                        </div>
+                        <p class="role-description">
+                          Review drafts, provide feedback, and beta read
+                        </p>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Step 3: Preferences -->
+            @if (currentStep() === 3) {
+              <div class="step-content-wrapper animate-fadeIn">
+                <h1 class="step-heading">Preferences</h1>
+                <p class="step-description">
+                  Customize your workspace settings
+                </p>
+
+                <div class="form-fields">
+                  <div class="preferences-list">
+                    <label class="preference-item">
+                      <div class="preference-info">
+                        <span class="material-symbols-outlined preference-icon"
+                          >notifications</span
+                        >
+                        <div class="preference-text">
+                          <span class="preference-title"
+                            >Email Notifications</span
+                          >
+                          <span class="preference-description"
+                            >Receive updates about your projects</span
+                          >
+                        </div>
+                      </div>
+                      <div
+                        class="toggle-switch"
+                        [class.active]="formData.preferences.emailNotifications"
+                      >
+                        <input
+                          type="checkbox"
+                          class="sr-only"
+                          [(ngModel)]="formData.preferences.emailNotifications"
+                        />
+                        <span class="toggle-slider"></span>
+                      </div>
+                    </label>
+
+                    <label class="preference-item">
+                      <div class="preference-info">
+                        <span class="material-symbols-outlined preference-icon"
+                          >backup</span
+                        >
+                        <div class="preference-text">
+                          <span class="preference-title">Auto Backup</span>
+                          <span class="preference-description"
+                            >Automatically sync your work to the cloud</span
+                          >
+                        </div>
+                      </div>
+                      <div
+                        class="toggle-switch"
+                        [class.active]="formData.preferences.autoBackup"
+                      >
+                        <input
+                          type="checkbox"
+                          class="sr-only"
+                          [(ngModel)]="formData.preferences.autoBackup"
+                        />
+                        <span class="toggle-slider"></span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Navigation -->
+            <div class="form-actions">
+              @if (currentStep() > 1) {
+                <button (click)="prevStep()" class="btn-secondary">
+                  <span class="material-symbols-outlined">arrow_back</span>
+                  Back
+                </button>
+              }
+
+              <button
+                (click)="nextStep()"
+                [disabled]="loading()"
+                class="btn-primary"
+              >
+                @if (loading()) {
+                  <span class="loading-spinner"></span>
+                  <span>Processing...</span>
+                } @else {
+                  <span>{{
+                    currentStep() === totalSteps ? 'Complete Setup' : 'Continue'
+                  }}</span>
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                }
+              </button>
+            </div>
+
+            @if (error()) {
+              <div class="error-message">
+                <span class="material-symbols-outlined">error</span>
+                <span>{{ error() }}</span>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
     </div>
-    }
+  }
 </div>

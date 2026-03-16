@@ -1,4 +1,17 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  signal,
+  effect,
+  inject,
+  computed,
+  HostListener,
+  ViewChild,
+  ElementRef,
+  AfterViewChecked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -10,8 +23,14 @@ import { VersionHistoryService, VersionSnapshot } from '@envello/core';
 import { AiService, AiMessage, AiSuggestion } from '@envello/core';
 
 // Modals
-import { DeleteModalComponent, DeleteModalData } from './components/modals/delete-modal/delete-modal.component';
-import { AddModalComponent, AddModalData } from './components/modals/add-modal/add-modal.component';
+import {
+  DeleteModalComponent,
+  DeleteModalData,
+} from './components/modals/delete-modal/delete-modal.component';
+import {
+  AddModalComponent,
+  AddModalData,
+} from './components/modals/add-modal/add-modal.component';
 import { LinkModalComponent } from './components/modals/link-modal/link-modal.component';
 import { VersionHistoryModalComponent } from './components/modals/version-history-modal/version-history-modal.component';
 
@@ -23,7 +42,10 @@ import { CharactersListComponent } from './components/sidebar/characters-list/ch
 import { LocationsListComponent } from './components/sidebar/locations-list/locations-list.component';
 
 // Editor
-import { EditorHeaderComponent, SearchResult } from './components/editor/editor-header/editor-header.component';
+import {
+  EditorHeaderComponent,
+  SearchResult,
+} from './components/editor/editor-header/editor-header.component';
 import { EditorToolbarComponent } from './components/editor/editor-toolbar/editor-toolbar.component';
 import { ManuscriptEditorComponent } from './components/editor/manuscript-editor/manuscript-editor.component';
 import { StructureEditorComponent } from './components/editor/structure-editor/structure-editor.component';
@@ -66,9 +88,11 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
   ],
   templateUrl: './novel-editor.component.html',
   styleUrl: './novel-editor.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class NovelEditorComponent
+  implements OnInit, OnDestroy, AfterViewChecked
+{
   editor!: Editor;
   novelService = inject(NovelContentService);
   versionHistoryService = inject(VersionHistoryService);
@@ -83,7 +107,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   activeChapterId = signal<string | null>(null);
   wordCount = signal(0);
   rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
-  activeNav = signal<'manuscript' | 'structure' | 'characters' | 'locations'>('manuscript');
+  activeNav = signal<'manuscript' | 'structure' | 'characters' | 'locations'>(
+    'manuscript',
+  );
 
   // Structure view state
   activeFrontMatterId = signal<string | null>(null);
@@ -126,7 +152,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   showContextPreview = signal(false);
 
   toggleContextPreview() {
-    this.showContextPreview.update(v => !v);
+    this.showContextPreview.update((v) => !v);
   }
 
   // Computed signals from Service
@@ -136,13 +162,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   activeCharacter = computed(() => {
     const n = this.novel();
     const id = this.selectedCharacterId();
-    return n?.characters.find(c => c.id === id) ?? null;
+    return n?.characters.find((c) => c.id === id) ?? null;
   });
 
   activeLocation = computed(() => {
     const n = this.novel();
     const id = this.selectedLocationId();
-    return n?.locations.find(l => l.id === id) ?? null;
+    return n?.locations.find((l) => l.id === id) ?? null;
   });
 
   activeChapter = computed(() => {
@@ -151,7 +177,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const novel = this.novel();
     if (!novel) return null;
     for (const group of novel.chapters) {
-      const chapter = group.children.find(c => c.id === chapterId);
+      const chapter = group.children.find((c) => c.id === chapterId);
       if (chapter) return chapter;
     }
     return null;
@@ -168,7 +194,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   // Helper function to calculate word count efficiently
   private calculateWordCount(text: string): number {
     if (!text || text.trim() === '') return 0;
-    return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter((w) => w.length > 0).length;
   }
 
   constructor(private router: Router) {
@@ -187,23 +216,43 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
             // Create initial snapshot if none exists
-            const versions = this.versionHistoryService.getVersions(chapterId, 'chapter');
+            const versions = this.versionHistoryService.getVersions(
+              chapterId,
+              'chapter',
+            );
             if (versions.length === 0) {
-              this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
+              this.versionHistoryService.addVersion(
+                chapterId,
+                'chapter',
+                chapter.content,
+                chapter.title,
+                count,
+                true,
+              );
             }
             this.updateUndoRedoState(chapterId, 'chapter');
           }
         } else if (frontMatterId) {
           const novel = this.novel();
-          const item = novel?.frontMatter.find(fm => fm.id === frontMatterId);
+          const item = novel?.frontMatter.find((fm) => fm.id === frontMatterId);
           if (item && this.editor.getHTML() !== item.content) {
             this.editor.commands.setContent(item.content);
             this.title.set(item.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
-            const versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
+            const versions = this.versionHistoryService.getVersions(
+              frontMatterId,
+              'frontMatter',
+            );
             if (versions.length === 0) {
-              this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', item.content, item.title, count, true);
+              this.versionHistoryService.addVersion(
+                frontMatterId,
+                'frontMatter',
+                item.content,
+                item.title,
+                count,
+                true,
+              );
             }
             this.updateUndoRedoState(frontMatterId, 'frontMatter');
           }
@@ -215,9 +264,19 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             this.title.set(prologue.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
-            const versions = this.versionHistoryService.getVersions('prologue', 'prologue');
+            const versions = this.versionHistoryService.getVersions(
+              'prologue',
+              'prologue',
+            );
             if (versions.length === 0) {
-              this.versionHistoryService.addVersion('prologue', 'prologue', prologue.content, prologue.title, count, true);
+              this.versionHistoryService.addVersion(
+                'prologue',
+                'prologue',
+                prologue.content,
+                prologue.title,
+                count,
+                true,
+              );
             }
             this.updateUndoRedoState('prologue', 'prologue');
           }
@@ -285,22 +344,44 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           if (activeId) {
             this.novelService.updateChapterContent(activeId, content, count);
             // Add version snapshot
-            this.versionHistoryService.addVersion(activeId, 'chapter', content, title, count);
+            this.versionHistoryService.addVersion(
+              activeId,
+              'chapter',
+              content,
+              title,
+              count,
+            );
             this.updateUndoRedoState(activeId, 'chapter');
           } else if (frontMatterId) {
-            this.novelService.updateFrontMatterContent(frontMatterId, content, count);
-            this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', content, title, count);
+            this.novelService.updateFrontMatterContent(
+              frontMatterId,
+              content,
+              count,
+            );
+            this.versionHistoryService.addVersion(
+              frontMatterId,
+              'frontMatter',
+              content,
+              title,
+              count,
+            );
             this.updateUndoRedoState(frontMatterId, 'frontMatter');
           } else if (prologueId) {
             this.novelService.updatePrologueContent(content, count);
-            this.versionHistoryService.addVersion('prologue', 'prologue', content, title, count);
+            this.versionHistoryService.addVersion(
+              'prologue',
+              'prologue',
+              content,
+              title,
+              count,
+            );
             this.updateUndoRedoState('prologue', 'prologue');
           }
 
           this.isSaving.set(false);
           this.lastSaved.set(new Date());
         }, 1000); // 1 second debounce
-      }
+      },
     });
 
     // Load novel data from DB (async)
@@ -338,7 +419,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       const novel = this.novel();
       if (novel) {
         for (const group of novel.chapters) {
-          const found = group.children.find(c => c.id === chapter.id);
+          const found = group.children.find((c) => c.id === chapter.id);
           if (found) {
             this.activeChapterId.set(found.id);
             return;
@@ -377,12 +458,17 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     type: null,
     id: null,
     title: '',
-    message: ''
+    message: '',
   });
 
-  requestDelete(type: 'chapter' | 'group' | 'character' | 'location' | 'note', id: string, name?: string) {
+  requestDelete(
+    type: 'chapter' | 'group' | 'character' | 'location' | 'note',
+    id: string,
+    name?: string,
+  ) {
     let title = 'Delete Item';
-    let message = 'Are you sure you want to delete this item? This action cannot be undone.';
+    let message =
+      'Are you sure you want to delete this item? This action cannot be undone.';
 
     switch (type) {
       case 'chapter':
@@ -392,7 +478,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       case 'group':
         title = 'Delete Act/Part?';
         const novel = this.novel();
-        const group = novel?.chapters.find(g => g.id === id);
+        const group = novel?.chapters.find((g) => g.id === id);
         const chapterCount = group?.children.length || 0;
         if (chapterCount > 0) {
           message = `Are you sure you want to delete "${name || 'this act/part'}"? This will also delete ${chapterCount} chapter${chapterCount > 1 ? 's' : ''} inside it. This action cannot be undone.`;
@@ -419,7 +505,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       type,
       id,
       title,
-      message
+      message,
     });
   }
 
@@ -440,10 +526,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         this.novelService.deleteChapterGroup(modal.id);
         // Clear active chapter if it was in the deleted group
         const novel = this.novel();
-        const deletedGroup = novel?.chapters.find(g => g.id === modal.id);
+        const deletedGroup = novel?.chapters.find((g) => g.id === modal.id);
         if (deletedGroup) {
-          const deletedChapterIds = deletedGroup.children.map(c => c.id);
-          if (this.activeChapterId() && deletedChapterIds.includes(this.activeChapterId()!)) {
+          const deletedChapterIds = deletedGroup.children.map((c) => c.id);
+          if (
+            this.activeChapterId() &&
+            deletedChapterIds.includes(this.activeChapterId()!)
+          ) {
             this.activeChapterId.set(null);
             this.title.set('');
             this.editor.commands.clearContent();
@@ -476,7 +565,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       type: null,
       id: null,
       title: '',
-      message: ''
+      message: '',
     });
   }
 
@@ -508,14 +597,22 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     }
 
     // Cmd/Ctrl + Z for undo
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey) {
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      event.key === 'z' &&
+      !event.shiftKey
+    ) {
       event.preventDefault();
       this.performUndo();
       return;
     }
 
     // Cmd/Ctrl + Shift + Z for redo
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z' && event.shiftKey) {
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      event.key === 'z' &&
+      event.shiftKey
+    ) {
       event.preventDefault();
       this.performRedo();
       return;
@@ -537,7 +634,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     // Cmd/Ctrl + B for focus mode
     if ((event.metaKey || event.ctrlKey) && event.key === 'b') {
       event.preventDefault();
-      this.focusMode.update(v => !v);
+      this.focusMode.update((v) => !v);
       return;
     }
 
@@ -564,7 +661,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     type: null,
     title: '',
     inputValue: '',
-    inputValue2: ''
+    inputValue2: '',
   });
 
   // Chapter management
@@ -584,7 +681,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       isOpen: true,
       type: 'chapter',
       title: 'Add New Chapter',
-      inputValue: 'Untitled Chapter'
+      inputValue: 'Untitled Chapter',
     });
     this.shouldFocusInput = true;
   }
@@ -603,7 +700,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         const targetGroupId = novel.chapters[0]?.id;
         if (targetGroupId) {
           // Store the current chapter count to identify the new one
-          const targetGroup = novel.chapters.find(g => g.id === targetGroupId);
+          const targetGroup = novel.chapters.find(
+            (g) => g.id === targetGroupId,
+          );
           const chapterCountBefore = targetGroup?.children.length || 0;
 
           this.novelService.addChapter(targetGroupId, modal.inputValue.trim());
@@ -612,9 +711,15 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
           setTimeout(() => {
             const updatedNovel = this.novel();
             if (updatedNovel) {
-              const updatedGroup = updatedNovel.chapters.find(g => g.id === targetGroupId);
-              if (updatedGroup && updatedGroup.children.length > chapterCountBefore) {
-                const newChapter = updatedGroup.children[updatedGroup.children.length - 1];
+              const updatedGroup = updatedNovel.chapters.find(
+                (g) => g.id === targetGroupId,
+              );
+              if (
+                updatedGroup &&
+                updatedGroup.children.length > chapterCountBefore
+              ) {
+                const newChapter =
+                  updatedGroup.children[updatedGroup.children.length - 1];
                 this.selectChapter(newChapter);
               }
             }
@@ -625,7 +730,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       this.novelService.addNote(
         modal.inputValue.trim(),
         modal.inputValue2?.trim() || '',
-        this.activeChapterId() || undefined
+        this.activeChapterId() || undefined,
       );
     }
 
@@ -638,21 +743,21 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       type: null,
       title: '',
       inputValue: '',
-      inputValue2: ''
+      inputValue2: '',
     });
   }
 
   updateAddModalInput(value: string) {
-    this.addModal.update(modal => ({
+    this.addModal.update((modal) => ({
       ...modal,
-      inputValue: value
+      inputValue: value,
     }));
   }
 
   updateAddModalInput2(value: string) {
-    this.addModal.update(modal => ({
+    this.addModal.update((modal) => ({
       ...modal,
-      inputValue2: value
+      inputValue2: value,
     }));
   }
 
@@ -662,13 +767,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       isOpen: true,
       type: 'act',
       title: 'Add New Act/Part',
-      inputValue: 'New Part'
+      inputValue: 'New Part',
     });
     this.shouldFocusInput = true;
   }
 
   toggleAddMenu() {
-    this.addMenuOpen.update(v => !v);
+    this.addMenuOpen.update((v) => !v);
   }
 
   deleteChapter(chapterId: string, title?: string) {
@@ -686,7 +791,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       type: 'note',
       title: 'Add New Note',
       inputValue: '',
-      inputValue2: ''
+      inputValue2: '',
     });
     this.shouldFocusInput = true;
   }
@@ -772,13 +877,13 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const novel = this.novel();
     if (!novel) return 0;
     let total = 0;
-    novel.chapters.forEach(group => {
-      group.children.forEach(chap => {
+    novel.chapters.forEach((group) => {
+      group.children.forEach((chap) => {
         total += chap.wordCount;
       });
     });
     if (novel.prologue) total += novel.prologue.wordCount;
-    novel.frontMatter.forEach(item => {
+    novel.frontMatter.forEach((item) => {
       total += item.wordCount;
     });
     return total;
@@ -789,8 +894,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!novel) return 0;
     let totalChapters = 0;
     let totalWords = 0;
-    novel.chapters.forEach(group => {
-      group.children.forEach(chap => {
+    novel.chapters.forEach((group) => {
+      group.children.forEach((chap) => {
         totalChapters++;
         totalWords += chap.wordCount;
       });
@@ -802,8 +907,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const novel = this.novel();
     if (!novel) return 0;
     let completed = 0;
-    novel.chapters.forEach(group => {
-      group.children.forEach(chap => {
+    novel.chapters.forEach((group) => {
+      group.children.forEach((chap) => {
         if (chap.status === 'DONE') completed++;
       });
     });
@@ -814,7 +919,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const novel = this.novel();
     if (!novel) return 0;
     let total = 0;
-    novel.chapters.forEach(group => {
+    novel.chapters.forEach((group) => {
       total += group.children.length;
     });
     return total;
@@ -824,11 +929,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   getFrontMatterTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       'title-page': 'Title Page',
-      'copyright': 'Copyright Page',
-      'toc': 'Table of Contents',
-      'dedication': 'Dedication',
-      'foreword': 'Foreword',
-      'preface': 'Preface'
+      copyright: 'Copyright Page',
+      toc: 'Table of Contents',
+      dedication: 'Dedication',
+      foreword: 'Foreword',
+      preface: 'Preface',
     };
     return labels[type] || type;
   }
@@ -836,16 +941,24 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   getFrontMatterTypeIcon(type: string): string {
     const icons: Record<string, string> = {
       'title-page': 'title',
-      'copyright': 'copyright',
-      'toc': 'list',
-      'dedication': 'favorite',
-      'foreword': 'menu_book',
-      'preface': 'description'
+      copyright: 'copyright',
+      toc: 'list',
+      dedication: 'favorite',
+      foreword: 'menu_book',
+      preface: 'description',
     };
     return icons[type] || 'description';
   }
 
-  addFrontMatterItem(type: 'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface') {
+  addFrontMatterItem(
+    type:
+      | 'title-page'
+      | 'copyright'
+      | 'toc'
+      | 'dedication'
+      | 'foreword'
+      | 'preface',
+  ) {
     const title = this.getFrontMatterTypeLabel(type);
     this.novelService.addFrontMatterItem(type, title);
   }
@@ -881,11 +994,17 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     }
   }
 
-
   // Version History & Undo/Redo
-  updateUndoRedoState(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue') {
-    this.canUndo.set(this.versionHistoryService.canUndo(contentId, contentType));
-    this.canRedo.set(this.versionHistoryService.canRedo(contentId, contentType));
+  updateUndoRedoState(
+    contentId: string,
+    contentType: 'chapter' | 'frontMatter' | 'prologue',
+  ) {
+    this.canUndo.set(
+      this.versionHistoryService.canUndo(contentId, contentType),
+    );
+    this.canRedo.set(
+      this.versionHistoryService.canRedo(contentId, contentType),
+    );
   }
 
   performUndo() {
@@ -901,7 +1020,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
+        this.novelService.updateChapterContent(
+          activeId,
+          snapshot.content,
+          snapshot.wordCount,
+        );
       }
     } else if (frontMatterId) {
       snapshot = this.versionHistoryService.undo(frontMatterId, 'frontMatter');
@@ -909,7 +1032,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
+        this.novelService.updateFrontMatterContent(
+          frontMatterId,
+          snapshot.content,
+          snapshot.wordCount,
+        );
       }
     } else if (prologueId) {
       snapshot = this.versionHistoryService.undo('prologue', 'prologue');
@@ -917,13 +1044,20 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
+        this.novelService.updatePrologueContent(
+          snapshot.content,
+          snapshot.wordCount,
+        );
       }
     }
 
     if (snapshot) {
       const contentId = activeId || frontMatterId || 'prologue';
-      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
+      const contentType = activeId
+        ? 'chapter'
+        : frontMatterId
+          ? 'frontMatter'
+          : 'prologue';
       this.updateUndoRedoState(contentId, contentType);
     }
   }
@@ -941,7 +1075,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
+        this.novelService.updateChapterContent(
+          activeId,
+          snapshot.content,
+          snapshot.wordCount,
+        );
       }
     } else if (frontMatterId) {
       snapshot = this.versionHistoryService.redo(frontMatterId, 'frontMatter');
@@ -949,7 +1087,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
+        this.novelService.updateFrontMatterContent(
+          frontMatterId,
+          snapshot.content,
+          snapshot.wordCount,
+        );
       }
     } else if (prologueId) {
       snapshot = this.versionHistoryService.redo('prologue', 'prologue');
@@ -957,13 +1099,20 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
+        this.novelService.updatePrologueContent(
+          snapshot.content,
+          snapshot.wordCount,
+        );
       }
     }
 
     if (snapshot) {
       const contentId = activeId || frontMatterId || 'prologue';
-      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
+      const contentType = activeId
+        ? 'chapter'
+        : frontMatterId
+          ? 'frontMatter'
+          : 'prologue';
       this.updateUndoRedoState(contentId, contentType);
     }
   }
@@ -978,7 +1127,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (activeId) {
       versions = this.versionHistoryService.getVersions(activeId, 'chapter');
     } else if (frontMatterId) {
-      versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
+      versions = this.versionHistoryService.getVersions(
+        frontMatterId,
+        'frontMatter',
+      );
     } else if (prologueId) {
       versions = this.versionHistoryService.getVersions('prologue', 'prologue');
     }
@@ -999,38 +1151,86 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     let snapshot: VersionSnapshot | null = null;
 
     if (activeId) {
-      snapshot = this.versionHistoryService.restoreVersion(activeId, 'chapter', versionId);
+      snapshot = this.versionHistoryService.restoreVersion(
+        activeId,
+        'chapter',
+        versionId,
+      );
       if (snapshot && this.editor) {
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
+        this.novelService.updateChapterContent(
+          activeId,
+          snapshot.content,
+          snapshot.wordCount,
+        );
         // Create immediate snapshot of restored version
-        this.versionHistoryService.addVersion(activeId, 'chapter', snapshot.content, snapshot.title, snapshot.wordCount, true);
+        this.versionHistoryService.addVersion(
+          activeId,
+          'chapter',
+          snapshot.content,
+          snapshot.title,
+          snapshot.wordCount,
+          true,
+        );
       }
     } else if (frontMatterId) {
-      snapshot = this.versionHistoryService.restoreVersion(frontMatterId, 'frontMatter', versionId);
+      snapshot = this.versionHistoryService.restoreVersion(
+        frontMatterId,
+        'frontMatter',
+        versionId,
+      );
       if (snapshot && this.editor) {
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
-        this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', snapshot.content, snapshot.title, snapshot.wordCount, true);
+        this.novelService.updateFrontMatterContent(
+          frontMatterId,
+          snapshot.content,
+          snapshot.wordCount,
+        );
+        this.versionHistoryService.addVersion(
+          frontMatterId,
+          'frontMatter',
+          snapshot.content,
+          snapshot.title,
+          snapshot.wordCount,
+          true,
+        );
       }
     } else if (prologueId) {
-      snapshot = this.versionHistoryService.restoreVersion('prologue', 'prologue', versionId);
+      snapshot = this.versionHistoryService.restoreVersion(
+        'prologue',
+        'prologue',
+        versionId,
+      );
       if (snapshot && this.editor) {
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
-        this.versionHistoryService.addVersion('prologue', 'prologue', snapshot.content, snapshot.title, snapshot.wordCount, true);
+        this.novelService.updatePrologueContent(
+          snapshot.content,
+          snapshot.wordCount,
+        );
+        this.versionHistoryService.addVersion(
+          'prologue',
+          'prologue',
+          snapshot.content,
+          snapshot.title,
+          snapshot.wordCount,
+          true,
+        );
       }
     }
 
     if (snapshot) {
       const contentId = activeId || frontMatterId || 'prologue';
-      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
+      const contentType = activeId
+        ? 'chapter'
+        : frontMatterId
+          ? 'frontMatter'
+          : 'prologue';
       this.updateUndoRedoState(contentId, contentType);
       this.closeVersionHistory();
     }
@@ -1049,8 +1249,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!novel) return [];
 
     return novel.characters
-      .filter(char => content.includes(char.name.toLowerCase()))
-      .map(char => char.name);
+      .filter((char) => content.includes(char.name.toLowerCase()))
+      .map((char) => char.name);
   });
 
   mentionedLocations = computed(() => {
@@ -1065,8 +1265,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!novel) return [];
 
     return novel.locations
-      .filter(loc => content.includes(loc.name.toLowerCase()))
-      .map(loc => loc.name);
+      .filter((loc) => content.includes(loc.name.toLowerCase()))
+      .map((loc) => loc.name);
   });
 
   // Drag & Drop for reordering
@@ -1093,7 +1293,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.dragOverIndex.set(null);
   }
 
-  onDrop(event: DragEvent, dropIndex: number, type: 'chapter' | 'group', groupId?: string) {
+  onDrop(
+    event: DragEvent,
+    dropIndex: number,
+    type: 'chapter' | 'group',
+    groupId?: string,
+  ) {
     event.preventDefault();
     const startIndex = this.dragStartIndex();
     if (startIndex === null || startIndex === dropIndex) {
@@ -1110,7 +1315,6 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.onDragEnd();
   }
 
-
   // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -1119,7 +1323,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const novel = this.novel();
     if (!novel) return null;
 
-    const results: Array<{ type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue', id: string, title: string, subtitle?: string }> = [];
+    const results: Array<{
+      type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue';
+      id: string;
+      title: string;
+      subtitle?: string;
+    }> = [];
 
     // Search chapters - only check title for performance (content search is expensive)
     for (const group of novel.chapters) {
@@ -1129,7 +1338,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
             type: 'chapter',
             id: chap.id,
             title: chap.title,
-            subtitle: `Chapter in ${group.title}`
+            subtitle: `Chapter in ${group.title}`,
           });
         }
       }
@@ -1138,12 +1347,15 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     // Search characters
     for (const char of novel.characters) {
       const nameLower = char.name.toLowerCase();
-      if (nameLower.includes(query) || (char.description && char.description.toLowerCase().includes(query))) {
+      if (
+        nameLower.includes(query) ||
+        (char.description && char.description.toLowerCase().includes(query))
+      ) {
         results.push({
           type: 'character',
           id: char.id,
           title: char.name,
-          subtitle: char.role
+          subtitle: char.role,
         });
       }
     }
@@ -1151,24 +1363,30 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     // Search locations
     for (const loc of novel.locations) {
       const nameLower = loc.name.toLowerCase();
-      if (nameLower.includes(query) || (loc.description && loc.description.toLowerCase().includes(query))) {
+      if (
+        nameLower.includes(query) ||
+        (loc.description && loc.description.toLowerCase().includes(query))
+      ) {
         results.push({
           type: 'location',
           id: loc.id,
           title: loc.name,
-          subtitle: loc.type
+          subtitle: loc.type,
         });
       }
     }
 
     // Search front matter
     for (const item of novel.frontMatter) {
-      if (item.title.toLowerCase().includes(query) || (item.content && item.content.toLowerCase().includes(query))) {
+      if (
+        item.title.toLowerCase().includes(query) ||
+        (item.content && item.content.toLowerCase().includes(query))
+      ) {
         results.push({
           type: 'frontMatter',
           id: item.id,
           title: item.title,
-          subtitle: this.getFrontMatterTypeLabel(item.type)
+          subtitle: this.getFrontMatterTypeLabel(item.type),
         });
       }
     }
@@ -1176,12 +1394,15 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     // Search prologue
     if (novel.prologue) {
       const prologue = novel.prologue;
-      if (prologue.title.toLowerCase().includes(query) || (prologue.content && prologue.content.toLowerCase().includes(query))) {
+      if (
+        prologue.title.toLowerCase().includes(query) ||
+        (prologue.content && prologue.content.toLowerCase().includes(query))
+      ) {
         results.push({
           type: 'prologue',
           id: 'prologue',
           title: prologue.title,
-          subtitle: 'Prologue'
+          subtitle: 'Prologue',
         });
       }
     }
@@ -1189,12 +1410,12 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     return results;
   });
 
-  selectSearchResult(result: { type: string, id: string }) {
+  selectSearchResult(result: { type: string; id: string }) {
     if (result.type === 'chapter') {
       const novel = this.novel();
       if (novel) {
         for (const group of novel.chapters) {
-          const chapter = group.children.find(c => c.id === result.id);
+          const chapter = group.children.find((c) => c.id === result.id);
           if (chapter) {
             this.selectChapter(chapter);
             this.setActiveNav('manuscript');
@@ -1221,7 +1442,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // Focus mode
   toggleFocusMode() {
-    this.focusMode.update(v => !v);
+    this.focusMode.update((v) => !v);
     if (this.focusMode()) {
       // Entering focus mode: collapse sidebars
       this.leftSidebarCollapsed.set(true);
@@ -1243,10 +1464,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
     // Add novel metadata
     if (novel.characters.length > 0) {
-      context += `Characters: ${novel.characters.map(c => c.name).join(', ')}\n`;
+      context += `Characters: ${novel.characters.map((c) => c.name).join(', ')}\n`;
     }
     if (novel.locations.length > 0) {
-      context += `Locations: ${novel.locations.map(l => l.name).join(', ')}\n`;
+      context += `Locations: ${novel.locations.map((l) => l.name).join(', ')}\n`;
     }
 
     return context;
@@ -1265,7 +1486,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
     const context = this.getCurrentContext();
     const selectedText = this.getSelectedText();
-    const fullContext = selectedText ? `${context}\n\nSelected text: ${selectedText}` : context;
+    const fullContext = selectedText
+      ? `${context}\n\nSelected text: ${selectedText}`
+      : context;
 
     // Add user message
     const userMessage: AiMessage = {
@@ -1273,9 +1496,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       role: 'user',
       content: message,
       timestamp: new Date(),
-      context: fullContext
+      context: fullContext,
     };
-    this.aiMessages.update(messages => [...messages, userMessage]);
+    this.aiMessages.update((messages) => [...messages, userMessage]);
     this.aiPrompt.set('');
 
     // Show loading
@@ -1290,9 +1513,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      this.aiMessages.update(messages => [...messages, assistantMessage]);
+      this.aiMessages.update((messages) => [...messages, assistantMessage]);
     } catch (error) {
       this.aiError.set('Failed to get AI response. Please try again.');
       console.error('AI error:', error);
@@ -1312,7 +1535,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.aiError.set(null);
 
     try {
-      const analysis = await this.aiService.analyzeToneAndPacing(chapter.content);
+      const analysis = await this.aiService.analyzeToneAndPacing(
+        chapter.content,
+      );
 
       // Add user message
       const userMessage: AiMessage = {
@@ -1320,18 +1545,18 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         role: 'user',
         content: 'Analyze the tone and pacing of this chapter',
         timestamp: new Date(),
-        context: this.getCurrentContext()
+        context: this.getCurrentContext(),
       };
-      this.aiMessages.update(messages => [...messages, userMessage]);
+      this.aiMessages.update((messages) => [...messages, userMessage]);
 
       // Add assistant response
       const assistantMessage: AiMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: analysis,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      this.aiMessages.update(messages => [...messages, assistantMessage]);
+      this.aiMessages.update((messages) => [...messages, assistantMessage]);
     } catch (error) {
       this.aiError.set('Failed to analyze chapter. Please try again.');
       console.error('Analysis error:', error);
@@ -1351,18 +1576,22 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.aiError.set(null);
 
     try {
-      const suggestions = await this.aiService.generateSuggestions(chapter.content);
+      const suggestions = await this.aiService.generateSuggestions(
+        chapter.content,
+      );
       this.aiSuggestions.set(suggestions);
 
       // Also add to chat
-      const suggestionsText = suggestions.map(s => `- ${s.content}`).join('\n');
+      const suggestionsText = suggestions
+        .map((s) => `- ${s.content}`)
+        .join('\n');
       const message: AiMessage = {
         id: Date.now().toString(),
         role: 'assistant',
         content: `**Writing Suggestions:**\n\n${suggestionsText}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      this.aiMessages.update(messages => [...messages, message]);
+      this.aiMessages.update((messages) => [...messages, message]);
     } catch (error) {
       this.aiError.set('Failed to generate suggestions. Please try again.');
       console.error('Suggestions error:', error);
@@ -1387,9 +1616,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         id: Date.now().toString(),
         role: 'assistant',
         content: `**Chapter Summary:**\n\n${summary}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      this.aiMessages.update(messages => [...messages, message]);
+      this.aiMessages.update((messages) => [...messages, message]);
       // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to summarize chapter. Please try again.');
@@ -1409,7 +1638,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.aiError.set(null);
 
     try {
-      const continuation = await this.aiService.continueWriting(content, cursorPosition);
+      const continuation = await this.aiService.continueWriting(
+        content,
+        cursorPosition,
+      );
 
       // Insert at cursor
       this.editor.chain().focus().insertContent(continuation).run();
@@ -1418,9 +1650,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
         id: Date.now().toString(),
         role: 'assistant',
         content: `**Continued writing:**\n\n${continuation}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      this.aiMessages.update(messages => [...messages, message]);
+      this.aiMessages.update((messages) => [...messages, message]);
       // Scrolling handled by AI panel component
     } catch (error) {
       this.aiError.set('Failed to continue writing. Please try again.');
@@ -1436,7 +1668,10 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (suggestion.originalText && suggestion.position !== undefined) {
       // Replace original text
       const content = this.editor.getHTML();
-      const newContent = content.replace(suggestion.originalText, suggestion.content);
+      const newContent = content.replace(
+        suggestion.originalText,
+        suggestion.content,
+      );
       this.editor.commands.setContent(newContent);
     } else {
       // Insert at cursor
@@ -1444,8 +1679,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     }
 
     // Remove suggestion
-    this.aiSuggestions.update(suggestions =>
-      suggestions.filter(s => s.id !== suggestion.id)
+    this.aiSuggestions.update((suggestions) =>
+      suggestions.filter((s) => s.id !== suggestion.id),
     );
   }
 
@@ -1484,7 +1719,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // Full screen mode
   toggleFullScreen() {
-    this.fullScreenMode.update(v => !v);
+    this.fullScreenMode.update((v) => !v);
     if (this.fullScreenMode()) {
       document.documentElement.requestFullscreen?.();
     } else {
@@ -1494,7 +1729,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // Bulk operations
   toggleBulkMode() {
-    this.bulkMode.update(v => !v);
+    this.bulkMode.update((v) => !v);
     if (!this.bulkMode()) {
       this.selectedChapters.set(new Set());
     }
@@ -1518,7 +1753,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (!novel) return;
 
     // Delete all selected chapters
-    selected.forEach(chapterId => {
+    selected.forEach((chapterId) => {
       this.novelService.deleteChapter(chapterId);
       if (this.activeChapterId() === chapterId) {
         this.activeChapterId.set(null);
@@ -1542,22 +1777,21 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // Sidebar toggles
   toggleLeftSidebar() {
-    this.leftSidebarCollapsed.update(v => !v);
+    this.leftSidebarCollapsed.update((v) => !v);
   }
 
   toggleRightSidebar() {
-    this.rightSidebarCollapsed.update(v => !v);
+    this.rightSidebarCollapsed.update((v) => !v);
   }
 
   // UI toggles
   toggleSearch() {
-    this.searchOpen.update(v => !v);
+    this.searchOpen.update((v) => !v);
   }
 
   toggleExportMenu() {
-    this.exportMenuOpen.update(v => !v);
+    this.exportMenuOpen.update((v) => !v);
   }
-
 
   // Link insertion
   linkModalOpen = signal(false);
@@ -1569,9 +1803,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const selectedText = this.editor.state.selection.empty
       ? ''
       : this.editor.state.doc.textBetween(
-        this.editor.state.selection.from,
-        this.editor.state.selection.to
-      );
+          this.editor.state.selection.from,
+          this.editor.state.selection.to,
+        );
     this.linkText.set(selectedText);
     this.linkUrl.set('');
     this.linkModalOpen.set(true);
@@ -1583,7 +1817,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const text = this.linkText().trim() || url;
 
     if (this.editor.state.selection.empty) {
-      this.editor.chain().focus().insertContent(`<a href="${url}">${text}</a>`).run();
+      this.editor
+        .chain()
+        .focus()
+        .insertContent(`<a href="${url}">${text}</a>`)
+        .run();
     } else {
       this.editor.chain().focus().setLink({ href: url }).run();
     }
@@ -1609,7 +1847,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   insertTable() {
     if (!this.editor) return;
-    this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    this.editor
+      .chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
   }
 
   addYoutube() {
@@ -1635,7 +1877,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       // Front Matter
       if (novel.frontMatter.length > 0) {
         content += '<h2>Front Matter</h2>\n';
-        novel.frontMatter.forEach(item => {
+        novel.frontMatter.forEach((item) => {
           content += `<h3>${item.title}</h3>\n${item.content}\n\n`;
         });
       }
@@ -1646,14 +1888,16 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       }
 
       // Chapters
-      novel.chapters.forEach(group => {
+      novel.chapters.forEach((group) => {
         content += `<h2>${group.title}</h2>\n`;
-        group.children.forEach(chap => {
+        group.children.forEach((chap) => {
           content += `<h3>${chap.title}</h3>\n${chap.content}\n\n`;
         });
       });
 
-      const blob = new Blob([content], { type: format === 'html' ? 'text/html' : 'text/markdown' });
+      const blob = new Blob([content], {
+        type: format === 'html' ? 'text/html' : 'text/markdown',
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

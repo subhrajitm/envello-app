@@ -13,13 +13,13 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return toObservable(auth.initialized).pipe(
-    filter(isInit => isInit), // Wait for initialization to complete
+    filter((isInit) => isInit), // Wait for initialization to complete
     take(1),
     map(() => {
       if (auth.isAuthenticated()) {
         return true;
       }
       return router.createUrlTree(['/login']);
-    })
+    }),
   );
 };

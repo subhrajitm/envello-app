@@ -1,15 +1,29 @@
-<button [attr.type]="type"
-  [class]="['env-btn', 'env-btn--' + variant, 'env-btn--' + size, 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors']"
-  [disabled]="disabled || loading" (click)="onClick()">
+<button
+  [attr.type]="type"
+  [class]="[
+    'env-btn',
+    'env-btn--' + variant,
+    'env-btn--' + size,
+    'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors',
+  ]"
+  [disabled]="disabled || loading"
+  (click)="onClick()"
+>
   @if (loading) {
-  <span class="env-btn__spinner"></span>
+    <span class="env-btn__spinner"></span>
   } @else {
-  @if (icon && iconPos === 'left') {
-  <span class="material-symbols-outlined env-btn__icon env-btn__icon--left">{{ icon }}</span>
-  }
-  <span class="env-btn__label"><ng-content></ng-content></span>
-  @if (icon && iconPos === 'right') {
-  <span class="material-symbols-outlined env-btn__icon env-btn__icon--right">{{ icon }}</span>
-  }
+    @if (icon && iconPos === 'left') {
+      <span
+        class="material-symbols-outlined env-btn__icon env-btn__icon--left"
+        >{{ icon }}</span
+      >
+    }
+    <span class="env-btn__label"><ng-content></ng-content></span>
+    @if (icon && iconPos === 'right') {
+      <span
+        class="material-symbols-outlined env-btn__icon env-btn__icon--right"
+        >{{ icon }}</span
+      >
+    }
   }
 </button>

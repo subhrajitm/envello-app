@@ -1,196 +1,215 @@
 /* Dashboard styles */
 .dashboard {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-app);
-    overflow: hidden;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+  overflow: hidden;
 }
 
 .dashboard-content {
-    flex: 1;
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-    padding: 12px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
 }
 
 .dashboard-content.with-sidebar:not(.immersive-view) {
-    margin-left: 240px;
+  margin-left: 240px;
 }
 
 .dashboard-content.with-sidebar:not(.immersive-view).sidebar-collapsed {
-    margin-left: 64px;
+  margin-left: 64px;
 }
 
 /* No margin when horizontal navigation is used */
 .dashboard-content.with-sidebar.horizontal-nav {
-    margin-left: 0;
+  margin-left: 0;
 }
 
 .dashboard-content.no-padding {
-    padding: 0;
-    gap: 0;
-    overflow: hidden;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    /* Routed component fills and manages its own overflow */
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Routed component fills and manages its own overflow */
 }
 
-.dashboard-content.no-padding>*:not(router-outlet) {
-    flex: 1 1 0;
-    min-height: 0;
-    overflow: hidden;
+.dashboard-content.no-padding > *:not(router-outlet) {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.dashboard-content.no-padding>router-outlet {
-    display: none;
+.dashboard-content.no-padding > router-outlet {
+  display: none;
 }
 
 .dashboard-content.immersive-view {
-    overflow: hidden;
-    scrollbar-gutter: auto;
+  overflow: hidden;
+  scrollbar-gutter: auto;
 }
 
 /* Fullscreen content mostly inherits no-padding behavior but ensures no margins */
 .dashboard-content.fullscreen-content {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100vw;
-    height: 100vh;
-    max-width: 100vw;
-    display: flex;
-    flex-direction: column;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
 }
 
-.dashboard-content.fullscreen-content>router-outlet {
-    display: none;
+.dashboard-content.fullscreen-content > router-outlet {
+  display: none;
 }
 
-.dashboard-content.fullscreen-content>*:not(router-outlet) {
-    flex: 1;
-    overflow: auto;
+.dashboard-content.fullscreen-content > *:not(router-outlet) {
+  flex: 1;
+  overflow: auto;
 }
 
 /* Helper grids often used in dashboards */
 .dashboard-main {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 12px;
-    align-items: start;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 12px;
+  align-items: start;
 }
 
 .dashboard-left {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .dashboard-right {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 1400px) {
-    .dashboard-main {
-        grid-template-columns: 1fr;
-    }
+  .dashboard-main {
+    grid-template-columns: 1fr;
+  }
 
-    .dashboard-right {
-        width: 100%;
-    }
+  .dashboard-right {
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
-    .dashboard-content {
-        padding: 0;
-    }
+  .dashboard-content {
+    padding: 0;
+  }
 
-    .dashboard-content.with-sidebar {
-        margin-left: 56px;
-    }
+  .dashboard-content.with-sidebar {
+    margin-left: 56px;
+  }
 
-    .dashboard-content.with-sidebar.sidebar-collapsed {
-        margin-left: 56px;
-    }
+  .dashboard-content.with-sidebar.sidebar-collapsed {
+    margin-left: 56px;
+  }
 }
 /* Global Splash Screen */
 .app-splash-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--bg-app);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-app);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
 
 .splash-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    animation: fadeIn 0.5s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .splash-icon {
-    font-size: 48px;
-    color: var(--accent-primary);
-    animation: pulse 2s infinite ease-in-out;
+  font-size: 48px;
+  color: var(--accent-primary);
+  animation: pulse 2s infinite ease-in-out;
 }
 
 .splash-title {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: 4px;
-    color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--text-primary);
 }
 
 .splash-loader {
-    width: 120px;
-    height: 2px;
-    background: var(--border-subtle);
-    border-radius: 2px;
-    position: relative;
-    overflow: hidden;
-    margin-top: 12px;
+  width: 120px;
+  height: 2px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 12px;
 }
 
 .splash-loader::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 40%;
-    height: 100%;
-    background: var(--accent-primary);
-    border-radius: 2px;
-    animation: loading 1.5s infinite ease-in-out;
-    transform: translateX(-100%);
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  animation: loading 1.5s infinite ease-in-out;
+  transform: translateX(-100%);
 }
 
 @keyframes loading {
-    0% { transform: translateX(-100%); }
-    50% { transform: translateX(150%); }
-    100% { transform: translateX(350%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(150%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(0.95); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.95);
+  }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ── Sub-nav spacer ───────────────────────────────────────────
@@ -201,7 +220,7 @@
    page types including no-padding feature pages.
 ─────────────────────────────────────────────────────────── */
 .sub-nav-spacer {
-    height: 36px;
-    flex-shrink: 0;
-    width: 100%;
+  height: 36px;
+  flex-shrink: 0;
+  width: 100%;
 }

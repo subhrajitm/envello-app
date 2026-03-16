@@ -1,15 +1,25 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  HostListener,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StoreService, type Novel, NovelContentService } from '@envello/core';
-import { ButtonComponent, ModalComponent, EmptyStateComponent } from '@envello/ui';
+import {
+  ButtonComponent,
+  ModalComponent,
+  EmptyStateComponent,
+} from '@envello/ui';
 
 @Component({
   selector: 'app-novels',
   standalone: true,
   imports: [CommonModule, ButtonComponent, ModalComponent, EmptyStateComponent],
   templateUrl: './novels.component.html',
-  styleUrl: './novels.component.css'
+  styleUrl: './novels.component.css',
 })
 export class NovelsComponent {
   private router = inject(Router);
@@ -17,19 +27,27 @@ export class NovelsComponent {
   private novelContent = inject(NovelContentService);
 
   viewMode = signal<'LIST' | 'GRID'>('LIST');
-  statusFilter = signal<'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED'>('ALL');
+  statusFilter = signal<
+    'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED'
+  >('ALL');
   sortBy = signal<'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'>('UPDATED');
   statusDropdownOpen = signal(false);
   sortDropdownOpen = signal(false);
 
   showAddModal = signal(false);
   addModalSubmitting = signal(false);
-  newNovel = signal<{ title: string; status: Novel['status']; genre: string; targetWordCount: number; icon: string }>({
+  newNovel = signal<{
+    title: string;
+    status: Novel['status'];
+    genre: string;
+    targetWordCount: number;
+    icon: string;
+  }>({
     title: '',
     status: 'PLANNING',
     genre: '',
     targetWordCount: 80000,
-    icon: 'menu_book'
+    icon: 'menu_book',
   });
 
   readonly novelIcons = [
@@ -50,16 +68,20 @@ export class NovelsComponent {
 
     // Filter
     if (this.statusFilter() !== 'ALL') {
-      list = list.filter(n => n.status === this.statusFilter());
+      list = list.filter((n) => n.status === this.statusFilter());
     }
 
     // Sort
     return list.sort((a, b) => {
       switch (this.sortBy()) {
-        case 'UPDATED': return 0; // Keeping simple for demo as date strings are fuzzy
-        case 'TITLE': return a.title.localeCompare(b.title);
-        case 'PROGRESS': return b.progress - a.progress;
-        default: return 0;
+        case 'UPDATED':
+          return 0; // Keeping simple for demo as date strings are fuzzy
+        case 'TITLE':
+          return a.title.localeCompare(b.title);
+        case 'PROGRESS':
+          return b.progress - a.progress;
+        default:
+          return 0;
       }
     });
   });
@@ -70,7 +92,7 @@ export class NovelsComponent {
   });
 
   activeDrafts = computed(() => {
-    return this.store.novels().filter(n => n.status !== 'PUBLISHED').length;
+    return this.store.novels().filter((n) => n.status !== 'PUBLISHED').length;
   });
 
   avgCompletion = computed(() => {
@@ -85,20 +107,22 @@ export class NovelsComponent {
   }
 
   toggleStatusDropdown() {
-    this.statusDropdownOpen.update(v => !v);
+    this.statusDropdownOpen.update((v) => !v);
     if (this.statusDropdownOpen()) {
       this.sortDropdownOpen.set(false);
     }
   }
 
   toggleSortDropdown() {
-    this.sortDropdownOpen.update(v => !v);
+    this.sortDropdownOpen.update((v) => !v);
     if (this.sortDropdownOpen()) {
       this.statusDropdownOpen.set(false);
     }
   }
 
-  selectStatus(status: 'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED') {
+  selectStatus(
+    status: 'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED',
+  ) {
     this.statusFilter.set(status);
     this.statusDropdownOpen.set(false);
   }
@@ -110,12 +134,18 @@ export class NovelsComponent {
 
   getStatusIcon(status: string): string {
     switch (status) {
-      case 'ALL': return 'filter_alt';
-      case 'DRAFTING': return 'edit';
-      case 'PLANNING': return 'lightbulb';
-      case 'REVISING': return 'autorenew';
-      case 'PUBLISHED': return 'check_circle';
-      default: return 'filter_alt';
+      case 'ALL':
+        return 'filter_alt';
+      case 'DRAFTING':
+        return 'edit';
+      case 'PLANNING':
+        return 'lightbulb';
+      case 'REVISING':
+        return 'autorenew';
+      case 'PUBLISHED':
+        return 'check_circle';
+      default:
+        return 'filter_alt';
     }
   }
 
@@ -125,38 +155,55 @@ export class NovelsComponent {
 
   getSortIcon(sort: string): string {
     switch (sort) {
-      case 'UPDATED': return 'schedule';
-      case 'CREATED': return 'calendar_today';
-      case 'TITLE': return 'sort_by_alpha';
-      case 'PROGRESS': return 'trending_up';
-      default: return 'sort';
+      case 'UPDATED':
+        return 'schedule';
+      case 'CREATED':
+        return 'calendar_today';
+      case 'TITLE':
+        return 'sort_by_alpha';
+      case 'PROGRESS':
+        return 'trending_up';
+      default:
+        return 'sort';
     }
   }
 
   getSortLabel(sort: string): string {
     switch (sort) {
-      case 'UPDATED': return 'Last Updated';
-      case 'CREATED': return 'Date Created';
-      case 'TITLE': return 'Title';
-      case 'PROGRESS': return 'Progress';
-      default: return sort;
+      case 'UPDATED':
+        return 'Last Updated';
+      case 'CREATED':
+        return 'Date Created';
+      case 'TITLE':
+        return 'Title';
+      case 'PROGRESS':
+        return 'Progress';
+      default:
+        return sort;
     }
   }
 
   getStatusColor(status: string) {
     switch (status) {
-      case 'DRAFTING': return 'status-yellow';
-      case 'PLANNING': return 'status-gray';
-      case 'PUBLISHED': return 'status-green';
-      case 'REVISING': return 'status-orange';
-      default: return 'status-gray';
+      case 'DRAFTING':
+        return 'status-yellow';
+      case 'PLANNING':
+        return 'status-gray';
+      case 'PUBLISHED':
+        return 'status-green';
+      case 'REVISING':
+        return 'status-orange';
+      default:
+        return 'status-gray';
     }
   }
 
   getProgressColor(status: string) {
     switch (status) {
-      case 'PUBLISHED': return '#4ade80';
-      default: return '#fcd34d'; // Match yellow-400
+      case 'PUBLISHED':
+        return '#4ade80';
+      default:
+        return '#fcd34d'; // Match yellow-400
     }
   }
 
@@ -166,7 +213,7 @@ export class NovelsComponent {
 
   toggleNovelMenu(novelId: string, e?: Event) {
     e?.stopPropagation();
-    this.novelMenuOpen.update(id => (id === novelId ? null : novelId));
+    this.novelMenuOpen.update((id) => (id === novelId ? null : novelId));
   }
 
   closeNovelMenu() {
@@ -199,7 +246,7 @@ export class NovelsComponent {
       status: 'PLANNING',
       genre: '',
       targetWordCount: 80000,
-      icon: 'menu_book'
+      icon: 'menu_book',
     });
     this.showAddModal.set(true);
   }
@@ -209,8 +256,11 @@ export class NovelsComponent {
     this.addModalSubmitting.set(false);
   }
 
-  updateNewNovel(key: 'title' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number) {
-    this.newNovel.update(n => ({ ...n, [key]: value }));
+  updateNewNovel(
+    key: 'title' | 'status' | 'genre' | 'targetWordCount' | 'icon',
+    value: string | number,
+  ) {
+    this.newNovel.update((n) => ({ ...n, [key]: value }));
   }
 
   async addNovel() {
@@ -221,8 +271,17 @@ export class NovelsComponent {
     try {
       const id = crypto.randomUUID();
       const now = new Date();
-      const createdDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      const genre = form.genre.trim() ? form.genre.split(',').map(s => s.trim()).filter(Boolean) : ['Fiction'];
+      const createdDate = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      const genre = form.genre.trim()
+        ? form.genre
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : ['Fiction'];
       const novel: Novel = {
         id,
         title,
@@ -236,7 +295,7 @@ export class NovelsComponent {
         createdDate,
         lastUpdated: 'Just now',
         genre,
-        isRecentlyUpdated: true
+        isRecentlyUpdated: true,
       };
       this.store.addNovel(novel);
       await this.novelContent.createAndPersistEmptyNovel(id, title);

@@ -1,3 +1,10 @@
-<span [class]="['env-badge', 'env-badge--' + variant, 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium', pill ? 'env-badge--pill' : '']">
+<span
+  [class]="[
+    'env-badge',
+    'env-badge--' + variant,
+    'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+    pill ? 'env-badge--pill' : '',
+  ]"
+>
   <ng-content></ng-content>
 </span>

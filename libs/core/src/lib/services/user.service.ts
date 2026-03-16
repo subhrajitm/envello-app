@@ -29,7 +29,7 @@ export interface UserProfile {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserService {
   private supabase = inject(SupabaseService);
@@ -47,7 +47,10 @@ export class UserService {
     const profile = this.currentUser();
     const authUser = this.authService.currentUser();
 
-    const name = profile?.name || authUser?.user_metadata?.['full_name'] || authUser?.user_metadata?.['name'];
+    const name =
+      profile?.name ||
+      authUser?.user_metadata?.['full_name'] ||
+      authUser?.user_metadata?.['name'];
     const email = profile?.email || authUser?.email;
     const identifier = name || email || 'Guest';
 
@@ -107,12 +110,14 @@ export class UserService {
 
   private async loadProfile(authUser: User) {
     try {
-      const { data, error } = await this.supabase.from('profiles')
+      const { data, error } = await this.supabase
+        .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = JSON object not found (no profile yet)
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = JSON object not found (no profile yet)
         console.error('Error fetching profile:', error);
         return;
       }
@@ -132,7 +137,7 @@ export class UserService {
             weeklyDigest: data.preferences?.weeklyDigest ?? false,
             autoBackup: data.preferences?.autoBackup ?? true,
             autoSchedule: data.preferences?.autoSchedule ?? false,
-            gender: data.preferences?.gender || 'male'
+            gender: data.preferences?.gender || 'male',
           },
           stats: data.stats || {
             totalWords: 0,
@@ -140,11 +145,11 @@ export class UserService {
             totalProjects: 0,
             daysActive: 0,
             currentStreak: 0,
-            lastLoginDate: new Date().toISOString()
-          }
+            lastLoginDate: new Date().toISOString(),
+          },
         };
         this.currentUser.set(profile);
-        this.cacheProfile(profile);  // Cache for instant load
+        this.cacheProfile(profile); // Cache for instant load
         this.checkStreak(profile);
       } else {
         // Create default profile if none exists
@@ -158,7 +163,10 @@ export class UserService {
   private async createProfile(authUser: User) {
     const newProfile: Partial<UserProfile> = {
       id: authUser.id,
-      name: authUser.user_metadata?.['full_name'] || authUser.email?.split('@')[0] || 'User',
+      name:
+        authUser.user_metadata?.['full_name'] ||
+        authUser.email?.split('@')[0] ||
+        'User',
       email: authUser.email!,
       role: 'Writer',
       joinedDate: new Date(),
@@ -167,7 +175,7 @@ export class UserService {
         weeklyDigest: false,
         autoBackup: true,
         autoSchedule: false,
-        gender: 'male' // Default
+        gender: 'male', // Default
       },
       stats: {
         totalWords: 0,
@@ -175,8 +183,8 @@ export class UserService {
         totalProjects: 0,
         daysActive: 1,
         currentStreak: 1,
-        lastLoginDate: new Date().toISOString()
-      }
+        lastLoginDate: new Date().toISOString(),
+      },
     };
 
     // DB Insert
@@ -186,12 +194,12 @@ export class UserService {
       full_name: newProfile.name,
       preferences: newProfile.preferences,
       stats: newProfile.stats,
-      joined_at: newProfile.joinedDate?.toISOString()
+      joined_at: newProfile.joinedDate?.toISOString(),
     });
 
     if (!error) {
       this.currentUser.set(newProfile as UserProfile);
-      this.cacheProfile(newProfile as UserProfile);  // Cache for instant load
+      this.cacheProfile(newProfile as UserProfile); // Cache for instant load
     } else {
       console.error('Error creating profile:', error);
     }
@@ -211,7 +219,7 @@ export class UserService {
         weeklyDigest: false,
         autoBackup: false,
         autoSchedule: false,
-        gender: 'male'
+        gender: 'male',
       },
       stats: {
         totalWords: 0,
@@ -219,8 +227,8 @@ export class UserService {
         totalProjects: 0,
         daysActive: 1,
         currentStreak: 0,
-        lastLoginDate: new Date().toISOString()
-      }
+        lastLoginDate: new Date().toISOString(),
+      },
     });
   }
 
@@ -239,7 +247,7 @@ export class UserService {
     // Optimistic update
     const updatedProfile = { ...current, ...updates };
     this.currentUser.set(updatedProfile);
-    this.cacheProfile(updatedProfile);  // Cache for instant load
+    this.cacheProfile(updatedProfile); // Cache for instant load
 
     // Sync to DB
     const dbUpdates: any = {};
@@ -250,7 +258,10 @@ export class UserService {
     if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
 
     if (Object.keys(dbUpdates).length > 0) {
-      await this.supabase.from('profiles').update(dbUpdates).eq('id', current.id);
+      await this.supabase
+        .from('profiles')
+        .update(dbUpdates)
+        .eq('id', current.id);
     }
   }
 
@@ -263,10 +274,13 @@ export class UserService {
 
     // Optimistic
     this.currentUser.set({ ...current, preferences: newPreferences });
-    this.cacheProfile({ ...current, preferences: newPreferences });  // Cache
+    this.cacheProfile({ ...current, preferences: newPreferences }); // Cache
 
     // DB
-    await this.supabase.from('profiles').update({ preferences: newPreferences }).eq('id', current.id);
+    await this.supabase
+      .from('profiles')
+      .update({ preferences: newPreferences })
+      .eq('id', current.id);
   }
 
   // Update stats
@@ -280,7 +294,10 @@ export class UserService {
     this.currentUser.set({ ...current, stats: newStats });
 
     // DB
-    await this.supabase.from('profiles').update({ stats: newStats }).eq('id', current.id);
+    await this.supabase
+      .from('profiles')
+      .update({ stats: newStats })
+      .eq('id', current.id);
   }
 
   // Increment word count
@@ -288,7 +305,7 @@ export class UserService {
     const current = this.currentUser();
     if (current) {
       this.updateStats({
-        totalWords: (current.stats.totalWords || 0) + count
+        totalWords: (current.stats.totalWords || 0) + count,
       });
     }
   }
@@ -298,7 +315,7 @@ export class UserService {
     const current = this.currentUser();
     if (current) {
       this.updateStats({
-        totalDocuments: (current.stats.totalDocuments || 0) + 1
+        totalDocuments: (current.stats.totalDocuments || 0) + 1,
       });
     }
   }
@@ -307,12 +324,14 @@ export class UserService {
   logout() {
     this.authService.logout();
     this.currentUser.set(null);
-    localStorage.removeItem(this.PROFILE_CACHE_KEY);  // Clear cache
+    localStorage.removeItem(this.PROFILE_CACHE_KEY); // Clear cache
   }
 
   private checkStreak(profile: UserProfile) {
     const today = new Date().toDateString();
-    const lastLogin = new Date(profile.stats.lastLoginDate || new Date().toISOString()).toDateString();
+    const lastLogin = new Date(
+      profile.stats.lastLoginDate || new Date().toISOString(),
+    ).toDateString();
 
     if (today === lastLogin) return;
 
@@ -331,7 +350,7 @@ export class UserService {
     this.updateStats({
       currentStreak: newStreak,
       lastLoginDate: new Date().toISOString(),
-      daysActive: (profile.stats.daysActive || 0) + 1
+      daysActive: (profile.stats.daysActive || 0) + 1,
     });
   }
 }

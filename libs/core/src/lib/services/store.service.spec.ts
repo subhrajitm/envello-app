@@ -13,10 +13,18 @@ describe('StoreService', () => {
   beforeEach(() => {
     const binSpy = jasmine.createSpyObj('BinService', ['addToBin']);
     const dbSpy = jasmine.createSpyObj('SqliteService', [
-      'getAllTasks', 'upsertTask', 'removeTask',
-      'getAllNotes', 'upsertNote', 'removeNote', 'getAllPlanningItems', 'upsertPlanningItem',
-      'getAllActivities', 'upsertActivity',
-      'getAllNovels', 'upsertNovel'
+      'getAllTasks',
+      'upsertTask',
+      'removeTask',
+      'getAllNotes',
+      'upsertNote',
+      'removeNote',
+      'getAllPlanningItems',
+      'upsertPlanningItem',
+      'getAllActivities',
+      'upsertActivity',
+      'getAllNovels',
+      'upsertNovel',
     ]);
 
     // Setup returns for loadFromDb (called in constructor)
@@ -30,20 +38,28 @@ describe('StoreService', () => {
     dbSpy.upsertTask.and.returnValue(Promise.resolve());
     dbSpy.upsertActivity.and.returnValue(Promise.resolve());
 
-    const fsSpy = jasmine.createSpyObj('FileSystemService', ['readNote', 'saveNote', 'deleteNote']);
+    const fsSpy = jasmine.createSpyObj('FileSystemService', [
+      'readNote',
+      'saveNote',
+      'deleteNote',
+    ]);
 
     TestBed.configureTestingModule({
       providers: [
         StoreService,
         { provide: BinService, useValue: binSpy },
         { provide: SqliteService, useValue: dbSpy },
-        { provide: FileSystemService, useValue: fsSpy }
-      ]
+        { provide: FileSystemService, useValue: fsSpy },
+      ],
     });
     service = TestBed.inject(StoreService);
     binServiceSpy = TestBed.inject(BinService) as jasmine.SpyObj<BinService>;
-    sqliteServiceSpy = TestBed.inject(SqliteService) as jasmine.SpyObj<SqliteService>;
-    fileSystemServiceSpy = TestBed.inject(FileSystemService) as jasmine.SpyObj<FileSystemService>;
+    sqliteServiceSpy = TestBed.inject(
+      SqliteService,
+    ) as jasmine.SpyObj<SqliteService>;
+    fileSystemServiceSpy = TestBed.inject(
+      FileSystemService,
+    ) as jasmine.SpyObj<FileSystemService>;
   });
 
   it('should be created', () => {
@@ -57,7 +73,12 @@ describe('StoreService', () => {
 
   describe('Task Management', () => {
     it('should add a task', () => {
-      const task = { id: '1', title: 'Test Task', priority: 'HIGH', status: 'ACTIVE' } as any;
+      const task = {
+        id: '1',
+        title: 'Test Task',
+        priority: 'HIGH',
+        status: 'ACTIVE',
+      } as any;
       service.addTask(task);
       expect(service.tasks().length).toBe(1);
       expect(service.tasks()[0]).toBe(task);
@@ -65,7 +86,12 @@ describe('StoreService', () => {
     });
 
     it('should update a task', () => {
-      const task = { id: '1', title: 'Test Task', priority: 'HIGH', status: 'ACTIVE' } as any;
+      const task = {
+        id: '1',
+        title: 'Test Task',
+        priority: 'HIGH',
+        status: 'ACTIVE',
+      } as any;
       service.tasks.set([task]);
 
       service.updateTask('1', { title: 'Updated' });

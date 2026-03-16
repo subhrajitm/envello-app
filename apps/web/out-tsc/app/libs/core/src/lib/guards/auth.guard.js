@@ -8,13 +8,16 @@ import { filter, map, take } from 'rxjs/operators';
  * Waits for auth initialization before making a decision.
  */
 export const authGuard = () => {
-    const auth = inject(AuthService);
-    const router = inject(Router);
-    return toObservable(auth.initialized).pipe(filter(isInit => isInit), // Wait for initialization to complete
-    take(1), map(() => {
-        if (auth.isAuthenticated()) {
-            return true;
-        }
-        return router.createUrlTree(['/login']);
-    }));
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return toObservable(auth.initialized).pipe(
+    filter((isInit) => isInit), // Wait for initialization to complete
+    take(1),
+    map(() => {
+      if (auth.isAuthenticated()) {
+        return true;
+      }
+      return router.createUrlTree(['/login']);
+    }),
+  );
 };

@@ -8,7 +8,7 @@ import { ButtonComponent, EmptyStateComponent } from '@envello/ui';
   standalone: true,
   imports: [CommonModule, ButtonComponent, EmptyStateComponent],
   templateUrl: './bin.component.html',
-  styleUrl: './bin.component.css'
+  styleUrl: './bin.component.css',
 })
 export class BinComponent {
   private binService = inject(BinService);
@@ -18,8 +18,9 @@ export class BinComponent {
   // Sorted newest → oldest for an enterprise-style view
   sortedItems = computed(() =>
     [...this.items()].sort(
-      (a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()
-    )
+      (a, b) =>
+        new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime(),
+    ),
   );
 
   trackById(index: number, item: BinItem) {
@@ -45,7 +46,7 @@ export class BinComponent {
 
   permanentlyDelete(id: string) {
     const confirmed = confirm(
-      'Delete forever?\n\nThis will permanently remove the selected item from the Bin and it cannot be recovered.'
+      'Delete forever?\n\nThis will permanently remove the selected item from the Bin and it cannot be recovered.',
     );
     if (confirmed) {
       this.binService.permanentlyDelete(id);
@@ -58,11 +59,10 @@ export class BinComponent {
     }
 
     const confirmed = confirm(
-      'Empty Bin?\n\nThis will permanently remove all items from the Bin for this workspace. This action cannot be undone.'
+      'Empty Bin?\n\nThis will permanently remove all items from the Bin for this workspace. This action cannot be undone.',
     );
     if (confirmed) {
       this.binService.emptyBin();
     }
   }
 }
-

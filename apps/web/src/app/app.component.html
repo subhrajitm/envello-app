@@ -1,20 +1,29 @@
 <div class="dashboard">
   @if (!isFullScreen()) {
-  <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
-    (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
-  </app-header>
+    <app-header
+      [activeTab]="currentTab()"
+      [isImmersive]="isImmersive()"
+      (sidebarCollapsedChange)="onSidebarCollapsedChange($event)"
+    >
+    </app-header>
   }
 
-  <div class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
+  <div
+    class="dashboard-content"
+    [class.no-padding]="hasSidebar() || isFullScreen()"
     [class.immersive-view]="isImmersive()"
-    [class.with-sidebar]="!isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'"
-    [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"
-    [class.fullscreen-content]="isFullScreen()">
+    [class.with-sidebar]="
+      !isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'
+    "
+    [class.sidebar-collapsed]="sidebarCollapsed()"
+    [class.horizontal-nav]="navigationLayout() === 'horizontal'"
+    [class.fullscreen-content]="isFullScreen()"
+  >
     <router-outlet></router-outlet>
   </div>
 
   @if (!isFullScreen()) {
-  <app-footer></app-footer>
+    <app-footer></app-footer>
   }
 </div>
 <!-- Command Palette to be added -->

@@ -1,4 +1,11 @@
-import { Component, input, output, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  inject,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
@@ -12,31 +19,33 @@ import { NovelContentService, FrontMatterItem, Prologue } from '@envello/core';
   templateUrl: './structure-editor.component.html',
   styleUrls: [
     './structure-editor.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class StructureEditorComponent {
   protected novelService = inject(NovelContentService);
-  
+
   editor = input.required<Editor>();
   activeFrontMatterId = input.required<string | null>();
   activePrologueId = input.required<string | null>();
   frontMatter = input.required<FrontMatterItem[]>();
   prologue = input<Prologue | null>(null);
-  
-  addFrontMatterItem = output<'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface'>();
+
+  addFrontMatterItem = output<
+    'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface'
+  >();
   addPrologue = output<void>();
-  
+
   getFrontMatterTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       'title-page': 'Title Page',
-      'copyright': 'Copyright Page',
-      'toc': 'Table of Contents',
-      'dedication': 'Dedication',
-      'foreword': 'Foreword',
-      'preface': 'Preface'
+      copyright: 'Copyright Page',
+      toc: 'Table of Contents',
+      dedication: 'Dedication',
+      foreword: 'Foreword',
+      preface: 'Preface',
     };
     return labels[type] || type;
   }

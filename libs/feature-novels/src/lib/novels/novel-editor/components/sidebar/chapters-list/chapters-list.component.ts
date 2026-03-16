@@ -1,4 +1,13 @@
-import { Component, input, output, signal, computed, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  signal,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NovelContentService, Chapter, ChapterGroup } from '@envello/core';
 
@@ -9,20 +18,20 @@ import { NovelContentService, Chapter, ChapterGroup } from '@envello/core';
   templateUrl: './chapters-list.component.html',
   styleUrls: [
     './chapters-list.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class ChaptersListComponent {
   protected novelService = inject(NovelContentService);
-  
+
   chapters = input.required<ChapterGroup[]>();
   activeChapterId = input.required<string | null>();
   bulkMode = input.required<boolean>();
   selectedChapters = input.required<Set<string>>();
   addMenuOpen = input.required<boolean>();
-  
+
   selectChapter = output<Chapter>();
   toggleChapter = output<ChapterGroup>();
   deleteChapter = output<{ id: string; title?: string }>();
@@ -33,11 +42,11 @@ export class ChaptersListComponent {
   addNewActOrPart = output<void>();
   addNewChapter = output<void>();
   toggleChapterSelection = output<string>();
-  
+
   // Drag & Drop
   dragStartIndex = signal<number | null>(null);
   dragOverIndex = signal<number | null>(null);
-  
+
   onDragStart(event: DragEvent, index: number, type: 'chapter' | 'group') {
     this.dragStartIndex.set(index);
     if (event.dataTransfer) {
@@ -58,7 +67,12 @@ export class ChaptersListComponent {
     this.dragOverIndex.set(null);
   }
 
-  onDrop(event: DragEvent, dropIndex: number, type: 'chapter' | 'group', groupId?: string) {
+  onDrop(
+    event: DragEvent,
+    dropIndex: number,
+    type: 'chapter' | 'group',
+    groupId?: string,
+  ) {
     event.preventDefault();
     const startIndex = this.dragStartIndex();
     if (startIndex === null || startIndex === dropIndex) {

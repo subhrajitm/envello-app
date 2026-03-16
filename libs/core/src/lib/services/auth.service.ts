@@ -51,7 +51,7 @@ export class AuthService {
 
       if (event === 'SIGNED_OUT') {
         // Only clear guest mode if explicit logout happens (which clears both)
-        // But SIGNED_OUT comes from Supabase. 
+        // But SIGNED_OUT comes from Supabase.
         // If we are guest, we are not interacting with Supabase auth changes usually.
         // However, if we were signed in and signed out, we go to login.
         this._isGuest.set(false);
@@ -113,7 +113,7 @@ export class AuthService {
     if (error) {
       this.logging.error('Logout failed', error.message);
     }
-    // Router navigation is handled by auth state change listener usually, 
+    // Router navigation is handled by auth state change listener usually,
     // but we can force it if needed.
   }
 

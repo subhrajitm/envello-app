@@ -1,4 +1,10 @@
-import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -9,16 +15,16 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './link-modal.component.html',
   styleUrls: [
     './link-modal.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class LinkModalComponent {
   isOpen = input.required<boolean>();
   linkText = input.required<string>();
   linkUrl = input.required<string>();
-  
+
   linkTextChange = output<string>();
   linkUrlChange = output<string>();
   insert = output<void>();

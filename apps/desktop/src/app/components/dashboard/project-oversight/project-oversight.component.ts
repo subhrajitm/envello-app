@@ -8,12 +8,11 @@ import { StoreService } from '@envello/core';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './project-oversight.component.html',
-  styleUrl: './project-oversight.component.css'
+  styleUrl: './project-oversight.component.css',
 })
 export class ProjectOversightComponent {
   private store = inject(StoreService);
   projects = this.store.projects;
-
 
   getStatusColor(status: string): string {
     switch (status) {

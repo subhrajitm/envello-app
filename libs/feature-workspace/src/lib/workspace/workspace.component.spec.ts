@@ -9,15 +9,13 @@ describe('WorkspaceComponent', () => {
   // Mock StoreService
   const storeServiceMock = {
     tasks: () => [],
-    planningItems: () => []
+    planningItems: () => [],
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [WorkspaceComponent],
-      providers: [
-        { provide: StoreService, useValue: storeServiceMock }
-      ]
+      providers: [{ provide: StoreService, useValue: storeServiceMock }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(WorkspaceComponent);

@@ -13,7 +13,7 @@ export interface SidebarNavItem {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css'
+  styleUrl: './sidebar.component.css',
 })
 export class SidebarComponent {
   /** Uppercase title, shown in the header */

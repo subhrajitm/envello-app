@@ -9,7 +9,7 @@ import { ButtonComponent, EmptyStateComponent } from '@envello/ui';
   standalone: true,
   imports: [CommonModule, FormsModule, ButtonComponent, EmptyStateComponent],
   templateUrl: './plan.component.html',
-  styleUrl: './plan.component.css'
+  styleUrl: './plan.component.css',
 })
 export class PlanComponent implements OnInit {
   executionEngine = inject(ExecutionEngineService);
@@ -29,13 +29,17 @@ export class PlanComponent implements OnInit {
   inProgressItems = computed(() => {
     // All active items that are not in the focus list (for visual distinctiveness)
     // Or we could just show all in-progress
-    const focusIds = new Set(this.focusItems().map(i => i.id));
-    return this.executionEngine.activeItems().filter(i => !focusIds.has(i.id));
+    const focusIds = new Set(this.focusItems().map((i) => i.id));
+    return this.executionEngine
+      .activeItems()
+      .filter((i) => !focusIds.has(i.id));
   });
 
   suggestions = computed(() => {
     // Writing suggestions
-    return this.executionEngine.generateSuggestions().filter(s => s.type === 'writing');
+    return this.executionEngine
+      .generateSuggestions()
+      .filter((s) => s.type === 'writing');
   });
 
   successMessage = signal('');
@@ -52,7 +56,9 @@ export class PlanComponent implements OnInit {
           status: 'in-progress',
           progress: 80,
           created_at: new Date().toISOString(),
-          last_edited_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+          last_edited_at: new Date(
+            Date.now() - 48 * 60 * 60 * 1000,
+          ).toISOString(),
           ai_generated: false,
         },
         {
@@ -65,7 +71,7 @@ export class PlanComponent implements OnInit {
           created_at: new Date().toISOString(),
           last_edited_at: new Date().toISOString(),
           ai_generated: false,
-        }
+        },
       ]);
     }
   }
@@ -105,4 +111,3 @@ export class PlanComponent implements OnInit {
     return 'Good evening';
   }
 }
-

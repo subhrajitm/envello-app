@@ -15,7 +15,10 @@ export class ApiService {
   private readonly logging = inject(LoggingService);
   private readonly baseUrl = environment.apiBaseUrl;
 
-  get<T>(path: string, params?: Record<string, string | number | boolean>): Observable<T> {
+  get<T>(
+    path: string,
+    params?: Record<string, string | number | boolean>,
+  ): Observable<T> {
     const httpParams = params
       ? new HttpParams({ fromObject: params as Record<string, string> })
       : undefined;

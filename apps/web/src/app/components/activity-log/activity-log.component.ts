@@ -8,7 +8,7 @@ import { StoreService } from '@envello/core';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './activity-log.component.html',
-  styleUrl: './activity-log.component.css'
+  styleUrl: './activity-log.component.css',
 })
 export class ActivityLogComponent {
   private store = inject(StoreService);
@@ -20,7 +20,7 @@ export class ActivityLogComponent {
 
   // Raw mapped activities
   allActivities = computed(() => {
-    return this.store.activities().map(activity => ({
+    return this.store.activities().map((activity) => ({
       id: activity.id,
       action: activity.text,
       time: activity.time,
@@ -28,7 +28,7 @@ export class ActivityLogComponent {
       icon: this.getIconForType(activity.type),
       user: 'Super Admin',
       device: 'MacBook Pro',
-      ip: '192.168.1.1'
+      ip: '192.168.1.1',
     }));
   });
 
@@ -39,13 +39,14 @@ export class ActivityLogComponent {
     const filter = this.activeFilter();
 
     if (filter !== 'ALL') {
-      list = list.filter(a => a.type.toLowerCase() === filter.toLowerCase());
+      list = list.filter((a) => a.type.toLowerCase() === filter.toLowerCase());
     }
 
     if (query) {
-      list = list.filter(a =>
-        a.action.toLowerCase().includes(query) ||
-        a.id.toLowerCase().includes(query)
+      list = list.filter(
+        (a) =>
+          a.action.toLowerCase().includes(query) ||
+          a.id.toLowerCase().includes(query),
       );
     }
 
@@ -79,11 +80,16 @@ export class ActivityLogComponent {
 
   private getIconForType(type: string): string {
     switch (type) {
-      case 'entry': return 'edit_note';
-      case 'sync': return 'cloud_sync';
-      case 'ai': return 'smart_toy';
-      case 'system': return 'settings';
-      default: return 'info';
+      case 'entry':
+        return 'edit_note';
+      case 'sync':
+        return 'cloud_sync';
+      case 'ai':
+        return 'smart_toy';
+      case 'system':
+        return 'settings';
+      default:
+        return 'info';
     }
   }
 }

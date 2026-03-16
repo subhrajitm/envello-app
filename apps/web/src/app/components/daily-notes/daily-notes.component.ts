@@ -1,8 +1,22 @@
-import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  untracked,
+  HostListener,
+  OnInit,
+  OnDestroy,
+  effect,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent, ModalComponent, EmptyStateComponent } from '@envello/ui';
+import {
+  ButtonComponent,
+  ModalComponent,
+  EmptyStateComponent,
+} from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -24,7 +38,11 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
 import FloatingMenu from '@tiptap/extension-floating-menu';
-import { TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective } from 'ngx-tiptap';
+import {
+  TiptapEditorDirective,
+  TiptapBubbleMenuDirective,
+  TiptapFloatingMenuDirective,
+} from 'ngx-tiptap';
 
 interface NoteGroup {
   id: string;
@@ -46,9 +64,18 @@ interface TagCategory {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, ModalComponent, EmptyStateComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TiptapEditorDirective,
+    TiptapBubbleMenuDirective,
+    TiptapFloatingMenuDirective,
+    ButtonComponent,
+    ModalComponent,
+    EmptyStateComponent,
+  ],
   templateUrl: './daily-notes.component.html',
-  styleUrl: './daily-notes.component.css'
+  styleUrl: './daily-notes.component.css',
 })
 export class DailyNotesComponent implements OnInit, OnDestroy {
   private store = inject(StoreService);
@@ -62,13 +89,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   characterCount = signal(0);
 
   // Modal State
-  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'delete-folder-confirm' | 'share' | 'export' | 'youtube'>('none');
+  activeModal = signal<
+    | 'none'
+    | 'new-folder'
+    | 'add-tag'
+    | 'link'
+    | 'image'
+    | 'delete-confirm'
+    | 'delete-folder-confirm'
+    | 'share'
+    | 'export'
+    | 'youtube'
+  >('none');
   modalInputValue = signal<string>('');
   modalInputPlaceholder = signal<string>('');
   modalTitle = signal<string>('');
   tempNoteId = signal<string>(''); // For storing ID during confirmation flow
   tempFolderId = signal<string>(''); // For storing Folder ID during confirmation flow
-
 
   selectedEntryId = signal<string>('');
   searchQuery = signal<string>('');
@@ -83,12 +120,48 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   // Tag categories with colors
   tagCategories = signal<TagCategory[]>([
-    { id: 'meta', name: '00 Meta', color: '#d89090', expanded: true, tags: ['Planning', 'Review', 'Goals'] },
-    { id: 'life', name: '10 Life', color: '#e8a87c', expanded: false, tags: ['Health', 'Family', 'Personal'] },
-    { id: 'it', name: '20 IT', color: '#f4e89c', expanded: false, tags: ['Programming', 'DevOps', 'Learning'] },
-    { id: 'hobbies', name: '30 Hobbies', color: '#a8d5a8', expanded: false, tags: ['Reading', 'Music', 'Art'] },
-    { id: 'devsystems', name: '50 DevO Systems', color: '#7eb3d4', expanded: false, tags: ['Architecture', 'Design', 'Tools'] },
-    { id: 'unsorted', name: 'Unsorted', color: '#b8d8e8', expanded: false, tags: ['Hippotology', 'Random', 'Misc'] },
+    {
+      id: 'meta',
+      name: '00 Meta',
+      color: '#d89090',
+      expanded: true,
+      tags: ['Planning', 'Review', 'Goals'],
+    },
+    {
+      id: 'life',
+      name: '10 Life',
+      color: '#e8a87c',
+      expanded: false,
+      tags: ['Health', 'Family', 'Personal'],
+    },
+    {
+      id: 'it',
+      name: '20 IT',
+      color: '#f4e89c',
+      expanded: false,
+      tags: ['Programming', 'DevOps', 'Learning'],
+    },
+    {
+      id: 'hobbies',
+      name: '30 Hobbies',
+      color: '#a8d5a8',
+      expanded: false,
+      tags: ['Reading', 'Music', 'Art'],
+    },
+    {
+      id: 'devsystems',
+      name: '50 DevO Systems',
+      color: '#7eb3d4',
+      expanded: false,
+      tags: ['Architecture', 'Design', 'Tools'],
+    },
+    {
+      id: 'unsorted',
+      name: 'Unsorted',
+      color: '#b8d8e8',
+      expanded: false,
+      tags: ['Hippotology', 'Random', 'Misc'],
+    },
   ]);
 
   showDropdown = signal<boolean>(false);
@@ -118,18 +191,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
     // Apply search filter
     if (query) {
-      list = list.filter(note =>
-        note.title.toLowerCase().includes(query) ||
-        note.preview.toLowerCase().includes(query) ||
-        note.tags?.some(tag => tag.toLowerCase().includes(query))
+      list = list.filter(
+        (note) =>
+          note.title.toLowerCase().includes(query) ||
+          note.preview.toLowerCase().includes(query) ||
+          note.tags?.some((tag) => tag.toLowerCase().includes(query)),
       );
     }
 
     // Apply category filter
     if (filter === 'pinned') {
-      list = list.filter(note => note.tags?.includes('pinned'));
+      list = list.filter((note) => note.tags?.includes('pinned'));
     } else if (filter === 'tagged') {
-      list = list.filter(note => note.tags && note.tags.length > 0);
+      list = list.filter((note) => note.tags && note.tags.length > 0);
     }
 
     return list;
@@ -146,16 +220,22 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   /** Notes in a folder (filtered by folderId); notes without folderId or orphaned go to first folder */
-  getBucketedNotesForFolder(folderId: string): { label: string; notes: Note[] }[] {
-    const inFolder = this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId);
+  getBucketedNotesForFolder(
+    folderId: string,
+  ): { label: string; notes: Note[] }[] {
+    const inFolder = this.filteredNotes().filter(
+      (n) => this.effectiveFolderId(n) === folderId,
+    );
     return this.getBucketedNotes(inFolder);
   }
 
   getNotesCountForFolder(folderId: string): number {
-    return this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId).length;
+    return this.filteredNotes().filter(
+      (n) => this.effectiveFolderId(n) === folderId,
+    ).length;
   }
 
-  getBucketedNotes(notes: Note[]): { label: string, notes: Note[] }[] {
+  getBucketedNotes(notes: Note[]): { label: string; notes: Note[] }[] {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
@@ -170,7 +250,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       yesterday: [] as Note[],
       previous7Days: [] as Note[],
       previous30Days: [] as Note[],
-      older: [] as Note[]
+      older: [] as Note[],
     };
 
     // Sort notes newest to oldest first
@@ -193,7 +273,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           noteDate = new Date();
         }
       }
-      
+
       const timeOnly = new Date(noteDate);
       timeOnly.setHours(0, 0, 0, 0);
 
@@ -211,11 +291,16 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
 
     const result = [];
-    if (buckets.today.length > 0) result.push({ label: 'Today', notes: buckets.today });
-    if (buckets.yesterday.length > 0) result.push({ label: 'Yesterday', notes: buckets.yesterday });
-    if (buckets.previous7Days.length > 0) result.push({ label: 'Previous 7 Days', notes: buckets.previous7Days });
-    if (buckets.previous30Days.length > 0) result.push({ label: 'Previous 30 Days', notes: buckets.previous30Days });
-    if (buckets.older.length > 0) result.push({ label: 'Older Notes', notes: buckets.older });
+    if (buckets.today.length > 0)
+      result.push({ label: 'Today', notes: buckets.today });
+    if (buckets.yesterday.length > 0)
+      result.push({ label: 'Yesterday', notes: buckets.yesterday });
+    if (buckets.previous7Days.length > 0)
+      result.push({ label: 'Previous 7 Days', notes: buckets.previous7Days });
+    if (buckets.previous30Days.length > 0)
+      result.push({ label: 'Previous 30 Days', notes: buckets.previous30Days });
+    if (buckets.older.length > 0)
+      result.push({ label: 'Older Notes', notes: buckets.older });
 
     return result;
   }
@@ -223,23 +308,26 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   formatTime(id: string, lastEdited?: string): string {
     const timestamp = parseInt(id, 10);
     if (!isNaN(timestamp) && timestamp > 1000000000000) {
-      return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      return new Date(timestamp).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+      });
     }
     return lastEdited || '12:00 PM';
   }
 
   getPreviewText(preview: string): string {
     if (!preview || preview.trim() === '') return 'No additional text';
-    if (preview === "Start writing...") return "No additional text";
+    if (preview === 'Start writing...') return 'No additional text';
     return preview;
   }
 
   allGroupsCollapsed = computed(() => {
-    return this.noteGroups().every(g => !g.expanded);
+    return this.noteGroups().every((g) => !g.expanded);
   });
 
   allExpanded = computed(() => {
-    return this.noteGroups().every(g => g.expanded);
+    return this.noteGroups().every((g) => g.expanded);
   });
 
   selectedNote = computed(() => {
@@ -258,10 +346,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (!selectedId) {
       // If no selection but tabs are open, select the first open tab
       const firstOpenId = this.openNotes()[0];
-      return list.find(n => n.id === firstOpenId) || null;
+      return list.find((n) => n.id === firstOpenId) || null;
     }
 
-    const found = list.find(n => n.id === selectedId);
+    const found = list.find((n) => n.id === selectedId);
     // Only return if the note is in open tabs
     if (found && this.openNotes().includes(found.id)) {
       return found;
@@ -297,12 +385,18 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const openIds = this.openNotes();
       const noteIds = new Set(notes.map((n) => n.id));
       const hasValidSelection = selectedId && noteIds.has(selectedId);
-      const hasValidTabs = openIds.length > 0 && openIds.some((id) => noteIds.has(id));
+      const hasValidTabs =
+        openIds.length > 0 && openIds.some((id) => noteIds.has(id));
       if (hasValidSelection && hasValidTabs) return;
 
       const saved = this.loadSelectionFromStorage();
-      const validOpen = (saved?.openNotes ?? openIds).filter((id) => noteIds.has(id));
-      const validSelected = saved?.selectedId && noteIds.has(saved.selectedId) ? saved.selectedId : validOpen[0] ?? notes[0].id;
+      const validOpen = (saved?.openNotes ?? openIds).filter((id) =>
+        noteIds.has(id),
+      );
+      const validSelected =
+        saved?.selectedId && noteIds.has(saved.selectedId)
+          ? saved.selectedId
+          : (validOpen[0] ?? notes[0].id);
       const finalOpen = validOpen.length > 0 ? validOpen : [validSelected];
 
       this.selectedEntryId.set(validSelected);
@@ -347,7 +441,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           codeBlock: false, // We use CodeBlockLowlight
         }),
         Placeholder.configure({
-          placeholder: 'Press \'/\' for commands...',
+          placeholder: "Press '/' for commands...",
         }),
         BubbleMenu.configure({
           pluginKey: 'bubbleMenu',
@@ -361,7 +455,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           pluginKey: 'floatingMenu',
           shouldShow: ({ editor, view, state }) => {
             // Show on empty lines
-            return editor.isActive('paragraph') && editor.state.selection.$from.parent.content.size === 0;
+            return (
+              editor.isActive('paragraph') &&
+              editor.state.selection.$from.parent.content.size === 0
+            );
           },
         }),
         Link.configure({
@@ -399,7 +496,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       onUpdate: ({ editor }) => {
         const content = editor.getHTML();
         const plainText = editor.getText();
-        const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
+        const preview =
+          plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
         this.updateNoteContent(content, preview);
 
         this.wordCount.set(editor.storage.characterCount.words());
@@ -425,7 +523,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const firstFolderId = this.noteGroups()[0]?.id ?? 'personal';
     const newNote: Note = {
       id: Date.now().toString(),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
       title: 'New Daily Note',
       preview: 'Start writing...',
       content: '<p>Start writing your thoughts...</p>',
@@ -482,7 +584,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   onListDragLeave(event: DragEvent) {
-    if ((event.relatedTarget as HTMLElement)?.closest?.('.dn-entries-list')) return;
+    if ((event.relatedTarget as HTMLElement)?.closest?.('.dn-entries-list'))
+      return;
     this.dragOverFolderId.set(null);
   }
 
@@ -495,14 +598,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (noteId) this.moveNoteToFolder(noteId, firstId);
   }
 
-  private loadSelectionFromStorage(): { selectedId: string; openNotes: string[] } | null {
+  private loadSelectionFromStorage(): {
+    selectedId: string;
+    openNotes: string[];
+  } | null {
     if (typeof localStorage === 'undefined') return null;
     try {
       const raw = localStorage.getItem(this.SELECTION_KEY);
       if (!raw) return null;
-      const data = JSON.parse(raw) as { selectedId?: string; openNotes?: string[] };
+      const data = JSON.parse(raw) as {
+        selectedId?: string;
+        openNotes?: string[];
+      };
       if (data?.openNotes && Array.isArray(data.openNotes)) {
-        return { selectedId: data.selectedId ?? data.openNotes[0], openNotes: data.openNotes };
+        return {
+          selectedId: data.selectedId ?? data.openNotes[0],
+          openNotes: data.openNotes,
+        };
       }
       return null;
     } catch {
@@ -513,7 +625,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private saveSelectionToStorage(selectedId: string, openNotes: string[]) {
     if (typeof localStorage === 'undefined') return;
     try {
-      localStorage.setItem(this.SELECTION_KEY, JSON.stringify({ selectedId, openNotes }));
+      localStorage.setItem(
+        this.SELECTION_KEY,
+        JSON.stringify({ selectedId, openNotes }),
+      );
     } catch {
       /* ignore */
     }
@@ -526,13 +641,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
     // Add to open notes if not already open
     if (!this.openNotes().includes(id)) {
-      this.openNotes.update(tabs => [...tabs, id]);
+      this.openNotes.update((tabs) => [...tabs, id]);
     }
   }
 
   toggleGroup(groupId: string) {
-    this.noteGroups.update(groups =>
-      groups.map(g => g.id === groupId ? { ...g, expanded: !g.expanded } : g)
+    this.noteGroups.update((groups) =>
+      groups.map((g) =>
+        g.id === groupId ? { ...g, expanded: !g.expanded } : g,
+      ),
     );
   }
 
@@ -551,23 +668,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   getNoteTags(note: Note): string[] {
-    return note.tags?.filter(tag => tag !== 'pinned') || [];
+    return note.tags?.filter((tag) => tag !== 'pinned') || [];
   }
 
   expandAll() {
-    this.noteGroups.update(groups =>
-      groups.map(g => ({ ...g, expanded: true }))
+    this.noteGroups.update((groups) =>
+      groups.map((g) => ({ ...g, expanded: true })),
     );
   }
 
   collapseAll() {
-    this.noteGroups.update(groups =>
-      groups.map(g => ({ ...g, expanded: false }))
+    this.noteGroups.update((groups) =>
+      groups.map((g) => ({ ...g, expanded: false })),
     );
   }
 
   toggleDropdown() {
-    this.showDropdown.update(show => !show);
+    this.showDropdown.update((show) => !show);
   }
 
   handleNewFolder() {
@@ -590,8 +707,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   toggleExpandAll() {
     const shouldExpand = !this.allExpanded();
-    this.noteGroups.update(groups =>
-      groups.map(g => ({ ...g, expanded: shouldExpand }))
+    this.noteGroups.update((groups) =>
+      groups.map((g) => ({ ...g, expanded: shouldExpand })),
     );
   }
 
@@ -600,7 +717,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
 
-    this.openNotes.update(tabs => tabs.filter(id => id !== noteId));
+    this.openNotes.update((tabs) => tabs.filter((id) => id !== noteId));
 
     // If closing the active note, switch to another open note
     if (this.selectedEntryId() === noteId) {
@@ -614,7 +731,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   getNoteById(id: string): Note | undefined {
-    return this.notes().find(n => n.id === id);
+    return this.notes().find((n) => n.id === id);
   }
 
   @HostListener('document:click', ['$event'])
@@ -633,19 +750,21 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   toggleTagCategory(categoryId: string) {
-    this.tagCategories.update(categories =>
-      categories.map(c => c.id === categoryId ? { ...c, expanded: !c.expanded } : c)
+    this.tagCategories.update((categories) =>
+      categories.map((c) =>
+        c.id === categoryId ? { ...c, expanded: !c.expanded } : c,
+      ),
     );
   }
 
   allTagCategoriesExpanded = computed(() => {
-    return this.tagCategories().every(c => c.expanded);
+    return this.tagCategories().every((c) => c.expanded);
   });
 
   toggleExpandAllTags() {
     const shouldExpand = !this.allTagCategoriesExpanded();
-    this.tagCategories.update(categories =>
-      categories.map(c => ({ ...c, expanded: shouldExpand }))
+    this.tagCategories.update((categories) =>
+      categories.map((c) => ({ ...c, expanded: shouldExpand })),
     );
   }
 
@@ -694,7 +813,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         'personal';
       this.notes()
         .filter((n) => this.effectiveFolderId(n) === folderId)
-        .forEach((n) => this.store.updateNote(n.id, { folderId: targetFolderId }));
+        .forEach((n) =>
+          this.store.updateNote(n.id, { folderId: targetFolderId }),
+        );
       this.store.removeNoteFolder(folderId);
     }
     this.closeModal();
@@ -713,7 +834,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   removeTag(tag: string) {
     const note = this.selectedNote();
     if (note && note.tags) {
-      this.store.updateNote(note.id, { tags: note.tags.filter(t => t !== tag) });
+      this.store.updateNote(note.id, {
+        tags: note.tags.filter((t) => t !== tag),
+      });
     }
   }
 
@@ -747,7 +870,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (url === '') {
       this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
     } else if (url) {
-      this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+      this.editor
+        .chain()
+        .focus()
+        .extendMarkRange('link')
+        .setLink({ href: url })
+        .run();
     }
     this.closeModal();
   }
@@ -794,7 +922,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   insertTable() {
-    this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    this.editor
+      .chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
   }
 
   confirmAddImage() {

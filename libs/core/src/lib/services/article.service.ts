@@ -28,7 +28,7 @@ export interface Article {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ArticleService {
   private db = inject(DataService);
@@ -63,7 +63,7 @@ export class ArticleService {
   }
 
   async loadArticleContent(id: string): Promise<string> {
-    const article = this.articles().find(a => a.id === id);
+    const article = this.articles().find((a) => a.id === id);
     if (!article) return '';
     if (article.content && article.content.length > 20) return article.content;
 
@@ -78,7 +78,9 @@ export class ArticleService {
     if (mdContent) {
       const { marked } = await import('marked');
       const html = await marked.parse(mdContent);
-      this.articles.update(as => as.map(a => a.id === id ? { ...a, content: html as string } : a));
+      this.articles.update((as) =>
+        as.map((a) => (a.id === id ? { ...a, content: html as string } : a)),
+      );
       return html as string;
     }
     return '';
@@ -89,17 +91,19 @@ export class ArticleService {
   }
 
   getArticle(id: string): Article | undefined {
-    return this.articles().find(a => a.id === id);
+    return this.articles().find((a) => a.id === id);
   }
 
-  addArticle(article: Omit<Article, 'id' | 'createdDate' | 'lastUpdated'>): Article {
+  addArticle(
+    article: Omit<Article, 'id' | 'createdDate' | 'lastUpdated'>,
+  ): Article {
     const newArticle: Article = {
       ...article,
       id: crypto.randomUUID(),
       createdDate: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
     };
-    this.articles.update(list => [newArticle, ...list]);
+    this.articles.update((list) => [newArticle, ...list]);
 
     // Auto-create Project
     const projectId = crypto.randomUUID();
@@ -112,14 +116,16 @@ export class ArticleService {
       updated: new Date().toISOString(),
       icon: 'article',
       linkedResources: {
-        articles: [newArticle.id]
-      }
+        articles: [newArticle.id],
+      },
     });
 
     // Initial file write
     this.saveArticleContentToFile(newArticle.id, newArticle.content || '');
 
-    this.db.upsert('articles', newArticle).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    this.db
+      .upsert('articles', newArticle)
+      .catch((e) => logIfTauri('[ArticleService] persist failed', e));
     return newArticle;
   }
 
@@ -127,8 +133,12 @@ export class ArticleService {
     const article = this.getArticle(id);
     if (!article) return;
 
-    this.articles.update(list =>
-      list.map(a => a.id === id ? { ...a, ...updates, lastUpdated: new Date().toISOString() } : a)
+    this.articles.update((list) =>
+      list.map((a) =>
+        a.id === id
+          ? { ...a, ...updates, lastUpdated: new Date().toISOString() }
+          : a,
+      ),
     );
 
     if (updates.content !== undefined) {
@@ -138,8 +148,11 @@ export class ArticleService {
       }, 1000);
     }
 
-    const a = this.articles().find(x => x.id === id);
-    if (a) this.db.upsert('articles', a).catch(e => logIfTauri('[ArticleService] persist failed', e));
+    const a = this.articles().find((x) => x.id === id);
+    if (a)
+      this.db
+        .upsert('articles', a)
+        .catch((e) => logIfTauri('[ArticleService] persist failed', e));
   }
 
   private async saveArticleContentToFile(id: string, html: string) {
@@ -149,36 +162,43 @@ export class ArticleService {
     const md = this.turndownService.turndown(html);
     const filePath = await this.fs.saveFile('articles', id, md);
 
-    const article = this.articles().find(a => a.id === id);
+    const article = this.articles().find((a) => a.id === id);
     if (article && article.filePath !== filePath) {
-      this.articles.update(as => as.map(a => a.id === id ? { ...a, filePath } : a));
+      this.articles.update((as) =>
+        as.map((a) => (a.id === id ? { ...a, filePath } : a)),
+      );
       this.db.upsert('articles', { ...article, filePath });
     }
   }
 
   deleteArticle(id: string): void {
-    this.articles.update(list => list.filter(a => a.id !== id));
-    this.db.remove('articles', id).catch(e => logIfTauri('[ArticleService] remove failed', e));
-    this.fs.deleteFile('articles', id).catch(e => console.error('Failed to delete article file', e));
+    this.articles.update((list) => list.filter((a) => a.id !== id));
+    this.db
+      .remove('articles', id)
+      .catch((e) => logIfTauri('[ArticleService] remove failed', e));
+    this.fs
+      .deleteFile('articles', id)
+      .catch((e) => console.error('Failed to delete article file', e));
   }
 
   getArticlesByPlatform(platform: string): Article[] {
     if (platform === 'All Platforms') return this.articles();
-    return this.articles().filter(a => a.platform === platform);
+    return this.articles().filter((a) => a.platform === platform);
   }
 
   getArticlesByPipeline(pipeline: string): Article[] {
     if (pipeline === 'All Statuses') return this.articles();
-    return this.articles().filter(a => a.pipeline === pipeline);
+    return this.articles().filter((a) => a.pipeline === pipeline);
   }
 
   searchArticles(query: string): Article[] {
     if (!query.trim()) return this.articles();
     const lowerQuery = query.toLowerCase();
-    return this.articles().filter(a =>
-      a.title.toLowerCase().includes(lowerQuery) ||
-      a.tags.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
-      a.excerpt?.toLowerCase().includes(lowerQuery)
+    return this.articles().filter(
+      (a) =>
+        a.title.toLowerCase().includes(lowerQuery) ||
+        a.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
+        a.excerpt?.toLowerCase().includes(lowerQuery),
     );
   }
 }

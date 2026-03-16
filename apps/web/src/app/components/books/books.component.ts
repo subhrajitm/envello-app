@@ -67,7 +67,12 @@ export class BooksComponent implements OnInit, OnDestroy {
   availableCategories = computed(() => this.booksService.availableCategories());
   selectedBook = computed(() => this.booksService.selectedBook());
 
-  readonly categories: BookCategory[] = ['DESIGN', 'CREATIVE', 'PRODUCTIVITY', 'OTHER'];
+  readonly categories: BookCategory[] = [
+    'DESIGN',
+    'CREATIVE',
+    'PRODUCTIVITY',
+    'OTHER',
+  ];
 
   ngOnInit() {}
   ngOnDestroy() {}
@@ -82,7 +87,8 @@ export class BooksComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
-    const inInput = (e.target as HTMLElement)?.tagName === 'INPUT' ||
+    const inInput =
+      (e.target as HTMLElement)?.tagName === 'INPUT' ||
       (e.target as HTMLElement)?.tagName === 'TEXTAREA';
     if (e.key === 'Escape') {
       if (this.showAddModal()) this.closeAddModal();
@@ -98,7 +104,9 @@ export class BooksComponent implements OnInit, OnDestroy {
     }
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
-      (document.querySelector('.books-search-input') as HTMLInputElement)?.focus();
+      (
+        document.querySelector('.books-search-input') as HTMLInputElement
+      )?.focus();
     }
   }
 
@@ -171,7 +179,7 @@ export class BooksComponent implements OnInit, OnDestroy {
     const patch = this.editedBook();
     if (b && patch) {
       this.booksService.updateBook(b.id, patch);
-      const updated = this.booksService.books().find(x => x.id === b.id);
+      const updated = this.booksService.books().find((x) => x.id === b.id);
       if (updated) this.booksService.selectedBookId.set(updated.id);
     }
     this.editingBook.set(false);
@@ -186,7 +194,7 @@ export class BooksComponent implements OnInit, OnDestroy {
 
   setStatus(book: Book, status: BookStatus) {
     this.booksService.setStatus(book.id, status);
-    const updated = this.booksService.books().find(x => x.id === book.id);
+    const updated = this.booksService.books().find((x) => x.id === book.id);
     if (updated) this.booksService.selectedBookId.set(updated.id);
   }
 
@@ -197,7 +205,7 @@ export class BooksComponent implements OnInit, OnDestroy {
     this.booksService.addNote(b.id, content, this.newNotePage());
     this.newNoteInput.set('');
     this.newNotePage.set(undefined);
-    const updated = this.booksService.books().find(x => x.id === b.id);
+    const updated = this.booksService.books().find((x) => x.id === b.id);
     if (updated) this.booksService.selectedBookId.set(updated.id);
   }
 
@@ -205,31 +213,39 @@ export class BooksComponent implements OnInit, OnDestroy {
     this.booksService.deleteNote(bookId, noteId);
     const b = this.selectedBook();
     if (b) {
-      const updated = this.booksService.books().find(x => x.id === b.id);
+      const updated = this.booksService.books().find((x) => x.id === b.id);
       if (updated) this.booksService.selectedBookId.set(updated.id);
     }
   }
 
   toggleQuickActions(bookId: string, ev: Event) {
     ev.stopPropagation();
-    this.showQuickActions.update(v => (v === bookId ? null : bookId));
+    this.showQuickActions.update((v) => (v === bookId ? null : bookId));
   }
 
   getCategoryColor(cat: BookCategory): string {
     switch (cat) {
-      case 'DESIGN': return '#3b82f6';
-      case 'CREATIVE': return '#a855f7';
-      case 'PRODUCTIVITY': return '#f97316';
-      default: return '#71717a';
+      case 'DESIGN':
+        return '#3b82f6';
+      case 'CREATIVE':
+        return '#a855f7';
+      case 'PRODUCTIVITY':
+        return '#f97316';
+      default:
+        return '#71717a';
     }
   }
 
   getStatusIcon(status: BookStatus): string {
     switch (status) {
-      case 'reading': return 'menu_book';
-      case 'completed': return 'check_circle';
-      case 'queued': return 'pending';
-      default: return 'book';
+      case 'reading':
+        return 'menu_book';
+      case 'completed':
+        return 'check_circle';
+      case 'queued':
+        return 'pending';
+      default:
+        return 'book';
     }
   }
 
@@ -257,11 +273,11 @@ export class BooksComponent implements OnInit, OnDestroy {
   }
 
   updateNewBook<K extends keyof Book>(key: K, value: Book[K]) {
-    this.newBook.update(n => ({ ...n, [key]: value }));
+    this.newBook.update((n) => ({ ...n, [key]: value }));
   }
 
   updateEditedBook<K extends keyof Book>(key: K, value: Book[K]) {
-    this.editedBook.update(e => ({ ...e, [key]: value }));
+    this.editedBook.update((e) => ({ ...e, [key]: value }));
   }
 
   openShortcutsHelp() {

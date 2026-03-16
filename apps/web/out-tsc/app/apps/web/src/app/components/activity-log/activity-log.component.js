@@ -1,79 +1,89 @@
-import { __decorate } from "tslib";
+import { __decorate } from 'tslib';
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StoreService } from '@envello/core';
 let ActivityLogComponent = class ActivityLogComponent {
-    store = inject(StoreService);
-    router = inject(Router);
-    searchQuery = signal('');
-    activeFilter = signal('ALL');
-    expandedRowId = signal(null);
-    // Raw mapped activities
-    allActivities = computed(() => {
-        return this.store.activities().map(activity => ({
-            id: activity.id,
-            action: activity.text,
-            time: activity.time,
-            type: activity.type,
-            icon: this.getIconForType(activity.type),
-            user: 'Super Admin',
-            device: 'MacBook Pro',
-            ip: '192.168.1.1'
-        }));
-    });
-    // Filtered activities
-    filteredActivities = computed(() => {
-        let list = this.allActivities();
-        const query = this.searchQuery().toLowerCase();
-        const filter = this.activeFilter();
-        if (filter !== 'ALL') {
-            list = list.filter(a => a.type.toLowerCase() === filter.toLowerCase());
-        }
-        if (query) {
-            list = list.filter(a => a.action.toLowerCase().includes(query) ||
-                a.id.toLowerCase().includes(query));
-        }
-        return list;
-    });
-    totalCount = computed(() => this.allActivities().length);
-    visibleCount = computed(() => this.filteredActivities().length);
-    goBack() {
-        this.router.navigate(['/workspace']);
+  store = inject(StoreService);
+  router = inject(Router);
+  searchQuery = signal('');
+  activeFilter = signal('ALL');
+  expandedRowId = signal(null);
+  // Raw mapped activities
+  allActivities = computed(() => {
+    return this.store.activities().map((activity) => ({
+      id: activity.id,
+      action: activity.text,
+      time: activity.time,
+      type: activity.type,
+      icon: this.getIconForType(activity.type),
+      user: 'Super Admin',
+      device: 'MacBook Pro',
+      ip: '192.168.1.1',
+    }));
+  });
+  // Filtered activities
+  filteredActivities = computed(() => {
+    let list = this.allActivities();
+    const query = this.searchQuery().toLowerCase();
+    const filter = this.activeFilter();
+    if (filter !== 'ALL') {
+      list = list.filter((a) => a.type.toLowerCase() === filter.toLowerCase());
     }
-    setFilter(filter) {
-        this.activeFilter.set(filter);
-        this.expandedRowId.set(null); // Close details on filter change
+    if (query) {
+      list = list.filter(
+        (a) =>
+          a.action.toLowerCase().includes(query) ||
+          a.id.toLowerCase().includes(query),
+      );
     }
-    updateSearch(event) {
-        const target = event.target;
-        this.searchQuery.set(target.value);
+    return list;
+  });
+  totalCount = computed(() => this.allActivities().length);
+  visibleCount = computed(() => this.filteredActivities().length);
+  goBack() {
+    this.router.navigate(['/workspace']);
+  }
+  setFilter(filter) {
+    this.activeFilter.set(filter);
+    this.expandedRowId.set(null); // Close details on filter change
+  }
+  updateSearch(event) {
+    const target = event.target;
+    this.searchQuery.set(target.value);
+  }
+  toggleRow(id) {
+    if (this.expandedRowId() === id) {
+      this.expandedRowId.set(null);
+    } else {
+      this.expandedRowId.set(id);
     }
-    toggleRow(id) {
-        if (this.expandedRowId() === id) {
-            this.expandedRowId.set(null);
-        }
-        else {
-            this.expandedRowId.set(id);
-        }
+  }
+  getIconForType(type) {
+    switch (type) {
+      case 'entry':
+        return 'edit_note';
+      case 'sync':
+        return 'cloud_sync';
+      case 'ai':
+        return 'smart_toy';
+      case 'system':
+        return 'settings';
+      default:
+        return 'info';
     }
-    getIconForType(type) {
-        switch (type) {
-            case 'entry': return 'edit_note';
-            case 'sync': return 'cloud_sync';
-            case 'ai': return 'smart_toy';
-            case 'system': return 'settings';
-            default: return 'info';
-        }
-    }
+  }
 };
-ActivityLogComponent = __decorate([
+ActivityLogComponent = __decorate(
+  [
     Component({
-        selector: 'app-activity-log',
-        standalone: true,
-        imports: [CommonModule],
-        templateUrl: './activity-log.component.html',
-        styleUrl: './activity-log.component.css'
-    })
-], ActivityLogComponent);
+      selector: 'app-activity-log',
+      standalone: true,
+      imports: [CommonModule],
+      templateUrl: './activity-log.component.html',
+      styleUrl: './activity-log.component.css',
+    }),
+  ],
+  ActivityLogComponent,
+);
 export { ActivityLogComponent };

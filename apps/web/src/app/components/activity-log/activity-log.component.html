@@ -1,106 +1,145 @@
 <div class="activity-log-page flex flex-col h-full">
-    <div class="al-header">
-        <div class="al-header-top flex items-center justify-between">
-            <button class="back-btn" (click)="goBack()">
-                <span class="material-symbols-outlined">arrow_back</span>
-                BACK TO WORKSPACE
-            </button>
-            <div class="al-breadcrumbs">SYSTEM / LOGS / ACTIVITY</div>
+  <div class="al-header">
+    <div class="al-header-top flex items-center justify-between">
+      <button class="back-btn" (click)="goBack()">
+        <span class="material-symbols-outlined">arrow_back</span>
+        BACK TO WORKSPACE
+      </button>
+      <div class="al-breadcrumbs">SYSTEM / LOGS / ACTIVITY</div>
+    </div>
+    <div class="al-title-row flex items-center justify-between">
+      <h1>Activity Log</h1>
+      <div class="al-controls">
+        <div class="search-input">
+          <span class="material-symbols-outlined">search</span>
+          <input
+            type="text"
+            placeholder="Search logs..."
+            (input)="updateSearch($event)"
+          />
         </div>
-        <div class="al-title-row flex items-center justify-between">
-            <h1>Activity Log</h1>
-            <div class="al-controls">
-                <div class="search-input">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Search logs..." (input)="updateSearch($event)" />
-                </div>
+      </div>
+    </div>
+    <div class="al-filters-row flex flex-wrap gap-2">
+      <button
+        class="filter-pill"
+        [class.active]="activeFilter() === 'ALL'"
+        (click)="setFilter('ALL')"
+      >
+        ALL
+      </button>
+      <button
+        class="filter-pill"
+        [class.active]="activeFilter() === 'ENTRY'"
+        (click)="setFilter('ENTRY')"
+      >
+        ENTRIES
+      </button>
+      <button
+        class="filter-pill"
+        [class.active]="activeFilter() === 'SYSTEM'"
+        (click)="setFilter('SYSTEM')"
+      >
+        SYSTEM
+      </button>
+      <button
+        class="filter-pill"
+        [class.active]="activeFilter() === 'SYNC'"
+        (click)="setFilter('SYNC')"
+      >
+        SYNC
+      </button>
+      <button
+        class="filter-pill"
+        [class.active]="activeFilter() === 'AI'"
+        (click)="setFilter('AI')"
+      >
+        AI TOOLS
+      </button>
+    </div>
+  </div>
+
+  <div class="al-stats-bar compact-stats">
+    <div class="stat-item">
+      <span class="stat-label">DISPLAYING</span>
+      <span class="stat-value"
+        >{{ visibleCount() }}
+        <span class="stat-sub">/ {{ totalCount() }}</span></span
+      >
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">SYSTEM STATUS</span>
+      <span class="stat-value status-ok">OPERATIONAL</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">LAST SYNC</span>
+      <span class="stat-value">JUST NOW</span>
+    </div>
+  </div>
+
+  <div class="log-container">
+    <div class="log-table-header">
+      <div class="col-icon">TYPE</div>
+      <div class="col-action">ACTION / DETAILS</div>
+      <div class="col-time">TIMESTAMP</div>
+      <div class="col-user">USER</div>
+      <div class="col-status">STATUS</div>
+    </div>
+    <div class="log-list">
+      @for (activity of filteredActivities(); track activity.id) {
+        <div class="log-row-group">
+          <div
+            class="log-row"
+            (click)="toggleRow(activity.id)"
+            [class.expanded]="expandedRowId() === activity.id"
+          >
+            <div class="col-icon">
+              <div class="log-icon-wrapper" [ngClass]="activity.type">
+                <span class="material-symbols-outlined log-icon">{{
+                  activity.icon
+                }}</span>
+              </div>
             </div>
-        </div>
-        <div class="al-filters-row flex flex-wrap gap-2">
-            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'"
-                (click)="setFilter('ALL')">ALL</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'"
-                (click)="setFilter('ENTRY')">ENTRIES</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'"
-                (click)="setFilter('SYSTEM')">SYSTEM</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'"
-                (click)="setFilter('SYNC')">SYNC</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI
-                TOOLS</button>
-        </div>
-    </div>
-
-    <div class="al-stats-bar compact-stats">
-        <div class="stat-item">
-            <span class="stat-label">DISPLAYING</span>
-            <span class="stat-value">{{ visibleCount() }} <span class="stat-sub">/ {{ totalCount() }}</span></span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">SYSTEM STATUS</span>
-            <span class="stat-value status-ok">OPERATIONAL</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">LAST SYNC</span>
-            <span class="stat-value">JUST NOW</span>
-        </div>
-    </div>
-
-    <div class="log-container">
-        <div class="log-table-header">
-            <div class="col-icon">TYPE</div>
-            <div class="col-action">ACTION / DETAILS</div>
-            <div class="col-time">TIMESTAMP</div>
-            <div class="col-user">USER</div>
-            <div class="col-status">STATUS</div>
-        </div>
-        <div class="log-list">
-            @for (activity of filteredActivities(); track activity.id) {
-            <div class="log-row-group">
-                <div class="log-row" (click)="toggleRow(activity.id)"
-                    [class.expanded]="expandedRowId() === activity.id">
-                    <div class="col-icon">
-                        <div class="log-icon-wrapper" [ngClass]="activity.type">
-                            <span class="material-symbols-outlined log-icon">{{ activity.icon }}</span>
-                        </div>
-                    </div>
-                    <div class="col-action">
-                        <div class="log-action-text">{{ activity.action }}</div>
-                        <div class="log-id">ID: {{ activity.id | slice:0:8 }}</div>
-                    </div>
-                    <div class="col-time">{{ activity.time }}</div>
-                    <div class="col-user">
-                        <div class="user-avatar">SM</div>
-                    </div>
-                    <div class="col-status">
-                        <span class="status-badge success">SUCCESS</span>
-                        <span class="material-symbols-outlined expand-icon">expand_more</span>
-                    </div>
-                </div>
-
-                @if (expandedRowId() === activity.id) {
-                <div class="log-details-panel">
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">FULL ID</span>
-                            <span class="detail-value">{{ activity.id }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">USER AGENT</span>
-                            <span class="detail-value">{{ activity.device }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">IP ADDRESS</span>
-                            <span class="detail-value">{{ activity.ip }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">LATENCY</span>
-                            <span class="detail-value">24ms</span>
-                        </div>
-                    </div>
-                </div>
-                }
+            <div class="col-action">
+              <div class="log-action-text">{{ activity.action }}</div>
+              <div class="log-id">ID: {{ activity.id | slice: 0 : 8 }}</div>
             </div>
-            }
+            <div class="col-time">{{ activity.time }}</div>
+            <div class="col-user">
+              <div class="user-avatar">SM</div>
+            </div>
+            <div class="col-status">
+              <span class="status-badge success">SUCCESS</span>
+              <span class="material-symbols-outlined expand-icon"
+                >expand_more</span
+              >
+            </div>
+          </div>
+
+          @if (expandedRowId() === activity.id) {
+            <div class="log-details-panel">
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">FULL ID</span>
+                  <span class="detail-value">{{ activity.id }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">USER AGENT</span>
+                  <span class="detail-value">{{ activity.device }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">IP ADDRESS</span>
+                  <span class="detail-value">{{ activity.ip }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">LATENCY</span>
+                  <span class="detail-value">24ms</span>
+                </div>
+              </div>
+            </div>
+          }
         </div>
+      }
     </div>
+  </div>
 </div>

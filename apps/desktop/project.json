@@ -12,9 +12,7 @@
         "outputPath": "dist/apps/desktop",
         "index": "apps/desktop/src/index.html",
         "browser": "apps/desktop/src/main.ts",
-        "polyfills": [
-          "zone.js"
-        ],
+        "polyfills": ["zone.js"],
         "tsConfig": "apps/desktop/tsconfig.app.json",
         "assets": [
           {
@@ -27,9 +25,7 @@
             "output": "assets"
           }
         ],
-        "styles": [
-          "apps/desktop/src/styles.css"
-        ],
+        "styles": ["apps/desktop/src/styles.css"],
         "scripts": []
       },
       "configurations": {
@@ -82,9 +78,7 @@
         }
       },
       "defaultConfiguration": "production",
-      "outputs": [
-        "{options.outputPath}"
-      ]
+      "outputs": ["{options.outputPath}"]
     },
     "serve": {
       "executor": "@angular-devkit/build-angular:dev-server",
@@ -104,10 +98,7 @@
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
-        "polyfills": [
-          "zone.js",
-          "zone.js/testing"
-        ],
+        "polyfills": ["zone.js", "zone.js/testing"],
         "tsConfig": "apps/desktop/tsconfig.spec.json",
         "assets": [
           {
@@ -115,9 +106,7 @@
             "input": "apps/desktop/public"
           }
         ],
-        "styles": [
-          "apps/desktop/src/styles.css"
-        ],
+        "styles": ["apps/desktop/src/styles.css"],
         "scripts": []
       }
     }

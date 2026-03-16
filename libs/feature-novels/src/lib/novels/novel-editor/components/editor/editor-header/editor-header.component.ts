@@ -1,4 +1,10 @@
-import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -16,13 +22,15 @@ export interface SearchResult {
   templateUrl: './editor-header.component.html',
   styleUrls: [
     './editor-header.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class EditorHeaderComponent {
-  activeNav = input.required<'manuscript' | 'structure' | 'characters' | 'locations'>();
+  activeNav = input.required<
+    'manuscript' | 'structure' | 'characters' | 'locations'
+  >();
   canUndo = input.required<boolean>();
   canRedo = input.required<boolean>();
   searchOpen = input.required<boolean>();
@@ -31,8 +39,10 @@ export class EditorHeaderComponent {
   focusMode = input.required<boolean>();
   fullScreenMode = input.required<boolean>();
   exportMenuOpen = input.required<boolean>();
-  
-  setActiveNav = output<'manuscript' | 'structure' | 'characters' | 'locations'>();
+
+  setActiveNav = output<
+    'manuscript' | 'structure' | 'characters' | 'locations'
+  >();
   performUndo = output<void>();
   performRedo = output<void>();
   toggleSearch = output<void>();

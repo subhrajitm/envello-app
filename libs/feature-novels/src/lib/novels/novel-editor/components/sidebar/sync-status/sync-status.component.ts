@@ -1,4 +1,10 @@
-import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,16 +14,16 @@ import { CommonModule } from '@angular/common';
   templateUrl: './sync-status.component.html',
   styleUrls: [
     './sync-status.component.css',
-    '../../../novel-editor.component.css'
+    '../../../novel-editor.component.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class SyncStatusComponent {
   wordCount = input.required<number>();
   formattedTime = input.required<string>();
   goalProgress = input<number | null>(null);
   leftSidebarCollapsed = input.required<boolean>();
-  
+
   toggleSidebar = output<void>();
 }

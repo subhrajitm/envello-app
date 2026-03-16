@@ -12,9 +12,7 @@
         "outputPath": "dist/apps/web",
         "index": "apps/web/src/index.html",
         "browser": "apps/web/src/main.ts",
-        "polyfills": [
-          "zone.js"
-        ],
+        "polyfills": ["zone.js"],
         "tsConfig": "apps/web/tsconfig.app.json",
         "assets": [
           {
@@ -27,9 +25,7 @@
             "output": "assets"
           }
         ],
-        "styles": [
-          "apps/web/src/styles.css"
-        ],
+        "styles": ["apps/web/src/styles.css"],
         "scripts": []
       },
       "configurations": {
@@ -82,9 +78,7 @@
         }
       },
       "defaultConfiguration": "production",
-      "outputs": [
-        "{options.outputPath}"
-      ]
+      "outputs": ["{options.outputPath}"]
     },
     "serve": {
       "executor": "@angular-devkit/build-angular:dev-server",
@@ -104,10 +98,7 @@
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
-        "polyfills": [
-          "zone.js",
-          "zone.js/testing"
-        ],
+        "polyfills": ["zone.js", "zone.js/testing"],
         "tsConfig": "apps/web/tsconfig.spec.json",
         "assets": [
           {
@@ -120,9 +111,7 @@
             "output": "assets"
           }
         ],
-        "styles": [
-          "apps/web/src/styles.css"
-        ],
+        "styles": ["apps/web/src/styles.css"],
         "scripts": []
       }
     }

@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'lib-core',
   imports: [],
   templateUrl: './core.html',
-  styleUrl: './core.css'
+  styleUrl: './core.css',
 })
 export class Core {}
