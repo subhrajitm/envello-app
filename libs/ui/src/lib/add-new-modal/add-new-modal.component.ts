@@ -69,16 +69,16 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     ];
 
     readonly options: AddNewOption[] = [
-        // Plan (Action Layer)
+        // Plan
         { id: 'task',    title: 'Task',    description: 'Add a new task or to-do',       icon: 'check_circle', route: '/tasks',       color: '#7eb3d4', category: 'plan',    shortcut: '1', keywords: ['task', 'todo', 'checklist'], tag: 'TASK' },
         { id: 'meeting', title: 'Meeting', description: 'Schedule a new meeting',         icon: 'groups',       route: '/meetings',    color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],       tag: 'COLLAB' },
-        // Today (Focus Layer) — note
+        // Today — note
         { id: 'note',    title: 'Note',    description: 'Quick note for today',           icon: 'description',  route: '/daily-notes', color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],    tag: 'NOTE' },
-        // Library (Knowledge Layer)
+        // Library
         { id: 'research',title: 'Research', description: 'Create a new research library', icon: 'science',      route: '/research',    color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],       tag: 'RESEARCH' },
         { id: 'journal', title: 'Journal',  description: 'Start a new journal project',   icon: 'auto_stories', route: '/journals',    color: '#f0b8d0', category: 'library', shortcut: '5', keywords: ['journal', 'project'],        tag: 'JOURNAL' },
         { id: 'snippet', title: 'Snippet',  description: 'Save a code snippet',           icon: 'code',         route: '/snippets',    color: '#b8d8e8', category: 'library', shortcut: '6', keywords: ['code', 'snippet'],           tag: 'DEV' },
-        // Create (Creation Layer)
+        // Create
         { id: 'article', title: 'Draft',    description: 'Write a new article or draft',  icon: 'article',      route: '/articles',    color: '#a8d5a8', category: 'create',  shortcut: '7', keywords: ['article', 'blog', 'draft'],  tag: 'DRAFT' },
         { id: 'novel',   title: 'Writing',  description: 'Start a new writing project',   icon: 'menu_book',    route: '/novels',      color: '#c4a8d8', category: 'create',  shortcut: '8', keywords: ['novel', 'book', 'story'],    tag: 'WRITING' },
     ];

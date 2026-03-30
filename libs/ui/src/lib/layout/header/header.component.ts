@@ -24,7 +24,6 @@ export interface NavItem {
 export interface NavSection {
   id: string;
   label: string;
-  layer: string;
   icon: string;
   items: NavItem[];
 }
@@ -91,7 +90,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     {
       id: 'plan',
       label: 'Plan',
-      layer: 'Action Layer',
       icon: 'task_alt',
       items: [
         { id: 'tasks',    label: 'Tasks',    icon: 'checklist', route: 'tasks' },
@@ -101,7 +99,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     {
       id: 'today',
       label: 'Today',
-      layer: 'Focus Layer',
       icon: 'today',
       items: [
         { id: 'daily-notes', label: 'Notes', icon: 'note', route: 'daily-notes' },
@@ -110,7 +107,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     {
       id: 'library',
       label: 'Library',
-      layer: 'Knowledge Layer',
       icon: 'local_library',
       items: [
         { id: 'research',  label: 'Research', icon: 'science', route: 'research' },
@@ -120,12 +116,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     {
       id: 'create',
       label: 'Create',
-      layer: 'Creation Layer',
       icon: 'edit_note',
       items: [
         { id: 'articles', label: 'Drafts',   icon: 'article',   route: 'articles' },
         { id: 'novels',   label: 'Writing',  icon: 'menu_book', route: 'novels' },
-        { id: 'projects', label: 'Projects', icon: 'folder',    route: 'projects' },
       ]
     },
   ];
@@ -135,7 +129,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return this.navSections.flatMap(s => s.items);
   }
 
-  // Section collapse state (signal for change detection)
+  // Section collapse state (signal for change detection). Default to ALL collapsed.
   collapsedSections = signal<Set<string>>(new Set<string>());
 
   isSectionCollapsed(sectionId: string): boolean {
@@ -154,35 +148,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Flyout open/close state (minimized sidebar) ────────────────
-  openFlyoutId = signal<string | null>(null);
-  private flyoutCloseTimer?: ReturnType<typeof setTimeout>;
 
-  /** Open the flyout for a section (clears any pending close timer) */
-  openFlyout(sectionId: string) {
-    if (this.flyoutCloseTimer) {
-      clearTimeout(this.flyoutCloseTimer);
-      this.flyoutCloseTimer = undefined;
-    }
-    this.openFlyoutId.set(sectionId);
-  }
-
-  /** Delay closing by 300ms — lets the mouse cross the gap to the panel */
-  scheduleFlyoutClose() {
-    this.flyoutCloseTimer = setTimeout(() => {
-      this.openFlyoutId.set(null);
-      this.flyoutCloseTimer = undefined;
-    }, 300);
-  }
-
-  /** Close immediately (used on navigation / clicking any item) */
-  closeFlyout() {
-    if (this.flyoutCloseTimer) {
-      clearTimeout(this.flyoutCloseTimer);
-      this.flyoutCloseTimer = undefined;
-    }
-    this.openFlyoutId.set(null);
-  }
 
   private lastAvatarUrl: string | undefined = undefined;
 
@@ -243,7 +209,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   navigateTo(route: string) {
-    this.closeFlyout();          // always dismiss flyout on navigation
     this.router.navigate([route]);
   }
 
@@ -319,6 +284,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     // Seed the route segment from the current URL immediately
     this.currentRouteSegment.set(this.router.url.split('/')[1]?.split('?')[0] ?? '');
+
+    // Set all sections as collapsed by default
+    this.collapsedSections.set(new Set(this.navSections.map(s => s.id)));
 
     // Keep currentRouteSegment in sync with every navigation
     this.routeSub = this.router.events

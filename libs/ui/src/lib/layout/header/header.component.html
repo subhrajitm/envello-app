@@ -111,15 +111,25 @@
         <div class="nav-divider-v"></div>
         <!-- Section group headers (top-level labels) -->
         @for (section of navSections; track section.id) {
-          <button
-            class="nav-tab nav-tab-section"
-            [class.active]="isSectionActive(section)"
-            (click)="navigateTo(section.items[0].route)"
-            [title]="section.layer"
-          >
-            <span class="material-symbols-outlined nav-tab-icon">{{ section.icon }}</span>
-            {{ section.label }}
-          </button>
+          @if (section.items.length === 1) {
+            <button
+              class="nav-tab"
+              [class.active]="isItemActive(section.items[0])"
+              (click)="navigateTo(section.items[0].route)"
+            >
+              <span class="material-symbols-outlined nav-tab-icon">{{ section.items[0].icon }}</span>
+              {{ section.items[0].label }}
+            </button>
+          } @else {
+            <button
+              class="nav-tab nav-tab-section"
+              [class.active]="isSectionActive(section)"
+              (click)="navigateTo(section.items[0].route)"
+            >
+              <span class="material-symbols-outlined nav-tab-icon">{{ section.icon }}</span>
+              {{ section.label }}
+            </button>
+          }
         }
       </nav>
     } @else {
@@ -148,9 +158,7 @@
           @for (section of navSections; track section.id) {
             <!-- Each section has a flyout wrapper; mouseenter/leave control open state -->
             <div
-              class="sidebar-section-flyout-wrapper"
-              (mouseenter)="sidebarCollapsed() && openFlyout(section.id)"
-              (mouseleave)="sidebarCollapsed() && scheduleFlyoutClose()"
+              class="sidebar-section-accordion-wrapper"
             >
 
               <!-- Section header button -->
@@ -158,47 +166,24 @@
                 type="button"
                 class="sidebar-section-header"
                 [class.active-section]="isSectionActive(section)"
-                (click)="sidebarCollapsed() ? navigateTo(section.items[0].route) : toggleSection(section.id)"
-                [title]="sidebarCollapsed() ? section.label : section.layer"
+                (click)="toggleSection(section.id)"
+                [title]="sidebarCollapsed() ? section.label : ''"
               >
                 <span class="material-symbols-outlined sidebar-icon sidebar-section-icon">{{ section.icon }}</span>
                 @if (!sidebarCollapsed()) {
                   <span class="sidebar-section-label">{{ section.label }}</span>
-                  <span class="sidebar-section-layer">{{ section.layer }}</span>
-                  <span class="material-symbols-outlined sidebar-section-chevron">
-                    {{ isSectionCollapsed(section.id) ? 'chevron_right' : 'expand_more' }}
-                  </span>
                 }
+                <span class="material-symbols-outlined sidebar-section-chevron" 
+                      [class.chevron-collapsed]="sidebarCollapsed()"
+                      [class.chevron-expanded]="!isSectionCollapsed(section.id)">
+                  chevron_right
+                </span>
               </button>
 
-              <!-- Flyout panel — collapsed mode, visibility controlled by openFlyoutId signal -->
-              @if (sidebarCollapsed()) {
-                <div
-                  class="sidebar-flyout"
-                  [class.flyout-open]="openFlyoutId() === section.id"
-                  role="menu"
-                >
-                  <div class="sidebar-flyout-title">
-                    <span class="material-symbols-outlined sidebar-flyout-title-icon">{{ section.icon }}</span>
-                    <span>{{ section.label }}</span>
-                    <small class="sidebar-flyout-layer">{{ section.layer }}</small>
-                  </div>
-                  @for (item of section.items; track item.id) {
-                    <button
-                      class="sidebar-flyout-item"
-                      [class.active]="isItemActive(item)"
-                      (click)="navigateTo(item.route)"
-                      role="menuitem"
-                    >
-                      <span class="material-symbols-outlined sidebar-flyout-icon">{{ item.icon }}</span>
-                      {{ item.label }}
-                    </button>
-                  }
-                </div>
-              }
 
-              <!-- Section items — expanded mode only -->
-              @if (!sidebarCollapsed() && !isSectionCollapsed(section.id)) {
+
+              <!-- Section items — accordion mode (works in both collapsed/expanded sidebar) -->
+              @if (!isSectionCollapsed(section.id)) {
                 @for (item of section.items; track item.id) {
                   <button
                     class="sidebar-nav-item sidebar-sub-item"
@@ -207,12 +192,14 @@
                     [title]="item.label"
                   >
                     <span class="material-symbols-outlined sidebar-icon sidebar-sub-icon">{{ item.icon }}</span>
-                    <span class="sidebar-label">{{ item.label }}</span>
+                    @if (!sidebarCollapsed()) {
+                      <span class="sidebar-label">{{ item.label }}</span>
+                    }
                   </button>
                 }
               }
 
-            </div><!-- /.sidebar-section-flyout-wrapper -->
+            </div><!-- /.sidebar-section-accordion-wrapper -->
           }
 
         </nav>
