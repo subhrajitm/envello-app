@@ -50,6 +50,9 @@ export class SqliteDataService implements DataService {
             case 'research_sources': return await this.sqlite.getAllResearchSources() as unknown as T[];
             case 'research_summaries': return await this.sqlite.getAllResearchSummaries() as unknown as T[];
             case 'projects': return await this.sqlite.getAllProjects() as unknown as T[];
+            case 'credentials': return await this.sqlite.getAllCredentials() as unknown as T[];
+            case 'subscriptions': return await this.sqlite.getAllSubscriptions() as unknown as T[];
+            case 'credential_subscription_links': return await this.sqlite.getAllLinks() as unknown as T[];
             default:
                 console.warn(`[SqliteDataService] Unknown collection ${collection}`);
                 return [];
@@ -91,6 +94,9 @@ export class SqliteDataService implements DataService {
             case 'research_sources': return await this.sqlite.upsertResearchSource(item as any);
             case 'research_summaries': return await this.sqlite.upsertResearchSummary(item as any);
             case 'projects': return await this.sqlite.upsertProject(item as unknown as Project);
+            case 'credentials': return await this.sqlite.upsertCredential(item as any);
+            case 'subscriptions': return await this.sqlite.upsertSubscription(item as any);
+            case 'credential_subscription_links': return await this.sqlite.upsertLink(item as any);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
         }
     }
@@ -125,6 +131,9 @@ export class SqliteDataService implements DataService {
             case 'research_sources': return await this.sqlite.removeResearchSource(id);
             case 'research_summaries': return await this.sqlite.removeResearchSummary(id);
             case 'projects': return await this.sqlite.removeProject(id);
+            case 'credentials': return await this.sqlite.removeCredential(id);
+            case 'subscriptions': return await this.sqlite.removeSubscription(id);
+            case 'credential_subscription_links': return await this.sqlite.removeLink(id);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for remove`);
         }
     }
@@ -133,4 +142,17 @@ export class SqliteDataService implements DataService {
         // Sqlite export/import logic is in SqliteService
         // If we need import logic here, we can delegate or implement
     }
+
+    // ─── Vault & Subscriptions ──────────────────────────────────────────────────
+    async saveCredential(credential: any): Promise<void> { return this.upsert('credentials', credential); }
+    async getCredentials(): Promise<any[]> { return this.getAll('credentials'); }
+    async deleteCredential(id: string): Promise<void> { return this.remove('credentials', id); }
+
+    async saveSubscription(subscription: any): Promise<void> { return this.upsert('subscriptions', subscription); }
+    async getSubscriptions(): Promise<any[]> { return this.getAll('subscriptions'); }
+    async deleteSubscription(id: string): Promise<void> { return this.remove('subscriptions', id); }
+
+    async saveLink(link: any): Promise<void> { return this.upsert('credential_subscription_links', link); }
+    async getLinks(): Promise<any[]> { return this.getAll('credential_subscription_links'); }
+    async deleteLink(id: string): Promise<void> { return this.remove('credential_subscription_links', id); }
 }

@@ -10,6 +10,8 @@ import { ResearchService } from '@envello/core';
 import { SnippetsService } from '@envello/core';
 import { ArticleService } from '@envello/core';
 import { JournalService } from '@envello/core';
+import { EncryptionUtil } from '@envello/core';
+import { VaultStore, SubscriptionStore, LinkStore } from '@envello/state';
 
 @Component({
     selector: 'app-project-details',
@@ -29,6 +31,12 @@ export class ProjectDetailsComponent {
     private snippetsService = inject(SnippetsService);
     private articleService = inject(ArticleService);
     private journalService = inject(JournalService);
+
+    public vaultStore = inject(VaultStore);
+    public subscriptionStore = inject(SubscriptionStore);
+    public linkStore = inject(LinkStore);
+
+    activeTab = signal<'OVERVIEW' | 'VAULT' | 'SUBSCRIPTIONS'>('OVERVIEW');
 
     projectId = signal<string | null>(null);
     newTaskTitle = signal('');
@@ -150,6 +158,116 @@ export class ProjectDetailsComponent {
             case 'MEDIUM': return 'priority-medium';
             case 'LOW': return 'priority-low';
             default: return 'priority-none';
+        }
+    }
+
+    // Vault Form
+    showAddCredential = signal(false);
+    newCredName = signal('');
+    newCredType = signal<'login'|'api_key'|'ssh'|'db'|'note'>('login');
+    newCredValue = signal('');
+    visibleCreds = signal<Set<string>>(new Set());
+
+    projectCredentials = computed(() => {
+        const id = this.projectId();
+        return id ? this.vaultStore.getCredentialsByProject(id)() : [];
+    });
+
+    toggleCredVisibility(id: string) {
+        const set = new Set(this.visibleCreds());
+        if (set.has(id)) set.delete(id);
+        else set.add(id);
+        this.visibleCreds.set(set);
+    }
+
+    decryptCred(cipher: string): string {
+        return EncryptionUtil.decrypt(cipher);
+    }
+
+    copyCred(cipher: string) {
+        navigator.clipboard.writeText(this.decryptCred(cipher));
+    }
+
+    addCredential() {
+        const id = this.projectId();
+        if(!id || !this.newCredName() || !this.newCredValue()) return;
+        
+        this.vaultStore.addCredential({
+            id: crypto.randomUUID(),
+            name: this.newCredName(),
+            type: this.newCredType(),
+            projectId: id,
+            createdAt: new Date().toISOString(),
+            unencryptedValue: this.newCredValue()
+        });
+
+        this.newCredName.set('');
+        this.newCredValue.set('');
+        this.showAddCredential.set(false);
+    }
+
+    // Subscription Form
+    showAddSubscription = signal(false);
+    newSubName = signal('');
+    newSubCategory = signal('');
+    newSubPrice = signal(0);
+    newSubCycle = signal<'monthly'|'yearly'>('monthly');
+    newSubRenewal = signal('');
+
+    projectSubscriptions = computed(() => {
+        const id = this.projectId();
+        return id ? this.subscriptionStore.getSubscriptionsByProject(id)() : [];
+    });
+
+    addSubscription() {
+        const id = this.projectId();
+        if(!id || !this.newSubName() || !this.newSubRenewal()) return;
+
+        this.subscriptionStore.addSubscription({
+            id: crypto.randomUUID(),
+            name: this.newSubName(),
+            category: this.newSubCategory() || 'General',
+            price: this.newSubPrice(),
+            billingCycle: this.newSubCycle(),
+            renewalDate: this.newSubRenewal(),
+            projectId: id
+        });
+        this.showAddSubscription.set(false);
+    }
+
+    // Link Form
+    showLinkModal = signal(false);
+    linkTargetType = signal<'credential'|'subscription'>('credential');
+    activeItemForLink = signal<string|null>(null);
+    selectedTargetToLink = signal('');
+
+    openLinkModal(type: 'credential'|'subscription', itemId: string) {
+        this.linkTargetType.set(type);
+        this.activeItemForLink.set(itemId);
+        this.selectedTargetToLink.set('');
+        this.showLinkModal.set(true);
+    }
+
+    addLink() {
+        const sourceId = this.activeItemForLink();
+        const targetId = this.selectedTargetToLink();
+        if(!sourceId || !targetId) return;
+
+        if (this.linkTargetType() === 'credential') {
+            this.linkStore.linkCredentialToSubscription(sourceId, targetId);
+        } else {
+            this.linkStore.linkCredentialToSubscription(targetId, sourceId);
+        }
+        this.showLinkModal.set(false);
+    }
+
+    getLinkedItemsText(type: 'credential'|'subscription', itemId: string): string {
+        if (type === 'credential') {
+            const links = this.linkStore.getLinksByCredential(itemId)();
+            return links.length + ' Subs';
+        } else {
+            const links = this.linkStore.getLinksBySubscription(itemId)();
+            return links.length + ' Creds';
         }
     }
 }

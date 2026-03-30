@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DataService } from '@envello/data';
+import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
 import PouchDB from 'pouchdb';
 
 @Injectable({
@@ -79,5 +80,36 @@ export class PouchDbDataService implements DataService {
     async importData(data: any): Promise<void> {
         // Reserved for bulk import implementation scaling.
         console.log('[PouchDbDataService] importData invoked.', data);
+    }
+
+    // Vault & Subscriptions
+    async saveCredential(credential: Credential): Promise<void> {
+        return this.upsert('credentials', credential);
+    }
+    async getCredentials(): Promise<Credential[]> {
+        return this.getAll<Credential>('credentials');
+    }
+    async deleteCredential(id: string): Promise<void> {
+        return this.remove('credentials', id);
+    }
+
+    async saveSubscription(subscription: Subscription): Promise<void> {
+        return this.upsert('subscriptions', subscription);
+    }
+    async getSubscriptions(): Promise<Subscription[]> {
+        return this.getAll<Subscription>('subscriptions');
+    }
+    async deleteSubscription(id: string): Promise<void> {
+        return this.remove('subscriptions', id);
+    }
+
+    async saveLink(link: CredentialSubscriptionLink): Promise<void> {
+        return this.upsert('credential_subscription_links', link);
+    }
+    async getLinks(): Promise<CredentialSubscriptionLink[]> {
+        return this.getAll<CredentialSubscriptionLink>('credential_subscription_links');
+    }
+    async deleteLink(id: string): Promise<void> {
+        return this.remove('credential_subscription_links', id);
     }
 }

@@ -148,3 +148,31 @@ export interface BinItem {
     deletedAt: string;
     payload: unknown;
 }
+
+export interface Credential {
+    id: string;
+    name: string;
+    type: 'login' | 'api_key' | 'ssh' | 'db' | 'note';
+    value: string; // encrypted string
+    projectId?: string;
+    createdAt: string;
+    createdBy?: string;
+}
+
+export interface Subscription {
+    id: string;
+    name: string;
+    category: string;
+    price: number;
+    billingCycle: 'monthly' | 'yearly';
+    renewalDate: string;
+    ownerId?: string;
+    projectId?: string;
+    notes?: string;
+}
+
+export interface CredentialSubscriptionLink {
+    id: string;
+    credentialId: string;
+    subscriptionId: string;
+}

@@ -53,6 +53,12 @@
                 </div>
             </div>
             <div class="flex items-center gap-4" style="display: flex; gap: 1rem; align-items: center;">
+                <div class="tabs-container" style="display: flex; gap: 0.5rem; background: var(--bg-panel); padding: 4px; border-radius: 4px;">
+                    <button class="tab-btn" [class.active]="activeTab() === 'OVERVIEW'" (click)="activeTab.set('OVERVIEW')" style="padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Overview</button>
+                    <button class="tab-btn" [class.active]="activeTab() === 'VAULT'" (click)="activeTab.set('VAULT')" style="padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Vault</button>
+                    <button class="tab-btn" [class.active]="activeTab() === 'SUBSCRIPTIONS'" (click)="activeTab.set('SUBSCRIPTIONS')" style="padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Subscriptions</button>
+                </div>
+
                 <div class="kbd-shortcuts">
                     <span>Save <kbd class="kbd-minimal">⌘ ⏎</kbd></span>
                     <span>Voice <kbd class="kbd-minimal">SPACE</kbd></span>
@@ -68,6 +74,7 @@
             </div>
         </div>
 
+        @if (activeTab() === 'OVERVIEW') {
         <div class="table-container">
             <table class="analyst-table">
                 <thead>
@@ -284,7 +291,9 @@
                 </tbody>
             </table>
         </div>
+        }
 
+        @if (activeTab() === 'OVERVIEW') {
         <div class="tasks-sections-container">
             <h2 class="section-title">Tasks & Sections</h2>
             
@@ -374,6 +383,191 @@
                 </div>
             </div>
         </div>
+        }
+
+        @if (activeTab() === 'VAULT') {
+        <div class="table-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2);">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Credentials Vault</span>
+                <button class="confirm-btn" style="padding: 4px 12px; background: var(--accent); color: var(--bg-app); cursor: pointer;" (click)="showAddCredential.set(true)">+ Add Credential</button>
+            </div>
+
+            @if (showAddCredential()) {
+            <div style="padding: 16px; background: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; align-items: flex-end;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Name</label>
+                    <input type="text" class="refine-input" [(ngModel)]="newCredName" placeholder="e.g. Prod DB">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Type</label>
+                    <select class="refine-input" [(ngModel)]="newCredType" style="background: var(--bg-panel); color: white;">
+                        <option value="login">Login</option>
+                        <option value="api_key">API Key</option>
+                        <option value="ssh">SSH</option>
+                        <option value="db">Database</option>
+                        <option value="note">Secure Note</option>
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Value</label>
+                    <input type="password" class="refine-input" [(ngModel)]="newCredValue" placeholder="Secret">
+                </div>
+                <button class="confirm-btn" style="padding: 8px 16px; background: var(--success);" (click)="addCredential()">Save</button>
+                <button class="confirm-btn" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border-color);" (click)="showAddCredential.set(false)">Cancel</button>
+            </div>
+            }
+
+            <table class="analyst-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Name</th>
+                        <th style="width: 15%;">Type</th>
+                        <th style="width: 30%;">Value</th>
+                        <th style="width: 20%;">Linked Subscriptions</th>
+                        <th style="width: 10%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (cred of projectCredentials(); track cred.id) {
+                    <tr>
+                        <td style="font-weight: 600;">{{ cred.name }}</td>
+                        <td class="text-muted"><span style="padding: 2px 6px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 10px;">{{ cred.type }}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-family: monospace; color: var(--text-secondary);">
+                                    {{ visibleCreds().has(cred.id) ? decryptCred(cred.value) : '••••••••••••••••' }}
+                                </span>
+                                <span class="material-symbols-outlined action-icon" (click)="toggleCredVisibility(cred.id)" style="font-size: 14px;">
+                                    {{ visibleCreds().has(cred.id) ? 'visibility_off' : 'visibility' }}
+                                </span>
+                                <span class="material-symbols-outlined action-icon" (click)="copyCred(cred.value)" style="font-size: 14px;">content_copy</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <span style="font-size: 10px; color: var(--text-tertiary);">{{ getLinkedItemsText('credential', cred.id) }}</span>
+                                <span class="material-symbols-outlined action-icon" style="font-size: 14px;" (click)="openLinkModal('credential', cred.id)">link</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="material-symbols-outlined action-icon delete" (click)="vaultStore.deleteCredential(cred.id)">delete</span>
+                        </td>
+                    </tr>
+                    }
+                    @if (projectCredentials().length === 0) {
+                    <tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-tertiary);">No credentials added</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+
+        @if (activeTab() === 'SUBSCRIPTIONS') {
+        <div class="table-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2);">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Subscriptions & Vendors</span>
+                <button class="confirm-btn" style="padding: 4px 12px; background: var(--accent); color: var(--bg-app); cursor: pointer;" (click)="showAddSubscription.set(true)">+ Add Subscription</button>
+            </div>
+
+            @if (showAddSubscription()) {
+            <div style="padding: 16px; background: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Name</label>
+                    <input type="text" class="refine-input" [(ngModel)]="newSubName" placeholder="e.g. AWS">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Category</label>
+                    <input type="text" class="refine-input" [(ngModel)]="newSubCategory" placeholder="e.g. Infrastructure">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; width: 80px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Price</label>
+                    <input type="number" class="refine-input" [(ngModel)]="newSubPrice" placeholder="0">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Cycle</label>
+                    <select class="refine-input" [(ngModel)]="newSubCycle" style="background: var(--bg-panel); color: white;">
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 10px; color: var(--text-tertiary);">Renewal Date</label>
+                    <input type="date" class="refine-input" [(ngModel)]="newSubRenewal">
+                </div>
+                <button class="confirm-btn" style="padding: 8px 16px; background: var(--success);" (click)="addSubscription()">Save</button>
+                <button class="confirm-btn" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border-color);" (click)="showAddSubscription.set(false)">Cancel</button>
+            </div>
+            }
+
+            <table class="analyst-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Service</th>
+                        <th style="width: 15%;">Category</th>
+                        <th style="width: 15%;">Cost</th>
+                        <th style="width: 15%;">Renewal</th>
+                        <th style="width: 20%;">Linked Credentials</th>
+                        <th style="width: 10%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (sub of projectSubscriptions(); track sub.id) {
+                    <tr>
+                        <td style="font-weight: 600;">{{ sub.name }}</td>
+                        <td class="text-muted">{{ sub.category }}</td>
+                        <td class="text-muted">${{ sub.price }}/{{ sub.billingCycle === 'monthly' ? 'mo' : 'yr' }}</td>
+                        <td class="text-muted" [ngStyle]="{'color': (subscriptionStore.upcomingRenewals().includes(sub) ? 'var(--alert)' : '')}">
+                            {{ sub.renewalDate }}
+                            @if (subscriptionStore.upcomingRenewals().includes(sub)) {
+                                <span style="font-size: 9px; padding: 2px 4px; background: var(--alert); color: white; border-radius: 2px; margin-left: 4px;">SOON</span>
+                            }
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <span style="font-size: 10px; color: var(--text-tertiary);">{{ getLinkedItemsText('subscription', sub.id) }}</span>
+                                <span class="material-symbols-outlined action-icon" style="font-size: 14px;" (click)="openLinkModal('subscription', sub.id)">link</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="material-symbols-outlined action-icon delete" (click)="subscriptionStore.deleteSubscription(sub.id)">delete</span>
+                        </td>
+                    </tr>
+                    }
+                    @if (projectSubscriptions().length === 0) {
+                    <tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-tertiary);">No subscriptions added</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+
+        <!-- Link Modal -->
+        @if (showLinkModal()) {
+        <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: var(--bg-panel); border: 1px solid var(--border-color); padding: 24px; width: 400px; border-radius: 4px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: white;">Link {{ linkTargetType() === 'credential' ? 'Subscription' : 'Credential' }}</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                    <label style="font-size: 11px; color: var(--text-tertiary);">Select item to link to:</label>
+                    <select class="refine-input" [(ngModel)]="selectedTargetToLink" style="background: rgba(0,0,0,0.2); color: white; width: 100%;">
+                        @if(linkTargetType() === 'credential') {
+                            @for(s of subscriptionStore.subscriptions(); track s.id) {
+                                <option [value]="s.id">{{ s.name }} ({{ s.category }})</option>
+                            }
+                        } @else {
+                            @for(c of vaultStore.credentials(); track c.id) {
+                                <option [value]="c.id">{{ c.name }} ({{ c.type }})</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button class="confirm-btn" style="padding: 6px 16px; background: transparent; border: 1px solid var(--border-color);" (click)="showLinkModal.set(false)">Cancel</button>
+                    <button class="confirm-btn" style="padding: 6px 16px; background: var(--accent); color: var(--bg-app);" (click)="addLink()">Create Link</button>
+                </div>
+            </div>
+        </div>
+        }
+
     </main>
 
     <footer>

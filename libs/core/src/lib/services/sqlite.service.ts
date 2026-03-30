@@ -26,7 +26,7 @@ import type {
     ResearchSource,
     ResearchSummary,
 } from './research.service';
-import type { Project } from '@envello/domain';
+import type { Project, Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
 
 const DB_NAME = 'envello.db';
 
@@ -47,6 +47,9 @@ export type ResearchLibraryDoc = ResearchLibrary;
 export type ResearchSourceDoc = ResearchSource;
 export type ResearchSummaryDoc = ResearchSummary;
 export type ProjectDoc = Project;
+export type CredentialDoc = Credential;
+export type SubscriptionDoc = Subscription;
+export type CredentialSubscriptionLinkDoc = CredentialSubscriptionLink;
 
 export interface NovelContentDoc {
     id: string;
@@ -78,6 +81,9 @@ export class SqliteService {
     private researchSourcesSubject = new BehaviorSubject<ResearchSourceDoc[]>([]);
     private researchSummariesSubject = new BehaviorSubject<ResearchSummaryDoc[]>([]);
     private projectsSubject = new BehaviorSubject<ProjectDoc[]>([]);
+    private credentialsSubject = new BehaviorSubject<CredentialDoc[]>([]);
+    private subscriptionsSubject = new BehaviorSubject<SubscriptionDoc[]>([]);
+    private linksSubject = new BehaviorSubject<CredentialSubscriptionLinkDoc[]>([]);
 
     constructor() {
         // Don't initialize eagerly - only init when first database operation is called
@@ -442,6 +448,43 @@ export class SqliteService {
         linkedResources TEXT
       )
     `);
+
+        // Credentials
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS credentials (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        type TEXT,
+        value TEXT,
+        projectId TEXT,
+        createdAt TEXT,
+        createdBy TEXT
+      )
+    `);
+
+        // Subscriptions
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        category TEXT,
+        price REAL,
+        billingCycle TEXT,
+        renewalDate TEXT,
+        ownerId TEXT,
+        projectId TEXT,
+        notes TEXT
+      )
+    `);
+
+        // Credential Subscription Links
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS credential_subscription_links (
+        id TEXT PRIMARY KEY,
+        credentialId TEXT,
+        subscriptionId TEXT
+      )
+    `);
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -465,6 +508,9 @@ export class SqliteService {
             this.reloadResearchSources(),
             this.reloadResearchSummaries(),
             this.reloadProjects(),
+            this.reloadCredentials(),
+            this.reloadSubscriptions(),
+            this.reloadLinks(),
         ]);
     }
 
@@ -1231,6 +1277,79 @@ export class SqliteService {
 
     projects$(): Observable<ProjectDoc[]> {
         return this.projectsSubject.asObservable();
+    }
+
+    // ─── Vault & Subscriptions ──────────────────────────────────────────────────
+    private async reloadCredentials() {
+        const db = await this.getDb();
+        const rows = await db.select<CredentialDoc[]>('SELECT * FROM credentials');
+        this.credentialsSubject.next(rows);
+    }
+    async getAllCredentials(): Promise<CredentialDoc[]> { return this.credentialsSubject.getValue(); }
+    async upsertCredential(item: CredentialDoc): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM credentials WHERE id = $1', [item.id]);
+        if (exists.length > 0) {
+            await db.execute(`UPDATE credentials SET name=$1, type=$2, value=$3, projectId=$4, createdAt=$5, createdBy=$6 WHERE id=$7`,
+                [item.name, item.type, item.value, item.projectId, item.createdAt, item.createdBy, item.id]);
+        } else {
+            await db.execute(`INSERT INTO credentials (id, name, type, value, projectId, createdAt, createdBy) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [item.id, item.name, item.type, item.value, item.projectId, item.createdAt, item.createdBy]);
+        }
+        await this.reloadCredentials();
+    }
+    async removeCredential(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM credentials WHERE id = $1', [id]);
+        await this.reloadCredentials();
+    }
+
+    private async reloadSubscriptions() {
+        const db = await this.getDb();
+        const rows = await db.select<SubscriptionDoc[]>('SELECT * FROM subscriptions');
+        this.subscriptionsSubject.next(rows);
+    }
+    async getAllSubscriptions(): Promise<SubscriptionDoc[]> { return this.subscriptionsSubject.getValue(); }
+    async upsertSubscription(item: SubscriptionDoc): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM subscriptions WHERE id = $1', [item.id]);
+        if (exists.length > 0) {
+            await db.execute(`UPDATE subscriptions SET name=$1, category=$2, price=$3, billingCycle=$4, renewalDate=$5, ownerId=$6, projectId=$7, notes=$8 WHERE id=$9`,
+                [item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes, item.id]);
+        } else {
+            await db.execute(`INSERT INTO subscriptions (id, name, category, price, billingCycle, renewalDate, ownerId, projectId, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [item.id, item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes]);
+        }
+        await this.reloadSubscriptions();
+    }
+    async removeSubscription(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM subscriptions WHERE id = $1', [id]);
+        await this.reloadSubscriptions();
+    }
+
+    private async reloadLinks() {
+        const db = await this.getDb();
+        const rows = await db.select<CredentialSubscriptionLinkDoc[]>('SELECT * FROM credential_subscription_links');
+        this.linksSubject.next(rows);
+    }
+    async getAllLinks(): Promise<CredentialSubscriptionLinkDoc[]> { return this.linksSubject.getValue(); }
+    async upsertLink(item: CredentialSubscriptionLinkDoc): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM credential_subscription_links WHERE id = $1', [item.id]);
+        if (exists.length > 0) {
+            await db.execute(`UPDATE credential_subscription_links SET credentialId=$1, subscriptionId=$2 WHERE id=$3`,
+                [item.credentialId, item.subscriptionId, item.id]);
+        } else {
+            await db.execute(`INSERT INTO credential_subscription_links (id, credentialId, subscriptionId) VALUES ($1, $2, $3)`,
+                [item.id, item.credentialId, item.subscriptionId]);
+        }
+        await this.reloadLinks();
+    }
+    async removeLink(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM credential_subscription_links WHERE id = $1', [id]);
+        await this.reloadLinks();
     }
 
     // ─── Export ────────────────────────────────────────────────────────────────
