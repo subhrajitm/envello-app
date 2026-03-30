@@ -1,8 +1,8 @@
 <div class="dashboard">
   @if (!isFullScreen()) {
-  <app-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
+  <lib-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
     (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
-  </app-header>
+  </lib-header>
   }
 
   <div class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"

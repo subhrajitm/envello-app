@@ -21,15 +21,10 @@ export interface NavItem {
   route: string;
 }
 
-export interface NavSection {
-  id: string;
-  label: string;
-  icon: string;
-  items: NavItem[];
-}
+
 
 @Component({
-  selector: 'app-header',
+  selector: 'lib-header',
   standalone: true,
   imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
   templateUrl: './header.component.html',
@@ -80,73 +75,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private routeSub?: Subscription;
   currentRouteSegment = signal<string>('');
 
-  // The section whose items the current route belongs to (drives sub-nav bar)
-  activeSectionForSubNav = computed<NavSection | null>(() => {
-    const seg = this.currentRouteSegment();
-    return this.navSections.find(s => s.items.some(i => i.route === seg)) ?? null;
-  });
 
-  navSections: NavSection[] = [
-    {
-      id: 'plan',
-      label: 'Plan',
-      icon: 'task_alt',
-      items: [
-        { id: 'tasks',    label: 'Tasks',    icon: 'checklist', route: 'tasks' },
-        { id: 'meetings', label: 'Meetings', icon: 'groups',    route: 'meetings' },
-      ]
-    },
-    {
-      id: 'today',
-      label: 'Today',
-      icon: 'today',
-      items: [
-        { id: 'daily-notes', label: 'Notes', icon: 'note', route: 'daily-notes' },
-      ]
-    },
-    {
-      id: 'library',
-      label: 'Library',
-      icon: 'local_library',
-      items: [
-        { id: 'research',  label: 'Research', icon: 'science', route: 'research' },
-        { id: 'journals',  label: 'Journal',  icon: 'book',    route: 'journals' },
-      ]
-    },
-    {
-      id: 'create',
-      label: 'Create',
-      icon: 'edit_note',
-      items: [
-        { id: 'articles', label: 'Drafts',   icon: 'article',   route: 'articles' },
-        { id: 'novels',   label: 'Writing',  icon: 'menu_book', route: 'novels' },
-      ]
-    },
+
+  navItems: NavItem[] = [
+    { id: 'tasks',       label: 'Tasks',    icon: 'checklist', route: 'tasks' },
+    { id: 'meetings',    label: 'Meetings', icon: 'groups',    route: 'meetings' },
+    { id: 'daily-notes', label: 'Notes',    icon: 'note',      route: 'daily-notes' },
+    { id: 'research',    label: 'Research', icon: 'science',   route: 'research' },
+    { id: 'journals',    label: 'Journal',  icon: 'book',      route: 'journals' },
+    { id: 'articles',    label: 'Drafts',   icon: 'article',   route: 'articles' },
+    { id: 'novels',      label: 'Writing',  icon: 'menu_book', route: 'novels' },
   ];
 
   // All flat items (for activeTab matching across sections)
   get allNavItems(): NavItem[] {
-    return this.navSections.flatMap(s => s.items);
+    return this.navItems;
   }
 
-  // Section collapse state (signal for change detection). Default to ALL collapsed.
-  collapsedSections = signal<Set<string>>(new Set<string>());
 
-  isSectionCollapsed(sectionId: string): boolean {
-    return this.collapsedSections().has(sectionId);
-  }
-
-  toggleSection(sectionId: string) {
-    this.collapsedSections.update(set => {
-      const next = new Set(set);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
-      } else {
-        next.add(sectionId);
-      }
-      return next;
-    });
-  }
 
 
 
@@ -168,9 +114,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     // Notify parent when sub-nav visibility changes
     effect(() => {
-      const section = this.activeSectionForSubNav();
-      const visible = !!section && section.items.length > 1;
-      this.subNavVisibleChange.emit(visible);
+      this.subNavVisibleChange.emit(false);
     });
   }
 
@@ -213,7 +157,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   getTabIcon(tab: string): string {
-    return this.allNavItems.find(i => i.label === tab || i.id === tab)?.icon || 'circle';
+    return this.navItems.find(i => i.label === tab || i.id === tab)?.icon || 'circle';
   }
 
   isItemActive(item: NavItem): boolean {
@@ -226,9 +170,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return currentSegment === 'workspace' || currentSegment === '';
   }
 
-  isSectionActive(section: NavSection): boolean {
-    return section.items.some(i => this.isItemActive(i));
-  }
+
 
   openQuickFind() {
     this.quickFind?.open();
@@ -285,8 +227,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Seed the route segment from the current URL immediately
     this.currentRouteSegment.set(this.router.url.split('/')[1]?.split('?')[0] ?? '');
 
-    // Set all sections as collapsed by default
-    this.collapsedSections.set(new Set(this.navSections.map(s => s.id)));
+
 
     // Keep currentRouteSegment in sync with every navigation
     this.routeSub = this.router.events

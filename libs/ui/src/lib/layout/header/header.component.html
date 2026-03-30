@@ -21,7 +21,7 @@
             </g>
           </svg>
         </div>
-        <div class="header-search" (click)="openQuickFind()">
+        <button type="button" class="header-search" (click)="openQuickFind()" aria-label="Quick find">
           <span class="material-symbols-outlined search-icon">search</span>
           <input
             type="text"
@@ -29,7 +29,7 @@
             class="search-input"
             readonly
           />
-        </div>
+        </button>
       </div>
 
       <div class="header-center">
@@ -73,7 +73,7 @@
             {{ getThemeIcon() }}
           </span>
         </button>
-        <div class="profile-menu" (click)="openProfileMenu()">
+        <button type="button" class="profile-menu" (click)="openProfileMenu()" aria-label="Profile menu">
           <div class="profile-avatar">
             @if (user()?.avatar) {
               @if (isAvatarLoading()) {
@@ -91,7 +91,7 @@
               <span class="avatar-text">{{ userInitials() }}</span>
             }
           </div>
-        </div>
+        </button>
       </div>
     </div>
   </header>
@@ -109,27 +109,16 @@
           Workspace
         </button>
         <div class="nav-divider-v"></div>
-        <!-- Section group headers (top-level labels) -->
-        @for (section of navSections; track section.id) {
-          @if (section.items.length === 1) {
-            <button
-              class="nav-tab"
-              [class.active]="isItemActive(section.items[0])"
-              (click)="navigateTo(section.items[0].route)"
-            >
-              <span class="material-symbols-outlined nav-tab-icon">{{ section.items[0].icon }}</span>
-              {{ section.items[0].label }}
-            </button>
-          } @else {
-            <button
-              class="nav-tab nav-tab-section"
-              [class.active]="isSectionActive(section)"
-              (click)="navigateTo(section.items[0].route)"
-            >
-              <span class="material-symbols-outlined nav-tab-icon">{{ section.icon }}</span>
-              {{ section.label }}
-            </button>
-          }
+        <!-- Individual navigation items -->
+        @for (item of allNavItems; track item.id) {
+          <button
+            class="nav-tab"
+            [class.active]="isItemActive(item)"
+            (click)="navigateTo(item.route)"
+          >
+            <span class="material-symbols-outlined nav-tab-icon">{{ item.icon }}</span>
+            {{ item.label }}
+          </button>
         }
       </nav>
     } @else {
@@ -154,53 +143,22 @@
             <div class="sidebar-divider"></div>
           }
 
-          <!-- ── Grouped sections ── -->
-          @for (section of navSections; track section.id) {
-            <!-- Each section has a flyout wrapper; mouseenter/leave control open state -->
-            <div
-              class="sidebar-section-accordion-wrapper"
+          <!-- ── Individual navigation items ── -->
+          @for (item of allNavItems; track item.id) {
+            <button
+              class="sidebar-nav-item"
+              [class.active]="isItemActive(item)"
+              (click)="navigateTo(item.route)"
+              [title]="sidebarCollapsed() ? item.label : ''"
             >
-
-              <!-- Section header button -->
-              <button
-                type="button"
-                class="sidebar-section-header"
-                [class.active-section]="isSectionActive(section)"
-                (click)="toggleSection(section.id)"
-                [title]="sidebarCollapsed() ? section.label : ''"
-              >
-                <span class="material-symbols-outlined sidebar-icon sidebar-section-icon">{{ section.icon }}</span>
-                @if (!sidebarCollapsed()) {
-                  <span class="sidebar-section-label">{{ section.label }}</span>
-                }
-                <span class="material-symbols-outlined sidebar-section-chevron" 
-                      [class.chevron-collapsed]="sidebarCollapsed()"
-                      [class.chevron-expanded]="!isSectionCollapsed(section.id)">
-                  chevron_right
-                </span>
-              </button>
-
-
-
-              <!-- Section items — accordion mode (works in both collapsed/expanded sidebar) -->
-              @if (!isSectionCollapsed(section.id)) {
-                @for (item of section.items; track item.id) {
-                  <button
-                    class="sidebar-nav-item sidebar-sub-item"
-                    [class.active]="isItemActive(item)"
-                    (click)="navigateTo(item.route)"
-                    [title]="item.label"
-                  >
-                    <span class="material-symbols-outlined sidebar-icon sidebar-sub-icon">{{ item.icon }}</span>
-                    @if (!sidebarCollapsed()) {
-                      <span class="sidebar-label">{{ item.label }}</span>
-                    }
-                  </button>
-                }
+              <span class="material-symbols-outlined sidebar-icon">{{ item.icon }}</span>
+              @if (!sidebarCollapsed()) {
+                <span class="sidebar-label">{{ item.label }}</span>
               }
-
-            </div><!-- /.sidebar-section-accordion-wrapper -->
+            </button>
           }
+
+
 
         </nav>
         <!-- ── Utility items (Bin, Activity Log) ── -->
@@ -242,31 +200,7 @@
   }
 </div>
 
-<!-- ── Section Sub-Nav Bar ─────────────────────────────────────────── -->
-<!-- Only shown when sidebar is NOT collapsed (flyout handles minimized mode) -->
-@if (!isImmersive && !sidebarCollapsed() && activeSectionForSubNav() && activeSectionForSubNav()!.items.length > 1) {
-  <nav class="section-sub-nav"
-       [class.sub-nav-with-sidebar]="navigationLayout() !== 'horizontal' && !sidebarCollapsed()"
-       [class.sub-nav-sidebar-collapsed]="navigationLayout() !== 'horizontal' && sidebarCollapsed()">
-    <!-- Section name as label -->
-    <span class="sub-nav-section-name">
-      <span class="material-symbols-outlined sub-nav-section-icon">{{ activeSectionForSubNav()!.icon }}</span>
-      {{ activeSectionForSubNav()!.label }}
-    </span>
-    <span class="material-symbols-outlined sub-nav-chevron">chevron_right</span>
-    <!-- Sibling page tabs -->
-    @for (item of activeSectionForSubNav()!.items; track item.id) {
-      <button
-        class="sub-nav-tab"
-        [class.active]="isItemActive(item)"
-        (click)="navigateTo(item.route)"
-      >
-        <span class="material-symbols-outlined sub-nav-icon">{{ item.icon }}</span>
-        {{ item.label }}
-      </button>
-    }
-  </nav>
-}
+
 
 <!-- Voice active banner -->
 @if (isVoiceActive()) {

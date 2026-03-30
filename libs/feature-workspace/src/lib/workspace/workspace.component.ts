@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, effect, HostListener } from '@angu
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { StoreService, Project, Task, Activity, UserService, NotificationService } from '@envello/core';
+import { StoreService, Task, Activity, UserService, NotificationService } from '@envello/core';
 
 @Component({
   selector: 'app-workspace',
@@ -35,10 +35,7 @@ export class WorkspaceComponent {
 
   // --- Computed Dashboard Data ---
 
-  // 1. Projects Summary
-  activeProjects = computed(() => {
-    return this.store.projects().filter(p => p.status !== 'COMPLETE').slice(0, 4);
-  });
+
 
   // 2. High Priority Tasks
   upcomingTasks = computed(() => {
@@ -94,34 +91,9 @@ export class WorkspaceComponent {
       };
     });
 
-    // Real projects with their associated tasks
-    const projects = this.store.projects().slice(0, 5).map(p => {
-      // Get tasks associated with this project
-      const projectTasks = this.store.tasks()
-        .filter(t => t.project === p.id)
-        .slice(0, 4)
-        .map(t => ({
-          id: t.id,
-          title: t.title,
-          status: t.status === 'COMPLETED' ? 'done' : 'pending'
-        }));
-
-      const updatedDate = new Date(p.updated);
-      return {
-        id: p.id,
-        type: 'PROJECT',
-        tagClass: p.priority === 'HIGH' ? 'action' : 'reference',
-        content: p.title + (p.description ? `. ${p.description}` : ''),
-        sub: `Priority: ${p.priority} | Status: ${p.status}`,
-        time: this.formatRelativeTime(updatedDate),
-        tags: p.tags?.map(t => '#' + t) || ['#project'],
-        tasks: projectTasks,
-        sortDate: updatedDate.getTime()
-      };
-    });
 
     // Merge and sort by date (most recent first)
-    const merged = [...projects, ...taskItems, ...activities]
+    const merged = [...taskItems, ...activities]
       .sort((a, b) => b.sortDate - a.sortDate);
 
     // Filter
@@ -139,7 +111,6 @@ export class WorkspaceComponent {
     const totalWords = novels.reduce((acc, n) => acc + n.wordCount, 0);
 
     return {
-      activeProjects: this.store.projects().filter(p => p.status === 'PLANNING' || p.status === 'DRAFTING').length,
       pendingTasks: activeTasks,
       completedTasks: completedTasks,
       totalWords: totalWords > 1000 ? (totalWords / 1000).toFixed(1) + 'k' : totalWords,
@@ -151,9 +122,8 @@ export class WorkspaceComponent {
 
   // Linked entities (projects/tasks count)
   linkedEntities = computed(() => {
-    const activeProjects = this.store.projects().filter(p => p.status !== 'COMPLETE').length;
     const activeTasks = this.store.tasks().filter(t => t.status !== 'COMPLETED').length;
-    return { projects: activeProjects, tasks: activeTasks };
+    return { tasks: activeTasks };
   });
 
   // User's name for personalized greeting
@@ -301,9 +271,7 @@ export class WorkspaceComponent {
       this.handleNavigationCommand(lower);
     }
     // 2. Creation
-    else if (lower.startsWith('create project') || lower.startsWith('new project')) {
-      this.createProjectFromVoice(rawInput);
-    } else if (lower.startsWith('remind me') || lower.startsWith('add task') || lower.startsWith('todo')) {
+    else if (lower.startsWith('remind me') || lower.startsWith('add task') || lower.startsWith('todo')) {
       this.createTaskFromVoice(rawInput);
     } else {
       // Default to a generic note or task
@@ -381,34 +349,9 @@ export class WorkspaceComponent {
     // Navigate based on item type
     if (item.type === 'ACTION ITEM') {
       this.router.navigate(['/tasks'], { queryParams: { focus: item.id } });
-    } else if (item.type === 'PROJECT') {
-      this.router.navigate(['/projects', item.id]);
     } else {
       this.router.navigate(['/activity-log']); // Fallback for logs
     }
-  }
-
-  openTask(task: any, event: Event) {
-    event.stopPropagation(); // Prevent opening the parent project
-    this.router.navigate(['/tasks'], { queryParams: { focus: task.id } });
-  }
-
-  private createProjectFromVoice(input: string) {
-    const title = input.replace(/^(create|new) project/i, '').trim() || 'New Project';
-    const newProject: Project = {
-      id: crypto.randomUUID(),
-      title: title,
-      status: 'PLANNING',
-      words: '0',
-      updated: new Date().toISOString(),
-      icon: 'rocket_launch',
-      description: 'Created via command center',
-      priority: 'MEDIUM',
-      progress: 0,
-      tags: ['Voice-Created'],
-      type: 'SINGLE'
-    };
-    this.store.addProject(newProject);
   }
 
   private createTaskFromVoice(input: string) {
@@ -417,39 +360,19 @@ export class WorkspaceComponent {
 
     // Detect multiple tasks via newlines
     const lines = rawContent.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    const mainTitle = lines[0];
 
-    // Create a unique Project for this entry
-    const projectId = crypto.randomUUID();
-    const newProject: Project = {
-      id: projectId,
-      title: mainTitle,
-      description: lines.length > 1 ? 'Multi-task project from context stream' : 'Single-task project',
-      status: 'PLANNING',
-      words: '0',
-      updated: new Date().toISOString(),
-      icon: 'assignment', // distinct icon
-      priority: 'MEDIUM',
-      progress: 0,
-      tags: ['Context-Stream'],
-      type: lines.length > 1 ? 'MULTI' : 'SINGLE'
-    };
-
-    // Add Project first
-    this.store.addProject(newProject);
-
-    // Create tasks linked to this Project
+    // Create tasks
     lines.forEach((line, index) => {
-      const hasAttachments = index === 0 && this.attachments().length > 0; // Attach to first task or all? Let's say first for now or just main logic
+      const hasAttachments = index === 0 && this.attachments().length > 0;
       const newTask: Task = {
         id: crypto.randomUUID(),
         title: line + (hasAttachments ? ` [${this.attachments().length} attachments]` : ''),
         priority: 'MEDIUM',
         hours: '0',
         status: 'ACTIVE',
-        project: projectId, // Link to the new unique project
+        project: '', 
         due: new Date().toISOString(),
-        notes: `Task ${index + 1} of project "${mainTitle}".`
+        notes: `Task created from context stream.`
       };
       this.store.addTask(newTask);
     });

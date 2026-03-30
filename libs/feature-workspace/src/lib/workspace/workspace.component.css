@@ -390,45 +390,6 @@
   font-family: var(--font-sans);
 }
 
-.stream-tasks {
-  margin-bottom: 12px;
-  padding-left: 8px;
-  border-left: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stream-task-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  transition: color 0.2s;
-}
-
-.stream-task-row:hover {
-  color: var(--accent);
-}
-
-.check-icon {
-  font-size: 14px;
-  color: var(--text-tertiary);
-}
-
-.check-icon.checked {
-  color: var(--success);
-}
-
-.task-text {
-  flex: 1;
-}
-
-.task-text.done {
-  text-decoration: line-through;
-  color: var(--text-tertiary);
-}
 
 .card-meta {
   display: flex;
