@@ -52,7 +52,7 @@
   justify-content: center;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 0 48px;
+  padding: 0 24px;
 }
 
 .context-label {
@@ -79,10 +79,10 @@
 
 .big-input-display {
   font-family: var(--font-serif);
-  font-size: 32px;
-  line-height: 1.3;
+  font-size: 24px;
+  line-height: 1.25;
   color: var(--text-tertiary);
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   font-weight: 300;
 }
 
@@ -131,6 +131,12 @@
   transition: all 0.2s;
   padding: 4px;
   border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-btn:hover {
@@ -174,6 +180,10 @@
   font-size: 14px;
   color: var(--text-tertiary);
   margin-left: 2px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  line-height: 1;
 }
 
 .remove-x:hover {
@@ -249,7 +259,7 @@
 
 /* --- Right Sidebar --- */
 .sidebar {
-  width: 340px;
+  width: 280px;
   border-left: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -298,6 +308,9 @@
   gap: 4px;
   transition: color 0.1s;
   font-family: var(--font-sans);
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .filter-btn:hover {
@@ -316,96 +329,81 @@
   /* for scrollbar */
 }
 
-.stream-card {
-  background: transparent;
-  padding: 12px;
-  border-radius: 2px;
-  border: 1px solid var(--border-color);
-  box-shadow: none;
-  transition: all 0.2s;
-}
-
-.stream-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
-  background: var(--bg-page);
-}
-
-.card-top {
+.stream-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--border-color);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
+  width: 100%;
 }
 
-.tag {
+.stream-item:last-child {
+  border-bottom: none;
+}
+
+.stream-item:hover {
+  background: var(--bg-page);
+  padding-left: 4px;
+}
+
+.status-indicator {
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+}
+
+.status-indicator.action { background: var(--accent); }
+.status-indicator.reference { background: var(--text-tertiary); }
+.status-indicator.note { background: var(--success); }
+.status-indicator.sync { background: var(--sync-bg); }
+.status-indicator.system { background: var(--alert); }
+
+.item-content-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.item-type {
   font-size: 8px;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 2px;
-  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
   text-transform: uppercase;
   font-family: var(--font-mono);
-}
-
-.tag.action {
-  background: var(--accent-light);
-  color: var(--accent);
-}
-
-.tag.reference {
   background: var(--bg-page);
-  color: var(--text-secondary);
+  padding: 1px 4px;
+  border-radius: 2px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
-.tag.note {
-  background: var(--bg-page);
-  color: var(--success);
-  border: 1px solid var(--success);
-}
-
-.tag.sync {
-  background: var(--sync-bg);
-  color: var(--sync-text);
-}
-
-.tag.system {
-  background: var(--bg-page);
-  color: var(--alert);
-  border: 1px solid var(--alert);
-}
-
-.timestamp {
-  font-size: 8px;
-  color: var(--text-tertiary);
-  font-family: var(--font-mono);
-}
-
-.card-content {
+.item-text {
   font-size: 11px;
-  line-height: 1.5;
   color: var(--text-primary);
-  margin-bottom: 8px;
-  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-
-.card-meta {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.meta-pill {
+.item-time-minimal {
   font-size: 9px;
   color: var(--text-tertiary);
-  background: var(--bg-page);
-  border: 1px solid var(--border-color);
-  padding: 1px 6px;
-  border-radius: 2px;
   font-family: var(--font-mono);
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 50px;
 }
+
 
 /* --- Footer Bar --- */
 .status-bar {

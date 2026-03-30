@@ -628,7 +628,7 @@
 /* ── Sidebar utility area (Bin, etc.) ── */
 .sidebar-utility-area {
   margin-top: auto;
-  padding: 8px 0 4px;
+  padding: 0;
   border-top: 1px solid var(--border-subtle);
 }
 

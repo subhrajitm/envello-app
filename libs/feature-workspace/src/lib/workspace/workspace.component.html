@@ -18,10 +18,15 @@
                 <input type="text" class="main-text-input" [(ngModel)]="inputText" (keydown.enter)="executeCommand()"
                     [placeholder]="listening() ? 'Listening (' + liveTranscript() + ')...' : 'Cmd + K to capture or type thoughts...'">
                 <div class="input-icons">
-                    <span class="material-symbols-outlined icon-btn" [class.active]="listening()"
-                        (click)="toggleVoice()" title="Voice Input">mic</span>
-                    <span class="material-symbols-outlined icon-btn" (click)="triggerFileUpload()"
-                        title="Attach File">attach_file</span>
+                    <button type="button" class="icon-btn" [class.active]="listening()"
+                        (click)="toggleVoice()" (keyup.enter)="toggleVoice()"
+                        title="Voice Input" aria-label="Toggle Voice Input">
+                        <span class="material-symbols-outlined">mic</span>
+                    </button>
+                    <button type="button" class="icon-btn" (click)="triggerFileUpload()"
+                        (keyup.enter)="triggerFileUpload()" title="Attach File" aria-label="Attach File">
+                        <span class="material-symbols-outlined">attach_file</span>
+                    </button>
                 </div>
             </div>
 
@@ -32,7 +37,8 @@
                 <div class="attachment-pill">
                     <span class="material-symbols-outlined" style="font-size: 12px;">draft</span>
                     {{ file }}
-                    <span class="remove-x" (click)="removeAttachment(i)">×</span>
+                    <button type="button" class="remove-x" (click)="removeAttachment(i)"
+                        (keyup.enter)="removeAttachment(i)" aria-label="Remove attachment">×</button>
                 </div>
                 }
             </div>
@@ -58,31 +64,22 @@
                         <span class="material-symbols-outlined" style="font-size: 14px;">hub</span>
                         CONTEXT STREAM
                     </div>
-                    <div class="filter-btn" (click)="toggleFilter()">
+                    <button type="button" class="filter-btn" (click)="toggleFilter()" (keyup.enter)="toggleFilter()" aria-label="Toggle Filter">
                         {{ activeFilter() }} <span class="material-symbols-outlined"
                             style="font-size: 14px;">tune</span>
-                    </div>
+                    </button>
                 </div>
 
                 <div class="stream-list">
                     @for (item of contextStream(); track item.content) {
-                    <div class="stream-card" (click)="openItem(item)" style="cursor: pointer;">
-                        <div class="card-top">
-                            <span class="tag" [class]="item.tagClass.toLowerCase()">{{ item.type }}</span>
-                            <span class="timestamp">{{ item.time }}</span>
+                    <button type="button" class="stream-item" (click)="openItem(item)" (keyup.enter)="openItem(item)" aria-label="Open context item">
+                        <span class="status-indicator" [class]="item.tagClass.toLowerCase()"></span>
+                        <div class="item-content-wrap">
+                            <span class="item-type">{{ item.type }}</span>
+                            <span class="item-text">{{ item.content }}</span>
                         </div>
-                        <div class="card-content">
-                            {{ item.content }}
-                        </div>
-
-
-
-                        <div class="card-meta">
-                            @for (t of item.tags; track t) {
-                            <span class="meta-pill">{{ t }}</span>
-                            }
-                        </div>
-                    </div>
+                        <span class="item-time-minimal">{{ item.time }}</span>
+                    </button>
                     }
                 </div>
             </div>
