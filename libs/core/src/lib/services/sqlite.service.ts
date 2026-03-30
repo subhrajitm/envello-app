@@ -26,6 +26,7 @@ import type {
     ResearchSource,
     ResearchSummary,
 } from './research.service';
+import type { Project } from '@envello/domain';
 
 const DB_NAME = 'envello.db';
 
@@ -45,6 +46,7 @@ export type JournalColumnDoc = JournalColumn;
 export type ResearchLibraryDoc = ResearchLibrary;
 export type ResearchSourceDoc = ResearchSource;
 export type ResearchSummaryDoc = ResearchSummary;
+export type ProjectDoc = Project;
 
 export interface NovelContentDoc {
     id: string;
@@ -75,6 +77,7 @@ export class SqliteService {
     private researchLibrariesSubject = new BehaviorSubject<ResearchLibraryDoc[]>([]);
     private researchSourcesSubject = new BehaviorSubject<ResearchSourceDoc[]>([]);
     private researchSummariesSubject = new BehaviorSubject<ResearchSummaryDoc[]>([]);
+    private projectsSubject = new BehaviorSubject<ProjectDoc[]>([]);
 
     constructor() {
         // Don't initialize eagerly - only init when first database operation is called
@@ -419,6 +422,26 @@ export class SqliteService {
         lastModified TEXT
       )
     `);
+
+        // Projects
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        description TEXT,
+        status TEXT,
+        words TEXT,
+        updated TEXT,
+        icon TEXT,
+        dueDate TEXT,
+        priority TEXT,
+        progress REAL,
+        team TEXT,
+        tags TEXT,
+        type TEXT,
+        linkedResources TEXT
+      )
+    `);
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -441,6 +464,7 @@ export class SqliteService {
             this.reloadResearchLibraries(),
             this.reloadResearchSources(),
             this.reloadResearchSummaries(),
+            this.reloadProjects(),
         ]);
     }
 
@@ -1159,6 +1183,56 @@ export class SqliteService {
         await this.reloadResearchSummaries();
     }
 
+    // ─── Projects ──────────────────────────────────────────────────────────────
+    private async reloadProjects() {
+        const db = await this.getDb();
+        const rows = await db.select<ProjectDoc[]>('SELECT * FROM projects');
+        const parsed = rows.map((r: any) => this.parseRow<ProjectDoc>(r, ['team', 'tags', 'linkedResources']));
+        this.projectsSubject.next(parsed);
+    }
+
+    async getAllProjects(): Promise<ProjectDoc[]> {
+        return this.projectsSubject.getValue();
+    }
+
+    async upsertProject(project: ProjectDoc): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM projects WHERE id = $1', [project.id]);
+        const jsonProject = {
+            ...project,
+            team: this.toJson(project.team),
+            tags: this.toJson(project.tags),
+            linkedResources: this.toJson(project.linkedResources),
+        };
+
+        if (exists.length > 0) {
+            await db.execute(
+                `UPDATE projects SET title=$1, description=$2, status=$3, words=$4, updated=$5, icon=$6, dueDate=$7, priority=$8, progress=$9, team=$10, tags=$11, type=$12, linkedResources=$13 WHERE id=$14`,
+                [jsonProject.title, jsonProject.description, jsonProject.status, jsonProject.words, jsonProject.updated,
+                jsonProject.icon, jsonProject.dueDate, jsonProject.priority, jsonProject.progress,
+                jsonProject.team, jsonProject.tags, jsonProject.type, jsonProject.linkedResources, jsonProject.id]
+            );
+        } else {
+            await db.execute(
+                `INSERT INTO projects (id, title, description, status, words, updated, icon, dueDate, priority, progress, team, tags, type, linkedResources) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+                [jsonProject.id, jsonProject.title, jsonProject.description, jsonProject.status, jsonProject.words, jsonProject.updated,
+                jsonProject.icon, jsonProject.dueDate, jsonProject.priority, jsonProject.progress,
+                jsonProject.team, jsonProject.tags, jsonProject.type, jsonProject.linkedResources]
+            );
+        }
+        await this.reloadProjects();
+    }
+
+    async removeProject(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM projects WHERE id = $1', [id]);
+        await this.reloadProjects();
+    }
+
+    projects$(): Observable<ProjectDoc[]> {
+        return this.projectsSubject.asObservable();
+    }
+
     // ─── Export ────────────────────────────────────────────────────────────────
     async exportAllData(): Promise<any> {
         const data: any = {
@@ -1196,6 +1270,7 @@ export class SqliteService {
         data.data.research_libraries = await this.getAllResearchLibraries();
         data.data.research_sources = await this.getAllResearchSources();
         data.data.research_summaries = await this.getAllResearchSummaries();
+        data.data.projects = await this.getAllProjects();
 
         // Novel Content
         const db = await this.getDb();

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -13,4 +13,7 @@ export class EmptyStateComponent {
   @Input() title = '';
   @Input() description = '';
   @Input() compact = false;
+  @Input() ctaLabel = '';
+  @Input() ctaIcon = '';
+  @Output() ctaClicked = new EventEmitter<void>();
 }

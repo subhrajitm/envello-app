@@ -59,3 +59,24 @@
 .env-empty-state__content ::ng-deep button {
   margin-top: 0;
 }
+
+.env-empty-state__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1.5px solid var(--accent, #6366f1);
+  background: transparent;
+  color: var(--accent, #6366f1);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.env-empty-state__cta:hover {
+  background: var(--accent, #6366f1);
+  color: #fff;
+}

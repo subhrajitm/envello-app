@@ -4,6 +4,7 @@ import { ThemeService, Theme } from '@envello/core';
 import { NotificationService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
+import { BinService } from '@envello/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
@@ -51,7 +52,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   themeService = inject(ThemeService);
   notificationService = inject(NotificationService);
   userService = inject(UserService);
+  private binService = inject(BinService);
   private router = inject(Router);
+
+  binCount = computed(() => this.binService.items().length);
 
   // Expose signals for template
   unreadCount = this.notificationService.unreadCount;

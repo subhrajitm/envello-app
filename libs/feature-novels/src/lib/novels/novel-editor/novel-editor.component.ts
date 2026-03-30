@@ -91,6 +91,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
   // UI State
   focusMode = signal(false);
+  showFocusToast = signal(false);
+  private focusToastTimer?: ReturnType<typeof setTimeout>;
   fullScreenMode = signal(false);
   leftSidebarCollapsed = signal(false);
   rightSidebarCollapsed = signal(false);
@@ -1226,11 +1228,28 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       // Entering focus mode: collapse sidebars
       this.leftSidebarCollapsed.set(true);
       this.rightSidebarCollapsed.set(true);
+      // Show first-time toast
+      const seenKey = 'envello-focus-toast-seen';
+      if (!localStorage.getItem(seenKey)) {
+        this.showFocusToast.set(true);
+        if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
+        this.focusToastTimer = setTimeout(() => {
+          this.showFocusToast.set(false);
+          localStorage.setItem(seenKey, 'true');
+        }, 4000);
+      }
     } else {
       // Exiting focus mode: restore sidebars to default (visible)
       this.leftSidebarCollapsed.set(false);
       this.rightSidebarCollapsed.set(false);
+      this.showFocusToast.set(false);
     }
+  }
+
+  dismissFocusToast() {
+    this.showFocusToast.set(false);
+    if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
+    localStorage.setItem('envello-focus-toast-seen', 'true');
   }
 
   // AI Companion Methods

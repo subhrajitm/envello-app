@@ -6,6 +6,14 @@
   @if (description) {
     <p class="env-empty-state__description">{{ description }}</p>
   }
+  @if (ctaLabel) {
+    <button class="env-empty-state__cta" (click)="ctaClicked.emit()">
+      @if (ctaIcon) {
+        <span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle;margin-right:6px;">{{ ctaIcon }}</span>
+      }
+      {{ ctaLabel }}
+    </button>
+  }
   <div class="env-empty-state__content">
     <ng-content></ng-content>
   </div>

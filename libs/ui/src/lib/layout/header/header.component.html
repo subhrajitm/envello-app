@@ -216,6 +216,26 @@
           }
 
         </nav>
+        <!-- ── Utility items (Bin, Activity Log) ── -->
+        <div class="sidebar-utility-area">
+          <button
+            class="sidebar-nav-item sidebar-utility-item"
+            [class.active]="currentRouteSegment() === 'bin'"
+            (click)="navigateTo('bin')"
+            [title]="sidebarCollapsed() ? 'Bin' + (binCount() > 0 ? ' (' + binCount() + ' items)' : '') : ''"
+          >
+            <span class="material-symbols-outlined sidebar-icon">delete</span>
+            @if (!sidebarCollapsed()) {
+              <span class="sidebar-label">Bin</span>
+              @if (binCount() > 0) {
+                <span class="sidebar-bin-badge">{{ binCount() }}</span>
+              }
+            } @else if (binCount() > 0) {
+              <span class="sidebar-bin-dot"></span>
+            }
+          </button>
+        </div>
+
         @if (
           navigationLayout() === 'vertical' ||
           navigationLayout() === 'minimized'
@@ -259,6 +279,17 @@
       </button>
     }
   </nav>
+}
+
+<!-- Voice active banner -->
+@if (isVoiceActive()) {
+  <div class="voice-active-banner">
+    <span class="material-symbols-outlined" style="font-size:16px;">mic</span>
+    <span>Voice input active — click any text field to start dictating</span>
+    <button class="voice-banner-dismiss" (click)="toggleVoice()" title="Stop voice input">
+      <span class="material-symbols-outlined" style="font-size:16px;">mic_off</span>
+    </button>
+  </div>
 }
 
 <!-- Quick Find Modal -->

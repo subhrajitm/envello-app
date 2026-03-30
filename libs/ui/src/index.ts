@@ -16,3 +16,7 @@ export * from './lib/profile-menu/profile-menu.component';
 export * from './lib/profile-editor/profile-editor.component';
 export * from './lib/auth/login/login.component';
 export * from './lib/auth/sign-up/sign-up.component';
+export * from './lib/skeleton-loader/skeleton-loader.component';
+export * from './lib/keyboard-shortcuts/keyboard-shortcuts.component';
+export * from './lib/onboarding/onboarding.component';
+export * from './lib/floating-ai-button/floating-ai-button.component';

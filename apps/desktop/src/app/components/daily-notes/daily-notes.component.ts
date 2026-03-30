@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, untracked, HostListener, OnInit, O
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent, ModalComponent, EmptyStateComponent } from '@envello/ui';
+import { ButtonComponent, ModalComponent, EmptyStateComponent, FloatingAiButtonComponent } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -46,7 +46,7 @@ interface TagCategory {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, ModalComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, ModalComponent, EmptyStateComponent, FloatingAiButtonComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css'
 })

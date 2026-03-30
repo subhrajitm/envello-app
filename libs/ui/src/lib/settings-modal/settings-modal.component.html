@@ -173,6 +173,22 @@
                             <span class="toggle-track"></span>
                         </label>
                     </div>
+
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Version History Limit</label>
+                            <span class="setting-desc">Max snapshots to keep per document ({{ versionHistoryLimit() }})</span>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" min="10" max="100" step="10"
+                                [value]="versionHistoryLimit()"
+                                (input)="setVersionHistoryLimit($event)"
+                                class="range-input" style="width:100%">
+                            <div class="range-labels" style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-tertiary);margin-top:2px;">
+                                <span>10</span><span>50</span><span>100</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 }
 
@@ -180,8 +196,8 @@
                 @if (activeSection() === 'ai') {
                 <div class="settings-section">
                     <div class="section-header">
-                        <h3>AI & Intelligence</h3>
-                        <p>Configure automated features</p>
+                        <h3>AI & Integrations</h3>
+                        <p>Configure AI providers and API keys</p>
                     </div>
 
                     <div class="setting-item flex flex-col gap-2">
@@ -218,9 +234,14 @@
                             <label>API Key</label>
                             <span class="setting-desc">Enter your {{ aiProvider() | titlecase }} API Key</span>
                         </div>
-                        <div class="setting-control w-full">
-                            <input type="password" [ngModel]="aiKey()" (ngModelChange)="aiKey.set($event)"
-                                class="form-input" placeholder="sk-..." spellcheck="false">
+                        <div class="setting-control w-full" style="position:relative;display:flex;align-items:center;">
+                            <input [type]="showApiKey() ? 'text' : 'password'" [ngModel]="aiKey()" (ngModelChange)="aiKey.set($event)"
+                                class="form-input" placeholder="sk-..." spellcheck="false" style="padding-right:2.5rem;width:100%;">
+                            <button type="button" (click)="showApiKey.set(!showApiKey())"
+                                style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;padding:0.25rem;opacity:0.6;color:inherit;"
+                                [title]="showApiKey() ? 'Hide API key' : 'Show API key'">
+                                <span class="material-symbols-outlined" style="font-size:18px;">{{ showApiKey() ? 'visibility_off' : 'visibility' }}</span>
+                            </button>
                         </div>
                     </div>
                     }
@@ -325,18 +346,63 @@
                 </div>
                 }
 
-                <!-- Privacy Section -->
-                @if (activeSection() === 'privacy') {
+                <!-- General Section -->
+                @if (activeSection() === 'general') {
                 <div class="settings-section">
                     <div class="section-header">
-                        <h3>Privacy & Data</h3>
-                        <p>Control your data and privacy</p>
+                        <h3>General</h3>
+                        <p>Navigation, layout and accessibility</p>
+                    </div>
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Navigation Layout</label>
+                            <span class="setting-desc">How the main navigation is displayed</span>
+                        </div>
+                        <div class="layout-options">
+                            @for (layout of [['minimized','Minimal','left_panel_close'],['vertical','Sidebar','view_sidebar'],['horizontal','Top Bar','view_headline']]; track layout[0]) {
+                            <button class="layout-btn" [class.active]="navigationLayout() === layout[0]"
+                                (click)="setNavigationLayout($any(layout[0]))">
+                                <span class="material-symbols-outlined">{{ layout[2] }}</span>
+                                <span>{{ layout[1] }}</span>
+                            </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Compact Mode</label>
+                            <span class="setting-desc">Reduce padding and spacing throughout the UI</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" [checked]="compactMode()" (change)="toggleCompactMode()">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Animations</label>
+                            <span class="setting-desc">Enable transitions and animations</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" [checked]="animations()" (change)="toggleAnimations()">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                </div>
+                }
+
+                <!-- Data & Sync Section -->
+                @if (activeSection() === 'data') {
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h3>Data & Sync</h3>
+                        <p>Storage, backup and sync preferences</p>
                     </div>
 
                     <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>Analytics</label>
-                            <span class="setting-desc">Share anonymous usage data</span>
+                            <span class="setting-desc">Share anonymous usage data to improve Envello</span>
                         </div>
                         <label class="toggle">
                             <input type="checkbox" [checked]="analytics()" (change)="toggleAnalytics()">
@@ -344,18 +410,24 @@
                         </label>
                     </div>
 
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Export Data</label>
+                            <span class="setting-desc">Download all your data as a JSON archive</span>
+                        </div>
+                        <div class="setting-control">
+                            <env-button variant="secondary">Export All Data</env-button>
+                        </div>
+                    </div>
+
                     <div class="info-card">
                         <div class="info-row">
-                            <span class="info-label">Local Storage</span>
-                            <span class="info-value">2.4 MB</span>
+                            <span class="info-label">Storage Mode</span>
+                            <span class="info-value">Local (SQLite)</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Total Documents</span>
-                            <span class="info-value">47</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Last Backup</span>
-                            <span class="info-value">2 hours ago</span>
+                            <span class="info-label">Sync Status</span>
+                            <span class="info-value">Saved locally</span>
                         </div>
                     </div>
 

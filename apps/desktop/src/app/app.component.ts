@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { AuthService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
-import { HeaderComponent, FooterComponent, EnvLogoComponent } from '@envello/ui';
+import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent } from '@envello/ui';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 /**
@@ -21,7 +21,7 @@ const SUB_NAV_ROUTES = new Set([
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

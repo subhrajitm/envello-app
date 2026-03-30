@@ -19,12 +19,12 @@ import TextAlign from '@tiptap/extension-text-align';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { JournalService, JournalProject, JournalEntry, JournalColumn } from '@envello/core';
 import { AiService } from '@envello/core';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '@envello/ui';
+import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent, FloatingAiButtonComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-journals',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent, FloatingAiButtonComponent],
   templateUrl: './journals.component.html',
   styleUrl: './journals.component.css'
 })

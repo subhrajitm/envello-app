@@ -1,0 +1,52 @@
+<!-- Floating trigger button -->
+<button class="fab" (click)="toggle()" [class.fab--open]="isOpen()" title="AI Assistant">
+  <span class="material-symbols-outlined fab-icon">{{ isOpen() ? 'close' : 'auto_awesome' }}</span>
+</button>
+
+<!-- Chat panel -->
+@if (isOpen()) {
+  <div class="fab-panel">
+    <div class="fab-panel-header">
+      <span class="material-symbols-outlined" style="font-size:16px;color:var(--accent,#6366f1);">auto_awesome</span>
+      <span class="fab-panel-title">AI Assistant</span>
+      <button class="fab-panel-close" (click)="close()">
+        <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+      </button>
+    </div>
+
+    <div class="fab-messages">
+      @if (messages().length === 0) {
+        <div class="fab-empty">
+          <span class="material-symbols-outlined" style="font-size:32px;opacity:0.3;">auto_awesome</span>
+          <p>Ask me anything about your writing…</p>
+        </div>
+      }
+      @for (msg of messages(); track $index) {
+        <div class="fab-msg" [class.fab-msg--user]="msg.role === 'user'" [class.fab-msg--ai]="msg.role === 'assistant'">
+          {{ msg.content }}
+        </div>
+      }
+      @if (isLoading()) {
+        <div class="fab-msg fab-msg--ai fab-typing">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      }
+    </div>
+
+    <div class="fab-input-row">
+      <textarea
+        class="fab-input"
+        [value]="prompt()"
+        (input)="prompt.set($any($event.target).value)"
+        (keydown)="onKeydown($event)"
+        placeholder="Ask AI…"
+        rows="1"
+      ></textarea>
+      <button class="fab-send" (click)="send()" [disabled]="!prompt().trim() || isLoading()">
+        <span class="material-symbols-outlined" style="font-size:18px;">send</span>
+      </button>
+    </div>
+  </div>
+}

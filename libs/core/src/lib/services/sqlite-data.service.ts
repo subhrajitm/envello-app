@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { SqliteService } from './sqlite.service';
 import { TauriService } from './tauri.service';
-import { Task, Note, PlanningItem, Activity, Novel, BinItem } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Novel, BinItem, Project } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -49,8 +49,7 @@ export class SqliteDataService implements DataService {
             case 'research_libraries': return await this.sqlite.getAllResearchLibraries() as unknown as T[];
             case 'research_sources': return await this.sqlite.getAllResearchSources() as unknown as T[];
             case 'research_summaries': return await this.sqlite.getAllResearchSummaries() as unknown as T[];
-            // Projects not yet implemented in SqliteService, returning empty for now
-            case 'projects': return [] as T[];
+            case 'projects': return await this.sqlite.getAllProjects() as unknown as T[];
             default:
                 console.warn(`[SqliteDataService] Unknown collection ${collection}`);
                 return [];
@@ -91,8 +90,7 @@ export class SqliteDataService implements DataService {
             case 'research_libraries': return await this.sqlite.upsertResearchLibrary(item as any);
             case 'research_sources': return await this.sqlite.upsertResearchSource(item as any);
             case 'research_summaries': return await this.sqlite.upsertResearchSummary(item as any);
-            // Projects todo
-            case 'projects': break;
+            case 'projects': return await this.sqlite.upsertProject(item as unknown as Project);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
         }
     }
@@ -126,6 +124,7 @@ export class SqliteDataService implements DataService {
             case 'research_libraries': return await this.sqlite.removeResearchLibrary(id);
             case 'research_sources': return await this.sqlite.removeResearchSource(id);
             case 'research_summaries': return await this.sqlite.removeResearchSummary(id);
+            case 'projects': return await this.sqlite.removeProject(id);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for remove`);
         }
     }

@@ -1,4 +1,14 @@
 <div class="ne-layout flex flex-col h-full" [class.fullscreen]="fullScreenMode()">
+    <!-- Focus mode entry toast -->
+    @if (showFocusToast()) {
+      <div class="ne-focus-toast">
+        <span class="material-symbols-outlined" style="font-size:16px;opacity:0.8;">center_focus_strong</span>
+        Focus mode active — press <kbd>Esc</kbd> to exit
+        <button class="ne-focus-toast-close" (click)="dismissFocusToast()">
+          <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        </button>
+      </div>
+    }
     <!-- Header Removed -->
 
     <!-- Workspace -->

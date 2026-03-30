@@ -37,7 +37,7 @@ export class SettingsModalComponent {
   aiService = inject(AiService);
 
   isOpen = signal(false);
-  activeSection = signal('appearance');
+  activeSection = signal('general');
 
   // Settings state
   currentTheme = signal<Theme>('dark');
@@ -54,19 +54,22 @@ export class SettingsModalComponent {
   soundEffects = signal(true);
   dailySummary = signal(false);
   analytics = signal(true);
+  versionHistoryLimit = signal(50);
 
   // AI State
   aiProvider = signal<AiProvider>('mock');
   aiModel = signal('');
   aiKey = signal('');
+  showApiKey = signal(false);
 
   sections: SettingsSection[] = [
-    { id: 'appearance', label: 'Appearance', icon: 'palette' },
-    { id: 'editor', label: 'Editor', icon: 'edit_note' },
-    { id: 'ai', label: 'AI & Intelligence', icon: 'smart_toy' },
-    { id: 'notifications', label: 'Notifications', icon: 'notifications' },
-    { id: 'privacy', label: 'Privacy & Data', icon: 'shield' },
-    { id: 'about', label: 'About', icon: 'info' }
+    { id: 'general',       label: 'General',           icon: 'tune' },
+    { id: 'appearance',    label: 'Appearance',         icon: 'palette' },
+    { id: 'editor',        label: 'Editor',             icon: 'edit_note' },
+    { id: 'ai',            label: 'AI & Integrations',  icon: 'smart_toy' },
+    { id: 'notifications', label: 'Notifications',      icon: 'notifications' },
+    { id: 'data',          label: 'Data & Sync',        icon: 'sync' },
+    { id: 'about',         label: 'About',              icon: 'info' }
   ];
 
   themes: ThemeOption[] = [
@@ -124,6 +127,7 @@ export class SettingsModalComponent {
 
   close() {
     this.isOpen.set(false);
+    this.showApiKey.set(false);
   }
 
   setActiveSection(sectionId: string) {
@@ -217,6 +221,10 @@ export class SettingsModalComponent {
   }
 
   // Actions
+  setVersionHistoryLimit(event: Event) {
+    this.versionHistoryLimit.set(parseInt((event.target as HTMLInputElement).value));
+  }
+
   saveSettings() {
     const settings = {
       theme: this.currentTheme(),
@@ -232,7 +240,8 @@ export class SettingsModalComponent {
       desktopNotifications: this.desktopNotifications(),
       soundEffects: this.soundEffects(),
       dailySummary: this.dailySummary(),
-      analytics: this.analytics()
+      analytics: this.analytics(),
+      versionHistoryLimit: this.versionHistoryLimit(),
     };
 
     localStorage.setItem('envello-settings', JSON.stringify(settings));
@@ -301,6 +310,7 @@ export class SettingsModalComponent {
         this.soundEffects.set(settings.soundEffects !== false);
         this.dailySummary.set(settings.dailySummary || false);
         this.analytics.set(settings.analytics !== false);
+        this.versionHistoryLimit.set(settings.versionHistoryLimit || 50);
 
         // Apply saved settings
         if (settings.fontSize) {

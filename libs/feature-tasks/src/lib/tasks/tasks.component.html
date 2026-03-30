@@ -85,20 +85,15 @@
                         (click)="viewMode.set('list')"
                         title="List view" aria-label="List view">
                         <span class="material-symbols-outlined">format_list_bulleted</span>
-                    </button>
-                    <button class="view-btn"
-                        [class.active]="viewMode() === 'thumbnails'"
-                        (click)="viewMode.set('thumbnails')"
-                        title="Thumbnails view"
-                        aria-label="Thumbnails view">
-                        <span class="material-symbols-outlined">view_module</span>
+                        <span class="view-btn-label">List</span>
                     </button>
                     <button class="view-btn"
                         [class.active]="viewMode() === 'kanban'"
                         (click)="viewMode.set('kanban')"
-                        title="Kanban view"
-                        aria-label="Kanban view">
+                        title="Board view"
+                        aria-label="Board view">
                         <span class="material-symbols-outlined">view_kanban</span>
+                        <span class="view-btn-label">Board</span>
                     </button>
                     <button class="view-btn"
                         [class.active]="viewMode() === 'calendar'"
@@ -106,6 +101,15 @@
                         title="Calendar view"
                         aria-label="Calendar view">
                         <span class="material-symbols-outlined">calendar_view_month</span>
+                        <span class="view-btn-label">Calendar</span>
+                    </button>
+                    <button class="view-btn"
+                        [class.active]="viewMode() === 'thumbnails'"
+                        (click)="viewMode.set('thumbnails')"
+                        title="Thumbnails view"
+                        aria-label="Thumbnails view">
+                        <span class="material-symbols-outlined">view_module</span>
+                        <span class="view-btn-label">Cards</span>
                     </button>
                 </div>
             </div>
