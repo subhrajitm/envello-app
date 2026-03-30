@@ -11,40 +11,38 @@
             @if (activeModal() === 'new-folder') {
             <p>Create a new folder to organize your notes.</p>
             <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
-                [(ngModel)]="modalInputValue" (keydown.enter)="confirmNewFolder()" autofocus>
+                [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
+                (keydown.enter)="confirmNewFolder()" autofocus>
             }
             @if (activeModal() === 'add-tag') {
             <p>Enter a tag name to categorize this note.</p>
             <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
-                [(ngModel)]="modalInputValue" (keydown.enter)="confirmAddTag()" autofocus>
+                [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
+                (keydown.enter)="confirmAddTag()" autofocus>
             }
             @if (activeModal() === 'link') {
             <p>Enter the URL for the link.</p>
             <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
-                [(ngModel)]="modalInputValue" (keydown.enter)="confirmSetLink()" autofocus>
+                [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
+                (keydown.enter)="confirmSetLink()" autofocus>
             }
             @if (activeModal() === 'image') {
             <p>Enter the URL of the image you want to insert.</p>
             <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
-                [(ngModel)]="modalInputValue" (keydown.enter)="confirmAddImage()" autofocus>
+                [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
+                (keydown.enter)="confirmAddImage()" autofocus>
             }
             @if (activeModal() === 'youtube') {
             <p>Enter the YouTube URL you want to insert.</p>
             <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
-                [(ngModel)]="modalInputValue" (keydown.enter)="confirmAddYoutube()" autofocus>
+                [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
+                (keydown.enter)="confirmAddYoutube()" autofocus>
             }
             @if (activeModal() === 'delete-confirm') {
             <p>Are you sure you want to delete this note? This action cannot be undone.</p>
             }
             @if (activeModal() === 'delete-folder-confirm') {
             <p>Are you sure you want to delete this folder? All notes within it will be removed from this view. This action cannot be undone.</p>
-            }
-            @if (activeModal() === 'share') {
-            <p>Share this note via link or email.</p>
-            <div class="modal-share-row">
-                <input type="text" class="modal-input" [value]="'https://envello.app/notes/share/' + selectedEntryId()" readonly>
-                <env-button variant="secondary" (clicked)="copyShareLink()">{{ shareBtnText() }}</env-button>
-            </div>
             }
             @if (activeModal() === 'export') {
             <p>Choose a format to export your note.</p>
@@ -56,7 +54,7 @@
             }
         </div>
         <div footer>
-            @if (activeModal() === 'share' || activeModal() === 'export') {
+            @if (activeModal() === 'export') {
             <env-button variant="primary" (clicked)="closeModal()">Done</env-button>
             } @else {
             <env-button variant="secondary" (clicked)="closeModal()">Cancel</env-button>
@@ -90,8 +88,13 @@
         <div class="dn-search-header">
             <div class="search-container">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" class="dn-search-input" placeholder="Search..." [(ngModel)]="searchQuery"
-                    (ngModelChange)="searchQuery.set($event)" />
+                <input type="text" class="dn-search-input" placeholder="Search..."
+                    [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+                @if (searchQuery()) {
+                <button class="search-clear-btn" (click)="clearSearch()" title="Clear search">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+                }
             </div>
             <div class="dropdown-wrapper">
                 <button class="add-btn" (click)="toggleDropdown()">
@@ -112,16 +115,45 @@
             </div>
         </div>
 
-        <!-- Tabs: Folders and Tags with Expand/Collapse -->
+        <!-- Filter Chips -->
+        <div class="dn-filter-chips">
+            <button class="filter-chip" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
+                All
+                <span class="chip-count">{{ notes().length }}</span>
+            </button>
+            <button class="filter-chip" [class.active]="selectedFilter() === 'pinned'" (click)="setFilter('pinned')">
+                <span class="material-symbols-outlined">push_pin</span>
+                Pinned
+                @if (pinnedCount() > 0) {
+                <span class="chip-count">{{ pinnedCount() }}</span>
+                }
+            </button>
+            <button class="filter-chip" [class.active]="selectedFilter() === 'tagged'" (click)="setFilter('tagged')">
+                <span class="material-symbols-outlined">label</span>
+                Tagged
+                @if (taggedCount() > 0) {
+                <span class="chip-count">{{ taggedCount() }}</span>
+                }
+            </button>
+            @if (selectedTag()) {
+            <button class="filter-chip filter-chip--tag active" (click)="selectTag(selectedTag())">
+                <span class="material-symbols-outlined">label</span>
+                {{ selectedTag() }}
+                <span class="material-symbols-outlined filter-chip-close">close</span>
+            </button>
+            }
+        </div>
+
+        <!-- View Switcher: Folders and Tags -->
         <div class="dn-tabs">
-            <div class="tab-icons">
-                <button class="tab-icon-btn" [class.active]="activeView() === 'folders'" (click)="switchView('folders')"
-                    title="Folders">
+            <div class="view-switcher">
+                <button class="view-switch-btn" [class.active]="activeView() === 'folders'" (click)="switchView('folders')">
                     <span class="material-symbols-outlined">folder</span>
+                    <span>Folders</span>
                 </button>
-                <button class="tab-icon-btn" [class.active]="activeView() === 'tags'" (click)="switchView('tags')"
-                    title="Tags">
+                <button class="view-switch-btn" [class.active]="activeView() === 'tags'" (click)="switchView('tags')">
                     <span class="material-symbols-outlined">label</span>
+                    <span>Tags</span>
                 </button>
             </div>
             <div class="expand-controls">
@@ -131,11 +163,7 @@
                     <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
                 </button>
                 } @else {
-                <button class="control-btn" [title]="allTagCategoriesExpanded() ? 'Collapse All' : 'Expand All'"
-                    (click)="toggleExpandAllTags()">
-                    <span class="material-symbols-outlined">{{ allTagCategoriesExpanded() ? 'unfold_less' :
-                        'unfold_more' }}</span>
-                </button>
+                <span class="tags-total-count">{{ allTags().length }} tag{{ allTags().length !== 1 ? 's' : '' }}</span>
                 }
             </div>
         </div>
@@ -146,6 +174,18 @@
             (dragleave)="onListDragLeave($event)"
             (drop)="onListDrop($event)">
             @if (activeView() === 'folders') {
+            @if (filteredNotes().length === 0) {
+            <div class="sidebar-empty-state">
+                @if (searchQuery()) {
+                <span class="material-symbols-outlined sidebar-empty-icon">search_off</span>
+                <span class="sidebar-empty-text">No results for "{{ searchQuery() }}"</span>
+                <button class="sidebar-empty-action" (click)="clearSearch()">Clear search</button>
+                } @else {
+                <span class="material-symbols-outlined sidebar-empty-icon">note_add</span>
+                <span class="sidebar-empty-text">No notes yet</span>
+                }
+            </div>
+            } @else {
             @for (group of noteGroups(); track group.id) {
             <div class="folder-group">
                 <div class="folder-header" [class.drop-target]="dragOverFolderId() === group.id"
@@ -158,10 +198,20 @@
                     </span>
                     <span class="folder-name">{{ group.name }}</span>
                     <span class="folder-count">{{ getNotesCountForFolder(group.id) }}</span>
-                    <button class="folder-delete-btn" title="Delete folder"
-                        (click)="requestDeleteFolder(group.id, $event)">
-                        <span class="material-symbols-outlined">delete</span>
-                    </button>
+                    <div class="folder-menu-wrapper">
+                        <button class="folder-menu-btn" title="Folder options"
+                            (click)="toggleFolderMenu(group.id, $event)">
+                            <span class="material-symbols-outlined">more_horiz</span>
+                        </button>
+                        @if (activeFolderMenuId() === group.id) {
+                        <div class="folder-context-menu dropdown-menu">
+                            <button class="dropdown-item danger" (click)="requestDeleteFolder(group.id, $event)">
+                                <span class="material-symbols-outlined">delete</span>
+                                <span>Delete folder</span>
+                            </button>
+                        </div>
+                        }
+                    </div>
                 </div>
 
                 @if (group.expanded) {
@@ -169,6 +219,9 @@
                     (dragover)="onFolderDragOver(group.id, $event)"
                     (dragleave)="onFolderDragLeave($event)"
                     (drop)="onFolderDrop(group.id, $event)">
+                    @if (getBucketedNotesForFolder(group.id).length === 0) {
+                    <div class="folder-empty">No notes in this folder</div>
+                    } @else {
                     @for (bucket of getBucketedNotesForFolder(group.id); track bucket.label) {
                         <div class="time-bucket-section">
                             <div class="time-bucket-label">{{ bucket.label }}</div>
@@ -179,46 +232,59 @@
                                 (click)="selectNote(entry.id)"
                                 (dragstart)="onNoteDragStart(entry.id, $event)"
                                 (dragend)="onNoteDragEnd()">
-                                <span class="note-card-icon material-symbols-outlined">description</span>
+                                <span class="note-card-icon material-symbols-outlined">{{ isPinned(entry) ? 'push_pin' : 'description' }}</span>
                                 <div class="note-card-body">
-                                    <div class="note-card-header">
-                                        <span class="note-card-title">{{ entry.title }}</span>
-                                        <button class="note-delete-btn" title="Delete note"
-                                            (click)="requestDeleteNote(entry.id, $event)">
-                                            <span class="material-symbols-outlined">delete</span>
-                                        </button>
-                                    </div>
+                                    <span class="note-card-title">{{ entry.title }}</span>
                                     <div class="note-card-meta">
                                         <span class="note-card-time">{{ formatTime(entry.id, entry.lastEdited) }}</span>
                                         <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
                                     </div>
+                                    @if (getNoteTags(entry).length > 0) {
+                                    <div class="note-card-tags">
+                                        @for (tag of getNoteTags(entry); track tag) {
+                                        <span class="note-tag-dot" [title]="tag"></span>
+                                        }
+                                    </div>
+                                    }
+                                </div>
+                                <div class="note-card-actions">
+                                    <button class="note-pin-btn" [class.is-pinned]="isPinned(entry)"
+                                        [title]="isPinned(entry) ? 'Unpin' : 'Pin'"
+                                        (click)="togglePin(entry, $event)">
+                                        <span class="material-symbols-outlined">push_pin</span>
+                                    </button>
+                                    <button class="note-delete-btn" title="Delete note"
+                                        (click)="requestDeleteNote(entry.id, $event)">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
                                 </div>
                             </div>
                             }
                         </div>
                     }
+                    }
                 </div>
                 }
             </div>
             }
+            }
             } @else {
-            <!-- Tags View -->
-            @for (category of tagCategories(); track category.id) {
-            <div class="tag-category">
-                <div class="tag-category-header" [style.background-color]="category.color"
-                    (click)="toggleTagCategory(category.id)">
-                    <span class="material-symbols-outlined category-icon">
-                        {{ category.expanded ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                    <span class="category-name">{{ category.name }}</span>
-                </div>
-
-                @if (category.expanded) {
-                <div class="tag-items">
-                    @for (tag of category.tags; track tag) {
-                    <div class="tag-item">
-                        <span class="tag-name">{{ tag }}</span>
-                    </div>
+            <!-- Tags View — dynamic, derived from actual note tags -->
+            @if (allTags().length === 0) {
+            <div class="sidebar-empty-state">
+                <span class="material-symbols-outlined sidebar-empty-icon">label_off</span>
+                <span class="sidebar-empty-text">No tags yet</span>
+                <span class="sidebar-empty-text">Add tags to your notes to organize them</span>
+            </div>
+            } @else {
+            <div class="tags-flat-list">
+                @for (tag of allTags(); track tag.name) {
+                <div class="tag-list-item" [class.active]="selectedTag() === tag.name" (click)="selectTag(tag.name)">
+                    <span class="material-symbols-outlined tag-item-icon">label</span>
+                    <span class="tag-name">{{ tag.name }}</span>
+                    <span class="tag-note-count">{{ tag.count }}</span>
+                    @if (selectedTag() === tag.name) {
+                    <span class="material-symbols-outlined tag-item-check">check</span>
                     }
                 </div>
                 }
@@ -238,7 +304,7 @@
                 @if (getNoteById(noteId); as tabNote) {
                 <button class="editor-tab" [class.active]="selectedEntryId() === noteId"
                     [class.pinned]="isPinned(tabNote)" (click)="selectNote(noteId)">
-                    <span class="material-symbols-outlined tab-icon">description</span>
+                    <span class="material-symbols-outlined tab-icon">{{ isPinned(tabNote) ? 'push_pin' : 'description' }}</span>
                     <span class="tab-label">{{ tabNote.title }}</span>
                     <button class="tab-close" (click)="closeNoteTab(noteId, $event)" title="Close">
                         <span class="material-symbols-outlined">close</span>
@@ -248,25 +314,102 @@
                 }
             </div>
             <div class="dn-editor-actions">
-                <button class="action-btn" title="Format">
-                    <span class="material-symbols-outlined">format_size</span>
-                </button>
-                <button class="action-btn" title="Add tags">
+                <!-- Paragraph style dropdown -->
+                <div class="dropdown-wrapper">
+                    <button class="action-btn" [class.active]="showFormatMenu()" title="Paragraph style" (click)="toggleFormatMenu()">
+                        <span class="material-symbols-outlined">format_size</span>
+                    </button>
+                    @if (showFormatMenu()) {
+                    <div class="format-dropdown dropdown-menu">
+                        <button class="dropdown-item" [class.active]="editor.isActive('paragraph')" (click)="setFormat('paragraph')">
+                            <span class="material-symbols-outlined">format_paragraph</span>
+                            <span>Normal text</span>
+                        </button>
+                        <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 1})" (click)="setFormat('h1')">
+                            <span class="material-symbols-outlined">format_h1</span>
+                            <span>Heading 1</span>
+                        </button>
+                        <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 2})" (click)="setFormat('h2')">
+                            <span class="material-symbols-outlined">format_h2</span>
+                            <span>Heading 2</span>
+                        </button>
+                        <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 3})" (click)="setFormat('h3')">
+                            <span class="material-symbols-outlined">format_h3</span>
+                            <span>Heading 3</span>
+                        </button>
+                    </div>
+                    }
+                </div>
+                <button class="action-btn" title="Add tag" (click)="promptAddTag()">
                     <span class="material-symbols-outlined">label</span>
-                </button>
-                <button class="action-btn" title="Share" (click)="shareNote()">
-                    <span class="material-symbols-outlined">share</span>
                 </button>
                 <button class="action-btn" title="Export" (click)="exportNote()">
                     <span class="material-symbols-outlined">download</span>
                 </button>
+                <!-- Note info dropdown -->
+                <div class="dropdown-wrapper">
+                    <button class="action-btn" [class.active]="showInfoMenu()" title="Note info" (click)="toggleInfoMenu()">
+                        <span class="material-symbols-outlined">info</span>
+                    </button>
+                    @if (showInfoMenu()) {
+                    <div class="info-dropdown dropdown-menu">
+                        <div class="info-dropdown-title">Note info</div>
+                        <div class="info-row">
+                            <span class="material-symbols-outlined info-icon">calendar_today</span>
+                            <span class="info-label">Created</span>
+                            <span class="info-value">{{ note.date }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="material-symbols-outlined info-icon">schedule</span>
+                            <span class="info-label">Time</span>
+                            <span class="info-value">{{ formatTime(note.id, note.lastEdited) }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="material-symbols-outlined info-icon">edit_note</span>
+                            <span class="info-label">Last edited</span>
+                            <span class="info-value">{{ note.lastEdited || 'today' }}</span>
+                        </div>
+                        <div class="info-divider"></div>
+                        <div class="info-row">
+                            <span class="material-symbols-outlined info-icon">article</span>
+                            <span class="info-label">Words</span>
+                            <span class="info-value">{{ wordCount() }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="material-symbols-outlined info-icon">text_fields</span>
+                            <span class="info-label">Characters</span>
+                            <span class="info-value">{{ characterCount() }}</span>
+                        </div>
+                        <div class="info-divider"></div>
+                        <div class="info-row info-save-status">
+                            <span class="material-symbols-outlined info-icon saved">cloud_done</span>
+                            <span class="info-value saved">All changes saved</span>
+                        </div>
+                    </div>
+                    }
+                </div>
                 <div class="action-divider"></div>
                 <button class="action-btn danger" title="Delete" (click)="deleteCurrentNote()">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
-                <button class="action-btn" title="More options" (click)="showMoreOptions()">
-                    <span class="material-symbols-outlined">more_horiz</span>
-                </button>
+                <!-- More options dropdown -->
+                <div class="dropdown-wrapper">
+                    <button class="action-btn" [class.active]="showMoreOptionsMenu()" title="More options" (click)="toggleMoreOptions()">
+                        <span class="material-symbols-outlined">more_horiz</span>
+                    </button>
+                    @if (showMoreOptionsMenu()) {
+                    <div class="more-options-dropdown dropdown-menu">
+                        <button class="dropdown-item" (click)="togglePin(note, $event); toggleMoreOptions()">
+                            <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
+                            <span>{{ isPinned(note) ? 'Unpin note' : 'Pin note' }}</span>
+                        </button>
+                        <button class="dropdown-item" (click)="duplicateNote(note); toggleMoreOptions()">
+                            <span class="material-symbols-outlined">content_copy</span>
+                            <span>Duplicate note</span>
+                        </button>
+                    </div>
+                    }
+                </div>
             </div>
         </div>
 
@@ -375,7 +518,7 @@
                     <span class="material-symbols-outlined">redo</span>
                     <span>Redo</span>
                 </button>
-                <button class="toolbar-action-btn primary" (click)="closeNoteTab(note.id)">
+                <button class="toolbar-action-btn primary" (click)="editor.commands.blur()">
                     <span class="material-symbols-outlined">check</span>
                     <span>Done</span>
                 </button>
@@ -389,7 +532,7 @@
                 <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
                     (ngModelChange)="updateNoteTitle($event)" placeholder="Note title..." />
 
-                @if (getNoteTags(note).length > 0) {
+                <!-- Tags section — always visible so users can always add tags -->
                 <div class="editor-tags-section">
                     @for (tag of getNoteTags(note); track tag) {
                     <span class="editor-tag-chip">
@@ -405,7 +548,6 @@
                         Add tag
                     </button>
                 </div>
-                }
 
                 <tiptap-bubble-menu [editor]="editor">
                     <div class="bubble-menu">
@@ -444,11 +586,11 @@
                     <div class="floating-menu">
                         <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
                             [class.active]="editor.isActive('heading', { level: 1 })">
-                            H1
+                            <span class="material-symbols-outlined">format_h1</span>
                         </button>
                         <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
                             [class.active]="editor.isActive('heading', { level: 2 })">
-                            H2
+                            <span class="material-symbols-outlined">format_h2</span>
                         </button>
                         <button class="float-btn" (click)="editor.chain().focus().toggleBulletList().run()"
                             [class.active]="editor.isActive('bulletList')">
@@ -474,37 +616,6 @@
             </div>
         </div>
 
-        <!-- Editor Footer -->
-        <div class="dn-editor-footer">
-            <div class="footer-left">
-                <span class="footer-meta-item">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    <span>{{ note.date }}</span>
-                </span>
-                <span class="footer-meta-item">
-                    <span class="material-symbols-outlined">schedule</span>
-                    <span>09:15 AM</span>
-                </span>
-                <span class="footer-meta-item">
-                    <span class="material-symbols-outlined">edit_note</span>
-                    <span>Last edited {{ note.lastEdited || 'today' }}</span>
-                </span>
-            </div>
-            <div class="footer-right">
-                <span class="footer-meta-item">
-                    <span class="material-symbols-outlined">article</span>
-                    <span>{{ wordCount() }} words</span>
-                </span>
-                <span class="footer-meta-item">
-                    <span class="material-symbols-outlined">text_fields</span>
-                    <span>{{ characterCount() }} characters</span>
-                </span>
-                <span class="save-status">
-                    <span class="material-symbols-outlined status-icon">cloud_done</span>
-                    All changes saved
-                </span>
-            </div>
-        </div>
         } @else {
         <div class="dn-empty-wrap">
             <env-empty-state

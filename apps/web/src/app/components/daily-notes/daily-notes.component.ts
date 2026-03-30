@@ -35,13 +35,6 @@ interface NoteGroup {
   noteIds: string[];
 }
 
-interface TagCategory {
-  id: string;
-  name: string;
-  color: string;
-  expanded: boolean;
-  tags: string[];
-}
 
 @Component({
   selector: 'app-daily-notes',
@@ -62,18 +55,18 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   characterCount = signal(0);
 
   // Modal State
-  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'delete-folder-confirm' | 'share' | 'export' | 'youtube'>('none');
+  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'delete-folder-confirm' | 'export' | 'youtube'>('none');
   modalInputValue = signal<string>('');
   modalInputPlaceholder = signal<string>('');
   modalTitle = signal<string>('');
-  tempNoteId = signal<string>(''); // For storing ID during confirmation flow
-  tempFolderId = signal<string>(''); // For storing Folder ID during confirmation flow
-
+  tempNoteId = signal<string>('');
+  tempFolderId = signal<string>('');
 
   selectedEntryId = signal<string>('');
   searchQuery = signal<string>('');
-  selectedFilter = signal<string>('all'); // all, pinned, tagged, archived
-  activeView = signal<'folders' | 'tags'>('folders'); // Track active sidebar view
+  selectedFilter = signal<string>('all');
+  selectedTag = signal<string>('');
+  activeView = signal<'folders' | 'tags'>('folders');
 
   // Track open notes as tabs
   openNotes = signal<string[]>([]);
@@ -81,20 +74,30 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   // Note groups for organization (synced from store so they persist across reloads)
   noteGroups = signal<NoteGroup[]>([]);
 
-  // Tag categories with colors
-  tagCategories = signal<TagCategory[]>([
-    { id: 'meta', name: '00 Meta', color: '#d89090', expanded: true, tags: ['Planning', 'Review', 'Goals'] },
-    { id: 'life', name: '10 Life', color: '#e8a87c', expanded: false, tags: ['Health', 'Family', 'Personal'] },
-    { id: 'it', name: '20 IT', color: '#f4e89c', expanded: false, tags: ['Programming', 'DevOps', 'Learning'] },
-    { id: 'hobbies', name: '30 Hobbies', color: '#a8d5a8', expanded: false, tags: ['Reading', 'Music', 'Art'] },
-    { id: 'devsystems', name: '50 DevO Systems', color: '#7eb3d4', expanded: false, tags: ['Architecture', 'Design', 'Tools'] },
-    { id: 'unsorted', name: 'Unsorted', color: '#b8d8e8', expanded: false, tags: ['Hippotology', 'Random', 'Misc'] },
-  ]);
+  // All unique tags derived dynamically from notes — sorted by usage count desc, then alpha
+  allTags = computed(() => {
+    const tagMap = new Map<string, number>();
+    for (const note of this.notes()) {
+      for (const tag of note.tags ?? []) {
+        if (tag === 'pinned') continue;
+        tagMap.set(tag, (tagMap.get(tag) ?? 0) + 1);
+      }
+    }
+    return [...tagMap.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  });
 
   showDropdown = signal<boolean>(false);
-  /** Folder id currently being dragged over (for drop target styling) */
+  showMoreOptionsMenu = signal<boolean>(false);
+  showFormatMenu = signal<boolean>(false);
+  showInfoMenu = signal<boolean>(false);
+  activeFolderMenuId = signal<string | null>(null);
+
+  pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
+  taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
+
   dragOverFolderId = signal<string | null>(null);
-  /** Note id being dragged */
   draggingNoteId = signal<string | null>(null);
 
   private readonly SELECTION_KEY = 'envello-daily-notes-selection';
@@ -105,31 +108,33 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const m = this.activeModal();
     if (m === 'delete-confirm') return 'Delete Note';
     if (m === 'delete-folder-confirm') return 'Delete Folder';
-    if (m === 'share') return 'Share Note';
     if (m === 'export') return 'Export Note';
     return '';
   });
 
-  // Computed filtered notes
+  // Computed filtered notes — search + filter + tag
   filteredNotes = computed(() => {
     let list = this.notes();
     const query = this.searchQuery().toLowerCase();
     const filter = this.selectedFilter();
+    const tag = this.selectedTag();
 
-    // Apply search filter
     if (query) {
       list = list.filter(note =>
         note.title.toLowerCase().includes(query) ||
         note.preview.toLowerCase().includes(query) ||
-        note.tags?.some(tag => tag.toLowerCase().includes(query))
+        note.tags?.some(t => t.toLowerCase().includes(query))
       );
     }
 
-    // Apply category filter
     if (filter === 'pinned') {
       list = list.filter(note => note.tags?.includes('pinned'));
     } else if (filter === 'tagged') {
       list = list.filter(note => note.tags && note.tags.length > 0);
+    }
+
+    if (tag) {
+      list = list.filter(note => note.tags?.includes(tag));
     }
 
     return list;
@@ -145,7 +150,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return this.noteGroups().some((g) => g.id === fid) ? fid : firstFolderId;
   }
 
-  /** Notes in a folder (filtered by folderId); notes without folderId or orphaned go to first folder */
   getBucketedNotesForFolder(folderId: string): { label: string; notes: Note[] }[] {
     const inFolder = this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId);
     return this.getBucketedNotes(inFolder);
@@ -173,7 +177,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       older: [] as Note[]
     };
 
-    // Sort notes newest to oldest first
     const sortedNotes = [...notes].sort((a, b) => {
       let aTime = parseInt(a.id, 10);
       let bTime = parseInt(b.id, 10);
@@ -193,7 +196,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           noteDate = new Date();
         }
       }
-      
+
       const timeOnly = new Date(noteDate);
       timeOnly.setHours(0, 0, 0, 0);
 
@@ -225,7 +228,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (!isNaN(timestamp) && timestamp > 1000000000000) {
       return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     }
-    return lastEdited || '12:00 PM';
+    return lastEdited || '—';
   }
 
   getPreviewText(preview: string): string {
@@ -243,36 +246,25 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   });
 
   selectedNote = computed(() => {
-    // If no tabs are open, return null to show empty state
-    if (this.openNotes().length === 0) {
-      return null;
-    }
+    if (this.openNotes().length === 0) return null;
 
-    const list = this.filteredNotes();
-    if (list.length === 0) {
-      return null;
-    }
+    // Use all notes (not filteredNotes) so the editor keeps showing
+    // even when a sidebar filter is active that would exclude this note.
+    const allNotes = this.notes();
+    if (allNotes.length === 0) return null;
 
-    // Only return a note if it's in the open tabs
     const selectedId = this.selectedEntryId();
     if (!selectedId) {
-      // If no selection but tabs are open, select the first open tab
       const firstOpenId = this.openNotes()[0];
-      return list.find(n => n.id === firstOpenId) || null;
+      return allNotes.find(n => n.id === firstOpenId) || null;
     }
 
-    const found = list.find(n => n.id === selectedId);
-    // Only return if the note is in open tabs
-    if (found && this.openNotes().includes(found.id)) {
-      return found;
-    }
-
+    const found = allNotes.find(n => n.id === selectedId);
+    if (found && this.openNotes().includes(found.id)) return found;
     return null;
   });
 
   constructor() {
-    // Sync folder list from store (persisted); preserves expanded state when store updates.
-    // Use untracked for noteGroups so we only re-run when noteFolders changes (avoids infinite loop).
     effect(() => {
       const folders = this.store.noteFolders();
       if (folders.length === 0) return;
@@ -289,12 +281,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       this.noteGroups.set(next);
     });
 
-    // Restore or initialize selection when notes load
     effect(() => {
       const notes = this.notes();
       if (notes.length === 0) return;
-      const selectedId = this.selectedEntryId();
-      const openIds = this.openNotes();
+      // Use untracked so opening/closing tabs does NOT re-trigger this effect.
+      // Without untracked, closing the last tab causes hasValidTabs=false,
+      // which bypasses the guard and re-opens the note from stale localStorage.
+      const selectedId = untracked(() => this.selectedEntryId());
+      const openIds = untracked(() => this.openNotes());
       const noteIds = new Set(notes.map((n) => n.id));
       const hasValidSelection = selectedId && noteIds.has(selectedId);
       const hasValidTabs = openIds.length > 0 && openIds.some((id) => noteIds.has(id));
@@ -310,7 +304,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       this.store.loadNoteContent(validSelected);
     });
 
-    // Persist selection when it changes
     effect(() => {
       const selectedId = this.selectedEntryId();
       const openIds = this.openNotes();
@@ -318,12 +311,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       this.saveSelectionToStorage(selectedId, openIds);
     });
 
-    // Effect to update editor content when selected note changes
     effect(() => {
       const note = this.selectedNote();
       if (note && this.editor) {
-        // Only update if content is different to avoid cursor jumps
-        // use default '' if content undefined
         const content = note.content || '';
         if (this.editor.getHTML() !== content) {
           this.editor.commands.setContent(content);
@@ -344,52 +334,37 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.editor = new Editor({
       extensions: [
         StarterKit.configure({
-          codeBlock: false, // We use CodeBlockLowlight
+          codeBlock: false,
         }),
         Placeholder.configure({
           placeholder: 'Press \'/\' for commands...',
         }),
         BubbleMenu.configure({
           pluginKey: 'bubbleMenu',
-          shouldShow: ({ editor, view, state, from, to }) => {
-            // Only show if selection is not empty and editor is editable
-            // Also check if not in a table (optional for some menus)
+          shouldShow: ({ editor }) => {
             return !editor.view.state.selection.empty && editor.isEditable;
           },
         }),
         FloatingMenu.configure({
           pluginKey: 'floatingMenu',
-          shouldShow: ({ editor, view, state }) => {
-            // Show on empty lines
+          shouldShow: ({ editor }) => {
             return editor.isActive('paragraph') && editor.state.selection.$from.parent.content.size === 0;
           },
         }),
-        Link.configure({
-          openOnClick: false,
-        }),
+        Link.configure({ openOnClick: false }),
         Image,
         TaskList,
-        TaskItem.configure({
-          nested: true,
-        }),
+        TaskItem.configure({ nested: true }),
         CharacterCount,
         Underline,
         Highlight.configure({ multicolor: true }),
-        TextAlign.configure({
-          types: ['heading', 'paragraph'],
-        }),
-        Table.configure({
-          resizable: true,
-        }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        Table.configure({ resizable: true }),
         TableRow,
         TableHeader,
         TableCell,
-        Youtube.configure({
-          controls: true,
-        }),
-        CodeBlockLowlight.configure({
-          lowlight: createLowlight(common),
-        }),
+        Youtube.configure({ controls: true }),
+        CodeBlockLowlight.configure({ lowlight: createLowlight(common) }),
       ],
       editorProps: {
         attributes: {
@@ -401,7 +376,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         const plainText = editor.getText();
         const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
         this.updateNoteContent(content, preview);
-
         this.wordCount.set(editor.storage.characterCount.words());
         this.characterCount.set(editor.storage.characterCount.characters());
       },
@@ -521,10 +495,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   selectNote(id: string) {
     this.selectedEntryId.set(id);
-    // Trigger lazy load from file system
     this.store.loadNoteContent(id);
-
-    // Add to open notes if not already open
     if (!this.openNotes().includes(id)) {
       this.openNotes.update(tabs => [...tabs, id]);
     }
@@ -536,8 +507,32 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     );
   }
 
+  clearSearch() {
+    this.searchQuery.set('');
+  }
+
+  toggleFolderMenu(folderId: string, event: Event) {
+    event.stopPropagation();
+    this.activeFolderMenuId.set(this.activeFolderMenuId() === folderId ? null : folderId);
+  }
+
+  getCategoryTextColor(hexColor: string): string {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.9)';
+  }
+
   setFilter(filter: string) {
     this.selectedFilter.set(filter);
+    this.selectedTag.set('');
+  }
+
+  selectTag(tag: string) {
+    this.selectedTag.set(this.selectedTag() === tag ? '' : tag);
+    this.selectedFilter.set('all');
   }
 
   isPinned(note: Note): boolean {
@@ -546,8 +541,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   togglePin(note: Note, event: Event) {
     event.stopPropagation();
-    // This would update the note's tags in the store
-    // For now, just a placeholder
+    const tags = note.tags || [];
+    const pinned = tags.includes('pinned');
+    this.store.updateNote(note.id, {
+      tags: pinned ? tags.filter(t => t !== 'pinned') : [...tags, 'pinned']
+    });
   }
 
   getNoteTags(note: Note): string[] {
@@ -555,19 +553,57 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   expandAll() {
-    this.noteGroups.update(groups =>
-      groups.map(g => ({ ...g, expanded: true }))
-    );
+    this.noteGroups.update(groups => groups.map(g => ({ ...g, expanded: true })));
   }
 
   collapseAll() {
-    this.noteGroups.update(groups =>
-      groups.map(g => ({ ...g, expanded: false }))
-    );
+    this.noteGroups.update(groups => groups.map(g => ({ ...g, expanded: false })));
   }
 
   toggleDropdown() {
     this.showDropdown.update(show => !show);
+  }
+
+  toggleMoreOptions() {
+    this.showMoreOptionsMenu.update(v => !v);
+    if (this.showFormatMenu()) this.showFormatMenu.set(false);
+    if (this.showInfoMenu()) this.showInfoMenu.set(false);
+  }
+
+  toggleInfoMenu() {
+    this.showInfoMenu.update(v => !v);
+    if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
+    if (this.showFormatMenu()) this.showFormatMenu.set(false);
+  }
+
+  toggleFormatMenu() {
+    this.showFormatMenu.update(v => !v);
+    if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
+  }
+
+  setFormat(type: 'paragraph' | 'h1' | 'h2' | 'h3') {
+    if (!this.editor) return;
+    if (type === 'paragraph') {
+      this.editor.chain().focus().setParagraph().run();
+    } else {
+      const level = parseInt(type.slice(1), 10) as 1 | 2 | 3;
+      this.editor.chain().focus().toggleHeading({ level }).run();
+    }
+    this.showFormatMenu.set(false);
+  }
+
+  duplicateNote(note: Note) {
+    const duplicate: Note = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      title: `${note.title} (copy)`,
+      preview: note.preview,
+      content: note.content,
+      tags: [...(note.tags || [])],
+      folderId: note.folderId,
+    };
+    this.store.addNote(duplicate);
+    this.selectNote(duplicate.id);
   }
 
   handleNewFolder() {
@@ -583,33 +619,21 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const id = folderName.toLowerCase().replace(/\s+/g, '-');
       const folder = { id, name: folderName, icon: 'folder' };
       this.store.addNoteFolder(folder);
-      // noteGroups will update via effect when noteFolders() changes
     }
     this.closeModal();
   }
 
   toggleExpandAll() {
     const shouldExpand = !this.allExpanded();
-    this.noteGroups.update(groups =>
-      groups.map(g => ({ ...g, expanded: shouldExpand }))
-    );
+    this.noteGroups.update(groups => groups.map(g => ({ ...g, expanded: shouldExpand })));
   }
 
   closeNoteTab(noteId: string, event?: Event) {
-    if (event) {
-      event.stopPropagation();
-    }
-
+    if (event) event.stopPropagation();
     this.openNotes.update(tabs => tabs.filter(id => id !== noteId));
-
-    // If closing the active note, switch to another open note
     if (this.selectedEntryId() === noteId) {
       const remainingTabs = this.openNotes();
-      if (remainingTabs.length > 0) {
-        this.selectedEntryId.set(remainingTabs[remainingTabs.length - 1]);
-      } else {
-        this.selectedEntryId.set('');
-      }
+      this.selectedEntryId.set(remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1] : '');
     }
   }
 
@@ -620,33 +644,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    const dropdownWrapper = target.closest('.dropdown-wrapper');
-
-    // Close dropdown if clicking outside
-    if (!dropdownWrapper && this.showDropdown()) {
-      this.showDropdown.set(false);
+    if (!target.closest('.dropdown-wrapper')) {
+      if (this.showDropdown()) this.showDropdown.set(false);
+      if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
+      if (this.showFormatMenu()) this.showFormatMenu.set(false);
+      if (this.showInfoMenu()) this.showInfoMenu.set(false);
+    }
+    if (!target.closest('.folder-menu-wrapper')) {
+      if (this.activeFolderMenuId()) this.activeFolderMenuId.set(null);
     }
   }
 
   switchView(view: 'folders' | 'tags') {
     this.activeView.set(view);
-  }
-
-  toggleTagCategory(categoryId: string) {
-    this.tagCategories.update(categories =>
-      categories.map(c => c.id === categoryId ? { ...c, expanded: !c.expanded } : c)
-    );
-  }
-
-  allTagCategoriesExpanded = computed(() => {
-    return this.tagCategories().every(c => c.expanded);
-  });
-
-  toggleExpandAllTags() {
-    const shouldExpand = !this.allTagCategoriesExpanded();
-    this.tagCategories.update(categories =>
-      categories.map(c => ({ ...c, expanded: shouldExpand }))
-    );
   }
 
   updateNoteTitle(title: string) {
@@ -726,16 +736,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   confirmAddTag() {
     const tag = this.modalInputValue();
-    if (tag) {
-      this.addTag(tag);
-    }
+    if (tag) this.addTag(tag);
     this.closeModal();
   }
 
   setLink() {
     if (!this.editor) return;
     const previousUrl = this.editor.getAttributes('link')['href'];
-
     this.modalTitle.set('Insert Link');
     this.modalInputPlaceholder.set('https://example.com');
     this.modalInputValue.set(previousUrl || '');
@@ -752,17 +759,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.closeModal();
   }
 
-  shareNote() {
-    this.activeModal.set('share');
-  }
-
   exportNote() {
     this.activeModal.set('export');
-  }
-
-  showMoreOptions() {
-    // This would toggle a dropdown menu
-    console.log('Show more options');
   }
 
   addImage() {
@@ -772,8 +770,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.modalInputValue.set('');
     this.activeModal.set('image');
   }
-
-  shareBtnText = signal('Copy');
 
   addYoutube() {
     if (!this.editor) return;
@@ -785,10 +781,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   confirmAddYoutube() {
     const url = this.modalInputValue();
-    if (url) {
-      if (this.editor) {
-        this.editor.commands.setYoutubeVideo({ src: url });
-      }
+    if (url && this.editor) {
+      this.editor.commands.setYoutubeVideo({ src: url });
     }
     this.closeModal();
   }
@@ -799,35 +793,26 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   confirmAddImage() {
     const url = this.modalInputValue();
-    if (url) {
-      if (this.editor) {
-        this.editor.chain().focus().setImage({ src: url }).run();
-      }
+    if (url && this.editor) {
+      this.editor.chain().focus().setImage({ src: url }).run();
     }
     this.closeModal();
-  }
-
-  copyShareLink() {
-    const url = `https://envello.app/notes/share/${this.selectedEntryId()}`;
-    navigator.clipboard.writeText(url).then(() => {
-      this.shareBtnText.set('Copied!');
-      setTimeout(() => this.shareBtnText.set('Copy'), 2000);
-    });
   }
 
   async downloadExport(format: 'pdf' | 'md' | 'html') {
     const content = this.editor?.getHTML() || '';
     const title = this.selectedNote()?.title || 'note';
-    const filename = `${title.toLowerCase().replace(/\s+/g, '-')}`;
+    const filename = title.toLowerCase().replace(/\s+/g, '-');
 
     if (this.tauriService.isTauri() && (format === 'html' || format === 'md')) {
       const ext = format === 'html' ? 'html' : 'md';
+      const exportContent = format === 'md' ? this.htmlToMarkdown(content) : content;
       const path = await this.tauriService.saveFile({
         defaultPath: `${filename}.${ext}`,
         filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
       });
       if (path) {
-        await this.tauriService.writeTextFile(path, content);
+        await this.tauriService.writeTextFile(path, exportContent);
       }
       this.closeModal();
       return;
@@ -837,17 +822,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const blob = new Blob([content], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.html`;
-      a.click();
+      a.href = url; a.download = `${filename}.html`; a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'md') {
-      const blob = new Blob([content], { type: 'text/markdown' });
+      const md = this.htmlToMarkdown(content);
+      const blob = new Blob([md], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.md`;
-      a.click();
+      a.href = url; a.download = `${filename}.md`; a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'pdf') {
       window.print();
@@ -860,5 +842,67 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.modalInputValue.set('');
     this.tempNoteId.set('');
     this.tempFolderId.set('');
+  }
+
+  // ─── HTML → Markdown conversion ─────────────────────────────────────────────
+
+  private htmlToMarkdown(html: string): string {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return this.convertNode(div).replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  private convertNode(node: Node): string {
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+    const el = node as HTMLElement;
+    const inner = () => Array.from(el.childNodes).map(n => this.convertNode(n)).join('');
+
+    switch (el.tagName) {
+      case 'H1': return `\n# ${inner().trim()}\n`;
+      case 'H2': return `\n## ${inner().trim()}\n`;
+      case 'H3': return `\n### ${inner().trim()}\n`;
+      case 'H4': return `\n#### ${inner().trim()}\n`;
+      case 'P':  return `\n${inner()}\n`;
+      case 'STRONG': case 'B': return `**${inner()}**`;
+      case 'EM': case 'I':     return `*${inner()}*`;
+      case 'S':                return `~~${inner()}~~`;
+      case 'U':                return `<u>${inner()}</u>`;
+      case 'MARK':             return `==${inner()}==`;
+      case 'CODE':
+        return el.closest('pre') ? inner() : `\`${inner()}\``;
+      case 'PRE':
+        return `\n\`\`\`\n${inner()}\n\`\`\`\n`;
+      case 'BLOCKQUOTE':
+        return inner().trim().split('\n').map(l => `> ${l}`).join('\n') + '\n';
+      case 'UL': case 'OL':
+        return inner() + '\n';
+      case 'LI': {
+        const isTask = el.getAttribute('data-type') === 'taskItem';
+        if (isTask) {
+          const checked = el.getAttribute('data-checked') === 'true';
+          const contentDiv = el.querySelector('div');
+          const text = (contentDiv ? this.convertNode(contentDiv) : inner()).replace(/^\n|\n$/g, '');
+          return `- [${checked ? 'x' : ' '}] ${text}\n`;
+        }
+        const content = inner().replace(/^\n|\n$/g, '');
+        if (el.parentElement?.tagName === 'OL') {
+          const idx = Array.from(el.parentElement.children).indexOf(el) + 1;
+          return `${idx}. ${content}\n`;
+        }
+        return `- ${content}\n`;
+      }
+      case 'LABEL':
+        // Skip checkbox labels inside task items
+        return el.querySelector('input[type="checkbox"]') ? '' : inner();
+      case 'A':
+        return `[${inner()}](${el.getAttribute('href') ?? ''})`;
+      case 'IMG':
+        return `![${el.getAttribute('alt') ?? ''}](${el.getAttribute('src') ?? ''})`;
+      case 'BR': return '\n';
+      case 'HR': return '\n---\n';
+      default:   return inner();
+    }
   }
 }
