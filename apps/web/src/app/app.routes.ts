@@ -99,6 +99,18 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'vault',
+    loadComponent: () => import('./components/vault/vault.component').then(m => m.VaultComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'subscriptions',
+    loadComponent: () => import('./components/vendor/vendor.component').then(m => m.VendorComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'not-found',
     loadComponent: () => import('./components/errors/not-found/not-found.component').then(m => m.NotFoundComponent),
     data: { hasSidebar: false },
