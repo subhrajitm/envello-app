@@ -60,6 +60,13 @@ export class SubscriptionStore {
         );
     }
 
+    async updateSubscription(id: string, changes: Partial<Subscription>) {
+        const existing = this.subscriptions().find(s => s.id === id);
+        if (!existing) return;
+        await this.db.saveSubscription({ ...existing, ...changes });
+        await this.loadSubscriptions();
+    }
+
     async deleteSubscription(id: string) {
         await this.db.deleteSubscription(id);
         await this.loadSubscriptions();

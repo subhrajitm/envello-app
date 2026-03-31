@@ -38,6 +38,29 @@ export class VaultStore {
         );
     }
 
+    async updateCredential(id: string, changes: Partial<Credential> & { newUnencryptedValue?: string }) {
+        const existing = this.credentials().find(c => c.id === id);
+        if (!existing) return;
+        const { newUnencryptedValue, ...rest } = changes;
+        const updated: Credential = {
+            ...existing,
+            ...rest,
+            updatedAt: new Date().toISOString(),
+        };
+        if (newUnencryptedValue) {
+            updated.value = EncryptionUtil.encrypt(newUnencryptedValue);
+        }
+        await this.db.saveCredential(updated);
+        await this.loadCredentials();
+    }
+
+    async touchCredential(id: string) {
+        const existing = this.credentials().find(c => c.id === id);
+        if (!existing) return;
+        await this.db.saveCredential({ ...existing, lastAccessedAt: new Date().toISOString() });
+        await this.loadCredentials();
+    }
+
     async deleteCredential(id: string) {
         await this.db.deleteCredential(id);
         await this.loadCredentials();

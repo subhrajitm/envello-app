@@ -154,9 +154,14 @@ export interface Credential {
     name: string;
     type: 'login' | 'api_key' | 'ssh' | 'db' | 'note';
     value: string; // encrypted string
+    username?: string;
+    url?: string;
+    notes?: string;
     projectId?: string;
     createdAt: string;
     createdBy?: string;
+    updatedAt?: string;
+    lastAccessedAt?: string;
 }
 
 export interface Subscription {
@@ -166,6 +171,8 @@ export interface Subscription {
     price: number;
     billingCycle: 'monthly' | 'yearly';
     renewalDate: string;
+    status?: 'active' | 'paused' | 'cancelled';
+    currency?: string;
     ownerId?: string;
     projectId?: string;
     notes?: string;
