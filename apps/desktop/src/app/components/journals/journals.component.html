@@ -350,76 +350,75 @@
                     <!-- Toolbar -->
                     @if (editor) {
                     <div class="formatting-toolbar">
-                        <div class="toolbar-group">
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()"
-                                [class.active]="editor.isActive('bold')" title="Bold">
-                                <span class="material-symbols-outlined">format_bold</span>
+                        <!-- Text Settings -->
+                        <div class="toolbar-dropdown group relative z-50 flex items-center">
+                            <button class="toolbar-btn flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[18px]">text_format</span>
+                                <span class="text-[11px] font-semibold">Text</span>
+                                <span class="material-symbols-outlined text-[14px]">expand_more</span>
                             </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()"
-                                [class.active]="editor.isActive('italic')" title="Italic">
-                                <span class="material-symbols-outlined">format_italic</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleUnderline().run()"
-                                [class.active]="editor.isActive('underline')" title="Underline">
-                                <span class="material-symbols-outlined">format_underlined</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleHighlight().run()"
-                                [class.active]="editor.isActive('highlight')" title="Highlight">
-                                <span class="material-symbols-outlined">ink_highlighter</span>
-                            </button>
+                            <div class="dropdown-content absolute top-full left-0 mt-1 hidden group-hover:flex flex-row flex-wrap w-[260px] bg-[var(--bg-panel)] border border-[var(--border-subtle)] rounded-md shadow-lg p-2 gap-1">
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleBold().run()" [class.active]="editor.isActive('bold')" title="Bold">
+                                    <span class="material-symbols-outlined">format_bold</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleItalic().run()" [class.active]="editor.isActive('italic')" title="Italic">
+                                    <span class="material-symbols-outlined">format_italic</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleUnderline().run()" [class.active]="editor.isActive('underline')" title="Underline">
+                                    <span class="material-symbols-outlined">format_underlined</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleHighlight().run()" [class.active]="editor.isActive('highlight')" title="Highlight">
+                                    <span class="material-symbols-outlined">ink_highlighter</span>
+                                </button>
+                                <div class="w-[1px] bg-[var(--border-subtle)] mx-1 h-6 self-center"></div>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('left').run()" [class.active]="editor.isActive({ textAlign: 'left' })" title="Align Left">
+                                    <span class="material-symbols-outlined">format_align_left</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('center').run()" [class.active]="editor.isActive({ textAlign: 'center' })" title="Align Center">
+                                    <span class="material-symbols-outlined">format_align_center</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('right').run()" [class.active]="editor.isActive({ textAlign: 'right' })" title="Align Right">
+                                    <span class="material-symbols-outlined">format_align_right</span>
+                                </button>
+                                <div class="w-[1px] bg-[var(--border-subtle)] mx-1 h-6 self-center"></div>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()" [class.active]="editor.isActive('heading', { level: 1 })" title="H1">
+                                    <span class="material-symbols-outlined">format_h1</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()" [class.active]="editor.isActive('heading', { level: 2 })" title="H2">
+                                    <span class="material-symbols-outlined">format_h2</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleBulletList().run()" [class.active]="editor.isActive('bulletList')" title="Bullet list">
+                                    <span class="material-symbols-outlined">format_list_bulleted</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleOrderedList().run()" [class.active]="editor.isActive('orderedList')" title="Numbered list">
+                                    <span class="material-symbols-outlined">format_list_numbered</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="editor.chain().focus().toggleTaskList().run()" [class.active]="editor.isActive('taskList')" title="Checklist">
+                                    <span class="material-symbols-outlined">check_box</span>
+                                </button>
+                            </div>
                         </div>
+
                         <div class="toolbar-divider"></div>
-                        <div class="toolbar-group">
-                            <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('left').run()"
-                                [class.active]="editor.isActive({ textAlign: 'left' })" title="Align Left">
-                                <span class="material-symbols-outlined">format_align_left</span>
+
+                        <!-- Media Settings -->
+                        <div class="toolbar-dropdown group relative z-50 flex items-center">
+                            <button class="toolbar-btn flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[18px]">perm_media</span>
+                                <span class="text-[11px] font-semibold">Media</span>
+                                <span class="material-symbols-outlined text-[14px]">expand_more</span>
                             </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('center').run()"
-                                [class.active]="editor.isActive({ textAlign: 'center' })" title="Align Center">
-                                <span class="material-symbols-outlined">format_align_center</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().setTextAlign('right').run()"
-                                [class.active]="editor.isActive({ textAlign: 'right' })" title="Align Right">
-                                <span class="material-symbols-outlined">format_align_right</span>
-                            </button>
-                        </div>
-                        <div class="toolbar-divider"></div>
-                        <div class="toolbar-group">
-                            <button class="toolbar-btn"
-                                (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-                                [class.active]="editor.isActive('heading', { level: 1 })" title="H1">
-                                <span class="material-symbols-outlined">format_h1</span>
-                            </button>
-                            <button class="toolbar-btn"
-                                (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                                [class.active]="editor.isActive('heading', { level: 2 })" title="H2">
-                                <span class="material-symbols-outlined">format_h2</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleBulletList().run()"
-                                [class.active]="editor.isActive('bulletList')" title="Bullet list">
-                                <span class="material-symbols-outlined">format_list_bulleted</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleOrderedList().run()"
-                                [class.active]="editor.isActive('orderedList')" title="Numbered list">
-                                <span class="material-symbols-outlined">format_list_numbered</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="editor.chain().focus().toggleTaskList().run()"
-                                [class.active]="editor.isActive('taskList')" title="Checklist">
-                                <span class="material-symbols-outlined">check_box</span>
-                            </button>
-                        </div>
-                        <div class="toolbar-divider"></div>
-                        <div class="toolbar-group">
-                            <button class="toolbar-btn" (click)="setLink()" [class.active]="editor.isActive('link')"
-                                title="Link">
-                                <span class="material-symbols-outlined">link</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="addImage()" title="Image">
-                                <span class="material-symbols-outlined">image</span>
-                            </button>
-                            <button class="toolbar-btn" (click)="insertTable()" title="Table">
-                                <span class="material-symbols-outlined">table</span>
-                            </button>
+                            <div class="dropdown-content absolute top-full left-0 mt-1 hidden group-hover:flex flex-row bg-[var(--bg-panel)] border border-[var(--border-subtle)] rounded-md shadow-lg p-2 gap-1 min-w-max">
+                                <button class="toolbar-btn" (click)="setLink()" [class.active]="editor.isActive('link')" title="Link">
+                                    <span class="material-symbols-outlined">link</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="addImage()" title="Image">
+                                    <span class="material-symbols-outlined">image</span>
+                                </button>
+                                <button class="toolbar-btn" (click)="insertTable()" title="Table">
+                                    <span class="material-symbols-outlined">table</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     }
