@@ -1,34 +1,11 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { SubscriptionStore } from '@envello/state';
-import { Subscription } from '@envello/domain';
+const fs = require('fs');
+const file = 'apps/web/src/app/components/vendor/vendor.component.ts';
+let content = fs.readFileSync(file, 'utf8');
 
-const CATEGORY_COLORS: Record<string, string> = {
-    software:    '#60a5fa',
-    infrastructure: '#a78bfa',
-    design:      '#f472b6',
-    marketing:   '#4ade80',
-    security:    '#fb923c',
-    analytics:   '#fbbf24',
-    communication: '#34d399',
-    finance:     '#e879f9',
-    other:       '#94a3b8',
-};
+const tplMatch = content.match(/template:\s*`([\s\S]*?)`,\s*styles:\s*`([\s\S]*?)`/);
+if (!tplMatch) throw new Error("Could not find template/styles");
 
-const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-    active:    { label: 'Active',    color: '#4ade80', bg: 'rgba(74,222,128,0.1)'  },
-    paused:    { label: 'Paused',    color: '#fbbf24', bg: 'rgba(251,191,36,0.1)'  },
-    cancelled: { label: 'Cancelled', color: '#94a3b8', bg: 'rgba(148,163,184,0.1)' },
-};
-
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
-
-@Component({
-    selector: 'app-vendor',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+const newTemplate = `
     <div class="orbit-page">
       <div class="orbit-workspace">
         <span class="material-symbols-outlined icon-sm">lock</span>
@@ -63,7 +40,7 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
               Add Subscription
               <span class="material-symbols-outlined icon-right">expand_more</span>
             </button>
-            <div class="orbit-dropdown-menu absolute top-full right-0 mt-2 hidden group-hover:flex flex-col z-50 shadow-lg">
+            <div class="orbit-dropdown-menu absolute top-full right-0 mt-2 hidden group-hover:flex flex-col">
                <button class="orbit-dropdown-item" (click)="openAddForm()">
                  <span class="material-symbols-outlined">add</span> Add Manual
                </button>
@@ -145,12 +122,6 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
-            <div class="form-group" style="flex:1;margin:0">
-              <label class="form-label">Notes</label>
-              <input type="text" class="form-input"
-                [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"
-                placeholder="Optional notes…">
-            </div>
             <div class="vendor-form-actions">
               <button class="vendor-save-btn" (click)="saveForm()"
                 [disabled]="!formName() || !formRenewal()">
@@ -172,11 +143,11 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
           <thead>
             <tr>
               <th (click)="setSort('name')" class="sortable">
-                Client Name <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                Vendor Name <span class="material-symbols-outlined sort-icon">unfold_more</span>
               </th>
               <th>Category</th>
               <th (click)="setSort('price')" class="sortable">
-                Amount <span class="material-symbols-outlined sort-icon">unfold_more</span>
+                Price <span class="material-symbols-outlined sort-icon">unfold_more</span>
               </th>
               <th>Cycle</th>
               <th (click)="setSort('renewalDate')" class="sortable">
@@ -223,21 +194,21 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
               <td class="orbit-actions-cell">
                  @if (deleteConfirmId() === sub.id) {
                     <div class="orbit-confirm">
-                       <button class="orbit-btn-danger" (click)="doDelete(sub.id)">Y</button>
-                       <button class="orbit-btn-cancel" (click)="deleteConfirmId.set(null)">N</button>
+                       <button class="orbit-btn-danger" (click)="doDelete(sub.id)">Yes</button>
+                       <button class="orbit-btn-cancel" (click)="deleteConfirmId.set(null)">No</button>
                     </div>
                  } @else {
                     <div class="orbit-row-actions relative group/actions">
                        <button class="orbit-more-btn">
                          <span class="material-symbols-outlined">more_vert</span>
                        </button>
-                       <div class="orbit-actions-dropdown absolute right-0 top-[80%] hidden group-hover/actions:flex flex-col z-[100]">
+                       <div class="orbit-actions-dropdown absolute right-0 top-[80%] hidden group-hover/actions:flex flex-col bg-panel border rounded-md shadow-lg z-50">
                           <button class="orbit-dropdown-item" (click)="openEditForm(sub)">
-                            <span class="material-symbols-outlined icon-[16px]">edit</span> Edit
+                            <span class="material-symbols-outlined text-[16px]">edit</span> Edit
                           </button>
                           <div class="dropdown-divider"></div>
                           <button class="orbit-dropdown-item text-red" (click)="deleteConfirmId.set(sub.id)">
-                             <span class="material-symbols-outlined icon-[16px]">delete</span> Delete
+                             <span class="material-symbols-outlined text-[16px]">delete</span> Delete
                           </button>
                        </div>
                     </div>
@@ -256,14 +227,15 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
         }
       </div>
     </div>
-  `,
-    styles: [`
+  `;
+
+const newStyles = `
     :host { display: block; height: 100vh; background: var(--bg-app); overflow: hidden; }
     
     .orbit-page {
       display: flex; flex-direction: column; height: 100%;
       padding: 24px 32px 20px; box-sizing: border-box;
-      background: var(--bg-app);
+      background: var(--bg-app); font-family: var(--font-sans, system-ui, sans-serif);
       color: var(--text-primary);
     }
     
@@ -272,11 +244,10 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
     .capitalize { text-transform: capitalize; }
     .text-green { color: #4ade80 !important; }
     .text-red { color: var(--accent-red) !important; }
-    .icon-\\[16px\\] { font-size: 16px; }
 
     .orbit-workspace {
       display: inline-flex; align-items: center; gap: 8px; margin-bottom: 24px;
-      color: var(--text-secondary); cursor: pointer;
+      color: var(--text-secondary);
     }
     .orbit-workspace-text { display: flex; flex-direction: column; }
     .orbit-workspace-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; color: var(--text-primary); }
@@ -388,11 +359,12 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
     }
     .orbit-more-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
     
-    .orbit-actions-dropdown { min-width: 140px; padding: 4px; background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 8px; }
+    .orbit-actions-dropdown { min-width: 140px; padding: 4px; border-color: var(--border-subtle); }
+    .bg-panel { background: var(--bg-panel); }
     
     .orbit-confirm { display: flex; gap: 6px; justify-content: flex-end; }
     .orbit-btn-danger, .orbit-btn-cancel {
-      padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+      padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
     }
     .orbit-btn-danger { background: rgba(248,113,113,0.1); color: var(--accent-red); border-color: rgba(248,113,113,0.3); }
     .orbit-btn-danger:hover { background: rgba(248,113,113,0.2); }
@@ -414,223 +386,13 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
     .form-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
     .form-input, .form-select { background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px 12px; font-size: 13px; color: var(--text-primary); height: 38px; outline: none; }
     .form-input:focus, .form-select:focus { border-color: var(--accent-primary); }
-    .form-select { -webkit-appearance: none; cursor: pointer; }
     .vendor-form-actions { display: flex; align-items: flex-end; }
     .vendor-save-btn { padding: 8px 16px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .vendor-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  `]
-})
-export class VendorComponent {
-    public subscriptionStore = inject(SubscriptionStore);
+  `;
 
-    readonly categoryOptions = ['software', 'infrastructure', 'design', 'marketing', 'security', 'analytics', 'communication', 'finance', 'other'];
-    readonly currencies = CURRENCIES;
+// Replace content precisely
+const finalContent = content.replace(/template:\s*`([\s\S]*?)`,\s*styles:\s*\[`([\s\S]*?)`\]/, 'template: `' + newTemplate + '`,\n  styles: [`' + newStyles + '`]');
 
-    // Filter state
-    searchQuery    = signal('');
-    selectedStatus   = signal<string | null>(null);
-    selectedCycle    = signal<'monthly' | 'yearly' | null>(null);
-    selectedCategory = signal<string | null>(null);
-
-    // Sort state
-    sortCol = signal<'name' | 'price' | 'renewalDate'>('renewalDate');
-    sortDir = signal<'asc' | 'desc'>('asc');
-
-    // Form state
-    formMode       = signal<'add' | 'edit' | null>(null);
-    editingId      = signal<string | null>(null);
-    formName       = signal('');
-    formCategory   = signal('software');
-    formProjectId  = signal('global');
-    formPrice      = signal<number>(0);
-    formCurrency   = signal('USD');
-    formCycle      = signal<'monthly' | 'yearly'>('monthly');
-    formRenewal    = signal('');
-    formStatus     = signal<'active' | 'paused' | 'cancelled'>('active');
-    formNotes      = signal('');
-
-    // Delete confirm
-    deleteConfirmId = signal<string | null>(null);
-
-    // Computed
-    activeCount = computed(() =>
-        this.subscriptionStore.subscriptions().filter(s => !s.status || s.status === 'active').length
-    );
-    upcomingCount = computed(() => this.subscriptionStore.upcomingRenewals().length);
-
-    allCategories = computed(() => {
-        const cats = new Set<string>();
-        for (const s of this.subscriptionStore.subscriptions()) {
-            if (s.category) cats.add(s.category);
-        }
-        return [...cats].sort();
-    });
-
-    filteredSubs = computed(() => {
-        const q = this.searchQuery().toLowerCase();
-        let list = this.subscriptionStore.subscriptions();
-
-        if (q) {
-            list = list.filter(s =>
-                s.name.toLowerCase().includes(q) ||
-                s.category?.toLowerCase().includes(q) ||
-                s.projectId?.toLowerCase().includes(q) ||
-                s.notes?.toLowerCase().includes(q)
-            );
-        }
-        if (this.selectedStatus() !== null) {
-            const st = this.selectedStatus()!;
-            list = list.filter(s => (s.status ?? 'active') === st);
-        }
-        if (this.selectedCycle() !== null) {
-            list = list.filter(s => s.billingCycle === this.selectedCycle());
-        }
-        if (this.selectedCategory() !== null) {
-            list = list.filter(s => s.category === this.selectedCategory());
-        }
-
-        const col = this.sortCol();
-        const dir = this.sortDir() === 'asc' ? 1 : -1;
-        return [...list].sort((a, b) => {
-            if (col === 'name') return dir * a.name.localeCompare(b.name);
-            if (col === 'price') return dir * (a.price - b.price);
-            if (col === 'renewalDate') return dir * (new Date(a.renewalDate).getTime() - new Date(b.renewalDate).getTime());
-            return 0;
-        });
-    });
-
-    @HostListener('document:click')
-    onDocumentClick() {
-        this.deleteConfirmId.set(null);
-    }
-
-    // Filter helpers
-    toggleStatusFilter(status: string) {
-        this.selectedStatus.set(this.selectedStatus() === status ? null : status);
-    }
-    toggleCycleFilter(cycle: 'monthly' | 'yearly') {
-        this.selectedCycle.set(this.selectedCycle() === cycle ? null : cycle);
-    }
-    toggleCategoryFilter(cat: string) {
-        this.selectedCategory.set(this.selectedCategory() === cat ? null : cat);
-    }
-    clearFilters() {
-        this.searchQuery.set('');
-        this.selectedStatus.set(null);
-        this.selectedCycle.set(null);
-        this.selectedCategory.set(null);
-    }
-
-    // Sort
-    setSort(col: 'name' | 'price' | 'renewalDate') {
-        if (this.sortCol() === col) {
-            this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
-        } else {
-            this.sortCol.set(col);
-            this.sortDir.set('asc');
-        }
-    }
-    sortIndicator(col: string): string {
-        if (this.sortCol() !== col) return '';
-        return this.sortDir() === 'asc' ? '↑' : '↓';
-    }
-
-    // Form
-    openAddForm() {
-        if (this.formMode() !== null) { this.closeForm(); return; }
-        this.resetForm();
-        this.formMode.set('add');
-    }
-    openEditForm(sub: Subscription) {
-        this.editingId.set(sub.id);
-        this.formName.set(sub.name);
-        this.formCategory.set(sub.category ?? 'software');
-        this.formProjectId.set(sub.projectId ?? 'global');
-        this.formPrice.set(sub.price);
-        this.formCurrency.set(sub.currency ?? 'USD');
-        this.formCycle.set(sub.billingCycle);
-        this.formRenewal.set(sub.renewalDate ? new Date(sub.renewalDate).toISOString().split('T')[0] : '');
-        this.formStatus.set(sub.status ?? 'active');
-        this.formNotes.set(sub.notes ?? '');
-        this.formMode.set('edit');
-    }
-    closeForm() {
-        this.formMode.set(null);
-        this.resetForm();
-    }
-    private resetForm() {
-        this.editingId.set(null);
-        this.formName.set('');
-        this.formCategory.set('software');
-        this.formProjectId.set('global');
-        this.formPrice.set(0);
-        this.formCurrency.set('USD');
-        this.formCycle.set('monthly');
-        this.formRenewal.set('');
-        this.formStatus.set('active');
-        this.formNotes.set('');
-    }
-
-    async saveForm() {
-        if (!this.formName() || !this.formRenewal()) return;
-        const payload: Partial<Subscription> = {
-            name:         this.formName(),
-            category:     this.formCategory() || 'software',
-            projectId:    this.formProjectId() || undefined,
-            price:        Number(this.formPrice()),
-            currency:     this.formCurrency(),
-            billingCycle: this.formCycle(),
-            renewalDate:  new Date(this.formRenewal()).toISOString(),
-            status:       this.formStatus(),
-            notes:        this.formNotes() || undefined,
-        };
-
-        if (this.formMode() === 'add') {
-            await this.subscriptionStore.addSubscription({ id: crypto.randomUUID(), ...payload } as Subscription);
-        } else if (this.formMode() === 'edit' && this.editingId()) {
-            await this.subscriptionStore.updateSubscription(this.editingId()!, payload);
-        }
-        this.closeForm();
-    }
-
-    async doDelete(id: string) {
-        await this.subscriptionStore.deleteSubscription(id);
-        this.deleteConfirmId.set(null);
-    }
-
-    // Display helpers
-    isUpcoming(date: string): boolean {
-        return this.subscriptionStore.upcomingRenewals().some((s: Subscription) => s.renewalDate === date);
-    }
-
-    daysUntil(dateStr: string): number | null {
-        if (!dateStr) return null;
-        const diff = new Date(dateStr).getTime() - Date.now();
-        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        return days >= 0 ? days : null;
-    }
-
-    formatDate(iso: string): string {
-        if (!iso) return '—';
-        return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
-    avatarBg(name: string): string {
-        const colors = ['#60a5fa','#4ade80','#fbbf24','#a855f7','#fb923c','#f472b6','#34d399','#e879f9'];
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-        return colors[Math.abs(hash) % colors.length];
-    }
-
-    catColor(cat: string): string {
-        return CATEGORY_COLORS[cat.toLowerCase()] ?? '#94a3b8';
-    }
-    statusMeta(status: string | undefined | null): { label: string; color: string; bg: string } {
-        return STATUS_META[status || 'active'] ?? STATUS_META['active'];
-    }
-
-    currencySymbol(currency: string | undefined): string {
-        const map: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$', INR: '₹', JPY: '¥' };
-        return map[currency ?? 'USD'] ?? '$';
-    }
-}
+fs.writeFileSync(file, finalContent);
+console.log("Patched successfully");
