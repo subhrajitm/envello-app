@@ -70,13 +70,13 @@ export const routes: Routes = [
   },
   {
     path: 'books',
-    loadComponent: () => import('./components/books/books.component').then(m => m.BooksComponent),
+    loadComponent: () => import('@envello/feature-books').then(m => m.BooksComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
     path: 'snippets',
-    loadComponent: () => import('./components/code-snippets/code-snippets.component').then(m => m.CodeSnippetsComponent),
+    loadComponent: () => import('@envello/feature-code-snippets').then(m => m.CodeSnippetsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
@@ -100,13 +100,13 @@ export const routes: Routes = [
   },
   {
     path: 'vault',
-    loadComponent: () => import('./components/vault/vault.component').then(m => m.VaultComponent),
+    loadComponent: () => import('@envello/feature-vault').then(m => m.VaultComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
     path: 'subscriptions',
-    loadComponent: () => import('./components/vendor/vendor.component').then(m => m.VendorComponent),
+    loadComponent: () => import('@envello/feature-vendor').then(m => m.VendorComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

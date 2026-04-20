@@ -88,6 +88,30 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'books',
+    loadComponent: () => import('@envello/feature-books').then(m => m.BooksComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'snippets',
+    loadComponent: () => import('@envello/feature-code-snippets').then(m => m.CodeSnippetsComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'vault',
+    loadComponent: () => import('@envello/feature-vault').then(m => m.VaultComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'subscriptions',
+    loadComponent: () => import('@envello/feature-vendor').then(m => m.VendorComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'not-found',
     loadComponent: () => import('./components/errors/not-found/not-found.component').then(m => m.NotFoundComponent),
     data: { hasSidebar: false },
