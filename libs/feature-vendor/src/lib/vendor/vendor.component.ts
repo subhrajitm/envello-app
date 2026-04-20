@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
 import { Subscription } from '@envello/domain';
+import { ModalComponent } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
     software:    '#60a5fa',
@@ -27,7 +28,7 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, ModalComponent],
     template: `
     <div class="orbit-page">
       <div class="orbit-workspace">
@@ -76,16 +77,17 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
       </header>
 
       @if (formMode() !== null) {
-      <div class="vendor-form-panel">
-        <div class="vendor-form-header">
+      <env-modal 
+        [isOpen]="true" 
+        [title]="formMode() === 'add' ? 'New Subscription' : 'Edit Subscription'" 
+        size="large" 
+        (closed)="closeForm()">
+        <div header style="display:flex; align-items:center; margin-left: 8px;">
           <span class="material-symbols-outlined" style="color:var(--accent-primary);font-size:18px">
             {{ formMode() === 'add' ? 'add_circle' : 'edit' }}
           </span>
-          <span style="font-weight:600;font-size:13px;color:var(--text-primary)">
-            {{ formMode() === 'add' ? 'New Subscription' : 'Edit Subscription' }}
-          </span>
         </div>
-        <div class="vendor-form-body">
+        <div body class="vendor-form-body">
           <div class="vendor-form-row">
             <div class="form-group" style="flex:2;margin:0">
               <label class="form-label">Vendor / Service Name</label>
@@ -151,19 +153,19 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
                 [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"
                 placeholder="Optional notes…">
             </div>
-            <div class="vendor-form-actions">
-              <button class="vendor-save-btn" (click)="saveForm()"
-                [disabled]="!formName() || !formRenewal()">
-                <span class="material-symbols-outlined">save</span>
-                {{ formMode() === 'add' ? 'Save' : 'Update' }}
-              </button>
-              <button class="vendor-cancel-btn" (click)="closeForm()" style="margin-left:8px; padding:8px 16px; background:var(--bg-hover); border:1px solid var(--border-subtle); color:var(--text-secondary); border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
-                Cancel
-              </button>
-            </div>
           </div>
         </div>
-      </div>
+        <div footer class="vendor-form-actions" style="display: flex; justify-content: flex-end; gap: 8px; width: 100%;">
+          <button class="vendor-cancel-btn" (click)="closeForm()" style="padding:8px 16px; background:transparent; border:1px solid var(--border-subtle); color:var(--text-secondary); border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+            Cancel
+          </button>
+          <button class="vendor-save-btn" (click)="saveForm()"
+            [disabled]="!formName() || !formRenewal()">
+            <span class="material-symbols-outlined">save</span>
+            {{ formMode() === 'add' ? 'Save' : 'Update' }}
+          </button>
+        </div>
+      </env-modal>
       }
 
       <div class="orbit-table-container">

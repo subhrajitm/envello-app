@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
 import { EncryptionUtil } from '@envello/core';
 import { Credential } from '@envello/domain';
+import { ModalComponent } from '@envello/ui';
 
 const TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
   login:   { label: 'Login',    icon: 'person',        color: '#4ade80', bg: 'rgba(74,222,128,0.1)'  },
@@ -26,7 +27,7 @@ const URL_LABEL: Record<string, string> = {
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   template: `
     <div class="vault-page">
 
@@ -78,19 +79,20 @@ const URL_LABEL: Record<string, string> = {
 
       <!-- Add / Edit Form Panel -->
       @if (formMode() !== null) {
-      <div class="vault-form-panel">
-        <div class="vault-form-header">
+      <env-modal
+        [isOpen]="true"
+        [title]="formMode() === 'edit' ? 'Edit Credential' : 'New Credential'"
+        size="large"
+        (closed)="closeForm()">
+        <div header style="display:flex; align-items:center; gap:8px; margin-left:8px;">
           <span class="material-symbols-outlined" style="color:var(--accent-primary);font-size:18px;">
             {{ formMode() === 'edit' ? 'edit' : 'add_circle' }}
-          </span>
-          <span style="font-weight:600;font-size:13px;color:var(--text-primary);">
-            {{ formMode() === 'edit' ? 'Edit Credential' : 'New Credential' }}
           </span>
           @if (formMode() === 'edit') {
             <span class="vault-form-editing-name">{{ editName() }}</span>
           }
         </div>
-        <div class="vault-form-body">
+        <div body class="vault-form-body">
           <div class="vault-form-grid">
             <div class="form-group">
               <label class="form-label">Name</label>
@@ -145,16 +147,16 @@ const URL_LABEL: Record<string, string> = {
                 (ngModelChange)="formMode() === 'edit' ? editNotes.set($event) : newCredNotes.set($event)">
             </div>
           </div>
-          <div class="vault-form-footer">
-            <button class="vault-cancel-btn" (click)="closeForm()">Cancel</button>
-            <button class="vault-save-btn" (click)="formMode() === 'edit' ? saveEdit() : addCredential()"
-              [disabled]="formMode() === 'edit' ? !editName() : (!newCredName() || !newCredValue())">
-              <span class="material-symbols-outlined">save</span>
-              {{ formMode() === 'edit' ? 'Save Changes' : 'Save Credential' }}
-            </button>
-          </div>
         </div>
-      </div>
+        <div footer class="vault-form-footer" style="padding:16px; width: 100%;">
+          <button class="vault-cancel-btn" (click)="closeForm()">Cancel</button>
+          <button class="vault-save-btn" (click)="formMode() === 'edit' ? saveEdit() : addCredential()"
+            [disabled]="formMode() === 'edit' ? !editName() : (!newCredName() || !newCredValue())">
+            <span class="material-symbols-outlined">save</span>
+            {{ formMode() === 'edit' ? 'Save Changes' : 'Save Credential' }}
+          </button>
+        </div>
+      </env-modal>
       }
 
       <!-- Table Panel -->
