@@ -52,7 +52,7 @@ export const routes: Routes = [
   },
   {
     path: 'daily-notes',
-    loadComponent: () => import('./components/daily-notes/daily-notes.component').then(m => m.DailyNotesComponent),
+    loadComponent: () => import('@envello/feature-daily-notes').then(m => m.DailyNotesComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

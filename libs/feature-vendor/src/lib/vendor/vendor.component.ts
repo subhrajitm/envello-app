@@ -31,13 +31,7 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
     imports: [CommonModule, FormsModule, ModalComponent],
     template: `
     <div class="orbit-page">
-      <div class="orbit-workspace">
-        <span class="material-symbols-outlined icon-sm">lock</span>
-        <div class="orbit-workspace-text">
-          <div class="orbit-workspace-name">Workspace Management <span class="material-symbols-outlined icon-sm">expand_more</span></div>
-          <div class="orbit-workspace-plan">Enterprise plan</div>
-        </div>
-      </div>
+
 
       <header class="orbit-header">
         <div class="orbit-header-left">

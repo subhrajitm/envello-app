@@ -5,7 +5,7 @@
         [searchPlaceholder]="'Search views'" [searchQuery]="sidebarSearch()"
         (searchChange)="sidebarSearch.set($event)"
         [items]="sidebarItems()" [activeId]="sidebarActiveId()" (activeIdChange)="onSidebarActiveChange($event)"
-        [addIcon]="'add'" addTooltip="New task" [showFooter]="true">
+        [addIcon]="'add'" addTooltip="New task">
 
         <div env-sidebar-header class="tasks-sidebar-quick-actions">
             <button type="button"
@@ -22,52 +22,6 @@
             </button>
         </div>
 
-        <div env-sidebar-footer class="custom-folders-section">
-            <div class="folders-header">
-                <span class="folders-title">PROJECTS / CONTEXT</span>
-                <button class="folder-add-btn" (click)="showCreateFolderInSidebar.set(true)" title="Create new project/context">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
-            </div>
-
-            @if (showCreateFolderInSidebar()) {
-            <div class="folder-create-sidebar">
-                <input type="text"
-                       class="folder-create-input-sidebar"
-                       placeholder="Project / context name..."
-                       [value]="newFolderNameSidebar()"
-                       (input)="newFolderNameSidebar.set($any($event.target).value)"
-                       (keydown.enter)="createFolderInSidebar()"
-                       (keydown.escape)="showCreateFolderInSidebar.set(false)"
-                       autofocus>
-                <div class="folder-create-actions-sidebar">
-                    <button type="button"
-                            class="btn-icon-sm"
-                            (click)="showCreateFolderInSidebar.set(false)">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                    <button type="button"
-                            class="btn-icon-sm btn-icon-primary"
-                            [disabled]="!newFolderNameSidebar().trim()"
-                            (click)="createFolderInSidebar()">
-                        <span class="material-symbols-outlined">check</span>
-                    </button>
-                </div>
-            </div>
-            }
-
-            <div class="folders-list">
-                @for (folder of availableLists(); track folder) {
-                <div class="folder-item" 
-                     [class.active]="selectedFolder() === folder"
-                     (click)="selectFolderInSidebar(folder)">
-                    <span class="material-symbols-outlined folder-icon">folder</span>
-                    <span class="folder-name">{{ folder }}</span>
-                    <span class="folder-count">{{ getFolderTaskCount(folder) }}</span>
-                </div>
-                }
-            </div>
-        </div>
     </env-left-sidebar>
 
     <!-- Main content -->

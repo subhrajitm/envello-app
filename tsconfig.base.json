@@ -22,7 +22,8 @@
       "@envello/feature-books": ["libs/feature-books/src/index.ts"],
       "@envello/feature-code-snippets": ["libs/feature-code-snippets/src/index.ts"],
       "@envello/feature-vault": ["libs/feature-vault/src/index.ts"],
-      "@envello/feature-vendor": ["libs/feature-vendor/src/index.ts"]
+      "@envello/feature-vendor": ["libs/feature-vendor/src/index.ts"],
+      "@envello/feature-daily-notes": ["libs/feature-daily-notes/src/index.ts"]
     }
   }
 }
