@@ -2,7 +2,7 @@ import { Component, signal, inject, output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { UserService } from '@envello/core';
+import { UserService, WorkspaceProfileService } from '@envello/core';
 
 @Component({
   selector: 'app-profile-menu',
@@ -35,6 +35,21 @@ export class ProfileMenuComponent {
   // Events
   onOpenProfile = output<void>();
   onOpenSettings = output<void>();
+
+  workspaceService = inject(WorkspaceProfileService);
+  workspaces = this.workspaceService.profiles;
+  activeWorkspace = this.workspaceService.activeProfile;
+
+  switchWorkspace(id: string) {
+    this.workspaceService.switchProfile(id);
+  }
+
+  addWorkspace() {
+    const name = prompt('Enter new workspace profile name:');
+    if (name) {
+      this.workspaceService.addProfile(name);
+    }
+  }
 
   open() {
     this.isOpen.set(true);

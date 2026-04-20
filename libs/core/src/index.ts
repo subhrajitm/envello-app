@@ -24,3 +24,4 @@ export * from './lib/services/file-system.service';
 export * from './lib/services/voice.service';
 export * from './lib/utils/encryption.util';
 export * from './lib/guards/auth.guard';
+export * from './lib/services/workspace-profile.service';

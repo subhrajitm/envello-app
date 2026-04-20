@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { WorkspaceProfileService } from './workspace-profile.service';
 import Database from '@tauri-apps/plugin-sql';
 import { readTextFile } from '@tauri-apps/plugin-fs';
 import { BehaviorSubject, from, map, Observable } from 'rxjs';
@@ -28,7 +29,7 @@ import type {
 } from './research.service';
 import type { Project, Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
 
-const DB_NAME = 'envello.db';
+// const DB_NAME = 'envello.db'; // Removed, now determined dynamically by profile
 
 export type TaskDoc = Task;
 export type NoteDoc = Note;
@@ -85,6 +86,8 @@ export class SqliteService {
     private subscriptionsSubject = new BehaviorSubject<SubscriptionDoc[]>([]);
     private linksSubject = new BehaviorSubject<CredentialSubscriptionLinkDoc[]>([]);
 
+    private profileService = inject(WorkspaceProfileService);
+
     constructor() {
         // Don't initialize eagerly - only init when first database operation is called
         // This prevents errors in browser/non-Tauri environments
@@ -120,13 +123,16 @@ export class SqliteService {
                 throw new Error('SQLite is only available in Tauri desktop app');
             }
 
-            const db = await Database.load(`sqlite:${DB_NAME}`);
+            const profileId = this.profileService.activeProfileId() || 'default';
+            const dbName = profileId === 'default' ? 'envello.db' : `envello_${profileId}.db`;
+
+            const db = await Database.load(`sqlite:${dbName}`);
             this.db = db;
 
             await this.createTables(db);
             await this.loadAllData(); // Load initial data into subjects
 
-            console.log('[SqliteService] Database initialized successfully');
+            console.log(`[SqliteService] Database initialized successfully for profile ${profileId}`);
             return db;
         } catch (error) {
             // Only log errors if we're in Tauri (unexpected errors)

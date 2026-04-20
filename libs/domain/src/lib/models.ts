@@ -183,3 +183,12 @@ export interface CredentialSubscriptionLink {
     credentialId: string;
     subscriptionId: string;
 }
+
+export interface WorkspaceProfile {
+    id: string;
+    name: string;
+    color?: string;
+    icon?: string;
+    createdAt: string;
+    lastAccessed: string;
+}

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { WorkspaceProfileService } from './workspace-profile.service';
 import { DataService } from '@envello/data';
 import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
 import PouchDB from 'pouchdb';
@@ -8,11 +9,13 @@ import PouchDB from 'pouchdb';
 })
 export class PouchDbDataService implements DataService {
     private dbs: Record<string, PouchDB.Database> = {};
+    private profileService = inject(WorkspaceProfileService);
 
     private getDb(collection: string): PouchDB.Database {
+        const profileId = this.profileService.activeProfileId() || 'default';
+        const profilePrefix = profileId === 'default' ? 'envello_' : `envello_${profileId}_`;
         if (!this.dbs[collection]) {
-            // We use 'envello_' prefix so the IndexedDB instances don't collide broadly
-            this.dbs[collection] = new PouchDB(`envello_${collection}`);
+            this.dbs[collection] = new PouchDB(`${profilePrefix}${collection}`);
         }
         return this.dbs[collection];
     }
