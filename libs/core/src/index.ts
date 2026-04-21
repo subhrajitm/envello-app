@@ -10,7 +10,7 @@ export * from './lib/services/notification.service';
 export * from './lib/services/novel-content.service';
 export * from './lib/services/research.service';
 export * from './lib/services/session.service';
-export * from './lib/services/snippets.service';
+
 export * from './lib/services/store.service';
 export * from './lib/services/theme.service';
 export * from './lib/services/user.service';

@@ -69,12 +69,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-  {
-    path: 'snippets',
-    loadComponent: () => import('@envello/feature-code-snippets').then(m => m.CodeSnippetsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
+
   {
     path: 'activity-log',
     loadComponent: () => import('./components/activity-log/activity-log.component').then(m => m.ActivityLogComponent),

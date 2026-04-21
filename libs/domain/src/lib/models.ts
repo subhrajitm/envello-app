@@ -116,7 +116,7 @@ export interface Project {
     linkedResources?: {
         novels?: string[]; // IDs of linked novels
         notes?: string[]; // IDs of linked daily notes
-        snippets?: string[]; // IDs of linked code snippets
+
         meetings?: string[]; // IDs of linked meetings
         research?: string[]; // IDs of linked research sources/libraries
         books?: string[]; // IDs of linked books
@@ -134,8 +134,7 @@ export type BinItemType =
     | 'novel-location'
     | 'task'
     | 'meeting'
-    | 'book'
-    | 'snippet';
+    | 'book';
 
 export interface BinItem {
     id: string;

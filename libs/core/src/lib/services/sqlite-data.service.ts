@@ -39,7 +39,7 @@ export class SqliteDataService implements DataService {
             case 'activities': return await this.sqlite.getAllActivities() as unknown as T[];
             case 'novels': return await this.sqlite.getAllNovels() as unknown as T[];
             case 'bin_items': return await this.sqlite.getAllBinItems() as unknown as T[];
-            case 'snippets': return await this.sqlite.getAllSnippets() as unknown as T[];
+
             case 'books': return await this.sqlite.getAllBooks() as unknown as T[];
             case 'meetings': return await this.sqlite.getAllMeetings() as unknown as T[];
             case 'articles': return await this.sqlite.getAllArticles() as unknown as T[];
@@ -80,7 +80,7 @@ export class SqliteDataService implements DataService {
             case 'activities': return await this.sqlite.upsertActivity(item as unknown as Activity);
             case 'novels': return await this.sqlite.upsertNovel(item as unknown as Novel);
             case 'bin_items': return await this.sqlite.upsertBinItem(item as unknown as BinItem);
-            case 'snippets': return await this.sqlite.upsertSnippet(item as any);
+
             case 'books': return await this.sqlite.upsertBook(item as any);
             case 'meetings': return await this.sqlite.upsertMeeting(item as any);
             case 'articles': return await this.sqlite.upsertArticle(item as any);
@@ -114,7 +114,7 @@ export class SqliteDataService implements DataService {
             case 'novels': return await this.sqlite.removeNovel(id);
             case 'bin_items': return await this.sqlite.removeBinItem(id);
             case 'novel_content': return await this.sqlite.removeNovelContent(id);
-            case 'snippets': return await this.sqlite.removeSnippet(id);
+
             case 'books': return await this.sqlite.removeBook(id);
             case 'meetings': return await this.sqlite.removeMeeting(id);
             case 'articles': return await this.sqlite.removeArticle(id);

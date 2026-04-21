@@ -13,7 +13,7 @@ import type {
     Novel,
 } from './store.service';
 import type { BinItem } from './bin.service';
-import type { Snippet } from './snippets.service';
+
 import type { Book } from './books.service';
 import type { Meeting } from './meetings.service';
 import type { Article } from './article.service';
@@ -32,7 +32,7 @@ export type PlanningItemDoc = PlanningItem;
 export type ActivityDoc = Activity;
 export type NovelDoc = Novel;
 export type BinItemDoc = BinItem;
-export type SnippetDoc = Snippet;
+
 export type BookDoc = Book;
 export type MeetingDoc = Meeting;
 export type ArticleDoc = Article;
@@ -63,7 +63,7 @@ export class SqliteService {
     private activitiesSubject = new BehaviorSubject<ActivityDoc[]>([]);
     private novelsSubject = new BehaviorSubject<NovelDoc[]>([]);
     private binItemsSubject = new BehaviorSubject<BinItemDoc[]>([]);
-    private snippetsSubject = new BehaviorSubject<SnippetDoc[]>([]);
+
     private booksSubject = new BehaviorSubject<BookDoc[]>([]);
     private meetingsSubject = new BehaviorSubject<MeetingDoc[]>([]);
     private articlesSubject = new BehaviorSubject<ArticleDoc[]>([]);
@@ -233,21 +233,7 @@ export class SqliteService {
       )
     `);
 
-        // Snippets
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS snippets (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        lang TEXT,
-        tags TEXT,
-        content TEXT,
-        filename TEXT,
-        path TEXT,
-        creator TEXT,
-        createdAt TEXT,
-        updatedAt TEXT
-      )
-    `);
+
 
         // Books
         await db.execute(`
@@ -448,7 +434,7 @@ export class SqliteService {
             this.reloadActivities(),
             this.reloadNovels(),
             this.reloadBinItems(),
-            this.reloadSnippets(),
+
             this.reloadBooks(),
             this.reloadMeetings(),
             this.reloadArticles(),
@@ -782,38 +768,7 @@ export class SqliteService {
         return this.binItemsSubject.getValue();
     }
 
-    // ─── Snippets ──────────────────────────────────────────────────────────────
-    private async reloadSnippets() {
-        const db = await this.getDb();
-        const rows = await db.select<SnippetDoc[]>('SELECT * FROM snippets');
-        const parsed = rows.map((r: any) => this.parseRow<SnippetDoc>(r, ['tags']));
-        this.snippetsSubject.next(parsed);
-    }
 
-    async upsertSnippet(doc: SnippetDoc): Promise<void> {
-        const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM snippets WHERE id = $1', [doc.id]);
-        const jsonDoc = { ...doc, tags: this.toJson(doc.tags) };
-
-        if (exists.length > 0) {
-            await db.execute(`UPDATE snippets SET title=$1, lang=$2, tags=$3, content=$4, filename=$5, path=$6, creator=$7, createdAt=$8, updatedAt=$9 WHERE id=$10`,
-                [jsonDoc.title, jsonDoc.lang, jsonDoc.tags, jsonDoc.content, jsonDoc.filename, jsonDoc.path, jsonDoc.creator, jsonDoc.createdAt, jsonDoc.updatedAt, jsonDoc.id]);
-        } else {
-            await db.execute(`INSERT INTO snippets (id, title, lang, tags, content, filename, path, creator, createdAt, updatedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-                [jsonDoc.id, jsonDoc.title, jsonDoc.lang, jsonDoc.tags, jsonDoc.content, jsonDoc.filename, jsonDoc.path, jsonDoc.creator, jsonDoc.createdAt, jsonDoc.updatedAt]);
-        }
-        await this.reloadSnippets();
-    }
-
-    async removeSnippet(id: string): Promise<void> {
-        const db = await this.getDb();
-        await db.execute('DELETE FROM snippets WHERE id = $1', [id]);
-        await this.reloadSnippets();
-    }
-
-    async getAllSnippets(): Promise<SnippetDoc[]> {
-        return this.snippetsSubject.getValue();
-    }
 
     // ─── Books ─────────────────────────────────────────────────────────────────
     private async reloadBooks() {
@@ -1199,7 +1154,7 @@ export class SqliteService {
         data.data.activities = await this.getAllActivities();
         data.data.novels = await this.getAllNovels();
         data.data.bin_items = await this.getAllBinItems();
-        data.data.snippets = await this.getAllSnippets();
+
         data.data.books = await this.getAllBooks();
         data.data.meetings = await this.getAllMeetings();
         data.data.articles = await this.getAllArticles();

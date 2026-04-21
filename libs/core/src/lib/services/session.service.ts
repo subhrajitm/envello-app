@@ -29,7 +29,7 @@ const PAGE_MAP: Record<string, string> = {
   'tasks': 'Tasks/Todos',
   'meetings': 'Meetings',
   'books': 'Books/Reading',
-  'snippets': 'Code Snippets',
+
   'bin': 'Bin'
 };
 

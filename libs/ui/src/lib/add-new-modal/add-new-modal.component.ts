@@ -6,7 +6,7 @@ import { StoreService, Task, Note, Novel } from '@envello/core';
 import { ArticleService } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { MeetingsService, MEETING_COLORS } from '@envello/core';
-import { SnippetsService } from '@envello/core';
+
 import { NovelContentService } from '@envello/core';
 
 type OptionCategory = 'create' | 'plan' | 'library';
@@ -49,7 +49,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private articleService = inject(ArticleService);
     private researchService = inject(ResearchService);
     private meetingsService = inject(MeetingsService);
-    private snippetsService = inject(SnippetsService);
+
     private novelContentService = inject(NovelContentService);
 
     isOpen = signal(false);
@@ -74,7 +74,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         { id: 'note',    title: 'Note',    description: 'Quick note for today',           icon: 'description',  route: '/daily-notes', color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],    tag: 'NOTE' },
         // Library
         { id: 'research',title: 'Research', description: 'Create a new research library', icon: 'science',      route: '/research',    color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],       tag: 'RESEARCH' },
-        { id: 'snippet', title: 'Snippet',  description: 'Save a code snippet',           icon: 'code',         route: '/snippets',    color: '#b8d8e8', category: 'library', shortcut: '6', keywords: ['code', 'snippet'],           tag: 'DEV' },
+
         // Create
         { id: 'article', title: 'Draft',    description: 'Write a new article or draft',  icon: 'article',      route: '/articles',    color: '#a8d5a8', category: 'create',  shortcut: '7', keywords: ['article', 'blog', 'draft'],  tag: 'DRAFT' },
         { id: 'novel',   title: 'Writing',  description: 'Start a new writing project',   icon: 'menu_book',    route: '/novels',      color: '#c4a8d8', category: 'create',  shortcut: '8', keywords: ['novel', 'book', 'story'],    tag: 'WRITING' },
@@ -96,7 +96,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         article: this.articleService.articles().length,
         research: this.researchService.libraries().length,
         meeting: this.meetingsService.meetings().length,
-        snippet: this.snippetsService.snippets().length
     }));
 
     // Computed: filtered options based on search
@@ -269,9 +268,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                     case 'meeting':
                         this.createMeeting();
                         break;
-                    case 'snippet':
-                        this.createSnippet();
-                        break;
+
                     default:
                         this.router.navigate([option.route]);
                 }
@@ -399,19 +396,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         this.router.navigate(['/meetings']);
     }
 
-    private createSnippet() {
-        this.snippetsService.addSnippet({
-            title: 'New Snippet',
-            lang: 'JavaScript',
-            tags: [],
-            content: '// Your code here',
-            filename: 'snippet.js',
-            path: '/snippets',
-            creator: 'User'
-        });
 
-        this.router.navigate(['/snippets']);
-    }
 
     getOptionCount(optionId: string): number {
         const counts = this.itemCounts();
