@@ -62,6 +62,12 @@ export class ProjectDetailsComponent {
         return this.store.novels().filter(n => p.linkedResources?.novels?.includes(n.id));
     });
 
+    linkedNotes = computed(() => {
+        const p = this.project();
+        if (!p || !p.linkedResources?.notes) return [];
+        return this.store.notes().filter(n => p.linkedResources?.notes?.includes(n.id));
+    });
+
     linkedMeetings = computed(() => {
         const p = this.project();
         if (!p || !p.linkedResources?.meetings) return [];

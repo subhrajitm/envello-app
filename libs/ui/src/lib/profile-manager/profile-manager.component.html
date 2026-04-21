@@ -1,50 +1,52 @@
 <div class="orbit-page">
     <header class="orbit-header">
         <div class="orbit-header-left">
-            <h1 class="orbit-title">Workspace Profiles</h1>
-            <p class="orbit-subtitle">Manage isolated local data environments.</p>
+            <h1 class="orbit-title">{{ userName() }}'s profiles</h1>
         </div>
         <div class="orbit-header-right">
-            <button class="orbit-action-btn primary" (click)="openAddModal()">
-                <span class="material-symbols-outlined">add</span>
-                <span>Add Profile</span>
+            <button class="create-profile-btn" (click)="openAddModal()">
+                <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+                New Profile
             </button>
         </div>
     </header>
 
-    <div class="orbit-content-area flex flex-col pt-6">
-        <div class="minimal-tiles-grid">
+    <div class="orbit-content-area">
+        <div class="profile-grid">
             @for (wp of workspaces(); track wp.id) {
-            <div class="minimal-tile" [class.tile-active]="activeWorkspace().id === wp.id">
-                <div class="tile-color-bar" [style.backgroundColor]="wp.color"></div>
-                <div class="tile-content">
-                    <div class="tile-header flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                           <div class="tile-dot" [style.backgroundColor]="wp.color"></div>
-                           <h3 class="tile-name">{{ wp.name }}</h3>
-                        </div>
+            <div class="profile-card" 
+                 [class.active-card]="activeWorkspace().id === wp.id"
+                 (click)="activeWorkspace().id !== wp.id && switchWorkspace(wp.id)">
+                
+                <div class="card-top" [style.backgroundColor]="wp.color + '1a'">
+                    <div class="card-top-row">
+                        <span class="material-symbols-outlined card-star">star</span>
                         @if (activeWorkspace().id === wp.id) {
-                            <div class="pulse-dot" title="Active Workspace" [style.backgroundColor]="wp.color" [style.boxShadow]="'0 0 8px ' + wp.color"></div>
+                            <span class="active-badge">Active</span>
                         }
                     </div>
-                    
-                    <div class="tile-meta mt-1">
-                        <span class="text-xs" style="color: var(--text-tertiary);">Used {{ wp.lastAccessed | date:'shortDate' }}</span>
-                    </div>
 
-                    <div class="tile-actions mt-5 flex items-center gap-2">
-                        <button class="tile-btn select-btn" 
-                                [disabled]="activeWorkspace().id === wp.id"
-                                (click)="switchWorkspace(wp.id)">
-                            {{ activeWorkspace().id === wp.id ? 'Active' : 'Switch' }}
-                        </button>
-                        <button class="tile-btn edit-btn" 
-                                title="Edit profile"
-                                (click)="openEditModal(wp)">
+                    <div class="card-body-row">
+                        <div class="card-title-area">
+                            <h3 class="card-title">{{ wp.name }}</h3>
+                        </div>
+                        <div class="card-main-icon">
+                            <span class="material-symbols-outlined icon-symbol"
+                                  [textContent]="wp.id === 'default' ? 'account_circle' : (wp.name.toLowerCase().includes('personal') ? 'person' : 'hub')">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-bottom">
+                    <div class="card-meta">
+                        Edited {{ wp.lastAccessed | date:'mediumDate' }}
+                    </div>
+                    <div class="card-action-group" (click)="$event.stopPropagation()">
+                        <button class="card-action-btn" title="Edit" (click)="openEditModal(wp)">
                             <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
                         </button>
-                        <button class="tile-btn delete-btn" 
-                                title="Delete profile"
+                        <button class="card-action-btn danger" title="Delete"
                                 [disabled]="activeWorkspace().id === wp.id || wp.id === 'default'"
                                 (click)="openDeleteModal(wp.id)">
                             <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>

@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { WorkspaceProfileService } from '@envello/core';
+import { WorkspaceProfileService, UserService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
 import { FormsModule } from '@angular/forms';
 
@@ -13,8 +13,10 @@ import { FormsModule } from '@angular/forms';
 })
 export class ProfileManagerComponent {
   workspaceService = inject(WorkspaceProfileService);
+  private userService = inject(UserService);
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
+  userName = this.userService.userName;
 
   isAddModalOpen = signal(false);
   newProfileName = signal('');

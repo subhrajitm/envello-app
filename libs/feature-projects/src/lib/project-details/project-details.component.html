@@ -113,7 +113,30 @@
                     }
                     }
 
-
+                    @if (linkedNotes().length > 0) {
+                    <tr style="background: rgba(191, 87, 0, 0.05);">
+                        <td colspan="5"
+                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
+                            Linked Notes</td>
+                    </tr>
+                    @for (note of linkedNotes(); track note.id) {
+                    <tr>
+                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
+                        <td style="font-weight: 600;">
+                            <span class="material-symbols-outlined"
+                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">edit_note</span>
+                            {{ note.title }}
+                        </td>
+                        <td class="text-muted">Daily Note</td>
+                        <td class="text-muted">{{ note.date }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <span class="material-symbols-outlined action-icon">edit</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
 
                     @if (linkedMeetings().length > 0) {
                     <tr style="background: rgba(191, 87, 0, 0.05);">
