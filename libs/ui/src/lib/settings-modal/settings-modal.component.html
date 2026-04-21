@@ -358,9 +358,9 @@
                             <label>Navigation Layout</label>
                             <span class="setting-desc">How the main navigation is displayed</span>
                         </div>
-                        <div class="layout-options">
+                        <div class="layout-selector">
                             @for (layout of [['minimized','Minimal','left_panel_close'],['vertical','Sidebar','view_sidebar'],['horizontal','Top Bar','view_headline']]; track layout[0]) {
-                            <button class="layout-btn" [class.active]="navigationLayout() === layout[0]"
+                            <button class="layout-option" [class.active]="navigationLayout() === layout[0]"
                                 (click)="setNavigationLayout($any(layout[0]))">
                                 <span class="material-symbols-outlined">{{ layout[2] }}</span>
                                 <span>{{ layout[1] }}</span>
@@ -445,7 +445,7 @@
 
                     <div class="about-banner">
                         <div class="about-icon">
-                            <env-logo height="120px"></env-logo>
+                            <env-logo height="24px"></env-logo>
                         </div>
                         <div class="about-info">
                             <h4>Envello</h4>
