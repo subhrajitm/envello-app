@@ -1,15 +1,15 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task } from '@envello/core';
-import { SidebarComponent, SidebarNavItem, ModalComponent } from '@envello/ui';
+import { SidebarNavItem, ModalComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
-type ViewMode = 'list' | 'thumbnails' | 'kanban' | 'calendar' | 'timeline';
+type ViewMode = 'list' | 'thumbnails' | 'timeline';
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, SidebarComponent, ModalComponent],
+  imports: [CommonModule, ModalComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css'
 })
@@ -24,8 +24,6 @@ export class TasksComponent implements OnInit, OnDestroy {
    * Main content layout mode for the center panel.
    * - 'list'      → compact data grid (existing experience)
    * - 'thumbnails' → card / thumbnail layout
-   * - 'kanban'    → kanban board view
-   * - 'calendar'  → calendar view
    */
   viewMode = signal<ViewMode>('list');
 
@@ -1355,116 +1353,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     return this.noDueDateGroupExpanded();
   }
 
-  // Kanban view methods
-  getKanbanTasks(status: Task['status']): Task[] {
-    return this.filteredTasks().filter(t => t.status === status);
-  }
-
-  kanbanDraggedTask = signal<Task | null>(null);
-
-  onKanbanDragStart(event: DragEvent, task: Task) {
-    this.kanbanDraggedTask.set(task);
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }
-
-  onKanbanDrop(event: DragEvent, targetStatus: Task['status']) {
-    event.preventDefault();
-    const target = event.currentTarget as HTMLElement;
-    target.classList.remove('drag-over');
-
-    const task = this.kanbanDraggedTask();
-    if (task) {
-      this.store.updateTask(task.id, { status: targetStatus });
-      this.kanbanDraggedTask.set(null);
-    }
-  }
-
-  onKanbanDragOver(event: DragEvent) {
-    event.preventDefault();
-    const target = event.currentTarget as HTMLElement;
-    target.classList.add('drag-over');
-
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-  }
-
-  onKanbanDragLeave(event: DragEvent) {
-    const target = event.currentTarget as HTMLElement;
-    target.classList.remove('drag-over');
-  }
-
-  // Calendar view methods
-  calendarViewDate = signal<Date>(new Date());
-
-  navigateCalendarView(direction: 'prev' | 'next') {
-    const current = this.calendarViewDate();
-    const newDate = new Date(current);
-    if (direction === 'prev') {
-      newDate.setMonth(current.getMonth() - 1);
-    } else {
-      newDate.setMonth(current.getMonth() + 1);
-    }
-    this.calendarViewDate.set(newDate);
-  }
-
-  getCalendarViewMonth(): string {
-    const date = this.calendarViewDate();
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  }
-
-  getCalendarViewDays() {
-    const date = this.calendarViewDate();
-    const year = date.getFullYear();
-    const month = date.getMonth();
-
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDay = firstDay.getDay();
-    const daysInMonth = lastDay.getDate();
-
-    const prevMonth = new Date(year, month, 0);
-    const daysInPrevMonth = prevMonth.getDate();
-
-    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; date: Date }> = [];
-
-    // Previous month's trailing days
-    for (let i = startDay - 1; i >= 0; i--) {
-      const dayDate = new Date(year, month - 1, daysInPrevMonth - i);
-      days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false, date: dayDate });
-    }
-
-    // Current month's days
-    const today = new Date();
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayDate = new Date(year, month, day);
-      const isToday = today.getDate() === day &&
-        today.getMonth() === month &&
-        today.getFullYear() === year;
-      days.push({ day, isCurrentMonth: true, isToday, date: dayDate });
-    }
-
-    // Next month's leading days
-    const remainingDays = 42 - days.length;
-    for (let day = 1; day <= remainingDays; day++) {
-      const dayDate = new Date(year, month + 1, day);
-      days.push({ day, isCurrentMonth: false, isToday: false, date: dayDate });
-    }
-
-    return days;
-  }
-
-  getTasksForDate(date: Date): Task[] {
-    const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    return this.filteredTasks().filter(t => {
-      if (!t.due) return false;
-      return t.due.includes(dateStr) ||
-        (date.toDateString() === new Date().toDateString() && t.due.includes('Today'));
-    });
-  }
-
   extractTime(dueString: string | undefined): string {
     if (!dueString) return '';
     const timeMatch = dueString.match(/(\d{1,2}):(\d{2})/);
@@ -1473,6 +1361,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
     return '';
   }
+
 
   // Subtasks methods
   getCompletedSubtasks(task: Task): number {

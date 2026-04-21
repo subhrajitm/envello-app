@@ -1,72 +1,44 @@
+
 <div class="tasks-view-minimal flex flex-col h-full">
-    <!-- Left sidebar using shared env component -->
-    <env-left-sidebar class="tasks-left-sidebar-shell" [title]="'Tasks'"
-        [subtitle]="store.tasks().length + ' tasks total'"
-        [searchPlaceholder]="'Search views'" [searchQuery]="sidebarSearch()"
-        (searchChange)="sidebarSearch.set($event)"
-        [items]="sidebarItems()" [activeId]="sidebarActiveId()" (activeIdChange)="onSidebarActiveChange($event)"
-        [addIcon]="'add'" addTooltip="New task">
-
-        <div env-sidebar-header class="tasks-sidebar-quick-actions">
-            <button type="button"
-                    class="btn-primary tasks-sidebar-quick-btn"
-                    (click)="setQuickAddMode('do-now'); openNewTaskDialog()">
-                <span class="material-symbols-outlined">play_arrow</span>
-                <span>Do Now</span>
-            </button>
-            <button type="button"
-                    class="btn-primary tasks-sidebar-quick-btn"
-                    (click)="setQuickAddMode('do-later'); openNewTaskDialog()">
-                <span class="material-symbols-outlined">schedule</span>
-                <span>Do Later</span>
-            </button>
-        </div>
-
-    </env-left-sidebar>
-
     <!-- Main content -->
     <div class="tasks-main-content">
 
         <!-- Enterprise Header / Toolbar -->
         <div class="tasks-toolbar">
             <div class="toolbar-left">
-                <div class="view-header">
-                    <h2 class="view-title">{{ viewTitle() }}</h2>
+                <div class="tasks-toolbar-quick-actions">
+                    <button type="button"
+                            class="btn-primary toolbar-quick-btn"
+                            (click)="setQuickAddMode('do-now'); openNewTaskDialog()"
+                            title="Do Now">
+                        <span class="material-symbols-outlined">play_arrow</span>
+                        <span class="btn-label">Now</span>
+                    </button>
+                    <button type="button"
+                            class="btn-primary toolbar-quick-btn"
+                            (click)="setQuickAddMode('do-later'); openNewTaskDialog()"
+                            title="Do Later">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <span class="btn-label">Later</span>
+                    </button>
                 </div>
                 <div class="toolbar-divider"></div>
-                <div class="view-switcher" aria-label="Change tasks layout" role="group">
-                    <button class="view-btn" [class.active]="viewMode() === 'list'"
-                        (click)="viewMode.set('list')"
-                        title="List view" aria-label="List view">
-                        <span class="material-symbols-outlined">format_list_bulleted</span>
-                        <span class="view-btn-label">List</span>
+
+                <!-- Primary Navigation Tabs -->
+                <div class="view-switcher main-nav-tabs" role="navigation">
+                    @for (item of sidebarItems(); track item.id) {
+                    <button class="view-btn" 
+                            [class.active]="selectedView() === item.id"
+                            (click)="onSidebarActiveChange(item.id)">
+                        <span class="material-symbols-outlined">{{ item.icon }}</span>
+                        <span class="view-btn-label">{{ item.label }}</span>
+                        @if (item.count) {
+                        <span class="nav-badge">{{ item.count }}</span>
+                        }
                     </button>
-                    <button class="view-btn"
-                        [class.active]="viewMode() === 'kanban'"
-                        (click)="viewMode.set('kanban')"
-                        title="Board view"
-                        aria-label="Board view">
-                        <span class="material-symbols-outlined">view_kanban</span>
-                        <span class="view-btn-label">Board</span>
-                    </button>
-                    <button class="view-btn"
-                        [class.active]="viewMode() === 'calendar'"
-                        (click)="viewMode.set('calendar')"
-                        title="Calendar view"
-                        aria-label="Calendar view">
-                        <span class="material-symbols-outlined">calendar_view_month</span>
-                        <span class="view-btn-label">Calendar</span>
-                    </button>
-                    <button class="view-btn"
-                        [class.active]="viewMode() === 'thumbnails'"
-                        (click)="viewMode.set('thumbnails')"
-                        title="Thumbnails view"
-                        aria-label="Thumbnails view">
-                        <span class="material-symbols-outlined">view_module</span>
-                        <span class="view-btn-label">Cards</span>
-                    </button>
+                    }
                 </div>
-            </div>
+                </div>
 
             <div class="toolbar-right">
                 <div class="search-input-wrapper">
@@ -75,46 +47,21 @@
                         (input)="sidebarSearch.set($any($event.target).value)"
                         placeholder="Search tasks, people, tags...">
                 </div>
-                @if (isVoiceSupported()) {
-                <button class="btn-icon-only" 
-                        [class.recording]="isListening()"
-                        (click)="isListening() ? stopVoiceInput() : startVoiceInput()"
-                        [title]="isListening() ? 'Stop recording' : 'Start voice input'"
-                        aria-label="Voice input">
-                    <span class="material-symbols-outlined">{{ isListening() ? 'mic' : 'mic_none' }}</span>
-                </button>
-                }
-                <div class="attachments-toolbar-wrapper" (click)="$event.stopPropagation()">
-                    <button class="btn-icon-only attachments-toggle"
-                            (click)="showAttachmentsMenu.set(!showAttachmentsMenu())"
-                            title="Add attachments"
-                            aria-label="Add attachments"
-                            aria-haspopup="true"
-                            [attr.aria-expanded]="showAttachmentsMenu()">
-                        <span class="material-symbols-outlined">attach_file</span>
-                        <span class="material-symbols-outlined caret">expand_more</span>
+                <div class="toolbar-divider"></div>
+                <div class="view-switcher" aria-label="Change tasks layout" role="group">
+                    <button class="view-btn icon-only" [class.active]="viewMode() === 'list'"
+                        (click)="viewMode.set('list')"
+                        title="List view" aria-label="List view">
+                        <span class="material-symbols-outlined">format_list_bulleted</span>
                     </button>
-                    @if (showAttachmentsMenu()) {
-                    <div class="attachments-menu">
-                        <button type="button"
-                                class="attachments-menu-item"
-                                (click)="toolbarFileInput.click(); showAttachmentsMenu.set(false)">
-                            <span class="material-symbols-outlined">description</span>
-                            <span>Attach files</span>
-                        </button>
-                        <button type="button"
-                                class="attachments-menu-item"
-                                (click)="openCameraCapture(); showAttachmentsMenu.set(false)">
-                            <span class="material-symbols-outlined">photo_camera</span>
-                            <span>Capture image</span>
-                        </button>
-                        <input #toolbarFileInput
-                               type="file"
-                               multiple
-                               class="sr-only"
-                               (change)="onFileSelected($event)">
-                    </div>
-                    }
+
+                    <button class="view-btn icon-only"
+                        [class.active]="viewMode() === 'thumbnails'"
+                        (click)="viewMode.set('thumbnails')"
+                        title="Thumbnails view"
+                        aria-label="Thumbnails view">
+                        <span class="material-symbols-outlined">view_module</span>
+                    </button>
                 </div>
                 @if (bulkActionMode()) {
                 <div class="bulk-actions-bar">
@@ -461,196 +408,11 @@
             </div>
             }
         </div>
-        } @else if (viewMode() === 'kanban') {
-        <!-- Kanban Board View -->
-        <div class="kanban-container">
-            <div class="kanban-column" [class.kanban-column-todo]="true">
-                <div class="kanban-column-header">
-                    <h3 class="kanban-column-title">To Do</h3>
-                    <span class="kanban-column-count">{{ getKanbanTasks('ACTIVE').length }}</span>
-                </div>
-                <div class="kanban-column-body"
-                 (dragover)="onKanbanDragOver($event)"
-                 (dragleave)="onKanbanDragLeave($event)"
-                 (drop)="onKanbanDrop($event, 'ACTIVE')"
-                 (dragenter)="$event.preventDefault()">
-                    @for (task of getKanbanTasks('ACTIVE'); track task.id) {
-                    <div class="kanban-card" 
-                         [class.kanban-card-high]="task.priority === 'HIGH'"
-                         draggable="true"
-                         (dragstart)="onKanbanDragStart($event, task)"
-                         (click)="focusTask(task)">
-                        <div class="kanban-card-header">
-                            <div class="kanban-card-title">{{ task.title }}</div>
-                            <div class="kanban-card-priority" [ngClass]="{
-                                'p1': task.priority === 'HIGH',
-                                'p2': task.priority === 'MEDIUM',
-                                'p3': task.priority === 'LOW'
-                            }">{{ task.priority }}</div>
-                        </div>
-                        @if (task.due) {
-                        <div class="kanban-card-due">
-                            <span class="material-symbols-outlined">schedule</span>
-                            {{ task.due }}
-                        </div>
-                        }
-                        @if (task.labels && task.labels.length > 0) {
-                        <div class="kanban-card-labels">
-                            @for (label of task.labels; track label) {
-                            <span class="kanban-label-tag">#{{ label }}</span>
-                            }
-                        </div>
-                        }
-                        <div class="kanban-card-footer">
-                            @if (task.subtasks && task.subtasks.length > 0) {
-                            <span class="kanban-subtask-count">
-                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
-                                {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
-                            </span>
-                            }
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
-            <div class="kanban-column" [class.kanban-column-progress]="true">
-                <div class="kanban-column-header">
-                    <h3 class="kanban-column-title">In Progress</h3>
-                    <span class="kanban-column-count">{{ getKanbanTasks('PENDING').length }}</span>
-                </div>
-                <div class="kanban-column-body"
-                 (dragover)="onKanbanDragOver($event)"
-                 (drop)="onKanbanDrop($event, 'PENDING')">
-                    @for (task of getKanbanTasks('PENDING'); track task.id) {
-                    <div class="kanban-card"
-                         [class.kanban-card-high]="task.priority === 'HIGH'"
-                         draggable="true"
-                         (dragstart)="onKanbanDragStart($event, task)"
-                         (click)="focusTask(task)">
-                        <div class="kanban-card-header">
-                            <div class="kanban-card-title">{{ task.title }}</div>
-                            <div class="kanban-card-priority" [ngClass]="{
-                                'p1': task.priority === 'HIGH',
-                                'p2': task.priority === 'MEDIUM',
-                                'p3': task.priority === 'LOW'
-                            }">{{ task.priority }}</div>
-                        </div>
-                        @if (task.due) {
-                        <div class="kanban-card-due">
-                            <span class="material-symbols-outlined">schedule</span>
-                            {{ task.due }}
-                        </div>
-                        }
-                        @if (task.labels && task.labels.length > 0) {
-                        <div class="kanban-card-labels">
-                            @for (label of task.labels; track label) {
-                            <span class="kanban-label-tag">#{{ label }}</span>
-                            }
-                        </div>
-                        }
-                        <div class="kanban-card-footer">
-                            @if (task.subtasks && task.subtasks.length > 0) {
-                            <span class="kanban-subtask-count">
-                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
-                                {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
-                            </span>
-                            }
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
-            <div class="kanban-column" [class.kanban-column-done]="true">
-                <div class="kanban-column-header">
-                    <h3 class="kanban-column-title">Done</h3>
-                    <span class="kanban-column-count">{{ getKanbanTasks('COMPLETED').length }}</span>
-                </div>
-                <div class="kanban-column-body"
-                 (dragover)="onKanbanDragOver($event)"
-                 (drop)="onKanbanDrop($event, 'COMPLETED')">
-                    @for (task of getKanbanTasks('COMPLETED'); track task.id) {
-                    <div class="kanban-card kanban-card-completed"
-                         draggable="true"
-                         (dragstart)="onKanbanDragStart($event, task)"
-                         (click)="focusTask(task)">
-                        <div class="kanban-card-header">
-                            <div class="kanban-card-title">{{ task.title }}</div>
-                        </div>
-                        @if (task.labels && task.labels.length > 0) {
-                        <div class="kanban-card-labels">
-                            @for (label of task.labels; track label) {
-                            <span class="kanban-label-tag">#{{ label }}</span>
-                            }
-                        </div>
-                        }
-                    </div>
-                    }
-                </div>
-            </div>
-        </div>
-        } @else if (viewMode() === 'calendar') {
-        <!-- Calendar View -->
-        <div class="calendar-view-container">
-            <div class="calendar-view-header">
-                <button class="calendar-nav-btn" (click)="navigateCalendarView('prev')">
-                    <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                <h2 class="calendar-view-month">{{ getCalendarViewMonth() }}</h2>
-                <button class="calendar-nav-btn" (click)="navigateCalendarView('next')">
-                    <span class="material-symbols-outlined">chevron_right</span>
-                </button>
-            </div>
-            <div class="calendar-view-grid">
-                <div class="calendar-weekdays">
-                    <div class="calendar-weekday">Sun</div>
-                    <div class="calendar-weekday">Mon</div>
-                    <div class="calendar-weekday">Tue</div>
-                    <div class="calendar-weekday">Wed</div>
-                    <div class="calendar-weekday">Thu</div>
-                    <div class="calendar-weekday">Fri</div>
-                    <div class="calendar-weekday">Sat</div>
-                </div>
-                <div class="calendar-days-grid-view">
-                    @for (day of getCalendarViewDays(); track $index) {
-                    @let dayTasks = getTasksForDate(day.date);
-                    <div class="calendar-day-cell" 
-                         [class.calendar-day-today]="day.isToday"
-                         [class.calendar-day-other-month]="!day.isCurrentMonth">
-                        <div class="calendar-day-number-row">
-                            <span class="calendar-day-number">{{ day.day }}</span>
-                            @if (dayTasks.length > 0) {
-                            <span class="calendar-day-count">{{ dayTasks.length }}</span>
-                            }
-                        </div>
-                        <div class="calendar-day-tasks">
-                            @for (task of dayTasks; track task.id; let idx = $index) {
-                            @if (idx < 2) {
-                            <div class="calendar-task-item"
-                                 [class.calendar-task-high]="task.priority === 'HIGH'"
-                                 (click)="focusTask(task)">
-                                @if (task.due?.includes(':')) {
-                                <span class="calendar-task-time">
-                                    {{ extractTime(task.due) }}
-                                </span>
-                                }
-                                <span class="calendar-task-title">{{ task.title }}</span>
-                            </div>
-                            }
-                            }
-                            @if (dayTasks.length > 2) {
-                            <div class="calendar-day-more">
-                                +{{ dayTasks.length - 2 }} more
-                            </div>
-                            }
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
-        </div>
+
         }
     </div>
 
+    <!-- Right Sidebar Restored -->
     <div class="tasks-sidebar">
         <div class="tasks-header-col">
             <div class="date-nav-minimal">
@@ -742,9 +504,7 @@
                 </div>
             </div>
         </div>
-        <!-- Global Tasks Feed Removed (moved to left sidebar) -->
     </div>
-</div>
 
 <!-- New Task Modal -->
 <env-modal
@@ -1785,3 +1545,4 @@
     </div>
 </env-modal>
 }
+</div>
