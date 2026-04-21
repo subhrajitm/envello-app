@@ -1564,6 +1564,23 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   pomodoroInterval: any = null;
 
+  getTaskColor(index: number): string {
+    const colors = [
+      '#fff9db', // Extremely light Amber
+      '#e7f5ff', // Extremely light Blue
+      '#fff0f0', // Extremely light Red
+      '#ebfbee', // Extremely light Green
+      '#f3f0ff', // Extremely light Purple
+      '#fff9db'  // Extremely light Yellow
+    ];
+    return colors[index % colors.length];
+  }
+
+  toggleTaskPriority(task: Task) {
+    const newPriority = task.priority === 'HIGH' ? 'MEDIUM' : 'HIGH';
+    this.store.updateTask(task.id, { priority: newPriority });
+  }
+
   ngOnInit() {
     // Initialize theme
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;

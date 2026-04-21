@@ -970,28 +970,78 @@
 
 .thumbs-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    padding: 8px;
     overflow-y: auto;
-    padding-right: 4px;
 }
 
 .thumb-card {
-    background: var(--bg-panel);
-    border-radius: 8px;
-    border: 1px solid var(--border-subtle);
-    padding: 10px 10px 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
-    min-height: 96px;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 
+        0 2px 4px -1px rgba(0, 0, 0, 0.04), 
+        0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    color: #1a1a1a;
+    overflow: hidden;
+}
+
+.thumb-top-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+.btn-thumb-action-mini {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-tertiary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-thumb-action-mini:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+}
+
+.btn-thumb-action-mini.active {
+    color: var(--accent-primary);
+}
+
+.btn-thumb-action-mini .material-symbols-outlined {
+    font-size: 14px;
+}
+
+/* Color indicator bar at the top */
+.thumb-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: currentColor; /* Will inherit from the background-color style if we set it correctly, or I'll use a better way */
+    opacity: 0.8;
 }
 
 .thumb-card:hover {
-    border-color: var(--border-highlight);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-    transform: translateY(-1px);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    border-color: var(--border-main);
 }
 
 .thumb-card-completed {
@@ -1011,15 +1061,17 @@
 }
 
 .thumb-title {
-    margin: 0;
+    margin: 8px 0 0;
     font-size: 13px;
     font-weight: 600;
+    line-height: 1.5;
     color: var(--text-primary);
-    line-height: 1.3;
-    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    font-family: var(--font-sans);
 }
 
 .thumb-project-pill {
@@ -1054,34 +1106,57 @@
 }
 
 .thumb-body {
-    margin-top: 2px;
+    margin-top: auto;
 }
 
 .thumb-due {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
-    color: var(--text-secondary);
-}
-
-.thumb-due-text {
-    font-family: var(--font-mono);
 }
 
 .thumb-footer {
-    margin-top: auto;
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    justify-content: flex-end;
 }
-
 
 .thumb-actions {
     display: flex;
-    align-items: center;
     gap: 4px;
+}
+
+.btn-thumb-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-thumb-action:hover {
+    background: var(--bg-active);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+}
+
+.btn-thumb-action .material-symbols-outlined {
+    font-size: 14px;
 }
 
 /* Reuse icon button hover emphasis in cards */

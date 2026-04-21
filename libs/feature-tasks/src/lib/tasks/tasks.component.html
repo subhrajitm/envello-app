@@ -355,51 +355,35 @@
                 <article class="thumb-card" 
                          [class.thumb-card-completed]="task.status === 'COMPLETED'"
                          (click)="openTaskDetails(task)"
-                         style="cursor: pointer;">
-                    <header class="thumb-header">
-                        <div class="thumb-title-row">
-                            <h3 class="thumb-title">{{ task.title }}</h3>
-                            @if(task.project) {
-                            <span class="project-pill thumb-project-pill">{{ task.project }}</span>
-                            }
-                        </div>
-                        <div class="thumb-meta-row">
-                            <span class="status-badge thumb-status" [ngClass]="task.status.toLowerCase()">
-                                {{ task.status }}
-                            </span>
-                            <span class="thumb-priority" [ngClass]="{
-                                'p1': task.priority === 'HIGH',
-                                'p2': task.priority === 'MEDIUM',
-                                'p3': task.priority === 'LOW'
-                            }">
-                                {{ task.priority }}
-                            </span>
-                            @if(task.hours) {
-                            <span class="thumb-hours">{{ task.hours }}</span>
-                            }
-                        </div>
-                    </header>
+                         [style.background-color]="getTaskColor($index)">
+                    
+                    <div class="thumb-top-actions" (click)="$event.stopPropagation()">
+                         <button class="btn-thumb-action-mini" 
+                                 [class.active]="task.priority === 'HIGH'"
+                                 (click)="toggleTaskPriority(task)"
+                                 title="Toggle Priority">
+                            <span class="material-symbols-outlined">star</span>
+                         </button>
+                    </div>
+
+                    <h3 class="thumb-title">{{ task.title }}</h3>
+                    
                     <div class="thumb-body">
                         <div class="thumb-due" [class.overdue]="task.due?.includes('Overdue')">
                             @if(task.due) {
-                            <span class="material-symbols-outlined due-icon">calendar_today</span>
-                            <span class="thumb-due-text">{{ task.due }}</span>
+                            <span>{{ task.due }}</span>
                             } @else {
-                            <span class="no-data">No due date</span>
+                            <span>No due date</span>
                             }
                         </div>
                     </div>
+
                     <footer class="thumb-footer" (click)="$event.stopPropagation()">
                         <div class="thumb-actions">
-                            <button class="btn-icon-only btn-icon-complete"
-                                (click)="onQuickComplete(task)"
-                                [attr.aria-label]="'Mark ' + task.title + ' complete'">
-                                <span class="material-symbols-outlined">done</span>
-                            </button>
-                            <button class="btn-icon-only"
-                                (click)="requestDeleteTask(task, $event)"
-                                [attr.aria-label]="'Delete task ' + task.title">
-                                <span class="material-symbols-outlined">delete</span>
+                            <button class="btn-thumb-action"
+                                (click)="openTaskDetails(task)"
+                                [attr.aria-label]="'Edit task ' + task.title">
+                                <span class="material-symbols-outlined">edit</span>
                             </button>
                         </div>
                     </footer>
