@@ -662,7 +662,9 @@ app-meetings,
 app-books,
 app-articles,
 app-code-snippets,
-app-developer-settings {
+app-developer-settings,
+app-activity-log,
+app-profile-manager {
     display: block;
     height: 100%;
     min-height: 0;
