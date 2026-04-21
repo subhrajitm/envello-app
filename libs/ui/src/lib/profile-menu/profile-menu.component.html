@@ -35,21 +35,23 @@
 
     <!-- Local Workspace Profiles -->
     <div class="menu-section">
-        <h4 style="font-size: 11px; text-transform: uppercase; margin: 8px 16px; color: var(--text-tertiary);">Local Profiles</h4>
-        <ng-container *ngFor="let wp of workspaces()">
-            <button class="menu-item flex items-center w-full" 
-                style="gap: 12px;"
-                [style.background]="wp.id === activeWorkspace().id ? 'var(--surface-active)' : ''"
-                (click)="switchWorkspace(wp.id)">
-                <div [style.background-color]="wp.color" style="width: 10px; height: 10px; border-radius: 50%;"></div>
-                <span>{{ wp.name }}</span>
-                <span class="material-symbols-outlined ml-auto" style="font-size: 16px;" *ngIf="wp.id === activeWorkspace().id">check</span>
+        <h4 style="font-size: 11px; text-transform: uppercase; margin: 8px 16px; color: var(--text-tertiary);">Active Profile</h4>
+        <div class="menu-item flex items-center w-full" style="gap: 12px; background: var(--surface-active); cursor: default; margin-bottom: 6px;">
+            <div [style.background-color]="activeWorkspace().color" style="width: 10px; height: 10px; border-radius: 50%;"></div>
+            <span style="font-weight: 500;">{{ activeWorkspace().name }}</span>
+            <span class="material-symbols-outlined ml-auto" style="font-size: 16px; color: var(--text-secondary);">check</span>
+        </div>
+        
+        <div class="flex items-center gap-2 px-2 pb-1">
+            <button class="menu-item flex items-center justify-center gap-1.5 flex-1" style="margin: 0; padding: 8px; border: 1px solid var(--border-subtle); background: transparent;" (click)="addWorkspace()" title="Add Profile">
+                <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+                <span style="font-size: 12px; font-weight: 500;">Add</span>
             </button>
-        </ng-container>
-        <button class="menu-item flex items-center gap-2 w-full" (click)="addWorkspace()">
-            <span class="material-symbols-outlined">add_circle</span>
-            <span>Add Profile</span>
-        </button>
+            <button class="menu-item flex items-center justify-center gap-1.5 flex-1" style="margin: 0; padding: 8px; border: 1px solid var(--border-subtle); background: transparent;" (click)="manageProfiles()" title="Manage Profiles">
+                <span class="material-symbols-outlined" style="font-size: 16px;">manage_search</span>
+                <span style="font-size: 12px; font-weight: 500;">Manage</span>
+            </button>
+        </div>
     </div>
 
     <div class="menu-divider"></div>
@@ -136,3 +138,36 @@
 
 <!-- Backdrop -->
 <div class="profile-backdrop" *ngIf="isOpen()" (click)="close()"></div>
+
+<!-- Add Profile Modal -->
+<env-modal
+    [isOpen]="isAddProfileModalOpen()"
+    title="Create Local Profile"
+    size="sm"
+    (closed)="cancelAddWorkspace()"
+>
+    <div body class="flex flex-col gap-4" style="padding: 16px 20px;">
+        <div class="form-group flex flex-col gap-2">
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Profile Name</label>
+            <input type="text"
+                class="form-input w-full"
+                placeholder="e.g., Personal, Client A, Side Project"
+                style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
+                [ngModel]="newProfileName()" (ngModelChange)="newProfileName.set($event)"
+                (keyup.enter)="confirmAddWorkspace()"
+                autofocus
+            >
+            <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
+                Data created in this profile (notes, passwords, subscriptions) will be isolated to this local workspace.
+            </p>
+        </div>
+    </div>
+    <div footer class="flex justify-end gap-3" style="width: 100%; padding: 16px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-hover);">
+        <button class="btn-cancel" (click)="cancelAddWorkspace()" style="padding: 8px 16px; border-radius: 6px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">
+            Cancel
+        </button>
+        <button class="btn-primary" (click)="confirmAddWorkspace()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; cursor: pointer; font-size: 13px; font-weight: 600;">
+            Create Profile
+        </button>
+    </div>
+</env-modal>

@@ -112,6 +112,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'profiles',
+    loadComponent: () => import('@envello/ui').then(m => m.ProfileManagerComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'not-found',
     loadComponent: () => import('./components/errors/not-found/not-found.component').then(m => m.NotFoundComponent),
     data: { hasSidebar: false },

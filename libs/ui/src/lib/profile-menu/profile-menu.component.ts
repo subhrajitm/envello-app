@@ -1,13 +1,15 @@
 import { Component, signal, inject, output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { UserService, WorkspaceProfileService } from '@envello/core';
+import { ModalComponent } from '../modal/modal.component';
 
 @Component({
   selector: 'app-profile-menu',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './profile-menu.component.html',
   styleUrl: './profile-menu.component.css',
   animations: [
@@ -40,15 +42,34 @@ export class ProfileMenuComponent {
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
 
+  isAddProfileModalOpen = signal(false);
+  newProfileName = signal('');
+
   switchWorkspace(id: string) {
     this.workspaceService.switchProfile(id);
   }
 
   addWorkspace() {
-    const name = prompt('Enter new workspace profile name:');
+    this.newProfileName.set('');
+    this.isAddProfileModalOpen.set(true);
+    this.close();
+  }
+
+  confirmAddWorkspace() {
+    const name = this.newProfileName().trim();
     if (name) {
       this.workspaceService.addProfile(name);
+      this.isAddProfileModalOpen.set(false);
     }
+  }
+
+  cancelAddWorkspace() {
+    this.isAddProfileModalOpen.set(false);
+  }
+
+  manageProfiles() {
+    this.router.navigate(['/profiles']);
+    this.close();
   }
 
   open() {

@@ -1,0 +1,86 @@
+<div class="orbit-page">
+    <header class="orbit-header">
+        <div class="orbit-header-left">
+            <h1 class="orbit-title">Workspace Profiles</h1>
+            <p class="orbit-subtitle">Manage isolated local data environments.</p>
+        </div>
+        <div class="orbit-header-right">
+            <button class="orbit-action-btn primary" (click)="openAddModal()">
+                <span class="material-symbols-outlined">add</span>
+                <span>Add Profile</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="orbit-content-area flex flex-col pt-6">
+        <div class="minimal-tiles-grid">
+            @for (wp of workspaces(); track wp.id) {
+            <div class="minimal-tile" [class.tile-active]="activeWorkspace().id === wp.id">
+                <div class="tile-color-bar" [style.backgroundColor]="wp.color"></div>
+                <div class="tile-content">
+                    <div class="tile-header flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                           <div class="tile-dot" [style.backgroundColor]="wp.color"></div>
+                           <h3 class="tile-name">{{ wp.name }}</h3>
+                        </div>
+                        @if (activeWorkspace().id === wp.id) {
+                            <div class="pulse-dot" title="Active Workspace" [style.backgroundColor]="wp.color" [style.boxShadow]="'0 0 8px ' + wp.color"></div>
+                        }
+                    </div>
+                    
+                    <div class="tile-meta mt-1">
+                        <span class="text-xs" style="color: var(--text-tertiary);">Used {{ wp.lastAccessed | date:'shortDate' }}</span>
+                    </div>
+
+                    <div class="tile-actions mt-5 flex items-center gap-2">
+                        <button class="tile-btn select-btn" 
+                                [disabled]="activeWorkspace().id === wp.id"
+                                (click)="switchWorkspace(wp.id)">
+                            {{ activeWorkspace().id === wp.id ? 'Active' : 'Switch' }}
+                        </button>
+                        <button class="tile-btn delete-btn" 
+                                title="Delete profile"
+                                [disabled]="activeWorkspace().id === wp.id || wp.id === 'default'"
+                                (click)="deleteWorkspace(wp.id)">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Add Profile Modal -->
+<env-modal
+    [isOpen]="isAddModalOpen()"
+    title="Create Local Profile"
+    size="sm"
+    (closed)="cancelAdd()"
+>
+    <div body class="flex flex-col gap-4" style="padding: 16px 20px;">
+        <div class="form-group flex flex-col gap-2">
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Profile Name</label>
+            <input type="text"
+                class="form-input w-full"
+                placeholder="e.g., Personal, Client A, Side Project"
+                style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
+                [ngModel]="newProfileName()" (ngModelChange)="newProfileName.set($event)"
+                (keyup.enter)="confirmAdd()"
+                autofocus
+            >
+            <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
+                Data created in this profile (notes, passwords, subscriptions) will be isolated to this local workspace.
+            </p>
+        </div>
+    </div>
+    <div footer class="flex justify-end gap-3" style="width: 100%; padding: 16px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-hover);">
+        <button class="btn-cancel" (click)="cancelAdd()">
+            Cancel
+        </button>
+        <button class="btn-primary" (click)="confirmAdd()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; font-size: 13px; font-weight: 600;">
+            Create Profile
+        </button>
+    </div>
+</env-modal>
