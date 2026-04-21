@@ -41,9 +41,53 @@ export class ProfileManagerComponent {
     }
   }
 
-  deleteWorkspace(id: string) {
-    if (confirm('Are you sure you want to completely delete this profile? All its isolated data will be unrecoverable.')) {
+  isEditModalOpen = signal(false);
+  editProfileId = signal<string | null>(null);
+  editProfileName = signal('');
+  editProfileColor = signal('#3b82f6'); // Default
+
+  openEditModal(wp: any) {
+    this.editProfileId.set(wp.id);
+    this.editProfileName.set(wp.name);
+    this.editProfileColor.set(wp.color || '#3b82f6');
+    this.isEditModalOpen.set(true);
+  }
+
+  cancelEdit() {
+    this.isEditModalOpen.set(false);
+    this.editProfileId.set(null);
+  }
+
+  confirmEdit() {
+    const id = this.editProfileId();
+    if (id && this.editProfileName().trim()) {
+      this.workspaceService.updateProfile(id, { 
+        name: this.editProfileName().trim(),
+        color: this.editProfileColor()
+      });
+      this.cancelEdit();
+    }
+  }
+
+  // Delete Modal Logic
+  isDeleteModalOpen = signal(false);
+  profileToDelete = signal<string | null>(null);
+
+  openDeleteModal(id: string) {
+    this.profileToDelete.set(id);
+    this.isDeleteModalOpen.set(true);
+  }
+
+  cancelDelete() {
+    this.isDeleteModalOpen.set(false);
+    this.profileToDelete.set(null);
+  }
+
+  confirmDelete() {
+    const id = this.profileToDelete();
+    if (id) {
       this.workspaceService.removeProfile(id);
+      this.cancelDelete();
     }
   }
 }

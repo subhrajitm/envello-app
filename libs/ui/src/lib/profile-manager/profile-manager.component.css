@@ -157,6 +157,25 @@
   cursor: default;
 }
 
+.tile-btn.edit-btn {
+  flex: 0 0 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+}
+
+.tile-btn.edit-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.tile-btn.edit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .tile-btn.delete-btn {
   flex: 0 0 32px;
   height: 32px;

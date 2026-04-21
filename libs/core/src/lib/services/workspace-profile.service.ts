@@ -92,4 +92,15 @@ export class WorkspaceProfileService {
       this.switchProfile('default');
     }
   }
+
+  updateProfile(id: string, updates: Partial<WorkspaceProfile>) {
+    const updated = this.profiles().map(p => {
+      if (p.id === id) {
+        return { ...p, ...updates } as WorkspaceProfile;
+      }
+      return p;
+    });
+    this.profilesSignal.set(updated);
+    localStorage.setItem(this.PROFILES_KEY, JSON.stringify(updated));
+  }
 }
