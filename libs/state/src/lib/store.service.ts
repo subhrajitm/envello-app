@@ -214,7 +214,7 @@ export class StoreService {
             updated: new Date().toISOString(),
             icon: 'edit_note',
             linkedResources: {
-                journals: [note.id]
+                notes: [note.id]
             }
         });
     }

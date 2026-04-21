@@ -93,7 +93,6 @@ export class AppComponent implements OnInit, OnDestroy {
       'novels': 'Novels/Fiction',
       'research': 'Research',
       'articles': 'Articles/Blogs',
-      'journals': 'Journals',
       'daily-notes': 'Daily Notes',
       'tasks': 'Tasks/Todos',
       'meetings': 'Meetings',

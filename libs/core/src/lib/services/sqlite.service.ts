@@ -18,11 +18,6 @@ import type { Book } from './books.service';
 import type { Meeting } from './meetings.service';
 import type { Article } from './article.service';
 import type {
-    JournalProject,
-    JournalEntry,
-    JournalColumn,
-} from './journal.service';
-import type {
     ResearchLibrary,
     ResearchSource,
     ResearchSummary,
@@ -41,9 +36,6 @@ export type SnippetDoc = Snippet;
 export type BookDoc = Book;
 export type MeetingDoc = Meeting;
 export type ArticleDoc = Article;
-export type JournalProjectDoc = JournalProject;
-export type JournalEntryDoc = JournalEntry;
-export type JournalColumnDoc = JournalColumn;
 export type ResearchLibraryDoc = ResearchLibrary;
 export type ResearchSourceDoc = ResearchSource;
 export type ResearchSummaryDoc = ResearchSummary;
@@ -75,9 +67,6 @@ export class SqliteService {
     private booksSubject = new BehaviorSubject<BookDoc[]>([]);
     private meetingsSubject = new BehaviorSubject<MeetingDoc[]>([]);
     private articlesSubject = new BehaviorSubject<ArticleDoc[]>([]);
-    private journalProjectsSubject = new BehaviorSubject<JournalProjectDoc[]>([]);
-    private journalEntriesSubject = new BehaviorSubject<JournalEntryDoc[]>([]);
-    private journalColumnsSubject = new BehaviorSubject<JournalColumnDoc[]>([]);
     private researchLibrariesSubject = new BehaviorSubject<ResearchLibraryDoc[]>([]);
     private researchSourcesSubject = new BehaviorSubject<ResearchSourceDoc[]>([]);
     private researchSummariesSubject = new BehaviorSubject<ResearchSummaryDoc[]>([]);
@@ -334,59 +323,15 @@ export class SqliteService {
       )
     `);
 
-        // Journal Projects
+        // Research Libraries
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS journal_projects (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        description TEXT,
-        entriesCount REAL,
-        active BOOLEAN,
-        wordCount REAL,
-        targetWordCount REAL,
-        progress REAL,
-        createdDate TEXT,
-        lastUpdated TEXT,
-        columns TEXT,
-        tags TEXT,
-        isLocked BOOLEAN
-      )
-    `);
-
-        // Journal Entries
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS journal_entries (
-        id TEXT PRIMARY KEY,
-        projectId TEXT,
-        title TEXT,
-        content TEXT,
-        preview TEXT,
-        type TEXT,
-        column TEXT,
-        tags TEXT,
-        wordCount REAL,
-        characterCount REAL,
-        createdDate TEXT,
-        lastEdited TEXT,
-        hasAi BOOLEAN,
-        isAiEdited BOOLEAN,
-        progress REAL,
-        statusColor TEXT,
-        meta TEXT,
-        isLocked BOOLEAN,
-        linkedEntries TEXT,
-        isPinned BOOLEAN,
-        isFavorite BOOLEAN
-      )
-    `);
-
-        // Journal Columns
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS journal_columns (
+      CREATE TABLE IF NOT EXISTS research_libraries (
         id TEXT PRIMARY KEY,
         name TEXT,
+        description TEXT,
         color TEXT,
-        "order" REAL
+        createdDate TEXT,
+        lastModified TEXT
       )
     `);
 
@@ -507,9 +452,6 @@ export class SqliteService {
             this.reloadBooks(),
             this.reloadMeetings(),
             this.reloadArticles(),
-            this.reloadJournalProjects(),
-            this.reloadJournalEntries(),
-            this.reloadJournalColumns(),
             this.reloadResearchLibraries(),
             this.reloadResearchSources(),
             this.reloadResearchSummaries(),
@@ -1010,134 +952,6 @@ export class SqliteService {
         await this.reloadArticles();
     }
 
-    // ─── Journal Projects ──────────────────────────────────────────────────────
-    private async reloadJournalProjects() {
-        const db = await this.getDb();
-        const rows = await db.select<JournalProjectDoc[]>('SELECT * FROM journal_projects');
-        const parsed = rows.map((r: any) => this.parseRow<JournalProjectDoc>(r, ['columns', 'tags']));
-        this.journalProjectsSubject.next(parsed);
-    }
-
-    async upsertJournalProject(doc: JournalProjectDoc): Promise<void> {
-        const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM journal_projects WHERE id = $1', [doc.id]);
-        const jsonDoc = { ...doc, columns: this.toJson(doc.columns), tags: this.toJson(doc.tags) };
-
-        if (exists.length > 0) {
-            await db.execute(`UPDATE journal_projects SET title=$1, description=$2, entriesCount=$3, active=$4, wordCount=$5, targetWordCount=$6, progress=$7, createdDate=$8, lastUpdated=$9, columns=$10, tags=$11, isLocked=$12 WHERE id=$13`,
-                [jsonDoc.title, jsonDoc.description, jsonDoc.entriesCount, jsonDoc.active, jsonDoc.wordCount, jsonDoc.targetWordCount, jsonDoc.progress, jsonDoc.createdDate, jsonDoc.lastUpdated, jsonDoc.columns, jsonDoc.tags, jsonDoc.isLocked, jsonDoc.id]);
-        } else {
-            await db.execute(`INSERT INTO journal_projects (id, title, description, entriesCount, active, wordCount, targetWordCount, progress, createdDate, lastUpdated, columns, tags, isLocked) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                [jsonDoc.id, jsonDoc.title, jsonDoc.description, jsonDoc.entriesCount, jsonDoc.active, jsonDoc.wordCount, jsonDoc.targetWordCount, jsonDoc.progress, jsonDoc.createdDate, jsonDoc.lastUpdated, jsonDoc.columns, jsonDoc.tags, jsonDoc.isLocked]);
-        }
-        await this.reloadJournalProjects();
-    }
-
-    async removeJournalProject(id: string): Promise<void> {
-        const db = await this.getDb();
-        await db.execute('DELETE FROM journal_projects WHERE id = $1', [id]);
-        await this.reloadJournalProjects();
-    }
-
-    async getAllJournalProjects(): Promise<JournalProjectDoc[]> {
-        return this.journalProjectsSubject.getValue();
-    }
-
-    // ─── Journal Entries ───────────────────────────────────────────────────────
-    private async reloadJournalEntries() {
-        const db = await this.getDb();
-        try {
-            await db.execute('ALTER TABLE journal_entries ADD COLUMN filePath TEXT').catch(() => { });
-            await db.execute('ALTER TABLE journal_entries ADD COLUMN lastSynced TEXT').catch(() => { });
-        } catch (e) { }
-
-        const rows = await db.select<JournalEntryDoc[]>('SELECT * FROM journal_entries');
-        const parsed = rows.map((r: any) => this.parseRow<JournalEntryDoc>(r, ['tags', 'linkedEntries']));
-        this.journalEntriesSubject.next(parsed);
-    }
-
-    async upsertJournalEntry(entry: JournalEntryDoc): Promise<void> {
-        const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM journal_entries WHERE id = $1', [entry.id]);
-
-        const entryAny = entry as any;
-        const jsonEntry = {
-            ...entry,
-            tags: this.toJson(entry.tags),
-            linkedEntries: this.toJson(entry.linkedEntries),
-            content: '', // Clear content
-            filePath: entryAny.filePath,
-            lastSynced: entryAny.lastSynced
-        };
-
-        if (exists.length > 0) {
-            await db.execute(`
-            UPDATE journal_entries SET 
-                projectId=$1, title=$2, content=$3, preview=$4, type=$5, column=$6, tags=$7, 
-                wordCount=$8, characterCount=$9, createdDate=$10, lastEdited=$11, hasAi=$12, 
-                isAiEdited=$13, progress=$14, statusColor=$15, meta=$16, isLocked=$17, 
-                linkedEntries=$18, isPinned=$19, isFavorite=$20, filePath=$21, lastSynced=$22
-            WHERE id=$23`,
-                [jsonEntry.projectId, jsonEntry.title, jsonEntry.content, jsonEntry.preview, jsonEntry.type, jsonEntry.column, jsonEntry.tags,
-                jsonEntry.wordCount, jsonEntry.characterCount, jsonEntry.createdDate, jsonEntry.lastEdited, jsonEntry.hasAi,
-                jsonEntry.isAiEdited, jsonEntry.progress, jsonEntry.statusColor, jsonEntry.meta, jsonEntry.isLocked,
-                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced, jsonEntry.id]);
-        } else {
-            await db.execute(`
-            INSERT INTO journal_entries (
-                id, projectId, title, content, preview, type, column, tags, wordCount, characterCount, 
-                createdDate, lastEdited, hasAi, isAiEdited, progress, statusColor, meta, isLocked, 
-                linkedEntries, isPinned, isFavorite, filePath, lastSynced
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`,
-                [jsonEntry.id, jsonEntry.projectId, jsonEntry.title, jsonEntry.content, jsonEntry.preview, jsonEntry.type, jsonEntry.column, jsonEntry.tags,
-                jsonEntry.wordCount, jsonEntry.characterCount, jsonEntry.createdDate, jsonEntry.lastEdited, jsonEntry.hasAi,
-                jsonEntry.isAiEdited, jsonEntry.progress, jsonEntry.statusColor, jsonEntry.meta, jsonEntry.isLocked,
-                jsonEntry.linkedEntries, jsonEntry.isPinned, jsonEntry.isFavorite, jsonEntry.filePath, jsonEntry.lastSynced]);
-        }
-        await this.reloadJournalEntries();
-    }
-
-    async removeJournalEntry(id: string): Promise<void> {
-        const db = await this.getDb();
-        await db.execute('DELETE FROM journal_entries WHERE id = $1', [id]);
-        await this.reloadJournalEntries();
-    }
-
-    async getAllJournalEntries(): Promise<JournalEntryDoc[]> {
-        return this.journalEntriesSubject.getValue();
-    }
-
-    // ─── Journal Columns ───────────────────────────────────────────────────────
-    private async reloadJournalColumns() {
-        const db = await this.getDb();
-        const rows = await db.select<JournalColumnDoc[]>('SELECT * FROM journal_columns');
-        this.journalColumnsSubject.next(rows);
-    }
-
-    async upsertJournalColumn(doc: JournalColumnDoc): Promise<void> {
-        // Not implemented in DB service either
-        // But assuming similar pattern.
-        const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM journal_columns WHERE id = $1', [doc.id]);
-
-        if (exists.length > 0) {
-            await db.execute('UPDATE journal_columns SET name=$1, color=$2, "order"=$3 WHERE id=$4', [doc.name, doc.color, doc.order, doc.id]);
-        } else {
-            await db.execute('INSERT INTO journal_columns (id, name, color, "order") VALUES ($1, $2, $3, $4)', [doc.id, doc.name, doc.color, doc.order]);
-        }
-        await this.reloadJournalColumns();
-    }
-
-    async removeJournalColumn(id: string): Promise<void> {
-        const db = await this.getDb();
-        await db.execute('DELETE FROM journal_columns WHERE id = $1', [id]);
-        await this.reloadJournalColumns();
-    }
-
-    async getAllJournalColumns(): Promise<JournalColumnDoc[]> {
-        return this.journalColumnsSubject.getValue();
-    }
-
     // ─── Research Libraries ────────────────────────────────────────────────────
     private async reloadResearchLibraries() {
         const db = await this.getDb();
@@ -1389,9 +1203,6 @@ export class SqliteService {
         data.data.books = await this.getAllBooks();
         data.data.meetings = await this.getAllMeetings();
         data.data.articles = await this.getAllArticles();
-        data.data.journal_projects = await this.getAllJournalProjects();
-        data.data.journal_entries = await this.getAllJournalEntries();
-        data.data.journal_columns = await this.getAllJournalColumns();
         data.data.research_libraries = await this.getAllResearchLibraries();
         data.data.research_sources = await this.getAllResearchSources();
         data.data.research_summaries = await this.getAllResearchSummaries();

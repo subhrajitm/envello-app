@@ -43,9 +43,6 @@ export class SqliteDataService implements DataService {
             case 'books': return await this.sqlite.getAllBooks() as unknown as T[];
             case 'meetings': return await this.sqlite.getAllMeetings() as unknown as T[];
             case 'articles': return await this.sqlite.getAllArticles() as unknown as T[];
-            case 'journal_projects': return await this.sqlite.getAllJournalProjects() as unknown as T[];
-            case 'journal_entries': return await this.sqlite.getAllJournalEntries() as unknown as T[];
-            case 'journal_columns': return await this.sqlite.getAllJournalColumns() as unknown as T[];
             case 'research_libraries': return await this.sqlite.getAllResearchLibraries() as unknown as T[];
             case 'research_sources': return await this.sqlite.getAllResearchSources() as unknown as T[];
             case 'research_summaries': return await this.sqlite.getAllResearchSummaries() as unknown as T[];
@@ -87,9 +84,6 @@ export class SqliteDataService implements DataService {
             case 'books': return await this.sqlite.upsertBook(item as any);
             case 'meetings': return await this.sqlite.upsertMeeting(item as any);
             case 'articles': return await this.sqlite.upsertArticle(item as any);
-            case 'journal_projects': return await this.sqlite.upsertJournalProject(item as any);
-            case 'journal_entries': return await this.sqlite.upsertJournalEntry(item as any);
-            case 'journal_columns': return await this.sqlite.upsertJournalColumn(item as any);
             case 'research_libraries': return await this.sqlite.upsertResearchLibrary(item as any);
             case 'research_sources': return await this.sqlite.upsertResearchSource(item as any);
             case 'research_summaries': return await this.sqlite.upsertResearchSummary(item as any);
@@ -124,9 +118,6 @@ export class SqliteDataService implements DataService {
             case 'books': return await this.sqlite.removeBook(id);
             case 'meetings': return await this.sqlite.removeMeeting(id);
             case 'articles': return await this.sqlite.removeArticle(id);
-            case 'journal_projects': return await this.sqlite.removeJournalProject(id);
-            case 'journal_entries': return await this.sqlite.removeJournalEntry(id);
-            case 'journal_columns': return await this.sqlite.removeJournalColumn(id);
             case 'research_libraries': return await this.sqlite.removeResearchLibrary(id);
             case 'research_sources': return await this.sqlite.removeResearchSource(id);
             case 'research_summaries': return await this.sqlite.removeResearchSummary(id);

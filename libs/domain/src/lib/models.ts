@@ -115,7 +115,7 @@ export interface Project {
     type?: 'SINGLE' | 'MULTI'; // Single task oriented or multi-faceted
     linkedResources?: {
         novels?: string[]; // IDs of linked novels
-        journals?: string[]; // IDs of linked journals/notes
+        notes?: string[]; // IDs of linked daily notes
         snippets?: string[]; // IDs of linked code snippets
         meetings?: string[]; // IDs of linked meetings
         research?: string[]; // IDs of linked research sources/libraries
@@ -132,8 +132,6 @@ export type BinItemType =
     | 'novel-note'
     | 'novel-character'
     | 'novel-location'
-    | 'journal-entry'
-    | 'journal-project'
     | 'task'
     | 'meeting'
     | 'book'

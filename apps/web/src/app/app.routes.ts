@@ -44,12 +44,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-  {
-    path: 'journals',
-    loadComponent: () => import('./components/journals/journals.component').then(m => m.JournalsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
+
   {
     path: 'daily-notes',
     loadComponent: () => import('@envello/feature-daily-notes').then(m => m.DailyNotesComponent),

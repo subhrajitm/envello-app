@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { StoreService, Task, Note, Novel } from '@envello/core';
 import { ArticleService } from '@envello/core';
-import { JournalService } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { MeetingsService, MEETING_COLORS } from '@envello/core';
 import { SnippetsService } from '@envello/core';
@@ -48,7 +47,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private router = inject(Router);
     private store = inject(StoreService);
     private articleService = inject(ArticleService);
-    private journalService = inject(JournalService);
     private researchService = inject(ResearchService);
     private meetingsService = inject(MeetingsService);
     private snippetsService = inject(SnippetsService);
@@ -76,7 +74,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         { id: 'note',    title: 'Note',    description: 'Quick note for today',           icon: 'description',  route: '/daily-notes', color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],    tag: 'NOTE' },
         // Library
         { id: 'research',title: 'Research', description: 'Create a new research library', icon: 'science',      route: '/research',    color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],       tag: 'RESEARCH' },
-        { id: 'journal', title: 'Journal',  description: 'Start a new journal project',   icon: 'auto_stories', route: '/journals',    color: '#f0b8d0', category: 'library', shortcut: '5', keywords: ['journal', 'project'],        tag: 'JOURNAL' },
         { id: 'snippet', title: 'Snippet',  description: 'Save a code snippet',           icon: 'code',         route: '/snippets',    color: '#b8d8e8', category: 'library', shortcut: '6', keywords: ['code', 'snippet'],           tag: 'DEV' },
         // Create
         { id: 'article', title: 'Draft',    description: 'Write a new article or draft',  icon: 'article',      route: '/articles',    color: '#a8d5a8', category: 'create',  shortcut: '7', keywords: ['article', 'blog', 'draft'],  tag: 'DRAFT' },
@@ -97,7 +94,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         task: this.store.tasks().length,
         novel: this.store.novels().length,
         article: this.articleService.articles().length,
-        journal: this.journalService.projects().length,
         research: this.researchService.libraries().length,
         meeting: this.meetingsService.meetings().length,
         snippet: this.snippetsService.snippets().length
@@ -267,9 +263,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                     case 'article':
                         this.createArticle();
                         break;
-                    case 'journal':
-                        this.createJournalProject();
-                        break;
                     case 'research':
                         this.createResearchLibrary();
                         break;
@@ -371,16 +364,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         });
 
         this.router.navigate(['/articles']);
-    }
-
-    private createJournalProject() {
-        this.journalService.addProject({
-            title: 'New Journal Project',
-            description: '',
-            active: true
-        });
-
-        this.router.navigate(['/journals']);
     }
 
     private createResearchLibrary() {

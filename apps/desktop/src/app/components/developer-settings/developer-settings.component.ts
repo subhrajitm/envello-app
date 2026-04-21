@@ -7,7 +7,6 @@ import { SessionService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { MeetingsService } from '@envello/core';
 import { ArticleService } from '@envello/core';
-import { JournalService } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { SqliteService } from '@envello/core';
 import { TauriService } from '@envello/core';
@@ -37,7 +36,6 @@ export class DeveloperSettingsComponent {
   private userService = inject(UserService);
   private meetings = inject(MeetingsService);
   private articles = inject(ArticleService);
-  private journal = inject(JournalService);
   private research = inject(ResearchService);
   private sqlite = inject(SqliteService);
   private tauri = inject(TauriService);
@@ -55,9 +53,6 @@ export class DeveloperSettingsComponent {
     this.makeTab('novels', 'Novels', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.novels()),
     this.makeTab('meetings', 'Meetings', 'event', 'Content', ['id', 'title', 'date', 'startTime', 'status'], this.meetings.meetings()),
     this.makeTab('articles', 'Articles', 'article', 'Content', ['id', 'title', 'platform', 'pipeline', 'wordCount'], this.articles.articles()),
-    this.makeTab('journal-projects', 'Journal Projects', 'folder', 'Content', ['id', 'title', 'entriesCount', 'active'], this.journal.projects()),
-    this.makeTab('journal-entries', 'Journal Entries', 'description', 'Content', ['id', 'projectId', 'title', 'type', 'column'], this.journal.entries()),
-    this.makeTab('journal-columns', 'Journal Columns', 'view_column', 'Content', ['id', 'name', 'color', 'order'], this.journal.columns()),
     this.makeTab('research-libraries', 'Research Libraries', 'folder', 'Research', ['id', 'name', 'description'], this.research.libraries()),
     this.makeTab('research-sources', 'Research Sources', 'source', 'Research', ['id', 'libraryId', 'title', 'sourceType'], this.research.sources()),
     this.makeTab('research-summaries', 'Research Summaries', 'summarize', 'Research', ['id', 'libraryId', 'title', 'sourceIds'], this.research.summaries()),

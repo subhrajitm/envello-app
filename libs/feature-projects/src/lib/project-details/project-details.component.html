@@ -113,30 +113,7 @@
                     }
                     }
 
-                    @if (linkedJournals().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Journals</td>
-                    </tr>
-                    @for (journal of linkedJournals(); track journal.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">edit_note</span>
-                            {{ journal.title }}
-                        </td>
-                        <td class="text-muted">Journal</td>
-                        <td class="text-muted">{{ journal.lastEdited }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
+
 
                     @if (linkedMeetings().length > 0) {
                     <tr style="background: rgba(191, 87, 0, 0.05);">
@@ -263,30 +240,7 @@
                     }
                     }
 
-                    @if (linkedJournalProjects().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Journal Projects</td>
-                    </tr>
-                    @for (jp of linkedJournalProjects(); track jp.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">book</span>
-                            {{ jp.title }}
-                        </td>
-                        <td class="text-muted">Journal</td>
-                        <td class="text-muted">{{ jp.lastUpdated }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
+
 
                 </tbody>
             </table>

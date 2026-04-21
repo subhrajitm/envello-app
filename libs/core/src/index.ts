@@ -4,7 +4,7 @@ export * from './lib/services/logging.service';
 export * from './lib/services/article.service';
 export * from './lib/services/bin.service';
 export * from './lib/services/books.service';
-export * from './lib/services/journal.service';
+
 export * from './lib/services/meetings.service';
 export * from './lib/services/notification.service';
 export * from './lib/services/novel-content.service';

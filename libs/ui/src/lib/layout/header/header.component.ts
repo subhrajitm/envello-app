@@ -82,7 +82,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { id: 'meetings',    label: 'Meetings', icon: 'groups',    route: 'meetings' },
     { id: 'daily-notes', label: 'Notes',    icon: 'note',      route: 'daily-notes' },
     { id: 'research',    label: 'Research', icon: 'science',   route: 'research' },
-    { id: 'journals',    label: 'Journal',  icon: 'book',      route: 'journals' },
     { id: 'articles',    label: 'Drafts',   icon: 'article',   route: 'articles' },
     { id: 'novels',      label: 'Writing',  icon: 'menu_book', route: 'novels' },
     { id: 'vault',       label: 'Vault',    icon: 'lock',      route: 'vault' },

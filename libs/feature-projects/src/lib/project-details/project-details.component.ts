@@ -9,7 +9,6 @@ import { BooksService } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { SnippetsService } from '@envello/core';
 import { ArticleService } from '@envello/core';
-import { JournalService } from '@envello/core';
 import { EncryptionUtil } from '@envello/core';
 import { VaultStore, SubscriptionStore, LinkStore } from '@envello/state';
 
@@ -30,7 +29,6 @@ export class ProjectDetailsComponent {
     private researchService = inject(ResearchService);
     private snippetsService = inject(SnippetsService);
     private articleService = inject(ArticleService);
-    private journalService = inject(JournalService);
 
     public vaultStore = inject(VaultStore);
     public subscriptionStore = inject(SubscriptionStore);
@@ -64,12 +62,6 @@ export class ProjectDetailsComponent {
         return this.store.novels().filter(n => p.linkedResources?.novels?.includes(n.id));
     });
 
-    linkedJournals = computed(() => {
-        const p = this.project();
-        if (!p || !p.linkedResources?.journals) return [];
-        return this.store.notes().filter(n => p.linkedResources?.journals?.includes(n.id));
-    });
-
     linkedMeetings = computed(() => {
         const p = this.project();
         if (!p || !p.linkedResources?.meetings) return [];
@@ -100,13 +92,6 @@ export class ProjectDetailsComponent {
         const p = this.project();
         if (!p || !p.linkedResources?.articles) return [];
         return this.articleService.articles().filter(a => p.linkedResources?.articles?.includes(a.id));
-    });
-
-    linkedJournalProjects = computed(() => {
-        const p = this.project();
-        if (!p || !p.linkedResources?.journals) return [];
-        // Check JournalService for these IDs
-        return this.journalService.projects().filter(jp => p.linkedResources?.journals?.includes(jp.id));
     });
 
     constructor() {
