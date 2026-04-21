@@ -475,38 +475,58 @@
             </div>
         </div>
 
-        <!-- KPIs Compact List -->
+        <!-- Dynamic KPI Panels -->
         <div class="kpis-compact-list">
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('today')" aria-label="Show tasks due today">
-                <div class="kpi-icon blue"><span class="material-symbols-outlined">event_available</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Due Today</span>
-                    <span class="kpi-value">{{ todayTasksCount() }}</span>
-                </div>
+            <!-- Context label -->
+            <div class="kpi-context-row">
+                <span class="kpi-context-label">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    {{ selectedDayLabel() }}
+                </span>
+                @if (selectedCalendarDay()) {
+                <button class="kpi-context-clear" (click)="selectedCalendarDay.set(null)" title="Clear selection">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+                }
             </div>
+
+            <!-- Completion -->
             <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('completed')" aria-label="Show completed tasks">
                 <div class="kpi-icon green"><span class="material-symbols-outlined">check_circle</span></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Completed</span>
                     <div class="kpi-value-row">
-                        <span class="kpi-value">{{ completedTasksCount() }}</span>
-                        <span class="kpi-sub">/ {{ store.tasks().length }}</span>
-                        <span class="kpi-percent">({{ (completedTasksCount() / (store.tasks().length || 1) * 100) | number:'1.0-0' }}%)</span>
+                        <span class="kpi-value">{{ selectedDayCompleted() }}</span>
+                        <span class="kpi-sub">/ {{ selectedDayTotal() }}</span>
+                        <span class="kpi-percent">({{ (selectedDayCompleted() / (selectedDayTotal() || 1) * 100) | number:'1.0-0' }}%)</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Due Today / Due on Date -->
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('today')" aria-label="Show tasks due">
+                <div class="kpi-icon blue"><span class="material-symbols-outlined">event_available</span></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">{{ selectedCalendarDay() ? 'Due This Day' : 'Due Today' }}</span>
+                    <span class="kpi-value">{{ selectedDayToday() }}</span>
+                </div>
+            </div>
+
+            <!-- Active -->
             <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('active')" aria-label="Show active tasks">
                 <div class="kpi-icon purple"><span class="material-symbols-outlined">work_history</span></div>
                 <div class="kpi-content">
-                    <span class="kpi-label">Active</span>
-                    <span class="kpi-value">{{ activeTasksCount() }}</span>
+                    <span class="kpi-label">In Progress</span>
+                    <span class="kpi-value">{{ selectedDayActive() }}</span>
                 </div>
             </div>
+
+            <!-- High Priority -->
             <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('priority')" aria-label="Show high priority tasks">
                 <div class="kpi-icon orange"><span class="material-symbols-outlined">flag</span></div>
                 <div class="kpi-content">
                     <span class="kpi-label">High Priority</span>
-                    <span class="kpi-value">{{ priorityTasksCount() }}</span>
+                    <span class="kpi-value">{{ selectedDayPriority() }}</span>
                 </div>
             </div>
         </div>

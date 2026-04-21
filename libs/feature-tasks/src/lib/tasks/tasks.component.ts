@@ -565,6 +565,8 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Calendar state
   currentDate = signal<Date>(new Date());
+  // null = no specific day selected (show all-time KPIs)
+  selectedCalendarDay = signal<{ day: number; month: number; year: number } | null>(null);
 
   // Task group collapse state
   todayGroupExpanded = signal<boolean>(true);
@@ -583,6 +585,37 @@ export class TasksComponent implements OnInit, OnDestroy {
   priorityTasksCount = computed(
     () => this.store.tasks().filter(t => t.priority === 'HIGH').length
   );
+
+  // Per-selected-day KPI counts
+  selectedDayLabel = computed(() => {
+    const sel = this.selectedCalendarDay();
+    if (!sel) return 'Overview';
+    const d = new Date(sel.year, sel.month, sel.day);
+    const today = new Date();
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  });
+
+  selectedDayTasks = computed(() => {
+    const sel = this.selectedCalendarDay();
+    if (!sel) return this.store.tasks();
+    const selDate = new Date(sel.year, sel.month, sel.day);
+    const today = new Date();
+    const isToday = selDate.toDateString() === today.toDateString();
+    return this.store.tasks().filter(t => {
+      if (!t.due) return false;
+      if (isToday && t.due.includes('Today')) return true;
+      // Match formatted date strings like "Mon, Apr 21"
+      const formatted = selDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      return t.due.includes(formatted);
+    });
+  });
+
+  selectedDayTotal        = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().length : this.store.tasks().length);
+  selectedDayCompleted    = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().filter(t => t.status === 'COMPLETED').length : this.completedTasksCount());
+  selectedDayActive       = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().filter(t => t.status === 'ACTIVE').length : this.activeTasksCount());
+  selectedDayToday        = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().length : this.todayTasksCount());
+  selectedDayPriority     = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().filter(t => t.priority === 'HIGH').length : this.priorityTasksCount());
 
   // Inbox/Today/Upcoming/Completed views
   inboxTasks = computed(() => this.store.tasks());
@@ -649,51 +682,39 @@ export class TasksComponent implements OnInit, OnDestroy {
     const date = this.currentDate();
     const year = date.getFullYear();
     const month = date.getMonth();
-
-    // First day of the month
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-
-    // Day of week for first day (0 = Sunday, 6 = Saturday)
     const startDay = firstDay.getDay();
-
-    // Days in the month
     const daysInMonth = lastDay.getDate();
-
-    // Previous month's days to show
     const prevMonth = new Date(year, month, 0);
     const daysInPrevMonth = prevMonth.getDate();
+    const sel = this.selectedCalendarDay();
 
-    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean }> = [];
+    const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean; isSelected: boolean }> = [];
 
-    // Add previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
-      const day = daysInPrevMonth - i;
-      days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
+      days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false, isActive: false, isSelected: false });
     }
 
-    // Add current month's days
     const today = new Date();
-    const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+    const isCurrentCalMonth = today.getMonth() === month && today.getFullYear() === year;
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = isCurrentMonth && day === today.getDate();
-      // Check if any task is due on this day (simplified - in real app, parse dates properly)
+      const isToday = isCurrentCalMonth && day === today.getDate();
+      const isSelected = !!sel && sel.day === day && sel.month === month && sel.year === year;
       const isActive = this.store.tasks().some(t => {
         if (!t.due) return false;
-        // Simple check - in production, you'd parse the date properly
-        // Check if task is due today or has a date that matches
         if (t.due.includes('Today') && isToday) return true;
-        // For other dates, we'd need proper date parsing
-        return false;
+        const d = new Date(year, month, day);
+        const formatted = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        return t.due.includes(formatted);
       });
-      days.push({ day, isCurrentMonth: true, isToday, isActive });
+      days.push({ day, isCurrentMonth: true, isToday, isActive, isSelected });
     }
 
-    // Add next month's leading days to fill the grid (42 cells = 6 weeks)
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
-      days.push({ day, isCurrentMonth: false, isToday: false, isActive: false });
+      days.push({ day, isCurrentMonth: false, isToday: false, isActive: false, isSelected: false });
     }
 
     return days;
@@ -741,11 +762,11 @@ export class TasksComponent implements OnInit, OnDestroy {
    * - If the clicked day is today, switches to Today view.
    * - Otherwise, switches to Upcoming as a lightweight "schedule" view.
    */
-  onCalendarDayClick(day: { day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean }) {
-    if (!day.isCurrentMonth) {
-      return;
-    }
+  onCalendarDayClick(day: { day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean; isSelected?: boolean }) {
+    if (!day.isCurrentMonth) return;
 
+    const date = this.currentDate();
+    this.selectedCalendarDay.set({ day: day.day, month: date.getMonth(), year: date.getFullYear() });
     this.sidebarSearch.set('');
 
     if (day.isToday) {
