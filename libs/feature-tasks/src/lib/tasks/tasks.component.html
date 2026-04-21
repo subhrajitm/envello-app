@@ -412,60 +412,80 @@
         }
     </div>
 
-    <!-- Right Sidebar Restored -->
+    <!-- Right Sidebar -->
     <div class="tasks-sidebar">
-        <div class="tasks-header-col">
-            <div class="date-nav-minimal">
-                <div class="mn-header">{{ calendarMonth() }}</div>
-                <div class="nav-arrows">
-                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('prev')"
-                        aria-label="Previous month" role="button">chevron_left</span>
-                    <span class="material-symbols-outlined nav-arr" (click)="navigateMonth('next')"
-                        aria-label="Next month" role="button">chevron_right</span>
+        <div class="sidebar-calendar-card">
+            <!-- Calendar Header -->
+            <div class="cal-card-header">
+                <div class="cal-card-month-nav">
+                    <button class="cal-nav-btn" (click)="navigateMonth('prev')" aria-label="Previous month">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <span class="cal-card-month-label">{{ calendarMonth() }}</span>
+                    <button class="cal-nav-btn" (click)="navigateMonth('next')" aria-label="Next month">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
                 </div>
+                <button class="cal-card-today-chip" (click)="onMetricClick('today')" title="Jump to today">
+                    <span class="material-symbols-outlined">today</span>
+                    Today
+                </button>
             </div>
 
-            <div class="mini-calendar-grid">
-                <div class="cal-days-header">
-                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                </div>
-                <div class="cal-days-grid">
-                    @for (day of calendarDays(); track $index) {
-                    <span class="c-day" [class.inactive]="!day.isCurrentMonth" [class.current]="day.isToday"
-                        [class.active-yellow]="day.isActive && day.isCurrentMonth"
-                        (click)="onCalendarDayClick(day)" role="button"
-                        [attr.aria-label]="day.isToday ? ('Today, ' + calendarMonth()) : ('Day ' + day.day)">
-                        {{ day.day }}
-                    </span>
+            <!-- Day Headers -->
+            <div class="cal-card-weekdays">
+                @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
+                <span>{{ d }}</span>
+                }
+            </div>
+
+            <!-- Day Grid -->
+            <div class="cal-card-grid">
+                @for (day of calendarDays(); track $index) {
+                <button class="cal-cell"
+                    [class.cal-cell--other-month]="!day.isCurrentMonth"
+                    [class.cal-cell--today]="day.isToday"
+                    [class.cal-cell--has-tasks]="day.isActive && day.isCurrentMonth && !day.isToday"
+                    (click)="onCalendarDayClick(day)"
+                    [attr.aria-label]="day.isToday ? 'Today' : 'Day ' + day.day">
+                    <span class="cal-cell-num">{{ day.day }}</span>
+                    @if (day.isActive && day.isCurrentMonth) {
+                    <span class="cal-cell-dot"></span>
                     }
+                </button>
+                }
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="cal-card-stats">
+                <div class="cal-stat" (click)="onMetricClick('today')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ todayTasksCount() }}</span>
+                    <span class="cal-stat-label">Today</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('active')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ activeTasksCount() }}</span>
+                    <span class="cal-stat-label">Active</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('completed')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ completedTasksCount() }}</span>
+                    <span class="cal-stat-label">Done</span>
                 </div>
             </div>
         </div>
-        
+
         <!-- KPIs Compact List -->
         <div class="kpis-compact-list">
-            <div class="kpi-item" 
-                 role="button" 
-                 tabindex="0"
-                 (click)="onMetricClick('today')" 
-                 aria-label="Show tasks due today">
-                <div class="kpi-icon blue">
-                    <span class="material-symbols-outlined">event_available</span>
-                </div>
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('today')" aria-label="Show tasks due today">
+                <div class="kpi-icon blue"><span class="material-symbols-outlined">event_available</span></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Due Today</span>
                     <span class="kpi-value">{{ todayTasksCount() }}</span>
                 </div>
             </div>
-
-            <div class="kpi-item" 
-                 role="button" 
-                 tabindex="0"
-                 (click)="onMetricClick('completed')" 
-                 aria-label="Show completed tasks">
-                <div class="kpi-icon green">
-                    <span class="material-symbols-outlined">check_circle</span>
-                </div>
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('completed')" aria-label="Show completed tasks">
+                <div class="kpi-icon green"><span class="material-symbols-outlined">check_circle</span></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Completed</span>
                     <div class="kpi-value-row">
@@ -475,29 +495,15 @@
                     </div>
                 </div>
             </div>
-
-            <div class="kpi-item" 
-                 role="button" 
-                 tabindex="0"
-                 (click)="onMetricClick('active')" 
-                 aria-label="Show active tasks">
-                <div class="kpi-icon purple">
-                    <span class="material-symbols-outlined">work_history</span>
-                </div>
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('active')" aria-label="Show active tasks">
+                <div class="kpi-icon purple"><span class="material-symbols-outlined">work_history</span></div>
                 <div class="kpi-content">
                     <span class="kpi-label">Active</span>
                     <span class="kpi-value">{{ activeTasksCount() }}</span>
                 </div>
             </div>
-
-            <div class="kpi-item" 
-                 role="button" 
-                 tabindex="0"
-                 (click)="onMetricClick('priority')" 
-                 aria-label="Show high priority tasks">
-                <div class="kpi-icon orange">
-                    <span class="material-symbols-outlined">flag</span>
-                </div>
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('priority')" aria-label="Show high priority tasks">
+                <div class="kpi-icon orange"><span class="material-symbols-outlined">flag</span></div>
                 <div class="kpi-content">
                     <span class="kpi-label">High Priority</span>
                     <span class="kpi-value">{{ priorityTasksCount() }}</span>
