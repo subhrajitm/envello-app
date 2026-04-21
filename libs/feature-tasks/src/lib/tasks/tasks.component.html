@@ -106,167 +106,108 @@
 
         <!-- Task List / Data Grid + Thumbnails -->
         @if (viewMode() === 'list') {
-        <div class="tasks-grid-container">
-            <div class="grid-header">
-                <div class="col-check">
-                    <label class="custom-checkbox" aria-label="Toggle completion for all visible tasks">
-                        <input type="checkbox" [checked]="allVisibleTasksCompleted()"
-                            (change)="toggleAllVisibleTasksStatus()">
-                        <span class="checkmark"></span>
-                    </label>
-                </div>
-                <div class="col-task">Task Name</div>
-                <div class="col-project">Project / Context</div>
-                <div class="col-priority">Priority</div>
-                <div class="col-status">Status</div>
-                <div class="col-due">Due Date</div>
-                <div class="col-actions"></div>
+        <div class="tasks-list-container">
+            <div class="list-body" 
+                 [class.virtual-scroll-container]="virtualScrollEnabled() && filteredTasks().length > 50"
+                 (scroll)="onScroll($event)">
+                
+                @if (isLoading()) {
+                    @for (i of [1,2,3,4,5]; track i) {
+                    <div class="task-item skeleton-row">
+                        <div class="task-drag-handle" style="opacity: 0.1;"><span class="material-symbols-outlined">drag_indicator</span></div>
+                        <div class="task-check-column"><div class="list-circular-checkbox" style="opacity: 0.2;"></div></div>
+                        <div class="task-main-column">
+                            <div class="skeleton-text" [style.width.%]="60 + (i * 5)"></div>
+                            <div class="skeleton-text skeleton-text-small" [style.width.%]="30"></div>
+                        </div>
+                    </div>
+                    }
+                } @else if(filteredTasks().length === 0) {
+                    <div class="tasks-empty-state">
+                        <div class="tasks-empty-icon">
+                            <span class="material-symbols-outlined">task_alt</span>
+                        </div>
+                        <h3 class="tasks-empty-title">
+                            {{ store.tasks().length === 0 ? 'You’re all set to start' : 'No tasks found' }}
+                        </h3>
+                        <p class="tasks-empty-body">
+                            {{ store.tasks().length === 0 ? 'Create your first task to kick off your workspace.' : 'No tasks match the current filter or search criteria.' }}
+                        </p>
+                        <button class="btn-primary" (click)="openNewTaskDialog()">+ New Task</button>
+                    </div>
+                } @else {
+                    @if (virtualScrollEnabled() && filteredTasks().length > 50) {
+                        <div [style.height.px]="visibleTaskRange().start * itemHeight"></div>
+                    }
+                    
+                    @for (task of visibleTasks(); track task.id) {
+                    <div class="task-item" 
+                         [class.completed]="task.status === 'COMPLETED'"
+                         [draggable]="true"
+                         (click)="openTaskDetails(task)">
+                        
+                        <div class="task-drag-handle" (click)="$event.stopPropagation()">
+                            <span class="material-symbols-outlined">drag_indicator</span>
+                        </div>
+
+                        <div class="task-check-column" (click)="$event.stopPropagation()">
+                            <button class="list-circular-checkbox" 
+                                    [class.checked]="task.status === 'COMPLETED'"
+                                    (click)="toggleTaskStatus(task)"
+                                    [attr.aria-label]="task.status === 'COMPLETED' ? 'Mark incomplete' : 'Mark complete'">
+                                @if (task.status === 'COMPLETED') {
+                                    <span class="material-symbols-outlined">check</span>
+                                }
+                            </button>
+                        </div>
+
+                        <div class="task-main-column">
+                            <div class="task-title-text">{{ task.title }}</div>
+                            <div class="task-metadata-row">
+                                @if (task.due) {
+                                <span class="metadata-item due-date" [class.overdue]="task.due.includes('Overdue')">
+                                    <span class="material-symbols-outlined">calendar_today</span>
+                                    {{ task.due }}
+                                </span>
+                                }
+                                @if (task.project) {
+                                <span class="metadata-item project">
+                                    <span class="material-symbols-outlined">folder</span>
+                                    {{ task.project }}
+                                </span>
+                                }
+                                @if (task.subtasks && task.subtasks.length > 0) {
+                                <span class="metadata-item subtasks">
+                                    <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                                    {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
+                                </span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="task-actions-column" (click)="$event.stopPropagation()">
+                            <button class="icon-btn" (click)="openTaskDetails(task)" title="Edit">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button class="icon-btn" title="Open details">
+                                <span class="material-symbols-outlined">open_in_new</span>
+                            </button>
+                            <button class="icon-btn" title="Comments">
+                                <span class="material-symbols-outlined">chat_bubble</span>
+                            </button>
+                            <button class="icon-btn" (click)="requestDeleteTask(task, $event)" title="Delete">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    }
+
+                    @if (virtualScrollEnabled() && filteredTasks().length > 50) {
+                        <div [style.height.px]="(filteredTasks().length - visibleTaskRange().end) * itemHeight"></div>
+                    }
+                }
             </div>
 
-            <div class="grid-body" 
-                 [class.virtual-scroll-container]="virtualScrollEnabled() && filteredTasks().length > 50"
-                 (scroll)="onScroll($event)"
-                 [style.height.px]="virtualScrollEnabled() && filteredTasks().length > 50 ? 600 : 'auto'"
-                 [style.overflow-y]="virtualScrollEnabled() && filteredTasks().length > 50 ? 'auto' : 'visible'">
-                @if (isLoading()) {
-                <!-- Skeleton Loaders -->
-                @for (i of [1,2,3,4,5]; track i) {
-                <div class="grid-row skeleton-row">
-                    <div class="col-check skeleton-checkbox"></div>
-                    <div class="col-task">
-                        <div class="skeleton-text" [style.width.%]="70 + (i * 5)"></div>
-                        <div class="skeleton-text skeleton-text-small" [style.width.%]="40"></div>
-                    </div>
-                    <div class="col-project skeleton-text" [style.width.%]="30"></div>
-                    <div class="col-priority skeleton-badge"></div>
-                    <div class="col-status skeleton-badge"></div>
-                    <div class="col-due skeleton-text" [style.width.%]="25"></div>
-                    <div class="col-actions skeleton-actions"></div>
-                </div>
-                }
-                } @else if(filteredTasks().length === 0) {
-                <div class="tasks-empty-state">
-                    <div class="tasks-empty-icon">
-                        <span class="material-symbols-outlined">task_alt</span>
-                    </div>
-                    @if (store.tasks().length === 0) {
-                    <h3 class="tasks-empty-title">You’re all set to start</h3>
-                    <p class="tasks-empty-body">Create your first task to kick off your workspace.</p>
-                    <button class="btn-primary" (click)="openNewTaskDialog()">+ New Task</button>
-                    } @else if (selectedView() === 'completed') {
-                    <h3 class="tasks-empty-title">No completed tasks yet</h3>
-                    <p class="tasks-empty-body">As you complete tasks, they’ll show up here for easy review.</p>
-                    <button class="btn-text" (click)="selectedView.set('today'); sidebarSearch.set('')">
-                        View today’s tasks
-                    </button>
-                    } @else {
-                    <h3 class="tasks-empty-title">No tasks found</h3>
-                    <p class="tasks-empty-body">No tasks match the current filter or search criteria.</p>
-                    <button class="btn-text" (click)="sidebarSearch.set(''); selectedView.set('inbox')">
-                        Clear filters
-                    </button>
-                    }
-                </div>
-                } @else {
-                @if (virtualScrollEnabled() && filteredTasks().length > 50) {
-                <!-- Virtual Scroll Spacer -->
-                <div [style.height.px]="visibleTaskRange().start * itemHeight"></div>
-                }
-                @for (task of visibleTasks(); track task.id) {
-                <div class="grid-row" 
-                     [class.completed-row]="task.status === 'COMPLETED'"
-                     [class.blocked-task]="isTaskBlocked(task)">
-                    <div class="col-check" (click)="$event.stopPropagation()">
-                        <label class="custom-checkbox">
-                            <input type="checkbox" 
-                                   [checked]="task.status === 'COMPLETED' || selectedTasks().has(task.id)"
-                                   (change)="bulkActionMode() ? toggleTaskSelection(task.id) : toggleTaskStatus(task)">
-                            <span class="checkmark"></span>
-                        </label>
-                    </div>
-                    <div class="col-task" (click)="openTaskDetails(task)" style="cursor: pointer;">
-                        <div class="task-title-row">
-                            @if (task.dependencies && task.dependencies.length > 0) {
-                            <span class="task-dependency-indicator" 
-                                  [title]="'Depends on: ' + getDependencyTitles(task).join(', ')">
-                                <span class="material-symbols-outlined">link</span>
-                            </span>
-                            }
-                            @if (task.subtasks && task.subtasks.length > 0) {
-                            <span class="task-subtask-indicator" 
-                                  [title]="getCompletedSubtasks(task) + '/' + task.subtasks.length + ' subtasks completed'">
-                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
-                                <span class="subtask-count-badge">{{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}</span>
-                            </span>
-                            }
-                            <div class="task-title-text">{{ task.title }}</div>
-                        </div>
-                        <div class="task-meta-mobile">
-                            @if(task.project) {
-                            <span class="task-meta-project">{{ task.project }}</span>
-                            }
-                            @if(task.due) {
-                            <span class="task-meta-separator">•</span>
-                            <span class="task-meta-due">{{ task.due }}</span>
-                            }
-                            @if(task.labels && task.labels.length > 0) {
-                            <span class="task-meta-separator">•</span>
-                            @for (label of task.labels; track label) {
-                            <span class="task-meta-label" [style.color]="getLabelColor(label)">#{{ label }}</span>
-                            }
-                            }
-                        </div>
-                    </div>
-                    <div class="col-project">
-                        @if(task.project) {
-                        <span class="project-pill">{{ task.project }}</span>
-                        } @else {
-                        <span class="no-data">—</span>
-                        }
-                    </div>
-                    <div class="col-priority">
-                        <div class="priority-indicator" [ngClass]="{
-                                    'p1': task.priority === 'HIGH',
-                                    'p2': task.priority === 'MEDIUM',
-                                    'p3': task.priority === 'LOW'
-                                }">
-                            <span class="p-dot"></span>
-                            {{ task.priority }}
-                        </div>
-                    </div>
-                    <div class="col-status">
-                        <span class="status-badge" [ngClass]="task.status.toLowerCase()">
-                            {{ task.status }}
-                        </span>
-                    </div>
-                    <div class="col-due" [class.overdue]="task.due?.includes('Overdue')">
-                        @if(task.due) {
-                        <span class="material-symbols-outlined due-icon">calendar_today</span>
-                        {{ task.due }}
-                        } @else {
-                        <span class="no-data">—</span>
-                        }
-                    </div>
-                    <div class="col-actions" (click)="$event.stopPropagation()">
-                        <button class="btn-icon-only btn-icon-complete"
-                            (click)="onQuickComplete(task)"
-                            [attr.aria-label]="'Mark ' + task.title + ' complete'">
-                            <span class="material-symbols-outlined">done</span>
-                        </button>
-                        <button class="btn-icon-only"
-                            (click)="requestDeleteTask(task, $event)"
-                            [attr.aria-label]="'Delete task ' + task.title">
-                            <span class="material-symbols-outlined">delete</span>
-                        </button>
-                    </div>
-                </div>
-                }
-                @if (virtualScrollEnabled() && filteredTasks().length > 50) {
-                <!-- Virtual Scroll Spacer -->
-                <div [style.height.px]="(filteredTasks().length - visibleTaskRange().end) * itemHeight"></div>
-                }
-                }
-            </div>
             <div class="quick-add-bar quick-add-bar-inline">
                 <div class="quick-add-input-wrapper">
                     <span class="material-symbols-outlined quick-add-icon">add_task</span>
