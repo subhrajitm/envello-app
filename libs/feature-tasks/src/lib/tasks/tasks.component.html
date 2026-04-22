@@ -433,6 +433,39 @@
                       (input)="newTaskDescription.set($any($event.target).value)"
                       rows="2"></textarea>
 
+            <!-- Labels -->
+            <div class="task-modal-labels-row">
+                <span class="material-symbols-outlined task-modal-labels-icon">label</span>
+                <div class="task-modal-labels-inner">
+                    @for (label of newTaskLabels(); track label) {
+                    <span class="task-modal-label-chip">
+                        #{{ label }}
+                        <button type="button" class="task-modal-label-remove" (click)="removeNewTaskLabel(label)">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </span>
+                    }
+                    <div class="task-modal-label-input-wrap">
+                        <input type="text"
+                               class="task-modal-label-input"
+                               placeholder="Add label..."
+                               [value]="newTaskLabelInput()"
+                               (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
+                               (keydown.enter)="addNewTaskLabel()"
+                               (blur)="hideLabelAutocomplete()">
+                        @if (showLabelAutocomplete() && getLabelSuggestions().length > 0) {
+                        <div class="label-autocomplete-dropdown">
+                            @for (suggestion of getLabelSuggestions(); track suggestion) {
+                            <button type="button" class="label-suggestion" (mousedown)="addNewTaskLabel(suggestion)">
+                                #{{ suggestion }}
+                            </button>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
             <!-- Metadata Chips Row -->
             <div class="task-modal-action-chips">
                 <button type="button" class="task-action-chip" (click)="toggleDatePicker($event)" [class.active]="!!newTaskDue()">
@@ -469,36 +502,6 @@
                        (change)="updateDueTime($any($event.target).value)">
             </div>
             }
-
-            <!-- Labels -->
-            <div class="new-task-labels-row">
-                @for (label of newTaskLabels(); track label) {
-                <span class="new-task-label-chip">
-                    #{{ label }}
-                    <button type="button" class="label-chip-remove" (click)="removeNewTaskLabel(label)">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </span>
-                }
-                <div class="new-task-label-input-wrap">
-                    <input type="text"
-                           class="new-task-label-input"
-                           placeholder="Add label..."
-                           [value]="newTaskLabelInput()"
-                           (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
-                           (keydown.enter)="addNewTaskLabel()"
-                           (blur)="hideLabelAutocomplete()">
-                    @if (showLabelAutocomplete() && getLabelSuggestions().length > 0) {
-                    <div class="label-autocomplete-dropdown">
-                        @for (suggestion of getLabelSuggestions(); track suggestion) {
-                        <button type="button" class="label-suggestion" (mousedown)="addNewTaskLabel(suggestion)">
-                            #{{ suggestion }}
-                        </button>
-                        }
-                    </div>
-                    }
-                </div>
-            </div>
 
             <!-- Advanced Options (··· more) -->
             @if (showAdvancedOptions()) {
@@ -562,11 +565,6 @@
     </div>
     <div footer>
         <div class="task-modal-footer-minimal">
-            <div class="footer-project-selector" (click)="toggleFolderDropdown($event)">
-                <span class="material-symbols-outlined project-icon">move_to_inbox</span>
-                <span class="project-name">{{ newTaskList() || 'Inbox' }}</span>
-                <span class="material-symbols-outlined project-caret">arrow_drop_down</span>
-            </div>
             <div class="footer-actions-right">
                 <button type="button" class="btn-minimal-cancel" (click)="closeNewTaskDialog()">Cancel</button>
                 <button type="button"
@@ -768,7 +766,8 @@
 <env-modal
     [isOpen]="showTaskDetails()"
     (closed)="closeTaskDetails()"
-    size="large"
+    [showClose]="true"
+    size="md"
 >
     <div header>
         <h2 class="env-modal-title">
@@ -777,240 +776,114 @@
         </h2>
     </div>
     <div body>
-        <div class="task-details-container">
-            <!-- Header Section -->
-            <div class="task-details-header-compact">
-                <div class="task-details-title-row">
-                    @if (!editingTaskDetails()) {
-                    <div class="title-with-edit">
-                        <div class="task-details-title-display"
-                             (click)="toggleEditTaskDetails()"
-                             title="Click to edit title">{{ task.title }}</div>
-                        <button type="button"
-                                class="btn-icon-compact"
-                                (click)="toggleEditTaskDetails()"
-                                title="Edit task">
-                            <span class="material-symbols-outlined">edit</span>
-                        </button>
-                    </div>
-                    } @else {
-                    <textarea class="task-details-title-textarea"
-                              [value]="editedTaskTitle()"
-                              (input)="editedTaskTitle.set($any($event.target).value)"
-                              placeholder="Task title"
-                              autofocus></textarea>
-                    }
-                </div>
-
-                <!-- Ultra Compact Metadata Row -->
-                <div class="task-metadata-ultra-compact">
-                    <!-- Status -->
-                    <div class="metadata-item-compact is-clickable"
-                         [ngClass]="'status-' + task.status.toLowerCase()"
-                         (click)="completeTaskFromDetails()"
-                         [title]="task.status === 'COMPLETED' ? 'Click to mark as active' : 'Click to mark as complete'">
-                        <span class="material-symbols-outlined">{{ task.status === 'COMPLETED' ? 'check_circle' : 'play_circle' }}</span>
-                        <span class="metadata-value-compact">{{ task.status | titlecase }}</span>
-                    </div>
-
-                    <!-- Priority -->
-                    <div class="metadata-item-compact"
-                         [ngClass]="'priority-' + (editingTaskDetails() ? editedTaskPriority().toLowerCase() : task.priority.toLowerCase())">
-                        <span class="material-symbols-outlined">flag</span>
-                        <span class="metadata-label-compact">Priority</span>
-                        @if (!editingTaskDetails()) {
-                        <span class="metadata-value-compact">{{ task.priority | titlecase }}</span>
-                        } @else {
-                        <select class="metadata-select"
-                                [value]="editedTaskPriority()"
-                                (change)="editedTaskPriority.set($any($event.target).value)">
-                             <option value="HIGH">High</option>
-                             <option value="MEDIUM">Medium</option>
-                             <option value="LOW">Low</option>
-                        </select>
-                        }
-                    </div>
-
-                    <!-- Project -->
-                    <div class="metadata-item-compact">
-                        <span class="material-symbols-outlined">folder</span>
-                        <span class="metadata-label-compact">Project</span>
-                        @if (!editingTaskDetails()) {
-                        <span class="metadata-value-compact">{{ task.project || 'Inbox' }}</span>
-                        } @else {
-                        <select class="metadata-select"
-                                [value]="editedTaskList()"
-                                (change)="editedTaskList.set($any($event.target).value)">
-                            @for (folder of availableLists(); track folder) {
-                            <option [value]="folder">{{ folder }}</option>
-                            }
-                        </select>
-                        }
-                    </div>
-
-                    <!-- Due Date -->
-                    <div class="metadata-item-compact">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        <span class="metadata-label-compact">Due</span>
-                        @if (!editingTaskDetails()) {
-                        <span class="metadata-value-compact" [class.empty]="!task.due">{{ task.due || 'No due date' }}</span>
-                        } @else {
-                        <input type="text"
-                               class="metadata-input"
-                               [value]="editedTaskDue() || ''"
-                               (input)="editedTaskDue.set($any($event.target).value)"
-                               placeholder="Tomorrow, 10am">
-                        }
-                    </div>
-
-                    <!-- Labels -->
-                    <div class="metadata-item-compact">
-                        <span class="material-symbols-outlined">label</span>
-                        <div class="task-details-labels-compact">
-                            @if (!editingTaskDetails()) {
-                                @if (task.labels && task.labels.length > 0) {
-                                    @for (label of task.labels; track label) {
-                                    <span class="task-label-chip-compact" [style.color]="getLabelColor(label)">#{{ label }}</span>
-                                    }
-                                } @else {
-                                    <span class="metadata-value-compact empty">No labels</span>
-                                }
-                            } @else {
-                                <div class="task-details-labels-edit-compact">
-                                    @for (label of editedTaskLabels(); track label) {
-                                    <span class="task-label-chip-compact">
-                                        #{{ label }}
-                                        <button type="button" class="chip-remove-compact" (click)="removeLabelFromEdit(label)">
-                                            <span class="material-symbols-outlined">close</span>
-                                        </button>
-                                    </span>
-                                    }
-                                    <input type="text" 
-                                           class="task-label-input-compact" 
-                                           placeholder="+"
-                                           (keydown.enter)="addLabelToEdit($event)">
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="task-modal-shell">
+            <!-- Title Input -->
+            <input type="text"
+                   class="task-modal-title-input"
+                   placeholder="Task Title"
+                   [value]="editedTaskTitle()"
+                   (input)="editedTaskTitle.set($any($event.target).value)" />
 
             <!-- Description -->
-            <div class="task-details-section">
-                <div class="section-header">
-                    <span class="material-symbols-outlined section-icon">description</span>
-                    <span class="section-title">Description</span>
-                </div>
-                @if (!editingTaskDetails()) {
-                <div class="task-details-description-content-compact"
-                     [class.description-empty]="!(task.description || task.notes)"
-                     (click)="toggleEditTaskDetails()"
-                     title="Click to add description">
-                    @if (task.description || task.notes) {
-                        <span [innerHTML]="renderMarkdown(task.description || task.notes || '')"></span>
-                    } @else {
-                        <span class="description-placeholder">No description — click to add one</span>
-                    }
-                </div>
-                } @else {
-                <textarea class="task-details-textarea-compact"
-                          [value]="editedTaskDescription()"
-                          (input)="editedTaskDescription.set($any($event.target).value)"
-                          placeholder="Add description... (Markdown supported)"
-                          rows="4"></textarea>
-                }
-            </div>
+            <textarea class="task-modal-description-input-minimal"
+                      placeholder="Description"
+                      [value]="editedTaskDescription()"
+                      (input)="editedTaskDescription.set($any($event.target).value)"
+                      rows="2"></textarea>
 
-            <!-- Subtasks -->
-            <div class="task-details-section">
-                <div class="section-header">
-                    <span class="material-symbols-outlined section-icon">subdirectory_arrow_right</span>
-                    <span class="section-title">Subtasks</span>
-                    @if (task.subtasks && task.subtasks.length > 0) {
-                    <span class="section-badge">{{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}</span>
+            <!-- Labels -->
+            <div class="task-modal-labels-row">
+                <span class="material-symbols-outlined task-modal-labels-icon">label</span>
+                <div class="task-modal-labels-inner">
+                    @for (label of editedTaskLabels(); track label) {
+                    <span class="task-modal-label-chip">
+                        #{{ label }}
+                        <button type="button" class="task-modal-label-remove" (click)="removeLabelFromEdit(label)">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </span>
                     }
-                </div>
-                <div class="task-details-subtasks-compact">
-                    @for (subtask of task.subtasks; track subtask.id) {
-                    <div class="subtask-item-compact">
-                        <label class="custom-checkbox-compact">
-                            <input type="checkbox"
-                                   [checked]="subtask.status === 'COMPLETED'"
-                                   (change)="toggleSubtaskStatus(task, subtask)">
-                            <span class="checkmark-compact"></span>
-                        </label>
-                        <span class="subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
-                    </div>
-                    }
-                </div>
-                <div class="add-subtask-row">
                     <input type="text"
-                           class="add-subtask-input"
-                           placeholder="Add a subtask..."
-                           [value]="newSubtaskTitle()"
-                           (input)="newSubtaskTitle.set($any($event.target).value)"
-                           (keydown.enter)="newSubtaskTitle().trim() && addSubtask(task, newSubtaskTitle()); newSubtaskTitle.set('')">
-                    <button type="button"
-                            class="add-subtask-btn"
-                            [disabled]="!newSubtaskTitle().trim()"
-                            (click)="addSubtask(task, newSubtaskTitle()); newSubtaskTitle.set('')">
-                        <span class="material-symbols-outlined">add</span>
-                    </button>
+                           class="task-modal-label-input"
+                           placeholder="Add label..."
+                           (keydown.enter)="addLabelToEdit($event)">
                 </div>
             </div>
 
-            <!-- Dependencies -->
-            @if (task.dependencies && task.dependencies.length > 0) {
-            <div class="task-details-section">
-                <div class="section-header">
-                    <span class="material-symbols-outlined section-icon">link</span>
-                    <span class="section-title">Dependencies</span>
-                </div>
-                <div class="task-details-dependencies-compact">
-                    @for (depId of task.dependencies; track depId) {
-                    @let depTask = getTaskById(depId);
-                    @if (depTask) {
-                    <div class="dependency-item-compact" [class.blocked]="depTask.status !== 'COMPLETED'">
-                        <span class="material-symbols-outlined dependency-icon">{{ depTask.status === 'COMPLETED' ? 'check_circle' : 'link' }}</span>
-                        <span class="dependency-title" [class.completed]="depTask.status === 'COMPLETED'">{{ depTask.title }}</span>
-                        @if (depTask.status !== 'COMPLETED') {
-                        <span class="dependency-badge">Blocked</span>
-                        }
-                    </div>
-                    }
-                    }
-                </div>
+            <!-- Metadata Chips Row -->
+            <div class="task-modal-action-chips">
+                <!-- Status -->
+                <button type="button"
+                        class="task-action-chip"
+                        [class.active]="task.status === 'COMPLETED'"
+                        (click)="completeTaskFromDetails()">
+                    <span class="material-symbols-outlined">{{ task.status === 'COMPLETED' ? 'check_circle' : 'play_circle' }}</span>
+                    <span>{{ task.status | titlecase }}</span>
+                </button>
+                <!-- Due Date -->
+                <button type="button" class="task-action-chip" [class.active]="!!editedTaskDue()">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    <span>{{ editedTaskDue() || 'Date' }}</span>
+                </button>
+                <!-- Priority -->
+                <button type="button"
+                        class="task-action-chip"
+                        (click)="editedTaskPriority.set(editedTaskPriority() === 'HIGH' ? 'MEDIUM' : editedTaskPriority() === 'MEDIUM' ? 'LOW' : 'HIGH')"
+                        [class.active]="editedTaskPriority() !== 'MEDIUM'"
+                        [class.priority-high]="editedTaskPriority() === 'HIGH'"
+                        [class.priority-low]="editedTaskPriority() === 'LOW'">
+                    <span class="material-symbols-outlined">flag</span>
+                    <span>{{ editedTaskPriority() === 'MEDIUM' ? 'Priority' : (editedTaskPriority() | titlecase) }}</span>
+                </button>
+                <!-- More options toggle -->
+                <button type="button" class="task-action-chip-more"
+                        (click)="showAdvancedOptions.set(!showAdvancedOptions())"
+                        [class.active]="showAdvancedOptions()"
+                        title="Subtasks & more">
+                    <span class="material-symbols-outlined">more_horiz</span>
+                </button>
             </div>
-            }
 
-            <!-- Attachments -->
-            @if (task.attachments && task.attachments.length > 0) {
-            <div class="task-details-section">
-                <div class="section-header">
-                    <span class="material-symbols-outlined section-icon">attach_file</span>
-                    <span class="section-title">Attachments</span>
-                    <span class="section-badge">{{ task.attachments.length }}</span>
-                </div>
-                <div class="task-details-attachments-compact">
-                    @for (attachment of task.attachments; track attachment.id) {
-                    <div class="attachment-item-compact">
-                        @if (isAttachmentImage(attachment)) {
-                        <img [src]="attachment.url" 
-                             [alt]="attachment.name"
-                             class="attachment-preview-compact"
-                             (click)="previewImage(attachment.url)">
-                        } @else {
-                        <div class="attachment-icon-wrapper">
-                            <span class="material-symbols-outlined">description</span>
+            <!-- Advanced Options (Subtasks & more) -->
+            @if (showAdvancedOptions()) {
+            <div class="new-task-advanced-section">
+                <!-- Subtasks -->
+                <div class="advanced-option-row advanced-option-col">
+                    <div class="advanced-section-label">
+                        <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                        <span>Subtasks</span>
+                        @if (task.subtasks && task.subtasks.length > 0) {
+                        <span class="new-task-subtask-count">{{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}</span>
+                        }
+                    </div>
+                    <div class="new-task-subtasks-section">
+                        @for (subtask of task.subtasks; track subtask.id) {
+                        <div class="new-task-subtask-item">
+                            <button class="list-circular-checkbox"
+                                    [class.checked]="subtask.status === 'COMPLETED'"
+                                    (click)="toggleSubtaskStatus(task, subtask)">
+                                @if (subtask.status === 'COMPLETED') {
+                                    <span class="material-symbols-outlined">check</span>
+                                }
+                            </button>
+                            <span class="new-task-subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
                         </div>
                         }
-                        <div class="attachment-info-compact">
-                            <span class="attachment-name-compact">{{ attachment.name }}</span>
-                            <span class="attachment-size-compact">{{ formatFileSize(attachment.size) }}</span>
+                        <div class="new-task-subtask-input-row">
+                            <input type="text"
+                                   class="new-task-subtask-input"
+                                   placeholder="Add a subtask..."
+                                   [value]="newSubtaskTitle()"
+                                   (input)="newSubtaskTitle.set($any($event.target).value)"
+                                   (keydown.enter)="newSubtaskTitle().trim() && addSubtask(task, newSubtaskTitle()); newSubtaskTitle.set('')">
+                            <button type="button"
+                                    class="new-task-subtask-add-btn"
+                                    [disabled]="!newSubtaskTitle().trim()"
+                                    (click)="addSubtask(task, newSubtaskTitle()); newSubtaskTitle.set('')">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
                         </div>
                     </div>
-                    }
                 </div>
             </div>
             }
@@ -1018,44 +891,23 @@
     </div>
 
     <div footer>
-        <div class="task-details-footer-compact">
-            <div class="task-details-actions-left-compact">
-                @if (!editingTaskDetails()) {
+        <div class="task-modal-footer-minimal">
+            <div class="footer-actions-right">
                 <button type="button"
-                        class="btn-action-compact"
+                        class="btn-minimal-cancel task-details-complete-btn"
+                        [class.is-completed]="selectedTaskForDetails()?.status === 'COMPLETED'"
                         (click)="completeTaskFromDetails()">
-                    <span class="material-symbols-outlined">{{ task.status === 'COMPLETED' ? 'undo' : 'check_circle' }}</span>
-                    <span>{{ task.status === 'COMPLETED' ? 'Incomplete' : 'Complete' }}</span>
+                    <span class="material-symbols-outlined">{{ selectedTaskForDetails()?.status === 'COMPLETED' ? 'undo' : 'check_circle' }}</span>
+                    {{ selectedTaskForDetails()?.status === 'COMPLETED' ? 'Incomplete' : 'Complete' }}
                 </button>
-                <button type="button"
-                        class="btn-action-compact"
-                        (click)="startPomodoroFromDetails()">
-                    <span class="material-symbols-outlined">timer</span>
-                    <span>Pomodoro</span>
-                </button>
-                }
-            </div>
-            <div class="task-details-actions-right-compact">
-                @if (editingTaskDetails()) {
-                <button type="button"
-                        class="btn-secondary-compact"
-                        (click)="toggleEditTaskDetails()">
-                    Cancel
-                </button>
-                <button type="button"
-                        class="btn-primary-compact"
-                        (click)="saveTaskDetails()">
-                    <span class="material-symbols-outlined">save</span>
-                    Save
-                </button>
-                } @else {
-                <button type="button"
-                        class="btn-danger-compact"
-                        (click)="deleteTaskFromDetails()">
+                <button type="button" class="btn-minimal-cancel task-details-delete-btn" (click)="deleteTaskFromDetails()">
                     <span class="material-symbols-outlined">delete</span>
                     Delete
                 </button>
-                }
+                <button type="button"
+                        class="btn-minimal-save"
+                        [disabled]="!editedTaskTitle().trim()"
+                        (click)="saveTaskDetails()">Save</button>
             </div>
         </div>
     </div>
