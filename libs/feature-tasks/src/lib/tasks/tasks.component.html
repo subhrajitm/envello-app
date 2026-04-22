@@ -8,18 +8,11 @@
             <div class="toolbar-left">
                 <div class="tasks-toolbar-quick-actions">
                     <button type="button"
-                            class="btn-primary toolbar-quick-btn"
-                            (click)="setQuickAddMode('do-now'); openNewTaskDialog()"
-                            title="Do Now">
-                        <span class="material-symbols-outlined">play_arrow</span>
-                        <span class="btn-label">Now</span>
-                    </button>
-                    <button type="button"
-                            class="btn-primary toolbar-quick-btn"
-                            (click)="setQuickAddMode('do-later'); openNewTaskDialog()"
-                            title="Do Later">
-                        <span class="material-symbols-outlined">schedule</span>
-                        <span class="btn-label">Later</span>
+                            class="btn-primary add-task-main-btn"
+                            (click)="openNewTaskDialog()"
+                            title="Add new task">
+                        <span class="material-symbols-outlined">add</span>
+                        <span class="btn-label">Add Task</span>
                     </button>
                 </div>
                 <div class="toolbar-divider"></div>
@@ -205,69 +198,6 @@
                     @if (virtualScrollEnabled() && filteredTasks().length > 50) {
                         <div [style.height.px]="(filteredTasks().length - visibleTaskRange().end) * itemHeight"></div>
                     }
-                }
-            </div>
-
-            <div class="quick-add-bar quick-add-bar-inline">
-                <div class="quick-add-input-wrapper">
-                    <span class="material-symbols-outlined quick-add-icon">add_task</span>
-                    <input type="text"
-                           class="quick-add-input"
-                           placeholder="Type a task... (e.g., 'Meeting tomorrow 3pm #work HIGH')"
-                           [value]="quickAddInput()"
-                           (input)="quickAddInput.set($any($event.target).value)"
-                           (keydown.enter)="handleQuickAdd()"
-                           (keydown.escape)="quickAddInput.set('')">
-                    @if (isVoiceSupported()) {
-                    <button type="button" 
-                            class="quick-add-voice"
-                            [class.recording]="isListening()"
-                            (click)="isListening() ? stopVoiceInput() : startVoiceInput()"
-                            [title]="isListening() ? 'Stop recording' : 'Start voice input'"
-                            aria-label="Voice input">
-                        <span class="material-symbols-outlined">{{ isListening() ? 'mic' : 'mic_none' }}</span>
-                    </button>
-                    }
-                    <button type="button" 
-                            class="quick-add-close"
-                            (click)="quickAddInput.set('')">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-                @if (isListening()) {
-                <div class="voice-recording-indicator">
-                    <span class="material-symbols-outlined voice-pulse">mic</span>
-                    <span>Listening...</span>
-                </div>
-                }
-                @if (quickAddInput().trim()) {
-                <div class="quick-add-preview">
-                    @let parsed = parseNaturalLanguage(quickAddInput());
-                    <div class="preview-item">
-                        <span class="preview-label">Title:</span>
-                        <span class="preview-value">{{ parsed.title || quickAddInput() }}</span>
-                    </div>
-                    @if (parsed.due) {
-                    <div class="preview-item">
-                        <span class="preview-label">Due:</span>
-                        <span class="preview-value">{{ parsed.due }}</span>
-                    </div>
-                    }
-                    @if (parsed.priority) {
-                    <div class="preview-item">
-                        <span class="preview-label">Priority:</span>
-                        <span class="preview-value">{{ parsed.priority }}</span>
-                    </div>
-                    }
-                    @if (parsed.labels.length > 0) {
-                    <div class="preview-item">
-                        <span class="preview-label">Labels:</span>
-                        @for (label of parsed.labels; track label) {
-                        <span class="preview-tag">#{{ label }}</span>
-                        }
-                    </div>
-                    }
-                </div>
                 }
             </div>
         </div>
@@ -477,546 +407,173 @@
 <env-modal
     [isOpen]="newTaskModalOpen()"
     (closed)="closeNewTaskDialog()"
-    size="large"
+    [showClose]="true"
+    size="md"
 >
     <div header>
         <h2 class="env-modal-title">
             <span class="material-symbols-outlined">add_task</span>
-            New task
+            <span>New Task</span>
         </h2>
     </div>
     <div body>
         <div class="task-modal-shell">
-            <!-- Mode Selection: Do Now / Do Later -->
-            <!-- Title Input -->
-            <div class="task-modal-field-group task-modal-title-group">
-                <input
-                    type="text"
-                    class="task-modal-title-input"
-                    placeholder="What needs to be done?"
-                    [value]="newTaskTitle()"
-                    (input)="newTaskTitle.set($any($event.target).value)"
-                    autofocus
-                />
+            <!-- Large Title Input -->
+            <input type="text"
+                   class="task-modal-title-input"
+                   placeholder="Task Title (e.g. Renew insurance)"
+                   [value]="newTaskTitle()"
+                   (input)="newTaskTitle.set($any($event.target).value)"
+                   autofocus />
+
+            <!-- Sub-description (Markdown / Notes) -->
+            <textarea class="task-modal-description-input-minimal"
+                      placeholder="Description"
+                      [value]="newTaskDescription()"
+                      (input)="newTaskDescription.set($any($event.target).value)"
+                      rows="2"></textarea>
+
+            <!-- Metadata Chips Row -->
+            <div class="task-modal-action-chips">
+                <button type="button" class="task-action-chip" (click)="toggleDatePicker($event)" [class.active]="!!newTaskDue()">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    <span>{{ newTaskDue() || 'Date' }}</span>
+                </button>
+                <button type="button" class="task-action-chip"
+                        (click)="setNewTaskPriority(newTaskPriority() === 'HIGH' ? 'MEDIUM' : newTaskPriority() === 'MEDIUM' ? 'LOW' : 'HIGH')"
+                        [class.active]="newTaskPriority() !== 'MEDIUM'"
+                        [class.priority-high]="newTaskPriority() === 'HIGH'"
+                        [class.priority-low]="newTaskPriority() === 'LOW'">
+                    <span class="material-symbols-outlined">flag</span>
+                    <span>{{ newTaskPriority() === 'MEDIUM' ? 'Priority' : (newTaskPriority() | titlecase) }}</span>
+                </button>
+                <button type="button" class="task-action-chip" (click)="toggleNewTaskReminder()" [class.active]="newTaskHasReminder()">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span>Reminders</span>
+                </button>
+                <button type="button" class="task-action-chip-more"
+                        (click)="showAdvancedOptions.set(!showAdvancedOptions())"
+                        [class.active]="showAdvancedOptions()"
+                        title="More options">
+                    <span class="material-symbols-outlined">more_horiz</span>
+                </button>
             </div>
 
-            <!-- Do Now Options -->
-            @if (quickAddMode() === 'do-now') {
-            <div class="task-modal-controls-row">
-                <div class="task-modal-control-group">
-                    <label class="task-modal-control-label">Priority</label>
-                    <div class="task-modal-priority-selector">
-                        <button type="button"
-                                class="priority-option"
-                                [class.selected]="newTaskPriority() === 'HIGH'"
-                                (click)="setNewTaskPriority('HIGH')">
-                            High
-                        </button>
-                        <button type="button"
-                                class="priority-option"
-                                [class.selected]="newTaskPriority() === 'MEDIUM'"
-                                (click)="setNewTaskPriority('MEDIUM')">
-                            Medium
-                        </button>
-                        <button type="button"
-                                class="priority-option"
-                                [class.selected]="newTaskPriority() === 'LOW'"
-                                (click)="setNewTaskPriority('LOW')">
-                            Low
-                        </button>
-                    </div>
-                </div>
-                <div class="task-modal-control-group task-modal-folder-group">
-                    <label class="task-modal-control-label">Project / Context</label>
-                    <div class="task-modal-folder-wrapper">
-                        <button type="button" 
-                                class="task-modal-folder-btn"
-                                (click)="toggleFolderDropdown($event)">
-                            <span class="material-symbols-outlined">folder</span>
-                            <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
-                            <span class="material-symbols-outlined">expand_more</span>
-                        </button>
-                        @if (showFolderDropdown() && folderDropdownPosition()) {
-                        <div class="task-modal-folder-dropdown"
-                             [style.top.px]="folderDropdownPosition()!.top"
-                             [style.left.px]="folderDropdownPosition()!.left">
-                            @if (!showCreateFolder()) {
-                            <div class="folder-dropdown-list">
-                                @for (folder of availableLists(); track folder) {
-                                <button type="button"
-                                        class="folder-dropdown-item"
-                                        [class.active]="newTaskList() === folder"
-                                        (click)="selectFolder(folder)">
-                                    <span class="material-symbols-outlined">folder</span>
-                                    <span>{{ folder }}</span>
-                                </button>
-                                }
-                                <button type="button"
-                                        class="folder-dropdown-item folder-dropdown-create"
-                                        (click)="toggleCreateFolder()">
-                                    <span class="material-symbols-outlined">add</span>
-                                    <span>Create new project/context</span>
-                                </button>
-                            </div>
-                            } @else {
-                            <div class="folder-create-form">
-                                <input type="text"
-                                       class="folder-create-input"
-                                       placeholder="Project / context name..."
-                                       [value]="newFolderName()"
-                                       (input)="newFolderName.set($any($event.target).value)"
-                                       (keydown.enter)="createNewFolder()"
-                                       autofocus>
-                                <div class="folder-create-actions">
-                                    <button type="button"
-                                            class="btn-secondary btn-sm"
-                                            (click)="toggleCreateFolder()">
-                                        Cancel
-                                    </button>
-                                    <button type="button"
-                                            class="btn-primary btn-sm"
-                                            [disabled]="!newFolderName().trim()"
-                                            (click)="createNewFolder()">
-                                        Create
-                                    </button>
-                                </div>
-                            </div>
-                            }
-                        </div>
-                        }
-                    </div>
-                </div>
-                <div class="task-modal-control-group task-modal-date-group">
-                    <label class="task-modal-control-label">Due Date</label>
-                    <div class="task-modal-date-time-wrapper">
-                        <div class="task-modal-date-wrapper">
-                            <button type="button"
-                                    class="task-modal-control-btn"
-                                    [class.active]="!!newTaskDue()"
-                                    (click)="toggleDatePicker($event)">
-                                <span class="material-symbols-outlined">calendar_today</span>
-                                <span>{{ newTaskDue() || 'Today' }}</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                            @if (showDatePicker() && datePickerPosition()) {
-                            <div class="task-modal-date-picker" 
-                                 [style.top.px]="datePickerPosition()!.top"
-                                 [style.left.px]="datePickerPosition()!.left">
-                                <div class="date-picker-header">
-                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
-                                        <span class="material-symbols-outlined">chevron_left</span>
-                                    </button>
-                                    <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
-                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
-                                        <span class="material-symbols-outlined">chevron_right</span>
-                                    </button>
-                                </div>
-                                <div class="date-picker-days-header">
-                                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                                </div>
-                                <div class="date-picker-days-grid">
-                                    @for (day of getDatePickerDays(); track $index) {
-                                    <button type="button"
-                                            class="date-picker-day"
-                                            [class.inactive]="!day.isCurrentMonth"
-                                            [class.today]="day.isToday"
-                                            (click)="selectDate(day.day, day.isCurrentMonth)">
-                                        {{ day.day }}
-                                    </button>
-                                    }
-                                </div>
-                            </div>
-                            }
-                        </div>
-                        <input type="time"
-                               class="task-modal-time-input"
-                               [value]="newTaskDueTime()"
-                               (change)="updateDueTime($any($event.target).value)"
-                               aria-label="Due time" />
-                    </div>
-                </div>
+            <!-- Due Time (shown when a due date is set) -->
+            @if (newTaskDue()) {
+            <div class="new-task-time-row">
+                <span class="material-symbols-outlined new-task-time-icon">schedule</span>
+                <input type="time"
+                       class="new-task-time-input"
+                       [value]="newTaskDueTime()"
+                       (change)="updateDueTime($any($event.target).value)">
             </div>
             }
 
-            <!-- Do Later Options -->
-            @if (quickAddMode() === 'do-later') {
-            <div class="task-modal-controls-row">
-                <div class="task-modal-control-group task-modal-date-group">
-                    <label class="task-modal-control-label">Due Date</label>
-                    <div class="task-modal-date-time-wrapper">
-                        <div class="task-modal-date-wrapper">
-                            <button type="button"
-                                    class="task-modal-control-btn"
-                                    [class.active]="!!newTaskDue()"
-                                    (click)="toggleDatePicker($event)">
-                                <span class="material-symbols-outlined">calendar_today</span>
-                                <span>{{ newTaskDue() || 'Set date' }}</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                            @if (showDatePicker() && datePickerPosition()) {
-                            <div class="task-modal-date-picker" 
-                                 [style.top.px]="datePickerPosition()!.top"
-                                 [style.left.px]="datePickerPosition()!.left">
-                                <div class="date-picker-header">
-                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('prev')">
-                                        <span class="material-symbols-outlined">chevron_left</span>
-                                    </button>
-                                    <div class="date-picker-month">{{ getDatePickerMonth() }}</div>
-                                    <button type="button" class="date-picker-nav" (click)="navigateDatePickerMonth('next')">
-                                        <span class="material-symbols-outlined">chevron_right</span>
-                                    </button>
-                                </div>
-                                <div class="date-picker-days-header">
-                                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                                </div>
-                                <div class="date-picker-days-grid">
-                                    @for (day of getDatePickerDays(); track $index) {
-                                    <button type="button"
-                                            class="date-picker-day"
-                                            [class.inactive]="!day.isCurrentMonth"
-                                            [class.today]="day.isToday"
-                                            (click)="selectDate(day.day, day.isCurrentMonth)">
-                                        {{ day.day }}
-                                    </button>
-                                    }
-                                </div>
-                            </div>
-                            }
-                        </div>
-                        <input type="time"
-                               class="task-modal-time-input"
-                               [value]="newTaskDueTime()"
-                               (change)="updateDueTime($any($event.target).value)"
-                               aria-label="Due time" />
-                    </div>
-                </div>
-                <div class="task-modal-control-group task-modal-folder-group">
-                    <label class="task-modal-control-label">Project / Context</label>
-                    <div class="task-modal-folder-wrapper">
-                        <button type="button" 
-                                class="task-modal-folder-btn"
-                                (click)="toggleFolderDropdown($event)">
-                            <span class="material-symbols-outlined">folder</span>
-                            <span class="task-modal-list-label">{{ newTaskList() || 'Inbox' }}</span>
-                            <span class="material-symbols-outlined">expand_more</span>
+            <!-- Labels -->
+            <div class="new-task-labels-row">
+                @for (label of newTaskLabels(); track label) {
+                <span class="new-task-label-chip">
+                    #{{ label }}
+                    <button type="button" class="label-chip-remove" (click)="removeNewTaskLabel(label)">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </span>
+                }
+                <div class="new-task-label-input-wrap">
+                    <input type="text"
+                           class="new-task-label-input"
+                           placeholder="Add label..."
+                           [value]="newTaskLabelInput()"
+                           (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
+                           (keydown.enter)="addNewTaskLabel()"
+                           (blur)="hideLabelAutocomplete()">
+                    @if (showLabelAutocomplete() && getLabelSuggestions().length > 0) {
+                    <div class="label-autocomplete-dropdown">
+                        @for (suggestion of getLabelSuggestions(); track suggestion) {
+                        <button type="button" class="label-suggestion" (mousedown)="addNewTaskLabel(suggestion)">
+                            #{{ suggestion }}
                         </button>
-                        @if (showFolderDropdown() && folderDropdownPosition()) {
-                        <div class="task-modal-folder-dropdown"
-                             [style.top.px]="folderDropdownPosition()!.top"
-                             [style.left.px]="folderDropdownPosition()!.left">
-                            @if (!showCreateFolder()) {
-                            <div class="folder-dropdown-list">
-                                @for (folder of availableLists(); track folder) {
-                                <button type="button"
-                                        class="folder-dropdown-item"
-                                        [class.active]="newTaskList() === folder"
-                                        (click)="selectFolder(folder)">
-                                    <span class="material-symbols-outlined">folder</span>
-                                    <span>{{ folder }}</span>
-                                </button>
-                                }
-                                <button type="button"
-                                        class="folder-dropdown-item folder-dropdown-create"
-                                        (click)="toggleCreateFolder()">
-                                    <span class="material-symbols-outlined">add</span>
-                                    <span>Create new project/context</span>
-                                </button>
-                            </div>
-                            } @else {
-                            <div class="folder-create-form">
-                                <input type="text"
-                                       class="folder-create-input"
-                                       placeholder="Project / context name..."
-                                       [value]="newFolderName()"
-                                       (input)="newFolderName.set($any($event.target).value)"
-                                       (keydown.enter)="createNewFolder()"
-                                       autofocus>
-                                <div class="folder-create-actions">
-                                    <button type="button"
-                                            class="btn-secondary btn-sm"
-                                            (click)="toggleCreateFolder()">
-                                        Cancel
-                                    </button>
-                                    <button type="button"
-                                            class="btn-primary btn-sm"
-                                            [disabled]="!newFolderName().trim()"
-                                            (click)="createNewFolder()">
-                                        Create
-                                    </button>
-                                </div>
-                            </div>
-                            }
-                        </div>
                         }
                     </div>
+                    }
                 </div>
             </div>
-            
-            <!-- Advanced Options -->
-            <div class="task-modal-advanced-section">
-                <div class="task-modal-advanced-toggle" (click)="showAdvancedOptions.set(!showAdvancedOptions())">
-                    <span class="material-symbols-outlined">tune</span>
-                    <span>Advanced Options</span>
-                    <span class="material-symbols-outlined">{{ showAdvancedOptions() ? 'expand_less' : 'expand_more' }}</span>
-                </div>
-                @if (showAdvancedOptions()) {
-                <div class="task-modal-advanced-content">
-                    <!-- Recurring Task -->
-                    <div class="task-modal-control-group">
-                        <label class="task-modal-control-label">Recurring</label>
-                        <div class="task-modal-recurring-controls">
-                            <button type="button"
-                                    class="task-modal-control-btn"
-                                    [class.active]="newTaskRecurring()"
-                                    (click)="newTaskRecurring.set(!newTaskRecurring())">
-                                <span class="material-symbols-outlined">repeat</span>
-                                <span>{{ newTaskRecurring() ? 'Enabled' : 'Disabled' }}</span>
-                            </button>
-                            @if (newTaskRecurring()) {
-                            <select class="task-modal-recurring-select"
-                                    [value]="newTaskRecurringPattern()"
-                                    (change)="newTaskRecurringPattern.set($any($event.target).value)">
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
-                            }
-                        </div>
+
+            <!-- Advanced Options (··· more) -->
+            @if (showAdvancedOptions()) {
+            <div class="new-task-advanced-section">
+                <!-- Subtasks -->
+                <div class="advanced-option-row advanced-option-col">
+                    <div class="advanced-section-label">
+                        <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                        <span>Subtasks</span>
                     </div>
-                    
-                    <!-- Reminders -->
-                    <div class="task-modal-control-group task-modal-reminders-group">
-                        <label class="task-modal-control-label">Reminders</label>
-                        <div class="task-modal-reminders-controls">
-                            <button type="button"
-                                    class="task-modal-control-btn"
-                                    [class.active]="newTaskHasReminder()"
-                                    (click)="toggleNewTaskReminder()">
-                                <span class="material-symbols-outlined">notifications</span>
-                                <span>{{ newTaskHasReminder() ? 'Enabled' : 'Disabled' }}</span>
-                            </button>
-                            @if (newTaskHasReminder()) {
-                            <div class="reminder-times-list">
-                                @for (time of newTaskReminderTimes(); track $index) {
-                                <div class="reminder-time-item">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    <span class="reminder-time-text">{{ time }}</span>
-                                    <div class="reminder-time-actions">
-                                        <button type="button" 
-                                                class="reminder-snooze-btn"
-                                                (click)="showSnoozeOptions.set($index)"
-                                                title="Snooze">
-                                            <span class="material-symbols-outlined">snooze</span>
-                                        </button>
-                                        <button type="button" class="reminder-time-remove" (click)="removeReminderTime($index)">
-                                            <span class="material-symbols-outlined">close</span>
-                                        </button>
-                                    </div>
-                                    @if (showSnoozeOptions() === $index) {
-                                    <div class="snooze-dropdown">
-                                        @for (option of snoozeOptions(); track option.id) {
-                                        <button type="button" 
-                                                class="snooze-option"
-                                                (click)="snoozeReminder($index, option.minutes)">
-                                            {{ option.label }}
-                                        </button>
-                                        }
-                                    </div>
-                                    }
-                                </div>
-                                }
-                                <div class="reminder-time-input-wrapper">
-                                    <input type="text"
-                                           class="reminder-time-input"
-                                           placeholder="e.g., '1 hour before', '30 min before'..."
-                                           [value]="newReminderTimeInput()"
-                                           (input)="newReminderTimeInput.set($any($event.target).value)"
-                                           (keydown.enter)="addReminderTime()">
-                                    <button type="button" class="reminder-time-add" (click)="addReminderTime()">
-                                        <span class="material-symbols-outlined">add</span>
-                                    </button>
-                                </div>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                    
-                    <!-- Subtasks -->
-                    <div class="task-modal-control-group task-modal-subtasks-group">
-                        <label class="task-modal-control-label">Subtasks</label>
-                        <div class="task-modal-subtasks-list">
-                            @for (subtask of newTaskSubtasks(); track $index) {
-                            <div class="subtask-item">
-                                <span class="material-symbols-outlined">subdirectory_arrow_right</span>
-                                <span class="subtask-text">{{ subtask }}</span>
-                                <button type="button" class="subtask-remove" (click)="removeSubtask($index)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
-                            }
-                            <div class="subtask-input-wrapper">
-                                <input type="text"
-                                       class="subtask-input"
-                                       placeholder="Add subtask..."
-                                       [value]="newSubtaskInput()"
-                                       (input)="newSubtaskInput.set($any($event.target).value)"
-                                       (keydown.enter)="addSubtaskToNew()"
-                                       (focus)="showLabelAutocomplete.set(false)">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Labels with Autocomplete -->
-                    <div class="task-modal-control-group task-modal-labels-group">
-                        <label class="task-modal-control-label">Labels</label>
-                        <div class="task-modal-labels-container-modal">
-                            @if (newTaskLabels().length > 0) {
-                            <div class="task-label-chips-modal">
-                                @for (label of newTaskLabels(); track label) {
-                                <span class="task-label-chip-modal" [style.border-left-color]="getLabelColor(label)">
-                                    <span class="material-symbols-outlined chip-icon">label</span>
-                                    {{ label }}
-                                    <button type="button" class="chip-remove" (click)="removeNewTaskLabel(label)">
-                                        <span class="material-symbols-outlined">close</span>
-                                    </button>
-                                </span>
-                                }
-                            </div>
-                            }
-                            <div class="task-modal-label-input-wrapper">
-                                <input type="text"
-                                       class="task-modal-label-input-modal"
-                                       placeholder="Add label (#work, #personal)..."
-                                       [value]="newTaskLabelInput()"
-                                       (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
-                                       (keydown.enter)="addNewTaskLabel()"
-                                       (focus)="showLabelAutocomplete.set(true)"
-                                       (blur)="hideLabelAutocomplete()">
-                                @if (showLabelAutocomplete() && getLabelSuggestions().length > 0) {
-                                <div class="task-modal-label-autocomplete">
-                                    @for (suggestion of getLabelSuggestions(); track suggestion) {
-                                    <div class="label-suggestion-item" (click)="addNewTaskLabel(suggestion)">
-                                        <span class="label-suggestion-color" [style.background-color]="getLabelColor(suggestion)"></span>
-                                        <span>{{ suggestion }}</span>
-                                    </div>
-                                    }
-                                </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Task Dependencies -->
-                    <div class="task-modal-control-group">
-                        <label class="task-modal-control-label">Dependencies</label>
-                        <div class="task-modal-dependencies-list">
-                            @if (newTaskDependencies().length > 0) {
-                            @for (depId of newTaskDependencies(); track depId) {
-                            @let depTask = getTaskById(depId);
-                            @if (depTask) {
-                            <div class="dependency-item">
-                                <span class="material-symbols-outlined">link</span>
-                                <span class="dependency-text">{{ depTask.title }}</span>
-                                <button type="button" class="dependency-remove" (click)="removeDependency(depId)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
-                            }
-                            }
-                            }
-                            <select class="task-modal-dependency-select"
-                                    (change)="addDependency($any($event.target).value); $any($event.target).value = ''">
-                                <option value="">Add dependency...</option>
-                                @for (task of getAvailableDependencyTasks(); track task.id) {
-                                <option [value]="task.id">{{ task.title }}</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Rich Description with Markdown -->
-                    <div class="task-modal-control-group">
-                        <div class="task-modal-description-header">
-                            <label class="task-modal-control-label">Description</label>
-                            <button type="button" 
-                                    class="btn-text btn-sm"
-                                    (click)="showMarkdownPreview.set(!showMarkdownPreview())">
-                                <span class="material-symbols-outlined">{{ showMarkdownPreview() ? 'edit' : 'preview' }}</span>
-                                {{ showMarkdownPreview() ? 'Edit' : 'Preview' }}
+                    <div class="new-task-subtasks-section">
+                        @for (subtask of newTaskSubtasks(); track $index) {
+                        <div class="new-task-subtask-item">
+                            <span class="material-symbols-outlined new-task-subtask-icon">subdirectory_arrow_right</span>
+                            <span class="new-task-subtask-title">{{ subtask }}</span>
+                            <button type="button" class="new-task-subtask-remove" (click)="removeSubtask($index)">
+                                <span class="material-symbols-outlined">close</span>
                             </button>
                         </div>
-                        @if (!showMarkdownPreview()) {
-                        <textarea class="task-modal-description-input"
-                                  placeholder="Add description... (Markdown supported: **bold**, *italic*, `code`, [links](url))"
-                                  [value]="newTaskDescription()"
-                                  (input)="newTaskDescription.set($any($event.target).value)"
-                                  rows="6"></textarea>
-                        } @else {
-                        <div class="task-modal-description-preview" [innerHTML]="renderMarkdown(newTaskDescription())"></div>
                         }
-                    </div>
-                    
-                    <!-- File Attachments -->
-                    <div class="task-modal-control-group">
-                        <label class="task-modal-control-label">Attachments</label>
-                        <div class="task-modal-attachments">
-                            @if (filesToUpload().length > 0) {
-                            <div class="attachment-list">
-                                @for (file of filesToUpload(); track $index) {
-                                <div class="attachment-item">
-                                    @if (isImageFile(file)) {
-                                    <img [src]="getFilePreview(file)" 
-                                         class="attachment-preview-thumb"
-                                         (click)="previewImage(getFilePreview(file))"
-                                         [alt]="file.name">
-                                    } @else {
-                                    <span class="material-symbols-outlined">attach_file</span>
-                                    }
-                                    <span class="attachment-name">{{ file.name }}</span>
-                                    <span class="attachment-size">({{ formatFileSize(file.size) }})</span>
-                                    <button type="button" class="attachment-remove" (click)="removeFileToUpload($index)">
-                                        <span class="material-symbols-outlined">close</span>
-                                    </button>
-                                </div>
-                                }
-                            </div>
-                            }
-                            <div class="attachment-upload-area"
-                                 (dragover)="$event.preventDefault()"
-                                 (drop)="handleFileDrop($event)">
-                                <input type="file" 
-                                       id="file-upload"
-                                       multiple
-                                       (change)="onFileSelected($event)"
-                                       style="display: none;">
-                                <label for="file-upload" class="attachment-upload-btn">
-                                    <span class="material-symbols-outlined">cloud_upload</span>
-                                    <span>Drop files here or click to upload</span>
-                                </label>
-                            </div>
+                        <div class="new-task-subtask-input-row">
+                            <input type="text"
+                                   class="new-task-subtask-input"
+                                   placeholder="Add a subtask..."
+                                   [value]="newSubtaskInput()"
+                                   (input)="newSubtaskInput.set($any($event.target).value)"
+                                   (keydown.enter)="addSubtaskToNew()">
+                            <button type="button"
+                                    class="new-task-subtask-add-btn"
+                                    [disabled]="!newSubtaskInput().trim()"
+                                    (click)="addSubtaskToNew()">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
                         </div>
                     </div>
                 </div>
-                }
+
+                <!-- Recurring -->
+                <div class="advanced-option-row">
+                    <label class="advanced-toggle-label">
+                        <input type="checkbox"
+                               [checked]="newTaskRecurring()"
+                               (change)="newTaskRecurring.set($any($event.target).checked)">
+                        <span class="material-symbols-outlined">repeat</span>
+                        <span>Recurring</span>
+                    </label>
+                    @if (newTaskRecurring()) {
+                    <select class="advanced-pattern-select"
+                            [value]="newTaskRecurringPattern()"
+                            (change)="newTaskRecurringPattern.set($any($event.target).value)">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                    }
+                </div>
             </div>
             }
         </div>
     </div>
-
     <div footer>
-        <div class="task-modal-footer-actions">
-            <button type="button"
-                    class="btn-secondary"
-                    (click)="closeNewTaskDialog()">
-                Cancel
-            </button>
-            <button type="button"
-                    class="btn-primary"
-                    [disabled]="!newTaskTitle().trim()"
-                    (click)="confirmNewTask()">
-                Add task
-            </button>
+        <div class="task-modal-footer-minimal">
+            <div class="footer-project-selector" (click)="toggleFolderDropdown($event)">
+                <span class="material-symbols-outlined project-icon">move_to_inbox</span>
+                <span class="project-name">{{ newTaskList() || 'Inbox' }}</span>
+                <span class="material-symbols-outlined project-caret">arrow_drop_down</span>
+            </div>
+            <div class="footer-actions-right">
+                <button type="button" class="btn-minimal-cancel" (click)="closeNewTaskDialog()">Cancel</button>
+                <button type="button"
+                        class="btn-minimal-save"
+                        [disabled]="!newTaskTitle().trim()"
+                        (click)="confirmNewTask()">Save</button>
+            </div>
         </div>
     </div>
 </env-modal>
@@ -1221,55 +778,67 @@
     </div>
     <div body>
         <div class="task-details-container">
-            <!-- Compact Header -->
+            <!-- Header Section -->
             <div class="task-details-header-compact">
                 <div class="task-details-title-row">
                     @if (!editingTaskDetails()) {
-                    <h2 class="task-details-title-compact">{{ task.title }}</h2>
-                    <button type="button" 
-                            class="btn-icon-compact"
-                            (click)="toggleEditTaskDetails()"
-                            title="Edit task">
-                        <span class="material-symbols-outlined">edit</span>
-                    </button>
+                    <div class="title-with-edit">
+                        <div class="task-details-title-display"
+                             (click)="toggleEditTaskDetails()"
+                             title="Click to edit title">{{ task.title }}</div>
+                        <button type="button"
+                                class="btn-icon-compact"
+                                (click)="toggleEditTaskDetails()"
+                                title="Edit task">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                    </div>
                     } @else {
-                    <input type="text"
-                           class="task-details-title-input-compact"
-                           [value]="editedTaskTitle()"
-                           (input)="editedTaskTitle.set($any($event.target).value)"
-                           placeholder="Task title"
-                           autofocus>
+                    <textarea class="task-details-title-textarea"
+                              [value]="editedTaskTitle()"
+                              (input)="editedTaskTitle.set($any($event.target).value)"
+                              placeholder="Task title"
+                              autofocus></textarea>
                     }
                 </div>
-                <div class="task-details-meta-row">
-                    <div class="task-details-status-badge-compact" [ngClass]="task.status.toLowerCase()">
-                        <span class="material-symbols-outlined status-icon">{{ task.status === 'COMPLETED' ? 'check_circle' : task.status === 'ACTIVE' ? 'play_circle' : 'schedule' }}</span>
-                        {{ task.status }}
-                    </div>
-                    <div class="task-details-priority-badge-compact" [ngClass]="{
-                        'priority-high': task.priority === 'HIGH',
-                        'priority-medium': task.priority === 'MEDIUM',
-                        'priority-low': task.priority === 'LOW'
-                    }">
-                        <span class="material-symbols-outlined priority-icon">flag</span>
-                        {{ task.priority }}
-                    </div>
-                </div>
-            </div>
 
-            <!-- Compact Information Grid -->
-            <div class="task-details-grid-compact">
-                <!-- Project/List -->
-                <div class="task-details-info-item">
-                    <div class="info-item-icon">
-                        <span class="material-symbols-outlined">folder</span>
+                <!-- Ultra Compact Metadata Row -->
+                <div class="task-metadata-ultra-compact">
+                    <!-- Status -->
+                    <div class="metadata-item-compact is-clickable"
+                         [ngClass]="'status-' + task.status.toLowerCase()"
+                         (click)="completeTaskFromDetails()"
+                         [title]="task.status === 'COMPLETED' ? 'Click to mark as active' : 'Click to mark as complete'">
+                        <span class="material-symbols-outlined">{{ task.status === 'COMPLETED' ? 'check_circle' : 'play_circle' }}</span>
+                        <span class="metadata-value-compact">{{ task.status | titlecase }}</span>
                     </div>
-                    <div class="info-item-content">
-                        <div class="info-item-label">Project</div>
+
+                    <!-- Priority -->
+                    <div class="metadata-item-compact"
+                         [ngClass]="'priority-' + (editingTaskDetails() ? editedTaskPriority().toLowerCase() : task.priority.toLowerCase())">
+                        <span class="material-symbols-outlined">flag</span>
+                        <span class="metadata-label-compact">Priority</span>
                         @if (!editingTaskDetails()) {
-                        <div class="info-item-value">{{ task.project || 'Inbox' }}</div>
+                        <span class="metadata-value-compact">{{ task.priority | titlecase }}</span>
                         } @else {
-                        <select class="info-item-select"
+                        <select class="metadata-select"
+                                [value]="editedTaskPriority()"
+                                (change)="editedTaskPriority.set($any($event.target).value)">
+                             <option value="HIGH">High</option>
+                             <option value="MEDIUM">Medium</option>
+                             <option value="LOW">Low</option>
+                        </select>
+                        }
+                    </div>
+
+                    <!-- Project -->
+                    <div class="metadata-item-compact">
+                        <span class="material-symbols-outlined">folder</span>
+                        <span class="metadata-label-compact">Project</span>
+                        @if (!editingTaskDetails()) {
+                        <span class="metadata-value-compact">{{ task.project || 'Inbox' }}</span>
+                        } @else {
+                        <select class="metadata-select"
                                 [value]="editedTaskList()"
                                 (change)="editedTaskList.set($any($event.target).value)">
                             @for (folder of availableLists(); track folder) {
@@ -1278,96 +847,51 @@
                         </select>
                         }
                     </div>
-                </div>
 
-                <!-- Due Date -->
-                <div class="task-details-info-item">
-                    <div class="info-item-icon">
+                    <!-- Due Date -->
+                    <div class="metadata-item-compact">
                         <span class="material-symbols-outlined">calendar_today</span>
-                    </div>
-                    <div class="info-item-content">
-                        <div class="info-item-label">Due Date</div>
+                        <span class="metadata-label-compact">Due</span>
                         @if (!editingTaskDetails()) {
-                        <div class="info-item-value">{{ task.due || 'No due date' }}</div>
+                        <span class="metadata-value-compact" [class.empty]="!task.due">{{ task.due || 'No due date' }}</span>
                         } @else {
                         <input type="text"
-                               class="info-item-input"
+                               class="metadata-input"
                                [value]="editedTaskDue() || ''"
                                (input)="editedTaskDue.set($any($event.target).value)"
-                               placeholder="e.g., Today, 12:00">
+                               placeholder="Tomorrow, 10am">
                         }
                     </div>
-                </div>
 
-                <!-- Priority (if editing) -->
-                @if (editingTaskDetails()) {
-                <div class="task-details-info-item">
-                    <div class="info-item-icon">
-                        <span class="material-symbols-outlined">flag</span>
-                    </div>
-                    <div class="info-item-content">
-                        <div class="info-item-label">Priority</div>
-                        <div class="task-modal-priority-selector-compact">
-                            <button type="button"
-                                    class="priority-option-compact"
-                                    [class.selected]="editedTaskPriority() === 'HIGH'"
-                                    (click)="editedTaskPriority.set('HIGH')">
-                                High
-                            </button>
-                            <button type="button"
-                                    class="priority-option-compact"
-                                    [class.selected]="editedTaskPriority() === 'MEDIUM'"
-                                    (click)="editedTaskPriority.set('MEDIUM')">
-                                Medium
-                            </button>
-                            <button type="button"
-                                    class="priority-option-compact"
-                                    [class.selected]="editedTaskPriority() === 'LOW'"
-                                    (click)="editedTaskPriority.set('LOW')">
-                                Low
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                }
-
-                <!-- Labels -->
-                <div class="task-details-info-item task-details-info-item-full">
-                    <div class="info-item-icon">
+                    <!-- Labels -->
+                    <div class="metadata-item-compact">
                         <span class="material-symbols-outlined">label</span>
-                    </div>
-                    <div class="info-item-content">
-                        <div class="info-item-label">Labels</div>
-                        @if (!editingTaskDetails()) {
                         <div class="task-details-labels-compact">
-                            @if (task.labels && task.labels.length > 0) {
-                            @for (label of task.labels; track label) {
-                            <span class="task-label-chip-compact" [style.color]="getLabelColor(label)">
-                                #{{ label }}
-                            </span>
-                            }
+                            @if (!editingTaskDetails()) {
+                                @if (task.labels && task.labels.length > 0) {
+                                    @for (label of task.labels; track label) {
+                                    <span class="task-label-chip-compact" [style.color]="getLabelColor(label)">#{{ label }}</span>
+                                    }
+                                } @else {
+                                    <span class="metadata-value-compact empty">No labels</span>
+                                }
                             } @else {
-                            <span class="task-details-empty-compact">—</span>
+                                <div class="task-details-labels-edit-compact">
+                                    @for (label of editedTaskLabels(); track label) {
+                                    <span class="task-label-chip-compact">
+                                        #{{ label }}
+                                        <button type="button" class="chip-remove-compact" (click)="removeLabelFromEdit(label)">
+                                            <span class="material-symbols-outlined">close</span>
+                                        </button>
+                                    </span>
+                                    }
+                                    <input type="text" 
+                                           class="task-label-input-compact" 
+                                           placeholder="+"
+                                           (keydown.enter)="addLabelToEdit($event)">
+                                </div>
                             }
                         </div>
-                        } @else {
-                        <div class="task-details-labels-edit-compact">
-                            @for (label of editedTaskLabels(); track label) {
-                            <span class="task-label-chip-compact">
-                                #{{ label }}
-                                <button type="button" 
-                                        class="chip-remove-compact"
-                                        (click)="removeLabelFromEdit(label)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
-                            }
-                            <input type="text"
-                                   class="task-label-input-compact"
-                                   placeholder="Add label..."
-                                   (keydown.enter)="addLabelToEdit($event)">
-                        </div>
-                        }
                     </div>
                 </div>
             </div>
@@ -1379,7 +903,16 @@
                     <span class="section-title">Description</span>
                 </div>
                 @if (!editingTaskDetails()) {
-                <div class="task-details-description-content-compact" [innerHTML]="renderMarkdown(task.description || task.notes || '')"></div>
+                <div class="task-details-description-content-compact"
+                     [class.description-empty]="!(task.description || task.notes)"
+                     (click)="toggleEditTaskDetails()"
+                     title="Click to add description">
+                    @if (task.description || task.notes) {
+                        <span [innerHTML]="renderMarkdown(task.description || task.notes || '')"></span>
+                    } @else {
+                        <span class="description-placeholder">No description — click to add one</span>
+                    }
+                </div>
                 } @else {
                 <textarea class="task-details-textarea-compact"
                           [value]="editedTaskDescription()"
@@ -1390,12 +923,13 @@
             </div>
 
             <!-- Subtasks -->
-            @if (task.subtasks && task.subtasks.length > 0) {
             <div class="task-details-section">
                 <div class="section-header">
                     <span class="material-symbols-outlined section-icon">subdirectory_arrow_right</span>
                     <span class="section-title">Subtasks</span>
+                    @if (task.subtasks && task.subtasks.length > 0) {
                     <span class="section-badge">{{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}</span>
+                    }
                 </div>
                 <div class="task-details-subtasks-compact">
                     @for (subtask of task.subtasks; track subtask.id) {
@@ -1410,8 +944,21 @@
                     </div>
                     }
                 </div>
+                <div class="add-subtask-row">
+                    <input type="text"
+                           class="add-subtask-input"
+                           placeholder="Add a subtask..."
+                           [value]="newSubtaskTitle()"
+                           (input)="newSubtaskTitle.set($any($event.target).value)"
+                           (keydown.enter)="newSubtaskTitle().trim() && addSubtask(task, newSubtaskTitle()); newSubtaskTitle.set('')">
+                    <button type="button"
+                            class="add-subtask-btn"
+                            [disabled]="!newSubtaskTitle().trim()"
+                            (click)="addSubtask(task, newSubtaskTitle()); newSubtaskTitle.set('')">
+                        <span class="material-symbols-outlined">add</span>
+                    </button>
+                </div>
             </div>
-            }
 
             <!-- Dependencies -->
             @if (task.dependencies && task.dependencies.length > 0) {
@@ -1473,6 +1020,7 @@
     <div footer>
         <div class="task-details-footer-compact">
             <div class="task-details-actions-left-compact">
+                @if (!editingTaskDetails()) {
                 <button type="button"
                         class="btn-action-compact"
                         (click)="completeTaskFromDetails()">
@@ -1485,6 +1033,7 @@
                     <span class="material-symbols-outlined">timer</span>
                     <span>Pomodoro</span>
                 </button>
+                }
             </div>
             <div class="task-details-actions-right-compact">
                 @if (editingTaskDetails()) {

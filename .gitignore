@@ -62,3 +62,7 @@ pnpm-debug.log*
 .nx/cache
 .nx/workspace-data
 .angular
+
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json

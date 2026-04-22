@@ -45,6 +45,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskDue = signal<string | undefined>(undefined);
   editedTaskList = signal<string>('Inbox');
   editedTaskLabels = signal<string[]>([]);
+  newSubtaskTitle = signal<string>('');
 
   // Pomodoro timer state
   pomodoroActive = signal<boolean>(false);
