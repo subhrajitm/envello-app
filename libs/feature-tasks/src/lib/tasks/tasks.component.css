@@ -5551,6 +5551,54 @@ textarea:focus-visible {
     color: var(--text-tertiary) !important;
 }
 
+/* Recurring row */
+.td-recurring-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.td-recurring-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+}
+.td-recurring-toggle:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+.td-recurring-toggle.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #fff;
+}
+.td-recurring-toggle .material-symbols-outlined {
+    font-size: 15px;
+}
+.td-recurring-select {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+}
+.td-recurring-select:focus {
+    border-color: var(--border-highlight);
+}
+
 /* Reminder picker */
 .td-prop-add-btn {
     background: none;

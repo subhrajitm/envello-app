@@ -50,6 +50,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskLabels = signal<string[]>([]);
   editedTaskDueTime = signal<string>('12:00');
   editedTaskReminders = signal<string[]>([]);
+  editedTaskRecurring = signal<boolean>(false);
+  editedTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
   detailsLabelInput = signal<string>('');
   newSubtaskTitle = signal<string>('');
   showReminderPicker = signal<boolean>(false);
@@ -1529,6 +1531,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.editedTaskList.set(task.project || 'Inbox');
     this.editedTaskLabels.set(task.labels || []);
     this.editedTaskReminders.set(task.reminders || []);
+    this.editedTaskRecurring.set(!!task.recurring);
+    const p = task.recurring?.pattern;
+    this.editedTaskRecurringPattern.set((p === 'daily' || p === 'weekly' || p === 'monthly' || p === 'yearly') ? p : 'weekly');
     this.editingTaskDetails.set(false);
     this.detailsShowAdvanced.set(true);
     this.newSubtaskTitle.set('');
@@ -1547,6 +1552,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.detailsShowAdvanced.set(false);
     this.detailsLabelInput.set('');
     this.editedTaskReminders.set([]);
+    this.editedTaskRecurring.set(false);
+    this.editedTaskRecurringPattern.set('weekly');
     this.showDatePicker.set(false);
     this.showReminderPicker.set(false);
     this.datePickerPosition.set(null);
@@ -1585,7 +1592,12 @@ export class TasksComponent implements OnInit, OnDestroy {
       due: this.editedTaskDue(),
       project: this.editedTaskList() === 'Inbox' ? undefined : this.editedTaskList(),
       labels: this.editedTaskLabels().length > 0 ? this.editedTaskLabels() : undefined,
-      reminders: this.editedTaskReminders().length > 0 ? this.editedTaskReminders() : undefined
+      reminders: this.editedTaskReminders().length > 0 ? this.editedTaskReminders() : undefined,
+      recurring: this.editedTaskRecurring() ? {
+        pattern: this.editedTaskRecurringPattern(),
+        interval: 1,
+        nextDue: this.calculateNextDue(this.editedTaskDue(), this.editedTaskRecurringPattern(), 1)
+      } : undefined
     };
 
     this.store.updateTask(task.id, updates);

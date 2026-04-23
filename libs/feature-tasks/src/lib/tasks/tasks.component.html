@@ -967,6 +967,32 @@
                     }
                 </div>
 
+                <!-- Recurring -->
+                <div class="td-prop-row">
+                    <span class="td-prop-label">Recurring</span>
+                    <div class="td-prop-value td-recurring-row">
+                        <button class="td-recurring-toggle"
+                                type="button"
+                                [class.active]="editedTaskRecurring()"
+                                (click)="editedTaskRecurring.set(!editedTaskRecurring())"
+                                [title]="editedTaskRecurring() ? 'Disable recurring' : 'Enable recurring'">
+                            <span class="material-symbols-outlined">repeat</span>
+                        </button>
+                        @if (editedTaskRecurring()) {
+                        <select class="td-recurring-select"
+                                [value]="editedTaskRecurringPattern()"
+                                (change)="editedTaskRecurringPattern.set($any($event.target).value)">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        } @else {
+                        <span class="td-prop-placeholder">Off</span>
+                        }
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
