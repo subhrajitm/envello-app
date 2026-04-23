@@ -184,23 +184,18 @@
                                     }
                                     @if (item.task.labels && item.task.labels.length > 0) {
                                         @for (label of item.task.labels; track label) {
-                                        <span class="metadata-item label-chip"
-                                              [style.background]="getLabelColor(label) + '18'"
-                                              [style.color]="getLabelColor(label)"
-                                              [style.border-color]="getLabelColor(label) + '44'">
-                                            {{ label }}
-                                        </span>
+                                        <span class="metadata-item label-chip">{{ label }}</span>
                                         }
                                     }
                                 </div>
 
                                 @if (item.task.subtasks && item.task.subtasks.length > 0 && !isSubtasksCollapsed(item.task.id)) {
-                                <div class="task-subtasks-list" (click)="$event.stopPropagation()">
+                                <div class="task-subtasks-list">
                                     @for (subtask of item.task.subtasks; track subtask.id) {
                                     <div class="task-subtask-row">
                                         <button class="task-subtask-checkbox"
                                                 [class.checked]="subtask.status === 'COMPLETED'"
-                                                (click)="toggleSubtaskStatus(item.task, subtask)"
+                                                (click)="toggleSubtaskStatus(item.task, subtask); $event.stopPropagation()"
                                                 [attr.aria-label]="(subtask.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + subtask.title">
                                             @if (subtask.status === 'COMPLETED') {
                                                 <span class="material-symbols-outlined">check</span>
@@ -932,12 +927,44 @@
                 </div>
 
                 <!-- Reminders -->
-                <div class="td-prop-row">
-                    <span class="td-prop-label">Reminders</span>
-                    <button class="td-prop-value td-prop-btn td-prop-placeholder" type="button">
-                        <span class="material-symbols-outlined td-prop-icon">notifications</span>
-                        <span>Add</span>
-                    </button>
+                <div class="td-prop-row td-prop-row--block">
+                    <div class="td-prop-row-header">
+                        <span class="td-prop-label">Reminders</span>
+                        <button class="td-prop-add-btn" type="button" (click)="showReminderPicker.set(!showReminderPicker())">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+
+                    @if (showReminderPicker()) {
+                    <div class="td-reminder-picker">
+                        @for (preset of REMINDER_PRESETS; track preset.value) {
+                        <button class="td-reminder-preset"
+                                [class.active]="editedTaskReminders().includes(preset.value)"
+                                type="button"
+                                (click)="addDetailsReminder(preset.value)">
+                            <span class="material-symbols-outlined">schedule</span>
+                            {{ preset.label }}
+                            @if (editedTaskReminders().includes(preset.value)) {
+                            <span class="material-symbols-outlined td-reminder-check">check</span>
+                            }
+                        </button>
+                        }
+                    </div>
+                    }
+
+                    @if (editedTaskReminders().length > 0) {
+                    <div class="td-reminder-chips">
+                        @for (r of editedTaskReminders(); track r) {
+                        <span class="td-reminder-chip">
+                            <span class="material-symbols-outlined">notifications</span>
+                            {{ r }}
+                            <button type="button" class="td-reminder-remove" (click)="removeDetailsReminder(r)">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </span>
+                        }
+                    </div>
+                    }
                 </div>
 
             </div>

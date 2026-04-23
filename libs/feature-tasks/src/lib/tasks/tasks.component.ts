@@ -49,8 +49,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskList = signal<string>('Inbox');
   editedTaskLabels = signal<string[]>([]);
   editedTaskDueTime = signal<string>('12:00');
+  editedTaskReminders = signal<string[]>([]);
   detailsLabelInput = signal<string>('');
   newSubtaskTitle = signal<string>('');
+  showReminderPicker = signal<boolean>(false);
 
   // Pomodoro timer state
   pomodoroActive = signal<boolean>(false);
@@ -1526,12 +1528,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.editedTaskDue.set(task.due);
     this.editedTaskList.set(task.project || 'Inbox');
     this.editedTaskLabels.set(task.labels || []);
+    this.editedTaskReminders.set(task.reminders || []);
     this.editingTaskDetails.set(false);
     this.detailsShowAdvanced.set(true);
     this.newSubtaskTitle.set('');
     this.detailsLabelInput.set('');
     this.editedTaskDueTime.set('12:00');
     this.showDatePicker.set(false);
+    this.showReminderPicker.set(false);
     this.datePickerPosition.set(null);
     this.showTaskDetails.set(true);
   }
@@ -1542,12 +1546,32 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.editingTaskDetails.set(false);
     this.detailsShowAdvanced.set(false);
     this.detailsLabelInput.set('');
+    this.editedTaskReminders.set([]);
     this.showDatePicker.set(false);
+    this.showReminderPicker.set(false);
     this.datePickerPosition.set(null);
   }
 
   toggleEditTaskDetails() {
     this.editingTaskDetails.update(v => !v);
+  }
+
+  readonly REMINDER_PRESETS = [
+    { label: 'On due date', value: 'On due date' },
+    { label: '30 min before', value: '30 min before' },
+    { label: '1 hour before', value: '1 hour before' },
+    { label: '3 hours before', value: '3 hours before' },
+    { label: '1 day before', value: '1 day before' },
+  ];
+
+  addDetailsReminder(value: string) {
+    if (!value || this.editedTaskReminders().includes(value)) return;
+    this.editedTaskReminders.update(r => [...r, value]);
+    this.showReminderPicker.set(false);
+  }
+
+  removeDetailsReminder(value: string) {
+    this.editedTaskReminders.update(r => r.filter(x => x !== value));
   }
 
   saveTaskDetails() {
@@ -1560,7 +1584,8 @@ export class TasksComponent implements OnInit, OnDestroy {
       priority: this.editedTaskPriority(),
       due: this.editedTaskDue(),
       project: this.editedTaskList() === 'Inbox' ? undefined : this.editedTaskList(),
-      labels: this.editedTaskLabels().length > 0 ? this.editedTaskLabels() : undefined
+      labels: this.editedTaskLabels().length > 0 ? this.editedTaskLabels() : undefined,
+      reminders: this.editedTaskReminders().length > 0 ? this.editedTaskReminders() : undefined
     };
 
     this.store.updateTask(task.id, updates);
