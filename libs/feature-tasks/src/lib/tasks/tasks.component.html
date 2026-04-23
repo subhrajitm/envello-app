@@ -76,26 +76,9 @@
                     </button>
                 </div>
                 }
-                <div class="toolbar-actions-right">
-                    @if (canUndo()) {
-                    <button class="btn-icon-only" 
-                            (click)="undo()"
-                            title="Undo (Cmd+Z)"
-                            aria-label="Undo">
-                        <span class="material-symbols-outlined">undo</span>
-                    </button>
-                    }
-                    @if (canRedo()) {
-                    <button class="btn-icon-only" 
-                            (click)="redo()"
-                            title="Redo (Cmd+Shift+Z)"
-                            aria-label="Redo">
-                        <span class="material-symbols-outlined">redo</span>
-                    </button>
-                    }
-                </div>
                 </div>
         </div>
+
 
         <!-- Task List / Data Grid + Thumbnails -->
         @if (viewMode() === 'list') {
@@ -129,72 +112,117 @@
                         <button class="btn-primary" (click)="openNewTaskDialog()">+ New Task</button>
                     </div>
                 } @else {
-                    @if (virtualScrollEnabled() && filteredTasks().length > 50) {
-                        <div [style.height.px]="visibleTaskRange().start * itemHeight"></div>
-                    }
-                    
-                    @for (task of visibleTasks(); track task.id) {
-                    <div class="task-item" 
-                         [class.completed]="task.status === 'COMPLETED'"
-                         [draggable]="true"
-                         (click)="openTaskDetails(task)">
-                        
-                        <div class="task-drag-handle" (click)="$event.stopPropagation()">
-                            <span class="material-symbols-outlined">drag_indicator</span>
-                        </div>
+                    @for (item of flatListItems(); track $index) {
 
-                        <div class="task-check-column" (click)="$event.stopPropagation()">
-                            <button class="list-circular-checkbox" 
-                                    [class.checked]="task.status === 'COMPLETED'"
-                                    (click)="toggleTaskStatus(task)"
-                                    [attr.aria-label]="(task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + task.title">
-                                @if (task.status === 'COMPLETED') {
-                                    <span class="material-symbols-outlined">check</span>
-                                }
-                            </button>
+                        @if (item.kind === 'header') {
+                        <div class="task-group-header" [style.--group-accent]="item.accent">
+                            <span class="task-group-dot"></span>
+                            <span class="task-group-label">{{ item.label }}</span>
+                            <span class="task-group-count">{{ item.count }}</span>
                         </div>
+                        }
 
-                        <div class="task-main-column">
-                            <div class="task-title-text">{{ task.title }}</div>
-                            <div class="task-metadata-row">
-                                @if (task.due) {
-                                <span class="metadata-item due-date" [class.overdue]="task.due.includes('Overdue')">
-                                    <span class="material-symbols-outlined">calendar_today</span>
-                                    {{ task.due }}
-                                </span>
-                                }
-                                @if (task.project && task.project !== 'Inbox') {
-                                <span class="metadata-item project">
-                                    <span class="material-symbols-outlined">folder</span>
-                                    {{ task.project }}
-                                </span>
-                                }
-                                @if (task.labels && task.labels.length > 0) {
-                                    @for (label of task.labels; track label) {
-                                    <span class="metadata-item label-chip">
-                                        #{{ label }}
+                        @if (item.kind === 'task') {
+                        <div class="task-item"
+                             [class.completed]="item.task.status === 'COMPLETED'"
+                             [class.priority-border-high]="item.task.priority === 'HIGH'"
+                             [class.priority-border-medium]="item.task.priority === 'MEDIUM'"
+                             [class.priority-border-low]="item.task.priority === 'LOW'"
+                             [draggable]="true"
+                             (click)="openTaskDetails(item.task)">
+
+                            <div class="task-drag-handle" (click)="$event.stopPropagation()">
+                                <span class="material-symbols-outlined">drag_indicator</span>
+                            </div>
+
+                            <div class="task-check-column" (click)="$event.stopPropagation()">
+                                <button class="list-circular-checkbox"
+                                        [class.checked]="item.task.status === 'COMPLETED'"
+                                        (click)="toggleTaskStatus(item.task)"
+                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
+                                    @if (item.task.status === 'COMPLETED') {
+                                        <span class="material-symbols-outlined">check</span>
+                                    }
+                                </button>
+                            </div>
+
+                            @if (item.task.subtasks && item.task.subtasks.length > 0) {
+                            <div class="task-collapse-btn-col" (click)="$event.stopPropagation()">
+                                <button class="task-collapse-btn"
+                                        (click)="toggleSubtasksCollapse(item.task.id, $event)"
+                                        [attr.aria-label]="isSubtasksCollapsed(item.task.id) ? 'Expand subtasks' : 'Collapse subtasks'">
+                                    <span class="material-symbols-outlined task-subtasks-chevron"
+                                          [class.collapsed]="isSubtasksCollapsed(item.task.id)">expand_more</span>
+                                </button>
+                            </div>
+                            }
+
+                            <div class="task-main-column">
+                                <div class="task-title-row-inner">
+                                    <span class="task-priority-dot"
+                                          [class.dot-high]="item.task.priority === 'HIGH'"
+                                          [class.dot-medium]="item.task.priority === 'MEDIUM'"
+                                          [class.dot-low]="item.task.priority === 'LOW'"></span>
+                                    <div class="task-title-text">{{ item.task.title }}</div>
+                                </div>
+                                <div class="task-metadata-row">
+                                    @if (item.task.due) {
+                                    <span class="metadata-item due-date" [class.overdue]="item.task.due.includes('Overdue')">
+                                        <span class="material-symbols-outlined">calendar_today</span>
+                                        {{ item.task.due }}
                                     </span>
                                     }
-                                }
-                                @if (task.subtasks && task.subtasks.length > 0) {
-                                <span class="metadata-item subtasks">
-                                    <span class="material-symbols-outlined">subdirectory_arrow_right</span>
-                                    {{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}
-                                </span>
+                                    @if (item.task.project && item.task.project !== 'Inbox') {
+                                    <span class="metadata-item project">
+                                        <span class="material-symbols-outlined">folder</span>
+                                        {{ item.task.project }}
+                                    </span>
+                                    }
+                                    @if (item.task.labels && item.task.labels.length > 0) {
+                                        @for (label of item.task.labels; track label) {
+                                        <span class="metadata-item label-chip"
+                                              [style.background]="getLabelColor(label) + '18'"
+                                              [style.color]="getLabelColor(label)"
+                                              [style.border-color]="getLabelColor(label) + '44'">
+                                            {{ label }}
+                                        </span>
+                                        }
+                                    }
+                                </div>
+
+                                @if (item.task.subtasks && item.task.subtasks.length > 0 && !isSubtasksCollapsed(item.task.id)) {
+                                <div class="task-subtasks-list" (click)="$event.stopPropagation()">
+                                    @for (subtask of item.task.subtasks; track subtask.id) {
+                                    <div class="task-subtask-row">
+                                        <button class="task-subtask-checkbox"
+                                                [class.checked]="subtask.status === 'COMPLETED'"
+                                                (click)="toggleSubtaskStatus(item.task, subtask)"
+                                                [attr.aria-label]="(subtask.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + subtask.title">
+                                            @if (subtask.status === 'COMPLETED') {
+                                                <span class="material-symbols-outlined">check</span>
+                                            }
+                                        </button>
+                                        <span class="task-subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
+                                    </div>
+                                    }
+                                </div>
                                 }
                             </div>
-                        </div>
 
-                        <div class="task-actions-column" (click)="$event.stopPropagation()">
-                            <button class="icon-btn" (click)="requestDeleteTask(task, $event)" title="Delete" [attr.aria-label]="'Delete: ' + task.title">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
+                            <div class="task-actions-column" (click)="$event.stopPropagation()">
+                                <button class="icon-btn"
+                                        (click)="cycleTaskPriority(item.task, $event)"
+                                        title="Priority: {{ item.task.priority | titlecase }}"
+                                        [class.icon-btn--high]="item.task.priority === 'HIGH'"
+                                        [class.icon-btn--medium]="item.task.priority === 'MEDIUM'">
+                                    <span class="material-symbols-outlined">flag</span>
+                                </button>
+                                <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)" title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    }
-
-                    @if (virtualScrollEnabled() && filteredTasks().length > 50) {
-                        <div [style.height.px]="(filteredTasks().length - visibleTaskRange().end) * itemHeight"></div>
+                        }
                     }
                 }
             </div>
@@ -924,5 +952,72 @@
                 (click)="saveTaskDetails()">Save</button>
     </div>
 </env-modal>
+}
+
+<!-- ─── Date Picker Popup ─── -->
+@if (showDatePicker()) {
+<div class="dp-overlay" (click)="showDatePicker.set(false); datePickerPosition.set(null)"></div>
+<div class="dp-popup"
+     [style.top.px]="datePickerPosition()?.top ?? 200"
+     [style.left.px]="datePickerPosition()?.left ?? 200"
+     (click)="$event.stopPropagation()">
+
+    <!-- Quick shortcuts -->
+    <div class="dp-shortcuts">
+        <button class="dp-shortcut" (click)="selectQuickDate('today')">
+            <span class="material-symbols-outlined">today</span>Today
+        </button>
+        <button class="dp-shortcut" (click)="selectQuickDate('tomorrow')">
+            <span class="material-symbols-outlined">event</span>Tomorrow
+        </button>
+        <button class="dp-shortcut" (click)="selectQuickDate('next-week')">
+            <span class="material-symbols-outlined">date_range</span>Next week
+        </button>
+        <button class="dp-shortcut dp-shortcut--clear" (click)="clearTaskDue()">
+            <span class="material-symbols-outlined">close</span>No date
+        </button>
+    </div>
+
+    <div class="dp-divider"></div>
+
+    <!-- Month navigation -->
+    <div class="dp-month-nav">
+        <button class="dp-nav-btn" (click)="navigateDatePickerMonth('prev')">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <span class="dp-month-label">{{ getDatePickerMonth() }}</span>
+        <button class="dp-nav-btn" (click)="navigateDatePickerMonth('next')">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+    </div>
+
+    <!-- Day headers -->
+    <div class="dp-day-headers">
+        @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
+        <span class="dp-day-header">{{ d }}</span>
+        }
+    </div>
+
+    <!-- Calendar grid -->
+    <div class="dp-grid">
+        @for (cell of getDatePickerDays(); track $index) {
+        <button class="dp-day"
+                [class.dp-day--other]="!cell.isCurrentMonth"
+                [class.dp-day--today]="cell.isToday"
+                (click)="selectDate(cell.day, cell.isCurrentMonth)">
+            {{ cell.day }}
+        </button>
+        }
+    </div>
+
+    <!-- Time input -->
+    <div class="dp-divider"></div>
+    <div class="dp-time-row">
+        <span class="material-symbols-outlined dp-time-icon">schedule</span>
+        <input type="time" class="dp-time-input"
+               [value]="datePickerContext() === 'details' ? editedTaskDueTime() : newTaskDueTime()"
+               (change)="datePickerContext() === 'details' ? updateDetailsTime($any($event.target).value) : updateDueTime($any($event.target).value)">
+    </div>
+</div>
 }
 </div>

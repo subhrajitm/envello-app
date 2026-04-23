@@ -5,6 +5,9 @@ import { SidebarNavItem, ModalComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
+type TaskListItem =
+  | { kind: 'header'; label: string; count: number; accent: string }
+  | { kind: 'task'; task: Task };
 
 @Component({
   selector: 'app-tasks',
@@ -65,9 +68,21 @@ export class TasksComponent implements OnInit, OnDestroy {
   selectedTasks = signal<Set<string>>(new Set());
   bulkActionMode = signal<boolean>(false);
 
+  // Tracks which task IDs have their subtasks collapsed in the list
+  collapsedSubtasks = signal<Set<string>>(new Set());
+
+  toggleSubtasksCollapse(taskId: string, event: Event) {
+    event.stopPropagation();
+    const current = new Set(this.collapsedSubtasks());
+    current.has(taskId) ? current.delete(taskId) : current.add(taskId);
+    this.collapsedSubtasks.set(current);
+  }
+
+  isSubtasksCollapsed(taskId: string): boolean {
+    return this.collapsedSubtasks().has(taskId);
+  }
+
   // Undo/Redo
-  actionHistory = signal<Array<{ type: string; task: Task; previousState?: Partial<Task> }>>([]);
-  historyIndex = signal<number>(-1);
 
   // Theme
   theme = signal<'light' | 'dark'>('light');
@@ -674,6 +689,41 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   filteredTasks = computed(() => this.viewTasks());
 
+  /** Flat list interleaved with group-header items for the inbox view. */
+  flatListItems = computed((): TaskListItem[] => {
+    const tasks = this.filteredTasks();
+    if (this.selectedView() !== 'inbox') {
+      return tasks.map(t => ({ kind: 'task', task: t }));
+    }
+
+    const items: TaskListItem[] = [];
+    const push = (label: string, accent: string, list: Task[]) => {
+      if (!list.length) return;
+      items.push({ kind: 'header', label, count: list.length, accent });
+      list.forEach(t => items.push({ kind: 'task', task: t }));
+    };
+
+    push('Overdue', '#ef4444',
+      tasks.filter(t => t.due?.includes('Overdue') && t.status !== 'COMPLETED'));
+    push('Today', '#f59e0b',
+      tasks.filter(t => t.due?.includes('Today') && t.status !== 'COMPLETED'));
+    push('Upcoming', '#6366f1',
+      tasks.filter(t => !!t.due && !t.due.includes('Today') && !t.due.includes('Overdue') && t.status !== 'COMPLETED'));
+    push('No Date', '#9ca3af',
+      tasks.filter(t => !t.due && t.status !== 'COMPLETED'));
+    push('Completed', '#10b981',
+      tasks.filter(t => t.status === 'COMPLETED'));
+
+    return items;
+  });
+
+  cycleTaskPriority(task: Task, event: Event) {
+    event.stopPropagation();
+    const next: Task['priority'] =
+      task.priority === 'HIGH' ? 'MEDIUM' : task.priority === 'MEDIUM' ? 'LOW' : 'HIGH';
+    this.store.updateTask(task.id, { priority: next });
+  }
+
   // Helper used by header checkbox to determine "all done" state
   allVisibleTasksCompleted = computed(() => {
     const tasks = this.filteredTasks();
@@ -796,7 +846,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       if (!v) {
         setTimeout(() => {
           const target = event?.target as HTMLElement;
-          const button = (target?.closest('.task-action-chip') || target?.closest('.task-modal-control-btn')) as HTMLElement;
+          const button = (target?.closest('.task-action-chip') || target?.closest('.task-modal-control-btn') || target?.closest('.td-prop-btn')) as HTMLElement;
           if (button) {
             const rect = button.getBoundingClientRect();
             this.datePickerPosition.set({
@@ -814,43 +864,71 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
   }
 
-  selectDate(day: number, isCurrentMonth: boolean) {
-    if (!isCurrentMonth) return;
-
-    const selectedDate = new Date(this.datePickerDate());
-    selectedDate.setDate(day);
-
+  private buildDateString(date: Date, timeStr: string): string {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const selected = new Date(selectedDate);
+    const selected = new Date(date);
     selected.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((selected.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return `Today, ${timeStr}`;
+    if (diffDays === 1) return `Tomorrow, ${timeStr}`;
+    if (diffDays === -1) return `Yesterday, ${timeStr}`;
+    return `${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}, ${timeStr}`;
+  }
 
-    const diffTime = selected.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    const timeStr = this.newTaskDueTime();
-    let dateString = '';
-    if (diffDays === 0) {
-      dateString = `Today, ${timeStr}`;
-    } else if (diffDays === 1) {
-      dateString = `Tomorrow, ${timeStr}`;
-    } else if (diffDays === -1) {
-      dateString = `Yesterday, ${timeStr}`;
-    } else {
-      dateString = `${selectedDate.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      })}, ${timeStr}`;
-    }
-
-    if (this.datePickerContext() === 'details') {
+  selectDate(day: number, isCurrentMonth: boolean) {
+    if (!isCurrentMonth) return;
+    const selectedDate = new Date(this.datePickerDate());
+    selectedDate.setDate(day);
+    const isDetails = this.datePickerContext() === 'details';
+    const timeStr = isDetails ? this.editedTaskDueTime() : this.newTaskDueTime();
+    const dateString = this.buildDateString(selectedDate, timeStr);
+    if (isDetails) {
       this.editedTaskDue.set(dateString);
     } else {
       this.newTaskDue.set(dateString);
     }
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
+  }
+
+  selectQuickDate(option: 'today' | 'tomorrow' | 'next-week') {
+    const date = new Date();
+    if (option === 'tomorrow') date.setDate(date.getDate() + 1);
+    if (option === 'next-week') date.setDate(date.getDate() + (8 - date.getDay()));
+    const isDetails = this.datePickerContext() === 'details';
+    const timeStr = isDetails ? this.editedTaskDueTime() : this.newTaskDueTime();
+    const dateString = this.buildDateString(date, timeStr);
+    if (isDetails) {
+      this.editedTaskDue.set(dateString);
+    } else {
+      this.newTaskDue.set(dateString);
+    }
+    this.showDatePicker.set(false);
+    this.datePickerPosition.set(null);
+  }
+
+  clearTaskDue() {
+    if (this.datePickerContext() === 'details') {
+      this.editedTaskDue.set(undefined);
+    } else {
+      this.newTaskDue.set(undefined);
+    }
+    this.showDatePicker.set(false);
+    this.datePickerPosition.set(null);
+  }
+
+  updateDetailsTime(time: string) {
+    this.editedTaskDueTime.set(time);
+    const currentDue = this.editedTaskDue();
+    if (currentDue) {
+      const dateMatch = currentDue.match(/^(.+?),\s*\d{1,2}:\d{2}$/);
+      if (dateMatch) {
+        this.editedTaskDue.set(`${dateMatch[1]}, ${time}`);
+      } else {
+        this.editedTaskDue.set(`${currentDue.split(',')[0]}, ${time}`);
+      }
+    }
   }
 
   updateDueTime(time: string) {
@@ -1012,24 +1090,6 @@ export class TasksComponent implements OnInit, OnDestroy {
   onKeyDown(event: KeyboardEvent) {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const modKey = isMac ? event.metaKey : event.ctrlKey;
-
-    // Cmd/Ctrl + Z: Undo
-    if (modKey && event.key === 'z' && !event.shiftKey) {
-      event.preventDefault();
-      if (this.canUndo()) {
-        this.undo();
-      }
-      return;
-    }
-
-    // Cmd/Ctrl + Shift + Z: Redo
-    if (modKey && event.key === 'z' && event.shiftKey) {
-      event.preventDefault();
-      if (this.canRedo()) {
-        this.redo();
-      }
-      return;
-    }
 
     // Cmd/Ctrl + K: Quick add
     if (modKey && event.key === 'k' && !event.shiftKey) {
@@ -1316,15 +1376,10 @@ export class TasksComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Optimistic update
-    const previousState = { status: task.status };
-    this.addToHistory('update', task, previousState);
-
     try {
       this.store.updateTask(task.id, { status: 'COMPLETED' });
     } catch (error) {
-      // Rollback on error
-      this.store.updateTask(task.id, previousState);
+      this.store.updateTask(task.id, { status: task.status });
       this.showErrorState('Failed to complete task. Please try again.');
     }
   }
@@ -1339,9 +1394,6 @@ export class TasksComponent implements OnInit, OnDestroy {
   confirmDeleteTask() {
     const task = this.taskPendingDelete();
     if (!task) return;
-
-    // Optimistic update
-    this.addToHistory('delete', task);
 
     try {
       this.deleteTask(task);
@@ -1493,7 +1545,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     };
 
     this.store.updateTask(task.id, updates);
-    this.addToHistory('update', task, updates);
     this.closeTaskDetails();
   }
 
@@ -1990,7 +2041,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     selected.forEach(id => {
       const task = this.store.tasks().find(t => t.id === id);
       if (task && task.status !== 'COMPLETED') {
-        this.addToHistory('complete', task);
         this.store.updateTask(id, { status: 'COMPLETED' });
       }
     });
@@ -2002,7 +2052,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     selected.forEach(id => {
       const task = this.store.tasks().find(t => t.id === id);
       if (task) {
-        this.addToHistory('delete', task);
         this.store.deleteTask(id);
       }
     });
@@ -2014,71 +2063,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     selected.forEach(id => {
       const task = this.store.tasks().find(t => t.id === id);
       if (task) {
-        this.addToHistory('update', task, { priority: task.priority });
         this.store.updateTask(id, { priority });
       }
     });
     this.clearSelection();
   }
 
-  // Undo/Redo
-  addToHistory(type: string, task: Task, previousState?: Partial<Task>) {
-    const history = this.actionHistory();
-    const index = this.historyIndex();
-
-    // Remove any history after current index
-    const newHistory = history.slice(0, index + 1);
-    newHistory.push({ type, task: { ...task }, previousState });
-
-    this.actionHistory.set(newHistory);
-    this.historyIndex.set(newHistory.length - 1);
-
-    // Limit history size
-    if (newHistory.length > 50) {
-      this.actionHistory.set(newHistory.slice(-50));
-      this.historyIndex.set(49);
-    }
-  }
-
-  undo() {
-    const index = this.historyIndex();
-    if (index < 0) return;
-
-    const history = this.actionHistory();
-    const action = history[index];
-
-    if (action.type === 'delete') {
-      this.store.addTask(action.task);
-    } else if (action.type === 'complete') {
-      this.store.updateTask(action.task.id, { status: 'ACTIVE' });
-    } else if (action.type === 'update' && action.previousState) {
-      this.store.updateTask(action.task.id, action.previousState);
-    }
-
-    this.historyIndex.set(index - 1);
-  }
-
-  redo() {
-    const history = this.actionHistory();
-    const index = this.historyIndex();
-    if (index >= history.length - 1) return;
-
-    const nextIndex = index + 1;
-    const action = history[nextIndex];
-
-    if (action.type === 'delete') {
-      this.store.deleteTask(action.task.id);
-    } else if (action.type === 'complete') {
-      this.store.updateTask(action.task.id, { status: 'COMPLETED' });
-    } else if (action.type === 'update') {
-      // Re-apply the update (would need to store the new state)
-    }
-
-    this.historyIndex.set(nextIndex);
-  }
-
-  canUndo = computed(() => this.historyIndex() >= 0);
-  canRedo = computed(() => this.historyIndex() < this.actionHistory().length - 1);
 
   // Virtual scrolling - visible tasks
   visibleTasks = computed(() => {
