@@ -1362,7 +1362,15 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
   }
 
+  hasIncompleteSubtasks(task: Task): boolean {
+    return !!task.subtasks?.length && task.subtasks.some(st => st.status !== 'COMPLETED');
+  }
+
   toggleTaskStatus(task: Task) {
+    if (task.status !== 'COMPLETED' && this.hasIncompleteSubtasks(task)) {
+      this.showErrorState('Complete all sub-tasks before marking this task as done.');
+      return;
+    }
     const newStatus = task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
     this.store.updateTask(task.id, { status: newStatus });
   }
@@ -1373,6 +1381,10 @@ export class TasksComponent implements OnInit, OnDestroy {
    */
   onQuickComplete(task: Task) {
     if (task.status === 'COMPLETED') {
+      return;
+    }
+    if (this.hasIncompleteSubtasks(task)) {
+      this.showErrorState('Complete all sub-tasks before marking this task as done.');
       return;
     }
 
@@ -1474,9 +1486,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   addSubtask(parentTask: Task, subtaskTitle: string) {
+    if (!subtaskTitle.trim()) return;
     const newSubtask: Task = {
       id: Date.now().toString(),
-      title: subtaskTitle,
+      title: subtaskTitle.trim(),
       priority: 'MEDIUM',
       hours: '0.5H',
       status: 'ACTIVE',
@@ -1485,6 +1498,12 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
     this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
+
+    // Keep selectedTaskForDetails in sync so the modal reflects the change immediately
+    if (this.selectedTaskForDetails()?.id === parentTask.id) {
+      this.selectedTaskForDetails.set({ ...parentTask, subtasks: updatedSubtasks });
+    }
+    this.newSubtaskTitle.set('');
   }
 
   // Focus mode
@@ -2038,12 +2057,20 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   bulkCompleteTasks() {
     const selected = this.selectedTasks();
+    let blocked = 0;
     selected.forEach(id => {
       const task = this.store.tasks().find(t => t.id === id);
       if (task && task.status !== 'COMPLETED') {
-        this.store.updateTask(id, { status: 'COMPLETED' });
+        if (this.hasIncompleteSubtasks(task)) {
+          blocked++;
+        } else {
+          this.store.updateTask(id, { status: 'COMPLETED' });
+        }
       }
     });
+    if (blocked > 0) {
+      this.showErrorState(`${blocked} task${blocked > 1 ? 's' : ''} skipped — complete their sub-tasks first.`);
+    }
     this.clearSelection();
   }
 

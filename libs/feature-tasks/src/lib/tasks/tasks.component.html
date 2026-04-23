@@ -138,10 +138,14 @@
                             <div class="task-check-column" (click)="$event.stopPropagation()">
                                 <button class="list-circular-checkbox"
                                         [class.checked]="item.task.status === 'COMPLETED'"
+                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
                                         (click)="toggleTaskStatus(item.task)"
+                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
                                         [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
                                     @if (item.task.status === 'COMPLETED') {
                                         <span class="material-symbols-outlined">check</span>
+                                    } @else if (hasIncompleteSubtasks(item.task)) {
+                                        <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-tertiary)">lock</span>
                                     }
                                 </button>
                             </div>
@@ -863,7 +867,7 @@
                                    placeholder="Add sub-task"
                                    [value]="newSubtaskTitle()"
                                    (input)="newSubtaskTitle.set($any($event.target).value)"
-                                   (keydown.enter)="newSubtaskTitle().trim() && addSubtask(task, newSubtaskTitle()); newSubtaskTitle.set('')">
+                                   (keydown.enter)="addSubtask(task, newSubtaskTitle())">
                         </div>
                     </div>
                     }

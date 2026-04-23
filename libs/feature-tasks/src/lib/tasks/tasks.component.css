@@ -716,6 +716,13 @@
     color: white;
 }
 
+.list-circular-checkbox.blocked {
+    border-color: var(--text-tertiary);
+    border-style: dashed;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .list-circular-checkbox .material-symbols-outlined {
     font-size: 14px;
     font-weight: 800;
@@ -5285,17 +5292,23 @@ textarea:focus-visible {
 :host ::ng-deep .env-modal--large .env-modal-body:has(.td-body) {
     padding: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Body: two columns */
 .td-body {
     display: flex;
+    align-items: stretch;
+    min-height: 0;
+    flex: 1;
 }
 
 /* LEFT panel */
 .td-main {
     flex: 1;
     display: flex;
+    border-right: 1px solid var(--border-subtle);
     flex-direction: column;
     gap: 0;
     padding: 24px 24px 16px;
@@ -5326,6 +5339,12 @@ textarea:focus-visible {
     field-sizing: content;
     min-height: 1.3em;
     word-break: break-word;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.td-title-input:focus {
+    outline: none;
+    box-shadow: none;
 }
 .td-title-input::placeholder {
     color: var(--text-tertiary);
@@ -5344,6 +5363,13 @@ textarea:focus-visible {
     padding: 0 0 0 36px;
     font-family: inherit;
     width: 100%;
+    /* Suppress browser native focus ring (uses accent-color) */
+    -webkit-appearance: none;
+    appearance: none;
+}
+.td-description-input:focus {
+    outline: none;
+    box-shadow: none;
 }
 .td-description-input::placeholder {
     color: var(--text-tertiary);
@@ -5421,6 +5447,11 @@ textarea:focus-visible {
     align-items: center;
     gap: 8px;
     padding: 8px 0;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+}
+.td-add-subtask-row:focus-within {
+    border-bottom-color: var(--border-highlight);
 }
 .td-add-subtask-icon {
     font-size: 16px;
@@ -5434,6 +5465,12 @@ textarea:focus-visible {
     font-size: 14px;
     color: var(--text-primary);
     font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.td-add-subtask-input:focus {
+    outline: none;
+    box-shadow: none;
 }
 .td-add-subtask-input::placeholder {
     color: var(--text-tertiary);
@@ -5443,7 +5480,7 @@ textarea:focus-visible {
 .td-sidebar {
     width: 240px;
     flex-shrink: 0;
-    border-left: 1px solid var(--border-subtle);
+    /* border-left: 1px solid var(--border-subtle); */
     background: var(--bg-panel);
     display: flex;
     flex-direction: column;
