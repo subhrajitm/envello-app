@@ -499,15 +499,18 @@
                 </button>
                 <button type="button" class="task-action-chip"
                         (click)="setNewTaskPriority(newTaskPriority() === 'HIGH' ? 'MEDIUM' : newTaskPriority() === 'MEDIUM' ? 'LOW' : 'HIGH')"
-                        [class.active]="newTaskPriority() !== 'MEDIUM'"
+                        [class.active]="true"
+                        [class.priority-medium]="newTaskPriority() === 'MEDIUM'"
                         [class.priority-high]="newTaskPriority() === 'HIGH'"
                         [class.priority-low]="newTaskPriority() === 'LOW'">
                     <span class="material-symbols-outlined">flag</span>
-                    <span>{{ newTaskPriority() === 'MEDIUM' ? 'Priority' : (newTaskPriority() | titlecase) }}</span>
+                    <span>{{ newTaskPriority() | titlecase }}</span>
                 </button>
-                <button type="button" class="task-action-chip" (click)="toggleNewTaskReminder()" [class.active]="newTaskHasReminder()">
+                <button type="button" class="task-action-chip"
+                        (click)="showNewTaskReminderPicker.set(!showNewTaskReminderPicker()); $event.stopPropagation()"
+                        [class.active]="newTaskHasReminder()">
                     <span class="material-symbols-outlined">notifications</span>
-                    <span>Reminders</span>
+                    <span>{{ newTaskHasReminder() ? newTaskReminderTimes().length + ' reminder' + (newTaskReminderTimes().length > 1 ? 's' : '') : 'Reminder' }}</span>
                 </button>
                 <button type="button" class="task-action-chip-more"
                         (click)="newTaskShowAdvanced.set(!newTaskShowAdvanced())"
@@ -516,6 +519,36 @@
                     <span class="material-symbols-outlined">more_horiz</span>
                 </button>
             </div>
+
+            @if (showNewTaskReminderPicker()) {
+            <div class="new-task-reminder-picker" (click)="$event.stopPropagation()">
+                @for (preset of REMINDER_PRESETS; track preset.value) {
+                <button class="new-task-reminder-preset"
+                        type="button"
+                        [class.active]="newTaskReminderTimes().includes(preset.value)"
+                        (click)="addNewTaskReminderPreset(preset.value)">
+                    <span class="material-symbols-outlined">schedule</span>
+                    {{ preset.label }}
+                    @if (newTaskReminderTimes().includes(preset.value)) {
+                    <span class="material-symbols-outlined" style="margin-left:auto;font-size:14px">check</span>
+                    }
+                </button>
+                }
+            </div>
+            }
+            @if (newTaskHasReminder() && newTaskReminderTimes().length > 0) {
+            <div class="new-task-reminder-chips">
+                @for (r of newTaskReminderTimes(); track r) {
+                <span class="new-task-reminder-chip">
+                    <span class="material-symbols-outlined">notifications</span>
+                    {{ r }}
+                    <button type="button" (click)="removeNewTaskReminderPreset(r)">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </span>
+                }
+            </div>
+            }
 
             <!-- Due Time (shown when a due date is set) -->
             @if (newTaskDue()) {
@@ -566,15 +599,19 @@
 
                 <!-- Recurring -->
                 <div class="advanced-option-row">
-                    <label class="advanced-toggle-label">
-                        <input type="checkbox"
-                               [checked]="newTaskRecurring()"
-                               (change)="newTaskRecurring.set($any($event.target).checked)">
+                    <span class="advanced-section-label" style="flex:1">
                         <span class="material-symbols-outlined">repeat</span>
                         <span>Recurring</span>
-                    </label>
+                    </span>
+                    <button class="td-recurring-toggle"
+                            type="button"
+                            [class.active]="newTaskRecurring()"
+                            (click)="newTaskRecurring.set(!newTaskRecurring())"
+                            [title]="newTaskRecurring() ? 'Disable recurring' : 'Enable recurring'">
+                        <span class="material-symbols-outlined">repeat</span>
+                    </button>
                     @if (newTaskRecurring()) {
-                    <select class="advanced-pattern-select"
+                    <select class="td-recurring-select"
                             [value]="newTaskRecurringPattern()"
                             (change)="newTaskRecurringPattern.set($any($event.target).value)">
                         <option value="daily">Daily</option>
@@ -590,6 +627,17 @@
     </div>
     <div footer>
         <div class="task-modal-footer-minimal">
+            <div class="footer-project-selector">
+                <span class="material-symbols-outlined footer-project-icon">inbox</span>
+                <select class="footer-project-select"
+                        [value]="newTaskList()"
+                        (change)="newTaskList.set($any($event.target).value)">
+                    <option value="Inbox">Inbox</option>
+                    @for (list of availableLists(); track list) {
+                    <option [value]="list">{{ list }}</option>
+                    }
+                </select>
+            </div>
             <div class="footer-actions-right">
                 <button type="button" class="btn-minimal-cancel" (click)="closeNewTaskDialog()">Cancel</button>
                 <button type="button"

@@ -55,6 +55,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   detailsLabelInput = signal<string>('');
   newSubtaskTitle = signal<string>('');
   showReminderPicker = signal<boolean>(false);
+  showNewTaskReminderPicker = signal<boolean>(false);
 
   // Pomodoro timer state
   pomodoroActive = signal<boolean>(false);
@@ -338,6 +339,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newReminderTimeInput.set('');
     this.filesToUpload.set([]);
     this.showMarkdownPreview.set(false);
+    this.showNewTaskReminderPicker.set(false);
     this.newTaskModalOpen.set(true);
   }
 
@@ -346,6 +348,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskShowAdvanced.set(false);
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
+    this.showNewTaskReminderPicker.set(false);
   }
 
   setNewTaskPriority(priority: Task['priority']) {
@@ -382,6 +385,20 @@ export class TasksComponent implements OnInit, OnDestroy {
     } else if (this.newTaskReminderTimes().length === 0) {
       // Set default reminder
       this.newTaskReminderTimes.set(['1 hour before']);
+    }
+  }
+
+  addNewTaskReminderPreset(value: string) {
+    if (!value || this.newTaskReminderTimes().includes(value)) return;
+    this.newTaskReminderTimes.update(r => [...r, value]);
+    this.newTaskHasReminder.set(true);
+    this.showNewTaskReminderPicker.set(false);
+  }
+
+  removeNewTaskReminderPreset(value: string) {
+    this.newTaskReminderTimes.update(r => r.filter(x => x !== value));
+    if (this.newTaskReminderTimes().length === 0) {
+      this.newTaskHasReminder.set(false);
     }
   }
 
