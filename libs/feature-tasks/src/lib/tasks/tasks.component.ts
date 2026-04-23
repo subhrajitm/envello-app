@@ -45,6 +45,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskDue = signal<string | undefined>(undefined);
   editedTaskList = signal<string>('Inbox');
   editedTaskLabels = signal<string[]>([]);
+  editedTaskDueTime = signal<string>('12:00');
+  detailsLabelInput = signal<string>('');
   newSubtaskTitle = signal<string>('');
 
   // Pomodoro timer state
@@ -83,7 +85,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Virtual scrolling
   virtualScrollEnabled = signal<boolean>(true);
   visibleTaskRange = signal<{ start: number; end: number }>({ start: 0, end: 50 });
-  itemHeight: number = 60; // Approximate height of each task row
+  itemHeight: number = 65; // Approximate height of each task row
 
   // Voice input
   isListening = signal<boolean>(false);
@@ -146,8 +148,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   newTaskSubtasks = signal<string[]>([]);
   newSubtaskInput = signal<string>('');
 
-  // Advanced options
-  showAdvancedOptions = signal<boolean>(false);
+  // Advanced options (separate signals per modal to avoid shared state)
+  newTaskShowAdvanced = signal<boolean>(false);
+  detailsShowAdvanced = signal<boolean>(false);
 
   // Task dependencies
   newTaskDependencies = signal<string[]>([]);
@@ -155,6 +158,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Calendar dropdown state
   showDatePicker = signal<boolean>(false);
   datePickerDate = signal<Date>(new Date());
+  datePickerContext = signal<'new' | 'details'>('new');
 
   // Folder dropdown state
   showFolderDropdown = signal<boolean>(false);
@@ -308,7 +312,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newSubtaskInput.set('');
     this.newTaskRecurring.set(false);
     this.newTaskRecurringPattern.set('weekly');
-    this.showAdvancedOptions.set(false);
+    this.newTaskShowAdvanced.set(false);
     this.showLabelAutocomplete.set(false);
     this.newTaskDependencies.set([]);
     this.newTaskReminderTimes.set([]);
@@ -320,6 +324,9 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   closeNewTaskDialog() {
     this.newTaskModalOpen.set(false);
+    this.newTaskShowAdvanced.set(false);
+    this.showDatePicker.set(false);
+    this.datePickerPosition.set(null);
   }
 
   setNewTaskPriority(priority: Task['priority']) {
@@ -783,14 +790,13 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Folder dropdown position
   folderDropdownPosition = signal<{ top: number; left: number } | null>(null);
 
-  toggleDatePicker(event?: Event) {
+  toggleDatePicker(event?: Event, context: 'new' | 'details' = 'new') {
+    this.datePickerContext.set(context);
     this.showDatePicker.update(v => {
       if (!v) {
-        // Calculate position when opening
         setTimeout(() => {
           const target = event?.target as HTMLElement;
-          const button = target?.closest('.task-modal-control-btn') as HTMLElement ||
-            document.querySelector('.task-modal-control-btn') as HTMLElement;
+          const button = (target?.closest('.task-action-chip') || target?.closest('.task-modal-control-btn')) as HTMLElement;
           if (button) {
             const rect = button.getBoundingClientRect();
             this.datePickerPosition.set({
@@ -838,7 +844,11 @@ export class TasksComponent implements OnInit, OnDestroy {
       })}, ${timeStr}`;
     }
 
-    this.newTaskDue.set(dateString);
+    if (this.datePickerContext() === 'details') {
+      this.editedTaskDue.set(dateString);
+    } else {
+      this.newTaskDue.set(dateString);
+    }
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
   }
@@ -980,7 +990,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Close date picker if clicking outside
     if (this.showDatePicker()) {
       if (!target.closest('.task-modal-date-picker') &&
-        !target.closest('.task-modal-control-btn')) {
+        !target.closest('.task-modal-control-btn') &&
+        !target.closest('.task-action-chip')) {
         this.showDatePicker.set(false);
         this.datePickerPosition.set(null);
       }
@@ -1055,6 +1066,9 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Escape: Close modals/dropdowns
     if (event.key === 'Escape') {
+      if (this.showTaskDetails()) {
+        this.closeTaskDetails();
+      }
       if (this.newTaskModalOpen()) {
         this.closeNewTaskDialog();
       }
@@ -1442,6 +1456,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.editedTaskList.set(task.project || 'Inbox');
     this.editedTaskLabels.set(task.labels || []);
     this.editingTaskDetails.set(false);
+    this.detailsShowAdvanced.set(true);
+    this.newSubtaskTitle.set('');
+    this.detailsLabelInput.set('');
+    this.editedTaskDueTime.set('12:00');
+    this.showDatePicker.set(false);
+    this.datePickerPosition.set(null);
     this.showTaskDetails.set(true);
   }
 
@@ -1449,6 +1469,10 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.showTaskDetails.set(false);
     this.selectedTaskForDetails.set(null);
     this.editingTaskDetails.set(false);
+    this.detailsShowAdvanced.set(false);
+    this.detailsLabelInput.set('');
+    this.showDatePicker.set(false);
+    this.datePickerPosition.set(null);
   }
 
   toggleEditTaskDetails() {
@@ -1470,11 +1494,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     this.store.updateTask(task.id, updates);
     this.addToHistory('update', task, updates);
-    this.editingTaskDetails.set(false);
-
-    // Update the selected task reference
-    const updatedTask = { ...task, ...updates };
-    this.selectedTaskForDetails.set(updatedTask);
+    this.closeTaskDetails();
   }
 
   deleteTaskFromDetails() {
@@ -1502,14 +1522,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
   }
 
-  addLabelToEdit(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const label = input.value.trim();
+  addLabelToEdit(event?: Event) {
+    event?.preventDefault();
+    const label = this.detailsLabelInput().trim();
     if (label && !this.editedTaskLabels().includes(label)) {
       this.editedTaskLabels.set([...this.editedTaskLabels(), label]);
-      input.value = '';
     }
-    event.preventDefault();
+    this.detailsLabelInput.set('');
   }
 
   removeLabelFromEdit(label: string) {

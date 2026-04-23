@@ -645,8 +645,8 @@
 /* ─── Premium Task Item ─── */
 .task-item {
     display: flex;
-    align-items: center;
-    padding: 12px 16px;
+    align-items: flex-start;
+    padding: 12px 16px 12px 0;
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-app);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -659,7 +659,7 @@
 }
 
 .task-item.completed {
-    opacity: 0.6;
+    opacity: 0.75;
 }
 
 /* Drag Handle */
@@ -672,6 +672,7 @@
     opacity: 0.3;
     transition: opacity 0.2s;
     width: 24px;
+    padding-top: 2px;
 }
 
 .task-item:hover .task-drag-handle {
@@ -687,6 +688,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-top: 2px;
 }
 
 .list-circular-checkbox {
@@ -740,7 +742,8 @@
 
 .task-item.completed .task-title-text {
     text-decoration: line-through;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
+    font-weight: 400;
 }
 
 .task-metadata-row {
@@ -754,19 +757,35 @@
     align-items: center;
     gap: 4px;
     font-size: 12px;
-    color: #059669; /* Green from the reference image */
+    color: var(--text-tertiary);
 }
 
 .metadata-item .material-symbols-outlined {
     font-size: 14px;
 }
 
+.metadata-item.due-date {
+    color: var(--text-secondary);
+}
+
 .metadata-item.overdue {
-    color: #dc2626;
+    color: var(--color-danger, #ef4444);
+    font-weight: 500;
 }
 
 .metadata-item.project {
     color: var(--text-tertiary);
+}
+
+.metadata-item.label-chip {
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.6;
 }
 
 /* Actions Column */
@@ -776,9 +795,12 @@
     gap: 4px;
     opacity: 0;
     transition: opacity 0.2s;
+    padding-top: 1px;
+    align-self: flex-start;
 }
 
-.task-item:hover .task-actions-column {
+.task-item:hover .task-actions-column,
+.task-actions-column:focus-within {
     opacity: 1;
 }
 
@@ -1009,9 +1031,8 @@
 /* Task Title Compact */
 .task-title-text {
     color: var(--text-primary);
-    font-size: 13px;
-    /* Smaller font */
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
@@ -5128,6 +5149,331 @@ textarea:focus-visible {
     color: var(--text-disabled);
     letter-spacing: 1px;
     margin-top: 8px;
+}
+
+/* ─── Task Details Modal — Two-panel layout ─── */
+
+/* Header context (project label) */
+.td-header-context {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.td-header-context-icon {
+    font-size: 16px;
+    color: var(--text-tertiary);
+}
+.td-header-context-label {
+    color: var(--text-secondary);
+}
+
+/* Remove default modal body padding for the two-panel layout */
+:host ::ng-deep .env-modal--large .env-modal-body:has(.td-body) {
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Body: two columns */
+.td-body {
+    display: flex;
+}
+
+/* LEFT panel */
+.td-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 24px 24px 16px;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* Title row: checkbox + input inline */
+.td-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.td-title-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    padding: 0;
+    font-family: inherit;
+    resize: none;
+    overflow: hidden;
+    field-sizing: content;
+    min-height: 1.3em;
+    word-break: break-word;
+}
+.td-title-input::placeholder {
+    color: var(--text-tertiary);
+    font-weight: 400;
+}
+
+/* Description */
+.td-description-input {
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding: 0 0 0 36px;
+    font-family: inherit;
+    width: 100%;
+}
+.td-description-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Sub-tasks section */
+.td-subtasks {
+    margin-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+}
+.td-subtasks-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    width: 100%;
+    text-align: left;
+}
+.td-subtasks-chevron {
+    font-size: 18px;
+    color: var(--text-tertiary);
+    transition: transform 0.2s;
+    transform: rotate(0deg);
+}
+.td-subtasks-chevron.expanded {
+    transform: rotate(90deg);
+}
+.td-subtasks-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.td-subtasks-count {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-left: 2px;
+}
+.td-subtasks-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border-subtle);
+}
+.td-subtask-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.td-subtask-checkbox {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0;
+}
+.td-subtask-checkbox .material-symbols-outlined {
+    font-size: 11px !important;
+}
+.td-subtask-title {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+.td-subtask-title.completed {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+}
+.td-add-subtask-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+.td-add-subtask-icon {
+    font-size: 16px;
+    color: var(--color-danger, #ef4444);
+}
+.td-add-subtask-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-family: inherit;
+}
+.td-add-subtask-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* RIGHT sidebar */
+.td-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border-subtle);
+    background: var(--bg-secondary, #f9f9f9);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    overflow-y: auto;
+    align-self: stretch;
+}
+
+/* Property rows */
+.td-prop-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 8px;
+    min-height: 44px;
+}
+.td-prop-row--block {
+    flex-direction: column;
+    align-items: flex-start;
+}
+.td-prop-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+.td-prop-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.td-prop-value {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+.td-prop-icon {
+    font-size: 15px;
+    color: var(--text-tertiary);
+}
+.td-prop-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    text-align: left;
+    font-family: inherit;
+}
+.td-prop-btn:hover {
+    background: var(--bg-hover);
+}
+.td-prop-placeholder {
+    color: var(--text-tertiary) !important;
+}
+.td-priority-high {
+    color: var(--color-danger, #ef4444) !important;
+}
+.td-priority-high .td-prop-icon {
+    color: var(--color-danger, #ef4444);
+}
+.td-priority-low {
+    color: var(--text-tertiary) !important;
+}
+
+/* Labels */
+.td-labels-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 8px;
+    width: 100%;
+}
+.td-label-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.td-label-chip-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    color: var(--text-tertiary);
+    line-height: 1;
+}
+.td-label-chip-remove .material-symbols-outlined {
+    font-size: 12px;
+}
+.td-label-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    width: 90px;
+}
+.td-label-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Footer */
+.td-footer-delete {
+    margin-right: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: inherit;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.td-footer-delete:hover {
+    color: var(--color-danger, #ef4444);
+    border-color: var(--color-danger, #ef4444);
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 6%, transparent);
+}
+.td-footer-delete .material-symbols-outlined {
+    font-size: 16px;
 }
 
 /* Task Details Modal - Minimalist (matches Add Task design) */
