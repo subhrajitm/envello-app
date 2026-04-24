@@ -248,8 +248,11 @@
             } @else {
             <div class="thumbs-grid">
                 @for (task of filteredTasks(); track task.id) {
-                <article class="thumb-card" 
+                <article class="thumb-card"
                          [class.thumb-card-completed]="task.status === 'COMPLETED'"
+                         [class.thumb-high]="task.priority === 'HIGH'"
+                         [class.thumb-medium]="task.priority === 'MEDIUM'"
+                         [class.thumb-low]="task.priority === 'LOW'"
                          (click)="openTaskDetails(task)"
                          style="cursor: pointer;">
                     <header class="thumb-header">
@@ -342,6 +345,7 @@
                     [class.cal-cell--other-month]="!day.isCurrentMonth"
                     [class.cal-cell--today]="day.isToday"
                     [class.cal-cell--has-tasks]="day.isActive && day.isCurrentMonth && !day.isToday"
+                    [class.cal-cell--selected]="day.isSelected && !day.isToday"
                     (click)="onCalendarDayClick(day)"
                     [attr.aria-label]="day.isToday ? 'Today' : 'Day ' + day.day">
                     <span class="cal-cell-num">{{ day.day }}</span>

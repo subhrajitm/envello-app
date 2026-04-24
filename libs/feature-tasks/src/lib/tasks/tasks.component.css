@@ -59,12 +59,30 @@
     letter-spacing: 0.5px;
 }
 
+.btn-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
 
+.add-task-main-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 32px;
+    padding: 0 14px;
+}
 
 .toolbar-divider {
     width: 1px;
     height: 20px;
     background: var(--border-subtle);
+}
+
+/* .main-nav-tabs is applied alongside .view-switcher — inherits all its styles */
+.main-nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
 }
 
 .view-switcher {
@@ -1223,6 +1241,28 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    background: var(--bg-active);
+    color: var(--text-secondary);
+}
+
+.status-badge.todo {
+    background: color-mix(in srgb, #94a3b8 15%, transparent);
+    color: #64748b;
+}
+
+.status-badge.in_progress {
+    background: color-mix(in srgb, #3b82f6 15%, transparent);
+    color: #3b82f6;
+}
+
+.status-badge.completed {
+    background: color-mix(in srgb, #22c55e 15%, transparent);
+    color: #16a34a;
+}
+
+.status-badge.blocked {
+    background: color-mix(in srgb, #ef4444 15%, transparent);
+    color: #ef4444;
 }
 
 /* Due Date */
@@ -1288,22 +1328,87 @@
     padding-right: 4px;
 }
 
+/* Empty state for thumbnails view */
+.empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.empty-state h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.empty-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.empty-icon-circle .material-symbols-outlined {
+    font-size: 24px;
+    color: var(--accent-primary);
+}
+
+/* "No due date" placeholder text in thumb cards */
+.no-data {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
 .thumb-card {
     background: var(--bg-panel);
     border-radius: 8px;
     border: 1px solid var(--border-subtle);
+    border-left: 1px solid var(--border-subtle);
     padding: 10px 10px 8px;
     display: flex;
     flex-direction: column;
     gap: 6px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     min-height: 96px;
 }
 
 .thumb-card:hover {
     border-color: var(--border-highlight);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-    transform: translateY(-1px);
+}
+
+/* Priority-colored left accent + subtle tint */
+.thumb-card.thumb-high {
+    border-left-color: #ef4444;
+    background: color-mix(in srgb, #ef4444 4%, var(--bg-panel));
+}
+
+.thumb-card.thumb-medium {
+    border-left-color: #f59e0b;
+    background: color-mix(in srgb, #f59e0b 4%, var(--bg-panel));
+}
+
+.thumb-card.thumb-low {
+    border-left-color: #6366f1;
+    background: color-mix(in srgb, #6366f1 4%, var(--bg-panel));
 }
 
 .thumb-card-completed {
@@ -1357,6 +1462,21 @@
     border-radius: 999px;
     background: var(--bg-active);
     color: var(--text-secondary);
+}
+
+.thumb-priority.p1 {
+    background: color-mix(in srgb, #ef4444 15%, transparent);
+    color: #ef4444;
+}
+
+.thumb-priority.p2 {
+    background: color-mix(in srgb, #f59e0b 15%, transparent);
+    color: #d97706;
+}
+
+.thumb-priority.p3 {
+    background: color-mix(in srgb, #6366f1 15%, transparent);
+    color: #6366f1;
 }
 
 .thumb-hours {

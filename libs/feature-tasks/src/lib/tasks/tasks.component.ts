@@ -296,7 +296,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const dueToday = this.todayTasksCount();
     const overdue = this.store
       .tasks()
-      .filter(t => t.due?.includes('Overdue')).length;
+      .filter(t => this.isOverdue(t)).length;
 
     const parts: string[] = [];
     parts.push(`${total} task${total === 1 ? '' : 's'}`);
@@ -600,9 +600,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Legacy top filter buttons (kept but internally derive from selectedView)
-  selectedFilter = signal<string>('All');
-
   // Metric-based filter from right-side KPIs
   // 'none' = no extra filter, 'active' = only ACTIVE tasks, 'priority' = only HIGH priority
   metricFilter = signal<'none' | 'active' | 'priority'>('none');
@@ -677,7 +674,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       base = this.store.tasks().filter(t => {
         if (!t.due) return false;
         if (t.due.includes('Today')) return false;
-        if (t.due.includes('Overdue')) return false;
+        if (this.isOverdue(t)) return false;
         return true;
       });
     } else if (view === 'completed') {
@@ -725,11 +722,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     };
 
     push('Overdue', '#ef4444',
-      tasks.filter(t => t.due?.includes('Overdue') && t.status !== 'COMPLETED'));
+      tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED'));
     push('Today', '#f59e0b',
       tasks.filter(t => t.due?.includes('Today') && t.status !== 'COMPLETED'));
     push('Upcoming', '#6366f1',
-      tasks.filter(t => !!t.due && !t.due.includes('Today') && !t.due.includes('Overdue') && t.status !== 'COMPLETED'));
+      tasks.filter(t => !!t.due && !t.due.includes('Today') && !this.isOverdue(t) && t.status !== 'COMPLETED'));
     push('No Date', '#9ca3af',
       tasks.filter(t => !t.due && t.status !== 'COMPLETED'));
     push('Completed', '#10b981',
@@ -808,7 +805,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     return this.store.tasks().filter(t => {
       if (!t.due) return false;
       if (t.due.includes('Today')) return false;
-      if (t.due.includes('Overdue')) return false;
+      if (this.isOverdue(t)) return false;
       return true;
     });
   });
@@ -1853,21 +1850,27 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   calculateNextDue(currentDue: string | undefined, pattern: string, interval: number): string {
     if (!currentDue) return '';
+    // Base off the current due date if parseable; otherwise fall back to today
+    const base = this.parseDateFromString(currentDue) ?? new Date();
+    // If the base date is already in the past, advance from today instead
     const today = new Date();
-    const next = new Date(today);
+    today.setHours(0, 0, 0, 0);
+    base.setHours(0, 0, 0, 0);
+    const from = base < today ? today : base;
+    const next = new Date(from);
 
     switch (pattern) {
       case 'daily':
-        next.setDate(today.getDate() + interval);
+        next.setDate(from.getDate() + interval);
         break;
       case 'weekly':
-        next.setDate(today.getDate() + (7 * interval));
+        next.setDate(from.getDate() + (7 * interval));
         break;
       case 'monthly':
-        next.setMonth(today.getMonth() + interval);
+        next.setMonth(from.getMonth() + interval);
         break;
       case 'yearly':
-        next.setFullYear(today.getFullYear() + interval);
+        next.setFullYear(from.getFullYear() + interval);
         break;
     }
 
@@ -2019,6 +2022,18 @@ export class TasksComponent implements OnInit, OnDestroy {
       startDate: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       endDate: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     };
+  }
+
+  /** Returns true if the task's due date is in the past (including the "Overdue" label or an actual past date string). */
+  isOverdue(task: { due?: string; status?: string }): boolean {
+    if (!task.due) return false;
+    if (task.due.includes('Overdue')) return true;
+    const parsed = this.parseDateFromString(task.due);
+    if (!parsed) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    parsed.setHours(0, 0, 0, 0);
+    return parsed < today;
   }
 
   parseDateFromString(dateStr: string): Date | null {
