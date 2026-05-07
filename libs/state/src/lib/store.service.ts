@@ -2,7 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Novel, Project } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Novel, Project, Bookmark, BookmarkFolder } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -15,6 +15,8 @@ export class StoreService {
     novels = signal<Novel[]>([]);
     /** Persisted folder definitions for daily notes; loaded from DB on init. */
     noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
+    bookmarks = signal<Bookmark[]>([]);
+    bookmarkFolders = signal<BookmarkFolder[]>([]);
     projects = signal<Project[]>([
         {
             id: '1',
@@ -105,19 +107,23 @@ export class StoreService {
 
     private async loadFromDb(): Promise<void> {
         try {
-            const [tasks, notes, planningItems, activities, novels, folders] = await Promise.all([
+            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
                 this.db.getAll<Note>('notes'),
                 this.db.getAll<PlanningItem>('planning_items'),
                 this.db.getAll<Activity>('activities'),
                 this.db.getAll<Novel>('novels'),
                 this.db.getAll<{ id: string; name: string; icon: string }>('note_folders'),
+                this.db.getAll<Bookmark>('bookmarks'),
+                this.db.getAll<BookmarkFolder>('bookmark_folders'),
             ]);
             this.tasks.set(tasks || []);
             this.notes.set(notes || []);
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
             this.novels.set(novels || []);
+            this.bookmarks.set(bookmarks || []);
+            this.bookmarkFolders.set(bookmarkFolders || []);
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -140,6 +146,8 @@ export class StoreService {
             this.activities.set([]);
             this.novels.set([]);
             this.noteFolders.set([{ id: 'personal', name: 'Personal', icon: 'folder' }]);
+            this.bookmarks.set([]);
+            this.bookmarkFolders.set([]);
         }
     }
 
@@ -334,6 +342,35 @@ export class StoreService {
         this.addActivity('Novel deleted', 'system');
         this.db.remove('novels', id).catch(e => console.error('[StoreService] remove novel failed', e));
         this.db.remove('novel_content', id).catch(e => console.error('[StoreService] remove novel content failed', e));
+    }
+
+    addBookmark(bookmark: Bookmark) {
+        this.bookmarks.update(list => [bookmark, ...list]);
+        this.addActivity('Bookmark saved: ' + bookmark.title, 'system');
+        this.db.upsert('bookmarks', bookmark).catch(e => console.error('[StoreService] persist bookmark failed', e));
+    }
+
+    updateBookmark(id: string, updates: Partial<Bookmark>) {
+        this.bookmarks.update(list => list.map(b => b.id === id ? { ...b, ...updates } : b));
+        const bookmark = this.bookmarks().find(b => b.id === id);
+        if (bookmark) this.db.upsert('bookmarks', bookmark).catch(e => console.error('[StoreService] persist bookmark failed', e));
+    }
+
+    deleteBookmark(id: string) {
+        this.bookmarks.update(list => list.filter(b => b.id !== id));
+        this.addActivity('Bookmark removed', 'system');
+        this.db.remove('bookmarks', id).catch(e => console.error('[StoreService] remove bookmark failed', e));
+    }
+
+    addBookmarkFolder(folder: BookmarkFolder) {
+        this.bookmarkFolders.update(list => [...list, folder]);
+        this.db.upsert('bookmark_folders', folder).catch(e => console.error('[StoreService] persist bookmark_folder failed', e));
+    }
+
+    deleteBookmarkFolder(id: string) {
+        this.bookmarkFolders.update(list => list.filter(f => f.id !== id));
+        this.bookmarks.update(list => list.map(b => b.folderId === id ? { ...b, folderId: undefined } : b));
+        this.db.remove('bookmark_folders', id).catch(e => console.error('[StoreService] remove bookmark_folder failed', e));
     }
 
     addActivity(text: string, type: Activity['type'] = 'entry') {

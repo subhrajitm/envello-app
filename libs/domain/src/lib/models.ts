@@ -189,3 +189,29 @@ export interface WorkspaceProfile {
     createdAt: string;
     lastAccessed: string;
 }
+
+export interface Bookmark {
+    id: string;
+    title: string;
+    url: string;
+    description?: string;
+    faviconUrl?: string;
+    tags?: string[];
+    folderId?: string;
+    createdAt: string;
+    lastVisited?: string;
+    visitCount?: number;
+    notes?: string;
+    color?: string;
+    isArchived?: boolean;
+    isPinned?: boolean;
+}
+
+export interface BookmarkFolder {
+    id: string;
+    name: string;
+    parentId?: string;
+    icon?: string;
+    color?: string;
+    createdAt: string;
+}

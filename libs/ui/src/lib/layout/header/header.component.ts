@@ -86,6 +86,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { id: 'novels',      label: 'Writing',  icon: 'menu_book', route: 'novels' },
     { id: 'vault',       label: 'Vault',    icon: 'lock',      route: 'vault' },
     { id: 'subscriptions',label: 'Vendors', icon: 'credit_card',route: 'subscriptions' },
+    { id: 'bookmarks',   label: 'Bookmarks', icon: 'bookmarks', route: 'bookmarks' },
   ];
 
   // All flat items (for activeTab matching across sections)

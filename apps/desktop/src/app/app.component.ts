@@ -130,6 +130,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'activity-log':       'Activity Log',
       'developer-settings': 'Developer Settings',
       'books':              'Books/Reading',
+      'bookmarks':          'Bookmarks',
       'snippets':           'Code Snippets',
       'vault':              'Vault',
       'subscriptions':      'Subscriptions'
