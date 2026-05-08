@@ -23,6 +23,7 @@ export interface SearchResult {
 })
 export class EditorHeaderComponent {
   activeNav = input.required<'manuscript' | 'structure' | 'characters' | 'locations'>();
+  showExtendedTabs = input<boolean>(true);
   canUndo = input.required<boolean>();
   canRedo = input.required<boolean>();
   searchOpen = input.required<boolean>();

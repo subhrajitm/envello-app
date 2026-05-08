@@ -10,6 +10,7 @@
             <span class="material-symbols-outlined tab-icon">menu_book</span>
             Structure
         </button>
+        @if (showExtendedTabs()) {
         <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
             (click)="setActiveNav.emit('characters')">
             <span class="material-symbols-outlined tab-icon">group</span>
@@ -20,6 +21,7 @@
             <span class="material-symbols-outlined tab-icon">public</span>
             Locations
         </button>
+        }
     </div>
     <div class="ne-editor-actions">
         <!-- Undo/Redo -->

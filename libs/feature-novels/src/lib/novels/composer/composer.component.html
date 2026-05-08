@@ -42,6 +42,7 @@
             @if (activeNav() === 'manuscript' && novel()) {
             <app-chapters-list [chapters]="novel()!.chapters" [activeChapterId]="activeChapterId()"
                 [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()"
+                [sectionLabel]="sectionLabel()"
                 (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)"
                 (deleteChapter)="deleteChapter($event.id, $event.title)"
                 (deleteGroup)="deleteGroup($event.id, $event.title)"
@@ -87,6 +88,7 @@
             <app-editor-header [activeNav]="activeNav()" [canUndo]="canUndo()" [canRedo]="canRedo()"
                 [searchOpen]="searchOpen()" [searchQuery]="searchQuery()" [filteredResults]="filteredChapters()"
                 [focusMode]="focusMode()" [fullScreenMode]="fullScreenMode()" [exportMenuOpen]="exportMenuOpen()"
+                [showExtendedTabs]="showExtendedTabs()"
                 (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()"
                 (toggleSearch)="toggleSearch()" (searchQueryChange)="searchQuery.set($event)"
                 (selectSearchResult)="selectSearchResult($event)" (toggleFocusMode)="toggleFocusMode()"

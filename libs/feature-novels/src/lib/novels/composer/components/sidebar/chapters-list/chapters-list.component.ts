@@ -23,6 +23,7 @@ export class ChaptersListComponent {
   bulkMode = input.required<boolean>();
   selectedChapters = input.required<Set<string>>();
   addMenuOpen = input.required<boolean>();
+  sectionLabel = input<string>('Chapters');
   
   selectChapter = output<Chapter>();
   toggleChapter = output<ChapterGroup>();

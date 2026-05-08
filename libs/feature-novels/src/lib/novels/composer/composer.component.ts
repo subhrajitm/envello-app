@@ -139,6 +139,27 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   novel = this.novelService.activeNovel;
   isLoading = signal(true);
 
+  private writingType = computed(() => {
+    const meta = this.store.novels().find(n => n.id === this.novelId());
+    return meta?.writingType ?? 'NOVEL';
+  });
+
+  sectionLabel = computed(() => {
+    switch (this.writingType()) {
+      case 'SCRIPT':      return 'Scenes';
+      case 'POETRY':      return 'Stanzas';
+      case 'ESSAY':
+      case 'RESEARCH':    return 'Parts';
+      case 'NOVEL':       return 'Chapters';
+      default:            return 'Sections';
+    }
+  });
+
+  showExtendedTabs = computed(() => {
+    const t = this.writingType();
+    return t === 'NOVEL' || t === 'SHORT_STORY' || t === 'SCRIPT';
+  });
+
   activeCharacter = computed(() => {
     const n = this.novel();
     const id = this.selectedCharacterId();
@@ -368,7 +389,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   setActiveNav(nav: 'manuscript' | 'structure' | 'characters' | 'locations') {
-    this.activeNav.set(nav);
+    const extended = this.showExtendedTabs();
+    if (!extended && (nav === 'characters' || nav === 'locations')) {
+      this.activeNav.set('manuscript');
+    } else {
+      this.activeNav.set(nav);
+    }
   }
 
   // Title editing

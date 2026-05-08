@@ -80,11 +80,22 @@ export interface Activity {
     type: 'entry' | 'sync' | 'ai' | 'system';
 }
 
+export type WritingType =
+    | 'NOVEL'
+    | 'SHORT_STORY'
+    | 'ARTICLE'
+    | 'ESSAY'
+    | 'SCRIPT'
+    | 'POETRY'
+    | 'BLOG_POST'
+    | 'RESEARCH';
+
 export interface Novel {
     id: string;
     title: string;
     icon: string;
     status: 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED';
+    writingType?: WritingType;
     wordCount: number;
     targetWordCount: number;
     progress: number; // percentage

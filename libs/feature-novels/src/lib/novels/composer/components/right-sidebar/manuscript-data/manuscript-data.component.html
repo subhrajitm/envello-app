@@ -1,7 +1,7 @@
 <div class="ne-meta-panel">
     <div class="ne-ai-header">
         <span class="material-symbols-outlined icon-bolt">description</span>
-        MANUSCRIPT DATA
+        PIECE DATA
     </div>
 
     <div class="ne-meta-content">
@@ -14,7 +14,7 @@
                     <div class="stat-value-mini">{{ totalNovelWords() | number }}</div>
                 </div>
                 <div class="stat-card-mini">
-                    <div class="stat-label-mini">Avg Chapter</div>
+                    <div class="stat-label-mini">Avg Section</div>
                     <div class="stat-value-mini">{{ averageChapterLength() | number }}</div>
                 </div>
                 <div class="stat-card-mini">
@@ -25,8 +25,8 @@
         </div>
 
         <div class="meta-section">
-            <label>LOGLINE</label>
-            <div class="meta-text">{{ logline() || 'No logline set' }}</div>
+            <label>SUMMARY</label>
+            <div class="meta-text">{{ logline() || 'No summary set' }}</div>
         </div>
 
         <div class="meta-section">
@@ -46,7 +46,7 @@
 
         @if (activeChapterId() && (mentionedCharacters().length > 0 || mentionedLocations().length > 0)) {
         <div class="meta-section">
-            <label>MENTIONS IN THIS CHAPTER</label>
+            <label>MENTIONS IN THIS SECTION</label>
             @if (mentionedCharacters().length > 0) {
             <div class="mentions-group">
                 <div class="mentions-label">Characters:</div>

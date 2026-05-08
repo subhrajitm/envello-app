@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService, type Novel, NovelContentService } from '@envello/core';
+import { StoreService, type Novel, type WritingType, NovelContentService } from '@envello/core';
 import { ButtonComponent, ModalComponent, EmptyStateComponent } from '@envello/ui';
 
 @Component({
@@ -25,13 +25,25 @@ export class NovelsComponent {
 
   showAddModal = signal(false);
   addModalSubmitting = signal(false);
-  newNovel = signal<{ title: string; status: Novel['status']; genre: string; targetWordCount: number; icon: string }>({
+  newNovel = signal<{ title: string; writingType: WritingType; status: Novel['status']; genre: string; targetWordCount: number; icon: string }>({
     title: '',
+    writingType: 'NOVEL',
     status: 'PLANNING',
     genre: '',
     targetWordCount: 80000,
     icon: 'menu_book'
   });
+
+  readonly writingTypes: { id: WritingType; label: string; defaultWords: number; defaultIcon: string }[] = [
+    { id: 'NOVEL',       label: 'Novel',        defaultWords: 80000, defaultIcon: 'menu_book'  },
+    { id: 'SHORT_STORY', label: 'Short Story',   defaultWords: 10000, defaultIcon: 'auto_stories' },
+    { id: 'ARTICLE',     label: 'Article',       defaultWords:  2000, defaultIcon: 'article'   },
+    { id: 'ESSAY',       label: 'Essay',         defaultWords:  3000, defaultIcon: 'psychology' },
+    { id: 'SCRIPT',      label: 'Script',        defaultWords: 15000, defaultIcon: 'description' },
+    { id: 'POETRY',      label: 'Poetry',        defaultWords:   500, defaultIcon: 'draw'      },
+    { id: 'BLOG_POST',   label: 'Blog Post',     defaultWords:  1500, defaultIcon: 'edit_note' },
+    { id: 'RESEARCH',    label: 'Research',      defaultWords:  5000, defaultIcon: 'science'   },
+  ];
 
   readonly novelIcons = [
     { id: 'menu_book', label: 'Book' },
@@ -175,6 +187,10 @@ export class NovelsComponent {
     }
   }
 
+  getWritingTypeLabel(type?: string): string {
+    return this.writingTypes.find(t => t.id === type)?.label ?? 'Novel';
+  }
+
   getStatusColor(status: string) {
     switch (status) {
       case 'DRAFTING': return 'status-yellow';
@@ -213,6 +229,7 @@ export class NovelsComponent {
       ...novel,
       id,
       title: `${novel.title} (Copy)`,
+      writingType: novel.writingType,
       createdDate: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       lastUpdated: 'Just now',
       createdAt: now.toISOString(),
@@ -249,6 +266,7 @@ export class NovelsComponent {
   openAddModal() {
     this.newNovel.set({
       title: '',
+      writingType: 'NOVEL',
       status: 'PLANNING',
       genre: '',
       targetWordCount: 80000,
@@ -262,7 +280,19 @@ export class NovelsComponent {
     this.addModalSubmitting.set(false);
   }
 
-  updateNewNovel(key: 'title' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number) {
+  updateNewNovel(key: 'title' | 'writingType' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number) {
+    if (key === 'writingType') {
+      const def = this.writingTypes.find(t => t.id === value);
+      if (def) {
+        this.newNovel.update(n => ({
+          ...n,
+          writingType: value as WritingType,
+          targetWordCount: def.defaultWords,
+          icon: def.defaultIcon,
+        }));
+        return;
+      }
+    }
     this.newNovel.update(n => ({ ...n, [key]: value }));
   }
 
@@ -281,6 +311,7 @@ export class NovelsComponent {
         title,
         icon: form.icon,
         status: form.status,
+        writingType: form.writingType,
         wordCount: 0,
         targetWordCount: Math.max(0, form.targetWordCount) || 80000,
         progress: 0,

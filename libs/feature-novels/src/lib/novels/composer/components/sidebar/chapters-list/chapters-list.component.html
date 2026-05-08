@@ -1,6 +1,6 @@
 <div class="ne-chapters-section">
     <div class="ne-chap-header">
-        CHAPTERS
+        {{ sectionLabel() | uppercase }}
         <div class="flex items-center gap-1">
             @if (bulkMode()) {
             <button class="ne-toolbar-btn" (click)="bulkDelete.emit()" 
