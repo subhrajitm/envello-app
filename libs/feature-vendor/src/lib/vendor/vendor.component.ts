@@ -170,19 +170,52 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
             <div class="form-row">
               <div class="form-group fg-2">
                 <label class="form-label">Service Name</label>
-                <div class="name-wrap">
-                  <input type="text" class="form-input vendor-name-input"
-                    [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
-                    placeholder="e.g. GitHub, AWS, Figma"
-                    autocomplete="off" list="vendor-list">
-                  <datalist id="vendor-list">
-                    @for (v of vendorNames; track v) { <option [value]="v"> }
-                  </datalist>
-                  @if (presetApplied()) {
-                    <span class="preset-badge">
-                      <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
-                      preset
-                    </span>
+                <div class="vd-wrap">
+                  <div class="name-wrap">
+                    <span class="material-symbols-outlined vd-search-icon">search</span>
+                    <input type="text" class="form-input vendor-name-input vd-input"
+                      [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
+                      (click)="showVendorDropdown.set(true)"
+                      (blur)="onVendorBlur()"
+                      (keydown)="onVendorKeydown($event)"
+                      placeholder="Search — GitHub, AWS, Figma…"
+                      autocomplete="off">
+                    @if (presetApplied()) {
+                      <span class="preset-badge">
+                        <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
+                        auto-filled
+                      </span>
+                    }
+                  </div>
+                  @if (showVendorDropdown() && vendorSuggestions().length > 0) {
+                    <div class="vd-dropdown">
+                      @if (!formName()) {
+                        <div class="vd-section-label">
+                          <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">bolt</span>
+                          Popular services
+                        </div>
+                      }
+                      @for (v of vendorSuggestions(); track v.key; let i = $index) {
+                        <button type="button" class="vd-item"
+                          [class.vd-item-highlighted]="vendorHighlightIdx() === i"
+                          (mousedown)="selectVendor(v)">
+                          <div class="vd-avatar" [style.background]="avatarBg(v.displayName)">
+                            {{ v.displayName.charAt(0).toUpperCase() }}
+                          </div>
+                          <div class="vd-info">
+                            <span class="vd-name">{{ v.displayName }}</span>
+                            <span class="vd-meta">
+                              <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">{{ categoryIcon(v.category) }}</span>
+                              {{ v.category }}
+                            </span>
+                          </div>
+                          <div class="vd-chips">
+                            <span class="vd-chip">{{ v.billingCycle }}</span>
+                            <span class="vd-chip vd-chip-currency">{{ v.currency }}</span>
+                          </div>
+                        </button>
+                      }
+                    </div>
                   }
                 </div>
               </div>
@@ -339,9 +372,106 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
         </env-modal>
       }
 
+      <!-- ── View Details Modal ─────────────────────────────────────────── -->
+      @if (viewingSub(); as sub) {
+        <env-modal [isOpen]="true" [title]="''" size="large" (closed)="closeDetails()">
+          <div body class="detail-body">
+
+            <!-- Hero row -->
+            <div class="detail-hero">
+              <div class="detail-avatar" [style.background]="avatarBg(sub.name)">
+                {{ sub.name.charAt(0).toUpperCase() }}
+              </div>
+              <div class="detail-hero-text">
+                <h2 class="detail-name">{{ sub.name }}</h2>
+                <span class="orbit-status-badge" style="display:inline-block;margin-top:4px"
+                  [style.color]="statusMeta(sub.status).color"
+                  [style.background]="statusMeta(sub.status).bg">
+                  {{ statusMeta(sub.status).label }}
+                </span>
+              </div>
+              <div class="detail-cost-block">
+                <div class="detail-price">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</div>
+                <div class="detail-cycle">per {{ sub.billingCycle === 'monthly' ? 'month' : 'year' }}</div>
+              </div>
+            </div>
+
+            <!-- Equivalents -->
+            <div class="detail-equiv">
+              @if (sub.billingCycle === 'yearly') {
+                <div class="detail-equiv-chip">
+                  <span class="equiv-label">Monthly equivalent</span>
+                  <span class="equiv-value">{{ monthlyCost(sub) }}</span>
+                </div>
+              }
+              @if (sub.billingCycle === 'monthly') {
+                <div class="detail-equiv-chip">
+                  <span class="equiv-label">Yearly equivalent</span>
+                  <span class="equiv-value">{{ yearlyCost(sub) }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Detail grid -->
+            <div class="detail-grid">
+              <div class="detail-field">
+                <span class="detail-field-label">Category</span>
+                <span class="detail-field-value capitalize">{{ sub.category || '—' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-field-label">Currency</span>
+                <span class="detail-field-value">{{ sub.currency || 'USD' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-field-label">Billing Cycle</span>
+                <span class="detail-field-value capitalize">{{ sub.billingCycle }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-field-label">Next Renewal</span>
+                <div class="detail-field-value" style="display:flex;align-items:center;gap:8px">
+                  {{ formatDate(sub.renewalDate) }}
+                  @let days = daysUntil(sub.renewalDate);
+                  @if (days !== null && sub.status !== 'cancelled') {
+                    <span class="days-chip"
+                      [class.days-ok]="days > 30"
+                      [class.days-caution]="days <= 30 && days > 7"
+                      [class.days-warn]="days <= 7">
+                      {{ days === 0 ? 'today' : 'in ' + days + 'd' }}
+                    </span>
+                  }
+                </div>
+              </div>
+              <div class="detail-field">
+                <span class="detail-field-label">Project Scope</span>
+                <span class="detail-field-value">{{ sub.projectId || 'global' }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="detail-field-label">ID</span>
+                <span class="detail-field-value detail-id">{{ sub.id }}</span>
+              </div>
+              @if (sub.notes) {
+                <div class="detail-field detail-field-full">
+                  <span class="detail-field-label">Notes</span>
+                  <span class="detail-field-value">{{ sub.notes }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%">
+            <button class="vendor-cancel-btn" (click)="closeDetails()">Close</button>
+            <button class="vendor-save-btn" (click)="editFromDetails(sub)">
+              <span class="material-symbols-outlined">edit</span>
+              Edit Subscription
+            </button>
+          </div>
+        </env-modal>
+      }
+
       <!-- ── Table ─────────────────────────────────────────────────────── -->
       <div class="orbit-table-container">
         @if (filteredSubs().length > 0) {
+          <div class="orbit-table-wrapper">
           <table class="orbit-table">
             <thead>
               <tr>
@@ -368,12 +498,12 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
                   [class.cancelled]="sub.status === 'cancelled'">
 
                   <td>
-                    <div class="orbit-name-cell">
+                    <div class="orbit-name-cell" (click)="openDetails(sub)" style="cursor:pointer" title="View details">
                       <div class="orbit-avatar" [style.background]="avatarBg(sub.name)">
                         <span class="avatar-text">{{ sub.name.charAt(0).toUpperCase() }}</span>
                       </div>
                       <div>
-                        <div class="orbit-vendor-name">{{ sub.name }}</div>
+                        <div class="orbit-vendor-name orbit-vendor-name-link">{{ sub.name }}</div>
                         @if (sub.notes) {
                           <div class="orbit-vendor-notes">{{ sub.notes }}</div>
                         }
@@ -381,7 +511,13 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
                     </div>
                   </td>
 
-                  <td><span class="orbit-text capitalize">{{ sub.category || '—' }}</span></td>
+                  <td>
+                    @if (sub.category) {
+                      <span class="orbit-cat-chip">{{ sub.category }}</span>
+                    } @else {
+                      <span class="orbit-text">—</span>
+                    }
+                  </td>
 
                   <td><span class="orbit-price-text">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</span></td>
 
@@ -389,7 +525,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
                   <td>
                     <div class="orbit-renewal-wrap">
-                      <span class="orbit-text">{{ formatDate(sub.renewalDate) }}</span>
+                      <span style="font-size:12.5px;color:var(--text-primary)">{{ formatDate(sub.renewalDate) }}</span>
                       @if (days !== null && sub.status !== 'cancelled') {
                         <span class="days-chip"
                           [class.days-ok]="days > 30"
@@ -424,6 +560,9 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
                           <span class="material-symbols-outlined">more_vert</span>
                         </button>
                         <div class="orbit-actions-dropdown absolute right-0 top-[80%] hidden group-hover/actions:flex flex-col z-[100]">
+                          <button class="orbit-dropdown-item" (click)="openDetails(sub)">
+                            <span class="material-symbols-outlined icon-sm">open_in_new</span> View Details
+                          </button>
                           <button class="orbit-dropdown-item" (click)="openEditForm(sub)">
                             <span class="material-symbols-outlined icon-sm">edit</span> Edit
                           </button>
@@ -439,6 +578,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
               }
             </tbody>
           </table>
+          </div>
 
         } @else {
           <div class="orbit-empty">
@@ -553,63 +693,94 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
     /* ── Table ───────────────────────────────────────── */
     .orbit-table-container {
-      flex: 1; overflow-y: auto; overflow-x: auto;
-      background: var(--bg-app); border-radius: 8px; padding-bottom: 40px;
+      flex: 1; overflow-y: auto; overflow-x: auto; padding-bottom: 40px;
+    }
+    .orbit-table-wrapper {
+      border: 1px solid var(--border-subtle); border-radius: 10px;
     }
     .orbit-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .orbit-table thead { position: sticky; top: 0; background: var(--bg-app); z-index: 10; }
+    /* Round the four corner cells instead of overflow:hidden on wrapper */
+    .orbit-table thead tr th:first-child { border-top-left-radius: 9px; }
+    .orbit-table thead tr th:last-child  { border-top-right-radius: 9px; }
+    .orbit-table tbody tr:last-child td:first-child { border-bottom-left-radius: 9px; }
+    .orbit-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 9px; }
+
+    /* Header — subtle bg + right separators between columns only */
+    .orbit-table thead { position: sticky; top: 0; z-index: 10; }
     .orbit-table th {
-      padding: 12px 16px; font-size: 11px; font-weight: 500; color: var(--text-tertiary);
-      border-bottom: 1px solid var(--border-subtle); border-top: 1px solid var(--border-subtle);
+      padding: 8px 14px; font-size: 12px; font-weight: 500; color: var(--text-tertiary);
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border-subtle);
       white-space: nowrap; user-select: none;
     }
-    .orbit-table th.sortable { cursor: pointer; transition: color 0.2s; }
+    .orbit-table th:last-child { border-right: none; }
+    .orbit-table th.sortable { cursor: pointer; transition: color 0.15s; }
     .orbit-table th.sortable:hover { color: var(--text-secondary); }
-    .sort-icon { font-size: 12px; vertical-align: middle; margin-left: 2px; opacity: 0.4; }
-    .th-hint   { font-size: 9px; opacity: 0.5; margin-left: 4px; font-weight: 400; }
+    .sort-icon { font-size: 11px; vertical-align: middle; margin-left: 3px; opacity: 0.5; }
+    .th-hint   { display: none; }
 
-    .orbit-row { transition: background 0.2s; border-bottom: 1px solid var(--border-subtle); }
-    .orbit-row:hover   { background: rgba(255,255,255,0.02); }
-    .orbit-row.paused  { opacity: 0.7; }
-    .orbit-row.cancelled { opacity: 0.4; }
-    .orbit-table td { padding: 14px 16px; vertical-align: middle; }
-
-    .orbit-name-cell { display: flex; align-items: center; gap: 12px; }
-    .orbit-avatar {
-      width: 32px; height: 32px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    /* Body rows — horizontal separators only, no vertical borders */
+    .orbit-row { transition: background 0.12s; }
+    .orbit-row:hover { background: var(--bg-hover); }
+    .orbit-row.paused    { opacity: 0.6; }
+    .orbit-row.cancelled { opacity: 0.35; }
+    .orbit-table td {
+      padding: 10px 14px; vertical-align: middle;
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .avatar-text       { font-size: 14px; font-weight: 600; }
-    .orbit-vendor-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-    .orbit-vendor-notes{ font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+    .orbit-table tbody tr:last-child td { border-bottom: none; }
 
-    .orbit-text       { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    /* Name cell */
+    .orbit-name-cell { display: flex; align-items: center; gap: 9px; }
+    .orbit-avatar {
+      width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    }
+    .avatar-text       { font-size: 10px; font-weight: 700; line-height: 1; }
+    .orbit-vendor-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .orbit-vendor-name-link:hover { color: var(--accent-primary); text-decoration: underline; text-underline-offset: 2px; }
+    .orbit-vendor-notes{ font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+
+    /* Category — small outlined tag chip like screenshot */
+    .orbit-cat-chip {
+      display: inline-flex; padding: 1px 8px; border-radius: 5px;
+      border: 1px solid var(--border-subtle); background: transparent;
+      font-size: 11.5px; font-weight: 400; color: var(--text-secondary);
+      text-transform: capitalize; white-space: nowrap;
+    }
+
+    .orbit-text       { font-size: 12.5px; color: var(--text-secondary); font-weight: 400; }
     .orbit-price-text { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono, monospace); }
 
-    .orbit-renewal-wrap { display: flex; align-items: center; gap: 8px; }
+    /* Renewal date + days chip — matches "today" pill in screenshot */
+    .orbit-renewal-wrap { display: flex; align-items: center; gap: 7px; }
     .days-chip {
-      padding: 2px 7px; border-radius: 4px;
-      font-size: 10px; font-weight: 600; white-space: nowrap;
+      padding: 1px 7px; border-radius: 4px; border: 1px solid var(--border-subtle);
+      font-size: 11px; font-weight: 500; white-space: nowrap;
     }
-    .days-ok      { background: rgba(74,222,128,0.08);  color: #4ade80; }
-    .days-caution { background: rgba(251,191,36,0.1);   color: #fbbf24; }
-    .days-warn    { background: rgba(248,113,113,0.1);  color: var(--accent-red); }
+    .days-ok      { color: var(--text-tertiary);    background: var(--bg-hover); }
+    .days-caution { color: #d97706; background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.3); }
+    .days-warn    { color: var(--accent-red); background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.3); }
 
+    /* Status badge — outlined rounded pill like "Read/Unread" in screenshot */
     .orbit-status-badge {
-      display: inline-block; padding: 4px 10px; border-radius: 6px;
-      font-size: 10px; font-weight: 600; text-transform: capitalize;
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 100px; border: 1px solid currentColor;
+      font-size: 11.5px; font-weight: 500; text-transform: capitalize; background: transparent !important;
     }
     .status-cycle-btn {
-      border: none; cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+      border: 1px solid currentColor !important; cursor: pointer;
+      transition: opacity 0.12s; background: transparent !important;
     }
-    .status-cycle-btn:hover { opacity: 0.75; transform: scale(0.96); }
+    .status-cycle-btn:hover { opacity: 0.65; }
 
-    .orbit-actions-cell { text-align: right; width: 60px; padding-right: 24px !important; }
+    .orbit-actions-cell { text-align: right; width: 44px; padding: 0 8px !important; }
     .orbit-more-btn {
-      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-      background: transparent; border: none; border-radius: 6px;
-      color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      background: transparent; border: none; border-radius: 5px;
+      color: var(--text-tertiary); cursor: pointer; transition: all 0.15s;
     }
     .orbit-more-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
     .orbit-actions-dropdown {
@@ -660,16 +831,64 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     }
     .form-input:focus { border-color: var(--accent-primary); }
 
-    /* Name field with floating preset badge */
+    /* ── Vendor name combobox ────────────────────────── */
+    .vd-wrap { position: relative; }
+
+    /* Search icon + preset badge inside input */
     .name-wrap { position: relative; display: flex; align-items: center; }
-    .name-wrap .form-input { flex: 1; padding-right: 70px; }
+    .vd-search-icon {
+      position: absolute; left: 10px; font-size: 17px;
+      color: var(--text-tertiary); pointer-events: none; z-index: 1;
+    }
+    .vd-input { padding-left: 34px !important; }
+    .name-wrap .form-input { flex: 1; }
     .preset-badge {
       position: absolute; right: 8px;
       display: inline-flex; align-items: center; gap: 3px;
-      padding: 2px 7px; border-radius: 100px;
+      padding: 2px 8px; border-radius: 100px;
       background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: #4ade80;
       font-size: 10px; font-weight: 600; pointer-events: none;
     }
+
+    /* Dropdown panel */
+    .vd-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--bg-panel); border: 1px solid var(--border-subtle);
+      border-radius: 10px; padding: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      z-index: 9999; max-height: 320px; overflow-y: auto;
+    }
+    .vd-section-label {
+      padding: 6px 10px 4px; font-size: 10.5px; font-weight: 600;
+      color: var(--text-tertiary); letter-spacing: 0.04em;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .vd-item {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 8px 10px; border: none; border-radius: 7px;
+      background: transparent; cursor: pointer; text-align: left;
+      transition: background 0.1s;
+    }
+    .vd-item:hover, .vd-item-highlighted { background: var(--bg-hover); }
+    .vd-avatar {
+      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    }
+    .vd-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .vd-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .vd-meta {
+      font-size: 11px; color: var(--text-tertiary); text-transform: capitalize;
+      display: flex; align-items: center; gap: 3px;
+    }
+    .vd-chips { display: flex; gap: 4px; flex-shrink: 0; }
+    .vd-chip {
+      padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border-subtle);
+      font-size: 10.5px; font-weight: 500; color: var(--text-secondary);
+      background: var(--bg-hover); text-transform: capitalize;
+    }
+    .vd-chip-currency { color: var(--text-tertiary); }
 
     /* Price + currency prefix */
     .price-wrap {
@@ -757,6 +976,49 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     }
     .vendor-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* ── View Details modal ──────────────────────────── */
+    .detail-body { padding: 4px 0; display: flex; flex-direction: column; gap: 20px; }
+
+    .detail-hero {
+      display: flex; align-items: center; gap: 16px;
+      padding-bottom: 20px; border-bottom: 1px solid var(--border-subtle);
+    }
+    .detail-avatar {
+      width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .detail-hero-text { flex: 1; }
+    .detail-name { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+    .detail-cost-block { text-align: right; }
+    .detail-price { font-size: 24px; font-weight: 700; font-family: var(--font-mono, monospace); }
+    .detail-cycle { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+    .detail-equiv { display: flex; gap: 10px; }
+    .detail-equiv-chip {
+      display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+      border: 1px solid var(--border-subtle); border-radius: 8px; background: var(--bg-hover);
+    }
+    .equiv-label { font-size: 11px; color: var(--text-tertiary); font-weight: 500; }
+    .equiv-value { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono, monospace); }
+
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+      border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden;
+      background: var(--border-subtle);
+    }
+    .detail-field {
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 12px 14px; background: var(--bg-app);
+    }
+    .detail-field-full { grid-column: 1 / -1; }
+    .detail-field-label {
+      font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+    }
+    .detail-field-value { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .detail-id { font-family: var(--font-mono, monospace); font-size: 10.5px; color: var(--text-tertiary); }
+
     /* ── Import modal ────────────────────────────────── */
     .import-body  { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
     .import-hint  { font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.7; }
@@ -808,11 +1070,25 @@ export class VendorComponent {
     formNotes     = signal('');
     showAdvanced  = signal(false);
     presetApplied = signal(false);
+    showVendorDropdown = signal(false);
+    vendorHighlightIdx = signal(-1);
+
+    readonly POPULAR_KEYS = ['github', 'aws', 'figma', 'slack', 'notion', 'stripe', 'openai', 'vercel', 'datadog', 'adobe'];
+
+    vendorSuggestions = computed(() => {
+        const q = this.formName().toLowerCase().trim();
+        const all = Object.entries(VENDOR_PRESETS).map(([key, val]) => ({
+            key, displayName: this.toDisplayName(key), ...val,
+        }));
+        if (!q) return all.filter(v => this.POPULAR_KEYS.includes(v.key));
+        return all.filter(v => v.key.includes(q) || v.displayName.toLowerCase().includes(q)).slice(0, 9);
+    });
 
     // ── Modal / delete state ──────────────────────────────────────────────
     deleteConfirmId = signal<string | null>(null);
     showImportModal = signal(false);
     importText      = signal('');
+    viewingSub      = signal<Subscription | null>(null);
 
     // ── Computed ──────────────────────────────────────────────────────────
     canSave = computed(() => !!this.formName() && !!this.formRenewal() && this.formPrice() > 0);
@@ -1011,6 +1287,8 @@ export class VendorComponent {
     /** Match typed vendor name against the preset catalog and auto-fill fields. */
     onNameChange(name: string) {
         this.formName.set(name);
+        this.vendorHighlightIdx.set(-1);
+        this.showVendorDropdown.set(true);
         if (this.formMode() !== 'add') return;
         const preset = VENDOR_PRESETS[name.toLowerCase().trim()];
         if (preset) {
@@ -1022,6 +1300,59 @@ export class VendorComponent {
         } else {
             this.presetApplied.set(false);
         }
+    }
+
+    selectVendor(v: { key: string; displayName: string; category: string; billingCycle: 'monthly' | 'yearly'; currency: string }) {
+        this.formName.set(v.displayName);
+        this.formCategory.set(v.category);
+        this.formCycle.set(v.billingCycle);
+        this.formCurrency.set(v.currency);
+        if (this.formMode() === 'add') this.formRenewal.set(this.autoRenewalDate(v.billingCycle));
+        this.presetApplied.set(true);
+        this.showVendorDropdown.set(false);
+        this.vendorHighlightIdx.set(-1);
+    }
+
+    onVendorBlur() {
+        setTimeout(() => this.showVendorDropdown.set(false), 150);
+    }
+
+    onVendorKeydown(e: KeyboardEvent) {
+        if (!this.showVendorDropdown()) return;
+        const list = this.vendorSuggestions();
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.vendorHighlightIdx.update(i => Math.min(i + 1, list.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.vendorHighlightIdx.update(i => Math.max(i - 1, -1));
+        } else if (e.key === 'Enter' && this.vendorHighlightIdx() >= 0) {
+            e.preventDefault();
+            this.selectVendor(list[this.vendorHighlightIdx()]);
+        } else if (e.key === 'Escape') {
+            this.showVendorDropdown.set(false);
+            this.vendorHighlightIdx.set(-1);
+        }
+    }
+
+    categoryIcon(cat: string): string {
+        const icons: Record<string, string> = {
+            software: 'code', infrastructure: 'cloud', design: 'palette',
+            marketing: 'campaign', security: 'shield', analytics: 'bar_chart',
+            communication: 'chat', finance: 'payments', other: 'category',
+        };
+        return icons[cat] ?? 'category';
+    }
+
+    private toDisplayName(key: string): string {
+        const overrides: Record<string, string> = {
+            'aws': 'AWS', 'gcp': 'GCP', '1password': '1Password',
+            'github': 'GitHub', 'github copilot': 'GitHub Copilot',
+            'gitlab': 'GitLab', 'google cloud': 'Google Cloud',
+            'google workspace': 'Google Workspace', 'microsoft teams': 'Microsoft Teams',
+            'adobe creative cloud': 'Adobe Creative Cloud', 'new relic': 'New Relic',
+        };
+        return overrides[key] ?? key.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
 
     /** Change cycle and auto-recalculate the renewal date (add mode only). */
@@ -1099,6 +1430,26 @@ export class VendorComponent {
 
     statusMeta(status: string | undefined | null): { label: string; color: string; bg: string } {
         return STATUS_META[status || 'active'] ?? STATUS_META['active'];
+    }
+
+    monthlyCost(sub: Subscription): string {
+        const sym = this.currencySymbol(sub.currency);
+        const val = sub.billingCycle === 'yearly' ? sub.price / 12 : sub.price;
+        return `${sym}${val.toFixed(2)}/mo`;
+    }
+
+    yearlyCost(sub: Subscription): string {
+        const sym = this.currencySymbol(sub.currency);
+        const val = sub.billingCycle === 'monthly' ? sub.price * 12 : sub.price;
+        return `${sym}${val.toFixed(2)}/yr`;
+    }
+
+    openDetails(sub: Subscription) { this.viewingSub.set(sub); }
+    closeDetails() { this.viewingSub.set(null); }
+
+    editFromDetails(sub: Subscription) {
+        this.closeDetails();
+        setTimeout(() => this.openEditForm(sub), 50);
     }
 
     currencySymbol(currency: string | undefined): string {
