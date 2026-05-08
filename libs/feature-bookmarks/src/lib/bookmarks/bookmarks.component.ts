@@ -65,6 +65,20 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   // ── Keyboard shortcuts help ──────────────────────────────────────────────────
   showShortcutsHelp = signal<boolean>(false);
 
+  // ── AI Assistant panel ───────────────────────────────────────────────────────
+  showAssistant = signal<boolean>(false);
+  aiInput = signal<string>('');
+  aiLoading = signal<boolean>(false);
+  aiMessages = signal<{ role: 'user' | 'assistant'; text: string }[]>([]);
+
+  readonly aiSuggestions = [
+    'What topics do my bookmarks cover?',
+    'Which bookmarks have I never visited?',
+    'Suggest tags for untagged bookmarks',
+    'Which bookmarks are my most visited?',
+    'Find similar or duplicate bookmarks',
+  ];
+
   // ── Computed ─────────────────────────────────────────────────────────────────
   allTags = computed<string[]>(() => {
     const tagSet = new Set<string>();
@@ -442,6 +456,78 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   trackById(_: number, item: Bookmark) { return item.id; }
   trackByFolderId(_: number, f: BookmarkFolder) { return f.id; }
+
+  // ── AI Assistant methods ──────────────────────────────────────────────────────
+  toggleAssistant() { this.showAssistant.update(v => !v); }
+
+  selectSuggestion(text: string) {
+    this.aiInput.set(text);
+    this.sendAiMessage();
+  }
+
+  async sendAiMessage() {
+    const text = this.aiInput().trim();
+    if (!text || this.aiLoading()) return;
+
+    this.aiMessages.update(m => [...m, { role: 'user', text }]);
+    this.aiInput.set('');
+    this.aiLoading.set(true);
+
+    await new Promise(r => setTimeout(r, 900 + Math.random() * 500));
+
+    const bookmarks = this.store.bookmarks();
+    const active = bookmarks.filter(b => !b.isArchived);
+    const tags = this.allTags();
+    const folders = this.store.bookmarkFolders();
+    const q = text.toLowerCase();
+    let response = '';
+
+    if (q.includes('topic') || q.includes('cover')) {
+      response = tags.length
+        ? `Your bookmarks span ${tags.length} topic${tags.length > 1 ? 's' : ''}: ${tags.slice(0, 8).map(t => `#${t}`).join(', ')}${tags.length > 8 ? ` and ${tags.length - 8} more` : ''}.`
+        : `Your bookmarks don't have tags yet. Adding tags will help organize and discover topics easily.`;
+    } else if (q.includes('unvisited') || q.includes('never visited') || q.includes('haven')) {
+      const unvisited = active.filter(b => !b.lastVisited);
+      response = unvisited.length
+        ? `You have ${unvisited.length} bookmark${unvisited.length > 1 ? 's' : ''} you've never opened: ${unvisited.slice(0, 3).map(b => b.title).join(', ')}${unvisited.length > 3 ? `… and ${unvisited.length - 3} more` : '.'}`
+        : `You've visited all your bookmarks at least once — great engagement!`;
+    } else if (q.includes('most visited') || q.includes('popular')) {
+      const top = [...active].sort((a, b) => (b.visitCount ?? 0) - (a.visitCount ?? 0)).filter(b => (b.visitCount ?? 0) > 0).slice(0, 5);
+      response = top.length
+        ? `Top bookmarks by visits:\n${top.map((b, i) => `${i + 1}. ${b.title} — ${b.visitCount} visit${b.visitCount !== 1 ? 's' : ''}`).join('\n')}`
+        : `No visit data yet. Open bookmarks through the app to start tracking.`;
+    } else if (q.includes('tag') || q.includes('untagged')) {
+      const untagged = active.filter(b => !b.tags?.length);
+      response = untagged.length
+        ? `${untagged.length} bookmark${untagged.length > 1 ? 's are' : ' is'} untagged: ${untagged.slice(0, 3).map(b => b.title).join(', ')}${untagged.length > 3 ? ` and ${untagged.length - 3} more` : ''}. Consider tagging for easier discovery.`
+        : `All your active bookmarks are tagged — great organization!`;
+    } else if (q.includes('duplicate') || q.includes('similar')) {
+      const domains = active.map(b => { try { return new URL(b.url).hostname; } catch { return ''; } });
+      const dupes = domains.filter((d, i) => d && domains.indexOf(d) !== i);
+      response = dupes.length
+        ? `Found ${dupes.length} bookmark${dupes.length > 1 ? 's' : ''} sharing a domain with another. Review your collection to remove duplicates.`
+        : `No obvious duplicates detected across your ${active.length} bookmarks.`;
+    } else {
+      response = `You have ${active.length} active bookmark${active.length !== 1 ? 's' : ''} across ${folders.length} folder${folders.length !== 1 ? 's' : ''} and ${tags.length} tag${tags.length !== 1 ? 's' : ''}. Try asking about topics, tags, visit history, or duplicates.`;
+    }
+
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    this.aiLoading.set(false);
+
+    setTimeout(() => {
+      const el = document.querySelector('.ai-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 50);
+  }
+
+  onAiKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      this.sendAiMessage();
+    }
+  }
+
+  clearAiChat() { this.aiMessages.set([]); }
 
   closeAllModals() {
     this.showAddModal.set(false);

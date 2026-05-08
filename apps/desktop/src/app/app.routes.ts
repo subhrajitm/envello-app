@@ -108,7 +108,7 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'profiles',
+    path: 'projects',
     loadComponent: () => import('@envello/ui').then(m => m.ProfileManagerComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },

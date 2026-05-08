@@ -32,7 +32,7 @@ export class WorkspaceProfileService {
     if (profiles.length === 0) {
       profiles = [{ 
         id: 'default', 
-        name: 'Default Profile', 
+        name: 'All Projects',
         color: '#34d399',
         createdAt: new Date().toISOString(), 
         lastAccessed: new Date().toISOString() 

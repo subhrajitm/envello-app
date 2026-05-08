@@ -1,12 +1,12 @@
 <div class="orbit-page">
     <header class="orbit-header">
         <div class="orbit-header-left">
-            <h1 class="orbit-title">{{ userName() }}'s profiles</h1>
+            <h1 class="orbit-title">Projects</h1>
         </div>
         <div class="orbit-header-right">
             <button class="create-profile-btn" (click)="openAddModal()">
                 <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
-                New Profile
+                New Project
             </button>
         </div>
     </header>
@@ -62,24 +62,24 @@
 <!-- Add Profile Modal -->
 <env-modal
     [isOpen]="isAddModalOpen()"
-    title="Create Local Profile"
+    title="New Project"
     size="sm"
     (closed)="cancelAdd()"
 >
     <!-- Same body & footer as before -->
     <div body class="flex flex-col gap-4">
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Profile Name</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Name</label>
             <input type="text"
                 class="form-input w-full"
-                placeholder="e.g., Personal, Client A, Side Project"
+                placeholder="e.g., Personal, Client A, Work"
                 style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
                 [ngModel]="newProfileName()" (ngModelChange)="newProfileName.set($event)"
                 (keyup.enter)="confirmAdd()"
                 autofocus
             >
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Data created in this profile (notes, passwords, subscriptions) will be isolated to this local workspace.
+                Data in this project (notes, tasks, subscriptions) will be isolated from other projects.
             </p>
         </div>
     </div>
@@ -88,21 +88,21 @@
             Cancel
         </button>
         <button class="btn-primary" (click)="confirmAdd()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; font-size: 13px; font-weight: 600;">
-            Create Profile
+            Create Project
         </button>
     </ng-container>
 </env-modal>
 
-<!-- Edit Profile Modal -->
+<!-- Edit Project Modal -->
 <env-modal
     [isOpen]="isEditModalOpen()"
-    title="Edit Profile"
+    title="Edit Project"
     size="sm"
     (closed)="cancelEdit()"
 >
     <div body class="flex flex-col gap-5">
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Profile Name</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Name</label>
             <input type="text"
                 class="form-input w-full"
                 style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
@@ -113,7 +113,7 @@
         </div>
         
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Profile Theme</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Color</label>
             <div class="color-picker flex items-center gap-3">
                 @for (color of ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#6366f1']; track color) {
                 <button type="button" 
@@ -128,7 +128,7 @@
                 }
             </div>
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Select a distinguishing color to identify this isolated environment easily.
+                Pick a color to visually distinguish this project.
             </p>
         </div>
     </div>
@@ -145,7 +145,7 @@
 <!-- Delete Profile Modal -->
 <env-modal
     [isOpen]="isDeleteModalOpen()"
-    title="Completely Delete Profile?"
+    title="Delete Project?"
     size="sm"
     (closed)="cancelDelete()"
 >
@@ -155,7 +155,7 @@
             <div class="warning-content">
                 <h4 style="color: #ef4444; margin: 0 0 4px 0; font-size: 13px; font-weight: 600;">Proceed with caution</h4>
                 <p style="color: var(--text-secondary); font-size: 12px; line-height: 1.5; margin: 0;">
-                    Are you sure you want to delete this profile? All its isolated data, including notes, settings, and subscriptions will be <strong>unrecoverable</strong>.
+                    All data in this project — notes, tasks, and subscriptions — will be permanently <strong>deleted and unrecoverable</strong>.
                 </p>
             </div>
         </div>
