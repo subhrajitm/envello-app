@@ -73,6 +73,36 @@
             {{ getThemeIcon() }}
           </span>
         </button>
+        <!-- Project Switcher -->
+        <div class="ps-wrap">
+          <button type="button" class="ps-btn" (click)="toggleProjectSwitcher()" title="Switch project">
+            <span class="ps-dot" [style.background]="activeProject().color"></span>
+            <span class="ps-name">{{ activeProject().name }}</span>
+            <span class="material-symbols-outlined ps-chevron">expand_more</span>
+          </button>
+
+          @if (showProjectSwitcher()) {
+            <div class="ps-dropdown">
+              <div class="ps-dropdown-label">Projects</div>
+              @for (p of projects(); track p.id) {
+                <button class="ps-item" [class.ps-item-active]="activeProject().id === p.id" (click)="switchProject(p.id)">
+                  <span class="ps-item-dot" [style.background]="p.color"></span>
+                  <span class="ps-item-name">{{ p.name }}</span>
+                  @if (activeProject().id === p.id) {
+                    <span class="material-symbols-outlined ps-check">check</span>
+                  }
+                </button>
+              }
+              <div class="ps-divider"></div>
+              <button class="ps-manage" (click)="manageProjects()">
+                <span class="material-symbols-outlined" style="font-size:15px">settings</span>
+                Manage Projects
+              </button>
+            </div>
+            <div class="ps-backdrop" (click)="closeProjectSwitcher()"></div>
+          }
+        </div>
+
         <button type="button" class="profile-menu" (click)="openProfileMenu()" aria-label="Profile menu">
           <div class="profile-avatar">
             @if (user()?.avatar) {

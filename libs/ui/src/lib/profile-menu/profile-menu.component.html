@@ -33,29 +33,6 @@
         </div>
     </div>
 
-    <!-- Local Workspace Profiles -->
-    <div class="menu-section">
-        <h4 style="font-size: 11px; text-transform: uppercase; margin: 8px 16px; color: var(--text-tertiary);">Active Profile</h4>
-        <div class="menu-item flex items-center w-full" style="gap: 12px; background: var(--surface-active); cursor: default; margin-bottom: 6px;">
-            <div [style.background-color]="activeWorkspace().color" style="width: 10px; height: 10px; border-radius: 50%;"></div>
-            <span style="font-weight: 500;">{{ activeWorkspace().name }}</span>
-            <span class="material-symbols-outlined ml-auto" style="font-size: 16px; color: var(--text-secondary);">check</span>
-        </div>
-        
-        <div class="flex items-center gap-2 px-2 pb-1">
-            <button class="menu-item flex items-center justify-center gap-1.5 flex-1" style="margin: 0; padding: 8px; border: 1px solid var(--border-subtle); background: transparent;" (click)="addWorkspace()" title="Add Profile">
-                <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
-                <span style="font-size: 12px; font-weight: 500;">Add</span>
-            </button>
-            <button class="menu-item flex items-center justify-center gap-1.5 flex-1" style="margin: 0; padding: 8px; border: 1px solid var(--border-subtle); background: transparent;" (click)="manageProfiles()" title="Manage Profiles">
-                <span class="material-symbols-outlined" style="font-size: 16px;">manage_search</span>
-                <span style="font-size: 12px; font-weight: 500;">Manage</span>
-            </button>
-        </div>
-    </div>
-
-    <div class="menu-divider"></div>
-
     <!-- Menu Items -->
     <div class="menu-section flex flex-col">
         <button class="menu-item flex items-center gap-2 w-full" (click)="openProfile()">

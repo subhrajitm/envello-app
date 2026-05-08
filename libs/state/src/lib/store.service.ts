@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
@@ -75,6 +75,13 @@ export class StoreService {
             tags: ['Thriller']
         },
     ]);
+
+    currentProjectId = signal<string | null>('1'); // Default to first project
+
+    currentProject = computed(() => {
+        const projectId = this.currentProjectId();
+        return projectId ? this.projects().find(p => p.id === projectId) || null : null;
+    });
 
     private bin = inject(BinService);
     private db = inject(DataService);
@@ -317,6 +324,10 @@ export class StoreService {
         this.addActivity('Project created: ' + project.title, 'system');
         // Upsert project? Not yet persisted in original code, leaving as TODO or implementing
         this.db.upsert('projects', project).catch(e => console.error('[StoreService] persist project failed', e));
+    }
+
+    setCurrentProject(projectId: string | null) {
+        this.currentProjectId.set(projectId);
     }
 
     updateProject(id: string, updates: Partial<Project>) {

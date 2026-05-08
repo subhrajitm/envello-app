@@ -5,6 +5,7 @@ import { NotificationService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
 import { BinService } from '@envello/core';
+import { WorkspaceProfileService } from '@envello/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
@@ -47,7 +48,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
   notificationService = inject(NotificationService);
   userService = inject(UserService);
   private binService = inject(BinService);
+  private workspaceService = inject(WorkspaceProfileService);
   private router = inject(Router);
+
+  // Project switcher
+  showProjectSwitcher = signal(false);
+  projects = this.workspaceService.profiles;
+  activeProject = this.workspaceService.activeProfile;
+
+  toggleProjectSwitcher() { this.showProjectSwitcher.update(v => !v); }
+  closeProjectSwitcher() { this.showProjectSwitcher.set(false); }
+
+  switchProject(id: string) {
+    this.closeProjectSwitcher();
+    if (this.activeProject().id !== id) this.workspaceService.switchProfile(id);
+  }
+
+  manageProjects() {
+    this.closeProjectSwitcher();
+    this.router.navigate(['/projects']);
+  }
 
   binCount = computed(() => this.binService.items().length);
 
