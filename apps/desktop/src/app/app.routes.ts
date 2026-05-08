@@ -21,26 +21,22 @@ export const routes: Routes = [
   },
 
   {
-    path: 'novels',
+    path: 'write',
     loadComponent: () => import('@envello/feature-novels').then(m => m.NovelsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
-    path: 'novels/:id',
+    path: 'write/:id',
     loadComponent: () => import('@envello/feature-novels').then(m => m.NovelEditorComponent),
     canActivate: [authGuard],
     data: { immersive: true },
   },
+  { path: 'novels', redirectTo: 'write', pathMatch: 'full' },
+  { path: 'articles', redirectTo: 'write', pathMatch: 'full' },
   {
     path: 'research',
     loadComponent: () => import('./components/research/research.component').then(m => m.ResearchComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
-    path: 'articles',
-    loadComponent: () => import('./components/articles/articles.component').then(m => m.ArticlesComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

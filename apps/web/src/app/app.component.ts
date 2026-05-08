@@ -90,9 +90,8 @@ export class AppComponent implements OnInit, OnDestroy {
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
       'workspace': 'Workspace',
-      'novels': 'Novels/Fiction',
+      'write': 'Write',
       'research': 'Research',
-      'articles': 'Articles/Blogs',
       'daily-notes': 'Daily Notes',
       'tasks': 'Tasks/Todos',
       'meetings': 'Meetings',
