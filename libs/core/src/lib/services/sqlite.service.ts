@@ -410,9 +410,14 @@ export class SqliteService {
         renewalDate TEXT,
         ownerId TEXT,
         projectId TEXT,
-        notes TEXT
+        notes TEXT,
+        status TEXT,
+        currency TEXT
       )
     `);
+        // Migration: add status/currency to existing databases that lack them
+        try { await db.execute(`ALTER TABLE subscriptions ADD COLUMN status TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE subscriptions ADD COLUMN currency TEXT`); } catch { /* already exists */ }
 
         // Credential Subscription Links
         await db.execute(`
@@ -1089,11 +1094,13 @@ export class SqliteService {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM subscriptions WHERE id = $1', [item.id]);
         if (exists.length > 0) {
-            await db.execute(`UPDATE subscriptions SET name=$1, category=$2, price=$3, billingCycle=$4, renewalDate=$5, ownerId=$6, projectId=$7, notes=$8 WHERE id=$9`,
-                [item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes, item.id]);
+            await db.execute(
+                `UPDATE subscriptions SET name=$1, category=$2, price=$3, billingCycle=$4, renewalDate=$5, ownerId=$6, projectId=$7, notes=$8, status=$9, currency=$10 WHERE id=$11`,
+                [item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes, item.status, item.currency, item.id]);
         } else {
-            await db.execute(`INSERT INTO subscriptions (id, name, category, price, billingCycle, renewalDate, ownerId, projectId, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [item.id, item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes]);
+            await db.execute(
+                `INSERT INTO subscriptions (id, name, category, price, billingCycle, renewalDate, ownerId, projectId, notes, status, currency) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                [item.id, item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes, item.status, item.currency]);
         }
         await this.reloadSubscriptions();
     }

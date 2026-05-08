@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
@@ -6,15 +6,15 @@ import { Subscription } from '@envello/domain';
 import { ModalComponent } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
-    software:    '#60a5fa',
+    software:       '#60a5fa',
     infrastructure: '#a78bfa',
-    design:      '#f472b6',
-    marketing:   '#4ade80',
-    security:    '#fb923c',
-    analytics:   '#fbbf24',
-    communication: '#34d399',
-    finance:     '#e879f9',
-    other:       '#94a3b8',
+    design:         '#f472b6',
+    marketing:      '#4ade80',
+    security:       '#fb923c',
+    analytics:      '#fbbf24',
+    communication:  '#34d399',
+    finance:        '#e879f9',
+    other:          '#94a3b8',
 };
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
@@ -25,6 +25,68 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
 
+/** Auto-fill category, billing cycle, and currency for ~60 known SaaS vendors. */
+const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly' | 'yearly'; currency: string }> = {
+    'github':               { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'github copilot':       { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'gitlab':               { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'aws':                  { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'amazon web services':  { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'gcp':                  { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'google cloud':         { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'azure':                { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'vercel':               { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'netlify':              { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'heroku':               { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'digitalocean':         { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'cloudflare':           { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'linode':               { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'cloudinary':           { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'render':               { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'railway':              { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'supabase':             { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'planetscale':          { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'neon':                 { category: 'infrastructure',  billingCycle: 'monthly', currency: 'USD' },
+    'figma':                { category: 'design',          billingCycle: 'monthly', currency: 'USD' },
+    'sketch':               { category: 'design',          billingCycle: 'yearly',  currency: 'USD' },
+    'adobe':                { category: 'design',          billingCycle: 'monthly', currency: 'USD' },
+    'adobe creative cloud': { category: 'design',          billingCycle: 'monthly', currency: 'USD' },
+    'canva':                { category: 'design',          billingCycle: 'monthly', currency: 'USD' },
+    'framer':               { category: 'design',          billingCycle: 'monthly', currency: 'USD' },
+    'slack':                { category: 'communication',   billingCycle: 'monthly', currency: 'USD' },
+    'discord':              { category: 'communication',   billingCycle: 'monthly', currency: 'USD' },
+    'zoom':                 { category: 'communication',   billingCycle: 'monthly', currency: 'USD' },
+    'microsoft teams':      { category: 'communication',   billingCycle: 'monthly', currency: 'USD' },
+    'google workspace':     { category: 'communication',   billingCycle: 'monthly', currency: 'USD' },
+    'twilio':               { category: 'communication',   billingCycle: 'monthly', currency: 'USD' },
+    'notion':               { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'linear':               { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'jira':                 { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'asana':                { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'trello':               { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'clickup':              { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'monday':               { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'openai':               { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'anthropic':            { category: 'software',        billingCycle: 'monthly', currency: 'USD' },
+    'datadog':              { category: 'analytics',       billingCycle: 'monthly', currency: 'USD' },
+    'sentry':               { category: 'analytics',       billingCycle: 'monthly', currency: 'USD' },
+    'new relic':            { category: 'analytics',       billingCycle: 'monthly', currency: 'USD' },
+    'pagerduty':            { category: 'analytics',       billingCycle: 'monthly', currency: 'USD' },
+    'mixpanel':             { category: 'analytics',       billingCycle: 'monthly', currency: 'USD' },
+    'mailchimp':            { category: 'marketing',       billingCycle: 'monthly', currency: 'USD' },
+    'sendgrid':             { category: 'marketing',       billingCycle: 'monthly', currency: 'USD' },
+    'hubspot':              { category: 'marketing',       billingCycle: 'monthly', currency: 'USD' },
+    'postmark':             { category: 'marketing',       billingCycle: 'monthly', currency: 'USD' },
+    'resend':               { category: 'marketing',       billingCycle: 'monthly', currency: 'USD' },
+    'stripe':               { category: 'finance',         billingCycle: 'monthly', currency: 'USD' },
+    'quickbooks':           { category: 'finance',         billingCycle: 'monthly', currency: 'USD' },
+    'auth0':                { category: 'security',        billingCycle: 'monthly', currency: 'USD' },
+    '1password':            { category: 'security',        billingCycle: 'yearly',  currency: 'USD' },
+    'lastpass':             { category: 'security',        billingCycle: 'yearly',  currency: 'USD' },
+    'bitwarden':            { category: 'security',        billingCycle: 'yearly',  currency: 'USD' },
+    'tailscale':            { category: 'security',        billingCycle: 'monthly', currency: 'USD' },
+};
+
 @Component({
     selector: 'app-vendor',
     standalone: true,
@@ -32,308 +94,467 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
     template: `
     <div class="orbit-page">
 
-
+      <!-- ── Header ─────────────────────────────────────────────────────── -->
       <header class="orbit-header">
         <div class="orbit-header-left">
           <h1 class="orbit-title">Subscriptions</h1>
-          <p class="orbit-subtitle">Check out the most recent list of subscriptions!</p>
+          <p class="orbit-subtitle">
+            {{ activeCount() }} active &nbsp;·&nbsp;
+            {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalMonthlyCost() | number:'1.0-0' }}/mo &nbsp;·&nbsp;
+            {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalYearlyCost() | number:'1.0-0' }}/yr
+          </p>
         </div>
         <div class="orbit-header-right">
           <div class="orbit-search-wrap">
             <span class="material-symbols-outlined orbit-search-icon">search</span>
             <input class="orbit-search-input" type="text"
               [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-              placeholder="Search here...">
+              placeholder="Search subscriptions…">
           </div>
-          <button class="orbit-icon-btn" (click)="clearFilters()">
-            <span class="material-symbols-outlined">filter_list</span>
+
+          <button class="orbit-icon-btn" [class.active-filter]="hasActiveFilters()"
+            title="Clear all filters" (click)="clearFilters()">
+            <span class="material-symbols-outlined">filter_list_off</span>
           </button>
-          <button class="orbit-icon-btn orbit-date-btn">
-            <span class="material-symbols-outlined">calendar_today</span>
-            <span>Timeline</span>
-          </button>
-          
-          <div class="orbit-add-dropdown-container group relative">
-            <button class="orbit-btn-primary" (click)="openAddForm()">
-              Add Subscription
-              <span class="material-symbols-outlined icon-right">expand_more</span>
-            </button>
-            <div class="orbit-dropdown-menu absolute top-full right-0 mt-2 hidden group-hover:flex flex-col z-50 shadow-lg">
-               <button class="orbit-dropdown-item" (click)="openAddForm()">
-                 <span class="material-symbols-outlined">add</span> Add Manual
-               </button>
-               <button class="orbit-dropdown-item ai-item">
-                 <span class="material-symbols-outlined text-green">auto_awesome</span> Generate with AI
-               </button>
-            </div>
+
+          <div class="orbit-filter-pills">
+            <button class="orbit-pill" [class.pill-active]="selectedStatus() === 'active'"
+              (click)="toggleStatusFilter('active')">Active</button>
+            <button class="orbit-pill" [class.pill-active]="selectedStatus() === 'paused'"
+              (click)="toggleStatusFilter('paused')">Paused</button>
+            <button class="orbit-pill" [class.pill-active]="selectedStatus() === 'cancelled'"
+              (click)="toggleStatusFilter('cancelled')">Cancelled</button>
+            <button class="orbit-pill" [class.pill-active]="selectedCycle() === 'monthly'"
+              (click)="toggleCycleFilter('monthly')">Monthly</button>
+            <button class="orbit-pill" [class.pill-active]="selectedCycle() === 'yearly'"
+              (click)="toggleCycleFilter('yearly')">Yearly</button>
           </div>
+
+          <button class="orbit-icon-btn" title="Bulk import from text" (click)="showImportModal.set(true)">
+            <span class="material-symbols-outlined">upload</span>
+          </button>
+
+          <button class="orbit-btn-primary" (click)="openAddForm()">
+            <span class="material-symbols-outlined">add</span>
+            Add Subscription
+          </button>
         </div>
       </header>
 
-      @if (formMode() !== null) {
-      <env-modal 
-        [isOpen]="true" 
-        [title]="formMode() === 'add' ? 'New Subscription' : 'Edit Subscription'" 
-        size="large" 
-        (closed)="closeForm()">
-        <div header style="display:flex; align-items:center; margin-left: 8px;">
-          <span class="material-symbols-outlined" style="color:var(--accent-primary);font-size:18px">
-            {{ formMode() === 'add' ? 'add_circle' : 'edit' }}
-          </span>
+      <!-- ── Upcoming renewals banner (≤14 days) ────────────────────────── -->
+      @if (upcomingBanner().length > 0) {
+        <div class="orbit-banner">
+          <span class="material-symbols-outlined banner-icon">notifications_active</span>
+          <span class="banner-label">Renewing soon:</span>
+          @for (sub of upcomingBanner(); track sub.id) {
+            @let bdays = daysUntil(sub.renewalDate);
+            <span class="banner-chip" [class.banner-urgent]="bdays !== null && bdays <= 3">
+              {{ sub.name }}
+              <span class="banner-days">{{ bdays === 0 ? 'today' : 'in ' + bdays + 'd' }}</span>
+            </span>
+          }
         </div>
-        <div body class="vendor-form-body">
-          <div class="vendor-form-row">
-            <div class="form-group" style="flex:2;margin:0">
-              <label class="form-label">Vendor / Service Name</label>
-              <input type="text" class="form-input"
-                [ngModel]="formName()" (ngModelChange)="formName.set($event)"
-                placeholder="e.g. AWS, GitHub, Figma">
-            </div>
-            <div class="form-group" style="flex:1;margin:0">
-              <label class="form-label">Category</label>
-              <input type="text" class="form-input" list="cat-list"
-                [ngModel]="formCategory()" (ngModelChange)="formCategory.set($event)"
-                placeholder="software">
-              <datalist id="cat-list">
-                @for (c of categoryOptions; track c) { <option [value]="c"> }
-              </datalist>
-            </div>
-            <div class="form-group" style="flex:1;margin:0">
-              <label class="form-label">Project Scope</label>
-              <input type="text" class="form-input"
-                [ngModel]="formProjectId()" (ngModelChange)="formProjectId.set($event)"
-                placeholder="global">
-            </div>
-          </div>
-          <div class="vendor-form-row" style="margin-top:10px">
-            <div class="form-group" style="width:110px;margin:0">
-              <label class="form-label">Price</label>
-              <input type="number" step="0.01" min="0" class="form-input"
-                [ngModel]="formPrice()" (ngModelChange)="formPrice.set($event)"
-                placeholder="0.00">
-            </div>
-            <div class="form-group" style="width:80px;margin:0">
-              <label class="form-label">Currency</label>
-              <select class="form-select"
-                [ngModel]="formCurrency()" (ngModelChange)="formCurrency.set($event)">
-                @for (cur of currencies; track cur) { <option [value]="cur">{{ cur }}</option> }
-              </select>
-            </div>
-            <div class="form-group" style="width:130px;margin:0">
-              <label class="form-label">Billing Cycle</label>
-              <select class="form-select"
-                [ngModel]="formCycle()" (ngModelChange)="formCycle.set($event)">
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-            <div class="form-group" style="width:155px;margin:0">
-              <label class="form-label">Next Renewal</label>
-              <input type="date" class="form-input"
-                [ngModel]="formRenewal()" (ngModelChange)="formRenewal.set($event)">
-            </div>
-             <div class="form-group" style="width:130px;margin:0">
-              <label class="form-label">Status</label>
-              <select class="form-select"
-                [ngModel]="formStatus()" (ngModelChange)="formStatus.set($event)">
-                <option value="active">Active</option>
-                <option value="paused">Paused</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div class="form-group" style="flex:1;margin:0">
-              <label class="form-label">Notes</label>
-              <input type="text" class="form-input"
-                [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"
-                placeholder="Optional notes…">
-            </div>
-          </div>
-        </div>
-        <div footer class="vendor-form-actions" style="display: flex; justify-content: flex-end; gap: 8px; width: 100%;">
-          <button class="vendor-cancel-btn" (click)="closeForm()" style="padding:8px 16px; background:transparent; border:1px solid var(--border-subtle); color:var(--text-secondary); border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
-            Cancel
-          </button>
-          <button class="vendor-save-btn" (click)="saveForm()"
-            [disabled]="!formName() || !formRenewal()">
-            <span class="material-symbols-outlined">save</span>
-            {{ formMode() === 'add' ? 'Save' : 'Update' }}
-          </button>
-        </div>
-      </env-modal>
       }
 
-      <div class="orbit-table-container">
-        @if (filteredSubs().length > 0) {
-        <table class="orbit-table">
-          <thead>
-            <tr>
-              <th (click)="setSort('name')" class="sortable">
-                Client Name <span class="material-symbols-outlined sort-icon">unfold_more</span>
-              </th>
-              <th>Category</th>
-              <th (click)="setSort('price')" class="sortable">
-                Amount <span class="material-symbols-outlined sort-icon">unfold_more</span>
-              </th>
-              <th>Cycle</th>
-              <th (click)="setSort('renewalDate')" class="sortable">
-                Next Renewal <span class="material-symbols-outlined sort-icon">unfold_more</span>
-              </th>
-              <th>Status</th>
-              <th>Scope</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (sub of filteredSubs(); track sub.id) {
-            <tr class="orbit-row" [class.paused]="sub.status === 'paused'" [class.cancelled]="sub.status === 'cancelled'">
-              <td>
-                <div class="orbit-name-cell">
-                  <div class="orbit-avatar" [style.background]="avatarBg(sub.name)">
-                    <span class="avatar-text">{{ sub.name.charAt(0).toUpperCase() }}</span>
-                  </div>
-                  <div>
-                    <div class="orbit-vendor-name">{{ sub.name }}</div>
-                    @if (sub.notes) { <div class="orbit-vendor-notes">{{ sub.notes }}</div> }
-                  </div>
-                </div>
-              </td>
-              <td><span class="orbit-text capitalize">{{ sub.category || '—' }}</span></td>
-              <td><span class="orbit-price-text">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</span></td>
-              <td><span class="orbit-text capitalize">{{ sub.billingCycle }}</span></td>
-              <td>
-                <div class="orbit-renewal-wrap">
-                  <span class="orbit-text">{{ formatDate(sub.renewalDate) }}</span>
-                  @if (isUpcoming(sub.renewalDate) && sub.status !== 'cancelled') {
-                    <span class="orbit-badge-warn">Soon</span>
+      <!-- ── Add / Edit Modal ────────────────────────────────────────────── -->
+      @if (formMode() !== null) {
+        <env-modal
+          [isOpen]="true"
+          [title]="formMode() === 'add' ? 'New Subscription' : 'Edit Subscription'"
+          size="large"
+          (closed)="closeForm()">
+
+          <div body class="vendor-form-body">
+
+            <!-- Row 1: Name + Category -->
+            <div class="form-row">
+              <div class="form-group fg-2">
+                <label class="form-label">Service Name</label>
+                <div class="name-wrap">
+                  <input type="text" class="form-input vendor-name-input"
+                    [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
+                    placeholder="e.g. GitHub, AWS, Figma"
+                    autocomplete="off" list="vendor-list">
+                  <datalist id="vendor-list">
+                    @for (v of vendorNames; track v) { <option [value]="v"> }
+                  </datalist>
+                  @if (presetApplied()) {
+                    <span class="preset-badge">
+                      <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
+                      preset
+                    </span>
                   }
                 </div>
-              </td>
-              <td>
-                 <span class="orbit-status-badge" 
-                    [style.color]="statusMeta(sub.status).color"
-                    [style.background]="statusMeta(sub.status).bg">
-                    {{ statusMeta(sub.status).label }}
-                 </span>
-              </td>
-              <td><span class="orbit-text">{{ sub.projectId || '—' }}</span></td>
-              <td class="orbit-actions-cell">
-                 @if (deleteConfirmId() === sub.id) {
-                    <div class="orbit-confirm">
-                       <button class="orbit-btn-danger" (click)="doDelete(sub.id)">Y</button>
-                       <button class="orbit-btn-cancel" (click)="deleteConfirmId.set(null)">N</button>
+              </div>
+              <div class="form-group fg-1">
+                <label class="form-label">Category</label>
+                <input type="text" class="form-input" list="cat-list"
+                  [ngModel]="formCategory()" (ngModelChange)="formCategory.set($event)"
+                  placeholder="software">
+                <datalist id="cat-list">
+                  @for (c of categoryOptions; track c) { <option [value]="c"> }
+                </datalist>
+              </div>
+            </div>
+
+            <!-- Row 2: Price · Cycle · Renewal -->
+            <div class="form-row" style="margin-top:12px">
+
+              <!-- Price with inline currency toggle -->
+              <div class="form-group">
+                <label class="form-label">Price</label>
+                <div class="price-wrap">
+                  <button type="button" class="currency-btn"
+                    (click)="rotateCurrency()"
+                    title="Click to change currency ({{ formCurrency() }})">
+                    {{ formCurrency() }}
+                  </button>
+                  <input type="number" step="0.01" min="0" class="form-input price-input"
+                    [ngModel]="formPrice()" (ngModelChange)="formPrice.set($event)"
+                    placeholder="0.00">
+                </div>
+              </div>
+
+              <!-- Billing cycle segmented control -->
+              <div class="form-group">
+                <label class="form-label">Billing Cycle</label>
+                <div class="seg-ctrl">
+                  <button type="button" class="seg-btn"
+                    [class.seg-active]="formCycle() === 'monthly'"
+                    (click)="setCycle('monthly')">Monthly</button>
+                  <button type="button" class="seg-btn"
+                    [class.seg-active]="formCycle() === 'yearly'"
+                    (click)="setCycle('yearly')">Yearly</button>
+                </div>
+              </div>
+
+              <!-- Renewal date + quick-shift shortcuts -->
+              <div class="form-group fg-1">
+                <label class="form-label">Next Renewal</label>
+                <div class="renewal-wrap">
+                  <input type="date" class="form-input renewal-input"
+                    [ngModel]="formRenewal()" (ngModelChange)="formRenewal.set($event)">
+                  <div class="shortcut-row">
+                    <button type="button" class="shortcut-btn" title="+1 month"  (click)="addRenewalOffset(1)">+1m</button>
+                    <button type="button" class="shortcut-btn" title="+3 months" (click)="addRenewalOffset(3)">+3m</button>
+                    <button type="button" class="shortcut-btn" title="+6 months" (click)="addRenewalOffset(6)">+6m</button>
+                    <button type="button" class="shortcut-btn" title="+1 year"   (click)="addRenewalOffset(12)">+1y</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Status segmented control -->
+            <div class="form-row" style="margin-top:12px">
+              <div class="form-group">
+                <label class="form-label">Status</label>
+                <div class="seg-ctrl">
+                  <button type="button" class="seg-btn seg-green"
+                    [class.seg-active]="formStatus() === 'active'"
+                    (click)="formStatus.set('active')">Active</button>
+                  <button type="button" class="seg-btn seg-yellow"
+                    [class.seg-active]="formStatus() === 'paused'"
+                    (click)="formStatus.set('paused')">Paused</button>
+                  <button type="button" class="seg-btn seg-grey"
+                    [class.seg-active]="formStatus() === 'cancelled'"
+                    (click)="formStatus.set('cancelled')">Cancelled</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Advanced: Project Scope + Notes (collapsed by default) -->
+            <button type="button" class="advanced-toggle" (click)="toggleAdvanced()">
+              <span class="material-symbols-outlined" style="font-size:16px">
+                {{ showAdvanced() ? 'expand_less' : 'expand_more' }}
+              </span>
+              Advanced
+            </button>
+            @if (showAdvanced()) {
+              <div class="form-row" style="margin-top:10px">
+                <div class="form-group fg-1">
+                  <label class="form-label">Project Scope</label>
+                  <input type="text" class="form-input"
+                    [ngModel]="formProjectId()" (ngModelChange)="formProjectId.set($event)"
+                    placeholder="global">
+                </div>
+                <div class="form-group fg-2">
+                  <label class="form-label">Notes</label>
+                  <input type="text" class="form-input"
+                    [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"
+                    placeholder="Optional notes…">
+                </div>
+              </div>
+            }
+          </div>
+
+          <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%;align-items:center">
+            @if (!canSave() && formName()) {
+              <span class="save-hint">
+                {{ formPrice() <= 0 ? 'Enter a price' : !formRenewal() ? 'Pick a renewal date' : '' }}
+              </span>
+            }
+            <button type="button" class="vendor-cancel-btn" (click)="closeForm()">Cancel</button>
+            @if (formMode() === 'add') {
+              <button type="button" class="save-another-btn"
+                [disabled]="!canSave()" (click)="saveAndAddAnother()">
+                <span class="material-symbols-outlined">add</span>
+                Save & Add Another
+              </button>
+            }
+            <button type="button" class="vendor-save-btn"
+              [disabled]="!canSave()" (click)="saveForm()">
+              <span class="material-symbols-outlined">save</span>
+              {{ formMode() === 'add' ? 'Save' : 'Update' }}
+            </button>
+          </div>
+        </env-modal>
+      }
+
+      <!-- ── Bulk Import Modal ───────────────────────────────────────────── -->
+      @if (showImportModal()) {
+        <env-modal [isOpen]="true" title="Import Subscriptions" (closed)="showImportModal.set(false)">
+          <div body class="import-body">
+            <p class="import-hint">
+              One subscription per line.<br>
+              Format: <code>Name, Price, Cycle, Category, Currency</code><br>
+              <span style="color:var(--text-tertiary)">Cycle is <code>monthly</code> or <code>yearly</code>. Category and Currency are optional — known vendors are auto-detected.</span>
+            </p>
+            <textarea class="import-textarea"
+              [ngModel]="importText()" (ngModelChange)="importText.set($event)"
+              placeholder="GitHub, 4, monthly&#10;AWS, 150, monthly&#10;Figma, 180, yearly, design&#10;1Password, 36, yearly, security, USD"></textarea>
+            @if (importPreviewCount() > 0) {
+              <p class="import-count">
+                <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">check_circle</span>
+                {{ importPreviewCount() }} subscription{{ importPreviewCount() === 1 ? '' : 's' }} ready to import
+              </p>
+            }
+          </div>
+          <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%">
+            <button class="vendor-cancel-btn" (click)="showImportModal.set(false)">Cancel</button>
+            <button class="vendor-save-btn" [disabled]="importPreviewCount() === 0" (click)="parseAndImport()">
+              <span class="material-symbols-outlined">upload</span>
+              Import {{ importPreviewCount() > 0 ? importPreviewCount() : '' }}
+            </button>
+          </div>
+        </env-modal>
+      }
+
+      <!-- ── Table ─────────────────────────────────────────────────────── -->
+      <div class="orbit-table-container">
+        @if (filteredSubs().length > 0) {
+          <table class="orbit-table">
+            <thead>
+              <tr>
+                <th (click)="setSort('name')" class="sortable">
+                  Service <span class="sort-icon">{{ sortIndicator('name') || '⇅' }}</span>
+                </th>
+                <th>Category</th>
+                <th (click)="setSort('price')" class="sortable">
+                  Amount <span class="sort-icon">{{ sortIndicator('price') || '⇅' }}</span>
+                </th>
+                <th>Cycle</th>
+                <th (click)="setSort('renewalDate')" class="sortable">
+                  Next Renewal <span class="sort-icon">{{ sortIndicator('renewalDate') || '⇅' }}</span>
+                </th>
+                <th>Status <span class="th-hint">click to change</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sub of filteredSubs(); track sub.id) {
+                @let days = daysUntil(sub.renewalDate);
+                <tr class="orbit-row"
+                  [class.paused]="sub.status === 'paused'"
+                  [class.cancelled]="sub.status === 'cancelled'">
+
+                  <td>
+                    <div class="orbit-name-cell">
+                      <div class="orbit-avatar" [style.background]="avatarBg(sub.name)">
+                        <span class="avatar-text">{{ sub.name.charAt(0).toUpperCase() }}</span>
+                      </div>
+                      <div>
+                        <div class="orbit-vendor-name">{{ sub.name }}</div>
+                        @if (sub.notes) {
+                          <div class="orbit-vendor-notes">{{ sub.notes }}</div>
+                        }
+                      </div>
                     </div>
-                 } @else {
-                    <div class="orbit-row-actions relative group/actions">
-                       <button class="orbit-more-btn">
-                         <span class="material-symbols-outlined">more_vert</span>
-                       </button>
-                       <div class="orbit-actions-dropdown absolute right-0 top-[80%] hidden group-hover/actions:flex flex-col z-[100]">
+                  </td>
+
+                  <td><span class="orbit-text capitalize">{{ sub.category || '—' }}</span></td>
+
+                  <td><span class="orbit-price-text">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</span></td>
+
+                  <td><span class="orbit-text capitalize">{{ sub.billingCycle }}</span></td>
+
+                  <td>
+                    <div class="orbit-renewal-wrap">
+                      <span class="orbit-text">{{ formatDate(sub.renewalDate) }}</span>
+                      @if (days !== null && sub.status !== 'cancelled') {
+                        <span class="days-chip"
+                          [class.days-ok]="days > 30"
+                          [class.days-caution]="days <= 30 && days > 7"
+                          [class.days-warn]="days <= 7">
+                          {{ days === 0 ? 'today' : 'in ' + days + 'd' }}
+                        </span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Inline status toggle — single click cycles active → paused → cancelled -->
+                  <td>
+                    <button class="orbit-status-badge status-cycle-btn"
+                      [style.color]="statusMeta(sub.status).color"
+                      [style.background]="statusMeta(sub.status).bg"
+                      (click)="cycleStatus(sub)"
+                      title="Click to cycle status">
+                      {{ statusMeta(sub.status).label }}
+                    </button>
+                  </td>
+
+                  <td class="orbit-actions-cell">
+                    @if (deleteConfirmId() === sub.id) {
+                      <div class="orbit-confirm">
+                        <button class="orbit-btn-danger" (click)="doDelete(sub.id)">Delete</button>
+                        <button class="orbit-btn-cancel" (click)="deleteConfirmId.set(null)">Cancel</button>
+                      </div>
+                    } @else {
+                      <div class="orbit-row-actions relative group/actions">
+                        <button class="orbit-more-btn">
+                          <span class="material-symbols-outlined">more_vert</span>
+                        </button>
+                        <div class="orbit-actions-dropdown absolute right-0 top-[80%] hidden group-hover/actions:flex flex-col z-[100]">
                           <button class="orbit-dropdown-item" (click)="openEditForm(sub)">
-                            <span class="material-symbols-outlined icon-[16px]">edit</span> Edit
+                            <span class="material-symbols-outlined icon-sm">edit</span> Edit
                           </button>
                           <div class="dropdown-divider"></div>
                           <button class="orbit-dropdown-item text-red" (click)="deleteConfirmId.set(sub.id)">
-                             <span class="material-symbols-outlined icon-[16px]">delete</span> Delete
+                            <span class="material-symbols-outlined icon-sm">delete</span> Delete
                           </button>
-                       </div>
-                    </div>
-                 }
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
+                        </div>
+                      </div>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
         } @else {
-           <div class="orbit-empty">
-             <span class="material-symbols-outlined orbit-empty-icon">search_off</span>
-             <p class="orbit-empty-title">No subscriptions found</p>
-             <button class="orbit-clear-btn" (click)="clearFilters()">Clear Filters</button>
-           </div>
+          <div class="orbit-empty">
+            @if (subscriptionStore.subscriptions().length === 0) {
+              <span class="material-symbols-outlined orbit-empty-icon">subscriptions</span>
+              <p class="orbit-empty-title">No subscriptions yet</p>
+              <p class="orbit-empty-sub">Track your SaaS costs — add one manually or import a list.</p>
+              <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
+                <button class="orbit-btn-primary" (click)="openAddForm()">
+                  <span class="material-symbols-outlined">add</span> Add Subscription
+                </button>
+                <button class="orbit-clear-btn" (click)="showImportModal.set(true)">
+                  <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">upload</span>
+                  Import
+                </button>
+              </div>
+            } @else {
+              <span class="material-symbols-outlined orbit-empty-icon">search_off</span>
+              <p class="orbit-empty-title">No subscriptions match your filters</p>
+              <button class="orbit-clear-btn" (click)="clearFilters()">Clear Filters</button>
+            }
+          </div>
         }
       </div>
     </div>
   `,
     styles: [`
     :host { display: block; height: 100vh; background: var(--bg-app); overflow: hidden; }
-    
+
     .orbit-page {
       display: flex; flex-direction: column; height: 100%;
       padding: 24px 32px 20px; box-sizing: border-box;
-      background: var(--bg-app);
-      color: var(--text-primary);
+      background: var(--bg-app); color: var(--text-primary);
     }
-    
-    .icon-sm { font-size: 16px; }
-    .icon-right { margin-left: auto; }
-    .capitalize { text-transform: capitalize; }
-    .text-green { color: #4ade80 !important; }
-    .text-red { color: var(--accent-red) !important; }
-    .icon-\\[16px\\] { font-size: 16px; }
 
-    .orbit-workspace {
-      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 24px;
-      color: var(--text-secondary); cursor: pointer;
-    }
-    .orbit-workspace-text { display: flex; flex-direction: column; }
-    .orbit-workspace-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; color: var(--text-primary); }
-    .orbit-workspace-plan { font-size: 11px; color: var(--text-tertiary); }
-    
+    .capitalize { text-transform: capitalize; }
+    .text-red   { color: var(--accent-red) !important; }
+    .icon-sm    { font-size: 16px; }
+
+    /* ── Header ──────────────────────────────────────── */
     .orbit-header {
       display: flex; justify-content: space-between; align-items: flex-end;
-      margin-bottom: 24px; flex-shrink: 0;
+      margin-bottom: 16px; flex-shrink: 0;
     }
-    .orbit-title { font-size: 28px; font-weight: 500; margin: 0; letter-spacing: -0.5px; }
+    .orbit-title    { font-size: 28px; font-weight: 500; margin: 0; letter-spacing: -0.5px; }
     .orbit-subtitle { font-size: 13px; color: var(--text-tertiary); margin: 6px 0 0; }
-    
-    .orbit-header-right { display: flex; align-items: center; gap: 12px; }
-    
+    .orbit-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
     .orbit-search-wrap { position: relative; display: flex; align-items: center; }
-    .orbit-search-icon { position: absolute; left: 12px; font-size: 18px; color: var(--text-tertiary); pointer-events: none; }
+    .orbit-search-icon {
+      position: absolute; left: 12px; font-size: 18px;
+      color: var(--text-tertiary); pointer-events: none;
+    }
     .orbit-search-input {
       background: var(--bg-hover); border: 1px solid var(--border-subtle);
       border-radius: 8px; padding: 10px 16px 10px 38px;
-      font-size: 13px; color: var(--text-primary); outline: none; width: 240px;
-      transition: all 0.2s;
+      font-size: 13px; color: var(--text-primary); outline: none; width: 220px; transition: all 0.2s;
     }
-    .orbit-search-input:focus { background: var(--bg-panel); border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-primary-dim); }
-    
+    .orbit-search-input:focus {
+      background: var(--bg-panel); border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-primary-dim);
+    }
+
     .orbit-icon-btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       height: 38px; padding: 0 12px; background: transparent; border: 1px solid var(--border-subtle);
-      border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 500;
+      border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
     }
-    .orbit-icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-main); }
-    
-    .orbit-add-dropdown-container { position: relative; z-index: 50; }
+    .orbit-icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .active-filter { border-color: var(--accent-red) !important; color: var(--accent-red) !important; }
+
+    .orbit-filter-pills { display: flex; align-items: center; gap: 6px; }
+    .orbit-pill {
+      height: 32px; padding: 0 12px; background: transparent; border: 1px solid var(--border-subtle);
+      border-radius: 100px; color: var(--text-secondary); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .orbit-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .pill-active {
+      background: var(--accent-primary-dim) !important;
+      border-color: var(--accent-primary) !important;
+      color: var(--accent-primary) !important;
+    }
+
     .orbit-btn-primary {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      display: flex; align-items: center; gap: 8px;
       height: 38px; padding: 0 16px; background: #111; color: #fff;
-      border: 1px solid #222; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
-      min-width: 150px;
+      border: 1px solid #222; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
     }
-    :root[class~="dark"] .orbit-btn-primary { background: var(--text-primary); color: var(--bg-app); border-color: var(--text-secondary); }
+    :root[class~="dark"] .orbit-btn-primary {
+      background: var(--text-primary); color: var(--bg-app); border-color: var(--text-secondary);
+    }
     .orbit-btn-primary:hover { opacity: 0.9; }
-    
-    .orbit-dropdown-menu {
-      width: 100%; min-width: 160px; padding: 6px; background: var(--bg-panel);
-      border: 1px solid var(--border-subtle); border-radius: 8px;
+
+    /* ── Upcoming banner ─────────────────────────────── */
+    .orbit-banner {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 10px 16px; margin-bottom: 16px; border-radius: 8px; flex-shrink: 0;
+      background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2);
     }
-    .orbit-dropdown-item {
-      display: flex; align-items: center; gap: 8px; padding: 8px 10px; width: 100%;
-      background: transparent; border: none; border-radius: 6px; color: var(--text-secondary);
-      font-size: 13px; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;
+    .banner-icon  { font-size: 18px; color: #fbbf24; }
+    .banner-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+    .banner-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 100px;
+      background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25);
+      font-size: 12px; font-weight: 500; color: var(--text-primary);
     }
-    .orbit-dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
-    .ai-item { background: rgba(74,222,128,0.05); color: #4ade80; }
-    .ai-item:hover { background: rgba(74,222,128,0.1); color: #4ade80; }
-    
-    .dropdown-divider { height: 1px; background: var(--border-subtle); margin: 4px 0; }
-    
-    /* Table Panel */
+    .banner-urgent { background: rgba(248,113,113,0.1) !important; border-color: rgba(248,113,113,0.3) !important; color: var(--accent-red) !important; }
+    .banner-days   { font-size: 11px; color: var(--text-tertiary); margin-left: 2px; }
+
+    /* ── Table ───────────────────────────────────────── */
     .orbit-table-container {
       flex: 1; overflow-y: auto; overflow-x: auto;
-      background: var(--bg-app); border-radius: 8px;
-      padding-bottom: 40px;
+      background: var(--bg-app); border-radius: 8px; padding-bottom: 40px;
     }
     .orbit-table { width: 100%; border-collapse: collapse; text-align: left; }
     .orbit-table thead { position: sticky; top: 0; background: var(--bg-app); z-index: 10; }
@@ -344,76 +565,216 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
     }
     .orbit-table th.sortable { cursor: pointer; transition: color 0.2s; }
     .orbit-table th.sortable:hover { color: var(--text-secondary); }
-    .sort-icon { font-size: 14px; vertical-align: middle; margin-left: 2px; opacity: 0.4; }
-    
+    .sort-icon { font-size: 12px; vertical-align: middle; margin-left: 2px; opacity: 0.4; }
+    .th-hint   { font-size: 9px; opacity: 0.5; margin-left: 4px; font-weight: 400; }
+
     .orbit-row { transition: background 0.2s; border-bottom: 1px solid var(--border-subtle); }
-    .orbit-row:hover { background: rgba(255,255,255,0.02); }
-    .orbit-row.paused { opacity: 0.7; }
+    .orbit-row:hover   { background: rgba(255,255,255,0.02); }
+    .orbit-row.paused  { opacity: 0.7; }
     .orbit-row.cancelled { opacity: 0.4; }
-    
     .orbit-table td { padding: 14px 16px; vertical-align: middle; }
-    
+
     .orbit-name-cell { display: flex; align-items: center; gap: 12px; }
     .orbit-avatar {
       width: 32px; height: 32px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
-    .avatar-text { font-size: 14px; font-weight: 600; }
+    .avatar-text       { font-size: 14px; font-weight: 600; }
     .orbit-vendor-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-    .orbit-vendor-notes { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
-    
-    .orbit-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    .orbit-vendor-notes{ font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+    .orbit-text       { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
     .orbit-price-text { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono, monospace); }
-    
+
     .orbit-renewal-wrap { display: flex; align-items: center; gap: 8px; }
-    .orbit-badge-warn {
-      padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase;
-      background: rgba(248,113,113,0.1); color: var(--accent-red); border: 1px solid rgba(248,113,113,0.2);
+    .days-chip {
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 600; white-space: nowrap;
     }
-    
+    .days-ok      { background: rgba(74,222,128,0.08);  color: #4ade80; }
+    .days-caution { background: rgba(251,191,36,0.1);   color: #fbbf24; }
+    .days-warn    { background: rgba(248,113,113,0.1);  color: var(--accent-red); }
+
     .orbit-status-badge {
-      display: inline-block; padding: 4px 8px; border-radius: 6px;
+      display: inline-block; padding: 4px 10px; border-radius: 6px;
       font-size: 10px; font-weight: 600; text-transform: capitalize;
     }
-    
+    .status-cycle-btn {
+      border: none; cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+    }
+    .status-cycle-btn:hover { opacity: 0.75; transform: scale(0.96); }
+
     .orbit-actions-cell { text-align: right; width: 60px; padding-right: 24px !important; }
     .orbit-more-btn {
       width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-      background: transparent; border: none; border-radius: 6px; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;
+      background: transparent; border: none; border-radius: 6px;
+      color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;
     }
     .orbit-more-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-    
-    .orbit-actions-dropdown { min-width: 140px; padding: 4px; background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 8px; }
-    
+    .orbit-actions-dropdown {
+      min-width: 140px; padding: 4px; background: var(--bg-panel);
+      border: 1px solid var(--border-subtle); border-radius: 8px;
+    }
+    .orbit-dropdown-item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px; width: 100%;
+      background: transparent; border: none; border-radius: 6px; color: var(--text-secondary);
+      font-size: 13px; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;
+    }
+    .orbit-dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .dropdown-divider { height: 1px; background: var(--border-subtle); margin: 4px 0; }
+
     .orbit-confirm { display: flex; gap: 6px; justify-content: flex-end; }
     .orbit-btn-danger, .orbit-btn-cancel {
-      padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+      padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent;
     }
     .orbit-btn-danger { background: rgba(248,113,113,0.1); color: var(--accent-red); border-color: rgba(248,113,113,0.3); }
     .orbit-btn-danger:hover { background: rgba(248,113,113,0.2); }
     .orbit-btn-cancel { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--border-subtle); }
-    
+
     .orbit-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
-    .orbit-empty-icon { font-size: 32px; opacity: 0.5; margin-bottom: 12px; }
+    .orbit-empty-icon { font-size: 32px; opacity: 0.5; margin-bottom: 12px; display: block; }
     .orbit-empty-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
-    .orbit-clear-btn { margin-top: 16px; padding: 8px 16px; background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 500; }
+    .orbit-empty-sub   { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+    .orbit-clear-btn {
+      padding: 8px 16px; background: var(--bg-hover); border: 1px solid var(--border-subtle);
+      border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 500;
+    }
     .orbit-clear-btn:hover { color: var(--text-primary); }
-    
-    /* Legacy Form Panel styles needed for Add/Edit */
-    .vendor-form-panel { background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; margin-bottom: 24px; animation: slideDown 0.2s ease; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-    .vendor-form-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--bg-hover); border-bottom: 1px solid var(--border-subtle); }
-    .vendor-form-body { padding: 16px; }
-    .vendor-form-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+
+    /* ── Form modal ──────────────────────────────────── */
+    .vendor-form-body { padding: 4px 0; }
+    .form-row   { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
     .form-group { display: flex; flex-direction: column; }
-    .form-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
-    .form-input, .form-select { background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px 12px; font-size: 13px; color: var(--text-primary); height: 38px; outline: none; }
-    .form-input:focus, .form-select:focus { border-color: var(--accent-primary); }
-    .form-select { -webkit-appearance: none; cursor: pointer; }
-    .vendor-form-actions { display: flex; align-items: flex-end; }
-    .vendor-save-btn { padding: 8px 16px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .fg-1 { flex: 1; min-width: 120px; }
+    .fg-2 { flex: 2; min-width: 180px; }
+    .form-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--text-tertiary); margin-bottom: 6px;
+    }
+    .form-input {
+      background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px;
+      padding: 8px 12px; font-size: 13px; color: var(--text-primary); height: 38px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--accent-primary); }
+
+    /* Name field with floating preset badge */
+    .name-wrap { position: relative; display: flex; align-items: center; }
+    .name-wrap .form-input { flex: 1; padding-right: 70px; }
+    .preset-badge {
+      position: absolute; right: 8px;
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 100px;
+      background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: #4ade80;
+      font-size: 10px; font-weight: 600; pointer-events: none;
+    }
+
+    /* Price + currency prefix */
+    .price-wrap {
+      display: flex; align-items: center; border: 1px solid var(--border-subtle);
+      border-radius: 6px; overflow: hidden; background: var(--bg-app); height: 38px;
+    }
+    .price-wrap:focus-within { border-color: var(--accent-primary); }
+    .currency-btn {
+      padding: 0 10px; height: 100%; background: var(--bg-hover);
+      border: none; border-right: 1px solid var(--border-subtle);
+      color: var(--text-secondary); font-size: 11px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .currency-btn:hover { background: var(--bg-active); color: var(--text-primary); }
+    .price-input {
+      border: none !important; border-radius: 0 !important;
+      height: 100% !important; flex: 1; min-width: 80px;
+    }
+
+    /* Segmented controls (Billing cycle & Status) */
+    .seg-ctrl {
+      display: flex; border: 1px solid var(--border-subtle); border-radius: 6px;
+      overflow: hidden; height: 38px;
+    }
+    .seg-btn {
+      flex: 1; background: transparent; border: none;
+      border-right: 1px solid var(--border-subtle);
+      color: var(--text-secondary); font-size: 12px; font-weight: 500;
+      cursor: pointer; padding: 0 12px; transition: all 0.15s; white-space: nowrap;
+    }
+    .seg-btn:last-child { border-right: none; }
+    .seg-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    /* Default active (blue/accent) */
+    .seg-btn.seg-active {
+      background: var(--accent-primary-dim);
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+    /* Colour-coded status buttons */
+    .seg-green.seg-active  { background: rgba(74,222,128,0.12) !important;  color: #4ade80 !important; }
+    .seg-yellow.seg-active { background: rgba(251,191,36,0.12) !important;  color: #fbbf24 !important; }
+    .seg-grey.seg-active   { background: rgba(148,163,184,0.12) !important; color: #94a3b8 !important; }
+
+    /* Renewal date + shortcut row */
+    .renewal-wrap  { display: flex; flex-direction: column; gap: 4px; }
+    .renewal-input { width: 100%; }
+    .shortcut-row  { display: flex; gap: 4px; }
+    .shortcut-btn {
+      flex: 1; padding: 3px 0; background: var(--bg-hover); border: 1px solid var(--border-subtle);
+      border-radius: 4px; color: var(--text-tertiary); font-size: 10px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .shortcut-btn:hover {
+      background: var(--accent-primary-dim); border-color: var(--accent-primary); color: var(--accent-primary);
+    }
+
+    /* Advanced toggle */
+    .advanced-toggle {
+      display: inline-flex; align-items: center; gap: 4px; margin-top: 14px;
+      background: transparent; border: none; color: var(--text-tertiary);
+      font-size: 12px; font-weight: 500; cursor: pointer; padding: 0; transition: color 0.15s;
+    }
+    .advanced-toggle:hover { color: var(--text-secondary); }
+
+    /* Footer buttons */
+    .save-hint {
+      font-size: 11px; color: var(--text-tertiary); margin-right: auto;
+    }
+    .vendor-cancel-btn {
+      padding: 8px 16px; background: transparent; border: 1px solid var(--border-subtle);
+      color: var(--text-secondary); border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .save-another-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; background: var(--bg-hover); color: var(--text-primary);
+      border: 1px solid var(--border-main); border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .save-another-btn:hover   { background: var(--bg-active); }
+    .save-another-btn:disabled{ opacity: 0.5; cursor: not-allowed; }
+    .vendor-save-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; background: var(--accent-primary); color: var(--accent-primary-text);
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
     .vendor-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Import modal ────────────────────────────────── */
+    .import-body  { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+    .import-hint  { font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.7; }
+    .import-hint code {
+      background: var(--bg-hover); padding: 1px 5px; border-radius: 3px;
+      font-size: 11px; color: var(--accent-primary);
+    }
+    .import-textarea {
+      width: 100%; min-height: 140px; resize: vertical;
+      background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px;
+      padding: 10px 12px; font-size: 13px; color: var(--text-primary); outline: none;
+      font-family: var(--font-mono, monospace); line-height: 1.6; box-sizing: border-box;
+    }
+    .import-textarea:focus { border-color: var(--accent-primary); }
+    .import-count {
+      font-size: 12px; color: #4ade80; margin: 0;
+      display: flex; align-items: center; gap: 4px;
+    }
   `]
 })
 export class VendorComponent {
@@ -421,46 +782,81 @@ export class VendorComponent {
 
     readonly categoryOptions = ['software', 'infrastructure', 'design', 'marketing', 'security', 'analytics', 'communication', 'finance', 'other'];
     readonly currencies = CURRENCIES;
+    readonly vendorNames = Object.keys(VENDOR_PRESETS).map(k => k.charAt(0).toUpperCase() + k.slice(1));
 
-    // Filter state
-    searchQuery    = signal('');
+    // ── Filter state ──────────────────────────────────────────────────────
+    searchQuery      = signal('');
     selectedStatus   = signal<string | null>(null);
     selectedCycle    = signal<'monthly' | 'yearly' | null>(null);
     selectedCategory = signal<string | null>(null);
 
-    // Sort state
+    // ── Sort state ────────────────────────────────────────────────────────
     sortCol = signal<'name' | 'price' | 'renewalDate'>('renewalDate');
     sortDir = signal<'asc' | 'desc'>('asc');
 
-    // Form state
-    formMode       = signal<'add' | 'edit' | null>(null);
-    editingId      = signal<string | null>(null);
-    formName       = signal('');
-    formCategory   = signal('software');
-    formProjectId  = signal('global');
-    formPrice      = signal<number>(0);
-    formCurrency   = signal('USD');
-    formCycle      = signal<'monthly' | 'yearly'>('monthly');
-    formRenewal    = signal('');
-    formStatus     = signal<'active' | 'paused' | 'cancelled'>('active');
-    formNotes      = signal('');
+    // ── Form state ────────────────────────────────────────────────────────
+    formMode      = signal<'add' | 'edit' | null>(null);
+    editingId     = signal<string | null>(null);
+    formName      = signal('');
+    formCategory  = signal('software');
+    formProjectId = signal('global');
+    formPrice     = signal<number>(0);
+    formCurrency  = signal('USD');
+    formCycle     = signal<'monthly' | 'yearly'>('monthly');
+    formRenewal   = signal('');
+    formStatus    = signal<'active' | 'paused' | 'cancelled'>('active');
+    formNotes     = signal('');
+    showAdvanced  = signal(false);
+    presetApplied = signal(false);
 
-    // Delete confirm
+    // ── Modal / delete state ──────────────────────────────────────────────
     deleteConfirmId = signal<string | null>(null);
+    showImportModal = signal(false);
+    importText      = signal('');
 
-    // Computed
+    // ── Computed ──────────────────────────────────────────────────────────
+    canSave = computed(() => !!this.formName() && !!this.formRenewal() && this.formPrice() > 0);
+
     activeCount = computed(() =>
         this.subscriptionStore.subscriptions().filter(s => !s.status || s.status === 'active').length
     );
-    upcomingCount = computed(() => this.subscriptionStore.upcomingRenewals().length);
 
-    allCategories = computed(() => {
-        const cats = new Set<string>();
-        for (const s of this.subscriptionStore.subscriptions()) {
-            if (s.category) cats.add(s.category);
+    hasActiveFilters = computed(() =>
+        !!this.searchQuery() || this.selectedStatus() !== null ||
+        this.selectedCycle() !== null || this.selectedCategory() !== null
+    );
+
+    /** Most-used currency across existing subscriptions, for the cost summary symbol. */
+    defaultCurrency = computed(() => {
+        const subs = this.subscriptionStore.subscriptions();
+        if (!subs.length) return 'USD';
+        const freq: Record<string, number> = {};
+        for (const s of subs) {
+            const cur = s.currency ?? 'USD';
+            freq[cur] = (freq[cur] ?? 0) + 1;
         }
-        return [...cats].sort();
+        return Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
     });
+
+    /** Subscriptions renewing within the next 14 days (non-cancelled). */
+    upcomingBanner = computed(() => {
+        const now = Date.now();
+        const limit = 14 * 24 * 60 * 60 * 1000;
+        return this.subscriptionStore.subscriptions()
+            .filter(s => s.status !== 'cancelled' && !!s.renewalDate)
+            .filter(s => {
+                const diff = new Date(s.renewalDate).getTime() - now;
+                return diff >= 0 && diff <= limit;
+            })
+            .sort((a, b) => new Date(a.renewalDate).getTime() - new Date(b.renewalDate).getTime());
+    });
+
+    importPreviewCount = computed(() =>
+        this.importText().trim().split('\n').filter(l => {
+            const p = l.split(',').map(x => x.trim());
+            return p.length >= 2 && p[0] && !isNaN(parseFloat(p[1]));
+        }).length
+    );
 
     filteredSubs = computed(() => {
         const q = this.searchQuery().toLowerCase();
@@ -488,27 +884,19 @@ export class VendorComponent {
         const col = this.sortCol();
         const dir = this.sortDir() === 'asc' ? 1 : -1;
         return [...list].sort((a, b) => {
-            if (col === 'name') return dir * a.name.localeCompare(b.name);
-            if (col === 'price') return dir * (a.price - b.price);
+            if (col === 'name')        return dir * a.name.localeCompare(b.name);
+            if (col === 'price')       return dir * (a.price - b.price);
             if (col === 'renewalDate') return dir * (new Date(a.renewalDate).getTime() - new Date(b.renewalDate).getTime());
             return 0;
         });
     });
 
-    @HostListener('document:click')
-    onDocumentClick() {
-        this.deleteConfirmId.set(null);
-    }
-
-    // Filter helpers
+    // ── Filter helpers ────────────────────────────────────────────────────
     toggleStatusFilter(status: string) {
         this.selectedStatus.set(this.selectedStatus() === status ? null : status);
     }
     toggleCycleFilter(cycle: 'monthly' | 'yearly') {
         this.selectedCycle.set(this.selectedCycle() === cycle ? null : cycle);
-    }
-    toggleCategoryFilter(cat: string) {
-        this.selectedCategory.set(this.selectedCategory() === cat ? null : cat);
     }
     clearFilters() {
         this.searchQuery.set('');
@@ -517,26 +905,25 @@ export class VendorComponent {
         this.selectedCategory.set(null);
     }
 
-    // Sort
+    // ── Sort ──────────────────────────────────────────────────────────────
     setSort(col: 'name' | 'price' | 'renewalDate') {
-        if (this.sortCol() === col) {
-            this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
-        } else {
-            this.sortCol.set(col);
-            this.sortDir.set('asc');
-        }
+        if (this.sortCol() === col) this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
+        else { this.sortCol.set(col); this.sortDir.set('asc'); }
     }
     sortIndicator(col: string): string {
         if (this.sortCol() !== col) return '';
         return this.sortDir() === 'asc' ? '↑' : '↓';
     }
 
-    // Form
+    // ── Form open / close ─────────────────────────────────────────────────
     openAddForm() {
         if (this.formMode() !== null) { this.closeForm(); return; }
         this.resetForm();
+        this.formRenewal.set(this.autoRenewalDate('monthly'));
         this.formMode.set('add');
+        setTimeout(() => (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus(), 60);
     }
+
     openEditForm(sub: Subscription) {
         this.editingId.set(sub.id);
         this.formName.set(sub.name);
@@ -545,15 +932,17 @@ export class VendorComponent {
         this.formPrice.set(sub.price);
         this.formCurrency.set(sub.currency ?? 'USD');
         this.formCycle.set(sub.billingCycle);
-        this.formRenewal.set(sub.renewalDate ? new Date(sub.renewalDate).toISOString().split('T')[0] : '');
+        this.formRenewal.set(sub.renewalDate ? sub.renewalDate.split('T')[0] : '');
         this.formStatus.set(sub.status ?? 'active');
         this.formNotes.set(sub.notes ?? '');
+        this.presetApplied.set(false);
+        // Auto-expand Advanced if non-default values exist
+        this.showAdvanced.set((!!sub.projectId && sub.projectId !== 'global') || !!sub.notes);
         this.formMode.set('edit');
     }
-    closeForm() {
-        this.formMode.set(null);
-        this.resetForm();
-    }
+
+    closeForm() { this.formMode.set(null); this.resetForm(); }
+
     private resetForm() {
         this.editingId.set(null);
         this.formName.set('');
@@ -565,10 +954,13 @@ export class VendorComponent {
         this.formRenewal.set('');
         this.formStatus.set('active');
         this.formNotes.set('');
+        this.showAdvanced.set(false);
+        this.presetApplied.set(false);
     }
 
-    async saveForm() {
-        if (!this.formName() || !this.formRenewal()) return;
+    // ── Save actions ──────────────────────────────────────────────────────
+    private async saveFormInternal(): Promise<boolean> {
+        if (!this.canSave()) return false;
         const payload: Partial<Subscription> = {
             name:         this.formName(),
             category:     this.formCategory() || 'software',
@@ -576,17 +968,30 @@ export class VendorComponent {
             price:        Number(this.formPrice()),
             currency:     this.formCurrency(),
             billingCycle: this.formCycle(),
-            renewalDate:  new Date(this.formRenewal()).toISOString(),
+            renewalDate:  this.formRenewal(),
             status:       this.formStatus(),
             notes:        this.formNotes() || undefined,
         };
-
         if (this.formMode() === 'add') {
             await this.subscriptionStore.addSubscription({ id: crypto.randomUUID(), ...payload } as Subscription);
-        } else if (this.formMode() === 'edit' && this.editingId()) {
+        } else if (this.editingId()) {
             await this.subscriptionStore.updateSubscription(this.editingId()!, payload);
         }
-        this.closeForm();
+        return true;
+    }
+
+    async saveForm() {
+        if (await this.saveFormInternal()) this.closeForm();
+    }
+
+    /** Save and immediately reset to blank Add form — keeps modal open for rapid entry. */
+    async saveAndAddAnother() {
+        if (await this.saveFormInternal()) {
+            this.resetForm();
+            this.formRenewal.set(this.autoRenewalDate('monthly'));
+            this.formMode.set('add');
+            setTimeout(() => (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus(), 60);
+        }
     }
 
     async doDelete(id: string) {
@@ -594,11 +999,85 @@ export class VendorComponent {
         this.deleteConfirmId.set(null);
     }
 
-    // Display helpers
-    isUpcoming(date: string): boolean {
-        return this.subscriptionStore.upcomingRenewals().some((s: Subscription) => s.renewalDate === date);
+    /** Click the status badge in the table to cycle active → paused → cancelled → active. */
+    async cycleStatus(sub: Subscription) {
+        const order: ('active' | 'paused' | 'cancelled')[] = ['active', 'paused', 'cancelled'];
+        const idx = order.indexOf(sub.status ?? 'active');
+        await this.subscriptionStore.updateSubscription(sub.id, { status: order[(idx + 1) % 3] });
     }
 
+    // ── Form field helpers ────────────────────────────────────────────────
+
+    /** Match typed vendor name against the preset catalog and auto-fill fields. */
+    onNameChange(name: string) {
+        this.formName.set(name);
+        if (this.formMode() !== 'add') return;
+        const preset = VENDOR_PRESETS[name.toLowerCase().trim()];
+        if (preset) {
+            this.formCategory.set(preset.category);
+            this.formCycle.set(preset.billingCycle);
+            this.formCurrency.set(preset.currency);
+            this.formRenewal.set(this.autoRenewalDate(preset.billingCycle));
+            this.presetApplied.set(true);
+        } else {
+            this.presetApplied.set(false);
+        }
+    }
+
+    /** Change cycle and auto-recalculate the renewal date (add mode only). */
+    setCycle(cycle: 'monthly' | 'yearly') {
+        this.formCycle.set(cycle);
+        if (this.formMode() === 'add') this.formRenewal.set(this.autoRenewalDate(cycle));
+    }
+
+    /** Cycle through the CURRENCIES array on each click. */
+    rotateCurrency() {
+        const idx = CURRENCIES.indexOf(this.formCurrency());
+        this.formCurrency.set(CURRENCIES[(idx + 1) % CURRENCIES.length]);
+    }
+
+    /** Shift the renewal date forward by N months (use 12 for +1 year). */
+    addRenewalOffset(months: number) {
+        const base = this.formRenewal();
+        const d = base ? new Date(base + 'T12:00:00') : new Date();
+        d.setMonth(d.getMonth() + months);
+        this.formRenewal.set(this.toLocalDateString(d));
+    }
+
+    toggleAdvanced() { this.showAdvanced.update(v => !v); }
+
+    // ── Bulk import ───────────────────────────────────────────────────────
+    async parseAndImport() {
+        const lines = this.importText().trim().split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const parts = line.split(',').map(p => p.trim());
+            if (parts.length < 2) continue;
+            const name  = parts[0];
+            const price = parseFloat(parts[1]);
+            if (!name || isNaN(price)) continue;
+
+            const cycleRaw = (parts[2] ?? 'monthly').toLowerCase();
+            const cycle: 'monthly' | 'yearly' = cycleRaw === 'yearly' ? 'yearly' : 'monthly';
+            const preset  = VENDOR_PRESETS[name.toLowerCase()];
+            const category = parts[3] || preset?.category  || 'software';
+            const currency  = parts[4] || preset?.currency  || 'USD';
+
+            await this.subscriptionStore.addSubscription({
+                id:          crypto.randomUUID(),
+                name,
+                price,
+                billingCycle: cycle,
+                category,
+                currency,
+                renewalDate:  this.autoRenewalDate(cycle),
+                status:       'active',
+            });
+        }
+        this.showImportModal.set(false);
+        this.importText.set('');
+    }
+
+    // ── Display helpers ───────────────────────────────────────────────────
     daysUntil(dateStr: string): number | null {
         if (!dateStr) return null;
         const diff = new Date(dateStr).getTime() - Date.now();
@@ -618,15 +1097,24 @@ export class VendorComponent {
         return colors[Math.abs(hash) % colors.length];
     }
 
-    catColor(cat: string): string {
-        return CATEGORY_COLORS[cat.toLowerCase()] ?? '#94a3b8';
-    }
     statusMeta(status: string | undefined | null): { label: string; color: string; bg: string } {
         return STATUS_META[status || 'active'] ?? STATUS_META['active'];
     }
 
     currencySymbol(currency: string | undefined): string {
         const map: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$', INR: '₹', JPY: '¥' };
-        return map[currency ?? 'USD'] ?? '$';
+        return map[currency ?? 'USD'] ?? (currency ?? '$');
+    }
+
+    // ── Private utilities ─────────────────────────────────────────────────
+    private autoRenewalDate(cycle: 'monthly' | 'yearly'): string {
+        const d = new Date();
+        if (cycle === 'monthly') d.setMonth(d.getMonth() + 1);
+        else d.setFullYear(d.getFullYear() + 1);
+        return this.toLocalDateString(d);
+    }
+
+    private toLocalDateString(d: Date): string {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 }
