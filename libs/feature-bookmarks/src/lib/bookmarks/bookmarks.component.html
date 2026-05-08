@@ -161,7 +161,7 @@
 
         <button
           class="bm-icon-btn"
-          (click)="sortAsc.update(v => !v)"
+          (click)="toggleSortAsc()"
           [title]="sortAsc() ? 'Sort descending' : 'Sort ascending'"
         >
           <span class="material-symbols-outlined">{{ sortAsc() ? 'arrow_upward' : 'arrow_downward' }}</span>
@@ -374,7 +374,7 @@
      ADD BOOKMARK MODAL
 ════════════════════════════════════════════════════ -->
 @if (showAddModal()) {
-  <env-modal title="Add Bookmark" (closeModal)="showAddModal.set(false)">
+  <env-modal title="Add Bookmark" [isOpen]="true" (closed)="showAddModal.set(false)">
     <div class="bm-modal-body">
       <div class="bm-form-group">
         <label class="bm-label">URL <span class="bm-required">*</span></label>
@@ -494,7 +494,7 @@
      EDIT BOOKMARK MODAL
 ════════════════════════════════════════════════════ -->
 @if (showEditModal()) {
-  <env-modal title="Edit Bookmark" (closeModal)="showEditModal.set(false)">
+  <env-modal title="Edit Bookmark" [isOpen]="true" (closed)="showEditModal.set(false)">
     <div class="bm-modal-body">
       <div class="bm-form-group">
         <label class="bm-label">URL <span class="bm-required">*</span></label>
@@ -603,7 +603,7 @@
      ADD FOLDER MODAL
 ════════════════════════════════════════════════════ -->
 @if (showAddFolderModal()) {
-  <env-modal title="New Folder" (closeModal)="showAddFolderModal.set(false)">
+  <env-modal title="New Folder" [isOpen]="true" (closed)="showAddFolderModal.set(false)">
     <div class="bm-modal-body">
       <div class="bm-form-group">
         <label class="bm-label">Name <span class="bm-required">*</span></label>
@@ -660,7 +660,7 @@
      DELETE CONFIRM MODAL
 ════════════════════════════════════════════════════ -->
 @if (showDeleteConfirm()) {
-  <env-modal title="Delete Bookmark" (closeModal)="showDeleteConfirm.set(false)">
+  <env-modal title="Delete Bookmark" [isOpen]="true" (closed)="showDeleteConfirm.set(false)">
     <div class="bm-modal-body">
       <p class="bm-confirm-text">Are you sure you want to delete this bookmark? This cannot be undone.</p>
       <div class="bm-modal-footer">
@@ -675,7 +675,7 @@
      KEYBOARD SHORTCUTS MODAL
 ════════════════════════════════════════════════════ -->
 @if (showShortcutsHelp()) {
-  <env-modal title="Keyboard Shortcuts" (closeModal)="showShortcutsHelp.set(false)">
+  <env-modal title="Keyboard Shortcuts" [isOpen]="true" (closed)="showShortcutsHelp.set(false)">
     <div class="bm-modal-body">
       <div class="bm-shortcuts-grid">
         <div class="bm-shortcut-row">

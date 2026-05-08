@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Bookmark, BookmarkFolder } from '@envello/core';
@@ -178,7 +178,6 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     window.removeEventListener('keydown', this._keyHandler);
   }
 
-  @HostListener('document:keydown', ['$event'])
   handleGlobalKey(e: KeyboardEvent) {
     const meta = e.metaKey || e.ctrlKey;
 
@@ -438,6 +437,8 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   folderName(folderId: string): string {
     return this.store.bookmarkFolders().find(f => f.id === folderId)?.name ?? '';
   }
+
+  toggleSortAsc() { this.sortAsc.set(!this.sortAsc()); }
 
   trackById(_: number, item: Bookmark) { return item.id; }
   trackByFolderId(_: number, f: BookmarkFolder) { return f.id; }
