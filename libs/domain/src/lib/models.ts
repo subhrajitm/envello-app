@@ -92,6 +92,7 @@ export interface Novel {
     notesCount: number;
     createdDate: string;
     lastUpdated: string;
+    createdAt?: string; // ISO date string for reliable sorting
     genre: string[];
     isRecentlyUpdated: boolean;
     coverImage?: string; // For thumbnail view

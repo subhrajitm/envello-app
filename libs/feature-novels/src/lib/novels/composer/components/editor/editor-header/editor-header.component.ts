@@ -16,7 +16,7 @@ export interface SearchResult {
   templateUrl: './editor-header.component.html',
   styleUrls: [
     './editor-header.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

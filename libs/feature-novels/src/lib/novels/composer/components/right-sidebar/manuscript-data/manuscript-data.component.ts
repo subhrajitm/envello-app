@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './manuscript-data.component.html',
   styleUrls: [
     './manuscript-data.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

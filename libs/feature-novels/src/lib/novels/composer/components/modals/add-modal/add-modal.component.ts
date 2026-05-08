@@ -17,7 +17,7 @@ export interface AddModalData {
   templateUrl: './add-modal.component.html',
   styleUrls: [
     './add-modal.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

@@ -28,7 +28,7 @@ export const routes: Routes = [
   },
   {
     path: 'write/:id',
-    loadComponent: () => import('@envello/feature-novels').then(m => m.NovelEditorComponent),
+    loadComponent: () => import('@envello/feature-novels').then(m => m.ComposerComponent),
     canActivate: [authGuard],
     data: { immersive: true },
   },

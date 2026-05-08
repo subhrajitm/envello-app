@@ -35,10 +35,16 @@ export class NovelsComponent {
   readonly novelIcons = [
     { id: 'menu_book', label: 'Book' },
     { id: 'auto_stories', label: 'Story' },
+    { id: 'article', label: 'Article' },
+    { id: 'description', label: 'Document' },
+    { id: 'edit_note', label: 'Notes' },
+    { id: 'draw', label: 'Creative' },
     { id: 'token', label: 'Token' },
     { id: 'castle', label: 'Castle' },
-    { id: 'rocket_launch', label: 'Rocket' },
+    { id: 'rocket_launch', label: 'Sci-Fi' },
     { id: 'water_drop', label: 'Drop' },
+    { id: 'science', label: 'Research' },
+    { id: 'psychology', label: 'Essay' },
   ] as const;
 
   novelMenuOpen = signal<string | null>(null);
@@ -56,10 +62,14 @@ export class NovelsComponent {
     // Sort
     return list.sort((a, b) => {
       switch (this.sortBy()) {
-        case 'UPDATED': return 0; // Keeping simple for demo as date strings are fuzzy
+        case 'CREATED': {
+          const tA = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.createdDate).getTime();
+          const tB = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.createdDate).getTime();
+          return tB - tA;
+        }
         case 'TITLE': return a.title.localeCompare(b.title);
         case 'PROGRESS': return b.progress - a.progress;
-        default: return 0;
+        default: return 0; // UPDATED: stable insertion order
       }
     });
   });
@@ -120,7 +130,14 @@ export class NovelsComponent {
   }
 
   getStatusLabel(status: string): string {
-    return status;
+    switch (status) {
+      case 'ALL': return 'All';
+      case 'DRAFTING': return 'Drafting';
+      case 'PLANNING': return 'Planning';
+      case 'REVISING': return 'Revising';
+      case 'PUBLISHED': return 'Published';
+      default: return status;
+    }
   }
 
   getSortIcon(sort: string): string {
@@ -161,7 +178,7 @@ export class NovelsComponent {
   }
 
   openNovel(id: string) {
-    this.router.navigate(['/novels', id]);
+    this.router.navigate(['/write', id]);
   }
 
   toggleNovelMenu(novelId: string, e?: Event) {
@@ -235,13 +252,14 @@ export class NovelsComponent {
         notesCount: 0,
         createdDate,
         lastUpdated: 'Just now',
+        createdAt: now.toISOString(),
         genre,
         isRecentlyUpdated: true
       };
       this.store.addNovel(novel);
       await this.novelContent.createAndPersistEmptyNovel(id, title);
       this.closeAddModal();
-      this.router.navigate(['/novels', id]);
+      this.router.navigate(['/write', id]);
     } catch (e) {
       console.error('[NovelsComponent] addNovel failed', e);
       this.addModalSubmitting.set(false);

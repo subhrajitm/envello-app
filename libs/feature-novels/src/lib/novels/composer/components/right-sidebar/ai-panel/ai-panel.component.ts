@@ -11,7 +11,7 @@ import { AiMessage, AiSuggestion } from '@envello/core';
   templateUrl: './ai-panel.component.html',
   styleUrls: [
     './ai-panel.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

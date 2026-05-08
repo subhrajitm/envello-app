@@ -3,7 +3,7 @@
     <div class="novels-sub-header">
         <div class="metrics-group">
             <div class="metric-item">
-                <span class="metric-label">TOTAL WORDS IN NOVELS</span>
+                <span class="metric-label">TOTAL WORDS</span>
                 <span class="metric-value-lg text-yellow">{{ totalWords() | number }}</span>
             </div>
             <div class="metric-item">
@@ -17,7 +17,7 @@
         </div>
 
         <div class="controls-group">
-            <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add novel</env-button>
+            <env-button variant="primary" icon="add" (clicked)="openAddModal()">New piece</env-button>
             <div class="view-toggles">
                 <button class="control-icon-btn" [class.active]="viewMode() === 'LIST'" (click)="toggleView('LIST')"
                     title="List View">
@@ -120,11 +120,11 @@
         @if (novels().length === 0) {
         <div class="novels-empty-wrap">
             <env-empty-state
-                icon="menu_book"
-                title="No novels yet"
-                description="Create your first novel to start writing."
+                icon="edit_note"
+                title="Nothing here yet"
+                description="Create your first piece to start writing."
             >
-                <env-button variant="primary" icon="add" (clicked)="openAddModal()">Add novel</env-button>
+                <env-button variant="primary" icon="add" (clicked)="openAddModal()">New piece</env-button>
             </env-empty-state>
         </div>
         } @else if (viewMode() === 'LIST') {
@@ -277,7 +277,7 @@
 
 <!-- Add novel modal -->
 @if (showAddModal()) {
-<env-modal [isOpen]="showAddModal()" (closed)="closeAddModal()" title="Add novel" size="md">
+<env-modal [isOpen]="showAddModal()" (closed)="closeAddModal()" title="New piece" size="md">
   <div body>
     <div class="add-novel-form">
       <div class="form-group">
@@ -327,7 +327,7 @@
     <env-button variant="secondary" (clicked)="closeAddModal()">Cancel</env-button>
     <env-button variant="primary" icon="add" (clicked)="addNovel()"
       [disabled]="!newNovel().title.trim() || addModalSubmitting()">
-      {{ addModalSubmitting() ? 'Creating…' : 'Add novel' }}
+      {{ addModalSubmitting() ? 'Creating…' : 'Create' }}
     </env-button>
   </div>
 </env-modal>
@@ -335,16 +335,20 @@
 
 <!-- Delete novel modal -->
 @if (showDeleteModal()) {
-<env-modal [isOpen]="showDeleteModal()" (closed)="cancelDeleteNovel()" title="Delete novel" size="md">
+<env-modal [isOpen]="showDeleteModal()" (closed)="cancelDeleteNovel()" title="Delete piece" size="md">
   <div body>
     @if (novelToDelete(); as novel) {
-    <p>Are you sure you want to delete <strong>"{{ novel.title }}"</strong>? It will be moved to the bin.</p>
+    <p>Are you sure you want to delete <strong>"{{ novel.title }}"</strong>? This action cannot be undone.</p>
     <p class="delete-modal-hint">You can restore it from the bin later.</p>
     }
   </div>
   <div footer>
     <env-button variant="secondary" (clicked)="cancelDeleteNovel()">Cancel</env-button>
-    <env-button variant="danger" (clicked)="confirmDeleteNovel()">Delete novel</env-button>
+    <env-button variant="danger" (clicked)="confirmDeleteNovel()">Delete</env-button>
   </div>
 </env-modal>
+}v-modal>
+}>
+}>
+}>
 }

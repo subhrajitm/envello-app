@@ -9,7 +9,7 @@ import { Character } from '@envello/core';
   templateUrl: './characters-list.component.html',
   styleUrls: [
     './characters-list.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

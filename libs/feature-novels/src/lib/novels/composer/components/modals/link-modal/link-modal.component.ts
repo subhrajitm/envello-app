@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './link-modal.component.html',
   styleUrls: [
     './link-modal.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

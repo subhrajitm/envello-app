@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './sync-status.component.html',
   styleUrls: [
     './sync-status.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

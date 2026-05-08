@@ -9,7 +9,7 @@ import { NovelContentService, FrontMatterItem, Prologue } from '@envello/core';
   templateUrl: './structure-view.component.html',
   styleUrls: [
     './structure-view.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

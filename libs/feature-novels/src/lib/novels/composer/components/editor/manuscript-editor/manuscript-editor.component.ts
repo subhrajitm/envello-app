@@ -11,7 +11,7 @@ import { TiptapEditorDirective } from 'ngx-tiptap';
   templateUrl: './manuscript-editor.component.html',
   styleUrls: [
     './manuscript-editor.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

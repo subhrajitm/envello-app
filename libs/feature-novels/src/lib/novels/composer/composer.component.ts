@@ -36,7 +36,7 @@ import { NotesPanelComponent } from './components/right-sidebar/notes-panel/note
 import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-data/manuscript-data.component';
 
 @Component({
-  selector: 'app-novel-editor',
+  selector: 'app-composer',
   standalone: true,
   imports: [
     CommonModule,
@@ -64,11 +64,11 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     NotesPanelComponent,
     ManuscriptDataComponent,
   ],
-  templateUrl: './novel-editor.component.html',
-  styleUrl: './novel-editor.component.css',
+  templateUrl: './composer.component.html',
+  styleUrl: './composer.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   editor!: Editor;
   novelService = inject(NovelContentService);
   versionHistoryService = inject(VersionHistoryService);
@@ -77,6 +77,7 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
   private shouldFocusInput = false;
   private timeInterval?: number;
+  private saveTimeout?: ReturnType<typeof setTimeout>;
 
   // State
   title = signal('');
@@ -276,8 +277,8 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
         // Auto-save to service with debouncing
         this.isSaving.set(true);
-        clearTimeout((this as any).saveTimeout);
-        (this as any).saveTimeout = setTimeout(() => {
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => {
           const activeId = this.activeChapterId();
           const frontMatterId = this.activeFrontMatterId();
           const prologueId = this.activePrologueId();
@@ -321,14 +322,14 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     if (this.timeInterval) {
       clearInterval(this.timeInterval);
     }
-    if ((this as any).saveTimeout) {
-      clearTimeout((this as any).saveTimeout);
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
     }
     this.editor.destroy();
   }
 
   goBack() {
-    this.router.navigate(['/novels']);
+    this.router.navigate(['/write']);
   }
 
   toggleChapter(group: ChapterGroup) {
@@ -525,15 +526,11 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
 
     // Escape to close modals
     if (event.key === 'Escape') {
-      if (this.addModal().isOpen) {
-        this.cancelAdd();
-      }
-      if (this.deleteModal().isOpen) {
-        this.cancelDelete();
-      }
-      if (this.searchOpen()) {
-        this.searchOpen.set(false);
-      }
+      if (this.imageModalOpen()) { this.cancelImageModal(); return; }
+      if (this.youtubeModalOpen()) { this.cancelYoutubeModal(); return; }
+      if (this.addModal().isOpen) { this.cancelAdd(); return; }
+      if (this.deleteModal().isOpen) { this.cancelDelete(); return; }
+      if (this.searchOpen()) { this.searchOpen.set(false); }
     }
 
     // Cmd/Ctrl + B for focus mode
@@ -1554,7 +1551,9 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     const selected = Array.from(this.selectedChapters());
     if (selected.length === 0) return;
 
-    // Move logic would go here
+    selected.forEach(chapterId => {
+      this.novelService.moveChapterToGroup?.(chapterId, targetGroupId);
+    });
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
   }
@@ -1618,12 +1617,26 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.linkText.set('');
   }
 
+  // Image modal
+  imageModalOpen = signal(false);
+  imageUrl = signal('');
+
   addImage() {
     if (!this.editor) return;
-    const url = prompt('Enter image URL:');
-    if (url) {
-      this.editor.chain().focus().setImage({ src: url }).run();
-    }
+    this.imageUrl.set('');
+    this.imageModalOpen.set(true);
+  }
+
+  insertImage() {
+    if (!this.editor || !this.imageUrl().trim()) return;
+    this.editor.chain().focus().setImage({ src: this.imageUrl().trim() }).run();
+    this.imageModalOpen.set(false);
+    this.imageUrl.set('');
+  }
+
+  cancelImageModal() {
+    this.imageModalOpen.set(false);
+    this.imageUrl.set('');
   }
 
   insertTable() {
@@ -1631,12 +1644,26 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
+  // YouTube modal
+  youtubeModalOpen = signal(false);
+  youtubeUrl = signal('');
+
   addYoutube() {
     if (!this.editor) return;
-    const url = prompt('Enter YouTube URL:');
-    if (url) {
-      this.editor.chain().focus().setYoutubeVideo({ src: url }).run();
-    }
+    this.youtubeUrl.set('');
+    this.youtubeModalOpen.set(true);
+  }
+
+  insertYoutube() {
+    if (!this.editor || !this.youtubeUrl().trim()) return;
+    this.editor.chain().focus().setYoutubeVideo({ src: this.youtubeUrl().trim() }).run();
+    this.youtubeModalOpen.set(false);
+    this.youtubeUrl.set('');
+  }
+
+  cancelYoutubeModal() {
+    this.youtubeModalOpen.set(false);
+    this.youtubeUrl.set('');
   }
 
   // Export functionality
@@ -1647,43 +1674,36 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
     let content = '';
     let filename = novel.title.toLowerCase().replace(/\s+/g, '-');
 
-    if (format === 'html' || format === 'md') {
-      // Build HTML/Markdown content
-      content = `<h1>${novel.title}</h1>\n\n`;
-
-      // Front Matter
-      if (novel.frontMatter.length > 0) {
-        content += '<h2>Front Matter</h2>\n';
-        novel.frontMatter.forEach(item => {
-          content += `<h3>${item.title}</h3>\n${item.content}\n\n`;
-        });
-      }
-
-      // Prologue
-      if (novel.prologue) {
-        content += `<h2>${novel.prologue.title}</h2>\n${novel.prologue.content}\n\n`;
-      }
-
-      // Chapters
-      novel.chapters.forEach(group => {
-        content += `<h2>${group.title}</h2>\n`;
-        group.children.forEach(chap => {
-          content += `<h3>${chap.title}</h3>\n${chap.content}\n\n`;
-        });
-      });
-
-      const blob = new Blob([content], { type: format === 'html' ? 'text/html' : 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } else if (format === 'pdf') {
+    if (format === 'pdf') {
       window.print();
-    } else if (format === 'docx') {
-      // For DOCX, we'd need a library like docx.js
-      // For now, export as HTML which can be opened in Word
+      return;
+    }
+
+    // Build HTML content for html / md / docx
+    content = `<h1>${novel.title}</h1>\n\n`;
+
+    // Front Matter
+    if (novel.frontMatter.length > 0) {
+      content += '<h2>Front Matter</h2>\n';
+      novel.frontMatter.forEach(item => {
+        content += `<h3>${item.title}</h3>\n${item.content}\n\n`;
+      });
+    }
+
+    // Prologue
+    if (novel.prologue) {
+      content += `<h2>${novel.prologue.title}</h2>\n${novel.prologue.content}\n\n`;
+    }
+
+    // Chapters
+    novel.chapters.forEach(group => {
+      content += `<h2>${group.title}</h2>\n`;
+      group.children.forEach(chap => {
+        content += `<h3>${chap.title}</h3>\n${chap.content}\n\n`;
+      });
+    });
+
+    if (format === 'html') {
       const blob = new Blob([content], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1691,6 +1711,31 @@ export class NovelEditorComponent implements OnInit, OnDestroy, AfterViewChecked
       a.download = `${filename}.html`;
       a.click();
       URL.revokeObjectURL(url);
+    } else if (format === 'md') {
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'docx') {
+      // Export as Word-compatible HTML (.doc) until a docx library is integrated
+      const blob = new Blob([content], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.doc`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  }
+}
+url);
+    }
+  }
+}
+url);
     }
   }
 }

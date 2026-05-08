@@ -9,7 +9,7 @@ import { VersionHistoryService, VersionSnapshot } from '@envello/core';
   templateUrl: './version-history-modal.component.html',
   styleUrls: [
     './version-history-modal.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

@@ -9,7 +9,7 @@ import { EditorNote } from '@envello/core';
   templateUrl: './notes-panel.component.html',
   styleUrls: [
     './notes-panel.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

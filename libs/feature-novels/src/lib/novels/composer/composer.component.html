@@ -188,4 +188,48 @@
     <app-add-modal [modal]="addModal()" (inputValueChange)="updateAddModalInput($event)"
         (inputValue2Change)="updateAddModalInput2($event)" (confirm)="confirmAdd()" (cancel)="cancelAdd()" />
 
+    <!-- Image URL modal -->
+    @if (imageModalOpen()) {
+    <div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="cancelImageModal()">
+        <div class="ne-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">Insert Image</div>
+            <div class="ne-modal-body">
+                <div class="ne-modal-input-wrapper">
+                    <label class="ne-modal-label">Image URL</label>
+                    <input type="url" class="ne-modal-input" [value]="imageUrl()"
+                        (input)="imageUrl.set($any($event.target).value)"
+                        placeholder="https://example.com/image.png"
+                        (keydown.enter)="insertImage()" autofocus />
+                </div>
+            </div>
+            <div class="ne-modal-footer flex items-center justify-end gap-2">
+                <button class="ne-modal-btn cancel" (click)="cancelImageModal()">Cancel</button>
+                <button class="ne-modal-btn confirm" (click)="insertImage()" [disabled]="!imageUrl().trim()">Insert</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- YouTube URL modal -->
+    @if (youtubeModalOpen()) {
+    <div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="cancelYoutubeModal()">
+        <div class="ne-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">Insert YouTube Video</div>
+            <div class="ne-modal-body">
+                <div class="ne-modal-input-wrapper">
+                    <label class="ne-modal-label">YouTube URL</label>
+                    <input type="url" class="ne-modal-input" [value]="youtubeUrl()"
+                        (input)="youtubeUrl.set($any($event.target).value)"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        (keydown.enter)="insertYoutube()" autofocus />
+                </div>
+            </div>
+            <div class="ne-modal-footer flex items-center justify-end gap-2">
+                <button class="ne-modal-btn cancel" (click)="cancelYoutubeModal()">Cancel</button>
+                <button class="ne-modal-btn confirm" (click)="insertYoutube()" [disabled]="!youtubeUrl().trim()">Insert</button>
+            </div>
+        </div>
+    </div>
+    }
+
 </div>

@@ -9,7 +9,7 @@ import { Editor } from '@tiptap/core';
   templateUrl: './editor-toolbar.component.html',
   styleUrls: [
     './editor-toolbar.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

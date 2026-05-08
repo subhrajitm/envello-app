@@ -12,7 +12,7 @@ import { NovelContentService, FrontMatterItem, Prologue } from '@envello/core';
   templateUrl: './structure-editor.component.html',
   styleUrls: [
     './structure-editor.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

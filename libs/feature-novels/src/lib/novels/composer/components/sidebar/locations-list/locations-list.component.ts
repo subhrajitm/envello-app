@@ -9,7 +9,7 @@ import { Location } from '@envello/core';
   templateUrl: './locations-list.component.html',
   styleUrls: [
     './locations-list.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None

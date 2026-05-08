@@ -9,7 +9,7 @@ import { NovelContentService, Chapter, ChapterGroup } from '@envello/core';
   templateUrl: './chapters-list.component.html',
   styleUrls: [
     './chapters-list.component.css',
-    '../../../novel-editor.component.css'
+    '../../../composer.component.css'
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
