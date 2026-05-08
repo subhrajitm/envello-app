@@ -4,11 +4,11 @@
         <div class="empty-state-icon">
             <span class="material-symbols-outlined">description</span>
         </div>
-        <h3 class="empty-state-title">No Chapter Selected</h3>
-        <p class="empty-state-text">Select a chapter from the sidebar to start writing, or create a new chapter to begin.</p>
+        <h3 class="empty-state-title">Nothing selected</h3>
+        <p class="empty-state-text">Select a section from the sidebar to start writing, or create a new one to begin.</p>
         <button class="ne-btn-primary" (click)="addNewChapter.emit()">
             <span class="material-symbols-outlined">add</span>
-            Create New Chapter
+            New Section
         </button>
     </div>
     } @else {
@@ -17,19 +17,18 @@
 
     <div class="ne-doc-meta">
         <div class="meta-row">
-            <span class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()">{{ chapterStatus() }}</span>
-            <span class="meta-sep">•</span>
-            <span>LAST EDITED: {{ chapterLastEdited() }}</span>
+            <span class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()">{{ chapterStatusLabel() }}</span>
             <span class="meta-sep">•</span>
             <span class="save-indicator" [class.saving]="isSaving()">
                 @if (isSaving()) {
                 <span class="material-symbols-outlined text-xs">sync</span>
-                Saving...
+                Saving…
                 } @else if (lastSaved()) {
                 <span class="material-symbols-outlined text-xs">check_circle</span>
-                Saved
-                } @else {
-                <span>Not saved</span>
+                Saved · {{ formatSaved(lastSaved()!) }}
+                } @else if (chapterLastEdited() !== 'Never') {
+                <span class="material-symbols-outlined text-xs">history</span>
+                Last edited: {{ chapterLastEdited() }}
                 }
             </span>
         </div>

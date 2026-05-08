@@ -1,6 +1,7 @@
-import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Editor } from '@tiptap/core';
 import { AiMessage, AiSuggestion } from '@envello/core';
 
@@ -17,6 +18,7 @@ import { AiMessage, AiSuggestion } from '@envello/core';
   encapsulation: ViewEncapsulation.None
 })
 export class AiPanelComponent implements AfterViewChecked {
+  private sanitizer = inject(DomSanitizer);
   aiMessages = input.required<AiMessage[]>();
   aiLoading = input.required<boolean>();
   aiError = input<string | null>(null);
@@ -41,11 +43,21 @@ export class AiPanelComponent implements AfterViewChecked {
   toggleContextPreview = output<void>();
   promptChange = output<string>();
   
-  formatMessage(content: string): string {
-    return content
+  private escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  formatMessage(content: string): SafeHtml {
+    const escaped = this.escapeHtml(content);
+    const formatted = escaped
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br>');
+    return this.sanitizer.bypassSecurityTrustHtml(formatted);
   }
 
   formatTime(date: Date): string {

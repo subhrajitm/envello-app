@@ -17,6 +17,17 @@
         </div>
 
         <div class="controls-group">
+            <div class="list-search-wrapper">
+                <span class="material-symbols-outlined list-search-icon">search</span>
+                <input class="list-search-input" type="text" placeholder="Search pieces…"
+                    [value]="searchQuery()"
+                    (input)="searchQuery.set($any($event.target).value)" />
+                @if (searchQuery()) {
+                <button class="list-search-clear" (click)="searchQuery.set('')">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+                }
+            </div>
             <env-button variant="primary" icon="add" (clicked)="openAddModal()">New piece</env-button>
             <div class="view-toggles">
                 <button class="control-icon-btn" [class.active]="viewMode() === 'LIST'" (click)="toggleView('LIST')"
@@ -130,13 +141,12 @@
         } @else if (viewMode() === 'LIST') {
         <div class="novels-table">
             <div class="table-header">
-                <div class="col-title">PROJECT TITLE</div>
-                <div class="col-chapters">CHAPTERS</div>
+                <div class="col-title">TITLE</div>
                 <div class="col-genre">GENRE</div>
                 <div class="col-status">STATUS</div>
-                <div class="col-word-count">WORD COUNT / TARGET</div>
-                <div class="col-progress">PROGRESS</div>
-                <div class="col-last-updated">LAST UPDATED</div>
+                <div class="col-word-count">WORDS / TARGET</div>
+                <div class="col-read-time">READ TIME</div>
+                <div class="col-last-updated">UPDATED</div>
                 <div class="col-menu"></div>
             </div>
             <div class="table-body">
@@ -154,12 +164,6 @@
                             <div class="title-meta">
                                 Created {{ novel.createdDate }} • {{ novel.notesCount }} notes
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-chapters">
-                        <div class="chapter-badge">
-                            <span class="material-symbols-outlined chapter-icon">menu_book</span>
-                            <span class="chapter-count">{{ novel.chapters }}</span>
                         </div>
                     </div>
                     <div class="col-genre">
@@ -186,17 +190,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-progress">
-                        <div class="circular-progress">
-                            <svg class="progress-ring" width="40" height="40">
-                                <circle class="progress-ring-bg" cx="20" cy="20" r="16" />
-                                <circle class="progress-ring-fill" cx="20" cy="20" r="16"
-                                    [style.stroke]="getProgressColor(novel.status)" [style.stroke-dasharray]="100.53"
-                                    [style.stroke-dashoffset]="100.53 - (100.53 * novel.progress / 100)" />
-                            </svg>
-                            <span class="progress-text">{{ novel.progress }}%</span>
-                        </div>
-                    </div>
+                    <div class="col-read-time">{{ readingTime(novel.wordCount) }}</div>
                     <div class="col-last-updated">{{ novel.lastUpdated }}</div>
                     <div class="col-menu">
                         <div class="novel-menu-wrapper">
@@ -208,6 +202,10 @@
                                 <button class="novel-menu-item" (click)="openNovel(novel.id); closeNovelMenu()">
                                     <span class="material-symbols-outlined">open_in_new</span>
                                     <span>Open</span>
+                                </button>
+                                <button class="novel-menu-item" (click)="duplicateNovel(novel, $event)">
+                                    <span class="material-symbols-outlined">content_copy</span>
+                                    <span>Duplicate</span>
                                 </button>
                                 <button class="novel-menu-item novel-menu-item--danger" (click)="openDeleteModal(novel, $event)">
                                     <span class="material-symbols-outlined">delete</span>
@@ -241,6 +239,10 @@
                             <span class="material-symbols-outlined">open_in_new</span>
                             <span>Open</span>
                         </button>
+                        <button class="novel-menu-item" (click)="duplicateNovel(novel, $event)">
+                            <span class="material-symbols-outlined">content_copy</span>
+                            <span>Duplicate</span>
+                        </button>
                         <button class="novel-menu-item novel-menu-item--danger" (click)="openDeleteModal(novel, $event)">
                             <span class="material-symbols-outlined">delete</span>
                             <span>Delete</span>
@@ -254,6 +256,8 @@
                         <span>{{ novel.chapters }} Ch</span>
                         <span class="dot">•</span>
                         <span>{{ novel.wordCount | number }} W</span>
+                        <span class="dot">•</span>
+                        <span>{{ readingTime(novel.wordCount) }}</span>
                     </div>
                     <div class="card-progress-bar">
                         <div class="prog-fill" [style.width.%]="novel.progress"
@@ -347,8 +351,4 @@
     <env-button variant="danger" (clicked)="confirmDeleteNovel()">Delete</env-button>
   </div>
 </env-modal>
-}v-modal>
-}>
-}>
-}>
 }

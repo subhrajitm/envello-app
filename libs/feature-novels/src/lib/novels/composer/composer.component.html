@@ -17,7 +17,7 @@
         <div class="loading-spinner">
             <span class="material-symbols-outlined">auto_awesome</span>
         </div>
-        <p class="loading-text">Loading novel...</p>
+        <p class="loading-text">Loading…</p>
     </div>
     } @else {
     <div class="ne-workspace">
@@ -31,9 +31,9 @@
             }
             <!-- Sidebar Back Action -->
             <div class="ne-sidebar-header-action">
-                <button class="ne-btn-back-sidebar" (click)="goBack()">
+                <button class="ne-btn-back-sidebar" (click)="goBack()" title="Back to Write">
                     <span class="material-symbols-outlined text-sm">arrow_back</span>
-                    Back to Dashboard
+                    Write
                 </button>
             </div>
 
@@ -44,7 +44,9 @@
                 [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()"
                 (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)"
                 (deleteChapter)="deleteChapter($event.id, $event.title)"
-                (deleteGroup)="deleteGroup($event.id, $event.title)" (toggleBulkMode)="toggleBulkMode()"
+                (deleteGroup)="deleteGroup($event.id, $event.title)"
+                (renameChapter)="novelService.updateChapterTitle($event.id, $event.title)"
+                (toggleBulkMode)="toggleBulkMode()"
                 (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()"
                 (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
                 (toggleChapterSelection)="toggleChapterSelection($event)" />

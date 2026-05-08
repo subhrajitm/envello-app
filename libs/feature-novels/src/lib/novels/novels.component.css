@@ -57,6 +57,68 @@
     gap: 8px;
 }
 
+/* Search Bar */
+.list-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.list-search-icon {
+    position: absolute;
+    left: 7px;
+    font-size: 14px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+}
+
+.list-search-input {
+    height: 26px;
+    padding: 0 28px 0 28px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 11px;
+    font-family: var(--font-sans);
+    width: 180px;
+    transition: all 0.15s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.list-search-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.list-search-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-dim);
+    width: 220px;
+}
+
+.list-search-clear {
+    position: absolute;
+    right: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 3px;
+}
+
+.list-search-clear:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.list-search-clear .material-symbols-outlined {
+    font-size: 14px;
+}
+
 /* Custom Icon-Based Dropdowns - Compact Enterprise Design */
 .custom-dropdown-wrapper {
     position: relative;
@@ -276,7 +338,7 @@
 
 .table-header {
     display: grid;
-    grid-template-columns: 3fr 0.8fr 1.5fr 1fr 1.5fr 0.8fr 1.2fr 40px;
+    grid-template-columns: 3fr 1.5fr 1fr 1.5fr 0.8fr 1.2fr 40px;
     gap: 12px;
     padding: 8px 16px;
     border-bottom: 1px solid var(--border-subtle);
@@ -295,7 +357,7 @@
 
 .table-row {
     display: grid;
-    grid-template-columns: 3fr 0.8fr 1.5fr 1fr 1.5fr 0.8fr 1.2fr 40px;
+    grid-template-columns: 3fr 1.5fr 1fr 1.5fr 0.8fr 1.2fr 40px;
     gap: 12px;
     padding: 8px 16px;
     border-bottom: 1px solid var(--border-subtle);
@@ -541,6 +603,11 @@
     font-family: var(--font-mono);
 }
 
+.col-read-time {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
 .col-last-updated {
     font-size: 11px;
     color: var(--text-tertiary);
@@ -688,6 +755,11 @@
 .card-updated {
     font-size: 10px;
     color: var(--text-tertiary);
+}
+
+.dot {
+    color: var(--text-tertiary);
+    opacity: 0.5;
 }
 
 .novels-empty-wrap {

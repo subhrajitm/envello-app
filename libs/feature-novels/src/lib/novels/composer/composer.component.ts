@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NovelContentService, Chapter, ChapterGroup } from '@envello/core';
 import { VersionHistoryService, VersionSnapshot } from '@envello/core';
 import { AiService, AiMessage, AiSuggestion } from '@envello/core';
+import { StoreService } from '@envello/core';
 
 // Modals
 import { DeleteModalComponent, DeleteModalData } from './components/modals/delete-modal/delete-modal.component';
@@ -72,7 +73,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   editor!: Editor;
   novelService = inject(NovelContentService);
   versionHistoryService = inject(VersionHistoryService);
-  aiService = inject(AiService); // Inject AI Service
+  aiService = inject(AiService);
+  private store = inject(StoreService);
   route = inject(ActivatedRoute);
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
   private shouldFocusInput = false;
@@ -109,6 +111,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   sessionStartTime = Date.now();
   elapsedSeconds = signal(0);
   targetWordCount = signal(2500);
+  private novelId = signal('');
 
   // Auto-save state
   isSaving = signal(false);
@@ -252,6 +255,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
+    // Sync writing goal target from store novel metadata
+    effect(() => {
+      const meta = this.store.novels().find(n => n.id === this.novelId());
+      if (meta?.targetWordCount) {
+        this.targetWordCount.set(meta.targetWordCount);
+      }
+    });
+
     // Time tracking interval
     this.timeInterval = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - this.sessionStartTime) / 1000);
@@ -261,6 +272,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id') || '1';
+    this.novelId.set(id);
 
     // Initialize editor first (non-blocking)
     this.editor = new Editor({

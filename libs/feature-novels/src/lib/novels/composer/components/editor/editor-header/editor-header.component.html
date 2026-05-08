@@ -110,6 +110,10 @@
                     <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
                     <span class="option-label">Export as PDF</span>
                 </button>
+                <button class="add-dropdown-option" (click)="exportNovel.emit('docx'); toggleExportMenu.emit()">
+                    <span class="material-symbols-outlined option-icon">article</span>
+                    <span class="option-label">Export as Word (.doc)</span>
+                </button>
                 <button class="add-dropdown-option" (click)="exportNovel.emit('html'); toggleExportMenu.emit()">
                     <span class="material-symbols-outlined option-icon">code</span>
                     <span class="option-label">Export as HTML</span>

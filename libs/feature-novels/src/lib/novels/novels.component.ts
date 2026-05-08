@@ -19,6 +19,7 @@ export class NovelsComponent {
   viewMode = signal<'LIST' | 'GRID'>('LIST');
   statusFilter = signal<'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED'>('ALL');
   sortBy = signal<'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'>('UPDATED');
+  searchQuery = signal('');
   statusDropdownOpen = signal(false);
   sortDropdownOpen = signal(false);
 
@@ -54,6 +55,15 @@ export class NovelsComponent {
   novels = computed(() => {
     let list = this.store.novels();
 
+    // Search
+    const q = this.searchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(n =>
+        n.title.toLowerCase().includes(q) ||
+        n.genre.some(g => g.toLowerCase().includes(q))
+      );
+    }
+
     // Filter
     if (this.statusFilter() !== 'ALL') {
       list = list.filter(n => n.status === this.statusFilter());
@@ -80,8 +90,13 @@ export class NovelsComponent {
   });
 
   activeDrafts = computed(() => {
-    return this.store.novels().filter(n => n.status !== 'PUBLISHED').length;
+    return this.store.novels().filter(n => n.status === 'DRAFTING' || n.status === 'REVISING').length;
   });
+
+  readingTime(wordCount: number): string {
+    const mins = Math.ceil(wordCount / 200);
+    return mins < 1 ? '<1 min' : `${mins} min read`;
+  }
 
   avgCompletion = computed(() => {
     const list = this.store.novels();
@@ -188,6 +203,27 @@ export class NovelsComponent {
 
   closeNovelMenu() {
     this.novelMenuOpen.set(null);
+  }
+
+  duplicateNovel(novel: Novel, e?: Event) {
+    e?.stopPropagation();
+    const id = crypto.randomUUID();
+    const now = new Date();
+    const copy: Novel = {
+      ...novel,
+      id,
+      title: `${novel.title} (Copy)`,
+      createdDate: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      lastUpdated: 'Just now',
+      createdAt: now.toISOString(),
+      isRecentlyUpdated: true,
+      wordCount: 0,
+      progress: 0,
+      chapters: 0,
+    };
+    this.store.addNovel(copy);
+    this.novelContent.createAndPersistEmptyNovel(id, copy.title).catch(e => console.error(e));
+    this.closeNovelMenu();
   }
 
   openDeleteModal(novel: Novel, e?: Event) {
