@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Bookmark, BookmarkFolder } from '@envello/core';
-import { ModalComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 type BookmarkView = 'all' | 'pinned' | 'archived' | 'recent';
 type ViewMode = 'grid' | 'list';
@@ -11,7 +11,7 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 @Component({
   selector: 'app-bookmarks',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent],
   templateUrl: './bookmarks.component.html',
   styleUrl: './bookmarks.component.css',
 })
@@ -67,9 +67,8 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   // ── AI Assistant panel ───────────────────────────────────────────────────────
   showAssistant = signal<boolean>(false);
-  aiInput = signal<string>('');
   aiLoading = signal<boolean>(false);
-  aiMessages = signal<{ role: 'user' | 'assistant'; text: string }[]>([]);
+  aiMessages = signal<AiPanelMessage[]>([]);
 
   readonly aiSuggestions = [
     'What topics do my bookmarks cover?',
@@ -460,17 +459,10 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   // ── AI Assistant methods ──────────────────────────────────────────────────────
   toggleAssistant() { this.showAssistant.update(v => !v); }
 
-  selectSuggestion(text: string) {
-    this.aiInput.set(text);
-    this.sendAiMessage();
-  }
-
-  async sendAiMessage() {
-    const text = this.aiInput().trim();
+  async sendAiMessage(text: string) {
     if (!text || this.aiLoading()) return;
 
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
-    this.aiInput.set('');
     this.aiLoading.set(true);
 
     await new Promise(r => setTimeout(r, 900 + Math.random() * 500));
@@ -515,16 +507,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.aiLoading.set(false);
 
     setTimeout(() => {
-      const el = document.querySelector('.ai-messages');
+      const el = document.querySelector('.ai-panel-messages');
       if (el) el.scrollTop = el.scrollHeight;
     }, 50);
-  }
-
-  onAiKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      this.sendAiMessage();
-    }
   }
 
   clearAiChat() { this.aiMessages.set([]); }

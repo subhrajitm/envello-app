@@ -1769,11 +1769,3 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 }
-url);
-    }
-  }
-}
-url);
-    }
-  }
-}

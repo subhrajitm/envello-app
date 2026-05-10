@@ -1,0 +1,85 @@
+<aside class="ai-panel">
+
+  <!-- Header -->
+  <div class="ai-panel-header">
+    <div class="ai-panel-header-left">
+      <span class="material-symbols-outlined ai-panel-spark">auto_awesome</span>
+      <span class="ai-panel-title">{{ title() }}</span>
+    </div>
+    <div class="ai-panel-header-right">
+      @if (messages().length > 0) {
+        <button class="ai-panel-btn" (click)="cleared.emit()" title="Clear chat">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+      }
+      <button class="ai-panel-btn" (click)="closed.emit()" title="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages area -->
+  <div class="ai-panel-messages">
+
+    @if (messages().length === 0) {
+      <div class="ai-panel-welcome">
+        <div class="ai-panel-welcome-icon">
+          <span class="material-symbols-outlined">auto_awesome</span>
+        </div>
+        <p class="ai-panel-welcome-heading">{{ title() }}</p>
+        <p class="ai-panel-welcome-sub">Ask anything — I'm here to help.</p>
+      </div>
+
+      @if (suggestions().length > 0) {
+        <div class="ai-panel-suggestions">
+          <p class="ai-panel-suggestions-label">Suggested actions</p>
+          @for (s of suggestions(); track s) {
+            <button class="ai-panel-chip" (click)="onSuggestionClick(s)">{{ s }}</button>
+          }
+        </div>
+      }
+    }
+
+    @for (msg of messages(); track $index) {
+      <div class="ai-panel-msg"
+           [class.ai-panel-msg--user]="msg.role === 'user'"
+           [class.ai-panel-msg--assistant]="msg.role === 'assistant'">
+        @if (msg.role === 'assistant') {
+          <span class="ai-panel-msg-icon material-symbols-outlined">auto_awesome</span>
+        }
+        <div class="ai-panel-msg-bubble">{{ msg.text }}</div>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="ai-panel-msg ai-panel-msg--assistant">
+        <span class="ai-panel-msg-icon material-symbols-outlined">auto_awesome</span>
+        <div class="ai-panel-typing">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- Input bar -->
+  <div class="ai-panel-input-bar">
+    <textarea
+      class="ai-panel-input"
+      [value]="inputText()"
+      (input)="inputText.set($any($event.target).value)"
+      (keydown)="onKeydown($event)"
+      [placeholder]="placeholder()"
+      rows="1"
+    ></textarea>
+    <button
+      class="ai-panel-send-btn"
+      [disabled]="!inputText().trim() || loading()"
+      (click)="onSend()"
+      title="Send (Enter)"
+    >
+      <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
+  </div>
+
+</aside>

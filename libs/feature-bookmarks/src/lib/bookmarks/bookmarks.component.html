@@ -386,90 +386,16 @@
        AI ASSISTANT PANEL
   ════════════════════════════════════════════════════ -->
   @if (showAssistant()) {
-    <aside class="bm-assistant-panel">
-
-      <!-- Header -->
-      <div class="bm-assist-header">
-        <div class="bm-assist-header-left">
-          <span class="material-symbols-outlined bm-assist-spark">auto_awesome</span>
-          <span class="bm-assist-title">AI Assistant</span>
-        </div>
-        <div class="bm-assist-header-right">
-          @if (aiMessages().length > 0) {
-            <button class="bm-assist-clear" (click)="clearAiChat()" title="Clear chat">
-              <span class="material-symbols-outlined">refresh</span>
-            </button>
-          }
-          <button class="bm-assist-close" (click)="toggleAssistant()" title="Close">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Messages area -->
-      <div class="ai-messages">
-
-        <!-- Welcome (shown when no messages) -->
-        @if (aiMessages().length === 0) {
-          <div class="ai-welcome">
-            <div class="ai-welcome-icon">
-              <span class="material-symbols-outlined">auto_awesome</span>
-            </div>
-            <p class="ai-welcome-heading">Bookmarks Assistant</p>
-            <p class="ai-welcome-sub">Ask anything about your bookmarks — topics, visit history, duplicates, and more.</p>
-          </div>
-
-          <!-- Suggested actions -->
-          <div class="ai-suggestions">
-            <p class="ai-suggestions-label">Suggested actions</p>
-            @for (s of aiSuggestions; track s) {
-              <button class="ai-suggestion-chip" (click)="selectSuggestion(s)">{{ s }}</button>
-            }
-          </div>
-        }
-
-        <!-- Chat messages -->
-        @for (msg of aiMessages(); track $index) {
-          <div class="ai-msg" [class.ai-msg-user]="msg.role === 'user'" [class.ai-msg-assistant]="msg.role === 'assistant'">
-            @if (msg.role === 'assistant') {
-              <span class="ai-msg-icon material-symbols-outlined">auto_awesome</span>
-            }
-            <div class="ai-msg-bubble">{{ msg.text }}</div>
-          </div>
-        }
-
-        <!-- Loading indicator -->
-        @if (aiLoading()) {
-          <div class="ai-msg ai-msg-assistant">
-            <span class="ai-msg-icon material-symbols-outlined">auto_awesome</span>
-            <div class="ai-typing">
-              <span></span><span></span><span></span>
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- Input bar -->
-      <div class="ai-input-bar">
-        <textarea
-          class="ai-input"
-          [value]="aiInput()"
-          (input)="aiInput.set($any($event.target).value)"
-          (keydown)="onAiKeydown($event)"
-          placeholder="Ask about your bookmarks…"
-          rows="1"
-        ></textarea>
-        <button
-          class="ai-send-btn"
-          [disabled]="!aiInput().trim() || aiLoading()"
-          (click)="sendAiMessage()"
-          title="Send (Enter)"
-        >
-          <span class="material-symbols-outlined">arrow_upward</span>
-        </button>
-      </div>
-
-    </aside>
+    <env-ai-panel
+      title="Bookmarks Assistant"
+      placeholder="Ask about your bookmarks…"
+      [suggestions]="aiSuggestions"
+      [messages]="aiMessages()"
+      [loading]="aiLoading()"
+      (send)="sendAiMessage($event)"
+      (cleared)="clearAiChat()"
+      (closed)="toggleAssistant()"
+    ></env-ai-panel>
   }
 
 </div>

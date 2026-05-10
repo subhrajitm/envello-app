@@ -20,4 +20,5 @@ export * from './lib/skeleton-loader/skeleton-loader.component';
 export * from './lib/keyboard-shortcuts/keyboard-shortcuts.component';
 export * from './lib/onboarding/onboarding.component';
 export * from './lib/floating-ai-button/floating-ai-button.component';
+export * from './lib/ai-assistant-panel/ai-assistant-panel.component';
 export * from './lib/profile-manager/profile-manager.component';

@@ -324,6 +324,26 @@ export class NovelContentService {
         this.schedulePersist();
     }
 
+    moveChapterToGroup(chapterId: string, targetGroupId: string) {
+        this.activeNovel.update(novel => {
+            if (!novel) return null;
+            let chapter: any = null;
+            const stripped = novel.chapters.map(group => {
+                const found = group.children.find(c => c.id === chapterId);
+                if (found) chapter = found;
+                return { ...group, children: group.children.filter(c => c.id !== chapterId) };
+            });
+            if (!chapter) return novel;
+            const newChapters = stripped.map(group =>
+                group.id === targetGroupId
+                    ? { ...group, children: [...group.children, chapter] }
+                    : group
+            );
+            return { ...novel, chapters: newChapters };
+        });
+        this.schedulePersist();
+    }
+
     reorderChapterGroup(fromIndex: number, toIndex: number) {
         this.activeNovel.update(novel => {
             if (!novel) return null;
