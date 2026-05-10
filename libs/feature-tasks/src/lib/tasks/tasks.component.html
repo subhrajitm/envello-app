@@ -1,10 +1,8 @@
 
-<div class="tasks-view-minimal flex flex-col h-full">
-    <!-- Main content -->
-    <div class="tasks-main-content">
+<div class="tasks-view-minimal h-full">
 
-        <!-- Enterprise Header / Toolbar -->
-        <div class="tasks-toolbar">
+    <!-- Enterprise Header / Toolbar -->
+    <div class="tasks-toolbar">
             <div class="toolbar-left">
                 <div class="tasks-toolbar-quick-actions">
                     <button type="button"
@@ -82,8 +80,11 @@
                 </div>
                 }
                 </div>
-        </div>
+    </div>
 
+    <!-- Body row: task list + sidebar + AI panel -->
+    <div class="tasks-body">
+    <div class="tasks-main-content">
 
         <!-- Task List / Data Grid + Thumbnails -->
         @if (viewMode() === 'list') {
@@ -437,6 +438,20 @@
         </div>
     </div>
 
+    @if (showAssistant()) {
+        <env-ai-panel
+            title="Tasks Assistant"
+            placeholder="Ask about your tasks…"
+            [suggestions]="aiSuggestions"
+            [messages]="aiMessages()"
+            [loading]="aiLoading()"
+            (send)="sendAiMessage($event)"
+            (cleared)="clearAiChat()"
+            (closed)="showAssistant.set(false)"
+        ></env-ai-panel>
+    }
+    </div><!-- /.tasks-body -->
+
 <!-- New Task Modal -->
 <env-modal
     [isOpen]="newTaskModalOpen()"
@@ -736,18 +751,6 @@
             }
         </div>
     </div>
-    @if (showAssistant()) {
-        <env-ai-panel
-            title="Tasks Assistant"
-            placeholder="Ask about your tasks…"
-            [suggestions]="aiSuggestions"
-            [messages]="aiMessages()"
-            [loading]="aiLoading()"
-            (send)="sendAiMessage($event)"
-            (cleared)="clearAiChat()"
-            (closed)="showAssistant.set(false)"
-        ></env-ai-panel>
-    }
 </div>
 }
 
