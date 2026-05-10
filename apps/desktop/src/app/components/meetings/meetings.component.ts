@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -22,7 +22,7 @@ import { TauriService } from '@envello/core';
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
-export class MeetingsComponent implements OnInit, OnDestroy {
+export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
   private tauriService = inject(TauriService);
   
@@ -351,13 +351,6 @@ export class MeetingsComponent implements OnInit, OnDestroy {
     };
   });
   
-  ngOnInit() {
-    // Initialize any needed state
-  }
-  
-  ngOnDestroy() {
-    // Cleanup
-  }
   
   // Keyboard shortcuts
   @HostListener('document:click', ['$event'])

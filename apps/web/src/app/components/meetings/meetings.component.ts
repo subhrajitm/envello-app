@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -22,7 +22,7 @@ import { TauriService } from '@envello/core';
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
-export class MeetingsComponent implements OnInit, OnDestroy {
+export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
   private tauriService = inject(TauriService);
   
@@ -339,6 +339,27 @@ export class MeetingsComponent implements OnInit, OnDestroy {
 
   /** Whether any meetings have no project (for filter dropdown) */
   hasNoProject = computed(() => this.meetingsByProject().some((p) => p[0] === 'No project'));
+
+  /** The very next scheduled meeting */
+  nextMeeting = computed((): Meeting | null => {
+    const now = new Date();
+    return this.meetingsService.meetings()
+      .filter(m => new Date(`${m.date}T${m.startTime}`) >= now && m.status === 'scheduled')
+      .sort((a, b) => new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime())[0] ?? null;
+  });
+
+  /** Count of meetings per type for breakdown bar */
+  meetingTypeBreakdown = computed(() => {
+    const meetings = this.meetingsService.meetings().filter(m => m.status !== 'cancelled');
+    const total = meetings.length;
+    if (!total) return [];
+    const counts = new Map<string, number>();
+    for (const m of meetings) counts.set(m.meetingType, (counts.get(m.meetingType) ?? 0) + 1);
+    const labels: Record<string, string> = { video: 'Video', phone: 'Phone', 'in-person': 'In-Person', hybrid: 'Hybrid' };
+    return Array.from(counts.entries())
+      .map(([type, count]) => ({ type, label: labels[type] ?? type, count, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  });
   
   // Meetings by status for kanban
   meetingsByStatus = computed(() => {
@@ -350,14 +371,6 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       cancelled: meetings.filter(m => m.status === 'cancelled'),
     };
   });
-  
-  ngOnInit() {
-    // Initialize any needed state
-  }
-  
-  ngOnDestroy() {
-    // Cleanup
-  }
   
   // Keyboard shortcuts
   @HostListener('document:click', ['$event'])

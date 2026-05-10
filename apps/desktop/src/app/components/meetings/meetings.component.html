@@ -669,7 +669,7 @@
                             </div>
                             } @else {
                             @if (selectedMeeting()!.meetingLink) {
-                            <a class="detail-link" [href]="selectedMeeting()!.meetingLink" target="_blank">
+                            <a class="detail-link" [href]="selectedMeeting()!.meetingLink" target="_blank" rel="noopener noreferrer">
                                 {{ selectedMeeting()!.meetingLink }}
                             </a>
                             }

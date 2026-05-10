@@ -1,9 +1,7 @@
-<div class="meetings-view-minimal flex flex-col h-full">
-    <!-- Main content -->
-    <div class="meetings-main-content">
+<div class="meetings-view-minimal h-full">
 
-        <!-- Toolbar -->
-        <div class="meetings-toolbar">
+    <!-- Toolbar -->
+    <div class="meetings-toolbar">
             <div class="toolbar-left">
                 <div class="meetings-toolbar-quick-actions">
                     <button type="button" class="btn-primary add-meeting-main-btn" (click)="openCreateModal()"
@@ -60,7 +58,11 @@
                     </button>
                 </div>
             </div>
-        </div>
+    </div>
+
+    <!-- Body row: list/calendar/kanban + sidebar -->
+    <div class="meetings-body">
+    <div class="meetings-main-content">
 
         <!-- List View -->
         @if (viewMode() === 'list') {
@@ -266,8 +268,9 @@
 
     <!-- Right Sidebar -->
     <div class="meetings-sidebar">
+
+        <!-- Mini Calendar -->
         <div class="sidebar-calendar-card">
-            <!-- Calendar Header -->
             <div class="cal-card-header">
                 <div class="cal-card-month-nav">
                     <button class="cal-nav-btn" (click)="previousMonth()" aria-label="Previous month">
@@ -283,15 +286,11 @@
                     Today
                 </button>
             </div>
-
-            <!-- Day Headers -->
             <div class="cal-card-weekdays">
                 @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
                 <span>{{ d }}</span>
                 }
             </div>
-
-            <!-- Day Grid -->
             <div class="cal-card-grid">
                 @for (week of calendarWeeks(); track week[0].getTime()) {
                 @for (day of week; track day.getTime()) {
@@ -308,111 +307,192 @@
                 }
                 }
             </div>
-
-            <!-- Stats Row -->
             <div class="cal-card-stats">
-                <div class="cal-stat">
-                    <span class="cal-stat-value" [class.highlight]="stats().todayCount > 0">{{ stats().todayCount
-                        }}</span>
+                <div class="cal-stat" (click)="viewFilter.set('today')" role="button" tabindex="0">
+                    <span class="cal-stat-value" [class.highlight]="stats().todayCount > 0">{{ stats().todayCount }}</span>
                     <span class="cal-stat-label">Today</span>
                 </div>
                 <div class="cal-stat-sep"></div>
-                <div class="cal-stat">
+                <div class="cal-stat" (click)="viewFilter.set('upcoming')" role="button" tabindex="0">
                     <span class="cal-stat-value">{{ stats().thisWeekCount }}</span>
                     <span class="cal-stat-label">Week</span>
                 </div>
                 <div class="cal-stat-sep"></div>
-                <div class="cal-stat">
+                <div class="cal-stat" (click)="viewFilter.set('all')" role="button" tabindex="0">
                     <span class="cal-stat-value">{{ stats().totalScheduled }}</span>
                     <span class="cal-stat-label">Scheduled</span>
                 </div>
             </div>
         </div>
 
-        <!-- KPI Items -->
-        <div class="kpis-compact-list">
-            <div class="kpi-context-row">
-                <span class="kpi-context-label">
-                    <span class="material-symbols-outlined">event</span>
-                    Overview
-                </span>
-            </div>
+        <!-- Scrollable content -->
+        <div class="sb-scroll">
 
-            <div class="kpi-item">
-                <div class="kpi-icon green"><span class="material-symbols-outlined">check_circle</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Completed</span>
-                    <span class="kpi-value">{{ stats().totalCompleted }}</span>
+            <!-- Next Up -->
+            @if (nextMeeting(); as m) {
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">schedule</span>
+                    Next Up
+                </div>
+                <div class="sb-next-card" [style.border-left-color]="m.color" (click)="openDetailsModal(m)">
+                    <div class="sb-next-header">
+                        <span class="sb-next-time">{{ getRelativeDate(m.date) }} · {{ formatTime(m.startTime) }}</span>
+                        @if (m.duration) {<span class="sb-next-dur">{{ m.duration }}m</span>}
+                    </div>
+                    <div class="sb-next-title">{{ m.title }}</div>
+                    <div class="sb-next-footer">
+                        <span class="sb-next-type-chip">
+                            <span class="material-symbols-outlined">{{ getMeetingTypeIcon(m.meetingType) }}</span>
+                            {{ m.meetingType }}
+                        </span>
+                        @if (m.attendees.length) {
+                        <span class="sb-next-ats">
+                            <span class="material-symbols-outlined">group</span>
+                            {{ m.attendees.length }}
+                        </span>
+                        }
+                        @if (m.meetingLink) {
+                        <button class="sb-next-join-btn" (click)="$event.stopPropagation(); joinMeeting(m)">
+                            <span class="material-symbols-outlined">videocam</span>
+                            Join
+                        </button>
+                        }
+                    </div>
                 </div>
             </div>
+            }
 
-            <div class="kpi-item">
-                <div class="kpi-icon purple"><span class="material-symbols-outlined">task_alt</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Action Items</span>
-                    <div class="kpi-value-row">
-                        <span class="kpi-value">{{ stats().openActionItems }}</span>
-                        <span class="kpi-sub">/ {{ stats().totalActionItems }}</span>
+            <!-- Stats Grid -->
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">bar_chart_4_bars</span>
+                    Overview
+                </div>
+                <div class="sb-stats-grid">
+                    <div class="sb-stat-cell" (click)="viewFilter.set('upcoming')" title="Scheduled meetings">
+                        <span class="sb-stat-num blue">{{ stats().totalScheduled }}</span>
+                        <span class="sb-stat-lbl">Scheduled</span>
+                    </div>
+                    <div class="sb-stat-cell" (click)="viewFilter.set('past')" title="Completed meetings">
+                        <span class="sb-stat-num green">{{ stats().totalCompleted }}</span>
+                        <span class="sb-stat-lbl">Completed</span>
+                    </div>
+                    <div class="sb-stat-cell" (click)="viewFilter.set('today')" title="Today's meetings">
+                        <span class="sb-stat-num" [class.accent]="stats().todayCount > 0">{{ stats().todayCount }}</span>
+                        <span class="sb-stat-lbl">Today</span>
+                    </div>
+                    <div class="sb-stat-cell" title="Meetings this week">
+                        <span class="sb-stat-num">{{ stats().thisWeekCount }}</span>
+                        <span class="sb-stat-lbl">This Week</span>
                     </div>
                 </div>
             </div>
 
-            <div class="kpi-item">
-                <div class="kpi-icon blue"><span class="material-symbols-outlined">event_upcoming</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">This Week</span>
-                    <span class="kpi-value">{{ stats().thisWeekCount }}</span>
+            <!-- Action Items Progress -->
+            @if (stats().totalActionItems > 0) {
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">task_alt</span>
+                    Action Items
+                    <span class="sb-section-badge">{{ stats().openActionItems }} open</span>
                 </div>
+                <div class="sb-progress-block">
+                    <div class="sb-progress-track">
+                        <div class="sb-progress-fill" [style.width.%]="stats().actionItemsPct"></div>
+                    </div>
+                    <div class="sb-progress-meta">
+                        <span>{{ stats().actionItemsPct }}% complete</span>
+                        <span>{{ stats().totalActionItems - stats().openActionItems }}&thinsp;/&thinsp;{{ stats().totalActionItems }}</span>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- Meeting Type Breakdown -->
+            @if (meetingTypeBreakdown().length > 0) {
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">category</span>
+                    By Type
+                </div>
+                <div class="sb-type-list">
+                    @for (t of meetingTypeBreakdown(); track t.type) {
+                    <div class="sb-type-row">
+                        <span class="sb-type-icon">
+                            <span class="material-symbols-outlined">{{ getMeetingTypeIcon(t.type) }}</span>
+                        </span>
+                        <span class="sb-type-name">{{ t.label }}</span>
+                        <div class="sb-type-bar-wrap">
+                            <div class="sb-type-bar" [style.width.%]="t.pct"></div>
+                        </div>
+                        <span class="sb-type-count">{{ t.count }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Upcoming -->
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">event_upcoming</span>
+                    Upcoming
+                </div>
+                @if (upcomingSyncs().length === 0) {
+                <div class="sb-empty-msg">No upcoming meetings scheduled.</div>
+                } @else {
+                @for (sync of upcomingSyncs().slice(0, 5); track sync.id) {
+                <div class="sb-upcoming-row" [class.today]="meetingsService.isMeetingToday(sync)"
+                    [style.border-left-color]="sync.color"
+                    (click)="openDetailsModal(sync)">
+                    <div class="sb-upcoming-main">
+                        <span class="sb-upcoming-time">{{ getRelativeDate(sync.date) }} · {{ formatTime(sync.startTime) }}</span>
+                        <span class="sb-upcoming-title">{{ sync.title }}</span>
+                        @if (sync.attendees.length > 0) {
+                        <span class="sb-upcoming-ats">
+                            <span class="material-symbols-outlined">group</span>
+                            {{ sync.attendees.length }}
+                        </span>
+                        }
+                    </div>
+                    @if (sync.meetingLink) {
+                    <button class="sb-join-btn" (click)="$event.stopPropagation(); joinMeeting(sync)" title="Join">
+                        <span class="material-symbols-outlined">videocam</span>
+                    </button>
+                    }
+                </div>
+                }
+                }
             </div>
 
-            @if (upcomingSyncs().length > 0) {
-            <div class="kpi-context-row" style="margin-top: 4px;">
-                <span class="kpi-context-label">
-                    <span class="material-symbols-outlined">upcoming</span>
-                    Upcoming
-                </span>
-            </div>
-            @for (sync of upcomingSyncs().slice(0, 4); track sync.id) {
-            <div class="sb-upcoming-row" [class.today]="meetingsService.isMeetingToday(sync)"
-                (click)="openDetailsModal(sync)">
-                <div class="sb-upcoming-main">
-                    <span class="sb-upcoming-time">{{ getRelativeDate(sync.date) }} · {{
-                        formatTime(sync.startTime) }}</span>
-                    <span class="sb-upcoming-title">{{ sync.title }}</span>
+            <!-- By Project -->
+            @if (meetingsByProject().length > 0) {
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">folder</span>
+                    By Project
                 </div>
-                @if (sync.meetingLink) {
-                <button class="sb-join-btn" (click)="$event.stopPropagation(); joinMeeting(sync)" title="Join">
-                    <span class="material-symbols-outlined">videocam</span>
-                </button>
+                @for (p of meetingsByProject(); track p[0]) {
+                <div class="sb-project-row" [class.selected]="selectedProject() === p[0]"
+                    (click)="selectedProject.set(selectedProject() === p[0] ? '' : p[0]); viewFilter.set('all')">
+                    <span class="sb-project-name">{{ p[0] }}</span>
+                    <span class="sb-project-count">{{ p[1] }}</span>
+                </div>
                 }
             </div>
             }
-            }
 
-            @if (meetingsByProject().length > 0) {
-            <div class="kpi-context-row" style="margin-top: 4px;">
-                <span class="kpi-context-label">
-                    <span class="material-symbols-outlined">folder</span>
-                    By Project
-                </span>
-            </div>
-            @for (p of meetingsByProject().slice(0, 5); track p[0]) {
-            <div class="sb-project-row" [class.selected]="selectedProject() === p[0]"
-                (click)="selectedProject.set(selectedProject() === p[0] ? '' : p[0]); viewFilter.set('all')">
-                <span class="sb-project-name">{{ p[0] }}</span>
-                <span class="sb-project-count">{{ p[1] }}</span>
-            </div>
-            }
-            }
-        </div>
+        </div><!-- /.sb-scroll -->
 
         <div class="meetings-sidebar-footer">
             <button type="button" class="sb-shortcut-btn" (click)="openShortcutsHelp()">
                 <span class="material-symbols-outlined">keyboard</span>
-                ⌘/
+                Shortcuts ⌘/
             </button>
         </div>
     </div>
+    </div><!-- /.meetings-body -->
 </div>
 
 <!-- Create Meeting Modal -->
@@ -748,7 +828,7 @@
                             </div>
                             } @else {
                             @if (selectedMeeting()!.meetingLink) {
-                            <a class="detail-link" [href]="selectedMeeting()!.meetingLink" target="_blank">
+                            <a class="detail-link" [href]="selectedMeeting()!.meetingLink" target="_blank" rel="noopener noreferrer">
                                 {{ selectedMeeting()!.meetingLink }}
                             </a>
                             }
