@@ -167,6 +167,29 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.ai-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.ai-toggle-btn .material-symbols-outlined { font-size: 15px; }
+.ai-toggle-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.ai-toggle-btn.active {
+    background: var(--accent-primary-dim);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
 .toolbar-right {
     display: flex;
     align-items: center;

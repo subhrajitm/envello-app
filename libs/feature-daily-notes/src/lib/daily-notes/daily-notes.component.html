@@ -410,6 +410,9 @@
                     </div>
                     }
                 </div>
+                <button class="action-btn ai-toggle-btn-dn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                </button>
             </div>
         </div>
 
@@ -626,4 +629,16 @@
         </div>
         }
     </div>
+    @if (showAssistant()) {
+        <env-ai-panel
+            title="Notes Assistant"
+            placeholder="Ask about your notes…"
+            [suggestions]="aiSuggestions"
+            [messages]="aiMessages()"
+            [loading]="aiLoading()"
+            (send)="sendAiMessage($event)"
+            (cleared)="clearAiChat()"
+            (closed)="showAssistant.set(false)"
+        ></env-ai-panel>
+    }
 </div>

@@ -56,6 +56,11 @@
                         <span class="material-symbols-outlined">view_module</span>
                     </button>
                 </div>
+                <div class="toolbar-divider"></div>
+                <button class="ai-toggle-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    <span>Assistant</span>
+                </button>
                 @if (bulkActionMode()) {
                 <div class="bulk-actions-bar">
                     <span class="bulk-selection-count">{{ selectedTasks().size }} selected</span>
@@ -731,6 +736,18 @@
             }
         </div>
     </div>
+    @if (showAssistant()) {
+        <env-ai-panel
+            title="Tasks Assistant"
+            placeholder="Ask about your tasks…"
+            [suggestions]="aiSuggestions"
+            [messages]="aiMessages()"
+            [loading]="aiLoading()"
+            (send)="sendAiMessage($event)"
+            (cleared)="clearAiChat()"
+            (closed)="showAssistant.set(false)"
+        ></env-ai-panel>
+    }
 </div>
 }
 

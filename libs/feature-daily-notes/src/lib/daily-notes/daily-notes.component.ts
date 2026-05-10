@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, untracked, HostListener, OnInit, O
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent, ModalComponent, EmptyStateComponent } from '@envello/ui';
+import { ButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -39,7 +39,7 @@ interface NoteGroup {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, ModalComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css'
 })
@@ -843,6 +843,83 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.tempNoteId.set('');
     this.tempFolderId.set('');
   }
+
+  // ── AI Assistant ─────────────────────────────────────────────────────────────
+  showAssistant = signal(false);
+  aiLoading     = signal(false);
+  aiMessages    = signal<AiPanelMessage[]>([]);
+
+  readonly aiSuggestions = [
+    'How many notes do I have?',
+    'What tags do I use most?',
+    'Show notes from today',
+    'Which folders have the most notes?',
+    'Find my pinned notes',
+  ];
+
+  toggleAssistant() { this.showAssistant.update(v => !v); }
+
+  async sendAiMessage(text: string) {
+    if (!text || this.aiLoading()) return;
+    this.aiMessages.update(m => [...m, { role: 'user', text }]);
+    this.aiLoading.set(true);
+
+    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
+
+    const notes = this.notes();
+    const q = text.toLowerCase();
+    let response = '';
+
+    if (q.includes('how many') || q.includes('count')) {
+      response = `You have ${notes.length} note${notes.length !== 1 ? 's' : ''} across ${this.noteGroups().length} folder${this.noteGroups().length !== 1 ? 's' : ''}.`;
+    } else if (q.includes('tag')) {
+      const tags = this.allTags();
+      response = tags.length
+        ? `Your top tags: ${tags.slice(0, 5).map(t => `#${t.name} (${t.count})`).join(', ')}.`
+        : 'No tags used yet. Add tags to notes to organize them.';
+    } else if (q.includes('today')) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayNotes = notes.filter(n => {
+        const ts = parseInt(n.id, 10);
+        const d = !isNaN(ts) && ts > 1e12 ? new Date(ts) : new Date(n.date);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() === today.getTime();
+      });
+      response = todayNotes.length
+        ? `${todayNotes.length} note${todayNotes.length > 1 ? 's' : ''} created today: ${todayNotes.map(n => n.title).join(', ')}.`
+        : 'No notes created today yet.';
+    } else if (q.includes('folder') || q.includes('most')) {
+      const counts: Record<string, number> = {};
+      notes.forEach(n => {
+        const fid = n.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
+        counts[fid] = (counts[fid] ?? 0) + 1;
+      });
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const labels = top.map(([id, count]) => {
+        const name = this.noteGroups().find(g => g.id === id)?.name ?? id;
+        return `${name} (${count})`;
+      });
+      response = labels.length ? `Top folders by note count: ${labels.join(', ')}.` : 'No folders found.';
+    } else if (q.includes('pin')) {
+      const pinned = notes.filter(n => this.isPinned(n));
+      response = pinned.length
+        ? `${pinned.length} pinned note${pinned.length > 1 ? 's' : ''}: ${pinned.map(n => n.title).join(', ')}.`
+        : 'No pinned notes. Pin notes from the note list to keep them at the top.';
+    } else {
+      response = `You have ${notes.length} notes across ${this.noteGroups().length} folders and ${this.allTags().length} tag${this.allTags().length !== 1 ? 's' : ''}. Try asking about tags, today's notes, folders, or pinned notes.`;
+    }
+
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    this.aiLoading.set(false);
+
+    setTimeout(() => {
+      const el = document.querySelector('.ai-panel-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 50);
+  }
+
+  clearAiChat() { this.aiMessages.set([]); }
 
   // ─── HTML → Markdown conversion ─────────────────────────────────────────────
 

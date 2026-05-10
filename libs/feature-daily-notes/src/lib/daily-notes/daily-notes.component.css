@@ -1880,6 +1880,12 @@ tiptap-editor:focus,
     border-color: var(--border-highlight);
 }
 
+.ai-toggle-btn-dn.active {
+    background: var(--accent-primary-dim);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
 /* ─── Note info dropdown ───────────────────────────────────────────────────── */
 .info-dropdown {
     right: 0;

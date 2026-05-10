@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task } from '@envello/core';
-import { SidebarNavItem, ModalComponent } from '@envello/ui';
+import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
@@ -12,7 +12,7 @@ type TaskListItem =
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, ModalComponent],
+  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css'
 })
@@ -2247,4 +2247,72 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   // (legacy quick-create kept via confirmNewTask modal now)
+
+  // ── AI Assistant ─────────────────────────────────────────────────────────────
+  showAssistant = signal(false);
+  aiLoading     = signal(false);
+  aiMessages    = signal<AiPanelMessage[]>([]);
+
+  readonly aiSuggestions = [
+    'What tasks are overdue?',
+    'Show high priority tasks',
+    'How many tasks do I have today?',
+    'Which tasks are completed?',
+    'What are my upcoming deadlines?',
+  ];
+
+  toggleAssistant() { this.showAssistant.update(v => !v); }
+
+  async sendAiMessage(text: string) {
+    if (!text || this.aiLoading()) return;
+    this.aiMessages.update(m => [...m, { role: 'user', text }]);
+    this.aiLoading.set(true);
+
+    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
+
+    const tasks = this.store.tasks();
+    const q = text.toLowerCase();
+    let response = '';
+
+    if (q.includes('overdue')) {
+      const overdue = tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED');
+      response = overdue.length
+        ? `You have ${overdue.length} overdue task${overdue.length > 1 ? 's' : ''}: ${overdue.slice(0, 3).map(t => t.title).join(', ')}${overdue.length > 3 ? ` and ${overdue.length - 3} more` : '.'}`
+        : 'No overdue tasks — great job staying on top of things!';
+    } else if (q.includes('high priority') || q.includes('priority')) {
+      const high = tasks.filter(t => t.priority === 'HIGH' && t.status !== 'COMPLETED');
+      response = high.length
+        ? `${high.length} high-priority task${high.length > 1 ? 's' : ''}: ${high.slice(0, 3).map(t => t.title).join(', ')}${high.length > 3 ? ` and ${high.length - 3} more` : '.'}`
+        : 'No high-priority active tasks right now.';
+    } else if (q.includes('today')) {
+      const today = tasks.filter(t => t.due?.includes('Today'));
+      response = today.length
+        ? `${today.length} task${today.length > 1 ? 's' : ''} due today: ${today.slice(0, 3).map(t => t.title).join(', ')}${today.length > 3 ? ` and ${today.length - 3} more` : '.'}`
+        : 'No tasks due today.';
+    } else if (q.includes('completed') || q.includes('done')) {
+      const done = tasks.filter(t => t.status === 'COMPLETED');
+      response = done.length
+        ? `${done.length} completed task${done.length > 1 ? 's' : ''}. Most recent: ${done.slice(-3).reverse().map(t => t.title).join(', ')}.`
+        : 'No completed tasks yet.';
+    } else if (q.includes('upcoming') || q.includes('deadline')) {
+      const upcoming = tasks.filter(t => t.due && !t.due.includes('Today') && !this.isOverdue(t) && t.status !== 'COMPLETED');
+      response = upcoming.length
+        ? `${upcoming.length} upcoming task${upcoming.length > 1 ? 's' : ''}: ${upcoming.slice(0, 3).map(t => t.title).join(', ')}${upcoming.length > 3 ? ` and ${upcoming.length - 3} more` : '.'}`
+        : 'No upcoming tasks with due dates.';
+    } else {
+      const active = tasks.filter(t => t.status !== 'COMPLETED').length;
+      const done = tasks.filter(t => t.status === 'COMPLETED').length;
+      response = `You have ${active} active task${active !== 1 ? 's' : ''} and ${done} completed. Try asking about overdue, high priority, today's tasks, or upcoming deadlines.`;
+    }
+
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    this.aiLoading.set(false);
+
+    setTimeout(() => {
+      const el = document.querySelector('.ai-panel-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 50);
+  }
+
+  clearAiChat() { this.aiMessages.set([]); }
 }
