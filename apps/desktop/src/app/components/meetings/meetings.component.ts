@@ -1,19 +1,22 @@
 import { Component, computed, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { 
-  MeetingsService, 
-  Meeting, 
-  Attendee, 
-  AgendaItem, 
-  ActionItem, 
+import {
+  MeetingsService,
+  Meeting,
+  Attendee,
+  AgendaItem,
+  ActionItem,
   MeetingNote,
   MEETING_COLORS,
   MeetingViewFilter,
-  MeetingViewMode
+  MeetingViewMode,
+  CalendarSyncService,
+  CalendarConnection,
+  PROVIDER_META,
+  TauriService,
 } from '@envello/core';
 import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '@envello/ui';
-import { TauriService } from '@envello/core';
 
 @Component({
   selector: 'app-meetings',
@@ -107,7 +110,17 @@ export class MeetingsComponent {
   
   // Keyboard shortcuts help
   showShortcutsHelp = signal(false);
-  
+
+  // Calendar sync modal
+  syncService = inject(CalendarSyncService);
+  readonly providerMeta = PROVIDER_META;
+  showSyncModal = signal(false);
+  syncActiveProvider = signal<CalendarConnection['provider']>('google');
+  syncNewName = signal('');
+  syncNewUrl = signal('');
+  syncAddError = signal('');
+  readonly syncProviders: CalendarConnection['provider'][] = ['google', 'outlook', 'apple', 'teams', 'zoom', 'custom'];
+
   // Available colors for meetings
   meetingColors = MEETING_COLORS;
   
@@ -958,4 +971,32 @@ export class MeetingsComponent {
   trackByNoteId(index: number, note: MeetingNote): string {
     return note.id;
   }
+
+  // ─── Calendar Sync ───────────────────────────────────────────────
+
+  openSyncModal() { this.showSyncModal.set(true); this.syncAddError.set(''); }
+  closeSyncModal() { this.showSyncModal.set(false); }
+
+  async addCalendarConnection() {
+    const name = this.syncNewName().trim();
+    const url = this.syncNewUrl().trim();
+    if (!name) { this.syncAddError.set('Please enter a calendar name.'); return; }
+    if (!url) { this.syncAddError.set('Please enter an ICS URL.'); return; }
+    if (!url.startsWith('http')) { this.syncAddError.set('URL must start with http:// or https://'); return; }
+
+    this.syncAddError.set('');
+    const conn = this.syncService.addConnection({
+      provider: this.syncActiveProvider(),
+      name,
+      icsUrl: url,
+      enabled: true,
+    });
+    this.syncNewName.set('');
+    this.syncNewUrl.set('');
+    await this.syncService.syncConnection(conn.id);
+  }
+
+  async syncAllCalendars() { await this.syncService.syncAll(); }
+
+  trackByConnId(_: number, c: CalendarConnection) { return c.id; }
 }

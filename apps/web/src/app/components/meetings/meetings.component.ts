@@ -1,19 +1,21 @@
 import { Component, computed, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { 
-  MeetingsService, 
-  Meeting, 
-  Attendee, 
-  AgendaItem, 
-  ActionItem, 
+import {
+  MeetingsService,
+  Meeting,
+  Attendee,
+  AgendaItem,
+  ActionItem,
   MeetingNote,
   MEETING_COLORS,
   MeetingViewFilter,
-  MeetingViewMode
+  MeetingViewMode,
+  CalendarSyncService,
+  CalendarConnection,
+  PROVIDER_META,
 } from '@envello/core';
 import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '@envello/ui';
-import { TauriService } from '@envello/core';
 
 @Component({
   selector: 'app-meetings',
@@ -24,7 +26,8 @@ import { TauriService } from '@envello/core';
 })
 export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
-  private tauriService = inject(TauriService);
+  syncService = inject(CalendarSyncService);
+  readonly providerMeta = PROVIDER_META;
   
   // View state
   viewMode = signal<MeetingViewMode>('list');
@@ -107,6 +110,14 @@ export class MeetingsComponent {
   
   // Keyboard shortcuts help
   showShortcutsHelp = signal(false);
+
+  // Calendar sync modal
+  showSyncModal = signal(false);
+  syncActiveProvider = signal<CalendarConnection['provider']>('google');
+  syncNewName = signal('');
+  syncNewUrl = signal('');
+  syncAddError = signal('');
+  readonly syncProviders: CalendarConnection['provider'][] = ['google', 'outlook', 'apple', 'teams', 'zoom', 'custom'];
   
   // Available colors for meetings
   meetingColors = MEETING_COLORS;
@@ -819,14 +830,15 @@ export class MeetingsComponent {
   }
   
   selectCalendarDate(date: Date) {
-    // If in create modal, set the date
     if (this.showDatePicker()) {
-      const current = this.newMeeting();
-      this.newMeeting.set({
-        ...current,
-        date: date.toISOString().split('T')[0],
-      });
+      // Called from the create-meeting date picker
+      this.newMeeting.set({ ...this.newMeeting(), date: date.toISOString().split('T')[0] });
       this.showDatePicker.set(false);
+    } else {
+      // Sidebar calendar: filter to that day
+      const dateStr = date.toISOString().split('T')[0];
+      const alreadySelected = this.searchQuery() === dateStr;
+      this.searchQuery.set(alreadySelected ? '' : dateStr);
     }
   }
   
@@ -941,7 +953,7 @@ export class MeetingsComponent {
   joinMeeting(meeting: Meeting, event?: Event) {
     if (event) event.stopPropagation();
     if (meeting.meetingLink) {
-      this.tauriService.openUrl(meeting.meetingLink).catch(() => {});
+      window.open(meeting.meetingLink, '_blank', 'noopener,noreferrer');
     }
     this.showQuickActions.set(null);
   }
@@ -978,4 +990,34 @@ export class MeetingsComponent {
   trackByNoteId(index: number, note: MeetingNote): string {
     return note.id;
   }
+
+  // ─── Calendar Sync ───────────────────────────────────────────────
+
+  openSyncModal() { this.showSyncModal.set(true); this.syncAddError.set(''); }
+  closeSyncModal() { this.showSyncModal.set(false); }
+
+  async addCalendarConnection() {
+    const name = this.syncNewName().trim();
+    const url = this.syncNewUrl().trim();
+    if (!name) { this.syncAddError.set('Please enter a calendar name.'); return; }
+    if (!url) { this.syncAddError.set('Please enter an ICS URL.'); return; }
+    if (!url.startsWith('http')) { this.syncAddError.set('URL must start with http:// or https://'); return; }
+
+    this.syncAddError.set('');
+    const conn = this.syncService.addConnection({
+      provider: this.syncActiveProvider(),
+      name,
+      icsUrl: url,
+      enabled: true,
+    });
+    this.syncNewName.set('');
+    this.syncNewUrl.set('');
+    await this.syncService.syncConnection(conn.id);
+  }
+
+  async syncAllCalendars() {
+    await this.syncService.syncAll();
+  }
+
+  trackByConnId(_: number, c: CalendarConnection) { return c.id; }
 }

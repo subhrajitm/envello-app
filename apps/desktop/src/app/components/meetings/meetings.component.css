@@ -878,6 +878,103 @@
 .empty-tab-content .material-symbols-outlined { font-size: 48px; }
 .empty-tab-content p { margin: 0; font-size: 11px; }
 
+/* ─── Sync Button + Modal ─── */
+.sync-calendars-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sync-calendars-btn .material-symbols-outlined { font-size: 15px; }
+.sync-calendars-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.sync-calendars-btn.has-connections { border-color: var(--accent-primary); color: var(--accent-primary); }
+.sync-conn-badge {
+  min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px;
+  background: var(--accent-primary); color: var(--accent-primary-text);
+  font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.sync-modal-body { display: flex; flex-direction: column; gap: 16px; }
+.sync-provider-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); }
+.sync-provider-tab {
+  display: flex; align-items: center; gap: 5px; padding: 4px 8px;
+  border: 1px solid var(--border-subtle); border-radius: 4px;
+  background: var(--bg-app); color: var(--text-tertiary); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.sync-provider-tab .material-symbols-outlined { font-size: 14px; }
+.sync-provider-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.sync-provider-tab.active { background: color-mix(in srgb, var(--accent-primary) 10%, transparent); color: var(--accent-primary); border-color: var(--accent-primary); }
+.sync-add-form { display: flex; flex-direction: column; gap: 10px; }
+.sync-help-text {
+  display: flex; align-items: flex-start; gap: 6px; padding: 7px 9px;
+  background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: 4px;
+  font-size: 11px; color: var(--text-secondary); line-height: 1.4;
+}
+.sync-help-text .material-symbols-outlined { font-size: 13px; color: var(--accent-primary); flex-shrink: 0; margin-top: 1px; }
+.sync-error-msg {
+  display: flex; align-items: flex-start; gap: 6px; padding: 7px 9px;
+  background: color-mix(in srgb, #ef4444 8%, transparent); border: 1px solid color-mix(in srgb, #ef4444 25%, transparent);
+  border-radius: 4px; font-size: 11px; color: #ef4444; line-height: 1.4;
+}
+.sync-error-msg .material-symbols-outlined { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.sync-add-actions { display: flex; justify-content: flex-end; }
+.sync-connections-section { display: flex; flex-direction: column; gap: 6px; }
+.sync-connections-hdr {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-tertiary);
+}
+.sync-connections-hdr .material-symbols-outlined { font-size: 13px; color: var(--accent-primary); }
+.sync-conn-count {
+  min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px;
+  background: var(--bg-hover); font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; color: var(--text-secondary);
+}
+.sync-all-btn {
+  margin-left: auto; display: flex; align-items: center; gap: 4px; padding: 2px 7px;
+  border: 1px solid var(--border-subtle); border-radius: 4px;
+  background: transparent; color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.sync-all-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--accent-primary); border-color: var(--accent-primary); }
+.sync-all-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sync-all-btn .material-symbols-outlined { font-size: 12px; }
+.sync-connections-list { display: flex; flex-direction: column; gap: 5px; }
+.sync-conn-item {
+  display: flex; align-items: center; gap: 8px; padding: 7px 9px;
+  background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 4px; transition: background 0.12s;
+}
+.sync-conn-item.disabled { opacity: 0.55; }
+.sync-conn-item:hover { background: var(--bg-hover); }
+.sync-conn-color { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.sync-conn-info { flex: 1; min-width: 0; }
+.sync-conn-name { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sync-conn-meta { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 1px; }
+.sync-conn-provider { font-size: 10px; color: var(--text-tertiary); font-weight: 500; }
+.sync-conn-sync-time { font-size: 10px; color: var(--text-tertiary); }
+.sync-conn-error { font-size: 10px; color: #ef4444; }
+.sync-conn-count-badge {
+  padding: 1px 4px; background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  color: var(--accent-primary); border-radius: 3px; font-size: 9px; font-weight: 700;
+}
+.sync-conn-actions { display: flex; align-items: center; gap: 2px; }
+.sync-icon-btn {
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--text-tertiary); border-radius: 3px; cursor: pointer; transition: all 0.15s; padding: 0;
+}
+.sync-icon-btn .material-symbols-outlined { font-size: 15px; }
+.sync-icon-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+.sync-icon-btn.danger:hover { background: rgba(239,68,68,.1); color: #ef4444; }
+.sync-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.spinning { display: inline-block; animation: spin 0.8s linear infinite; }
+
 /* Shortcuts modal — novels-style spacing */
 .shortcuts-content { display: flex; flex-direction: column; gap: 20px; }
 .shortcuts-group h4 { margin: 0 0 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); }

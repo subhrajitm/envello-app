@@ -56,6 +56,15 @@
                 <env-icon-button icon="view_kanban" variant="ghost" [size]="28" [active]="viewMode() === 'kanban'"
                     title="Kanban" (clicked)="viewMode.set('kanban')"></env-icon-button>
             </div>
+            <div class="toolbar-divider"></div>
+            <button class="sync-calendars-btn" [class.has-connections]="syncService.connections().length > 0"
+                (click)="openSyncModal()" title="Sync external calendars">
+                <span class="material-symbols-outlined">sync</span>
+                Sync
+                @if (syncService.connections().length > 0) {
+                <span class="sync-conn-badge">{{ syncService.connections().length }}</span>
+                }
+            </button>
             <env-button variant="primary" icon="add" (clicked)="openCreateModal()">New Meeting</env-button>
         </div>
     </div>
@@ -1003,6 +1012,110 @@
         <env-button variant="danger" icon="delete" size="sm"
             (clicked)="deleteMeeting(selectedMeeting()!)">Delete</env-button>
         }
+    </div>
+</env-modal>
+}
+
+<!-- Calendar Sync Modal -->
+@if (showSyncModal()) {
+<env-modal [isOpen]="showSyncModal()" (closed)="closeSyncModal()" title="Sync External Calendars" size="md">
+    <div body>
+        <div class="sync-modal-body">
+            <div class="sync-provider-tabs">
+                @for (p of syncProviders; track p) {
+                <button class="sync-provider-tab" [class.active]="syncActiveProvider() === p"
+                    (click)="syncActiveProvider.set(p)">
+                    <span class="material-symbols-outlined">{{ providerMeta[p].icon }}</span>
+                    {{ providerMeta[p].label }}
+                </button>
+                }
+            </div>
+            <div class="sync-add-form">
+                <div class="sync-help-text">
+                    <span class="material-symbols-outlined">info</span>
+                    {{ providerMeta[syncActiveProvider()].helpText }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Connection Name</label>
+                    <input type="text" class="form-input" placeholder="e.g. Work Calendar"
+                        [value]="syncNewName()" (input)="syncNewName.set($any($event.target).value)" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ICS / iCal URL</label>
+                    <input type="url" class="form-input"
+                        [placeholder]="providerMeta[syncActiveProvider()].placeholder"
+                        [value]="syncNewUrl()" (input)="syncNewUrl.set($any($event.target).value)" />
+                </div>
+                @if (syncAddError()) {
+                <div class="sync-error-msg">
+                    <span class="material-symbols-outlined">error</span>
+                    {{ syncAddError() }}
+                </div>
+                }
+                <div class="sync-add-actions">
+                    <env-button variant="primary" (clicked)="addCalendarConnection()"
+                        [disabled]="!syncNewName().trim() || !syncNewUrl().trim()">
+                        Connect Calendar
+                    </env-button>
+                </div>
+            </div>
+            @if (syncService.connections().length > 0) {
+            <div class="sync-connections-section">
+                <div class="sync-connections-hdr">
+                    <span class="material-symbols-outlined">link</span>
+                    Connected Calendars
+                    <span class="sync-conn-count">{{ syncService.connections().length }}</span>
+                    <button class="sync-all-btn" (click)="syncAllCalendars()"
+                        [disabled]="syncService.syncing().size > 0">
+                        <span class="material-symbols-outlined"
+                            [class.spinning]="syncService.syncing().size > 0">sync</span>
+                        Sync All
+                    </button>
+                </div>
+                <div class="sync-connections-list">
+                    @for (conn of syncService.connections(); track conn.id) {
+                    <div class="sync-conn-item" [class.disabled]="!conn.enabled">
+                        <div class="sync-conn-color" [style.background]="conn.color"></div>
+                        <div class="sync-conn-info">
+                            <div class="sync-conn-name">{{ conn.name }}</div>
+                            <div class="sync-conn-meta">
+                                <span class="sync-conn-provider">{{ providerMeta[conn.provider].label }}</span>
+                                @if (conn.error) {
+                                <span class="sync-conn-error">· {{ conn.error }}</span>
+                                } @else {
+                                <span class="sync-conn-sync-time">· {{ syncService.formatLastSync(conn) }}</span>
+                                @if (conn.lastSyncCount !== undefined) {
+                                <span class="sync-conn-count-badge">{{ conn.lastSyncCount }} imported</span>
+                                }
+                                }
+                            </div>
+                        </div>
+                        <div class="sync-conn-actions">
+                            <button class="sync-icon-btn" (click)="syncService.toggleEnabled(conn.id)"
+                                [title]="conn.enabled ? 'Disable' : 'Enable'">
+                                <span class="material-symbols-outlined">
+                                    {{ conn.enabled ? 'toggle_on' : 'toggle_off' }}
+                                </span>
+                            </button>
+                            <button class="sync-icon-btn" (click)="syncService.syncConnection(conn.id)"
+                                [disabled]="syncService.isSyncing(conn.id)" title="Sync now">
+                                <span class="material-symbols-outlined"
+                                    [class.spinning]="syncService.isSyncing(conn.id)">sync</span>
+                            </button>
+                            <button class="sync-icon-btn danger" (click)="syncService.removeConnection(conn.id)"
+                                title="Remove">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    <div footer>
+        <env-button variant="secondary" (clicked)="closeSyncModal()">Close</env-button>
     </div>
 </env-modal>
 }

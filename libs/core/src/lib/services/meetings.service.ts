@@ -102,6 +102,10 @@ export interface Meeting {
     uploadedAt: string;
   }>;
 
+  // External calendar sync
+  externalId?: string;   // UID from ICS / external calendar
+  externalSource?: 'google' | 'outlook' | 'apple' | 'zoom' | 'teams' | 'custom';
+
   // Metadata
   createdAt: string;
   updatedAt: string;
@@ -350,14 +354,11 @@ export class MeetingsService {
 
   // CRUD Operations
 
-  addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>) {
-    // Auto-project ID if not provided
-    const projectId = meeting.project || crypto.randomUUID();
-
+  addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>): Meeting {
     const newMeeting: Meeting = {
       ...meeting,
-      id: Date.now().toString(),
-      project: projectId, // Ensure it's linked
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+      project: meeting.project?.trim() || undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -365,23 +366,6 @@ export class MeetingsService {
     this.meetings.update(meetings => [...meetings, newMeeting]);
     this.store.addActivity('Meeting created: ' + newMeeting.title, 'system');
     this.persistMeeting(newMeeting);
-
-    // Create the Project container if we generated the ID
-    if (!meeting.project) {
-      this.store.addProject({
-        id: projectId,
-        title: newMeeting.title,
-        description: 'Meeting Project: ' + newMeeting.title,
-        status: 'PLANNING',
-        words: '0',
-        updated: new Date().toISOString(),
-        icon: 'groups',
-        linkedResources: {
-          meetings: [newMeeting.id]
-        }
-      });
-    }
-
     return newMeeting;
   }
 

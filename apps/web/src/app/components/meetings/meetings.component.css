@@ -1468,6 +1468,208 @@
 .empty-tab-content .material-symbols-outlined { font-size: 48px; }
 .empty-tab-content p { margin: 0; font-size: 11px; }
 
+/* ─── Sync Button (toolbar) ─── */
+.sync-calendars-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.sync-calendars-btn .material-symbols-outlined { font-size: 16px; }
+.sync-calendars-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-highlight); }
+.sync-calendars-btn.has-connections { border-color: var(--accent-primary); color: var(--accent-primary); }
+.sync-conn-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent-primary);
+  color: var(--accent-primary-text);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Sync Modal ─── */
+.sync-modal-body { display: flex; flex-direction: column; gap: 20px; }
+
+.sync-provider-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sync-provider-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-app);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sync-provider-tab .material-symbols-outlined { font-size: 15px; }
+.sync-provider-tab:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-highlight); }
+.sync-provider-tab.active { background: color-mix(in srgb, var(--accent-primary) 10%, transparent); color: var(--accent-primary); border-color: var(--accent-primary); }
+
+.sync-add-form { display: flex; flex-direction: column; gap: 10px; }
+
+.sync-help-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.sync-help-text .material-symbols-outlined { font-size: 14px; color: var(--accent-primary); flex-shrink: 0; margin-top: 1px; }
+
+.sync-error-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, #ef4444 8%, transparent);
+  border: 1px solid color-mix(in srgb, #ef4444 25%, transparent);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #ef4444;
+  line-height: 1.45;
+}
+.sync-error-msg .material-symbols-outlined { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+.sync-add-actions { display: flex; justify-content: flex-end; }
+
+/* Connected list */
+.sync-connections-section { display: flex; flex-direction: column; gap: 8px; }
+
+.sync-connections-hdr {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.sync-connections-hdr .material-symbols-outlined { font-size: 14px; color: var(--accent-primary); }
+.sync-conn-count {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--bg-hover);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+.sync-all-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sync-all-btn:hover:not(:disabled) { background: var(--bg-hover); border-color: var(--accent-primary); color: var(--accent-primary); }
+.sync-all-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sync-all-btn .material-symbols-outlined { font-size: 13px; }
+
+.sync-connections-list { display: flex; flex-direction: column; gap: 6px; }
+
+.sync-conn-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+.sync-conn-item.disabled { opacity: 0.55; }
+.sync-conn-item:hover { background: var(--bg-hover); }
+
+.sync-conn-color { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+.sync-conn-info { flex: 1; min-width: 0; }
+.sync-conn-name { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sync-conn-meta { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.sync-conn-provider { font-size: 10px; color: var(--text-tertiary); font-weight: 500; }
+.sync-conn-sync-time { font-size: 10px; color: var(--text-tertiary); }
+.sync-conn-error { font-size: 10px; color: #ef4444; }
+.sync-conn-count-badge {
+  padding: 1px 5px;
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  color: var(--accent-primary);
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.sync-conn-actions { display: flex; align-items: center; gap: 2px; }
+
+.sync-icon-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+.sync-icon-btn .material-symbols-outlined { font-size: 16px; }
+.sync-icon-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+.sync-icon-btn.danger:hover { background: rgba(239,68,68,.1); color: #ef4444; }
+.sync-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Spin animation for syncing state */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.spinning { display: inline-block; animation: spin 0.8s linear infinite; }
+
+/* Toggle icons coloring */
+.sync-icon-btn .material-symbols-outlined[style*="toggle_on"],
+.sync-conn-item:not(.disabled) .sync-icon-btn .material-symbols-outlined { }
+
 /* ─── Shortcuts Modal ─── */
 .shortcuts-content { display: flex; flex-direction: column; gap: 20px; }
 .shortcuts-group h4 { margin: 0 0 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); }
