@@ -38,7 +38,7 @@
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #fca5a5, #f87171, #7f1d1d);
+    background: linear-gradient(135deg, var(--accent-primary-dim), var(--accent-primary));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -55,7 +55,7 @@
 .avatar-initials {
     font-size: 16px;
     font-weight: 700;
-    color: white;
+    color: var(--accent-primary-text);
     font-family: var(--font-sans);
 }
 
@@ -183,7 +183,7 @@
 }
 
 .logout-item:hover {
-    background: rgba(248, 113, 113, 0.1);
+    background: color-mix(in srgb, var(--accent-red) 12%, transparent);
 }
 
 /* Menu Item Toggle */
@@ -261,7 +261,7 @@
 
 .mini-toggle input:checked+.mini-toggle-track:before {
     transform: translateX(16px);
-    background: white;
+    background: var(--accent-primary-text);
 }
 
 /* Profile Footer */

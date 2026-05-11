@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { UserService, WorkspaceProfileService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
+import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcuts.service';
 
 @Component({
   selector: 'app-profile-menu',
@@ -27,6 +28,7 @@ import { ModalComponent } from '../modal/modal.component';
 export class ProfileMenuComponent {
   private userService = inject(UserService);
   private router = inject(Router);
+  private kbShortcuts = inject(KeyboardShortcutsService);
 
   isOpen = signal(false);
 
@@ -115,8 +117,8 @@ export class ProfileMenuComponent {
   }
 
   openKeyboardShortcuts() {
-    console.log('Opening keyboard shortcuts...');
     this.close();
+    this.kbShortcuts.open();
   }
 
   toggleEmailNotifications() {

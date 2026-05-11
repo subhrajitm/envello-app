@@ -1,5 +1,6 @@
-import { Component, signal, HostListener } from '@angular/core';
+import { Component, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { KeyboardShortcutsService } from './keyboard-shortcuts.service';
 
 interface ShortcutGroup {
   label: string;
@@ -14,7 +15,8 @@ interface ShortcutGroup {
   styleUrl: './keyboard-shortcuts.component.css',
 })
 export class KeyboardShortcutsComponent {
-  isOpen = signal(false);
+  private svc = inject(KeyboardShortcutsService);
+  isOpen = this.svc.isOpen;
 
   groups: ShortcutGroup[] = [
     {
@@ -63,7 +65,7 @@ export class KeyboardShortcutsComponent {
     }
   }
 
-  toggle() { this.isOpen.update(v => !v); }
-  open()   { this.isOpen.set(true); }
-  close()  { this.isOpen.set(false); }
+  toggle() { this.svc.toggle(); }
+  open()   { this.svc.open(); }
+  close()  { this.svc.close(); }
 }
