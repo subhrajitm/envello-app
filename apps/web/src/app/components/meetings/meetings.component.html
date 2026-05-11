@@ -339,86 +339,191 @@
 
             <!-- Next Up -->
             @if (nextMeeting(); as m) {
-            <div class="sb-section">
-                <div class="sb-section-hdr">
-                    <span class="material-symbols-outlined">schedule</span>
-                    Next Up
-                </div>
-                <div class="sb-next-card" [style.border-left-color]="m.color" (click)="openDetailsModal(m)">
-                    <div class="sb-next-header">
-                        <span class="sb-next-time">{{ getRelativeDate(m.date) }} · {{ formatTime(m.startTime) }}</span>
-                        @if (m.duration) {<span class="sb-next-dur">{{ m.duration }}m</span>}
-                    </div>
-                    <div class="sb-next-title">{{ m.title }}</div>
-                    <div class="sb-next-footer">
-                        <span class="sb-next-type-chip">
+            <div class="sb-section sb-section--flush">
+                <div class="sb-next-card2" [style.--mc]="m.color" (click)="openDetailsModal(m)">
+                    <div class="sb-nc-accent"></div>
+                    <div class="sb-nc-body">
+                        <div class="sb-nc-toprow">
+                            <span class="sb-nc-until">
+                                <span class="material-symbols-outlined">schedule</span>
+                                {{ timeUntilMeeting(m) }}
+                            </span>
+                            @if (m.duration) {
+                            <span class="sb-nc-dur">{{ m.duration }}m</span>
+                            }
+                        </div>
+                        <div class="sb-nc-title">{{ m.title }}</div>
+                        <div class="sb-nc-meta">
                             <span class="material-symbols-outlined">{{ getMeetingTypeIcon(m.meetingType) }}</span>
-                            {{ m.meetingType }}
-                        </span>
-                        @if (m.attendees.length) {
-                        <span class="sb-next-ats">
-                            <span class="material-symbols-outlined">group</span>
-                            {{ m.attendees.length }}
-                        </span>
-                        }
-                        @if (m.meetingLink) {
-                        <button class="sb-next-join-btn" (click)="$event.stopPropagation(); joinMeeting(m)">
-                            <span class="material-symbols-outlined">videocam</span>
-                            Join
-                        </button>
-                        }
+                            {{ formatTime(m.startTime) }}
+                            @if (m.location) { · {{ m.location }} }
+                        </div>
+                        <div class="sb-nc-footer">
+                            @if (m.attendees.length > 0) {
+                            <div class="sb-avatars">
+                                @for (a of m.attendees.slice(0, 3); track a.id) {
+                                <div class="sb-av" [title]="a.name"
+                                    [style.backgroundImage]="a.avatar ? 'url(' + a.avatar + ')' : ''">
+                                    @if (!a.avatar) { {{ a.name.charAt(0) }} }
+                                </div>
+                                }
+                                @if (m.attendees.length > 3) {
+                                <div class="sb-av sb-av--more">+{{ m.attendees.length - 3 }}</div>
+                                }
+                            </div>
+                            }
+                            @if (m.meetingLink) {
+                            <button class="sb-join-pill" (click)="$event.stopPropagation(); joinMeeting(m)">
+                                <span class="material-symbols-outlined">videocam</span>
+                                Join
+                            </button>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
             }
 
-            <!-- Stats Grid -->
+            <!-- Today's Schedule -->
+            @if (todayMeetings().length > 0) {
             <div class="sb-section">
                 <div class="sb-section-hdr">
-                    <span class="material-symbols-outlined">bar_chart_4_bars</span>
-                    Overview
+                    <span class="material-symbols-outlined">today</span>
+                    Today
+                    <span class="sb-section-badge">{{ todayMeetings().length }}</span>
                 </div>
-                <div class="sb-stats-grid">
-                    <div class="sb-stat-cell" (click)="viewFilter.set('upcoming')" title="Scheduled meetings">
-                        <span class="sb-stat-num blue">{{ stats().totalScheduled }}</span>
-                        <span class="sb-stat-lbl">Scheduled</span>
+                <div class="sb-timeline">
+                    @for (m of todayMeetings(); track m.id; let last = $last) {
+                    <div class="sb-tl-row" [class.sb-tl-row--past]="isMeetingPast(m)"
+                        [style.--mc]="m.color" (click)="openDetailsModal(m)">
+                        <div class="sb-tl-aside">
+                            <div class="sb-tl-dot"></div>
+                            @if (!last) { <div class="sb-tl-line"></div> }
+                        </div>
+                        <div class="sb-tl-content">
+                            <div class="sb-tl-time">{{ formatTime(m.startTime) }}
+                                @if (m.endTime) { <span>– {{ formatTime(m.endTime) }}</span> }
+                            </div>
+                            <div class="sb-tl-title">{{ m.title }}</div>
+                            @if (m.attendees.length > 0 || m.meetingLink) {
+                            <div class="sb-tl-footer">
+                                @if (m.attendees.length > 0) {
+                                <div class="sb-avatars sb-avatars--xs">
+                                    @for (a of m.attendees.slice(0, 2); track a.id) {
+                                    <div class="sb-av sb-av--xs" [title]="a.name"
+                                        [style.backgroundImage]="a.avatar ? 'url(' + a.avatar + ')' : ''">
+                                        @if (!a.avatar) { {{ a.name.charAt(0) }} }
+                                    </div>
+                                    }
+                                    @if (m.attendees.length > 2) {
+                                    <div class="sb-av sb-av--xs sb-av--more">+{{ m.attendees.length - 2 }}</div>
+                                    }
+                                </div>
+                                }
+                                @if (m.meetingLink) {
+                                <button class="sb-tl-join" (click)="$event.stopPropagation(); joinMeeting(m)" title="Join">
+                                    <span class="material-symbols-outlined">videocam</span>
+                                </button>
+                                }
+                            </div>
+                            }
+                        </div>
                     </div>
-                    <div class="sb-stat-cell" (click)="viewFilter.set('past')" title="Completed meetings">
-                        <span class="sb-stat-num green">{{ stats().totalCompleted }}</span>
-                        <span class="sb-stat-lbl">Completed</span>
-                    </div>
-                    <div class="sb-stat-cell" (click)="viewFilter.set('today')" title="Today's meetings">
-                        <span class="sb-stat-num" [class.accent]="stats().todayCount > 0">{{ stats().todayCount }}</span>
-                        <span class="sb-stat-lbl">Today</span>
-                    </div>
-                    <div class="sb-stat-cell" title="Meetings this week">
-                        <span class="sb-stat-num">{{ stats().thisWeekCount }}</span>
-                        <span class="sb-stat-lbl">This Week</span>
-                    </div>
+                    }
                 </div>
             </div>
+            }
 
-            <!-- Action Items Progress -->
-            @if (stats().totalActionItems > 0) {
+            <!-- Overview: stat pills + action items inline -->
             <div class="sb-section">
                 <div class="sb-section-hdr">
-                    <span class="material-symbols-outlined">task_alt</span>
-                    Action Items
-                    <span class="sb-section-badge">{{ stats().openActionItems }} open</span>
+                    <span class="material-symbols-outlined">analytics</span>
+                    Overview
                 </div>
-                <div class="sb-progress-block">
+                <div class="sb-stat-pills">
+                    <div class="sb-stat-pill sb-stat-pill--blue" (click)="viewFilter.set('upcoming')" title="Scheduled">
+                        <span class="sb-stp-num">{{ stats().totalScheduled }}</span>
+                        <span class="sb-stp-lbl">Scheduled</span>
+                    </div>
+                    <div class="sb-stat-pill sb-stat-pill--green" (click)="viewFilter.set('past')" title="Completed">
+                        <span class="sb-stp-num">{{ stats().totalCompleted }}</span>
+                        <span class="sb-stp-lbl">Done</span>
+                    </div>
+                    <div class="sb-stat-pill" [class.sb-stat-pill--accent]="stats().todayCount > 0"
+                        (click)="viewFilter.set('today')" title="Today">
+                        <span class="sb-stp-num">{{ stats().todayCount }}</span>
+                        <span class="sb-stp-lbl">Today</span>
+                    </div>
+                </div>
+                @if (stats().totalActionItems > 0) {
+                <div class="sb-action-progress">
+                    <div class="sb-ap-label">
+                        <span class="material-symbols-outlined">task_alt</span>
+                        Action items
+                        <span class="sb-ap-open">{{ stats().openActionItems }} open</span>
+                        <span class="sb-ap-pct">{{ stats().actionItemsPct }}%</span>
+                    </div>
                     <div class="sb-progress-track">
                         <div class="sb-progress-fill" [style.width.%]="stats().actionItemsPct"></div>
                     </div>
-                    <div class="sb-progress-meta">
-                        <span>{{ stats().actionItemsPct }}% complete</span>
-                        <span>{{ stats().totalActionItems - stats().openActionItems }}&thinsp;/&thinsp;{{ stats().totalActionItems }}</span>
+                </div>
+                }
+            </div>
+
+            <!-- Upcoming -->
+            @if (upcomingSyncs().length > 0) {
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">event_upcoming</span>
+                    Upcoming
+                </div>
+                @for (m of upcomingSyncs().slice(0, 6); track m.id) {
+                <div class="sb-up-row" [style.--mc]="m.color" (click)="openDetailsModal(m)">
+                    <div class="sb-up-dot"></div>
+                    <div class="sb-up-body">
+                        <div class="sb-up-toprow">
+                            <span class="sb-up-when">{{ getRelativeDate(m.date) }} · {{ formatTime(m.startTime) }}</span>
+                            @if (m.duration) { <span class="sb-up-dur">{{ m.duration }}m</span> }
+                        </div>
+                        <div class="sb-up-title">{{ m.title }}</div>
+                        <div class="sb-up-footer">
+                            <span class="sb-up-type-icon">
+                                <span class="material-symbols-outlined">{{ getMeetingTypeIcon(m.meetingType) }}</span>
+                            </span>
+                            @if (m.attendees.length > 0) {
+                            <div class="sb-avatars sb-avatars--xs">
+                                @for (a of m.attendees.slice(0, 2); track a.id) {
+                                <div class="sb-av sb-av--xs" [title]="a.name"
+                                    [style.backgroundImage]="a.avatar ? 'url(' + a.avatar + ')' : ''">
+                                    @if (!a.avatar) { {{ a.name.charAt(0) }} }
+                                </div>
+                                }
+                                @if (m.attendees.length > 2) {
+                                <div class="sb-av sb-av--xs sb-av--more">+{{ m.attendees.length - 2 }}</div>
+                                }
+                            </div>
+                            }
+                            @if (m.meetingLink) {
+                            <button class="sb-up-join" (click)="$event.stopPropagation(); joinMeeting(m)" title="Join">
+                                <span class="material-symbols-outlined">videocam</span>
+                            </button>
+                            }
+                        </div>
                     </div>
                 </div>
+                }
+            </div>
+            } @else {
+            <div class="sb-section">
+                <div class="sb-section-hdr">
+                    <span class="material-symbols-outlined">event_upcoming</span>
+                    Upcoming
+                </div>
+                <div class="sb-empty-msg">No upcoming meetings scheduled.</div>
             </div>
             }
 
-            <!-- Meeting Type Breakdown -->
+            <!-- By Type -->
             @if (meetingTypeBreakdown().length > 0) {
             <div class="sb-section">
                 <div class="sb-section-hdr">
@@ -442,39 +547,6 @@
             </div>
             }
 
-            <!-- Upcoming -->
-            <div class="sb-section">
-                <div class="sb-section-hdr">
-                    <span class="material-symbols-outlined">event_upcoming</span>
-                    Upcoming
-                </div>
-                @if (upcomingSyncs().length === 0) {
-                <div class="sb-empty-msg">No upcoming meetings scheduled.</div>
-                } @else {
-                @for (sync of upcomingSyncs().slice(0, 5); track sync.id) {
-                <div class="sb-upcoming-row" [class.today]="meetingsService.isMeetingToday(sync)"
-                    [style.border-left-color]="sync.color"
-                    (click)="openDetailsModal(sync)">
-                    <div class="sb-upcoming-main">
-                        <span class="sb-upcoming-time">{{ getRelativeDate(sync.date) }} · {{ formatTime(sync.startTime) }}</span>
-                        <span class="sb-upcoming-title">{{ sync.title }}</span>
-                        @if (sync.attendees.length > 0) {
-                        <span class="sb-upcoming-ats">
-                            <span class="material-symbols-outlined">group</span>
-                            {{ sync.attendees.length }}
-                        </span>
-                        }
-                    </div>
-                    @if (sync.meetingLink) {
-                    <button class="sb-join-btn" (click)="$event.stopPropagation(); joinMeeting(sync)" title="Join">
-                        <span class="material-symbols-outlined">videocam</span>
-                    </button>
-                    }
-                </div>
-                }
-                }
-            </div>
-
             <!-- By Project -->
             @if (meetingsByProject().length > 0) {
             <div class="sb-section">
@@ -495,9 +567,8 @@
         </div><!-- /.sb-scroll -->
 
         <div class="meetings-sidebar-footer">
-            <button type="button" class="sb-shortcut-btn" (click)="openShortcutsHelp()">
+            <button type="button" class="sb-shortcut-icon-btn" (click)="openShortcutsHelp()" title="Keyboard shortcuts (⌘/)">
                 <span class="material-symbols-outlined">keyboard</span>
-                Shortcuts ⌘/
             </button>
         </div>
     </div>

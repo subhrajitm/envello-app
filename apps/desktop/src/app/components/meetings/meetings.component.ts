@@ -365,6 +365,50 @@ export class MeetingsComponent {
   });
   
   
+  /** All of today's non-cancelled meetings sorted by start time */
+  todayMeetings = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return this.meetingsService.meetings()
+      .filter(m => m.date === today && m.status !== 'cancelled')
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  });
+
+  /** Next scheduled meeting from now */
+  nextMeeting = computed((): Meeting | null => {
+    const now = new Date();
+    return this.meetingsService.meetings()
+      .filter(m => new Date(`${m.date}T${m.startTime}`) >= now && m.status === 'scheduled')
+      .sort((a, b) => new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime())[0] ?? null;
+  });
+
+  /** Count per meeting type for breakdown */
+  meetingTypeBreakdown = computed(() => {
+    const meetings = this.meetingsService.meetings().filter(m => m.status !== 'cancelled');
+    const total = meetings.length;
+    if (!total) return [];
+    const counts = new Map<string, number>();
+    for (const m of meetings) counts.set(m.meetingType, (counts.get(m.meetingType) ?? 0) + 1);
+    const labels: Record<string, string> = { video: 'Video', phone: 'Phone', 'in-person': 'In-Person', hybrid: 'Hybrid' };
+    return Array.from(counts.entries())
+      .map(([type, count]) => ({ type, label: labels[type] ?? type, count, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  });
+
+  timeUntilMeeting(meeting: Meeting): string {
+    const diffMs = new Date(`${meeting.date}T${meeting.startTime}`).getTime() - Date.now();
+    if (diffMs <= 0) return 'Now';
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `in ${mins}m`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `in ${h}h ${m}m` : `in ${h}h`;
+  }
+
+  isMeetingPast(meeting: Meeting): boolean {
+    const end = meeting.endTime ?? meeting.startTime;
+    return new Date(`${meeting.date}T${end}`) < new Date() || meeting.status === 'completed';
+  }
+
   // Keyboard shortcuts
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {

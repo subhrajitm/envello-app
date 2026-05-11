@@ -359,6 +359,31 @@ export class MeetingsComponent {
       .sort((a, b) => new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime())[0] ?? null;
   });
 
+  /** All of today's non-cancelled meetings sorted by start time */
+  todayMeetings = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return this.meetingsService.meetings()
+      .filter(m => m.date === today && m.status !== 'cancelled')
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  });
+
+  /** Human-readable time until a meeting: "in 45m", "in 2h 10m", "Now" */
+  timeUntilMeeting(meeting: Meeting): string {
+    const diffMs = new Date(`${meeting.date}T${meeting.startTime}`).getTime() - Date.now();
+    if (diffMs <= 0) return 'Now';
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `in ${mins}m`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `in ${h}h ${m}m` : `in ${h}h`;
+  }
+
+  /** Whether a meeting's end time has already passed */
+  isMeetingPast(meeting: Meeting): boolean {
+    const end = meeting.endTime ?? meeting.startTime;
+    return new Date(`${meeting.date}T${end}`) < new Date() || meeting.status === 'completed';
+  }
+
   /** Count of meetings per type for breakdown bar */
   meetingTypeBreakdown = computed(() => {
     const meetings = this.meetingsService.meetings().filter(m => m.status !== 'cancelled');
