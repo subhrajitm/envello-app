@@ -183,15 +183,6 @@
 .sb-cat-count { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-tertiary); flex-shrink: 0; margin-left: 8px; }
 .sb-cat-row.selected .sb-cat-count { color: var(--accent-primary); }
 
-.sb-footer { flex-shrink: 0; padding: 8px 16px; border-top: 1px solid var(--border-subtle); background: var(--bg-hover); }
-.sb-shortcut {
-  display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 8px;
-  font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--text-tertiary); background: transparent; border: none; cursor: pointer;
-  text-align: left; border-radius: 4px; transition: background 0.12s, color 0.12s;
-}
-.sb-shortcut:hover { background: var(--bg-panel); color: var(--text-secondary); }
-.sb-shortcut .material-symbols-outlined { font-size: 14px; }
 
 /* Add form */
 .add-book-form { display: flex; flex-direction: column; gap: 16px; }

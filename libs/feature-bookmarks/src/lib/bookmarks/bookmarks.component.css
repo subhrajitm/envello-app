@@ -230,31 +230,6 @@
 }
 
 /* Sidebar footer */
-.bm-sidebar-footer {
-  margin-top: auto;
-  padding: 12px 8px;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.bm-shortcut-hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-tertiary);
-  font-size: 12px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  transition: background 0.12s, color 0.12s;
-  width: 100%;
-}
-.bm-shortcut-hint:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-.bm-shortcut-hint .material-symbols-outlined { font-size: 16px; }
 
 /* ═══════════════════════════════════════════════════════
    MAIN CONTENT
