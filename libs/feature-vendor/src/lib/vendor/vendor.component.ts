@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
 import { Subscription } from '@envello/domain';
-import { ModalComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
     software:       '#60a5fa',
@@ -90,731 +90,869 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule, ModalComponent],
+    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent],
     template: `
-    <div class="orbit-page">
+<div class="vs-view">
 
-      <!-- ── Header ─────────────────────────────────────────────────────── -->
-      <header class="orbit-header">
-        <div class="orbit-header-left">
-          <h1 class="orbit-title">Subscriptions</h1>
-          <p class="orbit-subtitle">
-            {{ activeCount() }} active &nbsp;·&nbsp;
-            {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalMonthlyCost() | number:'1.0-0' }}/mo &nbsp;·&nbsp;
-            {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalYearlyCost() | number:'1.0-0' }}/yr
-          </p>
+  <!-- ── SIDEBAR ── -->
+  <aside class="vs-sb">
+    <div class="vs-sb-header">
+      <h1 class="vs-sb-title">Subscriptions</h1>
+      <p class="vs-sb-stats">
+        {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalMonthlyCost() | number:'1.0-0' }}/mo
+        &nbsp;·&nbsp;
+        {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalYearlyCost() | number:'1.0-0' }}/yr
+      </p>
+    </div>
+
+    <nav class="vs-sb-nav">
+      <button class="vs-sb-item"
+        [class.active]="!selectedStatus() && !selectedCategory() && !selectedCycle()"
+        (click)="clearFilters()">
+        <span class="material-symbols-outlined">subscriptions</span>
+        <span class="vs-sb-label">All</span>
+        <span class="vs-sb-count">{{ subscriptionStore.subscriptions().length }}</span>
+      </button>
+      <button class="vs-sb-item" [class.active]="selectedStatus() === 'active'"
+        (click)="toggleStatusFilter('active')">
+        <span class="vs-status-dot vs-dot-active"></span>
+        <span class="vs-sb-label">Active</span>
+        <span class="vs-sb-count">{{ activeCount() }}</span>
+      </button>
+      <button class="vs-sb-item" [class.active]="selectedStatus() === 'paused'"
+        (click)="toggleStatusFilter('paused')">
+        <span class="vs-status-dot vs-dot-paused"></span>
+        <span class="vs-sb-label">Paused</span>
+        <span class="vs-sb-count">{{ pausedCount() }}</span>
+      </button>
+      <button class="vs-sb-item" [class.active]="selectedStatus() === 'cancelled'"
+        (click)="toggleStatusFilter('cancelled')">
+        <span class="vs-status-dot vs-dot-cancelled"></span>
+        <span class="vs-sb-label">Cancelled</span>
+        <span class="vs-sb-count">{{ cancelledCount() }}</span>
+      </button>
+    </nav>
+
+    <div class="vs-sb-divider"></div>
+
+    <div class="vs-sb-section">
+      <div class="vs-sb-section-title">Billing Cycle</div>
+      <button class="vs-sb-item" [class.active]="selectedCycle() === 'monthly'"
+        (click)="toggleCycleFilter('monthly')">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span class="vs-sb-label">Monthly</span>
+      </button>
+      <button class="vs-sb-item" [class.active]="selectedCycle() === 'yearly'"
+        (click)="toggleCycleFilter('yearly')">
+        <span class="material-symbols-outlined">event_repeat</span>
+        <span class="vs-sb-label">Yearly</span>
+      </button>
+    </div>
+
+    <div class="vs-sb-divider"></div>
+
+    <div class="vs-sb-section">
+      <div class="vs-sb-section-title">Category</div>
+      @for (cat of categoryOptions; track cat) {
+        <button class="vs-sb-item" [class.active]="selectedCategory() === cat"
+          (click)="toggleCategoryFilter(cat)">
+          <span class="material-symbols-outlined">{{ categoryIcon(cat) }}</span>
+          <span class="vs-sb-label capitalize">{{ cat }}</span>
+          @if (countByCategory()[cat]) {
+            <span class="vs-sb-count">{{ countByCategory()[cat] }}</span>
+          }
+        </button>
+      }
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="vs-main">
+
+    <!-- Toolbar -->
+    <div class="vs-toolbar">
+      <div class="vs-bc">
+        <span class="vs-bc-root">Subscriptions</span>
+        @if (selectedStatus()) {
+          <span class="vs-bc-sep">›</span>
+          <span class="vs-bc-leaf">{{ selectedStatus() }}</span>
+        }
+        @if (selectedCategory()) {
+          <span class="vs-bc-sep">›</span>
+          <span class="vs-bc-leaf">{{ selectedCategory() }}</span>
+        }
+        @if (selectedCycle()) {
+          <span class="vs-bc-sep">›</span>
+          <span class="vs-bc-leaf">{{ selectedCycle() }}</span>
+        }
+        <span class="vs-bc-count">{{ filteredSubs().length }}</span>
+      </div>
+      <div class="vs-toolbar-right">
+        <div class="vs-search-wrap">
+          <span class="material-symbols-outlined vs-search-icon">search</span>
+          <input class="vs-search-input" type="text" placeholder="Search subscriptions…"
+            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
         </div>
-        <div class="orbit-header-right">
-          <div class="orbit-search-wrap">
-            <span class="material-symbols-outlined orbit-search-icon">search</span>
-            <input class="orbit-search-input" type="text"
-              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-              placeholder="Search subscriptions…">
-          </div>
-
-          <button class="orbit-icon-btn" [class.active-filter]="hasActiveFilters()"
-            title="Clear all filters" (click)="clearFilters()">
+        @if (hasActiveFilters()) {
+          <button class="vs-tool-btn" title="Clear filters" (click)="clearFilters()">
             <span class="material-symbols-outlined">filter_list_off</span>
           </button>
+        }
+        <div class="vs-tb-divider"></div>
+        <button class="vs-tool-btn" title="Bulk import" (click)="showImportModal.set(true)">
+          <span class="material-symbols-outlined">upload</span>
+        </button>
+        <button class="vs-tool-btn" [class.vs-tool-btn--active]="showAssistant()"
+          title="AI Assistant" (click)="toggleAssistant()">
+          <span class="material-symbols-outlined">auto_awesome</span>
+          AI
+        </button>
+        <div class="vs-tb-divider"></div>
+        <button class="vs-add-btn" (click)="openAddForm()">
+          <span class="material-symbols-outlined">add</span>
+          Add Subscription
+        </button>
+      </div>
+    </div>
 
-          <div class="orbit-filter-pills">
-            <button class="orbit-pill" [class.pill-active]="selectedStatus() === 'active'"
-              (click)="toggleStatusFilter('active')">Active</button>
-            <button class="orbit-pill" [class.pill-active]="selectedStatus() === 'paused'"
-              (click)="toggleStatusFilter('paused')">Paused</button>
-            <button class="orbit-pill" [class.pill-active]="selectedStatus() === 'cancelled'"
-              (click)="toggleStatusFilter('cancelled')">Cancelled</button>
-            <button class="orbit-pill" [class.pill-active]="selectedCycle() === 'monthly'"
-              (click)="toggleCycleFilter('monthly')">Monthly</button>
-            <button class="orbit-pill" [class.pill-active]="selectedCycle() === 'yearly'"
-              (click)="toggleCycleFilter('yearly')">Yearly</button>
-          </div>
+    <!-- Upcoming renewals banner -->
+    @if (upcomingBanner().length > 0) {
+      <div class="vs-banner">
+        <span class="material-symbols-outlined vs-banner-icon">notifications_active</span>
+        <span class="vs-banner-label">Renewing soon:</span>
+        @for (sub of upcomingBanner(); track sub.id) {
+          @let bdays = daysUntil(sub.renewalDate);
+          <span class="vs-banner-chip" [class.vs-banner-urgent]="bdays !== null && bdays <= 3">
+            {{ sub.name }}
+            <span class="vs-banner-days">{{ bdays === 0 ? 'today' : 'in ' + bdays + 'd' }}</span>
+          </span>
+        }
+      </div>
+    }
 
-          <button class="orbit-icon-btn" title="Bulk import from text" (click)="showImportModal.set(true)">
-            <span class="material-symbols-outlined">upload</span>
-          </button>
+    <!-- Table -->
+    <div class="vs-table-wrap">
 
-          <button class="orbit-btn-primary" (click)="openAddForm()">
-            <span class="material-symbols-outlined">add</span>
-            Add Subscription
-          </button>
+      <div class="vs-table-head">
+        <div class="vs-th vs-col-service" (click)="setSort('name')">
+          Service
+          <span class="vs-sort-ico material-symbols-outlined">
+            {{ sortCol() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+          </span>
         </div>
-      </header>
+        <div class="vs-th vs-col-category">Category</div>
+        <div class="vs-th vs-col-amount" (click)="setSort('price')">
+          Amount
+          <span class="vs-sort-ico material-symbols-outlined">
+            {{ sortCol() === 'price' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+          </span>
+        </div>
+        <div class="vs-th vs-col-cycle">Cycle</div>
+        <div class="vs-th vs-col-renewal" (click)="setSort('renewalDate')">
+          Next Renewal
+          <span class="vs-sort-ico material-symbols-outlined">
+            {{ sortCol() === 'renewalDate' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+          </span>
+        </div>
+        <div class="vs-th vs-col-status">Status</div>
+        <div class="vs-th vs-col-actions"></div>
+      </div>
 
-      <!-- ── Upcoming renewals banner (≤14 days) ────────────────────────── -->
-      @if (upcomingBanner().length > 0) {
-        <div class="orbit-banner">
-          <span class="material-symbols-outlined banner-icon">notifications_active</span>
-          <span class="banner-label">Renewing soon:</span>
-          @for (sub of upcomingBanner(); track sub.id) {
-            @let bdays = daysUntil(sub.renewalDate);
-            <span class="banner-chip" [class.banner-urgent]="bdays !== null && bdays <= 3">
-              {{ sub.name }}
-              <span class="banner-days">{{ bdays === 0 ? 'today' : 'in ' + bdays + 'd' }}</span>
-            </span>
+      @if (filteredSubs().length === 0) {
+        <div class="vs-empty">
+          @if (subscriptionStore.subscriptions().length === 0) {
+            <span class="material-symbols-outlined vs-empty-icon">subscriptions</span>
+            <p class="vs-empty-title">No subscriptions yet</p>
+            <p class="vs-empty-sub">Track your SaaS costs — add one manually or import a list.</p>
+            <div class="vs-empty-actions">
+              <button class="vs-add-btn" (click)="openAddForm()">
+                <span class="material-symbols-outlined">add</span>
+                Add Subscription
+              </button>
+              <button class="vs-tool-btn" (click)="showImportModal.set(true)">
+                <span class="material-symbols-outlined">upload</span>
+                Import
+              </button>
+            </div>
+          } @else {
+            <span class="material-symbols-outlined vs-empty-icon">search_off</span>
+            <p class="vs-empty-title">No results match your filters</p>
+            <button class="vs-tool-btn" (click)="clearFilters()">Clear Filters</button>
           }
         </div>
       }
 
-      <!-- ── Add / Edit Modal ────────────────────────────────────────────── -->
-      @if (formMode() !== null) {
-        <env-modal
-          [isOpen]="true"
-          [title]="formMode() === 'add' ? 'New Subscription' : 'Edit Subscription'"
-          size="large"
-          (closed)="closeForm()">
+      @for (sub of filteredSubs(); track sub.id) {
+        @let days = daysUntil(sub.renewalDate);
+        <div class="vs-tr"
+          [class.vs-tr--paused]="sub.status === 'paused'"
+          [class.vs-tr--cancelled]="sub.status === 'cancelled'">
 
-          <div body class="vendor-form-body">
-
-            <!-- Row 1: Name + Category -->
-            <div class="form-row">
-              <div class="form-group fg-2">
-                <label class="form-label">Service Name</label>
-                <div class="vd-wrap">
-                  <div class="name-wrap">
-                    <span class="material-symbols-outlined vd-search-icon">search</span>
-                    <input type="text" class="form-input vendor-name-input vd-input"
-                      [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
-                      (click)="showVendorDropdown.set(true)"
-                      (blur)="onVendorBlur()"
-                      (keydown)="onVendorKeydown($event)"
-                      placeholder="Search — GitHub, AWS, Figma…"
-                      autocomplete="off">
-                    @if (presetApplied()) {
-                      <span class="preset-badge">
-                        <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
-                        auto-filled
-                      </span>
-                    }
-                  </div>
-                  @if (showVendorDropdown() && vendorSuggestions().length > 0) {
-                    <div class="vd-dropdown">
-                      @if (!formName()) {
-                        <div class="vd-section-label">
-                          <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">bolt</span>
-                          Popular services
-                        </div>
-                      }
-                      @for (v of vendorSuggestions(); track v.key; let i = $index) {
-                        <button type="button" class="vd-item"
-                          [class.vd-item-highlighted]="vendorHighlightIdx() === i"
-                          (mousedown)="selectVendor(v)">
-                          <div class="vd-avatar" [style.background]="avatarBg(v.displayName)">
-                            {{ v.displayName.charAt(0).toUpperCase() }}
-                          </div>
-                          <div class="vd-info">
-                            <span class="vd-name">{{ v.displayName }}</span>
-                            <span class="vd-meta">
-                              <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">{{ categoryIcon(v.category) }}</span>
-                              {{ v.category }}
-                            </span>
-                          </div>
-                          <div class="vd-chips">
-                            <span class="vd-chip">{{ v.billingCycle }}</span>
-                            <span class="vd-chip vd-chip-currency">{{ v.currency }}</span>
-                          </div>
-                        </button>
-                      }
-                    </div>
-                  }
-                </div>
-              </div>
-              <div class="form-group fg-1">
-                <label class="form-label">Category</label>
-                <input type="text" class="form-input" list="cat-list"
-                  [ngModel]="formCategory()" (ngModelChange)="formCategory.set($event)"
-                  placeholder="software">
-                <datalist id="cat-list">
-                  @for (c of categoryOptions; track c) { <option [value]="c"> }
-                </datalist>
-              </div>
+          <div class="vs-td vs-col-service" (click)="openDetails(sub)">
+            <div class="vs-avatar" [style.background]="avatarBg(sub.name)">
+              <span class="vs-avatar-letter">{{ sub.name.charAt(0).toUpperCase() }}</span>
             </div>
-
-            <!-- Row 2: Price · Cycle · Renewal -->
-            <div class="form-row" style="margin-top:12px">
-
-              <!-- Price with inline currency toggle -->
-              <div class="form-group">
-                <label class="form-label">Price</label>
-                <div class="price-wrap">
-                  <button type="button" class="currency-btn"
-                    (click)="rotateCurrency()"
-                    title="Click to change currency ({{ formCurrency() }})">
-                    {{ formCurrency() }}
-                  </button>
-                  <input type="number" step="0.01" min="0" class="form-input price-input"
-                    [ngModel]="formPrice()" (ngModelChange)="formPrice.set($event)"
-                    placeholder="0.00">
-                </div>
-              </div>
-
-              <!-- Billing cycle segmented control -->
-              <div class="form-group">
-                <label class="form-label">Billing Cycle</label>
-                <div class="seg-ctrl">
-                  <button type="button" class="seg-btn"
-                    [class.seg-active]="formCycle() === 'monthly'"
-                    (click)="setCycle('monthly')">Monthly</button>
-                  <button type="button" class="seg-btn"
-                    [class.seg-active]="formCycle() === 'yearly'"
-                    (click)="setCycle('yearly')">Yearly</button>
-                </div>
-              </div>
-
-              <!-- Renewal date + quick-shift shortcuts -->
-              <div class="form-group fg-1">
-                <label class="form-label">Next Renewal</label>
-                <div class="renewal-wrap">
-                  <input type="date" class="form-input renewal-input"
-                    [ngModel]="formRenewal()" (ngModelChange)="formRenewal.set($event)">
-                  <div class="shortcut-row">
-                    <button type="button" class="shortcut-btn" title="+1 month"  (click)="addRenewalOffset(1)">+1m</button>
-                    <button type="button" class="shortcut-btn" title="+3 months" (click)="addRenewalOffset(3)">+3m</button>
-                    <button type="button" class="shortcut-btn" title="+6 months" (click)="addRenewalOffset(6)">+6m</button>
-                    <button type="button" class="shortcut-btn" title="+1 year"   (click)="addRenewalOffset(12)">+1y</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Row 3: Status segmented control -->
-            <div class="form-row" style="margin-top:12px">
-              <div class="form-group">
-                <label class="form-label">Status</label>
-                <div class="seg-ctrl">
-                  <button type="button" class="seg-btn seg-green"
-                    [class.seg-active]="formStatus() === 'active'"
-                    (click)="formStatus.set('active')">Active</button>
-                  <button type="button" class="seg-btn seg-yellow"
-                    [class.seg-active]="formStatus() === 'paused'"
-                    (click)="formStatus.set('paused')">Paused</button>
-                  <button type="button" class="seg-btn seg-grey"
-                    [class.seg-active]="formStatus() === 'cancelled'"
-                    (click)="formStatus.set('cancelled')">Cancelled</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Advanced: Project Scope + Notes (collapsed by default) -->
-            <button type="button" class="advanced-toggle" (click)="toggleAdvanced()">
-              <span class="material-symbols-outlined" style="font-size:16px">
-                {{ showAdvanced() ? 'expand_less' : 'expand_more' }}
-              </span>
-              Advanced
-            </button>
-            @if (showAdvanced()) {
-              <div class="form-row" style="margin-top:10px">
-                <div class="form-group fg-1">
-                  <label class="form-label">Project Scope</label>
-                  <input type="text" class="form-input"
-                    [ngModel]="formProjectId()" (ngModelChange)="formProjectId.set($event)"
-                    placeholder="global">
-                </div>
-                <div class="form-group fg-2">
-                  <label class="form-label">Notes</label>
-                  <input type="text" class="form-input"
-                    [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"
-                    placeholder="Optional notes…">
-                </div>
-              </div>
-            }
-          </div>
-
-          <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%;align-items:center">
-            @if (!canSave() && formName()) {
-              <span class="save-hint">
-                {{ formPrice() <= 0 ? 'Enter a price' : !formRenewal() ? 'Pick a renewal date' : '' }}
-              </span>
-            }
-            <button type="button" class="vendor-cancel-btn" (click)="closeForm()">Cancel</button>
-            @if (formMode() === 'add') {
-              <button type="button" class="save-another-btn"
-                [disabled]="!canSave()" (click)="saveAndAddAnother()">
-                <span class="material-symbols-outlined">add</span>
-                Save & Add Another
-              </button>
-            }
-            <button type="button" class="vendor-save-btn"
-              [disabled]="!canSave()" (click)="saveForm()">
-              <span class="material-symbols-outlined">save</span>
-              {{ formMode() === 'add' ? 'Save' : 'Update' }}
-            </button>
-          </div>
-        </env-modal>
-      }
-
-      <!-- ── Bulk Import Modal ───────────────────────────────────────────── -->
-      @if (showImportModal()) {
-        <env-modal [isOpen]="true" title="Import Subscriptions" (closed)="showImportModal.set(false)">
-          <div body class="import-body">
-            <p class="import-hint">
-              One subscription per line.<br>
-              Format: <code>Name, Price, Cycle, Category, Currency</code><br>
-              <span style="color:var(--text-tertiary)">Cycle is <code>monthly</code> or <code>yearly</code>. Category and Currency are optional — known vendors are auto-detected.</span>
-            </p>
-            <textarea class="import-textarea"
-              [ngModel]="importText()" (ngModelChange)="importText.set($event)"
-              placeholder="GitHub, 4, monthly&#10;AWS, 150, monthly&#10;Figma, 180, yearly, design&#10;1Password, 36, yearly, security, USD"></textarea>
-            @if (importPreviewCount() > 0) {
-              <p class="import-count">
-                <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">check_circle</span>
-                {{ importPreviewCount() }} subscription{{ importPreviewCount() === 1 ? '' : 's' }} ready to import
-              </p>
-            }
-          </div>
-          <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%">
-            <button class="vendor-cancel-btn" (click)="showImportModal.set(false)">Cancel</button>
-            <button class="vendor-save-btn" [disabled]="importPreviewCount() === 0" (click)="parseAndImport()">
-              <span class="material-symbols-outlined">upload</span>
-              Import {{ importPreviewCount() > 0 ? importPreviewCount() : '' }}
-            </button>
-          </div>
-        </env-modal>
-      }
-
-      <!-- ── View Details Modal ─────────────────────────────────────────── -->
-      @if (viewingSub(); as sub) {
-        <env-modal [isOpen]="true" [title]="''" size="large" (closed)="closeDetails()">
-          <div body class="detail-body">
-
-            <!-- Hero row -->
-            <div class="detail-hero">
-              <div class="detail-avatar" [style.background]="avatarBg(sub.name)">
-                {{ sub.name.charAt(0).toUpperCase() }}
-              </div>
-              <div class="detail-hero-text">
-                <h2 class="detail-name">{{ sub.name }}</h2>
-                <span class="orbit-status-badge" style="display:inline-block;margin-top:4px"
-                  [style.color]="statusMeta(sub.status).color"
-                  [style.background]="statusMeta(sub.status).bg">
-                  {{ statusMeta(sub.status).label }}
-                </span>
-              </div>
-              <div class="detail-cost-block">
-                <div class="detail-price">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</div>
-                <div class="detail-cycle">per {{ sub.billingCycle === 'monthly' ? 'month' : 'year' }}</div>
-              </div>
-            </div>
-
-            <!-- Equivalents -->
-            <div class="detail-equiv">
-              @if (sub.billingCycle === 'yearly') {
-                <div class="detail-equiv-chip">
-                  <span class="equiv-label">Monthly equivalent</span>
-                  <span class="equiv-value">{{ monthlyCost(sub) }}</span>
-                </div>
-              }
-              @if (sub.billingCycle === 'monthly') {
-                <div class="detail-equiv-chip">
-                  <span class="equiv-label">Yearly equivalent</span>
-                  <span class="equiv-value">{{ yearlyCost(sub) }}</span>
-                </div>
-              }
-            </div>
-
-            <!-- Detail grid -->
-            <div class="detail-grid">
-              <div class="detail-field">
-                <span class="detail-field-label">Category</span>
-                <span class="detail-field-value capitalize">{{ sub.category || '—' }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">Currency</span>
-                <span class="detail-field-value">{{ sub.currency || 'USD' }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">Billing Cycle</span>
-                <span class="detail-field-value capitalize">{{ sub.billingCycle }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">Next Renewal</span>
-                <div class="detail-field-value" style="display:flex;align-items:center;gap:8px">
-                  {{ formatDate(sub.renewalDate) }}
-                  @let days = daysUntil(sub.renewalDate);
-                  @if (days !== null && sub.status !== 'cancelled') {
-                    <span class="days-chip"
-                      [class.days-ok]="days > 30"
-                      [class.days-caution]="days <= 30 && days > 7"
-                      [class.days-warn]="days <= 7">
-                      {{ days === 0 ? 'today' : 'in ' + days + 'd' }}
-                    </span>
-                  }
-                </div>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">Project Scope</span>
-                <span class="detail-field-value">{{ sub.projectId || 'global' }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">ID</span>
-                <span class="detail-field-value detail-id">{{ sub.id }}</span>
-              </div>
+            <div class="vs-service-info">
+              <span class="vs-service-name">{{ sub.name }}</span>
               @if (sub.notes) {
-                <div class="detail-field detail-field-full">
-                  <span class="detail-field-label">Notes</span>
-                  <span class="detail-field-value">{{ sub.notes }}</span>
-                </div>
+                <span class="vs-service-notes">{{ sub.notes }}</span>
               }
             </div>
           </div>
 
-          <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%">
-            <button class="vendor-cancel-btn" (click)="closeDetails()">Close</button>
-            <button class="vendor-save-btn" (click)="editFromDetails(sub)">
-              <span class="material-symbols-outlined">edit</span>
-              Edit Subscription
+          <div class="vs-td vs-col-category">
+            @if (sub.category) {
+              <span class="vs-cat-chip">{{ sub.category }}</span>
+            } @else {
+              <span class="vs-muted">—</span>
+            }
+          </div>
+
+          <div class="vs-td vs-col-amount">
+            <span class="vs-price">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="vs-td vs-col-cycle">
+            <span class="vs-muted capitalize">{{ sub.billingCycle }}</span>
+          </div>
+
+          <div class="vs-td vs-col-renewal">
+            <span class="vs-date">{{ formatDate(sub.renewalDate) }}</span>
+            @if (days !== null && sub.status !== 'cancelled') {
+              <span class="vs-days-chip"
+                [class.vs-days-ok]="days > 30"
+                [class.vs-days-caution]="days <= 30 && days > 7"
+                [class.vs-days-warn]="days <= 7">
+                {{ days === 0 ? 'today' : 'in ' + days + 'd' }}
+              </span>
+            }
+          </div>
+
+          <div class="vs-td vs-col-status">
+            <button class="vs-status-badge"
+              [style.color]="statusMeta(sub.status).color"
+              [style.background]="statusMeta(sub.status).bg"
+              (click)="cycleStatus(sub)"
+              title="Click to cycle status">
+              {{ statusMeta(sub.status).label }}
             </button>
           </div>
-        </env-modal>
-      }
 
-      <!-- ── Table ─────────────────────────────────────────────────────── -->
-      <div class="orbit-table-container">
-        @if (filteredSubs().length > 0) {
-          <div class="orbit-table-wrapper">
-          <table class="orbit-table">
-            <thead>
-              <tr>
-                <th (click)="setSort('name')" class="sortable">
-                  Service <span class="sort-icon">{{ sortIndicator('name') || '⇅' }}</span>
-                </th>
-                <th>Category</th>
-                <th (click)="setSort('price')" class="sortable">
-                  Amount <span class="sort-icon">{{ sortIndicator('price') || '⇅' }}</span>
-                </th>
-                <th>Cycle</th>
-                <th (click)="setSort('renewalDate')" class="sortable">
-                  Next Renewal <span class="sort-icon">{{ sortIndicator('renewalDate') || '⇅' }}</span>
-                </th>
-                <th>Status <span class="th-hint">click to change</span></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (sub of filteredSubs(); track sub.id) {
-                @let days = daysUntil(sub.renewalDate);
-                <tr class="orbit-row"
-                  [class.paused]="sub.status === 'paused'"
-                  [class.cancelled]="sub.status === 'cancelled'">
-
-                  <td>
-                    <div class="orbit-name-cell" (click)="openDetails(sub)" style="cursor:pointer" title="View details">
-                      <div class="orbit-avatar" [style.background]="avatarBg(sub.name)">
-                        <span class="avatar-text">{{ sub.name.charAt(0).toUpperCase() }}</span>
-                      </div>
-                      <div>
-                        <div class="orbit-vendor-name orbit-vendor-name-link">{{ sub.name }}</div>
-                        @if (sub.notes) {
-                          <div class="orbit-vendor-notes">{{ sub.notes }}</div>
-                        }
-                      </div>
-                    </div>
-                  </td>
-
-                  <td>
-                    @if (sub.category) {
-                      <span class="orbit-cat-chip">{{ sub.category }}</span>
-                    } @else {
-                      <span class="orbit-text">—</span>
-                    }
-                  </td>
-
-                  <td><span class="orbit-price-text">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</span></td>
-
-                  <td><span class="orbit-text capitalize">{{ sub.billingCycle }}</span></td>
-
-                  <td>
-                    <div class="orbit-renewal-wrap">
-                      <span style="font-size:12.5px;color:var(--text-primary)">{{ formatDate(sub.renewalDate) }}</span>
-                      @if (days !== null && sub.status !== 'cancelled') {
-                        <span class="days-chip"
-                          [class.days-ok]="days > 30"
-                          [class.days-caution]="days <= 30 && days > 7"
-                          [class.days-warn]="days <= 7">
-                          {{ days === 0 ? 'today' : 'in ' + days + 'd' }}
-                        </span>
-                      }
-                    </div>
-                  </td>
-
-                  <!-- Inline status toggle — single click cycles active → paused → cancelled -->
-                  <td>
-                    <button class="orbit-status-badge status-cycle-btn"
-                      [style.color]="statusMeta(sub.status).color"
-                      [style.background]="statusMeta(sub.status).bg"
-                      (click)="cycleStatus(sub)"
-                      title="Click to cycle status">
-                      {{ statusMeta(sub.status).label }}
-                    </button>
-                  </td>
-
-                  <td class="orbit-actions-cell">
-                    @if (deleteConfirmId() === sub.id) {
-                      <div class="orbit-confirm">
-                        <button class="orbit-btn-danger" (click)="doDelete(sub.id)">Delete</button>
-                        <button class="orbit-btn-cancel" (click)="deleteConfirmId.set(null)">Cancel</button>
-                      </div>
-                    } @else {
-                      <div class="orbit-row-actions relative group/actions">
-                        <button class="orbit-more-btn">
-                          <span class="material-symbols-outlined">more_vert</span>
-                        </button>
-                        <div class="orbit-actions-dropdown absolute right-0 top-[80%] hidden group-hover/actions:flex flex-col z-[100]">
-                          <button class="orbit-dropdown-item" (click)="openDetails(sub)">
-                            <span class="material-symbols-outlined icon-sm">open_in_new</span> View Details
-                          </button>
-                          <button class="orbit-dropdown-item" (click)="openEditForm(sub)">
-                            <span class="material-symbols-outlined icon-sm">edit</span> Edit
-                          </button>
-                          <div class="dropdown-divider"></div>
-                          <button class="orbit-dropdown-item text-red" (click)="deleteConfirmId.set(sub.id)">
-                            <span class="material-symbols-outlined icon-sm">delete</span> Delete
-                          </button>
-                        </div>
-                      </div>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-          </div>
-
-        } @else {
-          <div class="orbit-empty">
-            @if (subscriptionStore.subscriptions().length === 0) {
-              <span class="material-symbols-outlined orbit-empty-icon">subscriptions</span>
-              <p class="orbit-empty-title">No subscriptions yet</p>
-              <p class="orbit-empty-sub">Track your SaaS costs — add one manually or import a list.</p>
-              <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
-                <button class="orbit-btn-primary" (click)="openAddForm()">
-                  <span class="material-symbols-outlined">add</span> Add Subscription
-                </button>
-                <button class="orbit-clear-btn" (click)="showImportModal.set(true)">
-                  <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">upload</span>
-                  Import
-                </button>
+          <div class="vs-td vs-col-actions">
+            @if (deleteConfirmId() === sub.id) {
+              <div class="vs-confirm">
+                <button class="vs-confirm-del" (click)="doDelete(sub.id)">Delete</button>
+                <button class="vs-confirm-cancel" (click)="deleteConfirmId.set(null)">Cancel</button>
               </div>
             } @else {
-              <span class="material-symbols-outlined orbit-empty-icon">search_off</span>
-              <p class="orbit-empty-title">No subscriptions match your filters</p>
-              <button class="orbit-clear-btn" (click)="clearFilters()">Clear Filters</button>
+              <div class="vs-row-actions">
+                <button class="vs-row-btn" (click)="openDetails(sub)" title="View details">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </button>
+                <button class="vs-row-btn" (click)="openEditForm(sub)" title="Edit">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="vs-row-btn vs-row-btn--danger" (click)="deleteConfirmId.set(sub.id)" title="Delete">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
             }
+          </div>
+
+        </div>
+      }
+
+    </div>
+  </div>
+
+  <!-- AI panel -->
+  @if (showAssistant()) {
+    <env-ai-panel
+      title="Subscriptions Assistant"
+      placeholder="Ask about your subscriptions…"
+      [suggestions]="aiSuggestions"
+      [messages]="aiMessages()"
+      [loading]="aiLoading()"
+      (send)="sendAiMessage($event)"
+      (cleared)="clearAiChat()"
+      (closed)="toggleAssistant()"
+    ></env-ai-panel>
+  }
+
+</div>
+
+<!-- ── ADD / EDIT MODAL ── -->
+@if (formMode() !== null) {
+  <env-modal
+    [isOpen]="true"
+    [title]="formMode() === 'add' ? 'New Subscription' : 'Edit Subscription'"
+    size="large"
+    (closed)="closeForm()">
+
+    <div body class="vendor-form-body">
+
+      <!-- Row 1: Name + Category -->
+      <div class="form-row">
+        <div class="form-group fg-2">
+          <label class="form-label">Service Name</label>
+          <div class="vd-wrap">
+            <div class="name-wrap">
+              <span class="material-symbols-outlined vd-search-icon">search</span>
+              <input type="text" class="form-input vendor-name-input vd-input"
+                [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
+                (click)="showVendorDropdown.set(true)"
+                (blur)="onVendorBlur()"
+                (keydown)="onVendorKeydown($event)"
+                placeholder="Search — GitHub, AWS, Figma…"
+                autocomplete="off">
+              @if (presetApplied()) {
+                <span class="preset-badge">
+                  <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
+                  auto-filled
+                </span>
+              }
+            </div>
+            @if (showVendorDropdown() && vendorSuggestions().length > 0) {
+              <div class="vd-dropdown">
+                @if (!formName()) {
+                  <div class="vd-section-label">
+                    <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">bolt</span>
+                    Popular services
+                  </div>
+                }
+                @for (v of vendorSuggestions(); track v.key; let i = $index) {
+                  <button type="button" class="vd-item"
+                    [class.vd-item-highlighted]="vendorHighlightIdx() === i"
+                    (mousedown)="selectVendor(v)">
+                    <div class="vd-avatar" [style.background]="avatarBg(v.displayName)">
+                      {{ v.displayName.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="vd-info">
+                      <span class="vd-name">{{ v.displayName }}</span>
+                      <span class="vd-meta">
+                        <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">{{ categoryIcon(v.category) }}</span>
+                        {{ v.category }}
+                      </span>
+                    </div>
+                    <div class="vd-chips">
+                      <span class="vd-chip">{{ v.billingCycle }}</span>
+                      <span class="vd-chip vd-chip-currency">{{ v.currency }}</span>
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        <div class="form-group fg-1">
+          <label class="form-label">Category</label>
+          <input type="text" class="form-input" list="cat-list"
+            [ngModel]="formCategory()" (ngModelChange)="formCategory.set($event)"
+            placeholder="software">
+          <datalist id="cat-list">
+            @for (c of categoryOptions; track c) { <option [value]="c"> }
+          </datalist>
+        </div>
+      </div>
+
+      <!-- Row 2: Price · Cycle · Renewal -->
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <label class="form-label">Price</label>
+          <div class="price-wrap">
+            <button type="button" class="currency-btn"
+              (click)="rotateCurrency()"
+              title="Click to change currency ({{ formCurrency() }})">
+              {{ formCurrency() }}
+            </button>
+            <input type="number" step="0.01" min="0" class="form-input price-input"
+              [ngModel]="formPrice()" (ngModelChange)="formPrice.set($event)"
+              placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Billing Cycle</label>
+          <div class="seg-ctrl">
+            <button type="button" class="seg-btn"
+              [class.seg-active]="formCycle() === 'monthly'"
+              (click)="setCycle('monthly')">Monthly</button>
+            <button type="button" class="seg-btn"
+              [class.seg-active]="formCycle() === 'yearly'"
+              (click)="setCycle('yearly')">Yearly</button>
+          </div>
+        </div>
+        <div class="form-group fg-1">
+          <label class="form-label">Next Renewal</label>
+          <div class="renewal-wrap">
+            <input type="date" class="form-input renewal-input"
+              [ngModel]="formRenewal()" (ngModelChange)="formRenewal.set($event)">
+            <div class="shortcut-row">
+              <button type="button" class="shortcut-btn" title="+1 month"  (click)="addRenewalOffset(1)">+1m</button>
+              <button type="button" class="shortcut-btn" title="+3 months" (click)="addRenewalOffset(3)">+3m</button>
+              <button type="button" class="shortcut-btn" title="+6 months" (click)="addRenewalOffset(6)">+6m</button>
+              <button type="button" class="shortcut-btn" title="+1 year"   (click)="addRenewalOffset(12)">+1y</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Status -->
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <div class="seg-ctrl">
+            <button type="button" class="seg-btn seg-green"
+              [class.seg-active]="formStatus() === 'active'"
+              (click)="formStatus.set('active')">Active</button>
+            <button type="button" class="seg-btn seg-yellow"
+              [class.seg-active]="formStatus() === 'paused'"
+              (click)="formStatus.set('paused')">Paused</button>
+            <button type="button" class="seg-btn seg-grey"
+              [class.seg-active]="formStatus() === 'cancelled'"
+              (click)="formStatus.set('cancelled')">Cancelled</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced -->
+      <button type="button" class="advanced-toggle" (click)="toggleAdvanced()">
+        <span class="material-symbols-outlined" style="font-size:16px">
+          {{ showAdvanced() ? 'expand_less' : 'expand_more' }}
+        </span>
+        Advanced
+      </button>
+      @if (showAdvanced()) {
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group fg-1">
+            <label class="form-label">Project Scope</label>
+            <input type="text" class="form-input"
+              [ngModel]="formProjectId()" (ngModelChange)="formProjectId.set($event)"
+              placeholder="global">
+          </div>
+          <div class="form-group fg-2">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-input"
+              [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"
+              placeholder="Optional notes…">
+          </div>
+        </div>
+      }
+    </div>
+
+    <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%;align-items:center">
+      @if (!canSave() && formName()) {
+        <span class="save-hint">
+          {{ formPrice() <= 0 ? 'Enter a price' : !formRenewal() ? 'Pick a renewal date' : '' }}
+        </span>
+      }
+      <button type="button" class="vendor-cancel-btn" (click)="closeForm()">Cancel</button>
+      @if (formMode() === 'add') {
+        <button type="button" class="save-another-btn"
+          [disabled]="!canSave()" (click)="saveAndAddAnother()">
+          <span class="material-symbols-outlined">add</span>
+          Save & Add Another
+        </button>
+      }
+      <button type="button" class="vendor-save-btn"
+        [disabled]="!canSave()" (click)="saveForm()">
+        <span class="material-symbols-outlined">save</span>
+        {{ formMode() === 'add' ? 'Save' : 'Update' }}
+      </button>
+    </div>
+  </env-modal>
+}
+
+<!-- ── BULK IMPORT MODAL ── -->
+@if (showImportModal()) {
+  <env-modal [isOpen]="true" title="Import Subscriptions" (closed)="showImportModal.set(false)">
+    <div body class="import-body">
+      <p class="import-hint">
+        One subscription per line.<br>
+        Format: <code>Name, Price, Cycle, Category, Currency</code><br>
+        <span style="color:var(--text-tertiary)">Cycle is <code>monthly</code> or <code>yearly</code>. Category and Currency are optional — known vendors are auto-detected.</span>
+      </p>
+      <textarea class="import-textarea"
+        [ngModel]="importText()" (ngModelChange)="importText.set($event)"
+        placeholder="GitHub, 4, monthly&#10;AWS, 150, monthly&#10;Figma, 180, yearly, design&#10;1Password, 36, yearly, security, USD"></textarea>
+      @if (importPreviewCount() > 0) {
+        <p class="import-count">
+          <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">check_circle</span>
+          {{ importPreviewCount() }} subscription{{ importPreviewCount() === 1 ? '' : 's' }} ready to import
+        </p>
+      }
+    </div>
+    <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%">
+      <button class="vendor-cancel-btn" (click)="showImportModal.set(false)">Cancel</button>
+      <button class="vendor-save-btn" [disabled]="importPreviewCount() === 0" (click)="parseAndImport()">
+        <span class="material-symbols-outlined">upload</span>
+        Import {{ importPreviewCount() > 0 ? importPreviewCount() : '' }}
+      </button>
+    </div>
+  </env-modal>
+}
+
+<!-- ── VIEW DETAILS MODAL ── -->
+@if (viewingSub(); as sub) {
+  <env-modal [isOpen]="true" [title]="''" size="large" (closed)="closeDetails()">
+    <div body class="detail-body">
+
+      <div class="detail-hero">
+        <div class="detail-avatar" [style.background]="avatarBg(sub.name)">
+          {{ sub.name.charAt(0).toUpperCase() }}
+        </div>
+        <div class="detail-hero-text">
+          <h2 class="detail-name">{{ sub.name }}</h2>
+          <span class="vs-status-badge" style="display:inline-block;margin-top:4px"
+            [style.color]="statusMeta(sub.status).color"
+            [style.background]="statusMeta(sub.status).bg">
+            {{ statusMeta(sub.status).label }}
+          </span>
+        </div>
+        <div class="detail-cost-block">
+          <div class="detail-price">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</div>
+          <div class="detail-cycle">per {{ sub.billingCycle === 'monthly' ? 'month' : 'year' }}</div>
+        </div>
+      </div>
+
+      <div class="detail-equiv">
+        @if (sub.billingCycle === 'yearly') {
+          <div class="detail-equiv-chip">
+            <span class="equiv-label">Monthly equivalent</span>
+            <span class="equiv-value">{{ monthlyCost(sub) }}</span>
+          </div>
+        }
+        @if (sub.billingCycle === 'monthly') {
+          <div class="detail-equiv-chip">
+            <span class="equiv-label">Yearly equivalent</span>
+            <span class="equiv-value">{{ yearlyCost(sub) }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-field">
+          <span class="detail-field-label">Category</span>
+          <span class="detail-field-value capitalize">{{ sub.category || '—' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-field-label">Currency</span>
+          <span class="detail-field-value">{{ sub.currency || 'USD' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-field-label">Billing Cycle</span>
+          <span class="detail-field-value capitalize">{{ sub.billingCycle }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-field-label">Next Renewal</span>
+          <div class="detail-field-value" style="display:flex;align-items:center;gap:8px">
+            {{ formatDate(sub.renewalDate) }}
+            @let days = daysUntil(sub.renewalDate);
+            @if (days !== null && sub.status !== 'cancelled') {
+              <span class="vs-days-chip"
+                [class.vs-days-ok]="days > 30"
+                [class.vs-days-caution]="days <= 30 && days > 7"
+                [class.vs-days-warn]="days <= 7">
+                {{ days === 0 ? 'today' : 'in ' + days + 'd' }}
+              </span>
+            }
+          </div>
+        </div>
+        <div class="detail-field">
+          <span class="detail-field-label">Project Scope</span>
+          <span class="detail-field-value">{{ sub.projectId || 'global' }}</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-field-label">ID</span>
+          <span class="detail-field-value detail-id">{{ sub.id }}</span>
+        </div>
+        @if (sub.notes) {
+          <div class="detail-field detail-field-full">
+            <span class="detail-field-label">Notes</span>
+            <span class="detail-field-value">{{ sub.notes }}</span>
           </div>
         }
       </div>
     </div>
+
+    <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%">
+      <button class="vendor-cancel-btn" (click)="closeDetails()">Close</button>
+      <button class="vendor-save-btn" (click)="editFromDetails(sub)">
+        <span class="material-symbols-outlined">edit</span>
+        Edit Subscription
+      </button>
+    </div>
+  </env-modal>
+}
   `,
     styles: [`
-    :host { display: block; height: 100vh; background: var(--bg-app); overflow: hidden; }
-
-    .orbit-page {
-      display: flex; flex-direction: column; height: 100%;
-      padding: 24px 32px 20px; box-sizing: border-box;
-      background: var(--bg-app); color: var(--text-primary);
-    }
-
+    :host { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; }
+    .vs-view { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg-app); }
     .capitalize { text-transform: capitalize; }
-    .text-red   { color: var(--accent-red) !important; }
-    .icon-sm    { font-size: 16px; }
 
-    /* ── Header ──────────────────────────────────────── */
-    .orbit-header {
-      display: flex; justify-content: space-between; align-items: flex-end;
-      margin-bottom: 16px; flex-shrink: 0;
+    /* ── Sidebar ── */
+    .vs-sb {
+      width: 200px; flex-shrink: 0;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-main);
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
     }
-    .orbit-title    { font-size: 28px; font-weight: 500; margin: 0; letter-spacing: -0.5px; }
-    .orbit-subtitle { font-size: 13px; color: var(--text-tertiary); margin: 6px 0 0; }
-    .orbit-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .vs-sb-header {
+      padding: 16px 12px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    .vs-sb-title { margin: 0 0 4px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .vs-sb-stats { margin: 0; font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
 
-    .orbit-search-wrap { position: relative; display: flex; align-items: center; }
-    .orbit-search-icon {
-      position: absolute; left: 12px; font-size: 18px;
+    .vs-sb-nav     { padding: 4px 6px; flex-shrink: 0; }
+    .vs-sb-section { padding: 4px 6px; flex-shrink: 0; }
+    .vs-sb-section-title {
+      padding: 6px 8px 4px;
+      font-size: 9.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+    }
+    .vs-sb-divider { height: 1px; background: var(--border-subtle); margin: 0 8px; flex-shrink: 0; }
+
+    .vs-sb-item {
+      width: 100%; display: flex; align-items: center; gap: 7px;
+      padding: 5px 8px; background: transparent; border: none;
+      border-radius: 6px; color: var(--text-secondary);
+      font-size: 12.5px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; text-align: left;
+    }
+    .vs-sb-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .vs-sb-item.active { background: var(--accent-primary-dim); color: var(--accent-primary); }
+    .vs-sb-item .material-symbols-outlined { font-size: 16px; flex-shrink: 0; color: var(--text-tertiary); }
+    .vs-sb-item.active .material-symbols-outlined { color: var(--accent-primary); }
+    .vs-sb-label { flex: 1; }
+    .vs-sb-count {
+      font-size: 10.5px; color: var(--text-tertiary);
+      background: var(--bg-app); border: 1px solid var(--border-subtle);
+      border-radius: 10px; padding: 0 5px;
+      font-family: var(--font-mono); min-width: 16px; text-align: center;
+    }
+    .vs-sb-item.active .vs-sb-count {
+      background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+      border-color: var(--accent-primary); color: var(--accent-primary);
+    }
+
+    .vs-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .vs-dot-active    { background: #4ade80; }
+    .vs-dot-paused    { background: #fbbf24; }
+    .vs-dot-cancelled { background: var(--text-tertiary); }
+
+    /* ── Main ── */
+    .vs-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── Toolbar ── */
+    .vs-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 44px; padding: 0 16px; gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0; background: var(--bg-panel);
+    }
+    .vs-bc { display: flex; align-items: center; gap: 6px; }
+    .vs-bc-root { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .vs-bc-sep  { font-size: 14px; color: var(--text-tertiary); }
+    .vs-bc-leaf { font-size: 13px; font-weight: 600; color: var(--text-primary); text-transform: capitalize; }
+    .vs-bc-count {
+      font-size: 11px; color: var(--text-tertiary);
+      background: var(--bg-hover); border-radius: 10px; padding: 1px 7px;
+    }
+
+    .vs-toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .vs-tb-divider { width: 1px; height: 18px; background: var(--border-subtle); margin: 0 2px; }
+
+    .vs-search-wrap { position: relative; display: flex; align-items: center; }
+    .vs-search-icon {
+      position: absolute; left: 8px; font-size: 16px;
       color: var(--text-tertiary); pointer-events: none;
     }
-    .orbit-search-input {
+    .vs-search-input {
+      height: 28px; padding: 0 10px 0 28px;
       background: var(--bg-hover); border: 1px solid var(--border-subtle);
-      border-radius: 8px; padding: 10px 16px 10px 38px;
-      font-size: 13px; color: var(--text-primary); outline: none; width: 220px; transition: all 0.2s;
+      border-radius: 5px; font-size: 12px; color: var(--text-primary);
+      outline: none; width: 190px; transition: all 0.2s;
     }
-    .orbit-search-input:focus {
-      background: var(--bg-panel); border-color: var(--accent-primary);
-      box-shadow: 0 0 0 2px var(--accent-primary-dim);
-    }
+    .vs-search-input:focus { background: var(--bg-panel); border-color: var(--accent-primary); }
 
-    .orbit-icon-btn {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      height: 38px; padding: 0 12px; background: transparent; border: 1px solid var(--border-subtle);
-      border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
-    }
-    .orbit-icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-    .active-filter { border-color: var(--accent-red) !important; color: var(--accent-red) !important; }
-
-    .orbit-filter-pills { display: flex; align-items: center; gap: 6px; }
-    .orbit-pill {
-      height: 32px; padding: 0 12px; background: transparent; border: 1px solid var(--border-subtle);
-      border-radius: 100px; color: var(--text-secondary); font-size: 12px; font-weight: 500;
+    .vs-tool-btn {
+      height: 28px; padding: 0 10px; display: flex; align-items: center; gap: 5px;
+      background: transparent; border: 1px solid var(--border-subtle);
+      border-radius: 5px; color: var(--text-secondary); font-size: 12px; font-weight: 500;
       cursor: pointer; transition: all 0.15s; white-space: nowrap;
     }
-    .orbit-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
-    .pill-active {
-      background: var(--accent-primary-dim) !important;
-      border-color: var(--accent-primary) !important;
-      color: var(--accent-primary) !important;
-    }
+    .vs-tool-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .vs-tool-btn--active { background: var(--accent-primary-dim) !important; border-color: var(--accent-primary) !important; color: var(--accent-primary) !important; }
+    .vs-tool-btn .material-symbols-outlined { font-size: 15px; }
 
-    .orbit-btn-primary {
-      display: flex; align-items: center; gap: 8px;
-      height: 38px; padding: 0 16px; background: #111; color: #fff;
-      border: 1px solid #222; border-radius: 8px; font-size: 13px; font-weight: 500;
-      cursor: pointer; transition: all 0.2s;
+    .vs-add-btn {
+      height: 30px; padding: 0 12px; display: flex; align-items: center; gap: 5px;
+      background: var(--accent-primary); color: var(--accent-primary-text);
+      border: none; border-radius: 5px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
     }
-    :root[class~="dark"] .orbit-btn-primary {
-      background: var(--text-primary); color: var(--bg-app); border-color: var(--text-secondary);
-    }
-    .orbit-btn-primary:hover { opacity: 0.9; }
+    .vs-add-btn:hover { opacity: 0.88; }
+    .vs-add-btn .material-symbols-outlined { font-size: 16px; }
 
-    /* ── Upcoming banner ─────────────────────────────── */
-    .orbit-banner {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      padding: 10px 16px; margin-bottom: 16px; border-radius: 8px; flex-shrink: 0;
-      background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2);
+    /* ── Banner ── */
+    .vs-banner {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 8px 20px; flex-shrink: 0;
+      background: color-mix(in srgb, #fbbf24 6%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, #fbbf24 20%, transparent);
     }
-    .banner-icon  { font-size: 18px; color: #fbbf24; }
-    .banner-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
-    .banner-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 3px 10px; border-radius: 100px;
-      background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25);
-      font-size: 12px; font-weight: 500; color: var(--text-primary);
+    .vs-banner-icon  { font-size: 17px; color: #fbbf24; }
+    .vs-banner-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+    .vs-banner-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 8px; border-radius: 100px;
+      background: color-mix(in srgb, #fbbf24 10%, transparent);
+      border: 1px solid color-mix(in srgb, #fbbf24 25%, transparent);
+      font-size: 11.5px; font-weight: 500; color: var(--text-primary);
     }
-    .banner-urgent { background: rgba(248,113,113,0.1) !important; border-color: rgba(248,113,113,0.3) !important; color: var(--accent-red) !important; }
-    .banner-days   { font-size: 11px; color: var(--text-tertiary); margin-left: 2px; }
+    .vs-banner-urgent {
+      background: color-mix(in srgb, var(--accent-red) 10%, transparent) !important;
+      border-color: color-mix(in srgb, var(--accent-red) 30%, transparent) !important;
+      color: var(--accent-red) !important;
+    }
+    .vs-banner-days { font-size: 10.5px; color: var(--text-tertiary); }
 
-    /* ── Table ───────────────────────────────────────── */
-    .orbit-table-container {
-      flex: 1; overflow-y: auto; overflow-x: auto; padding-bottom: 40px;
-    }
-    .orbit-table-wrapper {
-      border: 1px solid var(--border-subtle); border-radius: 10px;
-    }
-    .orbit-table { width: 100%; border-collapse: collapse; text-align: left; }
-    /* Round the four corner cells instead of overflow:hidden on wrapper */
-    .orbit-table thead tr th:first-child { border-top-left-radius: 9px; }
-    .orbit-table thead tr th:last-child  { border-top-right-radius: 9px; }
-    .orbit-table tbody tr:last-child td:first-child { border-bottom-left-radius: 9px; }
-    .orbit-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 9px; }
+    /* ── Table ── */
+    .vs-table-wrap { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: auto; }
 
-    /* Header — subtle bg + right separators between columns only */
-    .orbit-table thead { position: sticky; top: 0; z-index: 10; }
-    .orbit-table th {
-      padding: 8px 14px; font-size: 12px; font-weight: 500; color: var(--text-tertiary);
+    .vs-table-head {
+      display: flex; align-items: center; height: 36px;
       background: var(--bg-panel);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-main);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .vs-th {
+      display: flex; align-items: center; gap: 4px;
+      padding: 0 14px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.04em;
+      user-select: none;
       border-right: 1px solid var(--border-subtle);
-      white-space: nowrap; user-select: none;
     }
-    .orbit-table th:last-child { border-right: none; }
-    .orbit-table th.sortable { cursor: pointer; transition: color 0.15s; }
-    .orbit-table th.sortable:hover { color: var(--text-secondary); }
-    .sort-icon { font-size: 11px; vertical-align: middle; margin-left: 3px; opacity: 0.5; }
-    .th-hint   { display: none; }
+    .vs-th:last-child { border-right: none; }
+    .vs-sort-ico { font-size: 13px; opacity: 0.5; }
 
-    /* Body rows — horizontal separators only, no vertical borders */
-    .orbit-row { transition: background 0.12s; }
-    .orbit-row:hover { background: var(--bg-hover); }
-    .orbit-row.paused    { opacity: 0.6; }
-    .orbit-row.cancelled { opacity: 0.35; }
-    .orbit-table td {
-      padding: 10px 14px; vertical-align: middle;
-      border-bottom: 1px solid var(--border-subtle);
+    /* Column widths */
+    .vs-col-service  { flex: 1; min-width: 180px; cursor: pointer; }
+    .vs-col-category { width: 120px; flex-shrink: 0; }
+    .vs-col-amount   { width: 110px; flex-shrink: 0; justify-content: flex-end; }
+    .vs-col-cycle    { width: 80px;  flex-shrink: 0; }
+    .vs-col-renewal  { width: 170px; flex-shrink: 0; }
+    .vs-col-status   { width: 100px; flex-shrink: 0; }
+    .vs-col-actions  { width: 110px; flex-shrink: 0; justify-content: flex-end; }
+
+    .vs-th.vs-col-service,
+    .vs-th.vs-col-amount,
+    .vs-th.vs-col-renewal { cursor: pointer; transition: color 0.12s; }
+    .vs-th.vs-col-service:hover,
+    .vs-th.vs-col-amount:hover,
+    .vs-th.vs-col-renewal:hover { color: var(--text-secondary); }
+
+    /* Rows */
+    .vs-tr {
+      display: flex; align-items: center;
+      height: 44px; border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.12s;
     }
-    .orbit-table tbody tr:last-child td { border-bottom: none; }
+    .vs-tr:last-child { border-bottom: none; }
+    .vs-tr:hover { background: var(--bg-hover); }
+    .vs-tr--paused    { opacity: 0.6; }
+    .vs-tr--cancelled { opacity: 0.35; }
 
-    /* Name cell */
-    .orbit-name-cell { display: flex; align-items: center; gap: 9px; }
-    .orbit-avatar {
-      width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0;
+    /* Hover-reveal row actions */
+    .vs-col-actions { opacity: 0; transition: opacity 0.1s; }
+    .vs-tr:hover .vs-col-actions { opacity: 1; }
+
+    /* Cells */
+    .vs-td { display: flex; align-items: center; gap: 8px; padding: 0 14px; overflow: hidden; }
+
+    /* Service */
+    .vs-col-service.vs-td { cursor: pointer; }
+    .vs-avatar {
+      width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25);
     }
-    .avatar-text       { font-size: 10px; font-weight: 700; line-height: 1; }
-    .orbit-vendor-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
-    .orbit-vendor-name-link:hover { color: var(--accent-primary); text-decoration: underline; text-underline-offset: 2px; }
-    .orbit-vendor-notes{ font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+    .vs-avatar-letter { font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+    .vs-service-info  { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .vs-service-name  {
+      font-size: 13px; font-weight: 500; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .vs-col-service:hover .vs-service-name { color: var(--accent-primary); }
+    .vs-service-notes {
+      font-size: 10.5px; color: var(--text-tertiary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
-    /* Category — small outlined tag chip like screenshot */
-    .orbit-cat-chip {
-      display: inline-flex; padding: 1px 8px; border-radius: 5px;
+    /* Category chip */
+    .vs-cat-chip {
+      display: inline-flex; padding: 1px 7px; border-radius: 4px;
       border: 1px solid var(--border-subtle); background: transparent;
-      font-size: 11.5px; font-weight: 400; color: var(--text-secondary);
-      text-transform: capitalize; white-space: nowrap;
+      font-size: 11px; color: var(--text-secondary); text-transform: capitalize;
     }
+    .vs-muted { font-size: 12.5px; color: var(--text-tertiary); }
 
-    .orbit-text       { font-size: 12.5px; color: var(--text-secondary); font-weight: 400; }
-    .orbit-price-text { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono, monospace); }
+    /* Amount */
+    .vs-col-amount.vs-td { justify-content: flex-end; }
+    .vs-price { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
 
-    /* Renewal date + days chip — matches "today" pill in screenshot */
-    .orbit-renewal-wrap { display: flex; align-items: center; gap: 7px; }
-    .days-chip {
-      padding: 1px 7px; border-radius: 4px; border: 1px solid var(--border-subtle);
-      font-size: 11px; font-weight: 500; white-space: nowrap;
+    /* Renewal */
+    .vs-date { font-size: 12.5px; color: var(--text-primary); white-space: nowrap; }
+    .vs-days-chip {
+      padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);
+      font-size: 10.5px; font-weight: 500; white-space: nowrap;
     }
-    .days-ok      { color: var(--text-tertiary);    background: var(--bg-hover); }
-    .days-caution { color: #d97706; background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.3); }
-    .days-warn    { color: var(--accent-red); background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.3); }
+    .vs-days-ok      { color: var(--text-tertiary); background: var(--bg-hover); }
+    .vs-days-caution { color: #d97706; background: color-mix(in srgb, #fbbf24 8%, transparent); border-color: color-mix(in srgb, #fbbf24 30%, transparent); }
+    .vs-days-warn    { color: var(--accent-red); background: color-mix(in srgb, var(--accent-red) 8%, transparent); border-color: color-mix(in srgb, var(--accent-red) 30%, transparent); }
 
-    /* Status badge — outlined rounded pill like "Read/Unread" in screenshot */
-    .orbit-status-badge {
+    /* Status badge */
+    .vs-status-badge {
       display: inline-flex; align-items: center;
-      padding: 3px 10px; border-radius: 100px; border: 1px solid currentColor;
-      font-size: 11.5px; font-weight: 500; text-transform: capitalize; background: transparent !important;
+      padding: 2px 10px; border-radius: 100px;
+      border: 1px solid currentColor;
+      font-size: 11px; font-weight: 500; text-transform: capitalize;
+      cursor: pointer; transition: opacity 0.12s; background: transparent;
     }
-    .status-cycle-btn {
-      border: 1px solid currentColor !important; cursor: pointer;
-      transition: opacity 0.12s; background: transparent !important;
-    }
-    .status-cycle-btn:hover { opacity: 0.65; }
+    .vs-status-badge:hover { opacity: 0.65; }
 
-    .orbit-actions-cell { text-align: right; width: 44px; padding: 0 8px !important; }
-    .orbit-more-btn {
+    /* Row actions */
+    .vs-row-actions { display: flex; align-items: center; gap: 2px; justify-content: flex-end; }
+    .vs-row-btn {
       width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
       background: transparent; border: none; border-radius: 5px;
       color: var(--text-tertiary); cursor: pointer; transition: all 0.15s;
     }
-    .orbit-more-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-    .orbit-actions-dropdown {
-      min-width: 140px; padding: 4px; background: var(--bg-panel);
-      border: 1px solid var(--border-subtle); border-radius: 8px;
-    }
-    .orbit-dropdown-item {
-      display: flex; align-items: center; gap: 8px; padding: 8px 10px; width: 100%;
-      background: transparent; border: none; border-radius: 6px; color: var(--text-secondary);
-      font-size: 13px; font-weight: 500; cursor: pointer; text-align: left; transition: all 0.15s;
-    }
-    .orbit-dropdown-item:hover { background: var(--bg-hover); color: var(--text-primary); }
-    .dropdown-divider { height: 1px; background: var(--border-subtle); margin: 4px 0; }
+    .vs-row-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .vs-row-btn--danger:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); color: var(--accent-red); }
+    .vs-row-btn .material-symbols-outlined { font-size: 16px; }
 
-    .orbit-confirm { display: flex; gap: 6px; justify-content: flex-end; }
-    .orbit-btn-danger, .orbit-btn-cancel {
-      padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    .vs-confirm { display: flex; gap: 5px; justify-content: flex-end; }
+    .vs-confirm-del, .vs-confirm-cancel {
+      padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
       cursor: pointer; border: 1px solid transparent;
     }
-    .orbit-btn-danger { background: rgba(248,113,113,0.1); color: var(--accent-red); border-color: rgba(248,113,113,0.3); }
-    .orbit-btn-danger:hover { background: rgba(248,113,113,0.2); }
-    .orbit-btn-cancel { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--border-subtle); }
+    .vs-confirm-del    { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); border-color: color-mix(in srgb, var(--accent-red) 30%, transparent); }
+    .vs-confirm-del:hover { background: color-mix(in srgb, var(--accent-red) 20%, transparent); }
+    .vs-confirm-cancel { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--border-subtle); }
 
-    .orbit-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
-    .orbit-empty-icon { font-size: 32px; opacity: 0.5; margin-bottom: 12px; display: block; }
-    .orbit-empty-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
-    .orbit-empty-sub   { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
-    .orbit-clear-btn {
-      padding: 8px 16px; background: var(--bg-hover); border: 1px solid var(--border-subtle);
-      border-radius: 6px; color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 500;
-    }
-    .orbit-clear-btn:hover { color: var(--text-primary); }
+    /* Empty state */
+    .vs-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
+    .vs-empty-icon  { font-size: 32px; opacity: 0.4; margin-bottom: 12px; display: block; }
+    .vs-empty-title { font-size: 14px; font-weight: 500; color: var(--text-primary); margin: 0 0 4px; }
+    .vs-empty-sub   { font-size: 12px; color: var(--text-tertiary); margin: 0 0 16px; }
+    .vs-empty-actions { display: flex; gap: 8px; justify-content: center; }
 
-    /* ── Form modal ──────────────────────────────────── */
+    /* ── Form modal ── */
     .vendor-form-body { padding: 4px 0; }
     .form-row   { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
     .form-group { display: flex; flex-direction: column; }
@@ -831,10 +969,8 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     }
     .form-input:focus { border-color: var(--accent-primary); }
 
-    /* ── Vendor name combobox ────────────────────────── */
+    /* Vendor name combobox */
     .vd-wrap { position: relative; }
-
-    /* Search icon + preset badge inside input */
     .name-wrap { position: relative; display: flex; align-items: center; }
     .vd-search-icon {
       position: absolute; left: 10px; font-size: 17px;
@@ -846,11 +982,10 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       position: absolute; right: 8px;
       display: inline-flex; align-items: center; gap: 3px;
       padding: 2px 8px; border-radius: 100px;
-      background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: #4ade80;
+      background: color-mix(in srgb, #4ade80 10%, transparent);
+      border: 1px solid color-mix(in srgb, #4ade80 25%, transparent); color: #4ade80;
       font-size: 10px; font-weight: 600; pointer-events: none;
     }
-
-    /* Dropdown panel */
     .vd-dropdown {
       position: absolute; top: calc(100% + 4px); left: 0; right: 0;
       background: var(--bg-panel); border: 1px solid var(--border-subtle);
@@ -866,15 +1001,13 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     .vd-item {
       display: flex; align-items: center; gap: 10px; width: 100%;
       padding: 8px 10px; border: none; border-radius: 7px;
-      background: transparent; cursor: pointer; text-align: left;
-      transition: background 0.1s;
+      background: transparent; cursor: pointer; text-align: left; transition: background 0.1s;
     }
     .vd-item:hover, .vd-item-highlighted { background: var(--bg-hover); }
     .vd-avatar {
       width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+      font-size: 13px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25);
     }
     .vd-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .vd-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
@@ -890,7 +1023,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     }
     .vd-chip-currency { color: var(--text-tertiary); }
 
-    /* Price + currency prefix */
+    /* Price + currency */
     .price-wrap {
       display: flex; align-items: center; border: 1px solid var(--border-subtle);
       border-radius: 6px; overflow: hidden; background: var(--bg-app); height: 38px;
@@ -903,12 +1036,9 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
     }
     .currency-btn:hover { background: var(--bg-active); color: var(--text-primary); }
-    .price-input {
-      border: none !important; border-radius: 0 !important;
-      height: 100% !important; flex: 1; min-width: 80px;
-    }
+    .price-input { border: none !important; border-radius: 0 !important; height: 100% !important; flex: 1; min-width: 80px; }
 
-    /* Segmented controls (Billing cycle & Status) */
+    /* Segmented controls */
     .seg-ctrl {
       display: flex; border: 1px solid var(--border-subtle); border-radius: 6px;
       overflow: hidden; height: 38px;
@@ -921,18 +1051,12 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     }
     .seg-btn:last-child { border-right: none; }
     .seg-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-    /* Default active (blue/accent) */
-    .seg-btn.seg-active {
-      background: var(--accent-primary-dim);
-      color: var(--accent-primary);
-      font-weight: 600;
-    }
-    /* Colour-coded status buttons */
-    .seg-green.seg-active  { background: rgba(74,222,128,0.12) !important;  color: #4ade80 !important; }
-    .seg-yellow.seg-active { background: rgba(251,191,36,0.12) !important;  color: #fbbf24 !important; }
-    .seg-grey.seg-active   { background: rgba(148,163,184,0.12) !important; color: #94a3b8 !important; }
+    .seg-btn.seg-active { background: var(--accent-primary-dim); color: var(--accent-primary); font-weight: 600; }
+    .seg-green.seg-active  { background: color-mix(in srgb, #4ade80 12%, transparent) !important; color: #4ade80 !important; }
+    .seg-yellow.seg-active { background: color-mix(in srgb, #fbbf24 12%, transparent) !important; color: #fbbf24 !important; }
+    .seg-grey.seg-active   { background: color-mix(in srgb, #94a3b8 12%, transparent) !important; color: #94a3b8 !important; }
 
-    /* Renewal date + shortcut row */
+    /* Renewal shortcuts */
     .renewal-wrap  { display: flex; flex-direction: column; gap: 4px; }
     .renewal-input { width: 100%; }
     .shortcut-row  { display: flex; gap: 4px; }
@@ -953,10 +1077,8 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     }
     .advanced-toggle:hover { color: var(--text-secondary); }
 
-    /* Footer buttons */
-    .save-hint {
-      font-size: 11px; color: var(--text-tertiary); margin-right: auto;
-    }
+    /* Modal footer buttons */
+    .save-hint { font-size: 11px; color: var(--text-tertiary); margin-right: auto; }
     .vendor-cancel-btn {
       padding: 8px 16px; background: transparent; border: 1px solid var(--border-subtle);
       color: var(--text-secondary); border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
@@ -967,8 +1089,8 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       border: 1px solid var(--border-main); border-radius: 6px;
       font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
     }
-    .save-another-btn:hover   { background: var(--bg-active); }
-    .save-another-btn:disabled{ opacity: 0.5; cursor: not-allowed; }
+    .save-another-btn:hover    { background: var(--bg-active); }
+    .save-another-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .vendor-save-btn {
       display: flex; align-items: center; gap: 6px;
       padding: 8px 16px; background: var(--accent-primary); color: var(--accent-primary-text);
@@ -976,9 +1098,8 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     }
     .vendor-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── View Details modal ──────────────────────────── */
+    /* ── View Details modal ── */
     .detail-body { padding: 4px 0; display: flex; flex-direction: column; gap: 20px; }
-
     .detail-hero {
       display: flex; align-items: center; gap: 16px;
       padding-bottom: 20px; border-bottom: 1px solid var(--border-subtle);
@@ -991,7 +1112,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     .detail-hero-text { flex: 1; }
     .detail-name { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
     .detail-cost-block { text-align: right; }
-    .detail-price { font-size: 24px; font-weight: 700; font-family: var(--font-mono, monospace); }
+    .detail-price { font-size: 24px; font-weight: 700; font-family: var(--font-mono); }
     .detail-cycle { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
 
     .detail-equiv { display: flex; gap: 10px; }
@@ -1000,26 +1121,23 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       border: 1px solid var(--border-subtle); border-radius: 8px; background: var(--bg-hover);
     }
     .equiv-label { font-size: 11px; color: var(--text-tertiary); font-weight: 500; }
-    .equiv-value { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono, monospace); }
+    .equiv-value { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); }
 
     .detail-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
       border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden;
       background: var(--border-subtle);
     }
-    .detail-field {
-      display: flex; flex-direction: column; gap: 4px;
-      padding: 12px 14px; background: var(--bg-app);
-    }
+    .detail-field { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: var(--bg-app); }
     .detail-field-full { grid-column: 1 / -1; }
     .detail-field-label {
       font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
       color: var(--text-tertiary);
     }
     .detail-field-value { font-size: 13px; font-weight: 500; color: var(--text-primary); }
-    .detail-id { font-family: var(--font-mono, monospace); font-size: 10.5px; color: var(--text-tertiary); }
+    .detail-id { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
 
-    /* ── Import modal ────────────────────────────────── */
+    /* ── Import modal ── */
     .import-body  { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
     .import-hint  { font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.7; }
     .import-hint code {
@@ -1030,7 +1148,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       width: 100%; min-height: 140px; resize: vertical;
       background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px;
       padding: 10px 12px; font-size: 13px; color: var(--text-primary); outline: none;
-      font-family: var(--font-mono, monospace); line-height: 1.6; box-sizing: border-box;
+      font-family: var(--font-mono); line-height: 1.6; box-sizing: border-box;
     }
     .import-textarea:focus { border-color: var(--accent-primary); }
     .import-count {
@@ -1090,6 +1208,19 @@ export class VendorComponent {
     importText      = signal('');
     viewingSub      = signal<Subscription | null>(null);
 
+    // ── AI Assistant ──────────────────────────────────────────────────────
+    showAssistant = signal(false);
+    aiLoading     = signal(false);
+    aiMessages    = signal<AiPanelMessage[]>([]);
+
+    readonly aiSuggestions = [
+        'What is my total monthly spend?',
+        'Which subscriptions renew soon?',
+        'What are my most expensive subscriptions?',
+        'Show me a breakdown by category',
+        'Which subscriptions are paused or cancelled?',
+    ];
+
     // ── Computed ──────────────────────────────────────────────────────────
     canSave = computed(() => !!this.formName() && !!this.formRenewal() && this.formPrice() > 0);
 
@@ -1097,12 +1228,28 @@ export class VendorComponent {
         this.subscriptionStore.subscriptions().filter(s => !s.status || s.status === 'active').length
     );
 
+    pausedCount = computed(() =>
+        this.subscriptionStore.subscriptions().filter(s => s.status === 'paused').length
+    );
+
+    cancelledCount = computed(() =>
+        this.subscriptionStore.subscriptions().filter(s => s.status === 'cancelled').length
+    );
+
+    countByCategory = computed(() => {
+        const counts: Record<string, number> = {};
+        for (const s of this.subscriptionStore.subscriptions()) {
+            const cat = s.category || 'other';
+            counts[cat] = (counts[cat] ?? 0) + 1;
+        }
+        return counts;
+    });
+
     hasActiveFilters = computed(() =>
         !!this.searchQuery() || this.selectedStatus() !== null ||
         this.selectedCycle() !== null || this.selectedCategory() !== null
     );
 
-    /** Most-used currency across existing subscriptions, for the cost summary symbol. */
     defaultCurrency = computed(() => {
         const subs = this.subscriptionStore.subscriptions();
         if (!subs.length) return 'USD';
@@ -1114,7 +1261,6 @@ export class VendorComponent {
         return Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
     });
 
-    /** Subscriptions renewing within the next 14 days (non-cancelled). */
     upcomingBanner = computed(() => {
         const now = Date.now();
         const limit = 14 * 24 * 60 * 60 * 1000;
@@ -1174,6 +1320,9 @@ export class VendorComponent {
     toggleCycleFilter(cycle: 'monthly' | 'yearly') {
         this.selectedCycle.set(this.selectedCycle() === cycle ? null : cycle);
     }
+    toggleCategoryFilter(cat: string) {
+        this.selectedCategory.set(this.selectedCategory() === cat ? null : cat);
+    }
     clearFilters() {
         this.searchQuery.set('');
         this.selectedStatus.set(null);
@@ -1185,10 +1334,6 @@ export class VendorComponent {
     setSort(col: 'name' | 'price' | 'renewalDate') {
         if (this.sortCol() === col) this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
         else { this.sortCol.set(col); this.sortDir.set('asc'); }
-    }
-    sortIndicator(col: string): string {
-        if (this.sortCol() !== col) return '';
-        return this.sortDir() === 'asc' ? '↑' : '↓';
     }
 
     // ── Form open / close ─────────────────────────────────────────────────
@@ -1212,7 +1357,6 @@ export class VendorComponent {
         this.formStatus.set(sub.status ?? 'active');
         this.formNotes.set(sub.notes ?? '');
         this.presetApplied.set(false);
-        // Auto-expand Advanced if non-default values exist
         this.showAdvanced.set((!!sub.projectId && sub.projectId !== 'global') || !!sub.notes);
         this.formMode.set('edit');
     }
@@ -1260,7 +1404,6 @@ export class VendorComponent {
         if (await this.saveFormInternal()) this.closeForm();
     }
 
-    /** Save and immediately reset to blank Add form — keeps modal open for rapid entry. */
     async saveAndAddAnother() {
         if (await this.saveFormInternal()) {
             this.resetForm();
@@ -1275,7 +1418,6 @@ export class VendorComponent {
         this.deleteConfirmId.set(null);
     }
 
-    /** Click the status badge in the table to cycle active → paused → cancelled → active. */
     async cycleStatus(sub: Subscription) {
         const order: ('active' | 'paused' | 'cancelled')[] = ['active', 'paused', 'cancelled'];
         const idx = order.indexOf(sub.status ?? 'active');
@@ -1283,8 +1425,6 @@ export class VendorComponent {
     }
 
     // ── Form field helpers ────────────────────────────────────────────────
-
-    /** Match typed vendor name against the preset catalog and auto-fill fields. */
     onNameChange(name: string) {
         this.formName.set(name);
         this.vendorHighlightIdx.set(-1);
@@ -1355,19 +1495,16 @@ export class VendorComponent {
         return overrides[key] ?? key.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
 
-    /** Change cycle and auto-recalculate the renewal date (add mode only). */
     setCycle(cycle: 'monthly' | 'yearly') {
         this.formCycle.set(cycle);
         if (this.formMode() === 'add') this.formRenewal.set(this.autoRenewalDate(cycle));
     }
 
-    /** Cycle through the CURRENCIES array on each click. */
     rotateCurrency() {
         const idx = CURRENCIES.indexOf(this.formCurrency());
         this.formCurrency.set(CURRENCIES[(idx + 1) % CURRENCIES.length]);
     }
 
-    /** Shift the renewal date forward by N months (use 12 for +1 year). */
     addRenewalOffset(months: number) {
         const base = this.formRenewal();
         const d = base ? new Date(base + 'T12:00:00') : new Date();
@@ -1389,9 +1526,9 @@ export class VendorComponent {
 
             const cycleRaw = (parts[2] ?? 'monthly').toLowerCase();
             const cycle: 'monthly' | 'yearly' = cycleRaw === 'yearly' ? 'yearly' : 'monthly';
-            const preset  = VENDOR_PRESETS[name.toLowerCase()];
+            const preset   = VENDOR_PRESETS[name.toLowerCase()];
             const category = parts[3] || preset?.category  || 'software';
-            const currency  = parts[4] || preset?.currency  || 'USD';
+            const currency = parts[4] || preset?.currency  || 'USD';
 
             await this.subscriptionStore.addSubscription({
                 id:          crypto.randomUUID(),
@@ -1455,6 +1592,66 @@ export class VendorComponent {
     currencySymbol(currency: string | undefined): string {
         const map: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$', INR: '₹', JPY: '¥' };
         return map[currency ?? 'USD'] ?? (currency ?? '$');
+    }
+
+    // ── AI Assistant methods ──────────────────────────────────────────────
+    toggleAssistant() { this.showAssistant.update(v => !v); }
+    clearAiChat()     { this.aiMessages.set([]); }
+
+    async sendAiMessage(text: string) {
+        if (!text || this.aiLoading()) return;
+        this.aiMessages.update(m => [...m, { role: 'user', text }]);
+        this.aiLoading.set(true);
+
+        await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
+
+        const subs = this.subscriptionStore.subscriptions();
+        const active = subs.filter(s => !s.status || s.status === 'active');
+        const q = text.toLowerCase();
+        let response = '';
+
+        if (q.includes('total') || q.includes('spend') || q.includes('cost')) {
+            const mo = this.subscriptionStore.totalMonthlyCost();
+            const yr = this.subscriptionStore.totalYearlyCost();
+            const sym = this.currencySymbol(this.defaultCurrency());
+            response = `Your total monthly spend is **${sym}${mo.toFixed(2)}/mo** (${sym}${yr.toFixed(2)}/yr) across ${active.length} active subscription${active.length !== 1 ? 's' : ''}.`;
+        } else if (q.includes('renew') || q.includes('soon') || q.includes('upcoming')) {
+            const upcoming = this.upcomingBanner();
+            response = upcoming.length
+                ? `${upcoming.length} subscription${upcoming.length > 1 ? 's renew' : ' renews'} in the next 14 days: ${upcoming.map(s => `${s.name} (${this.formatDate(s.renewalDate)})`).join(', ')}.`
+                : `No subscriptions renewing in the next 14 days.`;
+        } else if (q.includes('expensive') || q.includes('most') || q.includes('highest')) {
+            const top = [...active].sort((a, b) => {
+                const ma = a.billingCycle === 'yearly' ? a.price / 12 : a.price;
+                const mb = b.billingCycle === 'yearly' ? b.price / 12 : b.price;
+                return mb - ma;
+            }).slice(0, 5);
+            response = top.length
+                ? `Top 5 by monthly cost:\n${top.map((s, i) => `${i + 1}. ${s.name} — ${this.currencySymbol(s.currency)}${(s.billingCycle === 'yearly' ? s.price / 12 : s.price).toFixed(2)}/mo`).join('\n')}`
+                : `No active subscriptions to rank.`;
+        } else if (q.includes('category') || q.includes('breakdown')) {
+            const counts = this.countByCategory();
+            const lines = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([cat, n]) => `${cat}: ${n}`);
+            response = lines.length
+                ? `Breakdown by category:\n${lines.join('\n')}`
+                : `No subscriptions yet.`;
+        } else if (q.includes('paused') || q.includes('cancelled')) {
+            const paused    = subs.filter(s => s.status === 'paused');
+            const cancelled = subs.filter(s => s.status === 'cancelled');
+            response = `You have ${paused.length} paused (${paused.map(s => s.name).join(', ') || 'none'}) and ${cancelled.length} cancelled subscription${cancelled.length !== 1 ? 's' : ''} (${cancelled.map(s => s.name).join(', ') || 'none'}).`;
+        } else {
+            const mo = this.subscriptionStore.totalMonthlyCost();
+            const sym = this.currencySymbol(this.defaultCurrency());
+            response = `You have ${active.length} active subscription${active.length !== 1 ? 's' : ''} costing ${sym}${mo.toFixed(2)}/mo. Try asking about your total spend, upcoming renewals, most expensive services, or a category breakdown.`;
+        }
+
+        this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+        this.aiLoading.set(false);
+
+        setTimeout(() => {
+            const el = document.querySelector('.ai-panel-messages');
+            if (el) el.scrollTop = el.scrollHeight;
+        }, 50);
     }
 
     // ── Private utilities ─────────────────────────────────────────────────
