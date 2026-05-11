@@ -256,8 +256,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   submitAddBookmark() {
-    const url = this.addUrl().trim();
-    if (!url) return;
+    const raw = this.addUrl().trim();
+    if (!raw) return;
+    const url = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
 
     const title = this.addTitle().trim() || url;
     const faviconUrl = this.getFaviconUrl(url);
@@ -318,8 +319,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   submitEditBookmark() {
     const bm = this.editingBookmark();
     if (!bm) return;
-    const url = this.editUrl().trim();
-    if (!url) return;
+    const raw = this.editUrl().trim();
+    if (!raw) return;
+    const url = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
 
     this.store.updateBookmark(bm.id, {
       url,
@@ -360,7 +362,8 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       lastVisited: new Date().toISOString(),
       visitCount: (bookmark.visitCount ?? 0) + 1,
     });
-    window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+    const url = /^https?:\/\//i.test(bookmark.url) ? bookmark.url : `https://${bookmark.url}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   // ── Tag filtering ─────────────────────────────────────────────────────────────
