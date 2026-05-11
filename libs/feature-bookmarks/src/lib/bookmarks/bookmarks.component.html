@@ -225,7 +225,7 @@
                 class="bm-fav"
                 [src]="bm.faviconUrl || getFaviconUrl(bm.url)"
                 [alt]="getDomain(bm.url)"
-                (error)="$any($event.target).style.display='none'"
+                (error)="$any($event.target).style.visibility='hidden'"
               />
               <span class="bm-tr-title">{{ bm.title }}</span>
               @if (bm.isPinned) {
@@ -308,7 +308,7 @@
                 class="bm-fav"
                 [src]="bm.faviconUrl || getFaviconUrl(bm.url)"
                 [alt]="getDomain(bm.url)"
-                (error)="$any($event.target).style.display='none'"
+                (error)="$any($event.target).style.visibility='hidden'"
               />
               <span class="bm-card-domain">{{ getDomain(bm.url) }}</span>
               @if (bm.isPinned) {
@@ -496,107 +496,173 @@
 
 <!-- ═══ EDIT BOOKMARK MODAL ═══ -->
 @if (showEditModal()) {
-  <env-modal title="Edit Bookmark" [isOpen]="true" (closed)="showEditModal.set(false)">
-    <div body class="bm-modal-body">
-      <div class="bm-form-group">
-        <label class="bm-label">URL <span class="bm-required">*</span></label>
-        <input class="bm-input" type="url" [value]="editUrl()"
-          (input)="editUrl.set($any($event.target).value)" />
-      </div>
-      <div class="bm-form-group">
-        <label class="bm-label">Title</label>
-        <input class="bm-input" type="text" [value]="editTitle()"
-          (input)="editTitle.set($any($event.target).value)" />
-      </div>
-      <div class="bm-form-group">
-        <label class="bm-label">Description</label>
-        <input class="bm-input" type="text" [value]="editDescription()"
-          (input)="editDescription.set($any($event.target).value)" />
-      </div>
-      <div class="bm-form-row">
-        <div class="bm-form-group half">
-          <label class="bm-label">Folder</label>
-          <select class="bm-select" [value]="editFolderId()" (change)="editFolderId.set($any($event.target).value)">
-            <option value="">No folder</option>
-            @for (f of folderTree(); track f.id) {
-              <option [value]="f.id">{{ f.name }}</option>
-            }
-          </select>
+  <div class="bma-backdrop" (click)="showEditModal.set(false)">
+    <div class="bma-modal" (click)="$event.stopPropagation()">
+
+      <div class="bma-header">
+        <div class="bma-header-left">
+          <span class="material-symbols-outlined bma-header-icon">edit</span>
+          <h2 class="bma-header-title">Edit Bookmark</h2>
         </div>
-        <div class="bm-form-group half">
-          <label class="bm-label">Accent colour</label>
-          <div class="bm-color-row">
-            @for (c of accentColors; track c) {
-              <button class="bm-color-swatch" [style.background-color]="c"
-                [class.selected]="editColor() === c"
-                (click)="editColor.set(editColor() === c ? '' : c)"></button>
-            }
+        <div class="bma-header-right">
+          <button class="bma-close-btn" (click)="showEditModal.set(false)" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bma-url-bar">
+        <span class="material-symbols-outlined bma-url-icon">link</span>
+        <input
+          class="bma-url-input"
+          type="url"
+          placeholder="https://example.com"
+          [value]="editUrl()"
+          (input)="editUrl.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="bma-body">
+        <div class="bma-field">
+          <label class="bma-label">Title</label>
+          <input class="bma-input" type="text" [value]="editTitle()"
+            (input)="editTitle.set($any($event.target).value)" />
+        </div>
+        <div class="bma-field">
+          <label class="bma-label">Description</label>
+          <input class="bma-input" type="text" [value]="editDescription()"
+            (input)="editDescription.set($any($event.target).value)" />
+        </div>
+
+        <div class="bma-sep"></div>
+
+        <div class="bma-row">
+          <div class="bma-field bma-field--half">
+            <label class="bma-label">Folder</label>
+            <select class="bma-select" [value]="editFolderId()" (change)="editFolderId.set($any($event.target).value)">
+              <option value="">No folder</option>
+              @for (f of folderTree(); track f.id) {
+                <option [value]="f.id">{{ f.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="bma-field bma-field--half">
+            <label class="bma-label">Accent colour</label>
+            <div class="bma-colors">
+              @for (c of accentColors; track c) {
+                <button class="bma-swatch" [style.background-color]="c"
+                  [class.bma-swatch--active]="editColor() === c"
+                  (click)="editColor.set(editColor() === c ? '' : c)"></button>
+              }
+            </div>
           </div>
         </div>
-      </div>
-      <div class="bm-form-group">
-        <label class="bm-label">Tags</label>
-        <div class="bm-tag-input-row">
-          @for (tag of editTags(); track tag) {
-            <span class="bm-tag-pill editable">#{{ tag }}
-              <button (click)="removeEditTag(tag)"><span class="material-symbols-outlined">close</span></button>
-            </span>
-          }
-          <input class="bm-tag-input" type="text" placeholder="Add tag…"
-            [value]="editTagInput()" (input)="editTagInput.set($any($event.target).value)"
-            (keydown)="onEditTagKeydown($event)" />
+
+        <div class="bma-field">
+          <label class="bma-label">Tags</label>
+          <div class="bma-tag-row">
+            @for (tag of editTags(); track tag) {
+              <span class="bma-tag-chip">
+                #{{ tag }}
+                <button (click)="removeEditTag(tag)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </span>
+            }
+            <input class="bma-tag-input" type="text" placeholder="Add tag…"
+              [value]="editTagInput()" (input)="editTagInput.set($any($event.target).value)"
+              (keydown)="onEditTagKeydown($event)" />
+          </div>
+          <span class="bma-hint-text">Press Enter or comma to add</span>
         </div>
-        <span class="bm-hint">Press Enter or comma to add</span>
+
+        <div class="bma-field">
+          <label class="bma-label">Notes</label>
+          <textarea class="bma-textarea" rows="3" [value]="editNotes()"
+            (input)="editNotes.set($any($event.target).value)"></textarea>
+        </div>
       </div>
-      <div class="bm-form-group">
-        <label class="bm-label">Notes</label>
-        <textarea class="bm-textarea" rows="3" [value]="editNotes()"
-          (input)="editNotes.set($any($event.target).value)"></textarea>
+
+      <div class="bma-footer">
+        <div class="bma-footer-hints">
+          <span class="bma-shortcut-hint"><kbd>Esc</kbd> Close</span>
+        </div>
+        <div class="bma-footer-actions">
+          <button class="bma-btn-cancel" (click)="showEditModal.set(false)">Cancel</button>
+          <button class="bma-btn-save" (click)="submitEditBookmark()" [disabled]="!editUrl().trim()">Save Changes</button>
+        </div>
       </div>
+
     </div>
-    <div footer>
-      <button class="bm-btn-secondary" (click)="showEditModal.set(false)">Cancel</button>
-      <button class="bm-btn-primary" (click)="submitEditBookmark()" [disabled]="!editUrl().trim()">Save Changes</button>
-    </div>
-  </env-modal>
+  </div>
 }
 
 <!-- ═══ ADD FOLDER MODAL ═══ -->
 @if (showAddFolderModal()) {
-  <env-modal title="New Folder" [isOpen]="true" (closed)="showAddFolderModal.set(false)">
-    <div body class="bm-modal-body">
-      <div class="bm-form-group">
-        <label class="bm-label">Name <span class="bm-required">*</span></label>
-        <input class="bm-input" type="text" placeholder="Folder name"
-          [value]="newFolderName()" (input)="newFolderName.set($any($event.target).value)" autofocus />
-      </div>
-      <div class="bm-form-group">
-        <label class="bm-label">Icon</label>
-        <div class="bm-icon-picker">
-          @for (icon of folderIcons; track icon) {
-            <button class="bm-icon-option" [class.selected]="newFolderIcon() === icon"
-              (click)="newFolderIcon.set(icon)">
-              <span class="material-symbols-outlined">{{ icon }}</span>
-            </button>
-          }
+  <div class="bma-backdrop" (click)="showAddFolderModal.set(false)">
+    <div class="bma-modal" (click)="$event.stopPropagation()">
+
+      <div class="bma-header">
+        <div class="bma-header-left">
+          <span class="material-symbols-outlined bma-header-icon">create_new_folder</span>
+          <h2 class="bma-header-title">New Folder</h2>
+        </div>
+        <div class="bma-header-right">
+          <button class="bma-close-btn" (click)="showAddFolderModal.set(false)" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
       </div>
-      <div class="bm-form-group">
-        <label class="bm-label">Colour</label>
-        <div class="bm-color-row">
-          @for (c of accentColors; track c) {
-            <button class="bm-color-swatch" [style.background-color]="c"
-              [class.selected]="newFolderColor() === c"
-              (click)="newFolderColor.set(newFolderColor() === c ? '' : c)"></button>
-          }
+
+      <div class="bma-url-bar">
+        <span class="material-symbols-outlined bma-url-icon">folder</span>
+        <input
+          class="bma-url-input"
+          type="text"
+          placeholder="Folder name"
+          [value]="newFolderName()"
+          (input)="newFolderName.set($any($event.target).value)"
+          autofocus
+        />
+      </div>
+
+      <div class="bma-body">
+        <div class="bma-field">
+          <label class="bma-label">Icon</label>
+          <div class="bma-icon-picker">
+            @for (icon of folderIcons; track icon) {
+              <button class="bma-icon-option" [class.bma-icon-option--active]="newFolderIcon() === icon"
+                (click)="newFolderIcon.set(icon)">
+                <span class="material-symbols-outlined">{{ icon }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="bma-field">
+          <label class="bma-label">Colour</label>
+          <div class="bma-colors">
+            @for (c of accentColors; track c) {
+              <button class="bma-swatch" [style.background-color]="c"
+                [class.bma-swatch--active]="newFolderColor() === c"
+                (click)="newFolderColor.set(newFolderColor() === c ? '' : c)"></button>
+            }
+          </div>
         </div>
       </div>
+
+      <div class="bma-footer">
+        <div class="bma-footer-hints">
+          <span class="bma-shortcut-hint"><kbd>Esc</kbd> Close</span>
+        </div>
+        <div class="bma-footer-actions">
+          <button class="bma-btn-cancel" (click)="showAddFolderModal.set(false)">Cancel</button>
+          <button class="bma-btn-save" (click)="submitAddFolder()" [disabled]="!newFolderName().trim()">Create Folder</button>
+        </div>
+      </div>
+
     </div>
-    <div footer>
-      <button class="bm-btn-secondary" (click)="showAddFolderModal.set(false)">Cancel</button>
-      <button class="bm-btn-primary" (click)="submitAddFolder()" [disabled]="!newFolderName().trim()">Create Folder</button>
-    </div>
-  </env-modal>
+  </div>
 }
 
 <!-- ═══ DELETE CONFIRM ═══ -->

@@ -1056,6 +1056,29 @@
 .bma-btn-save:hover { opacity: 0.88; }
 .bma-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Icon picker */
+.bma-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.bma-icon-option {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: all 0.15s;
+}
+.bma-icon-option:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-main); }
+.bma-icon-option--active { background: color-mix(in srgb, var(--accent-primary) 15%, transparent); border-color: var(--accent-primary); color: var(--accent-primary); }
+.bma-icon-option .material-symbols-outlined { font-size: 18px; }
+
 /* Body scrollbar */
 .bma-body::-webkit-scrollbar { width: 5px; }
 .bma-body::-webkit-scrollbar-track { background: transparent; }
