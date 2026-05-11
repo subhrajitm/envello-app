@@ -5,7 +5,7 @@ import { StoreService, Bookmark, BookmarkFolder } from '@envello/core';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 type BookmarkView = 'all' | 'pinned' | 'archived' | 'recent';
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'table' | 'grid';
 type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 
 @Component({
@@ -20,7 +20,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   // ── View state ──────────────────────────────────────────────────────────────
   selectedView = signal<BookmarkView>('all');
-  viewMode = signal<ViewMode>('grid');
+  viewMode = signal<ViewMode>('table');
   sortBy = signal<SortBy>('createdAt');
   sortAsc = signal<boolean>(false);
 
@@ -455,6 +455,23 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   toggleSortAsc() { this.sortAsc.set(!this.sortAsc()); }
+
+  setSortBy(col: SortBy) {
+    if (this.sortBy() === col) {
+      this.sortAsc.set(!this.sortAsc());
+    } else {
+      this.sortBy.set(col);
+      this.sortAsc.set(false);
+    }
+  }
+
+  currentViewLabel(): string {
+    const labels: Record<BookmarkView, string> = {
+      all: 'All Bookmarks', pinned: 'Pinned',
+      recent: 'Recently Added', archived: 'Archived',
+    };
+    return labels[this.selectedView()];
+  }
 
   trackById(_: number, item: Bookmark) { return item.id; }
   trackByFolderId(_: number, f: BookmarkFolder) { return f.id; }

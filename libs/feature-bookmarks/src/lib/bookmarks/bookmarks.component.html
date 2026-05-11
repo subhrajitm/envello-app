@@ -1,94 +1,90 @@
 <div class="bm-view">
 
   <!-- ═══════════════════════════════════════════════════
-       LEFT SIDEBAR
+       SIDEBAR
   ════════════════════════════════════════════════════ -->
   <aside class="bm-sidebar">
-    <div class="bm-sidebar-header">
-      <span class="material-symbols-outlined bm-sidebar-logo">bookmarks</span>
-      <span class="bm-sidebar-title">Bookmarks</span>
-    </div>
 
     <!-- Search -->
-    <div class="bm-sidebar-search">
-      <span class="material-symbols-outlined bm-search-icon">search</span>
+    <div class="bm-sb-search">
+      <span class="material-symbols-outlined bm-sb-search-icon">search</span>
       <input
-        class="bm-search-input"
+        class="bm-sb-search-input"
         type="text"
-        placeholder="Search bookmarks..."
+        placeholder="Search bookmarks…"
         [value]="searchQuery()"
         (input)="searchQuery.set($any($event.target).value)"
       />
       @if (searchQuery()) {
-        <button class="bm-clear-search" (click)="searchQuery.set('')" title="Clear search">
+        <button class="bm-sb-search-clear" (click)="searchQuery.set('')">
           <span class="material-symbols-outlined">close</span>
         </button>
       }
     </div>
 
-    <!-- Views -->
-    <nav class="bm-nav" aria-label="Bookmark views">
+    <!-- Navigation views -->
+    <nav class="bm-sb-nav">
       @for (item of sidebarItems(); track item.id) {
         <button
-          class="bm-nav-item"
+          class="bm-sb-item"
           [class.active]="selectedView() === item.id && !selectedFolderId()"
           (click)="selectedView.set($any(item.id)); selectedFolderId.set('')"
         >
-          <span class="material-symbols-outlined bm-nav-icon">{{ item.icon }}</span>
-          <span class="bm-nav-label">{{ item.label }}</span>
+          <span class="material-symbols-outlined bm-sb-item-icon">{{ item.icon }}</span>
+          <span class="bm-sb-item-label">{{ item.label }}</span>
           @if (item.count) {
-            <span class="bm-nav-count">{{ item.count }}</span>
+            <span class="bm-sb-count">{{ item.count }}</span>
           }
         </button>
       }
     </nav>
 
     <!-- Folders -->
-    <div class="bm-folders-section">
-      <div class="bm-section-header">
-        <span class="bm-section-label">Folders</span>
-        <button class="bm-icon-btn" (click)="openAddFolderModal()" title="New folder">
+    <div class="bm-sb-section">
+      <div class="bm-sb-section-hdr">
+        <span class="bm-sb-section-label">FOLDERS</span>
+        <button class="bm-sb-section-add" (click)="openAddFolderModal()" title="New folder">
           <span class="material-symbols-outlined">add</span>
         </button>
       </div>
       @if (folderTree().length === 0) {
-        <p class="bm-folders-empty">No folders yet</p>
+        <p class="bm-sb-empty">No folders yet</p>
       }
-      @for (folder of folderTree(); track folder.id; let i = $index) {
-        <div class="bm-folder-item" [class.active]="selectedFolderId() === folder.id">
+      @for (folder of folderTree(); track folder.id) {
+        <div class="bm-sb-folder" [class.active]="selectedFolderId() === folder.id">
           <button
-            class="bm-folder-btn"
+            class="bm-sb-folder-btn"
             (click)="selectedView.set('all'); selectedFolderId.set(folder.id)"
           >
             <span
-              class="material-symbols-outlined bm-folder-icon"
+              class="material-symbols-outlined bm-sb-item-icon"
               [style.color]="folder.color || ''"
             >{{ folder.icon || 'folder' }}</span>
-            <span class="bm-folder-name">{{ folder.name }}</span>
+            <span class="bm-sb-item-label">{{ folder.name }}</span>
             @if (bookmarkCountByFolder()[folder.id]) {
-              <span class="bm-nav-count">{{ bookmarkCountByFolder()[folder.id] }}</span>
+              <span class="bm-sb-count">{{ bookmarkCountByFolder()[folder.id] }}</span>
             }
           </button>
-          <button class="bm-folder-delete" (click)="deleteFolder(folder.id)" title="Delete folder">
+          <button class="bm-sb-folder-del" (click)="deleteFolder(folder.id)" title="Delete folder">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
       }
     </div>
 
-    <!-- Tag cloud -->
+    <!-- Tags -->
     @if (allTags().length > 0) {
-      <div class="bm-tags-section">
-        <div class="bm-section-header">
-          <span class="bm-section-label">Tags</span>
+      <div class="bm-sb-section">
+        <div class="bm-sb-section-hdr">
+          <span class="bm-sb-section-label">TAGS</span>
           @if (selectedTags().length > 0) {
-            <button class="bm-text-btn" (click)="selectedTags.set([])">Clear</button>
+            <button class="bm-sb-section-clear" (click)="selectedTags.set([])">Clear</button>
           }
         </div>
-        <div class="bm-tag-cloud">
+        <div class="bm-sb-tags">
           @for (tag of allTags(); track tag) {
             <button
-              class="bm-tag-pill"
+              class="bm-sb-tag"
               [class.active]="selectedTags().includes(tag)"
               (click)="toggleTagFilter(tag)"
             >#{{ tag }}</button>
@@ -106,278 +102,254 @@
 
     <!-- Toolbar -->
     <div class="bm-toolbar">
-      <div class="bm-toolbar-left">
-        <button class="bm-add-btn" (click)="openAddModal()" title="Add bookmark (Cmd+N)">
-          <span class="material-symbols-outlined">add</span>
-          <span>Add Bookmark</span>
-        </button>
-
-        <div class="bm-toolbar-divider"></div>
-
-        <!-- Active filters indicator -->
-        @if (selectedTags().length > 0 || selectedFolderId()) {
-          <div class="bm-active-filters">
-            @if (selectedFolderId()) {
-              <span class="bm-filter-chip">
-                <span class="material-symbols-outlined">folder</span>
-                {{ folderName(selectedFolderId()) }}
-                <button (click)="selectedFolderId.set('')">
-                  <span class="material-symbols-outlined">close</span>
-                </button>
-              </span>
-            }
-            @for (tag of selectedTags(); track tag) {
-              <span class="bm-filter-chip">
-                #{{ tag }}
-                <button (click)="toggleTagFilter(tag)">
-                  <span class="material-symbols-outlined">close</span>
-                </button>
-              </span>
-            }
-            <button class="bm-text-btn" (click)="clearFilters()">Clear all</button>
-          </div>
+      <!-- Breadcrumb -->
+      <div class="bm-breadcrumb">
+        <span class="bm-bc-root">Bookmarks</span>
+        @if (selectedFolderId()) {
+          <span class="bm-bc-sep">›</span>
+          <span class="bm-bc-leaf">{{ folderName(selectedFolderId()) }}</span>
+        } @else if (selectedView() !== 'all') {
+          <span class="bm-bc-sep">›</span>
+          <span class="bm-bc-leaf">{{ currentViewLabel() }}</span>
         }
+        <span class="bm-bc-count">{{ filteredBookmarks().length }}</span>
       </div>
 
+      <!-- Actions -->
       <div class="bm-toolbar-right">
-        <!-- Sort -->
-        <select
-          class="bm-sort-select"
-          [value]="sortBy()"
-          (change)="sortBy.set($any($event.target).value)"
-        >
-          <option value="createdAt">Date added</option>
-          <option value="title">Title</option>
-          <option value="lastVisited">Last visited</option>
-          <option value="visitCount">Most visited</option>
-        </select>
+        <!-- Active filter chips -->
+        @if (selectedTags().length > 0) {
+          @for (tag of selectedTags(); track tag) {
+            <span class="bm-filter-chip">
+              #{{ tag }}
+              <button (click)="toggleTagFilter(tag)">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+          }
+          <button class="bm-filter-clear" (click)="clearFilters()">Clear</button>
+          <div class="bm-tb-divider"></div>
+        }
 
-        <button
-          class="bm-icon-btn"
-          (click)="toggleSortAsc()"
-          [title]="sortAsc() ? 'Sort descending' : 'Sort ascending'"
-        >
-          <span class="material-symbols-outlined">{{ sortAsc() ? 'arrow_upward' : 'arrow_downward' }}</span>
-        </button>
-
-        <div class="bm-toolbar-divider"></div>
-
-        <!-- View mode -->
-        <div class="bm-view-mode">
+        <!-- View toggle -->
+        <div class="bm-view-toggle">
           <button
-            class="bm-icon-btn"
+            class="bm-vt-btn"
+            [class.active]="viewMode() === 'table'"
+            (click)="viewMode.set('table')"
+            title="Table view"
+          >
+            <span class="material-symbols-outlined">table_rows</span>
+          </button>
+          <button
+            class="bm-vt-btn"
             [class.active]="viewMode() === 'grid'"
             (click)="viewMode.set('grid')"
             title="Grid view"
           >
             <span class="material-symbols-outlined">grid_view</span>
           </button>
-          <button
-            class="bm-icon-btn"
-            [class.active]="viewMode() === 'list'"
-            (click)="viewMode.set('list')"
-            title="List view"
-          >
-            <span class="material-symbols-outlined">format_list_bulleted</span>
-          </button>
         </div>
 
-        <div class="bm-toolbar-divider"></div>
+        <div class="bm-tb-divider"></div>
 
-        <!-- AI Assistant toggle -->
+        <!-- AI toggle -->
         <button
-          class="bm-ai-toggle-btn"
+          class="bm-ai-btn"
           [class.active]="showAssistant()"
           (click)="toggleAssistant()"
           title="AI Assistant"
         >
           <span class="material-symbols-outlined">auto_awesome</span>
-          <span>Assistant</span>
+          <span>AI</span>
+        </button>
+
+        <!-- Add bookmark -->
+        <button class="bm-add-btn" (click)="openAddModal()">
+          <span class="material-symbols-outlined">add</span>
+          Add Bookmark
         </button>
       </div>
     </div>
 
-    <!-- Results count -->
-    <div class="bm-results-info">
-      <span class="bm-results-count">
-        {{ filteredBookmarks().length }}
-        {{ filteredBookmarks().length === 1 ? 'bookmark' : 'bookmarks' }}
-      </span>
-    </div>
+    <!-- ── TABLE VIEW ── -->
+    @if (viewMode() === 'table') {
+      <div class="bm-table-wrap">
 
-    <!-- Empty state -->
-    @if (filteredBookmarks().length === 0) {
-      <div class="bm-empty">
-        <span class="material-symbols-outlined bm-empty-icon">bookmarks</span>
-        <p class="bm-empty-title">
-          {{ searchQuery() || selectedTags().length ? 'No results found' : 'No bookmarks yet' }}
-        </p>
-        <p class="bm-empty-sub">
-          {{ searchQuery() || selectedTags().length
-            ? 'Try adjusting your search or filters.'
-            : 'Save your favourite links to keep them organised.' }}
-        </p>
-        @if (!searchQuery() && !selectedTags().length) {
-          <button class="bm-add-btn" (click)="openAddModal()">
-            <span class="material-symbols-outlined">add</span>
-            Add your first bookmark
-          </button>
+        <!-- Table header -->
+        <div class="bm-table-head">
+          <div class="bm-th bm-col-title" (click)="setSortBy('title')">
+            Name
+            <span class="bm-sort-ico material-symbols-outlined">
+              {{ sortBy() === 'title' ? (sortAsc() ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+            </span>
+          </div>
+          <div class="bm-th bm-col-domain">Domain</div>
+          <div class="bm-th bm-col-folder">Folder</div>
+          <div class="bm-th bm-col-tags">Tags</div>
+          <div class="bm-th bm-col-visits" (click)="setSortBy('visitCount')">
+            Visits
+            <span class="bm-sort-ico material-symbols-outlined">
+              {{ sortBy() === 'visitCount' ? (sortAsc() ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+            </span>
+          </div>
+          <div class="bm-th bm-col-added" (click)="setSortBy('createdAt')">
+            Added
+            <span class="bm-sort-ico material-symbols-outlined">
+              {{ sortBy() === 'createdAt' ? (sortAsc() ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+            </span>
+          </div>
+          <div class="bm-th bm-col-actions"></div>
+        </div>
+
+        <!-- Empty state -->
+        @if (filteredBookmarks().length === 0) {
+          <div class="bm-table-empty">
+            <span class="material-symbols-outlined">bookmarks</span>
+            <p>{{ searchQuery() || selectedTags().length ? 'No results found' : 'No bookmarks yet' }}</p>
+            @if (!searchQuery() && !selectedTags().length) {
+              <button class="bm-add-btn" (click)="openAddModal()">
+                <span class="material-symbols-outlined">add</span>
+                Add your first bookmark
+              </button>
+            }
+          </div>
         }
-      </div>
-    }
 
-    <!-- ── GRID VIEW ── -->
-    @if (viewMode() === 'grid' && filteredBookmarks().length > 0) {
-      <div class="bm-grid">
+        <!-- Rows -->
         @for (bm of filteredBookmarks(); track bm.id) {
-          <div
-            class="bm-card"
-            [class.pinned]="bm.isPinned"
-            [style.border-top-color]="bm.color || ''"
-          >
-            <!-- Card header -->
-            <div class="bm-card-header">
+          <div class="bm-tr" [class.bm-tr--pinned]="bm.isPinned" [style.--bm-accent]="bm.color || ''">
+            <!-- Title -->
+            <div class="bm-td bm-col-title" (click)="openBookmark(bm)">
               <img
-                class="bm-favicon"
+                class="bm-fav"
                 [src]="bm.faviconUrl || getFaviconUrl(bm.url)"
                 [alt]="getDomain(bm.url)"
                 (error)="$any($event.target).style.display='none'"
               />
-              <div class="bm-card-meta">
-                <span class="bm-card-domain">{{ getDomain(bm.url) }}</span>
-                @if (bm.isPinned) {
-                  <span class="material-symbols-outlined bm-pin-badge" title="Pinned">push_pin</span>
-                }
-              </div>
-              <!-- Actions -->
-              <div class="bm-card-actions">
-                <button class="bm-card-action-btn" (click)="openBookmark(bm)" title="Open link">
-                  <span class="material-symbols-outlined">open_in_new</span>
-                </button>
-                <button
-                  class="bm-card-action-btn"
-                  (click)="togglePin(bm)"
-                  [title]="bm.isPinned ? 'Unpin' : 'Pin'"
-                >
-                  <span class="material-symbols-outlined">{{ bm.isPinned ? 'push_pin' : 'keep' }}</span>
-                </button>
-                <button class="bm-card-action-btn" (click)="openEditModal(bm)" title="Edit">
-                  <span class="material-symbols-outlined">edit</span>
-                </button>
-                <button
-                  class="bm-card-action-btn"
-                  (click)="toggleArchive(bm)"
-                  [title]="bm.isArchived ? 'Restore' : 'Archive'"
-                >
-                  <span class="material-symbols-outlined">{{ bm.isArchived ? 'unarchive' : 'archive' }}</span>
-                </button>
-                <button class="bm-card-action-btn danger" (click)="requestDelete(bm.id)" title="Delete">
-                  <span class="material-symbols-outlined">delete</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Card body -->
-            <div class="bm-card-body" (click)="openBookmark(bm)">
-              <h3 class="bm-card-title" [title]="bm.title">{{ bm.title }}</h3>
-              @if (bm.description) {
-                <p class="bm-card-desc">{{ bm.description }}</p>
+              <span class="bm-tr-title">{{ bm.title }}</span>
+              @if (bm.isPinned) {
+                <span class="material-symbols-outlined bm-pin-ico">push_pin</span>
               }
             </div>
-
-            <!-- Card footer -->
-            <div class="bm-card-footer">
-              @if (bm.tags?.length) {
-                <div class="bm-card-tags">
-                  @for (tag of (bm.tags ?? []); track tag) {
-                    <button class="bm-tag-pill small" (click)="toggleTagFilter(tag)">#{{ tag }}</button>
-                  }
-                </div>
-              }
-              <span class="bm-card-date">{{ formatRelativeDate(bm.createdAt) }}</span>
+            <!-- Domain -->
+            <div class="bm-td bm-col-domain">
+              <span class="bm-tr-domain">{{ getDomain(bm.url) }}</span>
             </div>
-          </div>
-        }
-      </div>
-    }
-
-    <!-- ── LIST VIEW ── -->
-    @if (viewMode() === 'list' && filteredBookmarks().length > 0) {
-      <div class="bm-list">
-        @for (bm of filteredBookmarks(); track bm.id) {
-          <div class="bm-list-row" [class.pinned]="bm.isPinned">
-            <!-- Favicon -->
-            <img
-              class="bm-favicon small"
-              [src]="bm.faviconUrl || getFaviconUrl(bm.url)"
-              [alt]="getDomain(bm.url)"
-              (error)="$any($event.target).style.display='none'"
-            />
-
-            <!-- Main info -->
-            <div class="bm-list-info" (click)="openBookmark(bm)">
-              <div class="bm-list-title-row">
-                <span class="bm-list-title">{{ bm.title }}</span>
-                @if (bm.isPinned) {
-                  <span class="material-symbols-outlined bm-pin-badge small">push_pin</span>
-                }
-              </div>
-              <span class="bm-list-url">{{ getDomain(bm.url) }}</span>
-            </div>
-
-            <!-- Tags -->
-            <div class="bm-list-tags">
-              @for (tag of (bm.tags ?? []).slice(0, 3); track tag) {
-                <span class="bm-tag-pill small">{{ tag }}</span>
-              }
-            </div>
-
             <!-- Folder -->
-            @if (bm.folderId) {
-              <span class="bm-list-folder">
-                <span class="material-symbols-outlined">folder</span>
-                {{ folderName(bm.folderId) }}
-              </span>
-            }
-
-            <!-- Date -->
-            <span class="bm-list-date">{{ formatRelativeDate(bm.createdAt) }}</span>
-
-            <!-- Actions -->
-            <div class="bm-list-actions">
-              <button class="bm-card-action-btn" (click)="openBookmark(bm)" title="Open link">
+            <div class="bm-td bm-col-folder">
+              @if (bm.folderId) {
+                <span class="bm-tr-folder">
+                  <span class="material-symbols-outlined">folder</span>
+                  {{ folderName(bm.folderId) }}
+                </span>
+              }
+            </div>
+            <!-- Tags -->
+            <div class="bm-td bm-col-tags">
+              @for (tag of (bm.tags ?? []).slice(0, 2); track tag) {
+                <span class="bm-tr-tag" (click)="toggleTagFilter(tag); $event.stopPropagation()">#{{ tag }}</span>
+              }
+              @if ((bm.tags?.length ?? 0) > 2) {
+                <span class="bm-tr-tag-more">+{{ (bm.tags?.length ?? 0) - 2 }}</span>
+              }
+            </div>
+            <!-- Visits -->
+            <div class="bm-td bm-col-visits">
+              <span class="bm-tr-num">{{ bm.visitCount ?? 0 }}</span>
+            </div>
+            <!-- Added -->
+            <div class="bm-td bm-col-added">
+              <span class="bm-tr-date">{{ formatRelativeDate(bm.createdAt) }}</span>
+            </div>
+            <!-- Hover actions -->
+            <div class="bm-td bm-col-actions">
+              <button class="bm-row-action" (click)="openBookmark(bm)" title="Open">
                 <span class="material-symbols-outlined">open_in_new</span>
               </button>
-              <button
-                class="bm-card-action-btn"
-                (click)="togglePin(bm)"
-                [title]="bm.isPinned ? 'Unpin' : 'Pin'"
-              >
+              <button class="bm-row-action" (click)="togglePin(bm)" [title]="bm.isPinned ? 'Unpin' : 'Pin'">
                 <span class="material-symbols-outlined">{{ bm.isPinned ? 'push_pin' : 'keep' }}</span>
               </button>
-              <button class="bm-card-action-btn" (click)="openEditModal(bm)" title="Edit">
+              <button class="bm-row-action" (click)="openEditModal(bm)" title="Edit">
                 <span class="material-symbols-outlined">edit</span>
               </button>
-              <button
-                class="bm-card-action-btn"
-                (click)="toggleArchive(bm)"
-                [title]="bm.isArchived ? 'Restore' : 'Archive'"
-              >
+              <button class="bm-row-action" (click)="toggleArchive(bm)" [title]="bm.isArchived ? 'Restore' : 'Archive'">
                 <span class="material-symbols-outlined">{{ bm.isArchived ? 'unarchive' : 'archive' }}</span>
               </button>
-              <button class="bm-card-action-btn danger" (click)="requestDelete(bm.id)" title="Delete">
+              <button class="bm-row-action bm-row-action--danger" (click)="requestDelete(bm.id)" title="Delete">
                 <span class="material-symbols-outlined">delete</span>
               </button>
             </div>
           </div>
         }
+
       </div>
     }
+
+    <!-- ── GRID VIEW ── -->
+    @if (viewMode() === 'grid') {
+      @if (filteredBookmarks().length === 0) {
+        <div class="bm-table-empty">
+          <span class="material-symbols-outlined">bookmarks</span>
+          <p>{{ searchQuery() || selectedTags().length ? 'No results found' : 'No bookmarks yet' }}</p>
+          @if (!searchQuery() && !selectedTags().length) {
+            <button class="bm-add-btn" (click)="openAddModal()">
+              <span class="material-symbols-outlined">add</span>
+              Add your first bookmark
+            </button>
+          }
+        </div>
+      }
+      <div class="bm-grid">
+        @for (bm of filteredBookmarks(); track bm.id) {
+          <div class="bm-card" [class.pinned]="bm.isPinned" [style.--bm-accent]="bm.color || ''">
+            <div class="bm-card-header">
+              <img
+                class="bm-fav"
+                [src]="bm.faviconUrl || getFaviconUrl(bm.url)"
+                [alt]="getDomain(bm.url)"
+                (error)="$any($event.target).style.display='none'"
+              />
+              <span class="bm-card-domain">{{ getDomain(bm.url) }}</span>
+              @if (bm.isPinned) {
+                <span class="material-symbols-outlined bm-pin-ico">push_pin</span>
+              }
+              <div class="bm-card-actions">
+                <button class="bm-row-action" (click)="openBookmark(bm)" title="Open">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </button>
+                <button class="bm-row-action" (click)="openEditModal(bm)" title="Edit">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="bm-row-action bm-row-action--danger" (click)="requestDelete(bm.id)" title="Delete">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+            <div class="bm-card-body" (click)="openBookmark(bm)">
+              <h3 class="bm-card-title">{{ bm.title }}</h3>
+              @if (bm.description) {
+                <p class="bm-card-desc">{{ bm.description }}</p>
+              }
+            </div>
+            <div class="bm-card-footer">
+              @if (bm.tags?.length) {
+                <div class="bm-card-tags">
+                  @for (tag of (bm.tags ?? []).slice(0, 3); track tag) {
+                    <span class="bm-tr-tag">#{{ tag }}</span>
+                  }
+                </div>
+              }
+              <span class="bm-tr-date">{{ formatRelativeDate(bm.createdAt) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
   </main>
 
-  <!-- ═══════════════════════════════════════════════════
-       AI ASSISTANT PANEL
-  ════════════════════════════════════════════════════ -->
+  <!-- AI panel -->
   @if (showAssistant()) {
     <env-ai-panel
       title="Bookmarks Assistant"
@@ -393,326 +365,262 @@
 
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     ADD BOOKMARK MODAL
-════════════════════════════════════════════════════ -->
+<!-- ═══ ADD BOOKMARK MODAL ═══ -->
 @if (showAddModal()) {
-  <env-modal title="Add Bookmark" [isOpen]="true" (closed)="showAddModal.set(false)">
-    <div class="bm-modal-body">
-      <div class="bm-form-group">
-        <label class="bm-label">URL <span class="bm-required">*</span></label>
+  <div class="bma-backdrop" (click)="showAddModal.set(false)">
+    <div class="bma-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="bma-header">
+        <div class="bma-header-left">
+          <span class="material-symbols-outlined bma-header-icon">bookmark_add</span>
+          <h2 class="bma-header-title">Add Bookmark</h2>
+        </div>
+        <div class="bma-header-right">
+          <kbd class="bma-kbd">⌘N</kbd>
+          <button class="bma-close-btn" (click)="showAddModal.set(false)" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- URL bar — prominent -->
+      <div class="bma-url-bar">
+        <span class="material-symbols-outlined bma-url-icon">link</span>
         <input
-          class="bm-input"
+          class="bma-url-input"
           type="url"
-          placeholder="https://example.com"
+          placeholder="Paste or type a URL…"
           [value]="addUrl()"
           (input)="addUrl.set($any($event.target).value)"
           (blur)="onAddUrlBlur()"
           autofocus
         />
+        @if (addUrl()) {
+          <button class="bma-url-clear" (click)="addUrl.set('')" title="Clear">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
       </div>
 
-      <div class="bm-form-group">
-        <label class="bm-label">Title</label>
-        <input
-          class="bm-input"
-          type="text"
-          placeholder="Bookmark title"
-          [value]="addTitle()"
-          (input)="addTitle.set($any($event.target).value)"
-        />
-      </div>
-
-      <div class="bm-form-group">
-        <label class="bm-label">Description</label>
-        <input
-          class="bm-input"
-          type="text"
-          placeholder="Short description (optional)"
-          [value]="addDescription()"
-          (input)="addDescription.set($any($event.target).value)"
-        />
-      </div>
-
-      <div class="bm-form-row">
-        <!-- Folder -->
-        <div class="bm-form-group half">
-          <label class="bm-label">Folder</label>
-          <select
-            class="bm-select"
-            [value]="addFolderId()"
-            (change)="addFolderId.set($any($event.target).value)"
-          >
-            <option value="">No folder</option>
-            @for (f of folderTree(); track f.id) {
-              <option [value]="f.id">{{ f.name }}</option>
-            }
-          </select>
+      <!-- Body -->
+      <div class="bma-body">
+        <!-- Title & Description -->
+        <div class="bma-field">
+          <label class="bma-label">Title</label>
+          <input class="bma-input" type="text" placeholder="Bookmark title"
+            [value]="addTitle()" (input)="addTitle.set($any($event.target).value)" />
+        </div>
+        <div class="bma-field">
+          <label class="bma-label">Description</label>
+          <input class="bma-input" type="text" placeholder="Short description (optional)"
+            [value]="addDescription()" (input)="addDescription.set($any($event.target).value)" />
         </div>
 
-        <!-- Accent color -->
-        <div class="bm-form-group half">
-          <label class="bm-label">Accent colour</label>
-          <div class="bm-color-row">
-            @for (c of accentColors; track c) {
-              <button
-                class="bm-color-swatch"
-                [style.background-color]="c"
-                [class.selected]="addColor() === c"
-                (click)="addColor.set(addColor() === c ? '' : c)"
-                [title]="c"
-              ></button>
-            }
+        <div class="bma-sep"></div>
+
+        <!-- Folder + Colour -->
+        <div class="bma-row">
+          <div class="bma-field bma-field--half">
+            <label class="bma-label">Folder</label>
+            <select class="bma-select" [value]="addFolderId()" (change)="addFolderId.set($any($event.target).value)">
+              <option value="">No folder</option>
+              @for (f of folderTree(); track f.id) {
+                <option [value]="f.id">{{ f.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="bma-field bma-field--half">
+            <label class="bma-label">Accent colour</label>
+            <div class="bma-colors">
+              @for (c of accentColors; track c) {
+                <button
+                  class="bma-swatch"
+                  [style.background-color]="c"
+                  [class.bma-swatch--active]="addColor() === c"
+                  (click)="addColor.set(addColor() === c ? '' : c)"
+                ></button>
+              }
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Tags -->
-      <div class="bm-form-group">
-        <label class="bm-label">Tags</label>
-        <div class="bm-tag-input-row">
-          @for (tag of addTags(); track tag) {
-            <span class="bm-tag-pill editable">
-              #{{ tag }}
-              <button (click)="removeAddTag(tag)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </span>
-          }
-          <input
-            class="bm-tag-input"
-            type="text"
-            placeholder="Add tag…"
-            [value]="addTagInput()"
-            (input)="addTagInput.set($any($event.target).value)"
-            (keydown)="onAddTagKeydown($event)"
-          />
+        <!-- Tags -->
+        <div class="bma-field">
+          <label class="bma-label">Tags</label>
+          <div class="bma-tag-row">
+            @for (tag of addTags(); track tag) {
+              <span class="bma-tag-chip">
+                #{{ tag }}
+                <button (click)="removeAddTag(tag)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </span>
+            }
+            <input
+              class="bma-tag-input"
+              type="text"
+              placeholder="Add tag…"
+              [value]="addTagInput()"
+              (input)="addTagInput.set($any($event.target).value)"
+              (keydown)="onAddTagKeydown($event)"
+            />
+          </div>
+          <span class="bma-hint-text">Press Enter or comma to add</span>
         </div>
-        <span class="bm-hint">Press Enter or comma to add</span>
+
+        <!-- Notes -->
+        <div class="bma-field">
+          <label class="bma-label">Notes</label>
+          <textarea class="bma-textarea" placeholder="Personal notes…" rows="3"
+            [value]="addNotes()" (input)="addNotes.set($any($event.target).value)"></textarea>
+        </div>
       </div>
 
-      <!-- Notes -->
-      <div class="bm-form-group">
-        <label class="bm-label">Notes</label>
-        <textarea
-          class="bm-textarea"
-          placeholder="Personal notes…"
-          rows="3"
-          [value]="addNotes()"
-          (input)="addNotes.set($any($event.target).value)"
-        ></textarea>
+      <!-- Footer -->
+      <div class="bma-footer">
+        <div class="bma-footer-hints">
+          <span class="bma-shortcut-hint"><kbd>Esc</kbd> Close</span>
+        </div>
+        <div class="bma-footer-actions">
+          <button class="bma-btn-cancel" (click)="showAddModal.set(false)">Cancel</button>
+          <button class="bma-btn-save" (click)="submitAddBookmark()" [disabled]="!addUrl().trim()">
+            Save Bookmark
+          </button>
+        </div>
       </div>
 
-      <div class="bm-modal-footer">
-        <button class="bm-btn-secondary" (click)="showAddModal.set(false)">Cancel</button>
-        <button class="bm-btn-primary" (click)="submitAddBookmark()" [disabled]="!addUrl().trim()">
-          Save Bookmark
-        </button>
-      </div>
     </div>
-  </env-modal>
+  </div>
 }
 
-<!-- ═══════════════════════════════════════════════════
-     EDIT BOOKMARK MODAL
-════════════════════════════════════════════════════ -->
+<!-- ═══ EDIT BOOKMARK MODAL ═══ -->
 @if (showEditModal()) {
   <env-modal title="Edit Bookmark" [isOpen]="true" (closed)="showEditModal.set(false)">
-    <div class="bm-modal-body">
+    <div body class="bm-modal-body">
       <div class="bm-form-group">
         <label class="bm-label">URL <span class="bm-required">*</span></label>
-        <input
-          class="bm-input"
-          type="url"
-          [value]="editUrl()"
-          (input)="editUrl.set($any($event.target).value)"
-        />
+        <input class="bm-input" type="url" [value]="editUrl()"
+          (input)="editUrl.set($any($event.target).value)" />
       </div>
-
       <div class="bm-form-group">
         <label class="bm-label">Title</label>
-        <input
-          class="bm-input"
-          type="text"
-          [value]="editTitle()"
-          (input)="editTitle.set($any($event.target).value)"
-        />
+        <input class="bm-input" type="text" [value]="editTitle()"
+          (input)="editTitle.set($any($event.target).value)" />
       </div>
-
       <div class="bm-form-group">
         <label class="bm-label">Description</label>
-        <input
-          class="bm-input"
-          type="text"
-          [value]="editDescription()"
-          (input)="editDescription.set($any($event.target).value)"
-        />
+        <input class="bm-input" type="text" [value]="editDescription()"
+          (input)="editDescription.set($any($event.target).value)" />
       </div>
-
       <div class="bm-form-row">
         <div class="bm-form-group half">
           <label class="bm-label">Folder</label>
-          <select
-            class="bm-select"
-            [value]="editFolderId()"
-            (change)="editFolderId.set($any($event.target).value)"
-          >
+          <select class="bm-select" [value]="editFolderId()" (change)="editFolderId.set($any($event.target).value)">
             <option value="">No folder</option>
             @for (f of folderTree(); track f.id) {
               <option [value]="f.id">{{ f.name }}</option>
             }
           </select>
         </div>
-
         <div class="bm-form-group half">
           <label class="bm-label">Accent colour</label>
           <div class="bm-color-row">
             @for (c of accentColors; track c) {
-              <button
-                class="bm-color-swatch"
-                [style.background-color]="c"
+              <button class="bm-color-swatch" [style.background-color]="c"
                 [class.selected]="editColor() === c"
-                (click)="editColor.set(editColor() === c ? '' : c)"
-              ></button>
+                (click)="editColor.set(editColor() === c ? '' : c)"></button>
             }
           </div>
         </div>
       </div>
-
       <div class="bm-form-group">
         <label class="bm-label">Tags</label>
         <div class="bm-tag-input-row">
           @for (tag of editTags(); track tag) {
-            <span class="bm-tag-pill editable">
-              #{{ tag }}
-              <button (click)="removeEditTag(tag)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
+            <span class="bm-tag-pill editable">#{{ tag }}
+              <button (click)="removeEditTag(tag)"><span class="material-symbols-outlined">close</span></button>
             </span>
           }
-          <input
-            class="bm-tag-input"
-            type="text"
-            placeholder="Add tag…"
-            [value]="editTagInput()"
-            (input)="editTagInput.set($any($event.target).value)"
-            (keydown)="onEditTagKeydown($event)"
-          />
+          <input class="bm-tag-input" type="text" placeholder="Add tag…"
+            [value]="editTagInput()" (input)="editTagInput.set($any($event.target).value)"
+            (keydown)="onEditTagKeydown($event)" />
         </div>
         <span class="bm-hint">Press Enter or comma to add</span>
       </div>
-
       <div class="bm-form-group">
         <label class="bm-label">Notes</label>
-        <textarea
-          class="bm-textarea"
-          rows="3"
-          [value]="editNotes()"
-          (input)="editNotes.set($any($event.target).value)"
-        ></textarea>
+        <textarea class="bm-textarea" rows="3" [value]="editNotes()"
+          (input)="editNotes.set($any($event.target).value)"></textarea>
       </div>
-
-      <div class="bm-modal-footer">
-        <button class="bm-btn-secondary" (click)="showEditModal.set(false)">Cancel</button>
-        <button class="bm-btn-primary" (click)="submitEditBookmark()" [disabled]="!editUrl().trim()">
-          Save Changes
-        </button>
-      </div>
+    </div>
+    <div footer>
+      <button class="bm-btn-secondary" (click)="showEditModal.set(false)">Cancel</button>
+      <button class="bm-btn-primary" (click)="submitEditBookmark()" [disabled]="!editUrl().trim()">Save Changes</button>
     </div>
   </env-modal>
 }
 
-<!-- ═══════════════════════════════════════════════════
-     ADD FOLDER MODAL
-════════════════════════════════════════════════════ -->
+<!-- ═══ ADD FOLDER MODAL ═══ -->
 @if (showAddFolderModal()) {
   <env-modal title="New Folder" [isOpen]="true" (closed)="showAddFolderModal.set(false)">
-    <div class="bm-modal-body">
+    <div body class="bm-modal-body">
       <div class="bm-form-group">
         <label class="bm-label">Name <span class="bm-required">*</span></label>
-        <input
-          class="bm-input"
-          type="text"
-          placeholder="Folder name"
-          [value]="newFolderName()"
-          (input)="newFolderName.set($any($event.target).value)"
-          autofocus
-        />
+        <input class="bm-input" type="text" placeholder="Folder name"
+          [value]="newFolderName()" (input)="newFolderName.set($any($event.target).value)" autofocus />
       </div>
-
       <div class="bm-form-group">
         <label class="bm-label">Icon</label>
         <div class="bm-icon-picker">
           @for (icon of folderIcons; track icon) {
-            <button
-              class="bm-icon-option"
-              [class.selected]="newFolderIcon() === icon"
-              (click)="newFolderIcon.set(icon)"
-            >
+            <button class="bm-icon-option" [class.selected]="newFolderIcon() === icon"
+              (click)="newFolderIcon.set(icon)">
               <span class="material-symbols-outlined">{{ icon }}</span>
             </button>
           }
         </div>
       </div>
-
       <div class="bm-form-group">
         <label class="bm-label">Colour</label>
         <div class="bm-color-row">
           @for (c of accentColors; track c) {
-            <button
-              class="bm-color-swatch"
-              [style.background-color]="c"
+            <button class="bm-color-swatch" [style.background-color]="c"
               [class.selected]="newFolderColor() === c"
-              (click)="newFolderColor.set(newFolderColor() === c ? '' : c)"
-            ></button>
+              (click)="newFolderColor.set(newFolderColor() === c ? '' : c)"></button>
           }
         </div>
       </div>
-
-      <div class="bm-modal-footer">
-        <button class="bm-btn-secondary" (click)="showAddFolderModal.set(false)">Cancel</button>
-        <button class="bm-btn-primary" (click)="submitAddFolder()" [disabled]="!newFolderName().trim()">
-          Create Folder
-        </button>
-      </div>
+    </div>
+    <div footer>
+      <button class="bm-btn-secondary" (click)="showAddFolderModal.set(false)">Cancel</button>
+      <button class="bm-btn-primary" (click)="submitAddFolder()" [disabled]="!newFolderName().trim()">Create Folder</button>
     </div>
   </env-modal>
 }
 
-<!-- ═══════════════════════════════════════════════════
-     DELETE CONFIRM MODAL
-════════════════════════════════════════════════════ -->
+<!-- ═══ DELETE CONFIRM ═══ -->
 @if (showDeleteConfirm()) {
   <env-modal title="Delete Bookmark" [isOpen]="true" (closed)="showDeleteConfirm.set(false)">
-    <div class="bm-modal-body">
+    <div body class="bm-modal-body">
       <p class="bm-confirm-text">Are you sure you want to delete this bookmark? This cannot be undone.</p>
-      <div class="bm-modal-footer">
-        <button class="bm-btn-secondary" (click)="showDeleteConfirm.set(false)">Cancel</button>
-        <button class="bm-btn-danger" (click)="confirmDelete()">Delete</button>
-      </div>
+    </div>
+    <div footer>
+      <button class="bm-btn-secondary" (click)="showDeleteConfirm.set(false)">Cancel</button>
+      <button class="bm-btn-danger" (click)="confirmDelete()">Delete</button>
     </div>
   </env-modal>
 }
 
-<!-- ═══════════════════════════════════════════════════
-     KEYBOARD SHORTCUTS MODAL
-════════════════════════════════════════════════════ -->
+<!-- ═══ KEYBOARD SHORTCUTS ═══ -->
 @if (showShortcutsHelp()) {
   <env-modal title="Keyboard Shortcuts" [isOpen]="true" (closed)="showShortcutsHelp.set(false)">
-    <div class="bm-modal-body">
+    <div body class="bm-modal-body">
       <div class="bm-shortcuts-grid">
-        <div class="bm-shortcut-row">
-          <kbd>⌘ N</kbd><span>Add new bookmark</span>
-        </div>
-        <div class="bm-shortcut-row">
-          <kbd>⌘ F</kbd><span>Focus search</span>
-        </div>
-        <div class="bm-shortcut-row">
-          <kbd>⌘ /</kbd><span>Toggle shortcuts</span>
-        </div>
-        <div class="bm-shortcut-row">
-          <kbd>Esc</kbd><span>Close modal</span>
-        </div>
+        <div class="bm-shortcut-row"><kbd>⌘ N</kbd><span>Add new bookmark</span></div>
+        <div class="bm-shortcut-row"><kbd>⌘ F</kbd><span>Focus search</span></div>
+        <div class="bm-shortcut-row"><kbd>⌘ /</kbd><span>Toggle shortcuts</span></div>
+        <div class="bm-shortcut-row"><kbd>Esc</kbd><span>Close modal</span></div>
       </div>
     </div>
   </env-modal>
