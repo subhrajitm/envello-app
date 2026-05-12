@@ -427,57 +427,57 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 8px 16px;
   border-top: 1px solid rgba(15, 23, 42, 0.08);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.95);
   flex-shrink: 0;
   z-index: 1;
 }
 
 .env-table-foot-info {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 11px;
+  color: var(--text-tertiary);
 }
 
 .env-table-pages {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .env-table-pg-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 12px;
-  border-radius: 8px;
+  gap: 3px;
+  padding: 4px 10px;
+  border-radius: 7px;
   border: 1px solid var(--border-subtle);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
   white-space: nowrap;
 }
 .env-table-pg-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
 .env-table-pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.env-table-pg-btn .material-symbols-outlined { font-size: 15px; }
+.env-table-pg-btn .material-symbols-outlined { font-size: 14px; }
 
-.env-table-pg-nums { display: flex; align-items: center; gap: 3px; }
+.env-table-pg-nums { display: flex; align-items: center; gap: 2px; }
 
 .env-table-pg-num {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
@@ -490,9 +490,9 @@
 }
 
 .env-table-pg-ellipsis {
-  width: 32px;
+  width: 26px;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-tertiary);
-  line-height: 32px;
+  line-height: 26px;
 }
