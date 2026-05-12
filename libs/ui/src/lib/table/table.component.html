@@ -132,7 +132,7 @@
 
         <!-- Data rows -->
         } @else {
-          @for (row of rows; track row[rowIdKey]) {
+          @for (row of displayRows; track row[rowIdKey]) {
             <tr
               class="env-table-row"
               [class.env-table-row--selected]="isSelected(row)"
@@ -225,17 +225,36 @@
   </div>
 
   <!-- ── Pagination ── -->
-  @if (showPagination && totalEntries > 0) {
+  @if (showPagination && effectiveTotal > 0) {
     <div class="env-table-foot">
-      <span class="env-table-foot-info">
-        Showing {{ padNum(showingFrom) }} to {{ padNum(showingTo) }} of {{ totalEntries }} entries
-      </span>
 
+      <!-- Left: entry count + rows-per-page selector -->
+      <div class="env-table-foot-left">
+        <span class="env-table-foot-info">
+          Showing {{ padNum(showingFrom) }} to {{ padNum(showingTo) }} of {{ totalEntries }} entries
+        </span>
+
+        @if (pageSizeOptions.length) {
+          <div class="env-table-page-size">
+            <span class="env-table-page-size-label">Rows per page</span>
+            <select
+              class="env-table-page-size-select"
+              [value]="_pageSize()"
+              (change)="onPageSizeChange($any($event.target).value)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === _pageSize()">{{ opt }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      <!-- Right: navigation -->
       <div class="env-table-pages">
         <button
           class="env-table-pg-btn"
-          [disabled]="currentPage === 1"
-          (click)="goToPage(currentPage - 1)">
+          [disabled]="_page() === 1"
+          (click)="goToPage(_page() - 1)">
           <span class="material-symbols-outlined">arrow_back</span>
           Previous
         </button>
@@ -247,7 +266,7 @@
             } @else {
               <button
                 class="env-table-pg-num"
-                [class.active]="page === currentPage"
+                [class.active]="page === _page()"
                 (click)="goToPage($any(page))">
                 {{ padNum($any(page)) }}
               </button>
@@ -257,12 +276,13 @@
 
         <button
           class="env-table-pg-btn"
-          [disabled]="currentPage === totalPages"
-          (click)="goToPage(currentPage + 1)">
+          [disabled]="_page() === totalPages"
+          (click)="goToPage(_page() + 1)">
           Next
           <span class="material-symbols-outlined">arrow_forward</span>
         </button>
       </div>
+
     </div>
   }
 

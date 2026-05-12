@@ -436,10 +436,46 @@
   z-index: 1;
 }
 
+.env-table-foot-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
 .env-table-foot-info {
   font-size: 11px;
   color: var(--text-tertiary);
 }
+
+/* ── Rows-per-page selector ───────────────────────────────────────────────── */
+.env-table-page-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.env-table-page-size-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.env-table-page-size-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg-hover) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 7px center;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 3px 24px 3px 8px;
+  font-size: 11px;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.env-table-page-size-select:focus { border-color: var(--accent-primary); }
+.env-table-page-size-select:hover { border-color: var(--border-main); }
 
 .env-table-pages {
   display: flex;
