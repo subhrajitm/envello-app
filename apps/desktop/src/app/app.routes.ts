@@ -22,7 +22,7 @@ export const routes: Routes = [
 
   {
     path: 'write',
-    loadComponent: () => import('@envello/feature-novels').then(m => m.NovelsComponent),
+    loadComponent: () => import('@envello/feature-novels').then(m => m.WriteComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

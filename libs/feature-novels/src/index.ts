@@ -1,2 +1,2 @@
-export * from './lib/novels/novels.component';
-export * from './lib/novels/composer/composer.component';
+export * from './lib/write/write.component';
+export * from './lib/write/composer/composer.component';
