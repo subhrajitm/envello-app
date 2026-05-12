@@ -1,600 +1,322 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary } from '@envello/core';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
-type ViewMode = 'libraries' | 'sources' | 'summaries';
+type ViewMode = 'sources' | 'summaries';
 
-interface ResearchPlan {
-  topic: string;
-  overview: string;
-  phases: Array<{
-    name: string;
-    duration: string;
-    objectives: string[];
-  }>;
-  suggestedSources: Array<{
-    title: string;
-    type: string;
-    priority: 'High' | 'Medium' | 'Low';
-    rationale: string;
-  }>;
-  milestones: Array<{
-    name: string;
-    deadline: string;
-    deliverables: string[];
-  }>;
-  estimatedTimeframe: string;
-}
+const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: string }> = {
+  WEB:       { label: 'Web',       icon: 'language',       color: '#3b82f6' },
+  PDF:       { label: 'PDF',       icon: 'picture_as_pdf', color: '#ef4444' },
+  VIDEO:     { label: 'Video',     icon: 'smart_display',  color: '#a855f7' },
+  INTERVIEW: { label: 'Interview', icon: 'mic',            color: '#10b981' },
+  PHYSICAL:  { label: 'Physical',  icon: 'menu_book',      color: '#f59e0b' },
+};
+
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  UNREAD:    { label: 'Unread',    color: '#f87171' },
+  READING:   { label: 'Reading',   color: '#facc15' },
+  PROCESSED: { label: 'Processed', color: '#4ade80' },
+};
 
 @Component({
   selector: 'app-research',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent],
   templateUrl: './research.component.html',
   styleUrl: './research.component.css'
 })
 export class ResearchComponent {
   researchService = inject(ResearchService);
 
-  // UI State
-  viewMode = signal<ViewMode>('libraries');
+  // ── View state ────────────────────────────────────────────────────────────
+  viewMode        = signal<ViewMode>('sources');
   selectedLibrary = signal<ResearchLibrary | null>(null);
 
-  // Modals
-  showLibraryModal = signal(false);
-  showSourceModal = signal(false);
-  showSummaryModal = signal(false);
-  showSourceDetailPanel = signal(false);
-  selectedSource = signal<ResearchSource | null>(null);
-  
-  // Delete Modals
-  showDeleteLibraryModal = signal(false);
-  showDeleteSourceModal = signal(false);
-  libraryToDelete = signal<ResearchLibrary | null>(null);
-  sourceToDelete = signal<ResearchSource | null>(null);
-
-  // Filter & Search
-  searchQuery = signal('');
+  // ── Filter & Search ───────────────────────────────────────────────────────
+  searchQuery  = signal('');
   filterStatus = signal<'ALL' | 'UNREAD' | 'READING' | 'PROCESSED'>('ALL');
-  filterType = signal<'ALL' | 'WEB' | 'PDF' | 'VIDEO' | 'INTERVIEW' | 'PHYSICAL'>('ALL');
+  filterType   = signal<'ALL' | 'WEB' | 'PDF' | 'VIDEO' | 'INTERVIEW' | 'PHYSICAL'>('ALL');
 
-  // Form inputs - Library
-  newLibraryName = signal('');
-  newLibraryDesc = signal('');
+  // ── Modals ────────────────────────────────────────────────────────────────
+  showLibraryModal    = signal(false);
+  showSourceModal     = signal(false);
+  showSummaryModal    = signal(false);
+  showSourceDetail    = signal(false);
+  selectedSource      = signal<ResearchSource | null>(null);
+  showDeleteLibrary   = signal(false);
+  showDeleteSource    = signal(false);
+  libraryToDelete     = signal<ResearchLibrary | null>(null);
+  sourceToDelete      = signal<ResearchSource | null>(null);
+
+  // ── Library form ──────────────────────────────────────────────────────────
+  newLibraryName  = signal('');
+  newLibraryDesc  = signal('');
   newLibraryColor = signal('#8b5cf6');
 
-  // Form inputs - Source
-  newSourceTitle = signal('');
-  newSourceUrl = signal('');
-  newSourceType = signal<ResearchSource['sourceType']>('WEB');
-  newSourceTags = signal('');
-  newSourceDesc = signal('');
+  readonly libraryColors = ['#8b5cf6','#f97316','#10b981','#3b82f6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
+
+  // ── Source form ───────────────────────────────────────────────────────────
+  newSourceTitle  = signal('');
+  newSourceUrl    = signal('');
+  newSourceType   = signal<ResearchSource['sourceType']>('WEB');
+  newSourceTags   = signal('');
+  newSourceDesc   = signal('');
   newSourceAuthor = signal('');
 
-  // Form inputs - Summary
-  newSummaryTitle = signal('');
+  // ── Summary form ──────────────────────────────────────────────────────────
+  newSummaryTitle   = signal('');
   newSummaryContent = signal('');
-  newSummaryTags = signal('');
+  newSummaryTags    = signal('');
   selectedSourceIds = signal<string[]>([]);
 
-  // AI Features
-  showAIPanel = signal(true);
-  aiLoading = signal(false);
-  aiSuggestions = signal<string[]>([]);
-  aiTopics = signal<string[]>([]);
+  // ── Source detail ─────────────────────────────────────────────────────────
+  editNotes       = signal('');
   aiSourceAnalysis = signal('');
-  showTopicDiscovery = signal(false);
-  discoveredTopics = signal<Array<{ topic: string; relevance: number; sources: number }>>([]);
 
-  // Research Plan Generator
-  showResearchPlanModal = signal(false);
-  researchPlanTopic = signal('');
-  generatedPlan = signal<ResearchPlan | null>(null);
+  // ── AI Assistant ──────────────────────────────────────────────────────────
+  showAssistant = signal(false);
+  aiLoading     = signal(false);
+  aiMessages    = signal<AiPanelMessage[]>([]);
 
+  readonly aiSuggestions = [
+    'How many sources are in this library?',
+    'Show unread sources',
+    'Which sources have been processed?',
+    'Summarise the library topics',
+    'Show all web sources',
+  ];
 
-  // Editing
-  editNotes = signal('');
+  // ── Static data ───────────────────────────────────────────────────────────
+  readonly sourceTypeOptions = Object.entries(SOURCE_TYPE_META).map(([id, m]) => ({ id, ...m }));
 
-  // Data
+  // ── Data ──────────────────────────────────────────────────────────────────
   libraries = this.researchService.libraries;
 
   filteredLibraries = computed(() => {
-    const list = this.libraries();
     const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return list;
-    return list.filter(lib =>
-      lib.name.toLowerCase().includes(q) ||
-      (lib.description ?? '').toLowerCase().includes(q)
+    if (!q) return this.libraries();
+    return this.libraries().filter(lib =>
+      lib.name.toLowerCase().includes(q) || (lib.description ?? '').toLowerCase().includes(q)
     );
   });
 
   sources = computed(() => {
     const lib = this.selectedLibrary();
-    if (!lib) return [];
-    return this.researchService.getSourcesByLibrary(lib.id);
+    return lib ? this.researchService.getSourcesByLibrary(lib.id) : [];
   });
+
   summaries = computed(() => {
     const lib = this.selectedLibrary();
-    if (!lib) return [];
-    return this.researchService.getSummariesByLibrary(lib.id);
+    return lib ? this.researchService.getSummariesByLibrary(lib.id) : [];
   });
 
   filteredSources = computed(() => {
     let list = this.sources();
-    const query = this.searchQuery().toLowerCase();
+    const q      = this.searchQuery().toLowerCase();
     const status = this.filterStatus();
-    const type = this.filterType();
+    const type   = this.filterType();
 
-    if (query) {
-      list = list.filter(s =>
-        s.title.toLowerCase().includes(query) ||
-        s.tags.some(t => t.toLowerCase().includes(query)) ||
-        s.description?.toLowerCase().includes(query)
-      );
-    }
-
-    if (status !== 'ALL') {
-      list = list.filter(s => s.status === status);
-    }
-
-    if (type !== 'ALL') {
-      list = list.filter(s => s.sourceType === type);
-    }
-
+    if (q)           list = list.filter(s => s.title.toLowerCase().includes(q) || s.tags.some(t => t.toLowerCase().includes(q)) || s.description?.toLowerCase().includes(q));
+    if (status !== 'ALL') list = list.filter(s => s.status === status);
+    if (type   !== 'ALL') list = list.filter(s => s.sourceType === type);
     return list;
   });
 
-  // Stats
   sourceStats = computed(() => {
     const list = this.sources();
     return {
-      total: list.length,
-      unread: list.filter(s => s.status === 'UNREAD').length,
-      reading: list.filter(s => s.status === 'READING').length,
-      processed: list.filter(s => s.status === 'PROCESSED').length
+      total:     list.length,
+      unread:    list.filter(s => s.status === 'UNREAD').length,
+      reading:   list.filter(s => s.status === 'READING').length,
+      processed: list.filter(s => s.status === 'PROCESSED').length,
     };
   });
 
-  // Library actions
-  openLibraryModal() {
-    this.newLibraryName.set('');
-    this.newLibraryDesc.set('');
-    this.newLibraryColor.set('#8b5cf6');
-    this.showLibraryModal.set(true);
-  }
+  totalSources = computed(() => this.libraries().reduce((acc, lib) => acc + this.researchService.getSourcesByLibrary(lib.id).length, 0));
 
-  closeLibraryModal() {
-    this.showLibraryModal.set(false);
-  }
+  hasActiveFilters = computed(() => !!this.searchQuery() || this.filterStatus() !== 'ALL' || this.filterType() !== 'ALL');
 
-  saveLibrary() {
-    if (!this.newLibraryName()) return;
-    this.researchService.addLibrary({
-      name: this.newLibraryName(),
-      description: this.newLibraryDesc(),
-      color: this.newLibraryColor()
-    });
-    this.closeLibraryModal();
-  }
-
-  selectLibrary(library: ResearchLibrary) {
-    this.selectedLibrary.set(library);
-    this.viewMode.set('sources');
-  }
-
-  backToLibraries() {
-    this.selectedLibrary.set(null);
-    this.viewMode.set('libraries');
-  }
-
-  deleteLibrary(library: ResearchLibrary, event: Event) {
-    event.stopPropagation();
-    this.libraryToDelete.set(library);
-    this.showDeleteLibraryModal.set(true);
-  }
-
-  confirmDeleteLibrary() {
-    const library = this.libraryToDelete();
-    if (library) {
-      this.researchService.deleteLibrary(library.id);
-      if (this.selectedLibrary()?.id === library.id) {
-        this.backToLibraries();
-      }
-      this.showDeleteLibraryModal.set(false);
-      this.libraryToDelete.set(null);
-    }
-  }
-
-  cancelDeleteLibrary() {
-    this.showDeleteLibraryModal.set(false);
-    this.libraryToDelete.set(null);
-  }
-
-  // Source actions
-  openSourceModal() {
-    this.newSourceTitle.set('');
-    this.newSourceUrl.set('');
-    this.newSourceType.set('WEB');
-    this.newSourceTags.set('');
-    this.newSourceDesc.set('');
-    this.newSourceAuthor.set('');
-    this.showSourceModal.set(true);
-  }
-
-  closeSourceModal() {
-    this.showSourceModal.set(false);
-  }
-
-  saveSource() {
-    const lib = this.selectedLibrary();
-    if (!this.newSourceTitle() || !lib) return;
-
-    this.researchService.addSource({
-      libraryId: lib.id,
-      title: this.newSourceTitle(),
-      url: this.newSourceUrl(),
-      sourceType: this.newSourceType(),
-      tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
-      description: this.newSourceDesc(),
-      author: this.newSourceAuthor(),
-      status: 'UNREAD'
-    });
-
-    this.closeSourceModal();
-  }
-
-  openSourceDetail(source: ResearchSource) {
-    this.selectedSource.set(source);
-    this.editNotes.set(source.notes || '');
-    this.showSourceDetailPanel.set(true);
-  }
-
-  closeSourceDetail() {
-    this.showSourceDetailPanel.set(false);
-    this.selectedSource.set(null);
-  }
-
-  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED') {
-    const current = this.selectedSource();
-    if (current) {
-      this.researchService.updateSource(current.id, { status });
-      this.selectedSource.update(s => s ? { ...s, status } : null);
-    }
-  }
-
-  saveNotes() {
-    const current = this.selectedSource();
-    if (current) {
-      this.researchService.updateSource(current.id, { notes: this.editNotes() });
-    }
-  }
-
-  deleteCurrentSource() {
-    const current = this.selectedSource();
-    if (current) {
-      this.sourceToDelete.set(current);
-      this.showDeleteSourceModal.set(true);
-    }
-  }
-
-  confirmDeleteSource() {
-    const source = this.sourceToDelete();
-    if (source) {
-      this.researchService.deleteSource(source.id);
-      if (this.selectedSource()?.id === source.id) {
-        this.closeSourceDetail();
-      }
-      this.showDeleteSourceModal.set(false);
-      this.sourceToDelete.set(null);
-    }
-  }
-
-  cancelDeleteSource() {
-    this.showDeleteSourceModal.set(false);
-    this.sourceToDelete.set(null);
-  }
-
-  // Summary actions
-  openSummaryModal() {
-    this.newSummaryTitle.set('');
-    this.newSummaryContent.set('');
-    this.newSummaryTags.set('');
-    this.selectedSourceIds.set([]);
-    this.showSummaryModal.set(true);
-  }
-
-  closeSummaryModal() {
-    this.showSummaryModal.set(false);
-  }
-
-  saveSummary() {
-    const lib = this.selectedLibrary();
-    if (!this.newSummaryTitle() || !lib) return;
-
-    this.researchService.addSummary({
-      libraryId: lib.id,
-      title: this.newSummaryTitle(),
-      content: this.newSummaryContent(),
-      sourceIds: this.selectedSourceIds(),
-      tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t)
-    });
-
-    this.closeSummaryModal();
-  }
-
-  toggleSourceSelection(sourceId: string) {
-    this.selectedSourceIds.update(ids => {
-      if (ids.includes(sourceId)) {
-        return ids.filter(id => id !== sourceId);
-      } else {
-        return [...ids, sourceId];
-      }
-    });
-  }
-
-  isSourceSelected(sourceId: string): boolean {
-    return this.selectedSourceIds().includes(sourceId);
-  }
-
-  // View switching
-  showSources() {
-    this.viewMode.set('sources');
-  }
-
-  showSummaries() {
-    this.viewMode.set('summaries');
-  }
-
-  // Helpers
-  getStatusColor(status: string) {
-    switch (status) {
-      case 'PROCESSED': return '#4ade80';
-      case 'READING': return '#facc15';
-      case 'UNREAD': return '#f87171';
-      default: return '#9ca3af';
-    }
-  }
-
-  getStatusVariant(status: string): 'default' | 'success' | 'warning' | 'error' {
-    switch (status) {
-      case 'PROCESSED': return 'success';
-      case 'READING': return 'warning';
-      case 'UNREAD': return 'error';
-      default: return 'default';
-    }
-  }
-
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'PROCESSED': return 'status-processed';
-      case 'READING': return 'status-reading';
-      case 'UNREAD': return 'status-unread';
-      default: return 'status-default';
-    }
-  }
-
-  getStatClass(stat: string): string {
-    switch (stat) {
-      case 'unread': return 'stat-unread';
-      case 'reading': return 'stat-reading';
-      case 'processed': return 'stat-processed';
-      default: return 'stat-default';
-    }
-  }
-
-  getPriorityVariant(priority: string): 'default' | 'success' | 'warning' | 'error' {
-    switch (priority?.toLowerCase()) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'success';
-      default: return 'default';
-    }
-  }
-
-  getSourceIcon(type: string) {
-    switch (type) {
-      case 'WEB': return 'language';
-      case 'PDF': return 'picture_as_pdf';
-      case 'VIDEO': return 'smart_display';
-      case 'INTERVIEW': return 'mic';
-      case 'PHYSICAL': return 'menu_book';
-      default: return 'article';
-    }
-  }
-
-  getSourceTypeLabel(type: string): string {
-    switch (type) {
-      case 'WEB': return 'Web';
-      case 'PDF': return 'PDF';
-      case 'VIDEO': return 'Video';
-      case 'INTERVIEW': return 'Interview';
-      case 'PHYSICAL': return 'Physical';
-      default: return type || 'Source';
-    }
-  }
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  getSourceTypeMeta(type: string) { return SOURCE_TYPE_META[type] ?? SOURCE_TYPE_META['WEB']; }
+  getStatusMeta(status: string)   { return STATUS_META[status] ?? STATUS_META['UNREAD']; }
 
   formatSourceMeta(source: ResearchSource): string {
-    const parts: string[] = [this.getSourceTypeLabel(source.sourceType)];
+    const parts: string[] = [this.getSourceTypeMeta(source.sourceType).label];
     if (source.author) parts.push(source.author);
     const date = source.lastAccessed || source.createdDate;
     if (date) parts.push(new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }));
     return parts.join(' · ');
   }
 
-  // AI Features
-  toggleAIPanel() {
-    this.showAIPanel.update(v => !v);
+  // ── Library actions ───────────────────────────────────────────────────────
+  openLibraryModal() {
+    this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
+    this.showLibraryModal.set(true);
+  }
+  closeLibraryModal() { this.showLibraryModal.set(false); }
+
+  saveLibrary() {
+    if (!this.newLibraryName()) return;
+    this.researchService.addLibrary({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
+    this.closeLibraryModal();
   }
 
-  async discoverTopics() {
-    this.showTopicDiscovery.set(true);
+  selectLibrary(library: ResearchLibrary) {
+    this.selectedLibrary.set(library);
+    this.viewMode.set('sources');
+    this.searchQuery.set('');
+    this.filterStatus.set('ALL');
+    this.filterType.set('ALL');
+  }
+
+  openDeleteLibrary(library: ResearchLibrary, e: Event) {
+    e.stopPropagation();
+    this.libraryToDelete.set(library);
+    this.showDeleteLibrary.set(true);
+  }
+  cancelDeleteLibrary() { this.showDeleteLibrary.set(false); this.libraryToDelete.set(null); }
+  confirmDeleteLibrary() {
+    const lib = this.libraryToDelete();
+    if (lib) {
+      this.researchService.deleteLibrary(lib.id);
+      if (this.selectedLibrary()?.id === lib.id) this.selectedLibrary.set(null);
+      this.cancelDeleteLibrary();
+    }
+  }
+
+  // ── Source actions ────────────────────────────────────────────────────────
+  openSourceModal() {
+    this.newSourceTitle.set(''); this.newSourceUrl.set(''); this.newSourceType.set('WEB');
+    this.newSourceTags.set(''); this.newSourceDesc.set(''); this.newSourceAuthor.set('');
+    this.showSourceModal.set(true);
+  }
+  closeSourceModal() { this.showSourceModal.set(false); }
+
+  saveSource() {
+    const lib = this.selectedLibrary();
+    if (!this.newSourceTitle() || !lib) return;
+    this.researchService.addSource({
+      libraryId: lib.id, title: this.newSourceTitle(), url: this.newSourceUrl(),
+      sourceType: this.newSourceType(),
+      tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
+      description: this.newSourceDesc(), author: this.newSourceAuthor(), status: 'UNREAD',
+    });
+    this.closeSourceModal();
+  }
+
+  openSourceDetail(source: ResearchSource) {
+    this.selectedSource.set(source);
+    this.editNotes.set(source.notes || '');
+    this.aiSourceAnalysis.set('');
+    this.showSourceDetail.set(true);
+  }
+  closeSourceDetail() { this.showSourceDetail.set(false); this.selectedSource.set(null); }
+
+  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED') {
+    const s = this.selectedSource();
+    if (s) {
+      this.researchService.updateSource(s.id, { status });
+      this.selectedSource.update(cur => cur ? { ...cur, status } : null);
+    }
+  }
+
+  saveNotes() {
+    const s = this.selectedSource();
+    if (s) this.researchService.updateSource(s.id, { notes: this.editNotes() });
+  }
+
+  openDeleteSource(source: ResearchSource, e?: Event) {
+    e?.stopPropagation();
+    this.sourceToDelete.set(source);
+    this.showDeleteSource.set(true);
+  }
+  cancelDeleteSource() { this.showDeleteSource.set(false); this.sourceToDelete.set(null); }
+  confirmDeleteSource() {
+    const s = this.sourceToDelete();
+    if (s) {
+      this.researchService.deleteSource(s.id);
+      if (this.selectedSource()?.id === s.id) this.closeSourceDetail();
+      this.cancelDeleteSource();
+    }
+  }
+
+  // ── Summary actions ───────────────────────────────────────────────────────
+  openSummaryModal() {
+    this.newSummaryTitle.set(''); this.newSummaryContent.set('');
+    this.newSummaryTags.set(''); this.selectedSourceIds.set([]);
+    this.showSummaryModal.set(true);
+  }
+  closeSummaryModal() { this.showSummaryModal.set(false); }
+
+  saveSummary() {
+    const lib = this.selectedLibrary();
+    if (!this.newSummaryTitle() || !lib) return;
+    this.researchService.addSummary({
+      libraryId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
+      sourceIds: this.selectedSourceIds(),
+      tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t),
+    });
+    this.closeSummaryModal();
+  }
+
+  toggleSourceSelection(id: string) {
+    this.selectedSourceIds.update(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]);
+  }
+  isSourceSelected(id: string) { return this.selectedSourceIds().includes(id); }
+
+  clearFilters() { this.searchQuery.set(''); this.filterStatus.set('ALL'); this.filterType.set('ALL'); }
+
+  // ── AI ────────────────────────────────────────────────────────────────────
+  toggleAssistant() { this.showAssistant.update(v => !v); }
+  clearAiChat()     { this.aiMessages.set([]); }
+
+  async sendAiMessage(text: string) {
+    if (!text || this.aiLoading()) return;
+    this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-    await new Promise(resolve => setTimeout(resolve, 200));
-    this.discoveredTopics.set([]);
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+    const lib = this.selectedLibrary();
+    const srcs = lib ? this.researchService.getSourcesByLibrary(lib.id) : [];
+    const q = text.toLowerCase();
+    let response = '';
+    if (q.includes('how many') || q.includes('count')) {
+      response = `Library **${lib?.name ?? 'N/A'}** has **${srcs.length}** source${srcs.length !== 1 ? 's' : ''}.\nUnread: ${srcs.filter(s => s.status === 'UNREAD').length} · Reading: ${srcs.filter(s => s.status === 'READING').length} · Processed: ${srcs.filter(s => s.status === 'PROCESSED').length}`;
+    } else if (q.includes('unread')) {
+      const u = srcs.filter(s => s.status === 'UNREAD');
+      response = u.length ? `**${u.length}** unread:\n${u.map((s, i) => `${i + 1}. ${s.title}`).join('\n')}` : 'No unread sources.';
+    } else if (q.includes('processed')) {
+      const p = srcs.filter(s => s.status === 'PROCESSED');
+      response = p.length ? `**${p.length}** processed:\n${p.map((s, i) => `${i + 1}. ${s.title}`).join('\n')}` : 'No processed sources yet.';
+    } else if (q.includes('web')) {
+      const w = srcs.filter(s => s.sourceType === 'WEB');
+      response = w.length ? `**${w.length}** web source${w.length !== 1 ? 's' : ''}:\n${w.map((s, i) => `${i + 1}. ${s.title}`).join('\n')}` : 'No web sources.';
+    } else {
+      response = `Library has ${srcs.length} sources. Ask about unread, processed, web sources, or request a summary.`;
+    }
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
   }
 
-  async analyzeSource(_source: ResearchSource) {
+  async analyzeSource(source: ResearchSource) {
     this.aiLoading.set(true);
     this.aiSourceAnalysis.set('');
-    await new Promise(resolve => setTimeout(resolve, 200));
-    this.aiSourceAnalysis.set('AI is not configured. Connect an AI provider to analyze sources.');
+    await new Promise(r => setTimeout(r, 400));
+    this.aiSourceAnalysis.set('Connect an AI provider to analyse this source.');
     this.aiLoading.set(false);
   }
 
-  async generateAutoSummary() {
-    const selectedSources = this.sources().filter(s =>
-      this.selectedSourceIds().includes(s.id)
-    );
-    if (selectedSources.length === 0) {
-      alert('Please select at least one source to generate a summary');
-      return;
+  // ── Keyboard ──────────────────────────────────────────────────────────────
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      if (this.showSourceDetail())  this.closeSourceDetail();
+      else if (this.showSummaryModal()) this.closeSummaryModal();
+      else if (this.showSourceModal())  this.closeSourceModal();
+      else if (this.showLibraryModal()) this.closeLibraryModal();
+      else if (this.showDeleteSource()) this.cancelDeleteSource();
+      else if (this.showDeleteLibrary()) this.cancelDeleteLibrary();
     }
-    this.aiLoading.set(true);
-    await new Promise(resolve => setTimeout(resolve, 200));
-    alert('AI is not configured. Connect an AI provider to generate summaries.');
-    this.aiLoading.set(false);
-  }
-
-  async suggestSources() {
-    const lib = this.selectedLibrary();
-    if (!lib) return;
-    this.aiLoading.set(true);
-    await new Promise(resolve => setTimeout(resolve, 200));
-    this.aiSuggestions.set([]);
-    this.aiLoading.set(false);
-  }
-
-  private findCommonTags(sources: ResearchSource[]): string[] {
-    const tagCounts = new Map<string, number>();
-
-    sources.forEach(source => {
-      source.tags.forEach(tag => {
-        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-      });
-    });
-
-    return Array.from(tagCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([tag]) => tag);
-  }
-
-  addSuggestedSource(suggestion: string) {
-    this.newSourceTitle.set(suggestion);
-    this.newSourceType.set('WEB');
-    this.openSourceModal();
-    this.aiSuggestions.set([]);
-  }
-
-  closeTopicDiscovery() {
-    this.showTopicDiscovery.set(false);
-    this.discoveredTopics.set([]);
-  }
-
-  searchByTopic(topic: string) {
-    this.searchQuery.set(topic);
-    this.closeTopicDiscovery();
-  }
-
-  // Research Plan Generator
-  openResearchPlanModal() {
-    this.researchPlanTopic.set('');
-    this.generatedPlan.set(null);
-    this.showResearchPlanModal.set(true);
-  }
-
-  closeResearchPlanModal() {
-    this.showResearchPlanModal.set(false);
-    this.generatedPlan.set(null);
-  }
-
-  async generateResearchPlan() {
-    const topic = this.researchPlanTopic();
-    if (!topic) {
-      alert('Please enter a research topic');
-      return;
-    }
-    this.aiLoading.set(true);
-    await new Promise(resolve => setTimeout(resolve, 200));
-    this.generatedPlan.set(null);
-    alert('AI is not configured. Connect an AI provider to generate research plans.');
-    this.aiLoading.set(false);
-  }
-
-  async implementResearchPlan() {
-    const plan = this.generatedPlan();
-    const lib = this.selectedLibrary();
-
-    if (!plan || !lib) return;
-
-    this.aiLoading.set(true);
-
-    // Create library if needed or use existing
-    let targetLibrary = lib;
-
-    // Add suggested sources to the library
-    for (const source of plan.suggestedSources) {
-      await new Promise(resolve => setTimeout(resolve, 200)); // Simulate adding sources
-
-      this.researchService.addSource({
-        libraryId: targetLibrary.id,
-        title: source.title,
-        sourceType: source.type as ResearchSource['sourceType'],
-        tags: [plan.topic, source.priority, 'Research Plan'],
-        description: source.rationale,
-        status: 'UNREAD'
-      });
-    }
-
-    // Create a summary with the research plan
-    this.researchService.addSummary({
-      libraryId: targetLibrary.id,
-      title: `Research Plan: ${plan.topic}`,
-      content: this.formatPlanAsSummary(plan),
-      sourceIds: [],
-      tags: ['Research Plan', plan.topic, 'Roadmap']
-    });
-
-    this.aiLoading.set(false);
-    this.closeResearchPlanModal();
-
-    // Switch to sources view to show added sources
-    this.viewMode.set('sources');
-  }
-
-  private formatPlanAsSummary(plan: ResearchPlan): string {
-    let summary = `# Research Plan: ${plan.topic}\n\n`;
-    summary += `## Overview\n${plan.overview}\n\n`;
-    summary += `**Estimated Timeframe:** ${plan.estimatedTimeframe}\n\n`;
-
-    summary += `## Research Phases\n\n`;
-    plan.phases.forEach((phase, idx) => {
-      summary += `### ${phase.name} (${phase.duration})\n`;
-      phase.objectives.forEach(obj => {
-        summary += `- ${obj}\n`;
-      });
-      summary += '\n';
-    });
-
-    summary += `## Milestones\n\n`;
-    plan.milestones.forEach(milestone => {
-      summary += `### ${milestone.name} - ${milestone.deadline}\n`;
-      milestone.deliverables.forEach(del => {
-        summary += `- ${del}\n`;
-      });
-      summary += '\n';
-    });
-
-    summary += `## Suggested Sources (${plan.suggestedSources.length})\n\n`;
-    plan.suggestedSources.forEach(source => {
-      summary += `**${source.title}** [${source.priority} Priority]\n`;
-      summary += `- Type: ${source.type}\n`;
-      summary += `- Rationale: ${source.rationale}\n\n`;
-    });
-
-    return summary;
   }
 }
