@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
 import { Subscription } from '@envello/domain';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent } from '@envello/ui';
+import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
     software:       '#60a5fa',
@@ -90,7 +91,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent],
+    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent],
     template: `
 <div class="vs-view">
 
@@ -232,32 +233,6 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
     <!-- Table -->
     <div class="vs-table-wrap">
-
-      <div class="vs-table-head">
-        <div class="vs-th vs-col-service" (click)="setSort('name')">
-          Service
-          <span class="vs-sort-ico material-symbols-outlined">
-            {{ sortCol() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-          </span>
-        </div>
-        <div class="vs-th vs-col-category">Category</div>
-        <div class="vs-th vs-col-amount" (click)="setSort('price')">
-          Amount
-          <span class="vs-sort-ico material-symbols-outlined">
-            {{ sortCol() === 'price' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-          </span>
-        </div>
-        <div class="vs-th vs-col-cycle">Cycle</div>
-        <div class="vs-th vs-col-renewal" (click)="setSort('renewalDate')">
-          Next Renewal
-          <span class="vs-sort-ico material-symbols-outlined">
-            {{ sortCol() === 'renewalDate' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-          </span>
-        </div>
-        <div class="vs-th vs-col-status">Status</div>
-        <div class="vs-th vs-col-actions"></div>
-      </div>
-
       @if (filteredSubs().length === 0) {
         <div class="vs-empty">
           @if (subscriptionStore.subscriptions().length === 0) {
@@ -280,88 +255,19 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
             <button class="vs-tool-btn" (click)="clearFilters()">Clear Filters</button>
           }
         </div>
+      } @else {
+        <env-table
+          class="env-table--compact"
+          [columns]="tableColumns"
+          [rows]="tableRows()"
+          [actions]="tableActions"
+          [showToolbar]="false"
+          rowIdKey="id"
+          (rowClick)="openDetails($any($event['_sub']))"
+          (actionClick)="handleTableAction($event)"
+          (sortChange)="handleTableSort($event)"
+        ></env-table>
       }
-
-      @for (sub of filteredSubs(); track sub.id) {
-        @let days = daysUntil(sub.renewalDate);
-        <div class="vs-tr"
-          [class.vs-tr--paused]="sub.status === 'paused'"
-          [class.vs-tr--cancelled]="sub.status === 'cancelled'">
-
-          <div class="vs-td vs-col-service" (click)="openDetails(sub)">
-            <div class="vs-avatar" [style.background]="avatarBg(sub.name)">
-              <span class="vs-avatar-letter">{{ sub.name.charAt(0).toUpperCase() }}</span>
-            </div>
-            <div class="vs-service-info">
-              <span class="vs-service-name">{{ sub.name }}</span>
-              @if (sub.notes) {
-                <span class="vs-service-notes">{{ sub.notes }}</span>
-              }
-            </div>
-          </div>
-
-          <div class="vs-td vs-col-category">
-            @if (sub.category) {
-              <span class="vs-cat-chip">{{ sub.category }}</span>
-            } @else {
-              <span class="vs-muted">—</span>
-            }
-          </div>
-
-          <div class="vs-td vs-col-amount">
-            <span class="vs-price">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</span>
-          </div>
-
-          <div class="vs-td vs-col-cycle">
-            <span class="vs-muted capitalize">{{ sub.billingCycle }}</span>
-          </div>
-
-          <div class="vs-td vs-col-renewal">
-            <span class="vs-date">{{ formatDate(sub.renewalDate) }}</span>
-            @if (days !== null && sub.status !== 'cancelled') {
-              <span class="vs-days-chip"
-                [class.vs-days-ok]="days > 30"
-                [class.vs-days-caution]="days <= 30 && days > 7"
-                [class.vs-days-warn]="days <= 7">
-                {{ days === 0 ? 'today' : 'in ' + days + 'd' }}
-              </span>
-            }
-          </div>
-
-          <div class="vs-td vs-col-status">
-            <button class="vs-status-badge"
-              [style.color]="statusMeta(sub.status).color"
-              [style.background]="statusMeta(sub.status).bg"
-              (click)="cycleStatus(sub)"
-              title="Click to cycle status">
-              {{ statusMeta(sub.status).label }}
-            </button>
-          </div>
-
-          <div class="vs-td vs-col-actions">
-            @if (deleteConfirmId() === sub.id) {
-              <div class="vs-confirm">
-                <button class="vs-confirm-del" (click)="doDelete(sub.id)">Delete</button>
-                <button class="vs-confirm-cancel" (click)="deleteConfirmId.set(null)">Cancel</button>
-              </div>
-            } @else {
-              <div class="vs-row-actions">
-                <button class="vs-row-btn" (click)="openDetails(sub)" title="View details">
-                  <span class="material-symbols-outlined">open_in_new</span>
-                </button>
-                <button class="vs-row-btn" (click)="openEditForm(sub)" title="Edit">
-                  <span class="material-symbols-outlined">edit</span>
-                </button>
-                <button class="vs-row-btn vs-row-btn--danger" (click)="deleteConfirmId.set(sub.id)" title="Delete">
-                  <span class="material-symbols-outlined">delete</span>
-                </button>
-              </div>
-            }
-          </div>
-
-        </div>
-      }
-
     </div>
   </div>
 
@@ -821,129 +727,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     .vs-banner-days { font-size: 10.5px; color: var(--text-tertiary); }
 
     /* ── Table ── */
-    .vs-table-wrap { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: auto; }
-
-    .vs-table-head {
-      display: flex; align-items: center; height: 36px;
-      background: var(--bg-panel);
-      border-bottom: 1px solid var(--border-main);
-      position: sticky; top: 0; z-index: 10;
-    }
-    .vs-th {
-      display: flex; align-items: center; gap: 4px;
-      padding: 0 14px;
-      font-size: 11px; font-weight: 600;
-      color: var(--text-tertiary);
-      text-transform: uppercase; letter-spacing: 0.04em;
-      user-select: none;
-      border-right: 1px solid var(--border-subtle);
-    }
-    .vs-th:last-child { border-right: none; }
-    .vs-sort-ico { font-size: 13px; opacity: 0.5; }
-
-    /* Column widths */
-    .vs-col-service  { flex: 1; min-width: 180px; cursor: pointer; }
-    .vs-col-category { width: 120px; flex-shrink: 0; }
-    .vs-col-amount   { width: 110px; flex-shrink: 0; justify-content: flex-end; }
-    .vs-col-cycle    { width: 80px;  flex-shrink: 0; }
-    .vs-col-renewal  { width: 170px; flex-shrink: 0; }
-    .vs-col-status   { width: 100px; flex-shrink: 0; }
-    .vs-col-actions  { width: 110px; flex-shrink: 0; justify-content: flex-end; }
-
-    .vs-th.vs-col-service,
-    .vs-th.vs-col-amount,
-    .vs-th.vs-col-renewal { cursor: pointer; transition: color 0.12s; }
-    .vs-th.vs-col-service:hover,
-    .vs-th.vs-col-amount:hover,
-    .vs-th.vs-col-renewal:hover { color: var(--text-secondary); }
-
-    /* Rows */
-    .vs-tr {
-      display: flex; align-items: center;
-      height: 44px; border-bottom: 1px solid var(--border-subtle);
-      transition: background 0.12s;
-    }
-    .vs-tr:last-child { border-bottom: none; }
-    .vs-tr:hover { background: var(--bg-hover); }
-    .vs-tr--paused    { opacity: 0.6; }
-    .vs-tr--cancelled { opacity: 0.35; }
-
-    /* Hover-reveal row actions */
-    .vs-col-actions { opacity: 0; transition: opacity 0.1s; }
-    .vs-tr:hover .vs-col-actions { opacity: 1; }
-
-    /* Cells */
-    .vs-td { display: flex; align-items: center; gap: 8px; padding: 0 14px; overflow: hidden; }
-
-    /* Service */
-    .vs-col-service.vs-td { cursor: pointer; }
-    .vs-avatar {
-      width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .vs-avatar-letter { font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
-    .vs-service-info  { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-    .vs-service-name  {
-      font-size: 13px; font-weight: 500; color: var(--text-primary);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .vs-col-service:hover .vs-service-name { color: var(--accent-primary); }
-    .vs-service-notes {
-      font-size: 10.5px; color: var(--text-tertiary);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-
-    /* Category chip */
-    .vs-cat-chip {
-      display: inline-flex; padding: 1px 7px; border-radius: 4px;
-      border: 1px solid var(--border-subtle); background: transparent;
-      font-size: 11px; color: var(--text-secondary); text-transform: capitalize;
-    }
-    .vs-muted { font-size: 12.5px; color: var(--text-tertiary); }
-
-    /* Amount */
-    .vs-col-amount.vs-td { justify-content: flex-end; }
-    .vs-price { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
-
-    /* Renewal */
-    .vs-date { font-size: 12.5px; color: var(--text-primary); white-space: nowrap; }
-    .vs-days-chip {
-      padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);
-      font-size: 10.5px; font-weight: 500; white-space: nowrap;
-    }
-    .vs-days-ok      { color: var(--text-tertiary); background: var(--bg-hover); }
-    .vs-days-caution { color: #d97706; background: color-mix(in srgb, #fbbf24 8%, transparent); border-color: color-mix(in srgb, #fbbf24 30%, transparent); }
-    .vs-days-warn    { color: var(--accent-red); background: color-mix(in srgb, var(--accent-red) 8%, transparent); border-color: color-mix(in srgb, var(--accent-red) 30%, transparent); }
-
-    /* Status badge */
-    .vs-status-badge {
-      display: inline-flex; align-items: center;
-      padding: 2px 10px; border-radius: 100px;
-      border: 1px solid currentColor;
-      font-size: 11px; font-weight: 500; text-transform: capitalize;
-      cursor: pointer; transition: opacity 0.12s; background: transparent;
-    }
-    .vs-status-badge:hover { opacity: 0.65; }
-
-    /* Row actions */
-    .vs-row-actions { display: flex; align-items: center; gap: 2px; justify-content: flex-end; }
-    .vs-row-btn {
-      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-      background: transparent; border: none; border-radius: 5px;
-      color: var(--text-tertiary); cursor: pointer; transition: all 0.15s;
-    }
-    .vs-row-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-    .vs-row-btn--danger:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); color: var(--accent-red); }
-    .vs-row-btn .material-symbols-outlined { font-size: 16px; }
-
-    .vs-confirm { display: flex; gap: 5px; justify-content: flex-end; }
-    .vs-confirm-del, .vs-confirm-cancel {
-      padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
-      cursor: pointer; border: 1px solid transparent;
-    }
-    .vs-confirm-del    { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); border-color: color-mix(in srgb, var(--accent-red) 30%, transparent); }
-    .vs-confirm-del:hover { background: color-mix(in srgb, var(--accent-red) 20%, transparent); }
-    .vs-confirm-cancel { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--border-subtle); }
+    .vs-table-wrap { flex: 1 1 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 
     /* Empty state */
     .vs-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
@@ -1312,6 +1096,75 @@ export class VendorComponent {
             return 0;
         });
     });
+
+    // ── Table config ──────────────────────────────────────────────────────
+    readonly tableColumns: EnvTableColumn[] = [
+        { key: 'service',  header: 'Service',      type: 'avatar-text', sortable: true },
+        { key: 'category', header: 'Category',     type: 'badge', badgeMap: {
+            software:       { label: 'Software',       dotColor: '#60a5fa', bgColor: 'rgba(96,165,250,0.1)',  textColor: '#60a5fa' },
+            infrastructure: { label: 'Infrastructure', dotColor: '#a78bfa', bgColor: 'rgba(167,139,250,0.1)', textColor: '#a78bfa' },
+            design:         { label: 'Design',         dotColor: '#f472b6', bgColor: 'rgba(244,114,182,0.1)', textColor: '#f472b6' },
+            marketing:      { label: 'Marketing',      dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',  textColor: '#4ade80' },
+            security:       { label: 'Security',       dotColor: '#fb923c', bgColor: 'rgba(251,146,60,0.1)',  textColor: '#fb923c' },
+            analytics:      { label: 'Analytics',      dotColor: '#fbbf24', bgColor: 'rgba(251,191,36,0.1)',  textColor: '#fbbf24' },
+            communication:  { label: 'Communication',  dotColor: '#34d399', bgColor: 'rgba(52,211,153,0.1)',  textColor: '#34d399' },
+            finance:        { label: 'Finance',        dotColor: '#e879f9', bgColor: 'rgba(232,121,249,0.1)', textColor: '#e879f9' },
+            other:          { label: 'Other',          dotColor: '#94a3b8', bgColor: 'rgba(148,163,184,0.1)', textColor: '#94a3b8' },
+        }},
+        { key: 'amount',  header: 'Amount',       sortable: true },
+        { key: 'cycle',   header: 'Cycle' },
+        { key: 'renewal', header: 'Next Renewal', sortable: true },
+        { key: 'status',  header: 'Status',       type: 'badge', badgeMap: {
+            active:    { label: 'Active',    dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',  textColor: '#4ade80'  },
+            paused:    { label: 'Paused',    dotColor: '#fbbf24', bgColor: 'rgba(251,191,36,0.1)',  textColor: '#fbbf24'  },
+            cancelled: { label: 'Cancelled', dotColor: '#94a3b8', bgColor: 'rgba(148,163,184,0.1)', textColor: '#94a3b8'  },
+        }},
+    ];
+
+    readonly tableActions: EnvTableAction[] = [
+        { key: 'view',   label: 'View Details', icon: 'open_in_new' },
+        { key: 'edit',   label: 'Edit',         icon: 'edit'        },
+        { key: 'delete', label: 'Delete',        icon: 'delete', danger: true },
+    ];
+
+    tableRows = computed(() =>
+        this.filteredSubs().map(sub => ({
+            id:       sub.id,
+            service:  { name: sub.name },
+            category: sub.category || 'other',
+            amount:   `${this.currencySymbol(sub.currency)}${sub.price.toFixed(2)}`,
+            cycle:    sub.billingCycle.charAt(0).toUpperCase() + sub.billingCycle.slice(1),
+            renewal:  this.formatRenewal(sub),
+            status:   sub.status || 'active',
+            _sub:     sub,
+        }))
+    );
+
+    handleTableAction(event: EnvTableActionEvent) {
+        const sub = event.row['_sub'] as Subscription;
+        if (!sub) return;
+        switch (event.actionKey) {
+            case 'view':   this.openDetails(sub); break;
+            case 'edit':   this.openEditForm(sub); break;
+            case 'delete': this.deleteConfirmId.set(sub.id); break;
+        }
+    }
+
+    handleTableSort(event: EnvTableSortEvent) {
+        const colMap: Record<string, 'name' | 'price' | 'renewalDate'> = {
+            service: 'name', amount: 'price', renewal: 'renewalDate',
+        };
+        const col = colMap[event.key];
+        if (col) { this.sortCol.set(col); this.sortDir.set(event.direction); }
+    }
+
+    private formatRenewal(sub: Subscription): string {
+        const date = this.formatDate(sub.renewalDate);
+        const days = this.daysUntil(sub.renewalDate);
+        if (days === null || sub.status === 'cancelled') return date;
+        if (days === 0) return `${date} · today`;
+        return `${date} · in ${days}d`;
+    }
 
     // ── Filter helpers ────────────────────────────────────────────────────
     toggleStatusFilter(status: string) {

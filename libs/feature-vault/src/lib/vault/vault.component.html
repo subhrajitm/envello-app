@@ -1,0 +1,306 @@
+<div class="vt-view">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="vt-sidebar">
+
+    <!-- Search -->
+    <div class="vt-sb-search">
+      <span class="material-symbols-outlined vt-sb-search-icon">search</span>
+      <input
+        class="vt-sb-search-input"
+        type="text"
+        placeholder="Search credentials…"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)">
+      @if (searchQuery()) {
+        <button class="vt-sb-search-clear" (click)="searchQuery.set('')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      }
+    </div>
+
+    <!-- Nav: credential types -->
+    <nav class="vt-sb-nav">
+      <button class="vt-sb-item" [class.active]="!selectedType()" (click)="selectedType.set('')">
+        <span class="material-symbols-outlined vt-sb-item-icon">lock</span>
+        <span class="vt-sb-item-label">All Credentials</span>
+        <span class="vt-sb-count">{{ vaultStore.credentials().length }}</span>
+      </button>
+      @for (entry of allTypeStats(); track entry.type) {
+        <button
+          class="vt-sb-item"
+          [class.active]="selectedType() === entry.type"
+          (click)="selectedType.set(selectedType() === entry.type ? '' : entry.type)">
+          <span
+            class="material-symbols-outlined vt-sb-item-icon"
+            [style.color]="selectedType() === entry.type ? '' : entry.color">
+            {{ entry.icon }}
+          </span>
+          <span class="vt-sb-item-label">{{ entry.label }}</span>
+          <span class="vt-sb-count">{{ entry.count }}</span>
+        </button>
+      }
+    </nav>
+
+    <!-- Scope section -->
+    <div class="vt-sb-section">
+      <div class="vt-sb-section-hdr">
+        <span class="vt-sb-section-label">Scope</span>
+      </div>
+      <button
+        class="vt-sb-item"
+        [class.active]="selectedScope() === 'global'"
+        (click)="selectedScope.set(selectedScope() === 'global' ? '' : 'global')">
+        <span class="material-symbols-outlined vt-sb-item-icon">public</span>
+        <span class="vt-sb-item-label">Global</span>
+        <span class="vt-sb-count">{{ countByScope()['global'] || 0 }}</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="vt-main">
+
+    <!-- Toolbar -->
+    <div class="vt-toolbar">
+      <div class="vt-breadcrumb">
+        <span class="vt-bc-root">Vault</span>
+        @if (selectedType()) {
+          <span class="vt-bc-sep">›</span>
+          <span class="vt-bc-leaf">{{ getTypeMeta(selectedType()).label }}</span>
+        }
+        @if (selectedScope()) {
+          <span class="vt-bc-sep">›</span>
+          <span class="vt-bc-leaf vt-capitalize">{{ selectedScope() }}</span>
+        }
+        <span class="vt-bc-count">{{ filteredCredentials().length }}</span>
+      </div>
+      <div class="vt-toolbar-right">
+        @if (hasActiveFilters()) {
+          <div class="vt-filter-chip">
+            <span>Filtered</span>
+            <button (click)="clearFilters()">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        }
+        <div class="vt-tb-divider"></div>
+        <button
+          class="vt-ai-btn"
+          [class.active]="showAssistant()"
+          title="AI Assistant"
+          (click)="toggleAssistant()">
+          <span class="material-symbols-outlined">auto_awesome</span>
+          AI
+        </button>
+        <div class="vt-tb-divider"></div>
+        <button class="vt-add-btn" (click)="openAddForm()">
+          <span class="material-symbols-outlined">add</span>
+          New Credential
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="vt-table-wrap">
+
+      @if (filteredCredentials().length === 0) {
+        <div class="vt-empty">
+          @if (vaultStore.credentials().length === 0) {
+            <span class="material-symbols-outlined vt-empty-icon">vpn_key</span>
+            <p class="vt-empty-title">Vault is empty</p>
+            <p class="vt-empty-sub">Store API keys, passwords, SSH credentials and secure notes in one encrypted place.</p>
+            <div class="vt-empty-actions">
+              <button class="vt-add-btn" (click)="openAddForm()">
+                <span class="material-symbols-outlined">add</span>
+                Add First Credential
+              </button>
+            </div>
+          } @else {
+            <span class="material-symbols-outlined vt-empty-icon">search_off</span>
+            <p class="vt-empty-title">No results match your filters</p>
+            <button class="vt-tool-btn" (click)="clearFilters()">Clear Filters</button>
+          }
+        </div>
+      } @else {
+        <env-table
+          class="env-table--compact"
+          [columns]="tableColumns"
+          [rows]="tableRows()"
+          [actions]="tableActions"
+          [showToolbar]="false"
+          rowIdKey="id"
+          (rowClick)="openEditForm($any($event['_cred']))"
+          (actionClick)="handleTableAction($event)"
+          (sortChange)="handleTableSort($event)"
+        ></env-table>
+      }
+
+    </div>
+  </div>
+
+  <!-- AI panel -->
+  @if (showAssistant()) {
+    <env-ai-panel
+      title="Vault Assistant"
+      placeholder="Ask about your credentials…"
+      [suggestions]="aiSuggestions"
+      [messages]="aiMessages()"
+      [loading]="aiLoading()"
+      (send)="sendAiMessage($event)"
+      (cleared)="clearAiChat()"
+      (closed)="toggleAssistant()"
+    ></env-ai-panel>
+  }
+
+</div>
+
+<!-- ── ADD / EDIT MODAL ── -->
+@if (formMode() !== null) {
+  <div class="vta-backdrop" (click)="closeForm()">
+    <div class="vta-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="vta-header">
+        <div class="vta-header-left">
+          <span class="material-symbols-outlined vta-header-icon">vpn_key</span>
+          <h2 class="vta-header-title">{{ formMode() === 'edit' ? 'Edit Credential' : 'New Credential' }}</h2>
+          @if (formMode() === 'edit') {
+            <span class="vta-editing-chip">{{ editName() }}</span>
+          }
+        </div>
+        <div class="vta-header-right">
+          <kbd class="vta-kbd">Esc</kbd>
+          <button class="vta-close-btn" (click)="closeForm()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body: two-pane -->
+      <div class="vta-body">
+
+        <!-- Left: Type sidebar -->
+        <nav class="vta-type-sidebar">
+          <div class="vta-sidebar-label">TYPE</div>
+          @for (opt of typeOptions; track opt.type) {
+            <button
+              class="vta-type-item"
+              [class.vta-type-item--active]="activeType() === opt.type"
+              (click)="setFormType(opt.type)">
+              <div
+                class="vta-type-icon-wrap"
+                [style.background]="activeType() === opt.type ? opt.color : 'transparent'"
+                [style.border-color]="activeType() === opt.type ? opt.color : 'var(--border-subtle)'">
+                <span
+                  class="material-symbols-outlined"
+                  [style.color]="activeType() === opt.type ? 'white' : opt.color">
+                  {{ opt.icon }}
+                </span>
+              </div>
+              <span class="vta-type-label">{{ opt.label }}</span>
+            </button>
+          }
+        </nav>
+
+        <!-- Right: Form fields -->
+        <div class="vta-form-pane">
+
+          <!-- Name bar -->
+          <div class="vta-name-bar">
+            <div class="vta-name-icon-wrap">
+              <span class="material-symbols-outlined" [style.color]="getTypeMeta(activeType()).color">
+                {{ getTypeMeta(activeType()).icon }}
+              </span>
+            </div>
+            <input
+              class="vta-name-input"
+              type="text"
+              placeholder="Credential name…"
+              autofocus
+              [ngModel]="formMode() === 'edit' ? editName() : newCredName()"
+              (ngModelChange)="formMode() === 'edit' ? editName.set($event) : newCredName.set($event)">
+          </div>
+
+          <!-- Fields -->
+          <div class="vta-fields">
+            @if (activeType() !== 'note') {
+              <div class="vta-field-group">
+                <label class="vta-label">{{ usernameLabel() }}</label>
+                <input
+                  type="text"
+                  class="vta-input"
+                  [placeholder]="usernameLabel()"
+                  [ngModel]="formMode() === 'edit' ? editUsername() : newCredUsername()"
+                  (ngModelChange)="formMode() === 'edit' ? editUsername.set($event) : newCredUsername.set($event)">
+              </div>
+            }
+            <div class="vta-field-group">
+              <label class="vta-label">
+                {{ valueLabel() }}
+                @if (formMode() === 'edit') {
+                  <span class="vta-label-hint">(leave blank to keep existing)</span>
+                }
+              </label>
+              <input
+                type="password"
+                class="vta-input"
+                [placeholder]="valueLabel()"
+                [ngModel]="formMode() === 'edit' ? editValue() : newCredValue()"
+                (ngModelChange)="formMode() === 'edit' ? editValue.set($event) : newCredValue.set($event)">
+            </div>
+            <div class="vta-field-group">
+              <label class="vta-label">{{ urlLabel() }}</label>
+              <input
+                type="text"
+                class="vta-input"
+                [placeholder]="urlLabel()"
+                [ngModel]="formMode() === 'edit' ? editUrl() : newCredUrl()"
+                (ngModelChange)="formMode() === 'edit' ? editUrl.set($event) : newCredUrl.set($event)">
+            </div>
+            <div class="vta-field-group">
+              <label class="vta-label">Project Scope</label>
+              <input
+                type="text"
+                class="vta-input"
+                placeholder="global"
+                [ngModel]="formMode() === 'edit' ? editProjectId() : newProjectId()"
+                (ngModelChange)="formMode() === 'edit' ? editProjectId.set($event) : newProjectId.set($event)">
+            </div>
+            <div class="vta-field-group vta-field-group--wide">
+              <label class="vta-label">Notes</label>
+              <input
+                type="text"
+                class="vta-input"
+                placeholder="Optional description…"
+                [ngModel]="formMode() === 'edit' ? editNotes() : newCredNotes()"
+                (ngModelChange)="formMode() === 'edit' ? editNotes.set($event) : newCredNotes.set($event)">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="vta-footer">
+        <div class="vta-footer-hints">
+          <span class="vta-hint"><kbd>Tab</kbd> Next field</span>
+          <span class="vta-hint"><kbd>Enter</kbd> Save</span>
+          <span class="vta-hint"><kbd>Esc</kbd> Close</span>
+        </div>
+        <div class="vta-footer-actions">
+          <button class="vta-cancel-btn" (click)="closeForm()">Cancel</button>
+          <button
+            class="vta-save-btn"
+            [disabled]="formMode() === 'edit' ? !editName() : (!newCredName() || !newCredValue())"
+            (click)="formMode() === 'edit' ? saveEdit() : addCredential()">
+            <span class="material-symbols-outlined">save</span>
+            {{ formMode() === 'edit' ? 'Save Changes' : 'Save Credential' }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}
