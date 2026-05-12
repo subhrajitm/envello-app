@@ -10,3 +10,12 @@ export { ModalComponent } from './modal/modal.component';
 export { EmptyStateComponent } from './empty-state/empty-state.component';
 export { InputComponent } from './input/input.component';
 export { EnvLogoComponent } from './logo/logo.component';
+export {
+  TableComponent,
+  type EnvTableColumn,
+  type EnvTableTab,
+  type EnvTableAction,
+  type EnvTableRow,
+  type EnvTableSortEvent,
+  type EnvTableActionEvent,
+} from './table/table.component';
