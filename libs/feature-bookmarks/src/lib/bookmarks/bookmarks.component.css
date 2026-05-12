@@ -389,9 +389,9 @@
 ════════════════════════════════════════════════════════ */
 .bm-table-wrap {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */

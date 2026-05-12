@@ -2,7 +2,8 @@ import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Bookmark, BookmarkFolder } from '@envello/core';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent } from '@envello/ui';
+import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 type BookmarkView = 'all' | 'pinned' | 'archived' | 'recent';
 type ViewMode = 'table' | 'grid';
@@ -11,7 +12,7 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 @Component({
   selector: 'app-bookmarks',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent],
   templateUrl: './bookmarks.component.html',
   styleUrl: './bookmarks.component.css',
 })
@@ -178,6 +179,37 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     }
     return counts;
   });
+
+  readonly tableColumns: EnvTableColumn[] = [
+    { key: 'title', header: 'Name', type: 'avatar-text', sortable: true },
+    { key: 'domain', header: 'Domain' },
+    { key: 'folder', header: 'Folder' },
+    { key: 'tags', header: 'Tags' },
+    { key: 'visitCount', header: 'Visits', sortable: true },
+    { key: 'createdAt', header: 'Added', sortable: true },
+  ];
+
+  readonly tableActions: EnvTableAction[] = [
+    { key: 'open', label: 'Open', icon: 'open_in_new' },
+    { key: 'togglePin', label: 'Toggle pin', icon: 'push_pin' },
+    { key: 'edit', label: 'Edit', icon: 'edit' },
+    { key: 'toggleArchive', label: 'Archive', icon: 'archive' },
+    { key: 'delete', label: 'Delete', icon: 'delete', danger: true },
+  ];
+
+  tableRows = computed(() => this.filteredBookmarks().map(bookmark => ({
+    id: bookmark.id,
+    title: {
+      name: bookmark.title,
+      avatar: bookmark.faviconUrl || this.getFaviconUrl(bookmark.url),
+    },
+    domain: this.getDomain(bookmark.url),
+    folder: bookmark.folderId ? this.folderName(bookmark.folderId) : '',
+    tags: (bookmark.tags ?? []).slice(0, 2).map(tag => `#${tag}`).join(' '),
+    visitCount: bookmark.visitCount ?? 0,
+    createdAt: this.formatRelativeDate(bookmark.createdAt),
+    bookmark,
+  })));
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
   private _keyHandler!: (e: KeyboardEvent) => void;
@@ -471,6 +503,35 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       recent: 'Recently Added', archived: 'Archived',
     };
     return labels[this.selectedView()];
+  }
+
+  handleTableAction(event: EnvTableActionEvent) {
+    const bookmark = event.row['bookmark'] as Bookmark | undefined;
+    if (!bookmark) return;
+
+    switch (event.actionKey) {
+      case 'open':
+        this.openBookmark(bookmark);
+        break;
+      case 'togglePin':
+        this.togglePin(bookmark);
+        break;
+      case 'edit':
+        this.openEditModal(bookmark);
+        break;
+      case 'toggleArchive':
+        this.toggleArchive(bookmark);
+        break;
+      case 'delete':
+        this.requestDelete(bookmark.id);
+        break;
+    }
+  }
+
+  handleTableSort(event: EnvTableSortEvent) {
+    const sortKey = event.key as SortBy;
+    this.sortBy.set(sortKey);
+    this.sortAsc.set(event.direction === 'asc');
   }
 
   trackById(_: number, item: Bookmark) { return item.id; }

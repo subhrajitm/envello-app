@@ -175,34 +175,6 @@
     <!-- ── TABLE VIEW ── -->
     @if (viewMode() === 'table') {
       <div class="bm-table-wrap">
-
-        <!-- Table header -->
-        <div class="bm-table-head">
-          <div class="bm-th bm-col-title" (click)="setSortBy('title')">
-            Name
-            <span class="bm-sort-ico material-symbols-outlined">
-              {{ sortBy() === 'title' ? (sortAsc() ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-            </span>
-          </div>
-          <div class="bm-th bm-col-domain">Domain</div>
-          <div class="bm-th bm-col-folder">Folder</div>
-          <div class="bm-th bm-col-tags">Tags</div>
-          <div class="bm-th bm-col-visits" (click)="setSortBy('visitCount')">
-            Visits
-            <span class="bm-sort-ico material-symbols-outlined">
-              {{ sortBy() === 'visitCount' ? (sortAsc() ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-            </span>
-          </div>
-          <div class="bm-th bm-col-added" (click)="setSortBy('createdAt')">
-            Added
-            <span class="bm-sort-ico material-symbols-outlined">
-              {{ sortBy() === 'createdAt' ? (sortAsc() ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-            </span>
-          </div>
-          <div class="bm-th bm-col-actions"></div>
-        </div>
-
-        <!-- Empty state -->
         @if (filteredBookmarks().length === 0) {
           <div class="bm-table-empty">
             <span class="material-symbols-outlined">bookmarks</span>
@@ -214,75 +186,24 @@
               </button>
             }
           </div>
+        } @else {
+          <env-table
+            class="env-table--compact"
+            [columns]="tableColumns"
+            [rows]="tableRows()"
+            [actions]="tableActions"
+            [showToolbar]="false"
+            [showSortFilter]="false"
+            [showSearch]="false"
+            [totalEntries]="tableRows().length"
+            [currentPage]="1"
+            [pageSize]="tableRows().length"
+            rowIdKey="id"
+            (rowClick)="openBookmark($event['bookmark'])"
+            (actionClick)="handleTableAction($event)"
+            (sortChange)="handleTableSort($event)"
+          ></env-table>
         }
-
-        <!-- Rows -->
-        @for (bm of filteredBookmarks(); track bm.id) {
-          <div class="bm-tr" [class.bm-tr--pinned]="bm.isPinned" [style.--bm-accent]="bm.color || ''">
-            <!-- Title -->
-            <div class="bm-td bm-col-title" (click)="openBookmark(bm)">
-              <img
-                class="bm-fav"
-                [src]="bm.faviconUrl || getFaviconUrl(bm.url)"
-                [alt]="getDomain(bm.url)"
-                (error)="$any($event.target).style.visibility='hidden'"
-              />
-              <span class="bm-tr-title">{{ bm.title }}</span>
-              @if (bm.isPinned) {
-                <span class="material-symbols-outlined bm-pin-ico">push_pin</span>
-              }
-            </div>
-            <!-- Domain -->
-            <div class="bm-td bm-col-domain">
-              <span class="bm-tr-domain">{{ getDomain(bm.url) }}</span>
-            </div>
-            <!-- Folder -->
-            <div class="bm-td bm-col-folder">
-              @if (bm.folderId) {
-                <span class="bm-tr-folder">
-                  <span class="material-symbols-outlined">folder</span>
-                  {{ folderName(bm.folderId) }}
-                </span>
-              }
-            </div>
-            <!-- Tags -->
-            <div class="bm-td bm-col-tags">
-              @for (tag of (bm.tags ?? []).slice(0, 2); track tag) {
-                <span class="bm-tr-tag" (click)="toggleTagFilter(tag); $event.stopPropagation()">#{{ tag }}</span>
-              }
-              @if ((bm.tags?.length ?? 0) > 2) {
-                <span class="bm-tr-tag-more">+{{ (bm.tags?.length ?? 0) - 2 }}</span>
-              }
-            </div>
-            <!-- Visits -->
-            <div class="bm-td bm-col-visits">
-              <span class="bm-tr-num">{{ bm.visitCount ?? 0 }}</span>
-            </div>
-            <!-- Added -->
-            <div class="bm-td bm-col-added">
-              <span class="bm-tr-date">{{ formatRelativeDate(bm.createdAt) }}</span>
-            </div>
-            <!-- Hover actions -->
-            <div class="bm-td bm-col-actions">
-              <button class="bm-row-action" (click)="openBookmark(bm)" title="Open">
-                <span class="material-symbols-outlined">open_in_new</span>
-              </button>
-              <button class="bm-row-action" (click)="togglePin(bm)" [title]="bm.isPinned ? 'Unpin' : 'Pin'">
-                <span class="material-symbols-outlined">{{ bm.isPinned ? 'push_pin' : 'keep' }}</span>
-              </button>
-              <button class="bm-row-action" (click)="openEditModal(bm)" title="Edit">
-                <span class="material-symbols-outlined">edit</span>
-              </button>
-              <button class="bm-row-action" (click)="toggleArchive(bm)" [title]="bm.isArchived ? 'Restore' : 'Archive'">
-                <span class="material-symbols-outlined">{{ bm.isArchived ? 'unarchive' : 'archive' }}</span>
-              </button>
-              <button class="bm-row-action bm-row-action--danger" (click)="requestDelete(bm.id)" title="Delete">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-            </div>
-          </div>
-        }
-
       </div>
     }
 
