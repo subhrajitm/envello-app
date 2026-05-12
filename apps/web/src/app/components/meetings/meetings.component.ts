@@ -15,12 +15,10 @@ import {
   CalendarConnection,
   PROVIDER_META,
 } from '@envello/core';
-import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '@envello/ui';
-
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
