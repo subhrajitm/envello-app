@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { StoreService, type Novel, type WritingType, NovelContentService } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction } from '@envello/ui';
 
 const WRITING_TYPE_META: Record<string, { color: string; icon: string }> = {
   NOVEL:       { color: '#f59e0b', icon: 'menu_book'    },
@@ -26,7 +26,7 @@ const STATUS_META: Record<string, { color: string; icon: string; label: string }
 @Component({
   selector: 'app-write',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent],
   templateUrl: './write.component.html',
   styleUrl: './write.component.css'
 })
@@ -68,7 +68,20 @@ export class WriteComponent {
     'Which pieces are ready to publish?',
     'Show a breakdown by writing type',
   ];
+  // ── Table configuration ──────────────────────────────────────────────────
+  readonly tableColumns: EnvTableColumn[] = [
+    { key: 'title',       header: 'Title',           type: 'text', sortable: true },
+    { key: 'type',        header: 'Type',            type: 'badge', sortable: true, badgeMap: {} },
+    { key: 'status',      header: 'Status',          type: 'badge', sortable: true, badgeMap: {} },
+    { key: 'progress',    header: 'Progress',        type: 'text', sortable: true },
+    { key: 'updated',     header: 'Updated',         type: 'text', sortable: true },
+  ];
 
+  readonly tableActions: EnvTableAction[] = [
+    { key: 'open',      label: 'Open',      icon: 'open_in_new' },
+    { key: 'duplicate', label: 'Duplicate', icon: 'content_copy' },
+    { key: 'delete',    label: 'Delete',    icon: 'delete', danger: true },
+  ];
   // ── Static data ───────────────────────────────────────────────────────────
   readonly writingTypes: { id: WritingType; label: string; defaultWords: number; defaultIcon: string }[] = [
     { id: 'NOVEL',       label: 'Novel',        defaultWords: 80000, defaultIcon: 'menu_book'   },
@@ -153,6 +166,18 @@ export class WriteComponent {
     });
   });
 
+  tableRows = computed(() =>
+    this.filteredNovels().map(novel => ({
+      id: novel.id,
+      title: novel.title,
+      type: this.getWritingTypeLabel(novel.writingType),
+      status: this.getStatusMeta(novel.status).label,
+      progress: `${novel.progress}% (${novel.wordCount?.toLocaleString() || 0}/${novel.targetWordCount?.toLocaleString() || 0})`,
+      updated: novel.lastUpdated,
+      novel,
+    }))
+  );
+
   // ── Helpers ───────────────────────────────────────────────────────────────
   getTypeMeta(type?: string)  { return WRITING_TYPE_META[type ?? ''] ?? { color: '#9ca3af', icon: 'article' }; }
   getStatusMeta(status: string) { return STATUS_META[status] ?? STATUS_META['PLANNING']; }
@@ -200,6 +225,29 @@ export class WriteComponent {
       case 'PROGRESS': return 'Progress';
       default: return 'Sort';
     }
+  }
+
+  // ── Table handlers ────────────────────────────────────────────────────────
+  handleTableAction(event: any) {
+    const actionKey = event.key;
+    const novel = event.row['novel'];
+    if (!novel) return;
+
+    switch (actionKey) {
+      case 'open':
+        this.openNovel(novel.id);
+        break;
+      case 'duplicate':
+        this.duplicateNovel(novel);
+        break;
+      case 'delete':
+        this.openDeleteModal(novel);
+        break;
+    }
+  }
+
+  handleTableSort(event: any) {
+    this.selectSort(event.key === 'title' ? 'TITLE' : event.key === 'type' ? 'CREATED' : 'UPDATED');
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────

@@ -170,102 +170,25 @@
         </div>
       } @else if (viewMode() === 'LIST') {
 
-        <!-- List view -->
-        <div class="wr-table-head">
-          <div class="wr-th wr-col-title">Title</div>
-          <div class="wr-th wr-col-type">Type</div>
-          <div class="wr-th wr-col-status">Status</div>
-          <div class="wr-th wr-col-words">Words / Target</div>
-          <div class="wr-th wr-col-updated">Updated</div>
-          <div class="wr-th wr-col-actions"></div>
+        <!-- List view with reusable table -->
+        <div class="wr-table-wrap">
+          <env-table
+            class="env-table--compact"
+            [columns]="tableColumns"
+            [rows]="tableRows()"
+            [actions]="tableActions"
+            [showToolbar]="false"
+            [showSortFilter]="false"
+            [showSearch]="false"
+            [totalEntries]="tableRows().length"
+            [currentPage]="1"
+            [pageSize]="tableRows().length"
+            rowIdKey="id"
+            (rowClick)="openNovel($event['id'])"
+            (actionClick)="handleTableAction($event)"
+            (sortChange)="handleTableSort($event)"
+          ></env-table>
         </div>
-
-        @for (novel of filteredNovels(); track novel.id) {
-          <div class="wr-tr" (click)="openNovel(novel.id)">
-
-            <!-- Title -->
-            <div class="wr-td wr-col-title">
-              <div class="wr-novel-icon" [style.color]="getTypeMeta(novel.writingType).color"
-                [style.background]="getTypeMeta(novel.writingType).color + '18'">
-                <span class="material-symbols-outlined">{{ novel.icon }}</span>
-              </div>
-              <div class="wr-novel-info">
-                <span class="wr-novel-title">
-                  {{ novel.title }}
-                  @if (novel.isRecentlyUpdated) {
-                    <span class="wr-recent-dot" title="Recently updated"></span>
-                  }
-                </span>
-                <span class="wr-novel-meta">{{ getWritingTypeLabel(novel.writingType) }} · {{ novel.createdDate }} · {{ novel.notesCount }} notes</span>
-              </div>
-            </div>
-
-            <!-- Type -->
-            <div class="wr-td wr-col-type">
-              <span class="wr-type-badge"
-                [style.background]="getTypeMeta(novel.writingType).color + '18'"
-                [style.color]="getTypeMeta(novel.writingType).color"
-                [style.border-color]="getTypeMeta(novel.writingType).color + '40'">
-                {{ getWritingTypeLabel(novel.writingType) }}
-              </span>
-            </div>
-
-            <!-- Status -->
-            <div class="wr-td wr-col-status">
-              <span class="wr-status-badge">
-                <span class="wr-status-dot" [style.background]="getStatusMeta(novel.status).color"></span>
-                {{ getStatusMeta(novel.status).label }}
-              </span>
-            </div>
-
-            <!-- Words -->
-            <div class="wr-td wr-col-words">
-              <div class="wr-words-wrap">
-                <div class="wr-words-nums">
-                  <span class="wr-words-val">{{ novel.wordCount | number }}</span>
-                  <span class="wr-words-sep">/</span>
-                  <span class="wr-words-target">{{ novel.targetWordCount | number }}</span>
-                </div>
-                <div class="wr-progress-bar">
-                  <div class="wr-progress-fill"
-                    [style.width.%]="novel.progress"
-                    [style.background]="getProgressColor(novel.status)"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Updated -->
-            <div class="wr-td wr-col-updated">
-              <span class="wr-updated-text">{{ novel.lastUpdated }}</span>
-            </div>
-
-            <!-- Actions -->
-            <div class="wr-td wr-col-actions" (click)="$event.stopPropagation()">
-              <div class="wr-row-actions">
-                <div class="novel-menu-wrapper">
-                  <button class="wr-row-btn" (click)="toggleNovelMenu(novel.id, $event)" title="Actions">
-                    <span class="material-symbols-outlined">more_vert</span>
-                  </button>
-                  @if (novelMenuOpen() === novel.id) {
-                    <div class="wr-menu-dropdown">
-                      <button class="wr-menu-item" (click)="openNovel(novel.id); closeNovelMenu()">
-                        <span class="material-symbols-outlined">open_in_new</span>Open
-                      </button>
-                      <button class="wr-menu-item" (click)="duplicateNovel(novel, $event)">
-                        <span class="material-symbols-outlined">content_copy</span>Duplicate
-                      </button>
-                      <div class="wr-menu-divider"></div>
-                      <button class="wr-menu-item wr-menu-item--danger" (click)="openDeleteModal(novel, $event)">
-                        <span class="material-symbols-outlined">delete</span>Delete
-                      </button>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-
-          </div>
-        }
 
       } @else {
 
