@@ -96,9 +96,41 @@
                 </button>
                 }
             </div>
-            <button class="sidebar-filter-btn" title="Filter">
-                <span class="material-symbols-outlined">filter_list</span>
-            </button>
+            <div class="dropdown-wrapper">
+                <button class="sidebar-filter-btn" [class.active]="showFilterMenu()" (click)="toggleFilterMenu()" title="Filter">
+                    <span class="material-symbols-outlined">filter_list</span>
+                </button>
+                @if (showFilterMenu()) {
+                <div class="dropdown-menu filter-dropdown">
+                    <button class="dropdown-item" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all'); showFilterMenu.set(false)">
+                        <span>All</span>
+                        <span class="filter-dd-count">{{ notes().length }}</span>
+                    </button>
+                    <button class="dropdown-item" [class.active]="selectedFilter() === 'pinned'" (click)="setFilter('pinned'); showFilterMenu.set(false)">
+                        <span class="material-symbols-outlined">push_pin</span>
+                        <span>Pinned</span>
+                        @if (pinnedCount() > 0) {
+                        <span class="filter-dd-count">{{ pinnedCount() }}</span>
+                        }
+                    </button>
+                    <button class="dropdown-item" [class.active]="selectedFilter() === 'tagged'" (click)="setFilter('tagged'); showFilterMenu.set(false)">
+                        <span class="material-symbols-outlined">label</span>
+                        <span>Tagged</span>
+                        @if (taggedCount() > 0) {
+                        <span class="filter-dd-count">{{ taggedCount() }}</span>
+                        }
+                    </button>
+                    @if (selectedTag()) {
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item active" (click)="selectTag(selectedTag()); showFilterMenu.set(false)">
+                        <span class="material-symbols-outlined">label</span>
+                        <span>{{ selectedTag() }}</span>
+                        <span class="material-symbols-outlined filter-dd-close">close</span>
+                    </button>
+                    }
+                </div>
+                }
+            </div>
         </div>
 
         <!-- Section Header — Compass style -->
@@ -121,7 +153,7 @@
                 </button>
                 }
                 <div class="dropdown-wrapper">
-                    <button class="dn-section-action-btn" (click)="toggleDropdown()" title="Add">
+                    <button class="dn-section-action-btn dn-add-btn" (click)="toggleDropdown()" title="Add">
                         <span class="material-symbols-outlined">add</span>
                     </button>
                     @if (showDropdown()) {
@@ -137,39 +169,7 @@
                     </div>
                     }
                 </div>
-                <button class="dn-section-action-btn" title="More options">
-                    <span class="material-symbols-outlined">more_horiz</span>
-                </button>
             </div>
-        </div>
-
-        <!-- Filter Chips (subtle, below header) -->
-        <div class="dn-filter-chips">
-            <button class="filter-chip" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
-                All
-                <span class="chip-count">{{ notes().length }}</span>
-            </button>
-            <button class="filter-chip" [class.active]="selectedFilter() === 'pinned'" (click)="setFilter('pinned')">
-                <span class="material-symbols-outlined">push_pin</span>
-                Pinned
-                @if (pinnedCount() > 0) {
-                <span class="chip-count">{{ pinnedCount() }}</span>
-                }
-            </button>
-            <button class="filter-chip" [class.active]="selectedFilter() === 'tagged'" (click)="setFilter('tagged')">
-                <span class="material-symbols-outlined">label</span>
-                Tagged
-                @if (taggedCount() > 0) {
-                <span class="chip-count">{{ taggedCount() }}</span>
-                }
-            </button>
-            @if (selectedTag()) {
-            <button class="filter-chip filter-chip--tag active" (click)="selectTag(selectedTag())">
-                <span class="material-symbols-outlined">label</span>
-                {{ selectedTag() }}
-                <span class="material-symbols-outlined filter-chip-close">close</span>
-            </button>
-            }
         </div>
 
         <!-- Notes List with Hierarchical Folders -->
@@ -305,6 +305,9 @@
                     <span class="material-symbols-outlined">add</span>
                 </button>
             </div>
+            <button class="hdr-btn ai-hdr-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+                <span class="material-symbols-outlined">auto_awesome</span>
+            </button>
         </div>
 
         <!-- Editor Body — content + right sidebar side by side -->
@@ -401,6 +404,14 @@
 
         <!-- Right Compact Sidebar — Note Actions -->
         <aside class="dn-right-sidebar">
+            @if (editor) {
+            <button class="rs-btn rs-btn--save" (click)="editor.commands.blur()" title="Save">
+                <span class="material-symbols-outlined">check</span>
+            </button>
+            }
+
+            <div class="rs-divider"></div>
+
             <div class="rs-section">
                 <span class="rs-section-label">Format</span>
                 <div class="rs-btn-group">
@@ -615,14 +626,9 @@
 
             <div class="rs-spacer"></div>
 
-            <div class="rs-bottom-actions">
-                <button class="rs-btn ai-toggle-btn-dn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                </button>
-                <button class="rs-btn danger" title="Delete note" (click)="deleteCurrentNote()">
-                    <span class="material-symbols-outlined">delete</span>
-                </button>
-            </div>
+            <button class="rs-btn danger rs-delete-btn" title="Delete note" (click)="deleteCurrentNote()">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
         </aside>
         </div>
 
