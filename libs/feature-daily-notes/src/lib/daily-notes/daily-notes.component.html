@@ -297,7 +297,7 @@
     <!-- Editor Pane -->
     <div class="dn-editor">
         @if (selectedNote(); as note) {
-        <!-- Editor Header with Tab-like View -->
+        <!-- Editor Header — Tabs + New Note button only -->
         <div class="dn-editor-header">
             <div class="dn-editor-tabs">
                 @for (noteId of openNotes(); track noteId) {
@@ -312,106 +312,8 @@
                 </button>
                 }
                 }
-            </div>
-            <div class="dn-editor-actions">
-                <!-- Paragraph style dropdown -->
-                <div class="dropdown-wrapper">
-                    <button class="action-btn" [class.active]="showFormatMenu()" title="Paragraph style" (click)="toggleFormatMenu()">
-                        <span class="material-symbols-outlined">format_size</span>
-                    </button>
-                    @if (showFormatMenu()) {
-                    <div class="format-dropdown dropdown-menu">
-                        <button class="dropdown-item" [class.active]="editor.isActive('paragraph')" (click)="setFormat('paragraph')">
-                            <span class="material-symbols-outlined">format_paragraph</span>
-                            <span>Normal text</span>
-                        </button>
-                        <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 1})" (click)="setFormat('h1')">
-                            <span class="material-symbols-outlined">format_h1</span>
-                            <span>Heading 1</span>
-                        </button>
-                        <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 2})" (click)="setFormat('h2')">
-                            <span class="material-symbols-outlined">format_h2</span>
-                            <span>Heading 2</span>
-                        </button>
-                        <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 3})" (click)="setFormat('h3')">
-                            <span class="material-symbols-outlined">format_h3</span>
-                            <span>Heading 3</span>
-                        </button>
-                    </div>
-                    }
-                </div>
-                <button class="action-btn" title="Add tag" (click)="promptAddTag()">
-                    <span class="material-symbols-outlined">label</span>
-                </button>
-                <button class="action-btn" title="Export" (click)="exportNote()">
-                    <span class="material-symbols-outlined">download</span>
-                </button>
-                <!-- Note info dropdown -->
-                <div class="dropdown-wrapper">
-                    <button class="action-btn" [class.active]="showInfoMenu()" title="Note info" (click)="toggleInfoMenu()">
-                        <span class="material-symbols-outlined">info</span>
-                    </button>
-                    @if (showInfoMenu()) {
-                    <div class="info-dropdown dropdown-menu">
-                        <div class="info-dropdown-title">Note info</div>
-                        <div class="info-row">
-                            <span class="material-symbols-outlined info-icon">calendar_today</span>
-                            <span class="info-label">Created</span>
-                            <span class="info-value">{{ note.date }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="material-symbols-outlined info-icon">schedule</span>
-                            <span class="info-label">Time</span>
-                            <span class="info-value">{{ formatTime(note.id, note.lastEdited) }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="material-symbols-outlined info-icon">edit_note</span>
-                            <span class="info-label">Last edited</span>
-                            <span class="info-value">{{ note.lastEdited || 'today' }}</span>
-                        </div>
-                        <div class="info-divider"></div>
-                        <div class="info-row">
-                            <span class="material-symbols-outlined info-icon">article</span>
-                            <span class="info-label">Words</span>
-                            <span class="info-value">{{ wordCount() }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="material-symbols-outlined info-icon">text_fields</span>
-                            <span class="info-label">Characters</span>
-                            <span class="info-value">{{ characterCount() }}</span>
-                        </div>
-                        <div class="info-divider"></div>
-                        <div class="info-row info-save-status">
-                            <span class="material-symbols-outlined info-icon saved">cloud_done</span>
-                            <span class="info-value saved">All changes saved</span>
-                        </div>
-                    </div>
-                    }
-                </div>
-                <div class="action-divider"></div>
-                <button class="action-btn danger" title="Delete" (click)="deleteCurrentNote()">
-                    <span class="material-symbols-outlined">delete</span>
-                </button>
-                <!-- More options dropdown -->
-                <div class="dropdown-wrapper">
-                    <button class="action-btn" [class.active]="showMoreOptionsMenu()" title="More options" (click)="toggleMoreOptions()">
-                        <span class="material-symbols-outlined">more_horiz</span>
-                    </button>
-                    @if (showMoreOptionsMenu()) {
-                    <div class="more-options-dropdown dropdown-menu">
-                        <button class="dropdown-item" (click)="togglePin(note, $event); toggleMoreOptions()">
-                            <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
-                            <span>{{ isPinned(note) ? 'Unpin note' : 'Pin note' }}</span>
-                        </button>
-                        <button class="dropdown-item" (click)="duplicateNote(note); toggleMoreOptions()">
-                            <span class="material-symbols-outlined">content_copy</span>
-                            <span>Duplicate note</span>
-                        </button>
-                    </div>
-                    }
-                </div>
-                <button class="action-btn ai-toggle-btn-dn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
-                    <span class="material-symbols-outlined">auto_awesome</span>
+                <button class="editor-tab-add" (click)="handleNewNote()" title="New note">
+                    <span class="material-symbols-outlined">add</span>
                 </button>
             </div>
         </div>
@@ -525,13 +427,15 @@
         </div>
         }
 
+        <!-- Editor Body — content + right sidebar side by side -->
+        <div class="dn-editor-body">
         <!-- Editor Content -->
         <div class="dn-editor-content">
             <div class="editor-container">
                 <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
                     (ngModelChange)="updateNoteTitle($event)" placeholder="Note title..." />
 
-                <!-- Tags section — always visible so users can always add tags -->
+                <!-- Tags section -->
                 <div class="editor-tags-section">
                     @for (tag of getNoteTags(note); track tag) {
                     <span class="editor-tag-chip">
@@ -613,6 +517,100 @@
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
             </div>
+        </div>
+
+        <!-- Right Compact Sidebar — Note Actions -->
+        <aside class="dn-right-sidebar">
+            <div class="rs-section">
+                <span class="rs-section-label">Format</span>
+                <div class="rs-btn-group">
+                    <div class="dropdown-wrapper">
+                        <button class="rs-btn" [class.active]="showFormatMenu()" title="Paragraph style" (click)="toggleFormatMenu()">
+                            <span class="material-symbols-outlined">format_size</span>
+                        </button>
+                        @if (showFormatMenu()) {
+                        <div class="format-dropdown dropdown-menu rs-dropdown">
+                            <button class="dropdown-item" [class.active]="editor.isActive('paragraph')" (click)="setFormat('paragraph')">
+                                <span class="material-symbols-outlined">format_paragraph</span>
+                                <span>Normal</span>
+                            </button>
+                            <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 1})" (click)="setFormat('h1')">
+                                <span class="material-symbols-outlined">format_h1</span>
+                                <span>H1</span>
+                            </button>
+                            <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 2})" (click)="setFormat('h2')">
+                                <span class="material-symbols-outlined">format_h2</span>
+                                <span>H2</span>
+                            </button>
+                            <button class="dropdown-item" [class.active]="editor.isActive('heading', {level: 3})" (click)="setFormat('h3')">
+                                <span class="material-symbols-outlined">format_h3</span>
+                                <span>H3</span>
+                            </button>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="rs-divider"></div>
+
+            <div class="rs-section">
+                <span class="rs-section-label">Actions</span>
+                <div class="rs-btn-group">
+                    <button class="rs-btn" title="{{ isPinned(note) ? 'Unpin note' : 'Pin note' }}" (click)="togglePin(note, $event)">
+                        <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
+                    </button>
+                    <button class="rs-btn" title="Add tag" (click)="promptAddTag()">
+                        <span class="material-symbols-outlined">label</span>
+                    </button>
+                    <button class="rs-btn" title="Duplicate" (click)="duplicateNote(note)">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                    <button class="rs-btn" title="Export" (click)="exportNote()">
+                        <span class="material-symbols-outlined">download</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="rs-divider"></div>
+
+            <div class="rs-section">
+                <span class="rs-section-label">Info</span>
+                <div class="rs-info-list">
+                    <div class="rs-info-row">
+                        <span class="material-symbols-outlined rs-info-icon">calendar_today</span>
+                        <span class="rs-info-value">{{ note.date }}</span>
+                    </div>
+                    <div class="rs-info-row">
+                        <span class="material-symbols-outlined rs-info-icon">schedule</span>
+                        <span class="rs-info-value">{{ formatTime(note.id, note.lastEdited) }}</span>
+                    </div>
+                    <div class="rs-info-row">
+                        <span class="material-symbols-outlined rs-info-icon">article</span>
+                        <span class="rs-info-value">{{ wordCount() }} words</span>
+                    </div>
+                    <div class="rs-info-row">
+                        <span class="material-symbols-outlined rs-info-icon">text_fields</span>
+                        <span class="rs-info-value">{{ characterCount() }} chars</span>
+                    </div>
+                    <div class="rs-info-row rs-save-row">
+                        <span class="material-symbols-outlined rs-info-icon saved">cloud_done</span>
+                        <span class="rs-info-value saved">Saved</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rs-spacer"></div>
+
+            <div class="rs-bottom-actions">
+                <button class="rs-btn ai-toggle-btn-dn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                </button>
+                <button class="rs-btn danger" title="Delete note" (click)="deleteCurrentNote()">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+        </aside>
         </div>
 
         } @else {

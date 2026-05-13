@@ -580,11 +580,9 @@
     padding: 0;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
-    justify-content: space-between;
     align-items: flex-end;
     background: var(--bg-panel);
-    height: 46px;
-    /* consistent height */
+    height: 38px;
     position: relative;
     z-index: 1;
 }
@@ -837,6 +835,15 @@
 
 .toolbar-action-btn .material-symbols-outlined {
     font-size: 16px;
+}
+
+/* Editor Body — horizontal flex for content + right sidebar */
+.dn-editor-body {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* Editor Content */
@@ -2014,4 +2021,175 @@ tiptap-editor:focus,
 .filter-chip.active .chip-count {
     background: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.15);
     color: var(--accent-primary);
+}
+
+/* ─── Tab Add Button ───────────────────────────────────────────────────────── */
+.editor-tab-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px dashed var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin: auto 0 6px 4px;
+    flex-shrink: 0;
+}
+
+.editor-tab-add:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-highlight);
+}
+
+.editor-tab-add .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* ─── Right Compact Sidebar ────────────────────────────────────────────────── */
+.dn-right-sidebar {
+    width: 52px;
+    border-left: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.dn-right-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+.rs-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+}
+
+.rs-section-label {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    opacity: 0.7;
+    margin-bottom: 2px;
+}
+
+.rs-btn-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.rs-btn {
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    position: relative;
+}
+
+.rs-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.rs-btn.active {
+    background: var(--bg-active);
+    color: var(--accent-primary);
+}
+
+.rs-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.rs-btn.danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--accent-red);
+}
+
+.rs-divider {
+    width: 28px;
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 6px 0;
+}
+
+/* Right sidebar dropdown positioning — open to the left */
+.rs-dropdown {
+    right: calc(100% + 6px) !important;
+    left: auto !important;
+    top: 0 !important;
+    min-width: 140px;
+}
+
+.rs-info-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    width: 100%;
+}
+
+.rs-info-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 3px 4px;
+    width: 100%;
+}
+
+.rs-info-icon {
+    font-size: 13px !important;
+    color: var(--text-tertiary);
+}
+
+.rs-info-icon.saved {
+    color: var(--accent-green);
+}
+
+.rs-info-value {
+    font-size: 8px;
+    color: var(--text-tertiary);
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.rs-info-value.saved {
+    color: var(--accent-green);
+}
+
+.rs-spacer {
+    flex: 1;
+}
+
+.rs-bottom-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-subtle);
+    width: 100%;
 }
