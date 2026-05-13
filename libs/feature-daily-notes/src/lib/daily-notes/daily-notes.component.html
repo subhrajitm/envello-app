@@ -230,26 +230,42 @@
                     <div class="folder-empty">No notes in this folder</div>
                     } @else {
                     @for (bucket of getBucketedNotesForFolder(group.id); track bucket.label) {
-                        @for (entry of bucket.notes; track entry.id) {
-                        <div class="note-card-item" [class.active]="selectedNote()?.id === entry.id"
-                            [class.dragging]="draggingNoteId() === entry.id"
-                            draggable="true"
-                            (click)="selectNote(entry.id)"
-                            (dragstart)="onNoteDragStart(entry.id, $event)"
-                            (dragend)="onNoteDragEnd()">
-                            <span class="note-card-icon material-symbols-outlined">{{ isPinned(entry) ? 'push_pin' : 'description' }}</span>
-                            <span class="note-card-title">{{ entry.title }}</span>
-                            <div class="note-card-actions">
-                                <button class="note-pin-btn" [class.is-pinned]="isPinned(entry)" 
-                                    (click)="togglePin(entry, $event)" title="Pin">
-                                    <span class="material-symbols-outlined">push_pin</span>
-                                </button>
-                                <button class="note-delete-btn" (click)="requestDeleteNote(entry.id, $event)" title="Delete">
-                                    <span class="material-symbols-outlined">delete</span>
-                                </button>
+                        <div class="time-bucket-section">
+                            <div class="time-bucket-label">{{ bucket.label }}</div>
+                            @for (entry of bucket.notes; track entry.id) {
+                            <div class="note-card-item" [class.active]="selectedNote()?.id === entry.id"
+                                [class.dragging]="draggingNoteId() === entry.id"
+                                draggable="true"
+                                (click)="selectNote(entry.id)"
+                                (dragstart)="onNoteDragStart(entry.id, $event)"
+                                (dragend)="onNoteDragEnd()">
+                                <span class="note-card-icon material-symbols-outlined">{{ isPinned(entry) ? 'push_pin' : 'description' }}</span>
+                                <div class="note-card-body">
+                                    <span class="note-card-title">{{ entry.title }}</span>
+                                    <div class="note-card-meta">
+                                        <span class="note-card-time">{{ formatTime(entry.id, entry.lastEdited) }}</span>
+                                        <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
+                                    </div>
+                                    @if (getNoteTags(entry).length > 0) {
+                                    <div class="note-card-tags">
+                                        @for (tag of getNoteTags(entry); track tag) {
+                                        <span class="note-tag-dot" [title]="tag"></span>
+                                        }
+                                    </div>
+                                    }
+                                </div>
+                                <div class="note-card-actions">
+                                    <button class="note-pin-btn" [class.is-pinned]="isPinned(entry)" 
+                                        (click)="togglePin(entry, $event)" title="Pin">
+                                        <span class="material-symbols-outlined">push_pin</span>
+                                    </button>
+                                    <button class="note-delete-btn" (click)="requestDeleteNote(entry.id, $event)" title="Delete">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </div>
                             </div>
+                            }
                         </div>
-                        }
                     }
                     }
                 </div>
@@ -314,7 +330,30 @@
         <div class="dn-editor-body">
         <!-- Editor Content -->
         <div class="dn-editor-content">
-            <div class="editor-container">
+            <div class="editor-container" [ngClass]="noteBgClass()" [class.full-width]="isFullWidth()">
+                <div class="editor-actions-top">
+                    <button class="editor-action-btn" (click)="isFullWidth.set(!isFullWidth())" [title]="isFullWidth() ? 'Boxed width' : 'Full width'">
+                        <span class="material-symbols-outlined">{{ isFullWidth() ? 'view_column' : 'view_stream' }}</span>
+                    </button>
+                    <div class="color-picker-wrapper">
+                        <button class="editor-action-btn" (click)="showColorPicker.set(!showColorPicker())" title="Background color">
+                            <span class="material-symbols-outlined">format_color_fill</span>
+                        </button>
+                        @if (showColorPicker()) {
+                    <div class="color-picker-dropdown">
+                        @for (color of bgColors; track color) {
+                        <button class="color-swatch" [class]="'color-swatch' + (color ? ' ' + color : ' color-swatch--none')"
+                            [class.active]="noteBgClass() === color"
+                            (click)="noteBgClass.set(color); showColorPicker.set(false)" title="{{ color ? color.replace('note-bg--', '') : 'Default' }}">
+                            @if (!color) {
+                            <span class="material-symbols-outlined color-swatch-none-icon">close</span>
+                            }
+                        </button>
+                        }
+                        </div>
+                        }
+                    </div>
+                </div>
                 <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
                     (ngModelChange)="updateNoteTitle($event)" placeholder="Note title..." />
 

@@ -67,6 +67,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   selectedFilter = signal<string>('all');
   selectedTag = signal<string>('');
   activeView = signal<'folders' | 'tags'>('folders');
+  noteBgClass = signal<string>('');
+  showColorPicker = signal<boolean>(false);
+  isFullWidth = signal<boolean>(false);
+
+  readonly bgColors = [
+    '',
+    'note-bg--rose',
+    'note-bg--orange',
+    'note-bg--yellow',
+    'note-bg--green',
+    'note-bg--cyan',
+    'note-bg--blue',
+    'note-bg--purple',
+    'note-bg--pink',
+    'note-bg--warm',
+    'note-bg--cool',
+  ];
 
   // Track open notes as tabs
   openNotes = signal<string[]>([]);
@@ -660,13 +677,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.dropdown-wrapper')) {
+    if (!target.closest('.dropdown-wrapper') && !target.closest('.color-picker-wrapper')) {
       if (this.showDropdown()) this.showDropdown.set(false);
       if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
       if (this.showFormatMenu()) this.showFormatMenu.set(false);
       if (this.showInfoMenu()) this.showInfoMenu.set(false);
       if (this.showMediaMenu()) this.showMediaMenu.set(false);
       if (this.showFilterMenu()) this.showFilterMenu.set(false);
+      if (this.showColorPicker()) this.showColorPicker.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {
       if (this.activeFolderMenuId()) this.activeFolderMenuId.set(null);
