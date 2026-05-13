@@ -92,6 +92,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   showMoreOptionsMenu = signal<boolean>(false);
   showFormatMenu = signal<boolean>(false);
   showInfoMenu = signal<boolean>(false);
+  showMediaMenu = signal<boolean>(false);
   activeFolderMenuId = signal<string | null>(null);
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
@@ -568,17 +569,27 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.showMoreOptionsMenu.update(v => !v);
     if (this.showFormatMenu()) this.showFormatMenu.set(false);
     if (this.showInfoMenu()) this.showInfoMenu.set(false);
+    if (this.showMediaMenu()) this.showMediaMenu.set(false);
   }
 
   toggleInfoMenu() {
     this.showInfoMenu.update(v => !v);
     if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
     if (this.showFormatMenu()) this.showFormatMenu.set(false);
+    if (this.showMediaMenu()) this.showMediaMenu.set(false);
   }
 
   toggleFormatMenu() {
     this.showFormatMenu.update(v => !v);
     if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
+    if (this.showMediaMenu()) this.showMediaMenu.set(false);
+  }
+
+  toggleMediaMenu() {
+    this.showMediaMenu.update(v => !v);
+    if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
+    if (this.showFormatMenu()) this.showFormatMenu.set(false);
+    if (this.showInfoMenu()) this.showInfoMenu.set(false);
   }
 
   setFormat(type: 'paragraph' | 'h1' | 'h2' | 'h3') {
@@ -649,6 +660,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
       if (this.showFormatMenu()) this.showFormatMenu.set(false);
       if (this.showInfoMenu()) this.showInfoMenu.set(false);
+      if (this.showMediaMenu()) this.showMediaMenu.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {
       if (this.activeFolderMenuId()) this.activeFolderMenuId.set(null);
