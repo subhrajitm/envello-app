@@ -136,11 +136,11 @@ export class VaultComponent {
     { key: 'name',     header: 'Credential', sortable: true },
     { key: 'type',     header: 'Type',       type: 'badge', sortable: true,
       badgeMap: {
-        login:   { label: 'Login',       dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',  textColor: '#4ade80'  },
-        api_key: { label: 'API Key',     dotColor: '#60a5fa', bgColor: 'rgba(96,165,250,0.1)',  textColor: '#60a5fa'  },
-        ssh:     { label: 'SSH',         dotColor: '#a855f7', bgColor: 'rgba(168,85,247,0.1)',  textColor: '#a855f7'  },
-        db:      { label: 'Database',    dotColor: '#fb923c', bgColor: 'rgba(251,146,60,0.1)',  textColor: '#fb923c'  },
-        note:    { label: 'Secure Note', dotColor: '#fbbf24', bgColor: 'rgba(251,191,36,0.1)',  textColor: '#fbbf24'  },
+        login:   { label: 'Login',       dotColor: '#22c55e', bgColor: 'rgba(22,163,74,0.1)',   textColor: '#16a34a'  },
+        api_key: { label: 'API Key',     dotColor: '#60a5fa', bgColor: 'rgba(37,99,235,0.1)',   textColor: '#2563eb'  },
+        ssh:     { label: 'SSH',         dotColor: '#a855f7', bgColor: 'rgba(109,40,217,0.1)',  textColor: '#7c3aed'  },
+        db:      { label: 'Database',    dotColor: '#fb923c', bgColor: 'rgba(194,65,12,0.1)',   textColor: '#c2410c'  },
+        note:    { label: 'Secure Note', dotColor: '#f59e0b', bgColor: 'rgba(180,83,9,0.1)',    textColor: '#b45309'  },
       }
     },
     { key: 'username', header: 'Username' },
