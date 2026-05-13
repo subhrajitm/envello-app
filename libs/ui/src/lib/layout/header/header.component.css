@@ -57,7 +57,7 @@
 
 .header-search {
   flex: 1;
-  max-width: 640px; /* Reduced gap */
+  max-width: 400px;
   position: relative;
   margin-left: 0;
   cursor: pointer;
