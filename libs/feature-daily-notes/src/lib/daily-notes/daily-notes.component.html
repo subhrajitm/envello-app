@@ -84,11 +84,11 @@
     </env-modal>
 
     <div class="dn-sidebar">
-        <!-- Search Bar with Dropdown + Button -->
+        <!-- Search Bar -->
         <div class="dn-search-header">
             <div class="search-container">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" class="dn-search-input" placeholder="Search..."
+                <input type="text" class="dn-search-input" placeholder="Search connections..."
                     [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
                 @if (searchQuery()) {
                 <button class="search-clear-btn" (click)="clearSearch()" title="Clear search">
@@ -96,26 +96,54 @@
                 </button>
                 }
             </div>
-            <div class="dropdown-wrapper">
-                <button class="add-btn" (click)="toggleDropdown()">
-                    <span class="material-symbols-outlined">add</span>
+            <button class="sidebar-filter-btn" title="Filter">
+                <span class="material-symbols-outlined">filter_list</span>
+            </button>
+        </div>
+
+        <!-- Section Header — Compass style -->
+        <div class="dn-section-header">
+            <span class="dn-section-title">
+                {{ activeView() === 'folders' ? 'FOLDERS' : 'TAGS' }}
+                <span class="dn-section-count">({{ activeView() === 'folders' ? noteGroups().length : allTags().length }})</span>
+            </span>
+            <div class="dn-section-actions">
+                <button class="dn-section-action-btn" [class.active]="activeView() === 'folders'" (click)="switchView('folders')" title="Folders view">
+                    <span class="material-symbols-outlined">folder</span>
                 </button>
-                @if (showDropdown()) {
-                <div class="dropdown-menu">
-                    <button class="dropdown-item" (click)="handleNewNote(); toggleDropdown()">
-                        <span class="material-symbols-outlined">description</span>
-                        <span>New Note</span>
-                    </button>
-                    <button class="dropdown-item" (click)="handleNewFolder(); toggleDropdown()">
-                        <span class="material-symbols-outlined">create_new_folder</span>
-                        <span>New Folder</span>
-                    </button>
-                </div>
+                <button class="dn-section-action-btn" [class.active]="activeView() === 'tags'" (click)="switchView('tags')" title="Tags view">
+                    <span class="material-symbols-outlined">label</span>
+                </button>
+                @if (activeView() === 'folders') {
+                <button class="dn-section-action-btn" [title]="allExpanded() ? 'Collapse All' : 'Expand All'"
+                    (click)="toggleExpandAll()">
+                    <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
+                </button>
                 }
+                <div class="dropdown-wrapper">
+                    <button class="dn-section-action-btn" (click)="toggleDropdown()" title="Add">
+                        <span class="material-symbols-outlined">add</span>
+                    </button>
+                    @if (showDropdown()) {
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item" (click)="handleNewNote(); toggleDropdown()">
+                            <span class="material-symbols-outlined">description</span>
+                            <span>New Note</span>
+                        </button>
+                        <button class="dropdown-item" (click)="handleNewFolder(); toggleDropdown()">
+                            <span class="material-symbols-outlined">create_new_folder</span>
+                            <span>New Folder</span>
+                        </button>
+                    </div>
+                    }
+                </div>
+                <button class="dn-section-action-btn" title="More options">
+                    <span class="material-symbols-outlined">more_horiz</span>
+                </button>
             </div>
         </div>
 
-        <!-- Filter Chips -->
+        <!-- Filter Chips (subtle, below header) -->
         <div class="dn-filter-chips">
             <button class="filter-chip" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
                 All
@@ -142,30 +170,6 @@
                 <span class="material-symbols-outlined filter-chip-close">close</span>
             </button>
             }
-        </div>
-
-        <!-- View Switcher: Folders and Tags -->
-        <div class="dn-tabs">
-            <div class="view-switcher">
-                <button class="view-switch-btn" [class.active]="activeView() === 'folders'" (click)="switchView('folders')">
-                    <span class="material-symbols-outlined">folder</span>
-                    <span>Folders</span>
-                </button>
-                <button class="view-switch-btn" [class.active]="activeView() === 'tags'" (click)="switchView('tags')">
-                    <span class="material-symbols-outlined">label</span>
-                    <span>Tags</span>
-                </button>
-            </div>
-            <div class="expand-controls">
-                @if (activeView() === 'folders') {
-                <button class="control-btn" [title]="allExpanded() ? 'Collapse All' : 'Expand All'"
-                    (click)="toggleExpandAll()">
-                    <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
-                </button>
-                } @else {
-                <span class="tags-total-count">{{ allTags().length }} tag{{ allTags().length !== 1 ? 's' : '' }}</span>
-                }
-            </div>
         </div>
 
         <!-- Notes List with Hierarchical Folders -->

@@ -5,26 +5,24 @@
     background: var(--bg-app);
 }
 
-/* Sidebar - Enterprise sidebar */
+/* Sidebar — Compass-style tree panel */
 .dn-sidebar {
-    width: 260px;
+    width: 240px;
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     background: var(--bg-panel);
     height: 100%;
-    box-shadow: 1px 0 0 0 rgba(0, 0, 0, 0.03);
 }
 
-/* Search Header with Dropdown */
+/* Search Header — Compass style */
 .dn-search-header {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     flex-shrink: 0;
-    box-sizing: border-box;
 }
 
 .search-container {
@@ -60,8 +58,8 @@
 
 .search-icon {
     position: absolute;
-    left: 12px;
-    font-size: 18px;
+    left: 8px;
+    font-size: 16px;
     color: var(--text-tertiary);
     pointer-events: none;
 }
@@ -70,21 +68,98 @@
     width: 100%;
     background: var(--bg-app);
     border: 1px solid var(--border-subtle);
-    padding: 6px 10px 6px 32px;
-    border-radius: 6px;
+    padding: 5px 8px 5px 28px;
+    border-radius: 4px;
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: 12px;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.15s;
 }
 
 .dn-search-input:focus {
     border-color: var(--border-highlight);
-    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.08);
 }
 
 .dn-search-input::placeholder {
     color: var(--text-tertiary);
+}
+
+.sidebar-filter-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.sidebar-filter-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.sidebar-filter-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* Section Header — Compass "CONNECTIONS (2)" style */
+.dn-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.dn-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+}
+
+.dn-section-count {
+    font-weight: 500;
+    color: var(--text-tertiary);
+    margin-left: 2px;
+}
+
+.dn-section-actions {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.dn-section-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s;
+}
+
+.dn-section-action-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.dn-section-action-btn.active {
+    color: var(--accent-primary);
+}
+
+.dn-section-action-btn .material-symbols-outlined {
+    font-size: 16px;
 }
 
 /* Dropdown Wrapper */
@@ -233,31 +308,31 @@
     font-size: 16px;
 }
 
-/* Notes List - Enterprise note list */
+/* Notes List — Compass tree */
 .dn-entries-list {
     flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 4px 0;
+    padding: 2px 0;
 }
 
-/* Folder Groups */
+/* Folder Groups — Compass tree nodes */
 .folder-group {
-    margin: 0 0 2px 0;
+    margin: 0;
 }
 
 .folder-header {
-    padding: 5px 10px;
-    margin: 0 6px;
+    padding: 4px 10px;
+    margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.1s;
     user-select: none;
-    border-radius: 6px;
+    border-radius: 0;
 }
 
 .folder-header:hover {
@@ -265,9 +340,8 @@
 }
 
 .folder-icon {
-    font-size: 16px;
+    font-size: 15px;
     color: var(--text-secondary);
-    opacity: 0.85;
 }
 
 .folder-name {
@@ -275,18 +349,14 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--text-primary);
-    letter-spacing: -0.01em;
 }
 
 .folder-count {
     font-size: 10px;
     font-weight: 500;
     color: var(--text-tertiary);
-    background: var(--bg-app);
-    padding: 1px 6px;
-    border-radius: 8px;
-    min-width: 18px;
-    text-align: center;
+    padding: 0 2px;
+    min-width: auto;
 }
 
 .folder-menu-wrapper {
@@ -352,57 +422,48 @@
     outline-offset: -2px;
 }
 
-/* Folder Items & Time Buckets */
+/* Folder Items — Compass tree indentation */
 .folder-items {
     display: flex;
     flex-direction: column;
-    padding-left: 10px;
-    margin-top: 1px;
+    padding-left: 8px;
+    margin-top: 0;
     border-left: 1px solid var(--border-subtle);
-    margin-left: 16px;
+    margin-left: 18px;
 }
 
 /* Time Buckets */
 .time-bucket-section {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .time-bucket-label {
     font-size: 9px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-tertiary);
-    padding: 4px 10px 2px 0;
-    margin-bottom: 2px;
+    padding: 3px 8px 1px 0;
+    margin-bottom: 1px;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
 }
 
-/* Note Card Item - Enterprise card */
+/* Note Card Item — Compass tree leaf */
 .note-card-item {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    padding: 5px 10px;
-    margin: 1px 6px 1px 0;
-    border-radius: 6px;
+    gap: 6px;
+    padding: 3px 8px;
+    margin: 0;
+    border-radius: 0;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.1s;
     background: transparent;
-    border: 1px solid transparent;
+    border: none;
     position: relative;
 }
 
 .note-card-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    background: var(--accent-primary);
-    border-radius: 0 2px 2px 0;
-    transition: width 0.2s ease, height 0.2s ease;
+    display: none;
 }
 
 .note-card-item:hover {
@@ -410,14 +471,7 @@
 }
 
 .note-card-item.active {
-    background: var(--bg-hover);
-    border-color: var(--border-subtle);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.note-card-item.active::before {
-    width: 3px;
-    height: 60%;
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
 }
 
 .note-card-item.dragging {
@@ -425,7 +479,7 @@
 }
 
 .note-card-icon {
-    font-size: 16px;
+    font-size: 15px;
     color: var(--text-tertiary);
     flex-shrink: 0;
     margin-top: 1px;
