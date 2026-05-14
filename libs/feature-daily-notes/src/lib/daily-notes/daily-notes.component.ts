@@ -110,7 +110,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   showFormatMenu = signal<boolean>(false);
   showInfoMenu = signal<boolean>(false);
   showMediaMenu = signal<boolean>(false);
-  showFilterMenu = signal<boolean>(false);
   activeFolderMenuId = signal<string | null>(null);
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
@@ -615,9 +614,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (this.showInfoMenu()) this.showInfoMenu.set(false);
   }
 
-  toggleFilterMenu() {
-    this.showFilterMenu.update(v => !v);
-  }
 
   setFormat(type: 'paragraph' | 'h1' | 'h2' | 'h3') {
     if (!this.editor) return;
@@ -688,7 +684,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       if (this.showFormatMenu()) this.showFormatMenu.set(false);
       if (this.showInfoMenu()) this.showInfoMenu.set(false);
       if (this.showMediaMenu()) this.showMediaMenu.set(false);
-      if (this.showFilterMenu()) this.showFilterMenu.set(false);
       if (this.showColorPicker()) this.showColorPicker.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {

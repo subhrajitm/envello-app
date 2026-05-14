@@ -2089,10 +2089,6 @@ tiptap-editor:focus,
     color: var(--accent-primary);
 }
 
-.dn-quick-item--deleted {
-    opacity: 0.5;
-    cursor: default;
-}
 
 .dn-quick-icon {
     font-size: 16px !important;

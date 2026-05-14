@@ -96,72 +96,28 @@
                 </button>
                 }
             </div>
-            <div class="dropdown-wrapper">
-                <button class="sidebar-filter-btn" [class.active]="showFilterMenu()" (click)="toggleFilterMenu()" title="Filter">
-                    <span class="material-symbols-outlined">filter_list</span>
-                </button>
-                @if (showFilterMenu()) {
-                <div class="dropdown-menu filter-dropdown">
-                    <button class="dropdown-item" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all'); showFilterMenu.set(false)">
-                        <span>All</span>
-                        <span class="filter-dd-count">{{ notes().length }}</span>
-                    </button>
-                    <button class="dropdown-item" [class.active]="selectedFilter() === 'pinned'" (click)="setFilter('pinned'); showFilterMenu.set(false)">
-                        <span class="material-symbols-outlined">push_pin</span>
-                        <span>Pinned</span>
-                        @if (pinnedCount() > 0) {
-                        <span class="filter-dd-count">{{ pinnedCount() }}</span>
-                        }
-                    </button>
-                    <button class="dropdown-item" [class.active]="selectedFilter() === 'tagged'" (click)="setFilter('tagged'); showFilterMenu.set(false)">
-                        <span class="material-symbols-outlined">label</span>
-                        <span>Tagged</span>
-                        @if (taggedCount() > 0) {
-                        <span class="filter-dd-count">{{ taggedCount() }}</span>
-                        }
-                    </button>
-                    @if (selectedTag()) {
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item active" (click)="selectTag(selectedTag()); showFilterMenu.set(false)">
-                        <span class="material-symbols-outlined">label</span>
-                        <span>{{ selectedTag() }}</span>
-                        <span class="material-symbols-outlined filter-dd-close">close</span>
-                    </button>
-                    }
-                </div>
-                }
-            </div>
+            <button class="dn-section-action-btn dn-add-btn" (click)="handleNewNote()" title="New note">
+                <span class="material-symbols-outlined">add</span>
+            </button>
         </div>
 
         <!-- Quick Access -->
         <div class="dn-quick-access">
             <button class="dn-quick-item" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
-                <span class="material-symbols-outlined dn-quick-icon">article</span>
-                <span class="dn-quick-label">Drafts</span>
+                <span class="material-symbols-outlined dn-quick-icon">notes</span>
+                <span class="dn-quick-label">All Notes</span>
                 <span class="dn-quick-count">{{ notes().length }}</span>
             </button>
-            <button class="dn-quick-item dn-quick-item--deleted" disabled>
-                <span class="material-symbols-outlined dn-quick-icon">delete</span>
-                <span class="dn-quick-label">Deleted</span>
-                <span class="dn-quick-count">0</span>
+            <button class="dn-quick-item" [class.active]="selectedFilter() === 'tagged' && !selectedTag()" (click)="setFilter('tagged')">
+                <span class="material-symbols-outlined dn-quick-icon">label</span>
+                <span class="dn-quick-label">Tagged</span>
+                <span class="dn-quick-count">{{ taggedCount() }}</span>
             </button>
-        </div>
-
-        <div class="dn-sb-divider"></div>
-
-        <!-- Favourites -->
-        <div class="dn-sb-section">
-            <div class="dn-sb-section-label">Favourites</div>
-            @if (pinnedNotes().length > 0) {
-                @for (note of pinnedNotes(); track note.id) {
-                <div class="dn-fav-item" [class.active]="selectedNote()?.id === note.id" (click)="selectNote(note.id)">
-                    <span class="material-symbols-outlined dn-fav-icon">push_pin</span>
-                    <span class="dn-fav-title">{{ note.title }}</span>
-                </div>
-                }
-            } @else {
-            <div class="dn-fav-empty">Pin notes to add favourites</div>
-            }
+            <button class="dn-quick-item" [class.active]="selectedFilter() === 'pinned' && !selectedTag()" (click)="setFilter('pinned')">
+                <span class="material-symbols-outlined dn-quick-icon">push_pin</span>
+                <span class="dn-quick-label">Favourites</span>
+                <span class="dn-quick-count">{{ pinnedCount() }}</span>
+            </button>
         </div>
 
         <div class="dn-sb-divider"></div>
