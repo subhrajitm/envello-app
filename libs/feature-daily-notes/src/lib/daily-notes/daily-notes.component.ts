@@ -419,7 +419,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const newNote: Note = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      title: 'New Daily Note',
+      title: 'Title',
       preview: 'Start writing...',
       content: '<p>Start writing your thoughts...</p>',
       tags: [],
