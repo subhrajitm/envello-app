@@ -1,69 +1,55 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard } from '@envello/core';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'login',
-    loadComponent: () => import('./components/auth/login/login.component').then(m => m.LoginComponent),
+    loadComponent: () => import('@envello/ui').then(m => m.LoginComponent),
     data: { hasSidebar: false, fullScreen: true }
   },
   {
     path: 'sign-up',
-    loadComponent: () => import('./components/auth/sign-up/sign-up.component').then(m => m.SignUpComponent),
+    loadComponent: () => import('@envello/ui').then(m => m.SignUpComponent),
     data: { hasSidebar: false, fullScreen: true }
   },
   {
     path: 'workspace',
-    loadComponent: () => import('./components/workspace/workspace.component').then(m => m.WorkspaceComponent),
+    loadComponent: () => import('@envello/feature-workspace').then(m => m.WorkspaceComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+
+  {
+    path: 'write',
+    loadComponent: () => import('@envello/feature-novels').then(m => m.WriteComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
-    path: 'projects/:id',
-    loadComponent: () => import('./components/projects/project-details/project-details.component').then(m => m.ProjectDetailsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true }
-  },
-  {
-    path: 'novels',
-    loadComponent: () => import('./components/novels/novels.component').then(m => m.NovelsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
-    path: 'novels/:id',
-    loadComponent: () => import('./components/novels/novel-editor/novel-editor.component').then(m => m.NovelEditorComponent),
+    path: 'write/:id',
+    loadComponent: () => import('@envello/feature-novels').then(m => m.ComposerComponent),
     canActivate: [authGuard],
     data: { immersive: true },
   },
+  { path: 'novels', redirectTo: 'write', pathMatch: 'full' },
+  { path: 'articles', redirectTo: 'write', pathMatch: 'full' },
   {
     path: 'research',
     loadComponent: () => import('./components/research/research.component').then(m => m.ResearchComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-  {
-    path: 'articles',
-    loadComponent: () => import('./components/articles/articles.component').then(m => m.ArticlesComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
-    path: 'journals',
-    loadComponent: () => import('./components/journals/journals.component').then(m => m.JournalsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
+
   {
     path: 'daily-notes',
-    loadComponent: () => import('./components/daily-notes/daily-notes.component').then(m => m.DailyNotesComponent),
+    loadComponent: () => import('@envello/feature-daily-notes').then(m => m.DailyNotesComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
     path: 'tasks',
-    loadComponent: () => import('./components/tasks/tasks.component').then(m => m.TasksComponent),
+    loadComponent: () => import('@envello/feature-tasks').then(m => m.TasksComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
@@ -73,18 +59,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
-  {
-    path: 'books',
-    loadComponent: () => import('./components/books/books.component').then(m => m.BooksComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
-    path: 'snippets',
-    loadComponent: () => import('./components/code-snippets/code-snippets.component').then(m => m.CodeSnippetsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
+
   {
     path: 'activity-log',
     loadComponent: () => import('./components/activity-log/activity-log.component').then(m => m.ActivityLogComponent),
@@ -100,6 +75,37 @@ export const routes: Routes = [
   {
     path: 'developer-settings',
     loadComponent: () => import('./components/developer-settings/developer-settings.component').then(m => m.DeveloperSettingsComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'books',
+    loadComponent: () => import('@envello/feature-books').then(m => m.BooksComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+
+  {
+    path: 'bookmarks',
+    loadComponent: () => import('@envello/feature-bookmarks').then(m => m.BookmarksComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'vault',
+    loadComponent: () => import('@envello/feature-vault').then(m => m.VaultComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'subscriptions',
+    loadComponent: () => import('@envello/feature-vendor').then(m => m.VendorComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'projects',
+    loadComponent: () => import('@envello/ui').then(m => m.ProfileManagerComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

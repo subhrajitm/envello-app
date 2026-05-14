@@ -1,0 +1,131 @@
+<div class="ne-editor-header">
+    <div class="ne-editor-tabs">
+        <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
+            (click)="setActiveNav.emit('manuscript')">
+            <span class="material-symbols-outlined tab-icon">description</span>
+            Manuscript
+        </button>
+        <button class="ne-editor-tab" [class.active]="activeNav() === 'structure'"
+            (click)="setActiveNav.emit('structure')">
+            <span class="material-symbols-outlined tab-icon">menu_book</span>
+            Structure
+        </button>
+        @if (showExtendedTabs()) {
+        <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
+            (click)="setActiveNav.emit('characters')">
+            <span class="material-symbols-outlined tab-icon">group</span>
+            Characters
+        </button>
+        <button class="ne-editor-tab" [class.active]="activeNav() === 'locations'"
+            (click)="setActiveNav.emit('locations')">
+            <span class="material-symbols-outlined tab-icon">public</span>
+            Locations
+        </button>
+        }
+    </div>
+    <div class="ne-editor-actions">
+        <!-- Undo/Redo -->
+        <div class="undo-redo-group">
+            <button class="action-btn" 
+                    (click)="performUndo.emit()" 
+                    [disabled]="!canUndo()"
+                    title="Undo (⌘+Z)">
+                <span class="material-symbols-outlined">undo</span>
+            </button>
+            <button class="action-btn" 
+                    (click)="performRedo.emit()" 
+                    [disabled]="!canRedo()"
+                    title="Redo (⌘+Shift+Z)">
+                <span class="material-symbols-outlined">redo</span>
+            </button>
+        </div>
+        <div class="action-divider"></div>
+        <!-- Search -->
+        <div class="search-wrapper relative">
+            <button class="action-btn" (click)="toggleSearch.emit()" title="Search (⌘+K)">
+                <span class="material-symbols-outlined">search</span>
+            </button>
+            @if (searchOpen()) {
+            <div class="search-dropdown">
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        [value]="searchQuery()"
+                        (input)="searchQueryChange.emit($any($event.target).value)"
+                        placeholder="Search chapters, characters, locations..."
+                        autofocus
+                    />
+                    @if (searchQuery()) {
+                    <button class="search-clear" (click)="searchQueryChange.emit('')">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                    }
+                </div>
+                @if (filteredResults() && filteredResults()!.length > 0) {
+                <div class="search-results">
+                    @for (result of filteredResults()!; track result.id) {
+                    <button class="search-result-item" (click)="selectSearchResult.emit(result)">
+                        <span class="material-symbols-outlined result-icon">
+                            @if (result.type === 'chapter') { description }
+                            @else if (result.type === 'character') { account_circle }
+                            @else if (result.type === 'location') { public }
+                            @else if (result.type === 'frontMatter') { menu_book }
+                            @else if (result.type === 'prologue') { menu_book }
+                        </span>
+                        <div class="result-content">
+                            <div class="result-title">{{ result.title }}</div>
+                            @if (result.subtitle) {
+                            <div class="result-subtitle">{{ result.subtitle }}</div>
+                            }
+                        </div>
+                    </button>
+                    }
+                </div>
+                } @else if (searchQuery() && filteredResults()?.length === 0) {
+                <div class="search-empty">No results found</div>
+                }
+            </div>
+            }
+        </div>
+        <!-- Focus Mode -->
+        <button class="action-btn" (click)="toggleFocusMode.emit()" [class.active]="focusMode()" title="Focus Mode (⌘+B)">
+            <span class="material-symbols-outlined">center_focus_strong</span>
+        </button>
+        <!-- Full Screen -->
+        <button class="action-btn" (click)="toggleFullScreen.emit()" [class.active]="fullScreenMode()" title="Full Screen (F11)">
+            <span class="material-symbols-outlined">fullscreen</span>
+        </button>
+        <!-- Version History -->
+        <button class="action-btn" (click)="openVersionHistory.emit()" title="Version History">
+            <span class="material-symbols-outlined">history</span>
+        </button>
+        <!-- Export -->
+        <div class="export-menu-wrapper relative">
+            <button class="action-btn" (click)="toggleExportMenu.emit()" title="Export">
+                <span class="material-symbols-outlined">download</span>
+            </button>
+            @if (exportMenuOpen()) {
+            <div class="add-dropdown-menu">
+                <button class="add-dropdown-option" (click)="exportNovel.emit('pdf'); toggleExportMenu.emit()">
+                    <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
+                    <span class="option-label">Export as PDF</span>
+                </button>
+                <button class="add-dropdown-option" (click)="exportNovel.emit('docx'); toggleExportMenu.emit()">
+                    <span class="material-symbols-outlined option-icon">article</span>
+                    <span class="option-label">Export as Word (.doc)</span>
+                </button>
+                <button class="add-dropdown-option" (click)="exportNovel.emit('html'); toggleExportMenu.emit()">
+                    <span class="material-symbols-outlined option-icon">code</span>
+                    <span class="option-label">Export as HTML</span>
+                </button>
+                <button class="add-dropdown-option" (click)="exportNovel.emit('md'); toggleExportMenu.emit()">
+                    <span class="material-symbols-outlined option-icon">description</span>
+                    <span class="option-label">Export as Markdown</span>
+                </button>
+            </div>
+            }
+        </div>
+    </div>
+</div>

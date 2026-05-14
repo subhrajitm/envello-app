@@ -1,7 +1,7 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService } from '../../../services/store.service';
+import { StoreService } from '@envello/core';
 
 @Component({
   selector: 'app-recent-activity',

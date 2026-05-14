@@ -3,7 +3,7 @@
     <div class="dev-header flex items-center gap-4 flex-shrink-0">
         <button class="back-btn" (click)="goBack()">
             <span class="material-symbols-outlined">arrow_back</span>
-            Back to Overview
+            Back to Workspace
         </button>
         <h1 class="dev-title">Developer Settings</h1>
         <span class="dev-subtitle">Inspect and export all application data</span>
@@ -21,11 +21,7 @@
             <div class="dev-sidebar-group">
                 <div class="dev-sidebar-group-name">{{ group.name }}</div>
                 @for (tab of group.items; track tab.id) {
-                <button
-                    class="dev-sidebar-item"
-                    [class.active]="activeTab() === tab.id"
-                    (click)="setActiveTab(tab.id)"
-                >
+                <button class="dev-sidebar-item" [class.active]="activeTab() === tab.id" (click)="setActiveTab(tab.id)">
                     <span class="material-symbols-outlined dev-sidebar-icon">{{ tab.icon }}</span>
                     <span class="dev-sidebar-label">{{ tab.label }}</span>
                     <span class="dev-sidebar-count">{{ tab.count }}</span>
@@ -41,13 +37,8 @@
             <div class="dev-toolbar flex items-center justify-between gap-3">
                 <div class="dev-search-wrap">
                     <span class="material-symbols-outlined dev-search-icon">search</span>
-                    <input
-                        type="text"
-                        class="dev-search-input"
-                        placeholder="Search in table..."
-                        [value]="searchQuery()"
-                        (input)="onSearchInput($event)"
-                    />
+                    <input type="text" class="dev-search-input" placeholder="Search in table..." [value]="searchQuery()"
+                        (input)="onSearchInput($event)" />
                     @if (searchQuery()) {
                     <button class="dev-search-clear" (click)="clearSearch()" title="Clear">
                         <span class="material-symbols-outlined">close</span>
@@ -55,13 +46,15 @@
                     }
                 </div>
                 <div class="dev-toolbar-right flex items-center gap-2">
+                    <input type="file" #fileInput style="display: none" accept=".json" (change)="onImportFile($event)">
+                    <button class="dev-copy-btn bg-green-600 text-white hover:bg-green-700 border-green-600"
+                        (click)="fileInput.click()" [disabled]="isImporting()">
+                        <span class="material-symbols-outlined">upload</span>
+                        {{ isImporting() ? 'Importing...' : 'Import Backup' }}
+                    </button>
                     <span class="dev-stats-inline">{{ filteredCount() }} of {{ totalCount() }} records</span>
-                    <button
-                        class="dev-copy-btn"
-                        (click)="copyToClipboard()"
-                        [class.copied]="copyFeedback()"
-                        [title]="copyFeedback() ? 'Copied!' : 'Copy as TSV'"
-                    >
+                    <button class="dev-copy-btn" (click)="copyToClipboard()" [class.copied]="copyFeedback()"
+                        [title]="copyFeedback() ? 'Copied!' : 'Copy as TSV'">
                         <span class="material-symbols-outlined">{{ copyFeedback() ? 'check' : 'content_copy' }}</span>
                         {{ copyFeedback() ? 'Copied' : 'Copy' }}
                     </button>

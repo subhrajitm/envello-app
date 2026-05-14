@@ -1,16 +1,14 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { HeaderComponent } from './components/layout/header/header.component';
-import { FooterComponent } from './components/layout/footer/footer.component';
-import { TauriService } from './core/services/tauri.service';
-import { SessionService } from './services/session.service';
+import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent } from '@envello/ui';
+import { TauriService, SessionService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -22,9 +20,10 @@ export class AppComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService); // Initialize session tracking
   private unlistenFileDrop?: () => void;
 
-  currentTab = signal('Overview');
+  currentTab = signal('Workspace');
   hasSidebar = signal(true);
   isImmersive = signal(false);
+  isFullScreen = signal(false);
   sidebarCollapsed = signal(true);
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
@@ -51,6 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
     ).subscribe(data => {
       this.hasSidebar.set(data['hasSidebar'] !== false); // default to true if not specified? React logic was whitelist.
       this.isImmersive.set(!!data['immersive']);
+      this.isFullScreen.set(!!data['fullScreen']);
 
       // Map path to Tab Name for Header
       const url = this.router.url.split('/')[1];
@@ -89,21 +89,21 @@ export class AppComponent implements OnInit, OnDestroy {
 
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
-      'overview': 'Overview',
-      'novels': 'Novels/Fiction',
+      'workspace': 'Workspace',
+      'write': 'Write',
       'research': 'Research',
-      'articles': 'Articles/Blogs',
-      'journals': 'Journals',
       'daily-notes': 'Daily Notes',
       'tasks': 'Tasks/Todos',
       'meetings': 'Meetings',
       'books': 'Books/Reading',
+      'bookmarks': 'Bookmarks',
+      'projects':  'Projects',
       'snippets': 'Code Snippets',
       'bin': 'Bin',
       'activity-log': 'Activity Log',
       'developer-settings': 'Developer Settings'
     };
-    return map[url] || 'Overview';
+    return map[url] || 'Workspace';
   }
 
   onSidebarCollapsedChange(collapsed: boolean) {

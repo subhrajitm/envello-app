@@ -1,0 +1,1152 @@
+
+<div class="tasks-view-minimal h-full">
+
+    <!-- Enterprise Header / Toolbar -->
+    <div class="tasks-toolbar">
+            <div class="toolbar-left">
+                <div class="tasks-toolbar-quick-actions">
+                    <button type="button"
+                            class="btn-primary add-task-main-btn"
+                            (click)="openNewTaskDialog()"
+                            title="Add new task">
+                        <span class="material-symbols-outlined">add</span>
+                        <span class="btn-label">Add Task</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+
+                <!-- Primary Navigation Tabs -->
+                <div class="view-switcher main-nav-tabs" role="navigation">
+                    @for (item of sidebarItems(); track item.id) {
+                    <button class="view-btn" 
+                            [class.active]="selectedView() === item.id"
+                            (click)="onSidebarActiveChange(item.id)">
+                        <span class="material-symbols-outlined">{{ item.icon }}</span>
+                        <span class="view-btn-label">{{ item.label }}</span>
+                        @if (item.count) {
+                        <span class="nav-badge">{{ item.count }}</span>
+                        }
+                    </button>
+                    }
+                </div>
+                </div>
+
+            <div class="toolbar-right">
+                <div class="search-input-wrapper">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" class="toolbar-search" [value]="sidebarSearch()"
+                        (input)="sidebarSearch.set($any($event.target).value)"
+                        placeholder="Search tasks, people, tags...">
+                </div>
+                <div class="toolbar-divider"></div>
+                <div class="view-switcher" aria-label="Change tasks layout" role="group">
+                    <button class="view-btn icon-only" [class.active]="viewMode() === 'list'"
+                        (click)="viewMode.set('list')"
+                        title="List view" aria-label="List view">
+                        <span class="material-symbols-outlined">format_list_bulleted</span>
+                    </button>
+
+                    <button class="view-btn icon-only"
+                        [class.active]="viewMode() === 'thumbnails'"
+                        (click)="viewMode.set('thumbnails')"
+                        title="Thumbnails view"
+                        aria-label="Thumbnails view">
+                        <span class="material-symbols-outlined">view_module</span>
+                    </button>
+                </div>
+                <div class="toolbar-divider"></div>
+                <button class="ai-toggle-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    <span>Assistant</span>
+                </button>
+                @if (bulkActionMode()) {
+                <div class="bulk-actions-bar">
+                    <span class="bulk-selection-count">{{ selectedTasks().size }} selected</span>
+                    <button class="btn-secondary btn-sm" (click)="bulkCompleteTasks()">
+                        <span class="material-symbols-outlined">done_all</span>
+                        Complete
+                    </button>
+                    <button class="btn-secondary btn-sm" (click)="bulkChangePriority('HIGH')">
+                        <span class="material-symbols-outlined">flag</span>
+                        High Priority
+                    </button>
+                    <button class="btn-secondary btn-sm" (click)="bulkDeleteTasks()">
+                        <span class="material-symbols-outlined">delete</span>
+                        Delete
+                    </button>
+                    <button class="btn-icon-only" (click)="clearSelection()" title="Clear selection">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                }
+                </div>
+    </div>
+
+    <!-- Body row: task list + sidebar + AI panel -->
+    <div class="tasks-body">
+    <div class="tasks-main-content">
+
+        <!-- Task List / Data Grid + Thumbnails -->
+        @if (viewMode() === 'list') {
+        <div class="tasks-list-container">
+            <div class="list-body" 
+                 [class.virtual-scroll-container]="virtualScrollEnabled() && filteredTasks().length > 50"
+                 (scroll)="onScroll($event)">
+                
+                @if (isLoading()) {
+                    @for (i of [1,2,3,4,5]; track i) {
+                    <div class="task-item skeleton-row">
+                        <div class="task-drag-handle" style="opacity: 0.1;"><span class="material-symbols-outlined">drag_indicator</span></div>
+                        <div class="task-check-column"><div class="list-circular-checkbox" style="opacity: 0.2;"></div></div>
+                        <div class="task-main-column">
+                            <div class="skeleton-text" [style.width.%]="[72, 58, 80, 65, 75][i - 1]"></div>
+                            <div class="skeleton-text skeleton-text-small" [style.width.%]="[35, 45, 28, 40, 32][i - 1]"></div>
+                        </div>
+                    </div>
+                    }
+                } @else if(filteredTasks().length === 0) {
+                    <div class="tasks-empty-state">
+                        <div class="tasks-empty-icon">
+                            <span class="material-symbols-outlined">task_alt</span>
+                        </div>
+                        <h3 class="tasks-empty-title">
+                            {{ store.tasks().length === 0 ? 'You’re all set to start' : 'No tasks found' }}
+                        </h3>
+                        <p class="tasks-empty-body">
+                            {{ store.tasks().length === 0 ? 'Create your first task to kick off your workspace.' : 'No tasks match the current filter or search criteria.' }}
+                        </p>
+                        <button class="btn-primary" (click)="openNewTaskDialog()">+ New Task</button>
+                    </div>
+                } @else {
+                    @for (item of flatListItems(); track $index) {
+
+                        @if (item.kind === 'header') {
+                        <div class="task-group-header" [style.--group-accent]="item.accent">
+                            <span class="task-group-dot"></span>
+                            <span class="task-group-label">{{ item.label }}</span>
+                            <span class="task-group-count">{{ item.count }}</span>
+                        </div>
+                        }
+
+                        @if (item.kind === 'task') {
+                        <div class="task-item"
+                             [class.completed]="item.task.status === 'COMPLETED'"
+                             [class.priority-border-high]="item.task.priority === 'HIGH'"
+                             [class.priority-border-medium]="item.task.priority === 'MEDIUM'"
+                             [class.priority-border-low]="item.task.priority === 'LOW'"
+                             [draggable]="true"
+                             (click)="openTaskDetails(item.task)">
+
+                            <div class="task-drag-handle" (click)="$event.stopPropagation()">
+                                <span class="material-symbols-outlined">drag_indicator</span>
+                            </div>
+
+                            <div class="task-check-column" (click)="$event.stopPropagation()">
+                                <button class="list-circular-checkbox"
+                                        [class.checked]="item.task.status === 'COMPLETED'"
+                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
+                                        (click)="toggleTaskStatus(item.task)"
+                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
+                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
+                                    @if (item.task.status === 'COMPLETED') {
+                                        <span class="material-symbols-outlined">check</span>
+                                    } @else if (hasIncompleteSubtasks(item.task)) {
+                                        <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-tertiary)">lock</span>
+                                    }
+                                </button>
+                            </div>
+
+                            @if (item.task.subtasks && item.task.subtasks.length > 0) {
+                            <div class="task-collapse-btn-col" (click)="$event.stopPropagation()">
+                                <button class="task-collapse-btn"
+                                        (click)="toggleSubtasksCollapse(item.task.id, $event)"
+                                        [attr.aria-label]="isSubtasksCollapsed(item.task.id) ? 'Expand subtasks' : 'Collapse subtasks'">
+                                    <span class="material-symbols-outlined task-subtasks-chevron"
+                                          [class.collapsed]="isSubtasksCollapsed(item.task.id)">expand_more</span>
+                                </button>
+                            </div>
+                            }
+
+                            <div class="task-main-column">
+                                <div class="task-title-row-inner">
+                                    <span class="task-priority-dot"
+                                          [class.dot-high]="item.task.priority === 'HIGH'"
+                                          [class.dot-medium]="item.task.priority === 'MEDIUM'"
+                                          [class.dot-low]="item.task.priority === 'LOW'"></span>
+                                    <div class="task-title-text">{{ item.task.title }}</div>
+                                </div>
+                                <div class="task-metadata-row">
+                                    @if (item.task.due) {
+                                    <span class="metadata-item due-date" [class.overdue]="item.task.due.includes('Overdue')">
+                                        <span class="material-symbols-outlined">calendar_today</span>
+                                        {{ item.task.due }}
+                                    </span>
+                                    }
+                                    @if (item.task.project && item.task.project !== 'Inbox') {
+                                    <span class="metadata-item project">
+                                        <span class="material-symbols-outlined">folder</span>
+                                        {{ item.task.project }}
+                                    </span>
+                                    }
+                                    @if (item.task.labels && item.task.labels.length > 0) {
+                                        @for (label of item.task.labels; track label) {
+                                        <span class="metadata-item label-chip">{{ label }}</span>
+                                        }
+                                    }
+                                </div>
+
+                                @if (item.task.subtasks && item.task.subtasks.length > 0 && !isSubtasksCollapsed(item.task.id)) {
+                                <div class="task-subtasks-list">
+                                    @for (subtask of item.task.subtasks; track subtask.id) {
+                                    <div class="task-subtask-row">
+                                        <button class="task-subtask-checkbox"
+                                                [class.checked]="subtask.status === 'COMPLETED'"
+                                                (click)="toggleSubtaskStatus(item.task, subtask); $event.stopPropagation()"
+                                                [attr.aria-label]="(subtask.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + subtask.title">
+                                            @if (subtask.status === 'COMPLETED') {
+                                                <span class="material-symbols-outlined">check</span>
+                                            }
+                                        </button>
+                                        <span class="task-subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
+                                    </div>
+                                    }
+                                </div>
+                                }
+                            </div>
+
+                            <div class="task-actions-column" (click)="$event.stopPropagation()">
+                                <button class="icon-btn"
+                                        (click)="cycleTaskPriority(item.task, $event)"
+                                        title="Priority: {{ item.task.priority | titlecase }}"
+                                        [class.icon-btn--high]="item.task.priority === 'HIGH'"
+                                        [class.icon-btn--medium]="item.task.priority === 'MEDIUM'">
+                                    <span class="material-symbols-outlined">flag</span>
+                                </button>
+                                <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)" title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        }
+                    }
+                }
+            </div>
+        </div>
+        } @else if (viewMode() === 'thumbnails') {
+        <!-- Thumbnails / Card View -->
+        <div class="tasks-thumbnails-container">
+            @if(filteredTasks().length === 0) {
+            <div class="empty-state">
+                <div class="empty-icon-circle">
+                    <span class="material-symbols-outlined">task</span>
+                </div>
+                @if (store.tasks().length === 0) {
+                <h3>No tasks yet</h3>
+                <p>Create your first task to get started.</p>
+                <button class="btn-primary" (click)="openNewTaskDialog()">Create task</button>
+                } @else {
+                <h3>No tasks found</h3>
+                <p>No tasks match the current filter or search criteria.</p>
+                <button class="btn-text" (click)="sidebarSearch.set(''); selectedView.set('inbox')">Clear
+                    filters</button>
+                }
+            </div>
+            } @else {
+            <div class="thumbs-grid">
+                @for (task of filteredTasks(); track task.id) {
+                <article class="thumb-card"
+                         [class.thumb-card-completed]="task.status === 'COMPLETED'"
+                         [class.thumb-high]="task.priority === 'HIGH'"
+                         [class.thumb-medium]="task.priority === 'MEDIUM'"
+                         [class.thumb-low]="task.priority === 'LOW'"
+                         (click)="openTaskDetails(task)"
+                         style="cursor: pointer;">
+                    <header class="thumb-header">
+                        <div class="thumb-title-row">
+                            <h3 class="thumb-title">{{ task.title }}</h3>
+                            @if(task.project) {
+                            <span class="project-pill thumb-project-pill">{{ task.project }}</span>
+                            }
+                        </div>
+                        <div class="thumb-meta-row">
+                            <span class="status-badge thumb-status" [ngClass]="task.status.toLowerCase()">
+                                {{ task.status }}
+                            </span>
+                            <span class="thumb-priority" [ngClass]="{
+                                'p1': task.priority === 'HIGH',
+                                'p2': task.priority === 'MEDIUM',
+                                'p3': task.priority === 'LOW'
+                            }">
+                                {{ task.priority }}
+                            </span>
+                            @if(task.hours) {
+                            <span class="thumb-hours">{{ task.hours }}</span>
+                            }
+                        </div>
+                    </header>
+                    <div class="thumb-body">
+                        <div class="thumb-due" [class.overdue]="task.due?.includes('Overdue')">
+                            @if(task.due) {
+                            <span class="material-symbols-outlined due-icon">calendar_today</span>
+                            <span class="thumb-due-text">{{ task.due }}</span>
+                            } @else {
+                            <span class="no-data">No due date</span>
+                            }
+                        </div>
+                    </div>
+                    <footer class="thumb-footer" (click)="$event.stopPropagation()">
+                        <div class="thumb-actions">
+                            <button class="btn-icon-only btn-icon-complete"
+                                (click)="onQuickComplete(task)"
+                                [attr.aria-label]="'Mark ' + task.title + ' complete'">
+                                <span class="material-symbols-outlined">done</span>
+                            </button>
+                            <button class="btn-icon-only"
+                                (click)="requestDeleteTask(task, $event)"
+                                [attr.aria-label]="'Delete task ' + task.title">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </footer>
+                </article>
+                }
+            </div>
+            }
+        </div>
+
+        }
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="tasks-sidebar">
+        <div class="sidebar-calendar-card">
+            <!-- Calendar Header -->
+            <div class="cal-card-header">
+                <div class="cal-card-month-nav">
+                    <button class="cal-nav-btn" (click)="navigateMonth('prev')" aria-label="Previous month">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <span class="cal-card-month-label">{{ calendarMonth() }}</span>
+                    <button class="cal-nav-btn" (click)="navigateMonth('next')" aria-label="Next month">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+                <button class="cal-card-today-chip" (click)="onMetricClick('today')" title="Jump to today">
+                    <span class="material-symbols-outlined">today</span>
+                    Today
+                </button>
+            </div>
+
+            <!-- Day Headers -->
+            <div class="cal-card-weekdays">
+                @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
+                <span>{{ d }}</span>
+                }
+            </div>
+
+            <!-- Day Grid -->
+            <div class="cal-card-grid">
+                @for (day of calendarDays(); track $index) {
+                <button class="cal-cell"
+                    [class.cal-cell--other-month]="!day.isCurrentMonth"
+                    [class.cal-cell--today]="day.isToday"
+                    [class.cal-cell--has-tasks]="day.isActive && day.isCurrentMonth && !day.isToday"
+                    [class.cal-cell--selected]="day.isSelected && !day.isToday"
+                    (click)="onCalendarDayClick(day)"
+                    [attr.aria-label]="day.isToday ? 'Today' : 'Day ' + day.day">
+                    <span class="cal-cell-num">{{ day.day }}</span>
+                    @if (day.isActive && day.isCurrentMonth) {
+                    <span class="cal-cell-dot"></span>
+                    }
+                </button>
+                }
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="cal-card-stats">
+                <div class="cal-stat" (click)="onMetricClick('today')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ todayTasksCount() }}</span>
+                    <span class="cal-stat-label">Today</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('active')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ activeTasksCount() }}</span>
+                    <span class="cal-stat-label">Active</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('completed')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ completedTasksCount() }}</span>
+                    <span class="cal-stat-label">Done</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic KPI Panels -->
+        <div class="kpis-compact-list">
+            <!-- Context label -->
+            <div class="kpi-context-row">
+                <span class="kpi-context-label">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    {{ selectedDayLabel() }}
+                </span>
+                @if (selectedCalendarDay()) {
+                <button class="kpi-context-clear" (click)="selectedCalendarDay.set(null)" title="Clear selection">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+                }
+            </div>
+
+            <!-- Completion -->
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('completed')" aria-label="Show completed tasks">
+                <div class="kpi-icon green"><span class="material-symbols-outlined">check_circle</span></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">Completed</span>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value">{{ selectedDayCompleted() }}</span>
+                        <span class="kpi-sub">/ {{ selectedDayTotal() }}</span>
+                        <span class="kpi-percent">({{ (selectedDayCompleted() / (selectedDayTotal() || 1) * 100) | number:'1.0-0' }}%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Due Today / Due on Date -->
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('today')" aria-label="Show tasks due">
+                <div class="kpi-icon blue"><span class="material-symbols-outlined">event_available</span></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">{{ selectedCalendarDay() ? 'Due This Day' : 'Due Today' }}</span>
+                    <span class="kpi-value">{{ selectedDayToday() }}</span>
+                </div>
+            </div>
+
+            <!-- Active -->
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('active')" aria-label="Show active tasks">
+                <div class="kpi-icon purple"><span class="material-symbols-outlined">work_history</span></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">In Progress</span>
+                    <span class="kpi-value">{{ selectedDayActive() }}</span>
+                </div>
+            </div>
+
+            <!-- High Priority -->
+            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('priority')" aria-label="Show high priority tasks">
+                <div class="kpi-icon orange"><span class="material-symbols-outlined">flag</span></div>
+                <div class="kpi-content">
+                    <span class="kpi-label">High Priority</span>
+                    <span class="kpi-value">{{ selectedDayPriority() }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (showAssistant()) {
+        <env-ai-panel
+            title="Tasks Assistant"
+            placeholder="Ask about your tasks…"
+            [suggestions]="aiSuggestions"
+            [messages]="aiMessages()"
+            [loading]="aiLoading()"
+            (send)="sendAiMessage($event)"
+            (cleared)="clearAiChat()"
+            (closed)="showAssistant.set(false)"
+        ></env-ai-panel>
+    }
+    </div><!-- /.tasks-body -->
+
+<!-- New Task Modal -->
+<env-modal
+    [isOpen]="newTaskModalOpen()"
+    (closed)="closeNewTaskDialog()"
+    [showClose]="true"
+    size="md"
+>
+    <div header>
+        <h2 class="env-modal-title">
+            <span class="material-symbols-outlined">add_task</span>
+            <span>New Task</span>
+        </h2>
+    </div>
+    <div body>
+        <div class="task-modal-shell">
+            <!-- Large Title Input -->
+            <input type="text"
+                   class="task-modal-title-input"
+                   placeholder="Task Title (e.g. Renew insurance)"
+                   [value]="newTaskTitle()"
+                   (input)="newTaskTitle.set($any($event.target).value)"
+                   autofocus />
+
+            <!-- Sub-description (Markdown / Notes) -->
+            <textarea class="task-modal-description-input-minimal"
+                      placeholder="Description"
+                      [value]="newTaskDescription()"
+                      (input)="newTaskDescription.set($any($event.target).value)"
+                      rows="2"></textarea>
+
+            <!-- Labels -->
+            <div class="task-modal-labels-row">
+                <span class="material-symbols-outlined task-modal-labels-icon">label</span>
+                <div class="task-modal-labels-inner">
+                    @for (label of newTaskLabels(); track label) {
+                    <span class="task-modal-label-chip">
+                        #{{ label }}
+                        <button type="button" class="task-modal-label-remove" (click)="removeNewTaskLabel(label)">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </span>
+                    }
+                    <div class="task-modal-label-input-wrap">
+                        <input type="text"
+                               class="task-modal-label-input"
+                               placeholder="Add label..."
+                               [value]="newTaskLabelInput()"
+                               (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
+                               (keydown.enter)="addNewTaskLabel()"
+                               (blur)="hideLabelAutocomplete()">
+                        @if (showLabelAutocomplete() && getLabelSuggestions().length > 0) {
+                        <div class="label-autocomplete-dropdown">
+                            @for (suggestion of getLabelSuggestions(); track suggestion) {
+                            <button type="button" class="label-suggestion" (mousedown)="addNewTaskLabel(suggestion)">
+                                #{{ suggestion }}
+                            </button>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metadata Chips Row -->
+            <div class="task-modal-action-chips">
+                <button type="button" class="task-action-chip" (click)="toggleDatePicker($event, 'new')" [class.active]="!!newTaskDue()">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    <span>{{ newTaskDue() || 'Date' }}</span>
+                </button>
+                <button type="button" class="task-action-chip"
+                        (click)="setNewTaskPriority(newTaskPriority() === 'HIGH' ? 'MEDIUM' : newTaskPriority() === 'MEDIUM' ? 'LOW' : 'HIGH')"
+                        [class.active]="true"
+                        [class.priority-medium]="newTaskPriority() === 'MEDIUM'"
+                        [class.priority-high]="newTaskPriority() === 'HIGH'"
+                        [class.priority-low]="newTaskPriority() === 'LOW'">
+                    <span class="material-symbols-outlined">flag</span>
+                    <span>{{ newTaskPriority() | titlecase }}</span>
+                </button>
+                <button type="button" class="task-action-chip"
+                        (click)="showNewTaskReminderPicker.set(!showNewTaskReminderPicker()); $event.stopPropagation()"
+                        [class.active]="newTaskHasReminder()">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span>{{ newTaskHasReminder() ? newTaskReminderTimes().length + ' reminder' + (newTaskReminderTimes().length > 1 ? 's' : '') : 'Reminder' }}</span>
+                </button>
+                <button type="button" class="task-action-chip-more"
+                        (click)="newTaskShowAdvanced.set(!newTaskShowAdvanced())"
+                        [class.active]="newTaskShowAdvanced()"
+                        title="More options">
+                    <span class="material-symbols-outlined">more_horiz</span>
+                </button>
+            </div>
+
+            @if (showNewTaskReminderPicker()) {
+            <div class="new-task-reminder-picker" (click)="$event.stopPropagation()">
+                @for (preset of REMINDER_PRESETS; track preset.value) {
+                <button class="new-task-reminder-preset"
+                        type="button"
+                        [class.active]="newTaskReminderTimes().includes(preset.value)"
+                        (click)="addNewTaskReminderPreset(preset.value)">
+                    <span class="material-symbols-outlined">schedule</span>
+                    {{ preset.label }}
+                    @if (newTaskReminderTimes().includes(preset.value)) {
+                    <span class="material-symbols-outlined" style="margin-left:auto;font-size:14px">check</span>
+                    }
+                </button>
+                }
+            </div>
+            }
+            @if (newTaskHasReminder() && newTaskReminderTimes().length > 0) {
+            <div class="new-task-reminder-chips">
+                @for (r of newTaskReminderTimes(); track r) {
+                <span class="new-task-reminder-chip">
+                    <span class="material-symbols-outlined">notifications</span>
+                    {{ r }}
+                    <button type="button" (click)="removeNewTaskReminderPreset(r)">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </span>
+                }
+            </div>
+            }
+
+            <!-- Due Time (shown when a due date is set) -->
+            @if (newTaskDue()) {
+            <div class="new-task-time-row">
+                <span class="material-symbols-outlined new-task-time-icon">schedule</span>
+                <input type="time"
+                       class="new-task-time-input"
+                       [value]="newTaskDueTime()"
+                       (change)="updateDueTime($any($event.target).value)">
+            </div>
+            }
+
+            <!-- Advanced Options (··· more) -->
+            @if (newTaskShowAdvanced()) {
+            <div class="new-task-advanced-section">
+                <!-- Subtasks -->
+                <div class="advanced-option-row advanced-option-col">
+                    <div class="advanced-section-label">
+                        <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                        <span>Subtasks</span>
+                    </div>
+                    <div class="new-task-subtasks-section">
+                        @for (subtask of newTaskSubtasks(); track $index) {
+                        <div class="new-task-subtask-item">
+                            <span class="material-symbols-outlined new-task-subtask-icon">subdirectory_arrow_right</span>
+                            <span class="new-task-subtask-title">{{ subtask }}</span>
+                            <button type="button" class="new-task-subtask-remove" (click)="removeSubtask($index)">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        }
+                        <div class="new-task-subtask-input-row">
+                            <input type="text"
+                                   class="new-task-subtask-input"
+                                   placeholder="Add a subtask..."
+                                   [value]="newSubtaskInput()"
+                                   (input)="newSubtaskInput.set($any($event.target).value)"
+                                   (keydown.enter)="addSubtaskToNew()">
+                            <button type="button"
+                                    class="new-task-subtask-add-btn"
+                                    [disabled]="!newSubtaskInput().trim()"
+                                    (click)="addSubtaskToNew()">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recurring -->
+                <div class="advanced-option-row">
+                    <span class="advanced-section-label" style="flex:1">
+                        <span class="material-symbols-outlined">repeat</span>
+                        <span>Recurring</span>
+                    </span>
+                    <button class="td-recurring-toggle"
+                            type="button"
+                            [class.active]="newTaskRecurring()"
+                            (click)="newTaskRecurring.set(!newTaskRecurring())"
+                            [title]="newTaskRecurring() ? 'Disable recurring' : 'Enable recurring'">
+                        <span class="material-symbols-outlined">repeat</span>
+                    </button>
+                    @if (newTaskRecurring()) {
+                    <select class="td-recurring-select"
+                            [value]="newTaskRecurringPattern()"
+                            (change)="newTaskRecurringPattern.set($any($event.target).value)">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    <div footer>
+        <div class="task-modal-footer-minimal">
+            <div class="footer-project-selector">
+                <span class="material-symbols-outlined footer-project-icon">inbox</span>
+                <select class="footer-project-select"
+                        [value]="newTaskList()"
+                        (change)="newTaskList.set($any($event.target).value)">
+                    <option value="Inbox">Inbox</option>
+                    @for (list of availableLists(); track list) {
+                    <option [value]="list">{{ list }}</option>
+                    }
+                </select>
+            </div>
+            <div class="footer-actions-right">
+                <button type="button" class="btn-minimal-cancel" (click)="closeNewTaskDialog()">Cancel</button>
+                <button type="button"
+                        class="btn-minimal-save"
+                        [disabled]="!newTaskTitle().trim()"
+                        (click)="confirmNewTask()">Save</button>
+            </div>
+        </div>
+    </div>
+</env-modal>
+
+<!-- Delete Task Confirmation Modal -->
+<env-modal
+    [isOpen]="deleteModalOpen()"
+    (closed)="cancelDeleteTask()"
+    title="Delete task"
+    size="sm"
+>
+    <div body>
+        @if (taskPendingDelete(); as task) {
+        <p>Are you sure you want to delete the task "<strong>{{ task.title }}</strong>"?</p>
+        <p>This action moves the task to the bin.</p>
+        }
+    </div>
+    <div footer class="task-modal-footer">
+        <div class="task-modal-footer-actions">
+            <button type="button"
+                    class="btn-secondary"
+                    (click)="cancelDeleteTask()">
+                Cancel
+            </button>
+            <button type="button"
+                    class="btn-primary"
+                    (click)="confirmDeleteTask()">
+                Delete
+            </button>
+        </div>
+    </div>
+</env-modal>
+
+<!-- Focus Mode Overlay -->
+@if (focusMode() && focusedTask()) {
+<div class="focus-mode-overlay">
+    <div class="focus-mode-container">
+        <div class="focus-mode-header">
+            <button class="focus-mode-close" (click)="exitFocusMode()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <h2 class="focus-mode-title">Focus Mode</h2>
+        </div>
+        <div class="focus-mode-content">
+            @if (focusedTask(); as task) {
+            <div class="focus-task-card">
+                <h1 class="focus-task-title">{{ task.title }}</h1>
+                @if (task.notes) {
+                <div class="focus-task-notes">{{ task.notes }}</div>
+                }
+                <div class="focus-task-meta">
+                    <div class="focus-meta-item">
+                        <span class="material-symbols-outlined">flag</span>
+                        <span>{{ task.priority }}</span>
+                    </div>
+                    @if (task.due) {
+                    <div class="focus-meta-item">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <span>{{ task.due }}</span>
+                    </div>
+                    }
+                    @if (task.hours) {
+                    <div class="focus-meta-item">
+                        <span class="material-symbols-outlined">timer</span>
+                        <span>{{ task.hours }}</span>
+                    </div>
+                    }
+                </div>
+                <div class="focus-actions">
+                    <button class="btn-primary" (click)="onQuickComplete(task); exitFocusMode()">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Mark Complete
+                    </button>
+                    <button class="btn-secondary" (click)="startPomodoro(task)">
+                        <span class="material-symbols-outlined">timer</span>
+                        Start Pomodoro
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+}
+
+<!-- Pomodoro Timer -->
+@if (pomodoroActive()) {
+<div class="pomodoro-timer">
+    <div class="pomodoro-content">
+        <div class="pomodoro-time">{{ formatPomodoroTime(pomodoroTime()) }}</div>
+        @if (pomodoroTask(); as task) {
+        <div class="pomodoro-task">{{ task.title }}</div>
+        }
+        <div class="pomodoro-controls">
+            <button class="pomodoro-btn" (click)="stopPomodoro()">
+                <span class="material-symbols-outlined">stop</span>
+            </button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Keyboard Shortcuts Help -->
+@if (showShortcutsHelp()) {
+<div class="shortcuts-help-overlay" (click)="showShortcutsHelp.set(false)">
+    <div class="shortcuts-help-modal" (click)="$event.stopPropagation()">
+        <div class="shortcuts-help-header">
+            <h2>Keyboard Shortcuts</h2>
+            <button class="shortcuts-help-close" (click)="showShortcutsHelp.set(false)">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="shortcuts-help-content">
+            <div class="shortcut-item">
+                <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd>
+                <span>Quick add task</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>⌘N</kbd> / <kbd>Ctrl+N</kbd>
+                <span>New task modal</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>⌘F</kbd> / <kbd>Ctrl+F</kbd>
+                <span>Focus search</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>⌘/</kbd> / <kbd>Ctrl+/</kbd>
+                <span>Show shortcuts</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>Esc</kbd>
+                <span>Close modals/dropdowns</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>Enter</kbd>
+                <span>Submit forms</span>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Camera Capture Modal -->
+@if (showCameraCapture()) {
+<div class="camera-capture-overlay" (click)="closeCameraCapture()">
+    <div class="camera-capture-modal" (click)="$event.stopPropagation()">
+        <div class="camera-capture-header">
+            <h2>Capture Photo</h2>
+            <button class="camera-capture-close" (click)="closeCameraCapture()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="camera-capture-content">
+            @if (capturedPhoto()) {
+            <div class="captured-photo-preview">
+                <img [src]="capturedPhoto()!" alt="Captured photo" class="captured-photo-img">
+                <div class="captured-photo-actions">
+                    <button class="btn-secondary" (click)="capturedPhoto.set(null)">Retake</button>
+                    <button class="btn-primary" (click)="closeCameraCapture()">Use Photo</button>
+                </div>
+            </div>
+            } @else {
+            <div class="camera-capture-placeholder">
+                <span class="material-symbols-outlined">camera_alt</span>
+                <p>Click the button below to capture a photo</p>
+                <button class="btn-primary" (click)="capturePhoto()">
+                    <span class="material-symbols-outlined">camera</span>
+                    Capture Photo
+                </button>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+}
+
+<!-- Error Toast -->
+@if (showError() && errorMessage()) {
+<div class="error-toast" [class.show]="showError()">
+    <div class="error-toast-content">
+        <span class="material-symbols-outlined error-icon">error</span>
+        <span class="error-message">{{ errorMessage() }}</span>
+        <button class="error-dismiss" (click)="dismissError()">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+</div>
+}
+
+<!-- Task Details Modal -->
+@if (selectedTaskForDetails(); as task) {
+<env-modal
+    [isOpen]="showTaskDetails()"
+    (closed)="closeTaskDetails()"
+    [showClose]="true"
+    size="large"
+>
+    <div header>
+        <div class="td-header-context">
+            <span class="material-symbols-outlined td-header-context-icon">assignment</span>
+            <span class="td-header-context-label">Task Details</span>
+        </div>
+    </div>
+
+    <div body>
+        <div class="td-body">
+
+            <!-- LEFT: main content -->
+            <div class="td-main">
+
+                <!-- Title row -->
+                <div class="td-title-row">
+                    <button class="list-circular-checkbox"
+                            [class.checked]="task.status === 'COMPLETED'"
+                            (click)="completeTaskFromDetails()"
+                            [attr.aria-label]="(task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + task.title">
+                        @if (task.status === 'COMPLETED') {
+                            <span class="material-symbols-outlined">check</span>
+                        }
+                    </button>
+                    <textarea class="td-title-input"
+                              placeholder="Task title"
+                              [value]="editedTaskTitle()"
+                              (input)="editedTaskTitle.set($any($event.target).value); $any($event.target).style.height='auto'; $any($event.target).style.height=$any($event.target).scrollHeight+'px'"
+                              rows="1"></textarea>
+                </div>
+
+                <!-- Description -->
+                <textarea class="td-description-input"
+                          placeholder="Description"
+                          [value]="editedTaskDescription()"
+                          (input)="editedTaskDescription.set($any($event.target).value)"
+                          rows="3"></textarea>
+
+                <!-- Sub-tasks -->
+                <div class="td-subtasks">
+                    <button class="td-subtasks-toggle" (click)="detailsShowAdvanced.set(!detailsShowAdvanced())">
+                        <span class="material-symbols-outlined td-subtasks-chevron" [class.expanded]="detailsShowAdvanced()">chevron_right</span>
+                        <span class="td-subtasks-label">Sub-tasks</span>
+                        @if (task.subtasks && task.subtasks.length > 0) {
+                        <span class="td-subtasks-count">{{ getCompletedSubtasks(task) }}/{{ task.subtasks.length }}</span>
+                        }
+                    </button>
+                    @if (detailsShowAdvanced()) {
+                    <div class="td-subtasks-list">
+                        @for (subtask of task.subtasks; track subtask.id) {
+                        <div class="td-subtask-item">
+                            <button class="list-circular-checkbox td-subtask-checkbox"
+                                    [class.checked]="subtask.status === 'COMPLETED'"
+                                    (click)="toggleSubtaskStatus(task, subtask)">
+                                @if (subtask.status === 'COMPLETED') {
+                                    <span class="material-symbols-outlined">check</span>
+                                }
+                            </button>
+                            <span class="td-subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
+                        </div>
+                        }
+                        <!-- Add subtask row -->
+                        <div class="td-add-subtask-row">
+                            <span class="material-symbols-outlined td-add-subtask-icon">add</span>
+                            <input type="text"
+                                   class="td-add-subtask-input"
+                                   placeholder="Add sub-task"
+                                   [value]="newSubtaskTitle()"
+                                   (input)="newSubtaskTitle.set($any($event.target).value)"
+                                   (keydown.enter)="addSubtask(task, newSubtaskTitle())">
+                        </div>
+                    </div>
+                    }
+                </div>
+
+            </div>
+
+            <!-- RIGHT: property sidebar -->
+            <div class="td-sidebar">
+
+                <!-- Project -->
+                <div class="td-prop-row">
+                    <span class="td-prop-label">Project</span>
+                    <div class="td-prop-value">
+                        <span class="material-symbols-outlined td-prop-icon">inbox</span>
+                        <span>{{ editedTaskList() || 'Inbox' }}</span>
+                    </div>
+                </div>
+
+                <!-- Date -->
+                <div class="td-prop-row">
+                    <span class="td-prop-label">Date</span>
+                    <button class="td-prop-value td-prop-btn" (click)="toggleDatePicker($event, 'details')">
+                        <span class="material-symbols-outlined td-prop-icon">calendar_today</span>
+                        <span [class.td-prop-placeholder]="!editedTaskDue()">{{ editedTaskDue() || 'No date' }}</span>
+                    </button>
+                </div>
+
+                <!-- Priority -->
+                <div class="td-prop-row">
+                    <span class="td-prop-label">Priority</span>
+                    <button class="td-prop-value td-prop-btn"
+                            (click)="editedTaskPriority.set(editedTaskPriority() === 'HIGH' ? 'MEDIUM' : editedTaskPriority() === 'MEDIUM' ? 'LOW' : 'HIGH')"
+                            [class.td-priority-high]="editedTaskPriority() === 'HIGH'"
+                            [class.td-priority-low]="editedTaskPriority() === 'LOW'">
+                        <span class="material-symbols-outlined td-prop-icon">flag</span>
+                        <span>{{ editedTaskPriority() | titlecase }}</span>
+                    </button>
+                </div>
+
+                <!-- Labels -->
+                <div class="td-prop-row td-prop-row--block">
+                    <div class="td-prop-row-header">
+                        <span class="td-prop-label">Labels</span>
+                    </div>
+                    <div class="td-labels-area">
+                        @for (label of editedTaskLabels(); track label) {
+                        <span class="td-label-chip">
+                            {{ label }}
+                            <button type="button" class="td-label-chip-remove" (click)="removeLabelFromEdit(label)">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </span>
+                        }
+                        <input type="text"
+                               class="td-label-input"
+                               placeholder="Add label…"
+                               [value]="detailsLabelInput()"
+                               (input)="detailsLabelInput.set($any($event.target).value)"
+                               (keydown.enter)="addLabelToEdit($event)">
+                    </div>
+                </div>
+
+                <!-- Reminders -->
+                <div class="td-prop-row td-prop-row--block">
+                    <div class="td-prop-row-header">
+                        <span class="td-prop-label">Reminders</span>
+                        <button class="td-prop-add-btn" type="button" (click)="showReminderPicker.set(!showReminderPicker())">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+
+                    @if (showReminderPicker()) {
+                    <div class="td-reminder-picker">
+                        @for (preset of REMINDER_PRESETS; track preset.value) {
+                        <button class="td-reminder-preset"
+                                [class.active]="editedTaskReminders().includes(preset.value)"
+                                type="button"
+                                (click)="addDetailsReminder(preset.value)">
+                            <span class="material-symbols-outlined">schedule</span>
+                            {{ preset.label }}
+                            @if (editedTaskReminders().includes(preset.value)) {
+                            <span class="material-symbols-outlined td-reminder-check">check</span>
+                            }
+                        </button>
+                        }
+                    </div>
+                    }
+
+                    @if (editedTaskReminders().length > 0) {
+                    <div class="td-reminder-chips">
+                        @for (r of editedTaskReminders(); track r) {
+                        <span class="td-reminder-chip">
+                            <span class="material-symbols-outlined">notifications</span>
+                            {{ r }}
+                            <button type="button" class="td-reminder-remove" (click)="removeDetailsReminder(r)">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </span>
+                        }
+                    </div>
+                    }
+                </div>
+
+                <!-- Recurring -->
+                <div class="td-prop-row">
+                    <span class="td-prop-label">Recurring</span>
+                    <div class="td-prop-value td-recurring-row">
+                        <button class="td-recurring-toggle"
+                                type="button"
+                                [class.active]="editedTaskRecurring()"
+                                (click)="editedTaskRecurring.set(!editedTaskRecurring())"
+                                [title]="editedTaskRecurring() ? 'Disable recurring' : 'Enable recurring'">
+                            <span class="material-symbols-outlined">repeat</span>
+                        </button>
+                        @if (editedTaskRecurring()) {
+                        <select class="td-recurring-select"
+                                [value]="editedTaskRecurringPattern()"
+                                (change)="editedTaskRecurringPattern.set($any($event.target).value)">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        } @else {
+                        <span class="td-prop-placeholder">Off</span>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div footer style="display: contents;">
+        <button type="button" class="td-footer-delete" (click)="deleteTaskFromDetails()">
+            <span class="material-symbols-outlined">delete</span>
+            Delete
+        </button>
+        <button type="button" class="btn-minimal-cancel" (click)="closeTaskDetails()">Cancel</button>
+        <button type="button"
+                class="btn-minimal-save"
+                [disabled]="!editedTaskTitle().trim()"
+                (click)="saveTaskDetails()">Save</button>
+    </div>
+</env-modal>
+}
+
+<!-- ─── Date Picker Popup ─── -->
+@if (showDatePicker()) {
+<div class="dp-overlay" (click)="showDatePicker.set(false); datePickerPosition.set(null)"></div>
+<div class="dp-popup"
+     [style.top.px]="datePickerPosition()?.top ?? 200"
+     [style.left.px]="datePickerPosition()?.left ?? 200"
+     (click)="$event.stopPropagation()">
+
+    <!-- Quick shortcuts -->
+    <div class="dp-shortcuts">
+        <button class="dp-shortcut" (click)="selectQuickDate('today')">
+            <span class="material-symbols-outlined">today</span>Today
+        </button>
+        <button class="dp-shortcut" (click)="selectQuickDate('tomorrow')">
+            <span class="material-symbols-outlined">event</span>Tomorrow
+        </button>
+        <button class="dp-shortcut" (click)="selectQuickDate('next-week')">
+            <span class="material-symbols-outlined">date_range</span>Next week
+        </button>
+        <button class="dp-shortcut dp-shortcut--clear" (click)="clearTaskDue()">
+            <span class="material-symbols-outlined">close</span>No date
+        </button>
+    </div>
+
+    <div class="dp-divider"></div>
+
+    <!-- Month navigation -->
+    <div class="dp-month-nav">
+        <button class="dp-nav-btn" (click)="navigateDatePickerMonth('prev')">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <span class="dp-month-label">{{ getDatePickerMonth() }}</span>
+        <button class="dp-nav-btn" (click)="navigateDatePickerMonth('next')">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+    </div>
+
+    <!-- Day headers -->
+    <div class="dp-day-headers">
+        @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
+        <span class="dp-day-header">{{ d }}</span>
+        }
+    </div>
+
+    <!-- Calendar grid -->
+    <div class="dp-grid">
+        @for (cell of getDatePickerDays(); track $index) {
+        <button class="dp-day"
+                [class.dp-day--other]="!cell.isCurrentMonth"
+                [class.dp-day--today]="cell.isToday"
+                (click)="selectDate(cell.day, cell.isCurrentMonth)">
+            {{ cell.day }}
+        </button>
+        }
+    </div>
+
+    <!-- Time input -->
+    <div class="dp-divider"></div>
+    <div class="dp-time-row">
+        <span class="material-symbols-outlined dp-time-icon">schedule</span>
+        <input type="time" class="dp-time-input"
+               [value]="datePickerContext() === 'details' ? editedTaskDueTime() : newTaskDueTime()"
+               (change)="datePickerContext() === 'details' ? updateDetailsTime($any($event.target).value) : updateDueTime($any($event.target).value)">
+    </div>
+</div>
+}
+</div>

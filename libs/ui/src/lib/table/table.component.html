@@ -1,0 +1,289 @@
+<div class="env-table-wrapper">
+
+  <!-- ── Toolbar ── -->
+  @if (showToolbar) {
+    <div class="env-table-toolbar">
+
+      <!-- Tabs -->
+      @if (tabs.length) {
+        <div class="env-table-tabs">
+          @for (tab of tabs; track tab.key) {
+            <button
+              class="env-ttab"
+              [class.active]="tab.key === activeTab"
+              (click)="tabChange.emit(tab.key)">
+              {{ tab.label }}
+              @if (tab.count !== undefined) {
+                <span class="env-ttab-count">{{ tab.count }}</span>
+              }
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Right controls -->
+      <div class="env-table-toolbar-right">
+        @if (showSearch) {
+          <div class="env-table-search">
+            <span class="material-symbols-outlined env-table-search-icon">search</span>
+            <input
+              class="env-table-search-input"
+              [placeholder]="searchPlaceholder"
+              [value]="searchValue"
+              (input)="searchChange.emit($any($event.target).value)" />
+          </div>
+        }
+        @if (showSortFilter) {
+          <button class="env-table-ctrl-btn" (click)="sortByClick.emit()">
+            <span class="material-symbols-outlined">sort</span>
+            Sort by
+          </button>
+          <button class="env-table-ctrl-btn" (click)="filterClick.emit()">
+            <span class="material-symbols-outlined">filter_list</span>
+            Filter
+          </button>
+        }
+      </div>
+
+    </div>
+  }
+
+  <!-- ── Table ── -->
+  <div class="env-table-scroll">
+    <table class="env-table">
+
+      <!-- Header -->
+      <thead>
+        <tr>
+          <th class="env-table-th env-table-th--check">
+            <label class="env-table-check-label" (click)="$event.stopPropagation()">
+              <input
+                type="checkbox"
+                [checked]="allSelected"
+                [indeterminate]="someSelected"
+                (change)="toggleAll()" />
+            </label>
+          </th>
+
+          @for (col of columns; track col.key) {
+            <th
+              class="env-table-th"
+              [class.env-table-th--sortable]="col.sortable"
+              (click)="onSort(col)">
+              <div class="env-table-th-inner">
+                {{ col.header }}
+                @if (col.sortable) {
+                  <span
+                    class="material-symbols-outlined env-table-sort-icon"
+                    [class.active]="sortKey() === col.key">
+                    {{ sortKey() === col.key && sortDir() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+                  </span>
+                }
+              </div>
+            </th>
+          }
+
+          @if (actions.length) {
+            <th class="env-table-th env-table-th--action">Action</th>
+          }
+        </tr>
+      </thead>
+
+      <!-- Body -->
+      <tbody>
+
+        <!-- Loading skeleton -->
+        @if (loading) {
+          @for (i of skeletonRows; track i) {
+            <tr class="env-table-row">
+              <td class="env-table-td env-table-td--check">
+                <div class="env-table-skel env-table-skel--circle"></div>
+              </td>
+              @for (col of columns; track col.key) {
+                <td class="env-table-td">
+                  @if (col.type === 'avatar-text') {
+                    <div class="env-table-av-cell">
+                      <div class="env-table-skel env-table-skel--circle"></div>
+                      <div class="env-table-skel env-table-skel--line"></div>
+                    </div>
+                  } @else {
+                    <div class="env-table-skel env-table-skel--line"></div>
+                  }
+                </td>
+              }
+              @if (actions.length) {
+                <td class="env-table-td env-table-td--action">
+                  <div class="env-table-skel env-table-skel--circle"></div>
+                </td>
+              }
+            </tr>
+          }
+
+        <!-- Empty state -->
+        } @else if (!rows.length) {
+          <tr>
+            <td [attr.colspan]="columns.length + 1 + (actions.length ? 1 : 0)" class="env-table-td-empty">
+              <div class="env-table-empty">
+                <span class="material-symbols-outlined">table_rows</span>
+                <p>No data found</p>
+              </div>
+            </td>
+          </tr>
+
+        <!-- Data rows -->
+        } @else {
+          @for (row of displayRows; track row[rowIdKey]) {
+            <tr
+              class="env-table-row"
+              [class.env-table-row--selected]="isSelected(row)"
+              (click)="rowClick.emit(row)">
+
+              <!-- Checkbox -->
+              <td class="env-table-td env-table-td--check" (click)="$event.stopPropagation()">
+                <label class="env-table-check-label">
+                  <input
+                    type="checkbox"
+                    [checked]="isSelected(row)"
+                    (change)="toggleSelect(row)" />
+                </label>
+              </td>
+
+              <!-- Data cells -->
+              @for (col of columns; track col.key) {
+                <td class="env-table-td">
+
+                  <!-- avatar-text -->
+                  @if (col.type === 'avatar-text') {
+                    <div class="env-table-av-cell">
+                      <div
+                        class="env-table-av"
+                        [style.background-image]="getAvatarBg(row, col)"
+                        [class.env-table-av--img]="getAvatarCell(row, col).avatar">
+                        @if (!getAvatarCell(row, col).avatar) {
+                          {{ getInitials(getAvatarCell(row, col).name) }}
+                        }
+                      </div>
+                      <span class="env-table-av-name">{{ getAvatarCell(row, col).name }}</span>
+                    </div>
+
+                  <!-- badge -->
+                  } @else if (col.type === 'badge') {
+                    <span
+                      class="env-table-badge"
+                      [style.background]="getBadge(row, col).bgColor"
+                      [style.color]="getBadge(row, col).textColor">
+                      <span
+                        class="env-table-badge-dot"
+                        [style.background]="getBadge(row, col).dotColor">
+                      </span>
+                      {{ getBadge(row, col).label }}
+                    </span>
+
+                  <!-- text (default) -->
+                  } @else {
+                    <span class="env-table-cell-text">{{ row[col.key] }}</span>
+                  }
+
+                </td>
+              }
+
+              <!-- Action kebab -->
+              @if (actions.length) {
+                <td class="env-table-td env-table-td--action" (click)="$event.stopPropagation()">
+                  <div class="env-table-action-wrap">
+                    <button
+                      class="env-table-kebab"
+                      [class.active]="isMenuOpen(row)"
+                      (click)="toggleMenu(row, $event)">
+                      <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+                    @if (isMenuOpen(row)) {
+                      <div class="env-table-menu" (click)="$event.stopPropagation()">
+                        @for (action of actions; track action.key) {
+                          <button
+                            class="env-table-menu-item"
+                            [class.env-table-menu-item--danger]="action.danger"
+                            (click)="onAction(row, action.key)">
+                            @if (action.icon) {
+                              <span class="material-symbols-outlined">{{ action.icon }}</span>
+                            }
+                            {{ action.label }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                </td>
+              }
+
+            </tr>
+          }
+        }
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Pagination ── -->
+  @if (showPagination && effectiveTotal > 0) {
+    <div class="env-table-foot">
+
+      <!-- Left: entry count + rows-per-page selector -->
+      <div class="env-table-foot-left">
+        <span class="env-table-foot-info">
+          Showing {{ padNum(showingFrom) }} to {{ padNum(showingTo) }} of {{ totalEntries }} entries
+        </span>
+
+        @if (pageSizeOptions.length) {
+          <div class="env-table-page-size">
+            <span class="env-table-page-size-label">Rows per page</span>
+            <select
+              class="env-table-page-size-select"
+              [value]="_pageSize()"
+              (change)="onPageSizeChange($any($event.target).value)">
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === _pageSize()">{{ opt }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      <!-- Right: navigation -->
+      <div class="env-table-pages">
+        <button
+          class="env-table-pg-btn"
+          [disabled]="_page() === 1"
+          (click)="goToPage(_page() - 1)">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Previous
+        </button>
+
+        <div class="env-table-pg-nums">
+          @for (page of visiblePages(); track $index) {
+            @if (isEllipsis(page)) {
+              <span class="env-table-pg-ellipsis">...</span>
+            } @else {
+              <button
+                class="env-table-pg-num"
+                [class.active]="page === _page()"
+                (click)="goToPage($any(page))">
+                {{ padNum($any(page)) }}
+              </button>
+            }
+          }
+        </div>
+
+        <button
+          class="env-table-pg-btn"
+          [disabled]="_page() === totalPages"
+          (click)="goToPage(_page() + 1)">
+          Next
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+      </div>
+
+    </div>
+  }
+
+</div>

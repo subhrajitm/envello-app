@@ -1,0 +1,33 @@
+@if (isOpen()) {
+  <div class="ks-backdrop" (click)="close()">
+    <div class="ks-modal" (click)="$event.stopPropagation()">
+      <div class="ks-header">
+        <span class="material-symbols-outlined ks-icon">keyboard</span>
+        <h2 class="ks-title">Keyboard Shortcuts</h2>
+        <button class="ks-close" (click)="close()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="ks-body">
+        @for (group of groups; track group.label) {
+          <div class="ks-group">
+            <h3 class="ks-group-label">{{ group.label }}</h3>
+            @for (shortcut of group.shortcuts; track shortcut.description) {
+              <div class="ks-row">
+                <span class="ks-desc">{{ shortcut.description }}</span>
+                <div class="ks-keys">
+                  @for (key of shortcut.keys; track $index) {
+                    <kbd class="ks-key">{{ key }}</kbd>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <div class="ks-footer">
+        Press <kbd class="ks-key">?</kbd> to toggle this panel
+      </div>
+    </div>
+  </div>
+}

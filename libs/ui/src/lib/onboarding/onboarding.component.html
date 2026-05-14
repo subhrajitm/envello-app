@@ -1,0 +1,80 @@
+@if (isOpen()) {
+  <div class="ob-backdrop">
+    <div class="ob-modal">
+
+      <!-- Header -->
+      <div class="ob-header">
+        <div class="ob-logo-area">
+          <span class="material-symbols-outlined ob-logo-icon">auto_awesome</span>
+          <span class="ob-brand">Welcome to Envello</span>
+        </div>
+        <button class="ob-skip" (click)="skip()">Skip setup</button>
+      </div>
+
+      <!-- Progress -->
+      <div class="ob-progress">
+        @for (i of [1,2,3]; track i) {
+          <div class="ob-progress-dot" [class.active]="step() >= i" [class.current]="step() === i"></div>
+        }
+      </div>
+
+      <!-- Step label -->
+      <h2 class="ob-step-label">{{ stepLabel }}</h2>
+
+      <!-- Step 1: Use case -->
+      @if (step() === 1) {
+        <div class="ob-grid ob-grid-2">
+          @for (uc of useCases; track uc.id) {
+            <button class="ob-option" [class.selected]="selectedUseCase() === uc.id" (click)="selectUseCase(uc.id)">
+              <span class="material-symbols-outlined ob-option-icon">{{ uc.icon }}</span>
+              <span class="ob-option-label">{{ uc.label }}</span>
+              <span class="ob-option-desc">{{ uc.desc }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Step 2: Theme -->
+      @if (step() === 2) {
+        <div class="ob-grid ob-grid-3">
+          @for (t of themes; track t.id) {
+            <button class="ob-option ob-option-theme" [class.selected]="selectedTheme() === t.id" (click)="selectTheme(t.id)">
+              <span class="material-symbols-outlined ob-option-icon">{{ t.icon }}</span>
+              <span class="ob-option-label">{{ t.label }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Step 3: AI Provider -->
+      @if (step() === 3) {
+        <p class="ob-hint">AI assistance is optional. You can change this any time in Settings → AI & Intelligence.</p>
+        <div class="ob-grid ob-grid-3">
+          @for (p of aiProviders; track p.id) {
+            <button class="ob-option" [class.selected]="selectedAiProvider() === p.id" (click)="selectAiProvider(p.id)">
+              <span class="material-symbols-outlined ob-option-icon">{{ p.icon }}</span>
+              <span class="ob-option-label">{{ p.label }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Footer actions -->
+      <div class="ob-footer">
+        @if (step() > 1) {
+          <button class="ob-btn ob-btn-ghost" (click)="back()">
+            <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
+            Back
+          </button>
+        } @else {
+          <span></span>
+        }
+        <button class="ob-btn ob-btn-primary" [disabled]="!canProceed" (click)="next()">
+          {{ step() === totalSteps ? 'Get started' : 'Continue' }}
+          <span class="material-symbols-outlined" style="font-size:18px;">{{ step() === totalSteps ? 'rocket_launch' : 'arrow_forward' }}</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

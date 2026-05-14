@@ -27,7 +27,7 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.dashboard')).toBeTruthy();
-    expect(compiled.querySelector('app-header')).toBeTruthy();
+    expect(compiled.querySelector('lib-header')).toBeTruthy();
     expect(compiled.querySelector('app-footer')).toBeTruthy();
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });

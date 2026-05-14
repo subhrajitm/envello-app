@@ -1,0 +1,30 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@envello/data": ["libs/data/src/index.ts"],
+      "@envello/domain": ["libs/domain/src/index.ts"],
+      "@envello/state": ["libs/state/src/index.ts"],
+      "@envello/ui": ["libs/ui/src/index.ts"],
+      "@envello/feature-tasks": ["libs/feature-tasks/src/index.ts"],
+      "@envello/feature-workspace": ["libs/feature-workspace/src/index.ts"],
+      "@envello/feature-novels": ["libs/feature-novels/src/index.ts"],
+      "@envello/core": ["libs/core/src/index.ts"],
+      "feature-projects": ["libs/feature-projects/src/index.ts"],
+      "@envello/feature-projects": ["libs/feature-projects/src/index.ts"],
+      "@envello/feature-books": ["libs/feature-books/src/index.ts"],
+
+      "@envello/feature-vault": ["libs/feature-vault/src/index.ts"],
+      "@envello/feature-vendor": ["libs/feature-vendor/src/index.ts"],
+      "@envello/feature-daily-notes": ["libs/feature-daily-notes/src/index.ts"],
+      "@envello/feature-bookmarks": ["libs/feature-bookmarks/src/index.ts"]
+    }
+  }
+}

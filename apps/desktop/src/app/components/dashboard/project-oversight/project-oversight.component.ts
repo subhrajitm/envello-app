@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { StoreService } from '../../../services/store.service';
+import { StoreService } from '@envello/core';
 
 @Component({
   selector: 'app-project-oversight',

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BinComponent } from './bin.component';
-import { BinService } from '../../services/bin.service';
+import { BinService } from '@envello/core';
 import { signal } from '@angular/core';
 
 describe('BinComponent', () => {

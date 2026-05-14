@@ -1,100 +1,126 @@
-<div class="activity-log-page flex flex-col h-full">
+<div class="al-page">
+
+    <!-- Page Header -->
     <div class="al-header">
-        <div class="al-header-top flex items-center justify-between">
-            <button class="back-btn" (click)="goBack()">
-                <span class="material-symbols-outlined">arrow_back</span>
-                BACK TO OVERVIEW
+        <h1 class="al-title">Activity logs</h1>
+        <div class="al-header-actions">
+            <button class="al-refresh-btn" (click)="refresh()">
+                <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
+                Refresh
             </button>
-            <div class="al-breadcrumbs">SYSTEM / LOGS / ACTIVITY</div>
         </div>
-        <div class="al-title-row flex items-center justify-between">
-            <h1>Activity Log</h1>
-            <div class="al-controls">
-                <div class="search-input">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Search logs..." (input)="updateSearch($event)" />
-                </div>
+    </div>
+
+    <!-- Filter Row -->
+    <div class="al-filter-bar">
+        <div class="filter-group">
+            <label class="filter-label">Events</label>
+            <div class="filter-select-wrapper">
+                <span class="filter-select-text">Select events</span>
+                <span class="material-symbols-outlined" style="font-size: 16px;">expand_more</span>
             </div>
         </div>
-        <div class="al-filters-row flex flex-wrap gap-2">
-            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'"
-                (click)="setFilter('ALL')">ALL</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'"
-                (click)="setFilter('ENTRY')">ENTRIES</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'"
-                (click)="setFilter('SYSTEM')">SYSTEM</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'"
-                (click)="setFilter('SYNC')">SYNC</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI
-                TOOLS</button>
+        <div class="filter-group">
+            <label class="filter-label">Type</label>
+            <div class="filter-pills">
+                <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'" (click)="setFilter('ENTRY')">Entries</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'" (click)="setFilter('SYSTEM')">System</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'" (click)="setFilter('SYNC')">Sync</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI</button>
+            </div>
+        </div>
+        <div class="filter-group search-group">
+            <label class="filter-label">Search</label>
+            <div class="al-search">
+                <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-tertiary);">search</span>
+                <input type="text" placeholder="Search activities..." (input)="updateSearch($event)" />
+            </div>
         </div>
     </div>
 
-    <div class="al-stats-bar compact-stats">
-        <div class="stat-item">
-            <span class="stat-label">DISPLAYING</span>
-            <span class="stat-value">{{ visibleCount() }} <span class="stat-sub">/ {{ totalCount() }}</span></span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">SYSTEM STATUS</span>
-            <span class="stat-value status-ok">OPERATIONAL</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">LAST SYNC</span>
-            <span class="stat-value">JUST NOW</span>
-        </div>
-    </div>
+    <!-- Table Container -->
+    <div class="al-table-wrap">
 
-    <div class="log-container">
-        <div class="log-table-header">
-            <div class="col-icon">TYPE</div>
-            <div class="col-action">ACTION / DETAILS</div>
-            <div class="col-time">TIMESTAMP</div>
-            <div class="col-user">USER</div>
-            <div class="col-status">STATUS</div>
+        <!-- Table Header -->
+        <div class="al-table-header">
+            <div class="col-expand"></div>
+            <div class="col-event">Event description</div>
+            <div class="col-user">User</div>
+            <div class="col-date">Date <span class="material-symbols-outlined" style="font-size: 13px; vertical-align: middle;">arrow_downward</span></div>
         </div>
-        <div class="log-list">
+
+        <!-- Scrollable Log List -->
+        <div class="al-log-list">
+            @if (filteredActivities().length === 0) {
+                <div class="al-empty">
+                    <span class="material-symbols-outlined" style="font-size: 32px; color: var(--text-tertiary);">history</span>
+                    <p>No activity logs found</p>
+                </div>
+            }
+
             @for (activity of filteredActivities(); track activity.id) {
-            <div class="log-row-group">
-                <div class="log-row" (click)="toggleRow(activity.id)"
-                    [class.expanded]="expandedRowId() === activity.id">
-                    <div class="col-icon">
-                        <div class="log-icon-wrapper" [ngClass]="activity.type">
-                            <span class="material-symbols-outlined log-icon">{{ activity.icon }}</span>
+            <div class="al-row-group">
+                <div class="al-row" (click)="toggleRow(activity.id)" [class.expanded]="expandedRowId() === activity.id">
+
+                    <!-- Expand Toggle -->
+                    <div class="col-expand">
+                        <button class="expand-btn">
+                            <span class="material-symbols-outlined expand-chevron"
+                                  [style.transform]="expandedRowId() === activity.id ? 'rotate(90deg)' : 'rotate(0deg)'">
+                                chevron_right
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Event Description -->
+                    <div class="col-event">
+                        <div class="event-row">
+                            <div class="event-icon-wrap" [ngClass]="activity.type">
+                                <span class="material-symbols-outlined event-icon">{{ activity.icon }}</span>
+                            </div>
+                            <div class="event-text-wrap">
+                                <span class="event-action">{{ activity.action }}</span>
+                                <span class="event-id">ID: {{ activity.id | slice:0:12 }}...</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-action">
-                        <div class="log-action-text">{{ activity.action }}</div>
-                        <div class="log-id">ID: {{ activity.id | slice:0:8 }}</div>
-                    </div>
-                    <div class="col-time">{{ activity.time }}</div>
+
+                    <!-- User -->
                     <div class="col-user">
-                        <div class="user-avatar">SM</div>
+                        <div class="user-cell">
+                            <div class="user-avatar">{{ userInitials() }}</div>
+                            <div class="user-info">
+                                <span class="user-name">{{ userName() }}</span>
+                                <span class="user-sub">{{ activity.type }}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-status">
-                        <span class="status-badge success">SUCCESS</span>
-                        <span class="material-symbols-outlined expand-icon">expand_more</span>
+
+                    <!-- Date -->
+                    <div class="col-date">
+                        <div class="date-cell">
+                            <span class="date-primary">{{ activity.time }}</span>
+                        </div>
                     </div>
+
                 </div>
 
+                <!-- Expanded Detail Row -->
                 @if (expandedRowId() === activity.id) {
-                <div class="log-details-panel">
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">FULL ID</span>
-                            <span class="detail-value">{{ activity.id }}</span>
+                <div class="al-detail-panel">
+                    <div class="detail-kv-row">
+                        <div class="detail-kv">
+                            <span class="detail-key">Full ID</span>
+                            <span class="detail-val">{{ activity.id }}</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">USER AGENT</span>
-                            <span class="detail-value">{{ activity.device }}</span>
+                        <div class="detail-kv">
+                            <span class="detail-key">Type</span>
+                            <span class="detail-val">{{ activity.type }}</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">IP ADDRESS</span>
-                            <span class="detail-value">{{ activity.ip }}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">LATENCY</span>
-                            <span class="detail-value">24ms</span>
+                        <div class="detail-kv">
+                            <span class="detail-key">Status</span>
+                            <span class="detail-val status-success">Success</span>
                         </div>
                     </div>
                 </div>
@@ -102,5 +128,11 @@
             </div>
             }
         </div>
+
+        <!-- Footer -->
+        <div class="al-table-footer">
+            <span>Showing {{ visibleCount() }} of {{ totalCount() }} events</span>
+        </div>
     </div>
+
 </div>

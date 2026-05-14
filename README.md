@@ -17,8 +17,7 @@ Envello is organized into specialized modules to cater to different creative and
 -   **💻 Code Snippets:** Store and manage useful code blocks.
 -   **📔 Journals:** Personal journaling and reflection.
 -   **✍️ Articles/Blogs:** Draft and manage blog posts and articles.
--   **🤖 AI Assistance:** Integrated AI tools for drafting and brainstorming.
-
+-   **🤖 AI Assistance:** Integrated advanced AI models (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, Ollama) for drafting, rewriting, and brainstorming inside your notes.
 ## 🏗 Architecture & Tech Stack
 
 Envello uses a hybrid architecture leveraging the robustness of Rust and the agility of Angular.
@@ -32,34 +31,43 @@ Envello uses a hybrid architecture leveraging the robustness of Rust and the agi
 
 ### High-Level Architecture
 
-The application follows a modular, service-based architecture:
+The application follows a **Modular Monorepo** architecture using Nx:
 
-1.  **UI Components (`apps/web/src/app/components/`)**:
-    -   Purely presentational or container components.
-    -   Interact exclusively with **Domain Services**.
-    -   Lazy-loaded via the Router for optimal performance.
+1.  **Apps (`apps/`)**:
+    -   **`desktop`**: The Tauri-based desktop application.
+    -   **`web`**: The web-based version of the application.
+    -   Both apps act as "shells" that consume shared logic and UI components.
 
-2.  **Domain Services (`apps/web/src/app/services/`)**:
-    -   Handle business logic for specific features (e.g., `NovelService`, `TaskService`).
-    -   Manage state using **Angular Signals** for reactive updates.
-    -   Serve as the bridge between UI and Data layers.
+2.  **Shared UI (`libs/ui`)**:
+    -   Contains all reusable UI components, including:
+        -   **Auth**: Login, Sign Up forms.
+        -   **Layout**: Header, Footer, Sidebar.
+        -   **Core**: Buttons, Inputs, Modals, Logos.
+    -   Apps import these components to ensure 100% visual consistency.
 
-3.  **Core Core (`apps/web/src/app/core/`)**:
-    -   **`SqliteService`**: Manages all database interactions, executing queries against the local SQLite DB.
-    -   **`TauriService`**: Handles bridge commands between the webview and the Rust backend.
-    -   **`AuthService`**: Manages user session and authentication states.
-    -   **`LoggingService`**: Centralized logging for debugging and monitoring.
+3.  **Core Services (`libs/core`)**:
+    -   **`SqliteService`**: Manages local SQLite database (Desktop only).
+    -   **`TauriService`**: Bridges webview and Rust backend (Desktop only).
+    -   **`AuthService`**: Handles authentication state.
+    -   **`DataService`**: Abstract interface for data peristence strategies.
 
 ### Data Flow
 
 ```mermaid
 graph LR
-    User[User Interaction] --> UI[Angular Components]
-    UI --> Service[Domain Service]
-    Service --> Store[Store/Signal State]
+    User[User Interaction] --> UI[@envello/ui Components]
+    UI --> App[App Shell (Desktop/Web)]
+    App --> Service[@envello/core Services]
+    Service --> State[Reactive State (Signals)]
+    
+    subgraph Desktop
     Service --> SQLite[SqliteService]
-    SQLite -- Tauri Command --> Rust[Rust Backend]
-    Rust -- SQL Query --> DB[(SQLite DB)]
+    SQLite -- Tauri --> Rust[Rust Backend]
+    end
+    
+    subgraph Web
+    Service --> WebDB[Supabase / PouchDB]
+    end
 ```
 
 ## 🛠 Development
@@ -83,37 +91,35 @@ cargo --version
 ### Running Locally
 
 ```bash
-# Run the web application in browser mode (mocked backend)
-npm run dev
+# Run the web application
+npx nx serve web
 
-# Run the full desktop application (requires Rust)
-npm run tauri dev
+# Run the desktop application
+npx nx serve desktop
 ```
 
 ## 📦 Build & Deployment
 
 | Command | Description | Output |
 | :--- | :--- | :--- |
-| `npm run build` | Standard web build | `dist/apps/desktop/browser` |
-| `npm run build:prod` | Production optimized web build | `dist/apps/desktop/browser` |
-| `npm run tauri build` | Build native desktop binaries | `src-tauri/target/release/bundle` |
+| `npx nx build web` | Build web application | `dist/apps/web` |
+| `npx nx build desktop` | Build desktop frontend | `dist/apps/desktop` |
+| `npx nx run tauri build` | Build native desktop binaries | `src-tauri/target/release` |
 
 ## 📂 Project Structure
 
 ```
 envello/
 ├── apps/
-│   └── web/
-│       └── src/
-│           ├── app/
-│           │   ├── components/  # Feature modules (Novels, Tasks, etc.)
-│           │   ├── core/        # Singleton services (Auth, SQLite, Error Handling)
-│           │   ├── services/    # Domain-specific logic
-│           │   └── ...
-│           └── ...
-├── src-tauri/                   # Rust backend & Tauri configuration
-├── dist/                        # Build artifacts
-└── ...
+│   ├── desktop/         # Main desktop application (Tauri + Angular)
+│   └── web/             # Web application (Angular)
+├── libs/
+│   ├── core/            # Singleton services (Auth, SQLite, Logging)
+│   ├── ui/              # Shared UI components (Auth, Layout, Widgets)
+│   ├── feature-*/       # Feature-specific libraries (Tasks, Novels, etc.)
+│   └── domain/          # Shared interfaces and types
+├── src-tauri/           # Rust backend configuration
+└── dist/                # Build artifacts
 ```
 
 ## 🗺 Roadmap

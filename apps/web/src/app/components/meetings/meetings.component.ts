@@ -1,30 +1,31 @@
-import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { 
-  MeetingsService, 
-  Meeting, 
-  Attendee, 
-  AgendaItem, 
-  ActionItem, 
+import {
+  MeetingsService,
+  Meeting,
+  Attendee,
+  AgendaItem,
+  ActionItem,
   MeetingNote,
   MEETING_COLORS,
   MeetingViewFilter,
-  MeetingViewMode
-} from '../../services/meetings.service';
-import { ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent } from '../../shared/ui';
-import { TauriService } from '../../core/services/tauri.service';
-
+  MeetingViewMode,
+  CalendarSyncService,
+  CalendarConnection,
+  PROVIDER_META,
+} from '@envello/core';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EmptyStateComponent, ModalComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
-export class MeetingsComponent implements OnInit, OnDestroy {
+export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
-  private tauriService = inject(TauriService);
+  syncService = inject(CalendarSyncService);
+  readonly providerMeta = PROVIDER_META;
   
   // View state
   viewMode = signal<MeetingViewMode>('list');
@@ -107,6 +108,14 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   
   // Keyboard shortcuts help
   showShortcutsHelp = signal(false);
+
+  // Calendar sync modal
+  showSyncModal = signal(false);
+  syncActiveProvider = signal<CalendarConnection['provider']>('google');
+  syncNewName = signal('');
+  syncNewUrl = signal('');
+  syncAddError = signal('');
+  readonly syncProviders: CalendarConnection['provider'][] = ['google', 'outlook', 'apple', 'teams', 'zoom', 'custom'];
   
   // Available colors for meetings
   meetingColors = MEETING_COLORS;
@@ -339,6 +348,52 @@ export class MeetingsComponent implements OnInit, OnDestroy {
 
   /** Whether any meetings have no project (for filter dropdown) */
   hasNoProject = computed(() => this.meetingsByProject().some((p) => p[0] === 'No project'));
+
+  /** The very next scheduled meeting */
+  nextMeeting = computed((): Meeting | null => {
+    const now = new Date();
+    return this.meetingsService.meetings()
+      .filter(m => new Date(`${m.date}T${m.startTime}`) >= now && m.status === 'scheduled')
+      .sort((a, b) => new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime())[0] ?? null;
+  });
+
+  /** All of today's non-cancelled meetings sorted by start time */
+  todayMeetings = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return this.meetingsService.meetings()
+      .filter(m => m.date === today && m.status !== 'cancelled')
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  });
+
+  /** Human-readable time until a meeting: "in 45m", "in 2h 10m", "Now" */
+  timeUntilMeeting(meeting: Meeting): string {
+    const diffMs = new Date(`${meeting.date}T${meeting.startTime}`).getTime() - Date.now();
+    if (diffMs <= 0) return 'Now';
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `in ${mins}m`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `in ${h}h ${m}m` : `in ${h}h`;
+  }
+
+  /** Whether a meeting's end time has already passed */
+  isMeetingPast(meeting: Meeting): boolean {
+    const end = meeting.endTime ?? meeting.startTime;
+    return new Date(`${meeting.date}T${end}`) < new Date() || meeting.status === 'completed';
+  }
+
+  /** Count of meetings per type for breakdown bar */
+  meetingTypeBreakdown = computed(() => {
+    const meetings = this.meetingsService.meetings().filter(m => m.status !== 'cancelled');
+    const total = meetings.length;
+    if (!total) return [];
+    const counts = new Map<string, number>();
+    for (const m of meetings) counts.set(m.meetingType, (counts.get(m.meetingType) ?? 0) + 1);
+    const labels: Record<string, string> = { video: 'Video', phone: 'Phone', 'in-person': 'In-Person', hybrid: 'Hybrid' };
+    return Array.from(counts.entries())
+      .map(([type, count]) => ({ type, label: labels[type] ?? type, count, pct: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  });
   
   // Meetings by status for kanban
   meetingsByStatus = computed(() => {
@@ -350,14 +405,6 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       cancelled: meetings.filter(m => m.status === 'cancelled'),
     };
   });
-  
-  ngOnInit() {
-    // Initialize any needed state
-  }
-  
-  ngOnDestroy() {
-    // Cleanup
-  }
   
   // Keyboard shortcuts
   @HostListener('document:click', ['$event'])
@@ -806,14 +853,15 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   }
   
   selectCalendarDate(date: Date) {
-    // If in create modal, set the date
     if (this.showDatePicker()) {
-      const current = this.newMeeting();
-      this.newMeeting.set({
-        ...current,
-        date: date.toISOString().split('T')[0],
-      });
+      // Called from the create-meeting date picker
+      this.newMeeting.set({ ...this.newMeeting(), date: date.toISOString().split('T')[0] });
       this.showDatePicker.set(false);
+    } else {
+      // Sidebar calendar: filter to that day
+      const dateStr = date.toISOString().split('T')[0];
+      const alreadySelected = this.searchQuery() === dateStr;
+      this.searchQuery.set(alreadySelected ? '' : dateStr);
     }
   }
   
@@ -928,7 +976,7 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   joinMeeting(meeting: Meeting, event?: Event) {
     if (event) event.stopPropagation();
     if (meeting.meetingLink) {
-      this.tauriService.openUrl(meeting.meetingLink).catch(() => {});
+      window.open(meeting.meetingLink, '_blank', 'noopener,noreferrer');
     }
     this.showQuickActions.set(null);
   }
@@ -965,4 +1013,34 @@ export class MeetingsComponent implements OnInit, OnDestroy {
   trackByNoteId(index: number, note: MeetingNote): string {
     return note.id;
   }
+
+  // ─── Calendar Sync ───────────────────────────────────────────────
+
+  openSyncModal() { this.showSyncModal.set(true); this.syncAddError.set(''); }
+  closeSyncModal() { this.showSyncModal.set(false); }
+
+  async addCalendarConnection() {
+    const name = this.syncNewName().trim();
+    const url = this.syncNewUrl().trim();
+    if (!name) { this.syncAddError.set('Please enter a calendar name.'); return; }
+    if (!url) { this.syncAddError.set('Please enter an ICS URL.'); return; }
+    if (!url.startsWith('http')) { this.syncAddError.set('URL must start with http:// or https://'); return; }
+
+    this.syncAddError.set('');
+    const conn = this.syncService.addConnection({
+      provider: this.syncActiveProvider(),
+      name,
+      icsUrl: url,
+      enabled: true,
+    });
+    this.syncNewName.set('');
+    this.syncNewUrl.set('');
+    await this.syncService.syncConnection(conn.id);
+  }
+
+  async syncAllCalendars() {
+    await this.syncService.syncAll();
+  }
+
+  trackByConnId(_: number, c: CalendarConnection) { return c.id; }
 }

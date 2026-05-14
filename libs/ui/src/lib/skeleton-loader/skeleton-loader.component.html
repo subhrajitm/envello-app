@@ -1,0 +1,26 @@
+@if (variant === 'list') {
+  <div class="skeleton-list">
+    @for (row of rowsArray; track row) {
+      <div class="skeleton-row">
+        <div class="skeleton-avatar shimmer"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-line skeleton-line--primary shimmer"></div>
+          <div class="skeleton-line skeleton-line--secondary shimmer"></div>
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="skeleton-cards">
+    @for (row of rowsArray; track row) {
+      <div class="skeleton-card shimmer">
+        <div class="skeleton-card-header shimmer-inner"></div>
+        <div class="skeleton-card-body">
+          <div class="skeleton-line skeleton-line--primary shimmer-inner"></div>
+          <div class="skeleton-line skeleton-line--secondary shimmer-inner"></div>
+          <div class="skeleton-line skeleton-line--tertiary shimmer-inner"></div>
+        </div>
+      </div>
+    }
+  </div>
+}

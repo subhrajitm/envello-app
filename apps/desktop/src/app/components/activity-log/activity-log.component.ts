@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService } from '../../services/store.service';
+import { StoreService, UserService } from '@envello/core';
 
 @Component({
   selector: 'app-activity-log',
@@ -13,10 +13,14 @@ import { StoreService } from '../../services/store.service';
 export class ActivityLogComponent {
   private store = inject(StoreService);
   private router = inject(Router);
+  private userService = inject(UserService);
 
   searchQuery = signal('');
   activeFilter = signal<'ALL' | 'ENTRY' | 'SYSTEM' | 'SYNC' | 'AI'>('ALL');
   expandedRowId = signal<string | null>(null);
+
+  userName = this.userService.userName;
+  userInitials = this.userService.userInitials;
 
   // Raw mapped activities
   allActivities = computed(() => {
@@ -26,9 +30,6 @@ export class ActivityLogComponent {
       time: activity.time,
       type: activity.type,
       icon: this.getIconForType(activity.type),
-      user: 'Super Admin',
-      device: 'MacBook Pro',
-      ip: '192.168.1.1'
     }));
   });
 
@@ -44,8 +45,7 @@ export class ActivityLogComponent {
 
     if (query) {
       list = list.filter(a =>
-        a.action.toLowerCase().includes(query) ||
-        a.id.toLowerCase().includes(query)
+        a.action.toLowerCase().includes(query)
       );
     }
 
@@ -61,7 +61,7 @@ export class ActivityLogComponent {
 
   setFilter(filter: 'ALL' | 'ENTRY' | 'SYSTEM' | 'SYNC' | 'AI') {
     this.activeFilter.set(filter);
-    this.expandedRowId.set(null); // Close details on filter change
+    this.expandedRowId.set(null);
   }
 
   updateSearch(event: Event) {
@@ -70,11 +70,11 @@ export class ActivityLogComponent {
   }
 
   toggleRow(id: string) {
-    if (this.expandedRowId() === id) {
-      this.expandedRowId.set(null);
-    } else {
-      this.expandedRowId.set(id);
-    }
+    this.expandedRowId.set(this.expandedRowId() === id ? null : id);
+  }
+
+  refresh() {
+    // No-op for now; activities come from live store
   }
 
   private getIconForType(type: string): string {

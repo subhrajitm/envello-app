@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService } from '../../services/store.service';
+import { StoreService } from '@envello/core';
 
 @Component({
   selector: 'app-activity-log',
@@ -56,7 +56,7 @@ export class ActivityLogComponent {
   visibleCount = computed(() => this.filteredActivities().length);
 
   goBack() {
-    this.router.navigate(['/overview']);
+    this.router.navigate(['/workspace']);
   }
 
   setFilter(filter: 'ALL' | 'ENTRY' | 'SYSTEM' | 'SYNC' | 'AI') {

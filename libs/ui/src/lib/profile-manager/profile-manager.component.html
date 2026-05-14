@@ -1,0 +1,171 @@
+<div class="orbit-page">
+    <header class="orbit-header">
+        <div class="orbit-header-left">
+            <h1 class="orbit-title">Projects</h1>
+        </div>
+        <div class="orbit-header-right">
+            <button class="create-profile-btn" (click)="openAddModal()">
+                <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+                New Project
+            </button>
+        </div>
+    </header>
+
+    <div class="orbit-content-area">
+        <div class="profile-grid">
+            @for (wp of workspaces(); track wp.id) {
+            <div class="profile-card" 
+                 [class.active-card]="activeWorkspace().id === wp.id"
+                 (click)="activeWorkspace().id !== wp.id && switchWorkspace(wp.id)">
+                
+                <div class="card-top" [style.backgroundColor]="wp.color + '1a'">
+                    <div class="card-top-row">
+                        <span class="material-symbols-outlined card-star">star</span>
+                        @if (activeWorkspace().id === wp.id) {
+                            <span class="active-badge">Active</span>
+                        }
+                    </div>
+
+                    <div class="card-body-row">
+                        <div class="card-title-area">
+                            <h3 class="card-title">{{ wp.name }}</h3>
+                        </div>
+                        <div class="card-main-icon">
+                            <span class="material-symbols-outlined icon-symbol"
+                                  [textContent]="wp.id === 'default' ? 'account_circle' : (wp.name.toLowerCase().includes('personal') ? 'person' : 'hub')">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-bottom">
+                    <div class="card-meta">
+                        Edited {{ wp.lastAccessed | date:'mediumDate' }}
+                    </div>
+                    <div class="card-action-group" (click)="$event.stopPropagation()">
+                        <button class="card-action-btn" title="Edit" (click)="openEditModal(wp)">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                        </button>
+                        <button class="card-action-btn danger" title="Delete"
+                                [disabled]="activeWorkspace().id === wp.id || wp.id === 'default'"
+                                (click)="openDeleteModal(wp.id)">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Add Profile Modal -->
+<env-modal
+    [isOpen]="isAddModalOpen()"
+    title="New Project"
+    size="sm"
+    (closed)="cancelAdd()"
+>
+    <!-- Same body & footer as before -->
+    <div body class="flex flex-col gap-4">
+        <div class="form-group flex flex-col gap-2">
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Name</label>
+            <input type="text"
+                class="form-input w-full"
+                placeholder="e.g., Personal, Client A, Work"
+                style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
+                [ngModel]="newProfileName()" (ngModelChange)="newProfileName.set($event)"
+                (keyup.enter)="confirmAdd()"
+                autofocus
+            >
+            <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
+                Data in this project (notes, tasks, subscriptions) will be isolated from other projects.
+            </p>
+        </div>
+    </div>
+    <ng-container footer>
+        <button class="btn-cancel" (click)="cancelAdd()">
+            Cancel
+        </button>
+        <button class="btn-primary" (click)="confirmAdd()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; font-size: 13px; font-weight: 600;">
+            Create Project
+        </button>
+    </ng-container>
+</env-modal>
+
+<!-- Edit Project Modal -->
+<env-modal
+    [isOpen]="isEditModalOpen()"
+    title="Edit Project"
+    size="sm"
+    (closed)="cancelEdit()"
+>
+    <div body class="flex flex-col gap-5">
+        <div class="form-group flex flex-col gap-2">
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Name</label>
+            <input type="text"
+                class="form-input w-full"
+                style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
+                [ngModel]="editProfileName()" (ngModelChange)="editProfileName.set($event)"
+                (keyup.enter)="confirmEdit()"
+                autofocus
+            >
+        </div>
+        
+        <div class="form-group flex flex-col gap-2">
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Color</label>
+            <div class="color-picker flex items-center gap-3">
+                @for (color of ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#6366f1']; track color) {
+                <button type="button" 
+                        class="color-btn" 
+                        [style.backgroundColor]="color" 
+                        [class.active-color]="editProfileColor() === color"
+                        (click)="editProfileColor.set(color)"
+                        style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                        [style.borderColor]="editProfileColor() === color ? 'var(--text-primary)' : 'transparent'"
+                        [style.transform]="editProfileColor() === color ? 'scale(1.15)' : 'scale(1)'">
+                </button>
+                }
+            </div>
+            <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
+                Pick a color to visually distinguish this project.
+            </p>
+        </div>
+    </div>
+    <ng-container footer>
+        <button class="btn-cancel" (click)="cancelEdit()">
+            Cancel
+        </button>
+        <button class="btn-primary" (click)="confirmEdit()" [disabled]="!editProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; font-size: 13px; font-weight: 600;">
+            Save Changes
+        </button>
+    </ng-container>
+</env-modal>
+
+<!-- Delete Profile Modal -->
+<env-modal
+    [isOpen]="isDeleteModalOpen()"
+    title="Delete Project?"
+    size="sm"
+    (closed)="cancelDelete()"
+>
+    <div body class="flex flex-col gap-4">
+        <div class="delete-warning p-4 rounded-lg flex gap-3" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 16px;">
+            <span class="material-symbols-outlined" style="color: #ef4444; font-size: 20px;">warning</span>
+            <div class="warning-content">
+                <h4 style="color: #ef4444; margin: 0 0 4px 0; font-size: 13px; font-weight: 600;">Proceed with caution</h4>
+                <p style="color: var(--text-secondary); font-size: 12px; line-height: 1.5; margin: 0;">
+                    All data in this project — notes, tasks, and subscriptions — will be permanently <strong>deleted and unrecoverable</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+    <ng-container footer>
+        <button class="btn-cancel" (click)="cancelDelete()">
+            Cancel
+        </button>
+        <button class="btn-primary" (click)="confirmDelete()" style="padding: 8px 16px; border-radius: 6px; background: #ef4444; color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer;">
+            Delete Permanently
+        </button>
+    </ng-container>
+</env-modal>

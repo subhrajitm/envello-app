@@ -1,16 +1,16 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService } from '../../services/store.service';
-import { BinService } from '../../services/bin.service';
-import { SessionService } from '../../services/session.service';
-import { UserService } from '../../services/user.service';
-import { SnippetsService } from '../../services/snippets.service';
-import { BooksService } from '../../services/books.service';
-import { MeetingsService } from '../../services/meetings.service';
-import { ArticleService } from '../../services/article.service';
-import { JournalService } from '../../services/journal.service';
-import { ResearchService } from '../../services/research.service';
+import { StoreService } from '@envello/core';
+import { BinService } from '@envello/core';
+import { SessionService } from '@envello/core';
+import { UserService } from '@envello/core';
+import { SnippetsService } from '@envello/core';
+import { BooksService } from '@envello/core';
+import { MeetingsService } from '@envello/core';
+import { ArticleService } from '@envello/core';
+import { ResearchService } from '@envello/core';
+import { SqliteDataService as DatabaseService } from '@envello/core';
 
 export interface DataTab {
   id: string;
@@ -39,8 +39,10 @@ export class DeveloperSettingsComponent {
   private books = inject(BooksService);
   private meetings = inject(MeetingsService);
   private articles = inject(ArticleService);
-  private journal = inject(JournalService);
   private research = inject(ResearchService);
+  private db = inject(DatabaseService);
+
+  isImporting = signal(false);
 
   activeTab = signal<string>('tasks');
   searchQuery = signal('');
@@ -55,9 +57,6 @@ export class DeveloperSettingsComponent {
     this.makeTab('books', 'Books', 'menu_book', 'Content', ['id', 'title', 'author', 'status', 'progress'], this.books.books()),
     this.makeTab('meetings', 'Meetings', 'event', 'Content', ['id', 'title', 'date', 'startTime', 'status'], this.meetings.meetings()),
     this.makeTab('articles', 'Articles', 'article', 'Content', ['id', 'title', 'platform', 'pipeline', 'wordCount'], this.articles.articles()),
-    this.makeTab('journal-projects', 'Journal Projects', 'folder', 'Content', ['id', 'title', 'entriesCount', 'active'], this.journal.projects()),
-    this.makeTab('journal-entries', 'Journal Entries', 'description', 'Content', ['id', 'projectId', 'title', 'type', 'column'], this.journal.entries()),
-    this.makeTab('journal-columns', 'Journal Columns', 'view_column', 'Content', ['id', 'name', 'color', 'order'], this.journal.columns()),
     this.makeTab('research-libraries', 'Research Libraries', 'folder', 'Research', ['id', 'name', 'description'], this.research.libraries()),
     this.makeTab('research-sources', 'Research Sources', 'source', 'Research', ['id', 'libraryId', 'title', 'sourceType'], this.research.sources()),
     this.makeTab('research-summaries', 'Research Summaries', 'summarize', 'Research', ['id', 'libraryId', 'title', 'sourceIds'], this.research.summaries()),
@@ -141,7 +140,7 @@ export class DeveloperSettingsComponent {
   }
 
   goBack() {
-    this.router.navigate(['/overview']);
+    this.router.navigate(['/workspace']);
   }
 
   onSearchInput(e: Event) {
@@ -196,6 +195,32 @@ export class DeveloperSettingsComponent {
       setTimeout(() => this.copyFeedback.set(false), 1500);
     } catch {
       console.warn('Clipboard copy failed');
+    }
+  }
+
+
+  async onImportFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const file = input.files[0];
+    this.isImporting.set(true);
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (confirm(`Are you sure you want to import data from "${file.name}"? This will overwrite existing data.`)) {
+        await this.db.importData(data);
+        alert('Import successful! Please reload the page.');
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error('Import failed', e);
+      alert('Import failed: ' + String(e));
+    } finally {
+      this.isImporting.set(false);
+      input.value = ''; // Reset input
     }
   }
 }

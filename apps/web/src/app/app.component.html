@@ -1,20 +1,21 @@
 <div class="dashboard">
-  <app-header 
-    [activeTab]="currentTab()" 
-    [isImmersive]="isImmersive()"
+  @if (!isFullScreen()) {
+  <lib-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
     (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
-  </app-header>
+  </lib-header>
+  }
 
-  <div 
-    class="dashboard-content" 
-    [class.no-padding]="hasSidebar()" 
+  <div class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
     [class.immersive-view]="isImmersive()"
-    [class.with-sidebar]="!isImmersive() && navigationLayout() !== 'horizontal'"
-    [class.sidebar-collapsed]="sidebarCollapsed()"
-    [class.horizontal-nav]="navigationLayout() === 'horizontal'">
+    [class.with-sidebar]="!isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'"
+    [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"
+    [class.fullscreen-content]="isFullScreen()">
     <router-outlet></router-outlet>
   </div>
 
+  @if (!isFullScreen()) {
   <app-footer></app-footer>
+  }
 </div>
-<!-- Command Palette to be added -->
+<!-- Keyboard shortcuts modal (? key) -->
+<app-keyboard-shortcuts></app-keyboard-shortcuts>

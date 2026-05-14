@@ -1,18 +1,27 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { AuthService } from './core/services/auth.service';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { AuthService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { HeaderComponent } from './components/layout/header/header.component';
-import { FooterComponent } from './components/layout/footer/footer.component';
-import { TauriService } from './core/services/tauri.service';
-import { SessionService } from './services/session.service';
-import { EnvLogoComponent } from './shared/ui/logo/logo.component';
+import { TauriService, SessionService } from '@envello/core';
+import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent } from '@envello/ui';
 import { filter, map, mergeMap } from 'rxjs/operators';
+
+/**
+ * Routes that belong to a section with multiple siblings → show sub-nav bar.
+ * Workspace ('workspace' / '') and Today (single item: 'daily-notes') do NOT show it.
+ */
+const SUB_NAV_ROUTES = new Set([
+  // Plan section
+  'tasks', 'meetings',
+  // Library section
+  'research',
+  // Create section
+  'write', 'projects',
+]);
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -26,10 +35,20 @@ export class AppComponent implements OnInit, OnDestroy {
   private unlistenFileDrop?: () => void;
 
   currentTab = signal('Workspace');
+  /** Current URL segment — updated on every navigation */
+  currentRoute = signal('');
   hasSidebar = signal(true);
   isImmersive = signal(false);
   isFullScreen = signal(false);
   sidebarCollapsed = signal(true);
+  /**
+   * True when the sub-nav bar should appear:
+   * - the current page belongs to a section with siblings, AND
+   * - the sidebar is NOT collapsed (flyout covers minimized mode)
+   */
+  subNavVisible = computed(() =>
+    SUB_NAV_ROUTES.has(this.currentRoute()) && !this.sidebarCollapsed()
+  );
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
@@ -43,6 +62,9 @@ export class AppComponent implements OnInit, OnDestroy {
       this.navigationLayout.set(event.detail);
     };
     window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
+
+    // Seed route from initial URL (before any NavigationEnd fires)
+    this.currentRoute.set(this.router.url.split('/')[1]?.split('?')[0] ?? '');
 
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
@@ -58,11 +80,13 @@ export class AppComponent implements OnInit, OnDestroy {
       this.isFullScreen.set(!!data['fullScreen']);
 
       // Map path to Tab Name for Header
-      const url = this.router.url.split('/')[1];
+      const url = this.router.url.split('/')[1]?.split('?')[0] ?? '';
       const tabName = this.mapUrlToTabName(url);
       this.currentTab.set(tabName);
+      this.currentRoute.set(url);
+
       // Update window title when running in Tauri
-      this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => { });
+      this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => { /* ignore */ });
     });
     this.setupTauriFileDrop();
   }
@@ -94,19 +118,21 @@ export class AppComponent implements OnInit, OnDestroy {
 
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
-      'workspace': 'Workspace',
-      'novels': 'Novels/Fiction',
-      'research': 'Research',
-      'articles': 'Articles/Blogs',
-      'journals': 'Journals',
-      'daily-notes': 'Daily Notes',
-      'tasks': 'Tasks/Todos',
-      'meetings': 'Meetings',
-      'books': 'Books/Reading',
-      'snippets': 'Code Snippets',
-      'bin': 'Bin',
-      'activity-log': 'Activity Log',
-      'developer-settings': 'Developer Settings'
+      'workspace':   'Workspace',
+      'tasks':       'Tasks',
+      'meetings':    'Meetings',
+      'daily-notes': 'Notes',
+      'research':    'Research',
+      'write':       'Write',
+      'projects':    'Projects',
+      'bin':                'Bin',
+      'activity-log':       'Activity Log',
+      'developer-settings': 'Developer Settings',
+      'books':              'Books/Reading',
+      'bookmarks':          'Bookmarks',
+      'snippets':           'Code Snippets',
+      'vault':              'Vault',
+      'subscriptions':      'Subscriptions'
     };
     return map[url] || 'Workspace';
   }

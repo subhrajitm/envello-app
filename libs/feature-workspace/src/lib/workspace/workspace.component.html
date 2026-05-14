@@ -1,0 +1,128 @@
+<div class="dashboard-container compact-mode">
+    <div class="main-layout">
+        <!-- Main Workspace (Center) -->
+        <main class="workspace-area">
+            <div class="context-label">
+                <span class="material-symbols-outlined context-icon">contrast</span>
+                CONTEXTUAL WORKSPACE
+            </div>
+
+            <!-- Big Text Display -->
+            <!-- Big Text Display -->
+            <div class="big-input-display">
+                {{ getGreeting() }}
+            </div>
+
+            <!-- Command Input -->
+            <div class="command-input-row">
+                <input type="text" class="main-text-input" [(ngModel)]="inputText" (keydown.enter)="executeCommand()"
+                    [placeholder]="listening() ? 'Listening (' + liveTranscript() + ')...' : 'Cmd + K to capture or type thoughts...'">
+                <div class="input-icons">
+                    <button type="button" class="icon-btn" [class.active]="listening()"
+                        (click)="toggleVoice()" (keyup.enter)="toggleVoice()"
+                        title="Voice Input" aria-label="Toggle Voice Input">
+                        <span class="material-symbols-outlined">mic</span>
+                    </button>
+                    <button type="button" class="icon-btn" (click)="triggerFileUpload()"
+                        (keyup.enter)="triggerFileUpload()" title="Attach File" aria-label="Attach File">
+                        <span class="material-symbols-outlined">attach_file</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Attachment Preview List -->
+            @if (attachments().length > 0) {
+            <div class="attachment-list">
+                @for (file of attachments(); track file; let i = $index) {
+                <div class="attachment-pill">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">draft</span>
+                    {{ file }}
+                    <button type="button" class="remove-x" (click)="removeAttachment(i)"
+                        (keyup.enter)="removeAttachment(i)" aria-label="Remove attachment">×</button>
+                </div>
+                }
+            </div>
+            }
+
+            <!-- Actions -->
+            <div class="action-row">
+                <button class="btn-black" (click)="executeCommand()">
+                    PROCESS ENTRY <span class="kbd">↵</span>
+                </button>
+                <button class="btn-ghost" (click)="clearCommand()">
+                    DISCARD <span class="kbd-light">ESC</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar">
+            <!-- Context Stream -->
+            <div class="sidebar-section full-height">
+                <div class="sidebar-header">
+                    <div class="section-title">
+                        <span class="material-symbols-outlined" style="font-size: 14px;">hub</span>
+                        CONTEXT STREAM
+                    </div>
+                    <button type="button" class="filter-btn" (click)="toggleFilter()" (keyup.enter)="toggleFilter()" aria-label="Toggle Filter">
+                        {{ activeFilter() }} <span class="material-symbols-outlined"
+                            style="font-size: 14px;">tune</span>
+                    </button>
+                </div>
+
+                <div class="stream-list">
+                    @for (item of contextStream(); track item.content) {
+                    <button type="button" class="stream-item" (click)="openItem(item)" (keyup.enter)="openItem(item)" aria-label="Open context item">
+                        <span class="status-indicator" [class]="item.tagClass.toLowerCase()"></span>
+                        <div class="item-content-wrap">
+                            <span class="item-type">{{ item.type }}</span>
+                            <span class="item-text">{{ item.content }}</span>
+                        </div>
+                        <span class="item-time-minimal">{{ item.time }}</span>
+                    </button>
+                    }
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <footer class="status-bar">
+        <div class="sb-left">
+            <div class="active-item">
+                <span class="status-dot"></span>
+                INTELLIGENT CAPTURE v2.4
+            </div>
+            <div class="divider"></div>
+            <div class="active-item">
+                <span class="material-symbols-outlined" style="font-size: 12px;">bolt</span>
+                HIGH-PERFORMANCE
+            </div>
+        </div>
+
+        <div class="sb-right">
+            <div class="linked-entities">
+                LINKED:
+                <div class="entity-circles"
+                    title="Active Tasks: {{ linkedEntities().tasks }}">
+                    <span class="e-circle"
+                        [style.background]="linkedEntities().tasks > 0 ? '#3b82f6' : '#374151'"></span>
+                </div>
+                <span class="entity-count">{{ linkedEntities().tasks }}</span>
+            </div>
+            <div class="divider"></div>
+            <div class="active-item">
+                CPU
+                <div class="metric-bar">
+                    <div class="metric-fill" [style.width.%]="cpuUsage()"></div>
+                </div>
+            </div>
+            <div class="active-item">
+                LAT
+                <div class="metric-bar">
+                    <div class="metric-fill" [style.width.%]="latency()"></div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
