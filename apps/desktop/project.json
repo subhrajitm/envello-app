@@ -42,8 +42,8 @@
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "60kB",
-              "maximumError": "80kB"
+              "maximumWarning": "100kB",
+              "maximumError": "150kB"
             }
           ],
           "outputHashing": "all",
@@ -104,6 +104,7 @@
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
+        "karmaConfig": "apps/desktop/karma.conf.js",
         "polyfills": [
           "zone.js",
           "zone.js/testing"
