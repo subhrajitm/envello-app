@@ -104,6 +104,7 @@
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
+        "karmaConfig": "apps/desktop/karma.conf.js",
         "polyfills": [
           "zone.js",
           "zone.js/testing"
