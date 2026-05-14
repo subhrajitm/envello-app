@@ -408,4 +408,16 @@ export class StoreService {
             console.error('[StoreService] remove note_folder failed', e)
         );
     }
+
+    updateNoteFolder(id: string, updates: Partial<{ name: string; icon: string }>) {
+        this.noteFolders.update(list =>
+            list.map(f => f.id === id ? { ...f, ...updates } : f)
+        );
+        const folder = this.noteFolders().find(f => f.id === id);
+        if (folder) {
+            this.db.upsert('note_folders', folder).catch(e =>
+                console.error('[StoreService] persist note_folders failed', e)
+            );
+        }
+    }
 }

@@ -63,6 +63,8 @@ export interface Note {
     lastSynced?: string; // ISO date
     /** Folder id for daily-notes organization; defaults to first folder if missing */
     folderId?: string;
+    /** Background color class for the editor (e.g. 'note-bg--rose') */
+    bgColor?: string;
 }
 
 export interface PlanningItem {

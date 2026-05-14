@@ -14,11 +14,11 @@
                 [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
                 (keydown.enter)="confirmNewFolder()" autofocus>
             }
-            @if (activeModal() === 'add-tag') {
-            <p>Enter a tag name to categorize this note.</p>
+            @if (activeModal() === 'rename-folder') {
+            <p>Enter a new name for this folder.</p>
             <input type="text" class="modal-input" [placeholder]="modalInputPlaceholder()"
                 [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
-                (keydown.enter)="confirmAddTag()" autofocus>
+                (keydown.enter)="confirmRenameFolder()" autofocus>
             }
             @if (activeModal() === 'link') {
             <p>Enter the URL for the link.</p>
@@ -61,8 +61,8 @@
             @if (activeModal() === 'new-folder') {
             <env-button variant="primary" (clicked)="confirmNewFolder()">Create Folder</env-button>
             }
-            @if (activeModal() === 'add-tag') {
-            <env-button variant="primary" (clicked)="confirmAddTag()">Add Tag</env-button>
+            @if (activeModal() === 'rename-folder') {
+            <env-button variant="primary" (clicked)="confirmRenameFolder()">Rename</env-button>
             }
             @if (activeModal() === 'link') {
             <env-button variant="primary" (clicked)="confirmSetLink()">Set Link</env-button>
@@ -125,9 +125,14 @@
         <!-- My Folders Header -->
         <div class="dn-folders-hdr">
             <span class="dn-sb-section-label">My Folders</span>
-            <button class="dn-sb-add-btn" (click)="handleNewFolder()" title="New folder">
-                <span class="material-symbols-outlined">add</span>
-            </button>
+            <div style="display:flex;gap:2px;">
+                <button class="dn-sb-add-btn" (click)="toggleExpandAll()" [title]="allExpanded() ? 'Collapse all' : 'Expand all'">
+                    <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
+                </button>
+                <button class="dn-sb-add-btn" (click)="handleNewFolder()" title="New folder">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
         </div>
 
         <!-- Folder Tree -->
@@ -168,10 +173,16 @@
                         </button>
                         @if (activeFolderMenuId() === group.id) {
                         <div class="folder-context-menu dropdown-menu">
+                            <button class="dropdown-item" (click)="startRenameFolder(group.id, group.name, $event)">
+                                <span class="material-symbols-outlined">edit</span>
+                                <span>Rename</span>
+                            </button>
+                            @if (noteGroups().length > 1) {
                             <button class="dropdown-item danger" (click)="requestDeleteFolder(group.id, $event)">
                                 <span class="material-symbols-outlined">delete</span>
                                 <span>Delete folder</span>
                             </button>
+                            }
                         </div>
                         }
                     </div>
@@ -194,7 +205,12 @@
                         (dragend)="onNoteDragEnd()">
                         <span class="note-card-icon material-symbols-outlined">{{ isPinned(entry) ? 'push_pin' : 'description' }}</span>
                         <div class="note-card-body">
-                            <span class="note-card-title">{{ entry.title }}</span>
+                            <span class="note-card-title">{{ entry.title || 'Untitled' }}</span>
+                            @if (getPreviewText(entry.preview) !== 'No additional text') {
+                            <span class="note-card-meta">
+                                <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
+                            </span>
+                            }
                         </div>
                         <div class="note-card-actions">
                             <button class="note-pin-btn" [class.is-pinned]="isPinned(entry)"
@@ -261,7 +277,7 @@
                         @for (color of bgColors; track color) {
                         <button class="color-swatch" [class]="'color-swatch' + (color ? ' ' + color : ' color-swatch--none')"
                             [class.active]="noteBgClass() === color"
-                            (click)="noteBgClass.set(color); showColorPicker.set(false)" title="{{ color ? color.replace('note-bg--', '') : 'Default' }}">
+                            (click)="setNoteBgColor(color)" title="{{ color ? color.replace('note-bg--', '') : 'Default' }}">
                             @if (!color) {
                             <span class="material-symbols-outlined color-swatch-none-icon">close</span>
                             }
@@ -285,10 +301,21 @@
                         </button>
                     </span>
                     }
-                    <button class="add-tag-btn" (click)="promptAddTag()">
+                    @if (showTagInput()) {
+                    <div class="tag-input-wrapper">
+                        <input class="tag-input" type="text" placeholder="Tag name..."
+                            [ngModel]="tagInputValue()" (ngModelChange)="tagInputValue.set($event)"
+                            (keydown.enter)="submitTagInput()"
+                            (keydown.escape)="showTagInput.set(false); tagInputValue.set('')"
+                            (blur)="submitTagInput()"
+                            autofocus />
+                    </div>
+                    } @else {
+                    <button class="add-tag-btn" (click)="showTagInput.set(true)">
                         <span class="material-symbols-outlined">add</span>
                         Add tag
                     </button>
+                    }
                 </div>
 
                 <tiptap-bubble-menu [editor]="editor">
@@ -361,8 +388,8 @@
         <!-- Right Compact Sidebar — Note Actions -->
         <aside class="dn-right-sidebar">
             @if (editor) {
-            <button class="rs-btn rs-btn--save" (click)="editor.commands.blur()" title="Save">
-                <span class="material-symbols-outlined">check</span>
+            <button class="rs-btn rs-btn--save" (click)="editor.chain().focus().run()" title="Focus editor">
+                <span class="material-symbols-outlined">edit</span>
             </button>
             }
 
@@ -511,7 +538,7 @@
                     <button class="rs-btn" title="{{ isPinned(note) ? 'Unpin note' : 'Pin note' }}" (click)="togglePin(note, $event)">
                         <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
                     </button>
-                    <button class="rs-btn" title="Add tag" (click)="promptAddTag()">
+                    <button class="rs-btn" title="Add tag" (click)="showTagInput.set(true)">
                         <span class="material-symbols-outlined">label</span>
                     </button>
                     <button class="rs-btn" title="Duplicate" (click)="duplicateNote(note)">

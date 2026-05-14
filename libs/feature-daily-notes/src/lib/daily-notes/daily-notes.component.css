@@ -437,9 +437,9 @@
 /* Note Card Item - Compass style */
 .note-card-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 6px;
-    padding: 3px 8px 3px 12px;
+    padding: 5px 8px 5px 12px;
     margin: 0;
     border-radius: 0;
     cursor: pointer;
@@ -496,6 +496,7 @@
     font-size: 14px !important;
     color: var(--text-tertiary);
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .note-card-item.active .note-card-icon {
@@ -520,25 +521,18 @@
 }
 
 .note-card-meta {
-    display: flex;
-    gap: 6px;
-    font-size: 10px;
-    align-items: center;
+    display: block;
     margin-top: 2px;
-    color: var(--text-tertiary);
-}
-
-.note-card-time {
-    font-weight: 500;
-    flex-shrink: 0;
 }
 
 .note-card-preview {
+    display: block;
+    font-size: 10px;
+    color: var(--text-tertiary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 1;
-    min-width: 0;
+    max-width: 148px;
 }
 
 .note-card-tags {
@@ -2191,6 +2185,24 @@ tiptap-editor:focus,
     font-size: 11px;
     color: var(--text-tertiary);
     font-style: italic;
+}
+
+/* ─── Inline tag input ───────────────────────────────────────────────────────── */
+.tag-input-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.tag-input {
+    padding: 3px 10px;
+    background: var(--bg-app);
+    border: 1px solid var(--accent-primary);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+    width: 120px;
+    box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.15);
 }
 
 /* ─── My Folders Header ──────────────────────────────────────────────────────── */
