@@ -1,7 +1,7 @@
 import { Component, Input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type IconButtonVariant = 'primary' | 'ghost' | 'danger';
+export type IconButtonVariant = 'primary' | 'ghost' | 'danger' | 'borderless';
 
 @Component({
   selector: 'env-icon-button',
@@ -13,7 +13,7 @@ export type IconButtonVariant = 'primary' | 'ghost' | 'danger';
 export class IconButtonComponent {
   @Input() icon = 'add';
   @Input() variant: IconButtonVariant = 'ghost';
-  @Input() size: 28 | 32 = 32;
+  @Input() size: 20 | 24 | 28 | 32 | 34 | 36 = 32;
   @Input() disabled = false;
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
   @Input() active = false;

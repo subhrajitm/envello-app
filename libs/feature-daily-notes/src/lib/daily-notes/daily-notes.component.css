@@ -33,29 +33,6 @@
     align-items: center;
 }
 
-.search-clear-btn {
-    position: absolute;
-    right: 6px;
-    background: transparent;
-    border: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 2px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.15s, background 0.15s;
-}
-
-.search-clear-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-}
-
-.search-clear-btn .material-symbols-outlined {
-    font-size: 14px;
-}
 
 .search-icon {
     position: absolute;
@@ -85,37 +62,6 @@
     color: var(--text-tertiary);
 }
 
-.sidebar-filter-btn {
-    background: var(--bg-app);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 5px 7px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-    flex-shrink: 0;
-    height: 28px;
-    box-sizing: border-box;
-}
-
-.sidebar-filter-btn:hover {
-    color: var(--text-primary);
-    border-color: var(--border-highlight);
-    background: var(--bg-hover);
-}
-
-.sidebar-filter-btn .material-symbols-outlined {
-    font-size: 16px;
-}
-
-.sidebar-filter-btn.active {
-    color: var(--accent-primary);
-    background: var(--accent-primary-dim);
-    border-color: var(--accent-primary);
-}
 
 .filter-dropdown {
     right: 0;
@@ -349,32 +295,9 @@
     flex-shrink: 0;
 }
 
-.folder-menu-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s, background 0.2s, color 0.2s;
-}
-
-.folder-header:hover .folder-menu-btn {
-    opacity: 1;
-}
-
-.folder-menu-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.folder-menu-btn .material-symbols-outlined {
-    font-size: 16px;
-}
+/* folder-menu-btn: show the env-icon-button on folder hover */
+.folder-header .folder-menu-btn { opacity: 0; transition: opacity 0.2s; }
+.folder-header:hover .folder-menu-btn { opacity: 1; }
 
 .folder-context-menu {
     top: calc(100% + 4px);
@@ -573,28 +496,6 @@
     opacity: 1;
 }
 
-.note-delete-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 2px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s;
-    flex-shrink: 0;
-}
-
-.note-delete-btn:hover {
-    background: rgba(248, 113, 113, 0.15);
-    color: var(--accent-red);
-}
-
-.note-delete-btn .material-symbols-outlined {
-    font-size: 14px;
-}
 
 /* Tags flat list */
 .tags-flat-list {
@@ -1521,33 +1422,6 @@ tiptap-editor:focus,
 
 
 
-/* ─── Note pin button in sidebar (inside .note-card-actions overlay) ─────── */
-.note-pin-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    padding: 2px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.15s, background 0.15s;
-    flex-shrink: 0;
-}
-
-.note-pin-btn .material-symbols-outlined {
-    font-size: 14px;
-}
-
-.note-pin-btn.is-pinned {
-    color: var(--accent-primary);
-}
-
-.note-pin-btn:hover {
-    color: var(--accent-primary);
-    background: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.1);
-}
 
 /* ─── Dynamic tag list items ───────────────────────────────────────────────── */
 .tag-list-item {
@@ -1828,79 +1702,6 @@ tiptap-editor:focus,
     gap: 2px;
 }
 
-.rs-btn {
-    width: 34px;
-    height: 34px;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-    position: relative;
-}
-
-.rs-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.rs-btn.active {
-    background: var(--bg-active);
-    color: var(--accent-primary);
-}
-
-.rs-btn .material-symbols-outlined {
-    font-size: 18px;
-}
-
-.rs-btn.danger:hover {
-    background: rgba(248, 113, 113, 0.1);
-    color: var(--accent-red);
-}
-
-.rs-btn--save {
-    background: var(--accent-primary);
-    color: var(--accent-primary-text);
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-}
-
-.rs-btn--save:hover {
-    background: color-mix(in srgb, var(--accent-primary) 80%, black);
-    color: var(--accent-primary-text);
-}
-
-.rs-btn--save:active {
-    transform: scale(0.95);
-}
-
-.rs-btn--save .material-symbols-outlined {
-    font-size: 20px;
-}
-
-/* AI button in right sidebar — match save button dimensions */
-.rs-btn--ai {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-}
-
-.rs-btn--ai.active {
-    background: var(--accent-primary-dim);
-    color: var(--accent-primary);
-    border: 1px solid var(--accent-primary);
-}
-
-.rs-btn--ai:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
 
 .rs-divider {
     width: 100%;
@@ -1992,62 +1793,6 @@ tiptap-editor:focus,
     margin: 2px 0;
 }
 
-.rs-btn.disabled {
-    opacity: 0.3;
-    cursor: default;
-    pointer-events: none;
-}
-
-.rs-delete-btn {
-    margin-bottom: 8px;
-}
-
-.rs-delete-btn:hover {
-    background: rgba(248, 113, 113, 0.1);
-    color: var(--accent-red);
-}
-
-/* Header buttons (save + AI) */
-.hdr-btn {
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-}
-
-.hdr-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.hdr-btn .material-symbols-outlined {
-    font-size: 18px;
-}
-
-.ai-hdr-btn {
-    width: 36px;
-    height: 36px;
-    margin: auto 8px auto 2px;
-    border-color: var(--border-subtle);
-}
-
-.ai-hdr-btn:hover {
-    border-color: var(--border-highlight);
-}
-
-.ai-hdr-btn.active {
-    background: var(--accent-primary-dim);
-    color: var(--accent-primary);
-    border-color: var(--accent-primary);
-}
 
 /* ─── Quick Access Items ────────────────────────────────────────────────────── */
 .dn-quick-access {

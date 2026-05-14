@@ -91,14 +91,10 @@
                 <input type="text" class="dn-search-input" placeholder="Search notes..."
                     [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
                 @if (searchQuery()) {
-                <button class="search-clear-btn" (click)="clearSearch()" title="Clear search">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+                <env-icon-button icon="close" variant="borderless" [size]="20" title="Clear search" (clicked)="clearSearch()" style="position:absolute;right:6px;" />
                 }
             </div>
-            <button class="dn-section-action-btn dn-add-btn" (click)="handleNewNote()" title="New note">
-                <span class="material-symbols-outlined">add</span>
-            </button>
+            <env-icon-button icon="add" variant="primary" [size]="28" title="New note (⌘N)" (clicked)="handleNewNote()" />
         </div>
 
         <!-- Quick Access -->
@@ -126,12 +122,8 @@
         <div class="dn-folders-hdr">
             <span class="dn-sb-section-label">My Folders</span>
             <div style="display:flex;gap:2px;">
-                <button class="dn-sb-add-btn" (click)="toggleExpandAll()" [title]="allExpanded() ? 'Collapse all' : 'Expand all'">
-                    <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
-                </button>
-                <button class="dn-sb-add-btn" (click)="handleNewFolder()" title="New folder">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
+                <env-icon-button [icon]="allExpanded() ? 'unfold_less' : 'unfold_more'" variant="borderless" [size]="24" [title]="allExpanded() ? 'Collapse all' : 'Expand all'" (clicked)="toggleExpandAll()" />
+                <env-icon-button icon="add" variant="borderless" [size]="24" title="New folder" (clicked)="handleNewFolder()" />
             </div>
         </div>
 
@@ -167,10 +159,7 @@
                     </span>
                     <span class="folder-name">{{ group.name }}</span>
                     <div class="folder-menu-wrapper">
-                        <button class="folder-menu-btn" title="Folder options"
-                            (click)="toggleFolderMenu(group.id, $event)">
-                            <span class="material-symbols-outlined">more_horiz</span>
-                        </button>
+                        <env-icon-button icon="more_horiz" variant="borderless" [size]="24" title="Folder options" class="folder-menu-btn" (clicked)="toggleFolderMenu(group.id, $event)" />
                         @if (activeFolderMenuId() === group.id) {
                         <div class="folder-context-menu dropdown-menu">
                             <button class="dropdown-item" (click)="startRenameFolder(group.id, group.name, $event)">
@@ -213,13 +202,8 @@
                             }
                         </div>
                         <div class="note-card-actions">
-                            <button class="note-pin-btn" [class.is-pinned]="isPinned(entry)"
-                                (click)="togglePin(entry, $event)" title="Pin">
-                                <span class="material-symbols-outlined">push_pin</span>
-                            </button>
-                            <button class="note-delete-btn" (click)="requestDeleteNote(entry.id, $event)" title="Delete">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
+                            <env-icon-button icon="push_pin" variant="borderless" [size]="20" title="Pin" [active]="isPinned(entry)" (clicked)="togglePin(entry, $event)" />
+                            <env-icon-button icon="delete" variant="danger" [size]="20" title="Delete" (clicked)="requestDeleteNote(entry.id, $event)" />
                         </div>
                     </div>
                     }
@@ -244,19 +228,13 @@
                     [class.pinned]="isPinned(tabNote)" (click)="selectNote(noteId)">
                     <span class="material-symbols-outlined tab-icon">{{ isPinned(tabNote) ? 'push_pin' : 'description' }}</span>
                     <span class="tab-label">{{ tabNote.title }}</span>
-                    <button class="tab-close" (click)="closeNoteTab(noteId, $event)" title="Close">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
+                    <env-icon-button icon="close" variant="borderless" [size]="20" title="Close tab" class="tab-close" (clicked)="closeNoteTab(noteId, $event)" />
                 </button>
                 }
                 }
-                <button class="editor-tab-add" (click)="handleNewNote()" title="New note">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
+                <env-icon-button icon="add" variant="borderless" [size]="28" title="New note" class="editor-tab-add" (clicked)="handleNewNote()" />
             </div>
-            <button class="hdr-btn ai-hdr-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
-                <span class="material-symbols-outlined">auto_awesome</span>
-            </button>
+            <env-icon-button icon="auto_awesome" variant="ghost" [size]="36" title="AI Assistant" [active]="showAssistant()" (clicked)="toggleAssistant()" style="margin:auto 8px auto 2px;" />
         </div>
 
         <!-- Editor Body — content + right sidebar side by side -->
@@ -265,13 +243,9 @@
         <div class="dn-editor-content">
             <div class="editor-container" [ngClass]="noteBgClass()" [class.full-width]="isFullWidth()">
                 <div class="editor-actions-top">
-                    <button class="editor-action-btn" (click)="isFullWidth.set(!isFullWidth())" [title]="isFullWidth() ? 'Boxed width' : 'Full width'">
-                        <span class="material-symbols-outlined">{{ isFullWidth() ? 'view_column' : 'view_stream' }}</span>
-                    </button>
+                    <env-icon-button [icon]="isFullWidth() ? 'view_column' : 'view_stream'" variant="ghost" [size]="28" [title]="isFullWidth() ? 'Boxed width' : 'Full width'" (clicked)="isFullWidth.set(!isFullWidth())" />
                     <div class="color-picker-wrapper">
-                        <button class="editor-action-btn" (click)="showColorPicker.set(!showColorPicker())" title="Background color">
-                            <span class="material-symbols-outlined">format_color_fill</span>
-                        </button>
+                        <env-icon-button icon="format_color_fill" variant="ghost" [size]="28" title="Background color" [active]="showColorPicker()" (clicked)="showColorPicker.set(!showColorPicker())" />
                         @if (showColorPicker()) {
                     <div class="color-picker-dropdown">
                         @for (color of bgColors; track color) {
@@ -388,9 +362,7 @@
         <!-- Right Compact Sidebar — Note Actions -->
         <aside class="dn-right-sidebar">
             @if (editor) {
-            <button class="rs-btn rs-btn--save" (click)="editor.chain().focus().run()" title="Focus editor">
-                <span class="material-symbols-outlined">edit</span>
-            </button>
+            <env-icon-button icon="edit" variant="primary" [size]="36" title="Focus editor" (clicked)="editor.chain().focus().run()" style="border-radius:8px;" />
             }
 
             <div class="rs-divider"></div>
@@ -399,9 +371,7 @@
                 <span class="rs-section-label">Format</span>
                 <div class="rs-btn-group">
                     <div class="dropdown-wrapper">
-                        <button class="rs-btn" [class.active]="showFormatMenu()" title="Formatting" (click)="toggleFormatMenu()">
-                            <span class="material-symbols-outlined">text_format</span>
-                        </button>
+                        <env-icon-button icon="text_format" variant="borderless" [size]="34" title="Formatting" [active]="showFormatMenu()" (clicked)="toggleFormatMenu()" />
                         @if (showFormatMenu()) {
                         <div class="format-dropdown dropdown-menu rs-dropdown rs-dropdown--wide">
                             <div class="rs-dropdown-section">
@@ -503,9 +473,7 @@
                 <span class="rs-section-label">Media</span>
                 <div class="rs-btn-group">
                     <div class="dropdown-wrapper">
-                        <button class="rs-btn" [class.active]="showMediaMenu()" title="Insert media" (click)="toggleMediaMenu()">
-                            <span class="material-symbols-outlined">perm_media</span>
-                        </button>
+                        <env-icon-button icon="perm_media" variant="borderless" [size]="34" title="Insert media" [active]="showMediaMenu()" (clicked)="toggleMediaMenu()" />
                         @if (showMediaMenu()) {
                         <div class="dropdown-menu rs-dropdown">
                             <button class="dropdown-item" (click)="setLink(); showMediaMenu.set(false)">
@@ -535,26 +503,14 @@
             <div class="rs-section">
                 <span class="rs-section-label">Actions</span>
                 <div class="rs-btn-group">
-                    <button class="rs-btn" title="{{ isPinned(note) ? 'Unpin note' : 'Pin note' }}" (click)="togglePin(note, $event)">
-                        <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
-                    </button>
-                    <button class="rs-btn" title="Add tag" (click)="showTagInput.set(true)">
-                        <span class="material-symbols-outlined">label</span>
-                    </button>
-                    <button class="rs-btn" title="Duplicate" (click)="duplicateNote(note)">
-                        <span class="material-symbols-outlined">content_copy</span>
-                    </button>
-                    <button class="rs-btn" title="Export" (click)="exportNote()">
-                        <span class="material-symbols-outlined">download</span>
-                    </button>
+                    <env-icon-button [icon]="isPinned(note) ? 'keep_off' : 'keep'" variant="borderless" [size]="34" [title]="isPinned(note) ? 'Unpin note' : 'Pin note'" [active]="isPinned(note)" (clicked)="togglePin(note, $event)" />
+                    <env-icon-button icon="label" variant="borderless" [size]="34" title="Add tag" (clicked)="showTagInput.set(true)" />
+                    <env-icon-button icon="content_copy" variant="borderless" [size]="34" title="Duplicate" (clicked)="duplicateNote(note)" />
+                    <env-icon-button icon="download" variant="borderless" [size]="34" title="Export" (clicked)="exportNote()" />
                     @if (editor) {
                     <div class="rs-divider--sm"></div>
-                    <button class="rs-btn" title="Undo" (click)="editor.chain().focus().undo().run()" [class.disabled]="!editor.can().undo()">
-                        <span class="material-symbols-outlined">undo</span>
-                    </button>
-                    <button class="rs-btn" title="Redo" (click)="editor.chain().focus().redo().run()" [class.disabled]="!editor.can().redo()">
-                        <span class="material-symbols-outlined">redo</span>
-                    </button>
+                    <env-icon-button icon="undo" variant="borderless" [size]="34" title="Undo" [disabled]="!editor.can().undo()" (clicked)="editor.chain().focus().undo().run()" />
+                    <env-icon-button icon="redo" variant="borderless" [size]="34" title="Redo" [disabled]="!editor.can().redo()" (clicked)="editor.chain().focus().redo().run()" />
                     }
                 </div>
             </div>
@@ -565,9 +521,7 @@
                 <span class="rs-section-label">Info</span>
                 <div class="rs-btn-group">
                     <div class="dropdown-wrapper">
-                        <button class="rs-btn" [class.active]="showInfoMenu()" title="Note info" (click)="toggleInfoMenu()">
-                            <span class="material-symbols-outlined">info</span>
-                        </button>
+                        <env-icon-button icon="info" variant="borderless" [size]="34" title="Note info" [active]="showInfoMenu()" (clicked)="toggleInfoMenu()" />
                         @if (showInfoMenu()) {
                         <div class="info-dropdown dropdown-menu rs-dropdown">
                             <div class="info-dropdown-title">Note info</div>
@@ -609,9 +563,7 @@
 
             <div class="rs-spacer"></div>
 
-            <button class="rs-btn danger rs-delete-btn" title="Delete note" (click)="deleteCurrentNote()">
-                <span class="material-symbols-outlined">delete</span>
-            </button>
+            <env-icon-button icon="delete" variant="danger" [size]="34" title="Delete note" style="margin-bottom:8px;" (clicked)="deleteCurrentNote()" />
         </aside>
         </div>
 
