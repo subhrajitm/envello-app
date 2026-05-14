@@ -115,6 +115,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
+  pinnedNotes = computed(() => this.notes().filter(n => this.isPinned(n)));
 
   dragOverFolderId = signal<string | null>(null);
   draggingNoteId = signal<string | null>(null);
@@ -172,6 +173,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   getBucketedNotesForFolder(folderId: string): { label: string; notes: Note[] }[] {
     const inFolder = this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId);
     return this.getBucketedNotes(inFolder);
+  }
+
+  getNotesForFolder(folderId: string): Note[] {
+    return this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId);
   }
 
   getNotesCountForFolder(folderId: string): number {

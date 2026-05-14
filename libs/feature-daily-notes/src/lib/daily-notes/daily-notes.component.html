@@ -133,66 +133,67 @@
             </div>
         </div>
 
-        <!-- Section Header — Compass style -->
-        <div class="dn-section-header">
-            <span class="dn-section-title">
-                {{ activeView() === 'folders' ? 'FOLDERS' : 'TAGS' }}
-                <span class="dn-section-count">({{ activeView() === 'folders' ? noteGroups().length : allTags().length }})</span>
-            </span>
-            <div class="dn-section-actions">
-                <button class="dn-section-action-btn" [class.active]="activeView() === 'folders'" (click)="switchView('folders')" title="Folders view">
-                    <span class="material-symbols-outlined">folder</span>
-                </button>
-                <button class="dn-section-action-btn" [class.active]="activeView() === 'tags'" (click)="switchView('tags')" title="Tags view">
-                    <span class="material-symbols-outlined">label</span>
-                </button>
-                @if (activeView() === 'folders') {
-                <button class="dn-section-action-btn" [title]="allExpanded() ? 'Collapse All' : 'Expand All'"
-                    (click)="toggleExpandAll()">
-                    <span class="material-symbols-outlined">{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</span>
-                </button>
-                }
-                <div class="dropdown-wrapper">
-                    <button class="dn-section-action-btn dn-add-btn" (click)="toggleDropdown()" title="Add">
-                        <span class="material-symbols-outlined">add</span>
-                    </button>
-                    @if (showDropdown()) {
-                    <div class="dropdown-menu">
-                        <button class="dropdown-item" (click)="handleNewNote(); toggleDropdown()">
-                            <span class="material-symbols-outlined">description</span>
-                            <span>New Note</span>
-                        </button>
-                        <button class="dropdown-item" (click)="handleNewFolder(); toggleDropdown()">
-                            <span class="material-symbols-outlined">create_new_folder</span>
-                            <span>New Folder</span>
-                        </button>
-                    </div>
-                    }
-                </div>
-            </div>
+        <!-- Quick Access -->
+        <div class="dn-quick-access">
+            <button class="dn-quick-item" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
+                <span class="material-symbols-outlined dn-quick-icon">article</span>
+                <span class="dn-quick-label">Drafts</span>
+                <span class="dn-quick-count">{{ notes().length }}</span>
+            </button>
+            <button class="dn-quick-item dn-quick-item--deleted" disabled>
+                <span class="material-symbols-outlined dn-quick-icon">delete</span>
+                <span class="dn-quick-label">Deleted</span>
+                <span class="dn-quick-count">0</span>
+            </button>
         </div>
 
-        <!-- Notes List with Hierarchical Folders -->
+        <div class="dn-sb-divider"></div>
+
+        <!-- Favourites -->
+        <div class="dn-sb-section">
+            <div class="dn-sb-section-label">Favourites</div>
+            @if (pinnedNotes().length > 0) {
+                @for (note of pinnedNotes(); track note.id) {
+                <div class="dn-fav-item" [class.active]="selectedNote()?.id === note.id" (click)="selectNote(note.id)">
+                    <span class="material-symbols-outlined dn-fav-icon">push_pin</span>
+                    <span class="dn-fav-title">{{ note.title }}</span>
+                </div>
+                }
+            } @else {
+            <div class="dn-fav-empty">Pin notes to add favourites</div>
+            }
+        </div>
+
+        <div class="dn-sb-divider"></div>
+
+        <!-- My Folders Header -->
+        <div class="dn-folders-hdr">
+            <span class="dn-sb-section-label">My Folders</span>
+            <button class="dn-sb-add-btn" (click)="handleNewFolder()" title="New folder">
+                <span class="material-symbols-outlined">add</span>
+            </button>
+        </div>
+
+        <!-- Folder Tree -->
         <div class="dn-entries-list"
             (dragover)="onListDragOver($event)"
             (dragleave)="onListDragLeave($event)"
             (drop)="onListDrop($event)">
-            @if (activeView() === 'folders') {
-            @if (filteredNotes().length === 0) {
+            @if (filteredNotes().length === 0 && searchQuery()) {
             <div class="sidebar-empty-state">
-                @if (searchQuery()) {
                 <span class="material-symbols-outlined sidebar-empty-icon">search_off</span>
                 <span class="sidebar-empty-text">No results for "{{ searchQuery() }}"</span>
                 <button class="sidebar-empty-action" (click)="clearSearch()">Clear search</button>
-                } @else {
+            </div>
+            } @else if (noteGroups().length === 0) {
+            <div class="sidebar-empty-state">
                 <span class="material-symbols-outlined sidebar-empty-icon">note_add</span>
                 <span class="sidebar-empty-text">No notes yet</span>
-                }
             </div>
             } @else {
             @for (group of noteGroups(); track group.id) {
             <div class="folder-group">
-                <div class="folder-header" 
+                <div class="folder-header"
                     [class.expanded]="group.expanded"
                     [class.drop-target]="dragOverFolderId() === group.id"
                     (click)="toggleGroup(group.id)"
@@ -204,7 +205,6 @@
                         {{ group.expanded ? 'folder_open' : 'folder' }}
                     </span>
                     <span class="folder-name">{{ group.name }}</span>
-                    <span class="folder-count">({{ getNotesCountForFolder(group.id) }})</span>
                     <div class="folder-menu-wrapper">
                         <button class="folder-menu-btn" title="Folder options"
                             (click)="toggleFolderMenu(group.id, $event)">
@@ -226,70 +226,31 @@
                     (dragover)="onFolderDragOver(group.id, $event)"
                     (dragleave)="onFolderDragLeave($event)"
                     (drop)="onFolderDrop(group.id, $event)">
-                    @if (getBucketedNotesForFolder(group.id).length === 0) {
+                    @if (getNotesForFolder(group.id).length === 0) {
                     <div class="folder-empty">No notes in this folder</div>
                     } @else {
-                    @for (bucket of getBucketedNotesForFolder(group.id); track bucket.label) {
-                        <div class="time-bucket-section">
-                            <div class="time-bucket-label">{{ bucket.label }}</div>
-                            @for (entry of bucket.notes; track entry.id) {
-                            <div class="note-card-item" [class.active]="selectedNote()?.id === entry.id"
-                                [class.dragging]="draggingNoteId() === entry.id"
-                                draggable="true"
-                                (click)="selectNote(entry.id)"
-                                (dragstart)="onNoteDragStart(entry.id, $event)"
-                                (dragend)="onNoteDragEnd()">
-                                <span class="note-card-icon material-symbols-outlined">{{ isPinned(entry) ? 'push_pin' : 'description' }}</span>
-                                <div class="note-card-body">
-                                    <span class="note-card-title">{{ entry.title }}</span>
-                                    <div class="note-card-meta">
-                                        <span class="note-card-time">{{ formatTime(entry.id, entry.lastEdited) }}</span>
-                                        <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
-                                    </div>
-                                    @if (getNoteTags(entry).length > 0) {
-                                    <div class="note-card-tags">
-                                        @for (tag of getNoteTags(entry); track tag) {
-                                        <span class="note-tag-dot" [title]="tag"></span>
-                                        }
-                                    </div>
-                                    }
-                                </div>
-                                <div class="note-card-actions">
-                                    <button class="note-pin-btn" [class.is-pinned]="isPinned(entry)" 
-                                        (click)="togglePin(entry, $event)" title="Pin">
-                                        <span class="material-symbols-outlined">push_pin</span>
-                                    </button>
-                                    <button class="note-delete-btn" (click)="requestDeleteNote(entry.id, $event)" title="Delete">
-                                        <span class="material-symbols-outlined">delete</span>
-                                    </button>
-                                </div>
-                            </div>
-                            }
+                    @for (entry of getNotesForFolder(group.id); track entry.id) {
+                    <div class="note-card-item" [class.active]="selectedNote()?.id === entry.id"
+                        [class.dragging]="draggingNoteId() === entry.id"
+                        draggable="true"
+                        (click)="selectNote(entry.id)"
+                        (dragstart)="onNoteDragStart(entry.id, $event)"
+                        (dragend)="onNoteDragEnd()">
+                        <span class="note-card-icon material-symbols-outlined">{{ isPinned(entry) ? 'push_pin' : 'description' }}</span>
+                        <div class="note-card-body">
+                            <span class="note-card-title">{{ entry.title }}</span>
                         </div>
+                        <div class="note-card-actions">
+                            <button class="note-pin-btn" [class.is-pinned]="isPinned(entry)"
+                                (click)="togglePin(entry, $event)" title="Pin">
+                                <span class="material-symbols-outlined">push_pin</span>
+                            </button>
+                            <button class="note-delete-btn" (click)="requestDeleteNote(entry.id, $event)" title="Delete">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </div>
                     }
-                    }
-                </div>
-                }
-            </div>
-            }
-            }
-            } @else {
-            <!-- Tags View — dynamic, derived from actual note tags -->
-            @if (allTags().length === 0) {
-            <div class="sidebar-empty-state">
-                <span class="material-symbols-outlined sidebar-empty-icon">label_off</span>
-                <span class="sidebar-empty-text">No tags yet</span>
-                <span class="sidebar-empty-text">Add tags to your notes to organize them</span>
-            </div>
-            } @else {
-            <div class="tags-flat-list">
-                @for (tag of allTags(); track tag.name) {
-                <div class="tag-list-item" [class.active]="selectedTag() === tag.name" (click)="selectTag(tag.name)">
-                    <span class="material-symbols-outlined tag-item-icon">label</span>
-                    <span class="tag-name">{{ tag.name }}</span>
-                    <span class="tag-note-count">{{ tag.count }}</span>
-                    @if (selectedTag() === tag.name) {
-                    <span class="material-symbols-outlined tag-item-check">check</span>
                     }
                 </div>
                 }
