@@ -67,6 +67,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   selectedFilter = signal<string>('all');
   selectedTag = signal<string>('');
   activeView = signal<'folders' | 'tags'>('folders');
+  noteBgClass = signal<string>('');
+  showColorPicker = signal<boolean>(false);
+  isFullWidth = signal<boolean>(false);
+
+  readonly bgColors = [
+    '',
+    'note-bg--rose',
+    'note-bg--orange',
+    'note-bg--yellow',
+    'note-bg--green',
+    'note-bg--cyan',
+    'note-bg--blue',
+    'note-bg--purple',
+    'note-bg--pink',
+    'note-bg--warm',
+    'note-bg--cool',
+  ];
 
   // Track open notes as tabs
   openNotes = signal<string[]>([]);
@@ -92,6 +109,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   showMoreOptionsMenu = signal<boolean>(false);
   showFormatMenu = signal<boolean>(false);
   showInfoMenu = signal<boolean>(false);
+  showMediaMenu = signal<boolean>(false);
+  showFilterMenu = signal<boolean>(false);
   activeFolderMenuId = signal<string | null>(null);
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
@@ -568,17 +587,31 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.showMoreOptionsMenu.update(v => !v);
     if (this.showFormatMenu()) this.showFormatMenu.set(false);
     if (this.showInfoMenu()) this.showInfoMenu.set(false);
+    if (this.showMediaMenu()) this.showMediaMenu.set(false);
   }
 
   toggleInfoMenu() {
     this.showInfoMenu.update(v => !v);
     if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
     if (this.showFormatMenu()) this.showFormatMenu.set(false);
+    if (this.showMediaMenu()) this.showMediaMenu.set(false);
   }
 
   toggleFormatMenu() {
     this.showFormatMenu.update(v => !v);
     if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
+    if (this.showMediaMenu()) this.showMediaMenu.set(false);
+  }
+
+  toggleMediaMenu() {
+    this.showMediaMenu.update(v => !v);
+    if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
+    if (this.showFormatMenu()) this.showFormatMenu.set(false);
+    if (this.showInfoMenu()) this.showInfoMenu.set(false);
+  }
+
+  toggleFilterMenu() {
+    this.showFilterMenu.update(v => !v);
   }
 
   setFormat(type: 'paragraph' | 'h1' | 'h2' | 'h3') {
@@ -644,11 +677,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.dropdown-wrapper')) {
+    if (!target.closest('.dropdown-wrapper') && !target.closest('.color-picker-wrapper')) {
       if (this.showDropdown()) this.showDropdown.set(false);
       if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
       if (this.showFormatMenu()) this.showFormatMenu.set(false);
       if (this.showInfoMenu()) this.showInfoMenu.set(false);
+      if (this.showMediaMenu()) this.showMediaMenu.set(false);
+      if (this.showFilterMenu()) this.showFilterMenu.set(false);
+      if (this.showColorPicker()) this.showColorPicker.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {
       if (this.activeFolderMenuId()) this.activeFolderMenuId.set(null);
