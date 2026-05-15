@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, effect, HostListener } from '@angular/core';
+import { Component, computed, inject, signal, effect, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,7 +9,8 @@ import { StoreService, Task, Activity, UserService, NotificationService } from '
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './workspace.component.html',
-  styleUrl: './workspace.component.css'
+  styleUrl: './workspace.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkspaceComponent {
   store = inject(StoreService);

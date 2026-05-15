@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
@@ -31,6 +31,7 @@ const URL_LABEL: Record<string, string> = {
   imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent],
   templateUrl: './vault.component.html',
   styleUrl: './vault.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VaultComponent {
   public vaultStore = inject(VaultStore);

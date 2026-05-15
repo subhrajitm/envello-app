@@ -32,14 +32,36 @@ export class PouchDbDataService implements DataService {
     private applyingSync = false;
     /** Only pull once per app session. */
     private hasPulled = false;
+    /** Cleanup function returned by subscribeRealtime. */
+    private unsubscribeRealtime?: () => void;
 
     constructor() {
-        // Trigger a pull from Supabase the first time a user is authenticated.
+        // Trigger a pull + realtime subscription the first time a user is authenticated.
         effect(() => {
             const user = this.authService.currentUser();
             if (user && !this.hasPulled) {
                 this.hasPulled = true;
-                this.pullAndApply();
+                this.pullAndApply().then(() => {
+                    this.unsubscribeRealtime = this.syncService.subscribeRealtime(async (record) => {
+                        this.applyingSync = true;
+                        try {
+                            if (record.deleted) {
+                                await this.removeFromProfile(record.collection, record.profile_id, record.id);
+                            } else if (record.data?.id) {
+                                await this.upsertToProfile(record.collection, record.profile_id, record.data);
+                            }
+                            window.dispatchEvent(new CustomEvent('envello:sync-complete'));
+                        } finally {
+                            this.applyingSync = false;
+                        }
+                    });
+                });
+            }
+            // Unsubscribe on logout
+            if (!user && this.unsubscribeRealtime) {
+                this.unsubscribeRealtime();
+                this.unsubscribeRealtime = undefined;
+                this.hasPulled = false;
             }
         });
     }

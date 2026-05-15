@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
@@ -92,6 +92,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     selector: 'app-vendor',
     standalone: true,
     imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
 <div class="vs-view">
 

@@ -6,6 +6,7 @@ import {
   HostListener,
   OnInit,
   OnDestroy,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,6 +37,7 @@ import {
   ],
   templateUrl: './books.component.html',
   styleUrl: './books.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BooksComponent implements OnInit, OnDestroy {
   readonly booksService = inject(BooksService);

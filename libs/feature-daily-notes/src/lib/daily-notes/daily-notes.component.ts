@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
@@ -40,7 +40,8 @@ interface NoteGroup {
   standalone: true,
   imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
   templateUrl: './daily-notes.component.html',
-  styleUrl: './daily-notes.component.css'
+  styleUrl: './daily-notes.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DailyNotesComponent implements OnInit, OnDestroy {
   private store = inject(StoreService);

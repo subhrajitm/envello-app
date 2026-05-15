@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -28,7 +28,8 @@ const STATUS_META: Record<string, { color: string; icon: string; label: string }
   standalone: true,
   imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent],
   templateUrl: './write.component.html',
-  styleUrl: './write.component.css'
+  styleUrl: './write.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WriteComponent {
   private router = inject(Router);

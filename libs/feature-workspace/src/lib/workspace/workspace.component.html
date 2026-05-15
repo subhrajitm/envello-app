@@ -55,7 +55,8 @@
             </div>
         </main>
 
-        <!-- Right Sidebar -->
+        <!-- Right Sidebar — deferred until idle so main command input renders first -->
+        @defer (on idle) {
         <aside class="sidebar">
             <!-- Context Stream -->
             <div class="sidebar-section full-height">
@@ -84,6 +85,15 @@
                 </div>
             </div>
         </aside>
+        } @placeholder {
+        <aside class="sidebar" aria-hidden="true">
+            <div class="sidebar-section full-height" style="gap:8px;display:flex;flex-direction:column;padding:16px;">
+                @for (i of [1,2,3,4,5,6]; track i) {
+                <div style="height:44px;border-radius:6px;background:var(--bg-secondary,#1a1a1a);opacity:0.5;"></div>
+                }
+            </div>
+        </aside>
+        }
     </div>
 
     <!-- Bottom Status Bar -->

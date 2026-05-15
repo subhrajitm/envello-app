@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Bookmark, BookmarkFolder } from '@envello/core';
@@ -15,6 +15,7 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
   imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent],
   templateUrl: './bookmarks.component.html',
   styleUrl: './bookmarks.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);

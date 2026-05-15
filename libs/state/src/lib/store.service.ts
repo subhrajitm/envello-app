@@ -23,30 +23,56 @@ export class StoreService {
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
 
-    private turndownService: any;
+    private markdownWorker: Worker | null = null;
+    private workerCallbacks = new Map<string, (md: string) => void>();
     private saveTimeouts: { [id: string]: any } = {};
 
     constructor() {
         this.loadFromDb();
-        this.initMarkdown();
+        this.initMarkdownWorker();
         // Re-load signals after PouchDbDataService applies pulled Supabase records.
         window.addEventListener('envello:sync-complete', () => this.loadFromDb());
     }
 
-    private async initMarkdown() {
-        if (typeof window !== 'undefined') {
-            try {
-                const TurndownService = (await import('turndown')).default;
-                if (TurndownService) {
-                    this.turndownService = new TurndownService();
-                    this.turndownService.addRule('strikethrough', {
-                        filter: ['del', 's', 'strike'],
-                        replacement: (content: string) => '~' + content + '~'
-                    });
+    private initMarkdownWorker() {
+        if (typeof Worker === 'undefined') return;
+        try {
+            // Worker script is bundled by the app — resolved at build time via the URL pattern.
+            // Falls back gracefully if the app is built without worker support (e.g., desktop SSR).
+            const workerUrl = (globalThis as any).__MARKDOWN_WORKER_URL__;
+            if (!workerUrl) return;
+            this.markdownWorker = new Worker(workerUrl, { type: 'module' });
+            this.markdownWorker.onmessage = ({ data }: MessageEvent<{ id: string; markdown?: string; error?: string }>) => {
+                const cb = this.workerCallbacks.get(data.id);
+                if (cb) {
+                    this.workerCallbacks.delete(data.id);
+                    cb(data.markdown ?? '');
                 }
-            } catch (e) {
-                console.warn('Turndown service undefined', e);
-            }
+            };
+        } catch (e) {
+            console.warn('[StoreService] Markdown worker unavailable, will use inline fallback', e);
+        }
+    }
+
+    private async htmlToMarkdown(html: string): Promise<string> {
+        if (this.markdownWorker) {
+            return new Promise<string>((resolve) => {
+                const id = crypto.randomUUID();
+                this.workerCallbacks.set(id, resolve);
+                this.markdownWorker!.postMessage({ id, html });
+            });
+        }
+        // Inline fallback (non-Tauri desktop or worker unavailable)
+        try {
+            const TurndownService = (await import('turndown')).default;
+            const svc = new TurndownService();
+            svc.addRule('strikethrough', {
+                filter: ['del', 's', 'strike'],
+                replacement: (content: string) => '~' + content + '~'
+            });
+            return svc.turndown(html);
+        } catch {
+            return html;
         }
     }
 
@@ -187,10 +213,7 @@ export class StoreService {
     }
 
     private async saveNoteContentToFile(id: string, html: string) {
-        if (!this.turndownService) await this.initMarkdown();
-        if (!this.turndownService) return;
-
-        const md = this.turndownService.turndown(html);
+        const md = await this.htmlToMarkdown(html);
         const filePath = await this.fs.saveNote(id, md);
 
         const note = this.notes().find(n => n.id === id);
