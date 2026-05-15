@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BinService, BinItem } from '@envello/core';
 import type { BinItemType } from '@envello/core';
+import { ConfirmDialogComponent } from '@envello/ui';
 
 type FilterType = 'ALL' | BinItemType;
 
@@ -15,7 +16,7 @@ interface ConfirmDialog {
 @Component({
   selector: 'app-bin',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmDialogComponent],
   templateUrl: './bin.component.html',
   styleUrl: './bin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

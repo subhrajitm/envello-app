@@ -585,15 +585,16 @@
 
 <!-- ═══ DELETE CONFIRM ═══ -->
 @if (showDeleteConfirm()) {
-  <env-modal title="Delete Bookmark" [isOpen]="true" (closed)="showDeleteConfirm.set(false)">
-    <div body class="bm-modal-body">
-      <p class="bm-confirm-text">Are you sure you want to delete this bookmark? This cannot be undone.</p>
-    </div>
-    <div footer>
-      <button class="bm-btn-secondary" (click)="showDeleteConfirm.set(false)">Cancel</button>
-      <button class="bm-btn-danger" (click)="confirmDelete()">Delete</button>
-    </div>
-  </env-modal>
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Bookmark"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmDelete()"
+    (cancelled)="showDeleteConfirm.set(false)">
+    This bookmark will be permanently deleted. This cannot be undone.
+</env-confirm-dialog>
 }
 
 <!-- ═══ KEYBOARD SHORTCUTS ═══ -->

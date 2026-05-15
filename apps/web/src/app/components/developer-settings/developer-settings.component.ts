@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ConfirmDialogComponent } from '@envello/ui';
 import { Router } from '@angular/router';
 import { StoreService } from '@envello/core';
 import { BinService } from '@envello/core';
@@ -23,7 +24,7 @@ export interface DataTab {
 @Component({
   selector: 'app-developer-settings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmDialogComponent],
   templateUrl: './developer-settings.component.html',
   styleUrl: './developer-settings.component.css'
 })
@@ -39,6 +40,9 @@ export class DeveloperSettingsComponent {
   private db = inject(DatabaseService);
 
   isImporting = signal(false);
+  importConfirm = signal(false);
+  private pendingImportData: unknown = null;
+  pendingImportFileName = '';
 
   activeTab = signal<string>('tasks');
   searchQuery = signal('');
@@ -202,19 +206,28 @@ export class DeveloperSettingsComponent {
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
-
-      if (confirm(`Are you sure you want to import data from "${file.name}"? This will overwrite existing data.`)) {
-        await this.db.importData(data);
-        alert('Import successful! Please reload the page.');
-        window.location.reload();
-      }
+      this.pendingImportData = JSON.parse(text);
+      this.pendingImportFileName = file.name;
+      this.importConfirm.set(true);
     } catch (e) {
-      console.error('Import failed', e);
-      alert('Import failed: ' + String(e));
+      console.error('Import parse failed', e);
     } finally {
       this.isImporting.set(false);
-      input.value = ''; // Reset input
+      input.value = '';
+    }
+  }
+
+  async doImport() {
+    this.importConfirm.set(false);
+    if (!this.pendingImportData) return;
+    try {
+      await this.db.importData(this.pendingImportData);
+      window.location.reload();
+    } catch (e) {
+      console.error('Import failed', e);
+    } finally {
+      this.pendingImportData = null;
+      this.pendingImportFileName = '';
     }
   }
 }

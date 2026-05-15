@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
 import { Subscription } from '@envello/domain';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -91,7 +91,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent],
+    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
 <div class="vs-view">
@@ -589,6 +589,19 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       </button>
     </div>
   </env-modal>
+}
+
+@if (deleteConfirmId(); as subId) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Subscription"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="doDelete(subId)"
+    (cancelled)="deleteConfirmId.set(null)">
+    This subscription will be permanently deleted. This cannot be undone.
+</env-confirm-dialog>
 }
   `,
     styles: [`

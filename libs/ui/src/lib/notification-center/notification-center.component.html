@@ -98,3 +98,16 @@
 
 <!-- Backdrop -->
 <div class="notification-backdrop" *ngIf="isOpen()" (click)="close()"></div>
+
+@if (clearConfirm()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Clear All Notifications"
+    icon="delete_sweep"
+    variant="danger"
+    confirmLabel="Clear All"
+    (confirmed)="doClearAll()"
+    (cancelled)="clearConfirm.set(false)">
+    All notifications will be permanently removed. This cannot be undone.
+</env-confirm-dialog>
+}

@@ -2,12 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { WorkspaceProfileService, UserService, StoreService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile-manager',
   standalone: true,
-  imports: [CommonModule, ModalComponent, FormsModule, DatePipe],
+  imports: [CommonModule, ModalComponent, FormsModule, DatePipe, ConfirmDialogComponent],
   templateUrl: './profile-manager.component.html',
   styleUrl: './profile-manager.component.css'
 })

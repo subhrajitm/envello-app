@@ -7,6 +7,7 @@ export { ButtonComponent, type ButtonVariant, type ButtonSize } from './button/b
 export { IconButtonComponent, type IconButtonVariant } from './icon-button/icon-button.component';
 export { BadgeComponent, type BadgeVariant } from './badge/badge.component';
 export { ModalComponent } from './modal/modal.component';
+export { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 export { EmptyStateComponent } from './empty-state/empty-state.component';
 export { InputComponent } from './input/input.component';
 export { EnvLogoComponent } from './logo/logo.component';

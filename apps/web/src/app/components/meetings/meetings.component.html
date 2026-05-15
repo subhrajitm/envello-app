@@ -1047,3 +1047,16 @@
   </div>
 </div>
 }
+
+@if (deleteMeetingTarget(); as meeting) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Meeting"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="doDeleteMeeting()"
+    (cancelled)="deleteMeetingTarget.set(null)">
+    Delete <strong>{{ meeting.title }}</strong>? This action cannot be undone.
+</env-confirm-dialog>
+}

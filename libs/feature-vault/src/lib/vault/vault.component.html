@@ -304,3 +304,16 @@
     </div>
   </div>
 }
+
+@if (deleteConfirmId(); as credId) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Credential"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmDelete(credId)"
+    (cancelled)="deleteConfirmId.set(null)">
+    This credential will be permanently deleted. This cannot be undone.
+</env-confirm-dialog>
+}

@@ -15,10 +15,11 @@ import {
   CalendarConnection,
   PROVIDER_META,
 } from '@envello/core';
+import { ConfirmDialogComponent } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -27,6 +28,9 @@ export class MeetingsComponent {
   syncService = inject(CalendarSyncService);
   readonly providerMeta = PROVIDER_META;
   
+  // Delete confirm
+  deleteMeetingTarget = signal<Meeting | null>(null);
+
   // View state
   viewMode = signal<MeetingViewMode>('list');
   viewFilter = signal<MeetingViewFilter>('all');
@@ -583,7 +587,13 @@ export class MeetingsComponent {
   
   // Meeting actions
   deleteMeeting(meeting: Meeting) {
-    if (confirm('Are you sure you want to delete this meeting?')) {
+    this.deleteMeetingTarget.set(meeting);
+  }
+
+  doDeleteMeeting() {
+    const meeting = this.deleteMeetingTarget();
+    this.deleteMeetingTarget.set(null);
+    if (meeting) {
       this.meetingsService.deleteMeeting(meeting.id);
       this.closeDetailsModal();
     }

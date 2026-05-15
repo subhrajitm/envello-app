@@ -2,7 +2,7 @@ import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ArticleService, Article } from '@envello/core';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent, FloatingAiButtonComponent } from '@envello/ui';
+import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonComponent, FloatingAiButtonComponent, ConfirmDialogComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-articles',
@@ -14,7 +14,8 @@ import { ButtonComponent, ModalComponent, EmptyStateComponent, IconButtonCompone
     ModalComponent,
     EmptyStateComponent,
     IconButtonComponent,
-    FloatingAiButtonComponent
+    FloatingAiButtonComponent,
+    ConfirmDialogComponent
   ],
   templateUrl: './articles.component.html',
   styleUrl: './articles.component.css'

@@ -5,6 +5,7 @@ export * from './lib/icon-button/icon-button.component';
 export * from './lib/input/input.component';
 export * from './lib/logo/logo.component';
 export * from './lib/modal/modal.component';
+export * from './lib/confirm-dialog/confirm-dialog.component';
 export * from './lib/layout/sidebar/sidebar.component';
 export * from './lib/layout/header/header.component';
 export * from './lib/layout/footer/footer.component';

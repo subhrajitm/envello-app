@@ -6,6 +6,7 @@ import { IconButtonComponent } from '../icon-button/icon-button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme } from '@envello/core';
 import { AiService, AiProvider } from '@envello/core';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 interface SettingsSection {
   id: string;
@@ -28,7 +29,7 @@ interface AiProviderOption {
 @Component({
   selector: 'app-settings-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EnvLogoComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EnvLogoComponent, ConfirmDialogComponent],
   templateUrl: './settings-modal.component.html',
   styleUrl: './settings-modal.component.css'
 })
@@ -38,6 +39,7 @@ export class SettingsModalComponent {
 
   isOpen = signal(false);
   activeSection = signal('general');
+  resetConfirm = signal(false);
 
   // Settings state
   currentTheme = signal<Theme>('dark');
@@ -255,41 +257,44 @@ export class SettingsModalComponent {
   }
 
   resetToDefaults() {
-    if (confirm('Are you sure you want to reset all settings to defaults?')) {
-      this.currentTheme.set('light');
-      this.fontSize.set(14);
-      this.compactMode.set(false);
-      this.animations.set(true);
-      this.navigationLayout.set('minimized');
-      this.editorFont.set('serif');
-      this.lineHeight.set(1.8);
-      this.autoSave.set(true);
-      this.spellCheck.set(true);
-      this.focusMode.set(false);
-      this.desktopNotifications.set(false);
-      this.soundEffects.set(true);
-      this.dailySummary.set(false);
-      this.analytics.set(true);
+    this.resetConfirm.set(true);
+  }
 
-      // Reset AI
-      this.aiProvider.set('mock');
-      this.aiModel.set('mock-model');
-      this.aiKey.set('');
-      this.aiService.updateConfig('mock', '', '');
+  doResetToDefaults() {
+    this.resetConfirm.set(false);
+    this.currentTheme.set('light');
+    this.fontSize.set(14);
+    this.compactMode.set(false);
+    this.animations.set(true);
+    this.navigationLayout.set('minimized');
+    this.editorFont.set('serif');
+    this.lineHeight.set(1.8);
+    this.autoSave.set(true);
+    this.spellCheck.set(true);
+    this.focusMode.set(false);
+    this.desktopNotifications.set(false);
+    this.soundEffects.set(true);
+    this.dailySummary.set(false);
+    this.analytics.set(true);
 
-      this.themeService.theme.set('light');
-      localStorage.removeItem('envello-settings');
-      localStorage.setItem('theme', 'light');
+    // Reset AI
+    this.aiProvider.set('mock');
+    this.aiModel.set('mock-model');
+    this.aiKey.set('');
+    this.aiService.updateConfig('mock', '', '');
 
-      // Reset CSS variables
-      document.documentElement.style.removeProperty('--base-font-size');
-      document.documentElement.style.removeProperty('--editor-font');
-      document.documentElement.style.removeProperty('--editor-line-height');
-      document.body.classList.remove('compact-mode', 'no-animations');
+    this.themeService.theme.set('light');
+    localStorage.removeItem('envello-settings');
+    localStorage.setItem('theme', 'light');
 
-      // Dispatch event to reset navigation layout
-      window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
-    }
+    // Reset CSS variables
+    document.documentElement.style.removeProperty('--base-font-size');
+    document.documentElement.style.removeProperty('--editor-font');
+    document.documentElement.style.removeProperty('--editor-line-height');
+    document.body.classList.remove('compact-mode', 'no-animations');
+
+    // Dispatch event to reset navigation layout
+    window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
   }
 
   private loadSettings() {

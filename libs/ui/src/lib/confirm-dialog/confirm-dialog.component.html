@@ -1,0 +1,29 @@
+@if (isOpen) {
+<div class="cd-backdrop" (click)="cancelled.emit()">
+    <div class="cd-dialog" (click)="$event.stopPropagation()" role="alertdialog" [attr.aria-label]="title">
+
+        @if (icon) {
+        <div class="cd-icon cd-icon--{{ variant }}">
+            <span class="material-symbols-outlined">{{ icon }}</span>
+        </div>
+        }
+
+        <h3 class="cd-title">{{ title }}</h3>
+
+        <div class="cd-desc">
+            <ng-content />
+        </div>
+
+        <div class="cd-actions">
+            <button class="cd-cancel" (click)="cancelled.emit()">{{ cancelLabel }}</button>
+            <button class="cd-confirm cd-confirm--{{ variant }}" (click)="confirmed.emit()">
+                @if (icon) {
+                <span class="material-symbols-outlined">{{ icon }}</span>
+                }
+                {{ confirmLabel }}
+            </button>
+        </div>
+
+    </div>
+</div>
+}

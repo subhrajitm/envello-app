@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { StoreService, type Novel, type WritingType, NovelContentService } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent } from '@envello/ui';
 
 const WRITING_TYPE_META: Record<string, { color: string; icon: string }> = {
   NOVEL:       { color: '#f59e0b', icon: 'menu_book'    },
@@ -26,7 +26,7 @@ const STATUS_META: Record<string, { color: string; icon: string; label: string }
 @Component({
   selector: 'app-write',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent],
   templateUrl: './write.component.html',
   styleUrl: './write.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

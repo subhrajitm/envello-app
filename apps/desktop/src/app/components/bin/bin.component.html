@@ -144,62 +144,20 @@
 </div>
 
 @if (confirmDialog(); as dialog) {
-<div class="confirm-backdrop" (click)="cancelConfirm()">
-    <div class="confirm-dialog" (click)="$event.stopPropagation()">
-
-        @if (dialog.mode === 'restore') {
-        <div class="confirm-icon confirm-icon--restore">
-            <span class="material-symbols-outlined">restore_from_trash</span>
-        </div>
-        <h3 class="confirm-title">Restore Item</h3>
-        <p class="confirm-desc">
-            Restore <strong>{{ dialog.itemTitle }}</strong> back to its original location?
-        </p>
-        <div class="confirm-actions">
-            <button class="confirm-cancel" (click)="cancelConfirm()">Cancel</button>
-            <button class="confirm-ok confirm-ok--restore" (click)="confirmAction()">
-                <span class="material-symbols-outlined">restore_from_trash</span>
-                Restore
-            </button>
-        </div>
-        }
-
-        @if (dialog.mode === 'delete') {
-        <div class="confirm-icon confirm-icon--delete">
-            <span class="material-symbols-outlined">delete_forever</span>
-        </div>
-        <h3 class="confirm-title">Delete Permanently</h3>
-        <p class="confirm-desc">
-            <strong>{{ dialog.itemTitle }}</strong> will be permanently deleted.<br>
-            This action cannot be undone.
-        </p>
-        <div class="confirm-actions">
-            <button class="confirm-cancel" (click)="cancelConfirm()">Cancel</button>
-            <button class="confirm-ok confirm-ok--delete" (click)="confirmAction()">
-                <span class="material-symbols-outlined">delete_forever</span>
-                Delete Forever
-            </button>
-        </div>
-        }
-
-        @if (dialog.mode === 'empty') {
-        <div class="confirm-icon confirm-icon--delete">
-            <span class="material-symbols-outlined">delete_sweep</span>
-        </div>
-        <h3 class="confirm-title">Empty Bin</h3>
-        <p class="confirm-desc">
-            All <strong>{{ totalCount() }}</strong> item{{ totalCount() !== 1 ? 's' : '' }} will be permanently deleted.<br>
-            This action cannot be undone.
-        </p>
-        <div class="confirm-actions">
-            <button class="confirm-cancel" (click)="cancelConfirm()">Cancel</button>
-            <button class="confirm-ok confirm-ok--delete" (click)="confirmAction()">
-                <span class="material-symbols-outlined">delete_sweep</span>
-                Empty Bin
-            </button>
-        </div>
-        }
-
-    </div>
-</div>
+<env-confirm-dialog
+    [isOpen]="true"
+    [title]="dialog.mode === 'restore' ? 'Restore Item' : dialog.mode === 'delete' ? 'Delete Permanently' : 'Empty Bin'"
+    [icon]="dialog.mode === 'restore' ? 'restore_from_trash' : dialog.mode === 'empty' ? 'delete_sweep' : 'delete_forever'"
+    [variant]="dialog.mode === 'restore' ? 'success' : 'danger'"
+    [confirmLabel]="dialog.mode === 'restore' ? 'Restore' : dialog.mode === 'delete' ? 'Delete Forever' : 'Empty Bin'"
+    (confirmed)="confirmAction()"
+    (cancelled)="cancelConfirm()">
+    @if (dialog.mode === 'restore') {
+        Restore <strong>{{ dialog.itemTitle }}</strong> back to its original location?
+    } @else if (dialog.mode === 'delete') {
+        <strong>{{ dialog.itemTitle }}</strong> will be permanently deleted.<br>This action cannot be undone.
+    } @else {
+        All <strong>{{ totalCount() }}</strong> item{{ totalCount() !== 1 ? 's' : '' }} will be permanently deleted.<br>This action cannot be undone.
+    }
+</env-confirm-dialog>
 }
