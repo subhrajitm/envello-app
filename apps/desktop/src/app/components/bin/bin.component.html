@@ -1,77 +1,145 @@
-<div class="bin-page flex flex-col h-full">
-  <header class="bin-header flex items-center justify-between">
-    <div class="bin-header-left">
-      <h1>Bin</h1>
-      <p class="bin-subtitle">
-        Soft‑deleted items from across Envello. Items are only permanently removed from here.
-      </p>
-    </div>
-    <div class="bin-header-actions" *ngIf="items().length > 0">
-      <span class="bin-count">{{ items().length }} items</span>
-      <env-button variant="danger" icon="delete_sweep" (clicked)="emptyBin()" [disabled]="items().length === 0">
-        Empty Bin
-      </env-button>
-    </div>
-  </header>
+<div class="bin-page">
 
-  <section class="bin-content" *ngIf="items().length > 0; else emptyState">
-    <table class="bin-table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Scope</th>
-          <th>Deleted</th>
-          <th class="col-actions"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of sortedItems(); trackBy: trackById">
-          <td>
-            <div class="bin-item-main">
-              <div class="bin-item-title">
-                {{ item.title || item.originalId }}
-              </div>
-              <div class="bin-item-meta">
-                <span class="type-pill type-{{ item.type }}">
-                  {{ formatType(item.type) }}
-                </span>
-                <span class="meta-separator">•</span>
-                <span class="meta-id">ID: {{ item.originalId }}</span>
-              </div>
-            </div>
-          </td>
-          <td>
-            <div class="bin-scope">
-              <span class="scope-label">Context</span>
-              <span class="scope-value">{{ item.contextId || 'Global' }}</span>
-            </div>
-          </td>
-          <td>
-            <div class="bin-deleted">
-              <span class="deleted-primary">
-                {{ item.deletedAt | date: 'medium' }}
-              </span>
-              <span class="deleted-secondary">
-                {{ item.deletedAt | date: 'shortTime' }}
-              </span>
-            </div>
-          </td>
-          <td class="actions">
-            <env-button variant="danger" icon="delete_forever" size="sm" (clicked)="permanentlyDelete(item.id)">
-              Delete
-            </env-button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+    <!-- Page Header -->
+    <div class="bin-header">
+        <h1 class="bin-title">Bin</h1>
+        <div class="bin-header-actions">
+            <button class="bin-empty-btn" (click)="emptyBin()" [disabled]="totalCount() === 0">
+                <span class="material-symbols-outlined" style="font-size: 16px;">delete_sweep</span>
+                Empty Bin
+            </button>
+        </div>
+    </div>
 
-  <ng-template #emptyState>
-    <env-empty-state
-      icon="delete_outline"
-      title="No items in Bin"
-      description="Deleted notes, chapters, characters, and locations will appear here before permanent removal. This acts as a safety net so teams can review destructive actions."
-    />
-  </ng-template>
+    <!-- Filter Row -->
+    <div class="bin-filter-bar">
+        <div class="filter-group">
+            <label class="filter-label">Type</label>
+            <div class="filter-pills">
+                <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">Tasks</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">Notes</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'novel'" (click)="setFilter('novel')">Novels</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'book'" (click)="setFilter('book')">Books</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">Meetings</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'novel-chapter'" (click)="setFilter('novel-chapter')">Chapters</button>
+            </div>
+        </div>
+        <div class="filter-group search-group">
+            <label class="filter-label">Search</label>
+            <div class="bin-search">
+                <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-tertiary);">search</span>
+                <input type="text" placeholder="Search bin..." (input)="updateSearch($event)" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bin-table-wrap">
+
+        <!-- Table Header -->
+        <div class="bin-table-header">
+            <div class="col-expand"></div>
+            <div class="col-item">Item</div>
+            <div class="col-date">Deleted <span class="material-symbols-outlined" style="font-size: 13px; vertical-align: middle;">arrow_downward</span></div>
+            <div class="col-actions">Actions</div>
+        </div>
+
+        <!-- Scrollable List -->
+        <div class="bin-list">
+            @if (filteredItems().length === 0) {
+                <div class="bin-empty">
+                    <span class="material-symbols-outlined" style="font-size: 32px; color: var(--text-tertiary);">delete_outline</span>
+                    <p>{{ totalCount() === 0 ? 'Bin is empty' : 'No items match your filter' }}</p>
+                </div>
+            }
+
+            @for (item of filteredItems(); track item.id) {
+            <div class="bin-row-group">
+                <div class="bin-row" (click)="toggleRow(item.id)" [class.expanded]="expandedRowId() === item.id">
+
+                    <!-- Expand Toggle -->
+                    <div class="col-expand">
+                        <button class="expand-btn">
+                            <span class="material-symbols-outlined expand-chevron"
+                                  [style.transform]="expandedRowId() === item.id ? 'rotate(90deg)' : 'rotate(0deg)'">
+                                chevron_right
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Item -->
+                    <div class="col-item">
+                        <div class="item-row">
+                            <div class="bin-icon-wrap type-{{ item.type }}">
+                                <span class="material-symbols-outlined bin-icon">{{ getIconForType(item.type) }}</span>
+                            </div>
+                            <div class="item-text-wrap">
+                                <span class="item-title">{{ item.title || item.originalId }}</span>
+                                <span class="item-id">ID: {{ item.originalId | slice:0:12 }}...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="col-date">
+                        <div class="date-cell">
+                            <span class="date-primary">{{ formatDate(item.deletedAt) }}</span>
+                            <span class="date-sub">{{ formatTime(item.deletedAt) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-actions" (click)="$event.stopPropagation()">
+                        @if (canRestore(item.type)) {
+                            <button class="action-btn restore-btn"
+                                    [class.loading]="restoringId() === item.id"
+                                    [disabled]="restoringId() === item.id"
+                                    (click)="restore(item.id)">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">restore</span>
+                                {{ restoringId() === item.id ? 'Restoring…' : 'Restore' }}
+                            </button>
+                        }
+                        <button class="action-btn delete-btn" (click)="permanentlyDelete(item.id)">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">delete_forever</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Expanded Detail Row -->
+                @if (expandedRowId() === item.id) {
+                <div class="bin-detail-panel">
+                    <div class="detail-kv-row">
+                        <div class="detail-kv">
+                            <span class="detail-key">Full ID</span>
+                            <span class="detail-val">{{ item.originalId }}</span>
+                        </div>
+                        <div class="detail-kv">
+                            <span class="detail-key">Type</span>
+                            <span class="detail-val">{{ formatType(item.type) }}</span>
+                        </div>
+                        <div class="detail-kv">
+                            <span class="detail-key">Deleted At</span>
+                            <span class="detail-val">{{ item.deletedAt }}</span>
+                        </div>
+                        <div class="detail-kv">
+                            <span class="detail-key">Restorable</span>
+                            <span class="detail-val" [class.status-success]="canRestore(item.type)" [class.status-no]="!canRestore(item.type)">
+                                {{ canRestore(item.type) ? 'Yes' : 'No' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- Footer -->
+        <div class="bin-table-footer">
+            <span>Showing {{ visibleCount() }} of {{ totalCount() }} items</span>
+        </div>
+    </div>
+
 </div>
-

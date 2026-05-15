@@ -67,7 +67,7 @@ export class StoreService {
             const TurndownService = (await import('turndown')).default;
             const svc = new TurndownService();
             svc.addRule('strikethrough', {
-                filter: ['del', 's', 'strike'],
+                filter: ['del', 's', 'strike'] as any,
                 replacement: (content: string) => '~' + content + '~'
             });
             return svc.turndown(html);

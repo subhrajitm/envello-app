@@ -15,7 +15,7 @@ async function getTurndown(): Promise<any> {
   const { default: TurndownService } = await import('turndown');
   turndownService = new TurndownService();
   turndownService.addRule('strikethrough', {
-    filter: ['del', 's', 'strike'],
+    filter: ['del', 's', 'strike'] as any,
     replacement: (content: string) => '~' + content + '~'
   });
   return turndownService;
