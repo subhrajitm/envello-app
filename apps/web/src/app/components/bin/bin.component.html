@@ -17,7 +17,7 @@
                     <input type="text" placeholder="Search deleted items..." (input)="updateSearch($event)" />
                 </div>
                 @if (totalCount() > 0) {
-                <button class="empty-btn" (click)="emptyBin()">
+                <button class="empty-btn" (click)="openEmptyConfirm()">
                     <span class="material-symbols-outlined">delete_sweep</span>
                     EMPTY BIN
                 </button>
@@ -104,14 +104,14 @@
                         <button class="action-btn restore-btn"
                                 [class.loading]="restoringId() === item.id"
                                 [disabled]="restoringId() === item.id"
-                                (click)="restore(item.id)"
+                                (click)="openRestoreConfirm(item.id, item.title || item.originalId)"
                                 title="Restore item">
                             <span class="material-symbols-outlined">restore_from_trash</span>
                             {{ restoringId() === item.id ? '...' : 'RESTORE' }}
                         </button>
                         }
                         <button class="action-btn delete-btn"
-                                (click)="permanentlyDelete(item.id)"
+                                (click)="openDeleteConfirm(item.id, item.title || item.originalId)"
                                 title="Delete permanently">
                             <span class="material-symbols-outlined">delete_forever</span>
                         </button>
@@ -155,3 +155,64 @@
     </div>
 
 </div>
+
+@if (confirmDialog(); as dialog) {
+<div class="confirm-backdrop" (click)="cancelConfirm()">
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+
+        @if (dialog.mode === 'restore') {
+        <div class="confirm-icon confirm-icon--restore">
+            <span class="material-symbols-outlined">restore_from_trash</span>
+        </div>
+        <h3 class="confirm-title">Restore Item</h3>
+        <p class="confirm-desc">
+            Restore <strong>{{ dialog.itemTitle }}</strong> back to its original location?
+        </p>
+        <div class="confirm-actions">
+            <button class="confirm-cancel" (click)="cancelConfirm()">Cancel</button>
+            <button class="confirm-ok confirm-ok--restore" (click)="confirmAction()">
+                <span class="material-symbols-outlined">restore_from_trash</span>
+                Restore
+            </button>
+        </div>
+        }
+
+        @if (dialog.mode === 'delete') {
+        <div class="confirm-icon confirm-icon--delete">
+            <span class="material-symbols-outlined">delete_forever</span>
+        </div>
+        <h3 class="confirm-title">Delete Permanently</h3>
+        <p class="confirm-desc">
+            <strong>{{ dialog.itemTitle }}</strong> will be permanently deleted.<br>
+            This action cannot be undone.
+        </p>
+        <div class="confirm-actions">
+            <button class="confirm-cancel" (click)="cancelConfirm()">Cancel</button>
+            <button class="confirm-ok confirm-ok--delete" (click)="confirmAction()">
+                <span class="material-symbols-outlined">delete_forever</span>
+                Delete Forever
+            </button>
+        </div>
+        }
+
+        @if (dialog.mode === 'empty') {
+        <div class="confirm-icon confirm-icon--delete">
+            <span class="material-symbols-outlined">delete_sweep</span>
+        </div>
+        <h3 class="confirm-title">Empty Bin</h3>
+        <p class="confirm-desc">
+            All <strong>{{ totalCount() }}</strong> item{{ totalCount() !== 1 ? 's' : '' }} will be permanently deleted.<br>
+            This action cannot be undone.
+        </p>
+        <div class="confirm-actions">
+            <button class="confirm-cancel" (click)="cancelConfirm()">Cancel</button>
+            <button class="confirm-ok confirm-ok--delete" (click)="confirmAction()">
+                <span class="material-symbols-outlined">delete_sweep</span>
+                Empty Bin
+            </button>
+        </div>
+        }
+
+    </div>
+</div>
+}

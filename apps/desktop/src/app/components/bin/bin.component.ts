@@ -5,6 +5,12 @@ import { BinItemType } from '@envello/domain';
 
 type FilterType = 'ALL' | BinItemType;
 
+interface ConfirmDialog {
+  mode: 'restore' | 'delete' | 'empty';
+  itemId?: string;
+  itemTitle?: string;
+}
+
 @Component({
   selector: 'app-bin',
   standalone: true,
@@ -20,6 +26,7 @@ export class BinComponent {
   activeFilter = signal<FilterType>('ALL');
   expandedRowId = signal<string | null>(null);
   restoringId = signal<string | null>(null);
+  confirmDialog = signal<ConfirmDialog | null>(null);
 
   allItems = computed(() =>
     [...this.binService.items()].sort(
@@ -63,25 +70,43 @@ export class BinComponent {
     return this.binService.canRestore(type);
   }
 
-  async restore(id: string) {
-    this.restoringId.set(id);
-    await this.binService.restore(id);
-    this.restoringId.set(null);
-    if (this.expandedRowId() === id) this.expandedRowId.set(null);
+  openRestoreConfirm(id: string, title: string) {
+    this.confirmDialog.set({ mode: 'restore', itemId: id, itemTitle: title });
   }
 
-  permanentlyDelete(id: string) {
-    const confirmed = confirm('Delete forever?\n\nThis cannot be recovered.');
-    if (confirmed) {
-      this.binService.permanentlyDelete(id);
-      if (this.expandedRowId() === id) this.expandedRowId.set(null);
+  openDeleteConfirm(id: string, title: string) {
+    this.confirmDialog.set({ mode: 'delete', itemId: id, itemTitle: title });
+  }
+
+  openEmptyConfirm() {
+    if (this.allItems().length === 0) return;
+    this.confirmDialog.set({ mode: 'empty' });
+  }
+
+  cancelConfirm() {
+    this.confirmDialog.set(null);
+  }
+
+  async confirmAction() {
+    const dialog = this.confirmDialog();
+    if (!dialog) return;
+    this.confirmDialog.set(null);
+
+    if (dialog.mode === 'restore' && dialog.itemId) {
+      this.restoringId.set(dialog.itemId);
+      await this.binService.restore(dialog.itemId);
+      this.restoringId.set(null);
+      if (this.expandedRowId() === dialog.itemId) this.expandedRowId.set(null);
+    } else if (dialog.mode === 'delete' && dialog.itemId) {
+      this.binService.permanentlyDelete(dialog.itemId);
+      if (this.expandedRowId() === dialog.itemId) this.expandedRowId.set(null);
+    } else if (dialog.mode === 'empty') {
+      this.binService.emptyBin();
     }
   }
 
   emptyBin() {
-    if (this.allItems().length === 0) return;
-    const confirmed = confirm('Empty Bin?\n\nAll items will be permanently removed. This action cannot be undone.');
-    if (confirmed) this.binService.emptyBin();
+    this.openEmptyConfirm();
   }
 
   getIconForType(type: string): string {

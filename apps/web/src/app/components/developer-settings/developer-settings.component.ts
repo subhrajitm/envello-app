@@ -5,7 +5,6 @@ import { StoreService } from '@envello/core';
 import { BinService } from '@envello/core';
 import { SessionService } from '@envello/core';
 import { UserService } from '@envello/core';
-import { SnippetsService } from '@envello/core';
 import { MeetingsService } from '@envello/core';
 import { ArticleService } from '@envello/core';
 import { ResearchService } from '@envello/core';
@@ -34,7 +33,6 @@ export class DeveloperSettingsComponent {
   private bin = inject(BinService);
   private session = inject(SessionService);
   private userService = inject(UserService);
-  private snippets = inject(SnippetsService);
   private meetings = inject(MeetingsService);
   private articles = inject(ArticleService);
   private research = inject(ResearchService);
@@ -51,7 +49,6 @@ export class DeveloperSettingsComponent {
     this.makeTab('planning', 'Planning Items', 'timeline', 'Tasks', ['id', 'title', 'tag', 'stage'], this.store.planningItems()),
     this.makeTab('activities', 'Activities', 'history', 'System', ['id', 'text', 'time', 'type'], this.store.activities()),
     this.makeTab('novels', 'Novels', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.novels()),
-    this.makeTab('snippets', 'Code Snippets', 'code', 'Content', ['id', 'title', 'lang', 'tags'], this.snippets.snippets()),
     this.makeTab('meetings', 'Meetings', 'event', 'Content', ['id', 'title', 'date', 'startTime', 'status'], this.meetings.meetings()),
     this.makeTab('articles', 'Articles', 'article', 'Content', ['id', 'title', 'platform', 'pipeline', 'wordCount'], this.articles.articles()),
     this.makeTab('research-libraries', 'Research Libraries', 'folder', 'Research', ['id', 'name', 'description'], this.research.libraries()),
