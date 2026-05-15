@@ -159,7 +159,7 @@
                     </span>
                     <span class="folder-name">{{ group.name }}</span>
                     <div class="folder-menu-wrapper">
-                        <env-icon-button icon="more_horiz" variant="borderless" [size]="24" title="Folder options" class="folder-menu-btn" (clicked)="toggleFolderMenu(group.id, $event)" />
+                        <env-icon-button icon="more_horiz" variant="borderless" [size]="24" title="Folder options" class="folder-menu-btn" (click)="$event.stopPropagation()" (clicked)="toggleFolderMenu(group.id)" />
                         @if (activeFolderMenuId() === group.id) {
                         <div class="folder-context-menu dropdown-menu">
                             <button class="dropdown-item" (click)="startRenameFolder(group.id, group.name, $event)">
@@ -202,8 +202,8 @@
                             }
                         </div>
                         <div class="note-card-actions">
-                            <env-icon-button icon="push_pin" variant="borderless" [size]="20" title="Pin" [active]="isPinned(entry)" (clicked)="togglePin(entry, $event)" />
-                            <env-icon-button icon="delete" variant="danger" [size]="20" title="Delete" (clicked)="requestDeleteNote(entry.id, $event)" />
+                            <env-icon-button icon="push_pin" variant="borderless" [size]="20" title="Pin" [active]="isPinned(entry)" (click)="$event.stopPropagation()" (clicked)="togglePin(entry)" />
+                            <env-icon-button icon="delete" variant="danger" [size]="20" title="Delete" (click)="$event.stopPropagation()" (clicked)="requestDeleteNote(entry.id)" />
                         </div>
                     </div>
                     }
@@ -228,7 +228,7 @@
                     [class.pinned]="isPinned(tabNote)" (click)="selectNote(noteId)">
                     <span class="material-symbols-outlined tab-icon">{{ isPinned(tabNote) ? 'push_pin' : 'description' }}</span>
                     <span class="tab-label">{{ tabNote.title }}</span>
-                    <env-icon-button icon="close" variant="borderless" [size]="20" title="Close tab" class="tab-close" (clicked)="closeNoteTab(noteId, $event)" />
+                    <env-icon-button icon="close" variant="borderless" [size]="20" title="Close tab" class="tab-close" (click)="$event.stopPropagation()" (clicked)="closeNoteTab(noteId)" />
                 </button>
                 }
                 }
@@ -503,7 +503,7 @@
             <div class="rs-section">
                 <span class="rs-section-label">Actions</span>
                 <div class="rs-btn-group">
-                    <env-icon-button [icon]="isPinned(note) ? 'keep_off' : 'keep'" variant="borderless" [size]="34" [title]="isPinned(note) ? 'Unpin note' : 'Pin note'" [active]="isPinned(note)" (clicked)="togglePin(note, $event)" />
+                    <env-icon-button [icon]="isPinned(note) ? 'keep_off' : 'keep'" variant="borderless" [size]="34" [title]="isPinned(note) ? 'Unpin note' : 'Pin note'" [active]="isPinned(note)" (clicked)="togglePin(note)" />
                     <env-icon-button icon="label" variant="borderless" [size]="34" title="Add tag" (clicked)="showTagInput.set(true)" />
                     <env-icon-button icon="content_copy" variant="borderless" [size]="34" title="Duplicate" (clicked)="duplicateNote(note)" />
                     <env-icon-button icon="download" variant="borderless" [size]="34" title="Export" (clicked)="exportNote()" />

@@ -529,8 +529,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
   }
 
-  toggleFolderMenu(folderId: string, event: Event) {
-    event.stopPropagation();
+  toggleFolderMenu(folderId: string) {
     this.activeFolderMenuId.set(this.activeFolderMenuId() === folderId ? null : folderId);
   }
 
@@ -548,8 +547,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return note.tags?.includes('pinned') || false;
   }
 
-  togglePin(note: Note, event: Event) {
-    event.stopPropagation();
+  togglePin(note: Note) {
     const tags = note.tags || [];
     const pinned = tags.includes('pinned');
     this.store.updateNote(note.id, {
@@ -665,8 +663,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.noteGroups.update(groups => groups.map(g => ({ ...g, expanded: shouldExpand })));
   }
 
-  closeNoteTab(noteId: string, event?: Event) {
-    if (event) event.stopPropagation();
+  closeNoteTab(noteId: string) {
     this.openNotes.update(tabs => tabs.filter(id => id !== noteId));
     if (this.selectedEntryId() === noteId) {
       const remainingTabs = this.openNotes();
@@ -719,8 +716,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
   }
 
-  requestDeleteNote(noteId: string, event: Event) {
-    event.stopPropagation();
+  requestDeleteNote(noteId: string) {
     this.tempNoteId.set(noteId);
     this.activeModal.set('delete-confirm');
   }

@@ -135,6 +135,7 @@ export interface Project {
         books?: string[];
         articles?: string[];
         snippets?: string[];
+        bookmarks?: string[];
     };
 }
 

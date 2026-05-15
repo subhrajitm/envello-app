@@ -40,6 +40,10 @@
               <span class="material-symbols-outlined">article</span>
               {{ project.words | number }} words
             </span>
+            <a class="card-details-link" [routerLink]="['/projects', project.id]" (click)="$event.stopPropagation()">
+              View Details
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
           </div>
         </div>
       }
