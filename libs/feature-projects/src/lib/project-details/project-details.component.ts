@@ -6,7 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import {
     StoreService, Project, MeetingsService, BooksService,
-    ResearchService, ArticleService, EncryptionUtil
+    ResearchService, ArticleService, EncryptionUtil, WorkspaceProfileService
 } from '@envello/core';
 import { VaultStore, SubscriptionStore, LinkStore } from '@envello/state';
 
@@ -33,6 +33,7 @@ export class ProjectDetailsComponent {
     public vaultStore = inject(VaultStore);
     public subscriptionStore = inject(SubscriptionStore);
     public linkStore = inject(LinkStore);
+    public workspaceService = inject(WorkspaceProfileService);
 
     activeTab = signal<'OVERVIEW' | 'VAULT' | 'SUBSCRIPTIONS'>('OVERVIEW');
     projectId = signal<string | null>(null);
@@ -133,16 +134,27 @@ export class ProjectDetailsComponent {
     saveEdit() {
         const id = this.projectId();
         if (!id) return;
+        const newTitle = this.editTitle().trim() || this.project()!.title;
         this.store.updateProject(id, {
-            title: this.editTitle().trim() || this.project()!.title,
+            title: newTitle,
             description: this.editDescription(),
             status: this.editStatus(),
             updated: new Date().toISOString()
         });
+        this.workspaceService.updateProfile(id, { name: newTitle });
         this.editMode.set(false);
     }
 
     cancelEdit() { this.editMode.set(false); }
+
+    switchToProject() {
+        const id = this.projectId();
+        if (id) this.workspaceService.switchProfile(id);
+    }
+
+    isActiveProject() {
+        return this.workspaceService.activeProfileId() === this.projectId();
+    }
 
     // ── Tasks ─────────────────────────────────────────────────────────────────
     addTask() {

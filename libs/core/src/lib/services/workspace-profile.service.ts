@@ -64,6 +64,23 @@ export class WorkspaceProfileService {
     this.switchProfile(newProfile.id);
   }
 
+  /** Register a profile using a caller-supplied ID (used to keep Project.id === WorkspaceProfile.id). */
+  addProfileWithId(id: string, name: string, color?: string, icon?: string) {
+    if (id === 'default') return;
+    if (this.profiles().some(p => p.id === id)) return;
+    const newProfile: WorkspaceProfile = {
+      id,
+      name,
+      color: color || '#3b82f6',
+      icon,
+      createdAt: new Date().toISOString(),
+      lastAccessed: new Date().toISOString()
+    };
+    const updated = [...this.profiles(), newProfile];
+    this.profilesSignal.set(updated);
+    localStorage.setItem(this.PROFILES_KEY, JSON.stringify(updated));
+  }
+
   switchProfile(id: string) {
     if (this.profiles().some(p => p.id === id)) {
       this.activeProfileIdSignal.set(id);

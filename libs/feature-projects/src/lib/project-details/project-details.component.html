@@ -17,6 +17,17 @@
         </div>
 
         <div class="pd-header-actions">
+            @if (isActiveProject()) {
+                <span class="pd-active-badge">
+                    <span class="material-symbols-outlined">radio_button_checked</span>
+                    Active
+                </span>
+            } @else {
+                <button class="pd-switch-btn" (click)="switchToProject()" title="Switch workspace to this project">
+                    <span class="material-symbols-outlined">switch_account</span>
+                    Switch to Project
+                </button>
+            }
             @if (activeTab() === 'OVERVIEW' && !editMode()) {
                 <button class="pd-edit-btn" (click)="startEdit()">
                     <span class="material-symbols-outlined">edit</span>

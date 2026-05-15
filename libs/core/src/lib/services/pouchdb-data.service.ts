@@ -11,13 +11,21 @@ export class PouchDbDataService implements DataService {
     private dbs: Record<string, PouchDB.Database> = {};
     private profileService = inject(WorkspaceProfileService);
 
+    /**
+     * Collections that always live in the default namespace so they are visible
+     * from every workspace context (projects list, note folders, etc.).
+     */
+    private readonly GLOBAL_COLLECTIONS = new Set(['projects', 'note_folders']);
+
     private getDb(collection: string): PouchDB.Database {
-        const profileId = this.profileService.activeProfileId() || 'default';
+        const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+        const profileId = isGlobal ? 'default' : (this.profileService.activeProfileId() || 'default');
         const profilePrefix = profileId === 'default' ? 'envello_' : `envello_${profileId}_`;
-        if (!this.dbs[collection]) {
-            this.dbs[collection] = new PouchDB(`${profilePrefix}${collection}`);
+        const cacheKey = `${profileId}:${collection}`;
+        if (!this.dbs[cacheKey]) {
+            this.dbs[cacheKey] = new PouchDB(`${profilePrefix}${collection}`);
         }
-        return this.dbs[collection];
+        return this.dbs[cacheKey];
     }
 
     async getAll<T>(collection: string): Promise<T[]> {
