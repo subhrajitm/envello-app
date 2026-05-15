@@ -7,36 +7,6 @@
     [activeNavId]="viewFilter()"
     (navItemClick)="onNavItemClick($event)">
 
-    @if (meetingsByProject().length > 0) {
-    <div class="mt-sb-sect">
-      <div class="mt-sb-sect-hdr">By Project</div>
-      @for (p of meetingsByProject(); track p[0]) {
-      <button class="mt-proj-item" [class.active]="selectedProject() === p[0]"
-        (click)="selectedProject.set(selectedProject() === p[0] ? '' : p[0]); viewFilter.set('all')">
-        <span class="material-symbols-outlined mt-proj-icon">folder</span>
-        <span class="mt-proj-name">{{ p[0] }}</span>
-        <span class="mt-proj-count">{{ p[1] }}</span>
-      </button>
-      }
-    </div>
-    }
-
-    <div class="mt-sb-foot">
-      <div class="mt-sb-stat">
-        <span class="mt-sb-stat-val">{{ stats().totalScheduled }}</span>
-        <span class="mt-sb-stat-lbl">Scheduled</span>
-      </div>
-      <div class="mt-sb-stat-sep"></div>
-      <div class="mt-sb-stat">
-        <span class="mt-sb-stat-val">{{ stats().totalCompleted }}</span>
-        <span class="mt-sb-stat-lbl">Done</span>
-      </div>
-      <div class="mt-sb-stat-sep"></div>
-      <div class="mt-sb-stat">
-        <span class="mt-sb-stat-val" [class.mt-sb-stat-val--accent]="stats().todayCount > 0">{{ stats().todayCount }}</span>
-        <span class="mt-sb-stat-lbl">Today</span>
-      </div>
-    </div>
   </env-feature-sidebar>
 
   <!-- Main Area -->
@@ -56,14 +26,11 @@
       </div>
       <div class="mt-toolbar-right">
         <div class="mt-view-toggle">
-          <button class="mt-vt-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')" title="List">
-            <span class="material-symbols-outlined">format_list_bulleted</span>
-          </button>
           <button class="mt-vt-btn" [class.active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')" title="Calendar">
             <span class="material-symbols-outlined">calendar_month</span>
           </button>
-          <button class="mt-vt-btn" [class.active]="viewMode() === 'kanban'" (click)="viewMode.set('kanban')" title="Kanban">
-            <span class="material-symbols-outlined">view_kanban</span>
+          <button class="mt-vt-btn" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table">
+            <span class="material-symbols-outlined">table_rows</span>
           </button>
         </div>
         <button class="mt-sync-btn" [class.mt-sync-btn--active]="syncService.connections().length > 0"
@@ -192,36 +159,61 @@
       <!-- Calendar View -->
       @if (viewMode() === 'calendar') {
       <div class="mt-calendar">
-        <div class="mt-cal-toolbar">
-          <button class="mt-icon-btn" (click)="previousMonth()" title="Previous month">
-            <span class="material-symbols-outlined">chevron_left</span>
-          </button>
-          <h2 class="mt-cal-title">{{ calendarDate() | date:'MMMM yyyy' }}</h2>
-          <button class="mt-icon-btn" (click)="nextMonth()" title="Next month">
-            <span class="material-symbols-outlined">chevron_right</span>
-          </button>
-          <button class="mt-cal-today-btn" (click)="goToToday()">Today</button>
+        <div class="mt-cal-hdr">
+          <div class="mt-cal-nav">
+            <button class="mt-cal-nav-btn" (click)="previousMonth()" title="Previous month">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <h2 class="mt-cal-title">{{ calendarDate() | date:'MMMM yyyy' }}</h2>
+            <button class="mt-cal-nav-btn" (click)="nextMonth()" title="Next month">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          <div class="mt-cal-hdr-right">
+            @if (filteredMeetings().length > 0) {
+            <span class="mt-cal-count">{{ filteredMeetings().length }} meeting{{ filteredMeetings().length !== 1 ? 's' : '' }}</span>
+            }
+            <button class="mt-cal-today-btn" (click)="goToToday()">Today</button>
+          </div>
         </div>
         <div class="mt-cal-grid">
           <div class="mt-cal-weekdays">
-            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
           </div>
           <div class="mt-cal-days">
             @for (week of calendarWeeks(); track week[0].getTime()) {
             <div class="mt-cal-week">
               @for (day of week; track day.getTime()) {
-              <div class="mt-cal-day" [class.mt-cal-day--other]="!isCurrentMonth(day)"
-                [class.mt-cal-day--today]="isToday(day)" (click)="selectCalendarDate(day)">
-                <span class="mt-cal-day-num">{{ day.getDate() }}</span>
+              <div class="mt-cal-day"
+                [class.mt-cal-day--other]="!isCurrentMonth(day)"
+                [class.mt-cal-day--today]="isToday(day)"
+                [class.mt-cal-day--weekend]="day.getDay() === 0 || day.getDay() === 6"
+                (click)="selectCalendarDate(day)">
+                <div class="mt-cal-day-hdr">
+                  <span class="mt-cal-day-num">{{ day.getDate() }}</span>
+                  @if (getMeetingsForDate(day).length > 0) {
+                  <span class="mt-cal-day-badge">{{ getMeetingsForDate(day).length }}</span>
+                  }
+                </div>
                 <div class="mt-cal-day-events">
-                  @for (m of getMeetingsForDate(day).slice(0, 2); track m.id) {
-                  <div class="mt-cal-event" [style.borderLeftColor]="m.color"
-                    (click)="openDetailsModal(m); $event.stopPropagation()" [title]="m.title">
-                    {{ formatTime(m.startTime) }} {{ m.title }}
+                  @for (m of getMeetingsForDate(day).slice(0, 3); track m.id) {
+                  <div class="mt-cal-event"
+                    [style.--ev-color]="m.color"
+                    [class.mt-cal-event--cancelled]="m.status === 'cancelled'"
+                    (click)="openDetailsModal(m); $event.stopPropagation()"
+                    [title]="m.title + ' · ' + formatTime(m.startTime)">
+                    <span class="mt-cal-event-dot"></span>
+                    <span class="mt-cal-event-time">{{ formatTime(m.startTime) }}</span>
+                    <span class="mt-cal-event-title">{{ m.title }}</span>
+                    @if (m.attendees.length > 1) {
+                    <span class="mt-cal-event-att">{{ m.attendees.length }}</span>
+                    }
                   </div>
                   }
-                  @if (getMeetingsForDate(day).length > 2) {
-                  <div class="mt-cal-more">+{{ getMeetingsForDate(day).length - 2 }}</div>
+                  @if (getMeetingsForDate(day).length > 3) {
+                  <button class="mt-cal-more" (click)="$event.stopPropagation()">
+                    +{{ getMeetingsForDate(day).length - 3 }} more
+                  </button>
                   }
                 </div>
               </div>
@@ -233,50 +225,21 @@
       </div>
       }
 
-      <!-- Kanban View -->
-      @if (viewMode() === 'kanban') {
-      <div class="mt-kanban">
-        @for (col of [
-          { id: 'scheduled', label: 'Scheduled', color: '#3B82F6', meetings: meetingsByStatus().scheduled },
-          { id: 'in_progress', label: 'In Progress', color: '#F97316', meetings: meetingsByStatus().in_progress },
-          { id: 'completed', label: 'Done', color: '#10B981', meetings: meetingsByStatus().completed },
-          { id: 'cancelled', label: 'Cancelled', color: '#EF4444', meetings: meetingsByStatus().cancelled }
-        ]; track col.id) {
-        <div class="mt-kanban-col">
-          <div class="mt-kanban-hdr">
-            <span class="mt-kanban-dot" [style.backgroundColor]="col.color"></span>
-            <span>{{ col.label }}</span>
-            <span class="mt-kanban-count">{{ col.meetings.length }}</span>
-          </div>
-          <div class="mt-kanban-body">
-            @for (m of col.meetings; track m.id) {
-            <div class="mt-kanban-card" [class.mt-kanban-card--done]="col.id === 'completed'"
-              [class.mt-kanban-card--cancelled]="col.id === 'cancelled'"
-              [style.borderLeftColor]="m.color" (click)="openDetailsModal(m)">
-              <div class="mt-kc-title">{{ m.title }}</div>
-              <div class="mt-kc-meta">{{ getRelativeDate(m.date) }} · {{ formatTime(m.startTime) }}@if (m.project) { · {{ m.project }} }</div>
-              <div class="mt-kc-footer">
-                <div class="mt-avatars">
-                  @for (a of m.attendees.slice(0, 3); track a.id) {
-                  <div class="mt-av mt-av--sm" [title]="a.name"
-                    [style.backgroundImage]="a.avatar ? 'url(' + a.avatar + ')' : ''">
-                    @if (!a.avatar) { {{ a.name.charAt(0) }} }
-                  </div>
-                  }
-                </div>
-                @if (getOpenActionItemsCount(m) > 0) {
-                <span class="mt-kc-items">
-                  <span class="material-symbols-outlined">task_alt</span>
-                  {{ getOpenActionItemsCount(m) }}
-                </span>
-                }
-              </div>
-            </div>
-            }
-          </div>
-        </div>
-        }
-      </div>
+      <!-- Table View -->
+      @if (viewMode() === 'table') {
+      <env-table
+        class="env-table--compact"
+        [columns]="tableColumns"
+        [rows]="tableRows()"
+        [actions]="tableActions"
+        [showToolbar]="false"
+        [showSortFilter]="false"
+        [showSearch]="false"
+        rowIdKey="id"
+        (rowClick)="onTableRowClick($any($event))"
+        (actionClick)="onTableAction($event)"
+        (sortChange)="onTableSort($event)">
+      </env-table>
       }
 
     </div><!-- /mt-content -->

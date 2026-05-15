@@ -15,11 +15,11 @@ import {
   CalendarConnection,
   PROVIDER_META,
 } from '@envello/core';
-import { ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
+import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -32,7 +32,7 @@ export class MeetingsComponent {
   deleteMeetingTarget = signal<Meeting | null>(null);
 
   // View state
-  viewMode = signal<MeetingViewMode>('list');
+  viewMode = signal<MeetingViewMode>('calendar');
   viewFilter = signal<MeetingViewFilter>('all');
   
   // Filters
@@ -353,6 +353,74 @@ export class MeetingsComponent {
     this.selectedProject.set('');
   }
 
+  // ── Table view ──────────────────────────────────────────────────────────────
+  readonly tableColumns: EnvTableColumn[] = [
+    { key: 'title',    header: 'Title',    sortable: true },
+    { key: 'type',     header: 'Type',     type: 'badge', badgeMap: {
+      'video':     { label: 'Video',     dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
+      'phone':     { label: 'Phone',     dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)',  textColor: '#8b5cf6' },
+      'in-person': { label: 'In Person', dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+      'hybrid':    { label: 'Hybrid',    dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
+    }},
+    { key: 'date',     header: 'Date',     sortable: true },
+    { key: 'time',     header: 'Time' },
+    { key: 'project',  header: 'Project' },
+    { key: 'attendees',header: 'Attendees' },
+    { key: 'status',   header: 'Status',   type: 'badge', badgeMap: {
+      'scheduled':  { label: 'Scheduled',  dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
+      'in_progress':{ label: 'In Progress',dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
+      'completed':  { label: 'Done',       dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+      'cancelled':  { label: 'Cancelled',  dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
+    }},
+    { key: 'priority', header: 'Priority', type: 'badge', badgeMap: {
+      'HIGH':   { label: 'High',   dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
+      'MEDIUM': { label: 'Medium', dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)', textColor: '#f97316' },
+      'LOW':    { label: 'Low',    dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+    }},
+  ];
+
+  readonly tableActions: EnvTableAction[] = [
+    { key: 'view',      label: 'View',      icon: 'visibility' },
+    { key: 'duplicate', label: 'Duplicate', icon: 'content_copy' },
+    { key: 'cancel',    label: 'Cancel',    icon: 'event_busy' },
+    { key: 'delete',    label: 'Delete',    icon: 'delete', danger: true },
+  ];
+
+  readonly tableRows = computed(() =>
+    this.filteredMeetings().map(m => ({
+      id:        m.id,
+      title:     m.title,
+      type:      m.meetingType,
+      date:      m.date,
+      time:      m.startTime,
+      project:   m.project || '—',
+      attendees: m.attendees.length,
+      status:    m.status,
+      priority:  m.priority,
+    }))
+  );
+
+  onTableRowClick(row: { id: string }) {
+    const meeting = this.meetingsService.meetings().find(m => m.id === row.id);
+    if (meeting) this.openDetailsModal(meeting);
+  }
+
+  onTableAction(event: EnvTableActionEvent) {
+    const meeting = this.meetingsService.meetings().find(m => m.id === event.row['id']);
+    if (!meeting) return;
+    switch (event.actionKey) {
+      case 'view':      this.openDetailsModal(meeting); break;
+      case 'duplicate': this.duplicateMeeting(meeting); break;
+      case 'cancel':    this.cancelMeeting(meeting); break;
+      case 'delete':    this.deleteMeetingTarget.set(meeting); break;
+    }
+  }
+
+  onTableSort(event: EnvTableSortEvent) {
+    this.sortBy.set(event.key as 'date' | 'title' | 'attendees');
+    this.sortDirection.set(event.direction);
+  }
+
   /** Meetings grouped by project for sidebar */
   meetingsByProject = computed(() => {
     const map = new Map<string, number>();
@@ -491,7 +559,7 @@ export class MeetingsComponent {
     
     // V: Cycle view modes
     if (event.key === 'v') {
-      const modes: MeetingViewMode[] = ['list', 'calendar', 'kanban'];
+      const modes: MeetingViewMode[] = ['calendar', 'table'];
       const currentIndex = modes.indexOf(this.viewMode());
       this.viewMode.set(modes[(currentIndex + 1) % modes.length]);
     }
