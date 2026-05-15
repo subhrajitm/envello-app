@@ -40,8 +40,9 @@
           <span class="mt-sync-badge">{{ syncService.connections().length }}</span>
           }
         </button>
-        <button class="mt-icon-btn" (click)="openShortcutsHelp()" title="Keyboard shortcuts">
-          <span class="material-symbols-outlined">keyboard</span>
+        <button class="mt-ai-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+          <span class="material-symbols-outlined">auto_awesome</span>
+          <span>AI</span>
         </button>
         <div class="mt-tb-divider"></div>
         <button class="mt-add-btn" (click)="openCreateModal()">
@@ -202,7 +203,6 @@
                     [class.mt-cal-event--cancelled]="m.status === 'cancelled'"
                     (click)="openDetailsModal(m); $event.stopPropagation()"
                     [title]="m.title + ' · ' + formatTime(m.startTime)">
-                    <span class="mt-cal-event-dot"></span>
                     <span class="mt-cal-event-time">{{ formatTime(m.startTime) }}</span>
                     <span class="mt-cal-event-title">{{ m.title }}</span>
                     @if (m.attendees.length > 1) {
@@ -245,6 +245,20 @@
     </div><!-- /mt-content -->
   </div><!-- /mt-main -->
 </div><!-- /mt-view -->
+
+<!-- ─── AI Assistant Panel ──────────────────────────────────────────────────── -->
+@if (showAssistant()) {
+  <env-ai-panel
+    title="Meetings Assistant"
+    placeholder="Ask about your meetings…"
+    [suggestions]="aiSuggestions"
+    [messages]="aiMessages()"
+    [loading]="aiLoading()"
+    (send)="sendAiMessage($event)"
+    (cleared)="clearAiChat()"
+    (closed)="toggleAssistant()"
+  ></env-ai-panel>
+}
 
 <!-- ─── Create Meeting Modal ────────────────────────────────────────────────── -->
 @if (showCreateModal()) {

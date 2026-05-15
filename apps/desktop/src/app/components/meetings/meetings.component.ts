@@ -16,11 +16,11 @@ import {
   PROVIDER_META,
   TauriService,
 } from '@envello/core';
-import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent } from '@envello/ui';
+import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -116,6 +116,18 @@ export class MeetingsComponent {
   // Calendar sync modal
   syncService = inject(CalendarSyncService);
   readonly providerMeta = PROVIDER_META;
+  // AI Assistant
+  showAssistant = signal(false);
+  aiLoading = signal(false);
+  aiMessages = signal<AiPanelMessage[]>([]);
+  readonly aiSuggestions = [
+    "What meetings do I have today?",
+    "Summarise this week's schedule",
+    "Which meetings have open action items?",
+    "What's my most common meeting type?",
+    "Show upcoming high-priority meetings",
+  ];
+
   showSyncModal = signal(false);
   syncActiveProvider = signal<CalendarConnection['provider']>('google');
   syncNewName = signal('');
@@ -948,15 +960,9 @@ export class MeetingsComponent {
   }
   
   selectCalendarDate(date: Date) {
-    // If in create modal, set the date
-    if (this.showDatePicker()) {
-      const current = this.newMeeting();
-      this.newMeeting.set({
-        ...current,
-        date: date.toISOString().split('T')[0],
-      });
-      this.showDatePicker.set(false);
-    }
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    this.openCreateModal();
+    this.newMeeting.set({ ...this.newMeeting(), date: dateStr });
   }
   
   // Utility methods
@@ -1107,6 +1113,70 @@ export class MeetingsComponent {
   trackByNoteId(index: number, note: MeetingNote): string {
     return note.id;
   }
+
+  // ─── AI Assistant ────────────────────────────────────────────────
+
+  toggleAssistant() { this.showAssistant.update(v => !v); }
+
+  async sendAiMessage(text: string) {
+    if (!text || this.aiLoading()) return;
+    this.aiMessages.update(m => [...m, { role: 'user', text }]);
+    this.aiLoading.set(true);
+    await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
+
+    const all = this.meetingsService.meetings();
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const q = text.toLowerCase();
+    let response = '';
+
+    if (q.includes('today')) {
+      const t = all.filter(m => m.date === todayStr && m.status !== 'cancelled');
+      response = t.length
+        ? `You have ${t.length} meeting${t.length > 1 ? 's' : ''} today:\n${t.map(m => `• ${m.title} at ${this.formatTime(m.startTime)}`).join('\n')}`
+        : `No meetings scheduled for today.`;
+
+    } else if (q.includes('week')) {
+      const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
+      const week = all.filter(m => { const d = new Date(m.date); return d >= now && d <= weekEnd && m.status !== 'cancelled'; });
+      response = week.length
+        ? `${week.length} meeting${week.length > 1 ? 's' : ''} in the next 7 days:\n${week.slice(0,5).map(m => `• ${m.title} — ${this.getRelativeDate(m.date)} at ${this.formatTime(m.startTime)}`).join('\n')}${week.length > 5 ? `\n…and ${week.length - 5} more` : ''}`
+        : `No meetings in the next 7 days.`;
+
+    } else if (q.includes('action') || q.includes('open')) {
+      const withOpen = all.filter(m => (m.actionItems ?? []).some(a => a.status !== 'completed'));
+      const total = withOpen.reduce((s, m) => s + (m.actionItems ?? []).filter(a => a.status !== 'completed').length, 0);
+      response = withOpen.length
+        ? `${total} open action item${total > 1 ? 's' : ''} across ${withOpen.length} meeting${withOpen.length > 1 ? 's' : ''}:\n${withOpen.slice(0,5).map(m => `• ${m.title} — ${(m.actionItems ?? []).filter(a => a.status !== 'completed').length} open`).join('\n')}`
+        : `No open action items — everything is complete!`;
+
+    } else if (q.includes('type') || q.includes('common')) {
+      const counts = new Map<string, number>();
+      all.forEach(m => counts.set(m.meetingType, (counts.get(m.meetingType) ?? 0) + 1));
+      const sorted = [...counts.entries()].sort((a,b) => b[1]-a[1]);
+      response = sorted.length
+        ? `Meeting type breakdown:\n${sorted.map(([t,c]) => `• ${t.charAt(0).toUpperCase()+t.slice(1)}: ${c}`).join('\n')}\nMost common: ${sorted[0][0]}`
+        : `No meetings recorded yet.`;
+
+    } else if (q.includes('priority') || q.includes('high') || q.includes('upcoming')) {
+      const upcoming = all.filter(m => new Date(m.date) >= now && m.status === 'scheduled' && m.priority === 'HIGH');
+      response = upcoming.length
+        ? `${upcoming.length} high-priority upcoming meeting${upcoming.length > 1 ? 's' : ''}:\n${upcoming.slice(0,5).map(m => `• ${m.title} — ${this.getRelativeDate(m.date)}`).join('\n')}`
+        : `No high-priority upcoming meetings.`;
+
+    } else {
+      const scheduled = all.filter(m => m.status === 'scheduled').length;
+      const completed = all.filter(m => m.status === 'completed').length;
+      const todayCount = all.filter(m => m.date === todayStr && m.status !== 'cancelled').length;
+      response = `You have ${all.length} total meetings — ${scheduled} upcoming, ${completed} completed, and ${todayCount} today.\n\nTry asking about today's schedule, this week, open action items, meeting types, or high-priority meetings.`;
+    }
+
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    this.aiLoading.set(false);
+    setTimeout(() => { const el = document.querySelector('.ai-panel-messages'); if (el) el.scrollTop = el.scrollHeight; }, 50);
+  }
+
+  clearAiChat() { this.aiMessages.set([]); }
 
   // ─── Calendar Sync ───────────────────────────────────────────────
 
