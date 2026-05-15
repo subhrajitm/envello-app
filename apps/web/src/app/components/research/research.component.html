@@ -1,17 +1,7 @@
 <div class="rs-view">
 
   <!-- ── SIDEBAR ── -->
-  <aside class="rs-sb">
-    <div class="rs-sb-header">
-      <h1 class="rs-sb-title">Research</h1>
-      <p class="rs-sb-subtitle">{{ libraries().length }} librar{{ libraries().length !== 1 ? 'ies' : 'y' }}</p>
-    </div>
-
-    <div class="rs-sb-search">
-      <span class="material-symbols-outlined rs-sb-search-icon">search</span>
-      <input class="rs-sb-search-input" type="text" placeholder="Search libraries…"
-        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-    </div>
+  <env-feature-sidebar [title]="'Research'">
 
     <div class="rs-sb-libs">
       @for (lib of filteredLibraries(); track lib.id) {
@@ -52,7 +42,7 @@
         New Library
       </button>
     </div>
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="rs-main">
@@ -61,26 +51,17 @@
 
       <!-- Toolbar -->
       <div class="rs-toolbar">
-        <div class="rs-bc">
-          <span class="rs-bc-root">Research</span>
-          <span class="rs-bc-sep">›</span>
-          <span class="rs-bc-leaf" [style.color]="library.color">{{ library.name }}</span>
-          @if (viewMode() === 'sources') {
-            <span class="rs-bc-count">{{ filteredSources().length }}</span>
+        <div class="rs-search-wrap">
+          <span class="material-symbols-outlined rs-search-icon">search</span>
+          <input class="rs-search-input" type="text" placeholder="Search…"
+            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+          @if (searchQuery()) {
+            <button class="rs-search-clear" (click)="searchQuery.set('')">
+              <span class="material-symbols-outlined">close</span>
+            </button>
           }
         </div>
         <div class="rs-toolbar-right">
-          <div class="rs-search-wrap">
-            <span class="material-symbols-outlined rs-search-icon">search</span>
-            <input class="rs-search-input" type="text" placeholder="Search…"
-              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-            @if (searchQuery()) {
-              <button class="rs-search-clear" (click)="searchQuery.set('')">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            }
-          </div>
-
           @if (hasActiveFilters()) {
             <button class="rs-tool-btn" (click)="clearFilters()" title="Clear filters">
               <span class="material-symbols-outlined">filter_list_off</span>

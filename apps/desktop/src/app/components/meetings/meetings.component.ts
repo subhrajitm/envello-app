@@ -16,11 +16,11 @@ import {
   PROVIDER_META,
   TauriService,
 } from '@envello/core';
-import { ConfirmDialogComponent } from '@envello/ui';
+import { ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -339,6 +339,22 @@ export class MeetingsComponent {
     };
   });
   
+  readonly sidebarNavItems = computed(() => {
+    const s = this.stats();
+    return [
+      { id: 'all',       icon: 'event_note',  label: 'All',       count: this.meetingsService.meetings().length },
+      { id: 'today',     icon: 'today',       label: 'Today',     count: s.todayCount },
+      { id: 'upcoming',  icon: 'upcoming',    label: 'Upcoming',  count: s.totalScheduled },
+      { id: 'past',      icon: 'history',     label: 'Past',      count: s.totalCompleted },
+      { id: 'cancelled', icon: 'event_busy',  label: 'Cancelled' },
+    ];
+  });
+
+  onNavItemClick(id: string) {
+    this.viewFilter.set(id as MeetingViewFilter);
+    this.selectedProject.set('');
+  }
+
   /** Meetings grouped by project for sidebar */
   meetingsByProject = computed(() => {
     const map = new Map<string, number>();

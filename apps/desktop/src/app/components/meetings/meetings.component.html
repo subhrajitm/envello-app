@@ -1,46 +1,11 @@
 <div class="mt-view">
 
   <!-- Left Sidebar -->
-  <aside class="mt-sb">
-    <div class="mt-sb-head">
-      <span class="mt-sb-title">Meetings</span>
-      <button class="mt-sb-add" (click)="openCreateModal()" title="New Meeting">
-        <span class="material-symbols-outlined">add</span>
-      </button>
-    </div>
-
-    <nav class="mt-sb-nav">
-      <button class="mt-nav-item" [class.active]="viewFilter() === 'all'" (click)="viewFilter.set('all')">
-        <span class="material-symbols-outlined mt-nav-icon">event_note</span>
-        <span class="mt-nav-label">All</span>
-        <span class="mt-nav-count">{{ meetingsService.meetings().length }}</span>
-      </button>
-      <button class="mt-nav-item" [class.active]="viewFilter() === 'today'" (click)="viewFilter.set('today')">
-        <span class="material-symbols-outlined mt-nav-icon">today</span>
-        <span class="mt-nav-label">Today</span>
-        @if (stats().todayCount > 0) {
-        <span class="mt-nav-count mt-nav-count--accent">{{ stats().todayCount }}</span>
-        }
-      </button>
-      <button class="mt-nav-item" [class.active]="viewFilter() === 'upcoming'" (click)="viewFilter.set('upcoming')">
-        <span class="material-symbols-outlined mt-nav-icon">upcoming</span>
-        <span class="mt-nav-label">Upcoming</span>
-        @if (stats().totalScheduled > 0) {
-        <span class="mt-nav-count">{{ stats().totalScheduled }}</span>
-        }
-      </button>
-      <button class="mt-nav-item" [class.active]="viewFilter() === 'past'" (click)="viewFilter.set('past')">
-        <span class="material-symbols-outlined mt-nav-icon">history</span>
-        <span class="mt-nav-label">Past</span>
-        @if (stats().totalCompleted > 0) {
-        <span class="mt-nav-count">{{ stats().totalCompleted }}</span>
-        }
-      </button>
-      <button class="mt-nav-item" [class.active]="viewFilter() === 'cancelled'" (click)="viewFilter.set('cancelled')">
-        <span class="material-symbols-outlined mt-nav-icon">event_busy</span>
-        <span class="mt-nav-label">Cancelled</span>
-      </button>
-    </nav>
+  <env-feature-sidebar
+    [title]="'Meetings'"
+    [navItems]="sidebarNavItems()"
+    [activeNavId]="viewFilter()"
+    (navItemClick)="onNavItemClick($event)">
 
     @if (meetingsByProject().length > 0) {
     <div class="mt-sb-sect">
@@ -72,37 +37,24 @@
         <span class="mt-sb-stat-lbl">Today</span>
       </div>
     </div>
-  </aside>
+  </env-feature-sidebar>
 
   <!-- Main Area -->
   <div class="mt-main">
 
     <!-- Toolbar -->
     <div class="mt-toolbar">
-      <div class="mt-toolbar-left">
-        <span class="mt-breadcrumb">
-          <span class="mt-bc-root">Meetings</span>
-          @if (viewFilter() !== 'all') {
-          <span class="mt-bc-sep">›</span>
-          <span class="mt-bc-cur">{{ viewFilter() | titlecase }}</span>
-          }
-          @if (selectedProject()) {
-          <span class="mt-bc-sep">›</span>
-          <span class="mt-bc-cur">{{ selectedProject() }}</span>
-          }
-        </span>
+      <div class="mt-search-wrap">
+        <span class="material-symbols-outlined mt-search-icon">search</span>
+        <input type="text" class="mt-search" placeholder="Search meetings..."
+          [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+        @if (searchQuery()) {
+        <button class="mt-search-clear" (click)="searchQuery.set('')" title="Clear">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+        }
       </div>
       <div class="mt-toolbar-right">
-        <div class="mt-search-wrap">
-          <span class="material-symbols-outlined mt-search-icon">search</span>
-          <input type="text" class="mt-search" placeholder="Search meetings..."
-            [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
-          @if (searchQuery()) {
-          <button class="mt-search-clear" (click)="searchQuery.set('')" title="Clear">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-          }
-        </div>
         <div class="mt-view-toggle">
           <button class="mt-vt-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')" title="List">
             <span class="material-symbols-outlined">format_list_bulleted</span>
@@ -123,6 +75,11 @@
         </button>
         <button class="mt-icon-btn" (click)="openShortcutsHelp()" title="Keyboard shortcuts">
           <span class="material-symbols-outlined">keyboard</span>
+        </button>
+        <div class="mt-tb-divider"></div>
+        <button class="mt-add-btn" (click)="openCreateModal()">
+          <span class="material-symbols-outlined">add</span>
+          New Meeting
         </button>
       </div>
     </div>
