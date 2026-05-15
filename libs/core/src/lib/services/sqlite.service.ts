@@ -22,7 +22,7 @@ import type {
     ResearchSource,
     ResearchSummary,
 } from './research.service';
-import type { Project, Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
+import type { Project, Credential, Subscription, CredentialSubscriptionLink, Bookmark, BookmarkFolder } from '@envello/domain';
 
 // const DB_NAME = 'envello.db'; // Removed, now determined dynamically by profile
 
@@ -43,6 +43,9 @@ export type ProjectDoc = Project;
 export type CredentialDoc = Credential;
 export type SubscriptionDoc = Subscription;
 export type CredentialSubscriptionLinkDoc = CredentialSubscriptionLink;
+export type NoteFolderDoc = { id: string; name: string; icon: string };
+export type BookmarkDoc = Bookmark;
+export type BookmarkFolderDoc = BookmarkFolder;
 
 export interface NovelContentDoc {
     id: string;
@@ -74,6 +77,9 @@ export class SqliteService {
     private credentialsSubject = new BehaviorSubject<CredentialDoc[]>([]);
     private subscriptionsSubject = new BehaviorSubject<SubscriptionDoc[]>([]);
     private linksSubject = new BehaviorSubject<CredentialSubscriptionLinkDoc[]>([]);
+    private noteFoldersSubject = new BehaviorSubject<NoteFolderDoc[]>([]);
+    private bookmarksSubject = new BehaviorSubject<BookmarkDoc[]>([]);
+    private bookmarkFoldersSubject = new BehaviorSubject<BookmarkFolderDoc[]>([]);
 
     private profileService = inject(WorkspaceProfileService);
 
@@ -427,6 +433,47 @@ export class SqliteService {
         subscriptionId TEXT
       )
     `);
+
+        // Note Folders
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS note_folders (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        icon TEXT
+      )
+    `);
+
+        // Bookmarks
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS bookmarks (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        url TEXT,
+        description TEXT,
+        faviconUrl TEXT,
+        tags TEXT,
+        folderId TEXT,
+        createdAt TEXT,
+        lastVisited TEXT,
+        visitCount REAL,
+        notes TEXT,
+        color TEXT,
+        isArchived BOOLEAN,
+        isPinned BOOLEAN
+      )
+    `);
+
+        // Bookmark Folders
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS bookmark_folders (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        parentId TEXT,
+        icon TEXT,
+        color TEXT,
+        createdAt TEXT
+      )
+    `);
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -450,6 +497,9 @@ export class SqliteService {
             this.reloadCredentials(),
             this.reloadSubscriptions(),
             this.reloadLinks(),
+            this.reloadNoteFolders(),
+            this.reloadBookmarks(),
+            this.reloadBookmarkFolders(),
         ]);
     }
 
@@ -627,6 +677,12 @@ export class SqliteService {
 
     async getAllPlanningItems(): Promise<PlanningItemDoc[]> {
         return this.planningItemsSubject.getValue();
+    }
+
+    async removePlanningItem(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM planning_items WHERE id = $1', [id]);
+        await this.reloadPlanningItems();
     }
 
     // ─── Activities ────────────────────────────────────────────────────────────
@@ -1132,6 +1188,83 @@ export class SqliteService {
         const db = await this.getDb();
         await db.execute('DELETE FROM credential_subscription_links WHERE id = $1', [id]);
         await this.reloadLinks();
+    }
+
+    // ─── Note Folders ──────────────────────────────────────────────────────────
+    private async reloadNoteFolders() {
+        const db = await this.getDb();
+        const rows = await db.select<NoteFolderDoc[]>('SELECT * FROM note_folders');
+        this.noteFoldersSubject.next(rows);
+    }
+    async getAllNoteFolders(): Promise<NoteFolderDoc[]> { return this.noteFoldersSubject.getValue(); }
+    async upsertNoteFolder(item: NoteFolderDoc): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM note_folders WHERE id = $1', [item.id]);
+        if (exists.length > 0) {
+            await db.execute(`UPDATE note_folders SET name=$1, icon=$2 WHERE id=$3`, [item.name, item.icon, item.id]);
+        } else {
+            await db.execute(`INSERT INTO note_folders (id, name, icon) VALUES ($1, $2, $3)`, [item.id, item.name, item.icon]);
+        }
+        await this.reloadNoteFolders();
+    }
+    async removeNoteFolder(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM note_folders WHERE id = $1', [id]);
+        await this.reloadNoteFolders();
+    }
+
+    // ─── Bookmarks ─────────────────────────────────────────────────────────────
+    private async reloadBookmarks() {
+        const db = await this.getDb();
+        const rows = await db.select<any[]>('SELECT * FROM bookmarks');
+        const parsed = rows.map((r: any) => this.parseRow<BookmarkDoc>(r, ['tags']));
+        this.bookmarksSubject.next(parsed);
+    }
+    async getAllBookmarks(): Promise<BookmarkDoc[]> { return this.bookmarksSubject.getValue(); }
+    async upsertBookmark(item: BookmarkDoc): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM bookmarks WHERE id = $1', [item.id]);
+        const j = { ...item, tags: this.toJson(item.tags) };
+        if (exists.length > 0) {
+            await db.execute(
+                `UPDATE bookmarks SET title=$1, url=$2, description=$3, faviconUrl=$4, tags=$5, folderId=$6, createdAt=$7, lastVisited=$8, visitCount=$9, notes=$10, color=$11, isArchived=$12, isPinned=$13 WHERE id=$14`,
+                [j.title, j.url, j.description, j.faviconUrl, j.tags, j.folderId, j.createdAt, j.lastVisited, j.visitCount, j.notes, j.color, j.isArchived, j.isPinned, j.id]);
+        } else {
+            await db.execute(
+                `INSERT INTO bookmarks (id, title, url, description, faviconUrl, tags, folderId, createdAt, lastVisited, visitCount, notes, color, isArchived, isPinned) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+                [j.id, j.title, j.url, j.description, j.faviconUrl, j.tags, j.folderId, j.createdAt, j.lastVisited, j.visitCount, j.notes, j.color, j.isArchived, j.isPinned]);
+        }
+        await this.reloadBookmarks();
+    }
+    async removeBookmark(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM bookmarks WHERE id = $1', [id]);
+        await this.reloadBookmarks();
+    }
+
+    // ─── Bookmark Folders ──────────────────────────────────────────────────────
+    private async reloadBookmarkFolders() {
+        const db = await this.getDb();
+        const rows = await db.select<BookmarkFolderDoc[]>('SELECT * FROM bookmark_folders');
+        this.bookmarkFoldersSubject.next(rows);
+    }
+    async getAllBookmarkFolders(): Promise<BookmarkFolderDoc[]> { return this.bookmarkFoldersSubject.getValue(); }
+    async upsertBookmarkFolder(item: BookmarkFolderDoc): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM bookmark_folders WHERE id = $1', [item.id]);
+        if (exists.length > 0) {
+            await db.execute(`UPDATE bookmark_folders SET name=$1, parentId=$2, icon=$3, color=$4, createdAt=$5 WHERE id=$6`,
+                [item.name, item.parentId, item.icon, item.color, item.createdAt, item.id]);
+        } else {
+            await db.execute(`INSERT INTO bookmark_folders (id, name, parentId, icon, color, createdAt) VALUES ($1, $2, $3, $4, $5, $6)`,
+                [item.id, item.name, item.parentId, item.icon, item.color, item.createdAt]);
+        }
+        await this.reloadBookmarkFolders();
+    }
+    async removeBookmarkFolder(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM bookmark_folders WHERE id = $1', [id]);
+        await this.reloadBookmarkFolders();
     }
 
     // ─── Export ────────────────────────────────────────────────────────────────
