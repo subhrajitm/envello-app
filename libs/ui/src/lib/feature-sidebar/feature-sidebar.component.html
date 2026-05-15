@@ -1,5 +1,8 @@
 <div class="env-fsb-header">
   <h1 class="env-fsb-title">{{ title }}</h1>
+  @if (subtitle) {
+    <p class="env-fsb-subtitle">{{ subtitle }}</p>
+  }
 </div>
 
 @if (navItems.length) {

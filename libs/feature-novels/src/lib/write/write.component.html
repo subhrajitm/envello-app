@@ -1,11 +1,7 @@
 <div class="wr-view">
 
   <!-- ── SIDEBAR ── -->
-  <aside class="wr-sb">
-    <div class="wr-sb-header">
-      <h1 class="wr-sb-title">Write</h1>
-      <p class="wr-sb-stats">{{ store.novels().length }} piece{{ store.novels().length !== 1 ? 's' : '' }}</p>
-    </div>
+  <env-feature-sidebar [title]="'Write'">
 
     <nav class="wr-sb-nav">
       <button class="wr-sb-item" [class.active]="!selectedType() && statusFilter() === 'ALL'"
@@ -60,36 +56,24 @@
         <span class="wr-sb-stat-value">{{ avgCompletion() }}%</span>
       </div>
     </div>
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="wr-main">
 
     <!-- Toolbar -->
     <div class="wr-toolbar">
-      <div class="wr-bc">
-        <span class="wr-bc-root">Write</span>
-        @if (selectedType()) {
-          <span class="wr-bc-sep">›</span>
-          <span class="wr-bc-leaf">{{ getWritingTypeLabel(selectedType()) }}</span>
+      <div class="wr-search-wrap">
+        <span class="material-symbols-outlined wr-search-icon">search</span>
+        <input class="wr-search-input" type="text" placeholder="Search pieces…"
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+        @if (searchQuery()) {
+          <button class="wr-search-clear" (click)="searchQuery.set('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         }
-        @if (statusFilter() !== 'ALL') {
-          <span class="wr-bc-sep">›</span>
-          <span class="wr-bc-leaf">{{ getStatusMeta(statusFilter()).label }}</span>
-        }
-        <span class="wr-bc-count">{{ filteredNovels().length }}</span>
       </div>
       <div class="wr-toolbar-right">
-        <div class="wr-search-wrap">
-          <span class="material-symbols-outlined wr-search-icon">search</span>
-          <input class="wr-search-input" type="text" placeholder="Search pieces…"
-            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-          @if (searchQuery()) {
-            <button class="wr-search-clear" (click)="searchQuery.set('')">
-              <span class="material-symbols-outlined">close</span>
-            </button>
-          }
-        </div>
         @if (hasActiveFilters()) {
           <button class="wr-tool-btn" title="Clear filters" (click)="clearFilters()">
             <span class="material-symbols-outlined">filter_list_off</span>

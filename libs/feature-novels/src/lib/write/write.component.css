@@ -2,22 +2,7 @@
 :host { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; }
 .wr-view { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg-app); }
 
-/* ── Sidebar ── */
-.wr-sb {
-  width: 200px; flex-shrink: 0;
-  background: var(--bg-panel);
-  border-right: 1px solid var(--border-main);
-  display: flex; flex-direction: column;
-  overflow-y: auto; overflow-x: hidden;
-}
-.wr-sb-header {
-  padding: 16px 12px 12px;
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-}
-.wr-sb-title  { margin: 0 0 4px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.wr-sb-stats  { margin: 0; font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
-
+/* ── Sidebar (container handled by env-feature-sidebar) ── */
 .wr-sb-nav     { padding: 4px 6px; flex-shrink: 0; }
 .wr-sb-section { padding: 4px 6px; flex-shrink: 0; }
 .wr-sb-section-title {
@@ -69,14 +54,6 @@
   height: 44px; padding: 0 16px; gap: 8px;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0; background: var(--bg-panel);
-}
-.wr-bc { display: flex; align-items: center; gap: 6px; }
-.wr-bc-root  { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.wr-bc-sep   { font-size: 14px; color: var(--text-tertiary); }
-.wr-bc-leaf  { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.wr-bc-count {
-  font-size: 11px; color: var(--text-tertiary);
-  background: var(--bg-hover); border-radius: 10px; padding: 1px 7px;
 }
 .wr-toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .wr-tb-divider { width: 1px; height: 18px; background: var(--border-subtle); margin: 0 2px; }

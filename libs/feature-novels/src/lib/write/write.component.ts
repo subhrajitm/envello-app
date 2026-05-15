@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { StoreService, type Novel, type WritingType, NovelContentService } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 
 const WRITING_TYPE_META: Record<string, { color: string; icon: string }> = {
   NOVEL:       { color: '#f59e0b', icon: 'menu_book'    },
@@ -26,7 +26,7 @@ const STATUS_META: Record<string, { color: string; icon: string; label: string }
 @Component({
   selector: 'app-write',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
   templateUrl: './write.component.html',
   styleUrl: './write.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -43,6 +43,7 @@ export class WriteComponent {
   sortBy       = signal<'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'>('UPDATED');
   searchQuery  = signal('');
   sortDropdownOpen = signal(false);
+
 
   // ── Add modal state ────────────────────────────────────────────────────────
   showAddModal      = signal(false);

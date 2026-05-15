@@ -19,6 +19,7 @@ export interface FeatureSidebarNavItem {
 })
 export class FeatureSidebarComponent {
   @Input() title = '';
+  @Input() subtitle = '';
   @Input() navItems: FeatureSidebarNavItem[] = [];
   @Input() activeNavId = '';
 
