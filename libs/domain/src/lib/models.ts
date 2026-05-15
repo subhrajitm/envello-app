@@ -63,6 +63,8 @@ export interface Note {
     lastSynced?: string; // ISO date
     /** Folder id for daily-notes organization; defaults to first folder if missing */
     folderId?: string;
+    /** Background color class for the editor (e.g. 'note-bg--rose') */
+    bgColor?: string;
 }
 
 export interface PlanningItem {
@@ -114,7 +116,7 @@ export interface Project {
     title: string;
     description?: string;
     status: 'DRAFTING' | 'PLANNING' | 'COMPLETE' | 'REVIEW';
-    words: string;
+    words: number;
     updated: string;
     icon: string;
     dueDate?: string;
@@ -126,13 +128,14 @@ export interface Project {
     // New fields for complex projects
     type?: 'SINGLE' | 'MULTI'; // Single task oriented or multi-faceted
     linkedResources?: {
-        novels?: string[]; // IDs of linked novels
-        notes?: string[]; // IDs of linked daily notes
-
-        meetings?: string[]; // IDs of linked meetings
-        research?: string[]; // IDs of linked research sources/libraries
-        books?: string[]; // IDs of linked books
-        articles?: string[]; // IDs of linked articles
+        novels?: string[];
+        notes?: string[];
+        meetings?: string[];
+        research?: string[];
+        books?: string[];
+        articles?: string[];
+        snippets?: string[];
+        bookmarks?: string[];
     };
 }
 

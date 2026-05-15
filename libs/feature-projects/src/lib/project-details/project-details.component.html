@@ -1,383 +1,407 @@
-<div class="core-os-container">
-    <header>
-        <div class="brand-section" (click)="finalizeSession()" style="cursor: pointer;" title="Back to Workspace">
-            <div class="brand-icon">
-                <span class="material-symbols-outlined" style="font-size: 12px; color: white;">{{ project()?.icon ||
-                    'bolt' }}</span>
+<div class="pd-container">
+
+    <!-- Header -->
+    <header class="pd-header">
+        <button class="pd-back-btn" (click)="goBack()" title="Back to Projects">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <div class="pd-brand-icon">
+                <span class="material-symbols-outlined">{{ project()?.icon || 'folder' }}</span>
             </div>
-            <span class="brand-text"
-                style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{
-                project()?.title || 'Loading...' }}</span>
+            <span class="pd-brand-title">{{ project()?.title || 'Loading...' }}</span>
+        </button>
+
+        <div class="pd-tabs">
+            <button class="pd-tab" [class.active]="activeTab() === 'OVERVIEW'" (click)="activeTab.set('OVERVIEW')">Overview</button>
+            <button class="pd-tab" [class.active]="activeTab() === 'VAULT'" (click)="activeTab.set('VAULT')">Vault</button>
+            <button class="pd-tab" [class.active]="activeTab() === 'SUBSCRIPTIONS'" (click)="activeTab.set('SUBSCRIPTIONS')">Subscriptions</button>
         </div>
 
-        <div class="command-bar">
-            <div class="live-indicator">
-                <span class="pulse-dot"></span>
-                <span class="live-text">Live</span>
-            </div>
-            <div class="input-wrapper">
-                <span class="command-preview">
-                    "Create a new sprint retrospective for the <span class="highlight">&#64;design-team</span> and
-                    schedule
-                    it for <span class="highlight">#next-tuesday</span>..."
+        <div class="pd-header-actions">
+            @if (isActiveProject()) {
+                <span class="pd-active-badge">
+                    <span class="material-symbols-outlined">radio_button_checked</span>
+                    Active
                 </span>
-                <input type="text" class="refine-input" placeholder="Refine...">
-                <span class="material-symbols-outlined"
-                    style="font-size: 14px; color: rgba(61, 52, 47, 0.3); cursor: pointer;">keyboard</span>
+            } @else {
+                <button class="pd-switch-btn" (click)="switchToProject()" title="Switch workspace to this project">
+                    <span class="material-symbols-outlined">switch_account</span>
+                    Switch to Project
+                </button>
+            }
+            @if (activeTab() === 'OVERVIEW' && !editMode()) {
+                <button class="pd-edit-btn" (click)="startEdit()">
+                    <span class="material-symbols-outlined">edit</span>
+                    Edit
+                </button>
+            }
+            <div class="pd-task-add">
+                <span class="material-symbols-outlined">add</span>
+                <input type="text" placeholder="Add task..." [(ngModel)]="newTaskTitle" (keyup.enter)="addTask()">
             </div>
-        </div>
-
-        <div class="header-actions">
-            <div class="visualizer-mini">
-                <div class="wave-bar" style="height: 4px;"></div>
-                <div class="wave-bar" style="height: 12px;"></div>
-                <div class="wave-bar" style="height: 8px;"></div>
-                <div class="wave-bar" style="height: 14px;"></div>
-                <div class="wave-bar" style="height: 4px;"></div>
-            </div>
-            <button class="analyze-btn">
-                <span class="material-symbols-outlined" style="font-size: 12px;">auto_fix</span>
-                Analyze
-            </button>
         </div>
     </header>
 
-    <main>
-        <div class="toolbar">
-            <div class="flex items-center gap-4" style="display: flex; gap: 1rem; align-items: center;">
-                <h1 class="page-title">{{ project()?.title || 'Details'}}</h1>
-                <div class="confidence-metrics">
-                    <span style="font-size: 9px; font-weight: 700; text-transform: uppercase;">Confidence</span>
-                    <span
-                        style="font-size: 10px; font-family: 'Courier New', monospace; font-weight: 700; color: var(--color-burnt-orange);">98.2%</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-4" style="display: flex; gap: 1rem; align-items: center;">
-                <div class="tabs-container" style="display: flex; gap: 0.5rem; background: var(--bg-panel); padding: 4px; border-radius: 4px;">
-                    <button class="tab-btn" [class.active]="activeTab() === 'OVERVIEW'" (click)="activeTab.set('OVERVIEW')" style="padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Overview</button>
-                    <button class="tab-btn" [class.active]="activeTab() === 'VAULT'" (click)="activeTab.set('VAULT')" style="padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Vault</button>
-                    <button class="tab-btn" [class.active]="activeTab() === 'SUBSCRIPTIONS'" (click)="activeTab.set('SUBSCRIPTIONS')" style="padding: 4px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Subscriptions</button>
-                </div>
-
-                <div class="kbd-shortcuts">
-                    <span>Save <kbd class="kbd-minimal">⌘ ⏎</kbd></span>
-                    <span>Voice <kbd class="kbd-minimal">SPACE</kbd></span>
-                </div>
-                <!-- Quick Task Add for CoreOS -->
-                <div class="input-wrapper" style="width: 250px; margin: 0; padding: 2px 8px;">
-                    <span class="material-symbols-outlined" style="font-size: 14px; color: #999;">add</span>
-                    <input type="text" class="refine-input" placeholder="Add task..." [(ngModel)]="newTaskTitle"
-                        (keyup.enter)="addTask()">
-                </div>
-                <span class="material-symbols-outlined"
-                    style="font-size: 16px; color: rgba(61, 52, 47, 0.4); cursor: pointer;">filter_list</span>
-            </div>
-        </div>
+    <!-- Main -->
+    <main class="pd-main">
 
         @if (activeTab() === 'OVERVIEW') {
-        <div class="table-container">
-            <table class="analyst-table">
-                <thead>
-                    <tr>
-                        <th class="col-checkbox"><input type="checkbox" class="custom-checkbox"></th>
-                        <th>Objective</th>
-                        <th>Stakeholder</th>
-                        <th>Timeline</th>
-                        <th style="width: 3rem;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Linked Resources Section -->
-                    @if (linkedNovels().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Novels</td>
-                    </tr>
-                    @for (novel of linkedNovels(); track novel.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">menu_book</span>
-                            {{ novel.title }}
-                        </td>
-                        <td class="text-muted">Novel</td>
-                        <td class="text-muted">{{ novel.lastUpdated | date:'shortDate' }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
 
-                    @if (linkedNotes().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Notes</td>
-                    </tr>
-                    @for (note of linkedNotes(); track note.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">edit_note</span>
-                            {{ note.title }}
-                        </td>
-                        <td class="text-muted">Daily Note</td>
-                        <td class="text-muted">{{ note.date }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
-
-                    @if (linkedMeetings().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Meetings</td>
-                    </tr>
-                    @for (meeting of linkedMeetings(); track meeting.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">groups</span>
-                            {{ meeting.title }}
-                        </td>
-                        <td class="text-muted">Meeting</td>
-                        <td class="text-muted">{{ meeting.date }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
-
-                    @if (linkedBooks().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Books</td>
-                    </tr>
-                    @for (book of linkedBooks(); track book.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">local_library</span>
-                            {{ book.title }}
-                        </td>
-                        <td class="text-muted">Book</td>
-                        <td class="text-muted">{{ book.status }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
-
-                    @if (linkedResearch().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Research</td>
-                    </tr>
-                    @for (lib of linkedResearch(); track lib.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">science</span>
-                            {{ lib.name }}
-                        </td>
-                        <td class="text-muted">Library</td>
-                        <td class="text-muted">{{ lib.lastModified }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
-
-                    @if (linkedSnippets().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Snippets</td>
-                    </tr>
-                    @for (snippet of linkedSnippets(); track snippet.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">code</span>
-                            {{ snippet.title }}
-                        </td>
-                        <td class="text-muted">{{ snippet.lang }}</td>
-                        <td class="text-muted">{{ snippet.updatedAt | date:'shortDate' }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
-
-                    @if (linkedArticles().length > 0) {
-                    <tr style="background: rgba(191, 87, 0, 0.05);">
-                        <td colspan="5"
-                            style="padding: 8px 12px; font-weight: 700; color: var(--color-burnt-orange); text-transform: uppercase; font-size: 10px;">
-                            Linked Articles</td>
-                    </tr>
-                    @for (article of linkedArticles(); track article.id) {
-                    <tr>
-                        <td class="col-checkbox"><input type="checkbox" class="custom-checkbox" checked></td>
-                        <td style="font-weight: 600;">
-                            <span class="material-symbols-outlined"
-                                style="vertical-align: middle; font-size: 14px; margin-right: 4px;">article</span>
-                            {{ article.title }}
-                        </td>
-                        <td class="text-muted">{{ article.platform }}</td>
-                        <td class="text-muted">{{ article.lastUpdated | date:'shortDate' }}</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-symbols-outlined action-icon">edit</span>
-                            </div>
-                        </td>
-                    </tr>
-                    }
-                    }
-
-
-
-                </tbody>
-            </table>
-        </div>
-        }
-
-        @if (activeTab() === 'OVERVIEW') {
-        <div class="tasks-sections-container">
-            <h2 class="section-title">Tasks & Sections</h2>
-            
-            <div class="task-sections-grid">
-                <!-- Pending -->
-                <div class="task-section">
-                    <div class="section-header pending-header">
-                        <h3>Pending</h3>
-                        <span class="task-count">{{ pendingTasks().length }}</span>
+            <!-- Edit form -->
+            @if (editMode()) {
+            <div class="pd-edit-form">
+                <div class="pd-edit-row">
+                    <div class="pd-field">
+                        <label>Title</label>
+                        <input type="text" [(ngModel)]="editTitle" class="pd-input">
                     </div>
-                    <div class="section-content">
-                        @for (task of pendingTasks(); track task.id) {
-                            <div class="task-card">
-                                <label class="task-checkbox">
-                                    <input type="checkbox" (change)="task.status = 'COMPLETED'">
-                                    <span class="custom-chk"></span>
-                                </label>
-                                <div class="task-details">
-                                    <span class="task-title">{{ task.title }}</span>
-                                    @if (task.due) {
-                                        <span class="task-due"><span class="material-symbols-outlined icon-small">calendar_today</span> {{ task.due }}</span>
-                                    }
-                                </div>
-                                <span class="material-symbols-outlined action-icon delete" (click)="deleteTask(task.id)">delete</span>
-                            </div>
-                        }
-                        @if (pendingTasks().length === 0) {
-                            <div class="empty-section">No pending tasks</div>
-                        }
+                    <div class="pd-field pd-field--narrow">
+                        <label>Status</label>
+                        <select [(ngModel)]="editStatus" class="pd-input">
+                            <option value="PLANNING">Planning</option>
+                            <option value="DRAFTING">Drafting</option>
+                            <option value="REVIEW">Review</option>
+                            <option value="COMPLETE">Complete</option>
+                        </select>
                     </div>
                 </div>
-
-                <!-- Active -->
-                <div class="task-section">
-                    <div class="section-header active-header">
-                        <h3>Active</h3>
-                        <span class="task-count">{{ activeTasks().length }}</span>
-                    </div>
-                    <div class="section-content">
-                        @for (task of activeTasks(); track task.id) {
-                            <div class="task-card">
-                                <label class="task-checkbox">
-                                    <input type="checkbox" (change)="task.status = 'COMPLETED'">
-                                    <span class="custom-chk"></span>
-                                </label>
-                                <div class="task-details">
-                                    <span class="task-title">{{ task.title }}</span>
-                                    @if (task.due) {
-                                        <span class="task-due"><span class="material-symbols-outlined icon-small">calendar_today</span> {{ task.due }}</span>
-                                    }
-                                </div>
-                                <span class="material-symbols-outlined action-icon delete" (click)="deleteTask(task.id)">delete</span>
-                            </div>
-                        }
-                        @if (activeTasks().length === 0) {
-                            <div class="empty-section">No active tasks</div>
-                        }
-                    </div>
+                <div class="pd-field">
+                    <label>Description</label>
+                    <textarea [(ngModel)]="editDescription" class="pd-input pd-textarea" rows="2"></textarea>
                 </div>
-
-                <!-- Completed -->
-                <div class="task-section">
-                    <div class="section-header completed-header">
-                        <h3>Completed</h3>
-                        <span class="task-count">{{ completedTasks().length }}</span>
-                    </div>
-                    <div class="section-content">
-                        @for (task of completedTasks(); track task.id) {
-                            <div class="task-card completed">
-                                <label class="task-checkbox">
-                                    <input type="checkbox" checked (change)="task.status = 'ACTIVE'">
-                                    <span class="custom-chk"></span>
-                                </label>
-                                <div class="task-details">
-                                    <span class="task-title">{{ task.title }}</span>
-                                    @if (task.due) {
-                                        <span class="task-due"><span class="material-symbols-outlined icon-small">calendar_today</span> {{ task.due }}</span>
-                                    }
-                                </div>
-                                <span class="material-symbols-outlined action-icon delete" (click)="deleteTask(task.id)">delete</span>
-                            </div>
-                        }
-                        @if (completedTasks().length === 0) {
-                            <div class="empty-section">No completed tasks</div>
-                        }
-                    </div>
+                <div class="pd-edit-actions">
+                    <button class="pd-btn pd-btn--primary" (click)="saveEdit()">Save</button>
+                    <button class="pd-btn" (click)="cancelEdit()">Cancel</button>
                 </div>
             </div>
-        </div>
+            }
+
+            <!-- Project meta banner -->
+            @if (!editMode() && project()) {
+            <div class="pd-meta-banner">
+                <div class="pd-meta-left">
+                    <span class="pd-status-badge pd-status--{{ project()!.status.toLowerCase() }}">
+                        {{ project()!.status | titlecase }}
+                    </span>
+                    @if (project()!.description) {
+                        <p class="pd-meta-desc">{{ project()!.description }}</p>
+                    }
+                    @if (project()!.tags?.length) {
+                        <div class="pd-meta-tags">
+                            @for (tag of project()!.tags!; track tag) {
+                                <span class="pd-tag">{{ tag }}</span>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="pd-meta-right">
+                    <div class="pd-meta-stat">
+                        <span class="material-symbols-outlined">task_alt</span>
+                        <span>{{ projectTasks().length }} tasks</span>
+                    </div>
+                    @if (project()!.dueDate) {
+                        <div class="pd-meta-stat">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                            <span>Due {{ project()!.dueDate | date:'mediumDate' }}</span>
+                        </div>
+                    }
+                    @if (project()!.words > 0) {
+                        <div class="pd-meta-stat">
+                            <span class="material-symbols-outlined">article</span>
+                            <span>{{ project()!.words | number }} words</span>
+                        </div>
+                    }
+                    @if (project()!.priority) {
+                        <div class="pd-meta-stat pd-priority--{{ project()!.priority!.toLowerCase() }}">
+                            <span class="material-symbols-outlined">flag</span>
+                            <span>{{ project()!.priority | titlecase }}</span>
+                        </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Tasks — compact flat list -->
+            <div class="pd-section">
+                <div class="pd-section-hdr">
+                    <span class="material-symbols-outlined pd-section-icon">checklist</span>
+                    <h2 class="pd-section-name">Tasks</h2>
+                    <span class="pd-count-badge">{{ projectTasks().length }}</span>
+                </div>
+
+                <div class="pd-task-list">
+                    @for (task of activeTasks(); track task.id) {
+                    <div class="pd-task-row">
+                        <label class="pd-task-check">
+                            <input type="checkbox" (change)="updateTaskStatus(task.id, 'COMPLETED')">
+                            <span class="pd-chk"></span>
+                        </label>
+                        <span class="pd-task-title">{{ task.title }}</span>
+                        @if (task.due) {
+                            <span class="pd-task-due">
+                                <span class="material-symbols-outlined">calendar_today</span>{{ task.due }}
+                            </span>
+                        }
+                        <span class="pd-task-status-dot pd-task-status-dot--active"></span>
+                        <span class="material-symbols-outlined pd-task-del" (click)="deleteTask(task.id)">delete</span>
+                    </div>
+                    }
+                    @for (task of pendingTasks(); track task.id) {
+                    <div class="pd-task-row">
+                        <label class="pd-task-check">
+                            <input type="checkbox" (change)="updateTaskStatus(task.id, 'COMPLETED')">
+                            <span class="pd-chk"></span>
+                        </label>
+                        <span class="pd-task-title">{{ task.title }}</span>
+                        @if (task.due) {
+                            <span class="pd-task-due">
+                                <span class="material-symbols-outlined">calendar_today</span>{{ task.due }}
+                            </span>
+                        }
+                        <span class="pd-task-status-dot pd-task-status-dot--pending"></span>
+                        <span class="material-symbols-outlined pd-task-del" (click)="deleteTask(task.id)">delete</span>
+                    </div>
+                    }
+                    @for (task of completedTasks(); track task.id) {
+                    <div class="pd-task-row pd-task-row--done">
+                        <label class="pd-task-check">
+                            <input type="checkbox" checked (change)="updateTaskStatus(task.id, 'ACTIVE')">
+                            <span class="pd-chk"></span>
+                        </label>
+                        <span class="pd-task-title">{{ task.title }}</span>
+                        <span class="pd-task-status-dot pd-task-status-dot--done"></span>
+                        <span class="material-symbols-outlined pd-task-del" (click)="deleteTask(task.id)">delete</span>
+                    </div>
+                    }
+                    @if (projectTasks().length === 0) {
+                        <div class="pd-section-empty">
+                            <span class="material-symbols-outlined">checklist</span>
+                            No tasks yet — type above to add one
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Sections grid -->
+            <div class="pd-sections-grid">
+
+                <!-- Notes -->
+                <div class="pd-sec-card">
+                    <div class="pd-sec-hdr">
+                        <span class="material-symbols-outlined">edit_note</span>
+                        <span class="pd-sec-title">Notes</span>
+                        <span class="pd-count-badge">{{ linkedNotes().length }}</span>
+                        <button class="pd-sec-link-btn" (click)="openLinkSection('notes')" title="Link a note">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="pd-sec-body">
+                        @for (note of linkedNotes(); track note.id) {
+                        <div class="pd-sec-row">
+                            <span class="material-symbols-outlined pd-sec-row-icon">sticky_note_2</span>
+                            <div class="pd-sec-row-info">
+                                <span class="pd-sec-row-title">{{ note.title }}</span>
+                                <span class="pd-sec-row-sub">{{ note.date }}</span>
+                            </div>
+                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('notes', note.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedNotes().length === 0) {
+                            <div class="pd-sec-empty">No notes linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Meetings -->
+                <div class="pd-sec-card">
+                    <div class="pd-sec-hdr">
+                        <span class="material-symbols-outlined">groups</span>
+                        <span class="pd-sec-title">Meetings</span>
+                        <span class="pd-count-badge">{{ linkedMeetings().length }}</span>
+                        <button class="pd-sec-link-btn" (click)="openLinkSection('meetings')" title="Link a meeting">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="pd-sec-body">
+                        @for (meeting of linkedMeetings(); track meeting.id) {
+                        <div class="pd-sec-row">
+                            <span class="material-symbols-outlined pd-sec-row-icon">event</span>
+                            <div class="pd-sec-row-info">
+                                <span class="pd-sec-row-title">{{ meeting.title }}</span>
+                                <span class="pd-sec-row-sub">{{ meeting.date }}</span>
+                            </div>
+                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('meetings', meeting.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedMeetings().length === 0) {
+                            <div class="pd-sec-empty">No meetings linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Bookmarks -->
+                <div class="pd-sec-card">
+                    <div class="pd-sec-hdr">
+                        <span class="material-symbols-outlined">bookmark</span>
+                        <span class="pd-sec-title">Bookmarks</span>
+                        <span class="pd-count-badge">{{ linkedBookmarks().length }}</span>
+                        <button class="pd-sec-link-btn" (click)="openLinkSection('bookmarks')" title="Link a bookmark">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="pd-sec-body">
+                        @for (bm of linkedBookmarks(); track bm.id) {
+                        <div class="pd-sec-row">
+                            @if (bm.faviconUrl) {
+                                <img [src]="bm.faviconUrl" class="pd-sec-favicon" alt="" width="14" height="14">
+                            } @else {
+                                <span class="material-symbols-outlined pd-sec-row-icon">language</span>
+                            }
+                            <div class="pd-sec-row-info">
+                                <span class="pd-sec-row-title">{{ bm.title }}</span>
+                                <span class="pd-sec-row-sub">{{ bm.url }}</span>
+                            </div>
+                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('bookmarks', bm.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedBookmarks().length === 0) {
+                            <div class="pd-sec-empty">No bookmarks linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Novels -->
+                <div class="pd-sec-card">
+                    <div class="pd-sec-hdr">
+                        <span class="material-symbols-outlined">menu_book</span>
+                        <span class="pd-sec-title">Novels</span>
+                        <span class="pd-count-badge">{{ linkedNovels().length }}</span>
+                        <button class="pd-sec-link-btn" (click)="openLinkSection('novels')" title="Link a novel">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="pd-sec-body">
+                        @for (novel of linkedNovels(); track novel.id) {
+                        <div class="pd-sec-row">
+                            <span class="material-symbols-outlined pd-sec-row-icon">auto_stories</span>
+                            <div class="pd-sec-row-info">
+                                <span class="pd-sec-row-title">{{ novel.title }}</span>
+                                <span class="pd-sec-row-sub">{{ novel.wordCount | number }} words · {{ novel.status | titlecase }}</span>
+                            </div>
+                            <div class="pd-sec-row-progress">
+                                <div class="pd-sec-progress-bar">
+                                    <div class="pd-sec-progress-fill" [style.width.%]="novel.progress"></div>
+                                </div>
+                                <span class="pd-sec-progress-label">{{ novel.progress }}%</span>
+                            </div>
+                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('novels', novel.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedNovels().length === 0) {
+                            <div class="pd-sec-empty">No novels linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Books -->
+                <div class="pd-sec-card">
+                    <div class="pd-sec-hdr">
+                        <span class="material-symbols-outlined">local_library</span>
+                        <span class="pd-sec-title">Books</span>
+                        <span class="pd-count-badge">{{ linkedBooks().length }}</span>
+                        <button class="pd-sec-link-btn" (click)="openLinkSection('books')" title="Link a book">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="pd-sec-body">
+                        @for (book of linkedBooks(); track book.id) {
+                        <div class="pd-sec-row">
+                            <span class="material-symbols-outlined pd-sec-row-icon">book</span>
+                            <div class="pd-sec-row-info">
+                                <span class="pd-sec-row-title">{{ book.title }}</span>
+                                <span class="pd-sec-row-sub">{{ book.author }} · {{ book.status }}</span>
+                            </div>
+                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('books', book.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedBooks().length === 0) {
+                            <div class="pd-sec-empty">No books linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Articles -->
+                <div class="pd-sec-card">
+                    <div class="pd-sec-hdr">
+                        <span class="material-symbols-outlined">article</span>
+                        <span class="pd-sec-title">Articles</span>
+                        <span class="pd-count-badge">{{ linkedArticles().length }}</span>
+                        <button class="pd-sec-link-btn" (click)="openLinkSection('articles')" title="Link an article">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="pd-sec-body">
+                        @for (article of linkedArticles(); track article.id) {
+                        <div class="pd-sec-row">
+                            <span class="material-symbols-outlined pd-sec-row-icon">description</span>
+                            <div class="pd-sec-row-info">
+                                <span class="pd-sec-row-title">{{ article.title }}</span>
+                                <span class="pd-sec-row-sub">{{ article.platform }} · {{ article.lastUpdated | date:'shortDate' }}</span>
+                            </div>
+                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('articles', article.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedArticles().length === 0) {
+                            <div class="pd-sec-empty">No articles linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Research -->
+                <div class="pd-sec-card pd-sec-card--wide">
+                    <div class="pd-sec-hdr">
+                        <span class="material-symbols-outlined">science</span>
+                        <span class="pd-sec-title">Research Libraries</span>
+                        <span class="pd-count-badge">{{ linkedResearch().length }}</span>
+                        <button class="pd-sec-link-btn" (click)="openLinkSection('research')" title="Link a research library">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="pd-sec-body">
+                        @for (lib of linkedResearch(); track lib.id) {
+                        <div class="pd-sec-row">
+                            <span class="material-symbols-outlined pd-sec-row-icon">biotech</span>
+                            <div class="pd-sec-row-info">
+                                <span class="pd-sec-row-title">{{ lib.name }}</span>
+                                <span class="pd-sec-row-sub">{{ lib.description }}</span>
+                            </div>
+                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('research', lib.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedResearch().length === 0) {
+                            <div class="pd-sec-empty">No research libraries linked</div>
+                        }
+                    </div>
+                </div>
+
+            </div>
         }
 
+        <!-- Vault tab -->
         @if (activeTab() === 'VAULT') {
-        <div class="table-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2);">
-                <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Credentials Vault</span>
-                <button class="confirm-btn" style="padding: 4px 12px; background: var(--accent); color: var(--bg-app); cursor: pointer;" (click)="showAddCredential.set(true)">+ Add Credential</button>
+        <div class="pd-table-container">
+            <div class="pd-section-bar">
+                <span class="pd-section-bar-title">Credentials Vault</span>
+                <button class="pd-btn pd-btn--primary" (click)="showAddCredential.set(true)">+ Add Credential</button>
             </div>
-
             @if (showAddCredential()) {
-            <div style="padding: 16px; background: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; align-items: flex-end;">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Name</label>
-                    <input type="text" class="refine-input" [(ngModel)]="newCredName" placeholder="e.g. Prod DB">
+            <div class="pd-add-form">
+                <div class="pd-field">
+                    <label>Name</label>
+                    <input type="text" class="pd-input" [(ngModel)]="newCredName" placeholder="e.g. Prod DB">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Type</label>
-                    <select class="refine-input" [(ngModel)]="newCredType" style="background: var(--bg-panel); color: white;">
+                <div class="pd-field">
+                    <label>Type</label>
+                    <select class="pd-input" [(ngModel)]="newCredType">
                         <option value="login">Login</option>
                         <option value="api_key">API Key</option>
                         <option value="ssh">SSH</option>
@@ -385,192 +409,182 @@
                         <option value="note">Secure Note</option>
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Value</label>
-                    <input type="password" class="refine-input" [(ngModel)]="newCredValue" placeholder="Secret">
+                <div class="pd-field">
+                    <label>Value</label>
+                    <input type="password" class="pd-input" [(ngModel)]="newCredValue" placeholder="Secret">
                 </div>
-                <button class="confirm-btn" style="padding: 8px 16px; background: var(--success);" (click)="addCredential()">Save</button>
-                <button class="confirm-btn" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border-color);" (click)="showAddCredential.set(false)">Cancel</button>
+                <button class="pd-btn pd-btn--primary" (click)="addCredential()">Save</button>
+                <button class="pd-btn" (click)="showAddCredential.set(false)">Cancel</button>
             </div>
             }
-
-            <table class="analyst-table">
+            <table class="pd-table">
                 <thead>
                     <tr>
-                        <th style="width: 25%;">Name</th>
-                        <th style="width: 15%;">Type</th>
-                        <th style="width: 30%;">Value</th>
-                        <th style="width: 20%;">Linked Subscriptions</th>
-                        <th style="width: 10%;">Actions</th>
+                        <th>Name</th><th>Type</th><th>Value</th><th>Linked Subscriptions</th><th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (cred of projectCredentials(); track cred.id) {
                     <tr>
-                        <td style="font-weight: 600;">{{ cred.name }}</td>
-                        <td class="text-muted"><span style="padding: 2px 6px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 10px;">{{ cred.type }}</span></td>
+                        <td class="pd-fw">{{ cred.name }}</td>
+                        <td><span class="pd-type-badge">{{ cred.type }}</span></td>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-family: monospace; color: var(--text-secondary);">
-                                    {{ visibleCreds().has(cred.id) ? decryptCred(cred.value) : '••••••••••••••••' }}
-                                </span>
-                                <span class="material-symbols-outlined action-icon" (click)="toggleCredVisibility(cred.id)" style="font-size: 14px;">
+                            <div class="pd-cred-value">
+                                <span class="pd-mono">{{ visibleCreds().has(cred.id) ? decryptCred(cred.value) : '••••••••••••••••' }}</span>
+                                <span class="material-symbols-outlined action-icon" (click)="toggleCredVisibility(cred.id)">
                                     {{ visibleCreds().has(cred.id) ? 'visibility_off' : 'visibility' }}
                                 </span>
-                                <span class="material-symbols-outlined action-icon" (click)="copyCred(cred.value)" style="font-size: 14px;">content_copy</span>
+                                <span class="material-symbols-outlined action-icon" (click)="copyCred(cred.value)">content_copy</span>
                             </div>
                         </td>
                         <td>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <span style="font-size: 10px; color: var(--text-tertiary);">{{ getLinkedItemsText('credential', cred.id) }}</span>
-                                <span class="material-symbols-outlined action-icon" style="font-size: 14px;" (click)="openLinkModal('credential', cred.id)">link</span>
+                            <div class="pd-link-cell">
+                                <span class="text-muted">{{ getLinkedItemsText('credential', cred.id) }}</span>
+                                <span class="material-symbols-outlined action-icon" (click)="openLinkModal('credential', cred.id)">link</span>
                             </div>
                         </td>
-                        <td>
-                            <span class="material-symbols-outlined action-icon delete" (click)="vaultStore.deleteCredential(cred.id)">delete</span>
-                        </td>
+                        <td><span class="material-symbols-outlined action-icon delete" (click)="vaultStore.deleteCredential(cred.id)">delete</span></td>
                     </tr>
                     }
                     @if (projectCredentials().length === 0) {
-                    <tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-tertiary);">No credentials added</td></tr>
+                    <tr><td colspan="5" class="pd-empty-row">No credentials added</td></tr>
                     }
                 </tbody>
             </table>
         </div>
         }
 
+        <!-- Subscriptions tab -->
         @if (activeTab() === 'SUBSCRIPTIONS') {
-        <div class="table-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2);">
-                <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Subscriptions & Vendors</span>
-                <button class="confirm-btn" style="padding: 4px 12px; background: var(--accent); color: var(--bg-app); cursor: pointer;" (click)="showAddSubscription.set(true)">+ Add Subscription</button>
+        <div class="pd-table-container">
+            <div class="pd-section-bar">
+                <span class="pd-section-bar-title">Subscriptions & Vendors</span>
+                <button class="pd-btn pd-btn--primary" (click)="showAddSubscription.set(true)">+ Add Subscription</button>
             </div>
-
             @if (showAddSubscription()) {
-            <div style="padding: 16px; background: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Name</label>
-                    <input type="text" class="refine-input" [(ngModel)]="newSubName" placeholder="e.g. AWS">
+            <div class="pd-add-form pd-add-form--wrap">
+                <div class="pd-field">
+                    <label>Name</label>
+                    <input type="text" class="pd-input" [(ngModel)]="newSubName" placeholder="e.g. AWS">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Category</label>
-                    <input type="text" class="refine-input" [(ngModel)]="newSubCategory" placeholder="e.g. Infrastructure">
+                <div class="pd-field">
+                    <label>Category</label>
+                    <input type="text" class="pd-input" [(ngModel)]="newSubCategory" placeholder="e.g. Infrastructure">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px; width: 80px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Price</label>
-                    <input type="number" class="refine-input" [(ngModel)]="newSubPrice" placeholder="0">
+                <div class="pd-field pd-field--narrow">
+                    <label>Price</label>
+                    <input type="number" class="pd-input" [(ngModel)]="newSubPrice">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Cycle</label>
-                    <select class="refine-input" [(ngModel)]="newSubCycle" style="background: var(--bg-panel); color: white;">
+                <div class="pd-field">
+                    <label>Cycle</label>
+                    <select class="pd-input" [(ngModel)]="newSubCycle">
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 10px; color: var(--text-tertiary);">Renewal Date</label>
-                    <input type="date" class="refine-input" [(ngModel)]="newSubRenewal">
+                <div class="pd-field">
+                    <label>Renewal Date</label>
+                    <input type="date" class="pd-input" [(ngModel)]="newSubRenewal">
                 </div>
-                <button class="confirm-btn" style="padding: 8px 16px; background: var(--success);" (click)="addSubscription()">Save</button>
-                <button class="confirm-btn" style="padding: 8px 16px; background: transparent; border: 1px solid var(--border-color);" (click)="showAddSubscription.set(false)">Cancel</button>
+                <button class="pd-btn pd-btn--primary" (click)="addSubscription()">Save</button>
+                <button class="pd-btn" (click)="showAddSubscription.set(false)">Cancel</button>
             </div>
             }
-
-            <table class="analyst-table">
+            <table class="pd-table">
                 <thead>
                     <tr>
-                        <th style="width: 25%;">Service</th>
-                        <th style="width: 15%;">Category</th>
-                        <th style="width: 15%;">Cost</th>
-                        <th style="width: 15%;">Renewal</th>
-                        <th style="width: 20%;">Linked Credentials</th>
-                        <th style="width: 10%;">Actions</th>
+                        <th>Service</th><th>Category</th><th>Cost</th><th>Renewal</th><th>Linked Credentials</th><th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (sub of projectSubscriptions(); track sub.id) {
                     <tr>
-                        <td style="font-weight: 600;">{{ sub.name }}</td>
+                        <td class="pd-fw">{{ sub.name }}</td>
                         <td class="text-muted">{{ sub.category }}</td>
                         <td class="text-muted">${{ sub.price }}/{{ sub.billingCycle === 'monthly' ? 'mo' : 'yr' }}</td>
-                        <td class="text-muted" [ngStyle]="{'color': (subscriptionStore.upcomingRenewals().includes(sub) ? 'var(--alert)' : '')}">
+                        <td [class.pd-renewal-soon]="subscriptionStore.upcomingRenewals().includes(sub)">
                             {{ sub.renewalDate }}
                             @if (subscriptionStore.upcomingRenewals().includes(sub)) {
-                                <span style="font-size: 9px; padding: 2px 4px; background: var(--alert); color: white; border-radius: 2px; margin-left: 4px;">SOON</span>
+                                <span class="pd-soon-badge">SOON</span>
                             }
                         </td>
                         <td>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <span style="font-size: 10px; color: var(--text-tertiary);">{{ getLinkedItemsText('subscription', sub.id) }}</span>
-                                <span class="material-symbols-outlined action-icon" style="font-size: 14px;" (click)="openLinkModal('subscription', sub.id)">link</span>
+                            <div class="pd-link-cell">
+                                <span class="text-muted">{{ getLinkedItemsText('subscription', sub.id) }}</span>
+                                <span class="material-symbols-outlined action-icon" (click)="openLinkModal('subscription', sub.id)">link</span>
                             </div>
                         </td>
-                        <td>
-                            <span class="material-symbols-outlined action-icon delete" (click)="subscriptionStore.deleteSubscription(sub.id)">delete</span>
-                        </td>
+                        <td><span class="material-symbols-outlined action-icon delete" (click)="subscriptionStore.deleteSubscription(sub.id)">delete</span></td>
                     </tr>
                     }
                     @if (projectSubscriptions().length === 0) {
-                    <tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-tertiary);">No subscriptions added</td></tr>
+                    <tr><td colspan="6" class="pd-empty-row">No subscriptions added</td></tr>
                     }
                 </tbody>
             </table>
         </div>
         }
 
-        <!-- Link Modal -->
-        @if (showLinkModal()) {
-        <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;">
-            <div style="background: var(--bg-panel); border: 1px solid var(--border-color); padding: 24px; width: 400px; border-radius: 4px;">
-                <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: white;">Link {{ linkTargetType() === 'credential' ? 'Subscription' : 'Credential' }}</h3>
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
-                    <label style="font-size: 11px; color: var(--text-tertiary);">Select item to link to:</label>
-                    <select class="refine-input" [(ngModel)]="selectedTargetToLink" style="background: rgba(0,0,0,0.2); color: white; width: 100%;">
-                        @if(linkTargetType() === 'credential') {
-                            @for(s of subscriptionStore.subscriptions(); track s.id) {
-                                <option [value]="s.id">{{ s.name }} ({{ s.category }})</option>
-                            }
-                        } @else {
-                            @for(c of vaultStore.credentials(); track c.id) {
-                                <option [value]="c.id">{{ c.name }} ({{ c.type }})</option>
-                            }
-                        }
-                    </select>
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 12px;">
-                    <button class="confirm-btn" style="padding: 6px 16px; background: transparent; border: 1px solid var(--border-color);" (click)="showLinkModal.set(false)">Cancel</button>
-                    <button class="confirm-btn" style="padding: 6px 16px; background: var(--accent); color: var(--bg-app);" (click)="addLink()">Create Link</button>
-                </div>
-            </div>
-        </div>
-        }
-
     </main>
 
-    <footer>
-        <div class="footer-main">
-            <div class="security-bar">
-                <div class="security-item">
-                    <span class="status-dot"></span>
-                    <span>Ready</span>
-                </div>
-                <div class="security-item">
-                    <span class="material-symbols-outlined" style="font-size: 10px;">timer</span>
-                    <span>Latency: 12ms</span>
-                </div>
-                <div class="security-item">
-                    <span class="material-symbols-outlined" style="font-size: 10px;">verified_user</span>
-                    <span>Verified Analyst</span>
-                </div>
+    <!-- Link section modal -->
+    @if (linkSectionType()) {
+    <div class="pd-modal-overlay" (click)="closeLinkSection()">
+        <div class="pd-modal" (click)="$event.stopPropagation()">
+            <h3 class="pd-modal-title">Link {{ linkSectionType() | titlecase }}</h3>
+            <div class="pd-modal-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Search..." [(ngModel)]="linkSearch" class="pd-modal-search-input">
             </div>
-            <button class="confirm-btn" (click)="finalizeSession()">
-                <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
-                CONFIRM & FINALIZE SESSION
-            </button>
+            <div class="pd-link-list">
+                @for (item of linkableItems(); track $index) {
+                <button class="pd-link-list-item" (click)="linkItem(item['id'])">
+                    <div class="pd-link-item-info">
+                        <span class="pd-link-item-title">{{ getItemLabel(item) }}</span>
+                        <span class="pd-link-item-sub">{{ getItemSub(linkSectionType()!, item) }}</span>
+                    </div>
+                    <span class="material-symbols-outlined pd-link-item-add">add</span>
+                </button>
+                }
+                @if (linkableItems().length === 0) {
+                    <div class="pd-link-empty">
+                        @if (linkSearch()) { No matches for "{{ linkSearch() }}" }
+                        @else { No {{ linkSectionType() }} available to link }
+                    </div>
+                }
+            </div>
+            <div class="pd-modal-actions">
+                <button class="pd-btn" (click)="closeLinkSection()">Done</button>
+            </div>
         </div>
-        <div class="system-bar">
-            <span>SYSTEM v2.4.0-STABLE</span>
-            <span>END-TO-END ENCRYPTED ANALYST CHANNEL</span>
+    </div>
+    }
+
+    <!-- Vault-Subscription link modal -->
+    @if (showLinkModal()) {
+    <div class="pd-modal-overlay" (click)="showLinkModal.set(false)">
+        <div class="pd-modal" (click)="$event.stopPropagation()">
+            <h3 class="pd-modal-title">Link {{ linkTargetType() === 'credential' ? 'Subscription' : 'Credential' }}</h3>
+            <div class="pd-field">
+                <label>Select item to link to:</label>
+                <select class="pd-input" [(ngModel)]="selectedTargetToLink">
+                    @if(linkTargetType() === 'credential') {
+                        @for(s of subscriptionStore.subscriptions(); track s.id) {
+                            <option [value]="s.id">{{ s.name }} ({{ s.category }})</option>
+                        }
+                    } @else {
+                        @for(c of vaultStore.credentials(); track c.id) {
+                            <option [value]="c.id">{{ c.name }} ({{ c.type }})</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="pd-modal-actions">
+                <button class="pd-btn" (click)="showLinkModal.set(false)">Cancel</button>
+                <button class="pd-btn pd-btn--primary" (click)="addLink()">Create Link</button>
+            </div>
         </div>
-    </footer>
+    </div>
+    }
+
 </div>

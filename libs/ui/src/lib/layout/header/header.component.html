@@ -84,15 +84,17 @@
           @if (showProjectSwitcher()) {
             <div class="ps-dropdown">
               <div class="ps-dropdown-label">Projects</div>
-              @for (p of projects(); track p.id) {
-                <button class="ps-item" [class.ps-item-active]="activeProject().id === p.id" (click)="switchProject(p.id)">
-                  <span class="ps-item-dot" [style.background]="p.color"></span>
-                  <span class="ps-item-name">{{ p.name }}</span>
-                  @if (activeProject().id === p.id) {
-                    <span class="material-symbols-outlined ps-check">check</span>
-                  }
-                </button>
-              }
+              <div class="ps-list">
+                @for (p of projects(); track p.id) {
+                  <button class="ps-item" [class.ps-item-active]="activeProject().id === p.id" (click)="switchProject(p.id)">
+                    <span class="ps-item-dot" [style.background]="p.color"></span>
+                    <span class="ps-item-name">{{ p.name }}</span>
+                    @if (activeProject().id === p.id) {
+                      <span class="material-symbols-outlined ps-check">check</span>
+                    }
+                  </button>
+                }
+              </div>
               <div class="ps-divider"></div>
               <button class="ps-manage" (click)="manageProjects()">
                 <span class="material-symbols-outlined" style="font-size:15px">settings</span>

@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { WorkspaceProfileService, UserService } from '@envello/core';
+import { WorkspaceProfileService, UserService, StoreService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
 import { FormsModule } from '@angular/forms';
 
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class ProfileManagerComponent {
   workspaceService = inject(WorkspaceProfileService);
+  private storeService = inject(StoreService);
   private userService = inject(UserService);
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
@@ -31,10 +32,22 @@ export class ProfileManagerComponent {
   }
 
   confirmAdd() {
-    if (this.newProfileName().trim()) {
-      this.workspaceService.addProfile(this.newProfileName().trim());
-      this.isAddModalOpen.set(false);
-    }
+    const name = this.newProfileName().trim();
+    if (!name) return;
+    const newId = crypto.randomUUID();
+    // Persist to DB first so it survives the reload triggered by switchProfile
+    this.storeService.addProject({
+      id: newId,
+      title: name,
+      description: '',
+      status: 'PLANNING',
+      words: 0,
+      updated: new Date().toISOString(),
+      icon: 'folder'
+    });
+    this.workspaceService.addProfileWithId(newId, name, '#3b82f6', 'folder');
+    this.isAddModalOpen.set(false);
+    this.workspaceService.switchProfile(newId);
   }
 
   switchWorkspace(id: string) {
@@ -62,11 +75,10 @@ export class ProfileManagerComponent {
 
   confirmEdit() {
     const id = this.editProfileId();
-    if (id && this.editProfileName().trim()) {
-      this.workspaceService.updateProfile(id, { 
-        name: this.editProfileName().trim(),
-        color: this.editProfileColor()
-      });
+    const name = this.editProfileName().trim();
+    if (id && name) {
+      this.workspaceService.updateProfile(id, { name, color: this.editProfileColor() });
+      this.storeService.updateProject(id, { title: name });
       this.cancelEdit();
     }
   }
@@ -88,6 +100,9 @@ export class ProfileManagerComponent {
   confirmDelete() {
     const id = this.profileToDelete();
     if (id) {
+      // Remove from PouchDB first — prevents the header sync effect from
+      // re-adding the profile back on the next page load.
+      this.storeService.deleteProject(id);
       this.workspaceService.removeProfile(id);
       this.cancelDelete();
     }

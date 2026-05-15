@@ -1,5 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, effect } from '@angular/core';
 import { WorkspaceProfileService } from './workspace-profile.service';
+import { AuthService } from './auth.service';
+import { SyncService } from './sync.service';
 import { DataService } from '@envello/data';
 import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
 import PouchDB from 'pouchdb';
@@ -10,82 +12,231 @@ import PouchDB from 'pouchdb';
 export class PouchDbDataService implements DataService {
     private dbs: Record<string, PouchDB.Database> = {};
     private profileService = inject(WorkspaceProfileService);
+    private authService = inject(AuthService);
+    private syncService = inject(SyncService);
+
+    /**
+     * Collections that always live in the default namespace so they are visible
+     * from every workspace context. Vault collections are also global so
+     * credentials/subscriptions are accessible regardless of active project.
+     */
+    private readonly GLOBAL_COLLECTIONS = new Set([
+        'projects',
+        'note_folders',
+        'credentials',
+        'subscriptions',
+        'credential_subscription_links',
+    ]);
+
+    /** Set to true while applying pulled records to prevent re-triggering sync push. */
+    private applyingSync = false;
+    /** Only pull once per app session. */
+    private hasPulled = false;
+
+    constructor() {
+        // Trigger a pull from Supabase the first time a user is authenticated.
+        effect(() => {
+            const user = this.authService.currentUser();
+            if (user && !this.hasPulled) {
+                this.hasPulled = true;
+                this.pullAndApply();
+            }
+        });
+    }
+
+    // ─── Sync Pull ──────────────────────────────────────────────────────────────
+
+    private async pullAndApply(): Promise<void> {
+        this.applyingSync = true;
+        try {
+            const records = await this.syncService.pull();
+            for (const record of records) {
+                if (record.deleted) {
+                    await this.removeFromProfile(record.collection, record.profile_id, record.id);
+                } else if (record.data?.id) {
+                    await this.upsertToProfile(record.collection, record.profile_id, record.data);
+                }
+            }
+            if (records.length > 0) {
+                // Signal StoreService to reload signals from the updated PouchDB state.
+                window.dispatchEvent(new CustomEvent('envello:sync-complete'));
+            }
+        } catch (e) {
+            console.error('[PouchDbDataService] pullAndApply failed', e);
+        } finally {
+            this.applyingSync = false;
+        }
+    }
+
+    // ─── DB Helpers ─────────────────────────────────────────────────────────────
+
+    private getDbForProfile(collection: string, profileId: string): PouchDB.Database {
+        const profilePrefix = profileId === 'default' ? 'envello_' : `envello_${profileId}_`;
+        const cacheKey = `${profileId}:${collection}`;
+        if (!this.dbs[cacheKey]) {
+            this.dbs[cacheKey] = new PouchDB(`${profilePrefix}${collection}`);
+        }
+        return this.dbs[cacheKey];
+    }
 
     private getDb(collection: string): PouchDB.Database {
-        const profileId = this.profileService.activeProfileId() || 'default';
-        const profilePrefix = profileId === 'default' ? 'envello_' : `envello_${profileId}_`;
-        if (!this.dbs[collection]) {
-            this.dbs[collection] = new PouchDB(`${profilePrefix}${collection}`);
-        }
-        return this.dbs[collection];
+        const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+        const profileId = isGlobal ? 'default' : (this.profileService.activeProfileId() || 'default');
+        return this.getDbForProfile(collection, profileId);
     }
+
+    /** All profile namespaces: default first, then every user project. */
+    private getAllNamespaces(): string[] {
+        return ['default', ...this.profileService.profiles()
+            .filter(p => p.id !== 'default')
+            .map(p => p.id)];
+    }
+
+    /** Write to a specific namespace without triggering sync. Used by pullAndApply. */
+    private async upsertToProfile<T>(collection: string, profileId: string, item: T): Promise<void> {
+        const db = this.getDbForProfile(collection, profileId);
+        const docId = (item as any).id;
+        if (!docId) return;
+        try {
+            const existing = await db.get(docId);
+            await db.put({ ...item, _id: docId, _rev: existing._rev });
+        } catch (err: any) {
+            if (err.name === 'not_found' || err.status === 404) {
+                await db.put({ ...item, _id: docId });
+            } else {
+                throw err;
+            }
+        }
+    }
+
+    /** Remove from a specific namespace without triggering sync. Used by pullAndApply. */
+    private async removeFromProfile(collection: string, profileId: string, id: string): Promise<void> {
+        try {
+            const db = this.getDbForProfile(collection, profileId);
+            const existing = await db.get(id);
+            await db.remove(existing._id, existing._rev);
+        } catch (err: any) {
+            if (err.name !== 'not_found' && err.status !== 404) {
+                console.error(`[PouchDbDataService] removeFromProfile failed ${id}`, err);
+            }
+        }
+    }
+
+    // ─── Public DataService API ──────────────────────────────────────────────────
 
     async getAll<T>(collection: string): Promise<T[]> {
         try {
+            const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+            const activeId = this.profileService.activeProfileId() || 'default';
+
+            // In "All Projects" mode, aggregate from every project namespace.
+            if (!isGlobal && activeId === 'default') {
+                const results = await Promise.all(
+                    this.getAllNamespaces().map(async (pid) => {
+                        const db = this.getDbForProfile(collection, pid);
+                        const result = await db.allDocs({ include_docs: true });
+                        return result.rows.map(row => row.doc as unknown as T);
+                    })
+                );
+                const seen = new Set<string>();
+                const merged: T[] = [];
+                for (const docs of results) {
+                    for (const doc of docs) {
+                        const id = (doc as any).id;
+                        if (id && !seen.has(id)) {
+                            seen.add(id);
+                            merged.push(doc);
+                        }
+                    }
+                }
+                return merged;
+            }
+
             const db = this.getDb(collection);
             const result = await db.allDocs({ include_docs: true });
-            // The document inside PouchDB has _id and _rev, plus our item fields. 
-            // We map out the pure doc object.
             return result.rows.map(row => row.doc as unknown as T);
         } catch (e) {
-            console.error(`[PouchDbDataService] Failed to get all from ${collection}`, e);
+            console.error(`[PouchDbDataService] getAll failed for ${collection}`, e);
             return [];
         }
     }
 
     async upsert<T>(collection: string, item: T): Promise<void> {
         try {
-            const db = this.getDb(collection);
+            const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+            const activeId = this.profileService.activeProfileId() || 'default';
             const docId = (item as any).id;
 
             if (!docId) {
-                console.warn(`[PouchDbDataService] Item missing 'id' property. PouchDB requires _id. Upsert failed for ${collection}.`);
+                console.warn(`[PouchDbDataService] Item missing 'id'. Upsert failed for ${collection}.`);
                 return;
             }
 
-            try {
-                const existing = await db.get(docId);
-                // Put updating the properties and ensuring we send the current _rev
-                await db.put({
-                    ...item,
-                    _id: docId,
-                    _rev: existing._rev
-                });
-            } catch (err: any) {
-                if (err.name === 'not_found' || err.status === 404) {
-                    // Item doesn't exist, create it anew
-                    await db.put({
-                        ...item,
-                        _id: docId
-                    });
-                } else {
-                    throw err; // Propagate real errors
+            let resolvedProfileId: string;
+
+            if (!isGlobal && activeId === 'default') {
+                // Search all namespaces for an existing record; new items go to default.
+                resolvedProfileId = 'default';
+                for (const pid of this.getAllNamespaces()) {
+                    try {
+                        await this.getDbForProfile(collection, pid).get(docId);
+                        resolvedProfileId = pid;
+                        break;
+                    } catch (err: any) {
+                        if (err.name !== 'not_found' && err.status !== 404) throw err;
+                    }
                 }
+            } else {
+                resolvedProfileId = isGlobal ? 'default' : activeId;
+            }
+
+            await this.upsertToProfile(collection, resolvedProfileId, item);
+
+            if (!this.applyingSync) {
+                this.syncService.push(collection, resolvedProfileId, item).catch(() => {});
             }
         } catch (e) {
-            console.error(`[PouchDbDataService] Failed to upsert to ${collection}`, e);
+            console.error(`[PouchDbDataService] upsert failed for ${collection}`, e);
         }
     }
 
     async remove(collection: string, id: string): Promise<void> {
-        try {
-            const db = this.getDb(collection);
-            const existing = await db.get(id);
-            await db.remove(existing._id, existing._rev);
-        } catch (err: any) {
-            // If it's not found, it's already 'removed' essentially. Ignore 404s.
-            if (err.name !== 'not_found' && err.status !== 404) {
-                console.error(`[PouchDbDataService] Failed to remove ${id} from ${collection}`, err);
+        const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+        const activeId = this.profileService.activeProfileId() || 'default';
+
+        // In "All Projects" mode, search all namespaces to find the owning DB.
+        if (!isGlobal && activeId === 'default') {
+            for (const pid of this.getAllNamespaces()) {
+                try {
+                    const db = this.getDbForProfile(collection, pid);
+                    const existing = await db.get(id);
+                    await db.remove(existing._id, existing._rev);
+                    if (!this.applyingSync) {
+                        this.syncService.pushDelete(collection, pid, id).catch(() => {});
+                    }
+                    return;
+                } catch (err: any) {
+                    if (err.name !== 'not_found' && err.status !== 404) {
+                        console.error(`[PouchDbDataService] Failed to remove ${id}`, err);
+                    }
+                }
             }
+            return;
+        }
+
+        const profileId = isGlobal ? 'default' : activeId;
+        await this.removeFromProfile(collection, profileId, id);
+        if (!this.applyingSync) {
+            this.syncService.pushDelete(collection, profileId, id).catch(() => {});
         }
     }
 
     async importData(data: any): Promise<void> {
-        // Reserved for bulk import implementation scaling.
         console.log('[PouchDbDataService] importData invoked.', data);
     }
 
-    // Vault & Subscriptions
+    // ─── Vault & Subscriptions ───────────────────────────────────────────────────
+
     async saveCredential(credential: Credential): Promise<void> {
         return this.upsert('credentials', credential);
     }

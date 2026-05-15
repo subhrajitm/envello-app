@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, untracked, HostListener, OnInit, O
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -32,14 +32,13 @@ interface NoteGroup {
   icon: string;
   count: number;
   expanded: boolean;
-  noteIds: string[];
 }
 
 
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css'
 })
@@ -55,7 +54,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   characterCount = signal(0);
 
   // Modal State
-  activeModal = signal<'none' | 'new-folder' | 'add-tag' | 'link' | 'image' | 'delete-confirm' | 'delete-folder-confirm' | 'export' | 'youtube'>('none');
+  activeModal = signal<'none' | 'new-folder' | 'rename-folder' | 'link' | 'image' | 'delete-confirm' | 'delete-folder-confirm' | 'export' | 'youtube'>('none');
   modalInputValue = signal<string>('');
   modalInputPlaceholder = signal<string>('');
   modalTitle = signal<string>('');
@@ -66,10 +65,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   searchQuery = signal<string>('');
   selectedFilter = signal<string>('all');
   selectedTag = signal<string>('');
-  activeView = signal<'folders' | 'tags'>('folders');
-  noteBgClass = signal<string>('');
   showColorPicker = signal<boolean>(false);
   isFullWidth = signal<boolean>(false);
+  showTagInput = signal<boolean>(false);
+  tagInputValue = signal<string>('');
+  renamingFolderId = signal<string | null>(null);
+  renameInputValue = signal<string>('');
 
   readonly bgColors = [
     '',
@@ -106,16 +107,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   });
 
   showDropdown = signal<boolean>(false);
-  showMoreOptionsMenu = signal<boolean>(false);
   showFormatMenu = signal<boolean>(false);
   showInfoMenu = signal<boolean>(false);
   showMediaMenu = signal<boolean>(false);
-  showFilterMenu = signal<boolean>(false);
   activeFolderMenuId = signal<string | null>(null);
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
-  pinnedNotes = computed(() => this.notes().filter(n => this.isPinned(n)));
+  noteBgClass = computed(() => this.selectedNote()?.bgColor ?? '');
 
   dragOverFolderId = signal<string | null>(null);
   draggingNoteId = signal<string | null>(null);
@@ -128,6 +127,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const m = this.activeModal();
     if (m === 'delete-confirm') return 'Delete Note';
     if (m === 'delete-folder-confirm') return 'Delete Folder';
+    if (m === 'rename-folder') return 'Rename Folder';
     if (m === 'export') return 'Export Note';
     return '';
   });
@@ -143,14 +143,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       list = list.filter(note =>
         note.title.toLowerCase().includes(query) ||
         note.preview.toLowerCase().includes(query) ||
-        note.tags?.some(t => t.toLowerCase().includes(query))
+        note.tags?.some(t => t.toLowerCase().includes(query)) ||
+        (note.content ? note.content.replace(/<[^>]*>/g, '').toLowerCase().includes(query) : false)
       );
     }
 
     if (filter === 'pinned') {
       list = list.filter(note => note.tags?.includes('pinned'));
     } else if (filter === 'tagged') {
-      list = list.filter(note => note.tags && note.tags.length > 0);
+      list = list.filter(note => note.tags?.some(t => t !== 'pinned'));
     }
 
     if (tag) {
@@ -160,8 +161,16 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return list;
   });
 
-  bucketedFilteredNotes = computed(() => {
-    return this.getBucketedNotes(this.filteredNotes());
+  // Memoized per-folder note map for O(n) access instead of O(n*folders) method calls
+  notesPerFolder = computed(() => {
+    const map = new Map<string, Note[]>();
+    for (const note of this.filteredNotes()) {
+      const fid = this.effectiveFolderId(note);
+      const arr = map.get(fid);
+      if (arr) arr.push(note);
+      else map.set(fid, [note]);
+    }
+    return map;
   });
 
   private effectiveFolderId(note: Note): string {
@@ -170,17 +179,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return this.noteGroups().some((g) => g.id === fid) ? fid : firstFolderId;
   }
 
-  getBucketedNotesForFolder(folderId: string): { label: string; notes: Note[] }[] {
-    const inFolder = this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId);
-    return this.getBucketedNotes(inFolder);
-  }
-
   getNotesForFolder(folderId: string): Note[] {
-    return this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId);
-  }
-
-  getNotesCountForFolder(folderId: string): number {
-    return this.filteredNotes().filter((n) => this.effectiveFolderId(n) === folderId).length;
+    return this.notesPerFolder().get(folderId) ?? [];
   }
 
   getBucketedNotes(notes: Note[]): { label: string, notes: Note[] }[] {
@@ -248,11 +248,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   formatTime(id: string, lastEdited?: string): string {
+    if (lastEdited) return lastEdited;
     const timestamp = parseInt(id, 10);
     if (!isNaN(timestamp) && timestamp > 1000000000000) {
       return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     }
-    return lastEdited || '—';
+    return '—';
   }
 
   getPreviewText(preview: string): string {
@@ -261,13 +262,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return preview;
   }
 
-  allGroupsCollapsed = computed(() => {
-    return this.noteGroups().every(g => !g.expanded);
-  });
-
-  allExpanded = computed(() => {
-    return this.noteGroups().every(g => g.expanded);
-  });
+  allExpanded = computed(() => this.noteGroups().every(g => g.expanded));
 
   selectedNote = computed(() => {
     if (this.openNotes().length === 0) return null;
@@ -298,7 +293,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         return {
           ...f,
           expanded: cur?.expanded ?? true,
-          noteIds: cur?.noteIds ?? [],
           count: cur?.count ?? 0,
         };
       });
@@ -420,15 +414,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   handleNewNote() {
-    const firstFolderId = this.noteGroups()[0]?.id ?? 'personal';
+    const folderId = this.selectedNote()?.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
     const newNote: Note = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      title: 'Title',
-      preview: 'Start writing...',
-      content: '<p>Start writing your thoughts...</p>',
+      title: '',
+      preview: '',
+      content: '',
       tags: [],
-      folderId: firstFolderId,
+      folderId,
     };
     this.store.addNote(newNote);
     this.selectNote(newNote.id);
@@ -535,18 +529,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
   }
 
-  toggleFolderMenu(folderId: string, event: Event) {
-    event.stopPropagation();
+  toggleFolderMenu(folderId: string) {
     this.activeFolderMenuId.set(this.activeFolderMenuId() === folderId ? null : folderId);
-  }
-
-  getCategoryTextColor(hexColor: string): string {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.5 ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.9)';
   }
 
   setFilter(filter: string) {
@@ -563,8 +547,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return note.tags?.includes('pinned') || false;
   }
 
-  togglePin(note: Note, event: Event) {
-    event.stopPropagation();
+  togglePin(note: Note) {
     const tags = note.tags || [];
     const pinned = tags.includes('pinned');
     this.store.updateNote(note.id, {
@@ -576,48 +559,59 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return note.tags?.filter(tag => tag !== 'pinned') || [];
   }
 
-  expandAll() {
-    this.noteGroups.update(groups => groups.map(g => ({ ...g, expanded: true })));
+  setNoteBgColor(color: string) {
+    const id = this.selectedEntryId();
+    if (id) this.store.updateNote(id, { bgColor: color });
+    this.showColorPicker.set(false);
   }
 
-  collapseAll() {
-    this.noteGroups.update(groups => groups.map(g => ({ ...g, expanded: false })));
+  submitTagInput() {
+    const tag = this.tagInputValue().trim();
+    if (tag) this.addTag(tag);
+    this.tagInputValue.set('');
+    this.showTagInput.set(false);
+  }
+
+  startRenameFolder(folderId: string, currentName: string, event: Event) {
+    event.stopPropagation();
+    this.activeFolderMenuId.set(null);
+    this.tempFolderId.set(folderId);
+    this.modalTitle.set('Rename Folder');
+    this.modalInputPlaceholder.set('Folder name...');
+    this.modalInputValue.set(currentName);
+    this.activeModal.set('rename-folder');
+  }
+
+  confirmRenameFolder() {
+    const name = this.modalInputValue().trim();
+    const folderId = this.tempFolderId();
+    if (name && folderId) {
+      this.store.updateNoteFolder(folderId, { name });
+    }
+    this.closeModal();
   }
 
   toggleDropdown() {
     this.showDropdown.update(show => !show);
   }
 
-  toggleMoreOptions() {
-    this.showMoreOptionsMenu.update(v => !v);
-    if (this.showFormatMenu()) this.showFormatMenu.set(false);
-    if (this.showInfoMenu()) this.showInfoMenu.set(false);
-    if (this.showMediaMenu()) this.showMediaMenu.set(false);
-  }
-
   toggleInfoMenu() {
     this.showInfoMenu.update(v => !v);
-    if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
     if (this.showFormatMenu()) this.showFormatMenu.set(false);
     if (this.showMediaMenu()) this.showMediaMenu.set(false);
   }
 
   toggleFormatMenu() {
     this.showFormatMenu.update(v => !v);
-    if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
     if (this.showMediaMenu()) this.showMediaMenu.set(false);
   }
 
   toggleMediaMenu() {
     this.showMediaMenu.update(v => !v);
-    if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
     if (this.showFormatMenu()) this.showFormatMenu.set(false);
     if (this.showInfoMenu()) this.showInfoMenu.set(false);
   }
 
-  toggleFilterMenu() {
-    this.showFilterMenu.update(v => !v);
-  }
 
   setFormat(type: 'paragraph' | 'h1' | 'h2' | 'h3') {
     if (!this.editor) return;
@@ -652,11 +646,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   confirmNewFolder() {
-    const folderName = this.modalInputValue();
+    const folderName = this.modalInputValue().trim();
     if (folderName) {
-      const id = folderName.toLowerCase().replace(/\s+/g, '-');
-      const folder = { id, name: folderName, icon: 'folder' };
-      this.store.addNoteFolder(folder);
+      const base = folderName.toLowerCase().replace(/\s+/g, '-');
+      const existingIds = new Set(this.noteGroups().map(g => g.id));
+      let id = base;
+      let counter = 1;
+      while (existingIds.has(id)) { id = `${base}-${counter++}`; }
+      this.store.addNoteFolder({ id, name: folderName, icon: 'folder' });
     }
     this.closeModal();
   }
@@ -666,8 +663,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.noteGroups.update(groups => groups.map(g => ({ ...g, expanded: shouldExpand })));
   }
 
-  closeNoteTab(noteId: string, event?: Event) {
-    if (event) event.stopPropagation();
+  closeNoteTab(noteId: string) {
     this.openNotes.update(tabs => tabs.filter(id => id !== noteId));
     if (this.selectedEntryId() === noteId) {
       const remainingTabs = this.openNotes();
@@ -679,25 +675,30 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return this.notes().find(n => n.id === id);
   }
 
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardShortcuts(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'n' && this.activeModal() === 'none') {
+      event.preventDefault();
+      this.handleNewNote();
+    }
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (!target.closest('.dropdown-wrapper') && !target.closest('.color-picker-wrapper')) {
       if (this.showDropdown()) this.showDropdown.set(false);
-      if (this.showMoreOptionsMenu()) this.showMoreOptionsMenu.set(false);
       if (this.showFormatMenu()) this.showFormatMenu.set(false);
       if (this.showInfoMenu()) this.showInfoMenu.set(false);
       if (this.showMediaMenu()) this.showMediaMenu.set(false);
-      if (this.showFilterMenu()) this.showFilterMenu.set(false);
       if (this.showColorPicker()) this.showColorPicker.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {
       if (this.activeFolderMenuId()) this.activeFolderMenuId.set(null);
     }
-  }
-
-  switchView(view: 'folders' | 'tags') {
-    this.activeView.set(view);
+    if (!target.closest('.tag-input-wrapper') && !target.closest('.add-tag-btn')) {
+      if (this.showTagInput()) this.submitTagInput();
+    }
   }
 
   updateNoteTitle(title: string) {
@@ -715,8 +716,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
   }
 
-  requestDeleteNote(noteId: string, event: Event) {
-    event.stopPropagation();
+  requestDeleteNote(noteId: string) {
     this.tempNoteId.set(noteId);
     this.activeModal.set('delete-confirm');
   }
@@ -732,6 +732,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   requestDeleteFolder(folderId: string, event: Event) {
     event.stopPropagation();
+    if (this.noteGroups().length <= 1) return; // cannot delete the only folder
     this.tempFolderId.set(folderId);
     this.activeModal.set('delete-folder-confirm');
   }
@@ -739,10 +740,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   confirmDeleteFolder() {
     const folderId = this.tempFolderId();
     if (folderId) {
-      const targetFolderId =
-        this.noteGroups().find((g) => g.id !== folderId)?.id ??
-        this.noteGroups()[0]?.id ??
-        'personal';
+      const targetFolderId = this.noteGroups().find((g) => g.id !== folderId)!.id;
       this.notes()
         .filter((n) => this.effectiveFolderId(n) === folderId)
         .forEach((n) => this.store.updateNote(n.id, { folderId: targetFolderId }));
@@ -766,19 +764,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (note && note.tags) {
       this.store.updateNote(note.id, { tags: note.tags.filter(t => t !== tag) });
     }
-  }
-
-  promptAddTag() {
-    this.modalTitle.set('Add Tag');
-    this.modalInputPlaceholder.set('Enter tag name...');
-    this.modalInputValue.set('');
-    this.activeModal.set('add-tag');
-  }
-
-  confirmAddTag() {
-    const tag = this.modalInputValue();
-    if (tag) this.addTag(tag);
-    this.closeModal();
   }
 
   setLink() {
@@ -873,7 +858,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       a.href = url; a.download = `${filename}.md`; a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'pdf') {
-      window.print();
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 24px;line-height:1.7;color:#111;}h1,h2,h3{font-weight:700;}pre{background:#f4f4f4;padding:1rem;border-radius:6px;overflow-x:auto;}blockquote{border-left:3px solid #888;padding-left:1rem;color:#555;font-style:italic;}</style></head><body><h1>${this.selectedNote()?.title ?? ''}</h1>${content}</body></html>`);
+        printWin.document.close();
+        printWin.focus();
+        printWin.print();
+      }
     }
     this.closeModal();
   }

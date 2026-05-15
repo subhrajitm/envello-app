@@ -727,6 +727,14 @@
   padding: 4px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-list {
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .ps-dropdown-label {

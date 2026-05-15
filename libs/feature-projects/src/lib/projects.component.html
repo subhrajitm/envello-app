@@ -14,16 +14,21 @@
 
   <div class="content-area">
     <div class="projects-grid">
-      @for (project of projects(); track project.id) {
+      @for (project of store.projects(); track project.id) {
         <div class="project-card" (click)="openProject(project.id)">
           <div class="card-header">
             <h3>
                 <span class="material-symbols-outlined card-icon">{{ project.icon || 'folder' }}</span>
                 {{ project.title }}
             </h3>
-            <span class="status-badge" [ngClass]="project.status.toLowerCase() || 'planning'">
-              {{ project.status || 'Planning' | titlecase }}
-            </span>
+            <div class="card-header-right">
+              <span class="status-badge" [ngClass]="project.status.toLowerCase()">
+                {{ project.status | titlecase }}
+              </span>
+              <button class="card-delete-btn" (click)="deleteProject(project.id, $event)" title="Delete project">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
           </div>
           <p class="description">{{ project.description || 'No description provided.' }}</p>
           <div class="card-footer">
@@ -33,12 +38,16 @@
             </span>
             <span class="meta-item">
               <span class="material-symbols-outlined">article</span>
-              {{ project.words }} words
+              {{ project.words | number }} words
             </span>
+            <a class="card-details-link" [routerLink]="['/projects', project.id]" (click)="$event.stopPropagation()">
+              View Details
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
           </div>
         </div>
       }
-      @if (projects().length === 0) {
+      @if (store.projects().length === 0) {
         <div class="empty-state">
           <span class="material-symbols-outlined">folder_open</span>
           <p>No projects found. Create one to get started.</p>

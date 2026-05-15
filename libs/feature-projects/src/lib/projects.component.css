@@ -104,6 +104,42 @@
     margin-bottom: 12px;
 }
 
+.card-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.card-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.project-card:hover .card-delete-btn {
+    opacity: 1;
+}
+
+.card-delete-btn:hover {
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--accent-red);
+}
+
+.card-delete-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
 .card-header h3 {
     margin: 0;
     font-size: 18px;
@@ -170,6 +206,32 @@
     align-items: center;
     border-top: 1px solid var(--border-subtle, #333);
     padding-top: 16px;
+    flex-wrap: wrap;
+}
+
+.card-details-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s, gap 0.15s;
+}
+
+.card-details-link .material-symbols-outlined {
+    font-size: 13px;
+}
+
+.project-card:hover .card-details-link {
+    opacity: 1;
+}
+
+.card-details-link:hover {
+    gap: 6px;
 }
 
 .meta-item {

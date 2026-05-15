@@ -5,7 +5,7 @@ import { NotificationService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
 import { BinService } from '@envello/core';
-import { WorkspaceProfileService } from '@envello/core';
+import { WorkspaceProfileService, StoreService } from '@envello/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
@@ -49,11 +49,25 @@ export class HeaderComponent implements OnInit, OnDestroy {
   userService = inject(UserService);
   private binService = inject(BinService);
   private workspaceService = inject(WorkspaceProfileService);
+  private storeService = inject(StoreService);
   private router = inject(Router);
 
   // Project switcher
   showProjectSwitcher = signal(false);
-  projects = this.workspaceService.profiles;
+
+  /**
+   * Merged project list: 'All Projects' (default) pinned first, then user-created
+   * projects from the store. Uses workspaceService profiles as the canonical list
+   * but keeps them in sync with the DB via the effect in constructor.
+   */
+  projects = computed(() => {
+    const profiles = this.workspaceService.profiles();
+    // Separate the default 'All Projects' entry from user projects
+    const defaultProfile = profiles.find(p => p.id === 'default');
+    const userProfiles = profiles.filter(p => p.id !== 'default');
+    return defaultProfile ? [defaultProfile, ...userProfiles] : userProfiles;
+  });
+
   activeProject = this.workspaceService.activeProfile;
 
   toggleProjectSwitcher() { this.showProjectSwitcher.update(v => !v); }
@@ -120,6 +134,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private lastAvatarUrl: string | undefined = undefined;
 
   constructor() {
+    // Sync projects from DB into WorkspaceProfileService (idempotent — addProfileWithId
+    // is a no-op if the profile already exists). This ensures projects created before
+    // the profile-linking flow was introduced still appear in the switcher.
+    effect(() => {
+      const dbProjects = this.storeService.projects();
+      for (const p of dbProjects) {
+        this.workspaceService.addProfileWithId(p.id, p.title, '#3b82f6', p.icon);
+      }
+    });
+
     // Reset loading state when avatar URL changes
     effect(() => {
       const currentAvatar = this.user()?.avatar;

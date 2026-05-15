@@ -50,6 +50,9 @@ export class SqliteDataService implements DataService {
             case 'credentials': return await this.sqlite.getAllCredentials() as unknown as T[];
             case 'subscriptions': return await this.sqlite.getAllSubscriptions() as unknown as T[];
             case 'credential_subscription_links': return await this.sqlite.getAllLinks() as unknown as T[];
+            case 'note_folders': return await this.sqlite.getAllNoteFolders() as unknown as T[];
+            case 'bookmarks': return await this.sqlite.getAllBookmarks() as unknown as T[];
+            case 'bookmark_folders': return await this.sqlite.getAllBookmarkFolders() as unknown as T[];
             default:
                 console.warn(`[SqliteDataService] Unknown collection ${collection}`);
                 return [];
@@ -91,6 +94,9 @@ export class SqliteDataService implements DataService {
             case 'credentials': return await this.sqlite.upsertCredential(item as any);
             case 'subscriptions': return await this.sqlite.upsertSubscription(item as any);
             case 'credential_subscription_links': return await this.sqlite.upsertLink(item as any);
+            case 'note_folders': return await this.sqlite.upsertNoteFolder(item as any);
+            case 'bookmarks': return await this.sqlite.upsertBookmark(item as any);
+            case 'bookmark_folders': return await this.sqlite.upsertBookmarkFolder(item as any);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
         }
     }
@@ -110,7 +116,7 @@ export class SqliteDataService implements DataService {
         switch (collection) {
             case 'tasks': return await this.sqlite.removeTask(id);
             case 'notes': return await this.sqlite.removeNote(id);
-            // Planning items remove method? Check SqliteService
+            case 'planning_items': return await this.sqlite.removePlanningItem(id);
             case 'novels': return await this.sqlite.removeNovel(id);
             case 'bin_items': return await this.sqlite.removeBinItem(id);
             case 'novel_content': return await this.sqlite.removeNovelContent(id);
@@ -125,6 +131,9 @@ export class SqliteDataService implements DataService {
             case 'credentials': return await this.sqlite.removeCredential(id);
             case 'subscriptions': return await this.sqlite.removeSubscription(id);
             case 'credential_subscription_links': return await this.sqlite.removeLink(id);
+            case 'note_folders': return await this.sqlite.removeNoteFolder(id);
+            case 'bookmarks': return await this.sqlite.removeBookmark(id);
+            case 'bookmark_folders': return await this.sqlite.removeBookmarkFolder(id);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for remove`);
         }
     }

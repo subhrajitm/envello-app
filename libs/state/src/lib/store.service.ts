@@ -17,71 +17,7 @@ export class StoreService {
     noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
     bookmarks = signal<Bookmark[]>([]);
     bookmarkFolders = signal<BookmarkFolder[]>([]);
-    projects = signal<Project[]>([
-        {
-            id: '1',
-            title: 'Project Alpha: Final Manuscript',
-            description: 'The final push for the Alpha manuscript, focusing on copyediting and layout.',
-            status: 'DRAFTING',
-            words: '48.2k',
-            updated: '2m ago',
-            icon: 'menu_book',
-            dueDate: '2023-12-01',
-            priority: 'HIGH',
-            progress: 65,
-            team: ['Alex', 'Sam'],
-            tags: ['Publication', 'Q4']
-        },
-        {
-            id: '2',
-            title: 'Neon Orchard Chronicles',
-            description: 'World building and initial character sketches for the Neon Orchard series.',
-            status: 'PLANNING',
-            words: '12.5k',
-            updated: '1h ago',
-            icon: 'description',
-            dueDate: '2024-01-15',
-            priority: 'MEDIUM',
-            progress: 20,
-            team: ['Jordan'],
-            tags: ['Sci-Fi', 'Concept']
-        },
-        {
-            id: '3',
-            title: 'The Scent of Green',
-            description: 'Completed draft ready for initial beta reader review.',
-            status: 'COMPLETE',
-            words: '82.1k',
-            updated: 'Oct 24',
-            icon: 'check_circle',
-            dueDate: '2023-10-30',
-            priority: 'LOW',
-            progress: 100,
-            team: ['Alex'],
-            tags: ['Fantasy']
-        },
-        {
-            id: '4',
-            title: 'Echoes of the Void',
-            description: 'Mid-stage review of the plot points and pacing.',
-            status: 'REVIEW',
-            words: '35.0k',
-            updated: '2d ago',
-            icon: 'extension',
-            dueDate: '2023-11-20',
-            priority: 'HIGH',
-            progress: 45,
-            team: ['Sam', 'Jordan'],
-            tags: ['Thriller']
-        },
-    ]);
-
-    currentProjectId = signal<string | null>('1'); // Default to first project
-
-    currentProject = computed(() => {
-        const projectId = this.currentProjectId();
-        return projectId ? this.projects().find(p => p.id === projectId) || null : null;
-    });
+    projects = signal<Project[]>([]);
 
     private bin = inject(BinService);
     private db = inject(DataService);
@@ -93,6 +29,8 @@ export class StoreService {
     constructor() {
         this.loadFromDb();
         this.initMarkdown();
+        // Re-load signals after PouchDbDataService applies pulled Supabase records.
+        window.addEventListener('envello:sync-complete', () => this.loadFromDb());
     }
 
     private async initMarkdown() {
@@ -114,7 +52,7 @@ export class StoreService {
 
     private async loadFromDb(): Promise<void> {
         try {
-            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders] = await Promise.all([
+            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders, projects] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
                 this.db.getAll<Note>('notes'),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -123,6 +61,7 @@ export class StoreService {
                 this.db.getAll<{ id: string; name: string; icon: string }>('note_folders'),
                 this.db.getAll<Bookmark>('bookmarks'),
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
+                this.db.getAll<Project>('projects'),
             ]);
             this.tasks.set(tasks || []);
             this.notes.set(notes || []);
@@ -131,6 +70,7 @@ export class StoreService {
             this.novels.set(novels || []);
             this.bookmarks.set(bookmarks || []);
             this.bookmarkFolders.set(bookmarkFolders || []);
+            this.projects.set(projects || []);
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -155,6 +95,7 @@ export class StoreService {
             this.noteFolders.set([{ id: 'personal', name: 'Personal', icon: 'folder' }]);
             this.bookmarks.set([]);
             this.bookmarkFolders.set([]);
+            this.projects.set([]);
         }
     }
 
@@ -218,20 +159,6 @@ export class StoreService {
         this.addActivity("Entry added to '" + note.title + "'", 'entry');
         await this.saveNoteContentToFile(note.id, note.content || '');
         this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
-
-        const projectId = crypto.randomUUID();
-        this.addProject({
-            id: projectId,
-            title: note.title || 'Untitled Note',
-            description: 'Auto-generated project from Note',
-            status: 'PLANNING',
-            words: '0',
-            updated: new Date().toISOString(),
-            icon: 'edit_note',
-            linkedResources: {
-                notes: [note.id]
-            }
-        });
     }
 
     updateNote(id: string, updates: Partial<Note>) {
@@ -301,33 +228,18 @@ export class StoreService {
         this.novels.update(novels => [...novels, novel]);
         this.addActivity('Project started: ' + novel.title, 'system');
         this.db.upsert('novels', novel).catch(e => console.error('[StoreService] persist novel failed', e));
-
-        const projectId = crypto.randomUUID();
-        this.addProject({
-            id: projectId,
-            title: novel.title,
-            description: 'Auto-generated project from Novel',
-            status: (novel.status === 'REVISING' ? 'REVIEW' :
-                (novel.status === 'PUBLISHED' ? 'COMPLETE' :
-                    (novel.status === 'DRAFTING' || novel.status === 'PLANNING' ? novel.status : 'PLANNING'))),
-            words: String(novel.wordCount || 0),
-            updated: new Date().toISOString(),
-            icon: 'menu_book',
-            linkedResources: {
-                novels: [novel.id]
-            }
-        });
     }
 
     addProject(project: Project) {
         this.projects.update(projects => [...projects, project]);
         this.addActivity('Project created: ' + project.title, 'system');
-        // Upsert project? Not yet persisted in original code, leaving as TODO or implementing
         this.db.upsert('projects', project).catch(e => console.error('[StoreService] persist project failed', e));
     }
 
-    setCurrentProject(projectId: string | null) {
-        this.currentProjectId.set(projectId);
+    deleteProject(id: string) {
+        this.projects.update(projects => projects.filter(p => p.id !== id));
+        this.addActivity('Project deleted', 'system');
+        this.db.remove('projects', id).catch(e => console.error('[StoreService] remove project failed', e));
     }
 
     updateProject(id: string, updates: Partial<Project>) {
@@ -407,5 +319,17 @@ export class StoreService {
         this.db.remove('note_folders', id).catch(e =>
             console.error('[StoreService] remove note_folder failed', e)
         );
+    }
+
+    updateNoteFolder(id: string, updates: Partial<{ name: string; icon: string }>) {
+        this.noteFolders.update(list =>
+            list.map(f => f.id === id ? { ...f, ...updates } : f)
+        );
+        const folder = this.noteFolders().find(f => f.id === id);
+        if (folder) {
+            this.db.upsert('note_folders', folder).catch(e =>
+                console.error('[StoreService] persist note_folders failed', e)
+            );
+        }
     }
 }
