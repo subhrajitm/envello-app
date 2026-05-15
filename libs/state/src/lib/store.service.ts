@@ -23,8 +23,8 @@ export class StoreService {
             title: 'Project Alpha: Final Manuscript',
             description: 'The final push for the Alpha manuscript, focusing on copyediting and layout.',
             status: 'DRAFTING',
-            words: '48.2k',
-            updated: '2m ago',
+            words: 48200,
+            updated: '2023-11-28T10:00:00.000Z',
             icon: 'menu_book',
             dueDate: '2023-12-01',
             priority: 'HIGH',
@@ -37,8 +37,8 @@ export class StoreService {
             title: 'Neon Orchard Chronicles',
             description: 'World building and initial character sketches for the Neon Orchard series.',
             status: 'PLANNING',
-            words: '12.5k',
-            updated: '1h ago',
+            words: 12500,
+            updated: '2023-11-27T09:00:00.000Z',
             icon: 'description',
             dueDate: '2024-01-15',
             priority: 'MEDIUM',
@@ -51,8 +51,8 @@ export class StoreService {
             title: 'The Scent of Green',
             description: 'Completed draft ready for initial beta reader review.',
             status: 'COMPLETE',
-            words: '82.1k',
-            updated: 'Oct 24',
+            words: 82100,
+            updated: '2023-10-24T08:00:00.000Z',
             icon: 'check_circle',
             dueDate: '2023-10-30',
             priority: 'LOW',
@@ -65,8 +65,8 @@ export class StoreService {
             title: 'Echoes of the Void',
             description: 'Mid-stage review of the plot points and pacing.',
             status: 'REVIEW',
-            words: '35.0k',
-            updated: '2d ago',
+            words: 35000,
+            updated: '2023-11-26T14:00:00.000Z',
             icon: 'extension',
             dueDate: '2023-11-20',
             priority: 'HIGH',
@@ -225,7 +225,7 @@ export class StoreService {
             title: note.title || 'Untitled Note',
             description: 'Auto-generated project from Note',
             status: 'PLANNING',
-            words: '0',
+            words: 0,
             updated: new Date().toISOString(),
             icon: 'edit_note',
             linkedResources: {
@@ -310,7 +310,7 @@ export class StoreService {
             status: (novel.status === 'REVISING' ? 'REVIEW' :
                 (novel.status === 'PUBLISHED' ? 'COMPLETE' :
                     (novel.status === 'DRAFTING' || novel.status === 'PLANNING' ? novel.status : 'PLANNING'))),
-            words: String(novel.wordCount || 0),
+            words: novel.wordCount || 0,
             updated: new Date().toISOString(),
             icon: 'menu_book',
             linkedResources: {
@@ -322,8 +322,13 @@ export class StoreService {
     addProject(project: Project) {
         this.projects.update(projects => [...projects, project]);
         this.addActivity('Project created: ' + project.title, 'system');
-        // Upsert project? Not yet persisted in original code, leaving as TODO or implementing
         this.db.upsert('projects', project).catch(e => console.error('[StoreService] persist project failed', e));
+    }
+
+    deleteProject(id: string) {
+        this.projects.update(projects => projects.filter(p => p.id !== id));
+        this.addActivity('Project deleted', 'system');
+        this.db.remove('projects', id).catch(e => console.error('[StoreService] remove project failed', e));
     }
 
     setCurrentProject(projectId: string | null) {

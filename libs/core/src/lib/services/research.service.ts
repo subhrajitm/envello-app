@@ -99,7 +99,7 @@ export class ResearchService {
             title: newLibrary.name,
             description: newLibrary.description || 'Research Library',
             status: 'PLANNING',
-            words: '0',
+            words: 0,
             updated: new Date().toISOString(),
             icon: 'science',
             linkedResources: {

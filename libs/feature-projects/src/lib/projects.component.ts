@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { StoreService } from '@envello/core';
@@ -13,8 +13,6 @@ import { StoreService } from '@envello/core';
 export class ProjectsComponent {
   public store = inject(StoreService);
   private router = inject(Router);
-  
-  projects = computed(() => this.store.projects());
 
   openProject(id: string) {
     this.router.navigate(['/projects', id]);
@@ -27,10 +25,15 @@ export class ProjectsComponent {
       title: 'New Project',
       description: '',
       status: 'PLANNING',
-      words: '0',
+      words: 0,
       updated: new Date().toISOString(),
       icon: 'folder'
     });
     this.router.navigate(['/projects', newId]);
+  }
+
+  deleteProject(id: string, event: MouseEvent) {
+    event.stopPropagation();
+    this.store.deleteProject(id);
   }
 }

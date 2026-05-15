@@ -108,7 +108,7 @@ export class ArticleService {
       title: newArticle.title,
       description: 'Article Project: ' + newArticle.platform,
       status: 'PLANNING',
-      words: String(newArticle.wordCount),
+      words: newArticle.wordCount || 0,
       updated: new Date().toISOString(),
       icon: 'article',
       linkedResources: {

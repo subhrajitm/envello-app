@@ -144,7 +144,7 @@ export class BooksService {
       title: created.title,
       description: 'Book Reading Project: ' + created.author,
       status: 'PLANNING',
-      words: '0',
+      words: 0,
       updated: now,
       icon: 'local_library',
       linkedResources: {
