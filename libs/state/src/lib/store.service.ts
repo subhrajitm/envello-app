@@ -29,6 +29,8 @@ export class StoreService {
     constructor() {
         this.loadFromDb();
         this.initMarkdown();
+        // Re-load signals after PouchDbDataService applies pulled Supabase records.
+        window.addEventListener('envello:sync-complete', () => this.loadFromDb());
     }
 
     private async initMarkdown() {
