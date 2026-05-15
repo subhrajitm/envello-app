@@ -98,15 +98,8 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
   <!-- ── SIDEBAR ── -->
   <aside class="vs-sb">
-    <div class="vs-sb-search">
-      <span class="material-symbols-outlined vs-sb-search-icon">search</span>
-      <input class="vs-sb-search-input" type="text" placeholder="Search subscriptions…"
-        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-      @if (searchQuery()) {
-        <button class="vs-sb-search-clear" (click)="searchQuery.set('')">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      }
+    <div class="vs-sb-header">
+      <h1 class="vs-sb-title">Subscriptions</h1>
     </div>
 
     <nav class="vs-sb-nav">
@@ -175,28 +168,12 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
     <!-- Toolbar -->
     <div class="vs-toolbar">
-      <div class="vs-bc">
-        <span class="vs-bc-root">Subscriptions</span>
-        @if (selectedStatus()) {
-          <span class="vs-bc-sep">›</span>
-          <span class="vs-bc-leaf">{{ selectedStatus() }}</span>
-        }
-        @if (selectedCategory()) {
-          <span class="vs-bc-sep">›</span>
-          <span class="vs-bc-leaf">{{ selectedCategory() }}</span>
-        }
-        @if (selectedCycle()) {
-          <span class="vs-bc-sep">›</span>
-          <span class="vs-bc-leaf">{{ selectedCycle() }}</span>
-        }
-        <span class="vs-bc-count">{{ filteredSubs().length }}</span>
+      <div class="vs-search-wrap">
+        <span class="material-symbols-outlined vs-search-icon">search</span>
+        <input class="vs-search-input" type="text" placeholder="Search subscriptions…"
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
       </div>
-      <p class="vs-tb-stats">
-        {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalMonthlyCost() | number:'1.0-0' }}/mo
-        &nbsp;·&nbsp;
-        {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalYearlyCost() | number:'1.0-0' }}/yr
-      </p>
-      <div class="vs-toolbar-right">
+<div class="vs-toolbar-right">
         @if (hasActiveFilters()) {
           <button class="vs-tool-btn" title="Clear filters" (click)="clearFilters()">
             <span class="material-symbols-outlined">filter_list_off</span>
@@ -619,32 +596,12 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       display: flex; flex-direction: column;
       overflow-y: auto; overflow-x: hidden;
     }
-    .vs-sb-search {
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--border-subtle);
+    .vs-sb-header {
+      padding: 10px 12px 8px;
       flex-shrink: 0;
-      position: relative;
-      display: flex;
-      align-items: center;
     }
-    .vs-sb-search-icon {
-      position: absolute; left: 18px; font-size: 15px;
-      color: var(--text-tertiary); pointer-events: none;
-    }
-    .vs-sb-search-input {
-      flex: 1; height: 28px; padding: 0 28px 0 28px;
-      background: var(--bg-hover); border: 1px solid var(--border-subtle);
-      border-radius: 5px; font-size: 12px; color: var(--text-primary);
-      outline: none; width: 100%; transition: all 0.15s;
-    }
-    .vs-sb-search-input:focus { background: var(--bg-panel); border-color: var(--accent-primary); }
-    .vs-sb-search-clear {
-      position: absolute; right: 18px;
-      background: none; border: none; cursor: pointer;
-      color: var(--text-tertiary); display: flex; align-items: center;
-      padding: 0;
-    }
-    .vs-sb-search-clear .material-symbols-outlined { font-size: 15px; }
+    .vs-sb-title { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
 
     .vs-sb-nav     { padding: 4px 6px; flex-shrink: 0; }
     .vs-sb-section { padding: 4px 6px; flex-shrink: 0; }
@@ -694,21 +651,21 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       border-bottom: 1px solid var(--border-subtle);
       flex-shrink: 0; background: var(--bg-panel);
     }
-    .vs-bc { display: flex; align-items: center; gap: 6px; }
-    .vs-bc-root { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-    .vs-bc-sep  { font-size: 14px; color: var(--text-tertiary); }
-    .vs-bc-leaf { font-size: 13px; font-weight: 600; color: var(--text-primary); text-transform: capitalize; }
-    .vs-bc-count {
-      font-size: 11px; color: var(--text-tertiary);
-      background: var(--bg-hover); border-radius: 10px; padding: 1px 7px;
-    }
 
-    .vs-tb-stats {
-      margin: 0 0 0 12px;
-      font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono);
-      white-space: nowrap; flex-shrink: 0;
+    .vs-search-wrap { position: relative; display: flex; align-items: center; }
+    .vs-search-icon {
+      position: absolute; left: 8px; font-size: 16px;
+      color: var(--text-tertiary); pointer-events: none;
     }
-    .vs-toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .vs-search-input {
+      height: 28px; padding: 0 10px 0 28px;
+      background: var(--bg-hover); border: 1px solid var(--border-subtle);
+      border-radius: 5px; font-size: 12px; color: var(--text-primary);
+      outline: none; width: 200px; transition: all 0.2s;
+    }
+    .vs-search-input:focus { background: var(--bg-panel); border-color: var(--accent-primary); }
+
+.vs-toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .vs-tb-divider { width: 1px; height: 18px; background: var(--border-subtle); margin: 0 2px; }
 
     .vs-tool-btn {
