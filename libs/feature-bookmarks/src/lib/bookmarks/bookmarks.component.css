@@ -30,50 +30,17 @@
   overflow-x: hidden;
 }
 
-/* Search */
-.bm-sb-search {
-  position: relative;
-  padding: 10px 8px 6px;
+/* Sidebar header */
+.bm-sb-header {
+  padding: 14px 12px 10px;
   flex-shrink: 0;
 }
-.bm-sb-search-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 15px;
-  color: var(--text-tertiary);
-  pointer-events: none;
-}
-.bm-sb-search-input {
-  width: 100%;
-  height: 30px;
-  padding: 0 28px 0 32px;
-  background: var(--bg-app);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+.bm-sb-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
-  font-size: 12px;
-  outline: none;
-  transition: border-color 0.15s;
-  box-sizing: border-box;
 }
-.bm-sb-search-input:focus { border-color: var(--accent-primary); }
-.bm-sb-search-input::placeholder { color: var(--text-tertiary); }
-.bm-sb-search-clear {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  padding: 0;
-}
-.bm-sb-search-clear .material-symbols-outlined { font-size: 14px; }
 
 /* Nav items */
 .bm-sb-nav {
@@ -248,38 +215,32 @@
   gap: 12px;
 }
 
-/* Breadcrumb */
-.bm-breadcrumb {
+/* Toolbar search */
+.bm-toolbar-search {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-width: 0;
 }
-.bm-bc-root {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.bm-bc-sep {
-  font-size: 14px;
+.bm-toolbar-search-icon {
+  position: absolute;
+  left: 8px;
+  font-size: 16px;
   color: var(--text-tertiary);
+  pointer-events: none;
 }
-.bm-bc-leaf {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bm-bc-count {
-  font-size: 11px;
-  color: var(--text-tertiary);
+.bm-toolbar-search-input {
+  height: 28px;
+  padding: 0 10px 0 28px;
   background: var(--bg-hover);
-  border-radius: 10px;
-  padding: 1px 7px;
-  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+  width: 200px;
+  transition: all 0.2s;
 }
+.bm-toolbar-search-input:focus { border-color: var(--accent-primary); background: var(--bg-panel); }
 
 /* Toolbar right */
 .bm-toolbar-right {

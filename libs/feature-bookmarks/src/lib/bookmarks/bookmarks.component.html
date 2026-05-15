@@ -5,21 +5,9 @@
   ════════════════════════════════════════════════════ -->
   <aside class="bm-sidebar">
 
-    <!-- Search -->
-    <div class="bm-sb-search">
-      <span class="material-symbols-outlined bm-sb-search-icon">search</span>
-      <input
-        class="bm-sb-search-input"
-        type="text"
-        placeholder="Search bookmarks…"
-        [value]="searchQuery()"
-        (input)="searchQuery.set($any($event.target).value)"
-      />
-      @if (searchQuery()) {
-        <button class="bm-sb-search-clear" (click)="searchQuery.set('')">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      }
+    <!-- Header -->
+    <div class="bm-sb-header">
+      <h1 class="bm-sb-title">Bookmarks</h1>
     </div>
 
     <!-- Navigation views -->
@@ -102,17 +90,16 @@
 
     <!-- Toolbar -->
     <div class="bm-toolbar">
-      <!-- Breadcrumb -->
-      <div class="bm-breadcrumb">
-        <span class="bm-bc-root">Bookmarks</span>
-        @if (selectedFolderId()) {
-          <span class="bm-bc-sep">›</span>
-          <span class="bm-bc-leaf">{{ folderName(selectedFolderId()) }}</span>
-        } @else if (selectedView() !== 'all') {
-          <span class="bm-bc-sep">›</span>
-          <span class="bm-bc-leaf">{{ currentViewLabel() }}</span>
-        }
-        <span class="bm-bc-count">{{ filteredBookmarks().length }}</span>
+      <!-- Search -->
+      <div class="bm-toolbar-search">
+        <span class="material-symbols-outlined bm-toolbar-search-icon">search</span>
+        <input
+          class="bm-toolbar-search-input"
+          type="text"
+          placeholder="Search bookmarks…"
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+        />
       </div>
 
       <!-- Actions -->
