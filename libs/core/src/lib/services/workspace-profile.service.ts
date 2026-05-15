@@ -46,7 +46,12 @@ export class WorkspaceProfileService {
       this.activeProfileIdSignal.set(activeId);
     } else {
       this.activeProfileIdSignal.set(profiles[0].id);
-      localStorage.setItem(this.ACTIVE_PROFILE_KEY, profiles[0].id);
+      // Only write the default fallback if no activeId was saved.
+      // If there IS a saved activeId that doesn't match any profile yet,
+      // preserve it so addProfileWithId() can restore it once profiles are re-synced.
+      if (!activeId) {
+        localStorage.setItem(this.ACTIVE_PROFILE_KEY, profiles[0].id);
+      }
     }
   }
 
@@ -79,6 +84,15 @@ export class WorkspaceProfileService {
     const updated = [...this.profiles(), newProfile];
     this.profilesSignal.set(updated);
     localStorage.setItem(this.PROFILES_KEY, JSON.stringify(updated));
+
+    // If this profile was the saved active profile but was missing from the profiles list
+    // (e.g. after a wipe/reset), restore it now that it's been re-added.
+    // A reload is required so StoreService re-loads data from the correct namespace.
+    const savedActiveId = localStorage.getItem(this.ACTIVE_PROFILE_KEY);
+    if (savedActiveId === id && this.activeProfileIdSignal() !== id) {
+      this.activeProfileIdSignal.set(id);
+      window.location.reload();
+    }
   }
 
   switchProfile(id: string) {

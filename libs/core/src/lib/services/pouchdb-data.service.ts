@@ -17,9 +17,7 @@ export class PouchDbDataService implements DataService {
      */
     private readonly GLOBAL_COLLECTIONS = new Set(['projects', 'note_folders']);
 
-    private getDb(collection: string): PouchDB.Database {
-        const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
-        const profileId = isGlobal ? 'default' : (this.profileService.activeProfileId() || 'default');
+    private getDbForProfile(collection: string, profileId: string): PouchDB.Database {
         const profilePrefix = profileId === 'default' ? 'envello_' : `envello_${profileId}_`;
         const cacheKey = `${profileId}:${collection}`;
         if (!this.dbs[cacheKey]) {
@@ -28,12 +26,50 @@ export class PouchDbDataService implements DataService {
         return this.dbs[cacheKey];
     }
 
+    private getDb(collection: string): PouchDB.Database {
+        const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+        const profileId = isGlobal ? 'default' : (this.profileService.activeProfileId() || 'default');
+        return this.getDbForProfile(collection, profileId);
+    }
+
+    /** All profile namespaces in order: default first, then user projects. */
+    private getAllNamespaces(): string[] {
+        return ['default', ...this.profileService.profiles()
+            .filter(p => p.id !== 'default')
+            .map(p => p.id)];
+    }
+
     async getAll<T>(collection: string): Promise<T[]> {
         try {
+            const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+            const activeId = this.profileService.activeProfileId() || 'default';
+
+            // In "All Projects" mode, aggregate from every project namespace
+            if (!isGlobal && activeId === 'default') {
+                const results = await Promise.all(
+                    this.getAllNamespaces().map(async (pid) => {
+                        const db = this.getDbForProfile(collection, pid);
+                        const result = await db.allDocs({ include_docs: true });
+                        return result.rows.map(row => row.doc as unknown as T);
+                    })
+                );
+                // Deduplicate by id in case the same doc appears in multiple namespaces
+                const seen = new Set<string>();
+                const merged: T[] = [];
+                for (const docs of results) {
+                    for (const doc of docs) {
+                        const id = (doc as any).id;
+                        if (id && !seen.has(id)) {
+                            seen.add(id);
+                            merged.push(doc);
+                        }
+                    }
+                }
+                return merged;
+            }
+
             const db = this.getDb(collection);
             const result = await db.allDocs({ include_docs: true });
-            // The document inside PouchDB has _id and _rev, plus our item fields. 
-            // We map out the pure doc object.
             return result.rows.map(row => row.doc as unknown as T);
         } catch (e) {
             console.error(`[PouchDbDataService] Failed to get all from ${collection}`, e);
@@ -43,31 +79,43 @@ export class PouchDbDataService implements DataService {
 
     async upsert<T>(collection: string, item: T): Promise<void> {
         try {
-            const db = this.getDb(collection);
+            const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+            const activeId = this.profileService.activeProfileId() || 'default';
             const docId = (item as any).id;
 
             if (!docId) {
-                console.warn(`[PouchDbDataService] Item missing 'id' property. PouchDB requires _id. Upsert failed for ${collection}.`);
+                console.warn(`[PouchDbDataService] Item missing 'id' property. Upsert failed for ${collection}.`);
                 return;
             }
 
+            // In "All Projects" mode, find the namespace that owns this item and update there;
+            // fall back to default namespace for new items.
+            if (!isGlobal && activeId === 'default') {
+                for (const pid of this.getAllNamespaces()) {
+                    const db = this.getDbForProfile(collection, pid);
+                    try {
+                        const existing = await db.get(docId);
+                        await db.put({ ...item, _id: docId, _rev: existing._rev });
+                        return;
+                    } catch (err: any) {
+                        if (err.name !== 'not_found' && err.status !== 404) throw err;
+                    }
+                }
+                // New item — write to default namespace
+                const defaultDb = this.getDbForProfile(collection, 'default');
+                await defaultDb.put({ ...item, _id: docId });
+                return;
+            }
+
+            const db = this.getDb(collection);
             try {
                 const existing = await db.get(docId);
-                // Put updating the properties and ensuring we send the current _rev
-                await db.put({
-                    ...item,
-                    _id: docId,
-                    _rev: existing._rev
-                });
+                await db.put({ ...item, _id: docId, _rev: existing._rev });
             } catch (err: any) {
                 if (err.name === 'not_found' || err.status === 404) {
-                    // Item doesn't exist, create it anew
-                    await db.put({
-                        ...item,
-                        _id: docId
-                    });
+                    await db.put({ ...item, _id: docId });
                 } else {
-                    throw err; // Propagate real errors
+                    throw err;
                 }
             }
         } catch (e) {
@@ -76,12 +124,31 @@ export class PouchDbDataService implements DataService {
     }
 
     async remove(collection: string, id: string): Promise<void> {
+        const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+        const activeId = this.profileService.activeProfileId() || 'default';
+
+        // In "All Projects" mode, search all namespaces to find and remove the item
+        if (!isGlobal && activeId === 'default') {
+            for (const pid of this.getAllNamespaces()) {
+                try {
+                    const db = this.getDbForProfile(collection, pid);
+                    const existing = await db.get(id);
+                    await db.remove(existing._id, existing._rev);
+                    return;
+                } catch (err: any) {
+                    if (err.name !== 'not_found' && err.status !== 404) {
+                        console.error(`[PouchDbDataService] Failed to remove ${id} from ${collection}`, err);
+                    }
+                }
+            }
+            return;
+        }
+
         try {
             const db = this.getDb(collection);
             const existing = await db.get(id);
             await db.remove(existing._id, existing._rev);
         } catch (err: any) {
-            // If it's not found, it's already 'removed' essentially. Ignore 404s.
             if (err.name !== 'not_found' && err.status !== 404) {
                 console.error(`[PouchDbDataService] Failed to remove ${id} from ${collection}`, err);
             }
