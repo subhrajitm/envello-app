@@ -94,7 +94,6 @@ export class BinComponent {
       case 'novel-character': return 'person';
       case 'novel-location':  return 'location_on';
       case 'novel-group':     return 'group';
-      case 'book':            return 'auto_stories';
       case 'meeting':         return 'event';
       default:                return 'delete';
     }

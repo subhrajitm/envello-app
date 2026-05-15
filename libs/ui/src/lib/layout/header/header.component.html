@@ -21,14 +21,10 @@
             </g>
           </svg>
         </div>
-        <button type="button" class="header-search" (click)="openQuickFind()" aria-label="Quick find">
+        <button type="button" class="header-search" (click)="openQuickFind()" aria-label="Quick find (⌘K)">
           <span class="material-symbols-outlined search-icon">search</span>
-          <input
-            type="text"
-            placeholder="Quick find (Cmd + K)"
-            class="search-input"
-            readonly
-          />
+          <span class="search-placeholder">Search everything…</span>
+          <kbd class="search-kbd">⌘K</kbd>
         </button>
       </div>
 
@@ -58,6 +54,9 @@
           <span>Add New</span>
         </button>
         <div class="divider-vertical"></div>
+        <button class="icon-btn" (click)="navigateTo('activity-log')" title="Activity Log" [class.icon-btn-active]="currentRouteSegment() === 'activity-log'">
+          <span class="material-symbols-outlined">history</span>
+        </button>
         <button class="icon-btn notification-btn" (click)="openNotifications()">
           <span class="material-symbols-outlined">notifications</span>
           @if (unreadCount() > 0) {

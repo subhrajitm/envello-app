@@ -110,7 +110,6 @@ export class BinComponent {
       case 'novel-character': return 'person';
       case 'novel-location': return 'location_on';
       case 'novel-group': return 'folder';
-      case 'book': return 'import_contacts';
       case 'meeting': return 'groups';
       default: return 'delete';
     }
@@ -126,7 +125,6 @@ export class BinComponent {
       case 'novel-location': return 'Location';
       case 'novel-group': return 'Group';
       case 'task': return 'Task';
-      case 'book': return 'Book';
       case 'meeting': return 'Meeting';
       default: return type;
     }

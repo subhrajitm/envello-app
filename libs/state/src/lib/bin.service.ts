@@ -6,7 +6,6 @@ const COLLECTION_MAP: Partial<Record<BinItemType, string>> = {
     'task': 'tasks',
     'daily-note': 'notes',
     'novel': 'novels',
-    'book': 'books',
     'meeting': 'meetings',
 };
 

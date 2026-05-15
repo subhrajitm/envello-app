@@ -302,33 +302,6 @@
                     </div>
                 </div>
 
-                <!-- Books -->
-                <div class="pd-sec-card">
-                    <div class="pd-sec-hdr">
-                        <span class="material-symbols-outlined">local_library</span>
-                        <span class="pd-sec-title">Books</span>
-                        <span class="pd-count-badge">{{ linkedBooks().length }}</span>
-                        <button class="pd-sec-link-btn" (click)="openLinkSection('books')" title="Link a book">
-                            <span class="material-symbols-outlined">add_link</span>
-                        </button>
-                    </div>
-                    <div class="pd-sec-body">
-                        @for (book of linkedBooks(); track book.id) {
-                        <div class="pd-sec-row">
-                            <span class="material-symbols-outlined pd-sec-row-icon">book</span>
-                            <div class="pd-sec-row-info">
-                                <span class="pd-sec-row-title">{{ book.title }}</span>
-                                <span class="pd-sec-row-sub">{{ book.author }} · {{ book.status }}</span>
-                            </div>
-                            <span class="material-symbols-outlined pd-sec-unlink" (click)="unlinkItem('books', book.id)">link_off</span>
-                        </div>
-                        }
-                        @if (linkedBooks().length === 0) {
-                            <div class="pd-sec-empty">No books linked</div>
-                        }
-                    </div>
-                </div>
-
                 <!-- Articles -->
                 <div class="pd-sec-card">
                     <div class="pd-sec-hdr">

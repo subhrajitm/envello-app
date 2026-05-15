@@ -132,7 +132,6 @@ export interface Project {
         notes?: string[];
         meetings?: string[];
         research?: string[];
-        books?: string[];
         articles?: string[];
         snippets?: string[];
         bookmarks?: string[];
@@ -148,8 +147,7 @@ export type BinItemType =
     | 'novel-character'
     | 'novel-location'
     | 'task'
-    | 'meeting'
-    | 'book';
+    | 'meeting';
 
 export interface BinItem {
     id: string;

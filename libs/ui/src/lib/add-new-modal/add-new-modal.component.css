@@ -21,7 +21,7 @@
 
 .add-new-modal {
     width: 100%;
-    max-width: 600px;
+    max-width: 660px;
     max-height: calc(100vh - 48px);
     background: var(--bg-panel);
     border: 1px solid var(--border-main);
@@ -226,7 +226,7 @@
 
 /* Left sidebar - Categories */
 .sidebar {
-    width: 150px;
+    width: 160px;
     flex-shrink: 0;
     border-right: 1px solid var(--border-subtle);
     background: var(--bg-app);
@@ -341,7 +341,7 @@
 
 .content-card--focused,
 .content-card:focus {
-    background: var(--bg-hover);
+    background: color-mix(in srgb, var(--accent-primary) 7%, var(--bg-hover));
     border-color: var(--accent-primary);
     outline: none;
 }
@@ -352,9 +352,9 @@
 }
 
 .content-card-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -413,14 +413,17 @@
 }
 
 .content-card-shortcut {
+    min-width: 22px;
     padding: 2px 6px;
     background: var(--bg-app);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid rgba(var(--accent-primary-rgb, 99 102 241), 0.2);
     border-radius: 4px;
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     font-family: var(--font-mono);
     color: var(--text-tertiary);
+    text-align: center;
+    transition: all 0.12s;
 }
 
 .content-card:hover .content-card-shortcut,

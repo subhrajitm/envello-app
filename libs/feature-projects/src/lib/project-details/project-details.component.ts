@@ -5,12 +5,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import {
-    StoreService, Project, MeetingsService, BooksService,
+    StoreService, Project, MeetingsService,
     ResearchService, ArticleService, EncryptionUtil, WorkspaceProfileService
 } from '@envello/core';
 import { VaultStore, SubscriptionStore, LinkStore } from '@envello/state';
 
-export type SectionType = 'notes' | 'meetings' | 'bookmarks' | 'novels' | 'books' | 'articles' | 'research';
+export type SectionType = 'notes' | 'meetings' | 'bookmarks' | 'novels' | 'articles' | 'research';
 
 @Component({
     selector: 'app-project-details',
@@ -26,7 +26,6 @@ export class ProjectDetailsComponent {
     private destroyRef = inject(DestroyRef);
 
     private meetingsService = inject(MeetingsService);
-    private booksService = inject(BooksService);
     private researchService = inject(ResearchService);
     private articleService = inject(ArticleService);
 
@@ -73,7 +72,6 @@ export class ProjectDetailsComponent {
     private linkedNovelsIds   = this.linkedIds('novels');
     private linkedNotesIds    = this.linkedIds('notes');
     private linkedMeetingsIds = this.linkedIds('meetings');
-    private linkedBooksIds    = this.linkedIds('books');
     private linkedResearchIds = this.linkedIds('research');
     private linkedArticlesIds = this.linkedIds('articles');
     private linkedBookmarkIds = this.linkedIds('bookmarks');
@@ -81,7 +79,6 @@ export class ProjectDetailsComponent {
     linkedNovels   = computed(() => this.store.novels().filter(n => (this.linkedNovelsIds() as string[]).includes(n.id)));
     linkedNotes    = computed(() => this.store.notes().filter(n => (this.linkedNotesIds() as string[]).includes(n.id)));
     linkedMeetings = computed(() => this.meetingsService.meetings().filter(m => (this.linkedMeetingsIds() as string[]).includes(m.id)));
-    linkedBooks    = computed(() => this.booksService.books().filter(b => (this.linkedBooksIds() as string[]).includes(b.id)));
     linkedResearch = computed(() => this.researchService.libraries().filter(l => (this.linkedResearchIds() as string[]).includes(l.id)));
     linkedArticles = computed(() => this.articleService.articles().filter(a => (this.linkedArticlesIds() as string[]).includes(a.id)));
     linkedBookmarks = computed(() => this.store.bookmarks().filter(b => (this.linkedBookmarkIds() as string[]).includes(b.id)));
@@ -105,7 +102,6 @@ export class ProjectDetailsComponent {
             case 'meetings':  return filter(this.meetingsService.meetings());
             case 'bookmarks': return filter(this.store.bookmarks());
             case 'novels':    return filter(this.store.novels());
-            case 'books':     return filter(this.booksService.books());
             case 'articles':  return filter(this.articleService.articles());
             case 'research':  return filter(this.researchService.libraries(), 'name');
             default: return [];
@@ -217,7 +213,6 @@ export class ProjectDetailsComponent {
             case 'meetings':  return String(item['date'] ?? '');
             case 'bookmarks': return String(item['url'] ?? '');
             case 'novels':    return String(item['genre'] ? (item['genre'] as string[]).join(', ') : '');
-            case 'books':     return String(item['author'] ?? '');
             case 'articles':  return String(item['platform'] ?? '');
             case 'research':  return String(item['description'] ?? '');
             default:          return '';

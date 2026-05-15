@@ -79,13 +79,6 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'books',
-    loadComponent: () => import('@envello/feature-books').then(m => m.BooksComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-
-  {
     path: 'bookmarks',
     loadComponent: () => import('@envello/feature-bookmarks').then(m => m.BookmarksComponent),
     canActivate: [authGuard],

@@ -14,7 +14,6 @@ import type {
 } from './store.service';
 import type { BinItem } from './bin.service';
 
-import type { Book } from './books.service';
 import type { Meeting } from './meetings.service';
 import type { Article } from './article.service';
 import type {
@@ -33,7 +32,6 @@ export type ActivityDoc = Activity;
 export type NovelDoc = Novel;
 export type BinItemDoc = BinItem;
 
-export type BookDoc = Book;
 export type MeetingDoc = Meeting;
 export type ArticleDoc = Article;
 export type ResearchLibraryDoc = ResearchLibrary;
@@ -67,7 +65,6 @@ export class SqliteService {
     private novelsSubject = new BehaviorSubject<NovelDoc[]>([]);
     private binItemsSubject = new BehaviorSubject<BinItemDoc[]>([]);
 
-    private booksSubject = new BehaviorSubject<BookDoc[]>([]);
     private meetingsSubject = new BehaviorSubject<MeetingDoc[]>([]);
     private articlesSubject = new BehaviorSubject<ArticleDoc[]>([]);
     private researchLibrariesSubject = new BehaviorSubject<ResearchLibraryDoc[]>([]);
@@ -240,26 +237,6 @@ export class SqliteService {
     `);
 
 
-
-        // Books
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS books (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        author TEXT,
-        category TEXT,
-        status TEXT,
-        progress REAL,
-        notesCount REAL,
-        lastAccessed TEXT,
-        coverImage TEXT,
-        isbn TEXT,
-        year REAL,
-        notes TEXT,
-        createdAt TEXT,
-        updatedAt TEXT
-      )
-    `);
 
         // Meetings
         await db.execute(`
@@ -487,7 +464,6 @@ export class SqliteService {
             this.reloadNovels(),
             this.reloadBinItems(),
 
-            this.reloadBooks(),
             this.reloadMeetings(),
             this.reloadArticles(),
             this.reloadResearchLibraries(),
@@ -828,42 +804,6 @@ export class SqliteService {
     async getAllBinItems(): Promise<BinItemDoc[]> {
         return this.binItemsSubject.getValue();
     }
-
-
-
-    // ─── Books ─────────────────────────────────────────────────────────────────
-    private async reloadBooks() {
-        const db = await this.getDb();
-        const rows = await db.select<BookDoc[]>('SELECT * FROM books');
-        const parsed = rows.map((r: any) => this.parseRow<BookDoc>(r, ['notes']));
-        this.booksSubject.next(parsed);
-    }
-
-    async upsertBook(doc: BookDoc): Promise<void> {
-        const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM books WHERE id = $1', [doc.id]);
-        const jsonDoc = { ...doc, notes: this.toJson(doc.notes) };
-
-        if (exists.length > 0) {
-            await db.execute(`UPDATE books SET title=$1, author=$2, category=$3, status=$4, progress=$5, notesCount=$6, lastAccessed=$7, coverImage=$8, isbn=$9, year=$10, notes=$11, createdAt=$12, updatedAt=$13 WHERE id=$14`,
-                [jsonDoc.title, jsonDoc.author, jsonDoc.category, jsonDoc.status, jsonDoc.progress, jsonDoc.notesCount, jsonDoc.lastAccessed, jsonDoc.coverImage, jsonDoc.isbn, jsonDoc.year, jsonDoc.notes, jsonDoc.createdAt, jsonDoc.updatedAt, jsonDoc.id]);
-        } else {
-            await db.execute(`INSERT INTO books (id, title, author, category, status, progress, notesCount, lastAccessed, coverImage, isbn, year, notes, createdAt, updatedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-                [jsonDoc.id, jsonDoc.title, jsonDoc.author, jsonDoc.category, jsonDoc.status, jsonDoc.progress, jsonDoc.notesCount, jsonDoc.lastAccessed, jsonDoc.coverImage, jsonDoc.isbn, jsonDoc.year, jsonDoc.notes, jsonDoc.createdAt, jsonDoc.updatedAt]);
-        }
-        await this.reloadBooks();
-    }
-
-    async removeBook(id: string): Promise<void> {
-        const db = await this.getDb();
-        await db.execute('DELETE FROM books WHERE id = $1', [id]);
-        await this.reloadBooks();
-    }
-
-    async getAllBooks(): Promise<BookDoc[]> {
-        return this.booksSubject.getValue();
-    }
-
     // ─── Meetings ──────────────────────────────────────────────────────────────
     private async reloadMeetings() {
         const db = await this.getDb();
@@ -1295,7 +1235,6 @@ export class SqliteService {
         data.data.novels = await this.getAllNovels();
         data.data.bin_items = await this.getAllBinItems();
 
-        data.data.books = await this.getAllBooks();
         data.data.meetings = await this.getAllMeetings();
         data.data.articles = await this.getAllArticles();
         data.data.research_libraries = await this.getAllResearchLibraries();
