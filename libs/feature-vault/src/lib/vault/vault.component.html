@@ -1,35 +1,11 @@
 <div class="vt-view">
 
   <!-- ── SIDEBAR ── -->
-  <aside class="vt-sidebar">
-
-    <!-- Title -->
-    <div class="vt-sb-header">
-      <h1 class="vt-sb-title">Vault</h1>
-    </div>
-
-    <!-- Nav: credential types -->
-    <nav class="vt-sb-nav">
-      <button class="vt-sb-item" [class.active]="!selectedType()" (click)="selectedType.set('')">
-        <span class="material-symbols-outlined vt-sb-item-icon">lock</span>
-        <span class="vt-sb-item-label">All Credentials</span>
-        <span class="vt-sb-count">{{ vaultStore.credentials().length }}</span>
-      </button>
-      @for (entry of allTypeStats(); track entry.type) {
-        <button
-          class="vt-sb-item"
-          [class.active]="selectedType() === entry.type"
-          (click)="selectedType.set(selectedType() === entry.type ? '' : entry.type)">
-          <span
-            class="material-symbols-outlined vt-sb-item-icon"
-            [style.color]="selectedType() === entry.type ? '' : entry.color">
-            {{ entry.icon }}
-          </span>
-          <span class="vt-sb-item-label">{{ entry.label }}</span>
-          <span class="vt-sb-count">{{ entry.count }}</span>
-        </button>
-      }
-    </nav>
+  <env-feature-sidebar
+    [title]="'Vault'"
+    [navItems]="sidebarNavItems()"
+    [activeNavId]="selectedType()"
+    (navItemClick)="onNavItemClick($event)">
 
     <!-- Scope section -->
     <div class="vt-sb-section">
@@ -46,7 +22,7 @@
       </button>
     </div>
 
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="vt-main">

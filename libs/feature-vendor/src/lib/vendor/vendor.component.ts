@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
 import { Subscription } from '@envello/domain';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -91,16 +91,13 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent],
+    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
 <div class="vs-view">
 
   <!-- ── SIDEBAR ── -->
-  <aside class="vs-sb">
-    <div class="vs-sb-header">
-      <h1 class="vs-sb-title">Subscriptions</h1>
-    </div>
+  <env-feature-sidebar [title]="'Subscriptions'">
 
     <nav class="vs-sb-nav">
       <button class="vs-sb-item"
@@ -161,7 +158,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
         </button>
       }
     </div>
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="vs-main">
@@ -588,21 +585,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     .vs-view { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg-app); }
     .capitalize { text-transform: capitalize; }
 
-    /* ── Sidebar ── */
-    .vs-sb {
-      width: 200px; flex-shrink: 0;
-      background: var(--bg-panel);
-      border-right: 1px solid var(--border-main);
-      display: flex; flex-direction: column;
-      overflow-y: auto; overflow-x: hidden;
-    }
-    .vs-sb-header {
-      padding: 10px 12px 8px;
-      flex-shrink: 0;
-    }
-    .vs-sb-title { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-
-
+    /* ── Sidebar (container handled by env-feature-sidebar) ── */
     .vs-sb-nav     { padding: 4px 6px; flex-shrink: 0; }
     .vs-sb-section { padding: 4px 6px; flex-shrink: 0; }
     .vs-sb-section-title {

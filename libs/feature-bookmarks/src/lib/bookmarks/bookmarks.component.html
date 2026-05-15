@@ -3,29 +3,11 @@
   <!-- ═══════════════════════════════════════════════════
        SIDEBAR
   ════════════════════════════════════════════════════ -->
-  <aside class="bm-sidebar">
-
-    <!-- Header -->
-    <div class="bm-sb-header">
-      <h1 class="bm-sb-title">Bookmarks</h1>
-    </div>
-
-    <!-- Navigation views -->
-    <nav class="bm-sb-nav">
-      @for (item of sidebarItems(); track item.id) {
-        <button
-          class="bm-sb-item"
-          [class.active]="selectedView() === item.id && !selectedFolderId()"
-          (click)="selectedView.set($any(item.id)); selectedFolderId.set('')"
-        >
-          <span class="material-symbols-outlined bm-sb-item-icon">{{ item.icon }}</span>
-          <span class="bm-sb-item-label">{{ item.label }}</span>
-          @if (item.count) {
-            <span class="bm-sb-count">{{ item.count }}</span>
-          }
-        </button>
-      }
-    </nav>
+  <env-feature-sidebar
+    [title]="'Bookmarks'"
+    [navItems]="sidebarItems()"
+    [activeNavId]="activeNavId()"
+    (navItemClick)="onNavItemClick($event)">
 
     <!-- Folders -->
     <div class="bm-sb-section">
@@ -81,7 +63,7 @@
       </div>
     }
 
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ═══════════════════════════════════════════════════
        MAIN CONTENT

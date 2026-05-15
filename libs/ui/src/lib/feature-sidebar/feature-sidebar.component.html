@@ -1,0 +1,30 @@
+<div class="env-fsb-header">
+  <h1 class="env-fsb-title">{{ title }}</h1>
+</div>
+
+@if (navItems.length) {
+  <nav class="env-fsb-nav">
+    @for (item of navItems; track item.id) {
+      <button
+        class="env-fsb-item"
+        [class.active]="item.id === activeNavId"
+        (click)="navItemClick.emit(item.id)">
+        @if (item.icon) {
+          <span
+            class="material-symbols-outlined env-fsb-item-icon"
+            [style.color]="item.id === activeNavId ? null : (item.iconColor ?? null)">
+            {{ item.icon }}
+          </span>
+        } @else if (item.dotColor) {
+          <span class="env-fsb-dot" [style.background]="item.dotColor"></span>
+        }
+        <span class="env-fsb-item-label">{{ item.label }}</span>
+        @if (item.count) {
+          <span class="env-fsb-count">{{ item.count }}</span>
+        }
+      </button>
+    }
+  </nav>
+}
+
+<ng-content></ng-content>

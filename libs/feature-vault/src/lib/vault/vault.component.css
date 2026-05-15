@@ -19,41 +19,10 @@
 .vt-capitalize { text-transform: capitalize; }
 
 /* ═══════════════════════════════════════════════════════
-   SIDEBAR
+   SIDEBAR  (container handled by env-feature-sidebar)
 ════════════════════════════════════════════════════════ */
-.vt-sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  border-right: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
 
-/* Sidebar header */
-.vt-sb-header {
-  padding: 14px 14px 8px;
-  flex-shrink: 0;
-}
-.vt-sb-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-}
-
-/* Nav */
-.vt-sb-nav {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 6px;
-  flex-shrink: 0;
-}
-
-/* Nav items */
+/* Nav items (also used by projected scope section) */
 .vt-sb-item {
   display: flex;
   align-items: center;
@@ -110,10 +79,6 @@
   text-transform: uppercase;
 }
 
-/* Sidebar scrollbar */
-.vt-sidebar::-webkit-scrollbar { width: 4px; }
-.vt-sidebar::-webkit-scrollbar-track { background: transparent; }
-.vt-sidebar::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 4px; }
 
 /* ═══════════════════════════════════════════════════════
    MAIN
