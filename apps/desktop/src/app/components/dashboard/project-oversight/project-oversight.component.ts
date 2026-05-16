@@ -12,7 +12,7 @@ import { StoreService } from '@envello/core';
 })
 export class ProjectOversightComponent {
   private store = inject(StoreService);
-  projects = this.store.projects;
+  projects = this.store.spaces;
 
 
   getStatusColor(status: string): string {

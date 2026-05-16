@@ -1,61 +1,167 @@
-<div class="quick-find-backdrop fixed inset-0 flex items-start justify-center z-[9999]" *ngIf="isOpen()" (click)="onBackdropClick()">
-    <div class="quick-find-modal flex flex-col rounded-lg shadow-xl" (click)="onModalClick($event)">
-        <!-- Search Input -->
-        <div class="quick-find-header flex items-center gap-2">
-            <span class="material-symbols-outlined search-icon">search</span>
-            <input type="text" class="quick-find-input" placeholder="Search notes, tasks, and more..."
-                [(ngModel)]="searchQuery" (ngModelChange)="searchQuery.set($event)" autocomplete="off" />
-            <kbd class="keyboard-hint">ESC</kbd>
+@if (isOpen()) {
+<div class="qf-backdrop" (click)="close()">
+    <div class="qf-modal" (click)="$event.stopPropagation()">
+
+        <!-- Search Header -->
+        <div class="qf-header">
+            <span class="material-symbols-outlined qf-search-icon">
+                {{ isCommandMode() ? 'terminal' : 'search' }}
+            </span>
+            <input
+                class="qf-input"
+                type="text"
+                [placeholder]="isCommandMode() ? 'Type a command...' : 'Search everything or type > for commands'"
+                [value]="searchQuery()"
+                (input)="onInput($event)"
+                autocomplete="off"
+                spellcheck="false"
+            />
+            @if (searchQuery().length > 0) {
+                <button class="qf-clear" (click)="searchQuery.set(''); activeFilter.set('all')">
+                    <span class="material-symbols-outlined" style="font-size:16px">close</span>
+                </button>
+            }
+            <kbd class="qf-esc">ESC</kbd>
         </div>
 
-        <!-- Results List -->
-        <div class="quick-find-results flex flex-col flex-1 min-h-0 overflow-y-auto">
-            @if (results().length === 0 && searchQuery().length > 0) {
-            <div class="no-results">
-                <span class="material-symbols-outlined">search_off</span>
-                <p>No results found for "{{ searchQuery() }}"</p>
-            </div>
-            } @else if (results().length === 0) {
-            <div class="no-results">
-                <span class="material-symbols-outlined">history</span>
-                <p>Start typing to search...</p>
-            </div>
-            } @else {
-            @if (searchQuery().length === 0) {
-            <div class="results-header">Recent Items</div>
-            }
-            @for (result of results(); track result.id; let i = $index) {
-            <div class="result-item" [class.selected]="i === selectedIndex()" (click)="selectResult(result)"
-                (mouseenter)="selectedIndex.set(i)">
-                <span class="material-symbols-outlined result-icon">{{ result.icon }}</span>
-                <div class="result-content">
-                    <div class="result-title">{{ result.title }}</div>
-                    <div class="result-preview">{{ result.preview }}</div>
-                </div>
-                <div class="result-meta">
-                    @if (result.date) {
-                    <span class="result-date">{{ result.date }}</span>
+        <!-- Filter Pills (hidden in command mode) -->
+        @if (!isCommandMode()) {
+        <div class="qf-filters">
+            @for (f of filterTypes; track f) {
+                <button
+                    class="qf-filter-pill"
+                    [class.active]="activeFilter() === f"
+                    (click)="setFilter(f)">
+                    @if (f !== 'all') {
+                        <span class="material-symbols-outlined" style="font-size:13px">{{ $any(typeMeta)[$any(f)].icon }}</span>
                     }
-                    <span class="result-type">{{ result.type }}</span>
-                </div>
-            </div>
+                    {{ f === 'all' ? 'All' : $any(typeMeta)[$any(f)].label }}
+                </button>
             }
+        </div>
+        }
+
+        <!-- Results -->
+        <div class="qf-results">
+
+            <!-- Empty: no query -->
+            @if (!searchQuery() && !isCommandMode() && flatResults().length === 0) {
+                <div class="qf-empty">
+                    <span class="material-symbols-outlined">manage_search</span>
+                    <p>Start typing to search across all your content</p>
+                    <span class="qf-hint-tip">Tip: Type <kbd>&gt;</kbd> to navigate to a page</span>
+                </div>
+            }
+
+            <!-- Empty: query with no results -->
+            @if (searchQuery().length > 0 && flatResults().length === 0) {
+                <div class="qf-empty">
+                    <span class="material-symbols-outlined">search_off</span>
+                    <p>No results for "<strong>{{ searchQuery() }}</strong>"</p>
+                </div>
+            }
+
+            <!-- Command mode: flat list -->
+            @if (isCommandMode()) {
+                <div class="qf-group-label">
+                    <span class="material-symbols-outlined" style="font-size:14px">terminal</span>
+                    Navigation commands
+                </div>
+                @for (item of flatResults(); track item.id; let i = $index) {
+                    <div class="qf-item" [class.selected]="i === selectedIndex()"
+                        (mouseenter)="selectedIndex.set(i)"
+                        (click)="selectResult(item)">
+                        <div class="qf-item-icon cmd">
+                            <span class="material-symbols-outlined">{{ item.icon }}</span>
+                        </div>
+                        <div class="qf-item-body">
+                            <span class="qf-item-title">{{ item.title }}</span>
+                            <span class="qf-item-preview">{{ item.preview }}</span>
+                        </div>
+                        @if (item.badge) {
+                            <kbd class="qf-item-badge">{{ item.badge }}</kbd>
+                        }
+                        <span class="material-symbols-outlined qf-item-arrow">arrow_forward</span>
+                    </div>
+                }
+            }
+
+            <!-- Filtered mode: flat list with section label -->
+            @if (!isCommandMode() && activeFilter() !== 'all' && flatResults().length > 0) {
+                <div class="qf-group-label">
+                    <span class="material-symbols-outlined" style="font-size:14px">{{ getFilterMeta().icon }}</span>
+                    {{ searchQuery() ? 'Results' : 'Recent' }} · {{ getFilterMeta().label }}
+                </div>
+                @for (item of flatResults(); track item.id; let i = $index) {
+                    <div class="qf-item" [class.selected]="i === selectedIndex()"
+                        (mouseenter)="selectedIndex.set(i)"
+                        (click)="selectResult(item)">
+                        <div class="qf-item-icon" [style.color]="getTypeColor(item.type)">
+                            <span class="material-symbols-outlined">{{ item.icon }}</span>
+                        </div>
+                        <div class="qf-item-body">
+                            <span class="qf-item-title">{{ item.title }}</span>
+                            @if (item.preview) { <span class="qf-item-preview">{{ item.preview }}</span> }
+                        </div>
+                        <div class="qf-item-right">
+                            @if (item.badge) { <span class="qf-badge" [class]="'badge-' + item.type">{{ item.badge }}</span> }
+                            @if (item.date) { <span class="qf-item-date">{{ item.date }}</span> }
+                        </div>
+                        <span class="material-symbols-outlined qf-item-arrow">arrow_forward</span>
+                    </div>
+                }
+            }
+
+            <!-- All mode: grouped -->
+            @if (!isCommandMode() && activeFilter() === 'all' && groups().length > 0) {
+                @for (group of groups(); track group.type) {
+                    <div class="qf-group-label">
+                        <span class="material-symbols-outlined" style="font-size:14px">{{ group.icon }}</span>
+                        {{ searchQuery() ? 'Results' : 'Recent' }} · {{ group.label }}
+                    </div>
+                    @for (item of group.items; track item.id; let i = $index) {
+                        @let globalIdx = getGlobalIndex(group, i);
+                        <div class="qf-item" [class.selected]="globalIdx === selectedIndex()"
+                            (mouseenter)="selectedIndex.set(globalIdx)"
+                            (click)="selectResult(item)">
+                            <div class="qf-item-icon" [style.color]="getTypeColor(item.type)">
+                                <span class="material-symbols-outlined">{{ item.icon }}</span>
+                            </div>
+                            <div class="qf-item-body">
+                                <span class="qf-item-title">{{ item.title }}</span>
+                                @if (item.preview) {
+                                    <span class="qf-item-preview">{{ item.preview }}</span>
+                                }
+                            </div>
+                            <div class="qf-item-right">
+                                @if (item.badge) {
+                                    <span class="qf-badge" [class]="'badge-' + item.type">{{ item.badge }}</span>
+                                }
+                                @if (item.date) {
+                                    <span class="qf-item-date">{{ item.date }}</span>
+                                }
+                            </div>
+                            <span class="material-symbols-outlined qf-item-arrow">arrow_forward</span>
+                        </div>
+                    }
+                }
+            }
+
+        </div>
+
+        <!-- Footer -->
+        <div class="qf-footer">
+            <div class="qf-footer-hints">
+                <span class="qf-hint"><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                <span class="qf-hint"><kbd>↵</kbd> Open</span>
+                <span class="qf-hint"><kbd>ESC</kbd> Close</span>
+                <span class="qf-hint"><kbd>&gt;</kbd> Commands</span>
+            </div>
+            @if (totalCount() > 0) {
+                <span class="qf-count">{{ totalCount() }} result{{ totalCount() !== 1 ? 's' : '' }}</span>
             }
         </div>
 
-        <!-- Footer with hints -->
-        <div class="quick-find-footer flex items-center justify-between">
-            <div class="footer-hints flex items-center gap-4">
-                <span class="hint">
-                    <kbd>↑</kbd><kbd>↓</kbd> Navigate
-                </span>
-                <span class="hint">
-                    <kbd>↵</kbd> Select
-                </span>
-                <span class="hint">
-                    <kbd>ESC</kbd> Close
-                </span>
-            </div>
-        </div>
     </div>
 </div>
+}

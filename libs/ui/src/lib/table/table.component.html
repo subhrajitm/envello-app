@@ -228,15 +228,10 @@
   @if (showPagination && effectiveTotal > 0) {
     <div class="env-table-foot">
 
-      <!-- Left: entry count + rows-per-page selector -->
+      <!-- Left: rows-per-page selector + entry count -->
       <div class="env-table-foot-left">
-        <span class="env-table-foot-info">
-          Showing {{ padNum(showingFrom) }} to {{ padNum(showingTo) }} of {{ totalEntries }} entries
-        </span>
-
         @if (pageSizeOptions.length) {
           <div class="env-table-page-size">
-            <span class="env-table-page-size-label">Rows per page</span>
             <select
               class="env-table-page-size-select"
               [value]="_pageSize()"
@@ -247,6 +242,10 @@
             </select>
           </div>
         }
+
+        <span class="env-table-foot-info">
+          Showing {{ padNum(showingFrom) }} to {{ padNum(showingTo) }} of {{ effectiveTotal }} entries
+        </span>
       </div>
 
       <!-- Right: navigation -->

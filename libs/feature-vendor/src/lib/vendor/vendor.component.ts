@@ -1,9 +1,9 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
 import { Subscription } from '@envello/domain';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -91,20 +91,13 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent],
+    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
 <div class="vs-view">
 
   <!-- ── SIDEBAR ── -->
-  <aside class="vs-sb">
-    <div class="vs-sb-header">
-      <h1 class="vs-sb-title">Subscriptions</h1>
-      <p class="vs-sb-stats">
-        {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalMonthlyCost() | number:'1.0-0' }}/mo
-        &nbsp;·&nbsp;
-        {{ currencySymbol(defaultCurrency()) }}{{ subscriptionStore.totalYearlyCost() | number:'1.0-0' }}/yr
-      </p>
-    </div>
+  <env-feature-sidebar [title]="'Subscriptions'">
 
     <nav class="vs-sb-nav">
       <button class="vs-sb-item"
@@ -165,35 +158,19 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
         </button>
       }
     </div>
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="vs-main">
 
     <!-- Toolbar -->
     <div class="vs-toolbar">
-      <div class="vs-bc">
-        <span class="vs-bc-root">Subscriptions</span>
-        @if (selectedStatus()) {
-          <span class="vs-bc-sep">›</span>
-          <span class="vs-bc-leaf">{{ selectedStatus() }}</span>
-        }
-        @if (selectedCategory()) {
-          <span class="vs-bc-sep">›</span>
-          <span class="vs-bc-leaf">{{ selectedCategory() }}</span>
-        }
-        @if (selectedCycle()) {
-          <span class="vs-bc-sep">›</span>
-          <span class="vs-bc-leaf">{{ selectedCycle() }}</span>
-        }
-        <span class="vs-bc-count">{{ filteredSubs().length }}</span>
+      <div class="vs-search-wrap">
+        <span class="material-symbols-outlined vs-search-icon">search</span>
+        <input class="vs-search-input" type="text" placeholder="Search subscriptions…"
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
       </div>
-      <div class="vs-toolbar-right">
-        <div class="vs-search-wrap">
-          <span class="material-symbols-outlined vs-search-icon">search</span>
-          <input class="vs-search-input" type="text" placeholder="Search subscriptions…"
-            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-        </div>
+<div class="vs-toolbar-right">
         @if (hasActiveFilters()) {
           <button class="vs-tool-btn" title="Clear filters" (click)="clearFilters()">
             <span class="material-symbols-outlined">filter_list_off</span>
@@ -589,28 +566,26 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     </div>
   </env-modal>
 }
+
+@if (deleteConfirmId(); as subId) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Subscription"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="doDelete(subId)"
+    (cancelled)="deleteConfirmId.set(null)">
+    This subscription will be permanently deleted. This cannot be undone.
+</env-confirm-dialog>
+}
   `,
     styles: [`
     :host { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; }
     .vs-view { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg-app); }
     .capitalize { text-transform: capitalize; }
 
-    /* ── Sidebar ── */
-    .vs-sb {
-      width: 200px; flex-shrink: 0;
-      background: var(--bg-panel);
-      border-right: 1px solid var(--border-main);
-      display: flex; flex-direction: column;
-      overflow-y: auto; overflow-x: hidden;
-    }
-    .vs-sb-header {
-      padding: 16px 12px 12px;
-      border-bottom: 1px solid var(--border-subtle);
-      flex-shrink: 0;
-    }
-    .vs-sb-title { margin: 0 0 4px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-    .vs-sb-stats { margin: 0; font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
-
+    /* ── Sidebar (container handled by env-feature-sidebar) ── */
     .vs-sb-nav     { padding: 4px 6px; flex-shrink: 0; }
     .vs-sb-section { padding: 4px 6px; flex-shrink: 0; }
     .vs-sb-section-title {
@@ -659,17 +634,6 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       border-bottom: 1px solid var(--border-subtle);
       flex-shrink: 0; background: var(--bg-panel);
     }
-    .vs-bc { display: flex; align-items: center; gap: 6px; }
-    .vs-bc-root { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-    .vs-bc-sep  { font-size: 14px; color: var(--text-tertiary); }
-    .vs-bc-leaf { font-size: 13px; font-weight: 600; color: var(--text-primary); text-transform: capitalize; }
-    .vs-bc-count {
-      font-size: 11px; color: var(--text-tertiary);
-      background: var(--bg-hover); border-radius: 10px; padding: 1px 7px;
-    }
-
-    .vs-toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .vs-tb-divider { width: 1px; height: 18px; background: var(--border-subtle); margin: 0 2px; }
 
     .vs-search-wrap { position: relative; display: flex; align-items: center; }
     .vs-search-icon {
@@ -680,9 +644,12 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       height: 28px; padding: 0 10px 0 28px;
       background: var(--bg-hover); border: 1px solid var(--border-subtle);
       border-radius: 5px; font-size: 12px; color: var(--text-primary);
-      outline: none; width: 190px; transition: all 0.2s;
+      outline: none; width: 200px; transition: all 0.2s;
     }
     .vs-search-input:focus { background: var(--bg-panel); border-color: var(--accent-primary); }
+
+.vs-toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .vs-tb-divider { width: 1px; height: 18px; background: var(--border-subtle); margin: 0 2px; }
 
     .vs-tool-btn {
       height: 28px; padding: 0 10px; display: flex; align-items: center; gap: 5px;

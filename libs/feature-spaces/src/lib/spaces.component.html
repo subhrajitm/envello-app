@@ -14,7 +14,7 @@
 
   <div class="content-area">
     <div class="projects-grid">
-      @for (project of store.projects(); track project.id) {
+      @for (project of store.spaces(); track project.id) {
         <div class="project-card" (click)="openProject(project.id)">
           <div class="card-header">
             <h3>
@@ -47,7 +47,7 @@
           </div>
         </div>
       }
-      @if (store.projects().length === 0) {
+      @if (store.spaces().length === 0) {
         <div class="empty-state">
           <span class="material-symbols-outlined">folder_open</span>
           <p>No projects found. Create one to get started.</p>

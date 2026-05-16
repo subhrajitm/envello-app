@@ -1,0 +1,133 @@
+.cd-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: cdFadeIn 0.12s ease-out;
+}
+
+@keyframes cdFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.cd-dialog {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-main);
+    border-radius: 10px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+    width: 340px;
+    padding: 28px 24px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    animation: cdSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cdSlideIn {
+    from { opacity: 0; transform: scale(0.94) translateY(-8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Icon ── */
+.cd-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+}
+.cd-icon .material-symbols-outlined { font-size: 26px; }
+
+.cd-icon--danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.cd-icon--success {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+/* ── Text ── */
+.cd-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cd-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ── Actions ── */
+.cd-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+.cd-cancel {
+    flex: 1;
+    padding: 8px 16px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.cd-cancel:hover {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    border-color: var(--border-main);
+}
+
+.cd-confirm {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+}
+.cd-confirm .material-symbols-outlined { font-size: 15px; }
+
+.cd-confirm--danger {
+    background: #ef4444;
+    color: white;
+}
+.cd-confirm--danger:hover { background: #dc2626; }
+
+.cd-confirm--success {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.cd-confirm--success:hover {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.5);
+}

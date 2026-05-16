@@ -17,42 +17,68 @@ export class StoreService {
     noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
     bookmarks = signal<Bookmark[]>([]);
     bookmarkFolders = signal<BookmarkFolder[]>([]);
-    projects = signal<Project[]>([]);
+    spaces = signal<Project[]>([]);
 
     private bin = inject(BinService);
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
 
-    private turndownService: any;
+    private markdownWorker: Worker | null = null;
+    private workerCallbacks = new Map<string, (md: string) => void>();
     private saveTimeouts: { [id: string]: any } = {};
 
     constructor() {
         this.loadFromDb();
-        this.initMarkdown();
+        this.initMarkdownWorker();
         // Re-load signals after PouchDbDataService applies pulled Supabase records.
         window.addEventListener('envello:sync-complete', () => this.loadFromDb());
     }
 
-    private async initMarkdown() {
-        if (typeof window !== 'undefined') {
-            try {
-                const TurndownService = (await import('turndown')).default;
-                if (TurndownService) {
-                    this.turndownService = new TurndownService();
-                    this.turndownService.addRule('strikethrough', {
-                        filter: ['del', 's', 'strike'],
-                        replacement: (content: string) => '~' + content + '~'
-                    });
+    private initMarkdownWorker() {
+        if (typeof Worker === 'undefined') return;
+        try {
+            // Worker script is bundled by the app — resolved at build time via the URL pattern.
+            // Falls back gracefully if the app is built without worker support (e.g., desktop SSR).
+            const workerUrl = (globalThis as any).__MARKDOWN_WORKER_URL__;
+            if (!workerUrl) return;
+            this.markdownWorker = new Worker(workerUrl, { type: 'module' });
+            this.markdownWorker.onmessage = ({ data }: MessageEvent<{ id: string; markdown?: string; error?: string }>) => {
+                const cb = this.workerCallbacks.get(data.id);
+                if (cb) {
+                    this.workerCallbacks.delete(data.id);
+                    cb(data.markdown ?? '');
                 }
-            } catch (e) {
-                console.warn('Turndown service undefined', e);
-            }
+            };
+        } catch (e) {
+            console.warn('[StoreService] Markdown worker unavailable, will use inline fallback', e);
+        }
+    }
+
+    private async htmlToMarkdown(html: string): Promise<string> {
+        if (this.markdownWorker) {
+            return new Promise<string>((resolve) => {
+                const id = crypto.randomUUID();
+                this.workerCallbacks.set(id, resolve);
+                this.markdownWorker!.postMessage({ id, html });
+            });
+        }
+        // Inline fallback (non-Tauri desktop or worker unavailable)
+        try {
+            const TurndownService = (await import('turndown')).default;
+            const svc = new TurndownService();
+            svc.addRule('strikethrough', {
+                filter: ['del', 's', 'strike'] as any,
+                replacement: (content: string) => '~' + content + '~'
+            });
+            return svc.turndown(html);
+        } catch {
+            return html;
         }
     }
 
     private async loadFromDb(): Promise<void> {
         try {
-            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders, projects] = await Promise.all([
+            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders, spaces] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
                 this.db.getAll<Note>('notes'),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -70,7 +96,7 @@ export class StoreService {
             this.novels.set(novels || []);
             this.bookmarks.set(bookmarks || []);
             this.bookmarkFolders.set(bookmarkFolders || []);
-            this.projects.set(projects || []);
+            this.spaces.set(spaces || []);
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -95,7 +121,7 @@ export class StoreService {
             this.noteFolders.set([{ id: 'personal', name: 'Personal', icon: 'folder' }]);
             this.bookmarks.set([]);
             this.bookmarkFolders.set([]);
-            this.projects.set([]);
+            this.spaces.set([]);
         }
     }
 
@@ -187,10 +213,7 @@ export class StoreService {
     }
 
     private async saveNoteContentToFile(id: string, html: string) {
-        if (!this.turndownService) await this.initMarkdown();
-        if (!this.turndownService) return;
-
-        const md = this.turndownService.turndown(html);
+        const md = await this.htmlToMarkdown(html);
         const filePath = await this.fs.saveNote(id, md);
 
         const note = this.notes().find(n => n.id === id);
@@ -230,24 +253,24 @@ export class StoreService {
         this.db.upsert('novels', novel).catch(e => console.error('[StoreService] persist novel failed', e));
     }
 
-    addProject(project: Project) {
-        this.projects.update(projects => [...projects, project]);
-        this.addActivity('Project created: ' + project.title, 'system');
-        this.db.upsert('projects', project).catch(e => console.error('[StoreService] persist project failed', e));
+    addSpace(space: Project) {
+        this.spaces.update(list => [...list, space]);
+        this.addActivity('Space created: ' + space.title, 'system');
+        this.db.upsert('projects', space).catch(e => console.error('[StoreService] persist space failed', e));
     }
 
-    deleteProject(id: string) {
-        this.projects.update(projects => projects.filter(p => p.id !== id));
-        this.addActivity('Project deleted', 'system');
-        this.db.remove('projects', id).catch(e => console.error('[StoreService] remove project failed', e));
+    deleteSpace(id: string) {
+        this.spaces.update(list => list.filter(p => p.id !== id));
+        this.addActivity('Space deleted', 'system');
+        this.db.remove('projects', id).catch(e => console.error('[StoreService] remove space failed', e));
     }
 
-    updateProject(id: string, updates: Partial<Project>) {
-        this.projects.update(projects =>
-            projects.map(p => p.id === id ? { ...p, ...updates } : p)
+    updateSpace(id: string, updates: Partial<Project>) {
+        this.spaces.update(list =>
+            list.map(p => p.id === id ? { ...p, ...updates } : p)
         );
-        const project = this.projects().find(p => p.id === id);
-        if (project) this.db.upsert('projects', project).catch(e => console.error('[StoreService] persist project failed', e));
+        const space = this.spaces().find(p => p.id === id);
+        if (space) this.db.upsert('projects', space).catch(e => console.error('[StoreService] persist space failed', e));
     }
 
     deleteNovel(id: string) {

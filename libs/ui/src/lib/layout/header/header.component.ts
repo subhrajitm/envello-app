@@ -52,35 +52,35 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private storeService = inject(StoreService);
   private router = inject(Router);
 
-  // Project switcher
-  showProjectSwitcher = signal(false);
+  // Space switcher
+  showSpaceSwitcher = signal(false);
 
   /**
-   * Merged project list: 'All Projects' (default) pinned first, then user-created
-   * projects from the store. Uses workspaceService profiles as the canonical list
+   * Merged Space list: 'All Spaces' (default) pinned first, then user-created
+   * spaces from the store. Uses workspaceService profiles as the canonical list
    * but keeps them in sync with the DB via the effect in constructor.
    */
-  projects = computed(() => {
+  spaces = computed(() => {
     const profiles = this.workspaceService.profiles();
-    // Separate the default 'All Projects' entry from user projects
+    // Separate the default 'All Spaces' entry from user spaces
     const defaultProfile = profiles.find(p => p.id === 'default');
     const userProfiles = profiles.filter(p => p.id !== 'default');
     return defaultProfile ? [defaultProfile, ...userProfiles] : userProfiles;
   });
 
-  activeProject = this.workspaceService.activeProfile;
+  activeSpace = this.workspaceService.activeProfile;
 
-  toggleProjectSwitcher() { this.showProjectSwitcher.update(v => !v); }
-  closeProjectSwitcher() { this.showProjectSwitcher.set(false); }
+  toggleSpaceSwitcher() { this.showSpaceSwitcher.update(v => !v); }
+  closeSpaceSwitcher() { this.showSpaceSwitcher.set(false); }
 
-  switchProject(id: string) {
-    this.closeProjectSwitcher();
-    if (this.activeProject().id !== id) this.workspaceService.switchProfile(id);
+  switchSpace(id: string) {
+    this.closeSpaceSwitcher();
+    if (this.activeSpace().id !== id) this.workspaceService.switchProfile(id);
   }
 
-  manageProjects() {
-    this.closeProjectSwitcher();
-    this.router.navigate(['/projects']);
+  manageSpaces() {
+    this.closeSpaceSwitcher();
+    this.router.navigate(['/spaces']);
   }
 
   binCount = computed(() => this.binService.items().length);
@@ -134,12 +134,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private lastAvatarUrl: string | undefined = undefined;
 
   constructor() {
-    // Sync projects from DB into WorkspaceProfileService (idempotent — addProfileWithId
-    // is a no-op if the profile already exists). This ensures projects created before
+    // Sync spaces from DB into WorkspaceProfileService (idempotent — addProfileWithId
+    // is a no-op if the profile already exists). This ensures spaces created before
     // the profile-linking flow was introduced still appear in the switcher.
     effect(() => {
-      const dbProjects = this.storeService.projects();
-      for (const p of dbProjects) {
+      const dbSpaces = this.storeService.spaces();
+      for (const p of dbSpaces) {
         this.workspaceService.addProfileWithId(p.id, p.title, '#3b82f6', p.icon);
       }
     });

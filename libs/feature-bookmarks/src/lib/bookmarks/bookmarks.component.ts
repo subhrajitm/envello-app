@@ -1,8 +1,8 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Bookmark, BookmarkFolder } from '@envello/core';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 type BookmarkView = 'all' | 'pinned' | 'archived' | 'recent';
@@ -12,9 +12,10 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 @Component({
   selector: 'app-bookmarks',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
   templateUrl: './bookmarks.component.html',
   styleUrl: './bookmarks.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
@@ -87,6 +88,13 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     }
     return Array.from(tagSet).sort();
   });
+
+  readonly activeNavId = computed(() => this.selectedFolderId() ? '' : this.selectedView() as string);
+
+  onNavItemClick(id: string) {
+    this.selectedView.set(id as BookmarkView);
+    this.selectedFolderId.set('');
+  }
 
   sidebarItems = computed(() => [
     {

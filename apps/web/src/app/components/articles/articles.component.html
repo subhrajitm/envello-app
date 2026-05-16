@@ -221,22 +221,19 @@
         </div>
     </env-modal>
 
-    <!-- Delete Confirmation Modal -->
-    <env-modal
-        [isOpen]="showDeleteModal()"
-        (closed)="cancelDelete()"
-        title="Delete Article"
-        size="md"
-    >
-        <div body>
-            @if (articleToDelete(); as article) {
-            <p>Are you sure you want to delete <strong>"{{ article.title }}"</strong>?</p>
-            <p class="text-muted-hint">This action cannot be undone.</p>
-            }
-        </div>
-        <div footer>
-            <env-button variant="secondary" (clicked)="cancelDelete()">Cancel</env-button>
-            <env-button variant="danger" (clicked)="confirmDelete()">Delete Article</env-button>
-        </div>
-    </env-modal>
 </div>
+
+@if (showDeleteModal()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Article"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete Article"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()">
+    @if (articleToDelete(); as article) {
+        Delete <strong>"{{ article.title }}"</strong>? This action cannot be undone.
+    }
+</env-confirm-dialog>
+}

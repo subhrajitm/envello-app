@@ -12,9 +12,7 @@
         "outputPath": "dist/apps/desktop",
         "index": "apps/desktop/src/index.html",
         "browser": "apps/desktop/src/main.ts",
-        "polyfills": [
-          "zone.js"
-        ],
+        "polyfills": [],
         "tsConfig": "apps/desktop/tsconfig.app.json",
         "assets": [
           {

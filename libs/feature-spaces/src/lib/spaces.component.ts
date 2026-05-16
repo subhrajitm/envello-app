@@ -4,19 +4,19 @@ import { RouterModule, Router } from '@angular/router';
 import { StoreService, WorkspaceProfileService } from '@envello/core';
 
 @Component({
-  selector: 'app-projects',
+  selector: 'app-spaces',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './projects.component.html',
-  styleUrl: './projects.component.css'
+  templateUrl: './spaces.component.html',
+  styleUrl: './spaces.component.css'
 })
-export class ProjectsComponent {
+export class SpacesComponent {
   public store = inject(StoreService);
   private router = inject(Router);
   private workspaceService = inject(WorkspaceProfileService);
 
   openProject(id: string) {
-    this.router.navigate(['/projects', id]);
+    this.router.navigate(['/spaces', id]);
   }
 
   createNewProject() {
@@ -32,7 +32,7 @@ export class ProjectsComponent {
       icon: 'folder'
     });
     this.workspaceService.addProfileWithId(newId, title, '#3b82f6', 'folder');
-    this.router.navigate(['/projects', newId]);
+    this.router.navigate(['/spaces', newId]);
   }
 
   deleteProject(id: string, event: MouseEvent) {

@@ -1,135 +1,184 @@
 # Envello
 
-Envello is a powerful, distraction-free note-taking and productivity application designed for writers, researchers, and developers. Built with modern web technologies and wrapped in a native shell, it combines the flexibility of the web with the performance of a desktop application.
+A distraction-free productivity and creative writing workspace. Envello combines task management, note-taking, novel writing, research organization, project tracking, and credential vaulting into a single desktop-first application with web support.
 
-![Envello Banner](assets/banner.png) *Add a banner image if available*
+Built with Angular + Tauri for desktop, with a shared architecture across all platforms.
 
-## 🚀 Features
+## Apps
 
-Envello is organized into specialized modules to cater to different creative and productive needs:
+| App | Type | Platform | Description |
+|-----|------|----------|-------------|
+| `desktop` | Tauri + Angular | macOS / Windows / Linux | Native desktop app with SQLite persistence |
+| `web` | Angular PWA | Browser | Web app with PouchDB (IndexedDB) + Supabase cloud sync |
+| `admin` | Angular SPA | Browser | Admin dashboard |
+| `landing` | Angular SPA | Browser | Marketing landing page |
 
--   **📖 Novels & Fiction:** A dedicated writing environment for long-form fiction with chapter management.
--   **🔬 Research:** Organize sources, citations, and research notes.
--   **📝 Daily Notes:** Capture fleeting thoughts and daily logs.
--   **✅ Tasks & Todos:** Integrated task management to keep you on track.
--   **📅 Meetings:** Record meeting notes and action items.
--   **📚 Books/Reading:** Track your reading list and book notes.
--   **💻 Code Snippets:** Store and manage useful code blocks.
--   **📔 Journals:** Personal journaling and reflection.
--   **✍️ Articles/Blogs:** Draft and manage blog posts and articles.
--   **🤖 AI Assistance:** Integrated advanced AI models (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, Ollama) for drafting, rewriting, and brainstorming inside your notes.
-## 🏗 Architecture & Tech Stack
+## Features
 
-Envello uses a hybrid architecture leveraging the robustness of Rust and the agility of Angular.
+### Core Modules
 
-### Technology Stack
+| Feature | Library | Description |
+|---------|---------|-------------|
+| Tasks | `@envello/feature-tasks` | Full task management with priority, due dates, subtasks, dependencies, recurring patterns, Pomodoro timer, focus mode, timeline view, voice input, and undo/redo history |
+| Daily Notes | `@envello/feature-daily-notes` | Rich-text journaling with Tiptap editor (tables, task lists, code blocks, images, YouTube embeds), folder-based organization, AI summarization, and note backgrounds |
+| Novels | `@envello/feature-novels` | Long-form fiction editor with chapter management, character/location tracking, synopsis, plot points, front matter, chapter groups, and version history |
+| Projects | `@envello/feature-projects` | Project containers with progress tracking, word counts, team members, linked resources, due dates, and priority |
+| Bookmarks | `@envello/feature-bookmarks` | Bookmark manager with table/grid views, folder organization, pinning, archiving, tagging, and AI integration |
+| Vault | `@envello/feature-vault` | Encrypted credential manager for logins, API keys, SSH keys, database connections, and secure notes |
+| Vendors | `@envello/feature-vendor` | Subscription/vendor tracker with ~60 vendor presets, billing cycles, cost calculation, and renewal reminders |
+| Workspace | `@envello/feature-workspace` | Main dashboard hub with overview, recent activity, voice input, quick-add command bar, and CPU/latency metrics |
 
--   **Frontend:** Angular 19+ (Standalone Components, Signals, Reactive Forms)
--   **Backend/Native Shell:** Tauri (Rust) for cross-platform desktop capability.
--   **Database:** SQLite (Local storage for robust data persistence).
--   **Styling:** Modern CSS3 with CSS Variables for theming (Dark/Light mode support).
+### AI Integration
 
-### High-Level Architecture
+Multi-provider AI assistant powered by LangChain.js:
 
-The application follows a **Modular Monorepo** architecture using Nx:
+- **OpenAI** — GPT-4o, GPT-4o-mini
+- **Anthropic** — Claude 3.5 Sonnet, Claude 3 Haiku
+- **Google** — Gemini 2.0 Flash, Gemini 1.5 Pro
+- **xAI** — Grok
+- **Local** — Ollama (runs models locally)
 
-1.  **Apps (`apps/`)**:
-    -   **`desktop`**: The Tauri-based desktop application.
-    -   **`web`**: The web-based version of the application.
-    -   Both apps act as "shells" that consume shared logic and UI components.
+Integrated into Daily Notes, Tasks, Bookmarks, and Vendor modules for drafting, summarization, rewriting, and brainstorming.
 
-2.  **Shared UI (`libs/ui`)**:
-    -   Contains all reusable UI components, including:
-        -   **Auth**: Login, Sign Up forms.
-        -   **Layout**: Header, Footer, Sidebar.
-        -   **Core**: Buttons, Inputs, Modals, Logos.
-    -   Apps import these components to ensure 100% visual consistency.
+## Architecture
 
-3.  **Core Services (`libs/core`)**:
-    -   **`SqliteService`**: Manages local SQLite database (Desktop only).
-    -   **`TauriService`**: Bridges webview and Rust backend (Desktop only).
-    -   **`AuthService`**: Handles authentication state.
-    -   **`DataService`**: Abstract interface for data peristence strategies.
-
-### Data Flow
-
-```mermaid
-graph LR
-    User[User Interaction] --> UI[@envello/ui Components]
-    UI --> App[App Shell (Desktop/Web)]
-    App --> Service[@envello/core Services]
-    Service --> State[Reactive State (Signals)]
-    
-    subgraph Desktop
-    Service --> SQLite[SqliteService]
-    SQLite -- Tauri --> Rust[Rust Backend]
-    end
-    
-    subgraph Web
-    Service --> WebDB[Supabase / PouchDB]
-    end
-```
-
-## 🛠 Development
-
-### Prerequisites
-
--   **Node.js**: v20+
--   **npm**: v9+
--   **Rust**: Latest stable (for Tauri development)
-
-### Installation
-
-```bash
-# Install NPM dependencies
-npm install
-
-# Check Rust environment (if developing backend)
-cargo --version
-```
-
-### Running Locally
-
-```bash
-# Run the web application
-npx nx serve web
-
-# Run the desktop application
-npx nx serve desktop
-```
-
-## 📦 Build & Deployment
-
-| Command | Description | Output |
-| :--- | :--- | :--- |
-| `npx nx build web` | Build web application | `dist/apps/web` |
-| `npx nx build desktop` | Build desktop frontend | `dist/apps/desktop` |
-| `npx nx run tauri build` | Build native desktop binaries | `src-tauri/target/release` |
-
-## 📂 Project Structure
+### Nx Monorepo Structure
 
 ```
 envello/
 ├── apps/
-│   ├── desktop/         # Main desktop application (Tauri + Angular)
-│   └── web/             # Web application (Angular)
+│   ├── desktop/        # Tauri desktop app
+│   ├── web/            # Angular PWA
+│   ├── admin/          # Admin dashboard
+│   └── landing/        # Marketing page
 ├── libs/
-│   ├── core/            # Singleton services (Auth, SQLite, Logging)
-│   ├── ui/              # Shared UI components (Auth, Layout, Widgets)
-│   ├── feature-*/       # Feature-specific libraries (Tasks, Novels, etc.)
-│   └── domain/          # Shared interfaces and types
-├── src-tauri/           # Rust backend configuration
-└── dist/                # Build artifacts
+│   ├── domain/         # Pure TS interfaces (Task, Note, Novel, Project, etc.)
+│   ├── data/           # Persistence abstraction (SQLite / PouchDB adapters)
+│   ├── state/          # Global state (Angular Signals) — StoreService, BinService, VaultStore, etc.
+│   ├── core/           # Singleton services (Auth, AI, Theme, Tauri bridge, etc.)
+│   ├── ui/             # ~28 reusable UI components (Button, Modal, Sidebar, etc.)
+│   └── feature-*/      # Feature modules (tasks, novels, projects, vault, etc.)
+└── src-tauri/          # Rust backend (Tauri v2)
 ```
 
-## 🗺 Roadmap
+### Dependency Flow
 
-See [ENTERPRISE_IMPROVEMENTS.md](./ENTERPRISE_IMPROVEMENTS.md) for our detailed roadmap towards enterprise-grade attributes, including:
--   Remote Sync & Cloud Backup
--   Enhanced Security & Encryption
--   CI/CD Pipelines
--   Internationalization (i18n)
+```
+Feature libs → UI + State → Core + Data → Domain
+```
 
-## 📄 License
+- **Domain** — Pure interfaces, no framework dependencies
+- **Data** — Persistence contract (`DataService`) with platform implementations
+- **State** — Angular Signals-based global store
+- **Core** — Singleton services (Auth, AI, Theme, Tauri, SQLite, etc.)
+- **UI** — Standalone reusable Angular components
 
-Proprietary/Private.
+### State Management
+
+Angular Signals exclusively throughout the application. No NgRx, no BehaviorSubjects for state.
+
+### Persistence
+
+- **Desktop:** SQLite via `@tauri-apps/plugin-sql` (Rust-backed)
+- **Web:** PouchDB (IndexedDB) + Supabase for cloud sync
+- Adapter pattern in `libs/data` with platform-specific implementations swapped at boot via `app.config.ts`
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Angular v20 (Standalone Components, Signals, Reactive Forms) |
+| Desktop | Tauri v2 (Rust + Webview) |
+| Styling | TailwindCSS v4 + CSS Variables |
+| Rich Text | Tiptap v3 (15+ extensions) |
+| AI | LangChain.js (5 providers) |
+| Database (Desktop) | SQLite |
+| Database (Web) | PouchDB + Supabase |
+| Testing | Jest, Karma |
+| Linting | ESLint with Nx module boundary enforcement |
+| Build | Nx v22.5 + Angular Build |
+
+## Themes
+
+7 theme variants — switchable at runtime:
+
+| Theme | Style | Default On |
+|-------|-------|-----------|
+| Kindle Paperwhite | Warm matte paper, amber accent | Desktop (:root) |
+| Enterprise Dark | Zinc dark, gold accent | Web (:root) |
+| Dark | True black, gold accent | Desktop only |
+| Light | Kindle Paperwhite aesthetic | |
+| Colorful | White bg, colorful palette | |
+| Typewriter | Minimal monochrome, warm paper | |
+| Enterprise Light | Clean professional, gradients | |
+
+## Development
+
+### Prerequisites
+
+- Node.js v22
+- npm v10+
+- Rust (latest stable) — for Tauri desktop development
+
+### Setup
+
+```bash
+npm install
+```
+
+### Run
+
+```bash
+# Web app (browser)
+npx nx serve web
+
+# Desktop app (Tauri)
+npx nx serve desktop
+
+# Admin app
+npx nx serve admin
+
+# Landing page
+npx nx serve landing
+```
+
+### Build
+
+```bash
+npx nx build web          # Web PWA to dist/apps/web
+npx nx build desktop      # Desktop frontend to dist/apps/desktop
+npx nx run tauri build    # Native desktop binaries (src-tauri/target/release)
+```
+
+### Test
+
+```bash
+npx nx run-many -t test
+```
+
+### Lint
+
+```bash
+npx nx run-many -t lint
+```
+
+## Key Libraries
+
+| Package | Path | Purpose |
+|---------|------|---------|
+| `@envello/domain` | `libs/domain` | TypeScript interfaces (Task, Note, Project, etc.) |
+| `@envello/data` | `libs/data` | Persistence abstraction layer |
+| `@envello/state` | `libs/state` | Signals-based global store |
+| `@envello/core` | `libs/core` | Services (Auth, AI, Theme, Tauri, SQLite, etc.) |
+| `@envello/ui` | `libs/ui` | Reusable UI components |
+
+## Documentation
+
+- [Documentation](./DOCUMENTATION.md) — Detailed architecture and dev workflow
+- [Changelog](./CHANGELOG.md) — Release history
+- [AI Context](./AI_CONTEXT.md) — Auto-generated API surface for LLM agents
+- [Agents](./AGENTS.md) — Nx workspace agent instructions
+
+## License
+
+Proprietary / Private.

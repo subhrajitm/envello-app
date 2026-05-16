@@ -3,41 +3,11 @@
   <!-- ═══════════════════════════════════════════════════
        SIDEBAR
   ════════════════════════════════════════════════════ -->
-  <aside class="bm-sidebar">
-
-    <!-- Search -->
-    <div class="bm-sb-search">
-      <span class="material-symbols-outlined bm-sb-search-icon">search</span>
-      <input
-        class="bm-sb-search-input"
-        type="text"
-        placeholder="Search bookmarks…"
-        [value]="searchQuery()"
-        (input)="searchQuery.set($any($event.target).value)"
-      />
-      @if (searchQuery()) {
-        <button class="bm-sb-search-clear" (click)="searchQuery.set('')">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      }
-    </div>
-
-    <!-- Navigation views -->
-    <nav class="bm-sb-nav">
-      @for (item of sidebarItems(); track item.id) {
-        <button
-          class="bm-sb-item"
-          [class.active]="selectedView() === item.id && !selectedFolderId()"
-          (click)="selectedView.set($any(item.id)); selectedFolderId.set('')"
-        >
-          <span class="material-symbols-outlined bm-sb-item-icon">{{ item.icon }}</span>
-          <span class="bm-sb-item-label">{{ item.label }}</span>
-          @if (item.count) {
-            <span class="bm-sb-count">{{ item.count }}</span>
-          }
-        </button>
-      }
-    </nav>
+  <env-feature-sidebar
+    [title]="'Bookmarks'"
+    [navItems]="sidebarItems()"
+    [activeNavId]="activeNavId()"
+    (navItemClick)="onNavItemClick($event)">
 
     <!-- Folders -->
     <div class="bm-sb-section">
@@ -93,7 +63,7 @@
       </div>
     }
 
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ═══════════════════════════════════════════════════
        MAIN CONTENT
@@ -102,17 +72,16 @@
 
     <!-- Toolbar -->
     <div class="bm-toolbar">
-      <!-- Breadcrumb -->
-      <div class="bm-breadcrumb">
-        <span class="bm-bc-root">Bookmarks</span>
-        @if (selectedFolderId()) {
-          <span class="bm-bc-sep">›</span>
-          <span class="bm-bc-leaf">{{ folderName(selectedFolderId()) }}</span>
-        } @else if (selectedView() !== 'all') {
-          <span class="bm-bc-sep">›</span>
-          <span class="bm-bc-leaf">{{ currentViewLabel() }}</span>
-        }
-        <span class="bm-bc-count">{{ filteredBookmarks().length }}</span>
+      <!-- Search -->
+      <div class="bm-toolbar-search">
+        <span class="material-symbols-outlined bm-toolbar-search-icon">search</span>
+        <input
+          class="bm-toolbar-search-input"
+          type="text"
+          placeholder="Search bookmarks…"
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+        />
       </div>
 
       <!-- Actions -->
@@ -585,15 +554,16 @@
 
 <!-- ═══ DELETE CONFIRM ═══ -->
 @if (showDeleteConfirm()) {
-  <env-modal title="Delete Bookmark" [isOpen]="true" (closed)="showDeleteConfirm.set(false)">
-    <div body class="bm-modal-body">
-      <p class="bm-confirm-text">Are you sure you want to delete this bookmark? This cannot be undone.</p>
-    </div>
-    <div footer>
-      <button class="bm-btn-secondary" (click)="showDeleteConfirm.set(false)">Cancel</button>
-      <button class="bm-btn-danger" (click)="confirmDelete()">Delete</button>
-    </div>
-  </env-modal>
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Bookmark"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmDelete()"
+    (cancelled)="showDeleteConfirm.set(false)">
+    This bookmark will be permanently deleted. This cannot be undone.
+</env-confirm-dialog>
 }
 
 <!-- ═══ KEYBOARD SHORTCUTS ═══ -->

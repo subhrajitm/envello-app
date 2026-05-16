@@ -1,46 +1,11 @@
 <div class="vt-view">
 
   <!-- ── SIDEBAR ── -->
-  <aside class="vt-sidebar">
-
-    <!-- Search -->
-    <div class="vt-sb-search">
-      <span class="material-symbols-outlined vt-sb-search-icon">search</span>
-      <input
-        class="vt-sb-search-input"
-        type="text"
-        placeholder="Search credentials…"
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)">
-      @if (searchQuery()) {
-        <button class="vt-sb-search-clear" (click)="searchQuery.set('')">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      }
-    </div>
-
-    <!-- Nav: credential types -->
-    <nav class="vt-sb-nav">
-      <button class="vt-sb-item" [class.active]="!selectedType()" (click)="selectedType.set('')">
-        <span class="material-symbols-outlined vt-sb-item-icon">lock</span>
-        <span class="vt-sb-item-label">All Credentials</span>
-        <span class="vt-sb-count">{{ vaultStore.credentials().length }}</span>
-      </button>
-      @for (entry of allTypeStats(); track entry.type) {
-        <button
-          class="vt-sb-item"
-          [class.active]="selectedType() === entry.type"
-          (click)="selectedType.set(selectedType() === entry.type ? '' : entry.type)">
-          <span
-            class="material-symbols-outlined vt-sb-item-icon"
-            [style.color]="selectedType() === entry.type ? '' : entry.color">
-            {{ entry.icon }}
-          </span>
-          <span class="vt-sb-item-label">{{ entry.label }}</span>
-          <span class="vt-sb-count">{{ entry.count }}</span>
-        </button>
-      }
-    </nav>
+  <env-feature-sidebar
+    [title]="'Vault'"
+    [navItems]="sidebarNavItems()"
+    [activeNavId]="selectedType()"
+    (navItemClick)="onNavItemClick($event)">
 
     <!-- Scope section -->
     <div class="vt-sb-section">
@@ -57,24 +22,21 @@
       </button>
     </div>
 
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="vt-main">
 
     <!-- Toolbar -->
     <div class="vt-toolbar">
-      <div class="vt-breadcrumb">
-        <span class="vt-bc-root">Vault</span>
-        @if (selectedType()) {
-          <span class="vt-bc-sep">›</span>
-          <span class="vt-bc-leaf">{{ getTypeMeta(selectedType()).label }}</span>
-        }
-        @if (selectedScope()) {
-          <span class="vt-bc-sep">›</span>
-          <span class="vt-bc-leaf vt-capitalize">{{ selectedScope() }}</span>
-        }
-        <span class="vt-bc-count">{{ filteredCredentials().length }}</span>
+      <div class="vt-toolbar-search">
+        <span class="material-symbols-outlined vt-toolbar-search-icon">search</span>
+        <input
+          class="vt-toolbar-search-input"
+          type="text"
+          placeholder="Search credentials…"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)" />
       </div>
       <div class="vt-toolbar-right">
         @if (hasActiveFilters()) {
@@ -303,4 +265,17 @@
 
     </div>
   </div>
+}
+
+@if (deleteConfirmId(); as credId) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Credential"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmDelete(credId)"
+    (cancelled)="deleteConfirmId.set(null)">
+    This credential will be permanently deleted. This cannot be undone.
+</env-confirm-dialog>
 }

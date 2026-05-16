@@ -2,11 +2,12 @@ import { Component, signal, computed, inject, HostListener } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { NotificationService, Notification, NotificationType } from '@envello/core';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-notification-center',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmDialogComponent],
   templateUrl: './notification-center.component.html',
   styleUrl: './notification-center.component.css',
   animations: [
@@ -26,6 +27,7 @@ export class NotificationCenterComponent {
 
   isOpen = signal(false);
   activeTab = signal<'all' | 'unread'>('all');
+  clearConfirm = signal(false);
 
   // Get notifications from service
   notifications = this.notificationService.allNotifications;
@@ -69,9 +71,12 @@ export class NotificationCenterComponent {
   }
 
   clearAll() {
-    if (confirm('Are you sure you want to clear all notifications?')) {
-      this.notificationService.clearAll();
-    }
+    this.clearConfirm.set(true);
+  }
+
+  doClearAll() {
+    this.clearConfirm.set(false);
+    this.notificationService.clearAll();
   }
 
   clearRead() {

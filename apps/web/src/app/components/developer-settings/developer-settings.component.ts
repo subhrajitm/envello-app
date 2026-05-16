@@ -1,12 +1,11 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ConfirmDialogComponent } from '@envello/ui';
 import { Router } from '@angular/router';
 import { StoreService } from '@envello/core';
 import { BinService } from '@envello/core';
 import { SessionService } from '@envello/core';
 import { UserService } from '@envello/core';
-import { SnippetsService } from '@envello/core';
-import { BooksService } from '@envello/core';
 import { MeetingsService } from '@envello/core';
 import { ArticleService } from '@envello/core';
 import { ResearchService } from '@envello/core';
@@ -25,7 +24,7 @@ export interface DataTab {
 @Component({
   selector: 'app-developer-settings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmDialogComponent],
   templateUrl: './developer-settings.component.html',
   styleUrl: './developer-settings.component.css'
 })
@@ -35,14 +34,15 @@ export class DeveloperSettingsComponent {
   private bin = inject(BinService);
   private session = inject(SessionService);
   private userService = inject(UserService);
-  private snippets = inject(SnippetsService);
-  private books = inject(BooksService);
   private meetings = inject(MeetingsService);
   private articles = inject(ArticleService);
   private research = inject(ResearchService);
   private db = inject(DatabaseService);
 
   isImporting = signal(false);
+  importConfirm = signal(false);
+  private pendingImportData: unknown = null;
+  pendingImportFileName = '';
 
   activeTab = signal<string>('tasks');
   searchQuery = signal('');
@@ -53,8 +53,6 @@ export class DeveloperSettingsComponent {
     this.makeTab('planning', 'Planning Items', 'timeline', 'Tasks', ['id', 'title', 'tag', 'stage'], this.store.planningItems()),
     this.makeTab('activities', 'Activities', 'history', 'System', ['id', 'text', 'time', 'type'], this.store.activities()),
     this.makeTab('novels', 'Novels', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.novels()),
-    this.makeTab('snippets', 'Code Snippets', 'code', 'Content', ['id', 'title', 'lang', 'tags'], this.snippets.snippets()),
-    this.makeTab('books', 'Books', 'menu_book', 'Content', ['id', 'title', 'author', 'status', 'progress'], this.books.books()),
     this.makeTab('meetings', 'Meetings', 'event', 'Content', ['id', 'title', 'date', 'startTime', 'status'], this.meetings.meetings()),
     this.makeTab('articles', 'Articles', 'article', 'Content', ['id', 'title', 'platform', 'pipeline', 'wordCount'], this.articles.articles()),
     this.makeTab('research-libraries', 'Research Libraries', 'folder', 'Research', ['id', 'name', 'description'], this.research.libraries()),
@@ -208,19 +206,28 @@ export class DeveloperSettingsComponent {
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
-
-      if (confirm(`Are you sure you want to import data from "${file.name}"? This will overwrite existing data.`)) {
-        await this.db.importData(data);
-        alert('Import successful! Please reload the page.');
-        window.location.reload();
-      }
+      this.pendingImportData = JSON.parse(text);
+      this.pendingImportFileName = file.name;
+      this.importConfirm.set(true);
     } catch (e) {
-      console.error('Import failed', e);
-      alert('Import failed: ' + String(e));
+      console.error('Import parse failed', e);
     } finally {
       this.isImporting.set(false);
-      input.value = ''; // Reset input
+      input.value = '';
+    }
+  }
+
+  async doImport() {
+    this.importConfirm.set(false);
+    if (!this.pendingImportData) return;
+    try {
+      await this.db.importData(this.pendingImportData);
+      window.location.reload();
+    } catch (e) {
+      console.error('Import failed', e);
+    } finally {
+      this.pendingImportData = null;
+      this.pendingImportFileName = '';
     }
   }
 }

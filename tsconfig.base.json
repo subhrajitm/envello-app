@@ -19,8 +19,6 @@
       "@envello/core": ["libs/core/src/index.ts"],
       "feature-projects": ["libs/feature-projects/src/index.ts"],
       "@envello/feature-projects": ["libs/feature-projects/src/index.ts"],
-      "@envello/feature-books": ["libs/feature-books/src/index.ts"],
-
       "@envello/feature-vault": ["libs/feature-vault/src/index.ts"],
       "@envello/feature-vendor": ["libs/feature-vendor/src/index.ts"],
       "@envello/feature-daily-notes": ["libs/feature-daily-notes/src/index.ts"],

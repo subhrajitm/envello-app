@@ -1,12 +1,9 @@
-import { Component, signal, HostListener, inject, computed, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, signal, HostListener, inject, computed, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
-import { StoreService, Task, Note, Novel } from '@envello/core';
+import { StoreService, Task, Note, Novel, Bookmark } from '@envello/core';
 import { ArticleService } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { MeetingsService, MEETING_COLORS } from '@envello/core';
-
 import { NovelContentService } from '@envello/core';
 
 type OptionCategory = 'create' | 'plan' | 'library';
@@ -36,9 +33,10 @@ const MAX_RECENT_ITEMS = 4;
 @Component({
     selector: 'app-add-new-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [],
     templateUrl: './add-new-modal.component.html',
-    styleUrl: './add-new-modal.component.css'
+    styleUrl: './add-new-modal.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
@@ -51,7 +49,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private meetingsService = inject(MeetingsService);
 
     private novelContentService = inject(NovelContentService);
-
     isOpen = signal(false);
     searchQuery = signal('');
     isCreating = signal(false);
@@ -68,16 +65,18 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     readonly options: AddNewOption[] = [
         // Plan
-        { id: 'task',    title: 'Task',    description: 'Add a new task or to-do',       icon: 'check_circle', route: '/tasks',       color: '#7eb3d4', category: 'plan',    shortcut: '1', keywords: ['task', 'todo', 'checklist'], tag: 'TASK' },
-        { id: 'meeting', title: 'Meeting', description: 'Schedule a new meeting',         icon: 'groups',       route: '/meetings',    color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],       tag: 'COLLAB' },
-        // Today — note
-        { id: 'note',    title: 'Note',    description: 'Quick note for today',           icon: 'description',  route: '/daily-notes', color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],    tag: 'NOTE' },
+        { id: 'task',         title: 'Task',         description: 'Add a new task or to-do',            icon: 'check_circle',  route: '/tasks',         color: '#7eb3d4', category: 'plan',    shortcut: '1', keywords: ['task', 'todo', 'checklist'],           tag: 'TASK' },
+        { id: 'meeting',      title: 'Meeting',      description: 'Schedule a new meeting',              icon: 'groups',        route: '/meetings',      color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],                 tag: 'COLLAB' },
+        { id: 'note',         title: 'Note',         description: 'Quick note for today',                icon: 'edit_note',     route: '/daily-notes',   color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],              tag: 'NOTE' },
+        { id: 'project',      title: 'Project',      description: 'Create a new project workspace',      icon: 'folder',        route: '/projects',      color: '#60a5fa', category: 'plan',    shortcut: '',  keywords: ['project', 'workspace', 'team'],        tag: 'PROJECT' },
         // Library
-        { id: 'research',title: 'Research', description: 'Create a new research library', icon: 'science',      route: '/research',    color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],       tag: 'RESEARCH' },
-
+        { id: 'research',     title: 'Research',     description: 'Create a new research library',       icon: 'science',       route: '/research',      color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],                 tag: 'RESEARCH' },
+        { id: 'bookmark',     title: 'Bookmark',     description: 'Save a link or resource',             icon: 'bookmark',      route: '/bookmarks',     color: '#b48ce8', category: 'library', shortcut: '5', keywords: ['bookmark', 'link', 'url', 'save'],     tag: 'BOOKMARK' },
+        { id: 'vault',        title: 'Vault Entry',  description: 'Store a secret or credential',        icon: 'lock',          route: '/vault',         color: '#f59e0b', category: 'library', shortcut: '',  keywords: ['vault', 'credential', 'secret', 'key'], tag: 'VAULT' },
+        { id: 'subscription', title: 'Subscription', description: 'Track a vendor or subscription',      icon: 'credit_card',   route: '/subscriptions', color: '#34d399', category: 'library', shortcut: '',  keywords: ['subscription', 'vendor', 'billing'],   tag: 'VENDOR' },
         // Create
-        { id: 'article', title: 'Draft',    description: 'Write a new article or draft',  icon: 'article',      route: '/articles',    color: '#a8d5a8', category: 'create',  shortcut: '7', keywords: ['article', 'blog', 'draft'],  tag: 'DRAFT' },
-        { id: 'novel',   title: 'Writing',  description: 'Start a new writing project',   icon: 'menu_book',    route: '/novels',      color: '#c4a8d8', category: 'create',  shortcut: '8', keywords: ['novel', 'book', 'story'],    tag: 'WRITING' },
+        { id: 'article',      title: 'Draft',        description: 'Write a new article or draft',        icon: 'article',       route: '/articles',      color: '#a8d5a8', category: 'create',  shortcut: '7', keywords: ['article', 'blog', 'draft'],            tag: 'DRAFT' },
+        { id: 'novel',        title: 'Writing',      description: 'Start a new writing project',         icon: 'menu_book',     route: '/novels',        color: '#c4a8d8', category: 'create',  shortcut: '8', keywords: ['novel', 'book', 'story', 'writing'],   tag: 'WRITING' },
     ];
 
     readonly sidebarCategories: { id: SidebarCategoryId; label: string; icon: string }[] = [
@@ -90,12 +89,16 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Computed: item counts for each type
     readonly itemCounts = computed(() => ({
-        note: this.store.notes().length,
-        task: this.store.tasks().length,
-        novel: this.store.novels().length,
-        article: this.articleService.articles().length,
-        research: this.researchService.libraries().length,
-        meeting: this.meetingsService.meetings().length,
+        note:         this.store.notes().length,
+        task:         this.store.tasks().length,
+        novel:        this.store.novels().length,
+        article:      this.articleService.articles().length,
+        research:     this.researchService.libraries().length,
+        meeting:      this.meetingsService.meetings().length,
+        bookmark:     this.store.bookmarks().length,
+        space:      this.store.spaces().length,
+        vault:        0,
+        subscription: 0,
     }));
 
     // Computed: filtered options based on search
@@ -268,6 +271,14 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                     case 'meeting':
                         this.createMeeting();
                         break;
+                    case 'bookmark':
+                        this.createBookmark();
+                        break;
+                    case 'project':
+                    case 'vault':
+                    case 'subscription':
+                        this.router.navigate([option.route]);
+                        break;
 
                     default:
                         this.router.navigate([option.route]);
@@ -396,7 +407,17 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         this.router.navigate(['/meetings']);
     }
 
-
+    private createBookmark() {
+        const bookmark: Bookmark = {
+            id: `bm-${Date.now()}`,
+            title: 'New Bookmark',
+            url: 'https://',
+            createdAt: new Date().toISOString(),
+            tags: [],
+        };
+        this.store.addBookmark(bookmark);
+        this.router.navigate(['/bookmarks']);
+    }
 
     getOptionCount(optionId: string): number {
         const counts = this.itemCounts();

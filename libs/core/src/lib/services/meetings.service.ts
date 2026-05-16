@@ -125,7 +125,7 @@ export const MEETING_COLORS = [
 ];
 
 export type MeetingViewFilter = 'all' | 'today' | 'upcoming' | 'past' | 'cancelled';
-export type MeetingViewMode = 'list' | 'calendar' | 'kanban';
+export type MeetingViewMode = 'list' | 'calendar' | 'kanban' | 'table';
 export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attendees';
 
 @Injectable({

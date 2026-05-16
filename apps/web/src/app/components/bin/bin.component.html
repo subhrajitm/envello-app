@@ -1,77 +1,176 @@
-<div class="bin-page flex flex-col h-full">
-  <header class="bin-header flex items-center justify-between">
-    <div class="bin-header-left">
-      <h1>Bin</h1>
-      <p class="bin-subtitle">
-        Soft‑deleted items from across Envello. Items are only permanently removed from here.
-      </p>
-    </div>
-    <div class="bin-header-actions" *ngIf="items().length > 0">
-      <span class="bin-count">{{ items().length }} items</span>
-      <env-button variant="danger" icon="delete_sweep" (clicked)="emptyBin()" [disabled]="items().length === 0">
-        Empty Bin
-      </env-button>
-    </div>
-  </header>
+<div class="bin-page">
 
-  <section class="bin-content" *ngIf="items().length > 0; else emptyState">
-    <table class="bin-table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Scope</th>
-          <th>Deleted</th>
-          <th class="col-actions"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of sortedItems(); trackBy: trackById">
-          <td>
-            <div class="bin-item-main">
-              <div class="bin-item-title">
-                {{ item.title || item.originalId }}
-              </div>
-              <div class="bin-item-meta">
-                <span class="type-pill type-{{ item.type }}">
-                  {{ formatType(item.type) }}
-                </span>
-                <span class="meta-separator">•</span>
-                <span class="meta-id">ID: {{ item.originalId }}</span>
-              </div>
+    <!-- Header -->
+    <div class="bin-header">
+        <div class="bin-header-top">
+            <button class="back-btn" (click)="goBack()">
+                <span class="material-symbols-outlined">arrow_back</span>
+                BACK TO WORKSPACE
+            </button>
+            <div class="bin-breadcrumbs">SYSTEM / RECORDS / RECYCLE BIN</div>
+        </div>
+        <div class="bin-title-row">
+            <h1>Recycle Bin</h1>
+            <div class="bin-controls">
+                <div class="search-input">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" placeholder="Search deleted items..." (input)="updateSearch($event)" />
+                </div>
+                @if (totalCount() > 0) {
+                <button class="empty-btn" (click)="openEmptyConfirm()">
+                    <span class="material-symbols-outlined">delete_sweep</span>
+                    EMPTY BIN
+                </button>
+                }
             </div>
-          </td>
-          <td>
-            <div class="bin-scope">
-              <span class="scope-label">Context</span>
-              <span class="scope-value">{{ item.contextId || 'Global' }}</span>
-            </div>
-          </td>
-          <td>
-            <div class="bin-deleted">
-              <span class="deleted-primary">
-                {{ item.deletedAt | date: 'medium' }}
-              </span>
-              <span class="deleted-secondary">
-                {{ item.deletedAt | date: 'shortTime' }}
-              </span>
-            </div>
-          </td>
-          <td class="actions">
-            <env-button variant="danger" icon="delete_forever" size="sm" (clicked)="permanentlyDelete(item.id)">
-              Delete
-            </env-button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+        </div>
+        <div class="bin-filters-row">
+            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">ALL</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">TASKS</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">NOTES</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'novel'" (click)="setFilter('novel')">NOVELS</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">MEETINGS</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'novel-chapter'" (click)="setFilter('novel-chapter')">CHAPTERS</button>
+        </div>
+    </div>
 
-  <ng-template #emptyState>
-    <env-empty-state
-      icon="delete_outline"
-      title="No items in Bin"
-      description="Deleted notes, chapters, characters, and locations will appear here before permanent removal. This acts as a safety net so teams can review destructive actions."
-    />
-  </ng-template>
+    <!-- Stats Bar -->
+    <div class="bin-stats-bar">
+        <div class="stat-item">
+            <span class="stat-label">DISPLAYING</span>
+            <span class="stat-value">{{ visibleCount() }} <span class="stat-sub">/ {{ totalCount() }}</span></span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">RESTORABLE</span>
+            <span class="stat-value status-green">{{ restorableCount() }}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">OLDEST ITEM</span>
+            <span class="stat-value">{{ oldestItem() ? formatRelativeTime(oldestItem()!.deletedAt) : '—' }}</span>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bin-container">
+        <div class="bin-table-header">
+            <div class="col-icon">TYPE</div>
+            <div class="col-item">ITEM / DETAILS</div>
+            <div class="col-time">DELETED</div>
+            <div class="col-scope">SCOPE</div>
+            <div class="col-actions">ACTIONS</div>
+        </div>
+
+        <div class="bin-list">
+            @if (filteredItems().length === 0) {
+            <div class="bin-empty-state">
+                <span class="material-symbols-outlined bin-empty-icon">delete_outline</span>
+                <div class="bin-empty-title">
+                    {{ totalCount() === 0 ? 'Bin is empty' : 'No items match the filter' }}
+                </div>
+                <div class="bin-empty-body">
+                    {{ totalCount() === 0
+                        ? 'Deleted tasks, notes, novels, and meetings will appear here.'
+                        : 'Try selecting a different filter or clearing the search.' }}
+                </div>
+            </div>
+            }
+
+            @for (item of filteredItems(); track item.id) {
+            <div class="bin-row-group">
+                <div class="bin-row" (click)="toggleRow(item.id)" [class.expanded]="expandedRowId() === item.id">
+                    <div class="col-icon">
+                        <div class="bin-icon-wrapper type-{{ item.type }}">
+                            <span class="material-symbols-outlined bin-icon">{{ getIconForType(item.type) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-item">
+                        <div class="bin-item-title">{{ item.title || item.originalId }}</div>
+                        <div class="bin-item-meta">
+                            <span class="type-badge type-{{ item.type }}">{{ formatType(item.type) }}</span>
+                            <span class="meta-sep">•</span>
+                            <span class="meta-id">ID: {{ item.originalId | slice:0:8 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-time">
+                        <div class="time-primary">{{ formatRelativeTime(item.deletedAt) }}</div>
+                        <div class="time-secondary">{{ item.deletedAt | date:'mediumDate' }}</div>
+                    </div>
+                    <div class="col-scope">
+                        <div class="scope-label">CONTEXT</div>
+                        <div class="scope-value">{{ item.contextId || 'Global' }}</div>
+                    </div>
+                    <div class="col-actions" (click)="$event.stopPropagation()">
+                        @if (canRestore(item.type)) {
+                        <button class="action-btn restore-btn"
+                                [class.loading]="restoringId() === item.id"
+                                [disabled]="restoringId() === item.id"
+                                (click)="openRestoreConfirm(item.id, item.title || item.originalId)"
+                                title="Restore item">
+                            <span class="material-symbols-outlined">restore_from_trash</span>
+                            {{ restoringId() === item.id ? '...' : 'RESTORE' }}
+                        </button>
+                        }
+                        <button class="action-btn delete-btn"
+                                (click)="openDeleteConfirm(item.id, item.title || item.originalId)"
+                                title="Delete permanently">
+                            <span class="material-symbols-outlined">delete_forever</span>
+                        </button>
+                        <span class="material-symbols-outlined expand-icon">expand_more</span>
+                    </div>
+                </div>
+
+                @if (expandedRowId() === item.id) {
+                <div class="bin-details-panel">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">FULL BIN ID</span>
+                            <span class="detail-value">{{ item.id }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">ORIGINAL ID</span>
+                            <span class="detail-value">{{ item.originalId }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">DELETED AT</span>
+                            <span class="detail-value">{{ item.deletedAt | date:'medium' }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">RESTORABLE</span>
+                            <span class="detail-value" [class.detail-yes]="canRestore(item.type)" [class.detail-no]="!canRestore(item.type)">
+                                {{ canRestore(item.type) ? 'YES' : 'NO (complex type)' }}
+                            </span>
+                        </div>
+                        @for (field of payloadPreview(item); track field.label) {
+                        <div class="detail-item">
+                            <span class="detail-label">{{ field.label }}</span>
+                            <span class="detail-value">{{ field.value }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+
 </div>
 
+@if (confirmDialog(); as dialog) {
+<env-confirm-dialog
+    [isOpen]="true"
+    [title]="dialog.mode === 'restore' ? 'Restore Item' : dialog.mode === 'delete' ? 'Delete Permanently' : 'Empty Bin'"
+    [icon]="dialog.mode === 'restore' ? 'restore_from_trash' : dialog.mode === 'empty' ? 'delete_sweep' : 'delete_forever'"
+    [variant]="dialog.mode === 'restore' ? 'success' : 'danger'"
+    [confirmLabel]="dialog.mode === 'restore' ? 'Restore' : dialog.mode === 'delete' ? 'Delete Forever' : 'Empty Bin'"
+    (confirmed)="confirmAction()"
+    (cancelled)="cancelConfirm()">
+    @if (dialog.mode === 'restore') {
+        Restore <strong>{{ dialog.itemTitle }}</strong> back to its original location?
+    } @else if (dialog.mode === 'delete') {
+        <strong>{{ dialog.itemTitle }}</strong> will be permanently deleted.<br>This action cannot be undone.
+    } @else {
+        All <strong>{{ totalCount() }}</strong> item{{ totalCount() !== 1 ? 's' : '' }} will be permanently deleted.<br>This action cannot be undone.
+    }
+</env-confirm-dialog>
+}

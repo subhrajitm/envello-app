@@ -3,7 +3,6 @@ export * from './lib/services/tauri.service';
 export * from './lib/services/logging.service';
 export * from './lib/services/article.service';
 export * from './lib/services/bin.service';
-export * from './lib/services/books.service';
 
 export * from './lib/services/meetings.service';
 export * from './lib/services/calendar-sync.service';

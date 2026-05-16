@@ -1,11 +1,7 @@
 <div class="wr-view">
 
   <!-- ── SIDEBAR ── -->
-  <aside class="wr-sb">
-    <div class="wr-sb-header">
-      <h1 class="wr-sb-title">Write</h1>
-      <p class="wr-sb-stats">{{ store.novels().length }} piece{{ store.novels().length !== 1 ? 's' : '' }}</p>
-    </div>
+  <env-feature-sidebar [title]="'Write'">
 
     <nav class="wr-sb-nav">
       <button class="wr-sb-item" [class.active]="!selectedType() && statusFilter() === 'ALL'"
@@ -60,36 +56,24 @@
         <span class="wr-sb-stat-value">{{ avgCompletion() }}%</span>
       </div>
     </div>
-  </aside>
+  </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="wr-main">
 
     <!-- Toolbar -->
     <div class="wr-toolbar">
-      <div class="wr-bc">
-        <span class="wr-bc-root">Write</span>
-        @if (selectedType()) {
-          <span class="wr-bc-sep">›</span>
-          <span class="wr-bc-leaf">{{ getWritingTypeLabel(selectedType()) }}</span>
+      <div class="wr-search-wrap">
+        <span class="material-symbols-outlined wr-search-icon">search</span>
+        <input class="wr-search-input" type="text" placeholder="Search pieces…"
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+        @if (searchQuery()) {
+          <button class="wr-search-clear" (click)="searchQuery.set('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         }
-        @if (statusFilter() !== 'ALL') {
-          <span class="wr-bc-sep">›</span>
-          <span class="wr-bc-leaf">{{ getStatusMeta(statusFilter()).label }}</span>
-        }
-        <span class="wr-bc-count">{{ filteredNovels().length }}</span>
       </div>
       <div class="wr-toolbar-right">
-        <div class="wr-search-wrap">
-          <span class="material-symbols-outlined wr-search-icon">search</span>
-          <input class="wr-search-input" type="text" placeholder="Search pieces…"
-            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-          @if (searchQuery()) {
-            <button class="wr-search-clear" (click)="searchQuery.set('')">
-              <span class="material-symbols-outlined">close</span>
-            </button>
-          }
-        </div>
         @if (hasActiveFilters()) {
           <button class="wr-tool-btn" title="Clear filters" (click)="clearFilters()">
             <span class="material-symbols-outlined">filter_list_off</span>
@@ -399,33 +383,16 @@
 
 <!-- ── DELETE MODAL ── -->
 @if (showDeleteModal()) {
-  <div class="wra-backdrop" (click)="cancelDeleteNovel()">
-    <div class="wra-modal wra-modal--sm" (click)="$event.stopPropagation()">
-      <div class="wra-header">
-        <div class="wra-header-left">
-          <span class="material-symbols-outlined wra-header-icon" style="color:#ef4444">delete</span>
-          <h2 class="wra-header-title">Delete Piece</h2>
-        </div>
-        <button class="wra-close-btn" (click)="cancelDeleteNovel()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <div class="wra-delete-body">
-        @if (novelToDelete(); as novel) {
-          <p class="wra-delete-msg">Are you sure you want to delete <strong>"{{ novel.title }}"</strong>?</p>
-          <p class="wra-delete-hint">This action cannot be undone. You can restore it from the bin later.</p>
-        }
-      </div>
-      <div class="wra-footer">
-        <div></div>
-        <div class="wra-footer-actions">
-          <button class="wra-cancel-btn" (click)="cancelDeleteNovel()">Cancel</button>
-          <button class="wra-delete-btn" (click)="confirmDeleteNovel()">
-            <span class="material-symbols-outlined">delete</span>
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Piece"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmDeleteNovel()"
+    (cancelled)="cancelDeleteNovel()">
+    @if (novelToDelete(); as novel) {
+        Delete <strong>"{{ novel.title }}"</strong>? You can restore it from the bin later.
+    }
+</env-confirm-dialog>
 }

@@ -2,7 +2,7 @@ import { Component, signal, computed, inject, HostListener } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResearchService, ResearchLibrary, ResearchSource } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, FeatureSidebarComponent } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries';
 
@@ -23,7 +23,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 @Component({
   selector: 'app-research',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, FeatureSidebarComponent],
   templateUrl: './research.component.html',
   styleUrl: './research.component.css'
 })

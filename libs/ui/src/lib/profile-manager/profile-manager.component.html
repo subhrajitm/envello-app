@@ -143,29 +143,15 @@
 </env-modal>
 
 <!-- Delete Profile Modal -->
-<env-modal
-    [isOpen]="isDeleteModalOpen()"
-    title="Delete Project?"
-    size="sm"
-    (closed)="cancelDelete()"
->
-    <div body class="flex flex-col gap-4">
-        <div class="delete-warning p-4 rounded-lg flex gap-3" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 16px;">
-            <span class="material-symbols-outlined" style="color: #ef4444; font-size: 20px;">warning</span>
-            <div class="warning-content">
-                <h4 style="color: #ef4444; margin: 0 0 4px 0; font-size: 13px; font-weight: 600;">Proceed with caution</h4>
-                <p style="color: var(--text-secondary); font-size: 12px; line-height: 1.5; margin: 0;">
-                    All data in this project — notes, tasks, and subscriptions — will be permanently <strong>deleted and unrecoverable</strong>.
-                </p>
-            </div>
-        </div>
-    </div>
-    <ng-container footer>
-        <button class="btn-cancel" (click)="cancelDelete()">
-            Cancel
-        </button>
-        <button class="btn-primary" (click)="confirmDelete()" style="padding: 8px 16px; border-radius: 6px; background: #ef4444; color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer;">
-            Delete Permanently
-        </button>
-    </ng-container>
-</env-modal>
+@if (isDeleteModalOpen()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Project"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete Permanently"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()">
+    All data in this project — notes, tasks, and subscriptions — will be permanently <strong>deleted and unrecoverable</strong>.
+</env-confirm-dialog>
+}

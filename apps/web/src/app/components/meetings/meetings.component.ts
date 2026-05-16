@@ -15,10 +15,11 @@ import {
   CalendarConnection,
   PROVIDER_META,
 } from '@envello/core';
+import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -27,12 +28,15 @@ export class MeetingsComponent {
   syncService = inject(CalendarSyncService);
   readonly providerMeta = PROVIDER_META;
   
+  // Delete confirm
+  deleteMeetingTarget = signal<Meeting | null>(null);
+
   // View state
-  viewMode = signal<MeetingViewMode>('list');
+  viewMode = signal<MeetingViewMode>('calendar');
   viewFilter = signal<MeetingViewFilter>('all');
   
   // Filters
-  selectedProject = signal('');
+  selectedSpace = signal('');
   selectedTimeRange = signal('All Time');
   sortBy = signal<'date' | 'title' | 'attendees'>('date');
   sortDirection = signal<'asc' | 'desc'>('asc');
@@ -40,7 +44,7 @@ export class MeetingsComponent {
   
   // Calendar view state
   calendarDate = signal<Date>(new Date());
-  calendarView = signal<'month' | 'week'>('month');
+  calendarView = signal<'day' | 'week' | 'month' | 'year'>('month');
   
   // Create meeting modal
   showCreateModal = signal(false);
@@ -109,6 +113,18 @@ export class MeetingsComponent {
   // Keyboard shortcuts help
   showShortcutsHelp = signal(false);
 
+  // AI Assistant
+  showAssistant = signal(false);
+  aiLoading = signal(false);
+  aiMessages = signal<AiPanelMessage[]>([]);
+  readonly aiSuggestions = [
+    "What meetings do I have today?",
+    "Summarise this week's schedule",
+    "Which meetings have open action items?",
+    "What's my most common meeting type?",
+    "Show upcoming high-priority meetings",
+  ];
+
   // Calendar sync modal
   showSyncModal = signal(false);
   syncActiveProvider = signal<CalendarConnection['provider']>('google');
@@ -156,10 +172,10 @@ export class MeetingsComponent {
     }
     
     // Apply project filter
-    const proj = this.selectedProject();
+    const proj = this.selectedSpace();
     if (proj) {
       meetings = meetings.filter(m =>
-        proj === 'No project' ? !m.project : m.project === proj
+        proj === 'No space' ? !m.project : m.project === proj
       );
     }
     
@@ -332,13 +348,97 @@ export class MeetingsComponent {
       totalCompleted: all.filter(m => m.status === 'completed').length,
     };
   });
-  
+
+  readonly sidebarNavItems = computed(() => {
+    const s = this.stats();
+    return [
+      { id: 'all',       icon: 'event_note',  label: 'All',       count: this.meetingsService.meetings().length },
+      { id: 'today',     icon: 'today',       label: 'Today',     count: s.todayCount },
+      { id: 'upcoming',  icon: 'upcoming',    label: 'Upcoming',  count: s.totalScheduled },
+      { id: 'past',      icon: 'history',     label: 'Past',      count: s.totalCompleted },
+      { id: 'cancelled', icon: 'event_busy',  label: 'Cancelled' },
+    ];
+  });
+
+  onNavItemClick(id: string) {
+    this.viewFilter.set(id as MeetingViewFilter);
+    this.selectedSpace.set('');
+  }
+
+  // ── Table view ──────────────────────────────────────────────────────────────
+  readonly tableColumns: EnvTableColumn[] = [
+    { key: 'title',    header: 'Title',    sortable: true },
+    { key: 'type',     header: 'Type',     type: 'badge', badgeMap: {
+      'video':     { label: 'Video',     dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
+      'phone':     { label: 'Phone',     dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)',  textColor: '#8b5cf6' },
+      'in-person': { label: 'In Person', dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+      'hybrid':    { label: 'Hybrid',    dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
+    }},
+    { key: 'date',     header: 'Date',     sortable: true },
+    { key: 'time',     header: 'Time' },
+    { key: 'space',  header: 'Project' },
+    { key: 'attendees',header: 'Attendees' },
+    { key: 'status',   header: 'Status',   type: 'badge', badgeMap: {
+      'scheduled':  { label: 'Scheduled',  dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
+      'in_progress':{ label: 'In Progress',dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
+      'completed':  { label: 'Done',       dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+      'cancelled':  { label: 'Cancelled',  dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
+    }},
+    { key: 'priority', header: 'Priority', type: 'badge', badgeMap: {
+      'HIGH':   { label: 'High',   dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
+      'MEDIUM': { label: 'Medium', dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)', textColor: '#f97316' },
+      'LOW':    { label: 'Low',    dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+    }},
+  ];
+
+  readonly tableActions: EnvTableAction[] = [
+    { key: 'view',      label: 'View',      icon: 'visibility' },
+    { key: 'duplicate', label: 'Duplicate', icon: 'content_copy' },
+    { key: 'cancel',    label: 'Cancel',    icon: 'event_busy' },
+    { key: 'delete',    label: 'Delete',    icon: 'delete', danger: true },
+  ];
+
+  readonly tableRows = computed(() =>
+    this.filteredMeetings().map(m => ({
+      id:        m.id,
+      title:     m.title,
+      type:      m.meetingType,
+      date:      m.date,
+      time:      m.startTime,
+      space:   m.project || '—',
+      attendees: m.attendees.length,
+      status:    m.status,
+      priority:  m.priority,
+    }))
+  );
+
+  onTableRowClick(row: { id: string }) {
+    const meeting = this.meetingsService.meetings().find(m => m.id === row.id);
+    if (meeting) this.openDetailsModal(meeting);
+  }
+
+  onTableAction(event: EnvTableActionEvent) {
+    const meeting = this.meetingsService.meetings().find(m => m.id === event.row['id']);
+    if (!meeting) return;
+    switch (event.actionKey) {
+      case 'view':      this.openDetailsModal(meeting); break;
+      case 'duplicate': this.duplicateMeeting(meeting); break;
+      case 'cancel':    this.cancelMeeting(meeting); break;
+      case 'delete':    this.deleteMeetingTarget.set(meeting); break;
+    }
+  }
+
+  onTableSort(event: EnvTableSortEvent) {
+    this.sortBy.set(event.key as 'date' | 'title' | 'attendees');
+    this.sortDirection.set(event.direction);
+  }
+
   /** Meetings grouped by project for sidebar */
   meetingsByProject = computed(() => {
     const map = new Map<string, number>();
     for (const m of this.meetingsService.meetings()) {
       if (m.status === 'cancelled') continue;
-      const key = m.project || 'No project';
+      const key = m.project || 'No space';
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return Array.from(map.entries())
@@ -347,7 +447,7 @@ export class MeetingsComponent {
   });
 
   /** Whether any meetings have no project (for filter dropdown) */
-  hasNoProject = computed(() => this.meetingsByProject().some((p) => p[0] === 'No project'));
+  hasNoSpace = computed(() => this.meetingsByProject().some((p) => p[0] === 'No space'));
 
   /** The very next scheduled meeting */
   nextMeeting = computed((): Meeting | null => {
@@ -471,7 +571,7 @@ export class MeetingsComponent {
     
     // V: Cycle view modes
     if (event.key === 'v') {
-      const modes: MeetingViewMode[] = ['list', 'calendar', 'kanban'];
+      const modes: MeetingViewMode[] = ['calendar', 'table'];
       const currentIndex = modes.indexOf(this.viewMode());
       this.viewMode.set(modes[(currentIndex + 1) % modes.length]);
     }
@@ -583,7 +683,13 @@ export class MeetingsComponent {
   
   // Meeting actions
   deleteMeeting(meeting: Meeting) {
-    if (confirm('Are you sure you want to delete this meeting?')) {
+    this.deleteMeetingTarget.set(meeting);
+  }
+
+  doDeleteMeeting() {
+    const meeting = this.deleteMeetingTarget();
+    this.deleteMeetingTarget.set(null);
+    if (meeting) {
       this.meetingsService.deleteMeeting(meeting.id);
       this.closeDetailsModal();
     }
@@ -828,41 +934,138 @@ export class MeetingsComponent {
     });
   }
   
+  // Calendar computed
+  readonly calendarHours = Array.from({ length: 24 }, (_, i) => i);
+
+  readonly calendarTitle = computed(() => {
+    const d = this.calendarDate();
+    switch (this.calendarView()) {
+      case 'day':
+        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      case 'week': {
+        const days = this.weekDays();
+        const first = days[0], last = days[6];
+        return first.getMonth() === last.getMonth()
+          ? first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+          : `${first.toLocaleDateString('en-US', { month: 'short' })} – ${last.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+      }
+      case 'month': return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      case 'year':  return d.getFullYear().toString();
+    }
+  });
+
+  readonly weekDays = computed(() => {
+    const d = this.calendarDate();
+    const sun = new Date(d);
+    sun.setDate(d.getDate() - d.getDay());
+    return Array.from({ length: 7 }, (_, i) => { const day = new Date(sun); day.setDate(sun.getDate() + i); return day; });
+  });
+
+  readonly yearMonths = computed(() => {
+    const year = this.calendarDate().getFullYear();
+    return Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
+  });
+
   // Calendar methods
-  previousMonth() {
-    const current = this.calendarDate();
-    this.calendarDate.set(new Date(current.getFullYear(), current.getMonth() - 1, 1));
+  navigatePrev() {
+    const d = this.calendarDate();
+    switch (this.calendarView()) {
+      case 'day':   this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1)); break;
+      case 'week':  this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7)); break;
+      case 'month': this.calendarDate.set(new Date(d.getFullYear(), d.getMonth() - 1, 1)); break;
+      case 'year':  this.calendarDate.set(new Date(d.getFullYear() - 1, 0, 1)); break;
+    }
   }
-  
-  nextMonth() {
-    const current = this.calendarDate();
-    this.calendarDate.set(new Date(current.getFullYear(), current.getMonth() + 1, 1));
+
+  navigateNext() {
+    const d = this.calendarDate();
+    switch (this.calendarView()) {
+      case 'day':   this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)); break;
+      case 'week':  this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7)); break;
+      case 'month': this.calendarDate.set(new Date(d.getFullYear(), d.getMonth() + 1, 1)); break;
+      case 'year':  this.calendarDate.set(new Date(d.getFullYear() + 1, 0, 1)); break;
+    }
   }
-  
-  goToToday() {
-    this.calendarDate.set(new Date());
-  }
-  
+
+  previousMonth() { this.navigatePrev(); }
+  nextMonth()     { this.navigateNext(); }
+
+  goToToday() { this.calendarDate.set(new Date()); }
+
   isToday(date: Date): boolean {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+    const t = new Date();
+    return date.getFullYear() === t.getFullYear() && date.getMonth() === t.getMonth() && date.getDate() === t.getDate();
   }
-  
+
   isCurrentMonth(date: Date): boolean {
     return date.getMonth() === this.calendarDate().getMonth();
   }
+
+  getMeetingsForDay(date: Date): Meeting[] {
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    return this.meetingsService.meetings()
+      .filter(m => m.date === dateStr && m.status !== 'cancelled')
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }
+
+  getMeetingTopPx(startTime: string): number {
+    const [h, m] = startTime.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  getMeetingHeightPx(startTime: string, endTime?: string, duration?: number): number {
+    if (endTime) {
+      const [sh, sm] = startTime.split(':').map(Number);
+      const [eh, em] = endTime.split(':').map(Number);
+      return Math.max((eh * 60 + em) - (sh * 60 + sm), 30);
+    }
+    return Math.max(duration ?? 60, 30);
+  }
+
+  formatHour(h: number): string {
+    if (h === 0)  return '12 AM';
+    if (h < 12)   return `${h} AM`;
+    if (h === 12) return '12 PM';
+    return `${h - 12} PM`;
+  }
+
+  getMonthMeetingDays(month: Date): Set<number> {
+    const year = month.getFullYear(), mon = month.getMonth();
+    const set = new Set<number>();
+    this.meetingsService.meetings().forEach(m => {
+      const d = new Date(m.date);
+      if (d.getFullYear() === year && d.getMonth() === mon && m.status !== 'cancelled') set.add(d.getDate());
+    });
+    return set;
+  }
+
+  getYearMonthWeeks(month: Date): Date[][] {
+    const year = month.getFullYear(), mon = month.getMonth();
+    const firstDay = new Date(year, mon, 1);
+    const lastDay  = new Date(year, mon + 1, 0);
+    const weeks: Date[][] = [];
+    let week: Date[] = [];
+    for (let i = firstDay.getDay() - 1; i >= 0; i--) week.push(new Date(year, mon, -i));
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      week.push(new Date(year, mon, day));
+      if (week.length === 7) { weeks.push(week); week = []; }
+    }
+    if (week.length) {
+      let n = 1;
+      while (week.length < 7) week.push(new Date(year, mon + 1, n++));
+      weeks.push(week);
+    }
+    return weeks;
+  }
+
+  eventBg(color?: string): string {
+    return `color-mix(in srgb, ${color || 'var(--accent-primary)'} 80%, #000)`;
+  }
   
   selectCalendarDate(date: Date) {
-    if (this.showDatePicker()) {
-      // Called from the create-meeting date picker
-      this.newMeeting.set({ ...this.newMeeting(), date: date.toISOString().split('T')[0] });
-      this.showDatePicker.set(false);
-    } else {
-      // Sidebar calendar: filter to that day
-      const dateStr = date.toISOString().split('T')[0];
-      const alreadySelected = this.searchQuery() === dateStr;
-      this.searchQuery.set(alreadySelected ? '' : dateStr);
-    }
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    this.openCreateModal();
+    this.newMeeting.set({ ...this.newMeeting(), date: dateStr });
   }
   
   // Utility methods
@@ -1013,6 +1216,70 @@ export class MeetingsComponent {
   trackByNoteId(index: number, note: MeetingNote): string {
     return note.id;
   }
+
+  // ─── AI Assistant ────────────────────────────────────────────────
+
+  toggleAssistant() { this.showAssistant.update(v => !v); }
+
+  async sendAiMessage(text: string) {
+    if (!text || this.aiLoading()) return;
+    this.aiMessages.update(m => [...m, { role: 'user', text }]);
+    this.aiLoading.set(true);
+    await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
+
+    const all = this.meetingsService.meetings();
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const q = text.toLowerCase();
+    let response = '';
+
+    if (q.includes('today')) {
+      const t = all.filter(m => m.date === todayStr && m.status !== 'cancelled');
+      response = t.length
+        ? `You have ${t.length} meeting${t.length > 1 ? 's' : ''} today:\n${t.map(m => `• ${m.title} at ${this.formatTime(m.startTime)}`).join('\n')}`
+        : `No meetings scheduled for today.`;
+
+    } else if (q.includes('week')) {
+      const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
+      const week = all.filter(m => { const d = new Date(m.date); return d >= now && d <= weekEnd && m.status !== 'cancelled'; });
+      response = week.length
+        ? `${week.length} meeting${week.length > 1 ? 's' : ''} in the next 7 days:\n${week.slice(0,5).map(m => `• ${m.title} — ${this.getRelativeDate(m.date)} at ${this.formatTime(m.startTime)}`).join('\n')}${week.length > 5 ? `\n…and ${week.length - 5} more` : ''}`
+        : `No meetings in the next 7 days.`;
+
+    } else if (q.includes('action') || q.includes('open')) {
+      const withOpen = all.filter(m => (m.actionItems ?? []).some(a => a.status !== 'completed'));
+      const total = withOpen.reduce((s, m) => s + (m.actionItems ?? []).filter(a => a.status !== 'completed').length, 0);
+      response = withOpen.length
+        ? `${total} open action item${total > 1 ? 's' : ''} across ${withOpen.length} meeting${withOpen.length > 1 ? 's' : ''}:\n${withOpen.slice(0,5).map(m => `• ${m.title} — ${(m.actionItems ?? []).filter(a => a.status !== 'completed').length} open`).join('\n')}`
+        : `No open action items — everything is complete!`;
+
+    } else if (q.includes('type') || q.includes('common')) {
+      const counts = new Map<string, number>();
+      all.forEach(m => counts.set(m.meetingType, (counts.get(m.meetingType) ?? 0) + 1));
+      const sorted = [...counts.entries()].sort((a,b) => b[1]-a[1]);
+      response = sorted.length
+        ? `Meeting type breakdown:\n${sorted.map(([t,c]) => `• ${t.charAt(0).toUpperCase()+t.slice(1)}: ${c}`).join('\n')}\nMost common: ${sorted[0][0]}`
+        : `No meetings recorded yet.`;
+
+    } else if (q.includes('priority') || q.includes('high') || q.includes('upcoming')) {
+      const upcoming = all.filter(m => new Date(m.date) >= now && m.status === 'scheduled' && m.priority === 'HIGH');
+      response = upcoming.length
+        ? `${upcoming.length} high-priority upcoming meeting${upcoming.length > 1 ? 's' : ''}:\n${upcoming.slice(0,5).map(m => `• ${m.title} — ${this.getRelativeDate(m.date)}`).join('\n')}`
+        : `No high-priority upcoming meetings.`;
+
+    } else {
+      const scheduled = all.filter(m => m.status === 'scheduled').length;
+      const completed = all.filter(m => m.status === 'completed').length;
+      const todayCount = all.filter(m => m.date === todayStr && m.status !== 'cancelled').length;
+      response = `You have ${all.length} total meetings — ${scheduled} upcoming, ${completed} completed, and ${todayCount} today.\n\nTry asking about today's schedule, this week, open action items, meeting types, or high-priority meetings.`;
+    }
+
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    this.aiLoading.set(false);
+    setTimeout(() => { const el = document.querySelector('.ai-panel-messages'); if (el) el.scrollTop = el.scrollHeight; }, 50);
+  }
+
+  clearAiChat() { this.aiMessages.set([]); }
 
   // ─── Calendar Sync ───────────────────────────────────────────────
 

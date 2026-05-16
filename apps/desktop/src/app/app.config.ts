@@ -1,7 +1,7 @@
-import { ApplicationConfig, provideZoneChangeDetection, ErrorHandler } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { ApplicationConfig, provideZonelessChangeDetection, ErrorHandler } from '@angular/core';
+import { provideRouter, withPreloading, PreloadAllModules, withViewTransitions, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 import { routes } from './app.routes';
 import { GlobalErrorHandler } from './core/errors/global-error.handler';
@@ -14,10 +14,15 @@ import { FileSystemService } from '@envello/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes),
+    provideZonelessChangeDetection(),
+    provideRouter(
+      routes,
+      withPreloading(PreloadAllModules),
+      withViewTransitions(),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
+    ),
     provideHttpClient(withInterceptors([authInterceptor, errorRetryInterceptor])),
-    provideAnimations(),
+    provideAnimationsAsync(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: DataService, useClass: SqliteDataService },
     { provide: FILE_SYSTEM, useClass: FileSystemService }

@@ -1,10 +1,10 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
 import { EncryptionUtil } from '@envello/core';
 import { Credential } from '@envello/domain';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
@@ -28,9 +28,10 @@ const URL_LABEL: Record<string, string> = {
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
   templateUrl: './vault.component.html',
   styleUrl: './vault.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VaultComponent {
   public vaultStore = inject(VaultStore);
@@ -93,6 +94,15 @@ export class VaultComponent {
       count: this.vaultStore.credentials().filter(c => c.type === type).length
     })).filter(e => e.count > 0)
   );
+
+  readonly sidebarNavItems = computed(() => [
+    { id: '', icon: 'lock', label: 'All Credentials', count: this.vaultStore.credentials().length },
+    ...this.allTypeStats().map(e => ({ id: e.type, icon: e.icon, iconColor: e.color, label: e.label, count: e.count }))
+  ]);
+
+  onNavItemClick(id: string) {
+    this.selectedType.set(id);
+  }
 
   countByScope = computed(() => {
     const counts: Record<string, number> = {};

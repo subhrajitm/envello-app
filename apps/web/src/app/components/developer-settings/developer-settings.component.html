@@ -102,3 +102,17 @@
         </div>
     </div>
 </div>
+
+@if (importConfirm()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Import Data"
+    icon="upload"
+    variant="danger"
+    confirmLabel="Import"
+    (confirmed)="doImport()"
+    (cancelled)="importConfirm.set(false)">
+    Import data from <strong>{{ pendingImportFileName }}</strong>?
+    This will overwrite all existing data and cannot be undone.
+</env-confirm-dialog>
+}

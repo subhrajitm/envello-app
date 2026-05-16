@@ -117,4 +117,35 @@ export class SyncService {
         const userId = this.userId;
         if (userId) localStorage.removeItem(`${this.LAST_SYNC_PREFIX}${userId}`);
     }
+
+    /**
+     * Subscribe to Supabase Realtime for live cross-device updates.
+     * Calls `onRecord` for every INSERT or UPDATE on user_data belonging to this user.
+     * Returns an unsubscribe function — call it on destroy or logout.
+     */
+    subscribeRealtime(onRecord: (record: SyncRecord) => void): () => void {
+        if (!this.canSync) return () => {};
+
+        const userId = this.userId!;
+        const channel = this.supabase.client
+            .channel(`user_data:${userId}`)
+            .on(
+                'postgres_changes' as any,
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: this.TABLE,
+                    filter: `user_id=eq.${userId}`
+                },
+                (payload: any) => {
+                    const record = (payload.new ?? payload.old) as SyncRecord;
+                    if (record) onRecord(record);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            this.supabase.client.removeChannel(channel);
+        };
+    }
 }
