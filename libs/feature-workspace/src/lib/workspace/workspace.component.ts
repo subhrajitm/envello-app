@@ -73,7 +73,6 @@ export class WorkspaceComponent {
   isProcessing   = signal(false);
   lastCreated    = signal<CreatedItem | null>(null);
 
-  activeFilter = signal<'ALL' | 'ACTION ITEM' | 'LOG' | 'SYNC' | 'SYSTEM' | 'AI THOUGHT'>('ALL');
   attachments  = signal<string[]>([]);
   cpuUsage     = signal(12);
   latency      = signal(24);
@@ -109,37 +108,61 @@ export class WorkspaceComponent {
     return 'Type a command or describe what to create…  (⌘K)';
   });
 
-  // ── Dashboard data ───────────────────────────────────────────────────────────
-  upcomingTasks = computed(() =>
+  // ── Today at a Glance ────────────────────────────────────────────────────────
+
+  /** ISO date string for today, recomputed every minute via systemTime */
+  private todayStr = computed(() => this.systemTime().toISOString().split('T')[0]);
+
+  overdueTasks = computed(() =>
     this.store.tasks()
-      .filter(t => t.status !== 'COMPLETED')
-      .sort((a, b) => {
-        const p = { HIGH: 0, MEDIUM: 1, LOW: 2 } as Record<string, number>;
-        if (p[a.priority] !== p[b.priority]) return p[a.priority] - p[b.priority];
-        return (a.due || '9999').localeCompare(b.due || '9999');
-      })
-      .slice(0, 5)
+      .filter(t => t.status !== 'COMPLETED' && t.due && t.due < this.todayStr())
+      .sort((a, b) => (a.due || '').localeCompare(b.due || ''))
+      .slice(0, 4)
   );
 
-  contextStream = computed(() => {
-    const activities = this.store.activities().slice(0, 10).map(a => {
-      let type = 'LOG', tagClass = 'reference';
-      if (a.type === 'sync')   { type = 'SYNC';       tagClass = 'sync';   }
-      if (a.type === 'system') { type = 'SYSTEM';     tagClass = 'system'; }
-      if (a.type === 'ai')     { type = 'AI THOUGHT'; tagClass = 'note';   }
-      return { id: a.id, type, tagClass, content: a.text, sub: 'System Log',
-               time: a.time, tags: ['#log', '#' + a.type], route: '/activity-log', sortDate: Date.now() };
-    });
-    const taskItems = this.store.tasks().slice(0, 8).map(t => {
-      const dueDate = t.due ? new Date(t.due) : new Date();
-      return { id: t.id, type: 'ACTION ITEM', tagClass: 'action',
-               content: t.title + (t.description ? `. ${t.description}` : ''),
-               sub: 'Priority: ' + t.priority, time: this.formatRelativeTime(dueDate),
-               tags: t.labels?.map(l => '#' + l) || ['#task'], route: '/tasks', sortDate: dueDate.getTime() };
-    });
-    const merged = [...taskItems, ...activities].sort((a, b) => b.sortDate - a.sortDate);
-    if (this.activeFilter() === 'ALL') return merged;
-    return merged.filter(item => item.type === this.activeFilter());
+  dueTodayTasks = computed(() =>
+    this.store.tasks()
+      .filter(t => t.status !== 'COMPLETED' && t.due === this.todayStr())
+      .sort((a, b) => {
+        const p = { HIGH: 0, MEDIUM: 1, LOW: 2 } as Record<string, number>;
+        return p[a.priority] - p[b.priority];
+      })
+      .slice(0, 4)
+  );
+
+  nextMeeting = computed(() => {
+    const now = this.systemTime();
+    return this.meetingsService.meetings()
+      .filter(m => new Date(`${m.date}T${m.startTime}`) >= now && m.status === 'scheduled')
+      .sort((a, b) =>
+        new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime()
+      )[0] ?? null;
+  });
+
+  meetingCountdown = computed(() => {
+    const m = this.nextMeeting();
+    if (!m) return null;
+    const diffMs = new Date(`${m.date}T${m.startTime}`).getTime() - this.systemTime().getTime();
+    if (diffMs <= 0) return 'Now';
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `in ${mins}m`;
+    const h = Math.floor(mins / 60), rem = mins % 60;
+    return rem > 0 ? `in ${h}h ${rem}m` : `in ${h}h`;
+  });
+
+  lastNote = computed(() =>
+    [...this.store.notes()]
+      .sort((a, b) => (b.lastEdited || b.date).localeCompare(a.lastEdited || a.date))[0] ?? null
+  );
+
+  activeWriting = computed(() => {
+    const novels = this.store.novels();
+    return (
+      novels.filter(n => n.status === 'DRAFTING' || n.status === 'REVISING')
+            .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0]
+      ?? [...novels].sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))[0]
+      ?? null
+    );
   });
 
   linkedEntities = computed(() => ({
@@ -177,16 +200,6 @@ export class WorkspaceComponent {
     const t0 = performance.now();
     let s = 0; for (let i = 0; i < 1000; i++) s += Math.sqrt(i);
     this.cpuUsage.set(Math.min(Math.round((performance.now() - t0) * 10), 50) || 5);
-  }
-
-  private formatRelativeTime(date: Date): string {
-    const ms = Date.now() - date.getTime();
-    const mins = Math.floor(ms / 60000), hours = Math.floor(ms / 3600000), days = Math.floor(ms / 86400000);
-    if (mins  < 1)  return 'Just now';
-    if (mins  < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days  < 7)  return `${days}d ago`;
-    return date.toLocaleDateString();
   }
 
   private initSpeechRecognition() {
@@ -716,15 +729,6 @@ Rules:
     if (h < 18) return `Good Afternoon, ${name}`;
     return `Good Evening, ${name}`;
   }
-
-  toggleFilter() {
-    const filters: ('ALL' | 'ACTION ITEM' | 'LOG' | 'SYNC' | 'SYSTEM' | 'AI THOUGHT')[] =
-      ['ALL', 'ACTION ITEM', 'LOG', 'SYNC', 'SYSTEM', 'AI THOUGHT'];
-    const i = filters.indexOf(this.activeFilter());
-    this.activeFilter.set(filters[(i + 1) % filters.length]);
-  }
-
-  openItem(item: any) { this.router.navigate([item.route || '/activity-log']); }
 
   navigateToCreated() {
     const c = this.lastCreated();

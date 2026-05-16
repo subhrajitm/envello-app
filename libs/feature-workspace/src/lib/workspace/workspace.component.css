@@ -316,109 +316,226 @@
   font-family: var(--font-sans);
 }
 
-.filter-btn {
-  font-size: 9px;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.1s;
-  font-family: var(--font-sans);
-  background: transparent;
-  border: none;
-  padding: 0;
-}
+/* ── Today at a Glance ─────────────────────────────────────────────────────── */
 
-.filter-btn:hover {
-  color: var(--accent);
-}
-
-/* Context Stream List */
-.stream-list {
+.glance-scroll {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
   overflow-y: auto;
   flex: 1;
-  padding-right: 8px;
+  padding-right: 4px;
   min-height: 0;
-  /* for scrollbar */
 }
 
-.stream-item {
+.glance-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.glance-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: var(--font-sans);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 0;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.overdue-label  { color: var(--alert); }
+.today-label    { color: var(--accent); }
+.meeting-label  { color: #a78bfa; }
+.note-label     { color: var(--success); }
+.writing-label  { color: #f59e0b; }
+
+/* Task rows */
+.glance-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
   border-bottom: 1px dotted var(--border-color);
-  transition: all 0.15s ease;
-  cursor: pointer;
   background: transparent;
   border-left: none;
   border-right: none;
   border-top: none;
   text-align: left;
   width: 100%;
+  cursor: pointer;
+  transition: padding-left 0.1s;
 }
 
-.stream-item:last-child {
-  border-bottom: none;
-}
+.glance-task-row:last-child { border-bottom: none; }
 
-.stream-item:hover {
-  background: var(--bg-page);
+.glance-task-row:hover {
   padding-left: 4px;
 }
 
-.status-indicator {
-  width: 2px;
-  height: 12px;
-  border-radius: 1px;
-}
-
-.status-indicator.action { background: var(--accent); }
-.status-indicator.reference { background: var(--text-tertiary); }
-.status-indicator.note { background: var(--success); }
-.status-indicator.sync { background: var(--sync-bg); }
-.status-indicator.system { background: var(--alert); }
-
-.item-content-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.item-type {
-  font-size: 8px;
-  font-weight: 700;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  font-family: var(--font-mono);
-  background: var(--bg-page);
-  padding: 1px 4px;
-  border-radius: 2px;
-  border: 1px solid var(--border-color);
+.priority-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
-.item-text {
+.p-high   { background: var(--alert); }
+.p-medium { background: #f59e0b; }
+.p-low    { background: var(--success); }
+
+.glance-task-title {
   font-size: 11px;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.glance-task-due,
+.glance-task-priority {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+/* Meeting card */
+.glance-meeting-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-page);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.glance-meeting-card:hover { border-color: #a78bfa; }
+
+.meeting-card-title {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.item-time-minimal {
-  font-size: 9px;
+.meeting-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
   color: var(--text-tertiary);
   font-family: var(--font-mono);
-  flex-shrink: 0;
-  text-align: right;
-  min-width: 50px;
+}
+
+.meeting-countdown {
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+/* Note card */
+.glance-note-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-page);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.glance-note-card:hover { border-color: var(--success); }
+
+.glance-note-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.glance-note-preview {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Writing card */
+.glance-writing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-page);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+.glance-writing-card:hover { border-color: #f59e0b; }
+
+.glance-writing-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.glance-writing-meta {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.glance-writing-bar {
+  height: 3px;
+  background: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.glance-writing-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Empty state */
+.glance-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  text-align: center;
 }
 
 
@@ -824,19 +941,6 @@
   padding: 2px 6px;
   border-radius: 3px;
   border: 1px solid var(--border-color);
-}
-
-/* Empty state for stream */
-.stream-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 24px 0;
-  color: var(--text-tertiary);
-  font-size: 11px;
-  font-family: var(--font-sans);
-  text-align: center;
 }
 
 /* Scrollbar */

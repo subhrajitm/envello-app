@@ -149,41 +149,119 @@
 
     </main>
 
-    <!-- ── Right Sidebar ── -->
+    <!-- ── Right Sidebar — Today at a Glance ── -->
     @defer (on idle) {
       <aside class="sidebar">
         <div class="sidebar-section full-height">
           <div class="sidebar-header">
             <div class="section-title">
-              <span class="material-symbols-outlined" style="font-size:14px;">hub</span>
-              CONTEXT STREAM
+              <span class="material-symbols-outlined" style="font-size:14px;">today</span>
+              TODAY AT A GLANCE
             </div>
-            <button type="button" class="filter-btn"
-              (click)="toggleFilter()" aria-label="Toggle Filter">
-              {{ activeFilter() }}
-              <span class="material-symbols-outlined" style="font-size:14px;">tune</span>
-            </button>
           </div>
 
-          <div class="stream-list">
-            @for (item of contextStream(); track item.id) {
-              <button type="button" class="stream-item"
-                (click)="openItem(item)" aria-label="Open context item">
-                <span class="status-indicator" [class]="item.tagClass.toLowerCase()"></span>
-                <div class="item-content-wrap">
-                  <span class="item-type">{{ item.type }}</span>
-                  <span class="item-text">{{ item.content }}</span>
-                </div>
-                <span class="item-time-minimal">{{ item.time }}</span>
-              </button>
-            }
+          <div class="glance-scroll">
 
-            @if (contextStream().length === 0) {
-              <div class="stream-empty">
-                <span class="material-symbols-outlined" style="font-size:20px;opacity:0.4;">inbox</span>
-                <span>No items yet — start typing above</span>
+            <!-- Overdue Tasks -->
+            @if (overdueTasks().length > 0) {
+              <div class="glance-block">
+                <div class="glance-label overdue-label">
+                  <span class="material-symbols-outlined" style="font-size:11px;">error</span>
+                  OVERDUE
+                </div>
+                @for (task of overdueTasks(); track task.id) {
+                  <button type="button" class="glance-task-row"
+                    (click)="router.navigate(['/tasks'])">
+                    <span class="priority-dot" [class]="'p-' + task.priority.toLowerCase()"></span>
+                    <span class="glance-task-title">{{ task.title }}</span>
+                    <span class="glance-task-due">{{ task.due }}</span>
+                  </button>
+                }
               </div>
             }
+
+            <!-- Due Today -->
+            @if (dueTodayTasks().length > 0) {
+              <div class="glance-block">
+                <div class="glance-label today-label">
+                  <span class="material-symbols-outlined" style="font-size:11px;">check_circle</span>
+                  DUE TODAY
+                </div>
+                @for (task of dueTodayTasks(); track task.id) {
+                  <button type="button" class="glance-task-row"
+                    (click)="router.navigate(['/tasks'])">
+                    <span class="priority-dot" [class]="'p-' + task.priority.toLowerCase()"></span>
+                    <span class="glance-task-title">{{ task.title }}</span>
+                    <span class="glance-task-priority">{{ task.priority }}</span>
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Next Meeting -->
+            @if (nextMeeting(); as meeting) {
+              <div class="glance-block">
+                <div class="glance-label meeting-label">
+                  <span class="material-symbols-outlined" style="font-size:11px;">groups</span>
+                  NEXT MEETING
+                </div>
+                <button type="button" class="glance-meeting-card"
+                  (click)="router.navigate(['/meetings'])">
+                  <div class="meeting-card-title">{{ meeting.title }}</div>
+                  <div class="meeting-card-meta">
+                    <span>{{ meeting.date }} · {{ meeting.startTime }}</span>
+                    <span class="meeting-countdown">{{ meetingCountdown() }}</span>
+                  </div>
+                </button>
+              </div>
+            }
+
+            <!-- Last Note -->
+            @if (lastNote(); as note) {
+              <div class="glance-block">
+                <div class="glance-label note-label">
+                  <span class="material-symbols-outlined" style="font-size:11px;">edit_note</span>
+                  LAST NOTE
+                </div>
+                <button type="button" class="glance-note-card"
+                  (click)="router.navigate(['/daily-notes'])">
+                  <div class="glance-note-title">{{ note.title }}</div>
+                  @if (note.preview) {
+                    <div class="glance-note-preview">{{ note.preview }}</div>
+                  }
+                </button>
+              </div>
+            }
+
+            <!-- Active Writing -->
+            @if (activeWriting(); as writing) {
+              <div class="glance-block">
+                <div class="glance-label writing-label">
+                  <span class="material-symbols-outlined" style="font-size:11px;">menu_book</span>
+                  WRITING
+                </div>
+                <button type="button" class="glance-writing-card"
+                  (click)="router.navigate(['/write', writing.id])">
+                  <div class="glance-writing-title">{{ writing.title }}</div>
+                  <div class="glance-writing-meta">
+                    {{ writing.wordCount }} / {{ writing.targetWordCount }} words
+                  </div>
+                  <div class="glance-writing-bar">
+                    <div class="glance-writing-fill" [style.width.%]="writing.progress"></div>
+                  </div>
+                </button>
+              </div>
+            }
+
+            <!-- Empty state -->
+            @if (overdueTasks().length === 0 && dueTodayTasks().length === 0
+              && !nextMeeting() && !lastNote() && !activeWriting()) {
+              <div class="glance-empty">
+                <span class="material-symbols-outlined" style="font-size:20px;opacity:0.4;">wb_sunny</span>
+                <span>All clear — nothing pending today</span>
+              </div>
+            }
+
           </div>
         </div>
       </aside>
