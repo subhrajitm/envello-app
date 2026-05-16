@@ -105,7 +105,7 @@ export class WorkspaceComponent {
     if (this.isProcessing())                           return 'Processing…';
     if (this.conversationState() === 'awaiting-confirm') return 'Type "yes" to confirm or "no" to cancel…';
     if (this.conversationState() === 'awaiting-answer')  return 'Type your answer…';
-    return 'Type a command or describe what to create…  (⌘K)';
+    return 'Type a command or describe what to create…';
   });
 
   // ── Today at a Glance ────────────────────────────────────────────────────────
@@ -170,6 +170,15 @@ export class WorkspaceComponent {
   }));
 
   userName = computed(() => this.userService.userName());
+
+  sidebarTasks = computed(() => this.store.tasks().slice(0, 4));
+  sidebarTasksCompleted = computed(() => this.sidebarTasks().filter(t => t.status === 'COMPLETED').length);
+  sidebarTasksDashOffset = computed(() => {
+    const total = this.sidebarTasks().length;
+    if (total === 0) return 62.83;
+    const progress = this.sidebarTasksCompleted() / total;
+    return 62.83 - (62.83 * progress);
+  });
 
   // ── Voice ───────────────────────────────────────────────────────────────────
   private recognition: any;
@@ -724,10 +733,10 @@ Rules:
   // ── Template helpers ──────────────────────────────────────────────────────────
 
   getGreeting(): string {
-    const h = new Date().getHours(), name = this.userName() || 'there';
-    if (h < 12) return `Good Morning, ${name}`;
-    if (h < 18) return `Good Afternoon, ${name}`;
-    return `Good Evening, ${name}`;
+    const h = new Date().getHours();
+    if (h < 12) return `Good Morning`;
+    if (h < 18) return `Good Afternoon`;
+    return `Good Evening`;
   }
 
   navigateToCreated() {
@@ -739,6 +748,17 @@ Rules:
   setExampleText(text: string) {
     this.inputText.set(text);
     setTimeout(() => (document.querySelector('.main-text-input') as HTMLInputElement)?.focus(), 50);
+  }
+
+  toggleSidebarTask(task: Task, event: Event) {
+    event.stopPropagation();
+    const newStatus = task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
+    this.store.updateTask(task.id, { status: newStatus });
+  }
+
+  addSubtask(task: Task, event: Event) {
+    event.stopPropagation();
+    this.setExampleText(`Task: `);
   }
 
   clearCommand() {

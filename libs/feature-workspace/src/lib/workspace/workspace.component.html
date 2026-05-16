@@ -10,7 +10,7 @@
       </div>
 
       <!-- Greeting -->
-      <div class="big-input-display">{{ getGreeting() }}</div>
+      <div class="big-input-display">{{ getGreeting() }}, <span class="greeting-name">{{ userName() || 'there' }}</span></div>
 
       <!-- Subtitle hint (hidden during a conversation) -->
       @if (!isInConversation()) {
@@ -73,11 +73,11 @@
             }
             <button class="btn-inline-submit" (click)="executeCommand()">
               @if (conversationState() === 'awaiting-confirm') {
-                CONFIRM <span class="kbd">↵</span>
+                CONFIRM <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">keyboard_return</span>
               } @else if (conversationState() === 'awaiting-answer') {
-                REPLY <span class="kbd">↵</span>
+                REPLY <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">keyboard_return</span>
               } @else {
-                ENTER <span class="kbd">↵</span>
+                ENTER <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">keyboard_return</span>
               }
             </button>
           }
@@ -140,7 +140,7 @@
             <strong>{{ item.type }}</strong> created — <em>{{ item.title }}</em>
           </span>
           <button type="button" class="created-nav-btn" (click)="navigateToCreated()">
-            View <span class="material-symbols-outlined" style="font-size:13px;">arrow_forward</span>
+            View →
           </button>
           <button type="button" class="created-close-btn" (click)="lastCreated.set(null)"
             aria-label="Dismiss">×</button>
@@ -149,119 +149,52 @@
 
     </main>
 
-    <!-- ── Right Sidebar — Today at a Glance ── -->
+    <!-- ── Right Sidebar — Our Design Process ── -->
     @defer (on idle) {
       <aside class="sidebar">
-        <div class="sidebar-section full-height">
-          <div class="sidebar-header">
-            <div class="section-title">
-              <span class="material-symbols-outlined" style="font-size:14px;">today</span>
-              TODAY AT A GLANCE
+        <div class="sidebar-section full-height" style="padding: 24px;">
+          <div class="dp-header">
+            <h2 class="dp-title">Active workstream</h2>
+            <div class="dp-progress">
+              <svg class="progress-ring" width="24" height="24">
+                <circle class="progress-ring-bg" stroke="var(--border-color)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
+                <circle class="progress-ring-fill" stroke="var(--accent)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" stroke-dasharray="62.83" [attr.stroke-dashoffset]="sidebarTasksDashOffset()" />
+              </svg>
+              <span class="dp-progress-text">{{ sidebarTasksCompleted() }}/{{ sidebarTasks().length }}</span>
             </div>
           </div>
 
-          <div class="glance-scroll">
-
-            <!-- Overdue Tasks -->
-            @if (overdueTasks().length > 0) {
-              <div class="glance-block">
-                <div class="glance-label overdue-label">
-                  <span class="material-symbols-outlined" style="font-size:11px;">error</span>
-                  OVERDUE
-                </div>
-                @for (task of overdueTasks(); track task.id) {
-                  <button type="button" class="glance-task-row"
-                    (click)="router.navigate(['/tasks'])">
-                    <span class="priority-dot" [class]="'p-' + task.priority.toLowerCase()"></span>
-                    <span class="glance-task-title">{{ task.title }}</span>
-                    <span class="glance-task-due">{{ task.due }}</span>
-                  </button>
-                }
-              </div>
-            }
-
-            <!-- Due Today -->
-            @if (dueTodayTasks().length > 0) {
-              <div class="glance-block">
-                <div class="glance-label today-label">
-                  <span class="material-symbols-outlined" style="font-size:11px;">check_circle</span>
-                  DUE TODAY
-                </div>
-                @for (task of dueTodayTasks(); track task.id) {
-                  <button type="button" class="glance-task-row"
-                    (click)="router.navigate(['/tasks'])">
-                    <span class="priority-dot" [class]="'p-' + task.priority.toLowerCase()"></span>
-                    <span class="glance-task-title">{{ task.title }}</span>
-                    <span class="glance-task-priority">{{ task.priority }}</span>
-                  </button>
-                }
-              </div>
-            }
-
-            <!-- Next Meeting -->
-            @if (nextMeeting(); as meeting) {
-              <div class="glance-block">
-                <div class="glance-label meeting-label">
-                  <span class="material-symbols-outlined" style="font-size:11px;">groups</span>
-                  NEXT MEETING
-                </div>
-                <button type="button" class="glance-meeting-card"
-                  (click)="router.navigate(['/meetings'])">
-                  <div class="meeting-card-title">{{ meeting.title }}</div>
-                  <div class="meeting-card-meta">
-                    <span>{{ meeting.date }} · {{ meeting.startTime }}</span>
-                    <span class="meeting-countdown">{{ meetingCountdown() }}</span>
+          <div class="dp-list">
+            @for (task of sidebarTasks(); track task.id) {
+              <div class="dp-item">
+                <div class="dp-item-main">
+                  <div class="dp-checkbox" [class.checked]="task.status === 'COMPLETED'" (click)="toggleSidebarTask(task, $event)" title="Toggle Task Status">
+                    @if (task.status === 'COMPLETED') {
+                      <span class="material-symbols-outlined" style="font-size: 14px; font-weight: bold;">check</span>
+                    }
                   </div>
-                </button>
-              </div>
-            }
-
-            <!-- Last Note -->
-            @if (lastNote(); as note) {
-              <div class="glance-block">
-                <div class="glance-label note-label">
-                  <span class="material-symbols-outlined" style="font-size:11px;">edit_note</span>
-                  LAST NOTE
-                </div>
-                <button type="button" class="glance-note-card"
-                  (click)="router.navigate(['/daily-notes'])">
-                  <div class="glance-note-title">{{ note.title }}</div>
-                  @if (note.preview) {
-                    <div class="glance-note-preview">{{ note.preview }}</div>
+                  <div class="dp-item-title" [class.completed]="task.status === 'COMPLETED'" (click)="toggleSidebarTask(task, $event)" style="cursor: pointer;">{{ task.title }}</div>
+                  @if (task.status !== 'COMPLETED') {
+                    <div class="dp-actions">
+                      <button class="dp-action-btn" (click)="addSubtask(task, $event)" title="Add task">
+                        <span class="material-symbols-outlined">add</span>
+                      </button>
+                      <button class="dp-action-btn" (click)="router.navigate(['/tasks'])" title="View Task">
+                        <span class="material-symbols-outlined">visibility</span>
+                      </button>
+                    </div>
                   }
-                </button>
-              </div>
-            }
-
-            <!-- Active Writing -->
-            @if (activeWriting(); as writing) {
-              <div class="glance-block">
-                <div class="glance-label writing-label">
-                  <span class="material-symbols-outlined" style="font-size:11px;">menu_book</span>
-                  WRITING
                 </div>
-                <button type="button" class="glance-writing-card"
-                  (click)="router.navigate(['/write', writing.id])">
-                  <div class="glance-writing-title">{{ writing.title }}</div>
-                  <div class="glance-writing-meta">
-                    {{ writing.wordCount }} / {{ writing.targetWordCount }} words
+                @if (task.notes) {
+                  <div class="dp-item-note">
+                    {{ task.notes }}
                   </div>
-                  <div class="glance-writing-bar">
-                    <div class="glance-writing-fill" [style.width.%]="writing.progress"></div>
-                  </div>
-                </button>
+                }
               </div>
             }
-
-            <!-- Empty state -->
-            @if (overdueTasks().length === 0 && dueTodayTasks().length === 0
-              && !nextMeeting() && !lastNote() && !activeWriting()) {
-              <div class="glance-empty">
-                <span class="material-symbols-outlined" style="font-size:20px;opacity:0.4;">wb_sunny</span>
-                <span>All clear — nothing pending today</span>
-              </div>
+            @if (sidebarTasks().length === 0) {
+              <div style="text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 16px;">No tasks available</div>
             }
-
           </div>
         </div>
       </aside>
