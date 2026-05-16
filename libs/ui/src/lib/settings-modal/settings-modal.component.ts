@@ -229,6 +229,17 @@ export class SettingsModalComponent {
     }
   }
 
+  getApiKeyPlaceholder(): string {
+    switch (this.aiProvider()) {
+      case 'openai':    return 'sk-...';
+      case 'anthropic': return 'sk-ant-...';
+      case 'gemini':    return 'AIza...';
+      case 'grok':      return 'xai-...';
+      case 'deepseek':  return 'sk-...';
+      default:          return 'Enter API key';
+    }
+  }
+
   setAiProvider(provider: AiProvider) {
     this.testStatus.set('idle');
     this.testMessage.set('');

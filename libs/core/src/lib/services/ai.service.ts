@@ -87,20 +87,19 @@ export class AiService {
 
         try {
             if (p === 'openai' && k) {
-                this.chatModel = new ChatOpenAI({ openAIApiKey: k, modelName: m });
+                this.chatModel = new ChatOpenAI({ model: m, configuration: { apiKey: k } });
             } else if (p === 'anthropic' && k) {
-                this.chatModel = new ChatAnthropic({ anthropicApiKey: k, modelName: m });
+                this.chatModel = new ChatAnthropic({ model: m, apiKey: k });
             } else if (p === 'ollama') {
                 this.chatModel = new ChatOllama({ model: m || 'llama3', baseUrl: 'http://localhost:11434' });
             } else if (p === 'grok' && k) {
-                this.chatModel = new ChatXAI({ apiKey: k, model: m });
+                this.chatModel = new ChatXAI({ model: m, apiKey: k });
             } else if (p === 'gemini' && k) {
-                this.chatModel = new ChatGoogleGenerativeAI({ apiKey: k, model: m });
+                this.chatModel = new ChatGoogleGenerativeAI({ model: m, apiKey: k });
             } else if (p === 'deepseek' && k) {
                 this.chatModel = new ChatOpenAI({
-                    openAIApiKey: k,
-                    modelName: m || 'deepseek-chat',
-                    configuration: { baseURL: 'https://api.deepseek.com/v1' }
+                    model: m || 'deepseek-chat',
+                    configuration: { apiKey: k, baseURL: 'https://api.deepseek.com/v1' }
                 });
             } else {
                 this.chatModel = undefined; // Fallback to mock
@@ -123,20 +122,19 @@ export class AiService {
         let tempModel: BaseChatModel | undefined;
 
         if (provider === 'openai' && key) {
-            tempModel = new ChatOpenAI({ openAIApiKey: key, modelName: model });
+            tempModel = new ChatOpenAI({ model, configuration: { apiKey: key } });
         } else if (provider === 'anthropic' && key) {
-            tempModel = new ChatAnthropic({ anthropicApiKey: key, modelName: model });
+            tempModel = new ChatAnthropic({ model, apiKey: key });
         } else if (provider === 'ollama') {
             tempModel = new ChatOllama({ model: model || 'llama3', baseUrl: 'http://localhost:11434' });
         } else if (provider === 'grok' && key) {
-            tempModel = new ChatXAI({ apiKey: key, model: model });
+            tempModel = new ChatXAI({ model, apiKey: key });
         } else if (provider === 'gemini' && key) {
-            tempModel = new ChatGoogleGenerativeAI({ apiKey: key, model: model });
+            tempModel = new ChatGoogleGenerativeAI({ model, apiKey: key });
         } else if (provider === 'deepseek' && key) {
             tempModel = new ChatOpenAI({
-                openAIApiKey: key,
-                modelName: model || 'deepseek-chat',
-                configuration: { baseURL: 'https://api.deepseek.com/v1' }
+                model: model || 'deepseek-chat',
+                configuration: { apiKey: key, baseURL: 'https://api.deepseek.com/v1' }
             });
         } else if (provider === 'mock') {
             return; // Mock always succeeds

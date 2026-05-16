@@ -237,7 +237,7 @@
                         <div class="setting-control w-full" style="position:relative;display:flex;align-items:center;">
                             <input [type]="showApiKey() ? 'text' : 'password'" [ngModel]="aiKey()"
                                 (ngModelChange)="aiKey.set($event); testStatus.set('idle')"
-                                class="form-input" placeholder="sk-..." spellcheck="false" style="padding-right:2.5rem;width:100%;">
+                                class="form-input" [placeholder]="getApiKeyPlaceholder()" spellcheck="false" style="padding-right:2.5rem;width:100%;">
                             <button type="button" (click)="showApiKey.set(!showApiKey())"
                                 style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;padding:0.25rem;opacity:0.6;color:inherit;"
                                 [title]="showApiKey() ? 'Hide API key' : 'Show API key'">
