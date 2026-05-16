@@ -187,8 +187,8 @@ export class DeveloperSettingsComponent {
     const text = [header, body].join('\n');
     try {
       await navigator.clipboard.writeText(text);
+      this.copyFeedback.set(false);
       this.copyFeedback.set(true);
-      setTimeout(() => this.copyFeedback.set(false), 1500);
     } catch {
       console.warn('Clipboard copy failed');
     }

@@ -385,7 +385,6 @@ export class WriteComponent {
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
 
     const novels = this.store.novels();
     const q = text.toLowerCase();
@@ -417,10 +416,6 @@ export class WriteComponent {
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
   }
 
   // ── Keyboard ─────────────────────────────────────────────────────────────

@@ -119,7 +119,6 @@ export class AiService {
     }
 
     private async getMockResponse(): Promise<string> {
-        await new Promise(resolve => setTimeout(resolve, 1500));
         const responses = [
             `[MOCK] Based on the context provided, I suggest focusing on character development...`,
             `[MOCK] Your writing shows strong descriptive language...`,
@@ -134,7 +133,6 @@ export class AiService {
             return this.sendMessage(`Analyze the tone and pacing of the following text:\n\n${content}`, 'You are an expert literary editor.');
         }
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
         return `**Tone Analysis:**\nThe overall tone is consistent and engaging.\n\n**Pacing Analysis:**\nThe pacing is well-balanced.`;
     }
 
@@ -154,7 +152,6 @@ export class AiService {
             }
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
         return [
             {
                 id: '1',

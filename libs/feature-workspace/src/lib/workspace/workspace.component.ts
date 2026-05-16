@@ -187,9 +187,8 @@ export class WorkspaceComponent {
   constructor() {
     if (this.isBrowser) {
       this.initSpeechRecognition();
-      setInterval(() => this.systemTime.set(new Date()), 60000);
+      this.systemTime.set(new Date());
       this.updatePerformanceMetrics();
-      setInterval(() => this.updatePerformanceMetrics(), 5000);
     }
   }
 
@@ -747,7 +746,7 @@ Rules:
 
   setExampleText(text: string) {
     this.inputText.set(text);
-    setTimeout(() => (document.querySelector('.main-text-input') as HTMLInputElement)?.focus(), 50);
+    (document.querySelector('.main-text-input') as HTMLInputElement)?.focus();
   }
 
   toggleSidebarTask(task: Task, event: Event) {

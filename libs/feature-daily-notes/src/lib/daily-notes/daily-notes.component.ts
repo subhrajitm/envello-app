@@ -897,8 +897,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
 
-    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
-
     const notes = this.notes();
     const q = text.toLowerCase();
     let response = '';
@@ -945,11 +943,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
-
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
   }
 
   clearAiChat() { this.aiMessages.set([]); }

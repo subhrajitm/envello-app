@@ -303,10 +303,10 @@ export class VaultComponent {
   decryptCred(cipher: string): string { return EncryptionUtil.decrypt(cipher); }
 
   copyCred(id: string, cipher: string) {
+    this.copiedId.set(null);
     navigator.clipboard.writeText(this.decryptCred(cipher));
     this.copiedId.set(id);
     this.vaultStore.touchCredential(id);
-    setTimeout(() => this.copiedId.set(null), 1800);
   }
 
   // ── AI Assistant ─────────────────────────────────────────────────────────
@@ -317,7 +317,6 @@ export class VaultComponent {
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
 
     const creds = this.vaultStore.credentials();
     const q = text.toLowerCase();
@@ -359,10 +358,6 @@ export class VaultComponent {
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

@@ -52,8 +52,7 @@ export class OnboardingComponent implements OnInit {
   ngOnInit() {
     const done = localStorage.getItem(ONBOARDING_KEY);
     if (!done) {
-      // Small delay so the app shell renders first
-      setTimeout(() => this.isOpen.set(true), 800);
+      this.isOpen.set(true);
     }
   }
 

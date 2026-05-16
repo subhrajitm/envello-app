@@ -82,12 +82,10 @@ export class AiPanelComponent implements DoCheck {
   }
 
   private scrollToBottom() {
-    setTimeout(() => {
-      if (this.aiMessagesContainer?.nativeElement) {
-        const container = this.aiMessagesContainer.nativeElement;
-        container.scrollTop = container.scrollHeight;
-      }
-    }, 100);
+    if (this.aiMessagesContainer?.nativeElement) {
+      const container = this.aiMessagesContainer.nativeElement;
+      container.scrollTop = container.scrollHeight;
+    }
   }
 
   handleChatEnter(event: KeyboardEvent) {

@@ -207,7 +207,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         this.createdItem.set(null);
         this.selectedCategoryId.set('all');
 
-        setTimeout(() => this.searchInput?.nativeElement?.focus(), 50);
+        this.searchInput?.nativeElement?.focus();
     }
 
     selectCategory(id: SidebarCategoryId) {
@@ -234,54 +234,50 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         this.searchInput?.nativeElement?.focus();
     }
 
-    async selectOption(option: AddNewOption) {
+    selectOption(option: AddNewOption) {
         if (this.isCreating()) return;
 
         this.isCreating.set(true);
         this.saveRecentItem(option.id);
 
-        // Show success feedback immediately
         this.createdItem.set(option.title);
 
-        // Small delay for visual feedback, then navigate
-        setTimeout(async () => {
-            try {
-                switch (option.id) {
-                    case 'note':
-                        this.createDailyNote();
-                        break;
-                    case 'task':
-                        this.createTask();
-                        break;
-                    case 'novel':
-                        this.createNovel();
-                        break;
-                    case 'research':
-                        this.createResearchLibrary();
-                        break;
-                    case 'meeting':
-                        this.createMeeting();
-                        break;
-                    case 'bookmark':
-                        this.createBookmark();
-                        break;
-                    case 'vault':
-                    case 'subscription':
-                        this.router.navigate([option.route]);
-                        break;
+        try {
+            switch (option.id) {
+                case 'note':
+                    this.createDailyNote();
+                    break;
+                case 'task':
+                    this.createTask();
+                    break;
+                case 'novel':
+                    this.createNovel();
+                    break;
+                case 'research':
+                    this.createResearchLibrary();
+                    break;
+                case 'meeting':
+                    this.createMeeting();
+                    break;
+                case 'bookmark':
+                    this.createBookmark();
+                    break;
+                case 'vault':
+                case 'subscription':
+                    this.router.navigate([option.route]);
+                    break;
 
-                    default:
-                        this.router.navigate([option.route]);
-                }
-            } catch (error) {
-                console.error('Failed to create item:', error);
-            } finally {
-                this.isCreating.set(false);
-                this.isOpen.set(false);
-                this.searchQuery.set('');
-                this.createdItem.set(null);
+                default:
+                    this.router.navigate([option.route]);
             }
-        }, 200);
+        } catch (error) {
+            console.error('Failed to create item:', error);
+        } finally {
+            this.isCreating.set(false);
+            this.isOpen.set(false);
+            this.searchQuery.set('');
+            this.createdItem.set(null);
+        }
     }
 
     selectFocusedOption() {
@@ -484,10 +480,8 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     private scrollToFocused() {
-        setTimeout(() => {
-            const focused = this.optionsContainer?.nativeElement?.querySelector('.option-card--focused');
-            focused?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }, 0);
+        const focused = this.optionsContainer?.nativeElement?.querySelector('.option-card--focused');
+        focused?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
     trackByOptionId(index: number, option: AddNewOption): string {

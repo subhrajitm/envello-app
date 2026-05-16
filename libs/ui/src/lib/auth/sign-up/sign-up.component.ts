@@ -131,28 +131,23 @@ export class SignUpComponent {
             // We will try to update the profile via UserService if we are logged in.
             // If email verification is required, this part might fail until they verify.
 
-            // For now, let's treat success as "Check your email" or "Welcome"
-            // If auto-login is enabled in Supabase config:
-            setTimeout(async () => {
-                // Attempt to update profile with specific data
-                if (this.authService.isAuthenticated()) {
-                    await this.userService.updateProfile({
-                        name: this.formData.fullName,
-                        role: this.formData.role,
-                        preferences: {
-                            ...this.userService.user()!.preferences, // keep defaults
-                            emailNotifications: this.formData.preferences.emailNotifications,
-                            autoBackup: this.formData.preferences.autoBackup
-                        }
-                    });
-                    this.router.navigate(['/workspace']);
-                } else {
-                    // Likely email verification needed
-                    this.error.set('Account created! Please verify your email before logging in.');
-                    // Go to login after delay?
-                }
-                this.loading.set(false);
-            }, 1000);
+            // Attempt to update profile if auto-login was successful
+            if (this.authService.isAuthenticated()) {
+                await this.userService.updateProfile({
+                    name: this.formData.fullName,
+                    role: this.formData.role,
+                    preferences: {
+                        ...this.userService.user()!.preferences,
+                        emailNotifications: this.formData.preferences.emailNotifications,
+                        autoBackup: this.formData.preferences.autoBackup
+                    }
+                });
+                this.router.navigate(['/workspace']);
+            } else {
+                // Likely email verification needed
+                this.error.set('Account created! Please verify your email before logging in.');
+            }
+            this.loading.set(false);
 
         } else {
             this.error.set('Sign up failed. Please try again or use a different email.');

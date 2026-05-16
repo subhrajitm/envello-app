@@ -143,7 +143,7 @@ export class QuickFindComponent {
         this.searchQuery.set('');
         this.activeFilter.set('all');
         this.selectedIndex.set(0);
-        setTimeout(() => (document.querySelector('.qf-input') as HTMLInputElement)?.focus(), 50);
+        (document.querySelector('.qf-input') as HTMLInputElement)?.focus();
     }
 
     close() {

@@ -554,8 +554,6 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
 
-    await new Promise(r => setTimeout(r, 900 + Math.random() * 500));
-
     const bookmarks = this.store.bookmarks();
     const active = bookmarks.filter(b => !b.isArchived);
     const tags = this.allTags();
@@ -594,11 +592,6 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
-
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
   }
 
   clearAiChat() { this.aiMessages.set([]); }

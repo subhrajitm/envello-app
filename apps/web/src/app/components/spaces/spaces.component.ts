@@ -79,7 +79,7 @@ export class SpacesComponent {
   switchTo(profile: WorkspaceProfile) {
     if (this.isActive(profile.id)) return;
     this.switching.set(true);
-    setTimeout(() => this.workspaceService.switchProfile(profile.id), 280);
+    this.workspaceService.switchProfile(profile.id);
   }
 
   // ── New modal ─────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export class SpacesComponent {
       this.workspaceService.addProfileWithId(id, name, this.formColor(), this.formIcon());
       this.closeModal();
       this.switching.set(true);
-      setTimeout(() => this.workspaceService.switchProfile(id), 60);
+      this.workspaceService.switchProfile(id);
     }
   }
 

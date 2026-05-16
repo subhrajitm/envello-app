@@ -1162,7 +1162,7 @@ export class VendorComponent {
         this.resetForm();
         this.formRenewal.set(this.autoRenewalDate('monthly'));
         this.formMode.set('add');
-        setTimeout(() => (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus(), 60);
+        (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus();
     }
 
     openEditForm(sub: Subscription) {
@@ -1229,7 +1229,7 @@ export class VendorComponent {
             this.resetForm();
             this.formRenewal.set(this.autoRenewalDate('monthly'));
             this.formMode.set('add');
-            setTimeout(() => (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus(), 60);
+            (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus();
         }
     }
 
@@ -1406,7 +1406,7 @@ export class VendorComponent {
 
     editFromDetails(sub: Subscription) {
         this.closeDetails();
-        setTimeout(() => this.openEditForm(sub), 50);
+        this.openEditForm(sub);
     }
 
     currencySymbol(currency: string | undefined): string {
@@ -1423,7 +1423,6 @@ export class VendorComponent {
         this.aiMessages.update(m => [...m, { role: 'user', text }]);
         this.aiLoading.set(true);
 
-        await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
 
         const subs = this.subscriptionStore.subscriptions();
         const active = subs.filter(s => !s.status || s.status === 'active');
@@ -1467,11 +1466,6 @@ export class VendorComponent {
 
         this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
         this.aiLoading.set(false);
-
-        setTimeout(() => {
-            const el = document.querySelector('.ai-panel-messages');
-            if (el) el.scrollTop = el.scrollHeight;
-        }, 50);
     }
 
     // ── Private utilities ─────────────────────────────────────────────────

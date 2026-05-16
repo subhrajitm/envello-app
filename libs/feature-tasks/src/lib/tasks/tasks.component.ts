@@ -1114,10 +1114,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (modKey && event.key === 'k' && !event.shiftKey) {
       event.preventDefault();
       this.quickAddVisible.set(true);
-      setTimeout(() => {
-        const input = document.querySelector('.quick-add-input') as HTMLInputElement;
-        input?.focus();
-      }, 0);
+      (document.querySelector('.quick-add-input') as HTMLInputElement)?.focus();
       return;
     }
 
@@ -1818,15 +1815,11 @@ export class TasksComponent implements OnInit, OnDestroy {
   showErrorState(message: string) {
     this.errorMessage.set(message);
     this.showError.set(true);
-    setTimeout(() => {
-      this.showError.set(false);
-      setTimeout(() => this.errorMessage.set(null), 300);
-    }, 3000);
   }
 
   dismissError() {
     this.showError.set(false);
-    setTimeout(() => this.errorMessage.set(null), 300);
+    this.errorMessage.set(null);
   }
 
   ngOnDestroy() {
@@ -2269,8 +2262,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
 
-    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
-
     const tasks = this.store.tasks();
     const q = text.toLowerCase();
     let response = '';
@@ -2308,11 +2299,6 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
-
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
   }
 
   clearAiChat() { this.aiMessages.set([]); }

@@ -78,7 +78,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   route = inject(ActivatedRoute);
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
   private shouldFocusInput = false;
-  private timeInterval?: number;
   private saveTimeout?: ReturnType<typeof setTimeout>;
 
   // State
@@ -96,7 +95,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // UI State
   focusMode = signal(false);
   showFocusToast = signal(false);
-  private focusToastTimer?: ReturnType<typeof setTimeout>;
   fullScreenMode = signal(false);
   leftSidebarCollapsed = signal(false);
   rightSidebarCollapsed = signal(false);
@@ -109,8 +107,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   bulkMode = signal(false);
 
   // Time tracking
-  sessionStartTime = Date.now();
-  elapsedSeconds = signal(0);
+  private sessionStartTime = Date.now();
   targetWordCount = signal(2500);
   private novelId = signal('');
 
@@ -280,11 +277,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Time tracking interval
-    this.timeInterval = window.setInterval(() => {
-      const elapsed = Math.floor((Date.now() - this.sessionStartTime) / 1000);
-      this.elapsedSeconds.set(elapsed);
-    }, 1000);
   }
 
   ngOnInit() {
@@ -348,9 +340,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy() {
-    if (this.timeInterval) {
-      clearInterval(this.timeInterval);
-    }
     if (this.saveTimeout) {
       clearTimeout(this.saveTimeout);
     }
@@ -631,17 +620,15 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
           this.novelService.addChapter(targetGroupId, modal.inputValue.trim());
 
-          // Select the newly created chapter
-          setTimeout(() => {
-            const updatedNovel = this.novel();
-            if (updatedNovel) {
-              const updatedGroup = updatedNovel.chapters.find(g => g.id === targetGroupId);
-              if (updatedGroup && updatedGroup.children.length > chapterCountBefore) {
-                const newChapter = updatedGroup.children[updatedGroup.children.length - 1];
-                this.selectChapter(newChapter);
-              }
+          // Select the newly created chapter (signal updates synchronously)
+          const updatedNovel = this.novel();
+          if (updatedNovel) {
+            const updatedGroup = updatedNovel.chapters.find(g => g.id === targetGroupId);
+            if (updatedGroup && updatedGroup.children.length > chapterCountBefore) {
+              const newChapter = updatedGroup.children[updatedGroup.children.length - 1];
+              this.selectChapter(newChapter);
             }
-          }, 10);
+          }
         }
       }
     } else if (modal.type === 'note') {
@@ -776,7 +763,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Time formatting
   getFormattedTime(): string {
-    const seconds = this.elapsedSeconds();
+    const seconds = Math.floor((Date.now() - this.sessionStartTime) / 1000);
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
@@ -1130,11 +1117,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       const seenKey = 'envello-focus-toast-seen';
       if (!localStorage.getItem(seenKey)) {
         this.showFocusToast.set(true);
-        if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
-        this.focusToastTimer = setTimeout(() => {
-          this.showFocusToast.set(false);
-          localStorage.setItem(seenKey, 'true');
-        }, 4000);
       }
     } else {
       // Exiting focus mode: restore sidebars to default (visible)
@@ -1146,7 +1128,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   dismissFocusToast() {
     this.showFocusToast.set(false);
-    if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     localStorage.setItem('envello-focus-toast-seen', 'true');
   }
 

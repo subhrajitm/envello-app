@@ -1225,7 +1225,6 @@ export class MeetingsComponent {
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-    await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
 
     const all = this.meetingsService.meetings();
     const now = new Date();
@@ -1276,7 +1275,6 @@ export class MeetingsComponent {
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
-    setTimeout(() => { const el = document.querySelector('.ai-panel-messages'); if (el) el.scrollTop = el.scrollHeight; }, 50);
   }
 
   clearAiChat() { this.aiMessages.set([]); }

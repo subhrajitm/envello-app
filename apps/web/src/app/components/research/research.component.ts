@@ -276,7 +276,6 @@ export class ResearchComponent {
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
     const lib = this.selectedLibrary();
     const srcs = lib ? this.researchService.getSourcesByLibrary(lib.id) : [];
     const q = text.toLowerCase();
@@ -302,7 +301,6 @@ export class ResearchComponent {
   async analyzeSource(source: ResearchSource) {
     this.aiLoading.set(true);
     this.aiSourceAnalysis.set('');
-    await new Promise(r => setTimeout(r, 400));
     this.aiSourceAnalysis.set('Connect an AI provider to analyse this source.');
     this.aiLoading.set(false);
   }
