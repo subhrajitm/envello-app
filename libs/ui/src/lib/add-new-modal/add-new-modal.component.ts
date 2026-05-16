@@ -96,7 +96,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         research:     this.researchService.libraries().length,
         meeting:      this.meetingsService.meetings().length,
         bookmark:     this.store.bookmarks().length,
-        project:      this.store.projects().length,
+        space:      this.store.spaces().length,
         vault:        0,
         subscription: 0,
     }));

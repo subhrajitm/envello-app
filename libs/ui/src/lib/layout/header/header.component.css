@@ -185,7 +185,7 @@
   gap: 12px;
 }
 
-.btn-new-project {
+.btn-new-space {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -205,7 +205,7 @@
   font-weight: 700;
 }
 
-.btn-new-project:hover {
+.btn-new-space:hover {
   filter: brightness(1.1);
 }
 

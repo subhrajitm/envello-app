@@ -13,13 +13,13 @@ import { VaultStore, SubscriptionStore, LinkStore } from '@envello/state';
 export type SectionType = 'notes' | 'meetings' | 'bookmarks' | 'novels' | 'articles' | 'research';
 
 @Component({
-    selector: 'app-project-details',
+    selector: 'app-space-details',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    templateUrl: './project-details.component.html',
-    styleUrl: './project-details.component.css'
+    templateUrl: './space-details.component.html',
+    styleUrl: './space-details.component.css'
 })
-export class ProjectDetailsComponent {
+export class SpaceDetailsComponent {
     private route = inject(ActivatedRoute);
     public store = inject(StoreService);
     private router = inject(Router);
@@ -50,24 +50,24 @@ export class ProjectDetailsComponent {
 
     // ── Core project ──────────────────────────────────────────────────────────
     project = computed(() => {
-        const id = this.projectId();
+        const id = this.spaceId();
         if (!id) return null;
-        return this.store.projects().find(p => p.id === id) || null;
+        return this.store.spaces().find(p => p.id === id) || null;
     });
 
     // ── Tasks ─────────────────────────────────────────────────────────────────
     projectTasks = computed(() => {
-        const p = this.project();
+        const p = this.space();
         if (!p) return [];
-        return this.store.tasks().filter(t => t.project === p.id);
+        return this.store.tasks().filter(t => t.space === p.id);
     });
-    activeTasks    = computed(() => this.projectTasks().filter(t => t.status === 'ACTIVE'));
-    pendingTasks   = computed(() => this.projectTasks().filter(t => t.status === 'PENDING'));
-    completedTasks = computed(() => this.projectTasks().filter(t => t.status === 'COMPLETED'));
+    activeTasks    = computed(() => this.spaceTasks().filter(t => t.status === 'ACTIVE'));
+    pendingTasks   = computed(() => this.spaceTasks().filter(t => t.status === 'PENDING'));
+    completedTasks = computed(() => this.spaceTasks().filter(t => t.status === 'COMPLETED'));
 
     // ── Linked resources ──────────────────────────────────────────────────────
     private linkedIds = (key: keyof NonNullable<Project['linkedResources']>) =>
-        computed(() => this.project()?.linkedResources?.[key] ?? []);
+        computed(() => this.space()?.linkedResources?.[key] ?? []);
 
     private linkedNovelsIds   = this.linkedIds('novels');
     private linkedNotesIds    = this.linkedIds('notes');
@@ -89,7 +89,7 @@ export class ProjectDetailsComponent {
         const q = this.linkSearch().toLowerCase();
         if (!type) return [];
 
-        const linkedIds: string[] = (this.project()?.linkedResources?.[type] ?? []) as string[];
+        const linkedIds: string[] = (this.space()?.linkedResources?.[type] ?? []) as string[];
 
         const filter = <T extends { id: string; title?: string; name?: string }>(
             items: T[], label: keyof T = 'title'
@@ -112,14 +112,14 @@ export class ProjectDetailsComponent {
         this.route.paramMap.pipe(
             map(params => params.get('id')),
             takeUntilDestroyed(this.destroyRef)
-        ).subscribe(id => this.projectId.set(id));
+        ).subscribe(id => this.spaceId.set(id));
     }
 
     // ── Navigation & edit ─────────────────────────────────────────────────────
     goBack() { this.router.navigate(['/projects']); }
 
     startEdit() {
-        const p = this.project();
+        const p = this.space();
         if (!p) return;
         this.editTitle.set(p.title);
         this.editDescription.set(p.description ?? '');
@@ -128,9 +128,9 @@ export class ProjectDetailsComponent {
     }
 
     saveEdit() {
-        const id = this.projectId();
+        const id = this.spaceId();
         if (!id) return;
-        const newTitle = this.editTitle().trim() || this.project()!.title;
+        const newTitle = this.editTitle().trim() || this.space()!.title;
         this.store.updateProject(id, {
             title: newTitle,
             description: this.editDescription(),
@@ -144,18 +144,18 @@ export class ProjectDetailsComponent {
     cancelEdit() { this.editMode.set(false); }
 
     switchToProject() {
-        const id = this.projectId();
+        const id = this.spaceId();
         if (id) this.workspaceService.switchProfile(id);
     }
 
     isActiveProject() {
-        return this.workspaceService.activeProfileId() === this.projectId();
+        return this.workspaceService.activeProfileId() === this.spaceId();
     }
 
     // ── Tasks ─────────────────────────────────────────────────────────────────
     addTask() {
         const title = this.newTaskTitle().trim();
-        const p = this.project();
+        const p = this.space();
         if (!title || !p) return;
         this.store.addTask({
             id: crypto.randomUUID(),
@@ -185,7 +185,7 @@ export class ProjectDetailsComponent {
 
     linkItem(itemId: string) {
         const type = this.linkSectionType();
-        const p = this.project();
+        const p = this.space();
         if (!type || !p) return;
         const current: string[] = [...((p.linkedResources?.[type] ?? []) as string[])];
         if (current.includes(itemId)) return;
@@ -195,7 +195,7 @@ export class ProjectDetailsComponent {
     }
 
     unlinkItem(type: SectionType, itemId: string) {
-        const p = this.project();
+        const p = this.space();
         if (!p) return;
         const current: string[] = [...((p.linkedResources?.[type] ?? []) as string[])];
         this.store.updateProject(p.id, {
@@ -227,7 +227,7 @@ export class ProjectDetailsComponent {
     visibleCreds = signal<Set<string>>(new Set());
 
     projectCredentials = computed(() => {
-        const id = this.projectId();
+        const id = this.spaceId();
         return id ? this.vaultStore.getCredentialsByProject(id)() : [];
     });
 
@@ -241,7 +241,7 @@ export class ProjectDetailsComponent {
     copyCred(cipher: string) { navigator.clipboard.writeText(this.decryptCred(cipher)); }
 
     addCredential() {
-        const id = this.projectId();
+        const id = this.spaceId();
         if (!id || !this.newCredName() || !this.newCredValue()) return;
         this.vaultStore.addCredential({
             id: crypto.randomUUID(),
@@ -265,12 +265,12 @@ export class ProjectDetailsComponent {
     newSubRenewal  = signal('');
 
     projectSubscriptions = computed(() => {
-        const id = this.projectId();
+        const id = this.spaceId();
         return id ? this.subscriptionStore.getSubscriptionsByProject(id)() : [];
     });
 
     addSubscription() {
-        const id = this.projectId();
+        const id = this.spaceId();
         if (!id || !this.newSubName() || !this.newSubRenewal()) return;
         this.subscriptionStore.addSubscription({
             id: crypto.randomUUID(),

@@ -17,7 +17,7 @@ export class StoreService {
     noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
     bookmarks = signal<Bookmark[]>([]);
     bookmarkFolders = signal<BookmarkFolder[]>([]);
-    projects = signal<Project[]>([]);
+    spaces = signal<Project[]>([]);
 
     private bin = inject(BinService);
     private db = inject(DataService);
@@ -78,7 +78,7 @@ export class StoreService {
 
     private async loadFromDb(): Promise<void> {
         try {
-            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders, projects] = await Promise.all([
+            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders, spaces] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
                 this.db.getAll<Note>('notes'),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -96,7 +96,7 @@ export class StoreService {
             this.novels.set(novels || []);
             this.bookmarks.set(bookmarks || []);
             this.bookmarkFolders.set(bookmarkFolders || []);
-            this.projects.set(projects || []);
+            this.spaces.set(spaces || []);
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -121,7 +121,7 @@ export class StoreService {
             this.noteFolders.set([{ id: 'personal', name: 'Personal', icon: 'folder' }]);
             this.bookmarks.set([]);
             this.bookmarkFolders.set([]);
-            this.projects.set([]);
+            this.spaces.set([]);
         }
     }
 
@@ -253,24 +253,24 @@ export class StoreService {
         this.db.upsert('novels', novel).catch(e => console.error('[StoreService] persist novel failed', e));
     }
 
-    addProject(project: Project) {
-        this.projects.update(projects => [...projects, project]);
-        this.addActivity('Project created: ' + project.title, 'system');
-        this.db.upsert('projects', project).catch(e => console.error('[StoreService] persist project failed', e));
+    addSpace(space: Project) {
+        this.spaces.update(list => [...list, space]);
+        this.addActivity('Space created: ' + space.title, 'system');
+        this.db.upsert('projects', space).catch(e => console.error('[StoreService] persist space failed', e));
     }
 
-    deleteProject(id: string) {
-        this.projects.update(projects => projects.filter(p => p.id !== id));
-        this.addActivity('Project deleted', 'system');
-        this.db.remove('projects', id).catch(e => console.error('[StoreService] remove project failed', e));
+    deleteSpace(id: string) {
+        this.spaces.update(list => list.filter(p => p.id !== id));
+        this.addActivity('Space deleted', 'system');
+        this.db.remove('projects', id).catch(e => console.error('[StoreService] remove space failed', e));
     }
 
-    updateProject(id: string, updates: Partial<Project>) {
-        this.projects.update(projects =>
-            projects.map(p => p.id === id ? { ...p, ...updates } : p)
+    updateSpace(id: string, updates: Partial<Project>) {
+        this.spaces.update(list =>
+            list.map(p => p.id === id ? { ...p, ...updates } : p)
         );
-        const project = this.projects().find(p => p.id === id);
-        if (project) this.db.upsert('projects', project).catch(e => console.error('[StoreService] persist project failed', e));
+        const space = this.spaces().find(p => p.id === id);
+        if (space) this.db.upsert('projects', space).catch(e => console.error('[StoreService] persist space failed', e));
     }
 
     deleteNovel(id: string) {

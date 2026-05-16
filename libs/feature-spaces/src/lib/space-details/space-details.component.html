@@ -1,0 +1,563 @@
+<div class="sd-container">
+
+    <!-- Header -->
+    <header class="sd-header">
+        <button class="sd-back-btn" (click)="goBack()" title="Back to Projects">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <div class="sd-brand-icon">
+                <span class="material-symbols-outlined">{{ project()?.icon || 'folder' }}</span>
+            </div>
+            <span class="sd-brand-title">{{ project()?.title || 'Loading...' }}</span>
+        </button>
+
+        <div class="sd-tabs">
+            <button class="sd-tab" [class.active]="activeTab() === 'OVERVIEW'" (click)="activeTab.set('OVERVIEW')">Overview</button>
+            <button class="sd-tab" [class.active]="activeTab() === 'VAULT'" (click)="activeTab.set('VAULT')">Vault</button>
+            <button class="sd-tab" [class.active]="activeTab() === 'SUBSCRIPTIONS'" (click)="activeTab.set('SUBSCRIPTIONS')">Subscriptions</button>
+        </div>
+
+        <div class="sd-header-actions">
+            @if (isActiveProject()) {
+                <span class="sd-active-badge">
+                    <span class="material-symbols-outlined">radio_button_checked</span>
+                    Active
+                </span>
+            } @else {
+                <button class="sd-switch-btn" (click)="switchToProject()" title="Switch workspace to this project">
+                    <span class="material-symbols-outlined">switch_account</span>
+                    Switch to Project
+                </button>
+            }
+            @if (activeTab() === 'OVERVIEW' && !editMode()) {
+                <button class="sd-edit-btn" (click)="startEdit()">
+                    <span class="material-symbols-outlined">edit</span>
+                    Edit
+                </button>
+            }
+            <div class="sd-task-add">
+                <span class="material-symbols-outlined">add</span>
+                <input type="text" placeholder="Add task..." [(ngModel)]="newTaskTitle" (keyup.enter)="addTask()">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="sd-main">
+
+        @if (activeTab() === 'OVERVIEW') {
+
+            <!-- Edit form -->
+            @if (editMode()) {
+            <div class="sd-edit-form">
+                <div class="sd-edit-row">
+                    <div class="sd-field">
+                        <label>Title</label>
+                        <input type="text" [(ngModel)]="editTitle" class="sd-input">
+                    </div>
+                    <div class="sd-field sd-field--narrow">
+                        <label>Status</label>
+                        <select [(ngModel)]="editStatus" class="sd-input">
+                            <option value="PLANNING">Planning</option>
+                            <option value="DRAFTING">Drafting</option>
+                            <option value="REVIEW">Review</option>
+                            <option value="COMPLETE">Complete</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="sd-field">
+                    <label>Description</label>
+                    <textarea [(ngModel)]="editDescription" class="sd-input sd-textarea" rows="2"></textarea>
+                </div>
+                <div class="sd-edit-actions">
+                    <button class="sd-btn sd-btn--primary" (click)="saveEdit()">Save</button>
+                    <button class="sd-btn" (click)="cancelEdit()">Cancel</button>
+                </div>
+            </div>
+            }
+
+            <!-- Project meta banner -->
+            @if (!editMode() && project()) {
+            <div class="sd-meta-banner">
+                <div class="sd-meta-left">
+                    <span class="sd-status-badge sd-status--{{ project()!.status.toLowerCase() }}">
+                        {{ project()!.status | titlecase }}
+                    </span>
+                    @if (project()!.description) {
+                        <p class="sd-meta-desc">{{ project()!.description }}</p>
+                    }
+                    @if (project()!.tags?.length) {
+                        <div class="sd-meta-tags">
+                            @for (tag of project()!.tags!; track tag) {
+                                <span class="sd-tag">{{ tag }}</span>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="sd-meta-right">
+                    <div class="sd-meta-stat">
+                        <span class="material-symbols-outlined">task_alt</span>
+                        <span>{{ projectTasks().length }} tasks</span>
+                    </div>
+                    @if (project()!.dueDate) {
+                        <div class="sd-meta-stat">
+                            <span class="material-symbols-outlined">calendar_month</span>
+                            <span>Due {{ project()!.dueDate | date:'mediumDate' }}</span>
+                        </div>
+                    }
+                    @if (project()!.words > 0) {
+                        <div class="sd-meta-stat">
+                            <span class="material-symbols-outlined">article</span>
+                            <span>{{ project()!.words | number }} words</span>
+                        </div>
+                    }
+                    @if (project()!.priority) {
+                        <div class="sd-meta-stat sd-priority--{{ project()!.priority!.toLowerCase() }}">
+                            <span class="material-symbols-outlined">flag</span>
+                            <span>{{ project()!.priority | titlecase }}</span>
+                        </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Tasks — compact flat list -->
+            <div class="sd-section">
+                <div class="sd-section-hdr">
+                    <span class="material-symbols-outlined sd-section-icon">checklist</span>
+                    <h2 class="sd-section-name">Tasks</h2>
+                    <span class="sd-count-badge">{{ projectTasks().length }}</span>
+                </div>
+
+                <div class="sd-task-list">
+                    @for (task of activeTasks(); track task.id) {
+                    <div class="sd-task-row">
+                        <label class="sd-task-check">
+                            <input type="checkbox" (change)="updateTaskStatus(task.id, 'COMPLETED')">
+                            <span class="sd-chk"></span>
+                        </label>
+                        <span class="sd-task-title">{{ task.title }}</span>
+                        @if (task.due) {
+                            <span class="sd-task-due">
+                                <span class="material-symbols-outlined">calendar_today</span>{{ task.due }}
+                            </span>
+                        }
+                        <span class="sd-task-status-dot sd-task-status-dot--active"></span>
+                        <span class="material-symbols-outlined sd-task-del" (click)="deleteTask(task.id)">delete</span>
+                    </div>
+                    }
+                    @for (task of pendingTasks(); track task.id) {
+                    <div class="sd-task-row">
+                        <label class="sd-task-check">
+                            <input type="checkbox" (change)="updateTaskStatus(task.id, 'COMPLETED')">
+                            <span class="sd-chk"></span>
+                        </label>
+                        <span class="sd-task-title">{{ task.title }}</span>
+                        @if (task.due) {
+                            <span class="sd-task-due">
+                                <span class="material-symbols-outlined">calendar_today</span>{{ task.due }}
+                            </span>
+                        }
+                        <span class="sd-task-status-dot sd-task-status-dot--pending"></span>
+                        <span class="material-symbols-outlined sd-task-del" (click)="deleteTask(task.id)">delete</span>
+                    </div>
+                    }
+                    @for (task of completedTasks(); track task.id) {
+                    <div class="sd-task-row sd-task-row--done">
+                        <label class="sd-task-check">
+                            <input type="checkbox" checked (change)="updateTaskStatus(task.id, 'ACTIVE')">
+                            <span class="sd-chk"></span>
+                        </label>
+                        <span class="sd-task-title">{{ task.title }}</span>
+                        <span class="sd-task-status-dot sd-task-status-dot--done"></span>
+                        <span class="material-symbols-outlined sd-task-del" (click)="deleteTask(task.id)">delete</span>
+                    </div>
+                    }
+                    @if (projectTasks().length === 0) {
+                        <div class="sd-section-empty">
+                            <span class="material-symbols-outlined">checklist</span>
+                            No tasks yet — type above to add one
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Sections grid -->
+            <div class="sd-sections-grid">
+
+                <!-- Notes -->
+                <div class="sd-sec-card">
+                    <div class="sd-sec-hdr">
+                        <span class="material-symbols-outlined">edit_note</span>
+                        <span class="sd-sec-title">Notes</span>
+                        <span class="sd-count-badge">{{ linkedNotes().length }}</span>
+                        <button class="sd-sec-link-btn" (click)="openLinkSection('notes')" title="Link a note">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="sd-sec-body">
+                        @for (note of linkedNotes(); track note.id) {
+                        <div class="sd-sec-row">
+                            <span class="material-symbols-outlined sd-sec-row-icon">sticky_note_2</span>
+                            <div class="sd-sec-row-info">
+                                <span class="sd-sec-row-title">{{ note.title }}</span>
+                                <span class="sd-sec-row-sub">{{ note.date }}</span>
+                            </div>
+                            <span class="material-symbols-outlined sd-sec-unlink" (click)="unlinkItem('notes', note.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedNotes().length === 0) {
+                            <div class="sd-sec-empty">No notes linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Meetings -->
+                <div class="sd-sec-card">
+                    <div class="sd-sec-hdr">
+                        <span class="material-symbols-outlined">groups</span>
+                        <span class="sd-sec-title">Meetings</span>
+                        <span class="sd-count-badge">{{ linkedMeetings().length }}</span>
+                        <button class="sd-sec-link-btn" (click)="openLinkSection('meetings')" title="Link a meeting">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="sd-sec-body">
+                        @for (meeting of linkedMeetings(); track meeting.id) {
+                        <div class="sd-sec-row">
+                            <span class="material-symbols-outlined sd-sec-row-icon">event</span>
+                            <div class="sd-sec-row-info">
+                                <span class="sd-sec-row-title">{{ meeting.title }}</span>
+                                <span class="sd-sec-row-sub">{{ meeting.date }}</span>
+                            </div>
+                            <span class="material-symbols-outlined sd-sec-unlink" (click)="unlinkItem('meetings', meeting.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedMeetings().length === 0) {
+                            <div class="sd-sec-empty">No meetings linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Bookmarks -->
+                <div class="sd-sec-card">
+                    <div class="sd-sec-hdr">
+                        <span class="material-symbols-outlined">bookmark</span>
+                        <span class="sd-sec-title">Bookmarks</span>
+                        <span class="sd-count-badge">{{ linkedBookmarks().length }}</span>
+                        <button class="sd-sec-link-btn" (click)="openLinkSection('bookmarks')" title="Link a bookmark">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="sd-sec-body">
+                        @for (bm of linkedBookmarks(); track bm.id) {
+                        <div class="sd-sec-row">
+                            @if (bm.faviconUrl) {
+                                <img [src]="bm.faviconUrl" class="sd-sec-favicon" alt="" width="14" height="14">
+                            } @else {
+                                <span class="material-symbols-outlined sd-sec-row-icon">language</span>
+                            }
+                            <div class="sd-sec-row-info">
+                                <span class="sd-sec-row-title">{{ bm.title }}</span>
+                                <span class="sd-sec-row-sub">{{ bm.url }}</span>
+                            </div>
+                            <span class="material-symbols-outlined sd-sec-unlink" (click)="unlinkItem('bookmarks', bm.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedBookmarks().length === 0) {
+                            <div class="sd-sec-empty">No bookmarks linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Novels -->
+                <div class="sd-sec-card">
+                    <div class="sd-sec-hdr">
+                        <span class="material-symbols-outlined">menu_book</span>
+                        <span class="sd-sec-title">Novels</span>
+                        <span class="sd-count-badge">{{ linkedNovels().length }}</span>
+                        <button class="sd-sec-link-btn" (click)="openLinkSection('novels')" title="Link a novel">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="sd-sec-body">
+                        @for (novel of linkedNovels(); track novel.id) {
+                        <div class="sd-sec-row">
+                            <span class="material-symbols-outlined sd-sec-row-icon">auto_stories</span>
+                            <div class="sd-sec-row-info">
+                                <span class="sd-sec-row-title">{{ novel.title }}</span>
+                                <span class="sd-sec-row-sub">{{ novel.wordCount | number }} words · {{ novel.status | titlecase }}</span>
+                            </div>
+                            <div class="sd-sec-row-progress">
+                                <div class="sd-sec-progress-bar">
+                                    <div class="sd-sec-progress-fill" [style.width.%]="novel.progress"></div>
+                                </div>
+                                <span class="sd-sec-progress-label">{{ novel.progress }}%</span>
+                            </div>
+                            <span class="material-symbols-outlined sd-sec-unlink" (click)="unlinkItem('novels', novel.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedNovels().length === 0) {
+                            <div class="sd-sec-empty">No novels linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Articles -->
+                <div class="sd-sec-card">
+                    <div class="sd-sec-hdr">
+                        <span class="material-symbols-outlined">article</span>
+                        <span class="sd-sec-title">Articles</span>
+                        <span class="sd-count-badge">{{ linkedArticles().length }}</span>
+                        <button class="sd-sec-link-btn" (click)="openLinkSection('articles')" title="Link an article">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="sd-sec-body">
+                        @for (article of linkedArticles(); track article.id) {
+                        <div class="sd-sec-row">
+                            <span class="material-symbols-outlined sd-sec-row-icon">description</span>
+                            <div class="sd-sec-row-info">
+                                <span class="sd-sec-row-title">{{ article.title }}</span>
+                                <span class="sd-sec-row-sub">{{ article.platform }} · {{ article.lastUpdated | date:'shortDate' }}</span>
+                            </div>
+                            <span class="material-symbols-outlined sd-sec-unlink" (click)="unlinkItem('articles', article.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedArticles().length === 0) {
+                            <div class="sd-sec-empty">No articles linked</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Research -->
+                <div class="sd-sec-card sd-sec-card--wide">
+                    <div class="sd-sec-hdr">
+                        <span class="material-symbols-outlined">science</span>
+                        <span class="sd-sec-title">Research Libraries</span>
+                        <span class="sd-count-badge">{{ linkedResearch().length }}</span>
+                        <button class="sd-sec-link-btn" (click)="openLinkSection('research')" title="Link a research library">
+                            <span class="material-symbols-outlined">add_link</span>
+                        </button>
+                    </div>
+                    <div class="sd-sec-body">
+                        @for (lib of linkedResearch(); track lib.id) {
+                        <div class="sd-sec-row">
+                            <span class="material-symbols-outlined sd-sec-row-icon">biotech</span>
+                            <div class="sd-sec-row-info">
+                                <span class="sd-sec-row-title">{{ lib.name }}</span>
+                                <span class="sd-sec-row-sub">{{ lib.description }}</span>
+                            </div>
+                            <span class="material-symbols-outlined sd-sec-unlink" (click)="unlinkItem('research', lib.id)">link_off</span>
+                        </div>
+                        }
+                        @if (linkedResearch().length === 0) {
+                            <div class="sd-sec-empty">No research libraries linked</div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        }
+
+        <!-- Vault tab -->
+        @if (activeTab() === 'VAULT') {
+        <div class="sd-table-container">
+            <div class="sd-section-bar">
+                <span class="sd-section-bar-title">Credentials Vault</span>
+                <button class="sd-btn sd-btn--primary" (click)="showAddCredential.set(true)">+ Add Credential</button>
+            </div>
+            @if (showAddCredential()) {
+            <div class="sd-add-form">
+                <div class="sd-field">
+                    <label>Name</label>
+                    <input type="text" class="sd-input" [(ngModel)]="newCredName" placeholder="e.g. Prod DB">
+                </div>
+                <div class="sd-field">
+                    <label>Type</label>
+                    <select class="sd-input" [(ngModel)]="newCredType">
+                        <option value="login">Login</option>
+                        <option value="api_key">API Key</option>
+                        <option value="ssh">SSH</option>
+                        <option value="db">Database</option>
+                        <option value="note">Secure Note</option>
+                    </select>
+                </div>
+                <div class="sd-field">
+                    <label>Value</label>
+                    <input type="password" class="sd-input" [(ngModel)]="newCredValue" placeholder="Secret">
+                </div>
+                <button class="sd-btn sd-btn--primary" (click)="addCredential()">Save</button>
+                <button class="sd-btn" (click)="showAddCredential.set(false)">Cancel</button>
+            </div>
+            }
+            <table class="sd-table">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Type</th><th>Value</th><th>Linked Subscriptions</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (cred of projectCredentials(); track cred.id) {
+                    <tr>
+                        <td class="sd-fw">{{ cred.name }}</td>
+                        <td><span class="sd-type-badge">{{ cred.type }}</span></td>
+                        <td>
+                            <div class="sd-cred-value">
+                                <span class="sd-mono">{{ visibleCreds().has(cred.id) ? decryptCred(cred.value) : '••••••••••••••••' }}</span>
+                                <span class="material-symbols-outlined action-icon" (click)="toggleCredVisibility(cred.id)">
+                                    {{ visibleCreds().has(cred.id) ? 'visibility_off' : 'visibility' }}
+                                </span>
+                                <span class="material-symbols-outlined action-icon" (click)="copyCred(cred.value)">content_copy</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="sd-link-cell">
+                                <span class="text-muted">{{ getLinkedItemsText('credential', cred.id) }}</span>
+                                <span class="material-symbols-outlined action-icon" (click)="openLinkModal('credential', cred.id)">link</span>
+                            </div>
+                        </td>
+                        <td><span class="material-symbols-outlined action-icon delete" (click)="vaultStore.deleteCredential(cred.id)">delete</span></td>
+                    </tr>
+                    }
+                    @if (projectCredentials().length === 0) {
+                    <tr><td colspan="5" class="sd-empty-row">No credentials added</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+
+        <!-- Subscriptions tab -->
+        @if (activeTab() === 'SUBSCRIPTIONS') {
+        <div class="sd-table-container">
+            <div class="sd-section-bar">
+                <span class="sd-section-bar-title">Subscriptions & Vendors</span>
+                <button class="sd-btn sd-btn--primary" (click)="showAddSubscription.set(true)">+ Add Subscription</button>
+            </div>
+            @if (showAddSubscription()) {
+            <div class="sd-add-form sd-add-form--wrap">
+                <div class="sd-field">
+                    <label>Name</label>
+                    <input type="text" class="sd-input" [(ngModel)]="newSubName" placeholder="e.g. AWS">
+                </div>
+                <div class="sd-field">
+                    <label>Category</label>
+                    <input type="text" class="sd-input" [(ngModel)]="newSubCategory" placeholder="e.g. Infrastructure">
+                </div>
+                <div class="sd-field sd-field--narrow">
+                    <label>Price</label>
+                    <input type="number" class="sd-input" [(ngModel)]="newSubPrice">
+                </div>
+                <div class="sd-field">
+                    <label>Cycle</label>
+                    <select class="sd-input" [(ngModel)]="newSubCycle">
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="sd-field">
+                    <label>Renewal Date</label>
+                    <input type="date" class="sd-input" [(ngModel)]="newSubRenewal">
+                </div>
+                <button class="sd-btn sd-btn--primary" (click)="addSubscription()">Save</button>
+                <button class="sd-btn" (click)="showAddSubscription.set(false)">Cancel</button>
+            </div>
+            }
+            <table class="sd-table">
+                <thead>
+                    <tr>
+                        <th>Service</th><th>Category</th><th>Cost</th><th>Renewal</th><th>Linked Credentials</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (sub of projectSubscriptions(); track sub.id) {
+                    <tr>
+                        <td class="sd-fw">{{ sub.name }}</td>
+                        <td class="text-muted">{{ sub.category }}</td>
+                        <td class="text-muted">${{ sub.price }}/{{ sub.billingCycle === 'monthly' ? 'mo' : 'yr' }}</td>
+                        <td [class.sd-renewal-soon]="subscriptionStore.upcomingRenewals().includes(sub)">
+                            {{ sub.renewalDate }}
+                            @if (subscriptionStore.upcomingRenewals().includes(sub)) {
+                                <span class="sd-soon-badge">SOON</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="sd-link-cell">
+                                <span class="text-muted">{{ getLinkedItemsText('subscription', sub.id) }}</span>
+                                <span class="material-symbols-outlined action-icon" (click)="openLinkModal('subscription', sub.id)">link</span>
+                            </div>
+                        </td>
+                        <td><span class="material-symbols-outlined action-icon delete" (click)="subscriptionStore.deleteSubscription(sub.id)">delete</span></td>
+                    </tr>
+                    }
+                    @if (projectSubscriptions().length === 0) {
+                    <tr><td colspan="6" class="sd-empty-row">No subscriptions added</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+
+    </main>
+
+    <!-- Link section modal -->
+    @if (linkSectionType()) {
+    <div class="sd-modal-overlay" (click)="closeLinkSection()">
+        <div class="sd-modal" (click)="$event.stopPropagation()">
+            <h3 class="sd-modal-title">Link {{ linkSectionType() | titlecase }}</h3>
+            <div class="sd-modal-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Search..." [(ngModel)]="linkSearch" class="sd-modal-search-input">
+            </div>
+            <div class="sd-link-list">
+                @for (item of linkableItems(); track $index) {
+                <button class="sd-link-list-item" (click)="linkItem(item['id'])">
+                    <div class="sd-link-item-info">
+                        <span class="sd-link-item-title">{{ getItemLabel(item) }}</span>
+                        <span class="sd-link-item-sub">{{ getItemSub(linkSectionType()!, item) }}</span>
+                    </div>
+                    <span class="material-symbols-outlined sd-link-item-add">add</span>
+                </button>
+                }
+                @if (linkableItems().length === 0) {
+                    <div class="sd-link-empty">
+                        @if (linkSearch()) { No matches for "{{ linkSearch() }}" }
+                        @else { No {{ linkSectionType() }} available to link }
+                    </div>
+                }
+            </div>
+            <div class="sd-modal-actions">
+                <button class="sd-btn" (click)="closeLinkSection()">Done</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Vault-Subscription link modal -->
+    @if (showLinkModal()) {
+    <div class="sd-modal-overlay" (click)="showLinkModal.set(false)">
+        <div class="sd-modal" (click)="$event.stopPropagation()">
+            <h3 class="sd-modal-title">Link {{ linkTargetType() === 'credential' ? 'Subscription' : 'Credential' }}</h3>
+            <div class="sd-field">
+                <label>Select item to link to:</label>
+                <select class="sd-input" [(ngModel)]="selectedTargetToLink">
+                    @if(linkTargetType() === 'credential') {
+                        @for(s of subscriptionStore.subscriptions(); track s.id) {
+                            <option [value]="s.id">{{ s.name }} ({{ s.category }})</option>
+                        }
+                    } @else {
+                        @for(c of vaultStore.credentials(); track c.id) {
+                            <option [value]="c.id">{{ c.name }} ({{ c.type }})</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="sd-modal-actions">
+                <button class="sd-btn" (click)="showLinkModal.set(false)">Cancel</button>
+                <button class="sd-btn sd-btn--primary" (click)="addLink()">Create Link</button>
+            </div>
+        </div>
+    </div>
+    }
+
+</div>

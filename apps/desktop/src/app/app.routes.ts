@@ -97,8 +97,8 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'projects',
-    loadComponent: () => import('@envello/ui').then(m => m.ProfileManagerComponent),
+    path: 'spaces',
+    loadComponent: () => import('./components/spaces/spaces.component').then(m => m.SpacesComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

@@ -37,7 +37,7 @@ export class ProfileManagerComponent {
     if (!name) return;
     const newId = crypto.randomUUID();
     // Persist to DB first so it survives the reload triggered by switchProfile
-    this.storeService.addProject({
+    this.storeService.addSpace({
       id: newId,
       title: name,
       description: '',
@@ -79,7 +79,7 @@ export class ProfileManagerComponent {
     const name = this.editProfileName().trim();
     if (id && name) {
       this.workspaceService.updateProfile(id, { name, color: this.editProfileColor() });
-      this.storeService.updateProject(id, { title: name });
+      this.storeService.updateSpace(id, { title: name });
       this.cancelEdit();
     }
   }
@@ -103,7 +103,7 @@ export class ProfileManagerComponent {
     if (id) {
       // Remove from PouchDB first — prevents the header sync effect from
       // re-adding the profile back on the next page load.
-      this.storeService.deleteProject(id);
+      this.storeService.deleteSpace(id);
       this.workspaceService.removeProfile(id);
       this.cancelDelete();
     }

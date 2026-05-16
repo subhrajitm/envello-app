@@ -31,7 +31,7 @@ const TYPE_META: Record<ResultType, { label: string; icon: string; color: string
     novel:    { label: 'Novels',    icon: 'menu_book',    color: '#3b82f6' },
     bookmark: { label: 'Bookmarks', icon: 'bookmark',     color: '#a855f7' },
     meeting:  { label: 'Meetings',  icon: 'groups',       color: '#ec4899' },
-    project:  { label: 'Projects',  icon: 'folder',       color: '#60a5fa' },
+    project:  { label: 'Spaces',  icon: 'folder',       color: '#60a5fa' },
     command:  { label: 'Commands',  icon: 'terminal',     color: '#94a3b8' },
 };
 
@@ -47,7 +47,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-subscriptions',type: 'command', title: 'Go to Vendors',      preview: 'Subscriptions & vendors',     icon: 'credit_card',  route: '/subscriptions' },
     { id: 'cmd-activity',     type: 'command', title: 'Go to Activity Log', preview: 'View recent activity',        icon: 'history',      route: '/activity-log' },
     { id: 'cmd-bin',          type: 'command', title: 'Go to Bin',          preview: 'Deleted items',               icon: 'delete',       route: '/bin' },
-    { id: 'cmd-projects',     type: 'command', title: 'Go to Projects',     preview: 'Project management',          icon: 'folder',       route: '/projects' },
+    { id: 'cmd-projects',     type: 'command', title: 'Go to Spaces',     preview: 'Project management',          icon: 'folder',       route: '/projects' },
 ];
 
 @Component({
@@ -231,7 +231,7 @@ export class QuickFindComponent {
             }));
         }
         if (filter === 'all' || filter === 'project') {
-            this.store.projects().slice(0, 3).forEach(p => results.push({
+            this.store.spaces().slice(0, 3).forEach(p => results.push({
                 id: p.id, type: 'project', title: p.title,
                 preview: p.description || p.status,
                 icon: 'folder', route: '/projects', badge: p.status
@@ -275,7 +275,7 @@ export class QuickFindComponent {
                 .forEach(m => results.push({ id: m.id, type: 'meeting', title: m.title, preview: m.description || m.project || '', icon: 'groups', route: '/meetings', date: m.date }));
         }
         if (filter === 'all' || filter === 'project') {
-            this.store.projects()
+            this.store.spaces()
                 .filter(p => p.title.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query))
                 .slice(0, 5)
                 .forEach(p => results.push({ id: p.id, type: 'project', title: p.title, preview: p.description || '', icon: 'folder', route: '/projects', badge: p.status }));

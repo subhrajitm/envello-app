@@ -1,7 +1,7 @@
 {
-  "name": "feature-projects",
+  "name": "feature-spaces",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/feature-projects/src",
+  "sourceRoot": "libs/feature-spaces/src",
   "prefix": "lib",
   "projectType": "library",
   "tags": [],

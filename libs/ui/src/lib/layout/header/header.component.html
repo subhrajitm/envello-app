@@ -49,7 +49,7 @@
       </div>
 
       <div class="header-actions flex items-center gap-2">
-        <button class="btn-new-project" (click)="openAddNew()">
+        <button class="btn-new-space" (click)="openAddNew()">
           <span class="material-symbols-outlined btn-icon-inner">add</span>
           <span>Add New</span>
         </button>
@@ -68,35 +68,35 @@
             {{ getThemeIcon() }}
           </span>
         </button>
-        <!-- Project Switcher -->
+        <!-- Space Switcher -->
         <div class="ps-wrap">
-          <button type="button" class="ps-btn" (click)="toggleProjectSwitcher()" title="Switch project">
-            <span class="ps-dot" [style.background]="activeProject().color"></span>
-            <span class="ps-name">{{ activeProject().name }}</span>
+          <button type="button" class="ps-btn" (click)="toggleSpaceSwitcher()" title="Switch space">
+            <span class="ps-dot" [style.background]="activeSpace().color"></span>
+            <span class="ps-name">{{ activeSpace().name }}</span>
             <span class="material-symbols-outlined ps-chevron">expand_more</span>
           </button>
 
-          @if (showProjectSwitcher()) {
+          @if (showSpaceSwitcher()) {
             <div class="ps-dropdown">
-              <div class="ps-dropdown-label">Projects</div>
+              <div class="ps-dropdown-label">Spaces</div>
               <div class="ps-list">
-                @for (p of projects(); track p.id) {
-                  <button class="ps-item" [class.ps-item-active]="activeProject().id === p.id" (click)="switchProject(p.id)">
+                @for (p of spaces(); track p.id) {
+                  <button class="ps-item" [class.ps-item-active]="activeSpace().id === p.id" (click)="switchSpace(p.id)">
                     <span class="ps-item-dot" [style.background]="p.color"></span>
                     <span class="ps-item-name">{{ p.name }}</span>
-                    @if (activeProject().id === p.id) {
+                    @if (activeSpace().id === p.id) {
                       <span class="material-symbols-outlined ps-check">check</span>
                     }
                   </button>
                 }
               </div>
               <div class="ps-divider"></div>
-              <button class="ps-manage" (click)="manageProjects()">
+              <button class="ps-manage" (click)="manageSpaces()">
                 <span class="material-symbols-outlined" style="font-size:15px">settings</span>
-                Manage Projects
+                Manage Spaces
               </button>
             </div>
-            <div class="ps-backdrop" (click)="closeProjectSwitcher()"></div>
+            <div class="ps-backdrop" (click)="closeSpaceSwitcher()"></div>
           }
         </div>
 

@@ -36,7 +36,7 @@ export class MeetingsComponent {
   viewFilter = signal<MeetingViewFilter>('all');
 
   // Filters
-  selectedProject = signal('');
+  selectedSpace = signal('');
   selectedTimeRange = signal('All Time');
   sortBy = signal<'date' | 'title' | 'attendees'>('date');
   sortDirection = signal<'asc' | 'desc'>('asc');
@@ -174,10 +174,10 @@ export class MeetingsComponent {
     }
     
     // Apply project filter
-    const proj = this.selectedProject();
+    const proj = this.selectedSpace();
     if (proj) {
       meetings = meetings.filter(m =>
-        proj === 'No project' ? !m.project : m.project === proj
+        proj === 'No space' ? !m.project : m.project === proj
       );
     }
     
@@ -396,7 +396,7 @@ export class MeetingsComponent {
 
   onNavItemClick(id: string) {
     this.viewFilter.set(id as MeetingViewFilter);
-    this.selectedProject.set('');
+    this.selectedSpace.set('');
   }
 
   // ── Table view ──────────────────────────────────────────────────────────────
@@ -410,7 +410,7 @@ export class MeetingsComponent {
     }},
     { key: 'date',     header: 'Date',     sortable: true },
     { key: 'time',     header: 'Time' },
-    { key: 'project',  header: 'Project' },
+    { key: 'space',  header: 'Project' },
     { key: 'attendees',header: 'Attendees' },
     { key: 'status',   header: 'Status',   type: 'badge', badgeMap: {
       'scheduled':  { label: 'Scheduled',  dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
@@ -439,7 +439,7 @@ export class MeetingsComponent {
       type:      m.meetingType,
       date:      m.date,
       time:      m.startTime,
-      project:   m.project || '—',
+      space:   m.project || '—',
       attendees: m.attendees.length,
       status:    m.status,
       priority:  m.priority,
@@ -472,7 +472,7 @@ export class MeetingsComponent {
     const map = new Map<string, number>();
     for (const m of this.meetingsService.meetings()) {
       if (m.status === 'cancelled') continue;
-      const key = m.project || 'No project';
+      const key = m.project || 'No space';
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return Array.from(map.entries())
@@ -481,7 +481,7 @@ export class MeetingsComponent {
   });
 
   /** Whether any meetings have no project (for filter dropdown) */
-  hasNoProject = computed(() => this.meetingsByProject().some((p) => p[0] === 'No project'));
+  hasNoSpace = computed(() => this.meetingsByProject().some((p) => p[0] === 'No space'));
   
   // Meetings by status for kanban
   meetingsByStatus = computed(() => {
