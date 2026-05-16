@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+    --bg-app: #09090b;
+    --bg-panel: #121212;
+    --bg-hover: #1e1e1e;
+    --bg-active: #27272a;
+
+    --border-subtle: #1f1f22;
+    --border-main: #27272a;
+    --border-highlight: #3f3f46;
+
+    --text-primary: #ffffff;
+    --text-secondary: #d4d4d8;
+    --text-tertiary: #a1a1aa;
+
+    --accent-primary: #ffd700;
+    --accent-primary-dim: rgba(255, 215, 0, 0.1);
+    --accent-primary-text: #000000;
+    --accent-blue: #60a5fa;
+    --accent-red: #f87171;
+    --accent-green: #4ade80;
+    --accent-purple: #a855f7;
+
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Mobile-specific */
+    --bottom-nav-height: 64px;
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-top: env(safe-area-inset-top, 0px);
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    /* Disable pull-to-refresh on mobile */
+    overscroll-behavior: none;
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Smooth touch scrolling */
+* {
+    -webkit-overflow-scrolling: touch;
+}
