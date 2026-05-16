@@ -1,7 +1,6 @@
 import { Component, signal, HostListener, inject, computed, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { StoreService, Task, Note, Novel, Bookmark } from '@envello/core';
-import { ArticleService } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { MeetingsService, MEETING_COLORS } from '@envello/core';
 import { NovelContentService } from '@envello/core';
@@ -44,7 +43,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private router = inject(Router);
     private store = inject(StoreService);
-    private articleService = inject(ArticleService);
     private researchService = inject(ResearchService);
     private meetingsService = inject(MeetingsService);
 
@@ -68,15 +66,13 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         { id: 'task',         title: 'Task',         description: 'Add a new task or to-do',            icon: 'check_circle',  route: '/tasks',         color: '#7eb3d4', category: 'plan',    shortcut: '1', keywords: ['task', 'todo', 'checklist'],           tag: 'TASK' },
         { id: 'meeting',      title: 'Meeting',      description: 'Schedule a new meeting',              icon: 'groups',        route: '/meetings',      color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],                 tag: 'COLLAB' },
         { id: 'note',         title: 'Note',         description: 'Quick note for today',                icon: 'edit_note',     route: '/daily-notes',   color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],              tag: 'NOTE' },
-        { id: 'project',      title: 'Project',      description: 'Create a new project workspace',      icon: 'folder',        route: '/projects',      color: '#60a5fa', category: 'plan',    shortcut: '',  keywords: ['project', 'workspace', 'team'],        tag: 'PROJECT' },
         // Library
         { id: 'research',     title: 'Research',     description: 'Create a new research library',       icon: 'science',       route: '/research',      color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],                 tag: 'RESEARCH' },
         { id: 'bookmark',     title: 'Bookmark',     description: 'Save a link or resource',             icon: 'bookmark',      route: '/bookmarks',     color: '#b48ce8', category: 'library', shortcut: '5', keywords: ['bookmark', 'link', 'url', 'save'],     tag: 'BOOKMARK' },
         { id: 'vault',        title: 'Vault Entry',  description: 'Store a secret or credential',        icon: 'lock',          route: '/vault',         color: '#f59e0b', category: 'library', shortcut: '',  keywords: ['vault', 'credential', 'secret', 'key'], tag: 'VAULT' },
         { id: 'subscription', title: 'Subscription', description: 'Track a vendor or subscription',      icon: 'credit_card',   route: '/subscriptions', color: '#34d399', category: 'library', shortcut: '',  keywords: ['subscription', 'vendor', 'billing'],   tag: 'VENDOR' },
         // Create
-        { id: 'article',      title: 'Draft',        description: 'Write a new article or draft',        icon: 'article',       route: '/articles',      color: '#a8d5a8', category: 'create',  shortcut: '7', keywords: ['article', 'blog', 'draft'],            tag: 'DRAFT' },
-        { id: 'novel',        title: 'Writing',      description: 'Start a new writing project',         icon: 'menu_book',     route: '/novels',        color: '#c4a8d8', category: 'create',  shortcut: '8', keywords: ['novel', 'book', 'story', 'writing'],   tag: 'WRITING' },
+        { id: 'novel',        title: 'Write',        description: 'Start a new novel or writing project', icon: 'menu_book',    route: '/write',         color: '#c4a8d8', category: 'create',  shortcut: '7', keywords: ['novel', 'book', 'story', 'writing', 'draft'], tag: 'WRITE' },
     ];
 
     readonly sidebarCategories: { id: SidebarCategoryId; label: string; icon: string }[] = [
@@ -92,11 +88,9 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         note:         this.store.notes().length,
         task:         this.store.tasks().length,
         novel:        this.store.novels().length,
-        article:      this.articleService.articles().length,
         research:     this.researchService.libraries().length,
         meeting:      this.meetingsService.meetings().length,
         bookmark:     this.store.bookmarks().length,
-        space:      this.store.spaces().length,
         vault:        0,
         subscription: 0,
     }));
@@ -262,9 +256,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                     case 'novel':
                         this.createNovel();
                         break;
-                    case 'article':
-                        this.createArticle();
-                        break;
                     case 'research':
                         this.createResearchLibrary();
                         break;
@@ -274,7 +265,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                     case 'bookmark':
                         this.createBookmark();
                         break;
-                    case 'project':
                     case 'vault':
                     case 'subscription':
                         this.router.navigate([option.route]);
@@ -354,24 +344,10 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.store.addNovel(newNovel);
         // Persist asynchronously (fire and forget)
-        this.novelContentService.createAndPersistEmptyNovel(id, newNovel.title).catch(err => 
+        this.novelContentService.createAndPersistEmptyNovel(id, newNovel.title).catch(err =>
             console.error('[AddNewModal] Failed to persist novel content:', err)
         );
-        this.router.navigate(['/novels', id]);
-    }
-
-    private createArticle() {
-        this.articleService.addArticle({
-            title: 'Untitled Article',
-            platform: 'Blog',
-            pipeline: 'DRAFT',
-            wordCount: 0,
-            content: '',
-            tags: [],
-            icon: 'article'
-        });
-
-        this.router.navigate(['/articles']);
+        this.router.navigate(['/write', id]);
     }
 
     private createResearchLibrary() {

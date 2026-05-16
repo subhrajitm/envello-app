@@ -26,6 +26,7 @@ export class KeyboardShortcutsComponent {
         { keys: ['⌘', 'N'], description: 'Add New item' },
         { keys: ['?'],       description: 'Show keyboard shortcuts' },
         { keys: ['Esc'],     description: 'Close modal / Exit focus mode' },
+        { keys: ['⌃', 'hold'], description: 'Voice input (hold Control)' },
       ],
     },
     {

@@ -141,21 +141,6 @@
                                 <span class="material-symbols-outlined">drag_indicator</span>
                             </div>
 
-                            <div class="task-check-column" (click)="$event.stopPropagation()">
-                                <button class="list-circular-checkbox"
-                                        [class.checked]="item.task.status === 'COMPLETED'"
-                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
-                                        (click)="toggleTaskStatus(item.task)"
-                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
-                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
-                                    @if (item.task.status === 'COMPLETED') {
-                                        <span class="material-symbols-outlined">check</span>
-                                    } @else if (hasIncompleteSubtasks(item.task)) {
-                                        <span class="material-symbols-outlined" style="font-size:11px;color:var(--text-tertiary)">lock</span>
-                                    }
-                                </button>
-                            </div>
-
                             @if (item.task.subtasks && item.task.subtasks.length > 0) {
                             <div class="task-collapse-btn-col" (click)="$event.stopPropagation()">
                                 <button class="task-collapse-btn"
@@ -224,6 +209,23 @@
                                 </button>
                                 <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)" title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
                                     <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+
+                            <div class="task-check-column" (click)="$event.stopPropagation()">
+                                <button class="list-circular-checkbox"
+                                        [class.checked]="item.task.status === 'COMPLETED'"
+                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
+                                        (click)="toggleTaskStatus(item.task)"
+                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
+                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
+                                    @if (item.task.status === 'COMPLETED') {
+                                        <span class="material-symbols-outlined" style="color: #0b7a5a; font-size: 22px;">check_circle</span>
+                                    } @else if (hasIncompleteSubtasks(item.task)) {
+                                        <span class="material-symbols-outlined" style="font-size:16px;color:var(--text-tertiary)">lock</span>
+                                    } @else {
+                                        <span class="material-symbols-outlined" style="color: var(--border-color); font-size: 22px;">radio_button_unchecked</span>
+                                    }
                                 </button>
                             </div>
                         </div>

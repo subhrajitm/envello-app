@@ -691,13 +691,16 @@
 /* ─── Premium Task Item ─── */
 .task-item {
     display: flex;
-    align-items: flex-start;
-    padding: 12px 16px 12px 0;
-    border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-app);
+    align-items: center;
+    padding: 5px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-panel, #ffffff);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     gap: 12px;
+    margin-bottom: 8px;
+    box-shadow: none;
 }
 
 .task-item:hover {
@@ -715,10 +718,9 @@
     justify-content: center;
     color: var(--text-tertiary);
     cursor: grab;
-    opacity: 0.3;
+    opacity: 0.5;
     transition: opacity 0.2s;
-    width: 24px;
-    padding-top: 2px;
+    width: 20px;
 }
 
 .task-item:hover .task-drag-handle {
@@ -734,14 +736,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-top: 2px;
 }
 
 .list-circular-checkbox {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid var(--border-highlight);
+    width: 24px;
+    height: 24px;
+    border: none;
     background: transparent;
     cursor: pointer;
     display: flex;
@@ -749,30 +749,25 @@
     justify-content: center;
     padding: 0;
     transition: all 0.2s;
-    color: transparent;
 }
 
 .list-circular-checkbox:hover {
-    border-color: var(--accent-primary);
-    background: color-mix(in srgb, var(--accent-primary) 5%, transparent);
+    opacity: 0.8;
 }
 
 .list-circular-checkbox.checked {
-    background: var(--accent-primary);
-    border-color: var(--accent-primary);
-    color: white;
+    background: transparent;
+    border: none;
 }
 
 .list-circular-checkbox.blocked {
-    border-color: var(--text-tertiary);
-    border-style: dashed;
-    cursor: not-allowed;
     opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .list-circular-checkbox .material-symbols-outlined {
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 24px;
+    font-weight: 400;
 }
 
 /* Main Column Content */
@@ -786,8 +781,8 @@
 }
 
 .task-title-text {
-    font-size: 14px;
-    font-weight: 400;
+    font-size: 15px;
+    font-weight: 500;
     color: var(--text-primary);
     line-height: 1.4;
     transition: color 0.2s;
@@ -6840,6 +6835,7 @@ textarea:focus-visible {
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-app);
     flex-shrink: 0;
+    margin-bottom: 10px;
 }
 
 .task-group-dot {
