@@ -7,7 +7,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
 
-export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini';
+export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek';
 
 export interface AiMessage {
     id: string;
@@ -31,13 +31,23 @@ export interface AiSuggestion {
 export class AiService {
     aiEnabled = signal<boolean>(true);
     provider = signal<AiProvider>('mock');
-    modelName = signal<string>('gpt-4-turbo');
+    modelName = signal<string>('gpt-4o');
     apiKey = signal<string>('');
 
     private chatModel?: BaseChatModel;
 
+    /**
+     * API keys are sensitive. On Tauri (desktop) the webview storage is sandboxed
+     * to the app data directory, so localStorage is acceptable. On web we use
+     * sessionStorage — the key clears when the tab closes, reducing XSS exposure.
+     */
+    private readonly keyStorage: Storage =
+        typeof (window as any).__TAURI_INTERNALS__ !== 'undefined'
+            ? localStorage
+            : sessionStorage;
+
     constructor() {
-        // Initialize from storage
+        // Non-sensitive settings persist across sessions
         const savedEnabled = localStorage.getItem('ai-enabled');
         if (savedEnabled !== null) this.aiEnabled.set(savedEnabled === 'true');
 
@@ -47,25 +57,26 @@ export class AiService {
         const savedModel = localStorage.getItem('ai-model');
         if (savedModel) this.modelName.set(savedModel);
 
-        const savedKey = localStorage.getItem('ai-key');
+        // API key stored in session-scoped storage
+        const savedKey = this.keyStorage.getItem('ai-key');
         if (savedKey) this.apiKey.set(savedKey);
 
         // Initialize model
         this.initModel();
 
-        // Effect to update Storage when signals change
+        // Persist settings; key goes to session-scoped storage
         effect(() => {
             localStorage.setItem('ai-enabled', String(this.aiEnabled()));
             localStorage.setItem('ai-provider', this.provider());
             localStorage.setItem('ai-model', this.modelName());
-            localStorage.setItem('ai-key', this.apiKey());
+            this.keyStorage.setItem('ai-key', this.apiKey());
         });
     }
 
     updateConfig(provider: AiProvider, model: string, key: string) {
         this.provider.set(provider);
-        this.modelName.set(model);
-        this.apiKey.set(key);
+        if (model) this.modelName.set(model);
+        if (key) this.apiKey.set(key);
         this.initModel();
     }
 
@@ -85,6 +96,12 @@ export class AiService {
                 this.chatModel = new ChatXAI({ apiKey: k, model: m });
             } else if (p === 'gemini' && k) {
                 this.chatModel = new ChatGoogleGenerativeAI({ apiKey: k, model: m });
+            } else if (p === 'deepseek' && k) {
+                this.chatModel = new ChatOpenAI({
+                    openAIApiKey: k,
+                    modelName: m || 'deepseek-chat',
+                    configuration: { baseURL: 'https://api.deepseek.com/v1' }
+                });
             } else {
                 this.chatModel = undefined; // Fallback to mock
             }
@@ -96,6 +113,39 @@ export class AiService {
 
     toggleAi() {
         this.aiEnabled.set(!this.aiEnabled());
+    }
+
+    /**
+     * Tests a provider configuration without saving it.
+     * Returns 'success' or throws with an error message.
+     */
+    async testConfig(provider: AiProvider, model: string, key: string): Promise<void> {
+        let tempModel: BaseChatModel | undefined;
+
+        if (provider === 'openai' && key) {
+            tempModel = new ChatOpenAI({ openAIApiKey: key, modelName: model });
+        } else if (provider === 'anthropic' && key) {
+            tempModel = new ChatAnthropic({ anthropicApiKey: key, modelName: model });
+        } else if (provider === 'ollama') {
+            tempModel = new ChatOllama({ model: model || 'llama3', baseUrl: 'http://localhost:11434' });
+        } else if (provider === 'grok' && key) {
+            tempModel = new ChatXAI({ apiKey: key, model: model });
+        } else if (provider === 'gemini' && key) {
+            tempModel = new ChatGoogleGenerativeAI({ apiKey: key, model: model });
+        } else if (provider === 'deepseek' && key) {
+            tempModel = new ChatOpenAI({
+                openAIApiKey: key,
+                modelName: model || 'deepseek-chat',
+                configuration: { baseURL: 'https://api.deepseek.com/v1' }
+            });
+        } else if (provider === 'mock') {
+            return; // Mock always succeeds
+        } else {
+            throw new Error('API key is required for this provider.');
+        }
+
+        const response = await tempModel.invoke([new HumanMessage('Hi')]);
+        if (!response.content) throw new Error('Empty response from model.');
     }
 
     async sendMessage(prompt: string, context?: string): Promise<string> {
