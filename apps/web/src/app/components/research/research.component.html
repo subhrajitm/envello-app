@@ -24,57 +24,52 @@
       }
     </div>
 
-    <div class="rs-sb-divider"></div>
-    <div class="rs-sb-stats-section">
-      <div class="rs-sb-stat">
-        <span class="rs-sb-stat-label">Libraries</span>
-        <span class="rs-sb-stat-value">{{ libraries().length }}</span>
-      </div>
-      <div class="rs-sb-stat">
-        <span class="rs-sb-stat-label">Total sources</span>
-        <span class="rs-sb-stat-value">{{ totalSources() }}</span>
-      </div>
-    </div>
-
-    <div class="rs-sb-footer">
-      <button class="rs-new-lib-btn" (click)="openLibraryModal()">
-        <span class="material-symbols-outlined">add</span>
-        New Library
-      </button>
-    </div>
   </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
   <div class="rs-main">
 
-    @if (selectedLibrary(); as library) {
-
-      <!-- Toolbar -->
-      <div class="rs-toolbar">
-        <div class="rs-search-wrap">
-          <span class="material-symbols-outlined rs-search-icon">search</span>
-          <input class="rs-search-input" type="text" placeholder="Search…"
-            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-          @if (searchQuery()) {
-            <button class="rs-search-clear" (click)="searchQuery.set('')">
-              <span class="material-symbols-outlined">close</span>
-            </button>
-          }
-        </div>
-        <div class="rs-toolbar-right">
-          @if (hasActiveFilters()) {
-            <button class="rs-tool-btn" (click)="clearFilters()" title="Clear filters">
-              <span class="material-symbols-outlined">filter_list_off</span>
-            </button>
-          }
-
-          <div class="rs-tb-divider"></div>
-          <button class="rs-tool-btn" [class.rs-tool-btn--active]="showAssistant()"
-            (click)="toggleAssistant()">
-            <span class="material-symbols-outlined">auto_awesome</span>
-            AI
+    <!-- Toolbar — always visible -->
+    <div class="rs-toolbar">
+      <div class="rs-search-wrap">
+        <span class="material-symbols-outlined rs-search-icon">search</span>
+        <input class="rs-search-input" type="text"
+          [placeholder]="selectedLibrary() ? 'Search sources…' : 'Search libraries…'"
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+        @if (searchQuery()) {
+          <button class="rs-search-clear" (click)="searchQuery.set('')">
+            <span class="material-symbols-outlined">close</span>
           </button>
-          <div class="rs-tb-divider"></div>
+        }
+      </div>
+
+      @if (selectedLibrary(); as lib) {
+        <div class="rs-lib-breadcrumb">
+          <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
+          <span class="rs-lib-bc-name">{{ lib.name }}</span>
+          <button class="rs-lib-bc-close" (click)="selectedLibrary.set(null)" title="Back to all libraries">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      }
+
+      <div class="rs-toolbar-right">
+        @if (selectedLibrary() && hasActiveFilters()) {
+          <button class="rs-tool-btn" (click)="clearFilters()" title="Clear filters">
+            <span class="material-symbols-outlined">filter_list_off</span>
+          </button>
+        }
+        <button class="rs-tool-btn" [class.rs-tool-btn--active]="showAssistant()"
+          (click)="toggleAssistant()">
+          <span class="material-symbols-outlined">auto_awesome</span>
+          AI
+        </button>
+        <div class="rs-tb-divider"></div>
+        <button class="rs-new-lib-tb-btn" (click)="openLibraryModal()">
+          <span class="material-symbols-outlined">library_add</span>
+          New Library
+        </button>
+        @if (selectedLibrary()) {
           @if (viewMode() === 'sources') {
             <button class="rs-add-btn" (click)="openSourceModal()">
               <span class="material-symbols-outlined">add</span>
@@ -86,8 +81,11 @@
               New Summary
             </button>
           }
-        </div>
+        }
       </div>
+    </div>
+
+    @if (selectedLibrary(); as library) {
 
       <!-- Tabs + status filters -->
       <div class="rs-tabs-bar">
@@ -278,12 +276,23 @@
       <!-- No library selected -->
       <div class="rs-empty-main">
         <span class="material-symbols-outlined rs-empty-icon">library_books</span>
-        <p class="rs-empty-title">Select a library</p>
-        <p class="rs-empty-sub">Choose a research library from the sidebar, or create a new one to get started.</p>
-        <button class="rs-add-btn" (click)="openLibraryModal()">
-          <span class="material-symbols-outlined">add</span>
-          New Library
-        </button>
+        <p class="rs-empty-title">
+          @if (filteredLibraries().length === 0 && searchQuery()) {
+            No libraries match "{{ searchQuery() }}"
+          } @else {
+            Select a library to get started
+          }
+        </p>
+        <p class="rs-empty-sub">Choose a research library from the sidebar, or use <strong>New Library</strong> above to create one.</p>
+        <div class="rs-empty-libs">
+          @for (lib of filteredLibraries().slice(0, 4); track lib.id) {
+            <button class="rs-empty-lib-chip" (click)="selectLibrary(lib)">
+              <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
+              {{ lib.name }}
+              <span class="rs-empty-chip-count">{{ researchService.getSourcesByLibrary(lib.id).length }}</span>
+            </button>
+          }
+        </div>
       </div>
 
     }
