@@ -198,9 +198,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   ];
 
   readonly tableActions: EnvTableAction[] = [
-    { key: 'open', label: 'Open', icon: 'open_in_new' },
+    { key: 'open', label: 'Open', icon: 'open_in_new', bulk: false },
     { key: 'togglePin', label: 'Toggle pin', icon: 'push_pin' },
-    { key: 'edit', label: 'Edit', icon: 'edit' },
+    { key: 'edit', label: 'Edit', icon: 'edit', bulk: false },
     { key: 'toggleArchive', label: 'Archive', icon: 'archive' },
     { key: 'delete', label: 'Delete', icon: 'delete', danger: true },
   ];

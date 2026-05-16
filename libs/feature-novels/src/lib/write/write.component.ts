@@ -80,9 +80,9 @@ export class WriteComponent {
   ];
 
   readonly tableActions: EnvTableAction[] = [
-    { key: 'open',      label: 'Open',      icon: 'open_in_new' },
+    { key: 'open',      label: 'Open',      icon: 'open_in_new',   bulk: false },
     { key: 'duplicate', label: 'Duplicate', icon: 'content_copy' },
-    { key: 'delete',    label: 'Delete',    icon: 'delete', danger: true },
+    { key: 'delete',    label: 'Delete',    icon: 'delete',        danger: true },
   ];
   // ── Static data ───────────────────────────────────────────────────────────
   readonly writingTypes: { id: WritingType; label: string; defaultWords: number; defaultIcon: string }[] = [
@@ -231,7 +231,7 @@ export class WriteComponent {
 
   // ── Table handlers ────────────────────────────────────────────────────────
   handleTableAction(event: any) {
-    const actionKey = event.key;
+    const actionKey = event.actionKey;
     const novel = event.row['novel'];
     if (!novel) return;
 

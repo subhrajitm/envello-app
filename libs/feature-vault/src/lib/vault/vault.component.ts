@@ -161,8 +161,8 @@ export class VaultComponent {
 
   readonly tableActions: EnvTableAction[] = [
     { key: 'toggleVisibility', label: 'Show / Hide',  icon: 'visibility'    },
-    { key: 'copy',             label: 'Copy Secret',  icon: 'content_copy'  },
-    { key: 'edit',             label: 'Edit',         icon: 'edit'          },
+    { key: 'copy',             label: 'Copy Secret',  icon: 'content_copy', bulk: false },
+    { key: 'edit',             label: 'Edit',         icon: 'edit',         bulk: false },
     { key: 'delete',           label: 'Delete',       icon: 'delete', danger: true },
   ];
 
