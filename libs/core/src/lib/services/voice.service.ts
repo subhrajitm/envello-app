@@ -6,7 +6,7 @@ import { Injectable, signal } from '@angular/core';
 export class VoiceService {
   isVoiceActive = signal(false);
   private commandPressTimer: ReturnType<typeof setTimeout> | null = null;
-  private isCommandPressed = false;
+  private isControlPressed = false;
   private recognition: any = null;
   private isRecognizing = false;
 
@@ -133,16 +133,16 @@ export class VoiceService {
     if (typeof window === 'undefined') return;
 
     window.addEventListener('keydown', (event) => {
-      // Check for Meta key (Command on Mac, Windows key on Windows)
-      if (event.key === 'Meta' && !this.isCommandPressed) {
-        this.isCommandPressed = true;
-        // Start long press timer (e.g., 500ms)
+      // Check for Control key
+      if (event.key === 'Control' && !this.isControlPressed) {
+        this.isControlPressed = true;
+        // Start long press timer (500ms)
         this.commandPressTimer = setTimeout(() => {
           this.isVoiceActive.set(true); // Activate voice on long press
           this.handleRecognitionState(true); // Start listening
         }, 500);
-      } else if (this.isCommandPressed && event.key !== 'Meta') {
-        // Cancel if it's a shortcut combination like Cmd+C
+      } else if (this.isControlPressed && event.key !== 'Control') {
+        // Cancel if it's a shortcut combination like Ctrl+C
         if (this.commandPressTimer) {
           clearTimeout(this.commandPressTimer);
           this.commandPressTimer = null;
@@ -151,8 +151,8 @@ export class VoiceService {
     });
 
     window.addEventListener('keyup', (event) => {
-      if (event.key === 'Meta') {
-        this.isCommandPressed = false;
+      if (event.key === 'Control') {
+        this.isControlPressed = false;
         if (this.commandPressTimer) {
           clearTimeout(this.commandPressTimer);
           this.commandPressTimer = null;

@@ -3,7 +3,7 @@ import { signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AddNewModalComponent } from './add-new-modal.component';
-import { StoreService, ArticleService, ResearchService, MeetingsService, NovelContentService } from '@envello/core';
+import { StoreService, ResearchService, MeetingsService, NovelContentService } from '@envello/core';
 
 describe('AddNewModalComponent', () => {
   let component: AddNewModalComponent;
@@ -14,7 +14,6 @@ describe('AddNewModalComponent', () => {
       ['addNote', 'addTask', 'addBookmark'],
       { notes: signal([]), tasks: signal([]) }
     );
-    const articleSpy = jasmine.createSpyObj('ArticleService', ['addArticle'], { articles: signal([]) });
     const researchSpy = jasmine.createSpyObj('ResearchService', ['addLibrary'], { libraries: signal([]) });
     const meetingsSpy = jasmine.createSpyObj('MeetingsService', ['addMeeting'], { meetings: signal([]) });
     const novelSpy = jasmine.createSpyObj('NovelContentService', ['createNovel'], { novels: signal([]) });
@@ -24,7 +23,6 @@ describe('AddNewModalComponent', () => {
       imports: [AddNewModalComponent, RouterTestingModule],
       providers: [
         { provide: StoreService,         useValue: storeSpy },
-        { provide: ArticleService,       useValue: articleSpy },
         { provide: ResearchService,      useValue: researchSpy },
         { provide: MeetingsService,      useValue: meetingsSpy },
         { provide: NovelContentService,  useValue: novelSpy },
