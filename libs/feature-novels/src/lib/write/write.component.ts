@@ -196,7 +196,7 @@ export class WriteComponent {
       type: this.getWritingTypeLabel(novel.writingType),
       status: this.getStatusMeta(novel.status).label,
       progress: `${novel.progress}% (${novel.wordCount?.toLocaleString() || 0}/${novel.targetWordCount?.toLocaleString() || 0})`,
-      updated: novel.lastUpdated,
+      updated: this.formatDate(novel.lastUpdated),
       novel,
     }))
   );
@@ -216,6 +216,22 @@ export class WriteComponent {
 
   getProgressColor(status: string): string {
     return status === 'PUBLISHED' ? '#4ade80' : '#fcd34d';
+  }
+
+  formatDate(iso: string): string {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return iso;
+    const now = new Date();
+    const days = Math.floor((now.getTime() - date.getTime()) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    if (days < 30) return `${Math.floor(days / 7)}w ago`;
+    return date.toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric',
+      ...(date.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {})
+    });
   }
 
   // ── Sidebar / filter ─────────────────────────────────────────────────────
@@ -299,10 +315,9 @@ export class WriteComponent {
       lastUpdated: now.toISOString(),
       createdAt: now.toISOString(),
       isRecentlyUpdated: true,
-      wordCount: 0, progress: 0, chapters: 0,
     };
     this.store.addNovel(copy);
-    this.novelContent.createAndPersistEmptyNovel(id, copy.title).catch(e => console.error(e));
+    this.novelContent.cloneNovelContent(novel.id, id, copy.title).catch(err => console.error(err));
     this.closeNovelMenu();
   }
 

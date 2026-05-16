@@ -84,6 +84,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // State
   title = signal('');
   activeChapterId = signal<string | null>(null);
+  activeGroupId = signal<string | null>(null);
   wordCount = signal(0);
   rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
   activeNav = signal<'manuscript' | 'structure' | 'characters' | 'locations'>('manuscript');
@@ -218,7 +219,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
             }
-            this.updateUndoRedoState(chapterId, 'chapter');
           }
         } else if (frontMatterId) {
           const novel = this.novel();
@@ -232,7 +232,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', item.content, item.title, count, true);
             }
-            this.updateUndoRedoState(frontMatterId, 'frontMatter');
           }
         } else if (prologueId) {
           const novel = this.novel();
@@ -246,14 +245,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion('prologue', 'prologue', prologue.content, prologue.title, count, true);
             }
-            this.updateUndoRedoState('prologue', 'prologue');
           }
         } else if (!chapterId && !frontMatterId && !prologueId) {
           this.editor.commands.clearContent();
           this.title.set('');
           this.wordCount.set(0);
-          this.canUndo.set(false);
-          this.canRedo.set(false);
         }
       }
     });
@@ -304,6 +300,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         }),
       ],
       content: '', // Initial content will be set by effect
+      onTransaction: ({ editor }) => {
+        this.canUndo.set(editor.can().undo());
+        this.canRedo.set(editor.can().redo());
+      },
       onUpdate: ({ editor }) => {
         const count = this.calculateWordCount(editor.getText());
         this.wordCount.set(count);
@@ -320,17 +320,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
           if (activeId) {
             this.novelService.updateChapterContent(activeId, content, count);
-            // Add version snapshot
             this.versionHistoryService.addVersion(activeId, 'chapter', content, title, count);
-            this.updateUndoRedoState(activeId, 'chapter');
           } else if (frontMatterId) {
             this.novelService.updateFrontMatterContent(frontMatterId, content, count);
             this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', content, title, count);
-            this.updateUndoRedoState(frontMatterId, 'frontMatter');
           } else if (prologueId) {
             this.novelService.updatePrologueContent(content, count);
             this.versionHistoryService.addVersion('prologue', 'prologue', content, title, count);
-            this.updateUndoRedoState('prologue', 'prologue');
           }
 
           this.isSaving.set(false);
@@ -377,6 +373,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
           const found = group.children.find(c => c.id === chapter.id);
           if (found) {
             this.activeChapterId.set(found.id);
+            this.activeGroupId.set(group.id);
             return;
           }
         }
@@ -530,6 +527,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!target.closest('.search-wrapper')) {
       this.searchOpen.set(false);
     }
+    if (!target.closest('.export-menu-wrapper')) {
+      this.exportMenuOpen.set(false);
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -548,20 +548,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    // Cmd/Ctrl + Z for undo
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z' && !event.shiftKey) {
-      event.preventDefault();
-      this.performUndo();
-      return;
-    }
-
-    // Cmd/Ctrl + Shift + Z for redo
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z' && event.shiftKey) {
-      event.preventDefault();
-      this.performRedo();
-      return;
-    }
-
     // Escape to close modals
     if (event.key === 'Escape') {
       if (this.imageModalOpen()) { this.cancelImageModal(); return; }
@@ -571,8 +557,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (this.searchOpen()) { this.searchOpen.set(false); }
     }
 
-    // Cmd/Ctrl + B for focus mode
-    if ((event.metaKey || event.ctrlKey) && event.key === 'b') {
+    // Cmd/Ctrl + \ for focus mode
+    if ((event.metaKey || event.ctrlKey) && event.key === '\\') {
       event.preventDefault();
       this.focusMode.update(v => !v);
       return;
@@ -637,7 +623,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     } else if (modal.type === 'chapter') {
       const novel = this.novel();
       if (novel) {
-        const targetGroupId = novel.chapters[0]?.id;
+        const targetGroupId = this.activeGroupId() || novel.chapters[0]?.id;
         if (targetGroupId) {
           // Store the current chapter count to identify the new one
           const targetGroup = novel.chapters.find(g => g.id === targetGroupId);
@@ -919,90 +905,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
 
-  // Version History & Undo/Redo
-  updateUndoRedoState(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue') {
-    this.canUndo.set(this.versionHistoryService.canUndo(contentId, contentType));
-    this.canRedo.set(this.versionHistoryService.canRedo(contentId, contentType));
-  }
-
   performUndo() {
-    const activeId = this.activeChapterId();
-    const frontMatterId = this.activeFrontMatterId();
-    const prologueId = this.activePrologueId();
-
-    let snapshot: VersionSnapshot | null = null;
-
-    if (activeId) {
-      snapshot = this.versionHistoryService.undo(activeId, 'chapter');
-      if (snapshot && this.editor) {
-        this.editor.commands.setContent(snapshot.content);
-        this.title.set(snapshot.title || '');
-        this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
-      }
-    } else if (frontMatterId) {
-      snapshot = this.versionHistoryService.undo(frontMatterId, 'frontMatter');
-      if (snapshot && this.editor) {
-        this.editor.commands.setContent(snapshot.content);
-        this.title.set(snapshot.title || '');
-        this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
-      }
-    } else if (prologueId) {
-      snapshot = this.versionHistoryService.undo('prologue', 'prologue');
-      if (snapshot && this.editor) {
-        this.editor.commands.setContent(snapshot.content);
-        this.title.set(snapshot.title || '');
-        this.wordCount.set(snapshot.wordCount);
-        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
-      }
-    }
-
-    if (snapshot) {
-      const contentId = activeId || frontMatterId || 'prologue';
-      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
-      this.updateUndoRedoState(contentId, contentType);
-    }
+    this.editor?.chain().focus().undo().run();
   }
 
   performRedo() {
-    const activeId = this.activeChapterId();
-    const frontMatterId = this.activeFrontMatterId();
-    const prologueId = this.activePrologueId();
-
-    let snapshot: VersionSnapshot | null = null;
-
-    if (activeId) {
-      snapshot = this.versionHistoryService.redo(activeId, 'chapter');
-      if (snapshot && this.editor) {
-        this.editor.commands.setContent(snapshot.content);
-        this.title.set(snapshot.title || '');
-        this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
-      }
-    } else if (frontMatterId) {
-      snapshot = this.versionHistoryService.redo(frontMatterId, 'frontMatter');
-      if (snapshot && this.editor) {
-        this.editor.commands.setContent(snapshot.content);
-        this.title.set(snapshot.title || '');
-        this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
-      }
-    } else if (prologueId) {
-      snapshot = this.versionHistoryService.redo('prologue', 'prologue');
-      if (snapshot && this.editor) {
-        this.editor.commands.setContent(snapshot.content);
-        this.title.set(snapshot.title || '');
-        this.wordCount.set(snapshot.wordCount);
-        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
-      }
-    }
-
-    if (snapshot) {
-      const contentId = activeId || frontMatterId || 'prologue';
-      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
-      this.updateUndoRedoState(contentId, contentType);
-    }
+    this.editor?.chain().focus().redo().run();
   }
 
   openVersionHistory() {
@@ -1066,9 +974,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     if (snapshot) {
-      const contentId = activeId || frontMatterId || 'prologue';
-      const contentType = activeId ? 'chapter' : (frontMatterId ? 'frontMatter' : 'prologue');
-      this.updateUndoRedoState(contentId, contentType);
       this.closeVersionHistory();
     }
   }
@@ -1105,48 +1010,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       .filter(loc => content.includes(loc.name.toLowerCase()))
       .map(loc => loc.name);
   });
-
-  // Drag & Drop for reordering
-  dragStartIndex = signal<number | null>(null);
-  dragOverIndex = signal<number | null>(null);
-
-  onDragStart(event: DragEvent, index: number, type: 'chapter' | 'group') {
-    this.dragStartIndex.set(index);
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }
-
-  onDragOver(event: DragEvent, index: number) {
-    event.preventDefault();
-    this.dragOverIndex.set(index);
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-  }
-
-  onDragEnd() {
-    this.dragStartIndex.set(null);
-    this.dragOverIndex.set(null);
-  }
-
-  onDrop(event: DragEvent, dropIndex: number, type: 'chapter' | 'group', groupId?: string) {
-    event.preventDefault();
-    const startIndex = this.dragStartIndex();
-    if (startIndex === null || startIndex === dropIndex) {
-      this.onDragEnd();
-      return;
-    }
-
-    if (type === 'group') {
-      this.novelService.reorderChapterGroup(startIndex, dropIndex);
-    } else if (type === 'chapter' && groupId) {
-      this.novelService.reorderChapter(groupId, startIndex, dropIndex);
-    }
-
-    this.onDragEnd();
-  }
-
 
   // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {
@@ -1512,26 +1375,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   getTokenCount(): number {
     const context = this.getCurrentContext();
     return this.aiService.estimateTokens(context);
-  }
-
-  formatMessage(content: string): string {
-    // Simple markdown-like formatting
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br>');
-  }
-
-  formatTime(date: Date): string {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return date.toLocaleDateString();
   }
 
   // scrollToBottom and handleChatEnter moved to AI panel component

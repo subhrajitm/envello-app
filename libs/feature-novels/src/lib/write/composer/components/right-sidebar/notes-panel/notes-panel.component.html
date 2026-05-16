@@ -13,15 +13,33 @@
 
         @for (note of notes(); track note.id) {
         <div class="ne-note-card">
+            @if (editingNoteId() === note.id) {
+            <div class="note-edit-form">
+                <input class="note-edit-title" type="text" [ngModel]="editTitle()"
+                    (ngModelChange)="editTitle.set($event)" placeholder="Note title"
+                    (keydown.escape)="cancelEdit()" autofocus />
+                <textarea class="note-edit-body" [ngModel]="editBody()"
+                    (ngModelChange)="editBody.set($event)" placeholder="Note body"
+                    rows="3" (keydown.escape)="cancelEdit()"></textarea>
+                <div class="note-edit-actions">
+                    <button class="note-edit-cancel" (click)="cancelEdit()">Cancel</button>
+                    <button class="note-edit-save" (click)="commitEdit(note.id)"
+                        [disabled]="!editTitle().trim()">Save</button>
+                </div>
+            </div>
+            } @else {
             <div class="note-card-header">
                 <span class="note-title">{{ note.title }}</span>
                 <div class="note-actions">
                     <span class="note-time">{{ note.date }}</span>
+                    <span class="material-symbols-outlined note-edit-btn" (click)="startEdit(note, $event)"
+                        title="Edit note">edit</span>
                     <span class="material-symbols-outlined note-delete" (click)="deleteNote.emit(note.id)"
                         title="Delete note">delete</span>
                 </div>
             </div>
             <div class="note-body">{{ note.body }}</div>
+            }
         </div>
         }
     </div>
