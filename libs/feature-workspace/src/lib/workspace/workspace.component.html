@@ -1,138 +1,241 @@
 <div class="dashboard-container compact-mode">
-    <div class="main-layout">
-        <!-- Main Workspace (Center) -->
-        <main class="workspace-area">
-            <div class="context-label">
-                <span class="material-symbols-outlined context-icon">contrast</span>
-                CONTEXTUAL WORKSPACE
-            </div>
+  <div class="main-layout">
 
-            <!-- Big Text Display -->
-            <!-- Big Text Display -->
-            <div class="big-input-display">
-                {{ getGreeting() }}
-            </div>
+    <!-- ── Main Workspace (Center) ── -->
+    <main class="workspace-area">
 
-            <!-- Command Input -->
-            <div class="command-input-row">
-                <input type="text" class="main-text-input" [(ngModel)]="inputText" (keydown.enter)="executeCommand()"
-                    [placeholder]="listening() ? 'Listening (' + liveTranscript() + ')...' : 'Cmd + K to capture or type thoughts...'">
-                <div class="input-icons">
-                    <button type="button" class="icon-btn" [class.active]="listening()"
-                        (click)="toggleVoice()" (keyup.enter)="toggleVoice()"
-                        title="Voice Input" aria-label="Toggle Voice Input">
-                        <span class="material-symbols-outlined">mic</span>
-                    </button>
-                    <button type="button" class="icon-btn" (click)="triggerFileUpload()"
-                        (keyup.enter)="triggerFileUpload()" title="Attach File" aria-label="Attach File">
-                        <span class="material-symbols-outlined">attach_file</span>
-                    </button>
+      <div class="context-label">
+        <span class="material-symbols-outlined context-icon">contrast</span>
+        CONTEXTUAL WORKSPACE
+      </div>
+
+      <!-- Greeting -->
+      <div class="big-input-display">{{ getGreeting() }}</div>
+
+      <!-- Subtitle hint (hidden during a conversation) -->
+      @if (!isInConversation()) {
+        <p class="input-hint">
+          Describe anything — task, note, meeting, bookmark, writing, space — and it will be created instantly.
+        </p>
+      }
+
+      <!-- ── Conversation thread ── -->
+      @if (conversationHistory().length > 0) {
+        <div class="conversation-thread">
+          @for (msg of conversationHistory(); track $index) {
+            <div class="conv-msg" [class.conv-user]="msg.role === 'user'" [class.conv-ai]="msg.role === 'assistant'">
+              @if (msg.role === 'assistant') {
+                <span class="conv-avatar ai-avatar material-symbols-outlined">auto_awesome</span>
+              }
+              <span class="conv-bubble">{{ msg.text }}</span>
+              @if (msg.role === 'user') {
+                <span class="conv-avatar user-avatar material-symbols-outlined">person</span>
+              }
+            </div>
+          }
+
+          @if (isProcessing()) {
+            <div class="conv-msg conv-ai">
+              <span class="conv-avatar ai-avatar material-symbols-outlined">auto_awesome</span>
+              <span class="conv-bubble conv-typing">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Command Input -->
+      <div class="command-input-row" [class.processing]="isProcessing()" [class.in-conversation]="isInConversation()">
+        <input
+          type="text"
+          class="main-text-input"
+          [(ngModel)]="inputText"
+          (keydown.enter)="executeCommand()"
+          [disabled]="isProcessing()"
+          [placeholder]="inputPlaceholder()">
+
+        <div class="input-icons">
+          @if (isProcessing()) {
+            <span class="processing-spinner material-symbols-outlined">progress_activity</span>
+          } @else {
+            @if (!isInConversation()) {
+              <button type="button" class="icon-btn" [class.active]="listening()"
+                (click)="toggleVoice()" title="Voice Input" aria-label="Toggle Voice Input">
+                <span class="material-symbols-outlined">mic</span>
+              </button>
+              <button type="button" class="icon-btn" (click)="triggerFileUpload()"
+                title="Attach File" aria-label="Attach File">
+                <span class="material-symbols-outlined">attach_file</span>
+              </button>
+            }
+            <button class="btn-inline-submit" (click)="executeCommand()">
+              @if (conversationState() === 'awaiting-confirm') {
+                CONFIRM <span class="kbd">↵</span>
+              } @else if (conversationState() === 'awaiting-answer') {
+                REPLY <span class="kbd">↵</span>
+              } @else {
+                ENTER <span class="kbd">↵</span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Conversation mode controls -->
+      @if (isInConversation()) {
+        <div class="conv-controls">
+          @if (conversationState() === 'awaiting-confirm') {
+            <span class="conv-hint">
+              <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">info</span>
+              Type <strong>yes</strong> to confirm or <strong>no</strong> to cancel
+            </span>
+          } @else {
+            <span class="conv-hint">
+              <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">forum</span>
+              Answering AI question
+            </span>
+          }
+          <button type="button" class="conv-cancel-btn" (click)="clearCommand()">
+            <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+            Cancel conversation
+          </button>
+        </div>
+      }
+
+      <!-- Attachment Pills -->
+      @if (attachments().length > 0) {
+        <div class="attachment-list">
+          @for (file of attachments(); track file; let i = $index) {
+            <div class="attachment-pill">
+              <span class="material-symbols-outlined" style="font-size:12px;">draft</span>
+              {{ file }}
+              <button type="button" class="remove-x" (click)="removeAttachment(i)"
+                aria-label="Remove attachment">×</button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Quick example chips (hidden during conversation) -->
+      @if (!isInConversation()) {
+        <div class="examples-row">
+          @for (ex of examples; track ex.label) {
+            <button type="button" class="example-chip" (click)="setExampleText(ex.text)"
+              [title]="ex.text" aria-label="Use example: {{ ex.label }}">
+              <span class="material-symbols-outlined" style="font-size:13px;">{{ ex.icon }}</span>
+              {{ ex.label }}
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Creation confirmation banner -->
+      @if (lastCreated(); as item) {
+        <div class="created-banner">
+          <span class="created-icon material-symbols-outlined">check_circle</span>
+          <span class="created-text">
+            <strong>{{ item.type }}</strong> created — <em>{{ item.title }}</em>
+          </span>
+          <button type="button" class="created-nav-btn" (click)="navigateToCreated()">
+            View <span class="material-symbols-outlined" style="font-size:13px;">arrow_forward</span>
+          </button>
+          <button type="button" class="created-close-btn" (click)="lastCreated.set(null)"
+            aria-label="Dismiss">×</button>
+        </div>
+      }
+
+    </main>
+
+    <!-- ── Right Sidebar ── -->
+    @defer (on idle) {
+      <aside class="sidebar">
+        <div class="sidebar-section full-height">
+          <div class="sidebar-header">
+            <div class="section-title">
+              <span class="material-symbols-outlined" style="font-size:14px;">hub</span>
+              CONTEXT STREAM
+            </div>
+            <button type="button" class="filter-btn"
+              (click)="toggleFilter()" aria-label="Toggle Filter">
+              {{ activeFilter() }}
+              <span class="material-symbols-outlined" style="font-size:14px;">tune</span>
+            </button>
+          </div>
+
+          <div class="stream-list">
+            @for (item of contextStream(); track item.id) {
+              <button type="button" class="stream-item"
+                (click)="openItem(item)" aria-label="Open context item">
+                <span class="status-indicator" [class]="item.tagClass.toLowerCase()"></span>
+                <div class="item-content-wrap">
+                  <span class="item-type">{{ item.type }}</span>
+                  <span class="item-text">{{ item.content }}</span>
                 </div>
-            </div>
-
-            <!-- Attachment Preview List -->
-            @if (attachments().length > 0) {
-            <div class="attachment-list">
-                @for (file of attachments(); track file; let i = $index) {
-                <div class="attachment-pill">
-                    <span class="material-symbols-outlined" style="font-size: 12px;">draft</span>
-                    {{ file }}
-                    <button type="button" class="remove-x" (click)="removeAttachment(i)"
-                        (keyup.enter)="removeAttachment(i)" aria-label="Remove attachment">×</button>
-                </div>
-                }
-            </div>
+                <span class="item-time-minimal">{{ item.time }}</span>
+              </button>
             }
 
-            <!-- Actions -->
-            <div class="action-row">
-                <button class="btn-black" (click)="executeCommand()">
-                    PROCESS ENTRY <span class="kbd">↵</span>
-                </button>
-                <button class="btn-ghost" (click)="clearCommand()">
-                    DISCARD <span class="kbd-light">ESC</span>
-                </button>
-            </div>
-        </main>
+            @if (contextStream().length === 0) {
+              <div class="stream-empty">
+                <span class="material-symbols-outlined" style="font-size:20px;opacity:0.4;">inbox</span>
+                <span>No items yet — start typing above</span>
+              </div>
+            }
+          </div>
+        </div>
+      </aside>
+    } @placeholder {
+      <aside class="sidebar" aria-hidden="true">
+        <div class="sidebar-section full-height"
+          style="gap:8px;display:flex;flex-direction:column;padding:16px;">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div style="height:44px;border-radius:6px;background:var(--bg-secondary,#1a1a1a);opacity:0.5;"></div>
+          }
+        </div>
+      </aside>
+    }
 
-        <!-- Right Sidebar — deferred until idle so main command input renders first -->
-        @defer (on idle) {
-        <aside class="sidebar">
-            <!-- Context Stream -->
-            <div class="sidebar-section full-height">
-                <div class="sidebar-header">
-                    <div class="section-title">
-                        <span class="material-symbols-outlined" style="font-size: 14px;">hub</span>
-                        CONTEXT STREAM
-                    </div>
-                    <button type="button" class="filter-btn" (click)="toggleFilter()" (keyup.enter)="toggleFilter()" aria-label="Toggle Filter">
-                        {{ activeFilter() }} <span class="material-symbols-outlined"
-                            style="font-size: 14px;">tune</span>
-                    </button>
-                </div>
+  </div>
 
-                <div class="stream-list">
-                    @for (item of contextStream(); track item.content) {
-                    <button type="button" class="stream-item" (click)="openItem(item)" (keyup.enter)="openItem(item)" aria-label="Open context item">
-                        <span class="status-indicator" [class]="item.tagClass.toLowerCase()"></span>
-                        <div class="item-content-wrap">
-                            <span class="item-type">{{ item.type }}</span>
-                            <span class="item-text">{{ item.content }}</span>
-                        </div>
-                        <span class="item-time-minimal">{{ item.time }}</span>
-                    </button>
-                    }
-                </div>
-            </div>
-        </aside>
-        } @placeholder {
-        <aside class="sidebar" aria-hidden="true">
-            <div class="sidebar-section full-height" style="gap:8px;display:flex;flex-direction:column;padding:16px;">
-                @for (i of [1,2,3,4,5,6]; track i) {
-                <div style="height:44px;border-radius:6px;background:var(--bg-secondary,#1a1a1a);opacity:0.5;"></div>
-                }
-            </div>
-        </aside>
-        }
+  <!-- ── Bottom Status Bar ── -->
+  <footer class="status-bar">
+    <div class="sb-left">
+      <div class="active-item">
+        <span class="status-dot"></span>
+        INTELLIGENT CAPTURE v3.0
+      </div>
+      <div class="divider"></div>
+      <div class="active-item">
+        <span class="material-symbols-outlined" style="font-size:12px;">auto_awesome</span>
+        AI-POWERED
+      </div>
     </div>
 
-    <!-- Bottom Status Bar -->
-    <footer class="status-bar">
-        <div class="sb-left">
-            <div class="active-item">
-                <span class="status-dot"></span>
-                INTELLIGENT CAPTURE v2.4
-            </div>
-            <div class="divider"></div>
-            <div class="active-item">
-                <span class="material-symbols-outlined" style="font-size: 12px;">bolt</span>
-                HIGH-PERFORMANCE
-            </div>
+    <div class="sb-right">
+      <div class="linked-entities" title="Active Tasks: {{ linkedEntities().tasks }}">
+        LINKED:
+        <div class="entity-circles">
+          <span class="e-circle"
+            [style.background]="linkedEntities().tasks > 0 ? '#3b82f6' : '#374151'"></span>
         </div>
-
-        <div class="sb-right">
-            <div class="linked-entities">
-                LINKED:
-                <div class="entity-circles"
-                    title="Active Tasks: {{ linkedEntities().tasks }}">
-                    <span class="e-circle"
-                        [style.background]="linkedEntities().tasks > 0 ? '#3b82f6' : '#374151'"></span>
-                </div>
-                <span class="entity-count">{{ linkedEntities().tasks }}</span>
-            </div>
-            <div class="divider"></div>
-            <div class="active-item">
-                CPU
-                <div class="metric-bar">
-                    <div class="metric-fill" [style.width.%]="cpuUsage()"></div>
-                </div>
-            </div>
-            <div class="active-item">
-                LAT
-                <div class="metric-bar">
-                    <div class="metric-fill" [style.width.%]="latency()"></div>
-                </div>
-            </div>
+        <span class="entity-count">{{ linkedEntities().tasks }}</span>
+      </div>
+      <div class="divider"></div>
+      <div class="active-item">
+        CPU
+        <div class="metric-bar">
+          <div class="metric-fill" [style.width.%]="cpuUsage()"></div>
         </div>
-    </footer>
+      </div>
+      <div class="active-item">
+        LAT
+        <div class="metric-bar">
+          <div class="metric-fill" [style.width.%]="latency()"></div>
+        </div>
+      </div>
+    </div>
+  </footer>
 </div>
