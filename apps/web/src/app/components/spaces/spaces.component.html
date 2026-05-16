@@ -14,21 +14,20 @@
         [title]="isActive(profile.id) ? '' : 'Switch to ' + profile.name"
         (click)="switchTo(profile)">
 
-        <!-- Active badge -->
-        @if (isActive(profile.id)) {
-          <div class="sp-badge-wrap">
-            <env-badge variant="accent" [pill]="true">Active</env-badge>
-          </div>
-        }
-
-        <!-- 3-dot trigger — only for deletable profiles, only contains Delete -->
+        <!-- 3-dot trigger -->
         @if (isDeletable(profile.id)) {
           <div class="sp-menu-trigger" (click)="$event.stopPropagation()">
-            <env-icon-button icon="more_vert" variant="borderless" [size]="24"
-              title="Delete" (clicked)="toggleMenu(profile.id)" />
+            <env-icon-button icon="more_vert" variant="borderless" [size]="20"
+              title="Options" (clicked)="toggleMenu(profile.id)" />
           </div>
           @if (menuOpenId() === profile.id) {
             <div class="sp-menu" (click)="$event.stopPropagation()">
+              <button class="sp-menu-item" (click)="openEditModal(profile); closeMenu()">
+                <span class="material-symbols-outlined">edit</span> Edit space
+              </button>
+              <button class="sp-menu-item" (click)="openDetailsModal(profile); closeMenu()">
+                <span class="material-symbols-outlined">info</span> Details
+              </button>
               <button class="sp-menu-item sp-menu-item-danger"
                 (click)="openDeleteConfirm(profile); closeMenu()">
                 <span class="material-symbols-outlined">delete</span> Delete space
@@ -37,9 +36,14 @@
           }
         }
 
-        <!-- Avatar with initials -->
-        <div class="sp-avatar" [style.background]="profile.color || '#3b82f6'">
-          <span class="sp-avatar-initials">{{ getInitials(profile.name) }}</span>
+        <!-- Avatar with active ring -->
+        <div class="sp-avatar-wrap">
+          <div class="sp-avatar" [style.background]="profile.color || '#3b82f6'">
+            <span class="sp-avatar-initials">{{ getInitials(profile.name) }}</span>
+          </div>
+          @if (isActive(profile.id)) {
+            <span class="material-symbols-outlined sp-active-check">check_circle</span>
+          }
         </div>
 
         <!-- Name -->
@@ -47,14 +51,6 @@
 
         <!-- Last accessed -->
         <span class="sp-card-meta">{{ profile.lastAccessed | date:'MMM d' }}</span>
-
-        <!-- Direct action buttons -->
-        <div class="sp-card-actions" (click)="$event.stopPropagation()">
-          <env-icon-button icon="info" variant="ghost" [size]="28"
-            title="Details" (clicked)="openDetailsModal(profile)" />
-          <env-icon-button icon="edit" variant="ghost" [size]="28"
-            title="Edit" (clicked)="openEditModal(profile)" />
-        </div>
 
       </div>
     }
@@ -86,17 +82,28 @@
   size="sm" (closed)="closeModal()">
 
   <div body class="sp-modal-form">
+
+    <!-- Live preview banner -->
+    <div class="sp-edit-preview">
+      <div class="sp-edit-avatar" [style.background]="formColor()">
+        <span class="material-symbols-outlined">{{ formIcon() }}</span>
+      </div>
+      <div class="sp-edit-preview-text">
+        <span class="sp-edit-preview-name">{{ formName() || 'Space name' }}</span>
+        <span class="sp-edit-preview-hint">Live preview</span>
+      </div>
+    </div>
+
     <!-- Name -->
-    <div class="sp-form-row">
-      <label class="sp-label">Space Name <span class="sp-required">*</span></label>
-      <input class="sp-input" type="text" placeholder="e.g. Personal, Client A, Work"
+    <div class="sp-form-field">
+      <label class="sp-label">Name <span class="sp-required">*</span></label>
+      <input class="sp-input" type="text" placeholder="e.g. Personal, Work, Side Project"
         [ngModel]="formName()" (ngModelChange)="formName.set($event)"
-        (keyup.enter)="saveProfile()">
-      <p class="sp-input-hint">Data in this space (notes, tasks, meetings) will be isolated from other spaces.</p>
+        (keyup.enter)="saveProfile()" autofocus>
     </div>
 
     <!-- Color -->
-    <div class="sp-form-row">
+    <div class="sp-form-field">
       <label class="sp-label">Color</label>
       <div class="sp-color-picker">
         @for (color of colorOptions; track color) {
@@ -109,7 +116,7 @@
     </div>
 
     <!-- Icon -->
-    <div class="sp-form-row">
+    <div class="sp-form-field">
       <label class="sp-label">Icon</label>
       <div class="sp-icon-picker">
         @for (ic of iconOptions; track ic) {
@@ -121,13 +128,6 @@
       </div>
     </div>
 
-    <!-- Preview -->
-    <div class="sp-preview-row">
-      <div class="sp-preview-avatar" [style.background]="formColor()">
-        <span class="material-symbols-outlined sp-avatar-icon">{{ formIcon() }}</span>
-      </div>
-      <span class="sp-preview-name">{{ formName() || 'Space name' }}</span>
-    </div>
   </div>
 
   <div footer>
@@ -140,94 +140,100 @@
 </env-modal>
 
 <!-- ── DETAILS MODAL ── -->
-<env-modal [isOpen]="showDetails()" title="Space Details" size="sm" (closed)="closeDetails()">
+<env-modal [isOpen]="showDetails()" title="Space Details" size="md" (closed)="closeDetails()">
 
-  <div body class="sp-modal-form">
-    <div class="sp-preview-row">
-      <div class="sp-preview-avatar" [style.background]="detailsProfile()?.color || '#3b82f6'">
-        <span class="sp-avatar-initials sp-avatar-initials--sm">{{ getInitials(detailsProfile()?.name || '') }}</span>
+  <div body class="sp-detail-modal">
+
+    <!-- Hero -->
+    <div class="sp-detail-hero" [style.--sp-color]="detailsProfile()?.color || '#3b82f6'">
+      <div class="sp-detail-hero-avatar">
+        <span class="sp-avatar-initials">{{ getInitials(detailsProfile()?.name || '') }}</span>
       </div>
-      <div class="sp-detail-info">
-        <span class="sp-preview-name">{{ detailsProfile()?.name }}</span>
-        @if (isActive(detailsProfile()?.id ?? '')) {
-          <env-badge variant="accent" [pill]="true">Active</env-badge>
-        }
+      <div class="sp-detail-hero-text">
+        <h3 class="sp-detail-hero-name">{{ detailsProfile()?.name }}</h3>
+        <div class="sp-detail-hero-badges">
+          @if (isActive(detailsProfile()?.id ?? '')) {
+            <env-badge variant="accent" [pill]="true">Active</env-badge>
+          }
+          @if (linkedSpace()?.status) {
+            <span class="sp-status-chip sp-status-{{ linkedSpace()?.status?.toLowerCase() }}">
+              {{ linkedSpace()?.status | titlecase }}
+            </span>
+          }
+        </div>
       </div>
     </div>
-      <div class="sp-form-row">
-        <span class="sp-label">Created</span>
-        <span class="sp-detail-value">{{ detailsProfile()?.createdAt | date:'MMM d, yyyy' }}</span>
+
+    <!-- Timestamps -->
+    <div class="sp-detail-grid">
+      <div class="sp-detail-cell">
+        <span class="sp-detail-cell-label">
+          <span class="material-symbols-outlined">calendar_today</span> Created
+        </span>
+        <span class="sp-detail-cell-value">{{ detailsProfile()?.createdAt | date:'MMM d, yyyy' }}</span>
       </div>
-      <div class="sp-form-row">
-        <span class="sp-label">Last Accessed</span>
-        <span class="sp-detail-value">{{ detailsProfile()?.lastAccessed | date:'MMM d, yyyy, h:mm a' }}</span>
-      </div>
-      <div class="sp-detail-divider"></div>
-      <div class="sp-form-row">
-        <span class="sp-label">Status</span>
-        <span class="sp-detail-value sp-detail-cap">{{ linkedSpace()?.status || '—' }}</span>
-      </div>
-      <div class="sp-form-row">
-        <span class="sp-label">Words</span>
-        <span class="sp-detail-value">{{ linkedSpace()?.words ?? '—' }}</span>
+      <div class="sp-detail-cell">
+        <span class="sp-detail-cell-label">
+          <span class="material-symbols-outlined">schedule</span> Last Accessed
+        </span>
+        <span class="sp-detail-cell-value">{{ detailsProfile()?.lastAccessed | date:'MMM d, y · h:mm a' }}</span>
       </div>
       @if (linkedSpace()?.priority) {
-      <div class="sp-form-row">
-        <span class="sp-label">Priority</span>
-        <span class="sp-detail-value sp-detail-cap">{{ linkedSpace()?.priority }}</span>
-      </div>
+        <div class="sp-detail-cell">
+          <span class="sp-detail-cell-label">
+            <span class="material-symbols-outlined">flag</span> Priority
+          </span>
+          <span class="sp-detail-cell-value sp-detail-cap">{{ linkedSpace()?.priority }}</span>
+        </div>
       }
       @if (linkedSpace()?.dueDate) {
-      <div class="sp-form-row">
-        <span class="sp-label">Due Date</span>
-        <span class="sp-detail-value">{{ linkedSpace()?.dueDate | date:'MMM d, yyyy' }}</span>
-      </div>
-      }
-      @if (linkedSpace()?.progress != null) {
-      <div class="sp-form-row">
-        <span class="sp-label">Progress</span>
-        <div class="sp-progress-bar">
-          <div class="sp-progress-fill" [style.width.%]="linkedSpace()?.progress"></div>
+        <div class="sp-detail-cell">
+          <span class="sp-detail-cell-label">
+            <span class="material-symbols-outlined">event</span> Due Date
+          </span>
+          <span class="sp-detail-cell-value">{{ linkedSpace()?.dueDate | date:'MMM d, yyyy' }}</span>
         </div>
-        <span class="sp-detail-value">{{ linkedSpace()?.progress }}%</span>
-      </div>
       }
-      <div class="sp-detail-divider"></div>
-      <div class="sp-detail-resources">
-        <span class="sp-label">Linked Resources</span>
-        <div class="sp-resource-grid">
-          <div class="sp-resource-item">
-            <span class="material-symbols-outlined sp-resource-icon">description</span>
-            <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.notes?.length ?? 0 }}</span>
-            <span class="sp-resource-label">Notes</span>
-          </div>
-          <div class="sp-resource-item">
-            <span class="material-symbols-outlined sp-resource-icon">meeting_room</span>
-            <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.meetings?.length ?? 0 }}</span>
-            <span class="sp-resource-label">Meetings</span>
-          </div>
-          <div class="sp-resource-item">
-            <span class="material-symbols-outlined sp-resource-icon">menu_book</span>
-            <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.novels?.length ?? 0 }}</span>
-            <span class="sp-resource-label">Novels</span>
-          </div>
-          <div class="sp-resource-item">
-            <span class="material-symbols-outlined sp-resource-icon">travel_explore</span>
-            <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.research?.length ?? 0 }}</span>
-            <span class="sp-resource-label">Research</span>
-          </div>
-          <div class="sp-resource-item">
-            <span class="material-symbols-outlined sp-resource-icon">article</span>
-            <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.articles?.length ?? 0 }}</span>
-            <span class="sp-resource-label">Articles</span>
-          </div>
-          <div class="sp-resource-item">
-            <span class="material-symbols-outlined sp-resource-icon">bookmark</span>
-            <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.bookmarks?.length ?? 0 }}</span>
-            <span class="sp-resource-label">Bookmarks</span>
-          </div>
+    </div>
+
+
+    <!-- Linked Resources -->
+    <div class="sp-detail-section">
+      <span class="sp-detail-section-label">Linked Resources</span>
+      <div class="sp-resource-grid">
+        <div class="sp-resource-item">
+          <span class="material-symbols-outlined sp-resource-icon">description</span>
+          <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.notes?.length ?? 0 }}</span>
+          <span class="sp-resource-label">Notes</span>
+        </div>
+        <div class="sp-resource-item">
+          <span class="material-symbols-outlined sp-resource-icon">meeting_room</span>
+          <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.meetings?.length ?? 0 }}</span>
+          <span class="sp-resource-label">Meetings</span>
+        </div>
+        <div class="sp-resource-item">
+          <span class="material-symbols-outlined sp-resource-icon">menu_book</span>
+          <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.novels?.length ?? 0 }}</span>
+          <span class="sp-resource-label">Novels</span>
+        </div>
+        <div class="sp-resource-item">
+          <span class="material-symbols-outlined sp-resource-icon">travel_explore</span>
+          <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.research?.length ?? 0 }}</span>
+          <span class="sp-resource-label">Research</span>
+        </div>
+        <div class="sp-resource-item">
+          <span class="material-symbols-outlined sp-resource-icon">article</span>
+          <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.articles?.length ?? 0 }}</span>
+          <span class="sp-resource-label">Articles</span>
+        </div>
+        <div class="sp-resource-item">
+          <span class="material-symbols-outlined sp-resource-icon">bookmark</span>
+          <span class="sp-resource-count">{{ linkedSpace()?.linkedResources?.bookmarks?.length ?? 0 }}</span>
+          <span class="sp-resource-label">Bookmarks</span>
         </div>
       </div>
+    </div>
+
   </div>
 
   <div footer>
