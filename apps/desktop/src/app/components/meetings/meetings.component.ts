@@ -44,7 +44,7 @@ export class MeetingsComponent {
   
   // Calendar view state
   calendarDate = signal<Date>(new Date());
-  calendarView = signal<'month' | 'week'>('month');
+  calendarView = signal<'day' | 'week' | 'month' | 'year'>('month');
   
   // Create meeting modal
   showCreateModal = signal(false);
@@ -277,10 +277,42 @@ export class MeetingsComponent {
     return weeks;
   });
   
+  // Calendar computed
+  readonly calendarHours = Array.from({ length: 24 }, (_, i) => i);
+
+  readonly calendarTitle = computed(() => {
+    const d = this.calendarDate();
+    switch (this.calendarView()) {
+      case 'day':
+        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      case 'week': {
+        const days = this.weekDays();
+        const first = days[0], last = days[6];
+        return first.getMonth() === last.getMonth()
+          ? first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+          : `${first.toLocaleDateString('en-US', { month: 'short' })} – ${last.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+      }
+      case 'month': return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      case 'year':  return d.getFullYear().toString();
+    }
+  });
+
+  readonly weekDays = computed(() => {
+    const d = this.calendarDate();
+    const sun = new Date(d);
+    sun.setDate(d.getDate() - d.getDay());
+    return Array.from({ length: 7 }, (_, i) => { const day = new Date(sun); day.setDate(sun.getDate() + i); return day; });
+  });
+
+  readonly yearMonths = computed(() => {
+    const year = this.calendarDate().getFullYear();
+    return Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
+  });
+
   // Get meetings for a specific date (for calendar view)
   getMeetingsForDate(date: Date): Meeting[] {
-    const dateStr = date.toISOString().split('T')[0];
-    return this.meetingsService.meetings().filter(m => 
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    return this.meetingsService.meetings().filter(m =>
       m.date === dateStr && m.status !== 'cancelled'
     );
   }
@@ -936,29 +968,101 @@ export class MeetingsComponent {
   }
   
   // Calendar methods
-  previousMonth() {
-    const current = this.calendarDate();
-    this.calendarDate.set(new Date(current.getFullYear(), current.getMonth() - 1, 1));
+  navigatePrev() {
+    const d = this.calendarDate();
+    switch (this.calendarView()) {
+      case 'day':   this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1)); break;
+      case 'week':  this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7)); break;
+      case 'month': this.calendarDate.set(new Date(d.getFullYear(), d.getMonth() - 1, 1)); break;
+      case 'year':  this.calendarDate.set(new Date(d.getFullYear() - 1, 0, 1)); break;
+    }
   }
-  
-  nextMonth() {
-    const current = this.calendarDate();
-    this.calendarDate.set(new Date(current.getFullYear(), current.getMonth() + 1, 1));
+
+  navigateNext() {
+    const d = this.calendarDate();
+    switch (this.calendarView()) {
+      case 'day':   this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)); break;
+      case 'week':  this.calendarDate.set(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7)); break;
+      case 'month': this.calendarDate.set(new Date(d.getFullYear(), d.getMonth() + 1, 1)); break;
+      case 'year':  this.calendarDate.set(new Date(d.getFullYear() + 1, 0, 1)); break;
+    }
   }
-  
-  goToToday() {
-    this.calendarDate.set(new Date());
-  }
-  
+
+  previousMonth() { this.navigatePrev(); }
+  nextMonth()     { this.navigateNext(); }
+
+  goToToday() { this.calendarDate.set(new Date()); }
+
   isToday(date: Date): boolean {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+    const t = new Date();
+    return date.getFullYear() === t.getFullYear() && date.getMonth() === t.getMonth() && date.getDate() === t.getDate();
   }
-  
+
   isCurrentMonth(date: Date): boolean {
     return date.getMonth() === this.calendarDate().getMonth();
   }
-  
+
+  getMeetingsForDay(date: Date): Meeting[] {
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    return this.meetingsService.meetings()
+      .filter(m => m.date === dateStr && m.status !== 'cancelled')
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }
+
+  getMeetingTopPx(startTime: string): number {
+    const [h, m] = startTime.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  getMeetingHeightPx(startTime: string, endTime?: string, duration?: number): number {
+    if (endTime) {
+      const [sh, sm] = startTime.split(':').map(Number);
+      const [eh, em] = endTime.split(':').map(Number);
+      return Math.max((eh * 60 + em) - (sh * 60 + sm), 30);
+    }
+    return Math.max(duration ?? 60, 30);
+  }
+
+  formatHour(h: number): string {
+    if (h === 0)  return '12 AM';
+    if (h < 12)   return `${h} AM`;
+    if (h === 12) return '12 PM';
+    return `${h - 12} PM`;
+  }
+
+  getMonthMeetingDays(month: Date): Set<number> {
+    const year = month.getFullYear(), mon = month.getMonth();
+    const set = new Set<number>();
+    this.meetingsService.meetings().forEach(m => {
+      const d = new Date(m.date);
+      if (d.getFullYear() === year && d.getMonth() === mon && m.status !== 'cancelled') set.add(d.getDate());
+    });
+    return set;
+  }
+
+  getYearMonthWeeks(month: Date): Date[][] {
+    const year = month.getFullYear(), mon = month.getMonth();
+    const firstDay = new Date(year, mon, 1);
+    const lastDay  = new Date(year, mon + 1, 0);
+    const weeks: Date[][] = [];
+    let week: Date[] = [];
+    for (let i = firstDay.getDay() - 1; i >= 0; i--) week.push(new Date(year, mon, -i));
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      week.push(new Date(year, mon, day));
+      if (week.length === 7) { weeks.push(week); week = []; }
+    }
+    if (week.length) {
+      let n = 1;
+      while (week.length < 7) week.push(new Date(year, mon + 1, n++));
+      weeks.push(week);
+    }
+    return weeks;
+  }
+
+  eventBg(color?: string): string {
+    return `color-mix(in srgb, ${color || 'var(--accent-primary)'} 80%, #000)`;
+  }
+
   selectCalendarDate(date: Date) {
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     this.openCreateModal();

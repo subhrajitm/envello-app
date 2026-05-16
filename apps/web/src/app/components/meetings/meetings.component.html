@@ -160,15 +160,23 @@
       <!-- Calendar View -->
       @if (viewMode() === 'calendar') {
       <div class="mt-calendar">
+
+        <!-- Calendar Header -->
         <div class="mt-cal-hdr">
           <div class="mt-cal-nav">
-            <button class="mt-cal-nav-btn" (click)="previousMonth()" title="Previous month">
+            <button class="mt-cal-nav-btn" (click)="navigatePrev()">
               <span class="material-symbols-outlined">chevron_left</span>
             </button>
-            <h2 class="mt-cal-title">{{ calendarDate() | date:'MMMM yyyy' }}</h2>
-            <button class="mt-cal-nav-btn" (click)="nextMonth()" title="Next month">
+            <h2 class="mt-cal-title">{{ calendarTitle() }}</h2>
+            <button class="mt-cal-nav-btn" (click)="navigateNext()">
               <span class="material-symbols-outlined">chevron_right</span>
             </button>
+          </div>
+          <div class="mt-cal-view-tabs">
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='day'"   (click)="calendarView.set('day')">Day</button>
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='week'"  (click)="calendarView.set('week')">Week</button>
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='month'" (click)="calendarView.set('month')">Month</button>
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='year'"  (click)="calendarView.set('year')">Year</button>
           </div>
           <div class="mt-cal-hdr-right">
             @if (filteredMeetings().length > 0) {
@@ -177,6 +185,79 @@
             <button class="mt-cal-today-btn" (click)="goToToday()">Today</button>
           </div>
         </div>
+
+        <!-- ── Day View ─────────────────────────────────────────────── -->
+        @if (calendarView() === 'day') {
+        <div class="mt-cal-day-view">
+          <div class="mt-cal-tl">
+            <div class="mt-cal-tl-gutter">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-h-label">{{ formatHour(h) }}</div>
+              }
+            </div>
+            <div class="mt-cal-tl-col" [class.mt-cal-tl-col--today]="isToday(calendarDate())">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-slot" (click)="selectCalendarDate(calendarDate())"></div>
+              }
+              @for (m of getMeetingsForDay(calendarDate()); track m.id) {
+              <div class="mt-cal-tl-event"
+                [style.top.px]="getMeetingTopPx(m.startTime)"
+                [style.height.px]="getMeetingHeightPx(m.startTime, m.endTime, m.duration)"
+                [style.background]="eventBg(m.color)"
+                (click)="openDetailsModal(m)">
+                <span class="mt-cal-tl-event-time">{{ formatTime(m.startTime) }}@if(m.endTime){–{{ formatTime(m.endTime) }}}</span>
+                <span class="mt-cal-tl-event-title">{{ m.title }}</span>
+                @if (m.attendees.length > 1) {
+                <span class="mt-cal-tl-event-att">{{ m.attendees.length }} people</span>
+                }
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- ── Week View ────────────────────────────────────────────── -->
+        @if (calendarView() === 'week') {
+        <div class="mt-cal-week-view">
+          <div class="mt-cal-wv-hdr">
+            <div class="mt-cal-tl-gutter"></div>
+            @for (day of weekDays(); track day.getTime()) {
+            <div class="mt-cal-wv-day-hdr" [class.today]="isToday(day)">
+              <span class="mt-cal-wv-day-name">{{ day | date:'EEE' }}</span>
+              <span class="mt-cal-wv-day-num">{{ day.getDate() }}</span>
+            </div>
+            }
+          </div>
+          <div class="mt-cal-wv-body">
+            <div class="mt-cal-tl-gutter">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-h-label">{{ formatHour(h) }}</div>
+              }
+            </div>
+            @for (day of weekDays(); track day.getTime()) {
+            <div class="mt-cal-wv-col" [class.today]="isToday(day)">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-slot" (click)="selectCalendarDate(day)"></div>
+              }
+              @for (m of getMeetingsForDay(day); track m.id) {
+              <div class="mt-cal-tl-event"
+                [style.top.px]="getMeetingTopPx(m.startTime)"
+                [style.height.px]="getMeetingHeightPx(m.startTime, m.endTime, m.duration)"
+                [style.background]="eventBg(m.color)"
+                (click)="openDetailsModal(m); $event.stopPropagation()">
+                <span class="mt-cal-tl-event-time">{{ formatTime(m.startTime) }}</span>
+                <span class="mt-cal-tl-event-title">{{ m.title }}</span>
+              </div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- ── Month View ───────────────────────────────────────────── -->
+        @if (calendarView() === 'month') {
         <div class="mt-cal-grid">
           <div class="mt-cal-weekdays">
             <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
@@ -222,6 +303,34 @@
             }
           </div>
         </div>
+        }
+
+        <!-- ── Year View ────────────────────────────────────────────── -->
+        @if (calendarView() === 'year') {
+        <div class="mt-cal-year-view">
+          @for (month of yearMonths(); track month.getTime()) {
+          <div class="mt-cal-ym" (click)="calendarDate.set(month); calendarView.set('month')">
+            <div class="mt-cal-ym-title">{{ month | date:'MMMM' }}</div>
+            <div class="mt-cal-ym-weekdays">
+              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+            @for (week of getYearMonthWeeks(month); track week[0].getTime()) {
+            <div class="mt-cal-ym-week">
+              @for (day of week; track day.getTime()) {
+              <div class="mt-cal-ym-day"
+                [class.other]="day.getMonth() !== month.getMonth()"
+                [class.today]="isToday(day)"
+                [class.has-events]="day.getMonth() === month.getMonth() && getMonthMeetingDays(month).has(day.getDate())">
+                {{ day.getDate() }}
+              </div>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+
       </div>
       }
 
