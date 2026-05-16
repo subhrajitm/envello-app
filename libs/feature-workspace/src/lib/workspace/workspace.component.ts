@@ -11,7 +11,7 @@ import {
 // ── Interfaces ─────────────────────────────────────────────────────────────────
 
 interface ParsedIntent {
-  type: 'task' | 'note' | 'bookmark' | 'write' | 'meeting' | 'navigate' | 'unknown';
+  type: 'task' | 'note' | 'bookmark' | 'write' | 'meeting' | 'research' | 'navigate' | 'unknown';
   title: string;
   priority?: 'HIGH' | 'MEDIUM' | 'LOW';
   due?: string;
@@ -294,9 +294,26 @@ export class WorkspaceComponent {
 
   /**
    * User replied to an AI question (awaiting-answer state).
-   * Merge the answer into the context and call AI again.
+   * Try to extract any obvious fields from the reply so the mock fallback
+   * can use them, then pass the full history back to AI.
    */
   private async handleFollowUpReply(reply: string) {
+    const lower = reply.toLowerCase();
+    const type  = this.guessTypeFromText(lower);
+    if (type !== 'unknown') {
+      this.partialData.update(p => ({ ...p, type }));
+    }
+    const date = this.extractDate(lower);
+    if (date) this.partialData.update(p => ({ ...p, due: date }));
+    const time = this.extractTime(lower);
+    if (time) this.partialData.update(p => ({ ...p, time }));
+    const priority = lower.match(/\b(high|medium|low|urgent|critical)\b/)?.[0];
+    if (priority) this.partialData.update(p => ({ ...p, priority: this.extractPriority(lower) }));
+    // If partial has a type but no title yet, treat the reply as the title
+    const partial = this.partialData();
+    if (partial?.type && !partial.title) {
+      this.partialData.update(p => ({ ...p, title: reply.substring(0, 120) }));
+    }
     await this.dispatchToAi();
   }
 
@@ -371,7 +388,7 @@ export class WorkspaceComponent {
     const partial   = this.partialData();
 
     const systemPrompt = `You are a productivity assistant embedded in a personal workspace app.
-The app supports: tasks, notes, meetings, bookmarks, writing projects (novel/article/essay/script/poem/blog/research), and navigation. Spaces/projects cannot be created here — redirect the user to /spaces if they ask.
+The app supports: tasks, notes, meetings, bookmarks, writing projects (novel/article/essay/script/poem/blog), research articles, and navigation. Spaces/projects cannot be created here — redirect the user to /spaces if they ask.
 
 Today's date: ${today}
 ${partial ? `\nData collected so far: ${JSON.stringify(partial)}` : ''}
@@ -384,7 +401,7 @@ Based on the conversation, decide what to do and respond with ONLY valid JSON �
 Choose ONE of these response shapes:
 
 1. You have ALL necessary info → create immediately:
-{"action":"execute","intent":{"type":"task|note|bookmark|write|meeting|navigate","title":"string","priority":"HIGH|MEDIUM|LOW","due":"YYYY-MM-DD or null","time":"HH:mm or null","url":"string or null","description":"string or null","writingType":"NOVEL|SHORT_STORY|ARTICLE|ESSAY|SCRIPT|POETRY|BLOG_POST|RESEARCH or null","route":"string or null"}}
+{"action":"execute","intent":{"type":"task|note|bookmark|write|meeting|research|navigate","title":"string","priority":"HIGH|MEDIUM|LOW","due":"YYYY-MM-DD or null","time":"HH:mm or null","url":"string or null","description":"string or null","writingType":"NOVEL|SHORT_STORY|ARTICLE|ESSAY|SCRIPT|POETRY|BLOG_POST or null","route":"string or null"}}
 
 2. Need ONE critical piece of missing info → ask a single focused question:
 {"action":"ask","question":"One concise question?","partialData":{"type":"...","title":"..."}}
@@ -402,7 +419,7 @@ Rules:
 - If the user says "yes", "ok", "sure", "looks good" in response to a confirm → execute.
 - If the user says "no", "cancel", "never mind" → cancel.
 - If input is completely ambiguous with no recognisable intent → ask "What would you like to create?".
-- If user asks to create a space or project → respond with {"action":"navigate","intent":{"type":"navigate","title":"spaces","route":"/spaces"}} and do NOT attempt to create it.`;
+- If user asks to create a space or project → respond with {"action":"execute","intent":{"type":"navigate","title":"spaces","route":"/spaces"}} and do NOT attempt to create it.`;
 
     try {
       const raw     = await this.aiService.sendMessage(
@@ -448,10 +465,18 @@ Rules:
     const lower   = lastUser.toLowerCase();
     const type    = this.guessTypeFromText(lower);
     if (type !== 'unknown') {
-      return {
-        action: 'execute',
-        intent: { type, title: lastUser.substring(0, 120), priority: 'MEDIUM' },
+      const intent: ParsedIntent = {
+        type,
+        title:    lastUser.substring(0, 120),
+        priority: 'MEDIUM',
+        due:      this.extractDate(lower),
+        time:     this.extractTime(lower),
       };
+      // Meetings and writing projects get a confirmation step even in mock mode
+      if (type === 'meeting' || type === 'write') {
+        return { action: 'confirm', summary: this.buildSummary(intent), intent };
+      }
+      return { action: 'execute', intent };
     }
 
     // Completely unknown — ask for type
@@ -465,6 +490,7 @@ Rules:
     if (/\b(meeting|schedule|standup|sync|call)\b/.test(lower)) return 'meeting';
     if (/\b(bookmark|save|link|url)\b/.test(lower))             return 'bookmark';
     if (/\b(novel|story|article|essay|poem|blog|script)\b/.test(lower)) return 'write';
+    if (/\b(research|study|investigate|analyze|source)\b/.test(lower))  return 'research';
     return 'unknown';
   }
 
@@ -554,6 +580,13 @@ Rules:
       return { type: 'write', title, writingType: this.extractWritingType(lower) };
     }
 
+    // ── RESEARCH ────────────────────────────────────────────────────────────────
+    if (/^(research:|new research|research on|start research|create research)/i.test(lower)) {
+      const title = raw.replace(/^(research:|new research|research on|start research|create research):?\s*/i, '').trim();
+      if (!title) return null;
+      return { type: 'research', title };
+    }
+
     // ── SPACE — not allowed; redirect to /spaces ─────────────────────────────────
     if (/^(new project|new space|create project|create space|space:|project:)/i.test(lower)) {
       return { type: 'navigate', title: 'spaces', route: '/spaces' };
@@ -572,6 +605,7 @@ Rules:
       case 'bookmark': this.createBookmark(intent);           break;
       case 'write':    this.createWriting(intent);            break;
       case 'meeting':  this.createMeeting(intent);            break;
+      case 'research': this.navigateToResearch(intent);       break;
       default:
         this.createTask({ type: 'task', title: raw.substring(0, 120) || intent.title, priority: 'MEDIUM' });
     }
@@ -579,6 +613,11 @@ Rules:
 
   private doNavigate(intent: ParsedIntent) {
     if (intent.route) this.router.navigate([intent.route]);
+  }
+
+  private navigateToResearch(intent: ParsedIntent) {
+    this.lastCreated.set({ type: 'Research', title: intent.title, route: '/research' });
+    this.router.navigate(['/research']);
   }
 
   private createTask(intent: ParsedIntent) {
@@ -747,7 +786,7 @@ Rules:
 
   setExampleText(text: string) {
     this.inputText.set(text);
-    setTimeout(() => (document.querySelector('.main-text-input') as HTMLInputElement)?.focus(), 50);
+    (document.querySelector('.main-text-input') as HTMLInputElement)?.focus();
   }
 
   toggleSidebarTask(task: Task, event: Event) {
