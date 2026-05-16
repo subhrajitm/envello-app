@@ -250,7 +250,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.navigationLayout() === 'minimized' || this.navigationLayout() === 'vertical') {
       this.sidebarCollapsed.set(!this.sidebarCollapsed());
       this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
+      this.saveSidebarCollapsed(this.sidebarCollapsed());
     }
+  }
+
+  private saveSidebarCollapsed(collapsed: boolean) {
+    try {
+      const saved = localStorage.getItem('envello-settings');
+      const settings = saved ? JSON.parse(saved) : {};
+      settings.sidebarCollapsed = collapsed;
+      localStorage.setItem('envello-settings', JSON.stringify(settings));
+    } catch { }
   }
 
 
@@ -290,12 +300,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.routeSub?.unsubscribe();
   }
 
+  private sidebarRestoredFromStorage = false;
+
   private loadNavigationLayout() {
     const saved = localStorage.getItem('envello-settings');
     if (saved) {
       try {
         const settings = JSON.parse(saved);
         this.navigationLayout.set(settings.navigationLayout || 'minimized');
+        if (typeof settings.sidebarCollapsed === 'boolean') {
+          this.sidebarCollapsed.set(settings.sidebarCollapsed);
+          this.sidebarRestoredFromStorage = true;
+        }
       } catch (e) {
         console.error('Failed to load navigation layout:', e);
       }
@@ -305,16 +321,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private applyNavigationLayout() {
     const layout = this.navigationLayout();
 
-    // Only set initial state when layout actually changes, not on every call
     if (this.previousLayout !== layout) {
-      if (layout === 'minimized') {
-        // Start collapsed in minimized mode, but allow user to expand via toggle
-        this.sidebarCollapsed.set(true);
-      } else if (layout === 'vertical') {
-        // Start expanded in vertical mode, but allow user to collapse via toggle
-        this.sidebarCollapsed.set(false);
+      // If we just restored from storage (first run), honour the saved value —
+      // only apply layout defaults when no saved preference exists or when
+      // the user actively switches to a different layout type.
+      const isInit = this.previousLayout === undefined;
+      if (!isInit || !this.sidebarRestoredFromStorage) {
+        if (layout === 'minimized') {
+          this.sidebarCollapsed.set(true);
+          this.saveSidebarCollapsed(true);
+        } else if (layout === 'vertical') {
+          this.sidebarCollapsed.set(false);
+          this.saveSidebarCollapsed(false);
+        }
       }
-      // For horizontal, sidebar is not shown
 
       this.previousLayout = layout;
       this.sidebarCollapsedChange.emit(this.sidebarCollapsed());
