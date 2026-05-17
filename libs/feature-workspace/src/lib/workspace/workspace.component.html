@@ -160,14 +160,21 @@
         <div class="sidebar-section full-height" style="padding: 24px;">
           <div class="dp-header">
             <h2 class="dp-title">Recent activity</h2>
-            <div class="dp-progress">
+            <div class="dp-progress" [title]="sidebarTasksCompleted() + ' of ' + store.tasks().length + ' tasks completed'">
               <svg class="progress-ring" width="24" height="24">
                 <circle class="progress-ring-bg" stroke="var(--border-color)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
                 <circle class="progress-ring-fill" stroke="var(--accent)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" stroke-dasharray="62.83" [attr.stroke-dashoffset]="sidebarTasksDashOffset()" />
               </svg>
-              <span class="dp-progress-text">{{ sidebarTasksCompleted() }}/{{ store.tasks().length }}</span>
+              <span class="dp-progress-text">{{ sidebarTasksCompleted() }}/{{ store.tasks().length }} done</span>
             </div>
           </div>
+
+          @if (sidebarError()) {
+            <div class="si-error">
+              <span class="material-symbols-outlined" style="font-size:13px;flex-shrink:0;">warning</span>
+              {{ sidebarError() }}
+            </div>
+          }
 
           <div class="dp-list si-list">
             @for (item of sidebarActivityItems(); track item.id) {
@@ -192,7 +199,7 @@
                     }
                   </div>
 
-                  <button class="dp-action-btn si-nav-btn" (click)="navigateSidebarItem(item, $event)" title="View">
+                  <button class="dp-action-btn si-nav-btn" title="View">
                     <span class="material-symbols-outlined">arrow_forward</span>
                   </button>
                 </div>

@@ -75,6 +75,7 @@ interface SidebarActivityItem {
   subtitle?: string;
   route: string;
   task?: Task;
+  queryParams?: Record<string, string>;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -108,6 +109,8 @@ export class WorkspaceComponent {
   cpuUsage     = signal(12);
   latency      = signal(24);
   systemTime   = signal(new Date());
+
+  sidebarError = signal<string | null>(null);
 
   // ── Conversation state ───────────────────────────────────────────────────────
   /** Ordered list of turns shown in the conversation thread */
@@ -183,28 +186,12 @@ export class WorkspaceComponent {
     return rem > 0 ? `in ${h}h ${rem}m` : `in ${h}h`;
   });
 
-  lastNote = computed(() =>
-    [...this.store.notes()]
-      .sort((a, b) => (b.lastEdited || b.date).localeCompare(a.lastEdited || a.date))[0] ?? null
-  );
-
-  activeWriting = computed(() => {
-    const novels = this.store.novels();
-    return (
-      novels.filter(n => n.status === 'DRAFTING' || n.status === 'REVISING')
-            .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0]
-      ?? [...novels].sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))[0]
-      ?? null
-    );
-  });
-
   linkedEntities = computed(() => ({
     tasks: this.store.tasks().filter(t => t.status !== 'COMPLETED').length,
   }));
 
   userName = computed(() => this.userService.userName());
 
-  sidebarTasks = computed(() => this.store.tasks().filter(t => t.status !== 'COMPLETED').slice(0, 4));
   sidebarTasksCompleted = computed(() => this.store.tasks().filter(t => t.status === 'COMPLETED').length);
   sidebarTasksDashOffset = computed(() => {
     const total = this.store.tasks().length;
@@ -215,34 +202,40 @@ export class WorkspaceComponent {
 
   sidebarActivityItems = computed((): SidebarActivityItem[] => {
     const items: SidebarActivityItem[] = [];
+    const now = new Date();
 
-    // Active tasks (non-completed, up to 3)
+    // Active tasks (non-completed, non-subtask) — highest priority first, up to 3
+    const priorityScore: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
     const tasks = this.store.tasks()
       .filter(t => t.status !== 'COMPLETED' && !t.parentId)
+      .sort((a, b) => (priorityScore[b.priority] ?? 2) - (priorityScore[a.priority] ?? 2))
       .slice(0, 3);
     for (const t of tasks) {
       items.push({
         kind: 'task', id: t.id, title: t.title,
         icon: 'check_circle', iconColor: '#3b82f6',
-        subtitle: t.due || t.priority,
+        subtitle: this.formatTaskSubtitle(t),
         route: '/tasks', task: t,
       });
     }
 
-    // Recent notes (latest 2)
+    // Recent notes (latest 2, sorted by date then lastEdited)
     const notes = [...this.store.notes()]
-      .sort((a, b) => (b.lastEdited || b.date).localeCompare(a.lastEdited || a.date))
+      .sort((a, b) => {
+        try { return new Date(b.date).getTime() - new Date(a.date).getTime(); } catch { return 0; }
+      })
       .slice(0, 2);
     for (const n of notes) {
       items.push({
         kind: 'note', id: n.id, title: n.title,
         icon: 'edit_note', iconColor: '#a855f7',
-        subtitle: n.lastEdited || n.date,
+        subtitle: this.formatNoteSubtitle(n),
         route: '/daily-notes',
+        queryParams: { noteId: n.id },
       });
     }
 
-    // Recent bookmarks (latest 1)
+    // Most recent bookmark (by ISO createdAt)
     const bm = [...this.store.bookmarks()]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
     if (bm) {
@@ -256,30 +249,35 @@ export class WorkspaceComponent {
       });
     }
 
-    // Upcoming meetings (next 1)
-    const now = new Date();
+    // Next upcoming meeting
     const meeting = this.meetingsService.meetings()
       .filter(m => new Date(`${m.date}T${m.startTime}`) >= now && m.status === 'scheduled')
       .sort((a, b) =>
         new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime()
       )[0];
     if (meeting) {
+      const diffMins = Math.floor((new Date(`${meeting.date}T${meeting.startTime}`).getTime() - now.getTime()) / 60000);
+      const meetingSub = diffMins < 60
+        ? `in ${diffMins}m`
+        : diffMins < 1440
+          ? `${meeting.date} at ${meeting.startTime}`
+          : meeting.date;
       items.push({
         kind: 'meeting', id: meeting.id, title: meeting.title,
         icon: 'groups', iconColor: '#10b981',
-        subtitle: `${meeting.date} · ${meeting.startTime}`,
+        subtitle: meetingSub,
         route: '/meetings',
       });
     }
 
-    // Latest writing project (1)
+    // Most recently updated writing project
     const novel = [...this.store.novels()]
-      .sort((a, b) => (b.createdAt || b.lastUpdated).localeCompare(a.createdAt || a.lastUpdated))[0];
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0];
     if (novel) {
       items.push({
         kind: 'novel', id: novel.id, title: novel.title,
         icon: novel.icon || 'menu_book', iconColor: '#ec4899',
-        subtitle: (novel.writingType ?? 'NOVEL').toLowerCase().replace('_', ' '),
+        subtitle: this.formatNovelSubtitle(novel),
         route: `/write/${novel.id}`,
       });
     }
@@ -1103,13 +1101,62 @@ GENERAL RULES:
 
   toggleSidebarTask(task: Task, event: Event) {
     event.stopPropagation();
+    if (task.status !== 'COMPLETED' && task.subtasks?.some(st => st.status !== 'COMPLETED')) {
+      this.showSidebarError('Complete all subtasks before marking this task as done.');
+      return;
+    }
     const newStatus = task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
     this.store.updateTask(task.id, { status: newStatus });
   }
 
+  private showSidebarError(message: string) {
+    this.sidebarError.set(message);
+    setTimeout(() => this.sidebarError.set(null), 3000);
+  }
+
   navigateSidebarItem(item: SidebarActivityItem, event: Event) {
     event.stopPropagation();
-    this.router.navigate([item.route]);
+    this.router.navigate([item.route], item.queryParams ? { queryParams: item.queryParams } : {});
+  }
+
+  private formatTaskSubtitle(task: Task): string {
+    if (!task.due) {
+      const pMap: Record<string, string> = { HIGH: 'High priority', MEDIUM: 'Medium priority', LOW: 'Low priority' };
+      return pMap[task.priority] ?? task.priority;
+    }
+    const today = new Date();
+    const todayStr = this.localDateStr(today);
+    if (task.due === todayStr) return 'due today';
+    const dueDate = new Date(task.due + 'T00:00:00');
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffDays = Math.round((dueDate.getTime() - todayMidnight.getTime()) / 86400000);
+    const label = dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (diffDays < 0) return `overdue · ${Math.abs(diffDays)}d ago`;
+    if (diffDays === 1) return 'due tomorrow';
+    if (diffDays <= 7) return `due ${label} · in ${diffDays}d`;
+    return `due ${label}`;
+  }
+
+  private formatNoteSubtitle(note: Note): string {
+    const le = (note.lastEdited ?? '').toLowerCase();
+    if (!le || le === 'just now') return 'just now';
+    // lastEdited is a time string like "02:14 AM" → prefix with day context
+    if (/\d{1,2}:\d{2}\s*(am|pm)/i.test(note.lastEdited ?? '')) {
+      const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return note.date === today ? `Today ${note.lastEdited}` : `${note.date} · ${note.lastEdited}`;
+    }
+    return note.lastEdited || note.date;
+  }
+
+  private formatNovelSubtitle(novel: Novel): string {
+    const statusMap: Record<string, string> = {
+      PLANNING: 'Planning', DRAFTING: 'Drafting', REVISING: 'Revising',
+      EDITING: 'Editing', PUBLISHED: 'Published', ON_HOLD: 'On hold',
+    };
+    const status = statusMap[novel.status] ?? novel.status;
+    const words = novel.wordCount ?? 0;
+    const formatted = words >= 1000 ? `${(words / 1000).toFixed(1)}k words` : `${words} words`;
+    return `${status} · ${formatted}`;
   }
 
   addSubtask(task: Task, event: Event) {
