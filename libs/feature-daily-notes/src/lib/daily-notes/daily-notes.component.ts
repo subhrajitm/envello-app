@@ -2,6 +2,7 @@ import { Component, computed, inject, signal, untracked, HostListener, OnInit, O
 import { CommonModule } from '@angular/common';
 import { StoreService, Note } from '@envello/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
@@ -46,6 +47,7 @@ interface NoteGroup {
 export class DailyNotesComponent implements OnInit, OnDestroy {
   private store = inject(StoreService);
   private tauriService = inject(TauriService);
+  private route = inject(ActivatedRoute);
   editor!: Editor;
 
   // Connect to store signals
@@ -399,6 +401,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         this.characterCount.set(editor.storage.characterCount.characters());
       },
     });
+
+    // If navigated here with a specific note ID (e.g. from workspace prompt), open it directly.
+    const noteId = this.route.snapshot.queryParamMap.get('noteId');
+    if (noteId) {
+      this.selectNote(noteId);
+    }
   }
 
   ngOnDestroy(): void {

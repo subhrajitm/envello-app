@@ -63,6 +63,7 @@ interface CreatedItem {
   route: string;
   id?: string;
   count?: number;            // number of subtasks created
+  queryParams?: Record<string, string>;
 }
 
 interface SidebarActivityItem {
@@ -950,7 +951,7 @@ GENERAL RULES:
       lastEdited: 'Just now',
     };
     await this.store.addNote(note);
-    this.lastCreated.set({ type: 'Note', title: note.title, route: '/daily-notes', id: note.id });
+    this.lastCreated.set({ type: 'Note', title: note.title, route: '/daily-notes', id: note.id, queryParams: { noteId: note.id } });
   }
 
   private createBookmark(intent: ParsedIntent) {
@@ -1091,7 +1092,7 @@ GENERAL RULES:
 
   navigateToCreated() {
     const c = this.lastCreated();
-    if (c) this.router.navigate([c.route]);
+    if (c) this.router.navigate([c.route], c.queryParams ? { queryParams: c.queryParams } : {});
     this.lastCreated.set(null);
   }
 
