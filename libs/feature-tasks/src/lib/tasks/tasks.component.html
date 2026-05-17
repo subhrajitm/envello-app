@@ -104,7 +104,7 @@
                         </div>
                     </div>
                     }
-                } @else if(filteredTasks().length === 0 && calendarDaySubtasks().length === 0) {
+                } @else if(filteredTasks().length === 0 && calendarDaySubtasks().length === 0 && todaySubtasks().length === 0 && upcomingSubtasks().length === 0) {
                     <div class="tasks-empty-state">
                         <div class="tasks-empty-icon">
                             <span class="material-symbols-outlined">task_alt</span>
@@ -371,7 +371,7 @@
                         <span class="material-symbols-outlined">chevron_right</span>
                     </button>
                 </div>
-                <button class="cal-card-today-chip" (click)="onMetricClick('today')" title="Jump to today">
+                <button class="cal-card-today-chip" (click)="jumpToToday()" title="Jump to today">
                     <span class="material-symbols-outlined">today</span>
                     Today
                 </button>
@@ -542,9 +542,9 @@
                                (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
                                (keydown.enter)="addNewTaskLabel()"
                                (blur)="hideLabelAutocomplete()">
-                        @if (showLabelAutocomplete() && getLabelSuggestions().length > 0) {
+                        @if (showLabelAutocomplete() && labelSuggestions().length > 0) {
                         <div class="label-autocomplete-dropdown">
-                            @for (suggestion of getLabelSuggestions(); track suggestion) {
+                            @for (suggestion of labelSuggestions(); track suggestion) {
                             <button type="button" class="label-suggestion" (mousedown)="addNewTaskLabel(suggestion)">
                                 #{{ suggestion }}
                             </button>
@@ -738,6 +738,30 @@
                     (click)="confirmDeleteTask()">
                 Delete
             </button>
+        </div>
+    </div>
+</env-modal>
+
+<!-- Bulk Delete Confirmation Modal -->
+<env-modal
+    [isOpen]="bulkDeleteModalOpen()"
+    (closed)="cancelBulkDelete()"
+    size="sm"
+>
+    <div header>
+        <h2 class="env-modal-title">
+            <span class="material-symbols-outlined">delete_sweep</span>
+            <span>Delete {{ selectedTasks().size }} tasks</span>
+        </h2>
+    </div>
+    <div body>
+        <p>Are you sure you want to delete <strong>{{ selectedTasks().size }} task{{ selectedTasks().size === 1 ? '' : 's' }}</strong>?</p>
+        <p>This action moves them to the bin.</p>
+    </div>
+    <div footer class="task-modal-footer">
+        <div class="task-modal-footer-actions">
+            <button type="button" class="btn-secondary" (click)="cancelBulkDelete()">Cancel</button>
+            <button type="button" class="btn-primary" (click)="confirmBulkDelete()">Delete</button>
         </div>
     </div>
 </env-modal>
@@ -1158,7 +1182,7 @@
         <button class="dp-nav-btn" (click)="navigateDatePickerMonth('prev')">
             <span class="material-symbols-outlined">chevron_left</span>
         </button>
-        <span class="dp-month-label">{{ getDatePickerMonth() }}</span>
+        <span class="dp-month-label">{{ datePickerMonth() }}</span>
         <button class="dp-nav-btn" (click)="navigateDatePickerMonth('next')">
             <span class="material-symbols-outlined">chevron_right</span>
         </button>
@@ -1173,7 +1197,7 @@
 
     <!-- Calendar grid -->
     <div class="dp-grid">
-        @for (cell of getDatePickerDays(); track $index) {
+        @for (cell of datePickerDays(); track $index) {
         <button class="dp-day"
                 [class.dp-day--other]="!cell.isCurrentMonth"
                 [class.dp-day--today]="cell.isToday"
