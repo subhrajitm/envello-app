@@ -104,7 +104,7 @@
                         </div>
                     </div>
                     }
-                } @else if(filteredTasks().length === 0) {
+                } @else if(filteredTasks().length === 0 && calendarDaySubtasks().length === 0) {
                     <div class="tasks-empty-state">
                         <div class="tasks-empty-icon">
                             <span class="material-symbols-outlined">task_alt</span>
@@ -125,6 +125,43 @@
                             <span class="task-group-dot"></span>
                             <span class="task-group-label">{{ item.label }}</span>
                             <span class="task-group-count">{{ item.count }}</span>
+                        </div>
+                        }
+
+                        @if (item.kind === 'subtask') {
+                        <div class="task-item task-item-subtask"
+                             [class.completed]="item.task.status === 'COMPLETED'"
+                             (click)="openTaskDetails(item.task)">
+                            <div class="subtask-indent-line"></div>
+                            <div class="task-check-column">
+                                <button class="list-circular-checkbox"
+                                        [class.checked]="item.task.status === 'COMPLETED'"
+                                        (click)="toggleCalendarSubtaskStatus(item.task, $event)"
+                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
+                                    @if (item.task.status === 'COMPLETED') {
+                                        <span class="material-symbols-outlined" style="color: #0b7a5a; font-size: 22px;">check_circle</span>
+                                    } @else {
+                                        <span class="material-symbols-outlined" style="color: var(--border-color); font-size: 22px;">radio_button_unchecked</span>
+                                    }
+                                </button>
+                            </div>
+                            <div class="task-main-column">
+                                <div class="task-subtask-parent-label">
+                                    <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;">subdirectory_arrow_right</span>
+                                    {{ item.parentTitle }}
+                                </div>
+                                <div class="task-title-row-inner">
+                                    <div class="task-title-text">{{ item.task.title }}</div>
+                                </div>
+                                @if (item.task.due) {
+                                <div class="task-metadata-row">
+                                    <span class="metadata-item due-date">
+                                        <span class="material-symbols-outlined">calendar_today</span>
+                                        {{ item.task.due }}
+                                    </span>
+                                </div>
+                                }
+                            </div>
                         </div>
                         }
 
@@ -875,7 +912,7 @@
         </div>
     </div>
 
-    <div body>
+    <div body style="display: contents;">
         <div class="td-body">
 
             <!-- LEFT: main content -->
@@ -885,10 +922,14 @@
                 <div class="td-title-row">
                     <button class="list-circular-checkbox"
                             [class.checked]="task.status === 'COMPLETED'"
+                            [class.blocked]="task.status !== 'COMPLETED' && hasIncompleteSubtasks(task)"
                             (click)="completeTaskFromDetails()"
+                            [title]="task.status !== 'COMPLETED' && hasIncompleteSubtasks(task) ? 'Complete all sub-tasks first' : ''"
                             [attr.aria-label]="(task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + task.title">
                         @if (task.status === 'COMPLETED') {
                             <span class="material-symbols-outlined">check</span>
+                        } @else if (hasIncompleteSubtasks(task)) {
+                            <span class="material-symbols-outlined" style="font-size:13px;color:var(--text-tertiary)">lock</span>
                         }
                     </button>
                     <textarea class="td-title-input"

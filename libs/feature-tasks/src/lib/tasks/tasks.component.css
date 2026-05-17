@@ -711,6 +711,27 @@
     opacity: 0.75;
 }
 
+/* Calendar subtask list items */
+.task-item-subtask {
+    padding-left: 24px;
+    border-left: 3px solid var(--border-subtle);
+    background: var(--bg-secondary, rgba(0,0,0,0.015));
+}
+.task-item-subtask:hover {
+    background: var(--bg-hover-soft, rgba(0,0,0,0.035));
+}
+.subtask-indent-line {
+    display: none; /* visual handled via border-left on parent */
+}
+.task-subtask-parent-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
 /* Drag Handle */
 .task-drag-handle {
     display: flex;
@@ -5520,12 +5541,18 @@ textarea:focus-visible {
     color: var(--text-primary);
 }
 
+/* Give the task-details large modal a definite height so the flex chain can resolve */
+:host ::ng-deep .env-modal--large:has(.td-body) {
+    height: 85vh;
+}
+
 /* Remove default modal body padding for the two-panel layout */
 :host ::ng-deep .env-modal--large .env-modal-body:has(.td-body) {
     padding: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 /* Body: two columns */
@@ -5545,6 +5572,7 @@ textarea:focus-visible {
     gap: 0;
     padding: 24px 24px 16px;
     min-width: 0;
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -5554,6 +5582,32 @@ textarea:focus-visible {
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 10px;
+    flex-shrink: 0;
+}
+/* Make the title completion circle always visible */
+.td-title-row .list-circular-checkbox {
+    width: 22px !important;
+    height: 22px !important;
+    border: 2px solid var(--border-strong, var(--text-tertiary)) !important;
+    border-radius: 50% !important;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+.td-title-row .list-circular-checkbox:hover:not(.blocked) {
+    border-color: var(--accent-primary) !important;
+}
+.td-title-row .list-circular-checkbox.blocked {
+    border-color: var(--border-subtle, #d1d5db) !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+.td-title-row .list-circular-checkbox.checked {
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+}
+.td-title-row .list-circular-checkbox .material-symbols-outlined {
+    font-size: 13px !important;
+    color: #fff;
 }
 .td-title-input {
     flex: 1;
@@ -5592,9 +5646,10 @@ textarea:focus-visible {
     font-size: 14px;
     color: var(--text-secondary);
     line-height: 1.6;
-    padding: 0 0 0 36px;
+    padding: 0;
     font-family: inherit;
     width: 100%;
+    flex-shrink: 0;
     /* Suppress browser native focus ring (uses accent-color) */
     -webkit-appearance: none;
     appearance: none;
@@ -5611,6 +5666,7 @@ textarea:focus-visible {
 .td-subtasks {
     margin-top: 20px;
     border-top: 1px solid var(--border-subtle);
+    flex-shrink: 0;
 }
 .td-subtasks-toggle {
     display: flex;
@@ -5659,12 +5715,24 @@ textarea:focus-visible {
     border-bottom: 1px solid var(--border-subtle);
 }
 .td-subtask-checkbox {
-    width: 16px !important;
-    height: 16px !important;
+    width: 18px !important;
+    height: 18px !important;
     flex-shrink: 0;
+    border: 2px solid var(--border-strong, var(--text-tertiary)) !important;
+    border-radius: 50% !important;
+    transition: border-color 0.15s, background 0.15s;
+}
+.td-subtask-checkbox:hover {
+    border-color: var(--accent-primary) !important;
+    opacity: 1;
+}
+.td-subtask-checkbox.checked {
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
 }
 .td-subtask-checkbox .material-symbols-outlined {
     font-size: 11px !important;
+    color: #fff;
 }
 .td-subtask-title {
     font-size: 14px;

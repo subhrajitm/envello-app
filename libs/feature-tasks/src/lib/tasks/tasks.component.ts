@@ -7,7 +7,8 @@ type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
 type TaskListItem =
   | { kind: 'header'; label: string; count: number; accent: string }
-  | { kind: 'task'; task: Task };
+  | { kind: 'task'; task: Task }
+  | { kind: 'subtask'; task: Task; parentTitle: string };
 
 @Component({
   selector: 'app-tasks',
@@ -642,15 +643,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const sel = this.selectedCalendarDay();
     if (!sel) return this.store.tasks();
     const selDate = new Date(sel.year, sel.month, sel.day);
-    const today = new Date();
-    const isToday = selDate.toDateString() === today.toDateString();
-    return this.store.tasks().filter(t => {
-      if (!t.due) return false;
-      if (isToday && t.due.includes('Today')) return true;
-      // Match formatted date strings like "Mon, Apr 21"
-      const formatted = selDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      return t.due.includes(formatted);
-    });
+    return this.store.tasks().filter(t => this.dueDateMatchesDay(t.due, selDate));
   });
 
   selectedDayTotal        = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().length : this.store.tasks().length);
@@ -658,6 +651,23 @@ export class TasksComponent implements OnInit, OnDestroy {
   selectedDayActive       = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().filter(t => t.status === 'ACTIVE').length : this.activeTasksCount());
   selectedDayToday        = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().length : this.todayTasksCount());
   selectedDayPriority     = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().filter(t => t.priority === 'HIGH').length : this.priorityTasksCount());
+
+  /** Subtasks (from any parent) whose due date falls on the selected calendar day. */
+  calendarDaySubtasks = computed((): Array<{ task: Task; parentTitle: string }> => {
+    const sel = this.selectedCalendarDay();
+    if (!sel) return [];
+    const selDate = new Date(sel.year, sel.month, sel.day);
+    const result: Array<{ task: Task; parentTitle: string }> = [];
+    for (const parent of this.store.tasks()) {
+      if (!parent.subtasks?.length) continue;
+      for (const subtask of parent.subtasks) {
+        if (this.dueDateMatchesDay(subtask.due, selDate)) {
+          result.push({ task: subtask, parentTitle: parent.title });
+        }
+      }
+    }
+    return result;
+  });
 
   // Inbox/Today/Upcoming/Completed views
   inboxTasks = computed(() => this.store.tasks());
@@ -667,9 +677,17 @@ export class TasksComponent implements OnInit, OnDestroy {
     const query = this.sidebarSearch().trim().toLowerCase();
     const selectedFolder = this.selectedFolder();
     const metric = this.metricFilter();
+    const calDay = this.selectedCalendarDay();
 
     let base: Task[];
-    if (view === 'today') {
+    if (calDay && (view === 'today' || view === 'upcoming')) {
+      // Any calendar day click: show parent tasks due that day OR with a subtask due that day
+      const selDate = new Date(calDay.year, calDay.month, calDay.day);
+      base = this.store.tasks().filter(t =>
+        this.dueDateMatchesDay(t.due, selDate) ||
+        (t.subtasks?.some(st => this.dueDateMatchesDay(st.due, selDate)) ?? false)
+      );
+    } else if (view === 'today') {
       base = this.store.tasks().filter(t => t.due?.includes('Today'));
     } else if (view === 'upcoming') {
       base = this.store.tasks().filter(t => {
@@ -711,27 +729,40 @@ export class TasksComponent implements OnInit, OnDestroy {
   /** Flat list interleaved with group-header items for the inbox view. */
   flatListItems = computed((): TaskListItem[] => {
     const tasks = this.filteredTasks();
+    let items: TaskListItem[];
+
     if (this.selectedView() !== 'inbox') {
-      return tasks.map(t => ({ kind: 'task', task: t }));
+      items = tasks.map(t => ({ kind: 'task', task: t }));
+    } else {
+      items = [];
+      const push = (label: string, accent: string, list: Task[]) => {
+        if (!list.length) return;
+        items.push({ kind: 'header', label, count: list.length, accent });
+        list.forEach(t => items.push({ kind: 'task', task: t }));
+      };
+
+      push('Overdue', '#ef4444',
+        tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED'));
+      push('Today', '#f59e0b',
+        tasks.filter(t => t.due?.includes('Today') && t.status !== 'COMPLETED'));
+      push('Upcoming', '#6366f1',
+        tasks.filter(t => !!t.due && !t.due.includes('Today') && !this.isOverdue(t) && t.status !== 'COMPLETED'));
+      push('No Date', '#9ca3af',
+        tasks.filter(t => !t.due && t.status !== 'COMPLETED'));
+      push('Completed', '#10b981',
+        tasks.filter(t => t.status === 'COMPLETED'));
     }
 
-    const items: TaskListItem[] = [];
-    const push = (label: string, accent: string, list: Task[]) => {
-      if (!list.length) return;
-      items.push({ kind: 'header', label, count: list.length, accent });
-      list.forEach(t => items.push({ kind: 'task', task: t }));
-    };
-
-    push('Overdue', '#ef4444',
-      tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED'));
-    push('Today', '#f59e0b',
-      tasks.filter(t => t.due?.includes('Today') && t.status !== 'COMPLETED'));
-    push('Upcoming', '#6366f1',
-      tasks.filter(t => !!t.due && !t.due.includes('Today') && !this.isOverdue(t) && t.status !== 'COMPLETED'));
-    push('No Date', '#9ca3af',
-      tasks.filter(t => !t.due && t.status !== 'COMPLETED'));
-    push('Completed', '#10b981',
-      tasks.filter(t => t.status === 'COMPLETED'));
+    // When a calendar day is selected, append subtasks due on that day as separate items
+    if (this.selectedCalendarDay()) {
+      const calSubtasks = this.calendarDaySubtasks();
+      if (calSubtasks.length > 0) {
+        items.push({ kind: 'header', label: 'Subtasks Due', count: calSubtasks.length, accent: '#8b5cf6' });
+        calSubtasks.forEach(({ task, parentTitle }) =>
+          items.push({ kind: 'subtask', task, parentTitle })
+        );
+      }
+    }
 
     return items;
   });
@@ -779,13 +810,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday = isCurrentCalMonth && day === today.getDate();
       const isSelected = !!sel && sel.day === day && sel.month === month && sel.year === year;
-      const isActive = this.store.tasks().some(t => {
-        if (!t.due) return false;
-        if (t.due.includes('Today') && isToday) return true;
-        const d = new Date(year, month, day);
-        const formatted = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        return t.due.includes(formatted);
-      });
+      const d = new Date(year, month, day);
+      const isActive = this.store.tasks().some(t =>
+        this.dueDateMatchesDay(t.due, d) ||
+        (t.subtasks?.some(st => this.dueDateMatchesDay(st.due, d)) ?? false)
+      );
       days.push({ day, isCurrentMonth: true, isToday, isActive, isSelected });
     }
 
@@ -1669,6 +1698,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.selectedTaskForDetails.set(updatedTask);
   }
 
+  /** Toggle a subtask's status when shown as a standalone calendar list item (looks up parent by parentId). */
+  toggleCalendarSubtaskStatus(subtask: Task, event: Event) {
+    event.stopPropagation();
+    const parent = this.store.tasks().find(t => t.id === subtask.parentId);
+    if (!parent) return;
+    this.toggleSubtaskStatus(parent, subtask);
+  }
+
   isAttachmentImage(attachment: { name: string; type: string }): boolean {
     return attachment.type.startsWith('image/');
   }
@@ -2035,6 +2072,21 @@ export class TasksComponent implements OnInit, OnDestroy {
     today.setHours(0, 0, 0, 0);
     parsed.setHours(0, 0, 0, 0);
     return parsed < today;
+  }
+
+  /** Returns true if a task/subtask due string matches the given calendar date. Handles ISO (2026-05-18) and human-readable ("Mon, May 18") formats. */
+  private dueDateMatchesDay(due: string | undefined, date: Date): boolean {
+    if (!due) return false;
+    const today = new Date();
+    if (due.includes('Today') && date.toDateString() === today.toDateString()) return true;
+    // ISO format: "2026-05-18"
+    if (/^\d{4}-\d{2}-\d{2}/.test(due)) {
+      const parsed = new Date(due + 'T00:00:00');
+      return parsed.toDateString() === date.toDateString();
+    }
+    // Human-readable: "Mon, May 18"
+    const formatted = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return due.includes(formatted);
   }
 
   parseDateFromString(dateStr: string): Date | null {
