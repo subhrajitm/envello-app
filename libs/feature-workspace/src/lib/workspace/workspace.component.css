@@ -507,6 +507,60 @@
   font-size: 13px;
 }
 
+/* ── Sidebar activity items ──────────────────────────────────────────────── */
+
+.si-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.si-item {
+  cursor: pointer;
+}
+
+.si-type-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.si-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.si-text .dp-item-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.si-subtitle {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+  text-transform: capitalize;
+}
+
+.si-nav-btn {
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.si-item:hover .si-nav-btn {
+  opacity: 1;
+}
+
 /* --- Footer Bar --- */
 .status-bar {
   height: 36px;

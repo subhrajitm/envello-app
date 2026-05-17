@@ -65,6 +65,17 @@ interface CreatedItem {
   count?: number;            // number of subtasks created
 }
 
+interface SidebarActivityItem {
+  kind: 'task' | 'note' | 'bookmark' | 'meeting' | 'novel';
+  id: string;
+  title: string;
+  icon: string;
+  iconColor: string;
+  subtitle?: string;
+  route: string;
+  task?: Task;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 @Component({
@@ -192,13 +203,87 @@ export class WorkspaceComponent {
 
   userName = computed(() => this.userService.userName());
 
-  sidebarTasks = computed(() => this.store.tasks().slice(0, 4));
-  sidebarTasksCompleted = computed(() => this.sidebarTasks().filter(t => t.status === 'COMPLETED').length);
+  sidebarTasks = computed(() => this.store.tasks().filter(t => t.status !== 'COMPLETED').slice(0, 4));
+  sidebarTasksCompleted = computed(() => this.store.tasks().filter(t => t.status === 'COMPLETED').length);
   sidebarTasksDashOffset = computed(() => {
-    const total = this.sidebarTasks().length;
+    const total = this.store.tasks().length;
     if (total === 0) return 62.83;
     const progress = this.sidebarTasksCompleted() / total;
     return 62.83 - (62.83 * progress);
+  });
+
+  sidebarActivityItems = computed((): SidebarActivityItem[] => {
+    const items: SidebarActivityItem[] = [];
+
+    // Active tasks (non-completed, up to 3)
+    const tasks = this.store.tasks()
+      .filter(t => t.status !== 'COMPLETED' && !t.parentId)
+      .slice(0, 3);
+    for (const t of tasks) {
+      items.push({
+        kind: 'task', id: t.id, title: t.title,
+        icon: 'check_circle', iconColor: '#3b82f6',
+        subtitle: t.due || t.priority,
+        route: '/tasks', task: t,
+      });
+    }
+
+    // Recent notes (latest 2)
+    const notes = [...this.store.notes()]
+      .sort((a, b) => (b.lastEdited || b.date).localeCompare(a.lastEdited || a.date))
+      .slice(0, 2);
+    for (const n of notes) {
+      items.push({
+        kind: 'note', id: n.id, title: n.title,
+        icon: 'edit_note', iconColor: '#a855f7',
+        subtitle: n.lastEdited || n.date,
+        route: '/daily-notes',
+      });
+    }
+
+    // Recent bookmarks (latest 1)
+    const bm = [...this.store.bookmarks()]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (bm) {
+      let host = bm.url;
+      try { host = new URL(bm.url).hostname; } catch { /* keep raw */ }
+      items.push({
+        kind: 'bookmark', id: bm.id, title: bm.title,
+        icon: 'bookmark', iconColor: '#f59e0b',
+        subtitle: host,
+        route: '/bookmarks',
+      });
+    }
+
+    // Upcoming meetings (next 1)
+    const now = new Date();
+    const meeting = this.meetingsService.meetings()
+      .filter(m => new Date(`${m.date}T${m.startTime}`) >= now && m.status === 'scheduled')
+      .sort((a, b) =>
+        new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime()
+      )[0];
+    if (meeting) {
+      items.push({
+        kind: 'meeting', id: meeting.id, title: meeting.title,
+        icon: 'groups', iconColor: '#10b981',
+        subtitle: `${meeting.date} · ${meeting.startTime}`,
+        route: '/meetings',
+      });
+    }
+
+    // Latest writing project (1)
+    const novel = [...this.store.novels()]
+      .sort((a, b) => (b.createdAt || b.lastUpdated).localeCompare(a.createdAt || a.lastUpdated))[0];
+    if (novel) {
+      items.push({
+        kind: 'novel', id: novel.id, title: novel.title,
+        icon: novel.icon || 'menu_book', iconColor: '#ec4899',
+        subtitle: (novel.writingType ?? 'NOVEL').toLowerCase().replace('_', ' '),
+        route: `/write/${novel.id}`,
+      });
+    }
+
+    return items;
   });
 
   // ── Voice ───────────────────────────────────────────────────────────────────
@@ -1011,6 +1096,11 @@ GENERAL RULES:
     event.stopPropagation();
     const newStatus = task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
     this.store.updateTask(task.id, { status: newStatus });
+  }
+
+  navigateSidebarItem(item: SidebarActivityItem, event: Event) {
+    event.stopPropagation();
+    this.router.navigate([item.route]);
   }
 
   addSubtask(task: Task, event: Event) {
