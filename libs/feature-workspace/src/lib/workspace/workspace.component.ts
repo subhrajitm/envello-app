@@ -73,6 +73,7 @@ interface SidebarActivityItem {
   icon: string;
   iconColor: string;
   subtitle?: string;
+  description?: string;
   route: string;
   task?: Task;
   queryParams?: Record<string, string>;
@@ -215,6 +216,7 @@ export class WorkspaceComponent {
         kind: 'task', id: t.id, title: t.title,
         icon: 'check_circle', iconColor: '#3b82f6',
         subtitle: this.formatTaskSubtitle(t),
+        description: t.notes?.trim() || undefined,
         route: '/tasks', task: t,
       });
     }
@@ -230,6 +232,7 @@ export class WorkspaceComponent {
         kind: 'note', id: n.id, title: n.title,
         icon: 'edit_note', iconColor: '#a855f7',
         subtitle: this.formatNoteSubtitle(n),
+        description: n.preview?.trim() || undefined,
         route: '/daily-notes',
         queryParams: { noteId: n.id },
       });
@@ -245,6 +248,7 @@ export class WorkspaceComponent {
         kind: 'bookmark', id: bm.id, title: bm.title,
         icon: 'bookmark', iconColor: '#f59e0b',
         subtitle: host,
+        description: bm.description?.trim() || undefined,
         route: '/bookmarks',
       });
     }

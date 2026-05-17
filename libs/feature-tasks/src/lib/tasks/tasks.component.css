@@ -691,7 +691,7 @@
 /* ─── Premium Task Item ─── */
 .task-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     padding: 5px 14px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -742,6 +742,7 @@
     opacity: 0.5;
     transition: opacity 0.2s;
     width: 20px;
+    padding-top: 4px;
 }
 
 .task-item:hover .task-drag-handle {
@@ -757,13 +758,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-top: 2px;
 }
 
 .list-circular-checkbox {
-    width: 24px;
-    height: 24px;
-    border: none;
-    background: transparent;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-panel, #fff);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -773,12 +776,13 @@
 }
 
 .list-circular-checkbox:hover {
-    opacity: 0.8;
+    border-color: var(--border-highlight);
+    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
 }
 
 .list-circular-checkbox.checked {
-    background: transparent;
-    border: none;
+    background: var(--bg-panel, #fff);
+    border-color: var(--border-color);
 }
 
 .list-circular-checkbox.blocked {
@@ -862,26 +866,28 @@
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    padding-top: 2px;
 }
 
 .task-collapse-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: none;
-    border: none;
+    background: var(--bg-panel, #fff);
+    border: 1px solid var(--border-color);
     cursor: pointer;
     padding: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
     color: var(--text-tertiary);
-    transition: color 0.15s, background 0.15s;
-    width: 20px;
-    height: 20px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    width: 26px;
+    height: 26px;
 }
 
 .task-collapse-btn:hover {
     color: var(--text-secondary);
-    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
 }
 
 .task-subtasks-chevron {
@@ -985,21 +991,22 @@
 }
 
 .icon-btn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    border: none;
-    background: transparent;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-panel, #fff);
     color: var(--text-tertiary);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .icon-btn:hover {
-    background: var(--bg-hover);
+    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
+    border-color: var(--border-highlight);
     color: var(--text-primary);
 }
 
