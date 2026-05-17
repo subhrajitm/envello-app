@@ -857,11 +857,10 @@
     line-height: 1.6;
 }
 
-/* Collapse button column — shown only on tasks with subtasks */
+/* Collapse button column — shown only on tasks with subtasks, right-aligned */
 .task-collapse-btn-col {
     display: flex;
-    align-items: flex-start;
-    padding-top: 2px;
+    align-items: center;
     flex-shrink: 0;
 }
 

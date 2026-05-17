@@ -42,7 +42,21 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task details modal state
   showTaskDetails = signal<boolean>(false);
-  selectedTaskForDetails = signal<Task | null>(null);
+  /** Drives which task is shown in the details modal. Using a computed keeps the modal always fresh from the store. */
+  selectedTaskId = signal<string | null>(null);
+  selectedTaskForDetails = computed(() => {
+    const id = this.selectedTaskId();
+    if (!id) return null;
+    // Check top-level tasks first
+    const top = this.store.tasks().find(t => t.id === id);
+    if (top) return top;
+    // Fall back to nested subtasks (e.g. calendar list subtask rows)
+    for (const t of this.store.tasks()) {
+      const sub = t.subtasks?.find(s => s.id === id);
+      if (sub) return sub;
+    }
+    return null;
+  });
   editingTaskDetails = signal<boolean>(false);
   editedTaskTitle = signal<string>('');
   editedTaskDescription = signal<string>('');
@@ -1546,11 +1560,6 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
     this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
-
-    // Keep selectedTaskForDetails in sync so the modal reflects the change immediately
-    if (this.selectedTaskForDetails()?.id === parentTask.id) {
-      this.selectedTaskForDetails.set({ ...parentTask, subtasks: updatedSubtasks });
-    }
     this.newSubtaskTitle.set('');
   }
 
@@ -1567,7 +1576,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task details modal methods
   openTaskDetails(task: Task) {
-    this.selectedTaskForDetails.set(task);
+    this.selectedTaskId.set(task.id);
     this.editedTaskTitle.set(task.title);
     this.editedTaskDescription.set(task.description || task.notes || '');
     this.editedTaskPriority.set(task.priority);
@@ -1591,7 +1600,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   closeTaskDetails() {
     this.showTaskDetails.set(false);
-    this.selectedTaskForDetails.set(null);
+    this.selectedTaskId.set(null);
     this.editingTaskDetails.set(false);
     this.detailsShowAdvanced.set(false);
     this.detailsLabelInput.set('');
@@ -1658,11 +1667,13 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   completeTaskFromDetails() {
     const task = this.selectedTaskForDetails();
-    if (task) {
+    if (!task) return;
+    if (task.parentId) {
+      // Subtask opened directly — must update via parent's subtasks array
+      const parent = this.store.tasks().find(t => t.id === task.parentId);
+      if (parent) this.toggleSubtaskStatus(parent, task);
+    } else {
       this.toggleTaskStatus(task);
-      // Update the selected task reference
-      const updatedTask = { ...task, status: task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED' as Task['status'] };
-      this.selectedTaskForDetails.set(updatedTask);
     }
   }
 
@@ -1687,15 +1698,14 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   toggleSubtaskStatus(parentTask: Task, subtask: Task) {
+    // Always get the freshest parent from the store to avoid stale snapshot issues
+    const freshParent = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
     const newStatus: Task['status'] = subtask.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
-    const updatedSubtasks = (parentTask.subtasks || []).map(st =>
+    const updatedSubtasks = (freshParent.subtasks || []).map(st =>
       st.id === subtask.id ? { ...st, status: newStatus } : st
     );
-    this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
-
-    // Update the selected task reference
-    const updatedTask = { ...parentTask, subtasks: updatedSubtasks };
-    this.selectedTaskForDetails.set(updatedTask);
+    this.store.updateTask(freshParent.id, { subtasks: updatedSubtasks });
+    // selectedTaskForDetails is a computed from store.tasks, so it auto-updates
   }
 
   /** Toggle a subtask's status when shown as a standalone calendar list item (looks up parent by parentId). */

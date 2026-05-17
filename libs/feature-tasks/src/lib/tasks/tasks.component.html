@@ -178,17 +178,6 @@
                                 <span class="material-symbols-outlined">drag_indicator</span>
                             </div>
 
-                            @if (item.task.subtasks && item.task.subtasks.length > 0) {
-                            <div class="task-collapse-btn-col" (click)="$event.stopPropagation()">
-                                <button class="task-collapse-btn"
-                                        (click)="toggleSubtasksCollapse(item.task.id, $event)"
-                                        [attr.aria-label]="isSubtasksCollapsed(item.task.id) ? 'Expand subtasks' : 'Collapse subtasks'">
-                                    <span class="material-symbols-outlined task-subtasks-chevron"
-                                          [class.collapsed]="isSubtasksCollapsed(item.task.id)">expand_more</span>
-                                </button>
-                            </div>
-                            }
-
                             <div class="task-main-column">
                                 <div class="task-title-row-inner">
                                     <span class="task-priority-dot"
@@ -248,6 +237,18 @@
                                     <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
+
+                            @if (item.task.subtasks && item.task.subtasks.length > 0) {
+                            <div class="task-collapse-btn-col" (click)="$event.stopPropagation()">
+                                <button class="task-collapse-btn"
+                                        (click)="toggleSubtasksCollapse(item.task.id, $event)"
+                                        [attr.aria-label]="isSubtasksCollapsed(item.task.id) ? 'Expand subtasks' : 'Collapse subtasks'"
+                                        [title]="isSubtasksCollapsed(item.task.id) ? 'Expand subtasks' : 'Collapse subtasks'">
+                                    <span class="material-symbols-outlined task-subtasks-chevron"
+                                          [class.collapsed]="isSubtasksCollapsed(item.task.id)">expand_more</span>
+                                </button>
+                            </div>
+                            }
 
                             <div class="task-check-column" (click)="$event.stopPropagation()">
                                 <button class="list-circular-checkbox"
