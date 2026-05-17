@@ -434,7 +434,7 @@
 .sidebar-workspace-item {
   font-size: 13px;
   font-weight: 700;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
 /* Thin separator between Workspace and the sections */
