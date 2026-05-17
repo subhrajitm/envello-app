@@ -142,8 +142,8 @@ export class WorkspaceComponent {
 
   // ── Today at a Glance ────────────────────────────────────────────────────────
 
-  /** ISO date string for today, recomputed every minute via systemTime */
-  private todayStr = computed(() => this.systemTime().toISOString().split('T')[0]);
+  /** Local YYYY-MM-DD date string for today, recomputed every minute via systemTime */
+  private todayStr = computed(() => this.localDateStr(this.systemTime()));
 
   overdueTasks = computed(() =>
     this.store.tasks()
@@ -496,7 +496,7 @@ export class WorkspaceComponent {
 
   /** Call AiService with the full conversation transcript embedded in the system prompt */
   private async callConversationalAi(): Promise<AiTurn> {
-    const today     = new Date().toISOString().split('T')[0];
+    const today     = this.localDateStr(new Date());
     const history   = this.conversationHistory()
       .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
       .join('\n');
@@ -648,7 +648,7 @@ GENERAL RULES:
       due.setDate(due.getDate() + (i + 1) * unitDays);
       subtasks.push({
         title: phases[i] ?? `${unitLabel} ${i + 1} of ${count}: ${topic}`,
-        due:   due.toISOString().split('T')[0],
+        due:   this.localDateStr(due),
       });
     }
 
@@ -882,7 +882,7 @@ GENERAL RULES:
       const dueDate = s.due ?? (() => {
         const d = new Date(today);
         d.setDate(d.getDate() + i + 1);
-        return d.toISOString().split('T')[0];
+        return this.localDateStr(d);
       })();
       return {
         id:       crypto.randomUUID(),
@@ -1026,19 +1026,27 @@ GENERAL RULES:
     return 'MEDIUM';
   }
 
+  /** Returns YYYY-MM-DD in **local** time (not UTC) to avoid off-by-one-day timezone errors. */
+  private localDateStr(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   private extractDate(lower: string): string | undefined {
     const today = new Date();
-    if (/\btoday\b/.test(lower))    return today.toISOString().split('T')[0];
-    if (/\btomorrow\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; }
+    if (/\btoday\b/.test(lower))    return this.localDateStr(today);
+    // "next N hrs/hours" → still today (task due same day)
+    if (/\bnext\s+\d+\s*h(rs?|ours?)?\b/.test(lower)) return this.localDateStr(today);
+    if (/\bin\s+\d+\s*h(rs?|ours?)?\b/.test(lower))   return this.localDateStr(today);
+    if (/\btomorrow\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 1); return this.localDateStr(d); }
     const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     for (let i = 0; i < days.length; i++) {
       if (lower.includes(days[i])) {
         const d = new Date(today), diff = (i - d.getDay() + 7) % 7 || 7;
         d.setDate(d.getDate() + diff);
-        return d.toISOString().split('T')[0];
+        return this.localDateStr(d);
       }
     }
-    if (/\bnext week\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; }
+    if (/\bnext week\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 7); return this.localDateStr(d); }
     return undefined;
   }
 

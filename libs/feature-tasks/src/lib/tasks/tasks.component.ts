@@ -631,7 +631,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   noDueDateGroupExpanded = signal<boolean>(false);
 
   todayTasksCount = computed(
-    () => this.store.tasks().filter(t => t.due?.includes('Today')).length
+    () => this.store.tasks().filter(t => this.dueDateMatchesDay(t.due, new Date())).length
   );
   completedTasksCount = computed(
     () => this.store.tasks().filter(t => t.status === 'COMPLETED').length
@@ -694,6 +694,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const calDay = this.selectedCalendarDay();
 
     let base: Task[];
+    const todayDate = new Date();
     if (calDay && (view === 'today' || view === 'upcoming')) {
       // Any calendar day click: show parent tasks due that day OR with a subtask due that day
       const selDate = new Date(calDay.year, calDay.month, calDay.day);
@@ -702,11 +703,11 @@ export class TasksComponent implements OnInit, OnDestroy {
         (t.subtasks?.some(st => this.dueDateMatchesDay(st.due, selDate)) ?? false)
       );
     } else if (view === 'today') {
-      base = this.store.tasks().filter(t => t.due?.includes('Today'));
+      base = this.store.tasks().filter(t => this.dueDateMatchesDay(t.due, todayDate));
     } else if (view === 'upcoming') {
       base = this.store.tasks().filter(t => {
         if (!t.due) return false;
-        if (t.due.includes('Today')) return false;
+        if (this.dueDateMatchesDay(t.due, todayDate)) return false;
         if (this.isOverdue(t)) return false;
         return true;
       });
@@ -755,12 +756,13 @@ export class TasksComponent implements OnInit, OnDestroy {
         list.forEach(t => items.push({ kind: 'task', task: t }));
       };
 
+      const today = new Date();
       push('Overdue', '#ef4444',
         tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED'));
       push('Today', '#f59e0b',
-        tasks.filter(t => t.due?.includes('Today') && t.status !== 'COMPLETED'));
+        tasks.filter(t => this.dueDateMatchesDay(t.due, today) && t.status !== 'COMPLETED'));
       push('Upcoming', '#6366f1',
-        tasks.filter(t => !!t.due && !t.due.includes('Today') && !this.isOverdue(t) && t.status !== 'COMPLETED'));
+        tasks.filter(t => !!t.due && !this.dueDateMatchesDay(t.due, today) && !this.isOverdue(t) && t.status !== 'COMPLETED'));
       push('No Date', '#9ca3af',
         tasks.filter(t => !t.due && t.status !== 'COMPLETED'));
       push('Completed', '#10b981',
@@ -842,13 +844,15 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task groups
   todayTasks = computed(() => {
-    return this.store.tasks().filter(t => t.due?.includes('Today'));
+    const today = new Date();
+    return this.store.tasks().filter(t => this.dueDateMatchesDay(t.due, today));
   });
 
   upcomingTasks = computed(() => {
+    const today = new Date();
     return this.store.tasks().filter(t => {
       if (!t.due) return false;
-      if (t.due.includes('Today')) return false;
+      if (this.dueDateMatchesDay(t.due, today)) return false;
       if (this.isOverdue(t)) return false;
       return true;
     });
