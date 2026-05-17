@@ -137,7 +137,12 @@
         <div class="created-banner">
           <span class="created-icon material-symbols-outlined">check_circle</span>
           <span class="created-text">
-            <strong>{{ item.type }}</strong> created — <em>{{ item.title }}</em>
+            @if (item.count) {
+              <strong>Plan created</strong> — <em>{{ item.title }}</em>
+              <span class="created-count">+{{ item.count }} subtasks</span>
+            } @else {
+              <strong>{{ item.type }}</strong> created — <em>{{ item.title }}</em>
+            }
           </span>
           <button type="button" class="created-nav-btn" (click)="navigateToCreated()">
             View →
