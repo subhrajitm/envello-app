@@ -166,6 +166,31 @@ export class AiService {
         return this.getMockResponse();
     }
 
+    async *streamMessage(prompt: string, context?: string): AsyncIterable<string> {
+        if (!this.aiEnabled()) return;
+
+        if (this.chatModel) {
+            try {
+                const messages = [
+                    new SystemMessage(context || 'You are a helpful creative writing assistant.'),
+                    new HumanMessage(prompt)
+                ];
+                const stream = await this.chatModel.stream(messages);
+                for await (const chunk of stream) {
+                    const text = typeof chunk.content === 'string'
+                        ? chunk.content
+                        : (chunk.content as any[]).map(c => (typeof c === 'string' ? c : (c as any).text ?? '')).join('');
+                    if (text) yield text;
+                }
+                return;
+            } catch (e) {
+                console.error('AI stream failed:', e);
+            }
+        }
+
+        yield* this.getMockStream();
+    }
+
     private async getMockResponse(): Promise<string> {
         await new Promise(resolve => setTimeout(resolve, 1500));
         const responses = [
@@ -175,6 +200,20 @@ export class AiService {
             `[MOCK] This section demonstrates good narrative flow...`
         ];
         return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    private async *getMockStream(): AsyncIterable<string> {
+        const responses = [
+            `[MOCK] Based on the context provided, I suggest focusing on character development and deepening the emotional resonance of your prose.`,
+            `[MOCK] Your writing shows strong descriptive language. Consider varying sentence length for better rhythm and pacing.`,
+            `[MOCK] The chapter structure is solid. Adding more sensory details could immerse readers more deeply in the scene.`,
+            `[MOCK] This section demonstrates good narrative flow. The dialogue feels natural and advances character relationships.`
+        ];
+        const words = responses[Math.floor(Math.random() * responses.length)].split(' ');
+        for (const word of words) {
+            await new Promise(resolve => setTimeout(resolve, 60));
+            yield word + ' ';
+        }
     }
 
     async analyzeToneAndPacing(content: string): Promise<string> {
@@ -223,11 +262,11 @@ export class AiService {
         return this.sendMessage(`Continue the story from this point (write 2-3 sentences):\n\n${preceding}`, 'You are a creative fiction writer.');
     }
 
-    async improveText(selectedText: string, context?: string): Promise<string> {
+    async improveText(selectedText: string): Promise<string> {
         return this.sendMessage(`Rewrite the following text to improve flow and descriptive quality:\n\n${selectedText}`, 'You are a master editor.');
     }
 
-    async expandIdea(idea: string, context?: string): Promise<string> {
+    async expandIdea(idea: string): Promise<string> {
         return this.sendMessage(`Expand this idea into a full paragraph:\n\n${idea}`, 'You are a creative writer.');
     }
 

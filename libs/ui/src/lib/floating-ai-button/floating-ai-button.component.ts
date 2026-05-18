@@ -30,15 +30,27 @@ export class FloatingAiButtonComponent {
     const text = this.prompt().trim();
     if (!text || this.isLoading()) return;
 
-    this.messages.update(m => [...m, { role: 'user', content: text }]);
+    this.messages.update(m => [...m, { role: 'user' as const, content: text }]);
     this.prompt.set('');
     this.isLoading.set(true);
+    this.messages.update(m => [...m, { role: 'assistant' as const, content: '' }]);
 
     try {
-      const response = await this.aiService.sendMessage(text);
-      this.messages.update(m => [...m, { role: 'assistant', content: response }]);
+      for await (const chunk of this.aiService.streamMessage(text)) {
+        this.messages.update(msgs => {
+          const last = msgs[msgs.length - 1];
+          return last.role === 'assistant'
+            ? [...msgs.slice(0, -1), { ...last, content: last.content + chunk }]
+            : msgs;
+        });
+      }
     } catch {
-      this.messages.update(m => [...m, { role: 'assistant', content: 'Sorry, I encountered an error. Please check your AI settings.' }]);
+      this.messages.update(msgs => {
+        const last = msgs[msgs.length - 1];
+        return last.role === 'assistant' && !last.content
+          ? [...msgs.slice(0, -1), { role: 'assistant' as const, content: 'Sorry, I encountered an error. Please check your AI settings.' }]
+          : msgs;
+      });
     } finally {
       this.isLoading.set(false);
     }

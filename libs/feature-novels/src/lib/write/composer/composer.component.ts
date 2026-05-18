@@ -1150,6 +1150,21 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     localStorage.setItem('envello-focus-toast-seen', 'true');
   }
 
+  private async streamIntoNewMessage(stream: AsyncIterable<string>): Promise<void> {
+    const assistantId = Date.now().toString();
+    this.aiMessages.update(msgs => [...msgs, {
+      id: assistantId,
+      role: 'assistant' as const,
+      content: '',
+      timestamp: new Date()
+    }]);
+    for await (const chunk of stream) {
+      this.aiMessages.update(msgs =>
+        msgs.map(m => m.id === assistantId ? { ...m, content: m.content + chunk } : m)
+      );
+    }
+  }
+
   // AI Companion Methods
   getCurrentContext(): string {
     const chapter = this.activeChapter();
@@ -1184,35 +1199,21 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     const selectedText = this.getSelectedText();
     const fullContext = selectedText ? `${context}\n\nSelected text: ${selectedText}` : context;
 
-    // Add user message
-    const userMessage: AiMessage = {
+    this.aiMessages.update(msgs => [...msgs, {
       id: Date.now().toString(),
-      role: 'user',
+      role: 'user' as const,
       content: message,
       timestamp: new Date(),
       context: fullContext
-    };
-    this.aiMessages.update(messages => [...messages, userMessage]);
+    }]);
     this.aiPrompt.set('');
-
-    // Show loading
     this.aiLoading.set(true);
     this.aiError.set(null);
 
     try {
-      const response = await this.aiService.sendMessage(message, fullContext);
-
-      // Add assistant response
-      const assistantMessage: AiMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response,
-        timestamp: new Date()
-      };
-      this.aiMessages.update(messages => [...messages, assistantMessage]);
-    } catch (error) {
+      await this.streamIntoNewMessage(this.aiService.streamMessage(message, fullContext));
+    } catch {
       this.aiError.set('Failed to get AI response. Please try again.');
-      console.error('AI error:', error);
     } finally {
       this.aiLoading.set(false);
     }
@@ -1220,38 +1221,27 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   async analyzeToneAndPacing() {
     const chapter = this.activeChapter();
-    if (!chapter) {
-      this.aiError.set('Please select a chapter to analyze.');
-      return;
-    }
+    if (!chapter) { this.aiError.set('Please select a chapter to analyze.'); return; }
 
+    this.aiMessages.update(msgs => [...msgs, {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: 'Analyze the tone and pacing of this chapter',
+      timestamp: new Date(),
+      context: this.getCurrentContext()
+    }]);
     this.aiLoading.set(true);
     this.aiError.set(null);
 
     try {
-      const analysis = await this.aiService.analyzeToneAndPacing(chapter.content);
-
-      // Add user message
-      const userMessage: AiMessage = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: 'Analyze the tone and pacing of this chapter',
-        timestamp: new Date(),
-        context: this.getCurrentContext()
-      };
-      this.aiMessages.update(messages => [...messages, userMessage]);
-
-      // Add assistant response
-      const assistantMessage: AiMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: analysis,
-        timestamp: new Date()
-      };
-      this.aiMessages.update(messages => [...messages, assistantMessage]);
-    } catch (error) {
+      await this.streamIntoNewMessage(
+        this.aiService.streamMessage(
+          `Analyze the tone and pacing of the following text:\n\n${chapter.content}`,
+          'You are an expert literary editor.'
+        )
+      );
+    } catch {
       this.aiError.set('Failed to analyze chapter. Please try again.');
-      console.error('Analysis error:', error);
     } finally {
       this.aiLoading.set(false);
     }
@@ -1290,27 +1280,26 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   async summarizeChapter() {
     const chapter = this.activeChapter();
-    if (!chapter) {
-      this.aiError.set('Please select a chapter to summarize.');
-      return;
-    }
+    if (!chapter) { this.aiError.set('Please select a chapter to summarize.'); return; }
 
+    this.aiMessages.update(msgs => [...msgs, {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: 'Summarize this chapter',
+      timestamp: new Date()
+    }]);
     this.aiLoading.set(true);
     this.aiError.set(null);
 
     try {
-      const summary = await this.aiService.summarizeContent(chapter.content);
-      const message: AiMessage = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `**Chapter Summary:**\n\n${summary}`,
-        timestamp: new Date()
-      };
-      this.aiMessages.update(messages => [...messages, message]);
-      // Scrolling handled by AI panel component
-    } catch (error) {
+      await this.streamIntoNewMessage(
+        this.aiService.streamMessage(
+          `Summarize the following content in 50 words or less:\n\n${chapter.content}`,
+          'You are a concise summarizer.'
+        )
+      );
+    } catch {
       this.aiError.set('Failed to summarize chapter. Please try again.');
-      console.error('Summary error:', error);
     } finally {
       this.aiLoading.set(false);
     }
@@ -1321,27 +1310,37 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     const content = this.editor.getHTML();
     const cursorPosition = this.editor.state.selection.anchor;
+    const preceding = content.substring(Math.max(0, cursorPosition - 1000), cursorPosition);
 
+    this.aiMessages.update(msgs => [...msgs, {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: 'Continue writing from cursor position',
+      timestamp: new Date()
+    }]);
     this.aiLoading.set(true);
     this.aiError.set(null);
 
+    const assistantId = (Date.now() + 1).toString();
+    this.aiMessages.update(msgs => [...msgs, {
+      id: assistantId,
+      role: 'assistant' as const,
+      content: '',
+      timestamp: new Date()
+    }]);
+
     try {
-      const continuation = await this.aiService.continueWriting(content, cursorPosition);
-
-      // Insert at cursor
-      this.editor.chain().focus().insertContent(continuation).run();
-
-      const message: AiMessage = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `**Continued writing:**\n\n${continuation}`,
-        timestamp: new Date()
-      };
-      this.aiMessages.update(messages => [...messages, message]);
-      // Scrolling handled by AI panel component
-    } catch (error) {
+      for await (const chunk of this.aiService.streamMessage(
+        `Continue the story from this point (write 2-3 sentences):\n\n${preceding}`,
+        'You are a creative fiction writer.'
+      )) {
+        this.editor.chain().focus().insertContent(chunk).run();
+        this.aiMessages.update(msgs =>
+          msgs.map(m => m.id === assistantId ? { ...m, content: m.content + chunk } : m)
+        );
+      }
+    } catch {
       this.aiError.set('Failed to continue writing. Please try again.');
-      console.error('Continue error:', error);
     } finally {
       this.aiLoading.set(false);
     }
