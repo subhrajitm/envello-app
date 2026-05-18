@@ -262,7 +262,18 @@
                     </div>
                 </div>
                 <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
-                    (ngModelChange)="updateNoteTitle($event)" placeholder="Note title..." />
+                    (ngModelChange)="updateNoteTitle($event)"
+                    (keydown.enter)="checkAiTitleCommand(note.title)"
+                    [placeholder]="aiGenerating() ? 'Generating…' : 'Note title… (or type an AI prompt and press Enter)'"
+                    [disabled]="aiGenerating()" />
+
+                @if (aiGenerating()) {
+                <div class="dn-ai-generating">
+                    <span class="material-symbols-outlined dn-ai-generating-icon">auto_awesome</span>
+                    <span class="dn-ai-generating-text">AI is writing your note…</span>
+                    <span class="dn-ai-generating-dots"><span></span><span></span><span></span></span>
+                </div>
+                }
 
                 <!-- Tags section -->
                 <div class="editor-tags-section">
