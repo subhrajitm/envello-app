@@ -930,11 +930,15 @@
     [showClose]="true"
     size="large"
 >
-    <div header>
+    <div header class="td-header-row">
         <div class="td-header-context">
             <span class="material-symbols-outlined td-header-context-icon">assignment</span>
             <span class="td-header-context-label">Task Details</span>
         </div>
+        <button class="td-header-ai-btn" [class.active]="showDetailsAi()" (click)="showDetailsAi.set(!showDetailsAi())" title="AI Assistant">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            <span class="td-header-ai-label">AI</span>
+        </button>
     </div>
 
     <div body style="display: contents;">
@@ -983,7 +987,7 @@
                     @if (detailsShowAdvanced()) {
                     <div class="td-subtasks-list">
                         @for (subtask of task.subtasks; track subtask.id) {
-                        <div class="td-subtask-item">
+                        <div class="td-subtask-item" [class.td-subtask-item--editing]="editingSubtaskId() === subtask.id">
                             <button class="list-circular-checkbox td-subtask-checkbox"
                                     [class.checked]="subtask.status === 'COMPLETED'"
                                     (click)="toggleSubtaskStatus(task, subtask)">
@@ -991,7 +995,28 @@
                                     <span class="material-symbols-outlined">check</span>
                                 }
                             </button>
-                            <span class="td-subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
+
+                            @if (editingSubtaskId() === subtask.id) {
+                            <input class="td-subtask-edit-input"
+                                   [value]="editingSubtaskTitle()"
+                                   (input)="editingSubtaskTitle.set($any($event.target).value)"
+                                   (keydown.enter)="saveEditSubtask(task, subtask)"
+                                   (keydown.escape)="editingSubtaskId.set(null)"
+                                   (blur)="saveEditSubtask(task, subtask)"
+                                   autoFocus>
+                            } @else {
+                            <span class="td-subtask-title"
+                                  [class.completed]="subtask.status === 'COMPLETED'"
+                                  (click)="startEditSubtask(subtask)"
+                                  title="Click to edit">{{ subtask.title }}</span>
+                            }
+
+                            <button class="td-subtask-delete"
+                                    type="button"
+                                    (click)="deleteSubtask(task, subtask.id)"
+                                    title="Remove subtask">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
                         </div>
                         }
                         <!-- Add subtask row -->
@@ -1008,17 +1033,18 @@
                     }
                 </div>
 
+
             </div>
 
             <!-- RIGHT: property sidebar -->
             <div class="td-sidebar">
 
-                <!-- Project -->
+                <!-- Created -->
                 <div class="td-prop-row">
-                    <span class="td-prop-label">Project</span>
+                    <span class="td-prop-label">Created</span>
                     <div class="td-prop-value">
-                        <span class="material-symbols-outlined td-prop-icon">inbox</span>
-                        <span>{{ editedTaskList() || 'Inbox' }}</span>
+                        <span class="material-symbols-outlined td-prop-icon">event_available</span>
+                        <span>{{ task.createdAt ? (task.createdAt | date:'MMM d, y') : '—' }}</span>
                     </div>
                 </div>
 
@@ -1133,8 +1159,58 @@
                     </div>
                 </div>
 
+
             </div>
         </div>
+
+        @if (showDetailsAi()) {
+        <!-- AI Assistant: full-width compact panel -->
+        <div class="td-ai-full">
+            <div class="td-ai-header">
+                <span class="material-symbols-outlined td-ai-spark">auto_awesome</span>
+                <span class="td-ai-title">AI Assistant</span>
+                @if (detailsAiMessages().length > 0) {
+                <button class="td-ai-clear-link" type="button" (click)="clearDetailsAiChat()">Clear</button>
+                }
+            </div>
+
+            @if (detailsAiMessages().length === 0) {
+            <div class="td-ai-suggestions">
+                @for (s of detailsAiSuggestions; track s) {
+                <button class="td-ai-suggestion" type="button" (click)="sendDetailsAiMessage(s)">{{ s }}</button>
+                }
+            </div>
+            } @else {
+            <div class="td-ai-messages">
+                @for (msg of detailsAiMessages(); track $index) {
+                <div class="td-ai-msg" [class.td-ai-msg--user]="msg.role === 'user'" [class.td-ai-msg--ai]="msg.role === 'assistant'">
+                    <span class="td-ai-msg-text">{{ msg.text }}</span>
+                </div>
+                }
+                @if (detailsAiLoading()) {
+                <div class="td-ai-msg td-ai-msg--ai">
+                    <span class="td-ai-typing"><span></span><span></span><span></span></span>
+                </div>
+                }
+            </div>
+            }
+
+            <div class="td-ai-input-row">
+                <input type="text"
+                       class="td-ai-input"
+                       placeholder="Ask AI about this task…"
+                       [value]="detailsAiInput()"
+                       (input)="detailsAiInput.set($any($event.target).value)"
+                       (keydown.enter)="sendDetailsAiMessage(detailsAiInput())"
+                       [disabled]="detailsAiLoading()">
+                <button class="td-ai-send" type="button"
+                        (click)="sendDetailsAiMessage(detailsAiInput())"
+                        [disabled]="detailsAiLoading() || !detailsAiInput().trim()">
+                    <span class="material-symbols-outlined">arrow_upward</span>
+                </button>
+            </div>
+        </div>
+        }
     </div>
 
     <div footer style="display: contents;">

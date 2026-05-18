@@ -70,6 +70,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
   detailsLabelInput = signal<string>('');
   newSubtaskTitle = signal<string>('');
+  editingSubtaskId = signal<string | null>(null);
+  editingSubtaskTitle = signal<string>('');
   showReminderPicker = signal<boolean>(false);
   showNewTaskReminderPicker = signal<boolean>(false);
 
@@ -537,7 +539,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), 1)
       } : undefined,
       dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined,
-      description: this.newTaskDescription() || undefined
+      description: this.newTaskDescription() || undefined,
+      createdAt: new Date().toISOString()
     };
 
     try {
@@ -1622,6 +1625,30 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newSubtaskTitle.set('');
   }
 
+  startEditSubtask(subtask: Task) {
+    this.editingSubtaskId.set(subtask.id);
+    this.editingSubtaskTitle.set(subtask.title);
+  }
+
+  saveEditSubtask(parentTask: Task, subtask: Task) {
+    const newTitle = this.editingSubtaskTitle().trim();
+    if (newTitle && newTitle !== subtask.title) {
+      const fresh = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
+      const updated = (fresh.subtasks ?? []).map(s =>
+        s.id === subtask.id ? { ...s, title: newTitle } : s
+      );
+      this.store.updateTask(fresh.id, { subtasks: updated });
+    }
+    this.editingSubtaskId.set(null);
+    this.editingSubtaskTitle.set('');
+  }
+
+  deleteSubtask(parentTask: Task, subtaskId: string) {
+    const fresh = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
+    const updated = (fresh.subtasks ?? []).filter(s => s.id !== subtaskId);
+    this.store.updateTask(fresh.id, { subtasks: updated });
+  }
+
   // Focus mode
   focusTask(task: Task) {
     this.focusedTask.set(task);
@@ -1669,6 +1696,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.showDatePicker.set(false);
     this.showReminderPicker.set(false);
     this.datePickerPosition.set(null);
+    this.showDetailsAi.set(false);
+    this.detailsAiMessages.set([]);
+    this.detailsAiInput.set('');
+    this.editingSubtaskId.set(null);
+    this.editingSubtaskTitle.set('');
   }
 
   toggleEditTaskDetails() {
@@ -2403,6 +2435,20 @@ export class TasksComponent implements OnInit, OnDestroy {
   aiLoading     = signal(false);
   aiMessages    = signal<AiPanelMessage[]>([]);
 
+  // Task Details inline AI
+  showDetailsAi       = signal(false);
+  detailsAiLoading    = signal(false);
+  detailsAiMessages   = signal<AiPanelMessage[]>([]);
+  detailsAiInput      = signal('');
+
+  readonly detailsAiSuggestions = [
+    'Break into subtasks',
+    'Improve the description',
+    'Estimate time needed',
+    'Suggest labels',
+    'What should I do next?',
+  ];
+
   readonly aiSuggestions = [
     'What tasks are overdue?',
     'Show high priority tasks',
@@ -2467,4 +2513,52 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   clearAiChat() { this.aiMessages.set([]); }
+
+  async sendDetailsAiMessage(text: string) {
+    const task = this.selectedTaskForDetails();
+    if (!text.trim() || this.detailsAiLoading() || !task) return;
+    this.detailsAiMessages.update(m => [...m, { role: 'user', text }]);
+    this.detailsAiLoading.set(true);
+    this.detailsAiInput.set('');
+
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+
+    const q = text.toLowerCase();
+    let response = '';
+
+    if (q.includes('subtask') || q.includes('break')) {
+      response = task.description
+        ? `Suggested subtasks for "${task.title}":\n• Review and clarify requirements\n• Draft the main deliverable\n• Test and validate the outcome\n• Finalise and hand off`
+        : `Suggested subtasks for "${task.title}":\n• Plan the approach\n• Execute the main work\n• Review results\n• Finalise and close`;
+    } else if (q.includes('description') || q.includes('improve')) {
+      response = task.description
+        ? `Your description is a good start. Consider adding: the acceptance criteria, any blockers, and the expected outcome.`
+        : `A strong description covers: what needs to be done, why it matters, and the expected result. Try: "Complete [action] so that [benefit], resulting in [outcome]."`;
+    } else if (q.includes('time') || q.includes('estimate') || q.includes('duration')) {
+      const lvl = task.priority === 'HIGH' ? 'high' : task.priority === 'LOW' ? 'low' : 'medium';
+      response = `For a ${lvl}-priority task like "${task.title}":\n• Optimistic: 1–2 hours\n• Realistic: 2–4 hours\n• Pessimistic: 4–8 hours\n\nIf it exceeds 4 hours, consider breaking it into subtasks.`;
+    } else if (q.includes('label') || q.includes('tag') || q.includes('suggest label')) {
+      const suggestions: string[] = [];
+      if (task.priority === 'HIGH') suggestions.push('urgent');
+      if (task.due) suggestions.push('has-deadline');
+      if (task.subtasks?.length) suggestions.push('complex');
+      if (!suggestions.length) suggestions.push('general', 'needs-review');
+      response = `Suggested labels for "${task.title}": ${suggestions.join(', ')}.`;
+    } else if (q.includes('next') || q.includes('should i do')) {
+      const pending = (task.subtasks ?? []).filter(s => s.status !== 'COMPLETED');
+      response = pending.length
+        ? `Next step: work on the first pending subtask — "${pending[0].title}".${pending.length > 1 ? ` After that, tackle "${pending[1].title}".` : ''}`
+        : task.priority === 'HIGH'
+          ? `"${task.title}" is high priority with no subtasks — focus on completing it as soon as possible.`
+          : `Add a description and break "${task.title}" into smaller steps to make progress easier.`;
+    } else {
+      const subCount = task.subtasks?.length ?? 0;
+      response = `"${task.title}" is a ${task.priority.toLowerCase()}-priority task${task.due ? ` due ${task.due}` : ''} with ${subCount} subtask${subCount !== 1 ? 's' : ''}. I can help you break it into subtasks, improve the description, estimate time, suggest labels, or decide what to do next.`;
+    }
+
+    this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    this.detailsAiLoading.set(false);
+  }
+
+  clearDetailsAiChat() { this.detailsAiMessages.set([]); }
 }

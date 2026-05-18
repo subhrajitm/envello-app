@@ -49,6 +49,8 @@ export interface Task {
     startDate?: string;
     /** Estimated duration in hours */
     estimatedDuration?: number;
+    /** ISO timestamp when the task was created */
+    createdAt?: string;
 }
 
 export interface Note {
