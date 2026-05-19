@@ -7496,32 +7496,59 @@ textarea:focus-visible {
 
     /* Main content: smaller padding, full width */
     .tasks-main-content {
-        padding: 8px 12px;
+        padding: 8px 0;
     }
 
-    /* Toolbar: allow wrapping and reduce padding */
+    /* Toolbar: two-row layout on mobile */
     .tasks-toolbar {
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 8px 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
         min-height: auto;
     }
 
+    /* Row 1: Add Task + nav tabs (scrollable) */
     .toolbar-left {
-        flex: 1 1 100%;
+        display: flex;
+        align-items: center;
         gap: 8px;
+        padding: 8px 12px;
+        overflow: hidden;
+        min-width: 0;
+        border-bottom: 1px solid var(--border-subtle);
     }
 
-    .toolbar-right {
-        flex: 1 1 100%;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-
-    /* Search expands full width on mobile */
-    .search-input-wrapper {
-        width: 100%;
+    /* Nav tabs: horizontally scrollable strip */
+    .view-switcher.main-nav-tabs {
         flex: 1;
+        min-width: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .view-switcher.main-nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Row 2: Search + view toggle + AI */
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    /* Search expands to fill remaining space */
+    .search-input-wrapper {
+        flex: 1;
+        width: auto;
+    }
+
+    /* Hide toolbar dividers on mobile */
+    .toolbar-divider {
+        display: none;
     }
 
     /* Table views: horizontal scroll instead of overflow clip */
@@ -7532,24 +7559,9 @@ textarea:focus-visible {
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Quick action buttons: hide labels, keep icons */
-    .toolbar-quick-btn .btn-label {
-        display: none;
-    }
-
     /* Group headers: tighter */
     .task-group-header {
-        padding: 8px 12px 4px 0;
-    }
-
-    /* Add task button: compact */
-    .add-task-main-btn {
-        padding: 0 10px;
-    }
-
-    /* Toolbar filter/sort buttons: icon only */
-    .btn-secondary .btn-label {
-        display: none;
+        padding: 8px 12px 4px;
     }
 
     /* Task card/row: reduce horizontal padding */

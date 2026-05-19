@@ -109,14 +109,15 @@
 @media (max-width: 768px) {
     .dashboard-content {
         padding: 0;
+        scrollbar-gutter: auto;
     }
 
-    .dashboard-content.with-sidebar {
-        margin-left: 56px;
-    }
-
-    .dashboard-content.with-sidebar.sidebar-collapsed {
-        margin-left: 56px;
+    /* Sidebar is a fixed overlay on mobile — zero margin on all states */
+    .dashboard-content,
+    .dashboard-content.with-sidebar,
+    .dashboard-content.with-sidebar:not(.immersive-view),
+    .dashboard-content.with-sidebar:not(.immersive-view).sidebar-collapsed {
+        margin-left: 0 !important;
     }
 }
 /* Global Splash Screen */

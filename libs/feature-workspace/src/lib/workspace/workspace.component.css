@@ -1023,3 +1023,44 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
+
+/* ══════════════════════════════════════════════════════
+   Workspace — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Hide both sidebars; center content fills full width */
+  .sidebar {
+    display: none;
+  }
+
+  .main-layout {
+    flex-direction: column;
+  }
+
+  /* Center workspace takes full width */
+  .workspace-area {
+    max-width: 100%;
+    padding: 0 16px;
+  }
+
+  /* Reduce greeting font size on small screens */
+  .big-input-display {
+    font-size: clamp(28px, 8vw, 48px);
+  }
+
+  /* Input row: full width */
+  .command-input-row {
+    max-width: 100%;
+  }
+
+  /* Example chips: wrap on small screens */
+  .example-chips {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Use dvh to account for browser chrome / address bar */
+  .dashboard-container {
+    height: 100dvh;
+  }
+}

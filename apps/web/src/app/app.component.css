@@ -108,11 +108,14 @@
 @media (max-width: 768px) {
     .dashboard-content {
         padding: 0;
+        scrollbar-gutter: auto;
     }
 
-    /* Sidebar is an overlay on mobile — no margin needed */
+    /* Sidebar is a fixed overlay on mobile — zero left margin on ALL states */
+    .dashboard-content,
+    .dashboard-content.with-sidebar,
     .dashboard-content.with-sidebar:not(.immersive-view),
     .dashboard-content.with-sidebar:not(.immersive-view).sidebar-collapsed {
-        margin-left: 0;
+        margin-left: 0 !important;
     }
 }
