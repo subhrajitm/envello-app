@@ -155,8 +155,8 @@ Core lib (libs/core)      Data lib (libs/data)
 
 **Start Development Servers:**
 ```bash
-# Desktop
-npm exec nx serve desktop
+# Desktop (launches Tauri window + Angular dev server)
+npm exec tauri dev
 
 # Web
 npm exec nx serve web
@@ -169,6 +169,9 @@ npm exec nx serve admin
 
 # Landing
 npm exec nx serve landing
+
+# Angular-only frontend (no Tauri window — useful for browser debugging)
+npm exec nx serve desktop
 ```
 
 **Build Applications:**
@@ -228,8 +231,8 @@ npm run generate:context
 
 **NPM Script Shortcuts (package.json):**
 ```bash
-npm start           # Alias for: npm exec nx serve desktop
-npm run dev         # Alias for: npm exec nx serve desktop
+npm start           # Alias for: npm exec nx serve desktop (Angular only, no Tauri window)
+npm run dev         # Alias for: npm exec nx serve desktop (Angular only, no Tauri window)
 npm run build       # Alias for: npm exec nx build desktop
 npm run build:staging  # Alias for: npm exec nx build desktop --configuration staging
 npm run build:prod  # Alias for: npm exec nx build desktop --configuration production
