@@ -5,6 +5,11 @@ import { adminGuard } from './guards/admin.guard';
 export const appRoutes: Route[] = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./pages/login/admin-login.component').then(m => m.AdminLoginComponent),
+  },
+  {
     path: '',
     component: AdminLayoutComponent,
     canActivate: [adminGuard],
@@ -36,5 +41,5 @@ export const appRoutes: Route[] = [
       },
     ],
   },
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: 'login' },
 ];

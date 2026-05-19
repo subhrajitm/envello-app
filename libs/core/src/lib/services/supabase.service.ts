@@ -1,9 +1,28 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { Injectable, InjectionToken, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { createClient, SupabaseClient, User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { environment } from '../environments/environment';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
+export const SUPABASE_STORAGE_KEY = new InjectionToken<string>('SUPABASE_STORAGE_KEY');
+export const SUPABASE_SILENT_LOCK = new InjectionToken<boolean>('SUPABASE_SILENT_LOCK');
+
+/** Drop-in lock that never throws on contention — used where the auto-refresh
+ *  tick noise pollutes the console but carries no functional consequence. */
+async function silentNavigatorLock<R>(name: string, acquireTimeout: number, fn: () => Promise<R>): Promise<R> {
+    if (typeof navigator === 'undefined' || !navigator.locks) return fn();
+    return new Promise<R>((resolve, reject) => {
+        navigator.locks.request(
+            name,
+            acquireTimeout === 0 ? { mode: 'exclusive', ifAvailable: true } : { mode: 'exclusive' },
+            async (lock: Lock | null) => {
+                if (!lock && acquireTimeout === 0) { resolve(undefined as unknown as R); return; }
+                try { resolve(await fn()); } catch (e) { reject(e); }
+            }
+        );
+    });
+}
 
 @Injectable({
     providedIn: 'root'
@@ -14,12 +33,16 @@ export class SupabaseService {
 
     constructor() {
         const isBrowser = isPlatformBrowser(this.platformId);
+        const storageKey = inject(SUPABASE_STORAGE_KEY, { optional: true }) ?? undefined;
+        const silentLock = inject(SUPABASE_SILENT_LOCK, { optional: true }) ?? false;
 
         this.supabase = createClient(environment.supabase.url, environment.supabase.key, {
             auth: {
                 persistSession: isBrowser,
                 autoRefreshToken: isBrowser,
-                detectSessionInUrl: isBrowser
+                detectSessionInUrl: isBrowser,
+                ...(storageKey ? { storageKey } : {}),
+                ...(silentLock && isBrowser ? { lock: silentNavigatorLock } : {}),
             }
         });
     }
