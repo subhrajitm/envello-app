@@ -43,9 +43,9 @@
       <div class="activity-list">
         @for (row of recentActivity(); track row.created_at) {
           <div class="activity-row">
-            <div class="activity-avatar type-ai">{{ row.user_id.substring(0, 1).toUpperCase() }}</div>
+            <div class="activity-avatar type-ai">{{ (row.email || row.user_id)[0].toUpperCase() }}</div>
             <div class="activity-body">
-              <span class="activity-name">{{ row.user_id.substring(0, 8) }}…</span>
+              <span class="activity-name">{{ row.email || (row.user_id.substring(0, 8) + '…') }}</span>
               <span class="activity-action">Used {{ row.model }} via {{ row.provider }}</span>
             </div>
             <div class="activity-time">{{ row.created_at | date:'shortTime' }}</div>

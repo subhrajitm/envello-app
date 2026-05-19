@@ -14,9 +14,12 @@ import { AdminService, AdminUser } from '../../services/admin.service';
 export class UsersComponent implements OnInit {
   private admin = inject(AdminService);
 
+  readonly PAGE_SIZE = 10;
+
   searchQuery = signal('');
   allUsers = signal<AdminUser[]>([]);
   loading = signal(true);
+  currentPage = signal(0);
   toast = signal<{ text: string; isError: boolean }>({ text: '', isError: false });
   private toastTimer?: ReturnType<typeof setTimeout>;
 
@@ -33,10 +36,40 @@ export class UsersComponent implements OnInit {
     );
   });
 
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsers().length / this.PAGE_SIZE)));
+
+  readonly paginatedUsers = computed(() => {
+    const start = this.currentPage() * this.PAGE_SIZE;
+    return this.filteredUsers().slice(start, start + this.PAGE_SIZE);
+  });
+
+  readonly pages = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i));
+
   async ngOnInit() {
     const users = await this.admin.loadUsers();
     this.allUsers.set(users);
     this.loading.set(false);
+  }
+
+  goToPage(page: number) {
+    this.currentPage.set(Math.max(0, Math.min(page, this.totalPages() - 1)));
+  }
+
+  exportUsers() {
+    const headers = ['ID', 'Email', 'Full Name', 'Role', 'Status', 'AI Requests', 'Joined'];
+    const csvRows = this.filteredUsers().map(u =>
+      [u.id, u.email, u.full_name, u.role, u.status, u.ai_usage, u.created_at]
+        .map(v => `"${String(v ?? '').replace(/"/g, '""')}"`)
+        .join(',')
+    );
+    const csv = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // Opens confirm dialog instead of acting immediately

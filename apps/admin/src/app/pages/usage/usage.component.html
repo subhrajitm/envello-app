@@ -34,6 +34,21 @@
       </div>
     </div>
 
+    @if (providerChart().length) {
+      <div class="chart-card">
+        <h3 class="chart-title">By Provider</h3>
+        @for (item of providerChart(); track item.provider) {
+          <div class="bar-row">
+            <span class="bar-label">{{ item.provider }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="item.pct"></div>
+            </div>
+            <span class="bar-count">{{ item.count }} ({{ item.pct }}%)</span>
+          </div>
+        }
+      </div>
+    }
+
     <div class="table-card">
       <table class="data-table">
         <thead>
@@ -51,10 +66,9 @@
             <tr>
               <td>
                 <div class="user-cell">
-                  <div class="user-avatar">{{ row.email[0].toUpperCase() }}</div>
+                  <div class="user-avatar">{{ (row.email || row.user_id)[0].toUpperCase() }}</div>
                   <div class="user-info">
-                    <span class="user-name">{{ row.user_id.substring(0, 8) }}…</span>
-                    <span class="user-email">{{ row.email }}</span>
+                    <span class="user-name">{{ row.email || (row.user_id.substring(0, 8) + '…') }}</span>
                   </div>
                 </div>
               </td>

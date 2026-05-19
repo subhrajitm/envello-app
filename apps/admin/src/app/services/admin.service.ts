@@ -105,18 +105,28 @@ export class AdminService {
   // ── Users ───────────────────────────────────────────────────────────────────
 
   async loadUsers(): Promise<AdminUser[]> {
-    const { data, error } = await this.sb.client
-      .from('profiles')
-      .select(`id, email, full_name, avatar_url, role, status, created_at, ai_usage_logs ( count )`);
-    if (error) { console.error('[AdminService] loadUsers', error); return []; }
-    return (data ?? []).map((p: any) => ({
+    // Fetch profiles and usage counts in parallel.
+    // The ai_usage_logs FK points to auth.users (not profiles), so PostgREST
+    // can't auto-join — we aggregate client-side instead.
+    const [profilesRes, usageRes] = await Promise.all([
+      this.sb.client.from('profiles').select('id, email, full_name, avatar_url, role, status, created_at'),
+      this.sb.client.from('ai_usage_logs').select('user_id'),
+    ]);
+    if (profilesRes.error) { console.error('[AdminService] loadUsers', profilesRes.error); return []; }
+
+    const countMap = new Map<string, number>();
+    for (const row of (usageRes.data ?? []) as { user_id: string }[]) {
+      if (row.user_id) countMap.set(row.user_id, (countMap.get(row.user_id) ?? 0) + 1);
+    }
+
+    return (profilesRes.data ?? []).map((p: any) => ({
       id: p.id,
       email: p.email ?? '',
       full_name: p.full_name ?? 'Unknown',
       avatar_url: p.avatar_url ?? '',
       role: p.role ?? 'user',
       status: p.status ?? 'active',
-      ai_usage: p.ai_usage_logs?.[0]?.count ?? 0,
+      ai_usage: countMap.get(p.id) ?? 0,
       created_at: p.created_at ?? '',
     }));
   }
@@ -174,7 +184,7 @@ export class AdminService {
       } else {
         map.set(uid, {
           user_id: uid,
-          email: uid.substring(0, 8) + '…',
+          email: '',
           provider: row.provider,
           model: row.model,
           requests: 1,
@@ -183,7 +193,35 @@ export class AdminService {
         });
       }
     }
+
+    // Enrich with emails from profiles
+    const userIds = [...map.keys()].filter(id => id !== 'anonymous');
+    if (userIds.length) {
+      const { data: profiles } = await this.sb.client
+        .from('profiles').select('id, email').in('id', userIds);
+      const emailMap = new Map((profiles ?? []).map((p: any) => [p.id, p.email ?? '']));
+      for (const [uid, row] of map) {
+        row.email = emailMap.get(uid) || uid.substring(0, 8) + '…';
+      }
+    }
+
     return Array.from(map.values()).sort((a, b) => b.requests - a.requests);
+  }
+
+  async loadProviderBreakdown(filter: 'today' | 'week' | 'month'): Promise<{ provider: string; count: number; pct: number }[]> {
+    const since = this.filterToDate(filter);
+    const { data } = await this.sb.client
+      .from('ai_usage_logs')
+      .select('provider')
+      .gte('created_at', since.toISOString());
+    const map = new Map<string, number>();
+    for (const row of (data ?? []) as { provider: string }[]) {
+      map.set(row.provider, (map.get(row.provider) ?? 0) + 1);
+    }
+    const total = [...map.values()].reduce((s, v) => s + v, 0) || 1;
+    return [...map.entries()]
+      .map(([provider, count]) => ({ provider, count, pct: Math.round(count / total * 100) }))
+      .sort((a, b) => b.count - a.count);
   }
 
   // ── Dashboard ───────────────────────────────────────────────────────────────
@@ -209,13 +247,23 @@ export class AdminService {
     };
   }
 
-  async loadRecentActivity(): Promise<{ user_id: string; provider: string; model: string; created_at: string }[]> {
+  async loadRecentActivity(): Promise<{ user_id: string; email: string; provider: string; model: string; created_at: string }[]> {
     const { data } = await this.sb.client
       .from('ai_usage_logs')
       .select('user_id, provider, model, created_at')
       .order('created_at', { ascending: false })
       .limit(8);
-    return (data ?? []) as any[];
+    if (!data?.length) return [];
+
+    const userIds = [...new Set((data as any[]).map(r => r.user_id).filter(Boolean))];
+    const { data: profiles } = await this.sb.client
+      .from('profiles').select('id, email').in('id', userIds);
+    const emailMap = new Map((profiles ?? []).map((p: any) => [p.id, p.email ?? '']));
+
+    return (data as any[]).map(r => ({
+      ...r,
+      email: emailMap.get(r.user_id) || (r.user_id ? r.user_id.substring(0, 8) + '…' : 'unknown'),
+    }));
   }
 
   // ── Audit Log ───────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ export class UsageComponent implements OnInit {
   dateFilter = signal<DateFilter>('week');
   summary = signal<UsageSummary>({ total_requests: 0, total_chars: 0 });
   rows = signal<UsageRow[]>([]);
+  providerChart = signal<{ provider: string; count: number; pct: number }[]>([]);
   loading = signal(true);
 
   async ngOnInit() {
@@ -31,12 +32,14 @@ export class UsageComponent implements OnInit {
   private async fetchData() {
     this.loading.set(true);
     const filter = this.dateFilter();
-    const [summary, rows] = await Promise.all([
+    const [summary, rows, chart] = await Promise.all([
       this.admin.loadUsageSummary(filter),
       this.admin.loadUsageByUser(filter),
+      this.admin.loadProviderBreakdown(filter),
     ]);
     this.summary.set(summary);
     this.rows.set(rows);
+    this.providerChart.set(chart);
     this.loading.set(false);
   }
 

@@ -42,6 +42,30 @@
   display: block;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border-main);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.export-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.export-btn .material-symbols-outlined { font-size: 16px; }
+
 .search-wrap {
   position: relative;
   flex-shrink: 0;

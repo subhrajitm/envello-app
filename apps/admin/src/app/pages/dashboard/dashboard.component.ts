@@ -16,7 +16,7 @@ export class DashboardComponent implements OnInit {
   aiRequestsToday = signal(0);
   activeFlagCount = signal(0);
   platformProvider = signal('mock');
-  recentActivity = signal<{ user_id: string; provider: string; model: string; created_at: string }[]>([]);
+  recentActivity = signal<{ user_id: string; email: string; provider: string; model: string; created_at: string }[]>([]);
   loading = signal(true);
 
   async ngOnInit() {

@@ -124,7 +124,7 @@ export class NotificationCenterComponent {
   }
 
   @HostListener('document:keydown.escape', ['$event'])
-  handleEscape(event: KeyboardEvent) {
+  handleEscape(event: Event) {
     if (this.isOpen()) {
       event.preventDefault();
       this.close();

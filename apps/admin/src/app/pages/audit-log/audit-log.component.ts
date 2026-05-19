@@ -1,5 +1,5 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, SlicePipe } from '@angular/common';
 import { AdminService, AuditEntry } from '../../services/admin.service';
 
 const ACTION_LABELS: Record<string, { label: string; icon: string; cls: string }> = {
@@ -12,7 +12,7 @@ const ACTION_LABELS: Record<string, { label: string; icon: string; cls: string }
 @Component({
   selector: 'app-audit-log',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, SlicePipe],
   template: `
     <div class="audit-page">
       <div class="page-header">

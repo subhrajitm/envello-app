@@ -4,15 +4,21 @@
       <h2 class="page-title">Users</h2>
       <span class="page-subtitle">Manage platform users and permissions</span>
     </div>
-    <div class="search-wrap">
-      <span class="material-symbols-outlined search-icon">search</span>
-      <input
-        class="search-input"
-        type="text"
-        placeholder="Search by name or email..."
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)"
-      />
+    <div class="header-actions">
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Search by name or email..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); currentPage.set(0)"
+        />
+      </div>
+      <button class="export-btn" (click)="exportUsers()">
+        <span class="material-symbols-outlined">download</span>
+        Export CSV
+      </button>
     </div>
   </div>
 
@@ -39,7 +45,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (user of filteredUsers(); track user.id) {
+          @for (user of paginatedUsers(); track user.id) {
             <tr>
               <td>
                 <div class="user-cell">
@@ -88,7 +94,23 @@
     </div>
 
     <div class="pagination">
-      <span class="pagination-info">Showing {{ filteredUsers().length }} of {{ allUsers().length }} users</span>
+      <span class="pagination-info">
+        {{ filteredUsers().length }} user{{ filteredUsers().length !== 1 ? 's' : '' }}
+        @if (filteredUsers().length !== allUsers().length) { (filtered from {{ allUsers().length }}) }
+      </span>
+      @if (totalPages() > 1) {
+        <div class="pagination-controls">
+          <button class="page-btn" [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          @for (p of pages(); track p) {
+            <button class="page-btn" [class.active]="p === currentPage()" (click)="goToPage(p)">{{ p + 1 }}</button>
+          }
+          <button class="page-btn" [disabled]="currentPage() === totalPages() - 1" (click)="goToPage(currentPage() + 1)">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      }
     </div>
   }
 </div>
