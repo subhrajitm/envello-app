@@ -311,7 +311,7 @@
 .sidebar {
   position: fixed;
   left: 0;
-  top: 41px;
+  top: calc(41px + var(--titlebar-height, 0px));
   bottom: 28px;
   /* Account for footer height */
   width: 240px;
@@ -680,7 +680,7 @@
 /* ── Voice active banner ── */
 .voice-active-banner {
   position: fixed;
-  top: 52px;
+  top: calc(52px + var(--titlebar-height, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 1500;

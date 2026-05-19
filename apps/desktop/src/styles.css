@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+    --titlebar-height: 28px; /* Tauri overlay title bar */
     /* Kindle Paperwhite Aesthetic (DEFAULT) */
     /* Warm matte paper, e-ink feel */
     --bg-app: #f7f7f5;
