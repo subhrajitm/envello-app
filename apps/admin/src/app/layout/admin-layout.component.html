@@ -1,0 +1,38 @@
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon material-symbols-outlined">shield</span>
+      <span class="logo-text">Envello Admin</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (item of navItems; track item.path) {
+        <a
+          class="nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+        >
+          <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <div class="main-area">
+    <header class="top-header">
+      <h1 class="header-title">Admin Panel</h1>
+      <div class="header-right">
+        <span class="user-email">{{ userEmail() }}</span>
+        <button class="logout-btn" (click)="logout()">
+          <span class="material-symbols-outlined">logout</span>
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <main class="content-area">
+      <router-outlet />
+    </main>
+  </div>
+</div>

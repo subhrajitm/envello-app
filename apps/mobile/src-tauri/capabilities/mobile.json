@@ -1,0 +1,15 @@
+{
+  "identifier": "mobile-capability",
+  "description": "Default capability for Envello mobile (iOS & Android).",
+  "windows": ["main"],
+  "platforms": ["iOS", "android"],
+  "permissions": [
+    "core:default",
+    "core:path:default",
+    "core:event:default",
+    "core:window:default",
+    "core:app:default",
+    "notification:default",
+    "shell:allow-open"
+  ]
+}

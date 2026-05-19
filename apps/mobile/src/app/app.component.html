@@ -1,0 +1,21 @@
+<div class="mobile-app">
+  <div class="content" [class.with-nav]="!isFullScreen()">
+    <router-outlet></router-outlet>
+  </div>
+
+  @if (!isFullScreen()) {
+    <nav class="bottom-nav">
+      @for (item of navItems; track item.tab) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          class="nav-item"
+          [attr.aria-label]="item.label"
+        >
+          <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+  }
+</div>

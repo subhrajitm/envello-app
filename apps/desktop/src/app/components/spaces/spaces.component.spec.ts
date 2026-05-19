@@ -6,8 +6,8 @@ import { WorkspaceProfileService, StoreService } from '@envello/core';
 describe('SpacesComponent', () => {
   let component: SpacesComponent;
   let fixture: ComponentFixture<SpacesComponent>;
-  let workspaceSpy: jasmine.SpyObj<WorkspaceProfileService>;
-  let storeSpy: jasmine.SpyObj<StoreService>;
+  let workspaceSpy: { switchProfile: jest.Mock; updateProfile: jest.Mock; addProfileWithId: jest.Mock; removeProfile: jest.Mock; profiles: ReturnType<typeof signal>; activeProfile: ReturnType<typeof signal> };
+  let storeSpy: { addSpace: jest.Mock; updateSpace: jest.Mock; deleteSpace: jest.Mock; spaces: ReturnType<typeof signal> };
 
   const mockProfiles = signal([
     { id: 'default', name: 'All Spaces', color: '#3b82f6', icon: 'folder', lastAccessed: new Date(), createdAt: new Date() },
@@ -17,14 +17,20 @@ describe('SpacesComponent', () => {
   const mockSpaces = signal<unknown[]>([]);
 
   beforeEach(async () => {
-    workspaceSpy = jasmine.createSpyObj('WorkspaceProfileService',
-      ['switchProfile', 'updateProfile', 'addProfileWithId', 'removeProfile'],
-      { profiles: mockProfiles, activeProfile: mockActiveProfile }
-    );
-    storeSpy = jasmine.createSpyObj('StoreService',
-      ['addSpace', 'updateSpace', 'deleteSpace'],
-      { spaces: mockSpaces }
-    );
+    workspaceSpy = {
+      switchProfile: jest.fn(),
+      updateProfile: jest.fn(),
+      addProfileWithId: jest.fn(),
+      removeProfile: jest.fn(),
+      profiles: mockProfiles,
+      activeProfile: mockActiveProfile,
+    };
+    storeSpy = {
+      addSpace: jest.fn(),
+      updateSpace: jest.fn(),
+      deleteSpace: jest.fn(),
+      spaces: mockSpaces,
+    };
 
     await TestBed.configureTestingModule({
       imports: [SpacesComponent],
@@ -48,16 +54,16 @@ describe('SpacesComponent', () => {
   });
 
   it('isActive should return true for the active profile id', () => {
-    expect(component.isActive('default')).toBeTrue();
-    expect(component.isActive('ws-1')).toBeFalse();
+    expect(component.isActive('default')).toBe(true);
+    expect(component.isActive('ws-1')).toBe(false);
   });
 
   it('isDeletable should return false for default profile', () => {
-    expect(component.isDeletable('default')).toBeFalse();
+    expect(component.isDeletable('default')).toBe(false);
   });
 
   it('isDeletable should return true for non-default, non-active profile', () => {
-    expect(component.isDeletable('ws-1')).toBeTrue();
+    expect(component.isDeletable('ws-1')).toBe(true);
   });
 
   it('getInitials should derive two-char initials', () => {
@@ -75,15 +81,15 @@ describe('SpacesComponent', () => {
 
   it('openNewModal should reset form and open modal', () => {
     component.openNewModal();
-    expect(component.showModal()).toBeTrue();
-    expect(component.editMode()).toBeFalse();
+    expect(component.showModal()).toBe(true);
+    expect(component.editMode()).toBe(false);
     expect(component.formName()).toBe('');
   });
 
   it('closeModal should hide modal', () => {
     component.openNewModal();
     component.closeModal();
-    expect(component.showModal()).toBeFalse();
+    expect(component.showModal()).toBe(false);
   });
 
   it('confirmDelete should call store.deleteSpace and workspaceService.removeProfile', () => {

@@ -691,7 +691,7 @@
 /* ─── Premium Task Item ─── */
 .task-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     padding: 5px 14px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -711,6 +711,27 @@
     opacity: 0.75;
 }
 
+/* Calendar subtask list items */
+.task-item-subtask {
+    padding-left: 24px;
+    border-left: 3px solid var(--border-subtle);
+    background: var(--bg-secondary, rgba(0,0,0,0.015));
+}
+.task-item-subtask:hover {
+    background: var(--bg-hover-soft, rgba(0,0,0,0.035));
+}
+.subtask-indent-line {
+    display: none; /* visual handled via border-left on parent */
+}
+.task-subtask-parent-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
 /* Drag Handle */
 .task-drag-handle {
     display: flex;
@@ -721,6 +742,7 @@
     opacity: 0.5;
     transition: opacity 0.2s;
     width: 20px;
+    padding-top: 4px;
 }
 
 .task-item:hover .task-drag-handle {
@@ -736,13 +758,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-top: 2px;
 }
 
 .list-circular-checkbox {
-    width: 24px;
-    height: 24px;
-    border: none;
-    background: transparent;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-panel, #fff);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -752,12 +776,13 @@
 }
 
 .list-circular-checkbox:hover {
-    opacity: 0.8;
+    border-color: var(--border-highlight);
+    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
 }
 
 .list-circular-checkbox.checked {
-    background: transparent;
-    border: none;
+    background: var(--bg-panel, #fff);
+    border-color: var(--border-color);
 }
 
 .list-circular-checkbox.blocked {
@@ -836,32 +861,33 @@
     line-height: 1.6;
 }
 
-/* Collapse button column — shown only on tasks with subtasks */
+/* Collapse button column — shown only on tasks with subtasks, right-aligned */
 .task-collapse-btn-col {
     display: flex;
-    align-items: flex-start;
-    padding-top: 2px;
+    align-items: center;
     flex-shrink: 0;
+    padding-top: 2px;
 }
 
 .task-collapse-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: none;
-    border: none;
+    background: var(--bg-panel, #fff);
+    border: 1px solid var(--border-color);
     cursor: pointer;
     padding: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
     color: var(--text-tertiary);
-    transition: color 0.15s, background 0.15s;
-    width: 20px;
-    height: 20px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    width: 26px;
+    height: 26px;
 }
 
 .task-collapse-btn:hover {
     color: var(--text-secondary);
-    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
 }
 
 .task-subtasks-chevron {
@@ -965,21 +991,22 @@
 }
 
 .icon-btn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    border: none;
-    background: transparent;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-panel, #fff);
     color: var(--text-tertiary);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .icon-btn:hover {
-    background: var(--bg-hover);
+    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
+    border-color: var(--border-highlight);
     color: var(--text-primary);
 }
 
@@ -5520,12 +5547,18 @@ textarea:focus-visible {
     color: var(--text-primary);
 }
 
+/* Give the task-details large modal a definite height so the flex chain can resolve */
+:host ::ng-deep .env-modal--large:has(.td-body) {
+    height: 85vh;
+}
+
 /* Remove default modal body padding for the two-panel layout */
 :host ::ng-deep .env-modal--large .env-modal-body:has(.td-body) {
     padding: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 /* Body: two columns */
@@ -5545,6 +5578,7 @@ textarea:focus-visible {
     gap: 0;
     padding: 24px 24px 16px;
     min-width: 0;
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -5554,6 +5588,32 @@ textarea:focus-visible {
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 10px;
+    flex-shrink: 0;
+}
+/* Make the title completion circle always visible */
+.td-title-row .list-circular-checkbox {
+    width: 22px !important;
+    height: 22px !important;
+    border: 2px solid var(--border-strong, var(--text-tertiary)) !important;
+    border-radius: 50% !important;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+.td-title-row .list-circular-checkbox:hover:not(.blocked) {
+    border-color: var(--accent-primary) !important;
+}
+.td-title-row .list-circular-checkbox.blocked {
+    border-color: var(--border-subtle, #d1d5db) !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+.td-title-row .list-circular-checkbox.checked {
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+}
+.td-title-row .list-circular-checkbox .material-symbols-outlined {
+    font-size: 13px !important;
+    color: #fff;
 }
 .td-title-input {
     flex: 1;
@@ -5592,9 +5652,10 @@ textarea:focus-visible {
     font-size: 14px;
     color: var(--text-secondary);
     line-height: 1.6;
-    padding: 0 0 0 36px;
+    padding: 0;
     font-family: inherit;
     width: 100%;
+    flex-shrink: 0;
     /* Suppress browser native focus ring (uses accent-color) */
     -webkit-appearance: none;
     appearance: none;
@@ -5611,6 +5672,7 @@ textarea:focus-visible {
 .td-subtasks {
     margin-top: 20px;
     border-top: 1px solid var(--border-subtle);
+    flex-shrink: 0;
 }
 .td-subtasks-toggle {
     display: flex;
@@ -5658,21 +5720,88 @@ textarea:focus-visible {
     padding: 9px 0;
     border-bottom: 1px solid var(--border-subtle);
 }
-.td-subtask-checkbox {
-    width: 16px !important;
-    height: 16px !important;
+
+.td-subtask-delete {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
     flex-shrink: 0;
+    margin-left: auto;
+    padding: 0;
+    transition: color 0.15s, background 0.15s;
+}
+
+.td-subtask-delete .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.td-subtask-delete:hover {
+    color: var(--color-danger, #ef4444);
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 8%, transparent);
+}
+
+.td-subtask-item:hover .td-subtask-delete,
+.td-subtask-item--editing .td-subtask-delete {
+    display: flex;
+}
+.td-subtask-checkbox {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0;
+    border: 2px solid var(--border-strong, var(--text-tertiary)) !important;
+    border-radius: 50% !important;
+    transition: border-color 0.15s, background 0.15s;
+}
+.td-subtask-checkbox:hover {
+    border-color: var(--accent-primary) !important;
+    opacity: 1;
+}
+.td-subtask-checkbox.checked {
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
 }
 .td-subtask-checkbox .material-symbols-outlined {
     font-size: 11px !important;
+    color: #fff;
 }
 .td-subtask-title {
+    flex: 1;
     font-size: 14px;
     color: var(--text-primary);
+    cursor: text;
+    border-radius: 4px;
+    padding: 1px 3px;
+    margin: -1px -3px;
+    transition: background 0.12s;
 }
+
+.td-subtask-title:hover {
+    background: var(--bg-panel);
+}
+
 .td-subtask-title.completed {
     text-decoration: line-through;
     color: var(--text-tertiary);
+}
+
+.td-subtask-edit-input {
+    flex: 1;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-panel);
+    border: 1px solid var(--accent-primary);
+    border-radius: 5px;
+    padding: 2px 6px;
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 14%, transparent);
 }
 .td-add-subtask-row {
     display: flex;
@@ -7099,4 +7228,346 @@ textarea:focus-visible {
 
 .dp-time-input:focus {
     border-color: var(--accent-primary);
+}
+
+/* ── Task Details: header AI button ── */
+.td-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.td-header-context {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.td-header-ai-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.td-header-ai-btn .material-symbols-outlined {
+    font-size: 15px;
+}
+
+.td-header-ai-btn:hover,
+.td-header-ai-btn.active {
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.td-header-ai-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ── Task Details: full-width AI panel ── */
+.td-ai-full {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 10px 24px 12px;
+    border-top: 2px solid var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 4%, var(--bg-panel));
+}
+
+/* Header row */
+.td-ai-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.td-ai-spark {
+    font-size: 13px;
+    color: var(--accent-primary);
+}
+
+.td-ai-title {
+    flex: 1;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.td-ai-clear-link {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0;
+    transition: color 0.15s;
+}
+
+.td-ai-clear-link:hover {
+    color: var(--text-secondary);
+}
+
+/* Suggestions — single scrollable row */
+.td-ai-suggestions {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 1px;
+}
+
+.td-ai-suggestions::-webkit-scrollbar {
+    display: none;
+}
+
+.td-ai-suggestion {
+    white-space: nowrap;
+    flex-shrink: 0;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 100px;
+    padding: 3px 10px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.td-ai-suggestion:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, var(--bg-app));
+}
+
+/* Messages */
+.td-ai-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    max-height: 90px;
+}
+
+.td-ai-msg {
+    display: flex;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.td-ai-msg--user {
+    justify-content: flex-end;
+}
+
+.td-ai-msg--user .td-ai-msg-text {
+    background: var(--accent-primary);
+    color: #fff;
+    border-radius: 10px 10px 2px 10px;
+    padding: 4px 10px;
+    max-width: 80%;
+}
+
+.td-ai-msg--ai .td-ai-msg-text {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    border-radius: 2px 10px 10px 10px;
+    padding: 4px 10px;
+    max-width: 92%;
+    white-space: pre-wrap;
+}
+
+/* Typing indicator */
+.td-ai-typing {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 10px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 2px 10px 10px 10px;
+}
+
+.td-ai-typing span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    animation: td-ai-bounce 1.2s infinite;
+    opacity: 0.45;
+}
+
+.td-ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+.td-ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes td-ai-bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+    40% { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Input — pill bar */
+.td-ai-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 100px;
+    padding: 0 4px 0 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.td-ai-input-row:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+.td-ai-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 12.5px;
+    color: var(--text-primary);
+    font-family: inherit;
+    padding: 7px 0;
+}
+
+.td-ai-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.td-ai-send {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent-primary);
+    color: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.td-ai-send:hover:not(:disabled) {
+    opacity: 0.85;
+    transform: scale(1.06);
+}
+
+.td-ai-send:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.td-ai-send .material-symbols-outlined {
+    font-size: 14px;
+}
+
+/* ══════════════════════════════════════════════════════
+   Tasks — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Hide the right sidebar completely; content fills full width */
+    .tasks-sidebar {
+        display: none;
+    }
+
+    /* Main content: smaller padding, full width */
+    .tasks-main-content {
+        padding: 8px 0;
+    }
+
+    /* Toolbar: two-row layout on mobile */
+    .tasks-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
+        min-height: auto;
+    }
+
+    /* Row 1: Add Task + nav tabs (scrollable) */
+    .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        overflow: hidden;
+        min-width: 0;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    /* Nav tabs: horizontally scrollable strip */
+    .view-switcher.main-nav-tabs {
+        flex: 1;
+        min-width: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .view-switcher.main-nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Row 2: Search + view toggle + AI */
+    .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    /* Search expands to fill remaining space */
+    .search-input-wrapper {
+        flex: 1;
+        width: auto;
+    }
+
+    /* Hide toolbar dividers on mobile */
+    .toolbar-divider {
+        display: none;
+    }
+
+    /* Table views: horizontal scroll instead of overflow clip */
+    .tasks-list-table,
+    .tasks-grid,
+    .tasks-grid-details {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Group headers: tighter */
+    .task-group-header {
+        padding: 8px 12px 4px;
+    }
+
+    /* Task card/row: reduce horizontal padding */
+    .task-row,
+    .task-item {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
 }

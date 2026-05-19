@@ -419,12 +419,11 @@
    PAGINATION
    ════════════════════════════════════════════════════════════════════════════ */
 .env-table-foot {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 8px 16px;
   border-top: 1px solid var(--border-subtle);
-  flex-wrap: wrap;
   gap: 8px;
   background: var(--bg-panel);
   flex-shrink: 0;
@@ -435,8 +434,94 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  flex: 1;
   flex-wrap: wrap;
 }
+
+/* ── Selection action bar ─────────────────────────────────────────────────── */
+.env-table-sel-bar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border-radius: 8px;
+  background: var(--accent-primary-dim);
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  z-index: 2;
+  animation: sel-bar-in 0.15s ease;
+}
+
+@keyframes sel-bar-in {
+  from { opacity: 0; transform: translate(-50%, -44%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.env-table-sel-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.env-table-sel-count .material-symbols-outlined {
+  font-size: 13px;
+  color: var(--accent-primary);
+}
+
+.env-table-sel-divider {
+  width: 1px;
+  height: 12px;
+  background: var(--border-highlight);
+  margin: 0 1px;
+  flex-shrink: 0;
+}
+
+.env-table-sel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.env-table-sel-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.env-table-sel-btn .material-symbols-outlined { font-size: 13px; }
+
+.env-table-sel-btn--danger { color: #ef4444; }
+.env-table-sel-btn--danger:hover { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
+.env-table-sel-btn--danger .material-symbols-outlined { color: #ef4444; }
+
+.env-table-sel-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+.env-table-sel-clear:hover { background: var(--bg-hover); color: var(--text-primary); }
+.env-table-sel-clear .material-symbols-outlined { font-size: 13px; }
 
 .env-table-foot-info {
   font-size: 11px;
@@ -476,6 +561,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .env-table-pg-btn {

@@ -556,12 +556,34 @@
 }
 
 @media (max-width: 768px) {
+    /* Hide left sidebar; main content fills full width */
+    .ov-sidebar-left {
+        display: none;
+    }
+
+    /* Right sidebar: stack vertically */
+    .ov-sidebar-right {
+        display: none;
+    }
+
+    /* Main area: full width */
+    .ov-main {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Overview layout becomes single column */
+    .overview-layout {
+        flex-direction: column;
+    }
+
     .calendar-grid {
         grid-template-columns: repeat(7, minmax(40px, 1fr));
+        overflow-x: auto;
     }
 
     .cal-cell {
-        min-height: 80px;
+        min-height: 60px;
         padding: 4px;
     }
 

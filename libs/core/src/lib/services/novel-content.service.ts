@@ -743,6 +743,24 @@ export class NovelContentService {
         this.schedulePersist();
     }
 
+    /** Clone the content of an existing novel into a new one with a fresh id. */
+    async cloneNovelContent(sourceId: string, newId: string, newTitle: string): Promise<void> {
+        let raw: string | null = null;
+        try {
+            raw = await this.db.getNovelContent(sourceId);
+        } catch {
+            raw = localStorage.getItem(`novel_content_${sourceId}`);
+        }
+        const data: NovelContent = raw
+            ? { ...(JSON.parse(raw) as NovelContent), id: newId, title: newTitle }
+            : this.createEmptyNovel(newId, newTitle);
+        try {
+            await this.db.setNovelContent(newId, JSON.stringify(data));
+        } catch {
+            localStorage.setItem(`novel_content_${newId}`, JSON.stringify(data));
+        }
+    }
+
     /** Create and persist empty novel content (e.g. when adding a new novel from the list). */
     async createAndPersistEmptyNovel(id: string, title: string): Promise<void> {
         const data = this.createEmptyNovel(id, title);

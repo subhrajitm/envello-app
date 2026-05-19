@@ -1,4 +1,4 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, inject } from '@angular/core';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOllama } from '@langchain/ollama';
@@ -6,8 +6,9 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
+import { SupabaseService } from './supabase.service';
 
-export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini';
+export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek';
 
 export interface AiMessage {
     id: string;
@@ -31,13 +32,29 @@ export interface AiSuggestion {
 export class AiService {
     aiEnabled = signal<boolean>(true);
     provider = signal<AiProvider>('mock');
-    modelName = signal<string>('gpt-4-turbo');
+    modelName = signal<string>('gpt-4o');
     apiKey = signal<string>('');
 
     private chatModel?: BaseChatModel;
+    private sb = inject(SupabaseService);
+
+    // Platform-level fallback config loaded from Supabase on init
+    private platformProvider: AiProvider = 'mock';
+    private platformModel = '';
+    private platformKey = '';
+
+    /**
+     * API keys are sensitive. On Tauri (desktop) the webview storage is sandboxed
+     * to the app data directory, so localStorage is acceptable. On web we use
+     * sessionStorage — the key clears when the tab closes, reducing XSS exposure.
+     */
+    private readonly keyStorage: Storage =
+        typeof (window as any).__TAURI_INTERNALS__ !== 'undefined'
+            ? localStorage
+            : sessionStorage;
 
     constructor() {
-        // Initialize from storage
+        // Non-sensitive settings persist across sessions
         const savedEnabled = localStorage.getItem('ai-enabled');
         if (savedEnabled !== null) this.aiEnabled.set(savedEnabled === 'true');
 
@@ -47,44 +64,76 @@ export class AiService {
         const savedModel = localStorage.getItem('ai-model');
         if (savedModel) this.modelName.set(savedModel);
 
-        const savedKey = localStorage.getItem('ai-key');
+        // API key stored in session-scoped storage
+        const savedKey = this.keyStorage.getItem('ai-key');
         if (savedKey) this.apiKey.set(savedKey);
 
-        // Initialize model
-        this.initModel();
+        // Load platform config as fallback, then init model
+        this.loadPlatformConfig().then(() => this.initModel());
 
-        // Effect to update Storage when signals change
+        // Persist settings; key goes to session-scoped storage
         effect(() => {
             localStorage.setItem('ai-enabled', String(this.aiEnabled()));
             localStorage.setItem('ai-provider', this.provider());
             localStorage.setItem('ai-model', this.modelName());
-            localStorage.setItem('ai-key', this.apiKey());
+            this.keyStorage.setItem('ai-key', this.apiKey());
         });
+    }
+
+    private async loadPlatformConfig() {
+        try {
+            const { data } = await this.sb.client
+                .from('platform_ai_config')
+                .select('provider, model_name, api_key, ai_enabled')
+                .single();
+            if (data) {
+                this.platformProvider = (data.provider as AiProvider) ?? 'mock';
+                this.platformModel = data.model_name ?? '';
+                this.platformKey = data.api_key ?? '';
+                // Only override local enabled flag if no user preference saved
+                if (localStorage.getItem('ai-enabled') === null) {
+                    this.aiEnabled.set(data.ai_enabled ?? true);
+                }
+            }
+        } catch {
+            // Supabase not reachable — keep defaults
+        }
     }
 
     updateConfig(provider: AiProvider, model: string, key: string) {
         this.provider.set(provider);
-        this.modelName.set(model);
-        this.apiKey.set(key);
+        if (model) this.modelName.set(model);
+        if (key) this.apiKey.set(key);
         this.initModel();
     }
 
     private initModel() {
+        // Effective config: user key takes priority; fall back to platform key
         const p = this.provider();
-        const k = this.apiKey();
+        const userKey = this.apiKey();
         const m = this.modelName();
 
+        // If user has no key set, try using the platform provider + key
+        const effectiveProvider = userKey ? p : (this.platformKey ? this.platformProvider : p);
+        const effectiveKey = userKey || this.platformKey;
+        const effectiveModel = m || this.platformModel;
+
         try {
-            if (p === 'openai' && k) {
-                this.chatModel = new ChatOpenAI({ openAIApiKey: k, modelName: m });
-            } else if (p === 'anthropic' && k) {
-                this.chatModel = new ChatAnthropic({ anthropicApiKey: k, modelName: m });
-            } else if (p === 'ollama') {
-                this.chatModel = new ChatOllama({ model: m || 'llama3', baseUrl: 'http://localhost:11434' });
-            } else if (p === 'grok' && k) {
-                this.chatModel = new ChatXAI({ apiKey: k, model: m });
-            } else if (p === 'gemini' && k) {
-                this.chatModel = new ChatGoogleGenerativeAI({ apiKey: k, model: m });
+            if (effectiveProvider === 'openai' && effectiveKey) {
+                this.chatModel = new ChatOpenAI({ model: effectiveModel, configuration: { apiKey: effectiveKey } });
+            } else if (effectiveProvider === 'anthropic' && effectiveKey) {
+                this.chatModel = new ChatAnthropic({ model: effectiveModel, apiKey: effectiveKey });
+            } else if (effectiveProvider === 'ollama') {
+                this.chatModel = new ChatOllama({ model: effectiveModel || 'llama3', baseUrl: 'http://localhost:11434' });
+            } else if (effectiveProvider === 'grok' && effectiveKey) {
+                this.chatModel = new ChatXAI({ model: effectiveModel, apiKey: effectiveKey });
+            } else if (effectiveProvider === 'gemini' && effectiveKey) {
+                this.chatModel = new ChatGoogleGenerativeAI({ model: effectiveModel, apiKey: effectiveKey });
+            } else if (effectiveProvider === 'deepseek' && effectiveKey) {
+                this.chatModel = new ChatOpenAI({
+                    model: effectiveModel || 'deepseek-chat',
+                    configuration: { apiKey: effectiveKey, baseURL: 'https://api.deepseek.com/v1' }
+                });
             } else {
                 this.chatModel = undefined; // Fallback to mock
             }
@@ -94,13 +143,62 @@ export class AiService {
         }
     }
 
+    private async logUsage(prompt: string, response: string) {
+        try {
+            const { data: { user } } = await this.sb.client.auth.getUser();
+            if (!user) return;
+            await this.sb.client.from('ai_usage_logs').insert({
+                user_id: user.id,
+                provider: this.provider(),
+                model: this.modelName(),
+                prompt_length: prompt.length,
+                response_length: response.length,
+            });
+        } catch {
+            // Non-critical — swallow errors silently
+        }
+    }
+
     toggleAi() {
         this.aiEnabled.set(!this.aiEnabled());
+    }
+
+    /**
+     * Tests a provider configuration without saving it.
+     * Returns 'success' or throws with an error message.
+     */
+    async testConfig(provider: AiProvider, model: string, key: string): Promise<void> {
+        let tempModel: BaseChatModel | undefined;
+
+        if (provider === 'openai' && key) {
+            tempModel = new ChatOpenAI({ model, configuration: { apiKey: key } });
+        } else if (provider === 'anthropic' && key) {
+            tempModel = new ChatAnthropic({ model, apiKey: key });
+        } else if (provider === 'ollama') {
+            tempModel = new ChatOllama({ model: model || 'llama3', baseUrl: 'http://localhost:11434' });
+        } else if (provider === 'grok' && key) {
+            tempModel = new ChatXAI({ model, apiKey: key });
+        } else if (provider === 'gemini' && key) {
+            tempModel = new ChatGoogleGenerativeAI({ model, apiKey: key });
+        } else if (provider === 'deepseek' && key) {
+            tempModel = new ChatOpenAI({
+                model: model || 'deepseek-chat',
+                configuration: { apiKey: key, baseURL: 'https://api.deepseek.com/v1' }
+            });
+        } else if (provider === 'mock') {
+            return; // Mock always succeeds
+        } else {
+            throw new Error('API key is required for this provider.');
+        }
+
+        const response = await tempModel.invoke([new HumanMessage('Hi')]);
+        if (!response.content) throw new Error('Empty response from model.');
     }
 
     async sendMessage(prompt: string, context?: string): Promise<string> {
         if (!this.aiEnabled()) return '';
 
+        let result: string;
         if (this.chatModel) {
             try {
                 const messages = [
@@ -108,14 +206,42 @@ export class AiService {
                     new HumanMessage(prompt)
                 ];
                 const response = await this.chatModel.invoke(messages);
-                return typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
+                result = typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
             } catch (e) {
                 console.error('AI Request failed:', e);
-                return this.getMockResponse();
+                result = await this.getMockResponse();
+            }
+        } else {
+            result = await this.getMockResponse();
+        }
+
+        this.logUsage(prompt, result);
+        return result;
+    }
+
+    async *streamMessage(prompt: string, context?: string): AsyncIterable<string> {
+        if (!this.aiEnabled()) return;
+
+        if (this.chatModel) {
+            try {
+                const messages = [
+                    new SystemMessage(context || 'You are a helpful creative writing assistant.'),
+                    new HumanMessage(prompt)
+                ];
+                const stream = await this.chatModel.stream(messages);
+                for await (const chunk of stream) {
+                    const text = typeof chunk.content === 'string'
+                        ? chunk.content
+                        : (chunk.content as any[]).map(c => (typeof c === 'string' ? c : (c as any).text ?? '')).join('');
+                    if (text) yield text;
+                }
+                return;
+            } catch (e) {
+                console.error('AI stream failed:', e);
             }
         }
 
-        return this.getMockResponse();
+        yield* this.getMockStream();
     }
 
     private async getMockResponse(): Promise<string> {
@@ -127,6 +253,20 @@ export class AiService {
             `[MOCK] This section demonstrates good narrative flow...`
         ];
         return responses[Math.floor(Math.random() * responses.length)];
+    }
+
+    private async *getMockStream(): AsyncIterable<string> {
+        const responses = [
+            `[MOCK] Based on the context provided, I suggest focusing on character development and deepening the emotional resonance of your prose.`,
+            `[MOCK] Your writing shows strong descriptive language. Consider varying sentence length for better rhythm and pacing.`,
+            `[MOCK] The chapter structure is solid. Adding more sensory details could immerse readers more deeply in the scene.`,
+            `[MOCK] This section demonstrates good narrative flow. The dialogue feels natural and advances character relationships.`
+        ];
+        const words = responses[Math.floor(Math.random() * responses.length)].split(' ');
+        for (const word of words) {
+            await new Promise(resolve => setTimeout(resolve, 60));
+            yield word + ' ';
+        }
     }
 
     async analyzeToneAndPacing(content: string): Promise<string> {
@@ -175,11 +315,11 @@ export class AiService {
         return this.sendMessage(`Continue the story from this point (write 2-3 sentences):\n\n${preceding}`, 'You are a creative fiction writer.');
     }
 
-    async improveText(selectedText: string, context?: string): Promise<string> {
+    async improveText(selectedText: string): Promise<string> {
         return this.sendMessage(`Rewrite the following text to improve flow and descriptive quality:\n\n${selectedText}`, 'You are a master editor.');
     }
 
-    async expandIdea(idea: string, context?: string): Promise<string> {
+    async expandIdea(idea: string): Promise<string> {
         return this.sendMessage(`Expand this idea into a full paragraph:\n\n${idea}`, 'You are a creative writer.');
     }
 

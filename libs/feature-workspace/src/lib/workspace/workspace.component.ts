@@ -11,7 +11,7 @@ import {
 // ── Interfaces ─────────────────────────────────────────────────────────────────
 
 interface ParsedIntent {
-  type: 'task' | 'note' | 'bookmark' | 'write' | 'meeting' | 'navigate' | 'unknown';
+  type: 'task' | 'note' | 'bookmark' | 'write' | 'meeting' | 'research' | 'navigate' | 'unknown';
   title: string;
   priority?: 'HIGH' | 'MEDIUM' | 'LOW';
   due?: string;
@@ -28,11 +28,29 @@ interface ConversationMessage {
   text: string;
 }
 
+interface DecomposedSubtask {
+  title: string;
+  due?: string;
+  description?: string;
+  priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+interface DecomposePlan {
+  type: 'task' | 'note' | 'meeting';
+  title: string;
+  description?: string;
+  priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+  due?: string;
+  subtasks: DecomposedSubtask[];
+  summary: string;
+}
+
 /** Shape returned by the conversational AI call */
 interface AiTurn {
-  /** execute → create now; ask → need more info; confirm → show summary for yes/no; cancel → abort */
-  action: 'execute' | 'ask' | 'confirm' | 'cancel';
+  /** execute → single item now; decompose → multi-item plan; ask → need info; confirm → yes/no; cancel → abort */
+  action: 'execute' | 'ask' | 'confirm' | 'cancel' | 'decompose';
   intent?: ParsedIntent;
+  plan?: DecomposePlan;      // used with action:"decompose"
   question?: string;
   summary?: string;          // used with action:"confirm"
   partialData?: Partial<ParsedIntent>;
@@ -44,6 +62,21 @@ interface CreatedItem {
   title: string;
   route: string;
   id?: string;
+  count?: number;            // number of subtasks created
+  queryParams?: Record<string, string>;
+}
+
+interface SidebarActivityItem {
+  kind: 'task' | 'note' | 'bookmark' | 'meeting' | 'novel';
+  id: string;
+  title: string;
+  icon: string;
+  iconColor: string;
+  subtitle?: string;
+  description?: string;
+  route: string;
+  task?: Task;
+  queryParams?: Record<string, string>;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -78,6 +111,8 @@ export class WorkspaceComponent {
   latency      = signal(24);
   systemTime   = signal(new Date());
 
+  sidebarError = signal<string | null>(null);
+
   // ── Conversation state ───────────────────────────────────────────────────────
   /** Ordered list of turns shown in the conversation thread */
   conversationHistory = signal<ConversationMessage[]>([]);
@@ -87,6 +122,8 @@ export class WorkspaceComponent {
   partialData         = signal<Partial<ParsedIntent> | null>(null);
   /** The pending intent shown to the user for confirmation */
   pendingIntent       = signal<ParsedIntent | null>(null);
+  /** The pending decompose plan shown to the user for confirmation */
+  pendingPlan         = signal<DecomposePlan | null>(null);
 
   // ── Quick-action chips ───────────────────────────────────────────────────────
   readonly examples: { label: string; icon: string; text: string }[] = [
@@ -110,8 +147,8 @@ export class WorkspaceComponent {
 
   // ── Today at a Glance ────────────────────────────────────────────────────────
 
-  /** ISO date string for today, recomputed every minute via systemTime */
-  private todayStr = computed(() => this.systemTime().toISOString().split('T')[0]);
+  /** Local YYYY-MM-DD date string for today, recomputed every minute via systemTime */
+  private todayStr = computed(() => this.localDateStr(this.systemTime()));
 
   overdueTasks = computed(() =>
     this.store.tasks()
@@ -150,34 +187,106 @@ export class WorkspaceComponent {
     return rem > 0 ? `in ${h}h ${rem}m` : `in ${h}h`;
   });
 
-  lastNote = computed(() =>
-    [...this.store.notes()]
-      .sort((a, b) => (b.lastEdited || b.date).localeCompare(a.lastEdited || a.date))[0] ?? null
-  );
-
-  activeWriting = computed(() => {
-    const novels = this.store.novels();
-    return (
-      novels.filter(n => n.status === 'DRAFTING' || n.status === 'REVISING')
-            .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0]
-      ?? [...novels].sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))[0]
-      ?? null
-    );
-  });
-
   linkedEntities = computed(() => ({
     tasks: this.store.tasks().filter(t => t.status !== 'COMPLETED').length,
   }));
 
   userName = computed(() => this.userService.userName());
 
-  sidebarTasks = computed(() => this.store.tasks().slice(0, 4));
-  sidebarTasksCompleted = computed(() => this.sidebarTasks().filter(t => t.status === 'COMPLETED').length);
+  sidebarTasksCompleted = computed(() => this.store.tasks().filter(t => t.status === 'COMPLETED').length);
   sidebarTasksDashOffset = computed(() => {
-    const total = this.sidebarTasks().length;
+    const total = this.store.tasks().length;
     if (total === 0) return 62.83;
     const progress = this.sidebarTasksCompleted() / total;
     return 62.83 - (62.83 * progress);
+  });
+
+  sidebarActivityItems = computed((): SidebarActivityItem[] => {
+    const items: SidebarActivityItem[] = [];
+    const now = new Date();
+
+    // Active tasks (non-completed, non-subtask) — highest priority first, up to 3
+    const priorityScore: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+    const tasks = this.store.tasks()
+      .filter(t => t.status !== 'COMPLETED' && !t.parentId)
+      .sort((a, b) => (priorityScore[b.priority] ?? 2) - (priorityScore[a.priority] ?? 2))
+      .slice(0, 3);
+    for (const t of tasks) {
+      items.push({
+        kind: 'task', id: t.id, title: t.title,
+        icon: 'check_circle', iconColor: '#3b82f6',
+        subtitle: this.formatTaskSubtitle(t),
+        description: t.notes?.trim() || undefined,
+        route: '/tasks', task: t,
+      });
+    }
+
+    // Recent notes (latest 2, sorted by date then lastEdited)
+    const notes = [...this.store.notes()]
+      .sort((a, b) => {
+        try { return new Date(b.date).getTime() - new Date(a.date).getTime(); } catch { return 0; }
+      })
+      .slice(0, 2);
+    for (const n of notes) {
+      items.push({
+        kind: 'note', id: n.id, title: n.title,
+        icon: 'edit_note', iconColor: '#a855f7',
+        subtitle: this.formatNoteSubtitle(n),
+        description: n.preview?.trim() || undefined,
+        route: '/daily-notes',
+        queryParams: { noteId: n.id },
+      });
+    }
+
+    // Most recent bookmark (by ISO createdAt)
+    const bm = [...this.store.bookmarks()]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+    if (bm) {
+      let host = bm.url;
+      try { host = new URL(bm.url).hostname; } catch { /* keep raw */ }
+      items.push({
+        kind: 'bookmark', id: bm.id, title: bm.title,
+        icon: 'bookmark', iconColor: '#f59e0b',
+        subtitle: host,
+        description: bm.description?.trim() || undefined,
+        route: '/bookmarks',
+      });
+    }
+
+    // Next upcoming meeting
+    const meeting = this.meetingsService.meetings()
+      .filter(m => new Date(`${m.date}T${m.startTime}`) >= now && m.status === 'scheduled')
+      .sort((a, b) =>
+        new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime()
+      )[0];
+    if (meeting) {
+      const diffMins = Math.floor((new Date(`${meeting.date}T${meeting.startTime}`).getTime() - now.getTime()) / 60000);
+      const meetingSub = diffMins < 60
+        ? `in ${diffMins}m`
+        : diffMins < 1440
+          ? `${meeting.date} at ${meeting.startTime}`
+          : meeting.date;
+      items.push({
+        kind: 'meeting', id: meeting.id, title: meeting.title,
+        icon: 'groups', iconColor: '#10b981',
+        subtitle: meetingSub,
+        route: '/meetings',
+      });
+    }
+
+    // Most recently updated writing project
+    const novel = [...this.store.novels()]
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0];
+    if (novel) {
+      items.push({
+        kind: 'novel', id: novel.id, title: novel.title,
+        icon: novel.icon || 'menu_book', iconColor: '#ec4899',
+        subtitle: this.formatNovelSubtitle(novel),
+        route: `/write/${novel.id}`,
+      });
+    }
+
+    return items;
   });
 
   // ── Voice ───────────────────────────────────────────────────────────────────
@@ -294,9 +403,26 @@ export class WorkspaceComponent {
 
   /**
    * User replied to an AI question (awaiting-answer state).
-   * Merge the answer into the context and call AI again.
+   * Try to extract any obvious fields from the reply so the mock fallback
+   * can use them, then pass the full history back to AI.
    */
   private async handleFollowUpReply(reply: string) {
+    const lower = reply.toLowerCase();
+    const type  = this.guessTypeFromText(lower);
+    if (type !== 'unknown') {
+      this.partialData.update(p => ({ ...p, type }));
+    }
+    const date = this.extractDate(lower);
+    if (date) this.partialData.update(p => ({ ...p, due: date }));
+    const time = this.extractTime(lower);
+    if (time) this.partialData.update(p => ({ ...p, time }));
+    const priority = lower.match(/\b(high|medium|low|urgent|critical)\b/)?.[0];
+    if (priority) this.partialData.update(p => ({ ...p, priority: this.extractPriority(lower) }));
+    // If partial has a type but no title yet, treat the reply as the title
+    const partial = this.partialData();
+    if (partial?.type && !partial.title) {
+      this.partialData.update(p => ({ ...p, title: reply.substring(0, 120) }));
+    }
     await this.dispatchToAi();
   }
 
@@ -310,8 +436,11 @@ export class WorkspaceComponent {
     const lower = reply.toLowerCase().trim();
 
     if (/^(yes|yeah|yep|ok|okay|sure|confirm|go ahead|do it|create it|looks good|correct|right|proceed)/.test(lower)) {
+      const plan   = this.pendingPlan();
       const intent = this.pendingIntent();
-      if (intent) {
+      if (plan) {
+        await this.executePlan(plan);
+      } else if (intent) {
         await this.executeIntent(intent, reply);
       }
       this.clearConversation();
@@ -320,6 +449,7 @@ export class WorkspaceComponent {
       this.conversationHistory.update(h => [...h, { role: 'assistant', text: 'Got it, cancelled.' }]);
       this.conversationState.set('idle');
       this.pendingIntent.set(null);
+      this.pendingPlan.set(null);
 
     } else {
       // Ambiguous — treat as refinement and re-ask AI
@@ -335,13 +465,18 @@ export class WorkspaceComponent {
     const turn = await this.callConversationalAi();
 
     if (turn.action === 'execute' && turn.intent) {
-      // Optionally merge any partial data we were carrying
       const merged: ParsedIntent = { ...this.partialData() as ParsedIntent, ...turn.intent };
       await this.executeIntent(merged, '');
       this.clearConversation();
 
+    } else if (turn.action === 'decompose' && turn.plan) {
+      // Multi-item plan — show summary and wait for confirmation
+      this.pendingPlan.set(turn.plan);
+      this.partialData.set(null);
+      this.conversationHistory.update(h => [...h, { role: 'assistant', text: turn.plan!.summary }]);
+      this.conversationState.set('awaiting-confirm');
+
     } else if (turn.action === 'confirm' && turn.intent) {
-      // Show a confirmation with a human-readable summary
       const summary = turn.summary || this.buildSummary(turn.intent);
       this.pendingIntent.set(turn.intent);
       this.partialData.set(null);
@@ -349,7 +484,6 @@ export class WorkspaceComponent {
       this.conversationState.set('awaiting-confirm');
 
     } else if (turn.action === 'ask' && turn.question) {
-      // Persist partial data and ask the question
       if (turn.partialData) this.partialData.set({ ...this.partialData(), ...turn.partialData });
       this.conversationHistory.update(h => [...h, { role: 'assistant', text: turn.question! }]);
       this.conversationState.set('awaiting-answer');
@@ -359,19 +493,20 @@ export class WorkspaceComponent {
       this.conversationHistory.update(h => [...h, { role: 'assistant', text: msg }]);
       this.conversationState.set('idle');
       this.pendingIntent.set(null);
+      this.pendingPlan.set(null);
     }
   }
 
   /** Call AiService with the full conversation transcript embedded in the system prompt */
   private async callConversationalAi(): Promise<AiTurn> {
-    const today     = new Date().toISOString().split('T')[0];
+    const today     = this.localDateStr(new Date());
     const history   = this.conversationHistory()
       .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`)
       .join('\n');
     const partial   = this.partialData();
 
     const systemPrompt = `You are a productivity assistant embedded in a personal workspace app.
-The app supports: tasks, notes, meetings, bookmarks, writing projects (novel/article/essay/script/poem/blog/research), and navigation. Spaces/projects cannot be created here — redirect the user to /spaces if they ask.
+The app supports: tasks (with subtasks), notes, meetings, bookmarks, writing projects (novel/article/essay/script/poem/blog), research articles, and navigation. Spaces/projects cannot be created here.
 
 Today's date: ${today}
 ${partial ? `\nData collected so far: ${JSON.stringify(partial)}` : ''}
@@ -379,30 +514,35 @@ ${partial ? `\nData collected so far: ${JSON.stringify(partial)}` : ''}
 CONVERSATION SO FAR:
 ${history}
 
-Based on the conversation, decide what to do and respond with ONLY valid JSON — no markdown, no explanation.
+Respond with ONLY valid JSON — no markdown, no explanation. Choose ONE response shape:
 
-Choose ONE of these response shapes:
+1. SINGLE ITEM — simple, specific action with all info:
+{"action":"execute","intent":{"type":"task|note|bookmark|write|meeting|research|navigate","title":"string","priority":"HIGH|MEDIUM|LOW","due":"YYYY-MM-DD or null","time":"HH:mm or null","url":"string or null","description":"string or null","writingType":"NOVEL|SHORT_STORY|ARTICLE|ESSAY|SCRIPT|POETRY|BLOG_POST or null","route":"string or null"}}
 
-1. You have ALL necessary info → create immediately:
-{"action":"execute","intent":{"type":"task|note|bookmark|write|meeting|navigate","title":"string","priority":"HIGH|MEDIUM|LOW","due":"YYYY-MM-DD or null","time":"HH:mm or null","url":"string or null","description":"string or null","writingType":"NOVEL|SHORT_STORY|ARTICLE|ESSAY|SCRIPT|POETRY|BLOG_POST|RESEARCH or null","route":"string or null"}}
+2. MULTI-ITEM PLAN — user's request implies a structured sequence of steps over time (e.g. "learn X in N days", "30-day challenge", "build X over N weeks", "study plan", "roadmap for X", "X course", "prepare for X in N days"). Generate meaningful, topic-specific subtask titles — NOT generic "Day 1, Day 2":
+{"action":"decompose","plan":{"type":"task","title":"string","description":"string","priority":"HIGH|MEDIUM|LOW","due":"YYYY-MM-DD","subtasks":[{"title":"specific descriptive title","due":"YYYY-MM-DD","description":"optional detail","priority":"HIGH|MEDIUM|LOW"}],"summary":"I'll create '[title]' with N subtasks covering [brief scope]. Shall I go ahead?"}}
 
-2. Need ONE critical piece of missing info → ask a single focused question:
+3. NEED MORE INFO — ask ONE focused question:
 {"action":"ask","question":"One concise question?","partialData":{"type":"...","title":"..."}}
 
-3. You have enough info but want the user to confirm a non-trivial action → show a summary:
+4. CONFIRM BEFORE CREATING — for meetings or writing projects only:
 {"action":"confirm","summary":"I'll create a [type] called \"[title]\" [with details]. Shall I go ahead?","intent":{...complete intent...}}
 
-4. User clearly wants to stop → cancel gracefully:
+5. CANCEL — user wants to stop:
 {"action":"cancel","reason":"No problem, nothing was created."}
 
-Rules:
-- Ask at most ONE question per turn — never ask multiple things at once.
-- Use sensible defaults rather than asking (priority: MEDIUM, time: 09:00, writingType: NOVEL).
-- Only request "confirm" for meetings or writing projects — never for simple tasks or notes.
-- If the user says "yes", "ok", "sure", "looks good" in response to a confirm → execute.
-- If the user says "no", "cancel", "never mind" → cancel.
-- If input is completely ambiguous with no recognisable intent → ask "What would you like to create?".
-- If user asks to create a space or project → respond with {"action":"navigate","intent":{"type":"navigate","title":"spaces","route":"/spaces"}} and do NOT attempt to create it.`;
+DECOMPOSITION RULES:
+- Cap subtasks at 60. For "N days" plans, create exactly N subtasks spaced 1 day apart starting tomorrow.
+- For "N weeks" plans, create N subtasks spaced 7 days apart.
+- Make subtask titles specific and educational — e.g. for "Learn Python in 5 days": "Day 1: Install Python, variables & data types", "Day 2: Control flow — if/else & loops", etc.
+- Set the parent task due date to the last subtask's due date.
+
+GENERAL RULES:
+- Use sensible defaults (priority: MEDIUM, time: 09:00, writingType: NOVEL).
+- Ask at most ONE question per turn.
+- Only "confirm" for meetings or writing projects, not for tasks/notes/bookmarks.
+- If user says "yes/ok/sure" → execute pending action. If "no/cancel" → cancel.
+- Spaces/projects: {"action":"execute","intent":{"type":"navigate","title":"spaces","route":"/spaces"}}.`;
 
     try {
       const raw     = await this.aiService.sendMessage(
@@ -428,34 +568,180 @@ Rules:
     const partial  = this.partialData();
     const messages = this.conversationHistory().filter(m => m.role === 'user');
     const lastUser = messages[messages.length - 1]?.text || '';
+    const lower    = lastUser.toLowerCase();
+
+    // Check for decomposable goal pattern first
+    const plan = this.buildLocalPlan(lastUser, lower);
+    if (plan) return { action: 'decompose', plan };
 
     // If we already know the type and have a title → execute
     if (partial?.type && (partial.title || lastUser)) {
       const intent: ParsedIntent = {
-        type:     partial.type as ParsedIntent['type'],
-        title:    partial.title || lastUser.substring(0, 120),
-        priority: (partial.priority as ParsedIntent['priority']) || 'MEDIUM',
-        due:      partial.due,
-        time:     partial.time,
-        url:      partial.url,
+        type:        partial.type as ParsedIntent['type'],
+        title:       partial.title || lastUser.substring(0, 120),
+        priority:    (partial.priority as ParsedIntent['priority']) || 'MEDIUM',
+        due:         partial.due,
+        time:        partial.time,
+        url:         partial.url,
         writingType: partial.writingType,
-        route:    partial.route,
+        route:       partial.route,
       };
       return { action: 'execute', intent };
     }
 
     // Try to extract type from the last user message
-    const lower   = lastUser.toLowerCase();
-    const type    = this.guessTypeFromText(lower);
+    const type = this.guessTypeFromText(lower);
     if (type !== 'unknown') {
-      return {
-        action: 'execute',
-        intent: { type, title: lastUser.substring(0, 120), priority: 'MEDIUM' },
+      const intent: ParsedIntent = {
+        type,
+        title:    lastUser.substring(0, 120),
+        priority: 'MEDIUM',
+        due:      this.extractDate(lower),
+        time:     this.extractTime(lower),
       };
+      if (type === 'meeting' || type === 'write') {
+        return { action: 'confirm', summary: this.buildSummary(intent), intent };
+      }
+      return { action: 'execute', intent };
     }
 
-    // Completely unknown — ask for type
-    return { action: 'ask', question: 'What would you like to create? (task, note, meeting, bookmark, writing project, or space)' };
+    return { action: 'ask', question: 'What would you like to create? (task, note, meeting, bookmark, or writing project)' };
+  }
+
+  /**
+   * Detects "goal in N days/weeks" patterns and builds a local plan without AI.
+   * Returns null if the prompt doesn't look decomposable.
+   */
+  private buildLocalPlan(raw: string, lower: string): DecomposePlan | null {
+    const daysMatch  = lower.match(/\bin\s+(\d+)\s+days?\b/);
+    const weeksMatch = lower.match(/\bin\s+(\d+)\s+weeks?\b/);
+    const daysChal   = lower.match(/(\d+)[- ]day\s+(?:challenge|plan|course|program|bootcamp)/);
+    const learnMatch = lower.match(/^(?:learn|master|study|complete|finish|do)\b/i);
+
+    let count = 0;
+    let unit: 'day' | 'week' = 'day';
+
+    if (daysMatch)      { count = Math.min(parseInt(daysMatch[1]),  90); unit = 'day'; }
+    else if (weeksMatch){ count = Math.min(parseInt(weeksMatch[1]), 52); unit = 'week'; }
+    else if (daysChal)  { count = Math.min(parseInt(daysChal[1]),   90); unit = 'day'; }
+    else if (learnMatch && /\b(python|javascript|typescript|react|angular|java|rust|go|swift|kotlin|sql|css|html|c\+\+|ruby|php)\b/i.test(lower)) {
+      // "Learn X" with no duration → default 30-day plan
+      count = 30; unit = 'day';
+    }
+
+    if (!count) return null;
+
+    // Extract the topic/goal label
+    const topic = raw
+      .replace(/\bin\s+\d+\s+(?:days?|weeks?)\b/gi, '')
+      .replace(/\d+[- ]day\s+(?:challenge|plan|course|program|bootcamp)/gi, '')
+      .replace(/^(?:learn|master|study|complete|finish|do|create|build)\s+/i, '')
+      .trim() || raw.substring(0, 80);
+
+    const unitLabel  = unit === 'day' ? 'Day' : 'Week';
+    const unitDays   = unit === 'day' ? 1 : 7;
+    const today      = new Date();
+    const subtasks: DecomposedSubtask[] = [];
+
+    // Generate phase-based subtask titles for common topics
+    const phases = this.getTopicPhases(topic.toLowerCase(), count);
+
+    for (let i = 0; i < count; i++) {
+      const due = new Date(today);
+      due.setDate(due.getDate() + (i + 1) * unitDays);
+      subtasks.push({
+        title: phases[i] ?? `${unitLabel} ${i + 1} of ${count}: ${topic}`,
+        due:   this.localDateStr(due),
+      });
+    }
+
+    const lastDue = subtasks[subtasks.length - 1].due!;
+    const title   = `${raw.substring(0, 80)}`;
+
+    return {
+      type:     'task',
+      title,
+      description: `A structured ${count}-${unit} plan`,
+      priority: 'MEDIUM',
+      due:      lastDue,
+      subtasks,
+      summary:  `I'll create "${title}" with ${count} ${unit}ly subtasks. Shall I go ahead?`,
+    };
+  }
+
+  /**
+   * Returns topic-aware phase titles for common subjects.
+   * Falls back to numbered titles for unknown topics.
+   */
+  private getTopicPhases(topic: string, count: number): string[] {
+    const phases: string[] = [];
+
+    const isCoding  = /python|javascript|typescript|react|angular|vue|java|rust|go|swift|kotlin|c\+\+|ruby|php/.test(topic);
+    const isDesign  = /design|figma|ui|ux|sketch|css/.test(topic);
+    const isFitness = /fitness|workout|gym|exercise|running|yoga|weight/.test(topic);
+    const isLang    = /spanish|french|german|japanese|chinese|arabic|korean|italian/.test(topic);
+    const isBusiness = /business|startup|marketing|sales|finance|accounting/.test(topic);
+
+    if (isCoding) {
+      const segments = [
+        'Setup & environment',
+        'Basic syntax & data types',
+        'Variables, operators & expressions',
+        'Control flow — if/else & loops',
+        'Functions & scope',
+        'Data structures — lists/arrays',
+        'Data structures — dictionaries/objects',
+        'String manipulation',
+        'File I/O & error handling',
+        'Modules & packages',
+        'Object-oriented programming basics',
+        'OOP — classes & inheritance',
+        'OOP — polymorphism & encapsulation',
+        'Functional programming concepts',
+        'Working with APIs',
+        'Database basics',
+        'Testing fundamentals',
+        'Debugging techniques',
+        'Version control with Git',
+        'Project structure & best practices',
+        'Build a small project — part 1',
+        'Build a small project — part 2',
+        'Code review & refactoring',
+        'Performance & optimization',
+        'Security basics',
+        'Deployment basics',
+        'Advanced topics overview',
+        'Capstone project — part 1',
+        'Capstone project — part 2',
+        'Review, reflection & next steps',
+      ];
+      for (let i = 0; i < count; i++) {
+        const s = segments[i] ?? `Advanced practice ${i + 1}`;
+        phases.push(`Day ${i + 1}: ${s}`);
+      }
+    } else if (isDesign) {
+      const segments = ['Design principles','Color theory','Typography','Layout & grids','Wireframing','Prototyping','User research','Usability testing','Design systems','Portfolio project'];
+      for (let i = 0; i < count; i++) {
+        phases.push(`Day ${i + 1}: ${segments[i % segments.length]}`);
+      }
+    } else if (isFitness) {
+      const types = ['Cardio','Strength — upper body','Strength — lower body','Core & flexibility','Rest & recovery','HIIT','Active stretching'];
+      for (let i = 0; i < count; i++) {
+        phases.push(`Day ${i + 1}: ${types[i % types.length]}`);
+      }
+    } else if (isLang) {
+      const segments = ['Alphabet & pronunciation','Greetings & introductions','Numbers & dates','Common phrases','Present tense verbs','Past tense','Future tense','Vocabulary — food & daily life','Vocabulary — travel','Reading practice','Listening practice','Conversation practice','Grammar review','Writing practice','Final assessment'];
+      for (let i = 0; i < count; i++) {
+        phases.push(`Day ${i + 1}: ${segments[i % segments.length]}`);
+      }
+    } else if (isBusiness) {
+      const segments = ['Market research','Value proposition','Competitive analysis','Business model','Financial planning','Marketing strategy','Sales fundamentals','Customer discovery','Product development','Launch planning'];
+      for (let i = 0; i < count; i++) {
+        phases.push(`Day ${i + 1}: ${segments[i % segments.length]}`);
+      }
+    }
+    // Unknown topic — return empty so caller uses generic "Day N of M: topic"
+    return phases;
   }
 
   /** Lightweight type guesser used in the mock fallback */
@@ -465,6 +751,7 @@ Rules:
     if (/\b(meeting|schedule|standup|sync|call)\b/.test(lower)) return 'meeting';
     if (/\b(bookmark|save|link|url)\b/.test(lower))             return 'bookmark';
     if (/\b(novel|story|article|essay|poem|blog|script)\b/.test(lower)) return 'write';
+    if (/\b(research|study|investigate|analyze|source)\b/.test(lower))  return 'research';
     return 'unknown';
   }
 
@@ -483,6 +770,7 @@ Rules:
     this.conversationState.set('idle');
     this.partialData.set(null);
     this.pendingIntent.set(null);
+    this.pendingPlan.set(null);
   }
 
   // ── Intent parsing ───────────────────────────────────────────────────────────
@@ -554,6 +842,13 @@ Rules:
       return { type: 'write', title, writingType: this.extractWritingType(lower) };
     }
 
+    // ── RESEARCH ────────────────────────────────────────────────────────────────
+    if (/^(research:|new research|research on|start research|create research)/i.test(lower)) {
+      const title = raw.replace(/^(research:|new research|research on|start research|create research):?\s*/i, '').trim();
+      if (!title) return null;
+      return { type: 'research', title };
+    }
+
     // ── SPACE — not allowed; redirect to /spaces ─────────────────────────────────
     if (/^(new project|new space|create project|create space|space:|project:)/i.test(lower)) {
       return { type: 'navigate', title: 'spaces', route: '/spaces' };
@@ -572,6 +867,7 @@ Rules:
       case 'bookmark': this.createBookmark(intent);           break;
       case 'write':    this.createWriting(intent);            break;
       case 'meeting':  this.createMeeting(intent);            break;
+      case 'research': this.navigateToResearch(intent);       break;
       default:
         this.createTask({ type: 'task', title: raw.substring(0, 120) || intent.title, priority: 'MEDIUM' });
     }
@@ -579,6 +875,55 @@ Rules:
 
   private doNavigate(intent: ParsedIntent) {
     if (intent.route) this.router.navigate([intent.route]);
+  }
+
+  private async executePlan(plan: DecomposePlan) {
+    const parentId = crypto.randomUUID();
+    const today    = new Date();
+
+    const subtasks: Task[] = plan.subtasks.map((s, i) => {
+      const dueDate = s.due ?? (() => {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i + 1);
+        return this.localDateStr(d);
+      })();
+      return {
+        id:       crypto.randomUUID(),
+        title:    s.title,
+        priority: s.priority ?? plan.priority ?? 'MEDIUM',
+        hours:    '0',
+        status:   'ACTIVE' as const,
+        due:      dueDate,
+        notes:    s.description,
+        parentId,
+      };
+    });
+
+    const lastDue = subtasks[subtasks.length - 1]?.due;
+    const parent: Task = {
+      id:       parentId,
+      title:    plan.title,
+      priority: plan.priority ?? 'MEDIUM',
+      hours:    '0',
+      status:   'ACTIVE' as const,
+      due:      plan.due ?? lastDue,
+      notes:    plan.description,
+      subtasks,
+    };
+
+    this.store.addTask(parent);
+    this.lastCreated.set({
+      type:  'Plan',
+      title: plan.title,
+      route: '/tasks',
+      id:    parentId,
+      count: subtasks.length,
+    });
+  }
+
+  private navigateToResearch(intent: ParsedIntent) {
+    this.lastCreated.set({ type: 'Research', title: intent.title, route: '/research' });
+    this.router.navigate(['/research']);
   }
 
   private createTask(intent: ParsedIntent) {
@@ -608,7 +953,7 @@ Rules:
       lastEdited: 'Just now',
     };
     await this.store.addNote(note);
-    this.lastCreated.set({ type: 'Note', title: note.title, route: '/daily-notes', id: note.id });
+    this.lastCreated.set({ type: 'Note', title: note.title, route: '/daily-notes', id: note.id, queryParams: { noteId: note.id } });
   }
 
   private createBookmark(intent: ParsedIntent) {
@@ -684,19 +1029,27 @@ Rules:
     return 'MEDIUM';
   }
 
+  /** Returns YYYY-MM-DD in **local** time (not UTC) to avoid off-by-one-day timezone errors. */
+  private localDateStr(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   private extractDate(lower: string): string | undefined {
     const today = new Date();
-    if (/\btoday\b/.test(lower))    return today.toISOString().split('T')[0];
-    if (/\btomorrow\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; }
+    if (/\btoday\b/.test(lower))    return this.localDateStr(today);
+    // "next N hrs/hours" → still today (task due same day)
+    if (/\bnext\s+\d+\s*h(rs?|ours?)?\b/.test(lower)) return this.localDateStr(today);
+    if (/\bin\s+\d+\s*h(rs?|ours?)?\b/.test(lower))   return this.localDateStr(today);
+    if (/\btomorrow\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 1); return this.localDateStr(d); }
     const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     for (let i = 0; i < days.length; i++) {
       if (lower.includes(days[i])) {
         const d = new Date(today), diff = (i - d.getDay() + 7) % 7 || 7;
         d.setDate(d.getDate() + diff);
-        return d.toISOString().split('T')[0];
+        return this.localDateStr(d);
       }
     }
-    if (/\bnext week\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; }
+    if (/\bnext week\b/.test(lower)) { const d = new Date(today); d.setDate(d.getDate() + 7); return this.localDateStr(d); }
     return undefined;
   }
 
@@ -741,19 +1094,73 @@ Rules:
 
   navigateToCreated() {
     const c = this.lastCreated();
-    if (c) this.router.navigate([c.route]);
+    if (c) this.router.navigate([c.route], c.queryParams ? { queryParams: c.queryParams } : {});
     this.lastCreated.set(null);
   }
 
   setExampleText(text: string) {
     this.inputText.set(text);
-    setTimeout(() => (document.querySelector('.main-text-input') as HTMLInputElement)?.focus(), 50);
+    (document.querySelector('.main-text-input') as HTMLInputElement)?.focus();
   }
 
   toggleSidebarTask(task: Task, event: Event) {
     event.stopPropagation();
+    if (task.status !== 'COMPLETED' && task.subtasks?.some(st => st.status !== 'COMPLETED')) {
+      this.showSidebarError('Complete all subtasks before marking this task as done.');
+      return;
+    }
     const newStatus = task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
     this.store.updateTask(task.id, { status: newStatus });
+  }
+
+  private showSidebarError(message: string) {
+    this.sidebarError.set(message);
+    setTimeout(() => this.sidebarError.set(null), 3000);
+  }
+
+  navigateSidebarItem(item: SidebarActivityItem, event: Event) {
+    event.stopPropagation();
+    this.router.navigate([item.route], item.queryParams ? { queryParams: item.queryParams } : {});
+  }
+
+  private formatTaskSubtitle(task: Task): string {
+    if (!task.due) {
+      const pMap: Record<string, string> = { HIGH: 'High priority', MEDIUM: 'Medium priority', LOW: 'Low priority' };
+      return pMap[task.priority] ?? task.priority;
+    }
+    const today = new Date();
+    const todayStr = this.localDateStr(today);
+    if (task.due === todayStr) return 'due today';
+    const dueDate = new Date(task.due + 'T00:00:00');
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffDays = Math.round((dueDate.getTime() - todayMidnight.getTime()) / 86400000);
+    const label = dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (diffDays < 0) return `overdue · ${Math.abs(diffDays)}d ago`;
+    if (diffDays === 1) return 'due tomorrow';
+    if (diffDays <= 7) return `due ${label} · in ${diffDays}d`;
+    return `due ${label}`;
+  }
+
+  private formatNoteSubtitle(note: Note): string {
+    const le = (note.lastEdited ?? '').toLowerCase();
+    if (!le || le === 'just now') return 'just now';
+    // lastEdited is a time string like "02:14 AM" → prefix with day context
+    if (/\d{1,2}:\d{2}\s*(am|pm)/i.test(note.lastEdited ?? '')) {
+      const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return note.date === today ? `Today ${note.lastEdited}` : `${note.date} · ${note.lastEdited}`;
+    }
+    return note.lastEdited || note.date;
+  }
+
+  private formatNovelSubtitle(novel: Novel): string {
+    const statusMap: Record<string, string> = {
+      PLANNING: 'Planning', DRAFTING: 'Drafting', REVISING: 'Revising',
+      EDITING: 'Editing', PUBLISHED: 'Published', ON_HOLD: 'On hold',
+    };
+    const status = statusMap[novel.status] ?? novel.status;
+    const words = novel.wordCount ?? 0;
+    const formatted = words >= 1000 ? `${(words / 1000).toFixed(1)}k words` : `${words} words`;
+    return `${status} · ${formatted}`;
   }
 
   addSubtask(task: Task, event: Event) {

@@ -100,24 +100,13 @@
       "executor": "@angular-devkit/build-angular:extract-i18n"
     },
     "test": {
-      "executor": "@angular-devkit/build-angular:karma",
+      "executor": "@nx/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
-        "karmaConfig": "apps/desktop/karma.conf.js",
-        "polyfills": [
-          "zone.js",
-          "zone.js/testing"
-        ],
-        "tsConfig": "apps/desktop/tsconfig.spec.json",
-        "assets": [
-          {
-            "glob": "**/*",
-            "input": "apps/desktop/public"
-          }
-        ],
-        "styles": [
-          "apps/desktop/src/styles.css"
-        ],
-        "scripts": []
+        "jestConfig": "apps/desktop/jest.config.ts",
+        "tsConfig": "apps/desktop/tsconfig.spec.json"
       }
     }
   }

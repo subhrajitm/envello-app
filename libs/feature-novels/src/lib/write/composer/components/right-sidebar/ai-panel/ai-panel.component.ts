@@ -1,4 +1,4 @@
-import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
+import { Component, input, output, ViewChild, ElementRef, DoCheck, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -17,8 +17,9 @@ import { AiMessage, AiSuggestion } from '@envello/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
 })
-export class AiPanelComponent implements AfterViewChecked {
+export class AiPanelComponent implements DoCheck {
   private sanitizer = inject(DomSanitizer);
+  private lastMessageCount = 0;
   aiMessages = input.required<AiMessage[]>();
   aiLoading = input.required<boolean>();
   aiError = input<string | null>(null);
@@ -72,8 +73,12 @@ export class AiPanelComponent implements AfterViewChecked {
     return date.toLocaleDateString();
   }
 
-  ngAfterViewChecked() {
-    this.scrollToBottom();
+  ngDoCheck() {
+    const count = this.aiMessages().length;
+    if (count !== this.lastMessageCount) {
+      this.lastMessageCount = count;
+      this.scrollToBottom();
+    }
   }
 
   private scrollToBottom() {

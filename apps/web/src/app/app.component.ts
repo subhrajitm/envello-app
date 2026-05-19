@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent } from '@envello/ui';
 import { TauriService, SessionService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
@@ -17,8 +18,11 @@ export class AppComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
-  private sessionService = inject(SessionService); // Initialize session tracking
+  private sessionService = inject(SessionService);
+  private swUpdate = inject(SwUpdate, { optional: true });
   private unlistenFileDrop?: () => void;
+
+  updateAvailable = signal(false);
 
   currentTab = signal('Workspace');
   hasSidebar = signal(true);
@@ -30,7 +34,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private navigationLayoutListener?: (event: CustomEvent) => void;
 
   ngOnInit() {
-    // Load navigation layout from localStorage
+    this.setupSwUpdate();
     this.loadNavigationLayout();
 
     // Listen for navigation layout changes from settings
@@ -60,6 +64,20 @@ export class AppComponent implements OnInit, OnDestroy {
       this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => { });
     });
     this.setupTauriFileDrop();
+  }
+
+  private setupSwUpdate() {
+    if (!this.swUpdate?.isEnabled) return;
+    this.swUpdate.versionUpdates.pipe(
+      filter((e): e is VersionReadyEvent => e.type === 'VERSION_READY')
+    ).subscribe(() => {
+      this.updateAvailable.set(true);
+    });
+    this.swUpdate.checkForUpdate();
+  }
+
+  applyUpdate() {
+    this.swUpdate?.activateUpdate().then(() => document.location.reload());
   }
 
   private async setupTauriFileDrop(): Promise<void> {

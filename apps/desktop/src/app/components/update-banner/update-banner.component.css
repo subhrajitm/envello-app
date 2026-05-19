@@ -1,0 +1,121 @@
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.06));
+  border-bottom: 1px solid rgba(99, 102, 241, 0.25);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.banner-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.banner-icon {
+  font-size: 18px;
+  color: var(--accent-primary, #6366f1);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.banner-title {
+  font-weight: 600;
+  color: var(--text-primary, #f1f5f9);
+}
+
+.banner-notes {
+  font-size: 12px;
+  color: var(--text-tertiary, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 480px;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.banner-error {
+  font-size: 12px;
+  color: var(--accent-red, #f87171);
+}
+
+.btn-later {
+  padding: 5px 14px;
+  background: transparent;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 6px;
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.btn-later:hover {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.btn-install {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: var(--accent-primary, #6366f1);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.btn-install:hover { opacity: 0.88; }
+.btn-install .material-symbols-outlined { font-size: 15px; }
+
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  width: 140px;
+  height: 5px;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-primary, #6366f1);
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.progress-label {
+  font-size: 12px;
+  color: var(--text-tertiary, #94a3b8);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+}

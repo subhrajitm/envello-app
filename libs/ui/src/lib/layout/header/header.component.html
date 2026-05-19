@@ -2,6 +2,10 @@
   <header class="header">
     <div class="header-top flex items-center justify-between gap-4">
       <div class="header-left flex items-center gap-4">
+        <!-- Hamburger button: mobile only -->
+        <button type="button" class="mobile-menu-btn" (click)="toggleSidebar()" aria-label="Toggle menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
         <div class="logo flex items-center gap-2">
           <svg
             viewBox="0 0 1615 544"
@@ -150,6 +154,9 @@
       </nav>
     } @else {
       <!-- Vertical Sidebar — Workspace + grouped sections -->
+      @if (!sidebarCollapsed()) {
+        <div class="sidebar-backdrop" (click)="toggleSidebar()"></div>
+      }
       <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
         <nav class="sidebar-nav">
 

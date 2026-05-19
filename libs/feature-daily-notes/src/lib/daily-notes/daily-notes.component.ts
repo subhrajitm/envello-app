@@ -1,7 +1,8 @@
 import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Note } from '@envello/core';
+import { StoreService, Note, AiService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
@@ -46,7 +47,11 @@ interface NoteGroup {
 export class DailyNotesComponent implements OnInit, OnDestroy {
   private store = inject(StoreService);
   private tauriService = inject(TauriService);
+  private route = inject(ActivatedRoute);
+  private aiService = inject(AiService);
   editor!: Editor;
+
+  aiGenerating = signal(false);
 
   // Connect to store signals
   notes = this.store.notes;
@@ -399,6 +404,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         this.characterCount.set(editor.storage.characterCount.characters());
       },
     });
+
+    // If navigated here with a specific note ID (e.g. from workspace prompt), open it directly.
+    const noteId = this.route.snapshot.queryParamMap.get('noteId');
+    if (noteId) {
+      this.selectNote(noteId);
+    }
   }
 
   ngOnDestroy(): void {
@@ -709,6 +720,66 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
   }
 
+  private parseNoteCreationIntent(text: string): { topic: string; wordCount: number } | null {
+    const t = text.trim();
+
+    // Must start with an action verb
+    if (!/^(?:create|write|generate|make)\b/i.test(t)) return null;
+
+    // Extract topic: everything after the last "on"/"about"/"regarding" word boundary
+    const topicMatch = t.match(/\b(?:on|about|regarding)\s+(.+)$/i);
+    if (!topicMatch) return null;
+
+    // Strip trailing word-count phrase from topic (e.g. "in 500 words", "within 300 words")
+    let topic = topicMatch[1].trim();
+    topic = topic.replace(/\s*\b(?:in|within|of|under|around|approximately)?\s*\d+\s*words?\b.*$/i, '').trim();
+    if (!topic) return null;
+
+    // Extract word count from anywhere in the original text
+    const wcMatch = t.match(/\b(\d+)\s*words?\b/i);
+    const wordCount = wcMatch ? Math.min(Math.max(parseInt(wcMatch[1], 10), 100), 2000) : 300;
+
+    return { topic, wordCount };
+  }
+
+  private async generateNoteContent(topic: string, wordCount: number): Promise<string> {
+    const prompt = `Write a well-structured note of approximately ${wordCount} words on the topic: "${topic}".
+Use clear paragraphs with smooth transitions. Start directly with the content — do not include a title heading.
+Return plain text with paragraph breaks (double newline between paragraphs). No markdown headings or bullet points.`;
+    return this.aiService.sendMessage(prompt,
+      'You are a knowledgeable and articulate note-taking assistant. Write informative, engaging content.');
+  }
+
+  private plainToHtml(text: string): string {
+    return text
+      .split(/\n{2,}/)
+      .map(p => `<p>${p.trim().replace(/\n/g, ' ')}</p>`)
+      .join('');
+  }
+
+  async checkAiTitleCommand(title: string) {
+    if (this.aiGenerating()) return;
+
+    const intent = this.parseNoteCreationIntent(title.trim());
+    if (!intent) return;
+
+    const activeId = this.selectedEntryId();
+    if (!activeId) return;
+
+    const cleanTitle = intent.topic.charAt(0).toUpperCase() + intent.topic.slice(1);
+    this.store.updateNote(activeId, { title: cleanTitle });
+    this.aiGenerating.set(true);
+
+    try {
+      const generated = await this.generateNoteContent(intent.topic, intent.wordCount);
+      const html = this.plainToHtml(generated);
+      if (this.editor) this.editor.commands.setContent(html);
+      this.store.updateNote(activeId, { content: html, preview: generated.substring(0, 120) });
+    } finally {
+      this.aiGenerating.set(false);
+    }
+  }
+
   deleteCurrentNote() {
     const activeId = this.selectedEntryId();
     if (activeId) {
@@ -883,10 +954,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   aiMessages    = signal<AiPanelMessage[]>([]);
 
   readonly aiSuggestions = [
+    'Create a 500 words note on AI: Danger to society',
+    'Write a note about productivity habits',
     'How many notes do I have?',
     'What tags do I use most?',
-    'Show notes from today',
-    'Which folders have the most notes?',
     'Find my pinned notes',
   ];
 
@@ -897,7 +968,44 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
 
-    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
+    // ── Note creation intent ──────────────────────────────────────────────────
+    const intent = this.parseNoteCreationIntent(text);
+    if (intent) {
+      try {
+        const generated = await this.generateNoteContent(intent.topic, intent.wordCount);
+        const html = this.plainToHtml(generated);
+
+        const cleanTitle = intent.topic.charAt(0).toUpperCase() + intent.topic.slice(1);
+        const noteId = Date.now().toString();
+        const folderId = this.selectedNote()?.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
+        const newNote: Note = {
+          id: noteId,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          title: cleanTitle,
+          preview: generated.substring(0, 120),
+          content: html,
+          tags: [],
+          folderId,
+        };
+        this.store.addNote(newNote);
+        this.selectNote(noteId);
+
+        this.aiMessages.update(m => [...m, {
+          role: 'assistant',
+          text: `Done! Created "${cleanTitle}" (~${intent.wordCount} words). It's open in the editor now.`
+        }]);
+      } catch {
+        this.aiMessages.update(m => [...m, {
+          role: 'assistant',
+          text: 'Failed to generate note content. Check your AI provider settings and try again.'
+        }]);
+      }
+      this.aiLoading.set(false);
+      return;
+    }
+
+    // ── Stat queries ─────────────────────────────────────────────────────────
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 300));
 
     const notes = this.notes();
     const q = text.toLowerCase();
@@ -940,7 +1048,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         ? `${pinned.length} pinned note${pinned.length > 1 ? 's' : ''}: ${pinned.map(n => n.title).join(', ')}.`
         : 'No pinned notes. Pin notes from the note list to keep them at the top.';
     } else {
-      response = `You have ${notes.length} notes across ${this.noteGroups().length} folders and ${this.allTags().length} tag${this.allTags().length !== 1 ? 's' : ''}. Try asking about tags, today's notes, folders, or pinned notes.`;
+      response = `You have ${notes.length} notes across ${this.noteGroups().length} folders. Try asking me to create a note, or ask about tags, today's notes, folders, or pinned notes.`;
     }
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);

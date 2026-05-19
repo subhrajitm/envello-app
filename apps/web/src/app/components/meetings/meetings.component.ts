@@ -392,7 +392,7 @@ export class MeetingsComponent {
   ];
 
   readonly tableActions: EnvTableAction[] = [
-    { key: 'view',      label: 'View',      icon: 'visibility' },
+    { key: 'view',      label: 'View',      icon: 'visibility', bulk: false },
     { key: 'duplicate', label: 'Duplicate', icon: 'content_copy' },
     { key: 'cancel',    label: 'Cancel',    icon: 'event_busy' },
     { key: 'delete',    label: 'Delete',    icon: 'delete', danger: true },

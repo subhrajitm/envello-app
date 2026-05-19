@@ -66,3 +66,5 @@ pnpm-debug.log*
 .nx/polygraph
 .claude/worktrees
 .claude/settings.local.json
+# Tauri signing keys (never commit the private key)
+src-tauri/update.key

@@ -8,34 +8,34 @@ import { StoreService, BinService, SessionService, UserService, MeetingsService,
 describe('DeveloperSettingsComponent', () => {
   let component: DeveloperSettingsComponent;
   let fixture: ComponentFixture<DeveloperSettingsComponent>;
-  let routerSpy: jasmine.SpyObj<Router>;
+  let routerSpy: { navigate: jest.Mock };
 
   beforeEach(async () => {
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    routerSpy = { navigate: jest.fn() };
 
-    const storeSpy = jasmine.createSpyObj('StoreService', [], {
+    const storeSpy = {
       tasks: signal([]),
       notes: signal([]),
       planningItems: signal([]),
       activities: signal([]),
       novels: signal([]),
       spaces: signal([]),
-    });
-    const binSpy = jasmine.createSpyObj('BinService', [], { items: signal([]) });
-    const sessionSpy = jasmine.createSpyObj('SessionService', ['formatTime'], {
+    };
+    const binSpy = { items: signal([]) };
+    const sessionSpy = {
+      formatTime: jest.fn().mockReturnValue('0s'),
       pageStats: signal([]),
-    });
-    sessionSpy.formatTime.and.returnValue('0s');
-    const userSpy = jasmine.createSpyObj('UserService', [], { user: signal(null) });
-    const meetingsSpy = jasmine.createSpyObj('MeetingsService', [], { meetings: signal([]) });
-    const articleSpy = jasmine.createSpyObj('ArticleService', [], { articles: signal([]) });
-    const researchSpy = jasmine.createSpyObj('ResearchService', [], {
+    };
+    const userSpy = { user: signal(null) };
+    const meetingsSpy = { meetings: signal([]) };
+    const articleSpy = { articles: signal([]) };
+    const researchSpy = {
       libraries: signal([]),
       sources: signal([]),
       summaries: signal([]),
-    });
-    const sqliteSpy = jasmine.createSpyObj('SqliteService', ['exportDb', 'runMigrations']);
-    const tauriSpy = jasmine.createSpyObj('TauriService', ['saveFile', 'openFileDialog', 'setTitle']);
+    };
+    const sqliteSpy = { exportDb: jest.fn(), runMigrations: jest.fn() };
+    const tauriSpy = { saveFile: jest.fn(), openFileDialog: jest.fn(), setTitle: jest.fn() };
 
     await TestBed.configureTestingModule({
       imports: [DeveloperSettingsComponent, RouterTestingModule],

@@ -63,6 +63,8 @@ export class SettingsModalComponent {
   aiModel = signal('');
   aiKey = signal('');
   showApiKey = signal(false);
+  testStatus = signal<'idle' | 'testing' | 'success' | 'error'>('idle');
+  testMessage = signal('');
 
   sections: SettingsSection[] = [
     { id: 'general',       label: 'General',           icon: 'tune' },
@@ -84,12 +86,13 @@ export class SettingsModalComponent {
   ];
 
   aiProviders: AiProviderOption[] = [
-    { value: 'mock', label: 'Demo Mode (Offline)', icon: 'science' },
-    { value: 'openai', label: 'OpenAI (GPT)', icon: 'psychology' },
-    { value: 'anthropic', label: 'Anthropic (Claude)', icon: 'smart_toy' },
-    { value: 'gemini', label: 'Google (Gemini)', icon: 'auto_awesome' },
-    { value: 'grok', label: 'xAI (Grok)', icon: 'bolt' },
-    { value: 'ollama', label: 'Ollama (Local)', icon: 'terminal' }
+    { value: 'mock',      label: 'Demo Mode (Offline)', icon: 'science' },
+    { value: 'openai',    label: 'OpenAI (GPT)',         icon: 'psychology' },
+    { value: 'anthropic', label: 'Anthropic (Claude)',   icon: 'smart_toy' },
+    { value: 'gemini',    label: 'Google (Gemini)',      icon: 'auto_awesome' },
+    { value: 'grok',      label: 'xAI (Grok)',           icon: 'bolt' },
+    { value: 'deepseek',  label: 'DeepSeek',             icon: 'water' },
+    { value: 'ollama',    label: 'Ollama (Local)',        icon: 'terminal' },
   ];
 
   constructor() {
@@ -117,6 +120,8 @@ export class SettingsModalComponent {
   open() {
     this.isOpen.set(true);
     this.currentTheme.set(this.themeService.theme());
+    this.testStatus.set('idle');
+    this.testMessage.set('');
 
     // Refresh AI settings from service in case they changed elsewhere
     this.aiProvider.set(this.aiService.provider());
@@ -211,15 +216,42 @@ export class SettingsModalComponent {
   }
 
   // AI Actions
+  async testConnection() {
+    this.testStatus.set('testing');
+    this.testMessage.set('');
+    try {
+      await this.aiService.testConfig(this.aiProvider(), this.aiModel(), this.aiKey());
+      this.testStatus.set('success');
+      this.testMessage.set('Connection successful!');
+    } catch (e: any) {
+      this.testStatus.set('error');
+      this.testMessage.set(e?.message ?? 'Connection failed. Check your key and model.');
+    }
+  }
+
+  getApiKeyPlaceholder(): string {
+    switch (this.aiProvider()) {
+      case 'openai':    return 'sk-...';
+      case 'anthropic': return 'sk-ant-...';
+      case 'gemini':    return 'AIza...';
+      case 'grok':      return 'xai-...';
+      case 'deepseek':  return 'sk-...';
+      default:          return 'Enter API key';
+    }
+  }
+
   setAiProvider(provider: AiProvider) {
+    this.testStatus.set('idle');
+    this.testMessage.set('');
     this.aiProvider.set(provider);
-    // Set default models
-    if (provider === 'openai') this.aiModel.set('gpt-5.2');
-    else if (provider === 'anthropic') this.aiModel.set('claude-4.6-sonnet');
-    else if (provider === 'gemini') this.aiModel.set('gemini-3.1-pro');
-    else if (provider === 'grok') this.aiModel.set('grok-4.1');
-    else if (provider === 'ollama') this.aiModel.set('llama4-scout');
-    else this.aiModel.set('mock-model');
+    // Set real default model IDs for each provider
+    if (provider === 'openai') this.aiModel.set('gpt-4o');
+    else if (provider === 'anthropic') this.aiModel.set('claude-sonnet-4-6');
+    else if (provider === 'gemini') this.aiModel.set('gemini-2.5-flash');
+    else if (provider === 'grok') this.aiModel.set('grok-3');
+    else if (provider === 'deepseek') this.aiModel.set('deepseek-chat');
+    else if (provider === 'ollama') this.aiModel.set('llama3');
+    else this.aiModel.set('');
   }
 
   // Actions

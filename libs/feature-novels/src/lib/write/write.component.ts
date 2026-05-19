@@ -72,17 +72,31 @@ export class WriteComponent {
   ];
   // ── Table configuration ──────────────────────────────────────────────────
   readonly tableColumns: EnvTableColumn[] = [
-    { key: 'title',       header: 'Title',           type: 'text', sortable: true },
-    { key: 'type',        header: 'Type',            type: 'badge', sortable: true, badgeMap: {} },
-    { key: 'status',      header: 'Status',          type: 'badge', sortable: true, badgeMap: {} },
-    { key: 'progress',    header: 'Progress',        type: 'text', sortable: true },
-    { key: 'updated',     header: 'Updated',         type: 'text', sortable: true },
+    { key: 'title',    header: 'Title',    type: 'text',  sortable: true },
+    { key: 'type',     header: 'Type',     type: 'badge', sortable: true, badgeMap: {
+      'Novel':       { dotColor: '#f59e0b', bgColor: 'rgba(245,158,11,0.12)',  textColor: '#f59e0b' },
+      'Short Story': { dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
+      'Article':     { dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)',  textColor: '#10b981' },
+      'Essay':       { dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)', textColor: '#8b5cf6' },
+      'Script':      { dotColor: '#ec4899', bgColor: 'rgba(236,72,153,0.12)', textColor: '#ec4899' },
+      'Poetry':      { dotColor: '#f43f5e', bgColor: 'rgba(244,63,94,0.12)',  textColor: '#f43f5e' },
+      'Blog Post':   { dotColor: '#06b6d4', bgColor: 'rgba(6,182,212,0.12)',  textColor: '#06b6d4' },
+      'Research':    { dotColor: '#6366f1', bgColor: 'rgba(99,102,241,0.12)', textColor: '#6366f1' },
+    }},
+    { key: 'status',   header: 'Status',   type: 'badge', sortable: true, badgeMap: {
+      'Planning':  { dotColor: '#9ca3af', bgColor: 'rgba(156,163,175,0.12)', textColor: '#9ca3af' },
+      'Drafting':  { dotColor: '#fbbf24', bgColor: 'rgba(251,191,36,0.12)',  textColor: '#fbbf24' },
+      'Revising':  { dotColor: '#fb923c', bgColor: 'rgba(251,146,60,0.12)',  textColor: '#fb923c' },
+      'Published': { dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.12)',  textColor: '#4ade80' },
+    }},
+    { key: 'progress', header: 'Progress', type: 'text',  sortable: true },
+    { key: 'updated',  header: 'Updated',  type: 'text',  sortable: true },
   ];
 
   readonly tableActions: EnvTableAction[] = [
-    { key: 'open',      label: 'Open',      icon: 'open_in_new' },
+    { key: 'open',      label: 'Open',      icon: 'open_in_new',   bulk: false },
     { key: 'duplicate', label: 'Duplicate', icon: 'content_copy' },
-    { key: 'delete',    label: 'Delete',    icon: 'delete', danger: true },
+    { key: 'delete',    label: 'Delete',    icon: 'delete',        danger: true },
   ];
   // ── Static data ───────────────────────────────────────────────────────────
   readonly writingTypes: { id: WritingType; label: string; defaultWords: number; defaultIcon: string }[] = [
@@ -160,6 +174,13 @@ export class WriteComponent {
 
     return [...list].sort((a, b) => {
       switch (sort) {
+        case 'UPDATED': {
+          const aMs = new Date(a.lastUpdated).getTime();
+          const bMs = new Date(b.lastUpdated).getTime();
+          const aSort = isNaN(aMs) ? new Date(a.createdAt ?? 0).getTime() : aMs;
+          const bSort = isNaN(bMs) ? new Date(b.createdAt ?? 0).getTime() : bMs;
+          return bSort - aSort;
+        }
         case 'CREATED':  return new Date(b.createdAt ?? b.createdDate).getTime() - new Date(a.createdAt ?? a.createdDate).getTime();
         case 'TITLE':    return a.title.localeCompare(b.title);
         case 'PROGRESS': return b.progress - a.progress;
@@ -175,7 +196,7 @@ export class WriteComponent {
       type: this.getWritingTypeLabel(novel.writingType),
       status: this.getStatusMeta(novel.status).label,
       progress: `${novel.progress}% (${novel.wordCount?.toLocaleString() || 0}/${novel.targetWordCount?.toLocaleString() || 0})`,
-      updated: novel.lastUpdated,
+      updated: this.formatDate(novel.lastUpdated),
       novel,
     }))
   );
@@ -195,6 +216,22 @@ export class WriteComponent {
 
   getProgressColor(status: string): string {
     return status === 'PUBLISHED' ? '#4ade80' : '#fcd34d';
+  }
+
+  formatDate(iso: string): string {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return iso;
+    const now = new Date();
+    const days = Math.floor((now.getTime() - date.getTime()) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    if (days < 30) return `${Math.floor(days / 7)}w ago`;
+    return date.toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric',
+      ...(date.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {})
+    });
   }
 
   // ── Sidebar / filter ─────────────────────────────────────────────────────
@@ -231,7 +268,7 @@ export class WriteComponent {
 
   // ── Table handlers ────────────────────────────────────────────────────────
   handleTableAction(event: any) {
-    const actionKey = event.key;
+    const actionKey = event.actionKey;
     const novel = event.row['novel'];
     if (!novel) return;
 
@@ -249,7 +286,12 @@ export class WriteComponent {
   }
 
   handleTableSort(event: any) {
-    this.selectSort(event.key === 'title' ? 'TITLE' : event.key === 'type' ? 'CREATED' : 'UPDATED');
+    const map: Record<string, 'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'> = {
+      title:    'TITLE',
+      progress: 'PROGRESS',
+      updated:  'UPDATED',
+    };
+    this.selectSort(map[event.key] ?? 'UPDATED');
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -270,13 +312,12 @@ export class WriteComponent {
       ...novel, id,
       title: `${novel.title} (Copy)`,
       createdDate: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      lastUpdated: 'Just now',
+      lastUpdated: now.toISOString(),
       createdAt: now.toISOString(),
       isRecentlyUpdated: true,
-      wordCount: 0, progress: 0, chapters: 0,
     };
     this.store.addNovel(copy);
-    this.novelContent.createAndPersistEmptyNovel(id, copy.title).catch(e => console.error(e));
+    this.novelContent.cloneNovelContent(novel.id, id, copy.title).catch(err => console.error(err));
     this.closeNovelMenu();
   }
 
@@ -324,7 +365,7 @@ export class WriteComponent {
         wordCount: 0, targetWordCount: Math.max(0, form.targetWordCount) || 80000,
         progress: 0, chapters: 0, notesCount: 0,
         createdDate: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        lastUpdated: 'Just now', createdAt: now.toISOString(), genre, isRecentlyUpdated: true,
+        lastUpdated: now.toISOString(), createdAt: now.toISOString(), genre, isRecentlyUpdated: true,
       };
       this.store.addNovel(novel);
       await this.novelContent.createAndPersistEmptyNovel(id, title);

@@ -1089,8 +1089,8 @@ export class VendorComponent {
     ];
 
     readonly tableActions: EnvTableAction[] = [
-        { key: 'view',   label: 'View Details', icon: 'open_in_new' },
-        { key: 'edit',   label: 'Edit',         icon: 'edit'        },
+        { key: 'view',   label: 'View Details', icon: 'open_in_new', bulk: false },
+        { key: 'edit',   label: 'Edit',         icon: 'edit',        bulk: false },
         { key: 'delete', label: 'Delete',        icon: 'delete', danger: true },
     ];
 

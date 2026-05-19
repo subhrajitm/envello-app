@@ -7,7 +7,8 @@ type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
 type TaskListItem =
   | { kind: 'header'; label: string; count: number; accent: string }
-  | { kind: 'task'; task: Task };
+  | { kind: 'task'; task: Task }
+  | { kind: 'subtask'; task: Task; parentTitle: string };
 
 @Component({
   selector: 'app-tasks',
@@ -41,7 +42,21 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task details modal state
   showTaskDetails = signal<boolean>(false);
-  selectedTaskForDetails = signal<Task | null>(null);
+  /** Drives which task is shown in the details modal. Using a computed keeps the modal always fresh from the store. */
+  selectedTaskId = signal<string | null>(null);
+  selectedTaskForDetails = computed(() => {
+    const id = this.selectedTaskId();
+    if (!id) return null;
+    // Check top-level tasks first
+    const top = this.store.tasks().find(t => t.id === id);
+    if (top) return top;
+    // Fall back to nested subtasks (e.g. calendar list subtask rows)
+    for (const t of this.store.tasks()) {
+      const sub = t.subtasks?.find(s => s.id === id);
+      if (sub) return sub;
+    }
+    return null;
+  });
   editingTaskDetails = signal<boolean>(false);
   editedTaskTitle = signal<string>('');
   editedTaskDescription = signal<string>('');
@@ -55,6 +70,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
   detailsLabelInput = signal<string>('');
   newSubtaskTitle = signal<string>('');
+  editingSubtaskId = signal<string | null>(null);
+  editingSubtaskTitle = signal<string>('');
   showReminderPicker = signal<boolean>(false);
   showNewTaskReminderPicker = signal<boolean>(false);
 
@@ -235,6 +252,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Delete confirmation modal state
   deleteModalOpen = signal<boolean>(false);
   taskPendingDelete = signal<Task | null>(null);
+
+  // Bulk delete confirmation
+  bulkDeleteModalOpen = signal<boolean>(false);
 
   sidebarItems = computed<SidebarNavItem[]>(() => [
     {
@@ -417,7 +437,6 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   snoozeReminder(index: number, minutes: number) {
     const times = this.newTaskReminderTimes();
-    const currentTime = times[index];
 
     // Calculate new reminder time
     const now = new Date();
@@ -446,14 +465,14 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.showLabelAutocomplete.set(false);
   }
 
-  getLabelSuggestions(): string[] {
+  labelSuggestions = computed(() => {
     const input = this.newTaskLabelInput().toLowerCase();
     if (!input) return [];
     return this.allLabels().filter(label =>
       label.toLowerCase().includes(input) &&
       !this.newTaskLabels().includes(label)
     ).slice(0, 5);
-  }
+  });
 
   hideLabelAutocomplete() {
     // Delay hiding to allow click events on suggestions
@@ -485,14 +504,14 @@ export class TasksComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const taskId = Date.now().toString();
+    const taskId = crypto.randomUUID();
 
     // Optimistic update - show loading state
     this.isLoading.set(true);
 
     const subtasks: Task[] | undefined = this.newTaskSubtasks().length > 0
-      ? this.newTaskSubtasks().map((st, idx) => ({
-        id: `${taskId}-${idx}`,
+      ? this.newTaskSubtasks().map((st) => ({
+        id: crypto.randomUUID(),
         title: st,
         priority: 'MEDIUM' as Task['priority'],
         hours: '0.5H',
@@ -520,7 +539,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), 1)
       } : undefined,
       dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined,
-      description: this.newTaskDescription() || undefined
+      description: this.newTaskDescription() || undefined,
+      createdAt: new Date().toISOString()
     };
 
     try {
@@ -615,9 +635,13 @@ export class TasksComponent implements OnInit, OnDestroy {
   upcomingGroupExpanded = signal<boolean>(false);
   noDueDateGroupExpanded = signal<boolean>(false);
 
-  todayTasksCount = computed(
-    () => this.store.tasks().filter(t => t.due?.includes('Today')).length
-  );
+  todayTasksCount = computed(() => {
+    const today = new Date();
+    return this.store.tasks().filter(t =>
+      this.dueDateMatchesDay(t.due, today) ||
+      (t.subtasks?.some(st => this.dueDateMatchesDay(st.due, today)) ?? false)
+    ).length;
+  });
   completedTasksCount = computed(
     () => this.store.tasks().filter(t => t.status === 'COMPLETED').length
   );
@@ -642,15 +666,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     const sel = this.selectedCalendarDay();
     if (!sel) return this.store.tasks();
     const selDate = new Date(sel.year, sel.month, sel.day);
-    const today = new Date();
-    const isToday = selDate.toDateString() === today.toDateString();
-    return this.store.tasks().filter(t => {
-      if (!t.due) return false;
-      if (isToday && t.due.includes('Today')) return true;
-      // Match formatted date strings like "Mon, Apr 21"
-      const formatted = selDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      return t.due.includes(formatted);
-    });
+    return this.store.tasks().filter(t => this.dueDateMatchesDay(t.due, selDate));
   });
 
   selectedDayTotal        = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().length : this.store.tasks().length);
@@ -658,6 +674,53 @@ export class TasksComponent implements OnInit, OnDestroy {
   selectedDayActive       = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().filter(t => t.status === 'ACTIVE').length : this.activeTasksCount());
   selectedDayToday        = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().length : this.todayTasksCount());
   selectedDayPriority     = computed(() => this.selectedCalendarDay() ? this.selectedDayTasks().filter(t => t.priority === 'HIGH').length : this.priorityTasksCount());
+
+  /** Subtasks (from any parent) whose due date falls on the selected calendar day. */
+  calendarDaySubtasks = computed((): Array<{ task: Task; parentTitle: string }> => {
+    const sel = this.selectedCalendarDay();
+    if (!sel) return [];
+    const selDate = new Date(sel.year, sel.month, sel.day);
+    const result: Array<{ task: Task; parentTitle: string }> = [];
+    for (const parent of this.store.tasks()) {
+      if (!parent.subtasks?.length) continue;
+      for (const subtask of parent.subtasks) {
+        if (this.dueDateMatchesDay(subtask.due, selDate)) {
+          result.push({ task: subtask, parentTitle: parent.title });
+        }
+      }
+    }
+    return result;
+  });
+
+  /** Subtasks due today — shown as individual rows in the Today view. */
+  todaySubtasks = computed((): Array<{ task: Task; parentTitle: string }> => {
+    const today = new Date();
+    const result: Array<{ task: Task; parentTitle: string }> = [];
+    for (const parent of this.store.tasks()) {
+      if (!parent.subtasks?.length) continue;
+      for (const subtask of parent.subtasks) {
+        if (this.dueDateMatchesDay(subtask.due, today)) {
+          result.push({ task: subtask, parentTitle: parent.title });
+        }
+      }
+    }
+    return result;
+  });
+
+  /** Subtasks with a future due date — shown as individual rows in the Upcoming view. */
+  upcomingSubtasks = computed((): Array<{ task: Task; parentTitle: string }> => {
+    const today = new Date();
+    const result: Array<{ task: Task; parentTitle: string }> = [];
+    for (const parent of this.store.tasks()) {
+      if (!parent.subtasks?.length) continue;
+      for (const subtask of parent.subtasks) {
+        if (subtask.due && !this.dueDateMatchesDay(subtask.due, today) && !this.isOverdue(subtask)) {
+          result.push({ task: subtask, parentTitle: parent.title });
+        }
+      }
+    }
+    return result;
+  });
 
   // Inbox/Today/Upcoming/Completed views
   inboxTasks = computed(() => this.store.tasks());
@@ -667,16 +730,29 @@ export class TasksComponent implements OnInit, OnDestroy {
     const query = this.sidebarSearch().trim().toLowerCase();
     const selectedFolder = this.selectedFolder();
     const metric = this.metricFilter();
+    const calDay = this.selectedCalendarDay();
 
     let base: Task[];
-    if (view === 'today') {
-      base = this.store.tasks().filter(t => t.due?.includes('Today'));
+    const todayDate = new Date();
+    if (calDay && (view === 'today' || view === 'upcoming')) {
+      // Any calendar day click: show parent tasks due that day OR with a subtask due that day
+      const selDate = new Date(calDay.year, calDay.month, calDay.day);
+      base = this.store.tasks().filter(t =>
+        this.dueDateMatchesDay(t.due, selDate) ||
+        (t.subtasks?.some(st => this.dueDateMatchesDay(st.due, selDate)) ?? false)
+      );
+    } else if (view === 'today') {
+      base = this.store.tasks().filter(t =>
+        this.dueDateMatchesDay(t.due, todayDate) ||
+        (t.subtasks?.some(st => this.dueDateMatchesDay(st.due, todayDate)) ?? false)
+      );
     } else if (view === 'upcoming') {
       base = this.store.tasks().filter(t => {
-        if (!t.due) return false;
-        if (t.due.includes('Today')) return false;
-        if (this.isOverdue(t)) return false;
-        return true;
+        const taskUpcoming = !!t.due && !this.dueDateMatchesDay(t.due, todayDate) && !this.isOverdue(t);
+        const hasUpcomingSubtask = t.subtasks?.some(st =>
+          !!st.due && !this.dueDateMatchesDay(st.due, todayDate) && !this.isOverdue(st)
+        ) ?? false;
+        return taskUpcoming || hasUpcomingSubtask;
       });
     } else if (view === 'completed') {
       base = this.store.tasks().filter(t => t.status === 'COMPLETED');
@@ -700,8 +776,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (!query) return base;
 
     return base.filter(t => {
-      const haystack =
-        (t.title + ' ' + (t.project ?? '')).toLowerCase();
+      const haystack = (
+        t.title + ' ' +
+        (t.project ?? '') + ' ' +
+        (t.labels?.join(' ') ?? '') + ' ' +
+        (t.description ?? '')
+      ).toLowerCase();
       return haystack.includes(query);
     });
   });
@@ -711,27 +791,45 @@ export class TasksComponent implements OnInit, OnDestroy {
   /** Flat list interleaved with group-header items for the inbox view. */
   flatListItems = computed((): TaskListItem[] => {
     const tasks = this.filteredTasks();
+    let items: TaskListItem[];
+
     if (this.selectedView() !== 'inbox') {
-      return tasks.map(t => ({ kind: 'task', task: t }));
+      items = tasks.map(t => ({ kind: 'task', task: t }));
+    } else {
+      items = [];
+      const push = (label: string, accent: string, list: Task[]) => {
+        if (!list.length) return;
+        items.push({ kind: 'header', label, count: list.length, accent });
+        list.forEach(t => items.push({ kind: 'task', task: t }));
+      };
+
+      const today = new Date();
+      push('Overdue', '#ef4444',
+        tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED'));
+      push('Today', '#f59e0b',
+        tasks.filter(t => this.dueDateMatchesDay(t.due, today) && t.status !== 'COMPLETED'));
+      push('Upcoming', '#6366f1',
+        tasks.filter(t => !!t.due && !this.dueDateMatchesDay(t.due, today) && !this.isOverdue(t) && t.status !== 'COMPLETED'));
+      push('No Date', '#9ca3af',
+        tasks.filter(t => !t.due && t.status !== 'COMPLETED'));
+      push('Completed', '#10b981',
+        tasks.filter(t => t.status === 'COMPLETED'));
     }
 
-    const items: TaskListItem[] = [];
-    const push = (label: string, accent: string, list: Task[]) => {
-      if (!list.length) return;
-      items.push({ kind: 'header', label, count: list.length, accent });
-      list.forEach(t => items.push({ kind: 'task', task: t }));
+    const appendSubtasks = (subs: Array<{ task: Task; parentTitle: string }>, label: string) => {
+      if (!subs.length) return;
+      items.push({ kind: 'header', label, count: subs.length, accent: '#8b5cf6' });
+      subs.forEach(({ task, parentTitle }) => items.push({ kind: 'subtask', task, parentTitle }));
     };
 
-    push('Overdue', '#ef4444',
-      tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED'));
-    push('Today', '#f59e0b',
-      tasks.filter(t => t.due?.includes('Today') && t.status !== 'COMPLETED'));
-    push('Upcoming', '#6366f1',
-      tasks.filter(t => !!t.due && !t.due.includes('Today') && !this.isOverdue(t) && t.status !== 'COMPLETED'));
-    push('No Date', '#9ca3af',
-      tasks.filter(t => !t.due && t.status !== 'COMPLETED'));
-    push('Completed', '#10b981',
-      tasks.filter(t => t.status === 'COMPLETED'));
+    const view = this.selectedView();
+    if (this.selectedCalendarDay()) {
+      appendSubtasks(this.calendarDaySubtasks(), 'Subtasks Due');
+    } else if (view === 'today') {
+      appendSubtasks(this.todaySubtasks(), 'Subtasks Due Today');
+    } else if (view === 'upcoming') {
+      appendSubtasks(this.upcomingSubtasks(), 'Upcoming Subtasks');
+    }
 
     return items;
   });
@@ -779,13 +877,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday = isCurrentCalMonth && day === today.getDate();
       const isSelected = !!sel && sel.day === day && sel.month === month && sel.year === year;
-      const isActive = this.store.tasks().some(t => {
-        if (!t.due) return false;
-        if (t.due.includes('Today') && isToday) return true;
-        const d = new Date(year, month, day);
-        const formatted = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        return t.due.includes(formatted);
-      });
+      const d = new Date(year, month, day);
+      const isActive = this.store.tasks().some(t =>
+        this.dueDateMatchesDay(t.due, d) ||
+        (t.subtasks?.some(st => this.dueDateMatchesDay(st.due, d)) ?? false)
+      );
       days.push({ day, isCurrentMonth: true, isToday, isActive, isSelected });
     }
 
@@ -799,15 +895,18 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task groups
   todayTasks = computed(() => {
-    return this.store.tasks().filter(t => t.due?.includes('Today'));
+    const today = new Date();
+    return this.store.tasks().filter(t => this.dueDateMatchesDay(t.due, today));
   });
 
   upcomingTasks = computed(() => {
+    const today = new Date();
     return this.store.tasks().filter(t => {
-      if (!t.due) return false;
-      if (t.due.includes('Today')) return false;
-      if (this.isOverdue(t)) return false;
-      return true;
+      const taskUpcoming = !!t.due && !this.dueDateMatchesDay(t.due, today) && !this.isOverdue(t);
+      const hasUpcomingSubtask = t.subtasks?.some(st =>
+        !!st.due && !this.dueDateMatchesDay(st.due, today) && !this.isOverdue(st)
+      ) ?? false;
+      return taskUpcoming || hasUpcomingSubtask;
     });
   });
 
@@ -979,7 +1078,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.datePickerDate.set(newDate);
   }
 
-  getDatePickerDays() {
+  datePickerDays = computed(() => {
     const date = this.datePickerDate();
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -994,12 +1093,10 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     const days: Array<{ day: number; isCurrentMonth: boolean; isToday: boolean }> = [];
 
-    // Previous month's trailing days
     for (let i = startDay - 1; i >= 0; i--) {
       days.push({ day: daysInPrevMonth - i, isCurrentMonth: false, isToday: false });
     }
 
-    // Current month's days
     const today = new Date();
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday = today.getDate() === day &&
@@ -1008,19 +1105,18 @@ export class TasksComponent implements OnInit, OnDestroy {
       days.push({ day, isCurrentMonth: true, isToday });
     }
 
-    // Next month's leading days
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       days.push({ day, isCurrentMonth: false, isToday: false });
     }
 
     return days;
-  }
+  });
 
-  getDatePickerMonth() {
+  datePickerMonth = computed(() => {
     const date = this.datePickerDate();
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
-  }
+  });
 
   // Folder methods
   toggleFolderDropdown(event?: Event) {
@@ -1360,23 +1456,31 @@ export class TasksComponent implements OnInit, OnDestroy {
   /**
    * Metric cards are clickable shortcuts into common views.
    */
+  jumpToToday() {
+    this.currentDate.set(new Date());
+    this.onMetricClick('today');
+  }
+
   onMetricClick(metric: 'today' | 'completed' | 'active' | 'priority') {
     this.sidebarSearch.set('');
     this.selectedFolder.set('');
+    this.selectedCalendarDay.set(null);
 
     if (metric === 'today') {
       this.selectedView.set('today');
+      this.sidebarActiveId.set('today');
       this.metricFilter.set('none');
     } else if (metric === 'completed') {
       this.selectedView.set('completed');
+      this.sidebarActiveId.set('completed');
       this.metricFilter.set('none');
     } else if (metric === 'active') {
-      // Show only active tasks in inbox
       this.selectedView.set('inbox');
+      this.sidebarActiveId.set('inbox');
       this.metricFilter.set('active');
     } else if (metric === 'priority') {
-      // Show only high priority tasks in inbox
       this.selectedView.set('inbox');
+      this.sidebarActiveId.set('inbox');
       this.metricFilter.set('priority');
     }
   }
@@ -1507,7 +1611,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   addSubtask(parentTask: Task, subtaskTitle: string) {
     if (!subtaskTitle.trim()) return;
     const newSubtask: Task = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       title: subtaskTitle.trim(),
       priority: 'MEDIUM',
       hours: '0.5H',
@@ -1515,14 +1619,34 @@ export class TasksComponent implements OnInit, OnDestroy {
       parentId: parentTask.id
     };
 
-    const updatedSubtasks = [...(parentTask.subtasks || []), newSubtask];
-    this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
-
-    // Keep selectedTaskForDetails in sync so the modal reflects the change immediately
-    if (this.selectedTaskForDetails()?.id === parentTask.id) {
-      this.selectedTaskForDetails.set({ ...parentTask, subtasks: updatedSubtasks });
-    }
+    const freshParent = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
+    const updatedSubtasks = [...(freshParent.subtasks || []), newSubtask];
+    this.store.updateTask(freshParent.id, { subtasks: updatedSubtasks });
     this.newSubtaskTitle.set('');
+  }
+
+  startEditSubtask(subtask: Task) {
+    this.editingSubtaskId.set(subtask.id);
+    this.editingSubtaskTitle.set(subtask.title);
+  }
+
+  saveEditSubtask(parentTask: Task, subtask: Task) {
+    const newTitle = this.editingSubtaskTitle().trim();
+    if (newTitle && newTitle !== subtask.title) {
+      const fresh = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
+      const updated = (fresh.subtasks ?? []).map(s =>
+        s.id === subtask.id ? { ...s, title: newTitle } : s
+      );
+      this.store.updateTask(fresh.id, { subtasks: updated });
+    }
+    this.editingSubtaskId.set(null);
+    this.editingSubtaskTitle.set('');
+  }
+
+  deleteSubtask(parentTask: Task, subtaskId: string) {
+    const fresh = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
+    const updated = (fresh.subtasks ?? []).filter(s => s.id !== subtaskId);
+    this.store.updateTask(fresh.id, { subtasks: updated });
   }
 
   // Focus mode
@@ -1538,7 +1662,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task details modal methods
   openTaskDetails(task: Task) {
-    this.selectedTaskForDetails.set(task);
+    this.selectedTaskId.set(task.id);
     this.editedTaskTitle.set(task.title);
     this.editedTaskDescription.set(task.description || task.notes || '');
     this.editedTaskPriority.set(task.priority);
@@ -1562,7 +1686,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   closeTaskDetails() {
     this.showTaskDetails.set(false);
-    this.selectedTaskForDetails.set(null);
+    this.selectedTaskId.set(null);
     this.editingTaskDetails.set(false);
     this.detailsShowAdvanced.set(false);
     this.detailsLabelInput.set('');
@@ -1572,6 +1696,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.showDatePicker.set(false);
     this.showReminderPicker.set(false);
     this.datePickerPosition.set(null);
+    this.showDetailsAi.set(false);
+    this.detailsAiMessages.set([]);
+    this.detailsAiInput.set('');
+    this.editingSubtaskId.set(null);
+    this.editingSubtaskTitle.set('');
   }
 
   toggleEditTaskDetails() {
@@ -1615,13 +1744,33 @@ export class TasksComponent implements OnInit, OnDestroy {
       } : undefined
     };
 
-    this.store.updateTask(task.id, updates);
+    if (task.parentId) {
+      // Subtask: update via parent's subtasks array
+      const parent = this.store.tasks().find(t => t.id === task.parentId);
+      if (parent) {
+        const updatedSubtasks = (parent.subtasks || []).map(st =>
+          st.id === task.id ? { ...st, ...updates } : st
+        );
+        this.store.updateTask(parent.id, { subtasks: updatedSubtasks });
+      }
+    } else {
+      this.store.updateTask(task.id, updates);
+    }
     this.closeTaskDetails();
   }
 
   deleteTaskFromDetails() {
     const task = this.selectedTaskForDetails();
-    if (task) {
+    if (!task) return;
+    if (task.parentId) {
+      // Subtask: remove from parent's subtasks array
+      const parent = this.store.tasks().find(t => t.id === task.parentId);
+      if (parent) {
+        const updatedSubtasks = (parent.subtasks || []).filter(st => st.id !== task.id);
+        this.store.updateTask(parent.id, { subtasks: updatedSubtasks });
+      }
+      this.closeTaskDetails();
+    } else {
       this.closeTaskDetails();
       this.requestDeleteTask(task);
     }
@@ -1629,11 +1778,13 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   completeTaskFromDetails() {
     const task = this.selectedTaskForDetails();
-    if (task) {
+    if (!task) return;
+    if (task.parentId) {
+      // Subtask opened directly — must update via parent's subtasks array
+      const parent = this.store.tasks().find(t => t.id === task.parentId);
+      if (parent) this.toggleSubtaskStatus(parent, task);
+    } else {
       this.toggleTaskStatus(task);
-      // Update the selected task reference
-      const updatedTask = { ...task, status: task.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED' as Task['status'] };
-      this.selectedTaskForDetails.set(updatedTask);
     }
   }
 
@@ -1658,15 +1809,22 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   toggleSubtaskStatus(parentTask: Task, subtask: Task) {
+    // Always get the freshest parent from the store to avoid stale snapshot issues
+    const freshParent = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
     const newStatus: Task['status'] = subtask.status === 'COMPLETED' ? 'ACTIVE' : 'COMPLETED';
-    const updatedSubtasks = (parentTask.subtasks || []).map(st =>
+    const updatedSubtasks = (freshParent.subtasks || []).map(st =>
       st.id === subtask.id ? { ...st, status: newStatus } : st
     );
-    this.store.updateTask(parentTask.id, { subtasks: updatedSubtasks });
+    this.store.updateTask(freshParent.id, { subtasks: updatedSubtasks });
+    // selectedTaskForDetails is a computed from store.tasks, so it auto-updates
+  }
 
-    // Update the selected task reference
-    const updatedTask = { ...parentTask, subtasks: updatedSubtasks };
-    this.selectedTaskForDetails.set(updatedTask);
+  /** Toggle a subtask's status when shown as a standalone calendar list item (looks up parent by parentId). */
+  toggleCalendarSubtaskStatus(subtask: Task, event: Event) {
+    event.stopPropagation();
+    const parent = this.store.tasks().find(t => t.id === subtask.parentId);
+    if (!parent) return;
+    this.toggleSubtaskStatus(parent, subtask);
   }
 
   isAttachmentImage(attachment: { name: string; type: string }): boolean {
@@ -1694,6 +1852,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   stopPomodoro() {
+    if (this.pomodoroInterval) {
+      clearInterval(this.pomodoroInterval);
+      this.pomodoroInterval = null;
+    }
     this.pomodoroActive.set(false);
     this.pomodoroTask.set(null);
   }
@@ -1839,7 +2001,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   createRecurringTask(baseTask: Task, pattern: 'daily' | 'weekly' | 'monthly' | 'yearly', interval: number = 1) {
     const recurringTask: Task = {
       ...baseTask,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       recurring: {
         pattern,
         interval,
@@ -2037,6 +2199,21 @@ export class TasksComponent implements OnInit, OnDestroy {
     return parsed < today;
   }
 
+  /** Returns true if a task/subtask due string matches the given calendar date. Handles ISO (2026-05-18) and human-readable ("Mon, May 18") formats. */
+  private dueDateMatchesDay(due: string | undefined, date: Date): boolean {
+    if (!due) return false;
+    const today = new Date();
+    if (due.includes('Today') && date.toDateString() === today.toDateString()) return true;
+    // ISO format: "2026-05-18"
+    if (/^\d{4}-\d{2}-\d{2}/.test(due)) {
+      const parsed = new Date(due + 'T00:00:00');
+      return parsed.toDateString() === date.toDateString();
+    }
+    // Human-readable: "Mon, May 18"
+    const formatted = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    return due.includes(formatted);
+  }
+
   parseDateFromString(dateStr: string): Date | null {
     if (!dateStr) return null;
     if (dateStr.includes('Today')) {
@@ -2145,14 +2322,18 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   bulkDeleteTasks() {
+    this.bulkDeleteModalOpen.set(true);
+  }
+
+  confirmBulkDelete() {
     const selected = this.selectedTasks();
-    selected.forEach(id => {
-      const task = this.store.tasks().find(t => t.id === id);
-      if (task) {
-        this.store.deleteTask(id);
-      }
-    });
+    selected.forEach(id => this.store.deleteTask(id));
+    this.bulkDeleteModalOpen.set(false);
     this.clearSelection();
+  }
+
+  cancelBulkDelete() {
+    this.bulkDeleteModalOpen.set(false);
   }
 
   bulkChangePriority(priority: Task['priority']) {
@@ -2231,10 +2412,10 @@ export class TasksComponent implements OnInit, OnDestroy {
     return this.store.tasks().find(t => t.id === id);
   }
 
-  getAvailableDependencyTasks(): Task[] {
+  getAvailableDependencyTasks(excludeId?: string): Task[] {
     return this.store.tasks().filter(t =>
       t.status !== 'COMPLETED' &&
-      t.id !== this.newTaskTitle() // Exclude self if editing
+      (!excludeId || t.id !== excludeId)
     );
   }
 
@@ -2253,6 +2434,20 @@ export class TasksComponent implements OnInit, OnDestroy {
   showAssistant = signal(false);
   aiLoading     = signal(false);
   aiMessages    = signal<AiPanelMessage[]>([]);
+
+  // Task Details inline AI
+  showDetailsAi       = signal(false);
+  detailsAiLoading    = signal(false);
+  detailsAiMessages   = signal<AiPanelMessage[]>([]);
+  detailsAiInput      = signal('');
+
+  readonly detailsAiSuggestions = [
+    'Break into subtasks',
+    'Improve the description',
+    'Estimate time needed',
+    'Suggest labels',
+    'What should I do next?',
+  ];
 
   readonly aiSuggestions = [
     'What tasks are overdue?',
@@ -2286,7 +2481,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         ? `${high.length} high-priority task${high.length > 1 ? 's' : ''}: ${high.slice(0, 3).map(t => t.title).join(', ')}${high.length > 3 ? ` and ${high.length - 3} more` : '.'}`
         : 'No high-priority active tasks right now.';
     } else if (q.includes('today')) {
-      const today = tasks.filter(t => t.due?.includes('Today'));
+      const todayDate = new Date();
+      const today = tasks.filter(t => this.dueDateMatchesDay(t.due, todayDate));
       response = today.length
         ? `${today.length} task${today.length > 1 ? 's' : ''} due today: ${today.slice(0, 3).map(t => t.title).join(', ')}${today.length > 3 ? ` and ${today.length - 3} more` : '.'}`
         : 'No tasks due today.';
@@ -2296,7 +2492,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         ? `${done.length} completed task${done.length > 1 ? 's' : ''}. Most recent: ${done.slice(-3).reverse().map(t => t.title).join(', ')}.`
         : 'No completed tasks yet.';
     } else if (q.includes('upcoming') || q.includes('deadline')) {
-      const upcoming = tasks.filter(t => t.due && !t.due.includes('Today') && !this.isOverdue(t) && t.status !== 'COMPLETED');
+      const todayDate = new Date();
+      const upcoming = tasks.filter(t => t.due && !this.dueDateMatchesDay(t.due, todayDate) && !this.isOverdue(t) && t.status !== 'COMPLETED');
       response = upcoming.length
         ? `${upcoming.length} upcoming task${upcoming.length > 1 ? 's' : ''}: ${upcoming.slice(0, 3).map(t => t.title).join(', ')}${upcoming.length > 3 ? ` and ${upcoming.length - 3} more` : '.'}`
         : 'No upcoming tasks with due dates.';
@@ -2316,4 +2513,52 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   clearAiChat() { this.aiMessages.set([]); }
+
+  async sendDetailsAiMessage(text: string) {
+    const task = this.selectedTaskForDetails();
+    if (!text.trim() || this.detailsAiLoading() || !task) return;
+    this.detailsAiMessages.update(m => [...m, { role: 'user', text }]);
+    this.detailsAiLoading.set(true);
+    this.detailsAiInput.set('');
+
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+
+    const q = text.toLowerCase();
+    let response = '';
+
+    if (q.includes('subtask') || q.includes('break')) {
+      response = task.description
+        ? `Suggested subtasks for "${task.title}":\n• Review and clarify requirements\n• Draft the main deliverable\n• Test and validate the outcome\n• Finalise and hand off`
+        : `Suggested subtasks for "${task.title}":\n• Plan the approach\n• Execute the main work\n• Review results\n• Finalise and close`;
+    } else if (q.includes('description') || q.includes('improve')) {
+      response = task.description
+        ? `Your description is a good start. Consider adding: the acceptance criteria, any blockers, and the expected outcome.`
+        : `A strong description covers: what needs to be done, why it matters, and the expected result. Try: "Complete [action] so that [benefit], resulting in [outcome]."`;
+    } else if (q.includes('time') || q.includes('estimate') || q.includes('duration')) {
+      const lvl = task.priority === 'HIGH' ? 'high' : task.priority === 'LOW' ? 'low' : 'medium';
+      response = `For a ${lvl}-priority task like "${task.title}":\n• Optimistic: 1–2 hours\n• Realistic: 2–4 hours\n• Pessimistic: 4–8 hours\n\nIf it exceeds 4 hours, consider breaking it into subtasks.`;
+    } else if (q.includes('label') || q.includes('tag') || q.includes('suggest label')) {
+      const suggestions: string[] = [];
+      if (task.priority === 'HIGH') suggestions.push('urgent');
+      if (task.due) suggestions.push('has-deadline');
+      if (task.subtasks?.length) suggestions.push('complex');
+      if (!suggestions.length) suggestions.push('general', 'needs-review');
+      response = `Suggested labels for "${task.title}": ${suggestions.join(', ')}.`;
+    } else if (q.includes('next') || q.includes('should i do')) {
+      const pending = (task.subtasks ?? []).filter(s => s.status !== 'COMPLETED');
+      response = pending.length
+        ? `Next step: work on the first pending subtask — "${pending[0].title}".${pending.length > 1 ? ` After that, tackle "${pending[1].title}".` : ''}`
+        : task.priority === 'HIGH'
+          ? `"${task.title}" is high priority with no subtasks — focus on completing it as soon as possible.`
+          : `Add a description and break "${task.title}" into smaller steps to make progress easier.`;
+    } else {
+      const subCount = task.subtasks?.length ?? 0;
+      response = `"${task.title}" is a ${task.priority.toLowerCase()}-priority task${task.due ? ` due ${task.due}` : ''} with ${subCount} subtask${subCount !== 1 ? 's' : ''}. I can help you break it into subtasks, improve the description, estimate time, suggest labels, or decide what to do next.`;
+    }
+
+    this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    this.detailsAiLoading.set(false);
+  }
+
+  clearDetailsAiChat() { this.detailsAiMessages.set([]); }
 }

@@ -160,7 +160,8 @@
                     (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)" />
                 } @else if (rightSidebarTab() === 'notes' && novel()) {
                 <app-notes-panel [notes]="novel()!.notes" (addNewNote)="addNewNote()"
-                    (deleteNote)="deleteNote($event)" />
+                    (deleteNote)="deleteNote($event)"
+                    (updateNote)="novelService.updateNote($event.id, $event.title, $event.body)" />
                 } @else if (rightSidebarTab() === 'manuscript' && novel()) {
                 <app-manuscript-data [totalNovelWords]="totalNovelWords()"
                     [averageChapterLength]="averageChapterLength()" [chaptersCompleted]="chaptersCompleted()"

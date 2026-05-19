@@ -1,0 +1,127 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "mobile",
+  "projectType": "application",
+  "generators": {},
+  "sourceRoot": "apps/mobile/src",
+  "prefix": "app",
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:application",
+      "options": {
+        "outputPath": "dist/apps/mobile",
+        "index": "apps/mobile/src/index.html",
+        "browser": "apps/mobile/src/main.ts",
+        "polyfills": [],
+        "tsConfig": "apps/mobile/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/mobile/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/mobile/src/assets",
+            "output": "assets"
+          }
+        ],
+        "styles": [
+          "apps/mobile/src/styles.css"
+        ],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "1.5MB",
+              "maximumError": "2.5MB"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "100kB",
+              "maximumError": "150kB"
+            }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/mobile/src/environments/environment.ts",
+              "with": "apps/mobile/src/environments/environment.prod.ts"
+            }
+          ]
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production",
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "options": {
+        "port": 4202
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "mobile:build:production"
+        },
+        "development": {
+          "buildTarget": "mobile:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n"
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "polyfills": [
+          "zone.js",
+          "zone.js/testing"
+        ],
+        "tsConfig": "apps/mobile/tsconfig.spec.json",
+        "styles": [
+          "apps/mobile/src/styles.css"
+        ],
+        "scripts": []
+      }
+    },
+    "tauri-ios": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tauri ios dev",
+        "cwd": "apps/mobile"
+      }
+    },
+    "tauri-android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tauri android dev",
+        "cwd": "apps/mobile"
+      }
+    },
+    "tauri-ios-build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tauri ios build",
+        "cwd": "apps/mobile"
+      }
+    },
+    "tauri-android-build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tauri android build",
+        "cwd": "apps/mobile"
+      }
+    }
+  }
+}

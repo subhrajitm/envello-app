@@ -46,6 +46,7 @@ export class OnboardingComponent implements OnInit {
     { id: 'openai',    label: 'OpenAI (GPT)',       icon: 'psychology' },
     { id: 'anthropic', label: 'Anthropic (Claude)', icon: 'smart_toy' },
     { id: 'gemini',    label: 'Google (Gemini)',    icon: 'auto_awesome' },
+    { id: 'deepseek',  label: 'DeepSeek',           icon: 'water' },
     { id: 'ollama',    label: 'Ollama (Local)',     icon: 'terminal' },
   ];
 

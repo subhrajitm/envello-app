@@ -137,7 +137,12 @@
         <div class="created-banner">
           <span class="created-icon material-symbols-outlined">check_circle</span>
           <span class="created-text">
-            <strong>{{ item.type }}</strong> created — <em>{{ item.title }}</em>
+            @if (item.count) {
+              <strong>Plan created</strong> — <em>{{ item.title }}</em>
+              <span class="created-count">+{{ item.count }} subtasks</span>
+            } @else {
+              <strong>{{ item.type }}</strong> created — <em>{{ item.title }}</em>
+            }
           </span>
           <button type="button" class="created-nav-btn" (click)="navigateToCreated()">
             View →
@@ -149,51 +154,62 @@
 
     </main>
 
-    <!-- ── Right Sidebar — Our Design Process ── -->
+    <!-- ── Right Sidebar — Recent Activity ── -->
     @defer (on idle) {
       <aside class="sidebar">
         <div class="sidebar-section full-height" style="padding: 24px;">
           <div class="dp-header">
-            <h2 class="dp-title">Active workstream</h2>
-            <div class="dp-progress">
+            <h2 class="dp-title">Recent activity</h2>
+            <div class="dp-progress" [title]="sidebarTasksCompleted() + ' of ' + store.tasks().length + ' tasks completed'">
               <svg class="progress-ring" width="24" height="24">
                 <circle class="progress-ring-bg" stroke="var(--border-color)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
                 <circle class="progress-ring-fill" stroke="var(--accent)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" stroke-dasharray="62.83" [attr.stroke-dashoffset]="sidebarTasksDashOffset()" />
               </svg>
-              <span class="dp-progress-text">{{ sidebarTasksCompleted() }}/{{ sidebarTasks().length }}</span>
+              <span class="dp-progress-text">{{ sidebarTasksCompleted() }}/{{ store.tasks().length }} done</span>
             </div>
           </div>
 
-          <div class="dp-list">
-            @for (task of sidebarTasks(); track task.id) {
-              <div class="dp-item">
+          @if (sidebarError()) {
+            <div class="si-error">
+              <span class="material-symbols-outlined" style="font-size:13px;flex-shrink:0;">warning</span>
+              {{ sidebarError() }}
+            </div>
+          }
+
+          <div class="dp-list si-list">
+            @for (item of sidebarActivityItems(); track item.id) {
+              <div class="dp-item si-item" (click)="navigateSidebarItem(item, $event)">
                 <div class="dp-item-main">
-                  <div class="dp-checkbox" [class.checked]="task.status === 'COMPLETED'" (click)="toggleSidebarTask(task, $event)" title="Toggle Task Status">
-                    @if (task.status === 'COMPLETED') {
-                      <span class="material-symbols-outlined" style="font-size: 14px; font-weight: bold;">check</span>
+
+                  @if (item.kind === 'task' && item.task) {
+                    <div class="dp-checkbox" [class.checked]="item.task.status === 'COMPLETED'"
+                         (click)="toggleSidebarTask(item.task, $event)" title="Toggle status">
+                      @if (item.task.status === 'COMPLETED') {
+                        <span class="material-symbols-outlined" style="font-size: 14px; font-weight: bold;">check</span>
+                      }
+                    </div>
+                  } @else {
+                    <span class="si-type-icon material-symbols-outlined" [style.color]="item.iconColor">{{ item.icon }}</span>
+                  }
+
+                  <div class="si-text">
+                    <div class="dp-item-title" [class.completed]="item.task?.status === 'COMPLETED'">{{ item.title }}</div>
+                    @if (item.subtitle) {
+                      <div class="si-subtitle">{{ item.subtitle }}</div>
+                    }
+                    @if (item.description) {
+                      <div class="si-description">{{ item.description }}</div>
                     }
                   </div>
-                  <div class="dp-item-title" [class.completed]="task.status === 'COMPLETED'" (click)="toggleSidebarTask(task, $event)" style="cursor: pointer;">{{ task.title }}</div>
-                  @if (task.status !== 'COMPLETED') {
-                    <div class="dp-actions">
-                      <button class="dp-action-btn" (click)="addSubtask(task, $event)" title="Add task">
-                        <span class="material-symbols-outlined">add</span>
-                      </button>
-                      <button class="dp-action-btn" (click)="router.navigate(['/tasks'])" title="View Task">
-                        <span class="material-symbols-outlined">visibility</span>
-                      </button>
-                    </div>
-                  }
+
+                  <button class="dp-action-btn si-nav-btn" title="View">
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                  </button>
                 </div>
-                @if (task.notes) {
-                  <div class="dp-item-note">
-                    {{ task.notes }}
-                  </div>
-                }
               </div>
             }
-            @if (sidebarTasks().length === 0) {
-              <div style="text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 16px;">No tasks available</div>
+            @if (sidebarActivityItems().length === 0) {
+              <div style="text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 16px;">Nothing here yet</div>
             }
           </div>
         </div>

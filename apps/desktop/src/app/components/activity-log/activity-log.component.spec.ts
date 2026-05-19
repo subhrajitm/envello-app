@@ -6,15 +6,14 @@ import { StoreService } from '@envello/core';
 describe('ActivityLogComponent', () => {
   let component: ActivityLogComponent;
   let fixture: ComponentFixture<ActivityLogComponent>;
-  let storeService: jasmine.SpyObj<StoreService>;
 
   beforeEach(async () => {
-    const storeSpy = jasmine.createSpyObj('StoreService', [], {
-      activities: jasmine.createSpy().and.returnValue([
+    const storeSpy = {
+      activities: jest.fn().mockReturnValue([
         { id: '1', text: 'Entry added', time: '10 MINS AGO', type: 'entry' },
         { id: '2', text: 'Sync complete', time: '1 HOUR AGO', type: 'sync' },
       ]),
-    });
+    };
 
     await TestBed.configureTestingModule({
       imports: [ActivityLogComponent],
@@ -26,7 +25,6 @@ describe('ActivityLogComponent', () => {
 
     fixture = TestBed.createComponent(ActivityLogComponent);
     component = fixture.componentInstance;
-    storeService = TestBed.inject(StoreService) as jasmine.SpyObj<StoreService>;
     fixture.detectChanges();
   });
 

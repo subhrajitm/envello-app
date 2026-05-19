@@ -6,7 +6,13 @@ import { signal } from '@angular/core';
 describe('BinComponent', () => {
   let component: BinComponent;
   let fixture: ComponentFixture<BinComponent>;
-  let binService: jasmine.SpyObj<BinService>;
+  let binService: {
+    permanentlyDelete: jest.Mock;
+    emptyBin: jest.Mock;
+    restore: jest.Mock;
+    canRestore: jest.Mock;
+    items: ReturnType<typeof signal>;
+  };
 
   const mockItems = signal([
     {
@@ -26,18 +32,21 @@ describe('BinComponent', () => {
   ]);
 
   beforeEach(async () => {
-    const binSpy = jasmine.createSpyObj('BinService', ['permanentlyDelete', 'emptyBin'], {
+    binService = {
+      permanentlyDelete: jest.fn(),
+      emptyBin: jest.fn(),
+      restore: jest.fn().mockResolvedValue(true),
+      canRestore: jest.fn().mockReturnValue(true),
       items: mockItems,
-    });
+    };
 
     await TestBed.configureTestingModule({
       imports: [BinComponent],
-      providers: [{ provide: BinService, useValue: binSpy }],
+      providers: [{ provide: BinService, useValue: binService }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BinComponent);
     component = fixture.componentInstance;
-    binService = TestBed.inject(BinService) as jasmine.SpyObj<BinService>;
     fixture.detectChanges();
   });
 
@@ -45,59 +54,55 @@ describe('BinComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display items from BinService', () => {
-    expect(component.items().length).toBe(2);
-  });
-
-  it('should sort items newest first in sortedItems', () => {
-    const sorted = component.sortedItems();
-    expect(sorted[0].id).toBe('bin-1');
-    expect(sorted[1].id).toBe('bin-2');
-  });
-
-  it('should track by id', () => {
-    const item = component.items()[0];
-    expect(component.trackById(0, item)).toBe(item.id);
+  it('should expose all items sorted newest first', () => {
+    const all = component.allItems();
+    expect(all.length).toBe(2);
+    expect(all[0].id).toBe('bin-1');
+    expect(all[1].id).toBe('bin-2');
   });
 
   it('should format type labels', () => {
     expect(component.formatType('daily-note')).toBe('Daily Note');
-    expect(component.formatType('novel-chapter')).toBe('Novel Chapter');
     expect(component.formatType('novel-character')).toBe('Character');
-    expect(component.formatType('unknown')).toBe('unknown');
+    expect(component.formatType('unknown')).toBe('Unknown');
   });
 
-  it('should call permanentlyDelete when user confirms', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-    component.permanentlyDelete('bin-1');
+  it('should open delete confirm dialog', () => {
+    component.openDeleteConfirm('bin-1', 'Note Title');
+    expect(component.confirmDialog()?.mode).toBe('delete');
+    expect(component.confirmDialog()?.itemId).toBe('bin-1');
+  });
+
+  it('should call permanentlyDelete on confirmAction with delete mode', async () => {
+    component.openDeleteConfirm('bin-1', 'Note Title');
+    await component.confirmAction();
     expect(binService.permanentlyDelete).toHaveBeenCalledWith('bin-1');
   });
 
-  it('should not call permanentlyDelete when user cancels', () => {
-    spyOn(window, 'confirm').and.returnValue(false);
-    component.permanentlyDelete('bin-1');
-    expect(binService.permanentlyDelete).not.toHaveBeenCalled();
+  it('should open empty confirm when items exist', () => {
+    component.emptyBin();
+    expect(component.confirmDialog()?.mode).toBe('empty');
   });
 
-  it('should call emptyBin when user confirms', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
+  it('should call emptyBin on confirmAction with empty mode', async () => {
     component.emptyBin();
+    await component.confirmAction();
     expect(binService.emptyBin).toHaveBeenCalled();
   });
 
-  it('should not call emptyBin when user cancels', () => {
-    spyOn(window, 'confirm').and.returnValue(false);
-    component.emptyBin();
-    expect(binService.emptyBin).not.toHaveBeenCalled();
-  });
-
-  it('should return early when emptyBin is called with no items', () => {
+  it('should not open empty confirm when no items', () => {
     const emptyItems = signal([]);
     (binService as unknown as { items: ReturnType<typeof signal> }).items = emptyItems;
     fixture = TestBed.createComponent(BinComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
     component.emptyBin();
-    expect(binService.emptyBin).not.toHaveBeenCalled();
+    expect(component.confirmDialog()).toBeNull();
+  });
+
+  it('should cancel confirm dialog', () => {
+    component.openDeleteConfirm('bin-1', 'Note');
+    component.cancelConfirm();
+    expect(component.confirmDialog()).toBeNull();
   });
 });

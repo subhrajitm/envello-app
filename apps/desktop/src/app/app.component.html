@@ -1,5 +1,6 @@
 @if (authService.initialized()) {
 <div class="dashboard">
+  <app-update-banner></app-update-banner>
   @if (!isFullScreen() && authService.isAuthenticated()) {
   <lib-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
     (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">

@@ -1,0 +1,115 @@
+<div class="ai-settings">
+  <div class="page-header">
+    <h2 class="page-title">AI Settings</h2>
+    <span class="page-subtitle">Configure the platform-level AI provider and model</span>
+  </div>
+
+  @if (toast().text) {
+    <div class="toast" [class.toast-error]="toast().isError">
+      <span class="material-symbols-outlined">{{ toast().isError ? 'error' : 'check_circle' }}</span>
+      {{ toast().text }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">Loading configuration…</div>
+  }
+
+  <div class="info-card">
+    <span class="material-symbols-outlined info-icon">info</span>
+    <p>The platform key is used when users have no personal key configured. It applies globally across all AI features.</p>
+  </div>
+
+  <div class="settings-card">
+    <div class="form-group">
+      <label class="form-label">AI Provider</label>
+      <select
+        class="form-select"
+        [ngModel]="provider()"
+        (ngModelChange)="onProviderChange($event)"
+      >
+        @for (p of providers; track p) {
+          <option [value]="p">{{ p }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Model</label>
+      <input
+        class="form-input"
+        type="text"
+        [placeholder]="modelPlaceholder()"
+        [ngModel]="modelName()"
+        (ngModelChange)="modelName.set($event)"
+      />
+    </div>
+
+    @if (needsKey()) {
+      <div class="form-group">
+        <label class="form-label">API Key</label>
+        @if (!keyEditing()) {
+          <div class="input-row">
+            <input
+              class="form-input key-masked"
+              type="password"
+              [value]="hasExistingKey() ? '••••••••••••••••' : ''"
+              [placeholder]="hasExistingKey() ? '' : 'No key configured'"
+              readonly
+            />
+            <button class="icon-btn" (click)="startEditKey()" type="button" title="Replace key">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </div>
+          @if (hasExistingKey()) {
+            <span class="key-hint">Key configured — click edit to replace it</span>
+          }
+        } @else {
+          <div class="input-row">
+            <input
+              class="form-input"
+              [type]="showKey() ? 'text' : 'password'"
+              placeholder="Enter new API key…"
+              [ngModel]="newKey()"
+              (ngModelChange)="newKey.set($event)"
+              autofocus
+            />
+            <button class="icon-btn" (click)="showKey.set(!showKey())" type="button">
+              <span class="material-symbols-outlined">{{ showKey() ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+            <button class="icon-btn" (click)="cancelEditKey()" type="button" title="Cancel">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <span class="key-hint key-hint-warn">This will replace the stored key on save</span>
+        }
+      </div>
+    }
+
+    <div class="form-group toggle-group">
+      <div class="toggle-info">
+        <span class="form-label">Platform AI Enabled</span>
+        <span class="form-hint">Allow users to access AI features on this platform</span>
+      </div>
+      <label class="toggle-switch">
+        <input
+          type="checkbox"
+          [ngModel]="aiEnabled()"
+          (ngModelChange)="aiEnabled.set($event)"
+        />
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-secondary" [disabled]="testing()" (click)="testConnection()" type="button">
+        <span class="material-symbols-outlined" [class.spin]="testing()">{{ testing() ? 'sync' : 'wifi_tethering' }}</span>
+        {{ testing() ? 'Testing…' : 'Test Connection' }}
+      </button>
+      <button class="btn-primary" [disabled]="saving()" (click)="save()" type="button">
+        <span class="material-symbols-outlined" [class.spin]="saving()">{{ saving() ? 'sync' : 'save' }}</span>
+        {{ saving() ? 'Saving…' : 'Save Settings' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,16 +1,40 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { signal } from '@angular/core';
 import { ArticlesComponent } from './articles.component';
 import { ArticleService } from '@envello/core';
+
+const mockArticles = [
+  {
+    id: 'a1',
+    title: 'First Article',
+    platform: 'Medium' as const,
+    pipeline: 'PUBLISHED' as const,
+    wordCount: 1500,
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 describe('ArticlesComponent', () => {
   let component: ArticlesComponent;
   let fixture: ComponentFixture<ArticlesComponent>;
 
   beforeEach(async () => {
+    const articleSpy = {
+      getArticles: jest.fn().mockReturnValue(signal(mockArticles)),
+      addArticle: jest.fn(),
+      updateArticle: jest.fn(),
+      deleteArticle: jest.fn(),
+      saveMarkdown: jest.fn(),
+      loadArticleContent: jest.fn().mockResolvedValue(''),
+    };
+
     await TestBed.configureTestingModule({
       imports: [ArticlesComponent],
-      providers: [ArticleService],
+      providers: [
+        { provide: ArticleService, useValue: articleSpy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ArticlesComponent);
@@ -35,9 +59,9 @@ describe('ArticlesComponent', () => {
     expect(component.showArticleModal()).toBe(false);
   });
 
-  it('should open article modal with article for edit', () => {
+  it('should open article modal with article for edit', async () => {
     const article = component.articles()[0];
-    component.openArticleModal(article);
+    await component.openArticleModal(article);
     expect(component.showArticleModal()).toBe(true);
     expect(component.editingArticle()).toEqual(article);
     expect(component.newArticleTitle()).toBe(article.title);

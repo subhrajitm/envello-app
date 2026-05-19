@@ -235,8 +235,9 @@
                             <span class="setting-desc">Enter your {{ aiProvider() | titlecase }} API Key</span>
                         </div>
                         <div class="setting-control w-full" style="position:relative;display:flex;align-items:center;">
-                            <input [type]="showApiKey() ? 'text' : 'password'" [ngModel]="aiKey()" (ngModelChange)="aiKey.set($event)"
-                                class="form-input" placeholder="sk-..." spellcheck="false" style="padding-right:2.5rem;width:100%;">
+                            <input [type]="showApiKey() ? 'text' : 'password'" [ngModel]="aiKey()"
+                                (ngModelChange)="aiKey.set($event); testStatus.set('idle')"
+                                class="form-input" [placeholder]="getApiKeyPlaceholder()" spellcheck="false" style="padding-right:2.5rem;width:100%;">
                             <button type="button" (click)="showApiKey.set(!showApiKey())"
                                 style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;padding:0.25rem;opacity:0.6;color:inherit;"
                                 [title]="showApiKey() ? 'Hide API key' : 'Show API key'">
@@ -248,39 +249,70 @@
 
                     <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
-                            <label>Model Name</label>
+                            <label>Model</label>
                             <span class="setting-desc">Specific model identifier</span>
                         </div>
                         <div class="setting-control w-full">
                             <select class="select-input w-full" [ngModel]="aiModel()"
-                                (ngModelChange)="aiModel.set($event)">
+                                (ngModelChange)="aiModel.set($event); testStatus.set('idle')">
                                 @if (aiProvider() === 'openai') {
-                                <option value="gpt-5.3-codex">gpt-5.3-codex (Agentic Coding)</option>
-                                <option value="gpt-5.2">gpt-5.2 (Frontier Enterprise)</option>
-                                <option value="gpt-5.1">gpt-5.1 (Chat & Everyday Tasks)</option>
-                                <option value="gpt-4o">gpt-4o (Legacy)</option>
+                                <option value="gpt-4o">gpt-4o (Recommended)</option>
+                                <option value="gpt-4o-mini">gpt-4o-mini (Faster & Cheaper)</option>
+                                <option value="o1-preview">o1-preview (Advanced Reasoning)</option>
+                                <option value="o1-mini">o1-mini (Reasoning, Fast)</option>
                                 } @else if (aiProvider() === 'anthropic') {
-                                <option value="claude-4.6-opus">claude-4.6-opus (Highest Intel)</option>
-                                <option value="claude-4.6-sonnet">claude-4.6-sonnet (Latest Fast Intel)</option>
-                                <option value="claude-4.5-haiku">claude-4.5-haiku (Faster)</option>
+                                <option value="claude-opus-4-6">claude-opus-4-6 (Most Capable)</option>
+                                <option value="claude-sonnet-4-6">claude-sonnet-4-6 (Recommended)</option>
+                                <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (Fastest)</option>
                                 } @else if (aiProvider() === 'gemini') {
-                                <option value="gemini-3.1-pro">Gemini 3.1 Pro (Advanced Reasoning)</option>
-                                <option value="gemini-3.0-ultra">Gemini 3.0 Ultra</option>
-                                <option value="gemini-3.0-flash">Gemini 3.0 Flash</option>
+                                <option value="gemini-2.5-pro">gemini-2.5-pro (Most Capable)</option>
+                                <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended)</option>
+                                <option value="gemini-1.5-pro">gemini-1.5-pro (Stable)</option>
                                 } @else if (aiProvider() === 'grok') {
-                                <option value="grok-4.1">Grok 4.1 (Latest)</option>
-                                <option value="grok-4.1-fast">Grok 4.1 Fast</option>
-                                <option value="grok-4.0">Grok 4.0</option>
+                                <option value="grok-3">grok-3 (Latest)</option>
+                                <option value="grok-3-mini">grok-3-mini (Faster)</option>
+                                <option value="grok-2">grok-2 (Stable)</option>
+                                } @else if (aiProvider() === 'deepseek') {
+                                <option value="deepseek-chat">deepseek-chat (Recommended)</option>
+                                <option value="deepseek-reasoner">deepseek-reasoner (R1, Chain-of-Thought)</option>
                                 } @else if (aiProvider() === 'ollama') {
-                                <option value="llama4-scout">llama4-scout</option>
+                                <option value="llama3">llama3</option>
                                 <option value="llama3.2">llama3.2</option>
-                                <option value="deepseek-coder-v3.2">deepseek-coder-v3.2</option>
-                                <option value="qwen3-coder">qwen3-coder</option>
-                                <option value="mistral-large-3">mistral-large-3</option>
+                                <option value="mistral">mistral</option>
+                                <option value="deepseek-coder">deepseek-coder</option>
+                                <option value="qwen2.5">qwen2.5</option>
                                 } @else {
-                                <option value="mock-model">Mock Demo Model</option>
+                                <option value="">Demo Mode</option>
                                 }
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Test Connection -->
+                    <div class="setting-item flex flex-col gap-2">
+                        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                            <button class="btn-secondary" style="display:flex;align-items:center;gap:0.4rem;"
+                                [disabled]="testStatus() === 'testing'"
+                                (click)="testConnection()">
+                                @if (testStatus() === 'testing') {
+                                <span class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite;">progress_activity</span>
+                                Testing…
+                                } @else {
+                                <span class="material-symbols-outlined" style="font-size:16px;">wifi_tethering</span>
+                                Test Connection
+                                }
+                            </button>
+                            @if (testStatus() === 'success') {
+                            <span style="display:flex;align-items:center;gap:0.3rem;color:var(--accent-green);font-size:13px;">
+                                <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
+                                {{ testMessage() }}
+                            </span>
+                            } @else if (testStatus() === 'error') {
+                            <span style="display:flex;align-items:center;gap:0.3rem;color:var(--accent-red);font-size:13px;">
+                                <span class="material-symbols-outlined" style="font-size:16px;">error</span>
+                                {{ testMessage() }}
+                            </span>
+                            }
                         </div>
                     </div>
 
@@ -290,12 +322,12 @@
                             <span class="info-value">{{ aiProvider() | titlecase }}</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Status</span>
-                            <span class="info-value" style="color: var(--accent-green)">Ready</span>
+                            <span class="info-label">Key Storage</span>
+                            <span class="info-value">{{ 'Session (local only)' }}</span>
                         </div>
                         <p class="text-muted-hint text-[11px] mt-3 leading-relaxed">
                             Envello uses LangChain to connect to various AI providers.
-                            Keys are stored locally on your device.
+                            Keys are stored locally on your device and never sent to Envello servers.
                         </p>
                     </div>
                     }

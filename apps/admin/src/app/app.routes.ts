@@ -1,3 +1,50 @@
 import { Route } from '@angular/router';
+import { AdminLayoutComponent } from './layout/admin-layout.component';
+import { adminGuard } from './guards/admin.guard';
 
-export const appRoutes: Route[] = [];
+export const appRoutes: Route[] = [
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./pages/login/admin-login.component').then(m => m.AdminLoginComponent),
+  },
+  {
+    path: '',
+    component: AdminLayoutComponent,
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
+      },
+      {
+        path: 'ai-settings',
+        loadComponent: () =>
+          import('./pages/ai-settings/ai-settings.component').then(m => m.AiSettingsComponent),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./pages/users/users.component').then(m => m.UsersComponent),
+      },
+      {
+        path: 'usage',
+        loadComponent: () =>
+          import('./pages/usage/usage.component').then(m => m.UsageComponent),
+      },
+      {
+        path: 'feature-flags',
+        loadComponent: () =>
+          import('./pages/feature-flags/feature-flags.component').then(m => m.FeatureFlagsComponent),
+      },
+      {
+        path: 'audit-log',
+        loadComponent: () =>
+          import('./pages/audit-log/audit-log.component').then(m => m.AuditLogComponent),
+      },
+    ],
+  },
+  { path: '**', redirectTo: 'login' },
+];

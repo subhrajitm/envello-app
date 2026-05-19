@@ -1,3 +1,36 @@
+/* Service worker update banner */
+.sw-update-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    background: var(--accent-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.sw-update-banner button {
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.sw-update-banner button:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
 /* Dashboard styles */
 .dashboard {
     width: 100%;
@@ -108,13 +141,14 @@
 @media (max-width: 768px) {
     .dashboard-content {
         padding: 0;
+        scrollbar-gutter: auto;
     }
 
-    .dashboard-content.with-sidebar {
-        margin-left: 56px;
-    }
-
-    .dashboard-content.with-sidebar.sidebar-collapsed {
-        margin-left: 56px;
+    /* Sidebar is a fixed overlay on mobile — zero left margin on ALL states */
+    .dashboard-content,
+    .dashboard-content.with-sidebar,
+    .dashboard-content.with-sidebar:not(.immersive-view),
+    .dashboard-content.with-sidebar:not(.immersive-view).sidebar-collapsed {
+        margin-left: 0 !important;
     }
 }

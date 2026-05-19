@@ -1,0 +1,44 @@
+<div class="flags-page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Feature Flags</h2>
+      <span class="page-subtitle">Enable or disable platform features globally</span>
+    </div>
+    <button class="save-btn" [disabled]="saving()" (click)="saveAll()">
+      <span class="material-symbols-outlined">{{ saving() ? 'sync' : 'save' }}</span>
+      {{ saving() ? 'Saving…' : 'Save All' }}
+    </button>
+  </div>
+
+  @if (toast()) {
+    <div class="toast">{{ toast() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">Loading feature flags…</div>
+  } @else {
+    <div class="flags-list">
+      @for (flag of flags(); track flag.id) {
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-header">
+              <span class="flag-name">{{ flag.name }}</span>
+              <span class="affects-badge" [class]="'affects-' + flag.affects.split(' ')[0].toLowerCase()">
+                {{ flag.affects }}
+              </span>
+            </div>
+            <p class="flag-desc">{{ flag.description }}</p>
+          </div>
+          <label class="toggle-switch">
+            <input
+              type="checkbox"
+              [checked]="flag.enabled"
+              (change)="toggle(flag.id)"
+            />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      }
+    </div>
+  }
+</div>

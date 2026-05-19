@@ -9,6 +9,12 @@
   overflow-x: hidden;
 }
 
+@media (max-width: 768px) {
+  :host {
+    display: none;
+  }
+}
+
 .env-fsb-header {
   padding: 14px 12px 10px;
   flex-shrink: 0;

@@ -310,6 +310,60 @@ alter table public.research_summaries enable row level security;
 create policy "Users can all access their own research summaries" on public.research_summaries for all using (auth.uid() = user_id);
 
 -- ──────────────────────────────────────────────────────
+-- Profiles (user roles for admin access)
+-- ──────────────────────────────────────────────────────
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  full_name text,
+  role text not null default 'user' check (role in ('user', 'admin')),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+alter table public.profiles enable row level security;
+
+-- Users can read and update their own profile
+drop policy if exists "Users can read own profile" on public.profiles;
+create policy "Users can read own profile" on public.profiles
+  for select using (auth.uid() = id);
+
+drop policy if exists "Users can update own profile" on public.profiles;
+create policy "Users can update own profile" on public.profiles
+  for update using (auth.uid() = id);
+
+-- Security-definer function to check admin role without RLS recursion
+create or replace function public.is_admin()
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$$;
+
+-- Admins can read all profiles (uses is_admin() to avoid recursive RLS)
+drop policy if exists "Admins can read all profiles" on public.profiles;
+create policy "Admins can read all profiles" on public.profiles
+  for select using (public.is_admin());
+
+-- Admins can update any profile (e.g. promote/demote roles)
+drop policy if exists "Admins can update all profiles" on public.profiles;
+create policy "Admins can update all profiles" on public.profiles
+  for update using (public.is_admin());
+
+-- Auto-create profile on sign-up
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, email, full_name)
+  values (new.id, new.email, new.raw_user_meta_data->>'full_name')
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- ──────────────────────────────────────────────────────
 -- Optional: Storage Buckets Setup (Requires extension/admin)
 -- ──────────────────────────────────────────────────────
 -- insert into storage.buckets (id, name, public) values ('envello-files', 'envello-files', false) on conflict do nothing;

@@ -1,0 +1,61 @@
+<div class="dashboard">
+  <div class="page-header">
+    <h2 class="page-title">Dashboard</h2>
+    <span class="page-subtitle">Platform overview and recent activity</span>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">Loading stats…</div>
+  } @else {
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-icon material-symbols-outlined">group</span>
+          <span class="stat-value">{{ totalUsers() }}</span>
+        </div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-icon material-symbols-outlined">smart_toy</span>
+          <span class="stat-value">{{ aiRequestsToday() }}</span>
+        </div>
+        <div class="stat-label">AI Requests Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-icon material-symbols-outlined">toggle_on</span>
+          <span class="stat-value">{{ activeFlagCount() }}</span>
+        </div>
+        <div class="stat-label">Active Feature Flags</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-icon material-symbols-outlined">auto_awesome</span>
+          <span class="stat-value">{{ platformProvider() }}</span>
+        </div>
+        <div class="stat-label">AI Provider in Use</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3 class="section-title">Recent AI Activity</h3>
+      <div class="activity-list">
+        @for (row of recentActivity(); track row.created_at) {
+          <div class="activity-row">
+            <div class="activity-avatar type-ai">{{ (row.email || row.user_id)[0].toUpperCase() }}</div>
+            <div class="activity-body">
+              <span class="activity-name">{{ row.email || (row.user_id.substring(0, 8) + '…') }}</span>
+              <span class="activity-action">Used {{ row.model }} via {{ row.provider }}</span>
+            </div>
+            <div class="activity-time">{{ row.created_at | date:'shortTime' }}</div>
+            <div class="activity-badge badge-ai">ai</div>
+          </div>
+        }
+        @empty {
+          <div class="empty-activity">No AI activity yet.</div>
+        }
+      </div>
+    </div>
+  }
+</div>

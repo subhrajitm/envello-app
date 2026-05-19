@@ -1,0 +1,145 @@
+<div class="users-page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Users</h2>
+      <span class="page-subtitle">Manage platform users and permissions</span>
+    </div>
+    <div class="header-actions">
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          class="search-input"
+          type="text"
+          placeholder="Search by name or email..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); currentPage.set(0)"
+        />
+      </div>
+      <button class="export-btn" (click)="exportUsers()">
+        <span class="material-symbols-outlined">download</span>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  @if (toast().text) {
+    <div class="toast" [class.toast-error]="toast().isError">
+      <span class="material-symbols-outlined">{{ toast().isError ? 'error' : 'check_circle' }}</span>
+      {{ toast().text }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">Loading users…</div>
+  } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>AI Usage</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of paginatedUsers(); track user.id) {
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">{{ (user.full_name || user.email || '?')[0].toUpperCase() }}</div>
+                  <div class="user-info">
+                    <span class="user-name">{{ user.full_name || 'Unknown' }}</span>
+                    <span class="user-email">{{ user.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [class.badge-admin]="user.role === 'admin'" [class.badge-user]="user.role === 'user'">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [class.badge-active]="user.status === 'active'" [class.badge-suspended]="user.status === 'suspended'">
+                  {{ user.status }}
+                </span>
+              </td>
+              <td>
+                <span class="usage-count">{{ user.ai_usage }} req</span>
+              </td>
+              <td>
+                <span class="date-cell">{{ user.created_at | date:'mediumDate' }}</span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="action-btn" (click)="requestRoleChange(user)">
+                    {{ user.role === 'admin' ? 'Remove Admin' : 'Make Admin' }}
+                  </button>
+                  <button class="action-btn" [class.danger]="user.status === 'active'" (click)="requestStatusChange(user)">
+                    {{ user.status === 'active' ? 'Suspend' : 'Reactivate' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="6" class="empty-row">No users match your search.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination-info">
+        {{ filteredUsers().length }} user{{ filteredUsers().length !== 1 ? 's' : '' }}
+        @if (filteredUsers().length !== allUsers().length) { (filtered from {{ allUsers().length }}) }
+      </span>
+      @if (totalPages() > 1) {
+        <div class="pagination-controls">
+          <button class="page-btn" [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          @for (p of pages(); track p) {
+            <button class="page-btn" [class.active]="p === currentPage()" (click)="goToPage(p)">{{ p + 1 }}</button>
+          }
+          <button class="page-btn" [disabled]="currentPage() === totalPages() - 1" (click)="goToPage(currentPage() + 1)">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<env-confirm-dialog
+  [isOpen]="!!pendingRole()"
+  [title]="pendingRole()?.role === 'admin' ? 'Remove admin privileges?' : 'Grant admin privileges?'"
+  icon="admin_panel_settings"
+  [variant]="pendingRole()?.role === 'admin' ? 'danger' : 'success'"
+  [confirmLabel]="pendingRole()?.role === 'admin' ? 'Remove Admin' : 'Make Admin'"
+  (confirmed)="confirmRoleChange()"
+  (cancelled)="pendingRole.set(null)"
+>
+  @if (pendingRole()) {
+    <strong>{{ pendingRole()!.full_name || pendingRole()!.email }}</strong> will
+    {{ pendingRole()!.role === 'admin' ? 'lose admin access and become a regular user.' : 'gain full admin access to this panel.' }}
+  }
+</env-confirm-dialog>
+
+<env-confirm-dialog
+  [isOpen]="!!pendingStatus()"
+  title="Suspend this user?"
+  icon="block"
+  variant="danger"
+  confirmLabel="Suspend"
+  (confirmed)="confirmSuspend()"
+  (cancelled)="pendingStatus.set(null)"
+>
+  @if (pendingStatus()) {
+    <strong>{{ pendingStatus()!.full_name || pendingStatus()!.email }}</strong> will lose access to the platform immediately.
+  }
+</env-confirm-dialog>

@@ -26,6 +26,8 @@ export interface EnvTableAction {
   label: string;
   icon?: string;
   danger?: boolean;
+  /** Set false to hide this action from the bulk selection bar. Defaults to true. */
+  bulk?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,6 +91,8 @@ export class TableComponent implements OnChanges {
   @Output() sortChange       = new EventEmitter<EnvTableSortEvent>();
   @Output() selectionChange  = new EventEmitter<EnvTableRow[]>();
   @Output() actionClick      = new EventEmitter<EnvTableActionEvent>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  @Output() bulkActionClick  = new EventEmitter<{ selectedIds: Set<any>; actionKey: string }>();
   @Output() pageChange       = new EventEmitter<number>();
   @Output() pageSizeChange   = new EventEmitter<number>();
   @Output() rowClick         = new EventEmitter<EnvTableRow>();
@@ -273,6 +277,20 @@ export class TableComponent implements OnChanges {
     const entry = col.badgeMap[val];
     if (!entry) return fallback;
     return { label: entry.label ?? String(val ?? ''), dotColor: entry.dotColor, bgColor: entry.bgColor, textColor: entry.textColor };
+  }
+
+  clearSelection() {
+    this.selectedIds.set(new Set());
+    this.selectionChange.emit([]);
+  }
+
+  onBulkAction(actionKey: string) {
+    const ids = this.selectedIds();
+    this.rows
+      .filter(row => ids.has(row[this.rowIdKey]))
+      .forEach(row => this.actionClick.emit({ row, actionKey }));
+    this.bulkActionClick.emit({ selectedIds: ids, actionKey });
+    this.clearSelection();
   }
 
   // ── Close menu on outside click ──────────────────────────────────────────────
