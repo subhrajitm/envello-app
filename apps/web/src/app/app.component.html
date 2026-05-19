@@ -1,3 +1,9 @@
+@if (updateAvailable()) {
+<div class="sw-update-banner">
+  A new version is available.
+  <button (click)="applyUpdate()">Reload to update</button>
+</div>
+}
 <div class="dashboard">
   @if (!isFullScreen()) {
   <lib-header [activeTab]="currentTab()" [isImmersive]="isImmersive()"
