@@ -1,4 +1,4 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, inject } from '@angular/core';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOllama } from '@langchain/ollama';
@@ -6,6 +6,7 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
+import { SupabaseService } from './supabase.service';
 
 export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek';
 
@@ -35,6 +36,12 @@ export class AiService {
     apiKey = signal<string>('');
 
     private chatModel?: BaseChatModel;
+    private sb = inject(SupabaseService);
+
+    // Platform-level fallback config loaded from Supabase on init
+    private platformProvider: AiProvider = 'mock';
+    private platformModel = '';
+    private platformKey = '';
 
     /**
      * API keys are sensitive. On Tauri (desktop) the webview storage is sandboxed
@@ -61,8 +68,8 @@ export class AiService {
         const savedKey = this.keyStorage.getItem('ai-key');
         if (savedKey) this.apiKey.set(savedKey);
 
-        // Initialize model
-        this.initModel();
+        // Load platform config as fallback, then init model
+        this.loadPlatformConfig().then(() => this.initModel());
 
         // Persist settings; key goes to session-scoped storage
         effect(() => {
@@ -73,6 +80,26 @@ export class AiService {
         });
     }
 
+    private async loadPlatformConfig() {
+        try {
+            const { data } = await this.sb.client
+                .from('platform_ai_config')
+                .select('provider, model_name, api_key, ai_enabled')
+                .single();
+            if (data) {
+                this.platformProvider = (data.provider as AiProvider) ?? 'mock';
+                this.platformModel = data.model_name ?? '';
+                this.platformKey = data.api_key ?? '';
+                // Only override local enabled flag if no user preference saved
+                if (localStorage.getItem('ai-enabled') === null) {
+                    this.aiEnabled.set(data.ai_enabled ?? true);
+                }
+            }
+        } catch {
+            // Supabase not reachable — keep defaults
+        }
+    }
+
     updateConfig(provider: AiProvider, model: string, key: string) {
         this.provider.set(provider);
         if (model) this.modelName.set(model);
@@ -81,25 +108,31 @@ export class AiService {
     }
 
     private initModel() {
+        // Effective config: user key takes priority; fall back to platform key
         const p = this.provider();
-        const k = this.apiKey();
+        const userKey = this.apiKey();
         const m = this.modelName();
 
+        // If user has no key set, try using the platform provider + key
+        const effectiveProvider = userKey ? p : (this.platformKey ? this.platformProvider : p);
+        const effectiveKey = userKey || this.platformKey;
+        const effectiveModel = m || this.platformModel;
+
         try {
-            if (p === 'openai' && k) {
-                this.chatModel = new ChatOpenAI({ model: m, configuration: { apiKey: k } });
-            } else if (p === 'anthropic' && k) {
-                this.chatModel = new ChatAnthropic({ model: m, apiKey: k });
-            } else if (p === 'ollama') {
-                this.chatModel = new ChatOllama({ model: m || 'llama3', baseUrl: 'http://localhost:11434' });
-            } else if (p === 'grok' && k) {
-                this.chatModel = new ChatXAI({ model: m, apiKey: k });
-            } else if (p === 'gemini' && k) {
-                this.chatModel = new ChatGoogleGenerativeAI({ model: m, apiKey: k });
-            } else if (p === 'deepseek' && k) {
+            if (effectiveProvider === 'openai' && effectiveKey) {
+                this.chatModel = new ChatOpenAI({ model: effectiveModel, configuration: { apiKey: effectiveKey } });
+            } else if (effectiveProvider === 'anthropic' && effectiveKey) {
+                this.chatModel = new ChatAnthropic({ model: effectiveModel, apiKey: effectiveKey });
+            } else if (effectiveProvider === 'ollama') {
+                this.chatModel = new ChatOllama({ model: effectiveModel || 'llama3', baseUrl: 'http://localhost:11434' });
+            } else if (effectiveProvider === 'grok' && effectiveKey) {
+                this.chatModel = new ChatXAI({ model: effectiveModel, apiKey: effectiveKey });
+            } else if (effectiveProvider === 'gemini' && effectiveKey) {
+                this.chatModel = new ChatGoogleGenerativeAI({ model: effectiveModel, apiKey: effectiveKey });
+            } else if (effectiveProvider === 'deepseek' && effectiveKey) {
                 this.chatModel = new ChatOpenAI({
-                    model: m || 'deepseek-chat',
-                    configuration: { apiKey: k, baseURL: 'https://api.deepseek.com/v1' }
+                    model: effectiveModel || 'deepseek-chat',
+                    configuration: { apiKey: effectiveKey, baseURL: 'https://api.deepseek.com/v1' }
                 });
             } else {
                 this.chatModel = undefined; // Fallback to mock
@@ -107,6 +140,22 @@ export class AiService {
         } catch (e) {
             console.error('Failed to initialize AI model:', e);
             this.chatModel = undefined;
+        }
+    }
+
+    private async logUsage(prompt: string, response: string) {
+        try {
+            const { data: { user } } = await this.sb.client.auth.getUser();
+            if (!user) return;
+            await this.sb.client.from('ai_usage_logs').insert({
+                user_id: user.id,
+                provider: this.provider(),
+                model: this.modelName(),
+                prompt_length: prompt.length,
+                response_length: response.length,
+            });
+        } catch {
+            // Non-critical — swallow errors silently
         }
     }
 
@@ -149,6 +198,7 @@ export class AiService {
     async sendMessage(prompt: string, context?: string): Promise<string> {
         if (!this.aiEnabled()) return '';
 
+        let result: string;
         if (this.chatModel) {
             try {
                 const messages = [
@@ -156,14 +206,17 @@ export class AiService {
                     new HumanMessage(prompt)
                 ];
                 const response = await this.chatModel.invoke(messages);
-                return typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
+                result = typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
             } catch (e) {
                 console.error('AI Request failed:', e);
-                return this.getMockResponse();
+                result = await this.getMockResponse();
             }
+        } else {
+            result = await this.getMockResponse();
         }
 
-        return this.getMockResponse();
+        this.logUsage(prompt, result);
+        return result;
     }
 
     async *streamMessage(prompt: string, context?: string): AsyncIterable<string> {

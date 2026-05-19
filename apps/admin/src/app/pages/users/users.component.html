@@ -1,0 +1,91 @@
+<div class="users-page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Users</h2>
+      <span class="page-subtitle">Manage platform users and permissions</span>
+    </div>
+    <div class="search-wrap">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Search by name or email..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+  </div>
+
+  @if (toast()) {
+    <div class="toast">{{ toast() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">Loading users…</div>
+  } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>AI Usage</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">{{ (user.full_name || user.email || '?')[0].toUpperCase() }}</div>
+                  <div class="user-info">
+                    <span class="user-name">{{ user.full_name || 'Unknown' }}</span>
+                    <span class="user-email">{{ user.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [class.badge-admin]="user.role === 'admin'" [class.badge-user]="user.role === 'user'">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [class.badge-active]="user.status === 'active'" [class.badge-suspended]="user.status === 'suspended'">
+                  {{ user.status }}
+                </span>
+              </td>
+              <td>
+                <span class="usage-count">{{ user.ai_usage }} req</span>
+              </td>
+              <td>
+                <span class="date-cell">{{ user.created_at | date:'mediumDate' }}</span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="action-btn" (click)="makeAdmin(user)">
+                    {{ user.role === 'admin' ? 'Remove Admin' : 'Make Admin' }}
+                  </button>
+                  <button class="action-btn" [class.danger]="user.status === 'active'" (click)="toggleStatus(user)">
+                    {{ user.status === 'active' ? 'Suspend' : 'Reactivate' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="6" class="empty-row">No users match your search.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination-info">Showing {{ filteredUsers().length }} of {{ allUsers().length }} users</span>
+    </div>
+  }
+</div>

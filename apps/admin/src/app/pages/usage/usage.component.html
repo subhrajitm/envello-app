@@ -1,0 +1,77 @@
+<div class="usage-page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Usage</h2>
+      <span class="page-subtitle">Platform AI usage by user and provider</span>
+    </div>
+    <button class="export-btn" (click)="exportCsv()">
+      <span class="material-symbols-outlined">download</span>
+      Export CSV
+    </button>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">Period:</span>
+    <div class="filter-buttons">
+      <button class="filter-btn" [class.active]="dateFilter() === 'today'" (click)="setFilter('today')">Today</button>
+      <button class="filter-btn" [class.active]="dateFilter() === 'week'" (click)="setFilter('week')">Week</button>
+      <button class="filter-btn" [class.active]="dateFilter() === 'month'" (click)="setFilter('month')">Month</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">Loading usage data…</div>
+  } @else {
+    <div class="summary-bar">
+      <div class="summary-item">
+        <span class="summary-value">{{ summary().total_requests.toLocaleString() }}</span>
+        <span class="summary-label">Total Requests</span>
+      </div>
+      <div class="divider"></div>
+      <div class="summary-item">
+        <span class="summary-value">{{ formatChars(summary().total_chars) }}</span>
+        <span class="summary-label">Total Chars</span>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Provider</th>
+            <th>Model</th>
+            <th>Requests</th>
+            <th>Chars</th>
+            <th>Last Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.user_id) {
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">{{ row.email[0].toUpperCase() }}</div>
+                  <div class="user-info">
+                    <span class="user-name">{{ row.user_id.substring(0, 8) }}…</span>
+                    <span class="user-email">{{ row.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td><span class="provider-badge">{{ row.provider }}</span></td>
+              <td><code class="model-name">{{ row.model }}</code></td>
+              <td><span class="num">{{ row.requests.toLocaleString() }}</span></td>
+              <td><span class="num">{{ formatChars(row.total_chars) }}</span></td>
+              <td><span class="time-cell">{{ row.last_active | date:'short' }}</span></td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="6" class="empty-row">No usage data for this period.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
