@@ -1614,3 +1614,46 @@
 /* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes spinning { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .spinning { animation: spinning 1s linear infinite; }
+
+/* ══════════════════════════════════════════════════════
+   Meetings — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Calendar grids: scroll horizontally */
+  .mt-cal-ym-week,
+  .mt-cal-week-grid,
+  .mt-cal-month-grid {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Toolbar simplification */
+  .mt-toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  /* Modals: full width */
+  .mta-modal--sm,
+  .mta-modal--md,
+  .mta-modal--lg,
+  .mta-modal--xl {
+    max-width: 95vw;
+  }
+
+  /* Form rows: stack on mobile */
+  .mta-row {
+    flex-wrap: wrap;
+  }
+  .mta-row > .mta-fg {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* Sidebar search input: full width */
+  .mt-sb-search-input {
+    width: 100%;
+  }
+}

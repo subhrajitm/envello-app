@@ -613,3 +613,48 @@
 }
 .rsa-del-confirm-btn:hover { background: color-mix(in srgb, #ef4444 20%, transparent); }
 .rsa-del-confirm-btn .material-symbols-outlined { font-size: 15px; }
+
+/* ══════════════════════════════════════════════════════
+   Research — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Search input: full width */
+  .rs-toolbar-search {
+    flex: 1 1 100%;
+  }
+  .rs-search-input {
+    width: 100%;
+  }
+
+  /* Toolbar: wrap */
+  .rs-toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  /* Table: horizontal scroll */
+  .rs-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide secondary table columns */
+  .rs-col-type,
+  .rs-col-status,
+  .rs-col-meta {
+    display: none;
+  }
+
+  /* Detail slide-over: full width */
+  .rs-detail-panel {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  /* 2-col form: single col */
+  .rsa-fields {
+    grid-template-columns: 1fr !important;
+  }
+}

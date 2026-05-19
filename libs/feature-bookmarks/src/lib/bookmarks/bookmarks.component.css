@@ -994,3 +994,42 @@
 .bm-table-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
 .bm-table-wrap::-webkit-scrollbar-track { background: transparent; }
 .bm-table-wrap::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 4px; }
+
+/* ══════════════════════════════════════════════════════
+   Bookmarks — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Toolbar: wrap and reduce height */
+  .bm-toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  /* Search expands full width */
+  .bm-toolbar-search {
+    flex: 1 1 100%;
+  }
+  .bm-toolbar-search-input {
+    width: 100%;
+  }
+
+  /* Right controls wrap */
+  .bm-toolbar-right {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Table: horizontal scroll */
+  .bm-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Grid: single column on small screens */
+  .bm-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

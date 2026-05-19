@@ -290,6 +290,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .subscribe((e) => {
         const url = (e as NavigationEnd).urlAfterRedirects;
         this.currentRouteSegment.set(url.split('/')[1]?.split('?')[0] ?? '');
+        // Close mobile drawer on navigation
+        if (window.innerWidth <= 768 && !this.sidebarCollapsed()) {
+          this.sidebarCollapsed.set(true);
+          this.sidebarCollapsedChange.emit(true);
+        }
       });
   }
 

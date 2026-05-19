@@ -7484,3 +7484,78 @@ textarea:focus-visible {
 .td-ai-send .material-symbols-outlined {
     font-size: 14px;
 }
+
+/* ══════════════════════════════════════════════════════
+   Tasks — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Hide the right sidebar completely; content fills full width */
+    .tasks-sidebar {
+        display: none;
+    }
+
+    /* Main content: smaller padding, full width */
+    .tasks-main-content {
+        padding: 8px 12px;
+    }
+
+    /* Toolbar: allow wrapping and reduce padding */
+    .tasks-toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 12px;
+        min-height: auto;
+    }
+
+    .toolbar-left {
+        flex: 1 1 100%;
+        gap: 8px;
+    }
+
+    .toolbar-right {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* Search expands full width on mobile */
+    .search-input-wrapper {
+        width: 100%;
+        flex: 1;
+    }
+
+    /* Table views: horizontal scroll instead of overflow clip */
+    .tasks-list-table,
+    .tasks-grid,
+    .tasks-grid-details {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Quick action buttons: hide labels, keep icons */
+    .toolbar-quick-btn .btn-label {
+        display: none;
+    }
+
+    /* Group headers: tighter */
+    .task-group-header {
+        padding: 8px 12px 4px 0;
+    }
+
+    /* Add task button: compact */
+    .add-task-main-btn {
+        padding: 0 10px;
+    }
+
+    /* Toolbar filter/sort buttons: icon only */
+    .btn-secondary .btn-label {
+        display: none;
+    }
+
+    /* Task card/row: reduce horizontal padding */
+    .task-row,
+    .task-item {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}

@@ -2034,4 +2034,27 @@ tiptap-editor:focus,
     font-size: 16px;
 }
 
+/* ══════════════════════════════════════════════════════
+   Daily Notes — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Hide note-tree sidebar; content fills full width */
+  .dn-sidebar {
+    display: none;
+  }
+
+  /* Note list / editor: full width */
+  .dn-main,
+  .daily-notes-main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Reduce editor padding */
+  .dn-editor-area,
+  .dn-content {
+    padding: 12px;
+  }
+}
+
 

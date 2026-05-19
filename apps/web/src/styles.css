@@ -659,3 +659,65 @@ app-novel-editor {
  * Note: The most reliable approach is to add min-height: 0 directly in component CSS,
  * but this provides a comprehensive fallback for all scrollable sections.
  */
+
+/* ══════════════════════════════════════════════════════
+   Mobile Responsive Globals
+   ══════════════════════════════════════════════════════ */
+
+/* Prevent iOS bounce / address-bar resize artifacts */
+@supports (height: 100dvh) {
+    body, #root, .dashboard {
+        height: 100dvh;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Larger touch targets for interactive elements */
+    button, [role="button"], a {
+        min-height: 36px;
+    }
+
+    /* Form inputs: iOS auto-zoom prevention (min 16px) */
+    .form-input,
+    .form-textarea,
+    .form-select,
+    .modal-input,
+    .modal-textarea,
+    .modal-select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    textarea,
+    select {
+        font-size: 16px !important;
+        min-height: 44px;
+    }
+
+    /* Tables scroll horizontally instead of breaking layout */
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Prevent fixed-width containers from causing horizontal scroll */
+    [class$="-layout"],
+    [class*="-layout "],
+    [class$="-view"],
+    [class*="-view "] {
+        min-width: 0;
+        overflow-x: hidden;
+    }
+
+    /* Modal improvements on mobile */
+    .env-modal {
+        max-height: 90dvh !important;
+        overflow-y: auto !important;
+    }
+    .env-modal--large,
+    .env-modal--xl {
+        width: 95% !important;
+        max-width: none !important;
+    }
+}

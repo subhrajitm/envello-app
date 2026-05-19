@@ -202,3 +202,9 @@
   flex-shrink: 0;
   /* Don't shrink below content min-size if possible, but max-height handles it */
 }
+
+@media (max-width: 768px) {
+  .env-sidebar {
+    display: none;
+  }
+}

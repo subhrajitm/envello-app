@@ -136,3 +136,24 @@
         justify-content: flex-start;
     }
 }
+
+@media (max-width: 768px) {
+    /* Collapse footer to minimal on mobile */
+    .footer {
+        height: 24px;
+        padding: 0 12px;
+    }
+
+    /* Hide verbose footer items; keep sync status */
+    .footer-item:not(.footer-sync-item) {
+        display: none;
+    }
+
+    .footer-separator {
+        display: none;
+    }
+
+    .streak-indicators {
+        display: none;
+    }
+}

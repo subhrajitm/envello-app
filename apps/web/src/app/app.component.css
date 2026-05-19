@@ -110,11 +110,9 @@
         padding: 0;
     }
 
-    .dashboard-content.with-sidebar {
-        margin-left: 56px;
-    }
-
-    .dashboard-content.with-sidebar.sidebar-collapsed {
-        margin-left: 56px;
+    /* Sidebar is an overlay on mobile — no margin needed */
+    .dashboard-content.with-sidebar:not(.immersive-view),
+    .dashboard-content.with-sidebar:not(.immersive-view).sidebar-collapsed {
+        margin-left: 0;
     }
 }

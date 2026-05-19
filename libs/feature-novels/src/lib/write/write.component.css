@@ -506,3 +506,43 @@
 }
 .wra-delete-btn:hover { background: color-mix(in srgb, #ef4444 20%, transparent); }
 .wra-delete-btn .material-symbols-outlined { font-size: 15px; }
+
+/* ══════════════════════════════════════════════════════
+   Write — Mobile Responsive
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Toolbar: wrap */
+  .wr-toolbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  /* Search: full width */
+  .wr-search-wrap {
+    flex: 1 1 100%;
+  }
+  .wr-search-input {
+    width: 100%;
+  }
+
+  /* Table: horizontal scroll so fixed columns don't break layout */
+  .wr-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Grid: single column */
+  .wr-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hide secondary columns in table view */
+  .wr-col-type,
+  .wr-col-status,
+  .wr-col-words,
+  .wr-col-updated {
+    display: none;
+  }
+}
