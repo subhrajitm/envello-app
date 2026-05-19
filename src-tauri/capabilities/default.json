@@ -16,6 +16,8 @@
     "dialog:default",
     "shell:allow-open",
     "notification:default",
+    "updater:default",
+    "process:allow-relaunch",
     {
       "identifier": "fs:allow-read",
       "allow": [

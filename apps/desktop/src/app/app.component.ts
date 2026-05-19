@@ -3,6 +3,8 @@ import { AuthService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent } from '@envello/ui';
+import { UpdateBannerComponent } from './components/update-banner/update-banner.component';
+import { UpdateService } from './services/update.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 /**
@@ -21,7 +23,7 @@ const SUB_NAV_ROUTES = new Set([
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, UpdateBannerComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -30,7 +32,8 @@ export class AppComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
-  private sessionService = inject(SessionService); // Initialize session tracking
+  private sessionService = inject(SessionService);
+  private updateService = inject(UpdateService);
   authService = inject(AuthService);
   private unlistenFileDrop?: () => void;
 
@@ -89,6 +92,8 @@ export class AppComponent implements OnInit, OnDestroy {
       this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => { /* ignore */ });
     });
     this.setupTauriFileDrop();
+    // Check for updates 3s after launch to avoid blocking startup
+    setTimeout(() => this.updateService.checkForUpdate(), 3000);
   }
 
   private async setupTauriFileDrop(): Promise<void> {

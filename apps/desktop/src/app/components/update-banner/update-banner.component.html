@@ -1,0 +1,38 @@
+@if (update.available()) {
+  <div class="update-banner">
+    <div class="banner-left">
+      <span class="material-symbols-outlined banner-icon">system_update</span>
+      <div class="banner-text">
+        <span class="banner-title">Update available — v{{ update.version() }}</span>
+        @if (update.notes()) {
+          <span class="banner-notes">{{ update.notes() }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="banner-actions">
+      @if (update.error()) {
+        <span class="banner-error">{{ update.error() }}</span>
+      }
+
+      @if (update.downloading()) {
+        <div class="progress-wrap">
+          @if (update.progress() > 0) {
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="update.progress()"></div>
+            </div>
+            <span class="progress-label">{{ update.progress() }}%</span>
+          } @else {
+            <span class="progress-label">Downloading…</span>
+          }
+        </div>
+      } @else {
+        <button class="btn-later" (click)="update.dismiss()">Later</button>
+        <button class="btn-install" (click)="update.installUpdate()">
+          <span class="material-symbols-outlined">download</span>
+          Install & Restart
+        </button>
+      }
+    </div>
+  </div>
+}
