@@ -4,6 +4,7 @@ import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/ro
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent } from '@envello/ui';
 import { UpdateBannerComponent } from './components/update-banner/update-banner.component';
+import { TitlebarComponent } from './components/titlebar/titlebar.component';
 import { UpdateService } from './services/update.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
@@ -23,7 +24,7 @@ const SUB_NAV_ROUTES = new Set([
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, UpdateBannerComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, UpdateBannerComponent, TitlebarComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
