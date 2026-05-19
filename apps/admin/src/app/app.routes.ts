@@ -39,6 +39,11 @@ export const appRoutes: Route[] = [
         loadComponent: () =>
           import('./pages/feature-flags/feature-flags.component').then(m => m.FeatureFlagsComponent),
       },
+      {
+        path: 'audit-log',
+        loadComponent: () =>
+          import('./pages/audit-log/audit-log.component').then(m => m.AuditLogComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },

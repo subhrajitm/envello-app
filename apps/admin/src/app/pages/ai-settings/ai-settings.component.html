@@ -4,10 +4,10 @@
     <span class="page-subtitle">Configure the platform-level AI provider and model</span>
   </div>
 
-  @if (toast()) {
-    <div class="toast">
-      <span class="material-symbols-outlined">check_circle</span>
-      {{ toast() }}
+  @if (toast().text) {
+    <div class="toast" [class.toast-error]="toast().isError">
+      <span class="material-symbols-outlined">{{ toast().isError ? 'error' : 'check_circle' }}</span>
+      {{ toast().text }}
     </div>
   }
 
@@ -48,18 +48,41 @@
     @if (needsKey()) {
       <div class="form-group">
         <label class="form-label">API Key</label>
-        <div class="input-row">
-          <input
-            class="form-input"
-            [type]="showKey() ? 'text' : 'password'"
-            placeholder="sk-..."
-            [ngModel]="apiKey()"
-            (ngModelChange)="apiKey.set($event)"
-          />
-          <button class="icon-btn" (click)="showKey.set(!showKey())" type="button">
-            <span class="material-symbols-outlined">{{ showKey() ? 'visibility_off' : 'visibility' }}</span>
-          </button>
-        </div>
+        @if (!keyEditing()) {
+          <div class="input-row">
+            <input
+              class="form-input key-masked"
+              type="password"
+              [value]="hasExistingKey() ? '••••••••••••••••' : ''"
+              [placeholder]="hasExistingKey() ? '' : 'No key configured'"
+              readonly
+            />
+            <button class="icon-btn" (click)="startEditKey()" type="button" title="Replace key">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </div>
+          @if (hasExistingKey()) {
+            <span class="key-hint">Key configured — click edit to replace it</span>
+          }
+        } @else {
+          <div class="input-row">
+            <input
+              class="form-input"
+              [type]="showKey() ? 'text' : 'password'"
+              placeholder="Enter new API key…"
+              [ngModel]="newKey()"
+              (ngModelChange)="newKey.set($event)"
+              autofocus
+            />
+            <button class="icon-btn" (click)="showKey.set(!showKey())" type="button">
+              <span class="material-symbols-outlined">{{ showKey() ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+            <button class="icon-btn" (click)="cancelEditKey()" type="button" title="Cancel">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <span class="key-hint key-hint-warn">This will replace the stored key on save</span>
+        }
       </div>
     }
 
@@ -79,12 +102,12 @@
     </div>
 
     <div class="form-actions">
-      <button class="btn-secondary" (click)="testConnection()" type="button">
-        <span class="material-symbols-outlined">wifi_tethering</span>
-        Test Connection
+      <button class="btn-secondary" [disabled]="testing()" (click)="testConnection()" type="button">
+        <span class="material-symbols-outlined" [class.spin]="testing()">{{ testing() ? 'sync' : 'wifi_tethering' }}</span>
+        {{ testing() ? 'Testing…' : 'Test Connection' }}
       </button>
       <button class="btn-primary" [disabled]="saving()" (click)="save()" type="button">
-        <span class="material-symbols-outlined">{{ saving() ? 'sync' : 'save' }}</span>
+        <span class="material-symbols-outlined" [class.spin]="saving()">{{ saving() ? 'sync' : 'save' }}</span>
         {{ saving() ? 'Saving…' : 'Save Settings' }}
       </button>
     </div>

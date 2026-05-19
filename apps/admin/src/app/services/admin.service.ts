@@ -44,6 +44,16 @@ export interface UsageSummary {
   total_chars: number;
 }
 
+export interface AuditEntry {
+  id: string;
+  admin_id: string;
+  admin_email: string;
+  action: string;
+  target_id: string | null;
+  details: string;
+  created_at: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private sb = inject(SupabaseService);
@@ -65,6 +75,7 @@ export class AdminService {
       .from('platform_ai_config')
       .update({ ...config, updated_at: new Date().toISOString(), updated_by: user?.id })
       .eq('id', 1);
+    if (!error) await this.logAudit('ai_config_update', null, `provider=${config.provider ?? '—'}`);
     return { error: error?.message ?? null };
   }
 
@@ -84,23 +95,20 @@ export class AdminService {
     const { error } = await this.sb.client
       .from('feature_flags')
       .upsert(rows, { onConflict: 'id' });
+    if (!error) {
+      const summary = flags.map(f => `${f.name}=${f.enabled}`).join(', ');
+      await this.logAudit('flag_update', null, summary);
+    }
     return { error: error?.message ?? null };
   }
 
   // ── Users ───────────────────────────────────────────────────────────────────
 
   async loadUsers(): Promise<AdminUser[]> {
-    // Join profiles with usage count
     const { data, error } = await this.sb.client
       .from('profiles')
-      .select(`
-        id, full_name, avatar_url, role, status, created_at,
-        ai_usage_logs ( count )
-      `);
+      .select(`id, email, full_name, avatar_url, role, status, created_at, ai_usage_logs ( count )`);
     if (error) { console.error('[AdminService] loadUsers', error); return []; }
-
-    // Get emails from auth (only available if user reads own; admins get all via profiles join)
-    // We surface emails via auth.users view — fallback to id if not available
     return (data ?? []).map((p: any) => ({
       id: p.id,
       email: p.email ?? '',
@@ -118,6 +126,7 @@ export class AdminService {
       .from('profiles')
       .update({ role, updated_at: new Date().toISOString() })
       .eq('id', userId);
+    if (!error) await this.logAudit('role_change', userId, `role → ${role}`);
     return { error: error?.message ?? null };
   }
 
@@ -126,6 +135,7 @@ export class AdminService {
       .from('profiles')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', userId);
+    if (!error) await this.logAudit('status_change', userId, `status → ${status}`);
     return { error: error?.message ?? null };
   }
 
@@ -206,6 +216,33 @@ export class AdminService {
       .order('created_at', { ascending: false })
       .limit(8);
     return (data ?? []) as any[];
+  }
+
+  // ── Audit Log ───────────────────────────────────────────────────────────────
+
+  async logAudit(action: string, targetId: string | null, details: string): Promise<void> {
+    try {
+      const { data: { user } } = await this.sb.client.auth.getUser();
+      await this.sb.client.from('admin_audit_log').insert({
+        admin_id: user?.id ?? null,
+        admin_email: user?.email ?? '',
+        action,
+        target_id: targetId,
+        details,
+      });
+    } catch (e) {
+      console.error('[AdminService] logAudit', e);
+    }
+  }
+
+  async loadAuditLog(limit = 100): Promise<AuditEntry[]> {
+    const { data, error } = await this.sb.client
+      .from('admin_audit_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) { console.error('[AdminService] loadAuditLog', error); return []; }
+    return (data ?? []) as AuditEntry[];
   }
 
   private filterToDate(filter: 'today' | 'week' | 'month'): Date {

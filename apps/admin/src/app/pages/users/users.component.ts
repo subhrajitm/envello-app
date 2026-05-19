@@ -1,12 +1,13 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { ConfirmDialogComponent } from '@envello/ui';
 import { AdminService, AdminUser } from '../../services/admin.service';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, ConfirmDialogComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css',
 })
@@ -16,7 +17,12 @@ export class UsersComponent implements OnInit {
   searchQuery = signal('');
   allUsers = signal<AdminUser[]>([]);
   loading = signal(true);
-  toast = signal('');
+  toast = signal<{ text: string; isError: boolean }>({ text: '', isError: false });
+  private toastTimer?: ReturnType<typeof setTimeout>;
+
+  // Confirm dialog state
+  pendingRole = signal<AdminUser | null>(null);
+  pendingStatus = signal<AdminUser | null>(null);
 
   readonly filteredUsers = computed(() => {
     const q = this.searchQuery().toLowerCase();
@@ -33,31 +39,49 @@ export class UsersComponent implements OnInit {
     this.loading.set(false);
   }
 
-  async makeAdmin(user: AdminUser) {
+  // Opens confirm dialog instead of acting immediately
+  requestRoleChange(user: AdminUser) { this.pendingRole.set(user); }
+  requestStatusChange(user: AdminUser) {
+    // Reactivation is non-destructive — no confirmation needed
+    if (user.status === 'suspended') { this.executeToggleStatus(user); return; }
+    this.pendingStatus.set(user);
+  }
+
+  async confirmRoleChange() {
+    const user = this.pendingRole();
+    this.pendingRole.set(null);
+    if (!user) return;
     const newRole = user.role === 'admin' ? 'user' : 'admin';
     const { error } = await this.admin.updateUserRole(user.id, newRole);
     if (!error) {
-      this.allUsers.update(list =>
-        list.map(u => u.id === user.id ? { ...u, role: newRole } : u)
-      );
-      this.toast.set(`${user.full_name} is now ${newRole === 'admin' ? 'an admin' : 'a user'}.`);
+      this.allUsers.update(list => list.map(u => u.id === user.id ? { ...u, role: newRole } : u));
+      this.showToast(`${user.full_name || user.email} is now ${newRole === 'admin' ? 'an admin' : 'a regular user'}.`, false);
     } else {
-      this.toast.set(`Error: ${error}`);
+      this.showToast(`Error: ${error}`, true);
     }
-    setTimeout(() => this.toast.set(''), 3000);
   }
 
-  async toggleStatus(user: AdminUser) {
+  async confirmSuspend() {
+    const user = this.pendingStatus();
+    this.pendingStatus.set(null);
+    if (!user) return;
+    await this.executeToggleStatus(user);
+  }
+
+  private async executeToggleStatus(user: AdminUser) {
     const newStatus = user.status === 'active' ? 'suspended' : 'active';
     const { error } = await this.admin.updateUserStatus(user.id, newStatus);
     if (!error) {
-      this.allUsers.update(list =>
-        list.map(u => u.id === user.id ? { ...u, status: newStatus } : u)
-      );
-      this.toast.set(`${user.full_name} ${newStatus === 'suspended' ? 'suspended' : 'reactivated'}.`);
+      this.allUsers.update(list => list.map(u => u.id === user.id ? { ...u, status: newStatus } : u));
+      this.showToast(`${user.full_name || user.email} ${newStatus === 'suspended' ? 'suspended' : 'reactivated'}.`, false);
     } else {
-      this.toast.set(`Error: ${error}`);
+      this.showToast(`Error: ${error}`, true);
     }
-    setTimeout(() => this.toast.set(''), 3000);
+  }
+
+  private showToast(text: string, isError: boolean) {
+    clearTimeout(this.toastTimer);
+    this.toast.set({ text, isError });
+    this.toastTimer = setTimeout(() => this.toast.set({ text: '', isError: false }), isError ? 6000 : 3000);
   }
 }

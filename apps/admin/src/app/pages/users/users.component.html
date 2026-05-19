@@ -16,8 +16,11 @@
     </div>
   </div>
 
-  @if (toast()) {
-    <div class="toast">{{ toast() }}</div>
+  @if (toast().text) {
+    <div class="toast" [class.toast-error]="toast().isError">
+      <span class="material-symbols-outlined">{{ toast().isError ? 'error' : 'check_circle' }}</span>
+      {{ toast().text }}
+    </div>
   }
 
   @if (loading()) {
@@ -65,10 +68,10 @@
               </td>
               <td>
                 <div class="action-buttons">
-                  <button class="action-btn" (click)="makeAdmin(user)">
+                  <button class="action-btn" (click)="requestRoleChange(user)">
                     {{ user.role === 'admin' ? 'Remove Admin' : 'Make Admin' }}
                   </button>
-                  <button class="action-btn" [class.danger]="user.status === 'active'" (click)="toggleStatus(user)">
+                  <button class="action-btn" [class.danger]="user.status === 'active'" (click)="requestStatusChange(user)">
                     {{ user.status === 'active' ? 'Suspend' : 'Reactivate' }}
                   </button>
                 </div>
@@ -89,3 +92,32 @@
     </div>
   }
 </div>
+
+<env-confirm-dialog
+  [isOpen]="!!pendingRole()"
+  [title]="pendingRole()?.role === 'admin' ? 'Remove admin privileges?' : 'Grant admin privileges?'"
+  icon="admin_panel_settings"
+  [variant]="pendingRole()?.role === 'admin' ? 'danger' : 'success'"
+  [confirmLabel]="pendingRole()?.role === 'admin' ? 'Remove Admin' : 'Make Admin'"
+  (confirmed)="confirmRoleChange()"
+  (cancelled)="pendingRole.set(null)"
+>
+  @if (pendingRole()) {
+    <strong>{{ pendingRole()!.full_name || pendingRole()!.email }}</strong> will
+    {{ pendingRole()!.role === 'admin' ? 'lose admin access and become a regular user.' : 'gain full admin access to this panel.' }}
+  }
+</env-confirm-dialog>
+
+<env-confirm-dialog
+  [isOpen]="!!pendingStatus()"
+  title="Suspend this user?"
+  icon="block"
+  variant="danger"
+  confirmLabel="Suspend"
+  (confirmed)="confirmSuspend()"
+  (cancelled)="pendingStatus.set(null)"
+>
+  @if (pendingStatus()) {
+    <strong>{{ pendingStatus()!.full_name || pendingStatus()!.email }}</strong> will lose access to the platform immediately.
+  }
+</env-confirm-dialog>
