@@ -38,7 +38,18 @@
     flex-shrink: 0;
     min-height: 40px;
     padding: 10px 20px;
-    border-bottom: 1px solid var(--border-subtle);
+    position: relative;
+    background: linear-gradient(to bottom, var(--bg-app) 0%, transparent 100%);
+}
+
+.tasks-toolbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-main, rgba(128, 128, 128, 0.2));
 }
 
 .toolbar-left {
@@ -1836,9 +1847,52 @@
 }
 
 .task-action-chip.priority-medium {
-    background: var(--bg-app);
-    border-color: var(--border-main);
-    color: var(--text-secondary);
+    background: color-mix(in srgb, #f59e0b 12%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 40%, transparent);
+    color: #f59e0b;
+}
+
+/* Hours estimate chip */
+.task-hours-chip {
+    cursor: default;
+    gap: 4px;
+}
+
+.task-hours-input {
+    width: 36px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 12px;
+    color: inherit;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.task-hours-input::-webkit-outer-spin-button,
+.task-hours-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Advanced date input */
+.new-task-date-input {
+    font-size: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-main);
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.new-task-date-input:focus {
+    border-color: var(--primary-color);
+}
+
+/* Dependency section */
+.new-task-deps-section {
+    width: 100%;
 }
 
 /* Due time row */
@@ -1938,7 +1992,7 @@
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 100;
+    z-index: 9999;
     min-width: 140px;
     overflow: hidden;
 }
@@ -2229,7 +2283,7 @@
 
 .task-modal-footer-minimal {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     width: 100%;
 }
@@ -7569,5 +7623,425 @@ textarea:focus-visible {
     .task-item {
         padding-left: 8px;
         padding-right: 8px;
+    }
+}
+
+/* ─────────────────────────────────────────────────
+   Issue 9 – Status chip
+───────────────────────────────────────────────── */
+.task-action-chip.status-pending {
+    background: color-mix(in srgb, #8b5cf6 12%, transparent);
+    border-color: color-mix(in srgb, #8b5cf6 40%, transparent);
+    color: #8b5cf6;
+}
+
+/* ─────────────────────────────────────────────────
+   Issue 10 – Advanced section visual groups
+───────────────────────────────────────────────── */
+.advanced-section-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle, var(--border-main));
+}
+
+.advanced-section-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.advanced-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 0 2px 2px;
+}
+
+/* ─────────────────────────────────────────────────
+   Issue 11 – Subtask priority
+───────────────────────────────────────────────── */
+.subtask-priority-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.priority-badge-high   { background: #ef444420; color: #ef4444; }
+.priority-badge-medium { background: #f59e0b20; color: #f59e0b; }
+.priority-badge-low    { background: #6b728020; color: #6b7280; }
+
+.subtask-priority-select {
+    font-size: 11px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-main);
+    border-radius: 4px;
+    padding: 2px 4px;
+    color: var(--text-secondary);
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────
+   Feature 21 – Task templates
+───────────────────────────────────────────────── */
+.modal-header-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.template-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-main);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.template-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.template-btn .material-symbols-outlined {
+    font-size: 15px;
+}
+
+.template-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--bg-panel, #ffffff);
+    border: 1px solid var(--border-main);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 9999;
+    min-width: 168px;
+    padding: 4px;
+}
+
+.template-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+
+.template-option:hover {
+    background: var(--bg-hover);
+}
+
+.template-option .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+/* ─────────────────────────────────────────────────
+   Feature 19 – Quick-capture bar
+───────────────────────────────────────────────── */
+.quick-capture-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin: 4px 12px;
+    animation: quickCaptureIn 0.15s ease;
+}
+
+@keyframes quickCaptureIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.quick-capture-icon {
+    font-size: 18px;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.quick-add-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.quick-add-input::placeholder {
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.quick-capture-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.quick-capture-submit:disabled { opacity: 0.4; cursor: default; }
+
+.quick-capture-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-tertiary);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.quick-capture-close:hover { color: var(--text-primary); }
+
+/* ─────────────────────────────────────────────────
+   Feature 22 – Recurrence preview
+───────────────────────────────────────────────── */
+.recurrence-preview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0 2px;
+    font-size: 11px;
+}
+
+.recurrence-preview-label {
+    color: var(--text-tertiary);
+    font-weight: 500;
+    margin-right: 2px;
+}
+
+.recurrence-preview-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-main);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--text-secondary);
+}
+
+/* ─────────────────────────────────────────────────
+   New Task Modal — 2-pane layout
+───────────────────────────────────────────────── */
+
+.task-modal-2pane {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    min-height: 420px;
+    /* Negate the modal body's 20px padding so panes bleed edge-to-edge */
+    margin: -20px;
+}
+
+/* ── Left pane ── */
+.nt-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Subtasks section inside left pane */
+.nt-left-subtasks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-height: 0;
+}
+
+.nt-left-subtasks-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.nt-left-subtasks-label .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--text-tertiary);
+}
+
+/* Chips wrap in right pane properties section */
+.nt-chips-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* ── Right pane ── */
+.nt-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-left: 1px solid var(--border-subtle);
+    background: var(--bg-secondary, var(--bg-app));
+    overflow-y: auto;
+    padding: 16px 14px;
+}
+
+/* Right pane section */
+.nt-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.nt-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Section heading */
+.nt-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+}
+
+/* Property row */
+.nt-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+}
+
+.nt-row-icon {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.nt-row-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex: 1;
+    white-space: nowrap;
+}
+
+.nt-unit-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* Shared small input */
+.nt-input {
+    font-size: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-main);
+    border-radius: 5px;
+    padding: 3px 6px;
+    color: var(--text-primary);
+    outline: none;
+    max-width: 120px;
+}
+
+.nt-input:focus { border-color: var(--primary-color); }
+
+.nt-select {
+    cursor: pointer;
+    max-width: 110px;
+}
+
+/* Subtask items in right pane */
+.nt-subtask-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 0;
+}
+
+.nt-subtask-title {
+    font-size: 12px;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Subtask input row in right pane */
+.nt-subtask-input-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.nt-inline-input {
+    flex: 1;
+    font-size: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-main);
+    border-radius: 5px;
+    padding: 4px 7px;
+    color: var(--text-primary);
+    outline: none;
+    min-width: 0;
+}
+
+.nt-inline-input:focus { border-color: var(--primary-color); }
+.nt-inline-input::placeholder { color: var(--text-tertiary); }
+
+/* Mobile: stack panes vertically */
+@media (max-width: 768px) {
+    .task-modal-2pane {
+        grid-template-columns: 1fr;
+    }
+
+    .nt-right {
+        border-left: none;
+        border-top: 1px solid var(--border-subtle);
+        padding: 16px;
     }
 }

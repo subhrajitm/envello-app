@@ -1,7 +1,7 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '@envello/core';
+import { AuthService, TauriService } from '@envello/core';
 import { Router, RouterModule } from '@angular/router';
 import { EnvLogoComponent } from '../../logo/logo.component';
 import { ButtonComponent } from '../../button/button.component';
@@ -81,10 +81,13 @@ import { ButtonComponent } from '../../button/button.component';
           </env-button>
 
           <div class="login-footer">
+            @if (isTauri()) {
             <env-button variant="ghost" (clicked)="continueAsGuest()">
               Continue as Guest
             </env-button>
             <div class="footer-divider"></div>
+            }
+
             <span class="footer-text">Don't have an account?</span>
             <a routerLink="/sign-up" class="footer-link">Create Account</a>
           </div>
@@ -319,6 +322,7 @@ import { ButtonComponent } from '../../button/button.component';
 export class LoginComponent {
   authService = inject(AuthService);
   router = inject(Router);
+  isTauri = inject(TauriService).isTauri;
 
   email = '';
   password = '';
