@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task } from '@envello/core';
+import { StoreService, Task, NotificationService } from '@envello/core';
 import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
@@ -9,6 +9,8 @@ type TaskListItem =
   | { kind: 'header'; label: string; count: number; accent: string }
   | { kind: 'task'; task: Task }
   | { kind: 'subtask'; task: Task; parentTitle: string };
+
+type SubtaskDraft = { title: string; priority: Task['priority'] };
 
 @Component({
   selector: 'app-tasks',
@@ -20,6 +22,7 @@ type TaskListItem =
 })
 export class TasksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
+  private notificationService = inject(NotificationService);
 
   // Left sidebar state
   sidebarSearch = signal<string>('');
@@ -167,6 +170,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   newTaskTitle = signal<string>('');
   newTaskDescription = signal<string>('');
   newTaskPriority = signal<Task['priority']>('MEDIUM');
+  newTaskStatus = signal<Task['status']>('ACTIVE');
   newTaskDue = signal<string | undefined>(undefined);
   newTaskDueTime = signal<string>('12:00');
   newTaskList = signal<string>('Inbox');
@@ -183,8 +187,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   newTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
 
   // Subtasks state
-  newTaskSubtasks = signal<string[]>([]);
+  newTaskSubtasks = signal<SubtaskDraft[]>([]);
   newSubtaskInput = signal<string>('');
+  newSubtaskPriority = signal<Task['priority']>('MEDIUM');
 
   // Advanced options (separate signals per modal to avoid shared state)
   newTaskShowAdvanced = signal<boolean>(false);
@@ -202,6 +207,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Recurring interval and end date
   newTaskRecurringInterval = signal<number>(1);
   newTaskRecurringEndDate = signal<string>('');
+
+  // Template picker state
+  newTaskTemplateOpen = signal<boolean>(false);
 
   // Calendar dropdown state
   showDatePicker = signal<boolean>(false);
@@ -344,9 +352,10 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskTitle.set('');
     this.newTaskDescription.set('');
     this.newTaskPriority.set('MEDIUM');
+    this.newTaskStatus.set('ACTIVE');
     this.newTaskDue.set(undefined);
     this.newTaskDueTime.set('12:00');
-    this.newTaskList.set('Inbox');
+    this.newTaskList.set(this.selectedFolder() || 'Inbox');
     this.newTaskHasReminder.set(false);
     this.newTaskLabels.set([]);
     this.newTaskLabelInput.set('');
@@ -361,6 +370,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.folderDropdownPosition.set(null);
     this.newTaskSubtasks.set([]);
     this.newSubtaskInput.set('');
+    this.newSubtaskPriority.set('MEDIUM');
+    this.newTaskTemplateOpen.set(false);
     this.newTaskRecurring.set(false);
     this.newTaskRecurringPattern.set('weekly');
     this.newTaskShowAdvanced.set(false);
@@ -513,6 +524,18 @@ export class TasksComponent implements OnInit, OnDestroy {
       .slice(0, 5);
   });
 
+  nextOccurrences = computed(() => {
+    if (!this.newTaskRecurring() || !this.newTaskDue()) return [] as string[];
+    const results: string[] = [];
+    let current = this.newTaskDue();
+    for (let i = 0; i < 3; i++) {
+      current = this.calculateNextDue(current, this.newTaskRecurringPattern(), this.newTaskRecurringInterval() || 1);
+      if (!current) break;
+      results.push(current);
+    }
+    return results;
+  });
+
   hideLabelAutocomplete() {
     // Delay hiding to allow click events on suggestions
     setTimeout(() => {
@@ -551,8 +574,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     const subtasks: Task[] | undefined = this.newTaskSubtasks().length > 0
       ? this.newTaskSubtasks().map((st) => ({
         id: crypto.randomUUID(),
-        title: st,
-        priority: 'MEDIUM' as Task['priority'],
+        title: st.title,
+        priority: st.priority,
         hours: '0.5H',
         status: 'ACTIVE' as Task['status'],
         parentId: taskId
@@ -568,7 +591,7 @@ export class TasksComponent implements OnInit, OnDestroy {
       priority: this.newTaskPriority(),
       hours: `${hoursNum}H`,
       estimatedDuration: hoursNum * 60,
-      status: 'ACTIVE',
+      status: this.newTaskStatus(),
       project: this.newTaskList() || undefined,
       due: this.newTaskDue(),
       startDate: this.newTaskStartDate() || undefined,
@@ -591,6 +614,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     try {
       // Optimistic update
       this.store.addTask(newTask);
+      this.scheduleRemindersForTask(newTask);
 
       // Upload files if any
       if (this.filesToUpload().length > 0) {
@@ -641,7 +665,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   addSubtaskToNew() {
     const input = this.newSubtaskInput().trim();
     if (!input) return;
-    this.newTaskSubtasks.set([...this.newTaskSubtasks(), input]);
+    this.newTaskSubtasks.update(subs => [...subs, { title: input, priority: this.newSubtaskPriority() }]);
     this.newSubtaskInput.set('');
   }
 
@@ -1779,6 +1803,33 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.editingTaskDetails.update(v => !v);
   }
 
+  readonly TASK_TEMPLATES = [
+    {
+      id: 'bug-report',
+      label: 'Bug Report',
+      icon: 'bug_report',
+      priority: 'HIGH' as Task['priority'],
+      labels: ['bug'],
+      subtitles: ['Reproduce the issue', 'Fix root cause', 'Write regression test', 'Verify fix'],
+    },
+    {
+      id: 'meeting-action',
+      label: 'Meeting Action',
+      icon: 'groups',
+      priority: 'MEDIUM' as Task['priority'],
+      labels: ['meeting'],
+      subtitles: ['Prepare agenda', 'Send invites', 'Follow up on action items'],
+    },
+    {
+      id: 'research',
+      label: 'Research Task',
+      icon: 'science',
+      priority: 'LOW' as Task['priority'],
+      labels: ['research'],
+      subtitles: ['Gather sources', 'Summarize findings', 'Present results'],
+    },
+  ];
+
   readonly REMINDER_PRESETS = [
     { label: 'On due date', value: 'On due date' },
     { label: '30 min before', value: '30 min before' },
@@ -2081,6 +2132,70 @@ export class TasksComponent implements OnInit, OnDestroy {
       }
     };
     this.store.addTask(recurringTask);
+  }
+
+  onNewTaskTitleBlur() {
+    const title = this.newTaskTitle().trim();
+    if (!title || title.length < 5) return;
+    const parsed = this.parseNaturalLanguage(title);
+    if (parsed.title && parsed.title !== title) {
+      this.newTaskTitle.set(parsed.title);
+    }
+    if (parsed.due && !this.newTaskDue()) {
+      this.newTaskDue.set(parsed.due);
+    }
+    if (parsed.priority && this.newTaskPriority() === 'MEDIUM') {
+      this.newTaskPriority.set(parsed.priority);
+    }
+    if (parsed.labels.length > 0) {
+      const existing = new Set(this.newTaskLabels());
+      const newLabels = parsed.labels.filter(l => !existing.has(l));
+      if (newLabels.length > 0) {
+        this.newTaskLabels.update(l => [...l, ...newLabels]);
+      }
+    }
+  }
+
+  applyTemplate(id: string) {
+    const tpl = this.TASK_TEMPLATES.find(t => t.id === id);
+    if (!tpl) return;
+    this.newTaskPriority.set(tpl.priority);
+    this.newTaskLabels.set([...tpl.labels]);
+    this.newTaskSubtasks.set(tpl.subtitles.map(s => ({ title: s, priority: 'MEDIUM' as Task['priority'] })));
+    this.newTaskShowAdvanced.set(true);
+    this.newTaskTemplateOpen.set(false);
+  }
+
+  private parseReminderOffsetMinutes(reminder: string): number {
+    if (reminder === 'On due date') return 0;
+    const match = reminder.match(/(\d+)\s*(min|hour|day)/i);
+    if (!match) return 0;
+    const n = parseInt(match[1]);
+    const unit = match[2].toLowerCase();
+    if (unit.startsWith('min')) return n;
+    if (unit.startsWith('hour')) return n * 60;
+    if (unit.startsWith('day')) return n * 24 * 60;
+    return 0;
+  }
+
+  scheduleRemindersForTask(task: Task) {
+    if (!task.reminders?.length || !task.due) return;
+    const dueDate = this.parseDateFromString(task.due);
+    if (!dueDate) return;
+
+    for (const reminder of task.reminders) {
+      const offsetMs = this.parseReminderOffsetMinutes(reminder) * 60 * 1000;
+      const fireAt = new Date(dueDate.getTime() - offsetMs);
+      const delay = fireAt.getTime() - Date.now();
+      if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
+        setTimeout(() => {
+          this.notificationService.info(
+            `Reminder: ${task.title}`,
+            `Due: ${task.due} — ${reminder}`
+          );
+        }, delay);
+      }
+    }
   }
 
   calculateNextDue(currentDue: string | undefined, pattern: string, interval: number): string {

@@ -13,6 +13,25 @@
                         <span class="btn-label">Add Task</span>
                     </button>
                 </div>
+                @if (quickAddVisible()) {
+                <div class="quick-capture-bar" (click)="$event.stopPropagation()">
+                    <span class="material-symbols-outlined quick-capture-icon">bolt</span>
+                    <input type="text"
+                           class="quick-add-input"
+                           placeholder='Try "Review PR tomorrow #urgent"'
+                           [value]="quickAddInput()"
+                           (input)="quickAddInput.set($any($event.target).value)"
+                           (keydown.enter)="handleQuickAdd()"
+                           (keydown.escape)="quickAddVisible.set(false); quickAddInput.set('')"
+                           autofocus>
+                    <button type="button" class="quick-capture-submit" (click)="handleQuickAdd()" [disabled]="!quickAddInput().trim()">
+                        <span class="material-symbols-outlined">add</span>
+                    </button>
+                    <button type="button" class="quick-capture-close" (click)="quickAddVisible.set(false); quickAddInput.set('')">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                }
                 <div class="toolbar-divider"></div>
 
                 <!-- Primary Navigation Tabs -->
@@ -499,20 +518,37 @@
     [showClose]="true"
     size="md"
 >
-    <div header>
+    <div header style="display:flex;align-items:center;gap:8px;width:100%">
         <h2 class="env-modal-title">
             <span class="material-symbols-outlined">add_task</span>
             <span>New Task</span>
         </h2>
+        <div class="modal-header-actions">
+            <button type="button" class="template-btn" (click)="newTaskTemplateOpen.set(!newTaskTemplateOpen())" title="Use a template">
+                <span class="material-symbols-outlined">dashboard_customize</span>
+                <span>Template</span>
+            </button>
+            @if (newTaskTemplateOpen()) {
+            <div class="template-dropdown">
+                @for (tpl of TASK_TEMPLATES; track tpl.id) {
+                <button type="button" class="template-option" (click)="applyTemplate(tpl.id)">
+                    <span class="material-symbols-outlined">{{ tpl.icon }}</span>
+                    {{ tpl.label }}
+                </button>
+                }
+            </div>
+            }
+        </div>
     </div>
     <div body>
         <div class="task-modal-shell">
             <!-- Large Title Input -->
             <input type="text"
                    class="task-modal-title-input"
-                   placeholder="Task Title (e.g. Renew insurance)"
+                   placeholder="Task Title — try 'Call John tomorrow #urgent'"
                    [value]="newTaskTitle()"
                    (input)="newTaskTitle.set($any($event.target).value)"
+                   (blur)="onNewTaskTitleBlur()"
                    autofocus />
 
             <!-- Sub-description (Markdown / Notes) -->
@@ -567,8 +603,16 @@
                         [class.priority-medium]="newTaskPriority() === 'MEDIUM'"
                         [class.priority-high]="newTaskPriority() === 'HIGH'"
                         [class.priority-low]="newTaskPriority() === 'LOW'">
-                    <span class="material-symbols-outlined">flag</span>
+                    <span class="material-symbols-outlined">{{ newTaskPriority() === 'HIGH' ? 'flag' : newTaskPriority() === 'LOW' ? 'outlined_flag' : 'flag_2' }}</span>
                     <span>{{ newTaskPriority() | titlecase }}</span>
+                </button>
+                <button type="button" class="task-action-chip"
+                        (click)="newTaskStatus.set(newTaskStatus() === 'ACTIVE' ? 'PENDING' : 'ACTIVE')"
+                        [class.active]="newTaskStatus() === 'PENDING'"
+                        [class.status-pending]="newTaskStatus() === 'PENDING'"
+                        title="{{ newTaskStatus() === 'PENDING' ? 'Mark as Active' : 'Mark as Pending' }}">
+                    <span class="material-symbols-outlined">{{ newTaskStatus() === 'PENDING' ? 'pause_circle' : 'play_circle' }}</span>
+                    @if (newTaskStatus() === 'PENDING') {<span>Pending</span>}
                 </button>
                 <button type="button" class="task-action-chip"
                         (click)="showNewTaskReminderPicker.set(!showNewTaskReminderPicker()); $event.stopPropagation()"
@@ -640,156 +684,187 @@
             <!-- Advanced Options (··· more) -->
             @if (newTaskShowAdvanced()) {
             <div class="new-task-advanced-section">
-                <!-- Start Date -->
-                <div class="advanced-option-row">
-                    <span class="advanced-section-label" style="flex:1">
-                        <span class="material-symbols-outlined">event_available</span>
-                        <span>Start Date</span>
-                    </span>
-                    <input type="date"
-                           class="new-task-date-input"
-                           [value]="newTaskStartDate()"
-                           (change)="newTaskStartDate.set($any($event.target).value)">
-                </div>
-
-                <!-- Subtasks -->
-                <div class="advanced-option-row advanced-option-col">
-                    <div class="advanced-section-label">
-                        <span class="material-symbols-outlined">subdirectory_arrow_right</span>
-                        <span>Subtasks</span>
+                <!-- SCHEDULING group -->
+                <div class="advanced-section-group">
+                    <div class="advanced-group-label">Scheduling</div>
+                    <!-- Project / List -->
+                    <div class="advanced-option-row">
+                        <span class="advanced-section-label" style="flex:1">
+                            <span class="material-symbols-outlined">inbox</span>
+                            <span>Project</span>
+                        </span>
+                        <select class="new-task-date-input"
+                                style="min-width:100px"
+                                [value]="newTaskList()"
+                                (change)="newTaskList.set($any($event.target).value)">
+                            <option value="Inbox">Inbox</option>
+                            @for (list of availableLists(); track list) {
+                            <option [value]="list">{{ list }}</option>
+                            }
+                        </select>
                     </div>
-                    <div class="new-task-subtasks-section">
-                        @for (subtask of newTaskSubtasks(); track $index) {
-                        <div class="new-task-subtask-item">
-                            <span class="material-symbols-outlined new-task-subtask-icon">subdirectory_arrow_right</span>
-                            <span class="new-task-subtask-title">{{ subtask }}</span>
-                            <button type="button" class="new-task-subtask-remove" (click)="removeSubtask($index)">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
-                        }
-                        <div class="new-task-subtask-input-row">
-                            <input type="text"
-                                   class="new-task-subtask-input"
-                                   placeholder="Add a subtask..."
-                                   [value]="newSubtaskInput()"
-                                   (input)="newSubtaskInput.set($any($event.target).value)"
-                                   (keydown.enter)="addSubtaskToNew()">
-                            <button type="button"
-                                    class="new-task-subtask-add-btn"
-                                    [disabled]="!newSubtaskInput().trim()"
-                                    (click)="addSubtaskToNew()">
-                                <span class="material-symbols-outlined">add</span>
-                            </button>
-                        </div>
+                    <!-- Start Date -->
+                    <div class="advanced-option-row">
+                        <span class="advanced-section-label" style="flex:1">
+                            <span class="material-symbols-outlined">event_available</span>
+                            <span>Start Date</span>
+                        </span>
+                        <input type="date"
+                               class="new-task-date-input"
+                               [value]="newTaskStartDate()"
+                               (change)="newTaskStartDate.set($any($event.target).value)">
                     </div>
                 </div>
 
-                <!-- Dependencies -->
-                <div class="advanced-option-row advanced-option-col">
-                    <div class="advanced-section-label">
-                        <span class="material-symbols-outlined">account_tree</span>
-                        <span>Depends on</span>
-                    </div>
-                    <div class="new-task-deps-section">
-                        @for (depId of newTaskDependencies(); track depId) {
-                        <div class="new-task-subtask-item">
-                            <span class="material-symbols-outlined new-task-subtask-icon">link</span>
-                            <span class="new-task-subtask-title">{{ getDependencyTitle(depId) }}</span>
-                            <button type="button" class="new-task-subtask-remove" (click)="removeNewTaskDependency(depId)">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
+                <!-- BREAKDOWN group -->
+                <div class="advanced-section-group">
+                    <div class="advanced-group-label">Breakdown</div>
+                    <!-- Subtasks -->
+                    <div class="advanced-option-row advanced-option-col">
+                        <div class="advanced-section-label">
+                            <span class="material-symbols-outlined">subdirectory_arrow_right</span>
+                            <span>Subtasks</span>
                         </div>
-                        }
-                        <div class="new-task-subtask-input-row" style="position:relative">
-                            <input type="text"
-                                   class="new-task-subtask-input"
-                                   placeholder="Search tasks..."
-                                   [value]="newTaskDependencyInput()"
-                                   (input)="newTaskDependencyInput.set($any($event.target).value); showDependencySearch.set(true)"
-                                   (focus)="showDependencySearch.set(true)"
-                                   (blur)="hideDependencySearch()">
-                            @if (showDependencySearch() && dependencySuggestions().length > 0) {
-                            <div class="label-autocomplete-dropdown">
-                                @for (task of dependencySuggestions(); track task.id) {
-                                <button type="button" class="label-suggestion" (mousedown)="addNewTaskDependency(task.id)">
-                                    {{ task.title }}
+                        <div class="new-task-subtasks-section">
+                            @for (subtask of newTaskSubtasks(); track $index) {
+                            <div class="new-task-subtask-item">
+                                <span class="material-symbols-outlined new-task-subtask-icon">subdirectory_arrow_right</span>
+                                <span class="new-task-subtask-title">{{ subtask.title }}</span>
+                                <span class="subtask-priority-badge" [class]="'priority-badge-' + subtask.priority.toLowerCase()">{{ subtask.priority | titlecase }}</span>
+                                <button type="button" class="new-task-subtask-remove" (click)="removeSubtask($index)">
+                                    <span class="material-symbols-outlined">close</span>
                                 </button>
-                                }
                             </div>
                             }
+                            <div class="new-task-subtask-input-row">
+                                <input type="text"
+                                       class="new-task-subtask-input"
+                                       placeholder="Add a subtask..."
+                                       [value]="newSubtaskInput()"
+                                       (input)="newSubtaskInput.set($any($event.target).value)"
+                                       (keydown.enter)="addSubtaskToNew()">
+                                <select class="subtask-priority-select"
+                                        [value]="newSubtaskPriority()"
+                                        (change)="newSubtaskPriority.set($any($event.target).value)">
+                                    <option value="HIGH">High</option>
+                                    <option value="MEDIUM">Med</option>
+                                    <option value="LOW">Low</option>
+                                </select>
+                                <button type="button"
+                                        class="new-task-subtask-add-btn"
+                                        [disabled]="!newSubtaskInput().trim()"
+                                        (click)="addSubtaskToNew()">
+                                    <span class="material-symbols-outlined">add</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Dependencies -->
+                    <div class="advanced-option-row advanced-option-col">
+                        <div class="advanced-section-label">
+                            <span class="material-symbols-outlined">account_tree</span>
+                            <span>Depends on</span>
+                        </div>
+                        <div class="new-task-deps-section">
+                            @for (depId of newTaskDependencies(); track depId) {
+                            <div class="new-task-subtask-item">
+                                <span class="material-symbols-outlined new-task-subtask-icon">link</span>
+                                <span class="new-task-subtask-title">{{ getDependencyTitle(depId) }}</span>
+                                <button type="button" class="new-task-subtask-remove" (click)="removeNewTaskDependency(depId)">
+                                    <span class="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+                            }
+                            <div class="new-task-subtask-input-row" style="position:relative">
+                                <input type="text"
+                                       class="new-task-subtask-input"
+                                       placeholder="Search tasks..."
+                                       [value]="newTaskDependencyInput()"
+                                       (input)="newTaskDependencyInput.set($any($event.target).value); showDependencySearch.set(true)"
+                                       (focus)="showDependencySearch.set(true)"
+                                       (blur)="hideDependencySearch()">
+                                @if (showDependencySearch() && dependencySuggestions().length > 0) {
+                                <div class="label-autocomplete-dropdown">
+                                    @for (task of dependencySuggestions(); track task.id) {
+                                    <button type="button" class="label-suggestion" (mousedown)="addNewTaskDependency(task.id)">
+                                        {{ task.title }}
+                                    </button>
+                                    }
+                                </div>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recurring -->
-                <div class="advanced-option-row">
-                    <span class="advanced-section-label" style="flex:1">
-                        <span class="material-symbols-outlined">repeat</span>
-                        <span>Recurring</span>
-                    </span>
-                    <button class="td-recurring-toggle"
-                            type="button"
-                            [class.active]="newTaskRecurring()"
-                            (click)="newTaskRecurring.set(!newTaskRecurring())"
-                            [title]="newTaskRecurring() ? 'Disable recurring' : 'Enable recurring'">
-                        <span class="material-symbols-outlined">repeat</span>
-                    </button>
+                <!-- RECURRENCE group -->
+                <div class="advanced-section-group">
+                    <div class="advanced-group-label">Recurrence</div>
+                    <div class="advanced-option-row">
+                        <span class="advanced-section-label" style="flex:1">
+                            <span class="material-symbols-outlined">repeat</span>
+                            <span>Recurring</span>
+                        </span>
+                        <button class="td-recurring-toggle"
+                                type="button"
+                                [class.active]="newTaskRecurring()"
+                                (click)="newTaskRecurring.set(!newTaskRecurring())"
+                                [title]="newTaskRecurring() ? 'Disable recurring' : 'Enable recurring'">
+                            <span class="material-symbols-outlined">repeat</span>
+                        </button>
+                        @if (newTaskRecurring()) {
+                        <select class="td-recurring-select"
+                                [value]="newTaskRecurringPattern()"
+                                (change)="newTaskRecurringPattern.set($any($event.target).value)">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        }
+                    </div>
                     @if (newTaskRecurring()) {
-                    <select class="td-recurring-select"
-                            [value]="newTaskRecurringPattern()"
-                            (change)="newTaskRecurringPattern.set($any($event.target).value)">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
+                    <div class="advanced-option-row">
+                        <span class="advanced-section-label" style="flex:1">
+                            <span class="material-symbols-outlined">123</span>
+                            <span>Every</span>
+                        </span>
+                        <input type="number"
+                               class="new-task-date-input"
+                               style="width:60px;text-align:center"
+                               min="1" max="99"
+                               [value]="newTaskRecurringInterval()"
+                               (input)="newTaskRecurringInterval.set(+$any($event.target).value || 1)">
+                        <span style="font-size:12px;color:var(--text-secondary);margin-left:4px">
+                            {{ newTaskRecurringPattern() === 'daily' ? 'day(s)' : newTaskRecurringPattern() === 'weekly' ? 'week(s)' : newTaskRecurringPattern() === 'monthly' ? 'month(s)' : 'year(s)' }}
+                        </span>
+                    </div>
+                    <div class="advanced-option-row">
+                        <span class="advanced-section-label" style="flex:1">
+                            <span class="material-symbols-outlined">event_busy</span>
+                            <span>End date</span>
+                        </span>
+                        <input type="date"
+                               class="new-task-date-input"
+                               [value]="newTaskRecurringEndDate()"
+                               (change)="newTaskRecurringEndDate.set($any($event.target).value)">
+                    </div>
+                    @if (nextOccurrences().length > 0) {
+                    <div class="recurrence-preview">
+                        <span class="recurrence-preview-label">Next occurrences:</span>
+                        @for (occ of nextOccurrences(); track occ) {
+                        <span class="recurrence-preview-item">{{ occ }}</span>
+                        }
+                    </div>
+                    }
                     }
                 </div>
-                @if (newTaskRecurring()) {
-                <div class="advanced-option-row">
-                    <span class="advanced-section-label" style="flex:1">
-                        <span class="material-symbols-outlined">123</span>
-                        <span>Every</span>
-                    </span>
-                    <input type="number"
-                           class="new-task-date-input"
-                           style="width:60px;text-align:center"
-                           min="1" max="99"
-                           [value]="newTaskRecurringInterval()"
-                           (input)="newTaskRecurringInterval.set(+$any($event.target).value || 1)">
-                    <span style="font-size:12px;color:var(--text-secondary);margin-left:4px">
-                        {{ newTaskRecurringPattern() === 'daily' ? 'day(s)' : newTaskRecurringPattern() === 'weekly' ? 'week(s)' : newTaskRecurringPattern() === 'monthly' ? 'month(s)' : 'year(s)' }}
-                    </span>
-                </div>
-                <div class="advanced-option-row">
-                    <span class="advanced-section-label" style="flex:1">
-                        <span class="material-symbols-outlined">event_busy</span>
-                        <span>End date</span>
-                    </span>
-                    <input type="date"
-                           class="new-task-date-input"
-                           [value]="newTaskRecurringEndDate()"
-                           (change)="newTaskRecurringEndDate.set($any($event.target).value)">
-                </div>
-                }
             </div>
             }
         </div>
     </div>
     <div footer>
         <div class="task-modal-footer-minimal">
-            <div class="footer-project-selector">
-                <span class="material-symbols-outlined footer-project-icon">inbox</span>
-                <select class="footer-project-select"
-                        [value]="newTaskList()"
-                        (change)="newTaskList.set($any($event.target).value)">
-                    <option value="Inbox">Inbox</option>
-                    @for (list of availableLists(); track list) {
-                    <option [value]="list">{{ list }}</option>
-                    }
-                </select>
-            </div>
             <div class="footer-actions-right">
                 <button type="button" class="btn-minimal-cancel" (click)="closeNewTaskDialog()">Cancel</button>
                 <button type="button"

@@ -1836,9 +1836,9 @@
 }
 
 .task-action-chip.priority-medium {
-    background: var(--bg-app);
-    border-color: var(--border-main);
-    color: var(--text-secondary);
+    background: color-mix(in srgb, #f59e0b 12%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 40%, transparent);
+    color: #f59e0b;
 }
 
 /* Hours estimate chip */
@@ -1981,7 +1981,7 @@
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 100;
+    z-index: 9999;
     min-width: 140px;
     overflow: hidden;
 }
@@ -2272,7 +2272,7 @@
 
 .task-modal-footer-minimal {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     width: 100%;
 }
@@ -7613,4 +7613,236 @@ textarea:focus-visible {
         padding-left: 8px;
         padding-right: 8px;
     }
+}
+
+/* ─────────────────────────────────────────────────
+   Issue 9 – Status chip
+───────────────────────────────────────────────── */
+.task-action-chip.status-pending {
+    background: color-mix(in srgb, #8b5cf6 12%, transparent);
+    border-color: color-mix(in srgb, #8b5cf6 40%, transparent);
+    color: #8b5cf6;
+}
+
+/* ─────────────────────────────────────────────────
+   Issue 10 – Advanced section visual groups
+───────────────────────────────────────────────── */
+.advanced-section-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle, var(--border-main));
+}
+
+.advanced-section-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.advanced-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 0 2px 2px;
+}
+
+/* ─────────────────────────────────────────────────
+   Issue 11 – Subtask priority
+───────────────────────────────────────────────── */
+.subtask-priority-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.priority-badge-high   { background: #ef444420; color: #ef4444; }
+.priority-badge-medium { background: #f59e0b20; color: #f59e0b; }
+.priority-badge-low    { background: #6b728020; color: #6b7280; }
+
+.subtask-priority-select {
+    font-size: 11px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-main);
+    border-radius: 4px;
+    padding: 2px 4px;
+    color: var(--text-secondary);
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────
+   Feature 21 – Task templates
+───────────────────────────────────────────────── */
+.modal-header-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.template-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-main);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.template-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.template-btn .material-symbols-outlined {
+    font-size: 15px;
+}
+
+.template-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-main);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    z-index: 9999;
+    min-width: 168px;
+    padding: 4px;
+}
+
+.template-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+
+.template-option:hover {
+    background: var(--bg-hover);
+}
+
+.template-option .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+/* ─────────────────────────────────────────────────
+   Feature 19 – Quick-capture bar
+───────────────────────────────────────────────── */
+.quick-capture-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin: 4px 12px;
+    animation: quickCaptureIn 0.15s ease;
+}
+
+@keyframes quickCaptureIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.quick-capture-icon {
+    font-size: 18px;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.quick-add-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.quick-add-input::placeholder {
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.quick-capture-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.quick-capture-submit:disabled { opacity: 0.4; cursor: default; }
+
+.quick-capture-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-tertiary);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.quick-capture-close:hover { color: var(--text-primary); }
+
+/* ─────────────────────────────────────────────────
+   Feature 22 – Recurrence preview
+───────────────────────────────────────────────── */
+.recurrence-preview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0 2px;
+    font-size: 11px;
+}
+
+.recurrence-preview-label {
+    color: var(--text-tertiary);
+    font-weight: 500;
+    margin-right: 2px;
+}
+
+.recurrence-preview-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-main);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--text-secondary);
 }
