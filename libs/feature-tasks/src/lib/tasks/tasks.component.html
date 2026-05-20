@@ -576,6 +576,18 @@
                     <span class="material-symbols-outlined">notifications</span>
                     <span>{{ newTaskHasReminder() ? newTaskReminderTimes().length + ' reminder' + (newTaskReminderTimes().length > 1 ? 's' : '') : 'Reminder' }}</span>
                 </button>
+                <!-- Estimate chip -->
+                <div class="task-action-chip task-hours-chip" [class.active]="newTaskHours() !== '1'">
+                    <span class="material-symbols-outlined">timer</span>
+                    <input type="number"
+                           class="task-hours-input"
+                           min="0.25" max="99" step="0.25"
+                           [value]="newTaskHours()"
+                           (input)="newTaskHours.set($any($event.target).value)"
+                           (click)="$event.stopPropagation()"
+                           title="Estimated hours">
+                    <span>h</span>
+                </div>
                 <button type="button" class="task-action-chip-more"
                         (click)="newTaskShowAdvanced.set(!newTaskShowAdvanced())"
                         [class.active]="newTaskShowAdvanced()"
@@ -628,6 +640,18 @@
             <!-- Advanced Options (··· more) -->
             @if (newTaskShowAdvanced()) {
             <div class="new-task-advanced-section">
+                <!-- Start Date -->
+                <div class="advanced-option-row">
+                    <span class="advanced-section-label" style="flex:1">
+                        <span class="material-symbols-outlined">event_available</span>
+                        <span>Start Date</span>
+                    </span>
+                    <input type="date"
+                           class="new-task-date-input"
+                           [value]="newTaskStartDate()"
+                           (change)="newTaskStartDate.set($any($event.target).value)">
+                </div>
+
                 <!-- Subtasks -->
                 <div class="advanced-option-row advanced-option-col">
                     <div class="advanced-section-label">
@@ -661,6 +685,43 @@
                     </div>
                 </div>
 
+                <!-- Dependencies -->
+                <div class="advanced-option-row advanced-option-col">
+                    <div class="advanced-section-label">
+                        <span class="material-symbols-outlined">account_tree</span>
+                        <span>Depends on</span>
+                    </div>
+                    <div class="new-task-deps-section">
+                        @for (depId of newTaskDependencies(); track depId) {
+                        <div class="new-task-subtask-item">
+                            <span class="material-symbols-outlined new-task-subtask-icon">link</span>
+                            <span class="new-task-subtask-title">{{ getDependencyTitle(depId) }}</span>
+                            <button type="button" class="new-task-subtask-remove" (click)="removeNewTaskDependency(depId)">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        }
+                        <div class="new-task-subtask-input-row" style="position:relative">
+                            <input type="text"
+                                   class="new-task-subtask-input"
+                                   placeholder="Search tasks..."
+                                   [value]="newTaskDependencyInput()"
+                                   (input)="newTaskDependencyInput.set($any($event.target).value); showDependencySearch.set(true)"
+                                   (focus)="showDependencySearch.set(true)"
+                                   (blur)="hideDependencySearch()">
+                            @if (showDependencySearch() && dependencySuggestions().length > 0) {
+                            <div class="label-autocomplete-dropdown">
+                                @for (task of dependencySuggestions(); track task.id) {
+                                <button type="button" class="label-suggestion" (mousedown)="addNewTaskDependency(task.id)">
+                                    {{ task.title }}
+                                </button>
+                                }
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Recurring -->
                 <div class="advanced-option-row">
                     <span class="advanced-section-label" style="flex:1">
@@ -685,6 +746,33 @@
                     </select>
                     }
                 </div>
+                @if (newTaskRecurring()) {
+                <div class="advanced-option-row">
+                    <span class="advanced-section-label" style="flex:1">
+                        <span class="material-symbols-outlined">123</span>
+                        <span>Every</span>
+                    </span>
+                    <input type="number"
+                           class="new-task-date-input"
+                           style="width:60px;text-align:center"
+                           min="1" max="99"
+                           [value]="newTaskRecurringInterval()"
+                           (input)="newTaskRecurringInterval.set(+$any($event.target).value || 1)">
+                    <span style="font-size:12px;color:var(--text-secondary);margin-left:4px">
+                        {{ newTaskRecurringPattern() === 'daily' ? 'day(s)' : newTaskRecurringPattern() === 'weekly' ? 'week(s)' : newTaskRecurringPattern() === 'monthly' ? 'month(s)' : 'year(s)' }}
+                    </span>
+                </div>
+                <div class="advanced-option-row">
+                    <span class="advanced-section-label" style="flex:1">
+                        <span class="material-symbols-outlined">event_busy</span>
+                        <span>End date</span>
+                    </span>
+                    <input type="date"
+                           class="new-task-date-input"
+                           [value]="newTaskRecurringEndDate()"
+                           (change)="newTaskRecurringEndDate.set($any($event.target).value)">
+                </div>
+                }
             </div>
             }
         </div>
@@ -707,6 +795,7 @@
                 <button type="button"
                         class="btn-minimal-save"
                         [disabled]="!newTaskTitle().trim()"
+                        title="Save (⌘↵)"
                         (click)="confirmNewTask()">Save</button>
             </div>
         </div>

@@ -192,6 +192,16 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Task dependencies
   newTaskDependencies = signal<string[]>([]);
+  newTaskDependencyInput = signal<string>('');
+  showDependencySearch = signal<boolean>(false);
+
+  // Estimated hours & start date
+  newTaskHours = signal<string>('1');
+  newTaskStartDate = signal<string>('');
+
+  // Recurring interval and end date
+  newTaskRecurringInterval = signal<number>(1);
+  newTaskRecurringEndDate = signal<string>('');
 
   // Calendar dropdown state
   showDatePicker = signal<boolean>(false);
@@ -356,6 +366,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskShowAdvanced.set(false);
     this.showLabelAutocomplete.set(false);
     this.newTaskDependencies.set([]);
+    this.newTaskDependencyInput.set('');
+    this.showDependencySearch.set(false);
+    this.newTaskHours.set('1');
+    this.newTaskStartDate.set('');
+    this.newTaskRecurringInterval.set(1);
+    this.newTaskRecurringEndDate.set('');
     this.newTaskReminderTimes.set([]);
     this.newReminderTimeInput.set('');
     this.filesToUpload.set([]);
@@ -364,12 +380,26 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskModalOpen.set(true);
   }
 
-  closeNewTaskDialog() {
+  closeNewTaskDialog(force = false) {
+    if (!force && this.hasUnsavedNewTaskData()) {
+      if (!confirm('Discard unsaved task?')) return;
+    }
     this.newTaskModalOpen.set(false);
     this.newTaskShowAdvanced.set(false);
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
     this.showNewTaskReminderPicker.set(false);
+  }
+
+  private hasUnsavedNewTaskData(): boolean {
+    return !!(
+      this.newTaskTitle().trim() ||
+      this.newTaskDescription().trim() ||
+      this.newTaskLabels().length > 0 ||
+      this.newTaskDue() ||
+      this.newTaskSubtasks().length > 0 ||
+      this.newTaskDependencies().length > 0
+    );
   }
 
   setNewTaskPriority(priority: Task['priority']) {
@@ -474,6 +504,15 @@ export class TasksComponent implements OnInit, OnDestroy {
     ).slice(0, 5);
   });
 
+  dependencySuggestions = computed(() => {
+    const q = this.newTaskDependencyInput().toLowerCase().trim();
+    if (!q) return [] as Task[];
+    const existing = new Set(this.newTaskDependencies());
+    return this.store.tasks()
+      .filter(t => !existing.has(t.id) && t.status !== 'COMPLETED' && t.title.toLowerCase().includes(q))
+      .slice(0, 5);
+  });
+
   hideLabelAutocomplete() {
     // Delay hiding to allow click events on suggestions
     setTimeout(() => {
@@ -520,14 +559,19 @@ export class TasksComponent implements OnInit, OnDestroy {
       }))
       : undefined;
 
+    const hoursNum = parseFloat(this.newTaskHours()) || 1;
+    const recurringInterval = this.newTaskRecurringInterval() || 1;
+
     const newTask: Task = {
       id: taskId,
       title,
       priority: this.newTaskPriority(),
-      hours: '1.0H',
+      hours: `${hoursNum}H`,
+      estimatedDuration: hoursNum * 60,
       status: 'ACTIVE',
       project: this.newTaskList() || undefined,
       due: this.newTaskDue(),
+      startDate: this.newTaskStartDate() || undefined,
       labels: this.newTaskLabels().length ? this.newTaskLabels() : undefined,
       reminders: this.newTaskHasReminder() && this.newTaskReminderTimes().length > 0
         ? this.newTaskReminderTimes()
@@ -535,8 +579,9 @@ export class TasksComponent implements OnInit, OnDestroy {
       subtasks: subtasks,
       recurring: this.newTaskRecurring() ? {
         pattern: this.newTaskRecurringPattern(),
-        interval: 1,
-        nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), 1)
+        interval: recurringInterval,
+        endDate: this.newTaskRecurringEndDate() || undefined,
+        nextDue: this.calculateNextDue(this.newTaskDue(), this.newTaskRecurringPattern(), recurringInterval)
       } : undefined,
       dependencies: this.newTaskDependencies().length > 0 ? this.newTaskDependencies() : undefined,
       description: this.newTaskDescription() || undefined,
@@ -603,6 +648,26 @@ export class TasksComponent implements OnInit, OnDestroy {
   removeSubtask(index: number) {
     const subtasks = this.newTaskSubtasks();
     this.newTaskSubtasks.set(subtasks.filter((_, i) => i !== index));
+  }
+
+  addNewTaskDependency(taskId: string) {
+    if (!this.newTaskDependencies().includes(taskId)) {
+      this.newTaskDependencies.update(deps => [...deps, taskId]);
+    }
+    this.newTaskDependencyInput.set('');
+    this.showDependencySearch.set(false);
+  }
+
+  removeNewTaskDependency(taskId: string) {
+    this.newTaskDependencies.update(deps => deps.filter(d => d !== taskId));
+  }
+
+  getDependencyTitle(taskId: string): string {
+    return this.store.tasks().find(t => t.id === taskId)?.title ?? taskId;
+  }
+
+  hideDependencySearch() {
+    setTimeout(() => this.showDependencySearch.set(false), 200);
   }
 
   onSidebarActiveChange(id: string) {
@@ -1221,6 +1286,13 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (modKey && event.key === 'n') {
       event.preventDefault();
       this.openNewTaskDialog();
+      return;
+    }
+
+    // Cmd/Ctrl + Enter: Submit new task modal
+    if (modKey && event.key === 'Enter' && this.newTaskModalOpen()) {
+      event.preventDefault();
+      this.confirmNewTask();
       return;
     }
 

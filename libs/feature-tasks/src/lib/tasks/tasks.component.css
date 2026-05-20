@@ -1841,6 +1841,49 @@
     color: var(--text-secondary);
 }
 
+/* Hours estimate chip */
+.task-hours-chip {
+    cursor: default;
+    gap: 4px;
+}
+
+.task-hours-input {
+    width: 36px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 12px;
+    color: inherit;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.task-hours-input::-webkit-outer-spin-button,
+.task-hours-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Advanced date input */
+.new-task-date-input {
+    font-size: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-main);
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.new-task-date-input:focus {
+    border-color: var(--primary-color);
+}
+
+/* Dependency section */
+.new-task-deps-section {
+    width: 100%;
+}
+
 /* Due time row */
 .new-task-time-row {
     display: flex;
