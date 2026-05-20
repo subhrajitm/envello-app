@@ -66,7 +66,7 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
       transform: translateX(-50%);
       font-size: 11px;
       font-weight: 500;
-      color: var(--text-muted, #888);
+      color: var(--text-secondary, #555);
       letter-spacing: 0.02em;
       pointer-events: none;
       white-space: nowrap;

@@ -89,8 +89,8 @@ export class AppComponent implements OnInit, OnDestroy {
       this.currentTab.set(tabName);
       this.currentRoute.set(url);
 
-      // Update window title when running in Tauri
-      this.tauriService.setTitle(`Envello – ${tabName}`).catch(() => { /* ignore */ });
+      // Native window title intentionally left blank — custom titlebar div handles display
+      this.tauriService.setTitle('').catch(() => { /* ignore */ });
     });
     this.setupTauriFileDrop();
     // Check for updates 3s after launch to avoid blocking startup

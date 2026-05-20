@@ -38,7 +38,18 @@
     flex-shrink: 0;
     min-height: 40px;
     padding: 10px 20px;
-    border-bottom: 1px solid var(--border-subtle);
+    position: relative;
+    background: linear-gradient(to bottom, var(--bg-app) 0%, transparent 100%);
+}
+
+.tasks-toolbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-main, rgba(128, 128, 128, 0.2));
 }
 
 .toolbar-left {
