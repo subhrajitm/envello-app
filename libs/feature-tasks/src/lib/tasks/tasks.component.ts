@@ -1288,6 +1288,13 @@ export class TasksComponent implements OnInit, OnDestroy {
         this.folderDropdownPosition.set(null);
       }
     }
+
+    // Close template dropdown if clicking outside
+    if (this.newTaskTemplateOpen()) {
+      if (!target.closest('.modal-header-actions')) {
+        this.newTaskTemplateOpen.set(false);
+      }
+    }
   }
 
   @HostListener('document:keydown', ['$event'])
