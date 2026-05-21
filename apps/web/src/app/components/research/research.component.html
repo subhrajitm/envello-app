@@ -1,7 +1,7 @@
 <div class="rs-view">
 
   <!-- ── SIDEBAR ── -->
-  <env-feature-sidebar [title]="'Research'">
+  <env-feature-sidebar [title]="'Library'">
 
     <div class="rs-sb-libs">
       @for (lib of filteredLibraries(); track lib.id) {
@@ -65,22 +65,38 @@
           AI
         </button>
         <div class="rs-tb-divider"></div>
-        <button class="rs-new-lib-tb-btn" (click)="openLibraryModal()">
-          <span class="material-symbols-outlined">library_add</span>
-          New Library
-        </button>
-        @if (selectedLibrary()) {
-          @if (viewMode() === 'sources') {
-            <button class="rs-add-btn" (click)="openSourceModal()">
-              <span class="material-symbols-outlined">add</span>
-              Add Source
-            </button>
-          } @else {
-            <button class="rs-add-btn" (click)="openSummaryModal()">
-              <span class="material-symbols-outlined">add</span>
-              New Summary
-            </button>
+        <button class="rs-tool-btn" [class.rs-tool-btn--active]="viewMode() === 'files'"
+          (click)="openFilesView()" title="Global file library">
+          <span class="material-symbols-outlined">folder_open</span>
+          Files
+          @if (fileLibrary.files().length > 0) {
+            <span class="rs-tab-count">{{ fileLibrary.files().length }}</span>
           }
+        </button>
+        @if (viewMode() !== 'files') {
+          <button class="rs-new-lib-tb-btn" (click)="openLibraryModal()">
+            <span class="material-symbols-outlined">library_add</span>
+            New Library
+          </button>
+          @if (selectedLibrary()) {
+            @if (viewMode() === 'sources') {
+              <button class="rs-add-btn" (click)="openSourceModal()">
+                <span class="material-symbols-outlined">add</span>
+                Add Source
+              </button>
+            } @else {
+              <button class="rs-add-btn" (click)="openSummaryModal()">
+                <span class="material-symbols-outlined">add</span>
+                New Summary
+              </button>
+            }
+          }
+        }
+        @if (viewMode() === 'files') {
+          <button class="rs-add-btn" (click)="openFileInput()">
+            <span class="material-symbols-outlined">upload</span>
+            Upload
+          </button>
         }
       </div>
     </div>
@@ -271,7 +287,7 @@
 
       </div>
 
-    } @else {
+    } @else if (viewMode() !== 'files') {
 
       <!-- No library selected -->
       <div class="rs-empty-main">
@@ -296,6 +312,99 @@
       </div>
 
     }
+
+    <!-- ── FILES VIEW ── -->
+    @if (viewMode() === 'files') {
+      <div class="rs-files-view"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onFileDrop($event)">
+
+        <!-- Files toolbar -->
+        <div class="rs-files-toolbar">
+          <div class="rs-search-wrap" style="flex:1;max-width:320px">
+            <span class="material-symbols-outlined rs-search-icon">search</span>
+            <input class="rs-search-input" type="text" placeholder="Search files…"
+              [ngModel]="fileSearchQuery()" (ngModelChange)="fileSearchQuery.set($event)">
+            @if (fileSearchQuery()) {
+              <button class="rs-search-clear" (click)="fileSearchQuery.set('')">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            }
+          </div>
+          <div class="rs-files-type-pills">
+            @for (f of [['all','All'],['image','Images'],['document','Docs'],['video','Video'],['other','Audio']] ; track f[0]) {
+              <button class="rs-status-pill" [class.active]="fileFilterType() === f[0]"
+                (click)="fileFilterType.set($any(f[0]))">{{ f[1] }}</button>
+            }
+          </div>
+        </div>
+
+        <!-- Drop zone hint when empty -->
+        @if (filteredFiles().length === 0 && !fileLibrary.uploading()) {
+          <div class="rs-files-drop-zone" [class.dragging]="isDraggingOver()" (click)="openFileInput()">
+            <span class="material-symbols-outlined">cloud_upload</span>
+            <p>Drop files here or click to upload</p>
+            <span class="rs-files-drop-hint">Supports documents, images, video, audio — up to 50 MB each</span>
+          </div>
+        }
+
+        <!-- Upload progress -->
+        @if (fileLibrary.uploading()) {
+          <div class="rs-files-uploading">
+            <span class="qf-ai-spinner"></span>
+            Uploading…
+          </div>
+        }
+
+        <!-- Drag overlay -->
+        @if (isDraggingOver()) {
+          <div class="rs-files-drag-overlay">
+            <span class="material-symbols-outlined">cloud_upload</span>
+            Drop to upload
+          </div>
+        }
+
+        <!-- File grid -->
+        @if (filteredFiles().length > 0) {
+          <div class="rs-files-grid">
+            @for (file of filteredFiles(); track file.id) {
+              <div class="rs-file-card">
+                @if (fileLibrary.isImage(file)) {
+                  <div class="rs-file-thumb">
+                    <img [src]="file.publicUrl" [alt]="file.name" loading="lazy">
+                  </div>
+                } @else {
+                  <div class="rs-file-icon-wrap">
+                    <span class="material-symbols-outlined rs-file-icon">{{ fileLibrary.fileIcon(file.mimeType) }}</span>
+                  </div>
+                }
+                <div class="rs-file-info">
+                  <span class="rs-file-name" [title]="file.name">{{ file.name }}</span>
+                  <span class="rs-file-meta">
+                    {{ fileLibrary.formatSize(file.size) }}
+                    @if (file.sourceType && file.sourceType !== 'direct') {
+                      · from {{ file.sourceType }}
+                    }
+                  </span>
+                </div>
+                <div class="rs-file-actions">
+                  <button class="rs-file-action-btn" (click)="downloadFile(file)" title="Download">
+                    <span class="material-symbols-outlined">download</span>
+                  </button>
+                  <button class="rs-file-action-btn rs-file-action-btn--danger"
+                    (click)="openDeleteFile(file)" title="Delete">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    }
+
   </div>
 
   <!-- AI Panel -->
@@ -718,6 +827,39 @@
         <div class="rsa-footer-actions">
           <button class="rsa-cancel-btn" (click)="cancelDeleteSource()">Cancel</button>
           <button class="rsa-del-confirm-btn" (click)="confirmDeleteSource()">
+            <span class="material-symbols-outlined">delete</span>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── DELETE FILE ── -->
+@if (showDeleteFile()) {
+  <div class="rsa-backdrop" (click)="cancelDeleteFile()">
+    <div class="rsa-modal rsa-modal--xs" (click)="$event.stopPropagation()">
+      <div class="rsa-header">
+        <div class="rsa-header-left">
+          <span class="material-symbols-outlined rsa-header-icon" style="color:#ef4444">delete</span>
+          <h2 class="rsa-header-title">Delete File</h2>
+        </div>
+        <button class="rsa-close-btn" (click)="cancelDeleteFile()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="rsa-delete-body">
+        @if (fileToDelete(); as f) {
+          <p class="rsa-delete-msg">Delete <strong>"{{ f.name }}"</strong>?</p>
+          <p class="rsa-delete-hint">This removes the file from Supabase Storage and cannot be undone.</p>
+        }
+      </div>
+      <div class="rsa-footer">
+        <div></div>
+        <div class="rsa-footer-actions">
+          <button class="rsa-cancel-btn" (click)="cancelDeleteFile()">Cancel</button>
+          <button class="rsa-del-confirm-btn" (click)="confirmDeleteFile()">
             <span class="material-symbols-outlined">delete</span>
             Delete
           </button>

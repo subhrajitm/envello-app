@@ -1,10 +1,10 @@
 import { Component, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary } from '@envello/core';
+import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary, FileLibraryService, LibraryFile } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, FeatureSidebarComponent } from '@envello/ui';
 
-type ViewMode = 'sources' | 'summaries';
+type ViewMode = 'sources' | 'summaries' | 'files';
 
 const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: string }> = {
   WEB:       { label: 'Web',       icon: 'language',       color: '#3b82f6' },
@@ -29,10 +29,30 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 })
 export class ResearchComponent {
   researchService = inject(ResearchService);
+  fileLibrary     = inject(FileLibraryService);
 
   // ── View state ────────────────────────────────────────────────────────────
   viewMode        = signal<ViewMode>('sources');
   selectedLibrary = signal<ResearchLibrary | null>(null);
+
+  // ── Files ─────────────────────────────────────────────────────────────────
+  fileSearchQuery  = signal('');
+  fileFilterType   = signal<'all' | 'image' | 'document' | 'video' | 'other'>('all');
+  isDraggingOver   = signal(false);
+  fileToDelete     = signal<LibraryFile | null>(null);
+  showDeleteFile   = signal(false);
+
+  filteredFiles = computed(() => {
+    let list = this.fileLibrary.files();
+    const q = this.fileSearchQuery().toLowerCase().trim();
+    if (q) list = list.filter(f => f.name.toLowerCase().includes(q));
+    const type = this.fileFilterType();
+    if (type === 'image')    list = list.filter(f => f.mimeType.startsWith('image/'));
+    if (type === 'video')    list = list.filter(f => f.mimeType.startsWith('video/'));
+    if (type === 'document') list = list.filter(f => !f.mimeType.startsWith('image/') && !f.mimeType.startsWith('video/') && !f.mimeType.startsWith('audio/'));
+    if (type === 'other')    list = list.filter(f => f.mimeType.startsWith('audio/'));
+    return list;
+  });
 
   // ── Filter & Search ───────────────────────────────────────────────────────
   searchQuery  = signal('');
@@ -307,6 +327,54 @@ export class ResearchComponent {
     this.aiLoading.set(false);
   }
 
+  // ── File actions ─────────────────────────────────────────────────────────
+  openFilesView() {
+    this.viewMode.set('files');
+    this.selectedLibrary.set(null);
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isDraggingOver.set(false);
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' });
+  }
+
+  onDragOver(event: DragEvent) { event.preventDefault(); this.isDraggingOver.set(true); }
+  onDragLeave() { this.isDraggingOver.set(false); }
+
+  openFileInput() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.onchange = (e: Event) => {
+      const files = Array.from((e.target as HTMLInputElement).files ?? []);
+      if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' });
+    };
+    input.click();
+  }
+
+  openDeleteFile(file: LibraryFile) {
+    this.fileToDelete.set(file);
+    this.showDeleteFile.set(true);
+  }
+  cancelDeleteFile() { this.showDeleteFile.set(false); this.fileToDelete.set(null); }
+  async confirmDeleteFile() {
+    const f = this.fileToDelete();
+    if (f) {
+      await this.fileLibrary.delete(f.id);
+      this.cancelDeleteFile();
+    }
+  }
+
+  downloadFile(file: LibraryFile) {
+    const a = document.createElement('a');
+    a.href = file.publicUrl;
+    a.download = file.name;
+    a.target = '_blank';
+    a.click();
+  }
+
   // ── Keyboard ──────────────────────────────────────────────────────────────
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
@@ -317,6 +385,7 @@ export class ResearchComponent {
       else if (this.showLibraryModal()) this.closeLibraryModal();
       else if (this.showDeleteSource()) this.cancelDeleteSource();
       else if (this.showDeleteLibrary()) this.cancelDeleteLibrary();
+      else if (this.showDeleteFile()) this.cancelDeleteFile();
     }
   }
 }

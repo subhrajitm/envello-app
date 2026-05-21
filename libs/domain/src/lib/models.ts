@@ -222,6 +222,20 @@ export interface Bookmark {
     isPinned?: boolean;
 }
 
+export interface LibraryFile {
+    id: string;
+    name: string;
+    mimeType: string;
+    size: number;
+    storagePath: string;
+    publicUrl: string;
+    uploadedAt: string;
+    sourceType?: 'task' | 'note' | 'research' | 'bookmark' | 'direct';
+    sourceId?: string;
+    description?: string;
+    tags?: string[];
+}
+
 export interface BookmarkFolder {
     id: string;
     name: string;

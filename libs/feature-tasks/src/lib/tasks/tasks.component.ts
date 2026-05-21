@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task, NotificationService } from '@envello/core';
+import { StoreService, Task, NotificationService, FileLibraryService } from '@envello/core';
 import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
@@ -23,6 +23,7 @@ type SubtaskDraft = { title: string; priority: Task['priority'] };
 export class TasksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
   private notificationService = inject(NotificationService);
+  private fileLibrary = inject(FileLibraryService);
 
   // Left sidebar state
   sidebarSearch = signal<string>('');
@@ -2442,27 +2443,30 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (files.length === 0) return;
 
     this.uploadingFiles.set(true);
-
-    // Simulate file upload (in real app, upload to server)
-    const attachments = files.map((file, index) => ({
-      id: `${Date.now()}-${index}`,
-      name: file.name,
-      url: URL.createObjectURL(file), // In real app, this would be server URL
-      type: file.type,
-      size: file.size,
-      uploadedAt: new Date().toISOString()
-    }));
-
-    const task = this.store.tasks().find(t => t.id === taskId);
-    if (task) {
-      const existingAttachments = task.attachments || [];
-      this.store.updateTask(taskId, {
-        attachments: [...existingAttachments, ...attachments]
-      });
+    try {
+      const libFiles = await Promise.all(
+        files.map(f => this.fileLibrary.upload(f, { type: 'task', id: taskId }))
+      );
+      const attachments = libFiles.map(lf => ({
+        id: lf.id,
+        name: lf.name,
+        url: lf.publicUrl,
+        type: lf.mimeType,
+        size: lf.size,
+        uploadedAt: lf.uploadedAt,
+      }));
+      const task = this.store.tasks().find(t => t.id === taskId);
+      if (task) {
+        this.store.updateTask(taskId, {
+          attachments: [...(task.attachments ?? []), ...attachments],
+        });
+      }
+      this.filesToUpload.set([]);
+    } catch (e) {
+      this.notificationService.error('Upload failed', (e as Error).message ?? 'Could not upload files.');
+    } finally {
+      this.uploadingFiles.set(false);
     }
-
-    this.filesToUpload.set([]);
-    this.uploadingFiles.set(false);
   }
 
   removeAttachment(taskId: string, attachmentId: string) {
