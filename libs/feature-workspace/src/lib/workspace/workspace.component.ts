@@ -781,7 +781,7 @@ GENERAL RULES:
       'task': '/tasks', 'tasks': '/tasks', 'todos': '/tasks',
       'note': '/daily-notes', 'notes': '/daily-notes', 'daily': '/daily-notes', 'journal': '/daily-notes',
       'meeting': '/meetings', 'meetings': '/meetings', 'calendar': '/meetings',
-      'research': '/research',
+      'research': '/library',
       'write': '/write', 'writing': '/write', 'novel': '/write', 'novels': '/write',
       'bookmark': '/bookmarks', 'bookmarks': '/bookmarks',
       'vault': '/vault', 'password': '/vault', 'passwords': '/vault',
@@ -922,8 +922,8 @@ GENERAL RULES:
   }
 
   private navigateToResearch(intent: ParsedIntent) {
-    this.lastCreated.set({ type: 'Research', title: intent.title, route: '/research' });
-    this.router.navigate(['/research']);
+    this.lastCreated.set({ type: 'Library', title: intent.title, route: '/library' });
+    this.router.navigate(['/library']);
   }
 
   private createTask(intent: ParsedIntent) {

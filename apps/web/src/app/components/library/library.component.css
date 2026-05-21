@@ -277,6 +277,16 @@
 
 .rs-meta-text { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* Mobile-only status + type shown inside title cell */
+.rs-src-mobile-meta {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+}
+.rs-src-mobile-sep { opacity: 0.4; }
+
 .rs-row-btn {
   width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 5px;
@@ -615,7 +625,7 @@
 .rsa-del-confirm-btn .material-symbols-outlined { font-size: 15px; }
 
 /* ══════════════════════════════════════════════════════
-   Research — Mobile Responsive
+   Library — Mobile Responsive
    ══════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   /* Search input: full width */
@@ -640,12 +650,13 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Hide secondary table columns */
+  /* Hide secondary table columns — status/type shown inline in title cell instead */
   .rs-col-type,
   .rs-col-status,
   .rs-col-meta {
     display: none;
   }
+  .rs-src-mobile-meta { display: flex; }
 
   /* Detail slide-over: full width */
   .rs-detail-panel {
@@ -705,6 +716,10 @@
   border-color: var(--accent-primary);
   background: color-mix(in srgb, var(--accent-primary) 4%, transparent);
   color: var(--text-secondary);
+}
+.rs-files-drop-zone.uploading {
+  cursor: default;
+  pointer-events: none;
 }
 .rs-files-drop-zone .material-symbols-outlined { font-size: 40px; }
 .rs-files-drop-zone p { font-size: 14px; font-weight: 500; margin: 0; }
@@ -823,3 +838,26 @@
 .rs-file-action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rs-file-action-btn--danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
 .rs-file-action-btn .material-symbols-outlined { font-size: 16px; }
+
+/* File search empty state */
+.rs-files-empty-search {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-tertiary);
+  padding: 60px 20px;
+  text-align: center;
+}
+.rs-files-empty-search .material-symbols-outlined { font-size: 36px; opacity: 0.4; }
+.rs-files-empty-search p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+
+/* Unsafe URL display */
+.rsd-link--unsafe {
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+  text-decoration: line-through;
+  font-style: italic;
+}

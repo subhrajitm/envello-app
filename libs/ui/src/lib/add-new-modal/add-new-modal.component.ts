@@ -67,7 +67,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         { id: 'meeting',      title: 'Meeting',      description: 'Schedule a new meeting',              icon: 'groups',        route: '/meetings',      color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],                 tag: 'COLLAB' },
         { id: 'note',         title: 'Note',         description: 'Quick note for today',                icon: 'edit_note',     route: '/daily-notes',   color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],              tag: 'NOTE' },
         // Library
-        { id: 'research',     title: 'Research',     description: 'Create a new research library',       icon: 'science',       route: '/research',      color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],                 tag: 'RESEARCH' },
+        { id: 'research',     title: 'Library',      description: 'Create a new research library',       icon: 'science',       route: '/library',       color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],                 tag: 'RESEARCH' },
         { id: 'bookmark',     title: 'Bookmark',     description: 'Save a link or resource',             icon: 'bookmark',      route: '/bookmarks',     color: '#b48ce8', category: 'library', shortcut: '5', keywords: ['bookmark', 'link', 'url', 'save'],     tag: 'BOOKMARK' },
         { id: 'vault',        title: 'Vault Entry',  description: 'Store a secret or credential',        icon: 'lock',          route: '/vault',         color: '#f59e0b', category: 'library', shortcut: '',  keywords: ['vault', 'credential', 'secret', 'key'], tag: 'VAULT' },
         { id: 'subscription', title: 'Subscription', description: 'Track a vendor or subscription',      icon: 'credit_card',   route: '/subscriptions', color: '#34d399', category: 'library', shortcut: '',  keywords: ['subscription', 'vendor', 'billing'],   tag: 'VENDOR' },
@@ -357,7 +357,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
             color: '#3b82f6'
         });
 
-        this.router.navigate(['/research']);
+        this.router.navigate(['/library']);
     }
 
     private createMeeting() {

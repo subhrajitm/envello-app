@@ -12,6 +12,7 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
   VIDEO:     { label: 'Video',     icon: 'smart_display',  color: '#a855f7' },
   INTERVIEW: { label: 'Interview', icon: 'mic',            color: '#10b981' },
   PHYSICAL:  { label: 'Physical',  icon: 'menu_book',      color: '#f59e0b' },
+  ARTICLE:   { label: 'Article',   icon: 'article',        color: '#06b6d4' },
 };
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -21,13 +22,13 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 };
 
 @Component({
-  selector: 'app-research',
+  selector: 'app-library',
   standalone: true,
   imports: [CommonModule, FormsModule, AiAssistantPanelComponent, FeatureSidebarComponent],
-  templateUrl: './research.component.html',
-  styleUrl: './research.component.css'
+  templateUrl: './library.component.html',
+  styleUrl: './library.component.css'
 })
-export class ResearchComponent {
+export class LibraryComponent {
   researchService = inject(ResearchService);
   fileLibrary     = inject(FileLibraryService);
 
@@ -49,7 +50,14 @@ export class ResearchComponent {
     const type = this.fileFilterType();
     if (type === 'image')    list = list.filter(f => f.mimeType.startsWith('image/'));
     if (type === 'video')    list = list.filter(f => f.mimeType.startsWith('video/'));
-    if (type === 'document') list = list.filter(f => !f.mimeType.startsWith('image/') && !f.mimeType.startsWith('video/') && !f.mimeType.startsWith('audio/'));
+    if (type === 'document') list = list.filter(f => {
+      const m = f.mimeType;
+      return m === 'application/pdf'
+        || m.includes('word') || m.includes('document')
+        || m.includes('sheet') || m.includes('excel')
+        || m.includes('presentation') || m.includes('powerpoint')
+        || m.startsWith('text/');
+    });
     if (type === 'other')    list = list.filter(f => f.mimeType.startsWith('audio/'));
     return list;
   });
@@ -92,8 +100,7 @@ export class ResearchComponent {
   selectedSourceIds = signal<string[]>([]);
 
   // ── Source detail ─────────────────────────────────────────────────────────
-  editNotes       = signal('');
-  aiSourceAnalysis = signal('');
+  editNotes = signal('');
 
   // ── AI Assistant ──────────────────────────────────────────────────────────
   showAssistant = signal(false);
@@ -156,11 +163,35 @@ export class ResearchComponent {
 
   totalSources = computed(() => this.libraries().reduce((acc, lib) => acc + this.researchService.getSourcesByLibrary(lib.id).length, 0));
 
+  librarySourceCounts = computed(() => {
+    const map = new Map<string, number>();
+    for (const lib of this.libraries()) {
+      map.set(lib.id, this.researchService.getSourcesByLibrary(lib.id).length);
+    }
+    return map;
+  });
+
   hasActiveFilters = computed(() => !!this.searchQuery() || this.filterStatus() !== 'ALL' || this.filterType() !== 'ALL');
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   getSourceTypeMeta(type: string) { return SOURCE_TYPE_META[type] ?? SOURCE_TYPE_META['WEB']; }
   getStatusMeta(status: string)   { return STATUS_META[status] ?? STATUS_META['UNREAD']; }
+
+  formatDate(dateStr: string | undefined): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  isSafeUrl(url: string | undefined): boolean {
+    if (!url) return false;
+    try {
+      const { protocol } = new URL(url);
+      return protocol === 'http:' || protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
 
   formatSourceMeta(source: ResearchSource): string {
     const parts: string[] = [this.getSourceTypeMeta(source.sourceType).label];
@@ -229,7 +260,6 @@ export class ResearchComponent {
   openSourceDetail(source: ResearchSource) {
     this.selectedSource.set(source);
     this.editNotes.set(source.notes || '');
-    this.aiSourceAnalysis.set('');
     this.showSourceDetail.set(true);
   }
   closeSourceDetail() { this.showSourceDetail.set(false); this.selectedSource.set(null); }
@@ -316,14 +346,6 @@ export class ResearchComponent {
       response = `Library has ${srcs.length} sources. Ask about unread, processed, web sources, or request a summary.`;
     }
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-    this.aiLoading.set(false);
-  }
-
-  async analyzeSource(source: ResearchSource) {
-    this.aiLoading.set(true);
-    this.aiSourceAnalysis.set('');
-    await new Promise(r => setTimeout(r, 400));
-    this.aiSourceAnalysis.set('Connect an AI provider to analyse this source.');
     this.aiLoading.set(false);
   }
 

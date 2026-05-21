@@ -36,7 +36,7 @@ export const routes: Routes = [
   { path: 'articles', redirectTo: 'write', pathMatch: 'full' },
   {
     path: 'library',
-    loadComponent: () => import('./components/research/research.component').then(m => m.ResearchComponent),
+    loadComponent: () => import('./components/library/library.component').then(m => m.LibraryComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

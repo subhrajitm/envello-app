@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { ResearchComponent } from './research.component';
+import { LibraryComponent } from './library.component';
 import { ResearchService } from '@envello/core';
 
-describe('ResearchComponent', () => {
-  let component: ResearchComponent;
-  let fixture: ComponentFixture<ResearchComponent>;
+describe('LibraryComponent', () => {
+  let component: LibraryComponent;
+  let fixture: ComponentFixture<LibraryComponent>;
 
   beforeEach(async () => {
     const researchSpy = {
@@ -23,13 +23,13 @@ describe('ResearchComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [ResearchComponent],
+      imports: [LibraryComponent],
       providers: [
         { provide: ResearchService, useValue: researchSpy },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ResearchComponent);
+    fixture = TestBed.createComponent(LibraryComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

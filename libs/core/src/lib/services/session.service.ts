@@ -22,7 +22,7 @@ const STORAGE_KEY = 'envello-session-data';
 const PAGE_MAP: Record<string, string> = {
   'overview': 'Overview',
   'novels': 'Novels/Fiction',
-  'research': 'Research',
+  'library': 'Library',
   'articles': 'Articles/Blogs',
   'journals': 'Journals',
   'daily-notes': 'Daily Notes',

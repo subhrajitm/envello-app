@@ -1,7 +1,7 @@
 <div class="rs-view">
 
   <!-- ── SIDEBAR ── -->
-  <env-feature-sidebar [title]="'Research'">
+  <env-feature-sidebar [title]="'Library'">
 
     <div class="rs-sb-libs">
       @for (lib of filteredLibraries(); track lib.id) {
@@ -301,8 +301,8 @@
   <!-- AI Panel -->
   @if (showAssistant()) {
     <env-ai-panel
-      title="Research Assistant"
-      placeholder="Ask about your research…"
+      title="Library Assistant"
+      placeholder="Ask about your library…"
       [suggestions]="aiSuggestions"
       [messages]="aiMessages()"
       [loading]="aiLoading()"
