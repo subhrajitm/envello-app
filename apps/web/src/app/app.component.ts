@@ -109,7 +109,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       'workspace': 'Workspace',
       'write': 'Write',
-      'research': 'Research',
+      'library': 'Library',
       'daily-notes': 'Notes',
       'tasks': 'Tasks',
       'meetings': 'Meetings',

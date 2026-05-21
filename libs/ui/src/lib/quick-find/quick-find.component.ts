@@ -41,7 +41,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-notes',        type: 'command', title: 'Go to Notes',        preview: 'Daily notes & journals',      icon: 'edit_note',    route: '/daily-notes',   badge: '⌘3' },
     { id: 'cmd-meetings',     type: 'command', title: 'Go to Meetings',     preview: 'Schedule & notes',            icon: 'groups',       route: '/meetings' },
     { id: 'cmd-write',        type: 'command', title: 'Go to Write',        preview: 'Novels & creative projects',  icon: 'menu_book',    route: '/write' },
-    { id: 'cmd-research',     type: 'command', title: 'Go to Research',     preview: 'Articles & research',         icon: 'science',      route: '/research' },
+    { id: 'cmd-research',     type: 'command', title: 'Go to Library',      preview: 'Articles & research',         icon: 'science',      route: '/library' },
     { id: 'cmd-bookmarks',    type: 'command', title: 'Go to Bookmarks',    preview: 'Saved links & resources',     icon: 'bookmarks',    route: '/bookmarks' },
     { id: 'cmd-vault',        type: 'command', title: 'Go to Vault',        preview: 'Secrets & credentials',       icon: 'lock',         route: '/vault' },
     { id: 'cmd-subscriptions',type: 'command', title: 'Go to Vendors',      preview: 'Subscriptions & vendors',     icon: 'credit_card',  route: '/subscriptions' },
