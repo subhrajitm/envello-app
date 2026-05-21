@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService, MeetingsService } from '@envello/core';
+import { StoreService, MeetingsService, SemanticSearchService } from '@envello/core';
 
 type ResultType = 'note' | 'task' | 'novel' | 'bookmark' | 'meeting' | 'project' | 'command';
 type FilterType = 'all' | ResultType;
@@ -62,11 +62,17 @@ export class QuickFindComponent {
     private store = inject(StoreService);
     private meetingsService = inject(MeetingsService);
     private router = inject(Router);
+    private semanticSearch = inject(SemanticSearchService);
 
     isOpen = signal(false);
     searchQuery = signal('');
     activeFilter = signal<FilterType>('all');
     selectedIndex = signal(0);
+    semanticResults = signal<QuickFindResult[]>([]);
+    isSearchingAI = signal(false);
+
+    private searchTimer: ReturnType<typeof setTimeout> | null = null;
+    private searchSequence = 0;
 
     readonly typeMeta = TYPE_META;
     readonly filterTypes: FilterType[] = ['all', 'note', 'task', 'novel', 'bookmark', 'meeting', 'project'];
@@ -106,12 +112,12 @@ export class QuickFindComponent {
         }));
     });
 
-    // Flat list used for keyboard navigation
+    // Flat list used for keyboard navigation (includes semantic results in 'all' mode)
     navList = computed<QuickFindResult[]>(() => {
         if (this.activeFilter() !== 'all' || this.isCommandMode()) {
             return this.flatResults();
         }
-        return this.groups().flatMap(g => g.items);
+        return [...this.groups().flatMap(g => g.items), ...this.semanticResults()];
     });
 
     totalCount = computed(() => this.navList().length);
@@ -150,6 +156,9 @@ export class QuickFindComponent {
         this.isOpen.set(false);
         this.searchQuery.set('');
         this.activeFilter.set('all');
+        this.semanticResults.set([]);
+        this.isSearchingAI.set(false);
+        if (this.searchTimer) clearTimeout(this.searchTimer);
     }
 
     setFilter(f: FilterType) {
@@ -158,8 +167,42 @@ export class QuickFindComponent {
     }
 
     onInput(event: Event) {
-        this.searchQuery.set((event.target as HTMLInputElement).value);
+        const value = (event.target as HTMLInputElement).value;
+        this.searchQuery.set(value);
         this.selectedIndex.set(0);
+        this.scheduleSemanticSearch(value);
+    }
+
+    private scheduleSemanticSearch(query: string) {
+        if (this.searchTimer) clearTimeout(this.searchTimer);
+        if (query.length < 3 || query.startsWith('>') || !this.semanticSearch.available) {
+            this.semanticResults.set([]);
+            this.isSearchingAI.set(false);
+            return;
+        }
+        this.isSearchingAI.set(true);
+        const seq = ++this.searchSequence;
+        this.searchTimer = setTimeout(async () => {
+            const docs = await this.semanticSearch.search(query, 8);
+            if (seq !== this.searchSequence) return;
+            const lexicalIds = new Set(this.flatResults().map(r => r.id));
+            this.semanticResults.set(
+                docs
+                    .filter(d => !lexicalIds.has(d.id))
+                    .map(d => ({
+                        id: d.id,
+                        type: d.type as ResultType,
+                        title: d.title,
+                        preview: d.preview,
+                        icon: d.icon,
+                        route: d.route,
+                        tags: d.tags,
+                        badge: d.badge,
+                        date: d.date,
+                    }))
+            );
+            this.isSearchingAI.set(false);
+        }, 400);
     }
 
     selectResult(result: QuickFindResult | undefined) {
@@ -179,6 +222,10 @@ export class QuickFindComponent {
     getFilterMeta(): { label: string; icon: string; color: string } {
         const f = this.activeFilter();
         return f !== 'all' ? TYPE_META[f] : { label: '', icon: '', color: '' };
+    }
+
+    getSemanticGlobalIndex(itemIndex: number): number {
+        return this.navList().length - this.semanticResults().length + itemIndex;
     }
 
     /** Returns the index of item i within group g in the flat navList, used for keyboard selection. */

@@ -26,3 +26,4 @@ export * from './lib/utils/encryption.util';
 export * from './lib/guards/auth.guard';
 export * from './lib/services/workspace-profile.service';
 export * from './lib/services/sync.service';
+export * from './lib/services/semantic-search.service';

@@ -54,7 +54,7 @@
             }
 
             <!-- Empty: query with no results -->
-            @if (searchQuery().length > 0 && flatResults().length === 0) {
+            @if (searchQuery().length > 0 && flatResults().length === 0 && semanticResults().length === 0 && !isSearchingAI()) {
                 <div class="qf-empty">
                     <span class="material-symbols-outlined">search_off</span>
                     <p>No results for "<strong>{{ searchQuery() }}</strong>"</p>
@@ -140,6 +140,46 @@
                                 @if (item.date) {
                                     <span class="qf-item-date">{{ item.date }}</span>
                                 }
+                            </div>
+                            <span class="material-symbols-outlined qf-item-arrow">arrow_forward</span>
+                        </div>
+                    }
+                }
+            }
+
+            <!-- AI semantic results (all mode, non-trivial query) -->
+            @if (!isCommandMode() && activeFilter() === 'all' && searchQuery().length > 2) {
+                @if (isSearchingAI() && flatResults().length === 0) {
+                    <div class="qf-group-label qf-ai-label">
+                        <span class="material-symbols-outlined" style="font-size:14px">auto_awesome</span>
+                        AI Matches
+                        <span class="qf-ai-spinner"></span>
+                    </div>
+                }
+                @if (!isSearchingAI() && semanticResults().length > 0) {
+                    <div class="qf-group-label qf-ai-label">
+                        <span class="material-symbols-outlined" style="font-size:14px">auto_awesome</span>
+                        AI Matches
+                    </div>
+                    @for (item of semanticResults(); track item.id; let i = $index) {
+                        @let globalIdx = getSemanticGlobalIndex(i);
+                        <div class="qf-item" [class.selected]="globalIdx === selectedIndex()"
+                            (mouseenter)="selectedIndex.set(globalIdx)"
+                            (click)="selectResult(item)">
+                            <div class="qf-item-icon" [style.color]="getTypeColor(item.type)">
+                                <span class="material-symbols-outlined">{{ item.icon }}</span>
+                            </div>
+                            <div class="qf-item-body">
+                                <span class="qf-item-title">{{ item.title }}</span>
+                                @if (item.preview) {
+                                    <span class="qf-item-preview">{{ item.preview }}</span>
+                                }
+                            </div>
+                            <div class="qf-item-right">
+                                @if (item.badge) {
+                                    <span class="qf-badge" [class]="'badge-' + item.type">{{ item.badge }}</span>
+                                }
+                                <span class="qf-ai-tag">AI</span>
                             </div>
                             <span class="material-symbols-outlined qf-item-arrow">arrow_forward</span>
                         </div>
