@@ -44,7 +44,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-research',     type: 'command', title: 'Go to Library',      preview: 'Articles & research',         icon: 'science',      route: '/library' },
     { id: 'cmd-bookmarks',    type: 'command', title: 'Go to Bookmarks',    preview: 'Saved links & resources',     icon: 'bookmarks',    route: '/bookmarks' },
     { id: 'cmd-vault',        type: 'command', title: 'Go to Vault',        preview: 'Secrets & credentials',       icon: 'lock',         route: '/vault' },
-    { id: 'cmd-subscriptions',type: 'command', title: 'Go to Vendors',      preview: 'Subscriptions & vendors',     icon: 'credit_card',  route: '/subscriptions' },
+    { id: 'cmd-subscriptions',type: 'command', title: 'Go to Subscriptions', preview: 'Manage subscriptions',        icon: 'credit_card',  route: '/subscriptions' },
     { id: 'cmd-activity',     type: 'command', title: 'Go to Activity Log', preview: 'View recent activity',        icon: 'history',      route: '/activity-log' },
     { id: 'cmd-bin',          type: 'command', title: 'Go to Bin',          preview: 'Deleted items',               icon: 'delete',       route: '/bin' },
     { id: 'cmd-spaces',       type: 'command', title: 'Go to Spaces',       preview: 'Manage workspaces',           icon: 'folder',       route: '/spaces' },

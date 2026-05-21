@@ -20,17 +20,20 @@ export interface SessionData {
 
 const STORAGE_KEY = 'envello-session-data';
 const PAGE_MAP: Record<string, string> = {
-  'overview': 'Overview',
-  'novels': 'Novels/Fiction',
-  'library': 'Library',
-  'articles': 'Articles/Blogs',
-  'journals': 'Journals',
-  'daily-notes': 'Daily Notes',
-  'tasks': 'Tasks/Todos',
-  'meetings': 'Meetings',
-  'books': 'Books/Reading',
-
-  'bin': 'Bin'
+  'overview':     'Overview',      // default for root/empty path
+  'workspace':    'Workspace',
+  'write':        'Write',
+  'library':      'Library',
+  'daily-notes':  'Daily Notes',
+  'tasks':        'Tasks',
+  'meetings':     'Meetings',
+  'bookmarks':    'Bookmarks',
+  'vault':        'Vault',
+  'subscriptions':'Subscriptions',
+  'spaces':       'Spaces',
+  'activity-log': 'Activity Log',
+  'bin':               'Bin',
+  'developer-settings':'Developer Settings',
 };
 
 @Injectable({
