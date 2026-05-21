@@ -47,7 +47,6 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-subscriptions',type: 'command', title: 'Go to Subscriptions', preview: 'Manage subscriptions',        icon: 'credit_card',  route: '/subscriptions' },
     { id: 'cmd-activity',     type: 'command', title: 'Go to Activity Log', preview: 'View recent activity',        icon: 'history',      route: '/activity-log' },
     { id: 'cmd-bin',          type: 'command', title: 'Go to Bin',          preview: 'Deleted items',               icon: 'delete',       route: '/bin' },
-    { id: 'cmd-spaces',       type: 'command', title: 'Go to Spaces',       preview: 'Manage workspaces',           icon: 'folder',       route: '/spaces' },
 ];
 
 @Component({
@@ -80,7 +79,7 @@ export class QuickFindComponent {
     private aiAbortRequested = false;
 
     readonly typeMeta = TYPE_META;
-    readonly filterTypes: FilterType[] = ['all', 'note', 'task', 'novel', 'bookmark', 'meeting', 'project'];
+    readonly filterTypes: FilterType[] = ['all', 'note', 'task', 'novel', 'bookmark', 'meeting'];
 
     isCommandMode = computed(() => this.searchQuery().startsWith('>'));
     isAiMode = computed(() => this.searchQuery().startsWith('?'));
@@ -352,14 +351,6 @@ export class QuickFindComponent {
                 icon: 'groups', route: '/meetings', date: m.date
             }));
         }
-        if (filter === 'all' || filter === 'project') {
-            this.store.spaces().slice(0, 3).forEach(p => results.push({
-                id: p.id, type: 'project', title: p.title,
-                preview: p.description || p.status,
-                icon: 'folder', route: '/spaces', badge: p.status
-            }));
-        }
-
         return results;
     }
 
@@ -396,13 +387,6 @@ export class QuickFindComponent {
                 .slice(0, 5)
                 .forEach(m => results.push({ id: m.id, type: 'meeting', title: m.title, preview: m.description || m.project || '', icon: 'groups', route: '/meetings', date: m.date }));
         }
-        if (filter === 'all' || filter === 'project') {
-            this.store.spaces()
-                .filter(p => p.title.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query))
-                .slice(0, 5)
-                .forEach(p => results.push({ id: p.id, type: 'project', title: p.title, preview: p.description || '', icon: 'folder', route: '/spaces', badge: p.status }));
-        }
-
         return results;
     }
 }
