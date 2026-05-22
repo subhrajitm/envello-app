@@ -2447,14 +2447,16 @@ export class TasksComponent implements OnInit, OnDestroy {
       const libFiles = await Promise.all(
         files.map(f => this.fileLibrary.upload(f, { type: 'task', id: taskId }))
       );
-      const attachments = libFiles.map(lf => ({
-        id: lf.id,
-        name: lf.name,
-        url: lf.publicUrl,
-        type: lf.mimeType,
-        size: lf.size,
-        uploadedAt: lf.uploadedAt,
-      }));
+      const attachments = libFiles
+        .filter((lf): lf is typeof lf & { publicUrl: string } => !!lf.publicUrl)
+        .map(lf => ({
+          id: lf.id,
+          name: lf.name,
+          url: lf.publicUrl,
+          type: lf.mimeType,
+          size: lf.size,
+          uploadedAt: lf.uploadedAt,
+        }));
       const task = this.store.tasks().find(t => t.id === taskId);
       if (task) {
         this.store.updateTask(taskId, {
@@ -2560,7 +2562,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     const scrollTop = target.scrollTop;
     const containerHeight = target.clientHeight;
-    const scrollHeight = target.scrollHeight;
 
     const tasks = this.filteredTasks();
     if (tasks.length <= 50) return;

@@ -29,6 +29,7 @@ create table if not exists public.tasks (
   updated_at timestamptz default now()
 );
 alter table public.tasks enable row level security;
+drop policy if exists "Users can all access their own tasks" on public.tasks;
 create policy "Users can all access their own tasks" on public.tasks for all using (auth.uid() = user_id);
 
 
@@ -49,6 +50,7 @@ create table if not exists public.notes (
   created_at timestamptz default now()
 );
 alter table public.notes enable row level security;
+drop policy if exists "Users can all access their own notes" on public.notes;
 create policy "Users can all access their own notes" on public.notes for all using (auth.uid() = user_id);
 
 
@@ -65,6 +67,7 @@ create table if not exists public.planning_items (
   created_at timestamptz default now()
 );
 alter table public.planning_items enable row level security;
+drop policy if exists "Users can all access their own planning items" on public.planning_items;
 create policy "Users can all access their own planning items" on public.planning_items for all using (auth.uid() = user_id);
 
 
@@ -80,6 +83,7 @@ create table if not exists public.activities (
   created_at timestamptz default now()
 );
 alter table public.activities enable row level security;
+drop policy if exists "Users can all access their own activities" on public.activities;
 create policy "Users can all access their own activities" on public.activities for all using (auth.uid() = user_id);
 
 
@@ -105,6 +109,7 @@ create table if not exists public.novels (
   created_at timestamptz default now()
 );
 alter table public.novels enable row level security;
+drop policy if exists "Users can all access their own novels" on public.novels;
 create policy "Users can all access their own novels" on public.novels for all using (auth.uid() = user_id);
 
 
@@ -120,6 +125,7 @@ create table if not exists public.novel_content (
   updated_at timestamptz default now()
 );
 alter table public.novel_content enable row level security;
+drop policy if exists "Users can all access their own novel content" on public.novel_content;
 create policy "Users can all access their own novel content" on public.novel_content for all using (auth.uid() = user_id);
 
 
@@ -137,6 +143,7 @@ create table if not exists public.bin_items (
   payload jsonb
 );
 alter table public.bin_items enable row level security;
+drop policy if exists "Users can all access their own bin items" on public.bin_items;
 create policy "Users can all access their own bin items" on public.bin_items for all using (auth.uid() = user_id);
 
 
@@ -158,6 +165,7 @@ create table if not exists public.snippets (
   created_at timestamptz default now()
 );
 alter table public.snippets enable row level security;
+drop policy if exists "Users can all access their own snippets" on public.snippets;
 create policy "Users can all access their own snippets" on public.snippets for all using (auth.uid() = user_id);
 
 
@@ -183,6 +191,7 @@ create table if not exists public.books (
   created_at timestamptz default now()
 );
 alter table public.books enable row level security;
+drop policy if exists "Users can all access their own books" on public.books;
 create policy "Users can all access their own books" on public.books for all using (auth.uid() = user_id);
 
 
@@ -222,6 +231,7 @@ create table if not exists public.meetings (
   created_at timestamptz default now()
 );
 alter table public.meetings enable row level security;
+drop policy if exists "Users can all access their own meetings" on public.meetings;
 create policy "Users can all access their own meetings" on public.meetings for all using (auth.uid() = user_id);
 
 
@@ -247,6 +257,7 @@ create table if not exists public.articles (
   created_at timestamptz default now()
 );
 alter table public.articles enable row level security;
+drop policy if exists "Users can all access their own articles" on public.articles;
 create policy "Users can all access their own articles" on public.articles for all using (auth.uid() = user_id);
 
 
@@ -264,6 +275,7 @@ create table if not exists public.research_libraries (
   created_at timestamptz default now()
 );
 alter table public.research_libraries enable row level security;
+drop policy if exists "Users can all access their own research libraries" on public.research_libraries;
 create policy "Users can all access their own research libraries" on public.research_libraries for all using (auth.uid() = user_id);
 
 
@@ -288,6 +300,7 @@ create table if not exists public.research_sources (
   created_at timestamptz default now()
 );
 alter table public.research_sources enable row level security;
+drop policy if exists "Users can all access their own research sources" on public.research_sources;
 create policy "Users can all access their own research sources" on public.research_sources for all using (auth.uid() = user_id);
 
 
@@ -307,6 +320,7 @@ create table if not exists public.research_summaries (
   created_at timestamptz default now()
 );
 alter table public.research_summaries enable row level security;
+drop policy if exists "Users can all access their own research summaries" on public.research_summaries;
 create policy "Users can all access their own research summaries" on public.research_summaries for all using (auth.uid() = user_id);
 
 -- ──────────────────────────────────────────────────────
@@ -364,8 +378,34 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ──────────────────────────────────────────────────────
--- Optional: Storage Buckets Setup (Requires extension/admin)
+-- Storage: Library bucket + RLS policies
+-- Run in Supabase SQL Editor (Dashboard → SQL Editor)
 -- ──────────────────────────────────────────────────────
--- insert into storage.buckets (id, name, public) values ('envello-files', 'envello-files', false) on conflict do nothing;
--- create policy "Authenticated users can upload files" on storage.objects for insert with check (bucket_id = 'envello-files' and auth.role() = 'authenticated');
--- create policy "Users can see their own files" on storage.objects for select using (bucket_id = 'envello-files' and auth.uid() = owner);
+insert into storage.buckets (id, name, public, file_size_limit)
+  values ('library', 'library', false, 52428800)
+  on conflict (id) do nothing;
+
+-- Each file is stored as {user_id}/{file_id}.ext — policies scope by first path segment.
+drop policy if exists "Library: users can upload their own files" on storage.objects;
+create policy "Library: users can upload their own files"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'library'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "Library: users can read their own files" on storage.objects;
+create policy "Library: users can read their own files"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'library'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "Library: users can delete their own files" on storage.objects;
+create policy "Library: users can delete their own files"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'library'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

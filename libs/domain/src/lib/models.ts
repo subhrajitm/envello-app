@@ -228,7 +228,7 @@ export interface LibraryFile {
     mimeType: string;
     size: number;
     storagePath: string;
-    publicUrl: string;
+    publicUrl?: string;
     uploadedAt: string;
     libraryId?: string;
     sourceType?: 'task' | 'note' | 'research' | 'bookmark' | 'direct';

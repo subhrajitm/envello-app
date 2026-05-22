@@ -9,6 +9,8 @@ export type { LibraryFile };
 const BUCKET = 'library';
 const MAX_SIZE_BYTES = 52_428_800; // 50 MB
 
+const SIGNED_URL_TTL = 3600; // 1 hour
+
 @Injectable({ providedIn: 'root' })
 export class FileLibraryService {
     private sb = inject(SupabaseService);
@@ -18,36 +20,47 @@ export class FileLibraryService {
     files = signal<LibraryFile[]>([]);
     uploading = signal(false);
 
-    private bucketReady: Promise<boolean> | null = null;
+    private signedUrlCache = signal<Record<string, string>>({});
 
     constructor() {
         this.load();
     }
 
+    displayUrl(fileId: string): string {
+        return this.signedUrlCache()[fileId] ?? '';
+    }
+
+    async getSignedUrl(storagePath: string, expiresIn = SIGNED_URL_TTL): Promise<string> {
+        const { data, error } = await this.sb.client.storage
+            .from(BUCKET)
+            .createSignedUrl(storagePath, expiresIn);
+        if (error || !data) throw new Error(error?.message ?? 'Failed to generate download link');
+        return data.signedUrl;
+    }
+
+    private async resolveSignedUrls(files: LibraryFile[]): Promise<void> {
+        if (!files.length) return;
+        const { data } = await this.sb.client.storage
+            .from(BUCKET)
+            .createSignedUrls(files.map(f => f.storagePath), SIGNED_URL_TTL);
+        if (!data) return;
+        const updates: Record<string, string> = {};
+        for (const file of files) {
+            const entry = data.find(d => d.path === file.storagePath);
+            if (entry?.signedUrl) updates[file.id] = entry.signedUrl;
+        }
+        this.signedUrlCache.update(cache => ({ ...cache, ...updates }));
+    }
+
     private async load() {
         try {
             const files = await this.db.getAll<LibraryFile>('library_files');
-            this.files.set((files ?? []).sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt)));
+            const sorted = (files ?? []).sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+            this.files.set(sorted);
+            await this.resolveSignedUrls(sorted);
         } catch (e) {
             console.warn('[FileLibrary] could not load metadata:', e);
         }
-    }
-
-    private ensureBucket(): Promise<boolean> {
-        if (this.bucketReady) return this.bucketReady;
-
-        this.bucketReady = this.sb.client.storage
-            .createBucket(BUCKET, { public: true, fileSizeLimit: MAX_SIZE_BYTES })
-            .then(({ error }) => {
-                // "already exists" is fine — any other error is a real problem
-                if (error && !error.message?.toLowerCase().includes('already exist')) {
-                    console.warn('[FileLibrary] bucket init warning:', error.message);
-                }
-                return true;
-            })
-            .catch(() => true); // best-effort — upload attempt will surface any real error
-
-        return this.bucketReady;
     }
 
     async upload(
@@ -58,8 +71,6 @@ export class FileLibraryService {
         if (file.size > MAX_SIZE_BYTES) {
             throw new Error(`"${file.name}" exceeds the 50 MB limit.`);
         }
-
-        await this.ensureBucket();
 
         const { data: { user } } = await this.sb.client.auth.getUser();
         const userId = user?.id ?? 'anonymous';
@@ -72,15 +83,14 @@ export class FileLibraryService {
             .upload(storagePath, file, { contentType: file.type, upsert: false });
 
         if (uploadError) {
-            const msg = uploadError.message.toLowerCase().includes('not found') || uploadError.message.includes('404')
-                ? `Storage bucket not configured. Create a public bucket named "${BUCKET}" in your Supabase dashboard.`
-                : uploadError.message;
+            const lower = uploadError.message.toLowerCase();
+            const msg = lower.includes('not found') || lower.includes('404')
+                ? `Storage bucket not configured. Create a private bucket named "${BUCKET}" in your Supabase dashboard.`
+                : lower.includes('row-level security') || lower.includes('violates')
+                    ? `Storage permissions not configured. Run the storage policy SQL from supabase_schema.sql in your Supabase dashboard.`
+                    : uploadError.message;
             throw new Error(msg);
         }
-
-        const { data: { publicUrl } } = this.sb.client.storage
-            .from(BUCKET)
-            .getPublicUrl(storagePath);
 
         const entry: LibraryFile = {
             id: fileId,
@@ -88,7 +98,6 @@ export class FileLibraryService {
             mimeType: file.type,
             size: file.size,
             storagePath,
-            publicUrl,
             uploadedAt: new Date().toISOString(),
             libraryId,
             sourceType: source?.type,
@@ -97,6 +106,11 @@ export class FileLibraryService {
 
         await this.db.upsert('library_files', entry);
         this.files.update(list => [entry, ...list]);
+
+        // Resolve signed URL for the newly uploaded file
+        const signedUrl = await this.getSignedUrl(storagePath).catch(() => '');
+        if (signedUrl) this.signedUrlCache.update(c => ({ ...c, [fileId]: signedUrl }));
+
         return entry;
     }
 

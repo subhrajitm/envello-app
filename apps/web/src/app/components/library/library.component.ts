@@ -392,12 +392,17 @@ export class LibraryComponent {
     }
   }
 
-  downloadFile(file: LibraryFile) {
-    const a = document.createElement('a');
-    a.href = file.publicUrl;
-    a.download = file.name;
-    a.target = '_blank';
-    a.click();
+  async downloadFile(file: LibraryFile) {
+    try {
+      const url = await this.fileLibrary.getSignedUrl(file.storagePath);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.target = '_blank';
+      a.click();
+    } catch (e) {
+      console.error('[Library] download failed:', e);
+    }
   }
 
   // ── Keyboard ──────────────────────────────────────────────────────────────

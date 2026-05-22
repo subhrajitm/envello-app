@@ -385,7 +385,7 @@
               <div class="rs-file-card">
                 @if (fileLibrary.isImage(file)) {
                   <div class="rs-file-thumb">
-                    <img [src]="file.publicUrl" [alt]="file.name" loading="lazy">
+                    <img [src]="fileLibrary.displayUrl(file.id)" [alt]="file.name" loading="lazy">
                   </div>
                 } @else {
                   <div class="rs-file-icon-wrap">
