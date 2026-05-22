@@ -230,6 +230,7 @@ export interface LibraryFile {
     storagePath: string;
     publicUrl: string;
     uploadedAt: string;
+    libraryId?: string;
     sourceType?: 'task' | 'note' | 'research' | 'bookmark' | 'direct';
     sourceId?: string;
     description?: string;

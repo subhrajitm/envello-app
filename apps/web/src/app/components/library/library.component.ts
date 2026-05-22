@@ -45,6 +45,8 @@ export class LibraryComponent {
 
   filteredFiles = computed(() => {
     let list = this.fileLibrary.files();
+    const selectedLib = this.selectedLibrary();
+    if (selectedLib) list = list.filter(f => f.libraryId === selectedLib.id);
     const q = this.fileSearchQuery().toLowerCase().trim();
     if (q) list = list.filter(f => f.name.toLowerCase().includes(q));
     const type = this.fileFilterType();
@@ -359,19 +361,20 @@ export class LibraryComponent {
     event.preventDefault();
     this.isDraggingOver.set(false);
     const files = Array.from(event.dataTransfer?.files ?? []);
-    if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' });
+    if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, this.selectedLibrary()?.id);
   }
 
   onDragOver(event: DragEvent) { event.preventDefault(); this.isDraggingOver.set(true); }
   onDragLeave() { this.isDraggingOver.set(false); }
 
   openFileInput() {
+    const libraryId = this.selectedLibrary()?.id;
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
     input.onchange = (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
-      if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' });
+      if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, libraryId);
     };
     input.click();
   }

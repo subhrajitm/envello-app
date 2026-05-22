@@ -53,6 +53,7 @@ export class FileLibraryService {
     async upload(
         file: File,
         source?: { type: LibraryFile['sourceType']; id: string },
+        libraryId?: string,
     ): Promise<LibraryFile> {
         if (file.size > MAX_SIZE_BYTES) {
             throw new Error(`"${file.name}" exceeds the 50 MB limit.`);
@@ -89,6 +90,7 @@ export class FileLibraryService {
             storagePath,
             publicUrl,
             uploadedAt: new Date().toISOString(),
+            libraryId,
             sourceType: source?.type,
             sourceId: source?.id,
         };
@@ -101,6 +103,7 @@ export class FileLibraryService {
     async uploadMany(
         files: File[],
         source?: { type: LibraryFile['sourceType']; id: string },
+        libraryId?: string,
     ): Promise<LibraryFile[]> {
         this.uploading.set(true);
         const results: LibraryFile[] = [];
@@ -108,7 +111,7 @@ export class FileLibraryService {
 
         for (const file of files) {
             try {
-                const lf = await this.upload(file, source);
+                const lf = await this.upload(file, source, libraryId);
                 results.push(lf);
             } catch (e) {
                 errors.push(`${file.name}: ${(e as Error).message}`);
