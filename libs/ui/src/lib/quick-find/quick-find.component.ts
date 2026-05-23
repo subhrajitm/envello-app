@@ -30,7 +30,7 @@ const TYPE_META: Record<ResultType, { label: string; icon: string; color: string
     task:     { label: 'Tasks',     icon: 'check_circle', color: '#fcd34d' },
     novel:    { label: 'Novels',    icon: 'menu_book',    color: '#3b82f6' },
     bookmark: { label: 'Bookmarks', icon: 'bookmark',     color: '#a855f7' },
-    meeting:  { label: 'Meetings',  icon: 'groups',       color: '#ec4899' },
+    meeting:  { label: 'Meetings',  icon: 'calendar_month', color: '#ec4899' },
     project:  { label: 'Spaces',    icon: 'folder',       color: '#60a5fa' },
     command:  { label: 'Commands',  icon: 'terminal',     color: '#94a3b8' },
 };
@@ -39,9 +39,9 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-workspace',    type: 'command', title: 'Go to Workspace',    preview: 'Dashboard overview',          icon: 'dashboard',    route: '/workspace',     badge: '⌘1' },
     { id: 'cmd-tasks',        type: 'command', title: 'Go to Tasks',        preview: 'Manage your tasks',           icon: 'checklist',    route: '/tasks',         badge: '⌘2' },
     { id: 'cmd-notes',        type: 'command', title: 'Go to Notes',        preview: 'Daily notes & journals',      icon: 'edit_note',    route: '/daily-notes',   badge: '⌘3' },
-    { id: 'cmd-meetings',     type: 'command', title: 'Go to Meetings',     preview: 'Schedule & notes',            icon: 'groups',       route: '/meetings' },
+    { id: 'cmd-meetings',     type: 'command', title: 'Go to Meetings',     preview: 'Schedule & notes',            icon: 'calendar_month', route: '/meetings' },
     { id: 'cmd-write',        type: 'command', title: 'Go to Write',        preview: 'Novels & creative projects',  icon: 'menu_book',    route: '/write' },
-    { id: 'cmd-research',     type: 'command', title: 'Go to Knowledge',    preview: 'Articles & research',         icon: 'science',      route: '/knowledge' },
+    { id: 'cmd-research',     type: 'command', title: 'Go to Knowledge',    preview: 'Articles & research',         icon: 'hub',          route: '/knowledge' },
     { id: 'cmd-bookmarks',    type: 'command', title: 'Go to Bookmarks',    preview: 'Saved links & resources',     icon: 'bookmarks',    route: '/bookmarks' },
     { id: 'cmd-vault',        type: 'command', title: 'Go to Vault',        preview: 'Secrets & credentials',       icon: 'lock',         route: '/vault' },
     { id: 'cmd-subscriptions',type: 'command', title: 'Go to Subscriptions', preview: 'Manage subscriptions',        icon: 'credit_card',  route: '/subscriptions' },
@@ -348,7 +348,7 @@ export class QuickFindComponent {
             this.meetingsService.meetings().slice(0, 3).forEach(m => results.push({
                 id: m.id, type: 'meeting', title: m.title,
                 preview: m.description || m.project || '',
-                icon: 'groups', route: '/meetings', date: m.date
+                icon: 'calendar_month', route: '/meetings', date: m.date
             }));
         }
         return results;
@@ -385,7 +385,7 @@ export class QuickFindComponent {
             this.meetingsService.meetings()
                 .filter(m => m.title.toLowerCase().includes(query) || m.description?.toLowerCase().includes(query) || m.project?.toLowerCase().includes(query))
                 .slice(0, 5)
-                .forEach(m => results.push({ id: m.id, type: 'meeting', title: m.title, preview: m.description || m.project || '', icon: 'groups', route: '/meetings', date: m.date }));
+                .forEach(m => results.push({ id: m.id, type: 'meeting', title: m.title, preview: m.description || m.project || '', icon: 'calendar_month', route: '/meetings', date: m.date }));
         }
         return results;
     }
