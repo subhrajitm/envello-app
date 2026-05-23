@@ -21,13 +21,13 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 };
 
 @Component({
-  selector: 'app-library',
+  selector: 'app-knowledge',
   standalone: true,
   imports: [CommonModule, FormsModule, AiAssistantPanelComponent, FeatureSidebarComponent],
-  templateUrl: './library.component.html',
-  styleUrl: './library.component.css'
+  templateUrl: './knowledge.component.html',
+  styleUrl: './knowledge.component.css'
 })
-export class LibraryComponent {
+export class KnowledgeComponent {
   researchService = inject(ResearchService);
 
   // ── View state ────────────────────────────────────────────────────────────

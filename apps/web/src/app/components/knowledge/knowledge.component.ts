@@ -27,13 +27,13 @@ const STATUS_CYCLE: Record<string, ResearchSource['status']> = {
 };
 
 @Component({
-  selector: 'app-library',
+  selector: 'app-knowledge',
   standalone: true,
   imports: [CommonModule, FormsModule, AiAssistantPanelComponent, ConfirmDialogComponent, FeatureSidebarComponent],
-  templateUrl: './library.component.html',
-  styleUrl: './library.component.css'
+  templateUrl: './knowledge.component.html',
+  styleUrl: './knowledge.component.css'
 })
-export class LibraryComponent {
+export class KnowledgeComponent {
   researchService = inject(ResearchService);
   fileLibrary     = inject(FileLibraryService);
   store           = inject(StoreService);

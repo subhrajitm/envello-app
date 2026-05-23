@@ -35,11 +35,12 @@ export const routes: Routes = [
   { path: 'novels', redirectTo: 'write', pathMatch: 'full' },
   { path: 'articles', redirectTo: 'write', pathMatch: 'full' },
   {
-    path: 'library',
-    loadComponent: () => import('./components/library/library.component').then(m => m.LibraryComponent),
+    path: 'knowledge',
+    loadComponent: () => import('./components/knowledge/knowledge.component').then(m => m.KnowledgeComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
+  { path: 'library', redirectTo: 'knowledge', pathMatch: 'full' },
 
   {
     path: 'daily-notes',

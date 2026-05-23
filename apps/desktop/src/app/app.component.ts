@@ -15,8 +15,8 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 const SUB_NAV_ROUTES = new Set([
   // Plan section
   'tasks', 'meetings',
-  // Library section
-  'library',
+  // Knowledge section
+  'knowledge',
   // Create section
   'write', 'spaces',
 ]);
@@ -128,7 +128,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'tasks':       'Tasks',
       'meetings':    'Meetings',
       'daily-notes': 'Notes',
-      'library':     'Knowledge',
+      'knowledge':   'Knowledge',
       'write':       'Write',
       'spaces':    'Spaces',
       'bin':                'Bin',

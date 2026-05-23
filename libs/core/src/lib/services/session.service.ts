@@ -23,7 +23,7 @@ const PAGE_MAP: Record<string, string> = {
   'overview':     'Overview',      // default for root/empty path
   'workspace':    'Workspace',
   'write':        'Write',
-  'library':      'Library',
+  'knowledge':    'Knowledge',
   'daily-notes':  'Daily Notes',
   'tasks':        'Tasks',
   'meetings':     'Meetings',
