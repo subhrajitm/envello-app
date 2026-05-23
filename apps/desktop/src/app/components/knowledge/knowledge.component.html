@@ -11,7 +11,7 @@
           <div class="rs-lib-info">
             <span class="rs-lib-name">{{ lib.name }}</span>
           </div>
-          <span class="rs-lib-count">{{ researchService.getSourcesByLibrary(lib.id).length }}</span>
+          <span class="rs-lib-count">{{ researchService.getSourcesByCollection(lib.id).length }}</span>
           <button class="rs-lib-del" (click)="openDeleteLibrary(lib, $event)" title="Delete library">
             <span class="material-symbols-outlined">delete</span>
           </button>
@@ -289,7 +289,7 @@
             <button class="rs-empty-lib-chip" (click)="selectLibrary(lib)">
               <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
               {{ lib.name }}
-              <span class="rs-empty-chip-count">{{ researchService.getSourcesByLibrary(lib.id).length }}</span>
+              <span class="rs-empty-chip-count">{{ researchService.getSourcesByCollection(lib.id).length }}</span>
             </button>
           }
         </div>

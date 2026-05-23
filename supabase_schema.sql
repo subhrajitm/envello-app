@@ -285,13 +285,23 @@ create policy "Users can manage their own sync data"
   with check (auth.uid() = user_id);
 
 -- Enable Realtime so subscribeRealtime() receives live cross-device updates.
-alter publication supabase_realtime add table public.user_data;
+-- Idempotent: only adds the table if it isn't already a member of the publication.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'user_data'
+  ) then
+    alter publication supabase_realtime add table public.user_data;
+  end if;
+end $$;
 
 
 -- ──────────────────────────────────────────────────────
--- 15. Research Libraries
+-- 15. Research Collections (renamed from research_libraries)
 -- ──────────────────────────────────────────────────────
-create table if not exists public.research_libraries (
+-- Migration for existing deployments: ALTER TABLE public.research_libraries RENAME TO public.research_collections;
+create table if not exists public.research_collections (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   name text,
@@ -301,9 +311,9 @@ create table if not exists public.research_libraries (
   last_modified text,
   created_at timestamptz default now()
 );
-alter table public.research_libraries enable row level security;
-drop policy if exists "Users can all access their own research libraries" on public.research_libraries;
-create policy "Users can all access their own research libraries" on public.research_libraries for all using (auth.uid() = user_id);
+alter table public.research_collections enable row level security;
+drop policy if exists "Users can all access their own research collections" on public.research_collections;
+create policy "Users can all access their own research collections" on public.research_collections for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────

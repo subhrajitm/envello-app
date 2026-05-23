@@ -14,7 +14,7 @@ describe('AddNewModalComponent', () => {
       ['addNote', 'addTask', 'addBookmark'],
       { notes: signal([]), tasks: signal([]) }
     );
-    const researchSpy = jasmine.createSpyObj('ResearchService', ['addLibrary'], { libraries: signal([]) });
+    const researchSpy = jasmine.createSpyObj('ResearchService', ['addCollection'], { collections: signal([]) });
     const meetingsSpy = jasmine.createSpyObj('MeetingsService', ['addMeeting'], { meetings: signal([]) });
     const novelSpy = jasmine.createSpyObj('NovelContentService', ['createNovel'], { novels: signal([]) });
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);

@@ -6,7 +6,7 @@
     <!-- All Sources entry (always visible at top) -->
     <div class="rs-sb-section rs-sb-section--top">
       <button class="rs-lib-item"
-        [class.active]="!selectedLibrary() && viewMode() === 'sources'"
+        [class.active]="!selectedCollection() && viewMode() === 'sources'"
         (click)="selectAllSources()">
         <span class="material-symbols-outlined rs-sb-files-icon">article</span>
         <div class="rs-lib-info">
@@ -26,15 +26,15 @@
     </div>
 
     <div class="rs-sb-libs">
-      @for (lib of libraries(); track lib.id) {
-        <button class="rs-lib-item" [class.active]="selectedLibrary()?.id === lib.id"
-          (click)="selectLibrary(lib)">
+      @for (lib of collections(); track lib.id) {
+        <button class="rs-lib-item" [class.active]="selectedCollection()?.id === lib.id"
+          (click)="selectCollection(lib)">
           <span class="rs-lib-dot" [style.background]="lib.color"></span>
           <div class="rs-lib-info">
             <span class="rs-lib-name">{{ lib.name }}</span>
           </div>
-          <span class="rs-lib-count">{{ librarySourceCounts().get(lib.id) ?? 0 }}</span>
-          <button class="rs-lib-del" (click)="openDeleteLibrary(lib, $event)" title="Delete collection">
+          <span class="rs-lib-count">{{ collectionSourceCounts().get(lib.id) ?? 0 }}</span>
+          <button class="rs-lib-del" (click)="openDeleteCollection(lib, $event)" title="Delete collection">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </button>
@@ -67,12 +67,12 @@
         </div>
       }
 
-      @if (selectedLibrary(); as lib) {
+      @if (selectedCollection(); as lib) {
         <div class="rs-lib-breadcrumb">
           <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
           <span class="rs-lib-bc-name">{{ lib.name }}</span>
           <button class="rs-lib-bc-close"
-            (click)="selectedLibrary.set(null); switchView('sources')"
+            (click)="selectedCollection.set(null); switchView('sources')"
             title="Back to all collections">
             <span class="material-symbols-outlined">close</span>
           </button>
@@ -91,7 +91,7 @@
           AI
         </button>
         <div class="rs-tb-divider"></div>
-        @if (viewMode() === 'summaries' && selectedLibrary()) {
+        @if (viewMode() === 'summaries' && selectedCollection()) {
           <button class="rs-add-btn" (click)="openSummaryModal()">
             <span class="material-symbols-outlined">add</span>
             New Summary
@@ -116,7 +116,7 @@
       <!-- Tabs bar — always visible in files view -->
       <div class="rs-tabs-bar">
         <div class="rs-tabs">
-          @if (!selectedLibrary()) {
+          @if (!selectedCollection()) {
             <button class="rs-tab" (click)="switchView('sources')">
               <span class="material-symbols-outlined">article</span>
               Sources
@@ -136,8 +136,8 @@
           <button class="rs-tab active">
             <span class="material-symbols-outlined">folder_open</span>
             Files
-            @if ((!selectedLibrary() ? fileLibrary.files() : libraryFiles()).length > 0) {
-              <span class="rs-tab-count">{{ (!selectedLibrary() ? fileLibrary.files() : libraryFiles()).length }}</span>
+            @if ((!selectedCollection() ? fileLibrary.files() : collectionFiles()).length > 0) {
+              <span class="rs-tab-count">{{ (!selectedCollection() ? fileLibrary.files() : collectionFiles()).length }}</span>
             }
           </button>
         </div>
@@ -151,7 +151,7 @@
         </div>
 
         <!-- Summaries tab separated to the far right — only when a library is selected -->
-        @if (selectedLibrary()) {
+        @if (selectedCollection()) {
           <div class="rs-tabs rs-tabs--right">
             <button class="rs-tab" (click)="switchView('summaries')">
               <span class="material-symbols-outlined">summarize</span>
@@ -222,7 +222,7 @@
         }
 
       </div>
-    } @else if (selectedLibrary(); as library) {
+    } @else if (selectedCollection(); as library) {
 
       <!-- Tabs + status filters -->
       <div class="rs-tabs-bar">
@@ -239,8 +239,8 @@
             (click)="switchView('files')">
             <span class="material-symbols-outlined">folder_open</span>
             Files
-            @if (libraryFiles().length > 0) {
-              <span class="rs-tab-count">{{ libraryFiles().length }}</span>
+            @if (collectionFiles().length > 0) {
+              <span class="rs-tab-count">{{ collectionFiles().length }}</span>
             }
           </button>
         </div>
@@ -545,9 +545,9 @@
             <label class="rsd-label">Collection</label>
             <select class="rsd-library-select"
               [ngModel]="source.libraryId ?? ''"
-              (ngModelChange)="moveSourceToLibrary(source.id, $event)">
+              (ngModelChange)="moveSourceToCollection(source.id, $event)">
               <option value="">No collection</option>
-              @for (lib of libraries(); track lib.id) {
+              @for (lib of collections(); track lib.id) {
                 <option [value]="lib.id">{{ lib.name }}</option>
               }
             </select>
@@ -699,9 +699,9 @@
           <label class="rsa-label">Collection</label>
           <div class="rsa-collection-row">
             <select class="rsa-input rsa-select rsa-collection-select"
-              [ngModel]="newSourceLibraryId()" (ngModelChange)="newSourceLibraryId.set($event)">
+              [ngModel]="newSourceCollectionId()" (ngModelChange)="newSourceCollectionId.set($event)">
               <option value="">No collection</option>
-              @for (lib of libraries(); track lib.id) {
+              @for (lib of collections(); track lib.id) {
                 <option [value]="lib.id">{{ lib.name }}</option>
               }
             </select>
@@ -712,24 +712,24 @@
         } @else {
           <label class="rsa-label">New Collection</label>
           <div class="rsa-new-col-inline">
-            <span class="material-symbols-outlined rsa-new-col-icon" [style.color]="newLibraryColor()">library_books</span>
+            <span class="material-symbols-outlined rsa-new-col-icon" [style.color]="newCollectionColor()">library_books</span>
             <input class="rsa-input rsa-new-col-input" type="text" placeholder="Collection name…" autofocus
-              [ngModel]="newLibraryName()" (ngModelChange)="newLibraryName.set($event)"
-              (keydown.enter)="saveLibrary()">
+              [ngModel]="newCollectionName()" (ngModelChange)="newCollectionName.set($event)"
+              (keydown.enter)="saveCollection()">
             <div class="rsa-color-picker rsa-color-picker--compact">
-              @for (color of libraryColors; track color) {
-                <button class="rsa-color-opt rsa-color-opt--sm" [class.active]="newLibraryColor() === color"
-                  [style.background]="color" (click)="newLibraryColor.set(color)">
-                  @if (newLibraryColor() === color) {
+              @for (color of collectionColors; track color) {
+                <button class="rsa-color-opt rsa-color-opt--sm" [class.active]="newCollectionColor() === color"
+                  [style.background]="color" (click)="newCollectionColor.set(color)">
+                  @if (newCollectionColor() === color) {
                     <span class="material-symbols-outlined">check</span>
                   }
                 </button>
               }
             </div>
-            <button class="rsa-create-btn rsa-create-btn--sm" [disabled]="!newLibraryName()" (click)="saveLibrary()" title="Create">
+            <button class="rsa-create-btn rsa-create-btn--sm" [disabled]="!newCollectionName()" (click)="saveCollection()" title="Create">
               <span class="material-symbols-outlined">check</span>
             </button>
-            <button class="rsa-icon-btn" (click)="showNewCollectionForm.set(false); newLibraryName.set('')" title="Cancel">
+            <button class="rsa-icon-btn" (click)="showNewCollectionForm.set(false); newCollectionName.set('')" title="Cancel">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
@@ -993,7 +993,7 @@
         </div>
 
         <!-- Two-column selection: Sources + Files -->
-        @if (sources().length > 0 || libraryFiles().length > 0) {
+        @if (sources().length > 0 || collectionFiles().length > 0) {
           <div class="rsa-summary-selection">
             @if (sources().length > 0) {
               <div class="rsa-sel-col">
@@ -1020,7 +1020,7 @@
                 </div>
               </div>
             }
-            @if (libraryFiles().length > 0) {
+            @if (collectionFiles().length > 0) {
               <div class="rsa-sel-col">
                 <label class="rsa-label">
                   Files
@@ -1029,7 +1029,7 @@
                   }
                 </label>
                 <div class="rsa-source-list">
-                  @for (file of libraryFiles(); track file.id) {
+                  @for (file of collectionFiles(); track file.id) {
                     <button class="rsa-source-sel" [class.active]="isFileSelected(file.id)"
                       (click)="toggleFileSelection(file.id)">
                       <span class="material-symbols-outlined" style="color:var(--text-tertiary)">
@@ -1096,14 +1096,14 @@
 
 <!-- ── DELETE COLLECTION ── -->
 <env-confirm-dialog
-  [isOpen]="showDeleteLibrary()"
+  [isOpen]="showDeleteCollection()"
   title="Delete Collection"
   icon="delete"
   variant="danger"
   confirmLabel="Delete"
-  (confirmed)="confirmDeleteLibrary()"
-  (cancelled)="cancelDeleteLibrary()">
-  Delete <strong>"{{ libraryToDelete()?.name }}"</strong> and all its sources? This cannot be undone.
+  (confirmed)="confirmDeleteCollection()"
+  (cancelled)="cancelDeleteCollection()">
+  Delete <strong>"{{ collectionToDelete()?.name }}"</strong> and all its sources? This cannot be undone.
 </env-confirm-dialog>
 
 <!-- ── DELETE SOURCE ── -->

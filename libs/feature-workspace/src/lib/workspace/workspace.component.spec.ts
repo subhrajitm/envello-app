@@ -33,7 +33,7 @@ describe('WorkspaceComponent', () => {
     aiSpy.sendMessage.and.returnValue(Promise.resolve('{"type":"task","title":"Test task","priority":"MEDIUM","due":null,"time":null,"url":null,"description":null,"writingType":null,"route":null}'));
 
     const meetingsSpy  = jasmine.createSpyObj('MeetingsService', ['addMeeting'], { meetings: signal([]) });
-    const researchSpy  = jasmine.createSpyObj('ResearchService', ['addLibrary'], { libraries: signal([]) });
+    const researchSpy  = jasmine.createSpyObj('ResearchService', ['addCollection'], { collections: signal([]) });
 
     await TestBed.configureTestingModule({
       imports: [WorkspaceComponent, RouterTestingModule],

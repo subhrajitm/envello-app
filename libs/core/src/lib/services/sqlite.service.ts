@@ -17,7 +17,7 @@ import type { BinItem } from './bin.service';
 import type { Meeting } from './meetings.service';
 import type { Article } from './article.service';
 import type {
-    ResearchLibrary,
+    ResearchCollection,
     ResearchSource,
     ResearchSummary,
 } from './research.service';
@@ -34,7 +34,9 @@ export type BinItemDoc = BinItem;
 
 export type MeetingDoc = Meeting;
 export type ArticleDoc = Article;
-export type ResearchLibraryDoc = ResearchLibrary;
+export type ResearchCollectionDoc = ResearchCollection;
+/** @deprecated Use ResearchCollectionDoc */
+export type ResearchLibraryDoc = ResearchCollectionDoc;
 export type ResearchSourceDoc = ResearchSource;
 export type ResearchSummaryDoc = ResearchSummary;
 export type ProjectDoc = Project;
@@ -67,7 +69,7 @@ export class SqliteService {
 
     private meetingsSubject = new BehaviorSubject<MeetingDoc[]>([]);
     private articlesSubject = new BehaviorSubject<ArticleDoc[]>([]);
-    private researchLibrariesSubject = new BehaviorSubject<ResearchLibraryDoc[]>([]);
+    private researchCollectionsSubject = new BehaviorSubject<ResearchCollectionDoc[]>([]);
     private researchSourcesSubject = new BehaviorSubject<ResearchSourceDoc[]>([]);
     private researchSummariesSubject = new BehaviorSubject<ResearchSummaryDoc[]>([]);
     private projectsSubject = new BehaviorSubject<ProjectDoc[]>([]);
@@ -292,21 +294,16 @@ export class SqliteService {
       )
     `);
 
-        // Research Libraries
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS research_libraries (
-        id TEXT PRIMARY KEY,
-        name TEXT,
-        description TEXT,
-        color TEXT,
-        createdDate TEXT,
-        lastModified TEXT
-      )
-    `);
+        // Migrate: research_libraries → research_collections (safe no-op on fresh install)
+        try {
+            await db.execute('ALTER TABLE research_libraries RENAME TO research_collections');
+        } catch {
+            // Table already renamed or doesn't exist — both are fine
+        }
 
-        // Research Libraries
+        // Research Collections
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS research_libraries (
+      CREATE TABLE IF NOT EXISTS research_collections (
         id TEXT PRIMARY KEY,
         name TEXT,
         description TEXT,
@@ -930,35 +927,50 @@ export class SqliteService {
         await this.reloadArticles();
     }
 
-    // ─── Research Libraries ────────────────────────────────────────────────────
-    private async reloadResearchLibraries() {
+    // ─── Research Collections ──────────────────────────────────────────────────
+    private async reloadResearchCollections() {
         const db = await this.getDb();
-        const rows = await db.select<ResearchLibraryDoc[]>('SELECT * FROM research_libraries');
-        this.researchLibrariesSubject.next(rows);
+        const rows = await db.select<ResearchCollectionDoc[]>('SELECT * FROM research_collections');
+        this.researchCollectionsSubject.next(rows);
     }
 
-    async upsertResearchLibrary(doc: ResearchLibraryDoc): Promise<void> {
+    async upsertResearchCollection(doc: ResearchCollectionDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM research_libraries WHERE id = $1', [doc.id]);
+        const exists = await db.select<any[]>('SELECT id FROM research_collections WHERE id = $1', [doc.id]);
 
         if (exists.length > 0) {
-            await db.execute('UPDATE research_libraries SET name=$1, description=$2, color=$3, createdDate=$4, lastModified=$5 WHERE id=$6',
+            await db.execute('UPDATE research_collections SET name=$1, description=$2, color=$3, createdDate=$4, lastModified=$5 WHERE id=$6',
                 [doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified, doc.id]);
         } else {
-            await db.execute('INSERT INTO research_libraries (id, name, description, color, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6)',
+            await db.execute('INSERT INTO research_collections (id, name, description, color, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6)',
                 [doc.id, doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified]);
         }
-        await this.reloadResearchLibraries();
+        await this.reloadResearchCollections();
     }
 
-    async getAllResearchLibraries(): Promise<ResearchLibraryDoc[]> {
-        return this.researchLibrariesSubject.getValue();
+    async getAllResearchCollections(): Promise<ResearchCollectionDoc[]> {
+        return this.researchCollectionsSubject.getValue();
     }
 
-    async removeResearchLibrary(id: string): Promise<void> {
+    /** @deprecated Use upsertResearchCollection */
+    async upsertResearchLibrary(doc: ResearchCollectionDoc): Promise<void> {
+        return this.upsertResearchCollection(doc);
+    }
+
+    /** @deprecated Use getAllResearchCollections */
+    async getAllResearchLibraries(): Promise<ResearchCollectionDoc[]> {
+        return this.getAllResearchCollections();
+    }
+
+    async removeResearchCollection(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM research_libraries WHERE id = $1', [id]);
-        await this.reloadResearchLibraries();
+        await db.execute('DELETE FROM research_collections WHERE id = $1', [id]);
+        await this.reloadResearchCollections();
+    }
+
+    /** @deprecated Use removeResearchCollection */
+    async removeResearchLibrary(id: string): Promise<void> {
+        return this.removeResearchCollection(id);
     }
 
     // ─── Research Sources ──────────────────────────────────────────────────────
@@ -1259,7 +1271,7 @@ export class SqliteService {
 
         data.data.meetings = await this.getAllMeetings();
         data.data.articles = await this.getAllArticles();
-        data.data.research_libraries = await this.getAllResearchLibraries();
+        data.data.research_collections = await this.getAllResearchCollections();
         data.data.research_sources = await this.getAllResearchSources();
         data.data.research_summaries = await this.getAllResearchSummaries();
         data.data.projects = await this.getAllProjects();

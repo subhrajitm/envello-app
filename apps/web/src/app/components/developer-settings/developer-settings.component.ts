@@ -55,7 +55,7 @@ export class DeveloperSettingsComponent {
     this.makeTab('novels', 'Novels', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.novels()),
     this.makeTab('meetings', 'Meetings', 'event', 'Content', ['id', 'title', 'date', 'startTime', 'status'], this.meetings.meetings()),
     this.makeTab('articles', 'Articles', 'article', 'Content', ['id', 'title', 'platform', 'pipeline', 'wordCount'], this.articles.articles()),
-    this.makeTab('research-libraries', 'Research Libraries', 'folder', 'Research', ['id', 'name', 'description'], this.research.libraries()),
+    this.makeTab('research-collections', 'Research Collections', 'folder', 'Research', ['id', 'name', 'description'], this.research.collections()),
     this.makeTab('research-sources', 'Research Sources', 'source', 'Research', ['id', 'libraryId', 'title', 'sourceType'], this.research.sources()),
     this.makeTab('research-summaries', 'Research Summaries', 'summarize', 'Research', ['id', 'libraryId', 'title', 'sourceIds'], this.research.summaries()),
     this.makeTab('bin', 'Bin Items', 'delete', 'System', ['id', 'type', 'originalId', 'title', 'deletedAt'], this.bin.items()),

@@ -2,7 +2,7 @@ import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 
-export interface ResearchLibrary {
+export interface ResearchCollection {
     id: string;
     name: string;
     description?: string;
@@ -10,6 +10,9 @@ export interface ResearchLibrary {
     createdDate: string;
     lastModified: string;
 }
+
+/** @deprecated Use ResearchCollection */
+export type ResearchLibrary = ResearchCollection;
 
 export interface ResearchSource {
     id: string;
@@ -46,10 +49,12 @@ export interface ResearchSummary {
 export class ResearchService {
     private db = inject(DataService);
 
-
-    libraries = signal<ResearchLibrary[]>([]);
+    collections = signal<ResearchCollection[]>([]);
     sources = signal<ResearchSource[]>([]);
     summaries = signal<ResearchSummary[]>([]);
+
+    /** @deprecated Use collections */
+    get libraries() { return this.collections; }
 
     constructor() {
         this.loadFromDb();
@@ -57,12 +62,12 @@ export class ResearchService {
 
     private async loadFromDb(): Promise<void> {
         try {
-            const [libs, srcs, sums] = await Promise.all([
-                this.db.getAll<ResearchLibrary>('research_libraries'),
+            const [cols, srcs, sums] = await Promise.all([
+                this.db.getAll<ResearchCollection>('research_collections'),
                 this.db.getAll<ResearchSource>('research_sources'),
                 this.db.getAll<ResearchSummary>('research_summaries'),
             ]);
-            this.libraries.set(libs);
+            this.collections.set(cols);
             this.sources.set(srcs);
             this.summaries.set(sums);
         } catch (e) {
@@ -70,8 +75,8 @@ export class ResearchService {
         }
     }
 
-    private persistLibrary(lib: ResearchLibrary): void {
-        this.db.upsert('research_libraries', lib).catch(e => logIfTauri('[ResearchService] persist library failed', e));
+    private persistCollection(col: ResearchCollection): void {
+        this.db.upsert('research_collections', col).catch(e => logIfTauri('[ResearchService] persist collection failed', e));
     }
 
     private persistSource(s: ResearchSource): void {
@@ -82,36 +87,51 @@ export class ResearchService {
         this.db.upsert('research_summaries', s).catch(e => logIfTauri('[ResearchService] persist summary failed', e));
     }
 
-    // Library methods
-    addLibrary(library: Omit<ResearchLibrary, 'id' | 'createdDate' | 'lastModified'>) {
-        const newLibrary: ResearchLibrary = {
-            ...library,
+    // Collection methods
+    addCollection(collection: Omit<ResearchCollection, 'id' | 'createdDate' | 'lastModified'>) {
+        const newCollection: ResearchCollection = {
+            ...collection,
             id: crypto.randomUUID(),
             createdDate: new Date().toISOString().split('T')[0],
             lastModified: new Date().toISOString().split('T')[0]
         };
-        this.libraries.update(list => [newLibrary, ...list]);
-        this.persistLibrary(newLibrary);
-        return newLibrary;
+        this.collections.update(list => [newCollection, ...list]);
+        this.persistCollection(newCollection);
+        return newCollection;
     }
 
-    updateLibrary(id: string, updates: Partial<ResearchLibrary>) {
-        this.libraries.update(list =>
-            list.map(lib => lib.id === id ? { ...lib, ...updates, lastModified: new Date().toISOString().split('T')[0] } : lib)
+    /** @deprecated Use addCollection */
+    addLibrary(library: Omit<ResearchCollection, 'id' | 'createdDate' | 'lastModified'>) {
+        return this.addCollection(library);
+    }
+
+    updateCollection(id: string, updates: Partial<ResearchCollection>) {
+        this.collections.update(list =>
+            list.map(col => col.id === id ? { ...col, ...updates, lastModified: new Date().toISOString().split('T')[0] } : col)
         );
-        const lib = this.libraries().find(l => l.id === id);
-        if (lib) this.persistLibrary(lib);
+        const col = this.collections().find(c => c.id === id);
+        if (col) this.persistCollection(col);
     }
 
-    async deleteLibrary(id: string) {
+    /** @deprecated Use updateCollection */
+    updateLibrary(id: string, updates: Partial<ResearchCollection>) {
+        return this.updateCollection(id, updates);
+    }
+
+    async deleteCollection(id: string) {
         const srcs = this.sources().filter(s => s.libraryId === id);
         const sums = this.summaries().filter(s => s.libraryId === id);
         for (const s of srcs) await this.db.remove('research_sources', s.id).catch(() => { });
         for (const s of sums) await this.db.remove('research_summaries', s.id).catch(() => { });
         this.sources.update(list => list.filter(s => s.libraryId !== id));
         this.summaries.update(list => list.filter(s => s.libraryId !== id));
-        this.libraries.update(list => list.filter(lib => lib.id !== id));
-        await this.db.remove('research_libraries', id).catch(e => logIfTauri('[ResearchService] remove library failed', e));
+        this.collections.update(list => list.filter(col => col.id !== id));
+        await this.db.remove('research_collections', id).catch(e => logIfTauri('[ResearchService] remove collection failed', e));
+    }
+
+    /** @deprecated Use deleteCollection */
+    deleteLibrary(id: string) {
+        return this.deleteCollection(id);
     }
 
     // Source methods
@@ -146,8 +166,13 @@ export class ResearchService {
         this.summaries().filter(s => s.sourceIds.includes(id)).forEach(s => this.persistSummary(s));
     }
 
+    getSourcesByCollection(collectionId: string) {
+        return this.sources().filter(s => s.libraryId === collectionId);
+    }
+
+    /** @deprecated Use getSourcesByCollection */
     getSourcesByLibrary(libraryId: string) {
-        return this.sources().filter(s => s.libraryId === libraryId);
+        return this.getSourcesByCollection(libraryId);
     }
 
     // Summary methods
@@ -176,7 +201,12 @@ export class ResearchService {
         this.db.remove('research_summaries', id).catch(e => logIfTauri('[ResearchService] remove summary failed', e));
     }
 
+    getSummariesByCollection(collectionId: string) {
+        return this.summaries().filter(s => s.libraryId === collectionId);
+    }
+
+    /** @deprecated Use getSummariesByCollection */
     getSummariesByLibrary(libraryId: string) {
-        return this.summaries().filter(s => s.libraryId === libraryId);
+        return this.getSummariesByCollection(libraryId);
     }
 }

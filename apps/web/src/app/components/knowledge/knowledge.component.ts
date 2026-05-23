@@ -32,7 +32,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── View state ────────────────────────────────────────────────────────────
   viewMode        = signal<ViewMode>('sources');
-  selectedLibrary = signal<ResearchLibrary | null>(null);
+  selectedCollection = signal<ResearchLibrary | null>(null);
 
   // ── Files ─────────────────────────────────────────────────────────────────
   fileFilterType = signal<'all' | 'image' | 'document' | 'video' | 'audio'>('all');
@@ -42,7 +42,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   filteredFiles = computed(() => {
     let list = this.fileLibrary.files();
-    const selectedLib = this.selectedLibrary();
+    const selectedLib = this.selectedCollection();
     if (selectedLib) list = list.filter(f => f.libraryId === selectedLib.id);
     const q = this.searchQuery().toLowerCase().trim();
     if (q) list = list.filter(f => f.name.toLowerCase().includes(q));
@@ -91,19 +91,19 @@ export class KnowledgeComponent implements OnDestroy {
   showSummaryModal    = signal(false);
   showSourceDetail    = signal(false);
   selectedSource      = signal<ResearchSource | null>(null);
-  showDeleteLibrary   = signal(false);
+  showDeleteCollection   = signal(false);
   showDeleteSource    = signal(false);
   showDeleteSummary   = signal(false);
-  libraryToDelete     = signal<ResearchLibrary | null>(null);
+  collectionToDelete     = signal<ResearchLibrary | null>(null);
   sourceToDelete      = signal<ResearchSource | null>(null);
   summaryToDelete     = signal<ResearchSummary | null>(null);
 
-  // ── Library form ──────────────────────────────────────────────────────────
-  newLibraryName  = signal('');
-  newLibraryDesc  = signal('');
-  newLibraryColor = signal('#8b5cf6');
+  // ── Collection form ──────────────────────────────────────────────────────────
+  newCollectionName  = signal('');
+  newCollectionDesc  = signal('');
+  newCollectionColor = signal('#8b5cf6');
 
-  readonly libraryColors = ['#8b5cf6','#f97316','#10b981','#3b82f6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
+  readonly collectionColors = ['#8b5cf6','#f97316','#10b981','#3b82f6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
 
   // ── Source form ───────────────────────────────────────────────────────────
   newSourceTitle     = signal('');
@@ -112,7 +112,7 @@ export class KnowledgeComponent implements OnDestroy {
   newSourceTags      = signal('');
   newSourceDesc      = signal('');
   newSourceAuthor    = signal('');
-  newSourceLibraryId = signal('');   // optional — for add-from-all-sources
+  newSourceCollectionId = signal('');   // optional — for add-from-all-sources
   fetchingMeta       = signal(false);
   suggestingTags     = signal(false);
 
@@ -301,17 +301,16 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   // ── Data ──────────────────────────────────────────────────────────────────
-  libraries = this.researchService.libraries;
+  collections = this.researchService.collections;
 
   sources = computed(() => {
-    const lib = this.selectedLibrary();
-    // When a library is selected, show only its sources; otherwise show all
-    return lib ? this.researchService.getSourcesByLibrary(lib.id) : this.researchService.sources();
+    const lib = this.selectedCollection();
+    return lib ? this.researchService.getSourcesByCollection(lib.id) : this.researchService.sources();
   });
 
   summaries = computed(() => {
-    const lib = this.selectedLibrary();
-    return lib ? this.researchService.getSummariesByLibrary(lib.id) : [];
+    const lib = this.selectedCollection();
+    return lib ? this.researchService.getSummariesByCollection(lib.id) : [];
   });
 
   filteredSources = computed(() => {
@@ -339,10 +338,10 @@ export class KnowledgeComponent implements OnDestroy {
     return list;
   });
 
-  librarySourceCounts = computed(() => {
+  collectionSourceCounts = computed(() => {
     const map = new Map<string, number>();
-    for (const lib of this.libraries()) {
-      map.set(lib.id, this.researchService.getSourcesByLibrary(lib.id).length);
+    for (const lib of this.collections()) {
+      map.set(lib.id, this.researchService.getSourcesByCollection(lib.id).length);
     }
     return map;
   });
@@ -373,8 +372,8 @@ export class KnowledgeComponent implements OnDestroy {
     return s ? this.editNotes() !== (s.notes ?? '') : false;
   });
 
-  libraryFiles = computed(() => {
-    const lib = this.selectedLibrary();
+  collectionFiles = computed(() => {
+    const lib = this.selectedCollection();
     if (!lib) return this.fileLibrary.files();
     return this.fileLibrary.files().filter(f => f.libraryId === lib.id);
   });
@@ -415,16 +414,16 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   private resolveUploadLibraryId(): string | undefined {
-    return (this.showAddModal() ? this.newSourceLibraryId() : '') || this.selectedLibrary()?.id;
+    return (this.showAddModal() ? this.newSourceCollectionId() : '') || this.selectedCollection()?.id;
   }
 
-  // ── Library actions ───────────────────────────────────────────────────────
+  // ── Collection actions ───────────────────────────────────────────────────────
   saveLibrary() {
-    if (!this.newLibraryName()) return;
-    const newLib = this.researchService.addLibrary({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
-    this.newSourceLibraryId.set(newLib.id);
+    if (!this.newCollectionName()) return;
+    const newLib = this.researchService.addCollection({ name: this.newCollectionName(), description: this.newCollectionDesc(), color: this.newCollectionColor() });
+    this.newSourceCollectionId.set(newLib.id);
     this.showNewCollectionForm.set(false);
-    this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
+    this.newCollectionName.set(''); this.newCollectionDesc.set(''); this.newCollectionColor.set('#8b5cf6');
   }
 
   switchView(mode: ViewMode) {
@@ -434,7 +433,7 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   selectAllSources() {
-    this.selectedLibrary.set(null);
+    this.selectedCollection.set(null);
     this.viewMode.set('sources');
     this.searchQuery.set('');
     this.filterStatus.set('ALL');
@@ -442,14 +441,14 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   selectLibrary(library: ResearchLibrary) {
-    this.selectedLibrary.set(library);
+    this.selectedCollection.set(library);
     this.viewMode.set('sources');
     this.searchQuery.set('');
     this.filterStatus.set('ALL');
     this.filterType.set('ALL');
   }
 
-  moveSourceToLibrary(sourceId: string, libraryId: string) {
+  moveSourceToCollection(sourceId: string, libraryId: string) {
     const libId = libraryId || undefined;
     this.researchService.updateSource(sourceId, { libraryId: libId });
     if (this.selectedSource()?.id === sourceId) {
@@ -457,18 +456,18 @@ export class KnowledgeComponent implements OnDestroy {
     }
   }
 
-  openDeleteLibrary(library: ResearchLibrary, e: Event) {
+  openDeleteCollection(library: ResearchLibrary, e: Event) {
     e.stopPropagation();
-    this.libraryToDelete.set(library);
-    this.showDeleteLibrary.set(true);
+    this.collectionToDelete.set(library);
+    this.showDeleteCollection.set(true);
   }
-  cancelDeleteLibrary() { this.showDeleteLibrary.set(false); this.libraryToDelete.set(null); }
-  confirmDeleteLibrary() {
-    const lib = this.libraryToDelete();
+  cancelDeleteCollection() { this.showDeleteCollection.set(false); this.collectionToDelete.set(null); }
+  confirmDeleteCollection() {
+    const lib = this.collectionToDelete();
     if (lib) {
-      this.researchService.deleteLibrary(lib.id);
-      if (this.selectedLibrary()?.id === lib.id) this.selectedLibrary.set(null);
-      this.cancelDeleteLibrary();
+      this.researchService.deleteCollection(lib.id);
+      if (this.selectedCollection()?.id === lib.id) this.selectedCollection.set(null);
+      this.cancelDeleteCollection();
     }
   }
 
@@ -476,9 +475,9 @@ export class KnowledgeComponent implements OnDestroy {
   openAddModal(tab: 'url' | 'file' | 'note' | 'audio' = 'url') {
     this.newSourceTitle.set(''); this.newSourceUrl.set(''); this.newSourceType.set('WEB');
     this.newSourceTags.set(''); this.newSourceDesc.set(''); this.newSourceAuthor.set('');
-    this.newSourceLibraryId.set(this.selectedLibrary()?.id ?? '');
+    this.newSourceCollectionId.set(this.selectedCollection()?.id ?? '');
     this.addNoteContent.set('');
-    this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
+    this.newCollectionName.set(''); this.newCollectionDesc.set(''); this.newCollectionColor.set('#8b5cf6');
     this.fetchingMeta.set(false); this.suggestingTags.set(false);
     this.showNewCollectionForm.set(false);
     this.discardRecording(); this.audioTitle.set(''); this.recordingError.set('');
@@ -494,7 +493,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   saveSource() {
     if (!this.newSourceTitle()) return;
-    const libraryId = this.selectedLibrary()?.id ?? (this.newSourceLibraryId() || undefined);
+    const libraryId = this.selectedCollection()?.id ?? (this.newSourceCollectionId() || undefined);
     this.researchService.addSource({
       libraryId, title: this.newSourceTitle(), url: this.newSourceUrl(),
       sourceType: this.newSourceType(),
@@ -506,7 +505,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   saveNote() {
     if (!this.newSourceTitle()) return;
-    const libraryId = this.selectedLibrary()?.id ?? (this.newSourceLibraryId() || undefined);
+    const libraryId = this.selectedCollection()?.id ?? (this.newSourceCollectionId() || undefined);
     this.researchService.addSource({
       libraryId, title: this.newSourceTitle(), sourceType: 'ARTICLE',
       tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
@@ -707,7 +706,7 @@ export class KnowledgeComponent implements OnDestroy {
   closeSummaryModal() { this.showSummaryModal.set(false); }
 
   saveSummary() {
-    const lib = this.selectedLibrary();
+    const lib = this.selectedCollection();
     if (!this.newSummaryTitle() || !lib) return;
     this.researchService.addSummary({
       libraryId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
@@ -728,7 +727,7 @@ export class KnowledgeComponent implements OnDestroy {
     this.generatingSummary.set(true);
     try {
       const selectedSources = this.sources().filter(s => this.selectedSourceIds().includes(s.id));
-      const selectedFiles   = this.libraryFiles().filter(f => this.selectedFileIds().includes(f.id));
+      const selectedFiles   = this.collectionFiles().filter(f => this.selectedFileIds().includes(f.id));
       const sourceLines = selectedSources.map(s => [
         `- [${this.getSourceTypeMeta(s.sourceType).label}] ${s.title}`,
         s.author      ? `  Author: ${s.author}`           : '',
@@ -776,8 +775,8 @@ export class KnowledgeComponent implements OnDestroy {
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {
-      const lib = this.selectedLibrary();
-      const srcs = lib ? this.researchService.getSourcesByLibrary(lib.id) : this.researchService.libraries().flatMap(l => this.researchService.getSourcesByLibrary(l.id));
+      const lib = this.selectedCollection();
+      const srcs = lib ? this.researchService.getSourcesByCollection(lib.id) : this.researchService.collections().flatMap(l => this.researchService.getSourcesByCollection(l.id));
       const sourceList = srcs.map(s =>
         `- ${s.title} [${s.sourceType}, ${s.status}]${s.author ? `, by ${s.author}` : ''}${s.description ? `: ${s.description}` : ''}`
       ).join('\n');
@@ -917,7 +916,7 @@ export class KnowledgeComponent implements OnDestroy {
       a.href = url; a.download = file.name; a.target = '_blank';
       a.click();
     } catch (e) {
-      console.error('[Library] download failed:', e);
+      console.error('[Knowledge] download failed:', e);
     }
   }
 
@@ -931,7 +930,7 @@ export class KnowledgeComponent implements OnDestroy {
       else if (this.showAddModal())     this.closeAddModal();
       else if (this.showDeleteSource())  this.cancelDeleteSource();
       else if (this.showDeleteSummary()) this.cancelDeleteSummary();
-      else if (this.showDeleteLibrary()) this.cancelDeleteLibrary();
+      else if (this.showDeleteCollection()) this.cancelDeleteCollection();
       else if (this.showDeleteFile())    this.cancelDeleteFile();
     }
   }

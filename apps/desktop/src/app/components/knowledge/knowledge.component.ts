@@ -92,7 +92,7 @@ export class KnowledgeComponent {
   readonly sourceTypeOptions = Object.entries(SOURCE_TYPE_META).map(([id, m]) => ({ id, ...m }));
 
   // ── Data ──────────────────────────────────────────────────────────────────
-  libraries = this.researchService.libraries;
+  libraries = this.researchService.collections;
 
   filteredLibraries = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -104,12 +104,12 @@ export class KnowledgeComponent {
 
   sources = computed(() => {
     const lib = this.selectedLibrary();
-    return lib ? this.researchService.getSourcesByLibrary(lib.id) : [];
+    return lib ? this.researchService.getSourcesByCollection(lib.id) : [];
   });
 
   summaries = computed(() => {
     const lib = this.selectedLibrary();
-    return lib ? this.researchService.getSummariesByLibrary(lib.id) : [];
+    return lib ? this.researchService.getSummariesByCollection(lib.id) : [];
   });
 
   filteredSources = computed(() => {
@@ -134,7 +134,7 @@ export class KnowledgeComponent {
     };
   });
 
-  totalSources = computed(() => this.libraries().reduce((acc, lib) => acc + this.researchService.getSourcesByLibrary(lib.id).length, 0));
+  totalSources = computed(() => this.libraries().reduce((acc, lib) => acc + this.researchService.getSourcesByCollection(lib.id).length, 0));
 
   hasActiveFilters = computed(() => !!this.searchQuery() || this.filterStatus() !== 'ALL' || this.filterType() !== 'ALL');
 
@@ -159,7 +159,7 @@ export class KnowledgeComponent {
 
   saveLibrary() {
     if (!this.newLibraryName()) return;
-    this.researchService.addLibrary({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
+    this.researchService.addCollection({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
     this.closeLibraryModal();
   }
 
@@ -180,7 +180,7 @@ export class KnowledgeComponent {
   confirmDeleteLibrary() {
     const lib = this.libraryToDelete();
     if (lib) {
-      this.researchService.deleteLibrary(lib.id);
+      this.researchService.deleteCollection(lib.id);
       if (this.selectedLibrary()?.id === lib.id) this.selectedLibrary.set(null);
       this.cancelDeleteLibrary();
     }
@@ -278,7 +278,7 @@ export class KnowledgeComponent {
     this.aiLoading.set(true);
     await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
     const lib = this.selectedLibrary();
-    const srcs = lib ? this.researchService.getSourcesByLibrary(lib.id) : [];
+    const srcs = lib ? this.researchService.getSourcesByCollection(lib.id) : [];
     const q = text.toLowerCase();
     let response = '';
     if (q.includes('how many') || q.includes('count')) {

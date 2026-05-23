@@ -9,12 +9,14 @@ describe('KnowledgeComponent', () => {
 
   beforeEach(async () => {
     const researchSpy = {
-      libraries: signal([]),
+      collections: signal([]),
       sources: signal([]),
       summaries: signal([]),
-      addLibrary: jest.fn(),
-      updateLibrary: jest.fn(),
-      deleteLibrary: jest.fn(),
+      addCollection: jest.fn(),
+      updateCollection: jest.fn(),
+      deleteCollection: jest.fn(),
+      getSourcesByCollection: jest.fn().mockReturnValue([]),
+      getSummariesByCollection: jest.fn().mockReturnValue([]),
       addSource: jest.fn(),
       updateSource: jest.fn(),
       deleteSource: jest.fn(),
