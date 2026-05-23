@@ -84,9 +84,8 @@ export class KnowledgeComponent {
   showBulkDelete = signal(false);
 
   // ── Modals ────────────────────────────────────────────────────────────────
-  showLibraryModal    = signal(false);
   showAddModal        = signal(false);
-  addTab              = signal<'url' | 'file' | 'note'>('url');
+  addTab              = signal<'url' | 'file' | 'note' | 'collection'>('url');
   addNoteContent      = signal('');
   showSummaryModal    = signal(false);
   showSourceDetail    = signal(false);
@@ -270,16 +269,10 @@ export class KnowledgeComponent {
   isBulkMode()               { return this.bulkSelected().length > 0; }
 
   // ── Library actions ───────────────────────────────────────────────────────
-  openLibraryModal() {
-    this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
-    this.showLibraryModal.set(true);
-  }
-  closeLibraryModal() { this.showLibraryModal.set(false); }
-
   saveLibrary() {
     if (!this.newLibraryName()) return;
     this.researchService.addLibrary({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
-    this.closeLibraryModal();
+    this.closeAddModal();
   }
 
   switchView(mode: ViewMode) {
@@ -328,13 +321,14 @@ export class KnowledgeComponent {
   }
 
   // ── Source actions ────────────────────────────────────────────────────────
-  openAddModal(tab: 'url' | 'file' | 'note' = 'url') {
+  openAddModal(tab?: 'url' | 'file' | 'note' | 'collection') {
     this.newSourceTitle.set(''); this.newSourceUrl.set(''); this.newSourceType.set('WEB');
     this.newSourceTags.set(''); this.newSourceDesc.set(''); this.newSourceAuthor.set('');
     this.newSourceLibraryId.set(this.selectedLibrary()?.id ?? '');
     this.addNoteContent.set('');
+    this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
     this.fetchingMeta.set(false); this.suggestingTags.set(false);
-    this.addTab.set(tab);
+    this.addTab.set(tab ?? (this.selectedLibrary() ? 'url' : 'collection'));
     this.showAddModal.set(true);
   }
   closeAddModal() { this.showAddModal.set(false); }
@@ -688,7 +682,6 @@ export class KnowledgeComponent {
       else if (this.showSourceDetail()) this.closeSourceDetail();
       else if (this.showSummaryModal()) this.closeSummaryModal();
       else if (this.showAddModal())     this.closeAddModal();
-      else if (this.showLibraryModal()) this.closeLibraryModal();
       else if (this.showDeleteSource()) this.cancelDeleteSource();
       else if (this.showDeleteLibrary()) this.cancelDeleteLibrary();
       else if (this.showDeleteFile())   this.cancelDeleteFile();

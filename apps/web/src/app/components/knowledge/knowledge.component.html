@@ -20,12 +20,9 @@
 
     <div class="rs-sb-sep"></div>
 
-    <!-- Sidebar actions: libraries label + new library button -->
+    <!-- Sidebar actions: collections label -->
     <div class="rs-sb-actions">
       <span class="rs-sb-section-label">Collections</span>
-      <button class="rs-sb-new-btn" (click)="openLibraryModal()" title="New Collection">
-        <span class="material-symbols-outlined">add</span>
-      </button>
     </div>
 
     <div class="rs-sb-libs">
@@ -105,7 +102,7 @@
             Add
           </button>
         } @else {
-          <button class="rs-add-btn" (click)="openAddModal('url')">
+          <button class="rs-add-btn" (click)="openAddModal()">
             <span class="material-symbols-outlined">add</span>
             Add
           </button>
@@ -911,67 +908,6 @@
   </div>
 }
 
-<!-- ── NEW LIBRARY MODAL ── -->
-@if (showLibraryModal()) {
-  <div class="rsa-backdrop" (click)="closeLibraryModal()">
-    <div class="rsa-modal rsa-modal--sm" (click)="$event.stopPropagation()">
-
-      <div class="rsa-header">
-        <div class="rsa-header-left">
-          <span class="material-symbols-outlined rsa-header-icon">library_books</span>
-          <h2 class="rsa-header-title">New Collection</h2>
-        </div>
-        <div class="rsa-header-right">
-          <kbd class="rsa-esc-key">Esc</kbd>
-          <button class="rsa-close-btn" (click)="closeLibraryModal()">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="rsa-form-pane rsa-form-pane--solo">
-        <div class="rsa-name-bar">
-          <span class="material-symbols-outlined" [style.color]="newLibraryColor()">library_books</span>
-          <input class="rsa-name-input" type="text" placeholder="Collection name…" autofocus
-            [ngModel]="newLibraryName()" (ngModelChange)="newLibraryName.set($event)">
-        </div>
-
-        <div class="rsa-field-group">
-          <label class="rsa-label">Description</label>
-          <textarea class="rsa-textarea" rows="3" placeholder="What is this collection for?"
-            [ngModel]="newLibraryDesc()" (ngModelChange)="newLibraryDesc.set($event)"></textarea>
-        </div>
-
-        <div class="rsa-field-group">
-          <label class="rsa-label">Color</label>
-          <div class="rsa-color-picker">
-            @for (color of libraryColors; track color) {
-              <button class="rsa-color-opt" [class.active]="newLibraryColor() === color"
-                [style.background]="color"
-                (click)="newLibraryColor.set(color)">
-                @if (newLibraryColor() === color) {
-                  <span class="material-symbols-outlined">check</span>
-                }
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-
-      <div class="rsa-footer">
-        <div class="rsa-footer-actions">
-          <button class="rsa-cancel-btn" (click)="closeLibraryModal()">Cancel</button>
-          <button class="rsa-create-btn" [disabled]="!newLibraryName()" (click)="saveLibrary()">
-            <span class="material-symbols-outlined">add</span>
-            Create Collection
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-}
-
 <!-- ── UNIFIED ADD MODAL ── -->
 @if (showAddModal()) {
   <div class="rsa-backdrop" (click)="closeAddModal()">
@@ -979,8 +915,12 @@
 
       <div class="rsa-header">
         <div class="rsa-header-left">
-          <span class="material-symbols-outlined rsa-header-icon">add_circle</span>
-          <h2 class="rsa-header-title">Add</h2>
+          <span class="material-symbols-outlined rsa-header-icon">
+            {{ addTab() === 'collection' ? 'library_books' : 'add_circle' }}
+          </span>
+          <h2 class="rsa-header-title">
+            {{ addTab() === 'collection' ? 'New Collection' : 'Add' }}
+          </h2>
         </div>
         <div class="rsa-header-right">
           <kbd class="rsa-esc-key">Esc</kbd>
@@ -992,6 +932,9 @@
 
       <!-- Tab switcher -->
       <div class="rsa-add-tabs">
+        <button class="rsa-add-tab" [class.active]="addTab() === 'collection'" (click)="addTab.set('collection')">
+          <span class="material-symbols-outlined">library_books</span>Collection
+        </button>
         <button class="rsa-add-tab" [class.active]="addTab() === 'url'" (click)="addTab.set('url')">
           <span class="material-symbols-outlined">link</span>URL
         </button>
@@ -1002,6 +945,45 @@
           <span class="material-symbols-outlined">edit_note</span>Note
         </button>
       </div>
+
+      <!-- Collection Tab -->
+      @if (addTab() === 'collection') {
+        <div class="rsa-form-pane rsa-form-pane--solo">
+          <div class="rsa-name-bar">
+            <span class="material-symbols-outlined" [style.color]="newLibraryColor()">library_books</span>
+            <input class="rsa-name-input" type="text" placeholder="Collection name…" autofocus
+              [ngModel]="newLibraryName()" (ngModelChange)="newLibraryName.set($event)">
+          </div>
+          <div class="rsa-field-group">
+            <label class="rsa-label">Description</label>
+            <textarea class="rsa-textarea" rows="3" placeholder="What is this collection for?"
+              [ngModel]="newLibraryDesc()" (ngModelChange)="newLibraryDesc.set($event)"></textarea>
+          </div>
+          <div class="rsa-field-group">
+            <label class="rsa-label">Color</label>
+            <div class="rsa-color-picker">
+              @for (color of libraryColors; track color) {
+                <button class="rsa-color-opt" [class.active]="newLibraryColor() === color"
+                  [style.background]="color"
+                  (click)="newLibraryColor.set(color)">
+                  @if (newLibraryColor() === color) {
+                    <span class="material-symbols-outlined">check</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="rsa-footer">
+          <div class="rsa-footer-actions">
+            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
+            <button class="rsa-create-btn" [disabled]="!newLibraryName()" (click)="saveLibrary()">
+              <span class="material-symbols-outlined">add</span>
+              Create Collection
+            </button>
+          </div>
+        </div>
+      }
 
       <!-- URL Tab -->
       @if (addTab() === 'url') {
