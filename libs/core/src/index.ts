@@ -27,5 +27,6 @@ export * from './lib/guards/auth.guard';
 export * from './lib/services/workspace-profile.service';
 export * from './lib/services/sync.service';
 export * from './lib/services/semantic-search.service';
-export * from './lib/services/file-library.service';
+export * from './lib/services/file-storage.service';
+export * from './lib/services/file-library.service'; // deprecated re-exports
 export * from './lib/services/vault-key.service';

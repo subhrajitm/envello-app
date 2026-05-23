@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary, FileLibraryService, LibraryFile, AiService, StoreService } from '@envello/core';
+import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries' | 'files';
@@ -26,7 +26,7 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
 })
 export class KnowledgeComponent implements OnDestroy {
   researchService = inject(ResearchService);
-  fileLibrary     = inject(FileLibraryService);
+  fileStorage     = inject(FileStorageService);
   store           = inject(StoreService);
   private aiService = inject(AiService);
 
@@ -37,11 +37,11 @@ export class KnowledgeComponent implements OnDestroy {
   // ── Files ─────────────────────────────────────────────────────────────────
   fileFilterType = signal<'all' | 'image' | 'document' | 'video' | 'audio'>('all');
   isDraggingOver   = signal(false);
-  fileToDelete     = signal<LibraryFile | null>(null);
+  fileToDelete     = signal<StorageFile | null>(null);
   showDeleteFile   = signal(false);
 
   filteredFiles = computed(() => {
-    let list = this.fileLibrary.files();
+    let list = this.fileStorage.files();
     const selectedLib = this.selectedCollection();
     if (selectedLib) list = list.filter(f => f.libraryId === selectedLib.id);
     const q = this.searchQuery().toLowerCase().trim();
@@ -188,12 +188,12 @@ export class KnowledgeComponent implements OnDestroy {
       id:   f.id,
       name: f.name,
       type: this.fileMimeLabel(f.mimeType),
-      size: this.fileLibrary.formatSize(f.size),
+      size: this.fileStorage.formatSize(f.size),
     }))
   );
 
   onFileAction(event: EnvTableActionEvent) {
-    const file = this.fileLibrary.files().find(f => f.id === event.row['id']);
+    const file = this.fileStorage.files().find(f => f.id === event.row['id']);
     if (!file) return;
     switch (event.actionKey) {
       case 'download': this.downloadFile(file); break;
@@ -374,8 +374,8 @@ export class KnowledgeComponent implements OnDestroy {
 
   collectionFiles = computed(() => {
     const lib = this.selectedCollection();
-    if (!lib) return this.fileLibrary.files();
-    return this.fileLibrary.files().filter(f => f.libraryId === lib.id);
+    if (!lib) return this.fileStorage.files();
+    return this.fileStorage.files().filter(f => f.libraryId === lib.id);
   });
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -522,7 +522,7 @@ export class KnowledgeComponent implements OnDestroy {
     input.onchange = (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
       if (files.length) {
-        this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, libraryId);
+        this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, libraryId);
         this.closeAddModal();
       }
     };
@@ -844,7 +844,7 @@ export class KnowledgeComponent implements OnDestroy {
     const ext = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'm4a' : 'webm';
     const title = this.audioTitle().trim() || `Recording ${new Date().toLocaleString()}`;
     const file = new File([blob], `${title}.${ext}`, { type: blob.type });
-    await this.fileLibrary.uploadMany([file], { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
+    await this.fileStorage.uploadMany([file], { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
     this.discardRecording();
     this.closeAddModal();
   }
@@ -857,7 +857,7 @@ export class KnowledgeComponent implements OnDestroy {
     input.multiple = true;
     input.onchange = (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
-      if (files.length) { this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, libraryId); this.closeAddModal(); }
+      if (files.length) { this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, libraryId); this.closeAddModal(); }
     };
     input.click();
   }
@@ -878,7 +878,7 @@ export class KnowledgeComponent implements OnDestroy {
     event.preventDefault();
     this.isDraggingOver.set(false);
     const files = Array.from(event.dataTransfer?.files ?? []);
-    if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
+    if (files.length) this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
   }
 
   onDragOver(event: DragEvent) { event.preventDefault(); this.isDraggingOver.set(true); }
@@ -891,12 +891,12 @@ export class KnowledgeComponent implements OnDestroy {
     input.multiple = true;
     input.onchange = (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
-      if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, libraryId);
+      if (files.length) this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, libraryId);
     };
     input.click();
   }
 
-  openDeleteFile(file: LibraryFile) {
+  openDeleteFile(file: StorageFile) {
     this.fileToDelete.set(file);
     this.showDeleteFile.set(true);
   }
@@ -904,14 +904,14 @@ export class KnowledgeComponent implements OnDestroy {
   async confirmDeleteFile() {
     const f = this.fileToDelete();
     if (f) {
-      await this.fileLibrary.delete(f.id);
+      await this.fileStorage.delete(f.id);
       this.cancelDeleteFile();
     }
   }
 
-  async downloadFile(file: LibraryFile) {
+  async downloadFile(file: StorageFile) {
     try {
-      const url = await this.fileLibrary.getSignedUrl(file.storagePath);
+      const url = await this.fileStorage.getSignedUrl(file.storagePath);
       const a = document.createElement('a');
       a.href = url; a.download = file.name; a.target = '_blank';
       a.click();

@@ -420,7 +420,7 @@ create trigger on_auth_user_created
 -- Run in Supabase SQL Editor (Dashboard → SQL Editor)
 -- ──────────────────────────────────────────────────────
 insert into storage.buckets (id, name, public, file_size_limit)
-  values ('library', 'library', false, 52428800)
+  values ('knowledge-files', 'knowledge-files', false, 52428800)
   on conflict (id) do nothing;
 
 -- Each file is stored as {user_id}/{file_id}.ext — policies scope by first path segment.
@@ -428,7 +428,7 @@ drop policy if exists "Library: users can upload their own files" on storage.obj
 create policy "Library: users can upload their own files"
   on storage.objects for insert to authenticated
   with check (
-    bucket_id = 'library'
+    bucket_id = 'knowledge-files'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
@@ -436,7 +436,7 @@ drop policy if exists "Library: users can read their own files" on storage.objec
 create policy "Library: users can read their own files"
   on storage.objects for select to authenticated
   using (
-    bucket_id = 'library'
+    bucket_id = 'knowledge-files'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
@@ -444,6 +444,6 @@ drop policy if exists "Library: users can delete their own files" on storage.obj
 create policy "Library: users can delete their own files"
   on storage.objects for delete to authenticated
   using (
-    bucket_id = 'library'
+    bucket_id = 'knowledge-files'
     and auth.uid()::text = (storage.foldername(name))[1]
   );

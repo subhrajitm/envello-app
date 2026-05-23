@@ -222,7 +222,7 @@ export interface Bookmark {
     isPinned?: boolean;
 }
 
-export interface LibraryFile {
+export interface StorageFile {
     id: string;
     name: string;
     mimeType: string;
@@ -236,6 +236,9 @@ export interface LibraryFile {
     description?: string;
     tags?: string[];
 }
+
+/** @deprecated Use StorageFile */
+export type LibraryFile = StorageFile;
 
 export interface BookmarkFolder {
     id: string;

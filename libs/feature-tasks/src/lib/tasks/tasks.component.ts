@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task, NotificationService, FileLibraryService, AiService } from '@envello/core';
+import { StoreService, Task, NotificationService, FileStorageService, AiService } from '@envello/core';
 import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
@@ -23,7 +23,7 @@ type SubtaskDraft = { title: string; priority: Task['priority'] };
 export class TasksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
   private notificationService = inject(NotificationService);
-  private fileLibrary = inject(FileLibraryService);
+  private fileStorage = inject(FileStorageService);
   private aiService = inject(AiService);
 
   // Left sidebar state
@@ -2446,7 +2446,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.uploadingFiles.set(true);
     try {
       const libFiles = await Promise.all(
-        files.map(f => this.fileLibrary.upload(f, { type: 'task', id: taskId }))
+        files.map(f => this.fileStorage.upload(f, { type: 'task', id: taskId }))
       );
       const attachments = libFiles
         .filter((lf): lf is typeof lf & { publicUrl: string } => !!lf.publicUrl)

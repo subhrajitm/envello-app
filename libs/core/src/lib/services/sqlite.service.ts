@@ -485,7 +485,7 @@ export class SqliteService {
 
             this.reloadMeetings(),
             this.reloadArticles(),
-            this.reloadResearchLibraries(),
+            this.reloadResearchCollections(),
             this.reloadResearchSources(),
             this.reloadResearchSummaries(),
             this.reloadProjects(),

@@ -136,8 +136,8 @@
           <button class="rs-tab active">
             <span class="material-symbols-outlined">folder_open</span>
             Files
-            @if ((!selectedCollection() ? fileLibrary.files() : collectionFiles()).length > 0) {
-              <span class="rs-tab-count">{{ (!selectedCollection() ? fileLibrary.files() : collectionFiles()).length }}</span>
+            @if ((!selectedCollection() ? fileStorage.files() : collectionFiles()).length > 0) {
+              <span class="rs-tab-count">{{ (!selectedCollection() ? fileStorage.files() : collectionFiles()).length }}</span>
             }
           </button>
         </div>
@@ -171,11 +171,11 @@
 
 
         <!-- Drop zone: shown when library is empty (uploading or idle) -->
-        @if (fileLibrary.files().length === 0) {
+        @if (fileStorage.files().length === 0) {
           <div class="rs-files-drop-zone" [class.dragging]="isDraggingOver()"
-            [class.uploading]="fileLibrary.uploading()"
-            (click)="fileLibrary.uploading() ? null : openFileInput()">
-            @if (fileLibrary.uploading()) {
+            [class.uploading]="fileStorage.uploading()"
+            (click)="fileStorage.uploading() ? null : openFileInput()">
+            @if (fileStorage.uploading()) {
               <span class="rs-spinner"></span>
               <p>Uploading…</p>
             } @else {
@@ -187,7 +187,7 @@
         }
 
         <!-- Upload progress banner (when files already exist) -->
-        @if (fileLibrary.uploading() && fileLibrary.files().length > 0) {
+        @if (fileStorage.uploading() && fileStorage.files().length > 0) {
           <div class="rs-files-uploading">
             <span class="rs-spinner"></span>
             Uploading…
@@ -213,7 +213,7 @@
             rowIdKey="id"
             (actionClick)="onFileAction($event)">
           </env-table>
-        } @else if (fileLibrary.files().length > 0) {
+        } @else if (fileStorage.files().length > 0) {
           <div class="rs-files-empty-search">
             <span class="material-symbols-outlined">search_off</span>
             <p>No files match "{{ searchQuery() }}"</p>
@@ -389,8 +389,8 @@
           <button class="rs-tab" (click)="switchView('files')">
             <span class="material-symbols-outlined">folder_open</span>
             Files
-            @if (fileLibrary.files().length > 0) {
-              <span class="rs-tab-count">{{ fileLibrary.files().length }}</span>
+            @if (fileStorage.files().length > 0) {
+              <span class="rs-tab-count">{{ fileStorage.files().length }}</span>
             }
           </button>
         </div>
@@ -828,12 +828,12 @@
         <div class="rsa-form-pane rsa-form-pane--solo rsa-form-pane--file">
           <div class="rs-files-drop-zone rsa-file-drop"
             [class.dragging]="isDraggingOver()"
-            [class.uploading]="fileLibrary.uploading()"
+            [class.uploading]="fileStorage.uploading()"
             (dragover)="onDragOver($event)"
             (dragleave)="onDragLeave()"
             (drop)="onFileDrop($event); closeAddModal()"
-            (click)="fileLibrary.uploading() ? null : openFileInputFromModal()">
-            @if (fileLibrary.uploading()) {
+            (click)="fileStorage.uploading() ? null : openFileInputFromModal()">
+            @if (fileStorage.uploading()) {
               <span class="rs-spinner"></span>
               <p>Uploading…</p>
             } @else {
