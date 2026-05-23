@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, HostListener } from '@angular/core';
+import { Component, signal, computed, inject, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary, FileLibraryService, LibraryFile, AiService, StoreService } from '@envello/core';
@@ -33,7 +33,7 @@ const STATUS_CYCLE: Record<string, ResearchSource['status']> = {
   templateUrl: './knowledge.component.html',
   styleUrl: './knowledge.component.css'
 })
-export class KnowledgeComponent {
+export class KnowledgeComponent implements OnDestroy {
   researchService = inject(ResearchService);
   fileLibrary     = inject(FileLibraryService);
   store           = inject(StoreService);
@@ -84,8 +84,19 @@ export class KnowledgeComponent {
   // ── Modals ────────────────────────────────────────────────────────────────
   showAddModal           = signal(false);
   showNewCollectionForm  = signal(false);
-  addTab                 = signal<'url' | 'file' | 'note'>('url');
+  addTab                 = signal<'url' | 'file' | 'note' | 'audio'>('url');
   addNoteContent      = signal('');
+
+  // ── Audio recording ───────────────────────────────────────────────────────
+  isRecording      = signal(false);
+  recordingDuration = signal(0);
+  recordedBlob     = signal<Blob | null>(null);
+  recordedUrl      = signal('');
+  recordingError   = signal('');
+  audioTitle       = signal('');
+  private mediaRecorder?: MediaRecorder;
+  private audioChunks: BlobPart[] = [];
+  private recordingTimer?: ReturnType<typeof setInterval>;
   showSummaryModal    = signal(false);
   showSourceDetail    = signal(false);
   selectedSource      = signal<ResearchSource | null>(null);
@@ -447,7 +458,7 @@ export class KnowledgeComponent {
   }
 
   // ── Source actions ────────────────────────────────────────────────────────
-  openAddModal(tab: 'url' | 'file' | 'note' = 'url') {
+  openAddModal(tab: 'url' | 'file' | 'note' | 'audio' = 'url') {
     this.newSourceTitle.set(''); this.newSourceUrl.set(''); this.newSourceType.set('WEB');
     this.newSourceTags.set(''); this.newSourceDesc.set(''); this.newSourceAuthor.set('');
     this.newSourceLibraryId.set(this.selectedLibrary()?.id ?? '');
@@ -455,10 +466,16 @@ export class KnowledgeComponent {
     this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
     this.fetchingMeta.set(false); this.suggestingTags.set(false);
     this.showNewCollectionForm.set(false);
+    this.discardRecording(); this.audioTitle.set(''); this.recordingError.set('');
     this.addTab.set(tab);
     this.showAddModal.set(true);
   }
-  closeAddModal() { this.showAddModal.set(false); this.showNewCollectionForm.set(false); }
+  closeAddModal() {
+    if (this.isRecording()) this.stopRecording();
+    this.discardRecording();
+    this.showAddModal.set(false);
+    this.showNewCollectionForm.set(false);
+  }
 
   saveSource() {
     if (!this.newSourceTitle()) return;
@@ -764,6 +781,80 @@ export class KnowledgeComponent {
     } finally {
       this.aiLoading.set(false);
     }
+  }
+
+  // ── Audio recording ───────────────────────────────────────────────────────
+  async startRecording() {
+    this.recordingError.set('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.audioChunks = [];
+      const mimeType = ['audio/webm', 'audio/ogg', 'audio/mp4'].find(t => MediaRecorder.isTypeSupported(t)) ?? '';
+      this.mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      this.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) this.audioChunks.push(e.data); };
+      this.mediaRecorder.onstop = () => {
+        const type = this.mediaRecorder?.mimeType ?? 'audio/webm';
+        const blob = new Blob(this.audioChunks, { type });
+        if (this.recordedUrl()) URL.revokeObjectURL(this.recordedUrl());
+        this.recordedBlob.set(blob);
+        this.recordedUrl.set(URL.createObjectURL(blob));
+        stream.getTracks().forEach(t => t.stop());
+      };
+      this.mediaRecorder.start();
+      this.isRecording.set(true);
+      this.recordingDuration.set(0);
+      this.recordingTimer = setInterval(() => this.recordingDuration.update(d => d + 1), 1000);
+    } catch {
+      this.recordingError.set('Microphone access denied. Please allow microphone access in your browser settings.');
+    }
+  }
+
+  stopRecording() {
+    this.mediaRecorder?.stop();
+    this.isRecording.set(false);
+    clearInterval(this.recordingTimer);
+  }
+
+  discardRecording() {
+    if (this.recordedUrl()) { URL.revokeObjectURL(this.recordedUrl()); this.recordedUrl.set(''); }
+    this.recordedBlob.set(null);
+    this.recordingDuration.set(0);
+    this.audioChunks = [];
+  }
+
+  async saveAudioRecording() {
+    const blob = this.recordedBlob();
+    if (!blob) return;
+    const ext = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'm4a' : 'webm';
+    const title = this.audioTitle().trim() || `Recording ${new Date().toLocaleString()}`;
+    const file = new File([blob], `${title}.${ext}`, { type: blob.type });
+    await this.fileLibrary.uploadMany([file], { type: 'direct', id: 'library' }, this.selectedLibrary()?.id);
+    this.discardRecording();
+    this.closeAddModal();
+  }
+
+  openAudioFileInput() {
+    const libraryId = this.selectedLibrary()?.id;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/*';
+    input.multiple = true;
+    input.onchange = (e: Event) => {
+      const files = Array.from((e.target as HTMLInputElement).files ?? []);
+      if (files.length) { this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, libraryId); this.closeAddModal(); }
+    };
+    input.click();
+  }
+
+  formatDuration(seconds: number): string {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  ngOnDestroy() {
+    if (this.isRecording()) this.stopRecording();
+    this.discardRecording();
   }
 
   // ── File actions ──────────────────────────────────────────────────────────

@@ -743,6 +743,9 @@
         <button class="rsa-add-tab" [class.active]="addTab() === 'note'" (click)="addTab.set('note')">
           <span class="material-symbols-outlined">edit_note</span>Note
         </button>
+        <button class="rsa-add-tab" [class.active]="addTab() === 'audio'" (click)="addTab.set('audio')">
+          <span class="material-symbols-outlined">mic</span>Audio
+        </button>
       </div>
 
       <!-- URL Tab -->
@@ -879,6 +882,79 @@
               <span class="material-symbols-outlined">save</span>
               Save Note
             </button>
+          </div>
+        </div>
+      }
+
+      <!-- Audio Tab -->
+      @if (addTab() === 'audio') {
+        <div class="rsa-form-pane rsa-form-pane--solo rsa-form-pane--audio">
+
+          <!-- Title -->
+          <div class="rsa-field-group">
+            <label class="rsa-label">Title</label>
+            <input type="text" class="rsa-input" placeholder="Recording title…"
+              [ngModel]="audioTitle()" (ngModelChange)="audioTitle.set($event)">
+          </div>
+
+          <!-- Error -->
+          @if (recordingError()) {
+            <div class="rsa-audio-error">
+              <span class="material-symbols-outlined">mic_off</span>
+              {{ recordingError() }}
+            </div>
+          }
+
+          <!-- Idle: record button + upload option -->
+          @if (!isRecording() && !recordedBlob()) {
+            <div class="rsa-audio-stage">
+              <button class="rsa-mic-btn" (click)="startRecording()" title="Start recording">
+                <span class="material-symbols-outlined">mic</span>
+              </button>
+              <p class="rsa-audio-hint">Click to start recording from microphone</p>
+              <div class="rsa-audio-divider"><span>or</span></div>
+              <button class="rsa-audio-upload-btn" (click)="openAudioFileInput()">
+                <span class="material-symbols-outlined">upload_file</span>
+                Upload audio file
+              </button>
+            </div>
+          }
+
+          <!-- Recording in progress -->
+          @if (isRecording()) {
+            <div class="rsa-audio-stage">
+              <div class="rsa-recording-live">
+                <span class="rsa-recording-dot"></span>
+                <span class="rsa-recording-time">{{ formatDuration(recordingDuration()) }}</span>
+              </div>
+              <button class="rsa-stop-btn" (click)="stopRecording()">
+                <span class="material-symbols-outlined">stop_circle</span>
+                Stop Recording
+              </button>
+            </div>
+          }
+
+          <!-- Preview after recording -->
+          @if (recordedBlob() && !isRecording()) {
+            <div class="rsa-audio-preview">
+              <audio class="rsa-audio-player" [src]="recordedUrl()" controls></audio>
+              <button class="rsa-audio-discard-btn" (click)="discardRecording()" title="Discard recording">
+                <span class="material-symbols-outlined">delete</span>
+                Discard
+              </button>
+            </div>
+          }
+
+        </div>
+        <div class="rsa-footer">
+          <div class="rsa-footer-actions">
+            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
+            @if (recordedBlob()) {
+              <button class="rsa-create-btn" (click)="saveAudioRecording()">
+                <span class="material-symbols-outlined">save</span>
+                Save Recording
+              </button>
+            }
           </div>
         </div>
       }
