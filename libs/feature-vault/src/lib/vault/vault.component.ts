@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
-import { EncryptionUtil, AiService } from '@envello/core';
+import { AiService } from '@envello/core';
 import { Credential } from '@envello/domain';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
@@ -65,10 +65,12 @@ export class VaultComponent {
   editProjectId   = signal('global');
 
   // ── Visibility & copy ────────────────────────────────────────────────────
-  visibleCreds    = signal<Set<string>>(new Set());
-  copiedId        = signal<string | null>(null);
-  deleteConfirmId = signal<string | null>(null);
-  private hideTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  visibleCreds      = signal<Set<string>>(new Set());
+  decryptedSecrets  = signal<Map<string, string>>(new Map());
+  copiedId          = signal<string | null>(null);
+  deleteConfirmId   = signal<string | null>(null);
+  private hideTimers      = new Map<string, ReturnType<typeof setTimeout>>();
+  private clipboardTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   // ── AI Assistant ─────────────────────────────────────────────────────────
   showAssistant = signal(false);
@@ -174,7 +176,7 @@ export class VaultComponent {
       type:     cred.type,
       username: cred.username || '—',
       secret:   this.visibleCreds().has(cred.id)
-                  ? this.decryptCred(cred.value)
+                  ? (this.decryptedSecrets().get(cred.id) ?? '…')
                   : '•  •  •  •  •  •  •  •',
       scope:    cred.projectId || 'global',
       date:     this.formatDate(cred.lastAccessedAt || cred.createdAt),
@@ -281,33 +283,52 @@ export class VaultComponent {
   }
 
   // ── Visibility & copy ────────────────────────────────────────────────────
-  toggleCredVisibility(id: string) {
+  async toggleCredVisibility(id: string) {
     const set = new Set(this.visibleCreds());
     if (set.has(id)) {
       set.delete(id);
       clearTimeout(this.hideTimers.get(id));
       this.hideTimers.delete(id);
+      const secrets = new Map(this.decryptedSecrets());
+      secrets.delete(id);
+      this.decryptedSecrets.set(secrets);
     } else {
       set.add(id);
       this.vaultStore.touchCredential(id);
+      const cred = this.vaultStore.credentials().find(c => c.id === id);
+      if (cred) {
+        const plain = await this.vaultStore.decryptValue(cred.value);
+        const secrets = new Map(this.decryptedSecrets());
+        secrets.set(id, plain);
+        this.decryptedSecrets.set(secrets);
+      }
       const timer = setTimeout(() => {
         const next = new Set(this.visibleCreds());
         next.delete(id);
         this.visibleCreds.set(next);
         this.hideTimers.delete(id);
+        const s = new Map(this.decryptedSecrets());
+        s.delete(id);
+        this.decryptedSecrets.set(s);
       }, 30_000);
       this.hideTimers.set(id, timer);
     }
     this.visibleCreds.set(set);
   }
 
-  decryptCred(cipher: string): string { return EncryptionUtil.decrypt(cipher); }
-
-  copyCred(id: string, cipher: string) {
-    navigator.clipboard.writeText(this.decryptCred(cipher));
+  async copyCred(id: string, cipher: string) {
+    const plain = await this.vaultStore.decryptValue(cipher);
+    await navigator.clipboard.writeText(plain);
     this.copiedId.set(id);
     this.vaultStore.touchCredential(id);
     setTimeout(() => this.copiedId.set(null), 1800);
+    // Auto-clear clipboard after 30s — same window as visibility timeout
+    clearTimeout(this.clipboardTimers.get(id));
+    const t = setTimeout(() => {
+      navigator.clipboard.writeText('').catch(() => {});
+      this.clipboardTimers.delete(id);
+    }, 30_000);
+    this.clipboardTimers.set(id, t);
   }
 
   // ── AI Assistant ─────────────────────────────────────────────────────────

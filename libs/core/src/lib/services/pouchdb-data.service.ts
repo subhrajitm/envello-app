@@ -28,6 +28,17 @@ export class PouchDbDataService implements DataService {
         'credential_subscription_links',
     ]);
 
+    /**
+     * Collections that must never be pushed to or pulled from Supabase.
+     * Vault credentials are encrypted locally with a per-device key that does
+     * not travel to the server, so syncing them would expose unusable ciphertext
+     * and break decryption on other devices.
+     */
+    private readonly SYNC_EXCLUDED_COLLECTIONS = new Set([
+        'credentials',
+        'credential_subscription_links',
+    ]);
+
     /** Set to true while applying pulled records to prevent re-triggering sync push. */
     private applyingSync = false;
     /** Only pull once per app session. */
@@ -45,6 +56,7 @@ export class PouchDbDataService implements DataService {
                     this.unsubscribeRealtime = this.syncService.subscribeRealtime(async (record) => {
                         this.applyingSync = true;
                         try {
+                            if (this.SYNC_EXCLUDED_COLLECTIONS.has(record.collection)) return;
                             if (record.deleted) {
                                 await this.removeFromProfile(record.collection, record.profile_id, record.id);
                             } else if (record.data?.id) {
@@ -73,6 +85,7 @@ export class PouchDbDataService implements DataService {
         try {
             const records = await this.syncService.pull();
             for (const record of records) {
+                if (this.SYNC_EXCLUDED_COLLECTIONS.has(record.collection)) continue;
                 if (record.deleted) {
                     await this.removeFromProfile(record.collection, record.profile_id, record.id);
                 } else if (record.data?.id) {
@@ -214,7 +227,7 @@ export class PouchDbDataService implements DataService {
 
             await this.upsertToProfile(collection, resolvedProfileId, item);
 
-            if (!this.applyingSync) {
+            if (!this.applyingSync && !this.SYNC_EXCLUDED_COLLECTIONS.has(collection)) {
                 this.syncService.push(collection, resolvedProfileId, item).catch(() => {});
             }
         } catch (e) {
@@ -233,7 +246,7 @@ export class PouchDbDataService implements DataService {
                     const db = this.getDbForProfile(collection, pid);
                     const existing = await db.get(id);
                     await db.remove(existing._id, existing._rev);
-                    if (!this.applyingSync) {
+                    if (!this.applyingSync && !this.SYNC_EXCLUDED_COLLECTIONS.has(collection)) {
                         this.syncService.pushDelete(collection, pid, id).catch(() => {});
                     }
                     return;
@@ -248,7 +261,7 @@ export class PouchDbDataService implements DataService {
 
         const profileId = isGlobal ? 'default' : activeId;
         await this.removeFromProfile(collection, profileId, id);
-        if (!this.applyingSync) {
+        if (!this.applyingSync && !this.SYNC_EXCLUDED_COLLECTIONS.has(collection)) {
             this.syncService.pushDelete(collection, profileId, id).catch(() => {});
         }
     }
