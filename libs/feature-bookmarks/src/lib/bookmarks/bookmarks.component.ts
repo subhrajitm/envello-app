@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StoreService, Bookmark, BookmarkFolder } from '@envello/core';
+import { StoreService, Bookmark, BookmarkFolder, AiService } from '@envello/core';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
@@ -19,6 +19,7 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 })
 export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
+  private aiService = inject(AiService);
 
   // ── View state ──────────────────────────────────────────────────────────────
   selectedView = signal<BookmarkView>('all');
@@ -550,55 +551,71 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   async sendAiMessage(text: string) {
     if (!text || this.aiLoading()) return;
-
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
+    try {
+      const bookmarks = this.store.bookmarks();
+      const active = bookmarks.filter(b => !b.isArchived);
+      const tags = this.allTags();
+      const folders = this.store.bookmarkFolders();
+      const bookmarkList = active.slice(0, 40).map(b => {
+        const domain = (() => { try { return new URL(b.url).hostname; } catch { return b.url; } })();
+        return `- ${b.title} [${domain}]${b.tags?.length ? ` tags: ${b.tags.join(', ')}` : ''}${b.isPinned ? ' (pinned)' : ''}${b.visitCount ? ` visits: ${b.visitCount}` : ''}${!b.lastVisited ? ' (never opened)' : ''}${b.folderId ? ` folder: ${folders.find(f => f.id === b.folderId)?.name ?? b.folderId}` : ''}`;
+      }).join('\n');
+      const context = [
+        'You are a bookmark assistant for the Envello productivity app.',
+        `The user has ${active.length} active bookmarks across ${folders.length} folder${folders.length !== 1 ? 's' : ''} and ${tags.length} tag${tags.length !== 1 ? 's' : ''}.`,
+        active.length ? `Bookmarks (up to 40):\n${bookmarkList}` : 'No bookmarks yet.',
+        tags.length ? `All tags: ${tags.join(', ')}` : '',
+        'You can help find bookmarks, suggest tags, identify unvisited or duplicate links, summarize topics, or recommend what to read next. Answer concisely, use markdown lists.',
+      ].filter(Boolean).join('\n');
+      const aiResponse = await this.aiService.sendMessage(text, context);
+      const response = aiResponse || this.bookmarkFallback(text, active, tags, folders);
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    } catch {
+      const bookmarks = this.store.bookmarks();
+      const active = bookmarks.filter(b => !b.isArchived);
+      const tags = this.allTags();
+      const folders = this.store.bookmarkFolders();
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: this.bookmarkFallback(text, active, tags, folders) }]);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
 
-    await new Promise(r => setTimeout(r, 900 + Math.random() * 500));
-
-    const bookmarks = this.store.bookmarks();
-    const active = bookmarks.filter(b => !b.isArchived);
-    const tags = this.allTags();
-    const folders = this.store.bookmarkFolders();
+  private bookmarkFallback(text: string, active: Bookmark[], tags: string[], folders: BookmarkFolder[]): string {
     const q = text.toLowerCase();
-    let response = '';
-
     if (q.includes('topic') || q.includes('cover')) {
-      response = tags.length
+      return tags.length
         ? `Your bookmarks span ${tags.length} topic${tags.length > 1 ? 's' : ''}: ${tags.slice(0, 8).map(t => `#${t}`).join(', ')}${tags.length > 8 ? ` and ${tags.length - 8} more` : ''}.`
-        : `Your bookmarks don't have tags yet. Adding tags will help organize and discover topics easily.`;
-    } else if (q.includes('unvisited') || q.includes('never visited') || q.includes('haven')) {
+        : `Your bookmarks don't have tags yet. Adding tags will help with discovery.`;
+    }
+    if (q.includes('unvisited') || q.includes('never visited') || q.includes('haven')) {
       const unvisited = active.filter(b => !b.lastVisited);
-      response = unvisited.length
-        ? `You have ${unvisited.length} bookmark${unvisited.length > 1 ? 's' : ''} you've never opened: ${unvisited.slice(0, 3).map(b => b.title).join(', ')}${unvisited.length > 3 ? `… and ${unvisited.length - 3} more` : '.'}`
-        : `You've visited all your bookmarks at least once — great engagement!`;
-    } else if (q.includes('most visited') || q.includes('popular')) {
+      return unvisited.length
+        ? `${unvisited.length} bookmark${unvisited.length > 1 ? 's' : ''} never opened: ${unvisited.slice(0, 3).map(b => b.title).join(', ')}${unvisited.length > 3 ? ` and ${unvisited.length - 3} more` : '.'}`
+        : `You've opened all your bookmarks at least once — great!`;
+    }
+    if (q.includes('most visited') || q.includes('popular')) {
       const top = [...active].sort((a, b) => (b.visitCount ?? 0) - (a.visitCount ?? 0)).filter(b => (b.visitCount ?? 0) > 0).slice(0, 5);
-      response = top.length
-        ? `Top bookmarks by visits:\n${top.map((b, i) => `${i + 1}. ${b.title} — ${b.visitCount} visit${b.visitCount !== 1 ? 's' : ''}`).join('\n')}`
-        : `No visit data yet. Open bookmarks through the app to start tracking.`;
-    } else if (q.includes('tag') || q.includes('untagged')) {
+      return top.length
+        ? `Top by visits:\n${top.map((b, i) => `${i + 1}. ${b.title} — ${b.visitCount} visit${b.visitCount !== 1 ? 's' : ''}`).join('\n')}`
+        : `No visit data yet.`;
+    }
+    if (q.includes('untagged') || q.includes('tag')) {
       const untagged = active.filter(b => !b.tags?.length);
-      response = untagged.length
-        ? `${untagged.length} bookmark${untagged.length > 1 ? 's are' : ' is'} untagged: ${untagged.slice(0, 3).map(b => b.title).join(', ')}${untagged.length > 3 ? ` and ${untagged.length - 3} more` : ''}. Consider tagging for easier discovery.`
-        : `All your active bookmarks are tagged — great organization!`;
-    } else if (q.includes('duplicate') || q.includes('similar')) {
+      return untagged.length
+        ? `${untagged.length} untagged bookmark${untagged.length > 1 ? 's' : ''}: ${untagged.slice(0, 3).map(b => b.title).join(', ')}${untagged.length > 3 ? ` and ${untagged.length - 3} more` : ''}.`
+        : `All active bookmarks are tagged.`;
+    }
+    if (q.includes('duplicate') || q.includes('similar')) {
       const domains = active.map(b => { try { return new URL(b.url).hostname; } catch { return ''; } });
       const dupes = domains.filter((d, i) => d && domains.indexOf(d) !== i);
-      response = dupes.length
-        ? `Found ${dupes.length} bookmark${dupes.length > 1 ? 's' : ''} sharing a domain with another. Review your collection to remove duplicates.`
-        : `No obvious duplicates detected across your ${active.length} bookmarks.`;
-    } else {
-      response = `You have ${active.length} active bookmark${active.length !== 1 ? 's' : ''} across ${folders.length} folder${folders.length !== 1 ? 's' : ''} and ${tags.length} tag${tags.length !== 1 ? 's' : ''}. Try asking about topics, tags, visit history, or duplicates.`;
+      return dupes.length
+        ? `${dupes.length} bookmark${dupes.length > 1 ? 's share' : ' shares'} a domain with another.`
+        : `No obvious duplicates across your ${active.length} bookmarks.`;
     }
-
-    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-    this.aiLoading.set(false);
-
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
+    return `You have ${active.length} active bookmark${active.length !== 1 ? 's' : ''} across ${folders.length} folder${folders.length !== 1 ? 's' : ''} and ${tags.length} tag${tags.length !== 1 ? 's' : ''}. AI is unavailable — check Settings to configure a provider.`;
   }
 
   clearAiChat() { this.aiMessages.set([]); }

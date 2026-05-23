@@ -14,6 +14,7 @@ import {
   CalendarSyncService,
   CalendarConnection,
   PROVIDER_META,
+  AiService,
 } from '@envello/core';
 import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 @Component({
@@ -26,6 +27,7 @@ import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTab
 export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
   syncService = inject(CalendarSyncService);
+  private aiService = inject(AiService);
   readonly providerMeta = PROVIDER_META;
   
   // Delete confirm
@@ -1225,58 +1227,32 @@ export class MeetingsComponent {
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-    await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
-
-    const all = this.meetingsService.meetings();
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    const q = text.toLowerCase();
-    let response = '';
-
-    if (q.includes('today')) {
-      const t = all.filter(m => m.date === todayStr && m.status !== 'cancelled');
-      response = t.length
-        ? `You have ${t.length} meeting${t.length > 1 ? 's' : ''} today:\n${t.map(m => `• ${m.title} at ${this.formatTime(m.startTime)}`).join('\n')}`
-        : `No meetings scheduled for today.`;
-
-    } else if (q.includes('week')) {
-      const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
-      const week = all.filter(m => { const d = new Date(m.date); return d >= now && d <= weekEnd && m.status !== 'cancelled'; });
-      response = week.length
-        ? `${week.length} meeting${week.length > 1 ? 's' : ''} in the next 7 days:\n${week.slice(0,5).map(m => `• ${m.title} — ${this.getRelativeDate(m.date)} at ${this.formatTime(m.startTime)}`).join('\n')}${week.length > 5 ? `\n…and ${week.length - 5} more` : ''}`
-        : `No meetings in the next 7 days.`;
-
-    } else if (q.includes('action') || q.includes('open')) {
-      const withOpen = all.filter(m => (m.actionItems ?? []).some(a => a.status !== 'completed'));
-      const total = withOpen.reduce((s, m) => s + (m.actionItems ?? []).filter(a => a.status !== 'completed').length, 0);
-      response = withOpen.length
-        ? `${total} open action item${total > 1 ? 's' : ''} across ${withOpen.length} meeting${withOpen.length > 1 ? 's' : ''}:\n${withOpen.slice(0,5).map(m => `• ${m.title} — ${(m.actionItems ?? []).filter(a => a.status !== 'completed').length} open`).join('\n')}`
-        : `No open action items — everything is complete!`;
-
-    } else if (q.includes('type') || q.includes('common')) {
-      const counts = new Map<string, number>();
-      all.forEach(m => counts.set(m.meetingType, (counts.get(m.meetingType) ?? 0) + 1));
-      const sorted = [...counts.entries()].sort((a,b) => b[1]-a[1]);
-      response = sorted.length
-        ? `Meeting type breakdown:\n${sorted.map(([t,c]) => `• ${t.charAt(0).toUpperCase()+t.slice(1)}: ${c}`).join('\n')}\nMost common: ${sorted[0][0]}`
-        : `No meetings recorded yet.`;
-
-    } else if (q.includes('priority') || q.includes('high') || q.includes('upcoming')) {
-      const upcoming = all.filter(m => new Date(m.date) >= now && m.status === 'scheduled' && m.priority === 'HIGH');
-      response = upcoming.length
-        ? `${upcoming.length} high-priority upcoming meeting${upcoming.length > 1 ? 's' : ''}:\n${upcoming.slice(0,5).map(m => `• ${m.title} — ${this.getRelativeDate(m.date)}`).join('\n')}`
-        : `No high-priority upcoming meetings.`;
-
-    } else {
+    try {
+      const all = this.meetingsService.meetings();
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
       const scheduled = all.filter(m => m.status === 'scheduled').length;
       const completed = all.filter(m => m.status === 'completed').length;
       const todayCount = all.filter(m => m.date === todayStr && m.status !== 'cancelled').length;
-      response = `You have ${all.length} total meetings — ${scheduled} upcoming, ${completed} completed, and ${todayCount} today.\n\nTry asking about today's schedule, this week, open action items, meeting types, or high-priority meetings.`;
+      const openActions = all.reduce((s, m) => s + (m.actionItems ?? []).filter(a => a.status !== 'completed').length, 0);
+      const meetingList = all.slice(0, 30).map(m => {
+        const actions = (m.actionItems ?? []).filter(a => a.status !== 'completed').length;
+        return `- [${m.status}] ${m.title} | ${m.date} ${m.startTime ?? ''}${m.priority ? ` | priority: ${m.priority}` : ''}${m.meetingType ? ` | type: ${m.meetingType}` : ''}${actions ? ` | ${actions} open action item(s)` : ''}${m.project ? ` | project: ${m.project}` : ''}`;
+      }).join('\n');
+      const context = [
+        'You are a meetings assistant for the Envello productivity app.',
+        `Today is ${todayStr}.`,
+        `The user has ${all.length} total meetings: ${scheduled} scheduled, ${completed} completed, ${todayCount} today, ${openActions} open action items.`,
+        all.length ? `Meeting list (up to 30):\n${meetingList}` : 'No meetings yet.',
+        'Answer concisely. Use markdown for lists. You can help with scheduling, action items, follow-ups, or workload summaries.',
+      ].join('\n');
+      const response = await this.aiService.sendMessage(text, context);
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
+    } catch {
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);
+    } finally {
+      this.aiLoading.set(false);
     }
-
-    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-    this.aiLoading.set(false);
-    setTimeout(() => { const el = document.querySelector('.ai-panel-messages'); if (el) el.scrollTop = el.scrollHeight; }, 50);
   }
 
   clearAiChat() { this.aiMessages.set([]); }
