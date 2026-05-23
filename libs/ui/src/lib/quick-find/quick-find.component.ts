@@ -35,6 +35,8 @@ const TYPE_META: Record<ResultType, { label: string; icon: string; color: string
     command:  { label: 'Commands',  icon: 'terminal',     color: '#94a3b8' },
 };
 
+const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-workspace',    type: 'command', title: 'Go to Workspace',    preview: 'Dashboard overview',          icon: 'dashboard',    route: '/workspace',     badge: '⌘1' },
     { id: 'cmd-tasks',        type: 'command', title: 'Go to Tasks',        preview: 'Manage your tasks',           icon: 'checklist',    route: '/tasks',         badge: '⌘2' },
@@ -43,7 +45,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-write',        type: 'command', title: 'Go to Write',        preview: 'Novels & creative projects',  icon: 'menu_book',    route: '/write' },
     { id: 'cmd-research',     type: 'command', title: 'Go to Knowledge',    preview: 'Articles & research',         icon: 'hub',          route: '/knowledge' },
     { id: 'cmd-bookmarks',    type: 'command', title: 'Go to Bookmarks',    preview: 'Saved links & resources',     icon: 'bookmarks',    route: '/bookmarks' },
-    { id: 'cmd-vault',        type: 'command', title: 'Go to Vault',        preview: 'Secrets & credentials',       icon: 'lock',         route: '/vault' },
+    ...( IS_TAURI ? [{ id: 'cmd-vault', type: 'command' as const, title: 'Go to Vault', preview: 'Secrets & credentials', icon: 'lock', route: '/vault' }] : []),
     { id: 'cmd-subscriptions',type: 'command', title: 'Go to Subscriptions', preview: 'Manage subscriptions',        icon: 'credit_card',  route: '/subscriptions' },
     { id: 'cmd-activity',     type: 'command', title: 'Go to Activity Log', preview: 'View recent activity',        icon: 'history',      route: '/activity-log' },
     { id: 'cmd-bin',          type: 'command', title: 'Go to Bin',          preview: 'Deleted items',               icon: 'delete',       route: '/bin' },

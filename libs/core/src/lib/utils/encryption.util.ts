@@ -21,6 +21,10 @@ export class EncryptionUtil {
 
     static async encrypt(text: string, userId: string): Promise<string> {
         const key = await this.getOrCreateKey(userId);
+        return this.encryptWithKey(text, key);
+    }
+
+    static async encryptWithKey(text: string, key: CryptoKey): Promise<string> {
         const iv = crypto.getRandomValues(new Uint8Array(12));
         const encoded = new TextEncoder().encode(text);
         const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
@@ -34,12 +38,17 @@ export class EncryptionUtil {
 
     static async decrypt(cipher: string, userId: string): Promise<string> {
         if (!cipher.startsWith(this.V2_PREFIX)) {
-            // Transparent migration: legacy credentials are readable but will be
-            // re-encrypted with AES next time the user saves them.
+            return this.legacyDecrypt(cipher);
+        }
+        const key = await this.getOrCreateKey(userId);
+        return this.decryptWithKey(cipher, key);
+    }
+
+    static async decryptWithKey(cipher: string, key: CryptoKey): Promise<string> {
+        if (!cipher.startsWith(this.V2_PREFIX)) {
             return this.legacyDecrypt(cipher);
         }
         try {
-            const key = await this.getOrCreateKey(userId);
             const combined = Uint8Array.from(atob(cipher.slice(this.V2_PREFIX.length)), c => c.charCodeAt(0));
             const iv = combined.slice(0, 12);
             const cipherBuf = combined.slice(12);

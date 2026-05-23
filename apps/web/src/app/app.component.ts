@@ -115,7 +115,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'meetings': 'Meetings',
       'bookmarks': 'Bookmarks',
       'spaces':  'Spaces',
-      'vault': 'Vault',
+      // vault is desktop-only
       'subscriptions': 'Subscriptions',
       'bin': 'Bin',
       'activity-log': 'Activity Log',

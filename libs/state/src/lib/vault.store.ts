@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
 import { Credential } from '@envello/domain';
-import { EncryptionUtil, AuthService } from '@envello/core';
+import { EncryptionUtil, AuthService, VaultKeyService } from '@envello/core';
 
 @Injectable({
     providedIn: 'root'
@@ -9,6 +9,7 @@ import { EncryptionUtil, AuthService } from '@envello/core';
 export class VaultStore {
     private db = inject(DataService);
     private auth = inject(AuthService);
+    private vaultKey = inject(VaultKeyService);
 
     private credentialsSignal = signal<Credential[]>([]);
     public credentials = this.credentialsSignal.asReadonly();
@@ -27,7 +28,8 @@ export class VaultStore {
     }
 
     async addCredential(cred: Omit<Credential, 'value'> & { unencryptedValue: string }) {
-        const encryptedValue = await EncryptionUtil.encrypt(cred.unencryptedValue, this.userId);
+        const key = await this.vaultKey.getOrCreateKey(this.userId);
+        const encryptedValue = await EncryptionUtil.encryptWithKey(cred.unencryptedValue, key);
         const newCred: Credential = { ...cred, value: encryptedValue };
         await this.db.saveCredential(newCred);
         await this.loadCredentials();
@@ -43,7 +45,8 @@ export class VaultStore {
         const { newUnencryptedValue, ...rest } = changes;
         const updated: Credential = { ...existing, ...rest, updatedAt: new Date().toISOString() };
         if (newUnencryptedValue) {
-            updated.value = await EncryptionUtil.encrypt(newUnencryptedValue, this.userId);
+            const key = await this.vaultKey.getOrCreateKey(this.userId);
+            updated.value = await EncryptionUtil.encryptWithKey(newUnencryptedValue, key);
         }
         await this.db.saveCredential(updated);
         await this.loadCredentials();
@@ -63,6 +66,8 @@ export class VaultStore {
 
     /** Decrypt a stored value — handles v2 (AES-GCM) and legacy format transparently. */
     async decryptValue(cipher: string): Promise<string> {
-        return EncryptionUtil.decrypt(cipher, this.userId);
+        if (!cipher.startsWith('v2:')) return EncryptionUtil.legacyDecrypt(cipher);
+        const key = await this.vaultKey.getOrCreateKey(this.userId);
+        return EncryptionUtil.decryptWithKey(cipher, key);
     }
 }

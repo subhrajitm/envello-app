@@ -111,13 +111,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
 
 
+  private readonly isTauri =
+    typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
   navItems: NavItem[] = [
     { id: 'tasks',       label: 'Tasks',    icon: 'checklist', route: 'tasks' },
     { id: 'meetings',    label: 'Meetings', icon: 'calendar_month', route: 'meetings' },
     { id: 'daily-notes', label: 'Notes',    icon: 'note',      route: 'daily-notes' },
     { id: 'knowledge',   label: 'Knowledge',  icon: 'hub', route: 'knowledge' },
     { id: 'write',       label: 'Write',    icon: 'edit',      route: 'write' },
-    { id: 'vault',       label: 'Vault',    icon: 'lock',      route: 'vault' },
+    ...( this.isTauri ? [{ id: 'vault', label: 'Vault', icon: 'lock', route: 'vault' }] : [] as NavItem[]),
     { id: 'subscriptions',label: 'Subscriptions', icon: 'credit_card',route: 'subscriptions' },
     { id: 'bookmarks',   label: 'Bookmarks', icon: 'bookmarks', route: 'bookmarks' },
   ];

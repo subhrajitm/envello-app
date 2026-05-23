@@ -451,6 +451,28 @@ export class SqliteService {
         createdAt TEXT
       )
     `);
+
+        // App metadata — stores per-app key/value pairs (e.g. vault encryption key)
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+    }
+
+    async getAppMeta(key: string): Promise<string | null> {
+        const db = await this.getDb();
+        const rows = await db.select<{ value: string }[]>('SELECT value FROM app_meta WHERE key = $1', [key]);
+        return rows.length > 0 ? rows[0].value : null;
+    }
+
+    async setAppMeta(key: string, value: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute(
+            'INSERT INTO app_meta (key, value) VALUES ($1, $2) ON CONFLICT(key) DO UPDATE SET value = $2',
+            [key, value]
+        );
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
