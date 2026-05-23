@@ -191,6 +191,7 @@
   background: var(--bg-panel); flex-shrink: 0; gap: 12px; overflow: hidden;
 }
 .rs-tabs { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.rs-tabs--right { margin-left: auto; padding-left: 12px; border-left: 1px solid var(--border-subtle); }
 .rs-tab {
   display: flex; align-items: center; gap: 5px; padding: 4px 10px;
   background: transparent; border: 1px solid transparent;
@@ -652,6 +653,22 @@
 .rsa-color-opt .material-symbols-outlined { font-size: 14px; color: white; }
 
 /* Source selection list */
+/* Summary modal layout */
+.rsa-summary-pane { display: flex; flex-direction: column; gap: 12px; }
+.rsa-summary-selection { display: flex; gap: 12px; }
+.rsa-sel-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.rsa-sel-count { margin-left: 6px; font-size: 11px; font-weight: 600; color: var(--accent-primary); background: var(--accent-primary-dim); padding: 1px 6px; border-radius: 10px; }
+.rsa-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.rsa-ai-gen-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 5px; font-size: 12px; font-weight: 500;
+  background: var(--accent-primary-dim); border: 1px solid var(--accent-primary);
+  color: var(--accent-primary); cursor: pointer; transition: all 0.12s;
+}
+.rsa-ai-gen-btn:hover:not(:disabled) { background: var(--accent-primary); color: #fff; }
+.rsa-ai-gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.rsa-ai-gen-btn .material-symbols-outlined { font-size: 15px; }
+
 .rsa-source-list { display: flex; flex-direction: column; gap: 2px; max-height: 160px; overflow-y: auto; }
 .rsa-source-sel {
   display: flex; align-items: center; gap: 8px; padding: 6px 8px;
@@ -754,11 +771,6 @@
   position: relative;
 }
 
-.rs-files-type-bar {
-  display: flex; gap: 4px; flex-wrap: wrap;
-  padding: 8px 16px; border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-}
 
 .rs-files-drop-zone {
   flex: 1;
@@ -1145,6 +1157,53 @@
 
 /* ── Unified Add modal size ── */
 .rsa-modal--md { max-width: 560px; }
+
+/* ── Collection bar (above tabs) ── */
+.rsa-collection-bar {
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-app);
+  flex-shrink: 0;
+}
+.rsa-collection-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.rsa-collection-select { flex: 1; }
+.rsa-new-col-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 10px; height: 32px;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg-secondary); color: var(--text-secondary);
+  font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: all 0.15s;
+}
+.rsa-new-col-btn:hover { background: var(--accent-primary-dim); border-color: var(--accent-primary); color: var(--accent-primary); }
+.rsa-new-col-btn .material-symbols-outlined { font-size: 15px; }
+
+.rsa-new-col-inline {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 4px; flex-wrap: wrap;
+}
+.rsa-new-col-icon { font-size: 18px; flex-shrink: 0; }
+.rsa-new-col-input { flex: 1; min-width: 120px; }
+.rsa-color-picker--compact { display: flex; gap: 5px; flex-wrap: wrap; }
+.rsa-color-opt--sm { width: 18px !important; height: 18px !important; border-radius: 50% !important; }
+.rsa-color-opt--sm .material-symbols-outlined { font-size: 11px !important; }
+.rsa-create-btn--sm {
+  padding: 0 8px !important; height: 28px !important;
+  font-size: 11px !important; border-radius: 5px !important;
+}
+.rsa-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 6px;
+  border: none; background: transparent; color: var(--text-tertiary);
+  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.rsa-icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.rsa-icon-btn .material-symbols-outlined { font-size: 16px; }
 
 /* ── Unified Add modal tab bar ── */
 .rsa-add-tabs {

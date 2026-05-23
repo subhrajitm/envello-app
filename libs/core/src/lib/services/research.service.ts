@@ -34,6 +34,7 @@ export interface ResearchSummary {
     title: string;
     content: string;
     sourceIds: string[];
+    fileIds?: string[];
     tags: string[];
     createdDate: string;
     lastModified: string;

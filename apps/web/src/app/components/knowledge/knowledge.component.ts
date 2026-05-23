@@ -2,7 +2,7 @@ import { Component, signal, computed, inject, HostListener } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary, FileLibraryService, LibraryFile, AiService, StoreService } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries' | 'files';
 type SortField = 'title' | 'status' | 'type' | 'date';
@@ -29,7 +29,7 @@ const STATUS_CYCLE: Record<string, ResearchSource['status']> = {
 @Component({
   selector: 'app-knowledge',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, ConfirmDialogComponent, FeatureSidebarComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent],
   templateUrl: './knowledge.component.html',
   styleUrl: './knowledge.component.css'
 })
@@ -79,21 +79,22 @@ export class KnowledgeComponent {
   sortField = signal<SortField>('date');
   sortDir   = signal<'asc' | 'desc'>('desc');
 
-  // ── Bulk actions (feature 3) ──────────────────────────────────────────────
-  bulkSelected   = signal<string[]>([]);
-  showBulkDelete = signal(false);
+  // ── Bulk actions handled by env-table ────────────────────────────────────
 
   // ── Modals ────────────────────────────────────────────────────────────────
-  showAddModal        = signal(false);
-  addTab              = signal<'url' | 'file' | 'note' | 'collection'>('url');
+  showAddModal           = signal(false);
+  showNewCollectionForm  = signal(false);
+  addTab                 = signal<'url' | 'file' | 'note'>('url');
   addNoteContent      = signal('');
   showSummaryModal    = signal(false);
   showSourceDetail    = signal(false);
   selectedSource      = signal<ResearchSource | null>(null);
   showDeleteLibrary   = signal(false);
   showDeleteSource    = signal(false);
+  showDeleteSummary   = signal(false);
   libraryToDelete     = signal<ResearchLibrary | null>(null);
   sourceToDelete      = signal<ResearchSource | null>(null);
+  summaryToDelete     = signal<ResearchSummary | null>(null);
 
   // ── Library form ──────────────────────────────────────────────────────────
   newLibraryName  = signal('');
@@ -114,10 +115,12 @@ export class KnowledgeComponent {
   suggestingTags     = signal(false);
 
   // ── Summary form ──────────────────────────────────────────────────────────
-  newSummaryTitle   = signal('');
-  newSummaryContent = signal('');
-  newSummaryTags    = signal('');
-  selectedSourceIds = signal<string[]>([]);
+  newSummaryTitle    = signal('');
+  newSummaryContent  = signal('');
+  newSummaryTags     = signal('');
+  selectedSourceIds  = signal<string[]>([]);
+  selectedFileIds    = signal<string[]>([]);
+  generatingSummary  = signal(false);
 
   // ── Source detail ─────────────────────────────────────────────────────────
   editNotes       = signal('');
@@ -146,6 +149,139 @@ export class KnowledgeComponent {
 
   // ── Static data ───────────────────────────────────────────────────────────
   readonly sourceTypeOptions = Object.entries(SOURCE_TYPE_META).map(([id, m]) => ({ id, ...m }));
+
+  // ── env-table config ──────────────────────────────────────────────────────
+  readonly sourceColumns: EnvTableColumn[] = [
+    { key: 'title',      header: 'Source',        sortable: true },
+    { key: 'sourceType', header: 'Type',           type: 'badge', sortable: true, badgeMap: {
+      WEB:       { label: 'Web',       dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.1)',   textColor: '#3b82f6' },
+      PDF:       { label: 'PDF',       dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.1)',    textColor: '#ef4444' },
+      VIDEO:     { label: 'Video',     dotColor: '#a855f7', bgColor: 'rgba(168,85,247,0.1)',   textColor: '#a855f7' },
+      INTERVIEW: { label: 'Interview', dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.1)',   textColor: '#10b981' },
+      PHYSICAL:  { label: 'Physical',  dotColor: '#f59e0b', bgColor: 'rgba(245,158,11,0.1)',   textColor: '#d97706' },
+      ARTICLE:   { label: 'Article',   dotColor: '#06b6d4', bgColor: 'rgba(6,182,212,0.1)',    textColor: '#0891b2' },
+    }},
+    { key: 'status', header: 'Status', type: 'badge', sortable: true, badgeMap: {
+      UNREAD:    { label: 'Unread',    dotColor: '#f87171', bgColor: 'rgba(248,113,113,0.1)',  textColor: '#ef4444' },
+      READING:   { label: 'Reading',   dotColor: '#facc15', bgColor: 'rgba(250,204,21,0.1)',   textColor: '#b45309' },
+      PROCESSED: { label: 'Processed', dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',   textColor: '#16a34a' },
+    }},
+    { key: 'meta', header: 'Author · Date', sortable: true },
+  ];
+
+  // ── File table config ────────────────────────────────────────────────────
+  readonly fileColumns: EnvTableColumn[] = [
+    { key: 'name', header: 'Name',  sortable: true },
+    { key: 'type', header: 'Type' },
+    { key: 'size', header: 'Size',  sortable: true },
+  ];
+
+  readonly fileActions: EnvTableAction[] = [
+    { key: 'download', label: 'Download', icon: 'download', bulk: true  },
+    { key: 'delete',   label: 'Delete',   icon: 'delete',   danger: true, bulk: false },
+  ];
+
+  fileTableRows = computed(() =>
+    this.filteredFiles().map(f => ({
+      id:   f.id,
+      name: f.name,
+      type: this.fileMimeLabel(f.mimeType),
+      size: this.fileLibrary.formatSize(f.size),
+    }))
+  );
+
+  onFileAction(event: EnvTableActionEvent) {
+    const file = this.fileLibrary.files().find(f => f.id === event.row['id']);
+    if (!file) return;
+    switch (event.actionKey) {
+      case 'download': this.downloadFile(file); break;
+      case 'delete':   this.openDeleteFile(file); break;
+    }
+  }
+
+  fileMimeLabel(mimeType: string): string {
+    if (mimeType.startsWith('image/'))         return 'Image';
+    if (mimeType.startsWith('video/'))         return 'Video';
+    if (mimeType.startsWith('audio/'))         return 'Audio';
+    if (mimeType === 'application/pdf')        return 'PDF';
+    if (mimeType.startsWith('text/'))          return 'Text';
+    if (mimeType.includes('word') || mimeType.includes('document')) return 'Document';
+    if (mimeType.includes('sheet') || mimeType.includes('excel'))   return 'Spreadsheet';
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'Presentation';
+    return 'File';
+  }
+
+  // ── Summary table config ─────────────────────────────────────────────────
+  readonly summaryColumns: EnvTableColumn[] = [
+    { key: 'title',   header: 'Title',   sortable: true },
+    { key: 'sources', header: 'Sources' },
+    { key: 'tags',    header: 'Tags' },
+    { key: 'date',    header: 'Date',    sortable: true },
+  ];
+
+  readonly summaryActions: EnvTableAction[] = [
+    { key: 'delete', label: 'Delete', icon: 'delete', danger: true, bulk: false },
+  ];
+
+  summaryTableRows = computed(() =>
+    this.summaries().map(s => ({
+      id:      s.id,
+      title:   s.title,
+      sources: s.sourceIds.length ? `${s.sourceIds.length} source${s.sourceIds.length !== 1 ? 's' : ''}` : '—',
+      tags:    s.tags.join(', ') || '—',
+      date:    this.formatDate(s.createdDate),
+    }))
+  );
+
+  onSummaryAction(event: EnvTableActionEvent) {
+    const summary = this.summaries().find(s => s.id === event.row['id']);
+    if (!summary) return;
+    if (event.actionKey === 'delete') {
+      this.summaryToDelete.set(summary);
+      this.showDeleteSummary.set(true);
+    }
+  }
+
+  readonly sourceActions: EnvTableAction[] = [
+    { key: 'mark-unread',    label: 'Unread',    icon: 'radio_button_unchecked', bulk: true  },
+    { key: 'mark-reading',   label: 'Reading',   icon: 'menu_book',              bulk: true  },
+    { key: 'mark-processed', label: 'Processed', icon: 'task_alt',               bulk: true  },
+    { key: 'delete',         label: 'Delete',    icon: 'delete', danger: true,   bulk: false },
+  ];
+
+  sourceTableRows = computed(() =>
+    this.filteredSources().map(s => ({
+      id:         s.id,
+      title:      s.title,
+      sourceType: s.sourceType,
+      status:     s.status,
+      meta:       this.formatSourceMeta(s),
+    }))
+  );
+
+  onSourceRowClick(row: EnvTableRow) {
+    const source = this.researchService.sources().find(s => s.id === row['id']);
+    if (source) this.openSourceDetail(source);
+  }
+
+  onSourceAction(event: EnvTableActionEvent) {
+    const source = this.researchService.sources().find(s => s.id === event.row['id']);
+    if (!source) return;
+    switch (event.actionKey) {
+      case 'mark-unread':    this.researchService.updateSource(source.id, { status: 'UNREAD' });    break;
+      case 'mark-reading':   this.researchService.updateSource(source.id, { status: 'READING' });   break;
+      case 'mark-processed': this.researchService.updateSource(source.id, { status: 'PROCESSED' }); break;
+      case 'delete':         this.openDeleteSource(source);                                          break;
+    }
+  }
+
+  onSourceSort(event: EnvTableSortEvent) {
+    const keyMap: Record<string, SortField> = {
+      title: 'title', sourceType: 'type', status: 'status', meta: 'date',
+    };
+    const field = keyMap[event.key];
+    if (field) { this.sortField.set(field); this.sortDir.set(event.direction); }
+  }
 
   // ── Data ──────────────────────────────────────────────────────────────────
   libraries = this.researchService.libraries;
@@ -255,24 +391,16 @@ export class KnowledgeComponent {
     return parts.join(' · ');
   }
 
-  sortIcon(field: SortField): string {
-    if (this.sortField() !== field) return 'unfold_more';
-    return this.sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward';
-  }
-
-  toggleSort(field: SortField) {
-    if (this.sortField() === field) this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
-    else { this.sortField.set(field); this.sortDir.set('asc'); }
-  }
-
-  isBulkSelected(id: string) { return this.bulkSelected().includes(id); }
-  isBulkMode()               { return this.bulkSelected().length > 0; }
-
   // ── Library actions ───────────────────────────────────────────────────────
   saveLibrary() {
     if (!this.newLibraryName()) return;
-    this.researchService.addLibrary({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
-    this.closeAddModal();
+    const name = this.newLibraryName();
+    this.researchService.addLibrary({ name, description: this.newLibraryDesc(), color: this.newLibraryColor() });
+    // Auto-select the newly created collection in the dropdown
+    const newLib = this.libraries().find(l => l.name === name);
+    if (newLib) this.newSourceLibraryId.set(newLib.id);
+    this.showNewCollectionForm.set(false);
+    this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
   }
 
   switchView(mode: ViewMode) {
@@ -285,7 +413,6 @@ export class KnowledgeComponent {
     this.selectedLibrary.set(null);
     this.viewMode.set('sources');
     this.searchQuery.set('');
-    this.bulkSelected.set([]);
   }
 
   selectLibrary(library: ResearchLibrary) {
@@ -294,7 +421,6 @@ export class KnowledgeComponent {
     this.searchQuery.set('');
     this.filterStatus.set('ALL');
     this.filterType.set('ALL');
-    this.bulkSelected.set([]);
   }
 
   moveSourceToLibrary(sourceId: string, libraryId: string) {
@@ -321,17 +447,18 @@ export class KnowledgeComponent {
   }
 
   // ── Source actions ────────────────────────────────────────────────────────
-  openAddModal(tab?: 'url' | 'file' | 'note' | 'collection') {
+  openAddModal(tab: 'url' | 'file' | 'note' = 'url') {
     this.newSourceTitle.set(''); this.newSourceUrl.set(''); this.newSourceType.set('WEB');
     this.newSourceTags.set(''); this.newSourceDesc.set(''); this.newSourceAuthor.set('');
     this.newSourceLibraryId.set(this.selectedLibrary()?.id ?? '');
     this.addNoteContent.set('');
     this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
     this.fetchingMeta.set(false); this.suggestingTags.set(false);
-    this.addTab.set(tab ?? (this.selectedLibrary() ? 'url' : 'collection'));
+    this.showNewCollectionForm.set(false);
+    this.addTab.set(tab);
     this.showAddModal.set(true);
   }
-  closeAddModal() { this.showAddModal.set(false); }
+  closeAddModal() { this.showAddModal.set(false); this.showNewCollectionForm.set(false); }
 
   saveSource() {
     if (!this.newSourceTitle()) return;
@@ -475,15 +602,6 @@ export class KnowledgeComponent {
     }
   }
 
-  // Feature 2: inline status cycle in table row
-  cycleSourceStatus(source: ResearchSource, e: Event) {
-    e.stopPropagation();
-    const next = STATUS_CYCLE[source.status] ?? 'UNREAD';
-    this.researchService.updateSource(source.id, { status: next });
-    if (this.selectedSource()?.id === source.id) {
-      this.selectedSource.update(cur => cur ? { ...cur, status: next } : null);
-    }
-  }
 
   saveNotes() {
     const s = this.selectedSource();
@@ -526,29 +644,6 @@ export class KnowledgeComponent {
     }
   }
 
-  // Feature 3: Bulk actions
-  toggleBulkSelect(id: string, e: Event) {
-    e.stopPropagation();
-    this.bulkSelected.update(sel =>
-      sel.includes(id) ? sel.filter(i => i !== id) : [...sel, id]
-    );
-  }
-
-  clearBulkSelect() { this.bulkSelected.set([]); }
-
-  bulkSetStatus(status: ResearchSource['status']) {
-    for (const id of this.bulkSelected()) this.researchService.updateSource(id, { status });
-    this.clearBulkSelect();
-  }
-
-  bulkDeleteConfirm() { this.showBulkDelete.set(true); }
-  cancelBulkDelete()  { this.showBulkDelete.set(false); }
-  confirmBulkDelete() {
-    for (const id of this.bulkSelected()) this.researchService.deleteSource(id);
-    this.clearBulkSelect();
-    this.showBulkDelete.set(false);
-  }
-
   // Feature 8: Link tasks to sources
   linkTask(taskId: string) {
     const s = this.selectedSource();
@@ -572,6 +667,7 @@ export class KnowledgeComponent {
   openSummaryModal() {
     this.newSummaryTitle.set(''); this.newSummaryContent.set('');
     this.newSummaryTags.set(''); this.selectedSourceIds.set([]);
+    this.selectedFileIds.set([]); this.generatingSummary.set(false);
     this.showSummaryModal.set(true);
   }
   closeSummaryModal() { this.showSummaryModal.set(false); }
@@ -582,9 +678,52 @@ export class KnowledgeComponent {
     this.researchService.addSummary({
       libraryId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
       sourceIds: this.selectedSourceIds(),
+      fileIds: this.selectedFileIds(),
       tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t),
     });
     this.closeSummaryModal();
+  }
+
+  toggleFileSelection(id: string) {
+    this.selectedFileIds.update(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]);
+  }
+  isFileSelected(id: string) { return this.selectedFileIds().includes(id); }
+
+  async generateAiSummary() {
+    if (this.generatingSummary()) return;
+    this.generatingSummary.set(true);
+    try {
+      const selectedSources = this.sources().filter(s => this.selectedSourceIds().includes(s.id));
+      const selectedFiles   = this.libraryFiles().filter(f => this.selectedFileIds().includes(f.id));
+      const sourceLines = selectedSources.map(s => [
+        `- [${this.getSourceTypeMeta(s.sourceType).label}] ${s.title}`,
+        s.author      ? `  Author: ${s.author}`           : '',
+        s.description ? `  Description: ${s.description}` : '',
+        s.notes       ? `  Notes: ${s.notes}`             : '',
+      ].filter(Boolean).join('\n')).join('\n');
+      const fileLines = selectedFiles.map(f => `- [File] ${f.name} (${this.fileMimeLabel(f.mimeType)})`).join('\n');
+      const context = [
+        selectedSources.length ? `Sources:\n${sourceLines}` : '',
+        selectedFiles.length   ? `Files:\n${fileLines}`     : '',
+      ].filter(Boolean).join('\n\n');
+      const titleHint = this.newSummaryTitle() ? `The summary is titled "${this.newSummaryTitle()}".` : '';
+      const prompt = [
+        'Write a concise, insightful research summary in 3-6 sentences based on the following material.',
+        titleHint,
+        'Focus on key insights, patterns, and takeaways. Use plain prose, no bullet points.',
+        '',
+        context || 'No specific material selected — write a general synthesis placeholder.',
+      ].join('\n');
+      const result = await this.aiService.sendMessage(prompt);
+      if (result) this.newSummaryContent.set(result);
+    } catch { /* silently fail */ }
+    this.generatingSummary.set(false);
+  }
+
+  cancelDeleteSummary() { this.showDeleteSummary.set(false); this.summaryToDelete.set(null); }
+  confirmDeleteSummary() {
+    const s = this.summaryToDelete();
+    if (s) { this.researchService.deleteSummary(s.id); this.cancelDeleteSummary(); }
   }
 
   toggleSourceSelection(id: string) {
@@ -682,11 +821,10 @@ export class KnowledgeComponent {
       else if (this.showSourceDetail()) this.closeSourceDetail();
       else if (this.showSummaryModal()) this.closeSummaryModal();
       else if (this.showAddModal())     this.closeAddModal();
-      else if (this.showDeleteSource()) this.cancelDeleteSource();
+      else if (this.showDeleteSource())  this.cancelDeleteSource();
+      else if (this.showDeleteSummary()) this.cancelDeleteSummary();
       else if (this.showDeleteLibrary()) this.cancelDeleteLibrary();
-      else if (this.showDeleteFile())   this.cancelDeleteFile();
-      else if (this.showBulkDelete())   this.cancelBulkDelete();
-      else if (this.bulkSelected().length) this.clearBulkSelect();
+      else if (this.showDeleteFile())    this.cancelDeleteFile();
     }
   }
 }
