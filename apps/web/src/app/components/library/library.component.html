@@ -1,10 +1,35 @@
 <div class="rs-view">
 
   <!-- ── SIDEBAR ── -->
-  <env-feature-sidebar [title]="'Library'">
+  <env-feature-sidebar [title]="'Knowledge'">
+
+    <!-- All Sources entry (always visible at top) -->
+    <div class="rs-sb-section rs-sb-section--top">
+      <button class="rs-lib-item"
+        [class.active]="!selectedLibrary() && viewMode() === 'sources'"
+        (click)="selectAllSources()">
+        <span class="material-symbols-outlined rs-sb-files-icon">article</span>
+        <div class="rs-lib-info">
+          <span class="rs-lib-name">All Sources</span>
+        </div>
+        @if (researchService.sources().length > 0) {
+          <span class="rs-lib-count">{{ researchService.sources().length }}</span>
+        }
+      </button>
+    </div>
+
+    <div class="rs-sb-sep"></div>
+
+    <!-- Sidebar actions: libraries label + new library button -->
+    <div class="rs-sb-actions">
+      <span class="rs-sb-section-label">Collections</span>
+      <button class="rs-sb-new-btn" (click)="openLibraryModal()" title="New Collection">
+        <span class="material-symbols-outlined">add</span>
+      </button>
+    </div>
 
     <div class="rs-sb-libs">
-      @for (lib of filteredLibraries(); track lib.id) {
+      @for (lib of libraries(); track lib.id) {
         <button class="rs-lib-item" [class.active]="selectedLibrary()?.id === lib.id"
           (click)="selectLibrary(lib)">
           <span class="rs-lib-dot" [style.background]="lib.color"></span>
@@ -12,14 +37,14 @@
             <span class="rs-lib-name">{{ lib.name }}</span>
           </div>
           <span class="rs-lib-count">{{ librarySourceCounts().get(lib.id) ?? 0 }}</span>
-          <button class="rs-lib-del" (click)="openDeleteLibrary(lib, $event)" title="Delete library">
+          <button class="rs-lib-del" (click)="openDeleteLibrary(lib, $event)" title="Delete collection">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </button>
       } @empty {
         <div class="rs-sb-empty">
           <span class="material-symbols-outlined">library_books</span>
-          <p>{{ searchQuery() ? 'No results' : 'No libraries yet' }}</p>
+          <p>No collections yet</p>
         </div>
       }
     </div>
@@ -31,30 +56,34 @@
 
     <!-- Toolbar — always visible -->
     <div class="rs-toolbar">
-      <div class="rs-search-wrap">
-        <span class="material-symbols-outlined rs-search-icon">search</span>
-        <input class="rs-search-input" type="text"
-          [placeholder]="selectedLibrary() ? 'Search sources…' : 'Search libraries…'"
-          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-        @if (searchQuery()) {
-          <button class="rs-search-clear" (click)="searchQuery.set('')">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        }
-      </div>
+      @if (viewMode() === 'sources' || viewMode() === 'files') {
+        <div class="rs-search-wrap">
+          <span class="material-symbols-outlined rs-search-icon">search</span>
+          <input class="rs-search-input" type="text"
+            [placeholder]="viewMode() === 'files' ? 'Search files…' : 'Search sources…'"
+            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+          @if (searchQuery()) {
+            <button class="rs-search-clear" (click)="searchQuery.set('')">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          }
+        </div>
+      }
 
       @if (selectedLibrary(); as lib) {
         <div class="rs-lib-breadcrumb">
           <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
           <span class="rs-lib-bc-name">{{ lib.name }}</span>
-          <button class="rs-lib-bc-close" (click)="selectedLibrary.set(null)" title="Back to all libraries">
+          <button class="rs-lib-bc-close"
+            (click)="selectedLibrary.set(null); switchView('sources')"
+            title="Back to all collections">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
       }
 
       <div class="rs-toolbar-right">
-        @if (selectedLibrary() && hasActiveFilters()) {
+        @if (hasActiveFilters() && viewMode() === 'sources') {
           <button class="rs-tool-btn" (click)="clearFilters()" title="Clear filters">
             <span class="material-symbols-outlined">filter_list_off</span>
           </button>
@@ -65,285 +94,61 @@
           AI
         </button>
         <div class="rs-tb-divider"></div>
-        <button class="rs-tool-btn" [class.rs-tool-btn--active]="viewMode() === 'files'"
-          (click)="openFilesView()" title="Global file library">
-          <span class="material-symbols-outlined">folder_open</span>
-          Files
-          @if (fileLibrary.files().length > 0) {
-            <span class="rs-tab-count">{{ fileLibrary.files().length }}</span>
-          }
-        </button>
-        @if (viewMode() !== 'files') {
-          <button class="rs-new-lib-tb-btn" (click)="openLibraryModal()">
-            <span class="material-symbols-outlined">library_add</span>
-            New Library
+        @if (viewMode() === 'summaries' && selectedLibrary()) {
+          <button class="rs-add-btn" (click)="openSummaryModal()">
+            <span class="material-symbols-outlined">add</span>
+            New Summary
           </button>
-          @if (selectedLibrary()) {
-            @if (viewMode() === 'sources') {
-              <button class="rs-add-btn" (click)="openSourceModal()">
-                <span class="material-symbols-outlined">add</span>
-                Add Source
-              </button>
-            } @else {
-              <button class="rs-add-btn" (click)="openSummaryModal()">
-                <span class="material-symbols-outlined">add</span>
-                New Summary
-              </button>
-            }
-          }
-        }
-        @if (viewMode() === 'files') {
-          <button class="rs-add-btn" (click)="openFileInput()">
-            <span class="material-symbols-outlined">upload</span>
-            Upload
+        } @else if (viewMode() === 'files') {
+          <button class="rs-add-btn" (click)="openAddModal('file')">
+            <span class="material-symbols-outlined">add</span>
+            Add
+          </button>
+        } @else {
+          <button class="rs-add-btn" (click)="openAddModal('url')">
+            <span class="material-symbols-outlined">add</span>
+            Add
           </button>
         }
       </div>
     </div>
 
-    @if (selectedLibrary(); as library) {
-
-      <!-- Tabs + status filters -->
-      <div class="rs-tabs-bar">
-        <div class="rs-tabs">
-          <button class="rs-tab" [class.active]="viewMode() === 'sources'"
-            (click)="viewMode.set('sources')">
-            <span class="material-symbols-outlined">article</span>
-            Sources
-            <span class="rs-tab-count">{{ sources().length }}</span>
-          </button>
-          <button class="rs-tab" [class.active]="viewMode() === 'summaries'"
-            (click)="viewMode.set('summaries')">
-            <span class="material-symbols-outlined">summarize</span>
-            Summaries
-            <span class="rs-tab-count">{{ summaries().length }}</span>
-          </button>
-        </div>
-
-        @if (viewMode() === 'sources') {
-          <div class="rs-status-pills">
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'ALL'"
-              (click)="filterStatus.set('ALL')">All</button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
-              (click)="filterStatus.set('UNREAD')">
-              <span class="rs-pill-dot" style="background:#f87171"></span>Unread
-            </button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
-              (click)="filterStatus.set('READING')">
-              <span class="rs-pill-dot" style="background:#facc15"></span>Reading
-            </button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
-              (click)="filterStatus.set('PROCESSED')">
-              <span class="rs-pill-dot" style="background:#4ade80"></span>Processed
-            </button>
-
-            <div class="rs-tabs-right-divider"></div>
-
-            @for (t of sourceTypeOptions; track t.id) {
-              <button class="rs-type-pill" [class.active]="filterType() === t.id"
-                (click)="filterType.set($any(t.id))"
-                [style.--pill-color]="t.color">
-                <span class="material-symbols-outlined">{{ t.icon }}</span>
-                {{ t.label }}
-              </button>
-            }
-            @if (filterType() !== 'ALL') {
-              <button class="rs-type-pill rs-type-pill--clear"
-                (click)="filterType.set('ALL')">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            }
-          </div>
-        }
-      </div>
-
-      <!-- Content -->
-      <div class="rs-content">
-
-        @if (viewMode() === 'sources') {
-
-          @if (filteredSources().length === 0) {
-            <div class="rs-empty">
-              @if (sources().length === 0) {
-                <span class="material-symbols-outlined rs-empty-icon">article</span>
-                <p class="rs-empty-title">No sources yet</p>
-                <p class="rs-empty-sub">Add your first source to start building this research library.</p>
-                <button class="rs-add-btn" (click)="openSourceModal()">
-                  <span class="material-symbols-outlined">add</span>
-                  Add Source
-                </button>
-              } @else {
-                <span class="material-symbols-outlined rs-empty-icon">search_off</span>
-                <p class="rs-empty-title">No sources match your filters</p>
-                <button class="rs-tool-btn" (click)="clearFilters()">Clear Filters</button>
-              }
-            </div>
-          } @else {
-
-            <div class="rs-table-head">
-              <div class="rs-th rs-col-title">Source</div>
-              <div class="rs-th rs-col-type">Type</div>
-              <div class="rs-th rs-col-status">Status</div>
-              <div class="rs-th rs-col-meta">Author · Date</div>
-              <div class="rs-th rs-col-actions"></div>
-            </div>
-
-            @for (source of filteredSources(); track source.id) {
-              <div class="rs-tr" (click)="openSourceDetail(source)">
-
-                <div class="rs-td rs-col-title">
-                  <div class="rs-src-icon"
-                    [style.color]="getSourceTypeMeta(source.sourceType).color"
-                    [style.background]="getSourceTypeMeta(source.sourceType).color + '18'">
-                    <span class="material-symbols-outlined">{{ getSourceTypeMeta(source.sourceType).icon }}</span>
-                  </div>
-                  <div class="rs-src-info">
-                    <span class="rs-src-title">{{ source.title }}</span>
-                    <div class="rs-src-mobile-meta">
-                      <span class="rs-status-dot" [style.background]="getStatusMeta(source.status).color"></span>
-                      <span>{{ getStatusMeta(source.status).label }}</span>
-                      <span class="rs-src-mobile-sep">·</span>
-                      <span>{{ getSourceTypeMeta(source.sourceType).label }}</span>
-                    </div>
-                    @if (source.description) {
-                      <span class="rs-src-desc">{{ source.description }}</span>
-                    }
-                    @if (source.tags.length) {
-                      <div class="rs-src-tags">
-                        @for (tag of source.tags.slice(0, 3); track tag) {
-                          <span class="rs-tag">{{ tag }}</span>
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
-
-                <div class="rs-td rs-col-type">
-                  <span class="rs-type-badge"
-                    [style.background]="getSourceTypeMeta(source.sourceType).color + '18'"
-                    [style.color]="getSourceTypeMeta(source.sourceType).color"
-                    [style.border-color]="getSourceTypeMeta(source.sourceType).color + '40'">
-                    {{ getSourceTypeMeta(source.sourceType).label }}
-                  </span>
-                </div>
-
-                <div class="rs-td rs-col-status">
-                  <span class="rs-status-badge">
-                    <span class="rs-status-dot" [style.background]="getStatusMeta(source.status).color"></span>
-                    {{ getStatusMeta(source.status).label }}
-                  </span>
-                </div>
-
-                <div class="rs-td rs-col-meta">
-                  <span class="rs-meta-text">{{ formatSourceMeta(source) }}</span>
-                </div>
-
-                <div class="rs-td rs-col-actions" (click)="$event.stopPropagation()">
-                  <button class="rs-row-btn rs-row-btn--danger" (click)="openDeleteSource(source, $event)" title="Delete">
-                    <span class="material-symbols-outlined">delete</span>
-                  </button>
-                </div>
-
-              </div>
-            }
-
-          }
-
-        } @else {
-
-          <!-- Summaries view -->
-          @if (summaries().length === 0) {
-            <div class="rs-empty">
-              <span class="material-symbols-outlined rs-empty-icon">summarize</span>
-              <p class="rs-empty-title">No summaries yet</p>
-              <p class="rs-empty-sub">Create a summary to synthesize insights from your sources.</p>
-              <button class="rs-add-btn" (click)="openSummaryModal()">
-                <span class="material-symbols-outlined">add</span>
-                New Summary
-              </button>
-            </div>
-          } @else {
-            <div class="rs-summaries">
-              @for (summary of summaries(); track summary.id) {
-                <div class="rs-summary-card">
-                  <div class="rs-summary-hd">
-                    <span class="material-symbols-outlined rs-summary-icon">summarize</span>
-                    <div class="rs-summary-info">
-                      <span class="rs-summary-title">{{ summary.title }}</span>
-                      <span class="rs-summary-meta">{{ summary.sourceIds.length }} source{{ summary.sourceIds.length !== 1 ? 's' : '' }}</span>
-                    </div>
-                    <span class="rs-summary-date">{{ formatDate(summary.createdDate) }}</span>
-                  </div>
-                  @if (summary.content) {
-                    <p class="rs-summary-content">{{ summary.content }}</p>
-                  }
-                  @if (summary.tags.length) {
-                    <div class="rs-summary-tags">
-                      @for (tag of summary.tags; track tag) {
-                        <span class="rs-tag">{{ tag }}</span>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-
-        }
-
-      </div>
-
-    } @else if (viewMode() !== 'files') {
-
-      <!-- No library selected -->
-      <div class="rs-empty-main">
-        <span class="material-symbols-outlined rs-empty-icon">library_books</span>
-        <p class="rs-empty-title">
-          @if (filteredLibraries().length === 0 && searchQuery()) {
-            No libraries match "{{ searchQuery() }}"
-          } @else {
-            Select a library to get started
-          }
-        </p>
-        <p class="rs-empty-sub">Choose a research library from the sidebar, or use <strong>New Library</strong> above to create one.</p>
-        <div class="rs-empty-libs">
-          @for (lib of filteredLibraries().slice(0, 4); track lib.id) {
-            <button class="rs-empty-lib-chip" (click)="selectLibrary(lib)">
-              <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
-              {{ lib.name }}
-              <span class="rs-empty-chip-count">{{ librarySourceCounts().get(lib.id) ?? 0 }}</span>
-            </button>
-          }
-        </div>
-      </div>
-
-    }
-
     <!-- ── FILES VIEW ── -->
     @if (viewMode() === 'files') {
+
+      <!-- Show Sources|Files tabs when browsing all (no library selected) -->
+      @if (!selectedLibrary()) {
+        <div class="rs-tabs-bar">
+          <div class="rs-tabs">
+            <button class="rs-tab" (click)="switchView('sources')">
+              <span class="material-symbols-outlined">article</span>
+              Sources
+              @if (researchService.sources().length > 0) {
+                <span class="rs-tab-count">{{ researchService.sources().length }}</span>
+              }
+            </button>
+            <button class="rs-tab active">
+              <span class="material-symbols-outlined">folder_open</span>
+              Files
+              @if (fileLibrary.files().length > 0) {
+                <span class="rs-tab-count">{{ fileLibrary.files().length }}</span>
+              }
+            </button>
+          </div>
+        </div>
+      }
+
       <div class="rs-files-view"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave()"
         (drop)="onFileDrop($event)">
 
-        <!-- Files toolbar -->
-        <div class="rs-files-toolbar">
-          <div class="rs-search-wrap" style="flex:1;max-width:320px">
-            <span class="material-symbols-outlined rs-search-icon">search</span>
-            <input class="rs-search-input" type="text" placeholder="Search files…"
-              [ngModel]="fileSearchQuery()" (ngModelChange)="fileSearchQuery.set($event)">
-            @if (fileSearchQuery()) {
-              <button class="rs-search-clear" (click)="fileSearchQuery.set('')">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            }
-          </div>
-          <div class="rs-files-type-pills">
-            @for (f of [['all','All'],['image','Images'],['document','Docs'],['video','Video'],['other','Audio']] ; track f[0]) {
-              <button class="rs-status-pill" [class.active]="fileFilterType() === f[0]"
-                (click)="fileFilterType.set($any(f[0]))">{{ f[1] }}</button>
-            }
-          </div>
+        <!-- File type filter pills -->
+        <div class="rs-files-type-bar">
+          @for (f of [['all','All'],['image','Images'],['document','Docs'],['video','Video'],['audio','Audio']] ; track f[0]) {
+            <button class="rs-status-pill" [class.active]="fileFilterType() === f[0]"
+              (click)="fileFilterType.set($any(f[0]))">{{ f[1] }}</button>
+          }
         </div>
 
         <!-- Drop zone: shown when library is empty (uploading or idle) -->
@@ -352,7 +157,7 @@
             [class.uploading]="fileLibrary.uploading()"
             (click)="fileLibrary.uploading() ? null : openFileInput()">
             @if (fileLibrary.uploading()) {
-              <span class="qf-ai-spinner"></span>
+              <span class="rs-spinner"></span>
               <p>Uploading…</p>
             } @else {
               <span class="material-symbols-outlined">cloud_upload</span>
@@ -365,7 +170,7 @@
         <!-- Upload progress banner (when files already exist) -->
         @if (fileLibrary.uploading() && fileLibrary.files().length > 0) {
           <div class="rs-files-uploading">
-            <span class="qf-ai-spinner"></span>
+            <span class="rs-spinner"></span>
             Uploading…
           </div>
         }
@@ -416,12 +221,492 @@
         } @else if (fileLibrary.files().length > 0) {
           <div class="rs-files-empty-search">
             <span class="material-symbols-outlined">search_off</span>
-            <p>No files match "{{ fileSearchQuery() }}"</p>
-            <button class="rs-tool-btn" (click)="fileSearchQuery.set('')">Clear search</button>
+            <p>No files match "{{ searchQuery() }}"</p>
+            <button class="rs-tool-btn" (click)="searchQuery.set('')">Clear search</button>
           </div>
         }
 
       </div>
+    } @else if (selectedLibrary(); as library) {
+
+      <!-- Tabs + status filters -->
+      <div class="rs-tabs-bar">
+        <div class="rs-tabs">
+          <button class="rs-tab" [class.active]="viewMode() === 'sources'"
+            (click)="switchView('sources')">
+            <span class="material-symbols-outlined">article</span>
+            Sources
+            @if (sources().length > 0) {
+              <span class="rs-tab-count">{{ sources().length }}</span>
+            }
+          </button>
+          <button class="rs-tab" [class.active]="viewMode() === 'summaries'"
+            (click)="switchView('summaries')">
+            <span class="material-symbols-outlined">summarize</span>
+            Summaries
+            @if (summaries().length > 0) {
+              <span class="rs-tab-count">{{ summaries().length }}</span>
+            }
+          </button>
+          <button class="rs-tab" [class.active]="viewMode() === 'files'"
+            (click)="switchView('files')">
+            <span class="material-symbols-outlined">folder_open</span>
+            Files
+            @if (libraryFiles().length > 0) {
+              <span class="rs-tab-count">{{ libraryFiles().length }}</span>
+            }
+          </button>
+        </div>
+
+        @if (viewMode() === 'sources' && sources().length > 0) {
+          <div class="rs-status-pills">
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'ALL'"
+              (click)="filterStatus.set('ALL')">All</button>
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
+              (click)="filterStatus.set('UNREAD')">
+              <span class="rs-pill-dot" style="background:#f87171"></span>Unread
+            </button>
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
+              (click)="filterStatus.set('READING')">
+              <span class="rs-pill-dot" style="background:#facc15"></span>Reading
+            </button>
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
+              (click)="filterStatus.set('PROCESSED')">
+              <span class="rs-pill-dot" style="background:#4ade80"></span>Processed
+            </button>
+
+            <div class="rs-tabs-right-divider"></div>
+
+            <select class="rs-type-select"
+              [ngModel]="filterType()"
+              (ngModelChange)="filterType.set($event)">
+              <option value="ALL">All types</option>
+              @for (t of sourceTypeOptions; track t.id) {
+                <option [value]="t.id">{{ t.label }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      <!-- Content -->
+      <div class="rs-content">
+
+        @if (viewMode() === 'sources') {
+
+          @if (filteredSources().length === 0) {
+            <div class="rs-empty rs-empty--zone">
+              @if (sources().length === 0) {
+                <div class="rs-intake-zone"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave()"
+                  (drop)="onFileDrop($event); closeAddModal()"
+                  [class.dragging]="isDraggingOver()">
+                  @if (isDraggingOver()) {
+                    <span class="material-symbols-outlined rs-intake-icon">cloud_upload</span>
+                    <p class="rs-intake-title">Drop to add</p>
+                  } @else {
+                    <span class="material-symbols-outlined rs-intake-icon">auto_awesome</span>
+                    <p class="rs-intake-title">Add to your knowledge base</p>
+                    <p class="rs-intake-sub">Drop PDFs, links, videos or notes — Envello organises everything automatically.</p>
+                    <div class="rs-intake-btns">
+                      <button class="rs-intake-btn" (click)="openAddModal('url')">
+                        <span class="material-symbols-outlined">link</span>Paste URL
+                      </button>
+                      <button class="rs-intake-btn" (click)="openAddModal('file')">
+                        <span class="material-symbols-outlined">upload_file</span>Upload File
+                      </button>
+                      <button class="rs-intake-btn" (click)="openAddModal('note')">
+                        <span class="material-symbols-outlined">edit_note</span>Write Note
+                      </button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <span class="material-symbols-outlined rs-empty-icon">search_off</span>
+                <p class="rs-empty-title">No sources match your filters</p>
+                <button class="rs-tool-btn" (click)="clearFilters()">Clear Filters</button>
+              }
+            </div>
+          } @else {
+
+            <!-- Bulk action toolbar (feature 3) -->
+            @if (isBulkMode()) {
+              <div class="rs-bulk-toolbar">
+                <span class="rs-bulk-count">{{ bulkSelected().length }} selected</span>
+                <div class="rs-bulk-actions">
+                  <button class="rs-bulk-btn" (click)="bulkSetStatus('UNREAD')" title="Mark Unread">
+                    <span class="rs-status-dot" style="background:#f87171"></span>Unread
+                  </button>
+                  <button class="rs-bulk-btn" (click)="bulkSetStatus('READING')" title="Mark Reading">
+                    <span class="rs-status-dot" style="background:#facc15"></span>Reading
+                  </button>
+                  <button class="rs-bulk-btn" (click)="bulkSetStatus('PROCESSED')" title="Mark Processed">
+                    <span class="rs-status-dot" style="background:#4ade80"></span>Processed
+                  </button>
+                </div>
+                <div class="rs-bulk-sep"></div>
+                <button class="rs-bulk-btn rs-bulk-btn--danger" (click)="bulkDeleteConfirm()">
+                  <span class="material-symbols-outlined">delete</span>Delete
+                </button>
+                <button class="rs-bulk-btn rs-bulk-btn--clear" (click)="clearBulkSelect()" title="Clear selection">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            }
+
+            <!-- Sortable table header (feature 6) -->
+            <div class="rs-table-head">
+              <div class="rs-th rs-col-title">
+                <button class="rs-th-sort" (click)="toggleSort('title')">
+                  Source
+                  <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('title') }}</span>
+                </button>
+              </div>
+              <div class="rs-th rs-col-type">
+                <button class="rs-th-sort" (click)="toggleSort('type')">
+                  Type
+                  <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('type') }}</span>
+                </button>
+              </div>
+              <div class="rs-th rs-col-status">
+                <button class="rs-th-sort" (click)="toggleSort('status')">
+                  Status
+                  <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('status') }}</span>
+                </button>
+              </div>
+              <div class="rs-th rs-col-meta">
+                <button class="rs-th-sort" (click)="toggleSort('date')">
+                  Author · Date
+                  <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('date') }}</span>
+                </button>
+              </div>
+              <div class="rs-th rs-col-actions"></div>
+            </div>
+
+            @for (source of filteredSources(); track source.id) {
+              <div class="rs-tr" [class.rs-tr--selected]="isBulkSelected(source.id)"
+                (click)="openSourceDetail(source)">
+
+                <div class="rs-td rs-col-title">
+                  <!-- Bulk checkbox (feature 3) -->
+                  <button class="rs-row-check" [class.checked]="isBulkSelected(source.id)"
+                    (click)="toggleBulkSelect(source.id, $event)" title="Select">
+                    <span class="material-symbols-outlined">
+                      {{ isBulkSelected(source.id) ? 'check_box' : 'check_box_outline_blank' }}
+                    </span>
+                  </button>
+                  <div class="rs-src-icon"
+                    [style.color]="getSourceTypeMeta(source.sourceType).color"
+                    [style.background]="getSourceTypeMeta(source.sourceType).color + '18'">
+                    <span class="material-symbols-outlined">{{ getSourceTypeMeta(source.sourceType).icon }}</span>
+                  </div>
+                  <div class="rs-src-info">
+                    <span class="rs-src-title">{{ source.title }}</span>
+                    <div class="rs-src-mobile-meta">
+                      <span class="rs-status-dot" [style.background]="getStatusMeta(source.status).color"></span>
+                      <span>{{ getStatusMeta(source.status).label }}</span>
+                      <span class="rs-src-mobile-sep">·</span>
+                      <span>{{ getSourceTypeMeta(source.sourceType).label }}</span>
+                    </div>
+                    @if (source.description) {
+                      <span class="rs-src-desc">{{ source.description }}</span>
+                    }
+                    @if (source.tags.length) {
+                      <div class="rs-src-tags">
+                        @for (tag of source.tags.slice(0, 3); track tag) {
+                          <span class="rs-tag">{{ tag }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="rs-td rs-col-type">
+                  <span class="rs-type-badge"
+                    [style.background]="getSourceTypeMeta(source.sourceType).color + '18'"
+                    [style.color]="getSourceTypeMeta(source.sourceType).color"
+                    [style.border-color]="getSourceTypeMeta(source.sourceType).color + '40'">
+                    {{ getSourceTypeMeta(source.sourceType).label }}
+                  </span>
+                </div>
+
+                <!-- Inline status cycle (feature 2) -->
+                <div class="rs-td rs-col-status" (click)="$event.stopPropagation()">
+                  <button class="rs-status-badge rs-status-cycle-btn"
+                    (click)="cycleSourceStatus(source, $event)"
+                    title="Click to change status">
+                    <span class="rs-status-dot" [style.background]="getStatusMeta(source.status).color"></span>
+                    {{ getStatusMeta(source.status).label }}
+                    <span class="material-symbols-outlined rs-cycle-icon">sync</span>
+                  </button>
+                </div>
+
+                <div class="rs-td rs-col-meta">
+                  <span class="rs-meta-text">{{ formatSourceMeta(source) }}</span>
+                </div>
+
+                <div class="rs-td rs-col-actions" (click)="$event.stopPropagation()">
+                  <button class="rs-row-btn rs-row-btn--danger" (click)="openDeleteSource(source, $event)" title="Delete">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+
+              </div>
+            }
+
+          }
+
+        } @else if (viewMode() === 'summaries') {
+
+          <!-- Summaries view -->
+          @if (summaries().length === 0) {
+            <div class="rs-empty">
+              <span class="material-symbols-outlined rs-empty-icon">summarize</span>
+              <p class="rs-empty-title">No summaries yet</p>
+              <p class="rs-empty-sub">Create a summary to synthesize insights from your sources.</p>
+              <button class="rs-add-btn" (click)="openSummaryModal()">
+                <span class="material-symbols-outlined">add</span>
+                New Summary
+              </button>
+            </div>
+          } @else {
+            <div class="rs-summaries">
+              @for (summary of summaries(); track summary.id) {
+                <div class="rs-summary-card">
+                  <div class="rs-summary-hd">
+                    <span class="material-symbols-outlined rs-summary-icon">summarize</span>
+                    <div class="rs-summary-info">
+                      <span class="rs-summary-title">{{ summary.title }}</span>
+                      <span class="rs-summary-meta">{{ summary.sourceIds.length }} source{{ summary.sourceIds.length !== 1 ? 's' : '' }}</span>
+                    </div>
+                    <span class="rs-summary-date">{{ formatDate(summary.createdDate) }}</span>
+                  </div>
+                  @if (summary.content) {
+                    <p class="rs-summary-content">{{ summary.content }}</p>
+                  }
+                  @if (summary.tags.length) {
+                    <div class="rs-summary-tags">
+                      @for (tag of summary.tags; track tag) {
+                        <span class="rs-tag">{{ tag }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+        }
+
+      </div>
+
+    } @else {
+
+      <!-- ── ALL SOURCES VIEW (no library selected) ── -->
+
+      <div class="rs-tabs-bar">
+        <div class="rs-tabs">
+          <button class="rs-tab active">
+            <span class="material-symbols-outlined">article</span>
+            Sources
+            <span class="rs-tab-count">{{ researchService.sources().length }}</span>
+          </button>
+          <button class="rs-tab" (click)="switchView('files')">
+            <span class="material-symbols-outlined">folder_open</span>
+            Files
+            @if (fileLibrary.files().length > 0) {
+              <span class="rs-tab-count">{{ fileLibrary.files().length }}</span>
+            }
+          </button>
+        </div>
+        @if (researchService.sources().length > 0) {
+          <div class="rs-status-pills">
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'ALL'"
+              (click)="filterStatus.set('ALL')">All</button>
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
+              (click)="filterStatus.set('UNREAD')">
+              <span class="rs-pill-dot" style="background:#f87171"></span>Unread
+            </button>
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
+              (click)="filterStatus.set('READING')">
+              <span class="rs-pill-dot" style="background:#facc15"></span>Reading
+            </button>
+            <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
+              (click)="filterStatus.set('PROCESSED')">
+              <span class="rs-pill-dot" style="background:#4ade80"></span>Processed
+            </button>
+            <div class="rs-tabs-right-divider"></div>
+            <select class="rs-type-select" [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
+              <option value="ALL">All types</option>
+              @for (t of sourceTypeOptions; track t.id) {
+                <option [value]="t.id">{{ t.label }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      <div class="rs-content">
+        @if (filteredSources().length === 0) {
+          <div class="rs-empty rs-empty--zone">
+            @if (researchService.sources().length === 0) {
+              <div class="rs-intake-zone"
+                (dragover)="onDragOver($event)"
+                (dragleave)="onDragLeave()"
+                (drop)="onFileDrop($event)"
+                [class.dragging]="isDraggingOver()">
+                @if (isDraggingOver()) {
+                  <span class="material-symbols-outlined rs-intake-icon">cloud_upload</span>
+                  <p class="rs-intake-title">Drop to add</p>
+                } @else {
+                  <span class="material-symbols-outlined rs-intake-icon">auto_awesome</span>
+                  <p class="rs-intake-title">Add to your knowledge base</p>
+                  <p class="rs-intake-sub">Drop PDFs, links, videos or notes — Envello organises everything automatically.</p>
+                  <div class="rs-intake-btns">
+                    <button class="rs-intake-btn" (click)="openAddModal('url')">
+                      <span class="material-symbols-outlined">link</span>Paste URL
+                    </button>
+                    <button class="rs-intake-btn" (click)="openAddModal('file')">
+                      <span class="material-symbols-outlined">upload_file</span>Upload File
+                    </button>
+                    <button class="rs-intake-btn" (click)="openAddModal('note')">
+                      <span class="material-symbols-outlined">edit_note</span>Write Note
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <span class="material-symbols-outlined rs-empty-icon">search_off</span>
+              <p class="rs-empty-title">No sources match your filters</p>
+              <button class="rs-tool-btn" (click)="clearFilters()">Clear Filters</button>
+            }
+          </div>
+        } @else {
+
+          <!-- Bulk toolbar -->
+          @if (isBulkMode()) {
+            <div class="rs-bulk-toolbar">
+              <span class="rs-bulk-count">{{ bulkSelected().length }} selected</span>
+              <div class="rs-bulk-actions">
+                <button class="rs-bulk-btn" (click)="bulkSetStatus('UNREAD')">
+                  <span class="rs-status-dot" style="background:#f87171"></span>Unread
+                </button>
+                <button class="rs-bulk-btn" (click)="bulkSetStatus('READING')">
+                  <span class="rs-status-dot" style="background:#facc15"></span>Reading
+                </button>
+                <button class="rs-bulk-btn" (click)="bulkSetStatus('PROCESSED')">
+                  <span class="rs-status-dot" style="background:#4ade80"></span>Processed
+                </button>
+              </div>
+              <div class="rs-bulk-sep"></div>
+              <button class="rs-bulk-btn rs-bulk-btn--danger" (click)="bulkDeleteConfirm()">
+                <span class="material-symbols-outlined">delete</span>Delete
+              </button>
+              <button class="rs-bulk-btn rs-bulk-btn--clear" (click)="clearBulkSelect()">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          }
+
+          <div class="rs-table-head">
+            <div class="rs-th rs-col-title">
+              <button class="rs-th-sort" (click)="toggleSort('title')">
+                Source <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('title') }}</span>
+              </button>
+            </div>
+            <div class="rs-th rs-col-type">
+              <button class="rs-th-sort" (click)="toggleSort('type')">
+                Type <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('type') }}</span>
+              </button>
+            </div>
+            <div class="rs-th rs-col-status">
+              <button class="rs-th-sort" (click)="toggleSort('status')">
+                Status <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('status') }}</span>
+              </button>
+            </div>
+            <div class="rs-th rs-col-meta">
+              <button class="rs-th-sort" (click)="toggleSort('date')">
+                Author · Date <span class="material-symbols-outlined rs-th-sort-icon">{{ sortIcon('date') }}</span>
+              </button>
+            </div>
+            <div class="rs-th rs-col-actions"></div>
+          </div>
+
+          @for (source of filteredSources(); track source.id) {
+            <div class="rs-tr" [class.rs-tr--selected]="isBulkSelected(source.id)"
+              (click)="openSourceDetail(source)">
+
+              <div class="rs-td rs-col-title">
+                <button class="rs-row-check" [class.checked]="isBulkSelected(source.id)"
+                  (click)="toggleBulkSelect(source.id, $event)" title="Select">
+                  <span class="material-symbols-outlined">
+                    {{ isBulkSelected(source.id) ? 'check_box' : 'check_box_outline_blank' }}
+                  </span>
+                </button>
+                <div class="rs-src-icon"
+                  [style.color]="getSourceTypeMeta(source.sourceType).color"
+                  [style.background]="getSourceTypeMeta(source.sourceType).color + '18'">
+                  <span class="material-symbols-outlined">{{ getSourceTypeMeta(source.sourceType).icon }}</span>
+                </div>
+                <div class="rs-src-info">
+                  <span class="rs-src-title">{{ source.title }}</span>
+                  <!-- Library badge in all-sources view -->
+                  @if (getLibraryForSource(source); as lib) {
+                    <div class="rs-src-lib">
+                      <span class="rs-lib-dot" [style.background]="lib.color"></span>
+                      {{ lib.name }}
+                    </div>
+                  } @else {
+                    <span class="rs-src-lib rs-src-lib--none">No collection</span>
+                  }
+                  @if (source.description) {
+                    <span class="rs-src-desc">{{ source.description }}</span>
+                  }
+                  @if (source.tags.length) {
+                    <div class="rs-src-tags">
+                      @for (tag of source.tags.slice(0, 3); track tag) {
+                        <span class="rs-tag">{{ tag }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="rs-td rs-col-type">
+                <span class="rs-type-badge"
+                  [style.background]="getSourceTypeMeta(source.sourceType).color + '18'"
+                  [style.color]="getSourceTypeMeta(source.sourceType).color"
+                  [style.border-color]="getSourceTypeMeta(source.sourceType).color + '40'">
+                  {{ getSourceTypeMeta(source.sourceType).label }}
+                </span>
+              </div>
+
+              <div class="rs-td rs-col-status" (click)="$event.stopPropagation()">
+                <button class="rs-status-badge rs-status-cycle-btn"
+                  (click)="cycleSourceStatus(source, $event)" title="Click to change status">
+                  <span class="rs-status-dot" [style.background]="getStatusMeta(source.status).color"></span>
+                  {{ getStatusMeta(source.status).label }}
+                  <span class="material-symbols-outlined rs-cycle-icon">sync</span>
+                </button>
+              </div>
+
+              <div class="rs-td rs-col-meta">
+                <span class="rs-meta-text">{{ formatSourceMeta(source) }}</span>
+              </div>
+
+              <div class="rs-td rs-col-actions" (click)="$event.stopPropagation()">
+                <button class="rs-row-btn rs-row-btn--danger" (click)="openDeleteSource(source, $event)" title="Delete">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+
+            </div>
+          }
+
+        }
+      </div>
+
     }
 
   </div>
@@ -429,8 +714,8 @@
   <!-- AI Panel -->
   @if (showAssistant()) {
     <env-ai-panel
-      title="Library Assistant"
-      placeholder="Ask about your library…"
+      title="Knowledge Assistant"
+      placeholder="Ask about your knowledge…"
       [suggestions]="aiSuggestions"
       [messages]="aiMessages()"
       [loading]="aiLoading()"
@@ -457,7 +742,9 @@
               <span class="material-symbols-outlined">{{ getSourceTypeMeta(source.sourceType).icon }}</span>
             </div>
             <div class="rsd-header-info">
-              <h2 class="rsd-title">{{ source.title }}</h2>
+              <input class="rsd-title-input" type="text" placeholder="Source title…"
+                [ngModel]="editTitle()" (ngModelChange)="editTitle.set($event)"
+                (blur)="saveSourceField('title')">
               <span class="rsd-subtitle">{{ formatSourceMeta(source) }}</span>
             </div>
           </div>
@@ -489,41 +776,107 @@
             </div>
           </div>
 
-          @if (source.url || source.author) {
-            <div class="rsd-section">
-              <label class="rsd-label">Details</label>
-              @if (source.url) {
-                <div class="rsd-meta-row">
-                  <span class="material-symbols-outlined">link</span>
-                  @if (isSafeUrl(source.url)) {
-                    <a class="rsd-link" [href]="source.url" target="_blank" rel="noopener noreferrer">{{ source.url }}</a>
-                  } @else {
-                    <span class="rsd-link rsd-link--unsafe" title="URL scheme not allowed">{{ source.url }}</span>
-                  }
-                </div>
+          <!-- Collection assignment / move -->
+          <div class="rsd-section">
+            <label class="rsd-label">Collection</label>
+            <select class="rsd-library-select"
+              [ngModel]="source.libraryId ?? ''"
+              (ngModelChange)="moveSourceToLibrary(source.id, $event)">
+              <option value="">No collection</option>
+              @for (lib of libraries(); track lib.id) {
+                <option [value]="lib.id">{{ lib.name }}</option>
               }
-              @if (source.author) {
-                <div class="rsd-meta-row">
-                  <span class="material-symbols-outlined">person</span>
-                  <span>{{ source.author }}</span>
-                </div>
+            </select>
+          </div>
+
+          <div class="rsd-section">
+            <label class="rsd-label">URL</label>
+            <div class="rsd-url-row">
+              <input class="rsd-input" type="text" placeholder="https://…"
+                [ngModel]="editUrl()" (ngModelChange)="editUrl.set($event)"
+                (blur)="saveSourceField('url')">
+              @if (isSafeUrl(editUrl())) {
+                <a class="rsd-url-open" [href]="editUrl()" target="_blank" rel="noopener noreferrer" title="Open link">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </a>
               }
             </div>
-          }
+          </div>
 
-          @if (source.tags.length) {
-            <div class="rsd-section">
-              <label class="rsd-label">Tags</label>
-              <div class="rsd-tags">
-                @for (tag of source.tags; track tag) {
-                  <span class="rs-tag">{{ tag }}</span>
+          <div class="rsd-section">
+            <label class="rsd-label">Author</label>
+            <input class="rsd-input" type="text" placeholder="Author name"
+              [ngModel]="editAuthor()" (ngModelChange)="editAuthor.set($event)"
+              (blur)="saveSourceField('author')">
+          </div>
+
+          <div class="rsd-section">
+            <label class="rsd-label">Description</label>
+            <textarea class="rsd-desc" rows="2" placeholder="Brief description…"
+              [ngModel]="editDescription()" (ngModelChange)="editDescription.set($event)"
+              (blur)="saveSourceField('description')"></textarea>
+          </div>
+
+          <div class="rsd-section">
+            <label class="rsd-label">Tags <span class="rsd-label-hint">comma-separated</span></label>
+            <input class="rsd-input" type="text" placeholder="tag1, tag2, …"
+              [ngModel]="editTags()" (ngModelChange)="editTags.set($event)"
+              (blur)="saveSourceField('tags')">
+          </div>
+
+          <!-- Linked tasks (feature 8) -->
+          <div class="rsd-section">
+            <div class="rsd-linked-hd">
+              <label class="rsd-label">Linked Tasks</label>
+              <button class="rsd-link-add-btn" (click)="showLinkTask.set(!showLinkTask())"
+                [title]="showLinkTask() ? 'Close' : 'Link a task'">
+                <span class="material-symbols-outlined">{{ showLinkTask() ? 'expand_less' : 'add_link' }}</span>
+              </button>
+            </div>
+            @if (linkedTasks().length) {
+              <div class="rsd-linked-list">
+                @for (task of linkedTasks(); track task.id) {
+                  <div class="rsd-linked-item">
+                    <span class="material-symbols-outlined">task_alt</span>
+                    <span class="rsd-linked-title">{{ task.title }}</span>
+                    <button class="rsd-linked-unlink" (click)="unlinkTask(task.id)" title="Unlink">
+                      <span class="material-symbols-outlined">link_off</span>
+                    </button>
+                  </div>
                 }
               </div>
-            </div>
-          }
+            } @else if (!showLinkTask()) {
+              <span class="rsd-linked-empty">No linked tasks</span>
+            }
+            @if (showLinkTask()) {
+              <div class="rsd-task-picker">
+                <input class="rsd-task-search" type="text" placeholder="Search tasks…"
+                  [ngModel]="taskSearch()" (ngModelChange)="taskSearch.set($event)">
+                @if (availableTasks().length) {
+                  <div class="rsd-task-list">
+                    @for (task of availableTasks(); track task.id) {
+                      <button class="rsd-task-opt" (click)="linkTask(task.id)">
+                        <span class="material-symbols-outlined">task_alt</span>
+                        {{ task.title }}
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <div class="rsd-task-empty">
+                    {{ taskSearch() ? 'No tasks match' : hasTasks() ? 'All tasks are linked' : 'No tasks yet' }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
 
           <div class="rsd-section rsd-section--grow">
-            <label class="rsd-label">Notes & Insights</label>
+            <label class="rsd-label">
+              Notes & Insights
+              @if (notesDirty()) {
+                <span class="rsd-unsaved-badge">unsaved</span>
+              }
+            </label>
             <textarea class="rsd-notes" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)"
               placeholder="Take notes on this source…"></textarea>
           </div>
@@ -533,12 +886,23 @@
         <div class="rsd-footer">
           <button class="rsd-del-btn" (click)="openDeleteSource(source)">
             <span class="material-symbols-outlined">delete</span>
-            Delete Source
+            Delete
           </button>
-          <button class="rsd-save-btn" (click)="saveNotes()">
-            <span class="material-symbols-outlined">save</span>
-            Save Notes
-          </button>
+          <div class="rsd-footer-right">
+            <!-- AI generate notes (feature 4) -->
+            <button class="rsd-ai-btn" [disabled]="generatingNotes()" (click)="generateAiNotes()" title="AI generate notes">
+              @if (generatingNotes()) {
+                <span class="rs-spinner"></span>
+              } @else {
+                <span class="material-symbols-outlined">auto_awesome</span>
+              }
+              AI Notes
+            </button>
+            <button class="rsd-save-btn" (click)="saveNotes()">
+              <span class="material-symbols-outlined">save</span>
+              Save
+            </button>
+          </div>
         </div>
 
       }
@@ -555,7 +919,7 @@
       <div class="rsa-header">
         <div class="rsa-header-left">
           <span class="material-symbols-outlined rsa-header-icon">library_books</span>
-          <h2 class="rsa-header-title">New Library</h2>
+          <h2 class="rsa-header-title">New Collection</h2>
         </div>
         <div class="rsa-header-right">
           <kbd class="rsa-esc-key">Esc</kbd>
@@ -568,13 +932,13 @@
       <div class="rsa-form-pane rsa-form-pane--solo">
         <div class="rsa-name-bar">
           <span class="material-symbols-outlined" [style.color]="newLibraryColor()">library_books</span>
-          <input class="rsa-name-input" type="text" placeholder="Library name…" autofocus
+          <input class="rsa-name-input" type="text" placeholder="Collection name…" autofocus
             [ngModel]="newLibraryName()" (ngModelChange)="newLibraryName.set($event)">
         </div>
 
         <div class="rsa-field-group">
           <label class="rsa-label">Description</label>
-          <textarea class="rsa-textarea" rows="3" placeholder="What is this library for?"
+          <textarea class="rsa-textarea" rows="3" placeholder="What is this collection for?"
             [ngModel]="newLibraryDesc()" (ngModelChange)="newLibraryDesc.set($event)"></textarea>
         </div>
 
@@ -595,15 +959,11 @@
       </div>
 
       <div class="rsa-footer">
-        <div class="rsa-footer-hints">
-          <span class="rsa-hint"><kbd>Enter</kbd> Create</span>
-          <span class="rsa-hint"><kbd>Esc</kbd> Close</span>
-        </div>
         <div class="rsa-footer-actions">
           <button class="rsa-cancel-btn" (click)="closeLibraryModal()">Cancel</button>
           <button class="rsa-create-btn" [disabled]="!newLibraryName()" (click)="saveLibrary()">
             <span class="material-symbols-outlined">add</span>
-            Create Library
+            Create Collection
           </button>
         </div>
       </div>
@@ -612,99 +972,198 @@
   </div>
 }
 
-<!-- ── ADD SOURCE MODAL ── -->
-@if (showSourceModal()) {
-  <div class="rsa-backdrop" (click)="closeSourceModal()">
-    <div class="rsa-modal" (click)="$event.stopPropagation()">
+<!-- ── UNIFIED ADD MODAL ── -->
+@if (showAddModal()) {
+  <div class="rsa-backdrop" (click)="closeAddModal()">
+    <div class="rsa-modal rsa-modal--md" (click)="$event.stopPropagation()">
 
       <div class="rsa-header">
         <div class="rsa-header-left">
-          <span class="material-symbols-outlined rsa-header-icon"
-            [style.color]="getSourceTypeMeta(newSourceType()).color">
-            {{ getSourceTypeMeta(newSourceType()).icon }}
-          </span>
-          <h2 class="rsa-header-title">Add Source</h2>
+          <span class="material-symbols-outlined rsa-header-icon">add_circle</span>
+          <h2 class="rsa-header-title">Add</h2>
         </div>
         <div class="rsa-header-right">
           <kbd class="rsa-esc-key">Esc</kbd>
-          <button class="rsa-close-btn" (click)="closeSourceModal()">
+          <button class="rsa-close-btn" (click)="closeAddModal()">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
       </div>
 
-      <div class="rsa-body">
+      <!-- Tab switcher -->
+      <div class="rsa-add-tabs">
+        <button class="rsa-add-tab" [class.active]="addTab() === 'url'" (click)="addTab.set('url')">
+          <span class="material-symbols-outlined">link</span>URL
+        </button>
+        <button class="rsa-add-tab" [class.active]="addTab() === 'file'" (click)="addTab.set('file')">
+          <span class="material-symbols-outlined">upload_file</span>File
+        </button>
+        <button class="rsa-add-tab" [class.active]="addTab() === 'note'" (click)="addTab.set('note')">
+          <span class="material-symbols-outlined">edit_note</span>Note
+        </button>
+      </div>
 
-        <!-- Left: Source type sidebar -->
-        <nav class="rsa-type-sidebar">
-          <div class="rsa-sidebar-header">SOURCE TYPE</div>
-          @for (t of sourceTypeOptions; track t.id) {
-            <button class="rsa-type-item"
-              [class.rsa-type-item--active]="newSourceType() === t.id"
-              (click)="newSourceType.set($any(t.id))">
-              <div class="rsa-type-icon-wrap"
-                [style.background]="newSourceType() === t.id ? t.color : 'transparent'"
-                [style.border-color]="newSourceType() === t.id ? t.color : 'var(--border-subtle)'">
-                <span class="material-symbols-outlined"
-                  [style.color]="newSourceType() === t.id ? 'white' : t.color">{{ t.icon }}</span>
-              </div>
-              <span class="rsa-type-label">{{ t.label }}</span>
-            </button>
-          }
-        </nav>
-
-        <!-- Right: Form pane -->
-        <div class="rsa-form-pane">
-
+      <!-- URL Tab -->
+      @if (addTab() === 'url') {
+        <div class="rsa-form-pane rsa-form-pane--solo">
           <div class="rsa-name-bar">
-            <div class="rsa-name-icon-wrap"
-              [style.color]="getSourceTypeMeta(newSourceType()).color">
+            <div class="rsa-name-icon-wrap" [style.color]="getSourceTypeMeta(newSourceType()).color">
               <span class="material-symbols-outlined">{{ getSourceTypeMeta(newSourceType()).icon }}</span>
             </div>
             <input class="rsa-name-input" type="text" placeholder="Source title…" autofocus
               [ngModel]="newSourceTitle()" (ngModelChange)="newSourceTitle.set($event)">
           </div>
-
           <div class="rsa-fields">
             <div class="rsa-field-group rsa-field-group--wide">
               <label class="rsa-label">URL</label>
-              <input type="text" class="rsa-input" placeholder="https://…"
-                [ngModel]="newSourceUrl()" (ngModelChange)="newSourceUrl.set($event)">
+              <div class="rsa-url-row">
+                <input type="text" class="rsa-input" placeholder="https://…"
+                  [ngModel]="newSourceUrl()" (ngModelChange)="newSourceUrl.set($event)"
+                  (blur)="fetchMetadata()">
+                <button class="rsa-fetch-btn" [class.loading]="fetchingMeta()"
+                  [disabled]="!newSourceUrl() || fetchingMeta()"
+                  (click)="fetchMetadata()" title="Auto-fill metadata from URL">
+                  @if (fetchingMeta()) { <span class="rs-spinner"></span> }
+                  @else { <span class="material-symbols-outlined">auto_awesome</span> }
+                  Fill
+                </button>
+              </div>
+            </div>
+            <div class="rsa-field-group">
+              <label class="rsa-label">Type</label>
+              <select class="rsa-input rsa-select"
+                [ngModel]="newSourceType()" (ngModelChange)="newSourceType.set($event)">
+                @for (t of sourceTypeOptions; track t.id) {
+                  <option [value]="t.id">{{ t.label }}</option>
+                }
+              </select>
             </div>
             <div class="rsa-field-group">
               <label class="rsa-label">Author</label>
               <input type="text" class="rsa-input" placeholder="Author name"
                 [ngModel]="newSourceAuthor()" (ngModelChange)="newSourceAuthor.set($event)">
             </div>
-            <div class="rsa-field-group">
+            <div class="rsa-field-group rsa-field-group--wide">
               <label class="rsa-label">Tags</label>
-              <input type="text" class="rsa-input" placeholder="tag1, tag2, …"
-                [ngModel]="newSourceTags()" (ngModelChange)="newSourceTags.set($event)">
+              <div class="rsa-tag-row">
+                <input type="text" class="rsa-input" placeholder="tag1, tag2, …"
+                  [ngModel]="newSourceTags()" (ngModelChange)="newSourceTags.set($event)">
+                <button class="rsa-suggest-btn"
+                  [disabled]="suggestingTags() || (!newSourceTitle() && !newSourceUrl())"
+                  (click)="suggestTags()" title="AI suggest tags">
+                  @if (suggestingTags()) { <span class="rs-spinner"></span> }
+                  @else { <span class="material-symbols-outlined">auto_awesome</span> }
+                </button>
+              </div>
             </div>
             <div class="rsa-field-group rsa-field-group--wide">
               <label class="rsa-label">Description</label>
-              <textarea class="rsa-textarea" rows="3" placeholder="Brief summary of this source…"
+              <textarea class="rsa-textarea" rows="2" placeholder="Brief summary…"
                 [ngModel]="newSourceDesc()" (ngModelChange)="newSourceDesc.set($event)"></textarea>
             </div>
+            @if (!selectedLibrary()) {
+              <div class="rsa-field-group rsa-field-group--wide">
+                <label class="rsa-label">Collection <span class="rsa-label-opt">(optional)</span></label>
+                <select class="rsa-input rsa-select"
+                  [ngModel]="newSourceLibraryId()" (ngModelChange)="newSourceLibraryId.set($event)">
+                  <option value="">No collection</option>
+                  @for (lib of libraries(); track lib.id) {
+                    <option [value]="lib.id">{{ lib.name }}</option>
+                  }
+                </select>
+              </div>
+            }
           </div>
+        </div>
+        <div class="rsa-footer">
+          <div class="rsa-footer-actions">
+            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
+            <button class="rsa-create-btn" [disabled]="!newSourceTitle()" (click)="saveSource()">
+              <span class="material-symbols-outlined">add</span>
+              Add Source
+            </button>
+          </div>
+        </div>
+      }
 
+      <!-- File Tab -->
+      @if (addTab() === 'file') {
+        <div class="rsa-form-pane rsa-form-pane--solo rsa-form-pane--file">
+          <div class="rs-files-drop-zone rsa-file-drop"
+            [class.dragging]="isDraggingOver()"
+            [class.uploading]="fileLibrary.uploading()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onFileDrop($event); closeAddModal()"
+            (click)="fileLibrary.uploading() ? null : openFileInputFromModal()">
+            @if (fileLibrary.uploading()) {
+              <span class="rs-spinner"></span>
+              <p>Uploading…</p>
+            } @else {
+              <span class="material-symbols-outlined">cloud_upload</span>
+              <p>Drop files here or click to browse</p>
+              <span class="rs-files-drop-hint">Supports documents, images, video, audio — up to 50 MB each</span>
+            }
+          </div>
         </div>
-      </div>
+        <div class="rsa-footer">
+          <div class="rsa-footer-actions">
+            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
+          </div>
+        </div>
+      }
 
-      <div class="rsa-footer">
-        <div class="rsa-footer-hints">
-          <span class="rsa-hint"><kbd>Tab</kbd> Next field</span>
-          <span class="rsa-hint"><kbd>Enter</kbd> Add</span>
-          <span class="rsa-hint"><kbd>Esc</kbd> Close</span>
+      <!-- Note Tab -->
+      @if (addTab() === 'note') {
+        <div class="rsa-form-pane rsa-form-pane--solo">
+          <div class="rsa-name-bar">
+            <span class="material-symbols-outlined" style="color:var(--accent-primary)">edit_note</span>
+            <input class="rsa-name-input" type="text" placeholder="Note title…"
+              [ngModel]="newSourceTitle()" (ngModelChange)="newSourceTitle.set($event)">
+          </div>
+          <div class="rsa-field-group">
+            <label class="rsa-label">Content</label>
+            <textarea class="rsa-textarea rsa-textarea--tall" rows="6" placeholder="Write your note here…"
+              [ngModel]="addNoteContent()" (ngModelChange)="addNoteContent.set($event)"></textarea>
+          </div>
+          <div class="rsa-fields">
+            <div class="rsa-field-group">
+              <label class="rsa-label">Tags</label>
+              <div class="rsa-tag-row">
+                <input type="text" class="rsa-input" placeholder="tag1, tag2, …"
+                  [ngModel]="newSourceTags()" (ngModelChange)="newSourceTags.set($event)">
+                <button class="rsa-suggest-btn"
+                  [disabled]="suggestingTags() || !newSourceTitle()"
+                  (click)="suggestTags()" title="AI suggest tags">
+                  @if (suggestingTags()) { <span class="rs-spinner"></span> }
+                  @else { <span class="material-symbols-outlined">auto_awesome</span> }
+                </button>
+              </div>
+            </div>
+            @if (!selectedLibrary()) {
+              <div class="rsa-field-group">
+                <label class="rsa-label">Collection <span class="rsa-label-opt">(optional)</span></label>
+                <select class="rsa-input rsa-select"
+                  [ngModel]="newSourceLibraryId()" (ngModelChange)="newSourceLibraryId.set($event)">
+                  <option value="">No collection</option>
+                  @for (lib of libraries(); track lib.id) {
+                    <option [value]="lib.id">{{ lib.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
         </div>
-        <div class="rsa-footer-actions">
-          <button class="rsa-cancel-btn" (click)="closeSourceModal()">Cancel</button>
-          <button class="rsa-create-btn" [disabled]="!newSourceTitle()" (click)="saveSource()">
-            <span class="material-symbols-outlined">add</span>
-            Add Source
-          </button>
+        <div class="rsa-footer">
+          <div class="rsa-footer-actions">
+            <button class="rsa-cancel-btn" (click)="closeAddModal()">Cancel</button>
+            <button class="rsa-create-btn" [disabled]="!newSourceTitle()" (click)="saveNote()">
+              <span class="material-symbols-outlined">save</span>
+              Save Note
+            </button>
+          </div>
         </div>
-      </div>
+      }
 
     </div>
   </div>
@@ -786,101 +1245,64 @@
   </div>
 }
 
-<!-- ── DELETE LIBRARY ── -->
-@if (showDeleteLibrary()) {
-  <div class="rsa-backdrop" (click)="cancelDeleteLibrary()">
-    <div class="rsa-modal rsa-modal--xs" (click)="$event.stopPropagation()">
-      <div class="rsa-header">
-        <div class="rsa-header-left">
-          <span class="material-symbols-outlined rsa-header-icon" style="color:#ef4444">delete</span>
-          <h2 class="rsa-header-title">Delete Library</h2>
-        </div>
-        <button class="rsa-close-btn" (click)="cancelDeleteLibrary()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <div class="rsa-delete-body">
-        @if (libraryToDelete(); as lib) {
-          <p class="rsa-delete-msg">Delete <strong>"{{ lib.name }}"</strong> and all its sources?</p>
-          <p class="rsa-delete-hint">This action cannot be undone.</p>
-        }
-      </div>
-      <div class="rsa-footer">
-        <div></div>
-        <div class="rsa-footer-actions">
-          <button class="rsa-cancel-btn" (click)="cancelDeleteLibrary()">Cancel</button>
-          <button class="rsa-del-confirm-btn" (click)="confirmDeleteLibrary()">
-            <span class="material-symbols-outlined">delete</span>
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
+<!-- ── DELETE COLLECTION ── -->
+<env-confirm-dialog
+  [isOpen]="showDeleteLibrary()"
+  title="Delete Collection"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  (confirmed)="confirmDeleteLibrary()"
+  (cancelled)="cancelDeleteLibrary()">
+  Delete <strong>"{{ libraryToDelete()?.name }}"</strong> and all its sources? This cannot be undone.
+</env-confirm-dialog>
 
 <!-- ── DELETE SOURCE ── -->
-@if (showDeleteSource()) {
-  <div class="rsa-backdrop" (click)="cancelDeleteSource()">
-    <div class="rsa-modal rsa-modal--xs" (click)="$event.stopPropagation()">
-      <div class="rsa-header">
-        <div class="rsa-header-left">
-          <span class="material-symbols-outlined rsa-header-icon" style="color:#ef4444">delete</span>
-          <h2 class="rsa-header-title">Delete Source</h2>
-        </div>
-        <button class="rsa-close-btn" (click)="cancelDeleteSource()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <div class="rsa-delete-body">
-        @if (sourceToDelete(); as src) {
-          <p class="rsa-delete-msg">Delete <strong>"{{ src.title }}"</strong>?</p>
-          <p class="rsa-delete-hint">This action cannot be undone.</p>
-        }
-      </div>
-      <div class="rsa-footer">
-        <div></div>
-        <div class="rsa-footer-actions">
-          <button class="rsa-cancel-btn" (click)="cancelDeleteSource()">Cancel</button>
-          <button class="rsa-del-confirm-btn" (click)="confirmDeleteSource()">
-            <span class="material-symbols-outlined">delete</span>
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
+<env-confirm-dialog
+  [isOpen]="showDeleteSource()"
+  title="Delete Source"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  (confirmed)="confirmDeleteSource()"
+  (cancelled)="cancelDeleteSource()">
+  Delete <strong>"{{ sourceToDelete()?.title }}"</strong>? This action cannot be undone.
+</env-confirm-dialog>
 
 <!-- ── DELETE FILE ── -->
-@if (showDeleteFile()) {
-  <div class="rsa-backdrop" (click)="cancelDeleteFile()">
-    <div class="rsa-modal rsa-modal--xs" (click)="$event.stopPropagation()">
-      <div class="rsa-header">
-        <div class="rsa-header-left">
-          <span class="material-symbols-outlined rsa-header-icon" style="color:#ef4444">delete</span>
-          <h2 class="rsa-header-title">Delete File</h2>
-        </div>
-        <button class="rsa-close-btn" (click)="cancelDeleteFile()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <div class="rsa-delete-body">
-        @if (fileToDelete(); as f) {
-          <p class="rsa-delete-msg">Delete <strong>"{{ f.name }}"</strong>?</p>
-          <p class="rsa-delete-hint">This removes the file from Supabase Storage and cannot be undone.</p>
-        }
-      </div>
-      <div class="rsa-footer">
-        <div></div>
-        <div class="rsa-footer-actions">
-          <button class="rsa-cancel-btn" (click)="cancelDeleteFile()">Cancel</button>
-          <button class="rsa-del-confirm-btn" (click)="confirmDeleteFile()">
-            <span class="material-symbols-outlined">delete</span>
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-}
+<env-confirm-dialog
+  [isOpen]="showDeleteFile()"
+  title="Delete File"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete"
+  (confirmed)="confirmDeleteFile()"
+  (cancelled)="cancelDeleteFile()">
+  Delete <strong>"{{ fileToDelete()?.name }}"</strong>? This removes the file from Supabase Storage and cannot be undone.
+</env-confirm-dialog>
+
+<!-- ── BULK DELETE ── -->
+<env-confirm-dialog
+  [isOpen]="showBulkDelete()"
+  title="Delete Sources"
+  icon="delete"
+  variant="danger"
+  confirmLabel="Delete All"
+  (confirmed)="confirmBulkDelete()"
+  (cancelled)="cancelBulkDelete()">
+  Delete {{ bulkSelected().length }} selected source{{ bulkSelected().length !== 1 ? 's' : '' }}? This cannot be undone.
+</env-confirm-dialog>
+
+<!-- ── UNSAVED NOTES WARNING ── -->
+<env-confirm-dialog
+  [isOpen]="showUnsavedWarning()"
+  title="Unsaved Notes"
+  icon="warning"
+  variant="danger"
+  confirmLabel="Discard & Close"
+  cancelLabel="Keep Editing"
+  (confirmed)="discardNotesAndClose()"
+  (cancelled)="cancelUnsavedWarning()">
+  You have unsaved notes. Close without saving?
+</env-confirm-dialog>
+

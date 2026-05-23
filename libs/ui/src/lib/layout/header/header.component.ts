@@ -115,7 +115,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { id: 'tasks',       label: 'Tasks',    icon: 'checklist', route: 'tasks' },
     { id: 'meetings',    label: 'Meetings', icon: 'groups',    route: 'meetings' },
     { id: 'daily-notes', label: 'Notes',    icon: 'note',      route: 'daily-notes' },
-    { id: 'library',     label: 'Library',  icon: 'science',   route: 'library' },
+    { id: 'library',     label: 'Knowledge',  icon: 'science',   route: 'library' },
     { id: 'write',       label: 'Write',    icon: 'edit',      route: 'write' },
     { id: 'vault',       label: 'Vault',    icon: 'lock',      route: 'vault' },
     { id: 'subscriptions',label: 'Subscriptions', icon: 'credit_card',route: 'subscriptions' },

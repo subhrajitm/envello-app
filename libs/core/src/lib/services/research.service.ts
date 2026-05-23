@@ -13,7 +13,7 @@ export interface ResearchLibrary {
 
 export interface ResearchSource {
     id: string;
-    libraryId: string;
+    libraryId?: string;
     title: string;
     sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL' | 'VIDEO' | 'ARTICLE';
     url?: string;
@@ -25,6 +25,7 @@ export interface ResearchSource {
     notes?: string;
     createdDate: string;
     lastAccessed?: string;
+    linkedTaskIds?: string[];
 }
 
 export interface ResearchSummary {

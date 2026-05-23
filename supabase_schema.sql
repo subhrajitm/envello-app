@@ -262,6 +262,33 @@ create policy "Users can all access their own articles" on public.articles for a
 
 
 -- ──────────────────────────────────────────────────────
+-- 12. User Data (generic sync table for PouchDB → Supabase sync)
+--     All web-app collections sync here as JSONB blobs via SyncService.
+--     The primary key is composite so the same UUID in different
+--     collections/profiles never conflicts.
+-- ──────────────────────────────────────────────────────
+create table if not exists public.user_data (
+  id           text        not null,
+  user_id      uuid        references auth.users(id) not null default auth.uid(),
+  profile_id   text        not null default 'default',
+  collection   text        not null,
+  data         jsonb       not null default '{}',
+  deleted      boolean     not null default false,
+  updated_at   timestamptz not null default now(),
+  primary key (id, collection, profile_id)
+);
+alter table public.user_data enable row level security;
+drop policy if exists "Users can manage their own sync data" on public.user_data;
+create policy "Users can manage their own sync data"
+  on public.user_data for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Enable Realtime so subscribeRealtime() receives live cross-device updates.
+alter publication supabase_realtime add table public.user_data;
+
+
+-- ──────────────────────────────────────────────────────
 -- 15. Research Libraries
 -- ──────────────────────────────────────────────────────
 create table if not exists public.research_libraries (
@@ -297,6 +324,7 @@ create table if not exists public.research_sources (
   notes text,
   created_date text,
   last_accessed text,
+  linked_task_ids jsonb,
   created_at timestamptz default now()
 );
 alter table public.research_sources enable row level security;
