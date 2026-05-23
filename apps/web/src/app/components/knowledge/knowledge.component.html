@@ -97,7 +97,7 @@
             New Summary
           </button>
         } @else if (viewMode() === 'files') {
-          <button class="rs-add-btn" (click)="openAddModal('file')">
+          <button class="rs-add-btn" (click)="openAddModal()">
             <span class="material-symbols-outlined">add</span>
             Add
           </button>
@@ -299,7 +299,7 @@
                 <div class="rs-intake-zone"
                   (dragover)="onDragOver($event)"
                   (dragleave)="onDragLeave()"
-                  (drop)="onFileDrop($event); closeAddModal()"
+                  (drop)="onFileDrop($event)"
                   [class.dragging]="isDraggingOver()">
                   @if (isDraggingOver()) {
                     <span class="material-symbols-outlined rs-intake-icon">cloud_upload</span>
@@ -317,6 +317,9 @@
                       </button>
                       <button class="rs-intake-btn" (click)="openAddModal('note')">
                         <span class="material-symbols-outlined">edit_note</span>Write Note
+                      </button>
+                      <button class="rs-intake-btn" (click)="openAddModal('audio')">
+                        <span class="material-symbols-outlined">mic</span>Record Audio
                       </button>
                     </div>
                   }
@@ -363,7 +366,8 @@
               [actions]="summaryActions"
               [showToolbar]="false"
               rowIdKey="id"
-              (actionClick)="onSummaryAction($event)">
+              (actionClick)="onSummaryAction($event)"
+              (sortChange)="onSummarySort($event)">
             </env-table>
           }
 

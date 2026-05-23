@@ -355,7 +355,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private createResearchLibrary() {
         this.researchService.addLibrary({
-            name: 'New Research Library',
+            name: 'New Collection',
             description: '',
             color: '#3b82f6'
         });

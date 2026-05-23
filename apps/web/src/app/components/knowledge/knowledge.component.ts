@@ -16,15 +16,6 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
   ARTICLE:   { label: 'Article',   icon: 'article',        color: '#06b6d4' },
 };
 
-const STATUS_META: Record<string, { label: string; color: string }> = {
-  UNREAD:    { label: 'Unread',    color: '#f87171' },
-  READING:   { label: 'Reading',   color: '#facc15' },
-  PROCESSED: { label: 'Processed', color: '#4ade80' },
-};
-
-const STATUS_CYCLE: Record<string, ResearchSource['status']> = {
-  UNREAD: 'READING', READING: 'PROCESSED', PROCESSED: 'UNREAD',
-};
 
 @Component({
   selector: 'app-knowledge',
@@ -222,6 +213,9 @@ export class KnowledgeComponent implements OnDestroy {
     return 'File';
   }
 
+  // ── Summary sort ─────────────────────────────────────────────────────────
+  summarySort = signal<{ key: string; direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
+
   // ── Summary table config ─────────────────────────────────────────────────
   readonly summaryColumns: EnvTableColumn[] = [
     { key: 'title',   header: 'Title',   sortable: true },
@@ -234,15 +228,27 @@ export class KnowledgeComponent implements OnDestroy {
     { key: 'delete', label: 'Delete', icon: 'delete', danger: true, bulk: false },
   ];
 
-  summaryTableRows = computed(() =>
-    this.summaries().map(s => ({
-      id:      s.id,
-      title:   s.title,
-      sources: s.sourceIds.length ? `${s.sourceIds.length} source${s.sourceIds.length !== 1 ? 's' : ''}` : '—',
-      tags:    s.tags.join(', ') || '—',
-      date:    this.formatDate(s.createdDate),
-    }))
-  );
+  summaryTableRows = computed(() => {
+    const { key, direction } = this.summarySort();
+    const rows = this.summaries().map(s => ({
+      id:       s.id,
+      title:    s.title,
+      sources:  s.sourceIds.length ? `${s.sourceIds.length} source${s.sourceIds.length !== 1 ? 's' : ''}` : '—',
+      tags:     s.tags.join(', ') || '—',
+      date:     this.formatDate(s.createdDate),
+      _rawDate: s.createdDate,
+    }));
+    return [...rows].sort((a, b) => {
+      const cmp = key === 'title'
+        ? a.title.localeCompare(b.title)
+        : (a._rawDate ?? '').localeCompare(b._rawDate ?? '');
+      return direction === 'asc' ? cmp : -cmp;
+    });
+  });
+
+  onSummarySort(event: EnvTableSortEvent) {
+    this.summarySort.set({ key: event.key, direction: event.direction });
+  }
 
   onSummaryAction(event: EnvTableActionEvent) {
     const summary = this.summaries().find(s => s.id === event.row['id']);
@@ -266,7 +272,7 @@ export class KnowledgeComponent implements OnDestroy {
       title:      s.title,
       sourceType: s.sourceType,
       status:     s.status,
-      meta:       this.formatSourceMeta(s),
+      meta:       this.formatSourceMetaShort(s),
     }))
   );
 
@@ -374,9 +380,7 @@ export class KnowledgeComponent implements OnDestroy {
   });
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  getSourceTypeMeta(type: string)  { return SOURCE_TYPE_META[type] ?? SOURCE_TYPE_META['WEB']; }
-  getStatusMeta(status: string)    { return STATUS_META[status] ?? STATUS_META['UNREAD']; }
-  getLibraryForSource(s: ResearchSource) { return s.libraryId ? this.libraries().find(l => l.id === s.libraryId) : undefined; }
+  getSourceTypeMeta(type: string) { return SOURCE_TYPE_META[type] ?? SOURCE_TYPE_META['WEB']; }
 
   formatDate(dateStr: string | undefined): string {
     if (!dateStr) return '';
@@ -402,14 +406,23 @@ export class KnowledgeComponent implements OnDestroy {
     return parts.join(' · ');
   }
 
+  private formatSourceMetaShort(source: ResearchSource): string {
+    const parts: string[] = [];
+    if (source.author) parts.push(source.author);
+    const date = source.lastAccessed || source.createdDate;
+    if (date) parts.push(new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }));
+    return parts.join(' · ') || '—';
+  }
+
+  private resolveUploadLibraryId(): string | undefined {
+    return (this.showAddModal() ? this.newSourceLibraryId() : '') || this.selectedLibrary()?.id;
+  }
+
   // ── Library actions ───────────────────────────────────────────────────────
   saveLibrary() {
     if (!this.newLibraryName()) return;
-    const name = this.newLibraryName();
-    this.researchService.addLibrary({ name, description: this.newLibraryDesc(), color: this.newLibraryColor() });
-    // Auto-select the newly created collection in the dropdown
-    const newLib = this.libraries().find(l => l.name === name);
-    if (newLib) this.newSourceLibraryId.set(newLib.id);
+    const newLib = this.researchService.addLibrary({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
+    this.newSourceLibraryId.set(newLib.id);
     this.showNewCollectionForm.set(false);
     this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
   }
@@ -424,6 +437,8 @@ export class KnowledgeComponent implements OnDestroy {
     this.selectedLibrary.set(null);
     this.viewMode.set('sources');
     this.searchQuery.set('');
+    this.filterStatus.set('ALL');
+    this.filterType.set('ALL');
   }
 
   selectLibrary(library: ResearchLibrary) {
@@ -501,7 +516,7 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   openFileInputFromModal() {
-    const libraryId = this.selectedLibrary()?.id;
+    const libraryId = this.resolveUploadLibraryId();
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
@@ -622,7 +637,9 @@ export class KnowledgeComponent implements OnDestroy {
 
   saveNotes() {
     const s = this.selectedSource();
-    if (s) this.researchService.updateSource(s.id, { notes: this.editNotes() });
+    if (!s) return;
+    this.researchService.updateSource(s.id, { notes: this.editNotes() });
+    this.selectedSource.update(cur => cur ? { ...cur, notes: this.editNotes() } : null);
   }
 
   // Feature 4: AI generate notes
@@ -828,13 +845,13 @@ export class KnowledgeComponent implements OnDestroy {
     const ext = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'm4a' : 'webm';
     const title = this.audioTitle().trim() || `Recording ${new Date().toLocaleString()}`;
     const file = new File([blob], `${title}.${ext}`, { type: blob.type });
-    await this.fileLibrary.uploadMany([file], { type: 'direct', id: 'library' }, this.selectedLibrary()?.id);
+    await this.fileLibrary.uploadMany([file], { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
     this.discardRecording();
     this.closeAddModal();
   }
 
   openAudioFileInput() {
-    const libraryId = this.selectedLibrary()?.id;
+    const libraryId = this.resolveUploadLibraryId();
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'audio/*';
@@ -862,14 +879,14 @@ export class KnowledgeComponent implements OnDestroy {
     event.preventDefault();
     this.isDraggingOver.set(false);
     const files = Array.from(event.dataTransfer?.files ?? []);
-    if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, this.selectedLibrary()?.id);
+    if (files.length) this.fileLibrary.uploadMany(files, { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
   }
 
   onDragOver(event: DragEvent) { event.preventDefault(); this.isDraggingOver.set(true); }
   onDragLeave() { this.isDraggingOver.set(false); }
 
   openFileInput() {
-    const libraryId = this.selectedLibrary()?.id;
+    const libraryId = this.resolveUploadLibraryId();
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;

@@ -137,7 +137,7 @@ export class FileLibraryService {
         if (results.length > 0) {
             this.notify.success(
                 'Upload complete',
-                `${results.length} file${results.length !== 1 ? 's' : ''} saved to Library.`,
+                `${results.length} file${results.length !== 1 ? 's' : ''} uploaded successfully.`,
             );
         }
         if (errors.length > 0) {
