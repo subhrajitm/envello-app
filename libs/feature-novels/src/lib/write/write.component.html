@@ -40,22 +40,6 @@
         </button>
       }
     </div>
-
-    <div class="wr-sb-divider"></div>
-    <div class="wr-sb-stats-section">
-      <div class="wr-sb-stat">
-        <span class="wr-sb-stat-label">Total words</span>
-        <span class="wr-sb-stat-value">{{ totalWords() | number }}</span>
-      </div>
-      <div class="wr-sb-stat">
-        <span class="wr-sb-stat-label">Active drafts</span>
-        <span class="wr-sb-stat-value">{{ activeDrafts() }}</span>
-      </div>
-      <div class="wr-sb-stat">
-        <span class="wr-sb-stat-label">Avg. completion</span>
-        <span class="wr-sb-stat-value">{{ avgCompletion() }}%</span>
-      </div>
-    </div>
   </env-feature-sidebar>
 
   <!-- ── MAIN ── -->
@@ -128,7 +112,7 @@
         <div class="wr-tb-divider"></div>
         <button class="wr-add-btn" (click)="openAddModal()">
           <span class="material-symbols-outlined">add</span>
-          New Piece
+          New Writing
         </button>
       </div>
     </div>
@@ -144,7 +128,7 @@
             <p class="wr-empty-sub">Create your first piece to start writing books, articles, scripts and more.</p>
             <button class="wr-add-btn" (click)="openAddModal()">
               <span class="material-symbols-outlined">add</span>
-              New Piece
+              New Writing
             </button>
           } @else {
             <span class="material-symbols-outlined wr-empty-icon">search_off</span>
@@ -264,7 +248,7 @@
       <div class="wra-header">
         <div class="wra-header-left">
           <span class="material-symbols-outlined wra-header-icon">edit_note</span>
-          <h2 class="wra-header-title">New Piece</h2>
+          <h2 class="wra-header-title">New Writing</h2>
         </div>
         <div class="wra-header-right">
           <kbd class="wra-esc-key">Esc</kbd>
@@ -372,7 +356,7 @@
           <button class="wra-create-btn" (click)="addBook()"
             [disabled]="!newBook().title.trim() || addModalSubmitting()">
             <span class="material-symbols-outlined">add</span>
-            {{ addModalSubmitting() ? 'Creating…' : 'Create Piece' }}
+            {{ addModalSubmitting() ? 'Creating…' : 'Create Writing' }}
           </button>
         </div>
       </div>

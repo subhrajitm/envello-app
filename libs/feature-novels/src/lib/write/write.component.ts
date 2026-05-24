@@ -100,7 +100,7 @@ export class WriteComponent {
   ];
   // ── Static data ───────────────────────────────────────────────────────────
   readonly writingTypes: { id: WritingType; label: string; defaultWords: number; defaultIcon: string }[] = [
-    { id: 'NOVEL',       label: 'Novel',        defaultWords: 80000, defaultIcon: 'menu_book'   },
+    { id: 'NOVEL',       label: 'Book',         defaultWords: 80000, defaultIcon: 'menu_book'   },
     { id: 'SHORT_STORY', label: 'Short Story',  defaultWords: 10000, defaultIcon: 'auto_stories'},
     { id: 'ARTICLE',     label: 'Article',      defaultWords:  2000, defaultIcon: 'article'     },
     { id: 'ESSAY',       label: 'Essay',        defaultWords:  3000, defaultIcon: 'psychology'  },
@@ -152,14 +152,6 @@ export class WriteComponent {
   hasActiveFilters = computed(() =>
     !!this.searchQuery() || !!this.selectedType() || this.statusFilter() !== 'ALL'
   );
-
-  totalWords = computed(() => this.store.books().reduce((acc, n) => acc + n.wordCount, 0));
-  activeDrafts = computed(() => this.store.books().filter(n => n.status === 'DRAFTING' || n.status === 'REVISING').length);
-  avgCompletion = computed(() => {
-    const list = this.store.books();
-    if (!list.length) return 0;
-    return Math.round(list.reduce((acc, n) => acc + n.progress, 0) / list.length);
-  });
 
   filteredBooks = computed(() => {
     const q      = this.searchQuery().trim().toLowerCase();
