@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { SqliteService } from './sqlite.service';
 import { TauriService } from './tauri.service';
-import { Task, Note, PlanningItem, Activity, Novel, BinItem, Project } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, BinItem, Project } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -37,7 +37,7 @@ export class SqliteDataService implements DataService {
             case 'notes': return await this.sqlite.getAllNotes() as unknown as T[];
             case 'planning_items': return await this.sqlite.getAllPlanningItems() as unknown as T[];
             case 'activities': return await this.sqlite.getAllActivities() as unknown as T[];
-            case 'novels': return await this.sqlite.getAllNovels() as unknown as T[];
+            case 'books': return await this.sqlite.getAllBooks() as unknown as T[];
             case 'bin_items': return await this.sqlite.getAllBinItems() as unknown as T[];
 
             case 'meetings': return await this.sqlite.getAllMeetings() as unknown as T[];
@@ -80,7 +80,7 @@ export class SqliteDataService implements DataService {
             case 'notes': return await this.sqlite.upsertNote(item as unknown as Note);
             case 'planning_items': return await this.sqlite.upsertPlanningItem(item as unknown as PlanningItem);
             case 'activities': return await this.sqlite.upsertActivity(item as unknown as Activity);
-            case 'novels': return await this.sqlite.upsertNovel(item as unknown as Novel);
+            case 'books': return await this.sqlite.upsertBook(item as unknown as Book);
             case 'bin_items': return await this.sqlite.upsertBinItem(item as unknown as BinItem);
 
             case 'meetings': return await this.sqlite.upsertMeeting(item as any);
@@ -115,9 +115,9 @@ export class SqliteDataService implements DataService {
             case 'tasks': return await this.sqlite.removeTask(id);
             case 'notes': return await this.sqlite.removeNote(id);
             case 'planning_items': return await this.sqlite.removePlanningItem(id);
-            case 'novels': return await this.sqlite.removeNovel(id);
+            case 'books': return await this.sqlite.removeBook(id);
             case 'bin_items': return await this.sqlite.removeBinItem(id);
-            case 'novel_content': return await this.sqlite.removeNovelContent(id);
+            case 'book_content': return await this.sqlite.removeBookContent(id);
 
             case 'meetings': return await this.sqlite.removeMeeting(id);
             case 'articles': return await this.sqlite.removeArticle(id);

@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, HostListener, ChangeDetectionStrat
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { StoreService, type Novel, type WritingType, NovelContentService } from '@envello/core';
+import { StoreService, type Book, type WritingType, BookContentService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 
 const WRITING_TYPE_META: Record<string, { color: string; icon: string }> = {
@@ -34,7 +34,7 @@ const STATUS_META: Record<string, { color: string; icon: string; label: string }
 export class WriteComponent {
   private router = inject(Router);
   store = inject(StoreService);
-  private novelContent = inject(NovelContentService);
+  private bookContent = inject(BookContentService);
 
   // ── Filter / sort ─────────────────────────────────────────────────────────
   viewMode     = signal<'LIST' | 'GRID'>('LIST');
@@ -48,15 +48,15 @@ export class WriteComponent {
   // ── Add modal state ────────────────────────────────────────────────────────
   showAddModal      = signal(false);
   addModalSubmitting = signal(false);
-  newNovel = signal<{ title: string; writingType: WritingType; status: Novel['status']; genre: string; targetWordCount: number; icon: string }>({
+  newBook = signal<{ title: string; writingType: WritingType; status: Book['status']; genre: string; targetWordCount: number; icon: string }>({
     title: '', writingType: 'NOVEL', status: 'PLANNING',
     genre: '', targetWordCount: 80000, icon: 'menu_book'
   });
 
   // ── Delete modal ───────────────────────────────────────────────────────────
   showDeleteModal = signal(false);
-  novelToDelete   = signal<Novel | null>(null);
-  novelMenuOpen   = signal<string | null>(null);
+  bookToDelete   = signal<Book | null>(null);
+  bookMenuOpen   = signal<string | null>(null);
 
   // ── AI Assistant ──────────────────────────────────────────────────────────
   showAssistant = signal(false);
@@ -117,7 +117,7 @@ export class WriteComponent {
     { id: 'PUBLISHED' as const, ...STATUS_META['PUBLISHED'] },
   ];
 
-  readonly novelIcons = [
+  readonly bookIcons = [
     { id: 'menu_book',    label: 'Book'     },
     { id: 'auto_stories', label: 'Story'    },
     { id: 'article',      label: 'Article'  },
@@ -137,13 +137,13 @@ export class WriteComponent {
     this.writingTypes.map(t => ({
       ...t,
       color: WRITING_TYPE_META[t.id]?.color ?? '#9ca3af',
-      count: this.store.novels().filter(n => n.writingType === t.id).length,
+      count: this.store.books().filter(n => n.writingType === t.id).length,
     })).filter(t => t.count > 0)
   );
 
   statusCounts = computed(() => {
     const counts: Record<string, number> = {};
-    for (const n of this.store.novels()) {
+    for (const n of this.store.books()) {
       counts[n.status] = (counts[n.status] ?? 0) + 1;
     }
     return counts;
@@ -153,21 +153,21 @@ export class WriteComponent {
     !!this.searchQuery() || !!this.selectedType() || this.statusFilter() !== 'ALL'
   );
 
-  totalWords = computed(() => this.store.novels().reduce((acc, n) => acc + n.wordCount, 0));
-  activeDrafts = computed(() => this.store.novels().filter(n => n.status === 'DRAFTING' || n.status === 'REVISING').length);
+  totalWords = computed(() => this.store.books().reduce((acc, n) => acc + n.wordCount, 0));
+  activeDrafts = computed(() => this.store.books().filter(n => n.status === 'DRAFTING' || n.status === 'REVISING').length);
   avgCompletion = computed(() => {
-    const list = this.store.novels();
+    const list = this.store.books();
     if (!list.length) return 0;
     return Math.round(list.reduce((acc, n) => acc + n.progress, 0) / list.length);
   });
 
-  filteredNovels = computed(() => {
+  filteredBooks = computed(() => {
     const q      = this.searchQuery().trim().toLowerCase();
     const type   = this.selectedType();
     const status = this.statusFilter();
     const sort   = this.sortBy();
 
-    let list = this.store.novels();
+    let list = this.store.books();
     if (q)      list = list.filter(n => n.title.toLowerCase().includes(q) || n.genre.some(g => g.toLowerCase().includes(q)));
     if (type)   list = list.filter(n => n.writingType === type);
     if (status !== 'ALL') list = list.filter(n => n.status === status);
@@ -190,14 +190,14 @@ export class WriteComponent {
   });
 
   tableRows = computed(() =>
-    this.filteredNovels().map(novel => ({
-      id: novel.id,
-      title: novel.title,
-      type: this.getWritingTypeLabel(novel.writingType),
-      status: this.getStatusMeta(novel.status).label,
-      progress: `${novel.progress}% (${novel.wordCount?.toLocaleString() || 0}/${novel.targetWordCount?.toLocaleString() || 0})`,
-      updated: this.formatDate(novel.lastUpdated),
-      novel,
+    this.filteredBooks().map(book => ({
+      id: book.id,
+      title: book.title,
+      type: this.getWritingTypeLabel(book.writingType),
+      status: this.getStatusMeta(book.status).label,
+      progress: `${book.progress}% (${book.wordCount?.toLocaleString() || 0}/${book.targetWordCount?.toLocaleString() || 0})`,
+      updated: this.formatDate(book.lastUpdated),
+      book,
     }))
   );
 
@@ -211,7 +211,7 @@ export class WriteComponent {
   }
 
   getWritingTypeLabel(type?: string): string {
-    return this.writingTypes.find(t => t.id === type)?.label ?? 'Novel';
+    return this.writingTypes.find(t => t.id === type)?.label ?? 'Book';
   }
 
   getProgressColor(status: string): string {
@@ -269,18 +269,18 @@ export class WriteComponent {
   // ── Table handlers ────────────────────────────────────────────────────────
   handleTableAction(event: any) {
     const actionKey = event.actionKey;
-    const novel = event.row['novel'];
-    if (!novel) return;
+    const book = event.row['book'];
+    if (!book) return;
 
     switch (actionKey) {
       case 'open':
-        this.openNovel(novel.id);
+        this.openBook(book.id);
         break;
       case 'duplicate':
-        this.duplicateNovel(novel);
+        this.duplicateBook(book);
         break;
       case 'delete':
-        this.openDeleteModal(novel);
+        this.openDeleteModal(book);
         break;
     }
   }
@@ -295,64 +295,64 @@ export class WriteComponent {
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
-  openNovel(id: string) { this.router.navigate(['/write', id]); }
+  openBook(id: string) { this.router.navigate(['/write', id]); }
 
-  // ── Novel menu ────────────────────────────────────────────────────────────
-  toggleNovelMenu(novelId: string, e?: Event) {
+  // ── Book menu ─────────────────────────────────────────────────────────────
+  toggleBookMenu(bookId: string, e?: Event) {
     e?.stopPropagation();
-    this.novelMenuOpen.update(id => id === novelId ? null : novelId);
+    this.bookMenuOpen.update(id => id === bookId ? null : bookId);
   }
-  closeNovelMenu() { this.novelMenuOpen.set(null); }
+  closeBookMenu() { this.bookMenuOpen.set(null); }
 
-  duplicateNovel(novel: Novel, e?: Event) {
+  duplicateBook(book: Book, e?: Event) {
     e?.stopPropagation();
     const id = crypto.randomUUID();
     const now = new Date();
-    const copy: Novel = {
-      ...novel, id,
-      title: `${novel.title} (Copy)`,
+    const copy: Book = {
+      ...book, id,
+      title: `${book.title} (Copy)`,
       createdDate: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       lastUpdated: now.toISOString(),
       createdAt: now.toISOString(),
       isRecentlyUpdated: true,
     };
-    this.store.addNovel(copy);
-    this.novelContent.cloneNovelContent(novel.id, id, copy.title).catch(err => console.error(err));
-    this.closeNovelMenu();
+    this.store.addBook(copy);
+    this.bookContent.cloneBookContent(book.id, id, copy.title).catch(err => console.error(err));
+    this.closeBookMenu();
   }
 
-  openDeleteModal(novel: Novel, e?: Event) {
+  openDeleteModal(book: Book, e?: Event) {
     e?.stopPropagation();
-    this.novelToDelete.set(novel);
+    this.bookToDelete.set(book);
     this.showDeleteModal.set(true);
-    this.closeNovelMenu();
+    this.closeBookMenu();
   }
-  cancelDeleteNovel() { this.showDeleteModal.set(false); this.novelToDelete.set(null); }
-  confirmDeleteNovel() {
-    const novel = this.novelToDelete();
-    if (novel) { this.store.deleteNovel(novel.id); this.cancelDeleteNovel(); }
+  cancelDeleteBook() { this.showDeleteModal.set(false); this.bookToDelete.set(null); }
+  confirmDeleteBook() {
+    const book = this.bookToDelete();
+    if (book) { this.store.deleteBook(book.id); this.cancelDeleteBook(); }
   }
 
   // ── Add modal ─────────────────────────────────────────────────────────────
   openAddModal() {
-    this.newNovel.set({ title: '', writingType: 'NOVEL', status: 'PLANNING', genre: '', targetWordCount: 80000, icon: 'menu_book' });
+    this.newBook.set({ title: '', writingType: 'NOVEL', status: 'PLANNING', genre: '', targetWordCount: 80000, icon: 'menu_book' });
     this.showAddModal.set(true);
   }
   closeAddModal() { this.showAddModal.set(false); this.addModalSubmitting.set(false); }
 
-  updateNewNovel(key: 'title' | 'writingType' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number) {
+  updateNewBook(key: 'title' | 'writingType' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number) {
     if (key === 'writingType') {
       const def = this.writingTypes.find(t => t.id === value);
       if (def) {
-        this.newNovel.update(n => ({ ...n, writingType: value as WritingType, targetWordCount: def.defaultWords, icon: def.defaultIcon }));
+        this.newBook.update(n => ({ ...n, writingType: value as WritingType, targetWordCount: def.defaultWords, icon: def.defaultIcon }));
         return;
       }
     }
-    this.newNovel.update(n => ({ ...n, [key]: value }));
+    this.newBook.update(n => ({ ...n, [key]: value }));
   }
 
-  async addNovel() {
-    const form = this.newNovel();
+  async addBook() {
+    const form = this.newBook();
     const title = form.title.trim();
     if (!title) return;
     this.addModalSubmitting.set(true);
@@ -360,19 +360,19 @@ export class WriteComponent {
       const id = crypto.randomUUID();
       const now = new Date();
       const genre = form.genre.trim() ? form.genre.split(',').map(s => s.trim()).filter(Boolean) : ['Fiction'];
-      const novel: Novel = {
+      const book: Book = {
         id, title, icon: form.icon, status: form.status, writingType: form.writingType,
         wordCount: 0, targetWordCount: Math.max(0, form.targetWordCount) || 80000,
         progress: 0, chapters: 0, notesCount: 0,
         createdDate: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         lastUpdated: now.toISOString(), createdAt: now.toISOString(), genre, isRecentlyUpdated: true,
       };
-      this.store.addNovel(novel);
-      await this.novelContent.createAndPersistEmptyNovel(id, title);
+      this.store.addBook(book);
+      await this.bookContent.createAndPersistEmptyBook(id, title);
       this.closeAddModal();
       this.router.navigate(['/write', id]);
     } catch (e) {
-      console.error('[NovelsComponent] addNovel failed', e);
+      console.error('[BooksComponent] addBook failed', e);
       this.addModalSubmitting.set(false);
     }
   }
@@ -387,32 +387,32 @@ export class WriteComponent {
     this.aiLoading.set(true);
     await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
 
-    const novels = this.store.novels();
+    const books = this.store.books();
     const q = text.toLowerCase();
     let response = '';
 
     if (q.includes('how many') || q.includes('count')) {
-      response = `You have **${novels.length}** piece${novels.length !== 1 ? 's' : ''} in total.\n${this.writingTypes.map(t => {
-        const n = novels.filter(v => v.writingType === t.id).length;
+      response = `You have **${books.length}** piece${books.length !== 1 ? 's' : ''} in total.\n${this.writingTypes.map(t => {
+        const n = books.filter(v => v.writingType === t.id).length;
         return n > 0 ? `${t.label}: ${n}` : null;
       }).filter(Boolean).join('\n')}`;
     } else if (q.includes('draft') || q.includes('in progress')) {
-      const drafts = novels.filter(n => n.status === 'DRAFTING' || n.status === 'REVISING');
+      const drafts = books.filter(n => n.status === 'DRAFTING' || n.status === 'REVISING');
       response = drafts.length
         ? `**${drafts.length}** piece${drafts.length !== 1 ? 's' : ''} in progress:\n${drafts.map((n, i) => `${i + 1}. ${n.title} — ${n.status} (${n.progress}%)`).join('\n')}`
         : 'No pieces currently in draft or revision.';
     } else if (q.includes('word') || q.includes('total')) {
-      const total = novels.reduce((a, n) => a + n.wordCount, 0);
-      response = `Total word count: **${total.toLocaleString()}** words across ${novels.length} pieces.\nAverage: ${novels.length ? Math.round(total / novels.length).toLocaleString() : 0} words per piece.`;
+      const total = books.reduce((a, n) => a + n.wordCount, 0);
+      response = `Total word count: **${total.toLocaleString()}** words across ${books.length} pieces.\nAverage: ${books.length ? Math.round(total / books.length).toLocaleString() : 0} words per piece.`;
     } else if (q.includes('publish') || q.includes('ready')) {
-      const pub = novels.filter(n => n.status === 'PUBLISHED');
+      const pub = books.filter(n => n.status === 'PUBLISHED');
       response = pub.length
         ? `**${pub.length}** published piece${pub.length !== 1 ? 's' : ''}:\n${pub.map((n, i) => `${i + 1}. ${n.title}`).join('\n')}`
         : 'No published pieces yet.';
     } else if (q.includes('breakdown') || q.includes('type')) {
-      response = `Pieces by type:\n${this.writingTypes.map(t => `${t.label}: ${novels.filter(n => n.writingType === t.id).length}`).join('\n')}`;
+      response = `Pieces by type:\n${this.writingTypes.map(t => `${t.label}: ${books.filter(n => n.writingType === t.id).length}`).join('\n')}`;
     } else {
-      response = `You have ${novels.length} piece${novels.length !== 1 ? 's' : ''} with a total of ${novels.reduce((a, n) => a + n.wordCount, 0).toLocaleString()} words. Ask about drafts, word counts, publishing status, or a breakdown by type.`;
+      response = `You have ${books.length} piece${books.length !== 1 ? 's' : ''} with a total of ${books.reduce((a, n) => a + n.wordCount, 0).toLocaleString()} words. Ask about drafts, word counts, publishing status, or a breakdown by type.`;
     }
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
@@ -428,15 +428,15 @@ export class WriteComponent {
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
     if (!target.closest('.wr-sort-wrap'))  this.sortDropdownOpen.set(false);
-    if (!target.closest('.novel-menu-wrapper')) this.closeNovelMenu();
+    if (!target.closest('.book-menu-wrapper')) this.closeBookMenu();
   }
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
-      if (this.showDeleteModal()) this.cancelDeleteNovel();
+      if (this.showDeleteModal()) this.cancelDeleteBook();
       else if (this.showAddModal()) this.closeAddModal();
-      else { this.closeNovelMenu(); this.sortDropdownOpen.set(false); }
+      else { this.closeBookMenu(); this.sortDropdownOpen.set(false); }
     }
   }
 }

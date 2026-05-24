@@ -10,7 +10,7 @@ import type {
     Note,
     PlanningItem,
     Activity,
-    Novel,
+    Book,
 } from './store.service';
 import type { BinItem } from './bin.service';
 
@@ -29,7 +29,7 @@ export type TaskDoc = Task;
 export type NoteDoc = Note;
 export type PlanningItemDoc = PlanningItem;
 export type ActivityDoc = Activity;
-export type NovelDoc = Novel;
+export type BookDoc = Book;
 export type BinItemDoc = BinItem;
 
 export type MeetingDoc = Meeting;
@@ -45,7 +45,7 @@ export type NoteFolderDoc = { id: string; name: string; icon: string };
 export type BookmarkDoc = Bookmark;
 export type BookmarkFolderDoc = BookmarkFolder;
 
-export interface NovelContentDoc {
+export interface BookContentDoc {
     id: string;
     data: string;
 }
@@ -62,7 +62,7 @@ export class SqliteService {
     private notesSubject = new BehaviorSubject<NoteDoc[]>([]);
     private planningItemsSubject = new BehaviorSubject<PlanningItemDoc[]>([]);
     private activitiesSubject = new BehaviorSubject<ActivityDoc[]>([]);
-    private novelsSubject = new BehaviorSubject<NovelDoc[]>([]);
+    private booksSubject = new BehaviorSubject<BookDoc[]>([]);
     private binItemsSubject = new BehaviorSubject<BinItemDoc[]>([]);
 
     private meetingsSubject = new BehaviorSubject<MeetingDoc[]>([]);
@@ -195,9 +195,14 @@ export class SqliteService {
       )
     `);
 
-        // Novels
+        // Books (migrate from novels table if upgrading)
+        try {
+            await db.execute('ALTER TABLE novels RENAME TO books');
+        } catch {
+            // Already renamed or fresh install — both fine
+        }
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS novels (
+      CREATE TABLE IF NOT EXISTS books (
         id TEXT PRIMARY KEY,
         title TEXT,
         icon TEXT,
@@ -215,9 +220,14 @@ export class SqliteService {
       )
     `);
 
-        // Novel Content
+        // Book Content (migrate from novel_content table if upgrading)
+        try {
+            await db.execute('ALTER TABLE novel_content RENAME TO book_content');
+        } catch {
+            // Already renamed or fresh install — both fine
+        }
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS novel_content (
+      CREATE TABLE IF NOT EXISTS book_content (
         id TEXT PRIMARY KEY,
         data TEXT
       )
@@ -490,7 +500,7 @@ export class SqliteService {
             this.reloadNotes(),
             this.reloadPlanningItems(),
             this.reloadActivities(),
-            this.reloadNovels(),
+            this.reloadBooks(),
             this.reloadBinItems(),
 
             this.reloadMeetings(),
@@ -725,70 +735,70 @@ export class SqliteService {
         await this.reloadActivities();
     }
 
-    // ─── Novels ────────────────────────────────────────────────────────────────
-    private async reloadNovels() {
+    // ─── Books ─────────────────────────────────────────────────────────────────
+    private async reloadBooks() {
         const db = await this.getDb();
-        const rows = await db.select<NovelDoc[]>('SELECT * FROM novels');
-        const parsed = rows.map((r: any) => this.parseRow<NovelDoc>(r, ['genre']));
-        this.novelsSubject.next(parsed);
+        const rows = await db.select<BookDoc[]>('SELECT * FROM books');
+        const parsed = rows.map((r: any) => this.parseRow<BookDoc>(r, ['genre']));
+        this.booksSubject.next(parsed);
     }
 
-    async upsertNovel(novel: NovelDoc): Promise<void> {
+    async upsertBook(book: BookDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM novels WHERE id = $1', [novel.id]);
-        const jsonNovel = { ...novel, genre: this.toJson(novel.genre) };
+        const exists = await db.select<any[]>('SELECT id FROM books WHERE id = $1', [book.id]);
+        const jsonBook = { ...book, genre: this.toJson(book.genre) };
 
         if (exists.length > 0) {
             await db.execute(`
-        UPDATE novels SET title=$1, icon=$2, status=$3, wordCount=$4, targetWordCount=$5, progress=$6, 
+        UPDATE books SET title=$1, icon=$2, status=$3, wordCount=$4, targetWordCount=$5, progress=$6,
         chapters=$7, notesCount=$8, createdDate=$9, lastUpdated=$10, genre=$11, isRecentlyUpdated=$12, coverImage=$13
         WHERE id=$14`,
-                [jsonNovel.title, jsonNovel.icon, jsonNovel.status, jsonNovel.wordCount, jsonNovel.targetWordCount, jsonNovel.progress,
-                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage, jsonNovel.id]);
+                [jsonBook.title, jsonBook.icon, jsonBook.status, jsonBook.wordCount, jsonBook.targetWordCount, jsonBook.progress,
+                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage, jsonBook.id]);
         } else {
             await db.execute(`
-        INSERT INTO novels (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage)
+        INSERT INTO books (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-                [jsonNovel.id, jsonNovel.title, jsonNovel.icon, jsonNovel.status, jsonNovel.wordCount, jsonNovel.targetWordCount, jsonNovel.progress,
-                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage]);
+                [jsonBook.id, jsonBook.title, jsonBook.icon, jsonBook.status, jsonBook.wordCount, jsonBook.targetWordCount, jsonBook.progress,
+                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage]);
         }
-        await this.reloadNovels();
+        await this.reloadBooks();
     }
 
-    novels$(): Observable<NovelDoc[]> {
-        return this.novelsSubject.asObservable();
+    books$(): Observable<BookDoc[]> {
+        return this.booksSubject.asObservable();
     }
 
-    async getAllNovels(): Promise<NovelDoc[]> {
-        return this.novelsSubject.getValue();
+    async getAllBooks(): Promise<BookDoc[]> {
+        return this.booksSubject.getValue();
     }
 
-    async removeNovel(id: string): Promise<void> {
+    async removeBook(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM novels WHERE id = $1', [id]);
-        await this.reloadNovels();
+        await db.execute('DELETE FROM books WHERE id = $1', [id]);
+        await this.reloadBooks();
     }
 
-    // ─── Novel Content ─────────────────────────────────────────────────────────
-    async getNovelContent(id: string): Promise<string | null> {
+    // ─── Book Content ──────────────────────────────────────────────────────────
+    async getBookContent(id: string): Promise<string | null> {
         const db = await this.getDb();
-        const rows = await db.select<NovelContentDoc[]>('SELECT * FROM novel_content WHERE id = $1', [id]);
+        const rows = await db.select<BookContentDoc[]>('SELECT * FROM book_content WHERE id = $1', [id]);
         return rows.length > 0 ? rows[0].data : null;
     }
 
-    async setNovelContent(id: string, data: string): Promise<void> {
+    async setBookContent(id: string, data: string): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM novel_content WHERE id = $1', [id]);
+        const exists = await db.select<any[]>('SELECT id FROM book_content WHERE id = $1', [id]);
         if (exists.length > 0) {
-            await db.execute('UPDATE novel_content SET data = $1 WHERE id = $2', [data, id]);
+            await db.execute('UPDATE book_content SET data = $1 WHERE id = $2', [data, id]);
         } else {
-            await db.execute('INSERT INTO novel_content (id, data) VALUES ($1, $2)', [id, data]);
+            await db.execute('INSERT INTO book_content (id, data) VALUES ($1, $2)', [id, data]);
         }
     }
 
-    async removeNovelContent(id: string): Promise<void> {
+    async removeBookContent(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM novel_content WHERE id = $1', [id]);
+        await db.execute('DELETE FROM book_content WHERE id = $1', [id]);
     }
 
     // ─── Bin Items ─────────────────────────────────────────────────────────────
@@ -1261,7 +1271,7 @@ export class SqliteService {
 
         data.data.planning_items = await this.getAllPlanningItems();
         data.data.activities = await this.getAllActivities();
-        data.data.novels = await this.getAllNovels();
+        data.data.books = await this.getAllBooks();
         data.data.bin_items = await this.getAllBinItems();
 
         data.data.meetings = await this.getAllMeetings();
@@ -1271,10 +1281,10 @@ export class SqliteService {
         data.data.research_summaries = await this.getAllResearchSummaries();
         data.data.projects = await this.getAllProjects();
 
-        // Novel Content
+        // Book Content
         const db = await this.getDb();
-        const contentRows = await db.select<NovelContentDoc[]>('SELECT * FROM novel_content');
-        data.data.novel_content = contentRows;
+        const contentRows = await db.select<BookContentDoc[]>('SELECT * FROM book_content');
+        data.data.book_content = contentRows;
 
         return data;
     }

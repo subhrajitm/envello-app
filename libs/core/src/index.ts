@@ -7,7 +7,7 @@ export * from './lib/services/bin.service';
 export * from './lib/services/meetings.service';
 export * from './lib/services/calendar-sync.service';
 export * from './lib/services/notification.service';
-export * from './lib/services/novel-content.service';
+export * from './lib/services/book-content.service';
 export * from './lib/services/research.service';
 export * from './lib/services/session.service';
 

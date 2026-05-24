@@ -39,14 +39,14 @@
 
 
             <!-- MANUSCRIPT VIEW -->
-            @if (activeNav() === 'manuscript' && novel()) {
-            <app-chapters-list [chapters]="novel()!.chapters" [activeChapterId]="activeChapterId()"
+            @if (activeNav() === 'manuscript' && book()) {
+            <app-chapters-list [chapters]="book()!.chapters" [activeChapterId]="activeChapterId()"
                 [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()"
                 [sectionLabel]="sectionLabel()"
                 (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)"
                 (deleteChapter)="deleteChapter($event.id, $event.title)"
                 (deleteGroup)="deleteGroup($event.id, $event.title)"
-                (renameChapter)="novelService.updateChapterTitle($event.id, $event.title)"
+                (renameChapter)="bookService.updateChapterTitle($event.id, $event.title)"
                 (toggleBulkMode)="toggleBulkMode()"
                 (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()"
                 (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
@@ -54,8 +54,8 @@
             }
 
             <!-- STRUCTURE VIEW -->
-            @if (activeNav() === 'structure' && novel()) {
-            <app-structure-view [frontMatter]="novel()!.frontMatter" [prologue]="novel()!.prologue || null"
+            @if (activeNav() === 'manuscript' && book()) {
+            <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
                 [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
                 [addMenuOpen]="addMenuOpen()" (selectFrontMatterItem)="selectFrontMatterItem($event)"
                 (selectPrologue)="selectPrologue()"
@@ -65,15 +65,15 @@
             }
 
             <!-- CHARACTERS VIEW -->
-            @if (activeNav() === 'characters' && novel()) {
-            <app-characters-list [characters]="novel()!.characters" [selectedCharacterId]="selectedCharacterId()"
+            @if (activeNav() === 'manuscript' && book()) {
+            <app-characters-list [characters]="book()!.characters" [selectedCharacterId]="selectedCharacterId()"
                 (selectCharacter)="selectCharacter($event)" (deleteCharacter)="deleteCharacter($event.id, $event.name)"
                 (addNewCharacter)="addNewCharacter()" />
             }
 
             <!-- LOCATIONS VIEW -->
-            @if (activeNav() === 'locations' && novel()) {
-            <app-locations-list [locations]="novel()!.locations" [selectedLocationId]="selectedLocationId()"
+            @if (activeNav() === 'manuscript' && book()) {
+            <app-locations-list [locations]="book()!.locations" [selectedLocationId]="selectedLocationId()"
                 (selectLocation)="selectLocation($event)" (deleteLocation)="deleteLocation($event.id, $event.name)"
                 (addNewLocation)="addNewLocation()" />
             }
@@ -106,19 +106,19 @@
                 [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)" (addNewChapter)="addNewChapter()" />
             }
 
-            @if (activeNav() === 'structure' && novel()) {
+            @if (activeNav() === 'manuscript' && book()) {
             <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
-                [activePrologueId]="activePrologueId()" [frontMatter]="novel()!.frontMatter"
-                [prologue]="novel()!.prologue || null" (addFrontMatterItem)="addFrontMatterItem($event)"
+                [activePrologueId]="activePrologueId()" [frontMatter]="book()!.frontMatter"
+                [prologue]="book()!.prologue || null" (addFrontMatterItem)="addFrontMatterItem($event)"
                 (addPrologue)="addPrologue()" />
             }
 
-            @if (activeNav() === 'characters' && novel()) {
+            @if (activeNav() === 'manuscript' && book()) {
             <app-character-details [character]="activeCharacter()" (updateField)="onCharacterFieldUpdate($event)"
                 (addNewCharacter)="addNewCharacter()" />
             }
 
-            @if (activeNav() === 'locations' && novel()) {
+            @if (activeNav() === 'manuscript' && book()) {
             <app-location-details [location]="activeLocation()" (updateField)="onLocationFieldUpdate($event)"
                 (addNewLocation)="addNewLocation()" />
             }
@@ -158,15 +158,15 @@
                     (continueWriting)="continueWriting()" (applySuggestion)="applySuggestion($event)"
                     (clearConversation)="clearAiConversation()" (clearSuggestions)="aiSuggestions.set([])"
                     (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)" />
-                } @else if (rightSidebarTab() === 'notes' && novel()) {
-                <app-notes-panel [notes]="novel()!.notes" (addNewNote)="addNewNote()"
+                } @else if (rightSidebarTab() === 'notes' && book()) {
+                <app-notes-panel [notes]="book()!.notes" (addNewNote)="addNewNote()"
                     (deleteNote)="deleteNote($event)"
-                    (updateNote)="novelService.updateNote($event.id, $event.title, $event.body)" />
-                } @else if (rightSidebarTab() === 'manuscript' && novel()) {
+                    (updateNote)="bookService.updateNote($event.id, $event.title, $event.body)" />
+                } @else if (rightSidebarTab() === 'manuscript' && book()) {
                 <app-manuscript-data [totalNovelWords]="totalNovelWords()"
                     [averageChapterLength]="averageChapterLength()" [chaptersCompleted]="chaptersCompleted()"
-                    [totalChapters]="getTotalChapters()" [logline]="novel()!.synopsis.logline"
-                    [theme]="novel()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
+                    [totalChapters]="getTotalChapters()" [logline]="book()!.synopsis.logline"
+                    [theme]="book()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
                     [goalProgress]="getGoalProgress()" [activeChapterId]="activeChapterId()"
                     [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()" />
                 }

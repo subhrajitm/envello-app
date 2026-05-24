@@ -8,7 +8,7 @@
         (click)="clearFilters()">
         <span class="material-symbols-outlined">edit_note</span>
         <span class="wr-sb-label">All Pieces</span>
-        <span class="wr-sb-count">{{ store.novels().length }}</span>
+        <span class="wr-sb-count">{{ store.books().length }}</span>
       </button>
     </nav>
 
@@ -136,12 +136,12 @@
     <!-- Content -->
     <div class="wr-content">
 
-      @if (filteredNovels().length === 0) {
+      @if (filteredBooks().length === 0) {
         <div class="wr-empty">
-          @if (store.novels().length === 0) {
+          @if (store.books().length === 0) {
             <span class="material-symbols-outlined wr-empty-icon">edit_note</span>
             <p class="wr-empty-title">Nothing here yet</p>
-            <p class="wr-empty-sub">Create your first piece to start writing novels, articles, scripts and more.</p>
+            <p class="wr-empty-sub">Create your first piece to start writing books, articles, scripts and more.</p>
             <button class="wr-add-btn" (click)="openAddModal()">
               <span class="material-symbols-outlined">add</span>
               New Piece
@@ -168,7 +168,7 @@
             [currentPage]="1"
             [pageSize]="tableRows().length"
             rowIdKey="id"
-            (rowClick)="openNovel($event['id'])"
+            (rowClick)="openBook($event['id'])"
             (actionClick)="handleTableAction($event)"
             (sortChange)="handleTableSort($event)"
           ></env-table>
@@ -178,57 +178,57 @@
 
         <!-- Grid view -->
         <div class="wr-grid">
-          @for (novel of filteredNovels(); track novel.id) {
+          @for (book of filteredBooks(); track book.id) {
             <div class="wr-card">
-              <div class="wr-card-cover" (click)="openNovel(novel.id)"
-                [style.background]="'linear-gradient(135deg, ' + getTypeMeta(novel.writingType).color + '22, ' + getTypeMeta(novel.writingType).color + '08)'">
+              <div class="wr-card-cover" (click)="openBook(book.id)"
+                [style.background]="'linear-gradient(135deg, ' + getTypeMeta(book.writingType).color + '22, ' + getTypeMeta(book.writingType).color + '08)'">
                 <span class="material-symbols-outlined wr-card-icon"
-                  [style.color]="getTypeMeta(novel.writingType).color">{{ novel.icon }}</span>
+                  [style.color]="getTypeMeta(book.writingType).color">{{ book.icon }}</span>
                 <span class="wr-card-status">
-                  <span class="wr-status-dot" [style.background]="getStatusMeta(novel.status).color"></span>
-                  {{ getStatusMeta(novel.status).label }}
+                  <span class="wr-status-dot" [style.background]="getStatusMeta(book.status).color"></span>
+                  {{ getStatusMeta(book.status).label }}
                 </span>
               </div>
-              <div class="novel-menu-wrapper wr-card-menu-wrap">
-                <button class="wr-card-menu-btn" (click)="toggleNovelMenu(novel.id, $event)">
+              <div class="book-menu-wrapper wr-card-menu-wrap">
+                <button class="wr-card-menu-btn" (click)="toggleBookMenu(book.id, $event)">
                   <span class="material-symbols-outlined">more_vert</span>
                 </button>
-                @if (novelMenuOpen() === novel.id) {
+                @if (bookMenuOpen() === book.id) {
                   <div class="wr-menu-dropdown wr-menu-dropdown--card">
-                    <button class="wr-menu-item" (click)="openNovel(novel.id); closeNovelMenu()">
+                    <button class="wr-menu-item" (click)="openBook(book.id); closeBookMenu()">
                       <span class="material-symbols-outlined">open_in_new</span>Open
                     </button>
-                    <button class="wr-menu-item" (click)="duplicateNovel(novel, $event)">
+                    <button class="wr-menu-item" (click)="duplicateBook(book, $event)">
                       <span class="material-symbols-outlined">content_copy</span>Duplicate
                     </button>
                     <div class="wr-menu-divider"></div>
-                    <button class="wr-menu-item wr-menu-item--danger" (click)="openDeleteModal(novel, $event)">
+                    <button class="wr-menu-item wr-menu-item--danger" (click)="openDeleteModal(book, $event)">
                       <span class="material-symbols-outlined">delete</span>Delete
                     </button>
                   </div>
                 }
               </div>
-              <div class="wr-card-body" (click)="openNovel(novel.id)">
-                <div class="wr-card-title">{{ novel.title }}</div>
+              <div class="wr-card-body" (click)="openBook(book.id)">
+                <div class="wr-card-title">{{ book.title }}</div>
                 <div class="wr-card-meta">
-                  <span>{{ novel.chapters }} Ch</span>
+                  <span>{{ book.chapters }} Ch</span>
                   <span class="wr-dot">·</span>
-                  <span>{{ novel.wordCount | number }} W</span>
+                  <span>{{ book.wordCount | number }} W</span>
                   <span class="wr-dot">·</span>
-                  <span>{{ readingTime(novel.wordCount) }}</span>
+                  <span>{{ readingTime(book.wordCount) }}</span>
                 </div>
                 <div class="wr-card-progress">
                   <div class="wr-card-fill"
-                    [style.width.%]="novel.progress"
-                    [style.background]="getProgressColor(novel.status)"></div>
+                    [style.width.%]="book.progress"
+                    [style.background]="getProgressColor(book.status)"></div>
                 </div>
                 <div class="wr-card-footer">
                   <div class="wr-card-tags">
-                    @for (tag of novel.genre.slice(0, 2); track tag) {
+                    @for (tag of book.genre.slice(0, 2); track tag) {
                       <span class="wr-genre-tag">{{ tag }}</span>
                     }
                   </div>
-                  <span class="wr-card-updated">{{ formatDate(novel.lastUpdated) }}</span>
+                  <span class="wr-card-updated">{{ formatDate(book.lastUpdated) }}</span>
                 </div>
               </div>
             </div>
@@ -282,13 +282,13 @@
           <div class="wra-sidebar-header">WRITING TYPE</div>
           @for (type of writingTypes; track type.id) {
             <button class="wra-type-item"
-              [class.wra-type-item--active]="newNovel().writingType === type.id"
-              (click)="updateNewNovel('writingType', type.id)">
+              [class.wra-type-item--active]="newBook().writingType === type.id"
+              (click)="updateNewBook('writingType', type.id)">
               <div class="wra-type-icon-wrap"
-                [style.background]="newNovel().writingType === type.id ? getTypeMeta(type.id).color : 'transparent'"
-                [style.border-color]="newNovel().writingType === type.id ? getTypeMeta(type.id).color : 'var(--border-subtle)'">
+                [style.background]="newBook().writingType === type.id ? getTypeMeta(type.id).color : 'transparent'"
+                [style.border-color]="newBook().writingType === type.id ? getTypeMeta(type.id).color : 'var(--border-subtle)'">
                 <span class="material-symbols-outlined"
-                  [style.color]="newNovel().writingType === type.id ? 'white' : getTypeMeta(type.id).color">
+                  [style.color]="newBook().writingType === type.id ? 'white' : getTypeMeta(type.id).color">
                   {{ type.defaultIcon }}
                 </span>
               </div>
@@ -304,13 +304,13 @@
           <div class="wra-name-bar">
             <div class="wra-name-icon-wrap">
               <span class="material-symbols-outlined"
-                [style.color]="getTypeMeta(newNovel().writingType).color">
-                {{ newNovel().icon }}
+                [style.color]="getTypeMeta(newBook().writingType).color">
+                {{ newBook().icon }}
               </span>
             </div>
             <input class="wra-name-input" type="text" placeholder="Title…" autofocus
-              [ngModel]="newNovel().title"
-              (ngModelChange)="updateNewNovel('title', $event)">
+              [ngModel]="newBook().title"
+              (ngModelChange)="updateNewBook('title', $event)">
           </div>
 
           <!-- Status picker -->
@@ -318,10 +318,10 @@
             <label class="wra-label">Status</label>
             <div class="wra-status-picker">
               @for (s of allStatusItems; track s.id) {
-                <button class="wra-status-opt" [class.wra-status-opt--active]="newNovel().status === s.id"
-                  [style.border-color]="newNovel().status === s.id ? s.color : ''"
-                  [style.background]="newNovel().status === s.id ? s.color + '20' : ''"
-                  (click)="updateNewNovel('status', s.id)">
+                <button class="wra-status-opt" [class.wra-status-opt--active]="newBook().status === s.id"
+                  [style.border-color]="newBook().status === s.id ? s.color : ''"
+                  [style.background]="newBook().status === s.id ? s.color + '20' : ''"
+                  (click)="updateNewBook('status', s.id)">
                   <span class="wr-status-dot" [style.background]="s.color"></span>
                   {{ s.label }}
                 </button>
@@ -333,14 +333,14 @@
             <div class="wra-field-group">
               <label class="wra-label">Target word count</label>
               <input type="number" class="wra-input" min="0" placeholder="e.g. 80000"
-                [ngModel]="newNovel().targetWordCount"
-                (ngModelChange)="updateNewNovel('targetWordCount', +$event || 0)">
+                [ngModel]="newBook().targetWordCount"
+                (ngModelChange)="updateNewBook('targetWordCount', +$event || 0)">
             </div>
             <div class="wra-field-group">
               <label class="wra-label">Tags</label>
               <input type="text" class="wra-input" placeholder="Sci-Fi, Thriller, …"
-                [ngModel]="newNovel().genre"
-                (ngModelChange)="updateNewNovel('genre', $event)">
+                [ngModel]="newBook().genre"
+                (ngModelChange)="updateNewBook('genre', $event)">
             </div>
           </div>
 
@@ -348,9 +348,9 @@
           <div class="wra-field-group wra-field-group--wide">
             <label class="wra-label">Icon</label>
             <div class="wra-icon-picker">
-              @for (opt of novelIcons; track opt.id) {
-                <button class="wra-icon-opt" [class.wra-icon-opt--active]="newNovel().icon === opt.id"
-                  (click)="updateNewNovel('icon', opt.id)" [title]="opt.label">
+              @for (opt of bookIcons; track opt.id) {
+                <button class="wra-icon-opt" [class.wra-icon-opt--active]="newBook().icon === opt.id"
+                  (click)="updateNewBook('icon', opt.id)" [title]="opt.label">
                   <span class="material-symbols-outlined">{{ opt.id }}</span>
                 </button>
               }
@@ -369,8 +369,8 @@
         </div>
         <div class="wra-footer-actions">
           <button class="wra-cancel-btn" (click)="closeAddModal()">Cancel</button>
-          <button class="wra-create-btn" (click)="addNovel()"
-            [disabled]="!newNovel().title.trim() || addModalSubmitting()">
+          <button class="wra-create-btn" (click)="addBook()"
+            [disabled]="!newBook().title.trim() || addModalSubmitting()">
             <span class="material-symbols-outlined">add</span>
             {{ addModalSubmitting() ? 'Creating…' : 'Create Piece' }}
           </button>
@@ -389,10 +389,10 @@
     icon="delete_forever"
     variant="danger"
     confirmLabel="Delete"
-    (confirmed)="confirmDeleteNovel()"
-    (cancelled)="cancelDeleteNovel()">
-    @if (novelToDelete(); as novel) {
-        Delete <strong>"{{ novel.title }}"</strong>? You can restore it from the bin later.
+    (confirmed)="confirmDeleteBook()"
+    (cancelled)="cancelDeleteBook()">
+    @if (bookToDelete(); as book) {
+        Delete <strong>"{{ book.title }}"</strong>? You can restore it from the bin later.
     }
 </env-confirm-dialog>
 }

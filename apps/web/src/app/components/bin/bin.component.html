@@ -28,9 +28,9 @@
             <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">ALL</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">TASKS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">NOTES</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'novel'" (click)="setFilter('novel')">NOVELS</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'book'" (click)="setFilter('book')">BOOKS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">MEETINGS</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'novel-chapter'" (click)="setFilter('novel-chapter')">CHAPTERS</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'book-chapter'" (click)="setFilter('book-chapter')">CHAPTERS</button>
         </div>
     </div>
 
@@ -69,7 +69,7 @@
                 </div>
                 <div class="bin-empty-body">
                     {{ totalCount() === 0
-                        ? 'Deleted tasks, notes, novels, and meetings will appear here.'
+                        ? 'Deleted tasks, notes, books, and meetings will appear here.'
                         : 'Try selecting a different filter or clearing the search.' }}
                 </div>
             </div>

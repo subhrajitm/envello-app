@@ -185,18 +185,18 @@
 .wr-td { display: flex; align-items: center; gap: 8px; padding: 0 14px; overflow: hidden; }
 
 /* Title cell */
-.wr-novel-icon {
+.wr-book-icon {
   width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
 }
-.wr-novel-icon .material-symbols-outlined { font-size: 17px; }
-.wr-novel-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.wr-novel-title {
+.wr-book-icon .material-symbols-outlined { font-size: 17px; }
+.wr-book-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wr-book-title {
   font-size: 13px; font-weight: 600; color: var(--text-primary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   display: flex; align-items: center; gap: 6px;
 }
-.wr-novel-meta { font-size: 10.5px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-book-meta { font-size: 10.5px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .wr-recent-dot {
   display: inline-block; width: 6px; height: 6px;
@@ -247,7 +247,7 @@
 .wr-row-btn .material-symbols-outlined { font-size: 16px; }
 
 /* Context menu */
-.novel-menu-wrapper { position: relative; }
+.book-menu-wrapper { position: relative; }
 .wr-menu-dropdown {
   position: absolute; top: calc(100% + 4px); right: 0;
   background: var(--bg-panel); border: 1px solid var(--border-subtle);

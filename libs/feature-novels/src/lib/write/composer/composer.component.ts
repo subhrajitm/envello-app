@@ -5,7 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NovelContentService, Chapter, ChapterGroup } from '@envello/core';
+import { BookContentService, Chapter, ChapterGroup } from '@envello/core';
 import { VersionHistoryService, VersionSnapshot } from '@envello/core';
 import { AiService, AiMessage, AiSuggestion } from '@envello/core';
 import { StoreService } from '@envello/core';
@@ -71,7 +71,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
 })
 export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   editor!: Editor;
-  novelService = inject(NovelContentService);
+  bookService = inject(BookContentService);
   versionHistoryService = inject(VersionHistoryService);
   aiService = inject(AiService);
   private store = inject(StoreService);
@@ -112,7 +112,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   sessionStartTime = Date.now();
   elapsedSeconds = signal(0);
   targetWordCount = signal(2500);
-  private novelId = signal('');
+  private bookId = signal('');
 
   // Auto-save state
   isSaving = signal(false);
@@ -137,11 +137,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   // Computed signals from Service
-  novel = this.novelService.activeNovel;
+  book = this.bookService.activeBook;
   isLoading = signal(true);
 
   private writingType = computed(() => {
-    const meta = this.store.novels().find(n => n.id === this.novelId());
+    const meta = this.store.books().find(n => n.id === this.bookId());
     return meta?.writingType ?? 'NOVEL';
   });
 
@@ -162,13 +162,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   activeCharacter = computed(() => {
-    const n = this.novel();
+    const n = this.book();
     const id = this.selectedCharacterId();
     return n?.characters.find(c => c.id === id) ?? null;
   });
 
   activeLocation = computed(() => {
-    const n = this.novel();
+    const n = this.book();
     const id = this.selectedLocationId();
     return n?.locations.find(l => l.id === id) ?? null;
   });
@@ -176,9 +176,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   activeChapter = computed(() => {
     const chapterId = this.activeChapterId();
     if (!chapterId) return null;
-    const novel = this.novel();
-    if (!novel) return null;
-    for (const group of novel.chapters) {
+    const book = this.book();
+    if (!book) return null;
+    for (const group of book.chapters) {
       const chapter = group.children.find(c => c.id === chapterId);
       if (chapter) return chapter;
     }
@@ -208,7 +208,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
       if (this.editor) {
         if (chapterId) {
-          const chapter = this.novelService.getChapter(chapterId);
+          const chapter = this.bookService.getChapter(chapterId);
           if (chapter && this.editor.getHTML() !== chapter.content) {
             this.editor.commands.setContent(chapter.content);
             this.title.set(chapter.title);
@@ -221,8 +221,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             }
           }
         } else if (frontMatterId) {
-          const novel = this.novel();
-          const item = novel?.frontMatter.find(fm => fm.id === frontMatterId);
+          const book = this.book();
+          const item = book?.frontMatter.find(fm => fm.id === frontMatterId);
           if (item && this.editor.getHTML() !== item.content) {
             this.editor.commands.setContent(item.content);
             this.title.set(item.title);
@@ -234,8 +234,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             }
           }
         } else if (prologueId) {
-          const novel = this.novel();
-          const prologue = novel?.prologue;
+          const book = this.book();
+          const prologue = book?.prologue;
           if (prologue && this.editor.getHTML() !== prologue.content) {
             this.editor.commands.setContent(prologue.content);
             this.title.set(prologue.title);
@@ -254,9 +254,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Effect to set initial title from novel data
+    // Effect to set initial title from book data
     effect(() => {
-      const n = this.novel();
+      const n = this.book();
       if (n && !this.activeChapterId()) {
         // Default to first chapter
         if (n.chapters.length > 0 && n.chapters[0].children.length > 0) {
@@ -272,9 +272,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Sync writing goal target from store novel metadata
+    // Sync writing goal target from store book metadata
     effect(() => {
-      const meta = this.store.novels().find(n => n.id === this.novelId());
+      const meta = this.store.books().find(n => n.id === this.bookId());
       if (meta?.targetWordCount) {
         this.targetWordCount.set(meta.targetWordCount);
       }
@@ -289,7 +289,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id') || '1';
-    this.novelId.set(id);
+    this.bookId.set(id);
 
     // Initialize editor first (non-blocking)
     this.editor = new Editor({
@@ -319,13 +319,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
           const title = this.title();
 
           if (activeId) {
-            this.novelService.updateChapterContent(activeId, content, count);
+            this.bookService.updateChapterContent(activeId, content, count);
             this.versionHistoryService.addVersion(activeId, 'chapter', content, title, count);
           } else if (frontMatterId) {
-            this.novelService.updateFrontMatterContent(frontMatterId, content, count);
+            this.bookService.updateFrontMatterContent(frontMatterId, content, count);
             this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', content, title, count);
           } else if (prologueId) {
-            this.novelService.updatePrologueContent(content, count);
+            this.bookService.updatePrologueContent(content, count);
             this.versionHistoryService.addVersion('prologue', 'prologue', content, title, count);
           }
 
@@ -335,8 +335,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Load novel data from DB (async)
-    this.novelService.loadNovel(id).then(() => this.isLoading.set(false));
+    // Load book data from DB (async)
+    this.bookService.loadBook(id).then(() => this.isLoading.set(false));
   }
 
   ngAfterViewChecked() {
@@ -362,14 +362,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   toggleChapter(group: ChapterGroup) {
-    this.novelService.toggleGroupExpand(group.id);
+    this.bookService.toggleGroupExpand(group.id);
   }
 
   selectChapter(chapter: Chapter | { id: string }) {
     if ('id' in chapter) {
-      const novel = this.novel();
-      if (novel) {
-        for (const group of novel.chapters) {
+      const book = this.book();
+      if (book) {
+        for (const group of book.chapters) {
           const found = group.children.find(c => c.id === chapter.id);
           if (found) {
             this.activeChapterId.set(found.id);
@@ -399,7 +399,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.title.set(newTitle);
     const activeId = this.activeChapterId();
     if (activeId) {
-      this.novelService.updateChapterTitle(activeId, newTitle);
+      this.bookService.updateChapterTitle(activeId, newTitle);
     }
   }
 
@@ -429,8 +429,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         break;
       case 'group':
         title = 'Delete Act/Part?';
-        const novel = this.novel();
-        const group = novel?.chapters.find(g => g.id === id);
+        const book = this.book();
+        const group = book?.chapters.find(g => g.id === id);
         const chapterCount = group?.children.length || 0;
         if (chapterCount > 0) {
           message = `Are you sure you want to delete "${name || 'this act/part'}"? This will also delete ${chapterCount} chapter${chapterCount > 1 ? 's' : ''} inside it. This action cannot be undone.`;
@@ -467,7 +467,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     switch (modal.type) {
       case 'chapter':
-        this.novelService.deleteChapter(modal.id);
+        this.bookService.deleteChapter(modal.id);
         if (this.activeChapterId() === modal.id) {
           this.activeChapterId.set(null);
           this.title.set('');
@@ -475,10 +475,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
         break;
       case 'group':
-        this.novelService.deleteChapterGroup(modal.id);
+        this.bookService.deleteChapterGroup(modal.id);
         // Clear active chapter if it was in the deleted group
-        const novel = this.novel();
-        const deletedGroup = novel?.chapters.find(g => g.id === modal.id);
+        const book = this.book();
+        const deletedGroup = book?.chapters.find(g => g.id === modal.id);
         if (deletedGroup) {
           const deletedChapterIds = deletedGroup.children.map(c => c.id);
           if (this.activeChapterId() && deletedChapterIds.includes(this.activeChapterId()!)) {
@@ -489,19 +489,19 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
         break;
       case 'character':
-        this.novelService.deleteCharacter(modal.id);
+        this.bookService.deleteCharacter(modal.id);
         if (this.selectedCharacterId() === modal.id) {
           this.selectedCharacterId.set(null);
         }
         break;
       case 'location':
-        this.novelService.deleteLocation(modal.id);
+        this.bookService.deleteLocation(modal.id);
         if (this.selectedLocationId() === modal.id) {
           this.selectedLocationId.set(null);
         }
         break;
       case 'note':
-        this.novelService.deleteNote(modal.id);
+        this.bookService.deleteNote(modal.id);
         break;
     }
 
@@ -593,14 +593,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Chapter management
   addNewChapter(groupId?: string) {
     this.addMenuOpen.set(false);
-    const novel = this.novel();
-    if (!novel) {
+    const book = this.book();
+    if (!book) {
       return;
     }
 
     // If no groups exist, create one first
-    if (novel.chapters.length === 0) {
-      this.novelService.addChapterGroup('Part I');
+    if (book.chapters.length === 0) {
+      this.bookService.addChapterGroup('Part I');
     }
 
     this.addModal.set({
@@ -619,23 +619,23 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     if (modal.type === 'act') {
-      this.novelService.addChapterGroup(modal.inputValue.trim());
+      this.bookService.addChapterGroup(modal.inputValue.trim());
     } else if (modal.type === 'chapter') {
-      const novel = this.novel();
-      if (novel) {
-        const targetGroupId = this.activeGroupId() || novel.chapters[0]?.id;
+      const book = this.book();
+      if (book) {
+        const targetGroupId = this.activeGroupId() || book.chapters[0]?.id;
         if (targetGroupId) {
           // Store the current chapter count to identify the new one
-          const targetGroup = novel.chapters.find(g => g.id === targetGroupId);
+          const targetGroup = book.chapters.find(g => g.id === targetGroupId);
           const chapterCountBefore = targetGroup?.children.length || 0;
 
-          this.novelService.addChapter(targetGroupId, modal.inputValue.trim());
+          this.bookService.addChapter(targetGroupId, modal.inputValue.trim());
 
           // Select the newly created chapter
           setTimeout(() => {
-            const updatedNovel = this.novel();
-            if (updatedNovel) {
-              const updatedGroup = updatedNovel.chapters.find(g => g.id === targetGroupId);
+            const updatedBook = this.book();
+            if (updatedBook) {
+              const updatedGroup = updatedBook.chapters.find(g => g.id === targetGroupId);
               if (updatedGroup && updatedGroup.children.length > chapterCountBefore) {
                 const newChapter = updatedGroup.children[updatedGroup.children.length - 1];
                 this.selectChapter(newChapter);
@@ -645,7 +645,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
     } else if (modal.type === 'note') {
-      this.novelService.addNote(
+      this.bookService.addNote(
         modal.inputValue.trim(),
         modal.inputValue2?.trim() || '',
         this.activeChapterId() || undefined
@@ -723,9 +723,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Character management
   addNewCharacter() {
-    this.novelService.addCharacter('New Character');
+    this.bookService.addCharacter('New Character');
     // Auto-select the newly created character (assuming it's the last one)
-    const n = this.novel();
+    const n = this.book();
     if (n && n.characters.length > 0) {
       this.selectedCharacterId.set(n.characters[n.characters.length - 1].id);
     }
@@ -736,7 +736,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   updateCharacterField(charId: string, field: string, value: string) {
-    this.novelService.updateCharacter(charId, { [field]: value });
+    this.bookService.updateCharacter(charId, { [field]: value });
   }
 
   // Handler for component output
@@ -750,8 +750,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Location management
   addNewLocation() {
-    this.novelService.addLocation('New Location');
-    const n = this.novel();
+    this.bookService.addLocation('New Location');
+    const n = this.book();
     if (n && n.locations.length > 0) {
       this.selectedLocationId.set(n.locations[n.locations.length - 1].id);
     }
@@ -762,7 +762,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   updateLocationField(locId: string, field: string, value: string) {
-    this.novelService.updateLocation(locId, { [field]: value });
+    this.bookService.updateLocation(locId, { [field]: value });
   }
 
   // Handler for component output
@@ -792,27 +792,27 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Novel statistics
   totalNovelWords = computed(() => {
-    const novel = this.novel();
-    if (!novel) return 0;
+    const book = this.book();
+    if (!book) return 0;
     let total = 0;
-    novel.chapters.forEach(group => {
+    book.chapters.forEach(group => {
       group.children.forEach(chap => {
         total += chap.wordCount;
       });
     });
-    if (novel.prologue) total += novel.prologue.wordCount;
-    novel.frontMatter.forEach(item => {
+    if (book.prologue) total += book.prologue.wordCount;
+    book.frontMatter.forEach(item => {
       total += item.wordCount;
     });
     return total;
   });
 
   averageChapterLength = computed(() => {
-    const novel = this.novel();
-    if (!novel) return 0;
+    const book = this.book();
+    if (!book) return 0;
     let totalChapters = 0;
     let totalWords = 0;
-    novel.chapters.forEach(group => {
+    book.chapters.forEach(group => {
       group.children.forEach(chap => {
         totalChapters++;
         totalWords += chap.wordCount;
@@ -822,10 +822,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   chaptersCompleted = computed(() => {
-    const novel = this.novel();
-    if (!novel) return 0;
+    const book = this.book();
+    if (!book) return 0;
     let completed = 0;
-    novel.chapters.forEach(group => {
+    book.chapters.forEach(group => {
       group.children.forEach(chap => {
         if (chap.status === 'DONE') completed++;
       });
@@ -834,10 +834,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   getTotalChapters(): number {
-    const novel = this.novel();
-    if (!novel) return 0;
+    const book = this.book();
+    if (!book) return 0;
     let total = 0;
-    novel.chapters.forEach(group => {
+    book.chapters.forEach(group => {
       total += group.children.length;
     });
     return total;
@@ -870,7 +870,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   addFrontMatterItem(type: 'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface') {
     const title = this.getFrontMatterTypeLabel(type);
-    this.novelService.addFrontMatterItem(type, title);
+    this.bookService.addFrontMatterItem(type, title);
   }
 
   selectFrontMatterItem(itemId: string) {
@@ -886,17 +886,17 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   addPrologue() {
-    this.novelService.addPrologue();
+    this.bookService.addPrologue();
     this.selectPrologue();
   }
 
   deletePrologue() {
-    this.novelService.deletePrologue();
+    this.bookService.deletePrologue();
     this.activePrologueId.set(null);
   }
 
   deleteFrontMatterItem(itemId: string, title: string) {
-    this.novelService.deleteFrontMatterItem(itemId);
+    this.bookService.deleteFrontMatterItem(itemId);
     if (this.activeFrontMatterId() === itemId) {
       this.activeFrontMatterId.set(null);
       this.title.set('');
@@ -949,7 +949,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
+        this.bookService.updateChapterContent(activeId, snapshot.content, snapshot.wordCount);
         // Create immediate snapshot of restored version
         this.versionHistoryService.addVersion(activeId, 'chapter', snapshot.content, snapshot.title, snapshot.wordCount, true);
       }
@@ -959,7 +959,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
+        this.bookService.updateFrontMatterContent(frontMatterId, snapshot.content, snapshot.wordCount);
         this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', snapshot.content, snapshot.title, snapshot.wordCount, true);
       }
     } else if (prologueId) {
@@ -968,7 +968,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.editor.commands.setContent(snapshot.content);
         this.title.set(snapshot.title || '');
         this.wordCount.set(snapshot.wordCount);
-        this.novelService.updatePrologueContent(snapshot.content, snapshot.wordCount);
+        this.bookService.updatePrologueContent(snapshot.content, snapshot.wordCount);
         this.versionHistoryService.addVersion('prologue', 'prologue', snapshot.content, snapshot.title, snapshot.wordCount, true);
       }
     }
@@ -987,10 +987,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!chapter) return [];
 
     const content = chapter.content.toLowerCase();
-    const novel = this.novel();
-    if (!novel) return [];
+    const book = this.book();
+    if (!book) return [];
 
-    return novel.characters
+    return book.characters
       .filter(char => content.includes(char.name.toLowerCase()))
       .map(char => char.name);
   });
@@ -1003,10 +1003,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!chapter) return [];
 
     const content = chapter.content.toLowerCase();
-    const novel = this.novel();
-    if (!novel) return [];
+    const book = this.book();
+    if (!book) return [];
 
-    return novel.locations
+    return book.locations
       .filter(loc => content.includes(loc.name.toLowerCase()))
       .map(loc => loc.name);
   });
@@ -1016,13 +1016,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     const query = this.searchQuery().trim().toLowerCase();
     if (!query || query.length < 2) return null; // Early return for short queries
 
-    const novel = this.novel();
-    if (!novel) return null;
+    const book = this.book();
+    if (!book) return null;
 
     const results: Array<{ type: 'chapter' | 'character' | 'location' | 'frontMatter' | 'prologue', id: string, title: string, subtitle?: string }> = [];
 
     // Search chapters - only check title for performance (content search is expensive)
-    for (const group of novel.chapters) {
+    for (const group of book.chapters) {
       for (const chap of group.children) {
         if (chap.title.toLowerCase().includes(query)) {
           results.push({
@@ -1036,7 +1036,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Search characters
-    for (const char of novel.characters) {
+    for (const char of book.characters) {
       const nameLower = char.name.toLowerCase();
       if (nameLower.includes(query) || (char.description && char.description.toLowerCase().includes(query))) {
         results.push({
@@ -1049,7 +1049,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Search locations
-    for (const loc of novel.locations) {
+    for (const loc of book.locations) {
       const nameLower = loc.name.toLowerCase();
       if (nameLower.includes(query) || (loc.description && loc.description.toLowerCase().includes(query))) {
         results.push({
@@ -1062,7 +1062,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Search front matter
-    for (const item of novel.frontMatter) {
+    for (const item of book.frontMatter) {
       if (item.title.toLowerCase().includes(query) || (item.content && item.content.toLowerCase().includes(query))) {
         results.push({
           type: 'frontMatter',
@@ -1074,8 +1074,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Search prologue
-    if (novel.prologue) {
-      const prologue = novel.prologue;
+    if (book.prologue) {
+      const prologue = book.prologue;
       if (prologue.title.toLowerCase().includes(query) || (prologue.content && prologue.content.toLowerCase().includes(query))) {
         results.push({
           type: 'prologue',
@@ -1091,9 +1091,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   selectSearchResult(result: { type: string, id: string }) {
     if (result.type === 'chapter') {
-      const novel = this.novel();
-      if (novel) {
-        for (const group of novel.chapters) {
+      const book = this.book();
+      if (book) {
+        for (const group of book.chapters) {
           const chapter = group.children.find(c => c.id === result.id);
           if (chapter) {
             this.selectChapter(chapter);
@@ -1168,17 +1168,17 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // AI Companion Methods
   getCurrentContext(): string {
     const chapter = this.activeChapter();
-    const novel = this.novel();
-    if (!chapter || !novel) return '';
+    const book = this.book();
+    if (!chapter || !book) return '';
 
     let context = `Chapter: ${chapter.title}\n\n${chapter.content}\n\n`;
 
-    // Add novel metadata
-    if (novel.characters.length > 0) {
-      context += `Characters: ${novel.characters.map(c => c.name).join(', ')}\n`;
+    // Add book metadata
+    if (book.characters.length > 0) {
+      context += `Characters: ${book.characters.map(c => c.name).join(', ')}\n`;
     }
-    if (novel.locations.length > 0) {
-      context += `Locations: ${novel.locations.map(l => l.name).join(', ')}\n`;
+    if (book.locations.length > 0) {
+      context += `Locations: ${book.locations.map(l => l.name).join(', ')}\n`;
     }
 
     return context;
@@ -1410,12 +1410,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     const selected = Array.from(this.selectedChapters());
     if (selected.length === 0) return;
 
-    const novel = this.novel();
-    if (!novel) return;
+    const book = this.book();
+    if (!book) return;
 
     // Delete all selected chapters
     selected.forEach(chapterId => {
-      this.novelService.deleteChapter(chapterId);
+      this.bookService.deleteChapter(chapterId);
       if (this.activeChapterId() === chapterId) {
         this.activeChapterId.set(null);
         this.title.set('');
@@ -1432,7 +1432,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (selected.length === 0) return;
 
     selected.forEach(chapterId => {
-      this.novelService.moveChapterToGroup?.(chapterId, targetGroupId);
+      this.bookService.moveChapterToGroup?.(chapterId, targetGroupId);
     });
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
@@ -1548,11 +1548,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Export functionality
   exportNovel(format: 'pdf' | 'docx' | 'md' | 'html') {
-    const novel = this.novel();
-    if (!novel) return;
+    const book = this.book();
+    if (!book) return;
 
     let content = '';
-    let filename = novel.title.toLowerCase().replace(/\s+/g, '-');
+    let filename = book.title.toLowerCase().replace(/\s+/g, '-');
 
     if (format === 'pdf') {
       window.print();
@@ -1560,23 +1560,23 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Build HTML content for html / md / docx
-    content = `<h1>${novel.title}</h1>\n\n`;
+    content = `<h1>${book.title}</h1>\n\n`;
 
     // Front Matter
-    if (novel.frontMatter.length > 0) {
+    if (book.frontMatter.length > 0) {
       content += '<h2>Front Matter</h2>\n';
-      novel.frontMatter.forEach(item => {
+      book.frontMatter.forEach(item => {
         content += `<h3>${item.title}</h3>\n${item.content}\n\n`;
       });
     }
 
     // Prologue
-    if (novel.prologue) {
-      content += `<h2>${novel.prologue.title}</h2>\n${novel.prologue.content}\n\n`;
+    if (book.prologue) {
+      content += `<h2>${book.prologue.title}</h2>\n${book.prologue.content}\n\n`;
     }
 
     // Chapters
-    novel.chapters.forEach(group => {
+    book.chapters.forEach(group => {
       content += `<h2>${group.title}</h2>\n`;
       group.children.forEach(chap => {
         content += `<h3>${chap.title}</h3>\n${chap.content}\n\n`;

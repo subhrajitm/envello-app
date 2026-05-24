@@ -8,7 +8,7 @@ import { StoreService } from './store.service';
 
 export interface SemanticResult {
     id: string;
-    type: 'note' | 'task' | 'novel' | 'bookmark';
+    type: 'note' | 'task' | 'book' | 'bookmark';
     title: string;
     preview: string;
     icon: string;
@@ -40,7 +40,7 @@ export class SemanticSearchService {
             this.store.notes();
             this.store.bookmarks();
             this.store.tasks();
-            this.store.novels();
+            this.store.books();
             this.dirty = true;
         });
 
@@ -126,11 +126,11 @@ export class SemanticSearchService {
             });
         });
 
-        this.store.novels().forEach(n => {
+        this.store.books().forEach(n => {
             items.push({
                 text: [n.title, ...n.genre].filter(Boolean).join(' '),
                 result: {
-                    id: n.id, type: 'novel', title: n.title,
+                    id: n.id, type: 'book', title: n.title,
                     preview: n.genre.join(', '), icon: 'menu_book', route: '/write', badge: n.status,
                 },
             });

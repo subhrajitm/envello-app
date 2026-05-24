@@ -94,7 +94,7 @@ export type WritingType =
     | 'BLOG_POST'
     | 'RESEARCH';
 
-export interface Novel {
+export interface Book {
     id: string;
     title: string;
     icon: string;
@@ -102,15 +102,15 @@ export interface Novel {
     writingType?: WritingType;
     wordCount: number;
     targetWordCount: number;
-    progress: number; // percentage
+    progress: number;
     chapters: number;
     notesCount: number;
     createdDate: string;
     lastUpdated: string;
-    createdAt?: string; // ISO date string for reliable sorting
+    createdAt?: string;
     genre: string[];
     isRecentlyUpdated: boolean;
-    coverImage?: string; // For thumbnail view
+    coverImage?: string;
 }
 
 export interface Project {
@@ -130,7 +130,7 @@ export interface Project {
     // New fields for complex projects
     type?: 'SINGLE' | 'MULTI'; // Single task oriented or multi-faceted
     linkedResources?: {
-        novels?: string[];
+        books?: string[];
         notes?: string[];
         meetings?: string[];
         research?: string[];
@@ -142,12 +142,12 @@ export interface Project {
 
 export type BinItemType =
     | 'daily-note'
-    | 'novel'
-    | 'novel-chapter'
-    | 'novel-group'
-    | 'novel-note'
-    | 'novel-character'
-    | 'novel-location'
+    | 'book'
+    | 'book-chapter'
+    | 'book-group'
+    | 'book-note'
+    | 'book-character'
+    | 'book-location'
     | 'task'
     | 'meeting';
 

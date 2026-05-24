@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StoreService, MeetingsService, SemanticSearchService, AiService } from '@envello/core';
 
-type ResultType = 'note' | 'task' | 'novel' | 'bookmark' | 'meeting' | 'project' | 'command';
+type ResultType = 'note' | 'task' | 'book' | 'bookmark' | 'meeting' | 'project' | 'command';
 type FilterType = 'all' | ResultType;
 
 interface QuickFindResult {
@@ -28,7 +28,7 @@ interface ResultGroup {
 const TYPE_META: Record<ResultType, { label: string; icon: string; color: string }> = {
     note:     { label: 'Notes',     icon: 'edit_note',    color: '#22c55e' },
     task:     { label: 'Tasks',     icon: 'check_circle', color: '#fcd34d' },
-    novel:    { label: 'Novels',    icon: 'menu_book',    color: '#3b82f6' },
+    book:     { label: 'Books',     icon: 'menu_book',    color: '#3b82f6' },
     bookmark: { label: 'Bookmarks', icon: 'bookmark',     color: '#a855f7' },
     meeting:  { label: 'Meetings',  icon: 'calendar_month', color: '#ec4899' },
     project:  { label: 'Spaces',    icon: 'folder',       color: '#60a5fa' },
@@ -42,7 +42,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-tasks',        type: 'command', title: 'Go to Tasks',        preview: 'Manage your tasks',           icon: 'checklist',    route: '/tasks',         badge: '⌘2' },
     { id: 'cmd-notes',        type: 'command', title: 'Go to Notes',        preview: 'Daily notes & journals',      icon: 'edit_note',    route: '/daily-notes',   badge: '⌘3' },
     { id: 'cmd-meetings',     type: 'command', title: 'Go to Meetings',     preview: 'Schedule & notes',            icon: 'calendar_month', route: '/meetings' },
-    { id: 'cmd-write',        type: 'command', title: 'Go to Write',        preview: 'Novels & creative projects',  icon: 'menu_book',    route: '/write' },
+    { id: 'cmd-write',        type: 'command', title: 'Go to Write',        preview: 'Books & creative projects',   icon: 'menu_book',    route: '/write' },
     { id: 'cmd-research',     type: 'command', title: 'Go to Knowledge',    preview: 'Articles & research',         icon: 'hub',          route: '/knowledge' },
     { id: 'cmd-bookmarks',    type: 'command', title: 'Go to Bookmarks',    preview: 'Saved links & resources',     icon: 'bookmarks',    route: '/bookmarks' },
     ...( IS_TAURI ? [{ id: 'cmd-vault', type: 'command' as const, title: 'Go to Vault', preview: 'Secrets & credentials', icon: 'lock', route: '/vault' }] : []),
@@ -81,7 +81,7 @@ export class QuickFindComponent {
     private aiAbortRequested = false;
 
     readonly typeMeta = TYPE_META;
-    readonly filterTypes: FilterType[] = ['all', 'note', 'task', 'novel', 'bookmark', 'meeting'];
+    readonly filterTypes: FilterType[] = ['all', 'note', 'task', 'book', 'bookmark', 'meeting'];
 
     isCommandMode = computed(() => this.searchQuery().startsWith('>'));
     isAiMode = computed(() => this.searchQuery().startsWith('?'));
@@ -333,9 +333,9 @@ export class QuickFindComponent {
                 icon: 'check_circle', route: '/tasks', date: t.due, badge: t.status
             }));
         }
-        if (filter === 'all' || filter === 'novel') {
-            this.store.novels().slice(0, 3).forEach(n => results.push({
-                id: n.id, type: 'novel', title: n.title,
+        if (filter === 'all' || filter === 'book') {
+            this.store.books().slice(0, 3).forEach(n => results.push({
+                id: n.id, type: 'book', title: n.title,
                 preview: n.genre?.join(', ') || n.status,
                 icon: 'menu_book', route: '/write', badge: n.status
             }));
@@ -371,11 +371,11 @@ export class QuickFindComponent {
                 .slice(0, 5)
                 .forEach(t => results.push({ id: t.id, type: 'task', title: t.title, preview: [t.project, t.priority].filter(Boolean).join(' · '), icon: 'check_circle', route: '/tasks', date: t.due, badge: t.status }));
         }
-        if (filter === 'all' || filter === 'novel') {
-            this.store.novels()
+        if (filter === 'all' || filter === 'book') {
+            this.store.books()
                 .filter(n => n.title.toLowerCase().includes(query) || n.genre?.some(g => g.toLowerCase().includes(query)))
                 .slice(0, 5)
-                .forEach(n => results.push({ id: n.id, type: 'novel', title: n.title, preview: n.genre?.join(', ') || '', icon: 'menu_book', route: '/write', badge: n.status }));
+                .forEach(n => results.push({ id: n.id, type: 'book', title: n.title, preview: n.genre?.join(', ') || '', icon: 'menu_book', route: '/write', badge: n.status }));
         }
         if (filter === 'all' || filter === 'bookmark') {
             this.store.bookmarks()

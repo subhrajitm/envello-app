@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import {
   StoreService, UserService, NotificationService,
   AiService, MeetingsService, ResearchService,
-  type Task, type Note, type Novel, type Bookmark, type WritingType,
+  type Task, type Note, type Book, type Bookmark, type WritingType,
 } from '@envello/core';
 
 // ── Interfaces ─────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ interface CreatedItem {
 }
 
 interface SidebarActivityItem {
-  kind: 'task' | 'note' | 'bookmark' | 'meeting' | 'novel';
+  kind: 'task' | 'note' | 'bookmark' | 'meeting' | 'book';
   id: string;
   title: string;
   icon: string;
@@ -275,14 +275,14 @@ export class WorkspaceComponent {
     }
 
     // Most recently updated writing project
-    const novel = [...this.store.novels()]
+    const book = [...this.store.books()]
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0];
-    if (novel) {
+    if (book) {
       items.push({
-        kind: 'novel', id: novel.id, title: novel.title,
-        icon: novel.icon || 'menu_book', iconColor: '#ec4899',
-        subtitle: this.formatNovelSubtitle(novel),
-        route: `/write/${novel.id}`,
+        kind: 'book', id: book.id, title: book.title,
+        icon: book.icon || 'menu_book', iconColor: '#ec4899',
+        subtitle: this.formatBookSubtitle(book),
+        route: `/write/${book.id}`,
       });
     }
 
@@ -985,15 +985,15 @@ GENERAL RULES:
       ESSAY: 'psychology', SCRIPT: 'description', POETRY: 'draw',
       BLOG_POST: 'edit_note', RESEARCH: 'science',
     };
-    const novel: Novel = {
+    const book: Book = {
       id, title: intent.title || 'Untitled', icon: iconMap[wt], status: 'PLANNING',
       writingType: wt, wordCount: 0, targetWordCount: defaultWords[wt], progress: 0,
       chapters: 0, notesCount: 0,
       createdDate: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       lastUpdated: 'Just now', createdAt: now.toISOString(), genre: ['Fiction'], isRecentlyUpdated: true,
     };
-    this.store.addNovel(novel);
-    this.lastCreated.set({ type: 'Writing', title: novel.title, route: `/write/${id}`, id });
+    this.store.addBook(book);
+    this.lastCreated.set({ type: 'Writing', title: book.title, route: `/write/${id}`, id });
     this.router.navigate(['/write', id]);
   }
 
@@ -1152,13 +1152,13 @@ GENERAL RULES:
     return note.lastEdited || note.date;
   }
 
-  private formatNovelSubtitle(novel: Novel): string {
+  private formatBookSubtitle(book: Book): string {
     const statusMap: Record<string, string> = {
       PLANNING: 'Planning', DRAFTING: 'Drafting', REVISING: 'Revising',
       EDITING: 'Editing', PUBLISHED: 'Published', ON_HOLD: 'On hold',
     };
-    const status = statusMap[novel.status] ?? novel.status;
-    const words = novel.wordCount ?? 0;
+    const status = statusMap[book.status] ?? book.status;
+    const words = book.wordCount ?? 0;
     const formatted = words >= 1000 ? `${(words / 1000).toFixed(1)}k words` : `${words} words`;
     return `${status} · ${formatted}`;
   }

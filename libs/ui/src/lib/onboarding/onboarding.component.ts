@@ -27,7 +27,7 @@ export class OnboardingComponent implements OnInit {
   selectedAiProvider = signal<AiProvider>('mock');
 
   useCases: { id: UseCase; label: string; icon: string; desc: string }[] = [
-    { id: 'writing', label: 'Creative Writing',  icon: 'menu_book',    desc: 'Novels, stories & manuscripts' },
+    { id: 'writing', label: 'Creative Writing',  icon: 'menu_book',    desc: 'Books, stories & manuscripts' },
     { id: 'tasks',   label: 'Task Management',   icon: 'task_alt',     desc: 'Projects, todos & planning' },
     { id: 'research',label: 'Research & Notes',  icon: 'science',      desc: 'Sources, journals & knowledge' },
     { id: 'all',     label: 'All of the above',  icon: 'all_inclusive', desc: 'Full productivity suite' },

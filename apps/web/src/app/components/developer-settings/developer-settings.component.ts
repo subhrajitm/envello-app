@@ -52,7 +52,7 @@ export class DeveloperSettingsComponent {
     this.makeTab('notes', 'Notes', 'note', 'Content', ['id', 'date', 'title', 'preview'], this.store.notes()),
     this.makeTab('planning', 'Planning Items', 'timeline', 'Tasks', ['id', 'title', 'tag', 'stage'], this.store.planningItems()),
     this.makeTab('activities', 'Activities', 'history', 'System', ['id', 'text', 'time', 'type'], this.store.activities()),
-    this.makeTab('novels', 'Novels', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.novels()),
+    this.makeTab('books', 'Books', 'menu_book', 'Content', ['id', 'title', 'status', 'wordCount', 'chapters'], this.store.books()),
     this.makeTab('meetings', 'Meetings', 'event', 'Content', ['id', 'title', 'date', 'startTime', 'status'], this.meetings.meetings()),
     this.makeTab('articles', 'Articles', 'article', 'Content', ['id', 'title', 'platform', 'pipeline', 'wordCount'], this.articles.articles()),
     this.makeTab('research-collections', 'Research Collections', 'folder', 'Research', ['id', 'name', 'description'], this.research.collections()),

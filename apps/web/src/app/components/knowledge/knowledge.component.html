@@ -153,7 +153,8 @@
         <!-- Summaries tab separated to the far right — only when a library is selected -->
         @if (selectedCollection()) {
           <div class="rs-tabs rs-tabs--right">
-            <button class="rs-tab" (click)="switchView('summaries')">
+            <button class="rs-tab" [class.active]="viewMode() === 'summaries'"
+              (click)="switchView('summaries')">
               <span class="material-symbols-outlined">summarize</span>
               Summaries
               @if (summaries().length > 0) {

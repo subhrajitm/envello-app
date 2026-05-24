@@ -1,7 +1,7 @@
 import { Component, input, output, signal, computed, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NovelContentService, Chapter, ChapterGroup } from '@envello/core';
+import { BookContentService, Chapter, ChapterGroup } from '@envello/core';
 
 @Component({
   selector: 'app-chapters-list',
@@ -16,7 +16,7 @@ import { NovelContentService, Chapter, ChapterGroup } from '@envello/core';
   encapsulation: ViewEncapsulation.None
 })
 export class ChaptersListComponent {
-  protected novelService = inject(NovelContentService);
+  protected bookService = inject(BookContentService);
   
   chapters = input.required<ChapterGroup[]>();
   activeChapterId = input.required<string | null>();
@@ -90,9 +90,9 @@ export class ChaptersListComponent {
     }
 
     if (type === 'group') {
-      this.novelService.reorderChapterGroup(startIndex, dropIndex);
+      this.bookService.reorderChapterGroup(startIndex, dropIndex);
     } else if (type === 'chapter' && groupId) {
-      this.novelService.reorderChapter(groupId, startIndex, dropIndex);
+      this.bookService.reorderChapter(groupId, startIndex, dropIndex);
     }
 
     this.onDragEnd();

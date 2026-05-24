@@ -561,9 +561,9 @@ interface Activity {
 }
 ```
 
-### Interface: Novel
+### Interface: Book
 ```typescript
-interface Novel {
+interface Book {
   id: string;
   title: string;
   icon: string;
@@ -600,7 +600,7 @@ interface Project {
   tags?: string[];
   type?: 'SINGLE' | 'MULTI';
   linkedResources?: {
-        novels?: string[];
+        books?: string[];
         notes?: string[];
         meetings?: string[];
         research?: string[];
@@ -745,12 +745,12 @@ type WritingType = | 'NOVEL'
 ### Type: BinItemType
 ```typescript
 type BinItemType = | 'daily-note'
-    | 'novel'
-    | 'novel-chapter'
-    | 'novel-group'
-    | 'novel-note'
-    | 'novel-character'
-    | 'novel-location'
+    | 'book'
+    | 'book-chapter'
+    | 'book-group'
+    | 'book-note'
+    | 'book-character'
+    | 'book-location'
     | 'task'
     | 'meeting';
 ```
@@ -797,7 +797,7 @@ class StoreService {
   notes: any;
   planningItems: any;
   activities: any;
-  novels: any;
+  books: any;
   noteFolders: any;
   bookmarks: any;
   bookmarkFolders: any;
@@ -810,11 +810,11 @@ class StoreService {
   updateNote(id: string, updates: Partial<Note>): any;
   deleteNote(id: string): any;
   addPlanningItem(item: PlanningItem): any;
-  addNovel(novel: Novel): any;
+  addBook(book: Book): any;
   addSpace(space: Project): any;
   deleteSpace(id: string): any;
   updateSpace(id: string, updates: Partial<Project>): any;
-  deleteNovel(id: string): any;
+  deleteBook(id: string): any;
   addBookmark(bookmark: Bookmark): any;
   updateBookmark(id: string, updates: Partial<Bookmark>): any;
   deleteBookmark(id: string): any;
@@ -1154,6 +1154,158 @@ class AuthService {
 
 ---
 
+## File: /libs/core/src/lib/services/book-content.service.ts
+
+### Class: BookContentService
+```typescript
+class BookContentService {
+  activeBook: any;
+  store: any;
+  loadBook(id: string): Promise<void>;
+  getChapter(chapterId: string): Chapter | undefined;
+  updateChapterContent(chapterId: string, content: string, wordCount: number): any;
+  toggleGroupExpand(groupId: string): any;
+  updateChapterTitle(chapterId: string, title: string): any;
+  updateChapterTags(chapterId: string, tags: string[]): any;
+  updateChapterSummary(chapterId: string, summary: string): any;
+  addChapter(groupId: string, title: string): any;
+  deleteChapter(chapterId: string): any;
+  addChapterGroup(title: string): any;
+  moveChapterToGroup(chapterId: string, targetGroupId: string): any;
+  reorderChapterGroup(fromIndex: number, toIndex: number): any;
+  reorderChapter(groupId: string, fromIndex: number, toIndex: number): any;
+  deleteChapterGroup(groupId: string): any;
+  addNote(title: string, body: string, chapterId: string): any;
+  updateNote(noteId: string, title: string, body: string): any;
+  deleteNote(noteId: string): any;
+  addCharacter(name: string, role: string, archetype: string, description: string): any;
+  updateCharacter(characterId: string, updates: Partial<Character>): any;
+  deleteCharacter(characterId: string): any;
+  addLocation(name: string, type: string, description: string): any;
+  updateLocation(locationId: string, updates: Partial<Location>): any;
+  deleteLocation(locationId: string): any;
+  updateBookTitle(title: string): any;
+  updateSynopsis(logline: string, theme: string): any;
+  addFrontMatterItem(type: FrontMatterItem['type'], title: string): any;
+  updateFrontMatterContent(itemId: string, content: string, wordCount: number): any;
+  updateFrontMatterTitle(itemId: string, title: string): any;
+  deleteFrontMatterItem(itemId: string): any;
+  addPrologue(title: string): any;
+  updatePrologueContent(content: string, wordCount: number): any;
+  updatePrologueTitle(title: string): any;
+  deletePrologue(): any;
+  updateChapterPlotPoint(chapterId: string, plotPoint: 'firstSlap' | 'secondSlap' | 'climax', content: string): any;
+  cloneBookContent(sourceId: string, newId: string, newTitle: string): Promise<void>;
+  createAndPersistEmptyBook(id: string, title: string): Promise<void>;
+}
+```
+
+### Interface: BookContent
+```typescript
+interface BookContent {
+  id: string;
+  title: string;
+  synopsis: {
+        logline: string;
+        theme: string;
+    };
+  frontMatter: FrontMatterItem[];
+  prologue?: Prologue;
+  chapters: ChapterGroup[];
+  characters: Character[];
+  locations: Location[];
+  notes: EditorNote[];
+}
+```
+
+### Interface: ChapterGroup
+```typescript
+interface ChapterGroup {
+  id: string;
+  title: string;
+  expanded: boolean;
+  children: Chapter[];
+}
+```
+
+### Interface: Chapter
+```typescript
+interface Chapter {
+  id: string;
+  title: string;
+  content: string;
+  status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
+  wordCount: number;
+  lastEdited: string;
+  summary?: string;
+  tags?: string[];
+  template?: string;
+  plotPoints?: {
+        firstSlap?: string; // Inciting incident
+        secondSlap?: string; // Midpoint
+        climax?: string; // Resolution
+    };
+}
+```
+
+### Interface: FrontMatterItem
+```typescript
+interface FrontMatterItem {
+  id: string;
+  type: 'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface';
+  title: string;
+  content: string;
+  wordCount: number;
+  lastEdited: string;
+}
+```
+
+### Interface: Prologue
+```typescript
+interface Prologue {
+  id: string;
+  title: string;
+  content: string;
+  status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
+  wordCount: number;
+  lastEdited: string;
+}
+```
+
+### Interface: Character
+```typescript
+interface Character {
+  id: string;
+  name: string;
+  role: string;
+  archetype: string;
+  description: string;
+}
+```
+
+### Interface: Location
+```typescript
+interface Location {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+}
+```
+
+### Interface: EditorNote
+```typescript
+interface EditorNote {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+  chapterId?: string;
+}
+```
+
+---
+
 ## File: /libs/core/src/lib/services/calendar-sync.service.ts
 
 ### Class: CalendarSyncService
@@ -1462,158 +1614,6 @@ type NotificationType = 'info' | 'success' | 'warning' | 'error';
 
 ---
 
-## File: /libs/core/src/lib/services/novel-content.service.ts
-
-### Class: NovelContentService
-```typescript
-class NovelContentService {
-  activeNovel: any;
-  store: any;
-  loadNovel(id: string): Promise<void>;
-  getChapter(chapterId: string): Chapter | undefined;
-  updateChapterContent(chapterId: string, content: string, wordCount: number): any;
-  toggleGroupExpand(groupId: string): any;
-  updateChapterTitle(chapterId: string, title: string): any;
-  updateChapterTags(chapterId: string, tags: string[]): any;
-  updateChapterSummary(chapterId: string, summary: string): any;
-  addChapter(groupId: string, title: string): any;
-  deleteChapter(chapterId: string): any;
-  addChapterGroup(title: string): any;
-  moveChapterToGroup(chapterId: string, targetGroupId: string): any;
-  reorderChapterGroup(fromIndex: number, toIndex: number): any;
-  reorderChapter(groupId: string, fromIndex: number, toIndex: number): any;
-  deleteChapterGroup(groupId: string): any;
-  addNote(title: string, body: string, chapterId: string): any;
-  updateNote(noteId: string, title: string, body: string): any;
-  deleteNote(noteId: string): any;
-  addCharacter(name: string, role: string, archetype: string, description: string): any;
-  updateCharacter(characterId: string, updates: Partial<Character>): any;
-  deleteCharacter(characterId: string): any;
-  addLocation(name: string, type: string, description: string): any;
-  updateLocation(locationId: string, updates: Partial<Location>): any;
-  deleteLocation(locationId: string): any;
-  updateNovelTitle(title: string): any;
-  updateSynopsis(logline: string, theme: string): any;
-  addFrontMatterItem(type: FrontMatterItem['type'], title: string): any;
-  updateFrontMatterContent(itemId: string, content: string, wordCount: number): any;
-  updateFrontMatterTitle(itemId: string, title: string): any;
-  deleteFrontMatterItem(itemId: string): any;
-  addPrologue(title: string): any;
-  updatePrologueContent(content: string, wordCount: number): any;
-  updatePrologueTitle(title: string): any;
-  deletePrologue(): any;
-  updateChapterPlotPoint(chapterId: string, plotPoint: 'firstSlap' | 'secondSlap' | 'climax', content: string): any;
-  cloneNovelContent(sourceId: string, newId: string, newTitle: string): Promise<void>;
-  createAndPersistEmptyNovel(id: string, title: string): Promise<void>;
-}
-```
-
-### Interface: NovelContent
-```typescript
-interface NovelContent {
-  id: string;
-  title: string;
-  synopsis: {
-        logline: string;
-        theme: string;
-    };
-  frontMatter: FrontMatterItem[];
-  prologue?: Prologue;
-  chapters: ChapterGroup[];
-  characters: Character[];
-  locations: Location[];
-  notes: EditorNote[];
-}
-```
-
-### Interface: ChapterGroup
-```typescript
-interface ChapterGroup {
-  id: string;
-  title: string;
-  expanded: boolean;
-  children: Chapter[];
-}
-```
-
-### Interface: Chapter
-```typescript
-interface Chapter {
-  id: string;
-  title: string;
-  content: string;
-  status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
-  wordCount: number;
-  lastEdited: string;
-  summary?: string;
-  tags?: string[];
-  template?: string;
-  plotPoints?: {
-        firstSlap?: string; // Inciting incident
-        secondSlap?: string; // Midpoint
-        climax?: string; // Resolution
-    };
-}
-```
-
-### Interface: FrontMatterItem
-```typescript
-interface FrontMatterItem {
-  id: string;
-  type: 'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface';
-  title: string;
-  content: string;
-  wordCount: number;
-  lastEdited: string;
-}
-```
-
-### Interface: Prologue
-```typescript
-interface Prologue {
-  id: string;
-  title: string;
-  content: string;
-  status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
-  wordCount: number;
-  lastEdited: string;
-}
-```
-
-### Interface: Character
-```typescript
-interface Character {
-  id: string;
-  name: string;
-  role: string;
-  archetype: string;
-  description: string;
-}
-```
-
-### Interface: Location
-```typescript
-interface Location {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-}
-```
-
-### Interface: EditorNote
-```typescript
-interface EditorNote {
-  id: string;
-  title: string;
-  body: string;
-  date: string;
-  chapterId?: string;
-}
-```
-
----
-
 ## File: /libs/core/src/lib/services/pouchdb-data.service.ts
 
 ### Class: PouchDbDataService
@@ -1721,7 +1721,7 @@ class SemanticSearchService {
 ```typescript
 interface SemanticResult {
   id: string;
-  type: 'note' | 'task' | 'novel' | 'bookmark';
+  type: 'note' | 'task' | 'book' | 'bookmark';
   title: string;
   preview: string;
   icon: string;
@@ -1822,13 +1822,13 @@ class SqliteService {
   activities$(): Observable<ActivityDoc[]>;
   getAllActivities(): Promise<ActivityDoc[]>;
   removeActivity(id: string): Promise<void>;
-  upsertNovel(novel: NovelDoc): Promise<void>;
-  novels$(): Observable<NovelDoc[]>;
-  getAllNovels(): Promise<NovelDoc[]>;
-  removeNovel(id: string): Promise<void>;
-  getNovelContent(id: string): Promise<string | null>;
-  setNovelContent(id: string, data: string): Promise<void>;
-  removeNovelContent(id: string): Promise<void>;
+  upsertBook(book: BookDoc): Promise<void>;
+  books$(): Observable<BookDoc[]>;
+  getAllBooks(): Promise<BookDoc[]>;
+  removeBook(id: string): Promise<void>;
+  getBookContent(id: string): Promise<string | null>;
+  setBookContent(id: string, data: string): Promise<void>;
+  removeBookContent(id: string): Promise<void>;
   upsertBinItem(item: BinItemDoc): Promise<void>;
   removeBinItem(id: string): Promise<void>;
   clearBin(): Promise<void>;
@@ -1875,9 +1875,9 @@ class SqliteService {
 }
 ```
 
-### Interface: NovelContentDoc
+### Interface: BookContentDoc
 ```typescript
-interface NovelContentDoc {
+interface BookContentDoc {
   id: string;
   data: string;
 }
@@ -1903,9 +1903,9 @@ type PlanningItemDoc = PlanningItem;
 type ActivityDoc = Activity;
 ```
 
-### Type: NovelDoc
+### Type: BookDoc
 ```typescript
-type NovelDoc = Novel;
+type BookDoc = Book;
 ```
 
 ### Type: BinItemDoc
@@ -2466,10 +2466,10 @@ class WriteComponent {
   sortDropdownOpen: any;
   showAddModal: any;
   addModalSubmitting: any;
-  newNovel: any;
+  newBook: any;
   showDeleteModal: any;
-  novelToDelete: any;
-  novelMenuOpen: any;
+  bookToDelete: any;
+  bookMenuOpen: any;
   showAssistant: any;
   aiLoading: any;
   aiMessages: any;
@@ -2478,14 +2478,14 @@ class WriteComponent {
   tableActions: EnvTableAction[];
   writingTypes: { id: WritingType; label: string; defaultWords: number; defaultIcon: string }[];
   allStatusItems: any;
-  novelIcons: any;
+  bookIcons: any;
   allTypeStats: any;
   statusCounts: any;
   hasActiveFilters: any;
   totalWords: any;
   activeDrafts: any;
   avgCompletion: any;
-  filteredNovels: any;
+  filteredBooks: any;
   tableRows: any;
   getTypeMeta(type: string): any;
   getStatusMeta(status: string): any;
@@ -2501,17 +2501,17 @@ class WriteComponent {
   getSortLabel(): string;
   handleTableAction(event: any): any;
   handleTableSort(event: any): any;
-  openNovel(id: string): any;
-  toggleNovelMenu(novelId: string, e: Event): any;
-  closeNovelMenu(): any;
-  duplicateNovel(novel: Novel, e: Event): any;
-  openDeleteModal(novel: Novel, e: Event): any;
-  cancelDeleteNovel(): any;
-  confirmDeleteNovel(): any;
+  openBook(id: string): any;
+  toggleBookMenu(bookId: string, e: Event): any;
+  closeBookMenu(): any;
+  duplicateBook(book: Book, e: Event): any;
+  openDeleteModal(book: Book, e: Event): any;
+  cancelDeleteBook(): any;
+  confirmDeleteBook(): any;
   openAddModal(): any;
   closeAddModal(): any;
-  updateNewNovel(key: 'title' | 'writingType' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number): any;
-  addNovel(): any;
+  updateNewBook(key: 'title' | 'writingType' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number): any;
+  addBook(): any;
   toggleAssistant(): any;
   clearAiChat(): any;
   sendAiMessage(text: string): any;
@@ -5007,7 +5007,7 @@ function createTauriErrorHandler(message: string): (error: any) => void
 ```typescript
 class ComposerComponent {
   editor: Editor;
-  novelService: any;
+  bookService: any;
   versionHistoryService: any;
   aiService: any;
   route: any;
@@ -5045,7 +5045,7 @@ class ComposerComponent {
   aiPrompt: any;
   aiSuggestions: any;
   showContextPreview: any;
-  novel: any;
+  book: any;
   isLoading: any;
   sectionLabel: any;
   showExtendedTabs: any;

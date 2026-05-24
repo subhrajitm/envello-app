@@ -3,7 +3,7 @@
         @for (item of frontMatter(); track item.id) {
             @if (item.id === activeFrontMatterId()) {
             <input type="text" class="ne-doc-title-input" [ngModel]="item.title"
-                (ngModelChange)="novelService.updateFrontMatterTitle(item.id, $event)"
+                (ngModelChange)="bookService.updateFrontMatterTitle(item.id, $event)"
                 [placeholder]="getFrontMatterTypeLabel(item.type)" />
             <div class="ne-doc-meta">{{ item.wordCount }} w</div>
             <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
@@ -12,7 +12,7 @@
     } @else if (activePrologueId() && prologue()) {
         @if (prologue(); as prologueData) {
         <input type="text" class="ne-doc-title-input" [ngModel]="prologueData.title"
-            (ngModelChange)="novelService.updatePrologueTitle($event)" placeholder="Prologue Title" />
+            (ngModelChange)="bookService.updatePrologueTitle($event)" placeholder="Prologue Title" />
         <div class="ne-doc-meta">
             <span class="ne-draft-tag">{{ prologueData.status }}</span> • {{ prologueData.wordCount }} w
         </div>

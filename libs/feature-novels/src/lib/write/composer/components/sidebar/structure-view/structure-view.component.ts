@@ -1,6 +1,6 @@
 import { Component, input, output, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NovelContentService, FrontMatterItem, Prologue } from '@envello/core';
+import { BookContentService, FrontMatterItem, Prologue } from '@envello/core';
 
 @Component({
   selector: 'app-structure-view',
@@ -15,7 +15,7 @@ import { NovelContentService, FrontMatterItem, Prologue } from '@envello/core';
   encapsulation: ViewEncapsulation.None
 })
 export class StructureViewComponent {
-  protected novelService = inject(NovelContentService);
+  protected bookService = inject(BookContentService);
   
   frontMatter = input.required<FrontMatterItem[]>();
   prologue = input<Prologue | null>(null);

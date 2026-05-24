@@ -88,9 +88,9 @@ create policy "Users can all access their own activities" on public.activities f
 
 
 -- ──────────────────────────────────────────────────────
--- 5. Novels
+-- 5. Books (writing pieces — novels, stories, scripts, etc.)
 -- ──────────────────────────────────────────────────────
-create table if not exists public.novels (
+create table if not exists public.books (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   title text,
@@ -108,25 +108,25 @@ create table if not exists public.novels (
   cover_image text,
   created_at timestamptz default now()
 );
-alter table public.novels enable row level security;
-drop policy if exists "Users can all access their own novels" on public.novels;
-create policy "Users can all access their own novels" on public.novels for all using (auth.uid() = user_id);
+alter table public.books enable row level security;
+drop policy if exists "Users can all access their own books" on public.books;
+create policy "Users can all access their own books" on public.books for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
--- 6. Novel Content
---    Stores large content blobs or JSON structure for novels
+-- 6. Book Content
+--    Stores large content blobs or JSON structure for books
 -- ──────────────────────────────────────────────────────
-create table if not exists public.novel_content (
+create table if not exists public.book_content (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   data text, -- Storing JSON string or large text
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
-alter table public.novel_content enable row level security;
-drop policy if exists "Users can all access their own novel content" on public.novel_content;
-create policy "Users can all access their own novel content" on public.novel_content for all using (auth.uid() = user_id);
+alter table public.book_content enable row level security;
+drop policy if exists "Users can all access their own book content" on public.book_content;
+create policy "Users can all access their own book content" on public.book_content for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
@@ -170,9 +170,9 @@ create policy "Users can all access their own snippets" on public.snippets for a
 
 
 -- ──────────────────────────────────────────────────────
--- 9. Books
+-- 9. Library Books (reading library / book tracker)
 -- ──────────────────────────────────────────────────────
-create table if not exists public.books (
+create table if not exists public.library_books (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   title text,
@@ -190,9 +190,9 @@ create table if not exists public.books (
   updated_at_str text,
   created_at timestamptz default now()
 );
-alter table public.books enable row level security;
-drop policy if exists "Users can all access their own books" on public.books;
-create policy "Users can all access their own books" on public.books for all using (auth.uid() = user_id);
+alter table public.library_books enable row level security;
+drop policy if exists "Users can all access their own library books" on public.library_books;
+create policy "Users can all access their own library books" on public.library_books for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────

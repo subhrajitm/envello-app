@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
 import { TiptapEditorDirective } from 'ngx-tiptap';
-import { NovelContentService, FrontMatterItem, Prologue } from '@envello/core';
+import { BookContentService, FrontMatterItem, Prologue } from '@envello/core';
 
 @Component({
   selector: 'app-structure-editor',
@@ -18,7 +18,7 @@ import { NovelContentService, FrontMatterItem, Prologue } from '@envello/core';
   encapsulation: ViewEncapsulation.None
 })
 export class StructureEditorComponent {
-  protected novelService = inject(NovelContentService);
+  protected bookService = inject(BookContentService);
   
   editor = input.required<Editor>();
   activeFrontMatterId = input.required<string | null>();
