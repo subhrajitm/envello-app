@@ -379,10 +379,12 @@ class AppComponent {
   title: any;
   authService: any;
   currentTab: any;
+  currentRoute: any;
   hasSidebar: any;
   isImmersive: any;
   isFullScreen: any;
   sidebarCollapsed: any;
+  subNavVisible: any;
   navigationLayout: any;
   ngOnInit(): any;
   ngOnDestroy(): any;
@@ -413,12 +415,26 @@ class NxWelcome {
 
 ---
 
+## File: /apps/mobile/src/app/app.component.ts
+
+### Class: AppComponent
+```typescript
+class AppComponent {
+  isFullScreen: any;
+  navItems: NavItem[];
+  ngOnInit(): any;
+}
+```
+
+---
+
 ## File: /apps/web/src/app/app.component.ts
 
 ### Class: AppComponent
 ```typescript
 class AppComponent {
   title: any;
+  updateAvailable: any;
   currentTab: any;
   hasSidebar: any;
   isImmersive: any;
@@ -426,6 +442,7 @@ class AppComponent {
   sidebarCollapsed: any;
   navigationLayout: any;
   ngOnInit(): any;
+  applyUpdate(): any;
   ngOnDestroy(): any;
   mapUrlToTabName(url: string): string;
   onSidebarCollapsedChange(collapsed: boolean): any;
@@ -443,6 +460,15 @@ class DataService {
   upsert(collection: string, item: T): Promise<void>;
   remove(collection: string, id: string): Promise<void>;
   importData(data: any): Promise<void>;
+  saveCredential(credential: Credential): Promise<void>;
+  getCredentials(): Promise<Credential[]>;
+  deleteCredential(id: string): Promise<void>;
+  saveSubscription(subscription: Subscription): Promise<void>;
+  getSubscriptions(): Promise<Subscription[]>;
+  deleteSubscription(id: string): Promise<void>;
+  saveLink(link: CredentialSubscriptionLink): Promise<void>;
+  getLinks(): Promise<CredentialSubscriptionLink[]>;
+  deleteLink(id: string): Promise<void>;
 }
 ```
 
@@ -493,6 +519,7 @@ interface Task {
   description?: string;
   startDate?: string;
   estimatedDuration?: number;
+  createdAt?: string;
 }
 ```
 
@@ -508,6 +535,8 @@ interface Note {
   lastEdited?: string;
   filePath?: string;
   lastSynced?: string;
+  folderId?: string;
+  bgColor?: string;
 }
 ```
 
@@ -539,6 +568,7 @@ interface Novel {
   title: string;
   icon: string;
   status: 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED';
+  writingType?: WritingType;
   wordCount: number;
   targetWordCount: number;
   progress: number;
@@ -546,6 +576,7 @@ interface Novel {
   notesCount: number;
   createdDate: string;
   lastUpdated: string;
+  createdAt?: string;
   genre: string[];
   isRecentlyUpdated: boolean;
   coverImage?: string;
@@ -559,7 +590,7 @@ interface Project {
   title: string;
   description?: string;
   status: 'DRAFTING' | 'PLANNING' | 'COMPLETE' | 'REVIEW';
-  words: string;
+  words: number;
   updated: string;
   icon: string;
   dueDate?: string;
@@ -569,13 +600,13 @@ interface Project {
   tags?: string[];
   type?: 'SINGLE' | 'MULTI';
   linkedResources?: {
-        novels?: string[]; // IDs of linked novels
-        journals?: string[]; // IDs of linked journals/notes
-        snippets?: string[]; // IDs of linked code snippets
-        meetings?: string[]; // IDs of linked meetings
-        research?: string[]; // IDs of linked research sources/libraries
-        books?: string[]; // IDs of linked books
-        articles?: string[]; // IDs of linked articles
+        novels?: string[];
+        notes?: string[];
+        meetings?: string[];
+        research?: string[];
+        articles?: string[];
+        snippets?: string[];
+        bookmarks?: string[];
     };
 }
 ```
@@ -593,6 +624,124 @@ interface BinItem {
 }
 ```
 
+### Interface: Credential
+```typescript
+interface Credential {
+  id: string;
+  name: string;
+  type: 'login' | 'api_key' | 'ssh' | 'db' | 'note';
+  value: string;
+  username?: string;
+  url?: string;
+  notes?: string;
+  projectId?: string;
+  createdAt: string;
+  createdBy?: string;
+  updatedAt?: string;
+  lastAccessedAt?: string;
+}
+```
+
+### Interface: Subscription
+```typescript
+interface Subscription {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  billingCycle: 'monthly' | 'yearly';
+  renewalDate: string;
+  status?: 'active' | 'paused' | 'cancelled';
+  currency?: string;
+  ownerId?: string;
+  projectId?: string;
+  notes?: string;
+}
+```
+
+### Interface: CredentialSubscriptionLink
+```typescript
+interface CredentialSubscriptionLink {
+  id: string;
+  credentialId: string;
+  subscriptionId: string;
+}
+```
+
+### Interface: WorkspaceProfile
+```typescript
+interface WorkspaceProfile {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  createdAt: string;
+  lastAccessed: string;
+}
+```
+
+### Interface: Bookmark
+```typescript
+interface Bookmark {
+  id: string;
+  title: string;
+  url: string;
+  description?: string;
+  faviconUrl?: string;
+  tags?: string[];
+  folderId?: string;
+  createdAt: string;
+  lastVisited?: string;
+  visitCount?: number;
+  notes?: string;
+  color?: string;
+  isArchived?: boolean;
+  isPinned?: boolean;
+}
+```
+
+### Interface: StorageFile
+```typescript
+interface StorageFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  storagePath: string;
+  publicUrl?: string;
+  uploadedAt: string;
+  collectionId?: string;
+  sourceType?: 'task' | 'note' | 'research' | 'bookmark' | 'direct';
+  sourceId?: string;
+  description?: string;
+  tags?: string[];
+}
+```
+
+### Interface: BookmarkFolder
+```typescript
+interface BookmarkFolder {
+  id: string;
+  name: string;
+  parentId?: string;
+  icon?: string;
+  color?: string;
+  createdAt: string;
+}
+```
+
+### Type: WritingType
+```typescript
+type WritingType = | 'NOVEL'
+    | 'SHORT_STORY'
+    | 'ARTICLE'
+    | 'ESSAY'
+    | 'SCRIPT'
+    | 'POETRY'
+    | 'BLOG_POST'
+    | 'RESEARCH';
+```
+
 ### Type: BinItemType
 ```typescript
 type BinItemType = | 'daily-note'
@@ -602,12 +751,8 @@ type BinItemType = | 'daily-note'
     | 'novel-note'
     | 'novel-character'
     | 'novel-location'
-    | 'journal-entry'
-    | 'journal-project'
     | 'task'
-    | 'meeting'
-    | 'book'
-    | 'snippet';
+    | 'meeting';
 ```
 
 ---
@@ -619,8 +764,25 @@ type BinItemType = | 'daily-note'
 class BinService {
   items: any;
   addToBin(item: Omit<BinItem, 'id' | 'deletedAt'>): any;
+  restore(binItemId: string): Promise<boolean>;
+  canRestore(type: BinItemType): boolean;
   permanentlyDelete(binItemId: string): any;
   emptyBin(): any;
+}
+```
+
+---
+
+## File: /libs/state/src/lib/link.store.ts
+
+### Class: LinkStore
+```typescript
+class LinkStore {
+  links: any;
+  linkCredentialToSubscription(credentialId: string, subscriptionId: string): any;
+  unlink(id: string): any;
+  getLinksByCredential(credentialId: string): any;
+  getLinksBySubscription(subscriptionId: string): any;
 }
 ```
 
@@ -636,7 +798,10 @@ class StoreService {
   planningItems: any;
   activities: any;
   novels: any;
-  projects: any;
+  noteFolders: any;
+  bookmarks: any;
+  bookmarkFolders: any;
+  spaces: any;
   loadNoteContent(id: string): Promise<string>;
   addTask(task: Task): any;
   updateTask(id: string, updates: Partial<Task>): any;
@@ -646,10 +811,200 @@ class StoreService {
   deleteNote(id: string): any;
   addPlanningItem(item: PlanningItem): any;
   addNovel(novel: Novel): any;
-  addProject(project: Project): any;
-  updateProject(id: string, updates: Partial<Project>): any;
+  addSpace(space: Project): any;
+  deleteSpace(id: string): any;
+  updateSpace(id: string, updates: Partial<Project>): any;
   deleteNovel(id: string): any;
+  addBookmark(bookmark: Bookmark): any;
+  updateBookmark(id: string, updates: Partial<Bookmark>): any;
+  deleteBookmark(id: string): any;
+  addBookmarkFolder(folder: BookmarkFolder): any;
+  deleteBookmarkFolder(id: string): any;
   addActivity(text: string, type: Activity['type']): any;
+  addNoteFolder(folder: { id: string; name: string; icon: string }): any;
+  removeNoteFolder(id: string): any;
+  updateNoteFolder(id: string, updates: Partial<{ name: string; icon: string }>): any;
+}
+```
+
+---
+
+## File: /libs/state/src/lib/subscription.store.ts
+
+### Class: SubscriptionStore
+```typescript
+class SubscriptionStore {
+  subscriptions: any;
+  upcomingRenewals: any;
+  totalMonthlyCost: any;
+  totalYearlyCost: any;
+  addSubscription(sub: Subscription): any;
+  getSubscriptionsByProject(projectId: string): any;
+  updateSubscription(id: string, changes: Partial<Subscription>): any;
+  deleteSubscription(id: string): any;
+}
+```
+
+---
+
+## File: /libs/state/src/lib/vault.store.ts
+
+### Class: VaultStore
+```typescript
+class VaultStore {
+  credentials: any;
+  addCredential(cred: Omit<Credential, 'value'> & { unencryptedValue: string }): any;
+  getCredentialsByProject(projectId: string): any;
+  updateCredential(id: string, changes: Partial<Credential> & { newUnencryptedValue?: string }): any;
+  touchCredential(id: string): any;
+  deleteCredential(id: string): any;
+  decryptValue(cipher: string): Promise<string>;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/layout/admin-layout.component.ts
+
+### Class: AdminLayoutComponent
+```typescript
+class AdminLayoutComponent {
+  navItems: NavItem[];
+  userEmail: any;
+  ngOnInit(): any;
+  ngOnDestroy(): any;
+  logout(): any;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/services/admin.service.ts
+
+### Class: AdminService
+```typescript
+class AdminService {
+  loadAiConfig(): Promise<PlatformAiConfig | null>;
+  saveAiConfig(config: Partial<PlatformAiConfig>): Promise<{ error: string | null }>;
+  loadFeatureFlags(): Promise<FeatureFlag[]>;
+  saveFeatureFlags(flags: FeatureFlag[]): Promise<{ error: string | null }>;
+  loadUsers(): Promise<AdminUser[]>;
+  updateUserRole(userId: string, role: 'admin' | 'user'): Promise<{ error: string | null }>;
+  updateUserStatus(userId: string, status: 'active' | 'suspended'): Promise<{ error: string | null }>;
+  loadUsageSummary(filter: 'today' | 'week' | 'month'): Promise<UsageSummary>;
+  loadUsageByUser(filter: 'today' | 'week' | 'month'): Promise<UsageRow[]>;
+  loadProviderBreakdown(filter: 'today' | 'week' | 'month'): Promise<{ provider: string; count: number; pct: number }[]>;
+  loadDashboardStats(): Promise<{
+    totalUsers: number;
+    aiRequestsToday: number;
+    activeFlagCount: number;
+    platformProvider: string;
+  }>;
+  loadRecentActivity(): Promise<{ user_id: string; email: string; provider: string; model: string; created_at: string }[]>;
+  logAudit(action: string, targetId: string | null, details: string): Promise<void>;
+  loadAuditLog(limit: any): Promise<AuditEntry[]>;
+}
+```
+
+### Interface: PlatformAiConfig
+```typescript
+interface PlatformAiConfig {
+  provider: string;
+  model_name: string;
+  api_key: string;
+  ai_enabled: boolean;
+  updated_at?: string;
+}
+```
+
+### Interface: FeatureFlag
+```typescript
+interface FeatureFlag {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  affects: 'All Users' | 'Admins only' | 'Beta users';
+  updated_at?: string;
+}
+```
+
+### Interface: AdminUser
+```typescript
+interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string;
+  role: 'admin' | 'user';
+  status: 'active' | 'suspended';
+  ai_usage: number;
+  created_at: string;
+}
+```
+
+### Interface: UsageRow
+```typescript
+interface UsageRow {
+  user_id: string;
+  email: string;
+  provider: string;
+  model: string;
+  requests: number;
+  total_chars: number;
+  last_active: string;
+}
+```
+
+### Interface: UsageSummary
+```typescript
+interface UsageSummary {
+  total_requests: number;
+  total_chars: number;
+}
+```
+
+### Interface: AuditEntry
+```typescript
+interface AuditEntry {
+  id: string;
+  admin_id: string;
+  admin_email: string;
+  action: string;
+  target_id: string | null;
+  details: string;
+  created_at: string;
+}
+```
+
+---
+
+## File: /apps/desktop/src/app/services/update.service.ts
+
+### Class: UpdateService
+```typescript
+class UpdateService {
+  available: any;
+  version: any;
+  notes: any;
+  downloading: any;
+  progress: any;
+  error: any;
+  checkForUpdate(): Promise<void>;
+  installUpdate(): Promise<void>;
+  dismiss(): void;
+}
+```
+
+---
+
+## File: /apps/mobile/src/app/settings/settings.component.ts
+
+### Class: SettingsComponent
+```typescript
+class SettingsComponent {
+  userInitial(): any;
+  logout(): any;
 }
 ```
 
@@ -676,13 +1031,15 @@ class AiService {
   apiKey: any;
   updateConfig(provider: AiProvider, model: string, key: string): any;
   toggleAi(): any;
+  testConfig(provider: AiProvider, model: string, key: string): Promise<void>;
   sendMessage(prompt: string, context: string): Promise<string>;
+  streamMessage(prompt: string, context: string): AsyncIterable<string>;
   analyzeToneAndPacing(content: string): Promise<string>;
   generateSuggestions(content: string): Promise<AiSuggestion[]>;
   summarizeContent(content: string): Promise<string>;
   continueWriting(content: string, cursorPosition: number): Promise<string>;
-  improveText(selectedText: string, context: string): Promise<string>;
-  expandIdea(idea: string, context: string): Promise<string>;
+  improveText(selectedText: string): Promise<string>;
+  expandIdea(idea: string): Promise<string>;
   estimateTokens(text: string): number;
 }
 ```
@@ -711,7 +1068,7 @@ interface AiSuggestion {
 
 ### Type: AiProvider
 ```typescript
-type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock';
+type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek';
 ```
 
 ---
@@ -797,88 +1154,56 @@ class AuthService {
 
 ---
 
-## File: /libs/core/src/lib/services/books.service.ts
+## File: /libs/core/src/lib/services/calendar-sync.service.ts
 
-### Class: BooksService
+### Class: CalendarSyncService
 ```typescript
-class BooksService {
-  books: any;
-  selectedBookId: any;
-  viewFilter: any;
-  viewMode: any;
-  sortBy: any;
-  sortDirection: any;
-  searchQuery: any;
-  selectedCategory: any;
-  selectedBook: any;
-  availableCategories: any;
-  filteredBooks: any;
-  stats: any;
-  booksByCategory: any;
-  addBook(book: Omit<Book, 'id' | 'createdAt' | 'updatedAt'>): Book;
-  updateBook(id: string, patch: Partial<Book>): void;
-  deleteBook(id: string): void;
-  setProgress(id: string, progress: number): void;
-  setStatus(id: string, status: BookStatus): void;
-  addNote(bookId: string, content: string, page: number): void;
-  deleteNote(bookId: string, noteId: string): void;
-  touchLastAccessed(id: string): void;
+class CalendarSyncService {
+  connections: any;
+  syncing: any;
+  addConnection(partial: Omit<CalendarConnection, 'id' | 'color'>): CalendarConnection;
+  removeConnection(id: string): void;
+  toggleEnabled(id: string): void;
+  syncAll(): Promise<void>;
+  syncConnection(id: string): Promise<void>;
+  isSyncing(id: string): boolean;
+  formatLastSync(conn: CalendarConnection): string;
 }
 ```
 
-### Interface: BookNote
+### Interface: CalendarConnection
 ```typescript
-interface BookNote {
+interface CalendarConnection {
   id: string;
-  content: string;
-  page?: number;
-  createdAt: string;
+  provider: 'google' | 'outlook' | 'apple' | 'zoom' | 'teams' | 'custom';
+  name: string;
+  icsUrl: string;
+  color: string;
+  enabled: boolean;
+  lastSync?: string;
+  lastSyncCount?: number;
+  error?: string;
 }
 ```
 
-### Interface: Book
+---
+
+## File: /libs/core/src/lib/services/file-storage.service.ts
+
+### Class: FileStorageService
 ```typescript
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  category: BookCategory;
-  status: BookStatus;
-  progress: number;
-  notesCount: number;
-  lastAccessed: string;
-  coverImage?: string;
-  isbn?: string;
-  year?: number;
-  notes?: BookNote[];
-  createdAt: string;
-  updatedAt: string;
+class FileStorageService {
+  files: any;
+  uploading: any;
+  displayUrl(fileId: string): string;
+  getSignedUrl(storagePath: string, expiresIn: any): Promise<string>;
+  upload(file: File, source: { type: StorageFile['sourceType']; id: string }, collectionId: string): Promise<StorageFile>;
+  uploadMany(files: File[], source: { type: StorageFile['sourceType']; id: string }, collectionId: string): Promise<StorageFile[]>;
+  delete(fileId: string): Promise<void>;
+  isImage(file: StorageFile): boolean;
+  formatSize(bytes: number): string;
+  fileIcon(mimeType: string): string;
 }
-```
-
-### Type: BookCategory
-```typescript
-type BookCategory = 'DESIGN' | 'CREATIVE' | 'PRODUCTIVITY' | 'OTHER';
-```
-
-### Type: BookStatus
-```typescript
-type BookStatus = 'reading' | 'completed' | 'queued';
-```
-
-### Type: BookViewFilter
-```typescript
-type BookViewFilter = 'all' | 'reading' | 'completed' | 'queued';
-```
-
-### Type: BookViewMode
-```typescript
-type BookViewMode = 'list' | 'grid';
-```
-
-### Type: BookSortBy
-```typescript
-type BookSortBy = 'title' | 'author' | 'lastAccessed' | 'progress' | 'category';
 ```
 
 ---
@@ -895,100 +1220,6 @@ class FileSystemService {
   saveNote(id: string, content: string): Promise<string>;
   readNote(id: string): Promise<string | null>;
   deleteNote(id: string): Promise<void>;
-}
-```
-
----
-
-## File: /libs/core/src/lib/services/journal.service.ts
-
-### Class: JournalService
-```typescript
-class JournalService {
-  projects: any;
-  entries: any;
-  columns: any;
-  loadEntryContent(id: string): Promise<string>;
-  getProjects(): JournalProject[];
-  getProject(id: string): JournalProject | undefined;
-  getActiveProject(): JournalProject | undefined;
-  setActiveProject(id: string): any;
-  addProject(project: Omit<JournalProject, 'id' | 'entriesCount' | 'wordCount' | 'createdDate' | 'lastUpdated' | 'columns'>): any;
-  updateProject(id: string, updates: Partial<JournalProject>): any;
-  deleteProject(id: string): any;
-  getEntries(projectId: string): JournalEntry[];
-  getEntriesByColumn(projectId: string, columnId: string): JournalEntry[];
-  getEntry(id: string): JournalEntry | undefined;
-  addEntry(entry: Omit<JournalEntry, 'id' | 'createdDate' | 'lastEdited' | 'wordCount' | 'characterCount'>): any;
-  updateEntry(id: string, updates: Partial<JournalEntry>): any;
-  deleteEntry(id: string): any;
-  moveEntry(entryId: string, newColumn: string): any;
-  getColumns(projectId: string): JournalColumn[];
-  addColumn(column: Omit<JournalColumn, 'id'>): any;
-  updateColumn(id: string, updates: Partial<JournalColumn>): any;
-  deleteColumn(id: string): any;
-  searchEntries(query: string, projectId: string): JournalEntry[];
-  getAllTags(projectId: string): string[];
-  getEntriesByTag(tag: string, projectId: string): JournalEntry[];
-  getProjectStats(projectId: string): any;
-}
-```
-
-### Interface: JournalEntry
-```typescript
-interface JournalEntry {
-  id: string;
-  projectId: string;
-  title: string;
-  content: string;
-  preview: string;
-  type: 'CONCEPT' | 'CHAPTER' | 'SETTING' | 'CRITICAL' | 'NOTE' | 'IDEA';
-  column: string;
-  tags?: string[];
-  wordCount: number;
-  characterCount: number;
-  createdDate: string;
-  lastEdited: string;
-  hasAi?: boolean;
-  isAiEdited?: boolean;
-  progress?: number;
-  statusColor?: string;
-  meta?: string;
-  isLocked?: boolean;
-  linkedEntries?: string[];
-  isPinned?: boolean;
-  isFavorite?: boolean;
-  filePath?: string;
-  lastSynced?: string;
-}
-```
-
-### Interface: JournalProject
-```typescript
-interface JournalProject {
-  id: string;
-  title: string;
-  description?: string;
-  entriesCount: number;
-  active: boolean;
-  wordCount: number;
-  targetWordCount?: number;
-  progress?: number;
-  createdDate: string;
-  lastUpdated: string;
-  columns: string[];
-  tags?: string[];
-  isLocked?: boolean;
-}
-```
-
-### Interface: JournalColumn
-```typescript
-interface JournalColumn {
-  id: string;
-  name: string;
-  color: string;
-  order: number;
 }
 ```
 
@@ -1037,7 +1268,7 @@ class MeetingsService {
   meetingStats: any;
   upcomingSyncs: any;
   getMeetingsForDate(date: Date): Meeting[];
-  addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>): any;
+  addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>): Meeting;
   updateMeeting(id: string, updates: Partial<Meeting>): any;
   deleteMeeting(id: string): any;
   cancelMeeting(id: string): any;
@@ -1162,6 +1393,8 @@ interface Meeting {
     size: number;
     uploadedAt: string;
   }>;
+  externalId?: string;
+  externalSource?: 'google' | 'outlook' | 'apple' | 'zoom' | 'teams' | 'custom';
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -1175,7 +1408,7 @@ type MeetingViewFilter = 'all' | 'today' | 'upcoming' | 'past' | 'cancelled';
 
 ### Type: MeetingViewMode
 ```typescript
-type MeetingViewMode = 'list' | 'calendar' | 'kanban';
+type MeetingViewMode = 'list' | 'calendar' | 'kanban' | 'table';
 ```
 
 ### Type: MeetingSortBy
@@ -1246,6 +1479,7 @@ class NovelContentService {
   addChapter(groupId: string, title: string): any;
   deleteChapter(chapterId: string): any;
   addChapterGroup(title: string): any;
+  moveChapterToGroup(chapterId: string, targetGroupId: string): any;
   reorderChapterGroup(fromIndex: number, toIndex: number): any;
   reorderChapter(groupId: string, fromIndex: number, toIndex: number): any;
   deleteChapterGroup(groupId: string): any;
@@ -1269,6 +1503,7 @@ class NovelContentService {
   updatePrologueTitle(title: string): any;
   deletePrologue(): any;
   updateChapterPlotPoint(chapterId: string, plotPoint: 'firstSlap' | 'secondSlap' | 'climax', content: string): any;
+  cloneNovelContent(sourceId: string, newId: string, newTitle: string): Promise<void>;
   createAndPersistEmptyNovel(id: string, title: string): Promise<void>;
 }
 ```
@@ -1379,31 +1614,54 @@ interface EditorNote {
 
 ---
 
+## File: /libs/core/src/lib/services/pouchdb-data.service.ts
+
+### Class: PouchDbDataService
+```typescript
+class PouchDbDataService {
+  getAll(collection: string): Promise<T[]>;
+  upsert(collection: string, item: T): Promise<void>;
+  remove(collection: string, id: string): Promise<void>;
+  importData(data: any): Promise<void>;
+  saveCredential(credential: Credential): Promise<void>;
+  getCredentials(): Promise<Credential[]>;
+  deleteCredential(id: string): Promise<void>;
+  saveSubscription(subscription: Subscription): Promise<void>;
+  getSubscriptions(): Promise<Subscription[]>;
+  deleteSubscription(id: string): Promise<void>;
+  saveLink(link: CredentialSubscriptionLink): Promise<void>;
+  getLinks(): Promise<CredentialSubscriptionLink[]>;
+  deleteLink(id: string): Promise<void>;
+}
+```
+
+---
+
 ## File: /libs/core/src/lib/services/research.service.ts
 
 ### Class: ResearchService
 ```typescript
 class ResearchService {
-  libraries: any;
+  collections: any;
   sources: any;
   summaries: any;
-  addLibrary(library: Omit<ResearchLibrary, 'id' | 'createdDate' | 'lastModified'>): any;
-  updateLibrary(id: string, updates: Partial<ResearchLibrary>): any;
-  deleteLibrary(id: string): any;
+  addCollection(collection: Omit<ResearchCollection, 'id' | 'createdDate' | 'lastModified'>): any;
+  updateCollection(id: string, updates: Partial<ResearchCollection>): any;
+  deleteCollection(id: string): any;
   addSource(source: Omit<ResearchSource, 'id' | 'createdDate'>): any;
   updateSource(id: string, updates: Partial<ResearchSource>): any;
   deleteSource(id: string): any;
-  getSourcesByLibrary(libraryId: string): any;
+  getSourcesByCollection(collectionId: string): any;
   addSummary(summary: Omit<ResearchSummary, 'id' | 'createdDate' | 'lastModified'>): any;
   updateSummary(id: string, updates: Partial<ResearchSummary>): any;
   deleteSummary(id: string): any;
-  getSummariesByLibrary(libraryId: string): any;
+  getSummariesByCollection(collectionId: string): any;
 }
 ```
 
-### Interface: ResearchLibrary
+### Interface: ResearchCollection
 ```typescript
-interface ResearchLibrary {
+interface ResearchCollection {
   id: string;
   name: string;
   description?: string;
@@ -1417,7 +1675,7 @@ interface ResearchLibrary {
 ```typescript
 interface ResearchSource {
   id: string;
-  libraryId: string;
+  collectionId?: string;
   title: string;
   sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL' | 'VIDEO' | 'ARTICLE';
   url?: string;
@@ -1429,6 +1687,7 @@ interface ResearchSource {
   notes?: string;
   createdDate: string;
   lastAccessed?: string;
+  linkedTaskIds?: string[];
 }
 ```
 
@@ -1436,13 +1695,40 @@ interface ResearchSource {
 ```typescript
 interface ResearchSummary {
   id: string;
-  libraryId: string;
+  collectionId: string;
   title: string;
   content: string;
   sourceIds: string[];
+  fileIds?: string[];
   tags: string[];
   createdDate: string;
   lastModified: string;
+}
+```
+
+---
+
+## File: /libs/core/src/lib/services/semantic-search.service.ts
+
+### Class: SemanticSearchService
+```typescript
+class SemanticSearchService {
+  search(query: string, k: any): Promise<SemanticResult[]>;
+}
+```
+
+### Interface: SemanticResult
+```typescript
+interface SemanticResult {
+  id: string;
+  type: 'note' | 'task' | 'novel' | 'bookmark';
+  title: string;
+  preview: string;
+  icon: string;
+  route: string;
+  tags?: string[];
+  badge?: string;
+  date?: string;
 }
 ```
 
@@ -1489,80 +1775,6 @@ interface SessionData {
 
 ---
 
-## File: /libs/core/src/lib/services/snippets.service.ts
-
-### Class: SnippetsService
-```typescript
-class SnippetsService {
-  snippets: any;
-  selectedSnippetId: any;
-  viewFilter: any;
-  viewMode: any;
-  sortBy: any;
-  sortDirection: any;
-  searchQuery: any;
-  selectedLang: any;
-  selectedTag: any;
-  LANGS: any;
-  selectedSnippet: any;
-  allTags: any;
-  filteredSnippets: any;
-  stats: any;
-  snippetsByLang: any;
-  addSnippet(snippet: Omit<Snippet, 'id' | 'createdAt' | 'updatedAt'>): Snippet;
-  updateSnippet(id: string, patch: Partial<Snippet>): void;
-  deleteSnippet(id: string): void;
-  copyContent(id: string): string | null;
-}
-```
-
-### Interface: Snippet
-```typescript
-interface Snippet {
-  id: string;
-  title: string;
-  lang: SnippetLang;
-  tags: string[];
-  content: string;
-  filename: string;
-  path: string;
-  creator: string;
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-### Type: SnippetLang
-```typescript
-type SnippetLang = | 'Python'
-  | 'JavaScript'
-  | 'TypeScript'
-  | 'Markdown'
-  | 'SQL'
-  | 'HTML'
-  | 'CSS'
-  | 'JSON'
-  | 'Shell'
-  | 'Other';
-```
-
-### Type: SnippetViewFilter
-```typescript
-type SnippetViewFilter = 'all' | SnippetLang;
-```
-
-### Type: SnippetViewMode
-```typescript
-type SnippetViewMode = 'list' | 'grid';
-```
-
-### Type: SnippetSortBy
-```typescript
-type SnippetSortBy = 'title' | 'lastModified' | 'lang' | 'path';
-```
-
----
-
 ## File: /libs/core/src/lib/services/sqlite-data.service.ts
 
 ### Class: SqliteDataService
@@ -1572,6 +1784,15 @@ class SqliteDataService {
   upsert(collection: string, item: T): Promise<void>;
   remove(collection: string, id: string): Promise<void>;
   importData(data: any): Promise<void>;
+  saveCredential(credential: any): Promise<void>;
+  getCredentials(): Promise<any[]>;
+  deleteCredential(id: string): Promise<void>;
+  saveSubscription(subscription: any): Promise<void>;
+  getSubscriptions(): Promise<any[]>;
+  deleteSubscription(id: string): Promise<void>;
+  saveLink(link: any): Promise<void>;
+  getLinks(): Promise<any[]>;
+  deleteLink(id: string): Promise<void>;
 }
 ```
 
@@ -1583,6 +1804,8 @@ class SqliteDataService {
 ```typescript
 class SqliteService {
   getDb(): Promise<Database>;
+  getAppMeta(key: string): Promise<string | null>;
+  setAppMeta(key: string, value: string): Promise<void>;
   getAllTasks(): Promise<TaskDoc[]>;
   upsertTask(task: TaskDoc): Promise<void>;
   removeTask(id: string): Promise<void>;
@@ -1594,6 +1817,7 @@ class SqliteService {
   upsertPlanningItem(item: PlanningItemDoc): Promise<void>;
   planningItems$(): Observable<PlanningItemDoc[]>;
   getAllPlanningItems(): Promise<PlanningItemDoc[]>;
+  removePlanningItem(id: string): Promise<void>;
   upsertActivity(act: ActivityDoc): Promise<void>;
   activities$(): Observable<ActivityDoc[]>;
   getAllActivities(): Promise<ActivityDoc[]>;
@@ -1610,36 +1834,43 @@ class SqliteService {
   clearBin(): Promise<void>;
   binItems$(): Observable<BinItemDoc[]>;
   getAllBinItems(): Promise<BinItemDoc[]>;
-  upsertSnippet(doc: SnippetDoc): Promise<void>;
-  removeSnippet(id: string): Promise<void>;
-  getAllSnippets(): Promise<SnippetDoc[]>;
-  upsertBook(doc: BookDoc): Promise<void>;
-  removeBook(id: string): Promise<void>;
-  getAllBooks(): Promise<BookDoc[]>;
   upsertMeeting(doc: MeetingDoc): Promise<void>;
   getAllMeetings(): Promise<MeetingDoc[]>;
   removeMeeting(id: string): Promise<void>;
   getAllArticles(): Promise<ArticleDoc[]>;
   upsertArticle(article: ArticleDoc): Promise<void>;
   removeArticle(id: string): Promise<void>;
-  upsertJournalProject(doc: JournalProjectDoc): Promise<void>;
-  removeJournalProject(id: string): Promise<void>;
-  getAllJournalProjects(): Promise<JournalProjectDoc[]>;
-  upsertJournalEntry(entry: JournalEntryDoc): Promise<void>;
-  removeJournalEntry(id: string): Promise<void>;
-  getAllJournalEntries(): Promise<JournalEntryDoc[]>;
-  upsertJournalColumn(doc: JournalColumnDoc): Promise<void>;
-  removeJournalColumn(id: string): Promise<void>;
-  getAllJournalColumns(): Promise<JournalColumnDoc[]>;
-  upsertResearchLibrary(doc: ResearchLibraryDoc): Promise<void>;
-  getAllResearchLibraries(): Promise<ResearchLibraryDoc[]>;
-  removeResearchLibrary(id: string): Promise<void>;
+  upsertResearchCollection(doc: ResearchCollectionDoc): Promise<void>;
+  getAllResearchCollections(): Promise<ResearchCollectionDoc[]>;
+  removeResearchCollection(id: string): Promise<void>;
   upsertResearchSource(doc: ResearchSourceDoc): Promise<void>;
   getAllResearchSources(): Promise<ResearchSourceDoc[]>;
   removeResearchSource(id: string): Promise<void>;
   upsertResearchSummary(doc: ResearchSummaryDoc): Promise<void>;
   getAllResearchSummaries(): Promise<ResearchSummaryDoc[]>;
   removeResearchSummary(id: string): Promise<void>;
+  getAllProjects(): Promise<ProjectDoc[]>;
+  upsertProject(project: ProjectDoc): Promise<void>;
+  removeProject(id: string): Promise<void>;
+  projects$(): Observable<ProjectDoc[]>;
+  getAllCredentials(): Promise<CredentialDoc[]>;
+  upsertCredential(item: CredentialDoc): Promise<void>;
+  removeCredential(id: string): Promise<void>;
+  getAllSubscriptions(): Promise<SubscriptionDoc[]>;
+  upsertSubscription(item: SubscriptionDoc): Promise<void>;
+  removeSubscription(id: string): Promise<void>;
+  getAllLinks(): Promise<CredentialSubscriptionLinkDoc[]>;
+  upsertLink(item: CredentialSubscriptionLinkDoc): Promise<void>;
+  removeLink(id: string): Promise<void>;
+  getAllNoteFolders(): Promise<NoteFolderDoc[]>;
+  upsertNoteFolder(item: NoteFolderDoc): Promise<void>;
+  removeNoteFolder(id: string): Promise<void>;
+  getAllBookmarks(): Promise<BookmarkDoc[]>;
+  upsertBookmark(item: BookmarkDoc): Promise<void>;
+  removeBookmark(id: string): Promise<void>;
+  getAllBookmarkFolders(): Promise<BookmarkFolderDoc[]>;
+  upsertBookmarkFolder(item: BookmarkFolderDoc): Promise<void>;
+  removeBookmarkFolder(id: string): Promise<void>;
   exportAllData(): Promise<any>;
 }
 ```
@@ -1682,16 +1913,6 @@ type NovelDoc = Novel;
 type BinItemDoc = BinItem;
 ```
 
-### Type: SnippetDoc
-```typescript
-type SnippetDoc = Snippet;
-```
-
-### Type: BookDoc
-```typescript
-type BookDoc = Book;
-```
-
 ### Type: MeetingDoc
 ```typescript
 type MeetingDoc = Meeting;
@@ -1702,24 +1923,9 @@ type MeetingDoc = Meeting;
 type ArticleDoc = Article;
 ```
 
-### Type: JournalProjectDoc
+### Type: ResearchCollectionDoc
 ```typescript
-type JournalProjectDoc = JournalProject;
-```
-
-### Type: JournalEntryDoc
-```typescript
-type JournalEntryDoc = JournalEntry;
-```
-
-### Type: JournalColumnDoc
-```typescript
-type JournalColumnDoc = JournalColumn;
-```
-
-### Type: ResearchLibraryDoc
-```typescript
-type ResearchLibraryDoc = ResearchLibrary;
+type ResearchCollectionDoc = ResearchCollection;
 ```
 
 ### Type: ResearchSourceDoc
@@ -1730,6 +1936,41 @@ type ResearchSourceDoc = ResearchSource;
 ### Type: ResearchSummaryDoc
 ```typescript
 type ResearchSummaryDoc = ResearchSummary;
+```
+
+### Type: ProjectDoc
+```typescript
+type ProjectDoc = Project;
+```
+
+### Type: CredentialDoc
+```typescript
+type CredentialDoc = Credential;
+```
+
+### Type: SubscriptionDoc
+```typescript
+type SubscriptionDoc = Subscription;
+```
+
+### Type: CredentialSubscriptionLinkDoc
+```typescript
+type CredentialSubscriptionLinkDoc = CredentialSubscriptionLink;
+```
+
+### Type: NoteFolderDoc
+```typescript
+type NoteFolderDoc = { id: string; name: string; icon: string };
+```
+
+### Type: BookmarkDoc
+```typescript
+type BookmarkDoc = Bookmark;
+```
+
+### Type: BookmarkFolderDoc
+```typescript
+type BookmarkFolderDoc = BookmarkFolder;
 ```
 
 ---
@@ -1745,6 +1986,36 @@ class SupabaseService {
   authChanges(callback: (event: AuthChangeEvent, session: Session | null) => void): any;
   signIn(email: string): any;
   signOut(): any;
+}
+```
+
+---
+
+## File: /libs/core/src/lib/services/sync.service.ts
+
+### Class: SyncService
+```typescript
+class SyncService {
+  isSyncing: any;
+  lastSyncedAt: any;
+  push(collection: string, profileId: string, item: any): Promise<void>;
+  pushDelete(collection: string, profileId: string, id: string): Promise<void>;
+  pull(): Promise<SyncRecord[]>;
+  resetLastSync(): void;
+  subscribeRealtime(onRecord: (record: SyncRecord) => void): () => void;
+}
+```
+
+### Interface: SyncRecord
+```typescript
+interface SyncRecord {
+  id: string;
+  user_id: string;
+  profile_id: string;
+  collection: string;
+  data: any;
+  deleted: boolean;
+  updated_at: string;
 }
 ```
 
@@ -1838,6 +2109,17 @@ interface UserProfile {
 
 ---
 
+## File: /libs/core/src/lib/services/vault-key.service.ts
+
+### Class: VaultKeyService
+```typescript
+class VaultKeyService {
+  getOrCreateKey(userId: string): Promise<CryptoKey>;
+}
+```
+
+---
+
 ## File: /libs/core/src/lib/services/version-history.service.ts
 
 ### Class: VersionHistoryService
@@ -1884,6 +2166,52 @@ interface VersionHistory {
 
 ---
 
+## File: /libs/core/src/lib/services/voice.service.ts
+
+### Class: VoiceService
+```typescript
+class VoiceService {
+  isVoiceActive: any;
+  toggleVoice(): any;
+}
+```
+
+---
+
+## File: /libs/core/src/lib/services/workspace-profile.service.ts
+
+### Class: WorkspaceProfileService
+```typescript
+class WorkspaceProfileService {
+  profiles: any;
+  activeProfileId: any;
+  activeProfile: any;
+  addProfile(name: string, color: string): any;
+  addProfileWithId(id: string, name: string, color: string, icon: string): any;
+  switchProfile(id: string): any;
+  removeProfile(id: string): any;
+  updateProfile(id: string, updates: Partial<WorkspaceProfile>): any;
+}
+```
+
+---
+
+## File: /libs/core/src/lib/utils/encryption.util.ts
+
+### Class: EncryptionUtil
+```typescript
+class EncryptionUtil {
+  getOrCreateKey(userId: string): Promise<CryptoKey>;
+  encrypt(text: string, userId: string): Promise<string>;
+  encryptWithKey(text: string, key: CryptoKey): Promise<string>;
+  decrypt(cipher: string, userId: string): Promise<string>;
+  decryptWithKey(cipher: string, key: CryptoKey): Promise<string>;
+  legacyDecrypt(cipher: string): string;
+}
+```
+
+---
+
 ## File: /libs/core/src/lib/utils/tauri-helpers.ts
 
 ### Function: isTauriEnvironment
@@ -1903,49 +2231,290 @@ function createTauriErrorHandler(message: string): (error: any) => void
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novels.component.ts
+## File: /libs/feature-bookmarks/src/lib/bookmarks/bookmarks.component.ts
 
-### Class: NovelsComponent
+### Class: BookmarksComponent
 ```typescript
-class NovelsComponent {
+class BookmarksComponent {
+  store: any;
+  selectedView: any;
+  viewMode: any;
+  sortBy: any;
+  sortAsc: any;
+  searchQuery: any;
+  selectedFolderId: any;
+  selectedTags: any;
+  showAddModal: any;
+  addUrl: any;
+  addTitle: any;
+  addDescription: any;
+  addNotes: any;
+  addTagInput: any;
+  addTags: any;
+  addFolderId: any;
+  addColor: any;
+  showEditModal: any;
+  editingBookmark: any;
+  editUrl: any;
+  editTitle: any;
+  editDescription: any;
+  editNotes: any;
+  editTagInput: any;
+  editTags: any;
+  editFolderId: any;
+  editColor: any;
+  showAddFolderModal: any;
+  newFolderName: any;
+  newFolderIcon: any;
+  newFolderColor: any;
+  showDeleteConfirm: any;
+  deletingBookmarkId: any;
+  showShortcutsHelp: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  allTags: any;
+  activeNavId: any;
+  sidebarItems: any;
+  filteredBookmarks: any;
+  folderTree: any;
+  bookmarkCountByFolder: any;
+  tableColumns: EnvTableColumn[];
+  tableActions: EnvTableAction[];
+  tableRows: any;
+  accentColors: any;
+  folderIcons: any;
+  onNavItemClick(id: string): any;
+  ngOnInit(): any;
+  ngOnDestroy(): any;
+  handleGlobalKey(e: KeyboardEvent): any;
+  openAddModal(): any;
+  onAddUrlBlur(): any;
+  addTagFromInput(): any;
+  onAddTagKeydown(e: KeyboardEvent): any;
+  removeAddTag(tag: string): any;
+  submitAddBookmark(): any;
+  openEditModal(bookmark: Bookmark): any;
+  editTagFromInput(): any;
+  onEditTagKeydown(e: KeyboardEvent): any;
+  removeEditTag(tag: string): any;
+  submitEditBookmark(): any;
+  requestDelete(id: string): any;
+  confirmDelete(): any;
+  togglePin(bookmark: Bookmark): any;
+  toggleArchive(bookmark: Bookmark): any;
+  openBookmark(bookmark: Bookmark): any;
+  toggleTagFilter(tag: string): any;
+  clearFilters(): any;
+  openAddFolderModal(): any;
+  submitAddFolder(): any;
+  deleteFolder(id: string): any;
+  getFaviconUrl(url: string): string;
+  getDomain(url: string): string;
+  formatDate(iso: string): string;
+  formatRelativeDate(iso: string): string;
+  getBookmarkCardColor(bookmark: Bookmark): string;
+  folderName(folderId: string): string;
+  toggleSortAsc(): any;
+  setSortBy(col: SortBy): any;
+  currentViewLabel(): string;
+  handleTableAction(event: EnvTableActionEvent): any;
+  handleTableSort(event: EnvTableSortEvent): any;
+  trackById(_: number, item: Bookmark): any;
+  trackByFolderId(_: number, f: BookmarkFolder): any;
+  toggleAssistant(): any;
+  sendAiMessage(text: string): any;
+  clearAiChat(): any;
+  closeAllModals(): any;
+}
+```
+
+---
+
+## File: /libs/feature-daily-notes/src/lib/daily-notes/daily-notes.component.ts
+
+### Class: DailyNotesComponent
+```typescript
+class DailyNotesComponent {
+  editor: Editor;
+  aiGenerating: any;
+  notes: any;
+  wordCount: any;
+  characterCount: any;
+  activeModal: any;
+  modalInputValue: any;
+  modalInputPlaceholder: any;
+  modalTitle: any;
+  tempNoteId: any;
+  tempFolderId: any;
+  selectedEntryId: any;
+  searchQuery: any;
+  selectedFilter: any;
+  selectedTag: any;
+  showColorPicker: any;
+  isFullWidth: any;
+  showTagInput: any;
+  tagInputValue: any;
+  renamingFolderId: any;
+  renameInputValue: any;
+  bgColors: any;
+  openNotes: any;
+  noteGroups: any;
+  allTags: any;
+  showDropdown: any;
+  showFormatMenu: any;
+  showInfoMenu: any;
+  showMediaMenu: any;
+  activeFolderMenuId: any;
+  pinnedCount: any;
+  taggedCount: any;
+  noteBgClass: any;
+  dragOverFolderId: any;
+  draggingNoteId: any;
+  displayModalTitle: any;
+  filteredNotes: any;
+  notesPerFolder: any;
+  allExpanded: any;
+  selectedNote: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  getNotesForFolder(folderId: string): Note[];
+  getBucketedNotes(notes: Note[]): { label: string, notes: Note[] }[];
+  formatTime(id: string, lastEdited: string): string;
+  getPreviewText(preview: string): string;
+  handleEscape(event: Event): any;
+  ngOnInit(): any;
+  ngOnDestroy(): void;
+  updateNoteContent(content: string, preview: string): any;
+  handleNewNote(): any;
+  moveNoteToFolder(noteId: string, targetFolderId: string): any;
+  onNoteDragStart(noteId: string, event: DragEvent): any;
+  onNoteDragEnd(): any;
+  onFolderDragOver(folderId: string, event: DragEvent): any;
+  onFolderDragLeave(event: DragEvent): any;
+  onFolderDrop(folderId: string, event: DragEvent): any;
+  onListDragOver(event: DragEvent): any;
+  onListDragLeave(event: DragEvent): any;
+  onListDrop(event: DragEvent): any;
+  selectNote(id: string): any;
+  toggleGroup(groupId: string): any;
+  clearSearch(): any;
+  toggleFolderMenu(folderId: string): any;
+  setFilter(filter: string): any;
+  selectTag(tag: string): any;
+  isPinned(note: Note): boolean;
+  togglePin(note: Note): any;
+  getNoteTags(note: Note): string[];
+  setNoteBgColor(color: string): any;
+  submitTagInput(): any;
+  startRenameFolder(folderId: string, currentName: string, event: Event): any;
+  confirmRenameFolder(): any;
+  toggleDropdown(): any;
+  toggleInfoMenu(): any;
+  toggleFormatMenu(): any;
+  toggleMediaMenu(): any;
+  setFormat(type: 'paragraph' | 'h1' | 'h2' | 'h3'): any;
+  duplicateNote(note: Note): any;
+  handleNewFolder(): any;
+  confirmNewFolder(): any;
+  toggleExpandAll(): any;
+  closeNoteTab(noteId: string): any;
+  getNoteById(id: string): Note | undefined;
+  handleKeyboardShortcuts(event: KeyboardEvent): any;
+  onDocumentClick(event: MouseEvent): any;
+  updateNoteTitle(title: string): any;
+  checkAiTitleCommand(title: string): any;
+  deleteCurrentNote(): any;
+  requestDeleteNote(noteId: string): any;
+  confirmDeleteNote(): any;
+  requestDeleteFolder(folderId: string, event: Event): any;
+  confirmDeleteFolder(): any;
+  addTag(tag: string): any;
+  removeTag(tag: string): any;
+  setLink(): any;
+  confirmSetLink(): any;
+  exportNote(): any;
+  addImage(): any;
+  addYoutube(): any;
+  confirmAddYoutube(): any;
+  insertTable(): any;
+  confirmAddImage(): any;
+  downloadExport(format: 'pdf' | 'md' | 'html'): any;
+  closeModal(): any;
+  toggleAssistant(): any;
+  sendAiMessage(text: string): any;
+  clearAiChat(): any;
+}
+```
+
+---
+
+## File: /libs/feature-novels/src/lib/write/write.component.ts
+
+### Class: WriteComponent
+```typescript
+class WriteComponent {
   store: any;
   viewMode: any;
+  selectedType: any;
   statusFilter: any;
   sortBy: any;
-  statusDropdownOpen: any;
+  searchQuery: any;
   sortDropdownOpen: any;
   showAddModal: any;
   addModalSubmitting: any;
   newNovel: any;
-  novelIcons: any;
-  novelMenuOpen: any;
   showDeleteModal: any;
   novelToDelete: any;
-  novels: any;
+  novelMenuOpen: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  tableColumns: EnvTableColumn[];
+  tableActions: EnvTableAction[];
+  writingTypes: { id: WritingType; label: string; defaultWords: number; defaultIcon: string }[];
+  allStatusItems: any;
+  novelIcons: any;
+  allTypeStats: any;
+  statusCounts: any;
+  hasActiveFilters: any;
   totalWords: any;
   activeDrafts: any;
   avgCompletion: any;
-  toggleView(mode: 'LIST' | 'GRID'): any;
-  toggleStatusDropdown(): any;
-  toggleSortDropdown(): any;
+  filteredNovels: any;
+  tableRows: any;
+  getTypeMeta(type: string): any;
+  getStatusMeta(status: string): any;
+  readingTime(wordCount: number): string;
+  getWritingTypeLabel(type: string): string;
+  getProgressColor(status: string): string;
+  formatDate(iso: string): string;
+  clearFilters(): any;
+  selectType(type: WritingType | ''): any;
   selectStatus(status: 'ALL' | 'DRAFTING' | 'PLANNING' | 'REVISING' | 'PUBLISHED'): any;
+  toggleSortDropdown(): any;
   selectSort(sort: 'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'): any;
-  getStatusIcon(status: string): string;
-  getStatusLabel(status: string): string;
-  getSortIcon(sort: string): string;
-  getSortLabel(sort: string): string;
-  getStatusColor(status: string): any;
-  getProgressColor(status: string): any;
+  getSortLabel(): string;
+  handleTableAction(event: any): any;
+  handleTableSort(event: any): any;
   openNovel(id: string): any;
   toggleNovelMenu(novelId: string, e: Event): any;
   closeNovelMenu(): any;
+  duplicateNovel(novel: Novel, e: Event): any;
   openDeleteModal(novel: Novel, e: Event): any;
   cancelDeleteNovel(): any;
   confirmDeleteNovel(): any;
   openAddModal(): any;
   closeAddModal(): any;
-  updateNewNovel(key: 'title' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number): any;
+  updateNewNovel(key: 'title' | 'writingType' | 'status' | 'genre' | 'targetWordCount' | 'icon', value: string | number): any;
   addNovel(): any;
+  toggleAssistant(): any;
+  clearAiChat(): any;
+  sendAiMessage(text: string): any;
   onDocumentClick(event: MouseEvent): any;
   onKeyDown(e: KeyboardEvent): any;
 }
@@ -1968,6 +2537,7 @@ class TasksComponent {
   focusMode: any;
   focusedTask: any;
   showTaskDetails: any;
+  selectedTaskId: any;
   selectedTaskForDetails: any;
   editingTaskDetails: any;
   editedTaskTitle: any;
@@ -1976,6 +2546,16 @@ class TasksComponent {
   editedTaskDue: any;
   editedTaskList: any;
   editedTaskLabels: any;
+  editedTaskDueTime: any;
+  editedTaskReminders: any;
+  editedTaskRecurring: any;
+  editedTaskRecurringPattern: any;
+  detailsLabelInput: any;
+  newSubtaskTitle: any;
+  editingSubtaskId: any;
+  editingSubtaskTitle: any;
+  showReminderPicker: any;
+  showNewTaskReminderPicker: any;
   pomodoroActive: any;
   pomodoroTime: any;
   pomodoroTask: any;
@@ -1984,8 +2564,7 @@ class TasksComponent {
   timelineZoom: any;
   selectedTasks: any;
   bulkActionMode: any;
-  actionHistory: any;
-  historyIndex: any;
+  collapsedSubtasks: any;
   theme: any;
   uploadingFiles: any;
   filesToUpload: any;
@@ -2012,6 +2591,7 @@ class TasksComponent {
   newTaskTitle: any;
   newTaskDescription: any;
   newTaskPriority: any;
+  newTaskStatus: any;
   newTaskDue: any;
   newTaskDueTime: any;
   newTaskList: any;
@@ -2025,10 +2605,20 @@ class TasksComponent {
   newTaskRecurringPattern: any;
   newTaskSubtasks: any;
   newSubtaskInput: any;
-  showAdvancedOptions: any;
+  newSubtaskPriority: any;
+  newTaskShowAdvanced: any;
+  detailsShowAdvanced: any;
   newTaskDependencies: any;
+  newTaskDependencyInput: any;
+  showDependencySearch: any;
+  newTaskHours: any;
+  newTaskStartDate: any;
+  newTaskRecurringInterval: any;
+  newTaskRecurringEndDate: any;
+  newTaskTemplateOpen: any;
   showDatePicker: any;
   datePickerDate: any;
+  datePickerContext: any;
   showFolderDropdown: any;
   showCreateFolder: any;
   newFolderName: any;
@@ -2039,13 +2629,17 @@ class TasksComponent {
   availableLists: any;
   deleteModalOpen: any;
   taskPendingDelete: any;
+  bulkDeleteModalOpen: any;
   sidebarItems: any;
   filtersActive: any;
   viewTitle: any;
   viewSubtitle: any;
-  selectedFilter: any;
+  labelSuggestions: any;
+  dependencySuggestions: any;
+  nextOccurrences: any;
   metricFilter: any;
   currentDate: any;
+  selectedCalendarDay: any;
   todayGroupExpanded: any;
   upcomingGroupExpanded: any;
   noDueDateGroupExpanded: any;
@@ -2053,9 +2647,20 @@ class TasksComponent {
   completedTasksCount: any;
   activeTasksCount: any;
   priorityTasksCount: any;
+  selectedDayLabel: any;
+  selectedDayTasks: any;
+  selectedDayTotal: any;
+  selectedDayCompleted: any;
+  selectedDayActive: any;
+  selectedDayToday: any;
+  selectedDayPriority: any;
+  calendarDaySubtasks: any;
+  todaySubtasks: any;
+  upcomingSubtasks: any;
   inboxTasks: any;
   viewTasks: any;
   filteredTasks: any;
+  flatListItems: any;
   allVisibleTasksCompleted: any;
   calendarMonth: any;
   calendarDays: any;
@@ -2065,27 +2670,39 @@ class TasksComponent {
   activeTasksCountSidebar: any;
   datePickerPosition: any;
   folderDropdownPosition: any;
-  kanbanDraggedTask: any;
-  calendarViewDate: any;
+  datePickerDays: any;
+  datePickerMonth: any;
+  TASK_TEMPLATES: any;
+  REMINDER_PRESETS: any;
   pomodoroInterval: any;
   allLabels: any;
-  canUndo: any;
-  canRedo: any;
   visibleTasks: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  showDetailsAi: any;
+  detailsAiLoading: any;
+  detailsAiMessages: any;
+  detailsAiInput: any;
+  detailsAiSuggestions: any;
+  aiSuggestions: any;
+  toggleSubtasksCollapse(taskId: string, event: Event): any;
+  isSubtasksCollapsed(taskId: string): boolean;
   getFolderTaskCount(folderName: string): number;
   selectFolderInSidebar(folderName: string): any;
   createFolderInSidebar(): any;
   openNewTaskDialog(): any;
-  closeNewTaskDialog(): any;
+  closeNewTaskDialog(force: any): any;
   setNewTaskPriority(priority: Task['priority']): any;
   toggleNewTaskTodayDue(): any;
   setQuickAddMode(mode: 'do-now' | 'do-later'): any;
   toggleNewTaskReminder(): any;
+  addNewTaskReminderPreset(value: string): any;
+  removeNewTaskReminderPreset(value: string): any;
   addReminderTime(): any;
   removeReminderTime(index: number): any;
   snoozeReminder(index: number, minutes: number): any;
   addNewTaskLabel(label: string): any;
-  getLabelSuggestions(): string[];
   hideLabelAutocomplete(): any;
   removeNewTaskLabel(label: string): any;
   requestDeleteTask(task: Task, event: Event): any;
@@ -2099,15 +2716,21 @@ class TasksComponent {
   closeImagePreview(): any;
   addSubtaskToNew(): any;
   removeSubtask(index: number): any;
+  addNewTaskDependency(taskId: string): any;
+  removeNewTaskDependency(taskId: string): any;
+  getDependencyTitle(taskId: string): string;
+  hideDependencySearch(): any;
   onSidebarActiveChange(id: string): any;
+  cycleTaskPriority(task: Task, event: Event): any;
   navigateMonth(direction: 'prev' | 'next'): any;
-  onCalendarDayClick(day: { day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean }): any;
-  toggleDatePicker(event: Event): any;
+  onCalendarDayClick(day: { day: number; isCurrentMonth: boolean; isToday: boolean; isActive: boolean; isSelected?: boolean }): any;
+  toggleDatePicker(event: Event, context: 'new' | 'details'): any;
   selectDate(day: number, isCurrentMonth: boolean): any;
+  selectQuickDate(option: 'today' | 'tomorrow' | 'next-week'): any;
+  clearTaskDue(): any;
+  updateDetailsTime(time: string): any;
   updateDueTime(time: string): any;
   navigateDatePickerMonth(direction: 'prev' | 'next'): any;
-  getDatePickerDays(): any;
-  getDatePickerMonth(): any;
   toggleFolderDropdown(event: Event): any;
   selectFolder(folderName: string): any;
   toggleCreateFolder(): any;
@@ -2125,7 +2748,9 @@ class TasksComponent {
   getDateInDays(days: number): string;
   parseDate(month: string, day: string, year: string): string;
   handleQuickAdd(): any;
+  jumpToToday(): any;
   onMetricClick(metric: 'today' | 'completed' | 'active' | 'priority'): any;
+  hasIncompleteSubtasks(task: Task): boolean;
   toggleTaskStatus(task: Task): any;
   onQuickComplete(task: Task): any;
   deleteTask(task: Task): any;
@@ -2133,25 +2758,21 @@ class TasksComponent {
   toggleAllVisibleTasksStatus(): any;
   toggleTaskGroup(group: 'today' | 'upcoming' | 'noDueDate'): any;
   isGroupExpanded(group: 'today' | 'upcoming' | 'noDueDate'): boolean;
-  getKanbanTasks(status: Task['status']): Task[];
-  onKanbanDragStart(event: DragEvent, task: Task): any;
-  onKanbanDrop(event: DragEvent, targetStatus: Task['status']): any;
-  onKanbanDragOver(event: DragEvent): any;
-  onKanbanDragLeave(event: DragEvent): any;
-  navigateCalendarView(direction: 'prev' | 'next'): any;
-  getCalendarViewMonth(): string;
-  getCalendarViewDays(): any;
-  getTasksForDate(date: Date): Task[];
   extractTime(dueString: string | undefined): string;
   getCompletedSubtasks(task: Task): number;
   getDependencyTitles(task: Task): string[];
   isTaskBlocked(task: Task): boolean;
   addSubtask(parentTask: Task, subtaskTitle: string): any;
+  startEditSubtask(subtask: Task): any;
+  saveEditSubtask(parentTask: Task, subtask: Task): any;
+  deleteSubtask(parentTask: Task, subtaskId: string): any;
   focusTask(task: Task): any;
   exitFocusMode(): any;
   openTaskDetails(task: Task): any;
   closeTaskDetails(): any;
   toggleEditTaskDetails(): any;
+  addDetailsReminder(value: string): any;
+  removeDetailsReminder(value: string): any;
   saveTaskDetails(): any;
   deleteTaskFromDetails(): any;
   completeTaskFromDetails(): any;
@@ -2159,6 +2780,7 @@ class TasksComponent {
   addLabelToEdit(event: Event): any;
   removeLabelFromEdit(label: string): any;
   toggleSubtaskStatus(parentTask: Task, subtask: Task): any;
+  toggleCalendarSubtaskStatus(subtask: Task, event: Event): any;
   isAttachmentImage(attachment: { name: string; type: string }): boolean;
   startPomodoro(task: Task): any;
   stopPomodoro(): any;
@@ -2175,6 +2797,9 @@ class TasksComponent {
   dismissError(): any;
   ngOnDestroy(): any;
   createRecurringTask(baseTask: Task, pattern: 'daily' | 'weekly' | 'monthly' | 'yearly', interval: number): any;
+  onNewTaskTitleBlur(): any;
+  applyTemplate(id: string): any;
+  scheduleRemindersForTask(task: Task): any;
   calculateNextDue(currentDue: string | undefined, pattern: string, interval: number): string;
   getLabelColor(label: string): string;
   navigateTimeline(direction: 'prev' | 'next'): any;
@@ -2185,6 +2810,7 @@ class TasksComponent {
   getDateWeekday(date: Date): string;
   isToday(date: Date): boolean;
   getTaskTimelineBar(task: Task): { startPercent: number; widthPercent: number; startDate: string; endDate: string } | null;
+  isOverdue(task: { due?: string; status?: string }): boolean;
   parseDateFromString(dateStr: string): Date | null;
   onFileSelected(event: Event): any;
   removeFileToUpload(index: number): any;
@@ -2195,18 +2821,189 @@ class TasksComponent {
   clearSelection(): any;
   bulkCompleteTasks(): any;
   bulkDeleteTasks(): any;
+  confirmBulkDelete(): any;
+  cancelBulkDelete(): any;
   bulkChangePriority(priority: Task['priority']): any;
-  addToHistory(type: string, task: Task, previousState: Partial<Task>): any;
-  undo(): any;
-  redo(): any;
   onScroll(event: Event): any;
   toggleTheme(): any;
   setFontSize(size: 'small' | 'medium' | 'large'): any;
   renderMarkdown(text: string): string;
   getTaskById(id: string): Task | undefined;
-  getAvailableDependencyTasks(): Task[];
+  getAvailableDependencyTasks(excludeId: string): Task[];
   addDependency(taskId: string): any;
   removeDependency(taskId: string): any;
+  toggleAssistant(): any;
+  sendAiMessage(text: string): any;
+  clearAiChat(): any;
+  sendDetailsAiMessage(text: string): any;
+  clearDetailsAiChat(): any;
+}
+```
+
+---
+
+## File: /libs/feature-vault/src/lib/vault/vault.component.ts
+
+### Class: VaultComponent
+```typescript
+class VaultComponent {
+  vaultStore: any;
+  typeOptions: any;
+  searchQuery: any;
+  selectedType: any;
+  selectedScope: any;
+  sortCol: any;
+  sortDir: any;
+  formMode: any;
+  newCredName: any;
+  newCredType: any;
+  newCredUsername: any;
+  newCredValue: any;
+  newCredUrl: any;
+  newCredNotes: any;
+  newProjectId: any;
+  editingId: any;
+  editName: any;
+  editType: any;
+  editUsername: any;
+  editValue: any;
+  editUrl: any;
+  editNotes: any;
+  editProjectId: any;
+  visibleCreds: any;
+  decryptedSecrets: any;
+  copiedId: any;
+  deleteConfirmId: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  activeType: any;
+  usernameLabel: any;
+  valueLabel: any;
+  urlLabel: any;
+  allTypeStats: any;
+  sidebarNavItems: any;
+  countByScope: any;
+  hasActiveFilters: any;
+  filteredCredentials: any;
+  tableColumns: EnvTableColumn[];
+  tableActions: EnvTableAction[];
+  tableRows: any;
+  onNavItemClick(id: string): any;
+  handleTableAction(event: EnvTableActionEvent): any;
+  handleTableSort(event: EnvTableSortEvent): any;
+  setSort(col: 'name' | 'type' | 'createdAt'): any;
+  clearFilters(): any;
+  openAddForm(): any;
+  openEditForm(cred: Credential): any;
+  closeForm(): any;
+  setFormType(type: Credential['type']): any;
+  addCredential(): any;
+  saveEdit(): any;
+  confirmDelete(id: string): any;
+  toggleCredVisibility(id: string): any;
+  copyCred(id: string, cipher: string): any;
+  toggleAssistant(): any;
+  clearAiChat(): any;
+  sendAiMessage(text: string): any;
+  getTypeMeta(type: string): any;
+  formatDate(iso: string): string;
+}
+```
+
+---
+
+## File: /libs/feature-vendor/src/lib/vendor/vendor.component.ts
+
+### Class: VendorComponent
+```typescript
+class VendorComponent {
+  subscriptionStore: any;
+  categoryOptions: any;
+  currencies: any;
+  vendorNames: any;
+  searchQuery: any;
+  selectedStatus: any;
+  selectedCycle: any;
+  selectedCategory: any;
+  sortCol: any;
+  sortDir: any;
+  formMode: any;
+  editingId: any;
+  formName: any;
+  formCategory: any;
+  formProjectId: any;
+  formPrice: any;
+  formCurrency: any;
+  formCycle: any;
+  formRenewal: any;
+  formStatus: any;
+  formNotes: any;
+  showAdvanced: any;
+  presetApplied: any;
+  showVendorDropdown: any;
+  vendorHighlightIdx: any;
+  POPULAR_KEYS: any;
+  vendorSuggestions: any;
+  deleteConfirmId: any;
+  showImportModal: any;
+  importText: any;
+  viewingSub: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  canSave: any;
+  activeCount: any;
+  pausedCount: any;
+  cancelledCount: any;
+  countByCategory: any;
+  hasActiveFilters: any;
+  defaultCurrency: any;
+  upcomingBanner: any;
+  importPreviewCount: any;
+  filteredSubs: any;
+  tableColumns: EnvTableColumn[];
+  tableActions: EnvTableAction[];
+  tableRows: any;
+  handleTableAction(event: EnvTableActionEvent): any;
+  handleTableSort(event: EnvTableSortEvent): any;
+  toggleStatusFilter(status: string): any;
+  toggleCycleFilter(cycle: 'monthly' | 'yearly'): any;
+  toggleCategoryFilter(cat: string): any;
+  clearFilters(): any;
+  setSort(col: 'name' | 'price' | 'renewalDate'): any;
+  openAddForm(): any;
+  openEditForm(sub: Subscription): any;
+  closeForm(): any;
+  saveForm(): any;
+  saveAndAddAnother(): any;
+  doDelete(id: string): any;
+  cycleStatus(sub: Subscription): any;
+  onNameChange(name: string): any;
+  selectVendor(v: { key: string; displayName: string; category: string; billingCycle: 'monthly' | 'yearly'; currency: string }): any;
+  onVendorBlur(): any;
+  onVendorKeydown(e: KeyboardEvent): any;
+  categoryIcon(cat: string): string;
+  setCycle(cycle: 'monthly' | 'yearly'): any;
+  rotateCurrency(): any;
+  addRenewalOffset(months: number): any;
+  toggleAdvanced(): any;
+  parseAndImport(): any;
+  daysUntil(dateStr: string): number | null;
+  formatDate(iso: string): string;
+  avatarBg(name: string): string;
+  statusMeta(status: string | undefined | null): { label: string; color: string; bg: string };
+  monthlyCost(sub: Subscription): string;
+  yearlyCost(sub: Subscription): string;
+  openDetails(sub: Subscription): any;
+  closeDetails(): any;
+  editFromDetails(sub: Subscription): any;
+  currencySymbol(currency: string | undefined): string;
+  toggleAssistant(): any;
+  clearAiChat(): any;
+  sendAiMessage(text: string): any;
 }
 ```
 
@@ -2221,33 +3018,50 @@ class WorkspaceComponent {
   router: any;
   userService: any;
   notificationService: any;
+  aiService: any;
+  meetingsService: any;
+  researchService: any;
   inputText: any;
   listening: any;
   liveTranscript: any;
   confidence: any;
-  activeFilter: any;
+  isProcessing: any;
+  lastCreated: any;
   attachments: any;
   cpuUsage: any;
   latency: any;
-  activeProjects: any;
-  upcomingTasks: any;
-  contextStream: any;
-  stats: any;
   systemTime: any;
+  sidebarError: any;
+  conversationHistory: any;
+  conversationState: any;
+  partialData: any;
+  pendingIntent: any;
+  pendingPlan: any;
+  examples: { label: string; icon: string; text: string }[];
+  isInConversation: any;
+  inputPlaceholder: any;
+  overdueTasks: any;
+  dueTodayTasks: any;
+  nextMeeting: any;
+  meetingCountdown: any;
   linkedEntities: any;
   userName: any;
+  sidebarTasksCompleted: any;
+  sidebarTasksDashOffset: any;
+  sidebarActivityItems: any;
   handleKeyboard(event: KeyboardEvent): any;
   toggleVoice(): any;
   executeCommand(): any;
-  handleNavigationCommand(command: string): any;
+  clearConversation(): any;
+  getGreeting(): string;
+  navigateToCreated(): any;
+  setExampleText(text: string): any;
+  toggleSidebarTask(task: Task, event: Event): any;
+  navigateSidebarItem(item: SidebarActivityItem, event: Event): any;
+  addSubtask(task: Task, event: Event): any;
   clearCommand(): any;
   triggerFileUpload(): any;
-  handleFiles(files: File[]): any;
   removeAttachment(index: number): any;
-  toggleFilter(): any;
-  openItem(item: any): any;
-  openTask(task: any, event: Event): any;
-  getGreeting(): string;
 }
 ```
 
@@ -2292,6 +3106,36 @@ class AddNewModalComponent {
   handleKeydown(event: KeyboardEvent): any;
   trackByOptionId(index: number, option: AddNewOption): string;
   trackByGroupLabel(index: number, group: { label: string }): string;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/ai-assistant-panel/ai-assistant-panel.component.ts
+
+### Class: AiAssistantPanelComponent
+```typescript
+class AiAssistantPanelComponent {
+  title: any;
+  placeholder: any;
+  suggestions: any;
+  messages: any;
+  loading: any;
+  send: any;
+  cleared: any;
+  closed: any;
+  inputText: any;
+  onSend(): any;
+  onSuggestionClick(text: string): any;
+  onKeydown(e: KeyboardEvent): any;
+}
+```
+
+### Interface: AiPanelMessage
+```typescript
+interface AiPanelMessage {
+  role: 'user' | 'assistant';
+  text: string;
 }
 ```
 
@@ -2343,6 +3187,24 @@ type ButtonSize = 'sm' | 'md' | 'lg';
 
 ---
 
+## File: /libs/ui/src/lib/confirm-dialog/confirm-dialog.component.ts
+
+### Class: ConfirmDialogComponent
+```typescript
+class ConfirmDialogComponent {
+  isOpen: any;
+  title: any;
+  icon: any;
+  variant: 'danger' | 'success';
+  confirmLabel: any;
+  cancelLabel: any;
+  confirmed: any;
+  cancelled: any;
+}
+```
+
+---
+
 ## File: /libs/ui/src/lib/empty-state/empty-state.component.ts
 
 ### Class: EmptyStateComponent
@@ -2352,6 +3214,54 @@ class EmptyStateComponent {
   title: any;
   description: any;
   compact: any;
+  ctaLabel: any;
+  ctaIcon: any;
+  ctaClicked: any;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/feature-sidebar/feature-sidebar.component.ts
+
+### Class: FeatureSidebarComponent
+```typescript
+class FeatureSidebarComponent {
+  title: any;
+  subtitle: any;
+  navItems: FeatureSidebarNavItem[];
+  activeNavId: any;
+  navItemClick: any;
+}
+```
+
+### Interface: FeatureSidebarNavItem
+```typescript
+interface FeatureSidebarNavItem {
+  id: string;
+  label: string;
+  icon?: string;
+  iconColor?: string;
+  dotColor?: string;
+  count?: number;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/floating-ai-button/floating-ai-button.component.ts
+
+### Class: FloatingAiButtonComponent
+```typescript
+class FloatingAiButtonComponent {
+  isOpen: any;
+  prompt: any;
+  messages: any;
+  isLoading: any;
+  toggle(): any;
+  close(): any;
+  send(): any;
+  onKeydown(event: KeyboardEvent): any;
 }
 ```
 
@@ -2364,7 +3274,7 @@ class EmptyStateComponent {
 class IconButtonComponent {
   icon: any;
   variant: IconButtonVariant;
-  size: 28 | 32;
+  size: 20 | 24 | 28 | 32 | 34 | 36;
   disabled: any;
   type: 'button' | 'submit' | 'reset';
   active: any;
@@ -2376,7 +3286,7 @@ class IconButtonComponent {
 
 ### Type: IconButtonVariant
 ```typescript
-type IconButtonVariant = 'primary' | 'ghost' | 'danger';
+type IconButtonVariant = 'primary' | 'ghost' | 'danger' | 'borderless';
 ```
 
 ---
@@ -2398,6 +3308,36 @@ class InputComponent {
   registerOnTouched(fn: () => void): void;
   setDisabledState(isDisabled: boolean): void;
   onInput(e: Event): any;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/keyboard-shortcuts/keyboard-shortcuts.component.ts
+
+### Class: KeyboardShortcutsComponent
+```typescript
+class KeyboardShortcutsComponent {
+  isOpen: any;
+  groups: ShortcutGroup[];
+  onKey(event: KeyboardEvent): any;
+  toggle(): any;
+  open(): any;
+  close(): any;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/keyboard-shortcuts/keyboard-shortcuts.service.ts
+
+### Class: KeyboardShortcutsService
+```typescript
+class KeyboardShortcutsService {
+  isOpen: any;
+  open(): any;
+  close(): any;
+  toggle(): any;
 }
 ```
 
@@ -2440,6 +3380,7 @@ class ModalComponent {
 class NotificationCenterComponent {
   isOpen: any;
   activeTab: any;
+  clearConfirm: any;
   notifications: any;
   unreadCount: any;
   filteredNotifications: any;
@@ -2451,12 +3392,40 @@ class NotificationCenterComponent {
   markAllAsRead(): any;
   deleteNotification(id: string): any;
   clearAll(): any;
+  doClearAll(): any;
   clearRead(): any;
   handleNotificationClick(notification: Notification): any;
   handleAction(notification: Notification, event: Event): any;
   getDefaultIcon(type: NotificationType): string;
   getRelativeTime(date: Date): string;
-  handleEscape(event: KeyboardEvent): any;
+  handleEscape(event: Event): any;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/onboarding/onboarding.component.ts
+
+### Class: OnboardingComponent
+```typescript
+class OnboardingComponent {
+  isOpen: any;
+  step: any;
+  totalSteps: any;
+  selectedUseCase: any;
+  selectedTheme: any;
+  selectedAiProvider: any;
+  useCases: { id: UseCase; label: string; icon: string; desc: string }[];
+  themes: { id: string; label: string; icon: string }[];
+  aiProviders: { id: AiProvider; label: string; icon: string }[];
+  ngOnInit(): any;
+  next(): any;
+  back(): any;
+  selectUseCase(id: UseCase): any;
+  selectTheme(id: string): any;
+  selectAiProvider(id: AiProvider): any;
+  finish(): any;
+  skip(): any;
 }
 ```
 
@@ -2488,6 +3457,38 @@ class ProfileEditorComponent {
 
 ---
 
+## File: /libs/ui/src/lib/profile-manager/profile-manager.component.ts
+
+### Class: ProfileManagerComponent
+```typescript
+class ProfileManagerComponent {
+  workspaceService: any;
+  workspaces: any;
+  activeWorkspace: any;
+  userName: any;
+  isAddModalOpen: any;
+  newProfileName: any;
+  isEditModalOpen: any;
+  editProfileId: any;
+  editProfileName: any;
+  editProfileColor: any;
+  isDeleteModalOpen: any;
+  profileToDelete: any;
+  openAddModal(): any;
+  cancelAdd(): any;
+  confirmAdd(): any;
+  switchWorkspace(id: string): any;
+  openEditModal(wp: any): any;
+  cancelEdit(): any;
+  confirmEdit(): any;
+  openDeleteModal(id: string): any;
+  cancelDelete(): any;
+  confirmDelete(): any;
+}
+```
+
+---
+
 ## File: /libs/ui/src/lib/profile-menu/profile-menu.component.ts
 
 ### Class: ProfileMenuComponent
@@ -2498,6 +3499,16 @@ class ProfileMenuComponent {
   userInitials: any;
   onOpenProfile: any;
   onOpenSettings: any;
+  workspaceService: any;
+  workspaces: any;
+  activeWorkspace: any;
+  isAddProfileModalOpen: any;
+  newProfileName: any;
+  switchWorkspace(id: string): any;
+  addWorkspace(): any;
+  confirmAddWorkspace(): any;
+  cancelAddWorkspace(): any;
+  manageProfiles(): any;
   open(): any;
   close(): any;
   toggle(): any;
@@ -2513,7 +3524,7 @@ class ProfileMenuComponent {
   logout(): any;
   formatNumber(num: number): string;
   getMemberSince(): string;
-  handleEscape(event: KeyboardEvent): any;
+  handleEscape(event: Event): any;
 }
 ```
 
@@ -2526,16 +3537,34 @@ class ProfileMenuComponent {
 class QuickFindComponent {
   isOpen: any;
   searchQuery: any;
+  activeFilter: any;
   selectedIndex: any;
-  results: any;
-  handleKeyboardShortcut(event: KeyboardEvent): any;
+  semanticResults: any;
+  isSearchingAI: any;
+  aiAnswer: any;
+  isAiStreaming: any;
+  aiSources: any;
+  typeMeta: any;
+  filterTypes: FilterType[];
+  isCommandMode: any;
+  isAiMode: any;
+  flatResults: any;
+  groups: any;
+  navList: any;
+  totalCount: any;
+  handleKeyboard(event: KeyboardEvent): any;
   open(): any;
   close(): any;
-  performSearch(query: string): any;
-  showRecentItems(): any;
+  clearQuery(): any;
+  setFilter(f: FilterType): any;
+  onInput(event: Event): any;
+  submitAiQuery(): any;
   selectResult(result: QuickFindResult | undefined): any;
-  onBackdropClick(): any;
-  onModalClick(event: Event): any;
+  getTypeColor(type: ResultType): string;
+  getTypeLabel(type: ResultType): string;
+  getFilterMeta(): { label: string; icon: string; color: string };
+  getSemanticGlobalIndex(itemIndex: number): number;
+  getGlobalIndex(group: ResultGroup, itemIndex: number): number;
 }
 ```
 
@@ -2549,6 +3578,7 @@ class SettingsModalComponent {
   aiService: any;
   isOpen: any;
   activeSection: any;
+  resetConfirm: any;
   currentTheme: any;
   fontSize: any;
   compactMode: any;
@@ -2563,9 +3593,13 @@ class SettingsModalComponent {
   soundEffects: any;
   dailySummary: any;
   analytics: any;
+  versionHistoryLimit: any;
   aiProvider: any;
   aiModel: any;
   aiKey: any;
+  showApiKey: any;
+  testStatus: any;
+  testMessage: any;
   sections: SettingsSection[];
   themes: ThemeOption[];
   aiProviders: AiProviderOption[];
@@ -2587,9 +3621,155 @@ class SettingsModalComponent {
   toggleSoundEffects(): any;
   toggleDailySummary(): any;
   toggleAnalytics(): any;
+  testConnection(): any;
+  getApiKeyPlaceholder(): string;
   setAiProvider(provider: AiProvider): any;
+  setVersionHistoryLimit(event: Event): any;
   saveSettings(): any;
   resetToDefaults(): any;
+  doResetToDefaults(): any;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/skeleton-loader/skeleton-loader.component.ts
+
+### Class: SkeletonLoaderComponent
+```typescript
+class SkeletonLoaderComponent {
+  variant: 'list' | 'card';
+  rows: any;
+}
+```
+
+---
+
+## File: /libs/ui/src/lib/table/table.component.ts
+
+### Class: TableComponent
+```typescript
+class TableComponent {
+  columns: EnvTableColumn[];
+  rows: EnvTableRow[];
+  rowIdKey: any;
+  tabs: EnvTableTab[];
+  activeTab: any;
+  showSearch: any;
+  searchPlaceholder: any;
+  searchValue: any;
+  showSortFilter: any;
+  showToolbar: any;
+  actions: EnvTableAction[];
+  showPagination: any;
+  totalEntries: any;
+  currentPage: any;
+  pageSize: any;
+  pageSizeOptions: number[];
+  loading: any;
+  tabChange: any;
+  searchChange: any;
+  sortChange: any;
+  selectionChange: any;
+  actionClick: any;
+  bulkActionClick: any;
+  pageChange: any;
+  pageSizeChange: any;
+  rowClick: any;
+  sortByClick: any;
+  filterClick: any;
+  _page: any;
+  _pageSize: any;
+  sortKey: any;
+  sortDir: any;
+  selectedIds: any;
+  openMenuId: any;
+  ngOnChanges(changes: SimpleChanges): any;
+  visiblePages(): (number | '...')[];
+  isEllipsis(p: number | '...'): p is '...';
+  padNum(n: number): string;
+  isSelected(row: EnvTableRow): any;
+  toggleSelect(row: EnvTableRow): any;
+  toggleAll(): any;
+  onSort(col: EnvTableColumn): any;
+  toggleMenu(row: EnvTableRow, e: Event): any;
+  isMenuOpen(row: EnvTableRow): any;
+  onAction(row: EnvTableRow, actionKey: string): any;
+  goToPage(page: number): any;
+  onPageSizeChange(value: string): any;
+  getAvatarCell(row: EnvTableRow, col: EnvTableColumn): { name: string; avatar?: string };
+  getInitials(name: string): string;
+  getAvatarBg(row: EnvTableRow, col: EnvTableColumn): string;
+  getBadge(row: EnvTableRow, col: EnvTableColumn): { label: string; dotColor: string; bgColor: string; textColor: string };
+  clearSelection(): any;
+  onBulkAction(actionKey: string): any;
+  onDocClick(): any;
+}
+```
+
+### Interface: EnvTableColumn
+```typescript
+interface EnvTableColumn {
+  key: string;
+  header: string;
+  type?: 'text' | 'avatar-text' | 'badge';
+  sortable?: boolean;
+  badgeMap?: Record<string, { label?: string; dotColor: string; bgColor: string; textColor: string }>;
+}
+```
+
+### Interface: EnvTableTab
+```typescript
+interface EnvTableTab {
+  key: string;
+  label: string;
+  count?: number;
+}
+```
+
+### Interface: EnvTableAction
+```typescript
+interface EnvTableAction {
+  key: string;
+  label: string;
+  icon?: string;
+  danger?: boolean;
+  bulk?: boolean;
+}
+```
+
+### Interface: EnvTableSortEvent
+```typescript
+interface EnvTableSortEvent {
+  key: string;
+  direction: 'asc' | 'desc';
+}
+```
+
+### Interface: EnvTableActionEvent
+```typescript
+interface EnvTableActionEvent {
+  row: EnvTableRow;
+  actionKey: string;
+}
+```
+
+### Type: EnvTableRow
+```typescript
+type EnvTableRow = Record<string, any>;
+```
+
+---
+
+## File: /libs/ui/src/lib/toast/toast.component.ts
+
+### Class: ToastComponent
+```typescript
+class ToastComponent {
+  toasts: any;
+  iconFor(type: Notification['type']): string;
+  show(n: Notification): any;
+  dismiss(id: string): any;
 }
 ```
 
@@ -2605,6 +3785,148 @@ class Ui {
 
 ---
 
+## File: /apps/admin/src/app/pages/ai-settings/ai-settings.component.ts
+
+### Class: AiSettingsComponent
+```typescript
+class AiSettingsComponent {
+  providers: AiProvider[];
+  provider: any;
+  modelName: any;
+  aiEnabled: any;
+  showKey: any;
+  toast: any;
+  toastTimer?: ReturnType<typeof setTimeout>;
+  saving: any;
+  testing: any;
+  loading: any;
+  newKey: any;
+  hasExistingKey: any;
+  keyEditing: any;
+  modelPlaceholder: any;
+  needsKey: any;
+  ngOnInit(): any;
+  startEditKey(): any;
+  cancelEditKey(): any;
+  save(): any;
+  testConnection(): any;
+  onProviderChange(value: string): any;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/pages/audit-log/audit-log.component.ts
+
+### Class: AuditLogComponent
+```typescript
+class AuditLogComponent {
+  entries: any;
+  loading: any;
+  ngOnInit(): any;
+  meta(action: string): any;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/pages/dashboard/dashboard.component.ts
+
+### Class: DashboardComponent
+```typescript
+class DashboardComponent {
+  totalUsers: any;
+  aiRequestsToday: any;
+  activeFlagCount: any;
+  platformProvider: any;
+  recentActivity: any;
+  loading: any;
+  ngOnInit(): any;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/pages/feature-flags/feature-flags.component.ts
+
+### Class: FeatureFlagsComponent
+```typescript
+class FeatureFlagsComponent {
+  flags: any;
+  loading: any;
+  saving: any;
+  toast: any;
+  ngOnInit(): any;
+  toggle(id: string): any;
+  saveAll(): any;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/pages/login/admin-login.component.ts
+
+### Class: AdminLoginComponent
+```typescript
+class AdminLoginComponent {
+  email: any;
+  password: any;
+  loading: any;
+  error: any;
+  handleLogin(): any;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/pages/usage/usage.component.ts
+
+### Class: UsageComponent
+```typescript
+class UsageComponent {
+  dateFilter: any;
+  summary: any;
+  rows: any;
+  providerChart: any;
+  loading: any;
+  ngOnInit(): any;
+  setFilter(f: DateFilter): any;
+  exportCsv(): any;
+  formatChars(n: number): string;
+}
+```
+
+---
+
+## File: /apps/admin/src/app/pages/users/users.component.ts
+
+### Class: UsersComponent
+```typescript
+class UsersComponent {
+  PAGE_SIZE: any;
+  searchQuery: any;
+  allUsers: any;
+  loading: any;
+  currentPage: any;
+  toast: any;
+  pendingRole: any;
+  pendingStatus: any;
+  filteredUsers: any;
+  totalPages: any;
+  paginatedUsers: any;
+  pages: any;
+  ngOnInit(): any;
+  goToPage(page: number): any;
+  exportUsers(): any;
+  requestRoleChange(user: AdminUser): any;
+  requestStatusChange(user: AdminUser): any;
+  confirmRoleChange(): any;
+  confirmSuspend(): any;
+}
+```
+
+---
+
 ## File: /apps/desktop/src/app/components/activity-log/activity-log.component.ts
 
 ### Class: ActivityLogComponent
@@ -2613,6 +3935,8 @@ class ActivityLogComponent {
   searchQuery: any;
   activeFilter: any;
   expandedRowId: any;
+  userName: any;
+  userInitials: any;
   allActivities: any;
   filteredActivities: any;
   totalCount: any;
@@ -2621,6 +3945,7 @@ class ActivityLogComponent {
   setFilter(filter: 'ALL' | 'ENTRY' | 'SYSTEM' | 'SYNC' | 'AI'): any;
   updateSearch(event: Event): any;
   toggleRow(id: string): any;
+  refresh(): any;
 }
 ```
 
@@ -2676,190 +4001,29 @@ class ArticlesComponent {
 ### Class: BinComponent
 ```typescript
 class BinComponent {
-  items: any;
-  sortedItems: any;
-  trackById(index: number, item: BinItem): any;
-  formatType(type: string): string;
-  permanentlyDelete(id: string): any;
-  emptyBin(): any;
-}
-```
-
----
-
-## File: /apps/desktop/src/app/components/books/books.component.ts
-
-### Class: BooksComponent
-```typescript
-class BooksComponent {
-  booksService: any;
-  showAddModal: any;
-  newBook: any;
-  showDetailModal: any;
-  editingBook: any;
-  editedBook: any;
-  newNoteInput: any;
-  newNotePage: any;
-  showQuickActions: any;
-  showShortcutsHelp: any;
-  filteredBooks: any;
-  stats: any;
-  booksByCategory: any;
-  availableCategories: any;
-  selectedBook: any;
-  categories: BookCategory[];
-  ngOnInit(): any;
-  ngOnDestroy(): any;
-  onDocumentClick(event: MouseEvent): any;
-  onKeyDown(e: KeyboardEvent): any;
-  openAddModal(): any;
-  closeAddModal(): any;
-  addBook(): any;
-  openDetailModal(book: Book): any;
-  closeDetailModal(): any;
-  startEditing(): any;
-  cancelEditing(): any;
-  saveEditing(): any;
-  deleteBook(book: Book): any;
-  setStatus(book: Book, status: BookStatus): any;
-  addNote(): any;
-  removeNote(bookId: string, noteId: string): any;
-  toggleQuickActions(bookId: string, ev: Event): any;
-  getCategoryColor(cat: BookCategory): string;
-  getStatusIcon(status: BookStatus): string;
-  formatDate(iso: string): string;
-  formatShortDate(iso: string): string;
-  updateNewBook(key: K, value: Book[K]): any;
-  updateEditedBook(key: K, value: Book[K]): any;
-  openShortcutsHelp(): any;
-  closeShortcutsHelp(): any;
-}
-```
-
----
-
-## File: /apps/desktop/src/app/components/code-snippets/code-snippets.component.ts
-
-### Class: CodeSnippetsComponent
-```typescript
-class CodeSnippetsComponent {
-  snippetsService: any;
-  showAddModal: any;
-  newSnippet: any;
-  showDetailModal: any;
-  editingSnippet: any;
-  editedSnippet: any;
-  newTagInput: any;
-  showQuickActions: any;
-  showShortcutsHelp: any;
-  filteredSnippets: any;
-  stats: any;
-  snippetsByLang: any;
-  allTags: any;
-  selectedSnippet: any;
-  LANGS: any;
-  ngOnInit(): any;
-  ngOnDestroy(): any;
-  onDocumentClick(event: MouseEvent): any;
-  onKeyDown(e: KeyboardEvent): any;
-  openAddModal(): any;
-  closeAddModal(): any;
-  addSnippet(): any;
-  openDetailModal(snip: Snippet): any;
-  closeDetailModal(): any;
-  startEditing(): any;
-  cancelEditing(): any;
-  saveEditing(): any;
-  deleteSnippet(snip: Snippet): any;
-  copySnippet(snip: Snippet): any;
-  toggleQuickActions(id: string, ev: Event): any;
-  getLangColor(lang: SnippetLang): string;
-  getLineNumbers(content: string): number[];
-  formatRelative(iso: string): string;
-  updateNewSnippet(key: K, value: Snippet[K]): any;
-  updateEditedSnippet(key: K, value: Snippet[K]): any;
-  addTagToNew(): any;
-  removeTagFromNew(tag: string): any;
-  openShortcutsHelp(): any;
-  closeShortcutsHelp(): any;
-}
-```
-
----
-
-## File: /apps/desktop/src/app/components/daily-notes/daily-notes.component.ts
-
-### Class: DailyNotesComponent
-```typescript
-class DailyNotesComponent {
-  editor: Editor;
-  notes: any;
-  wordCount: any;
-  characterCount: any;
-  activeModal: any;
-  modalInputValue: any;
-  modalInputPlaceholder: any;
-  modalTitle: any;
-  tempNoteId: any;
-  selectedEntryId: any;
   searchQuery: any;
-  selectedFilter: any;
-  activeView: any;
-  openNotes: any;
-  noteGroups: any;
-  tagCategories: any;
-  showDropdown: any;
-  displayModalTitle: any;
-  filteredNotes: any;
-  allGroupsCollapsed: any;
-  allExpanded: any;
-  selectedNote: any;
-  allTagCategoriesExpanded: any;
-  shareBtnText: any;
-  handleEscape(event: Event): any;
-  ngOnInit(): any;
-  ngOnDestroy(): void;
-  updateNoteContent(content: string, preview: string): any;
-  handleNewNote(): any;
-  selectNote(id: string): any;
-  toggleGroup(groupId: string): any;
-  setFilter(filter: string): any;
-  isPinned(note: Note): boolean;
-  togglePin(note: Note, event: Event): any;
-  getNoteTags(note: Note): string[];
-  expandAll(): any;
-  collapseAll(): any;
-  toggleDropdown(): any;
-  handleNewFolder(): any;
-  confirmNewFolder(): any;
-  toggleExpandAll(): any;
-  closeNoteTab(noteId: string, event: Event): any;
-  getNoteById(id: string): Note | undefined;
-  onDocumentClick(event: MouseEvent): any;
-  switchView(view: 'folders' | 'tags'): any;
-  toggleTagCategory(categoryId: string): any;
-  toggleExpandAllTags(): any;
-  updateNoteTitle(title: string): any;
-  deleteCurrentNote(): any;
-  requestDeleteNote(noteId: string, event: Event): any;
-  confirmDeleteNote(): any;
-  addTag(tag: string): any;
-  removeTag(tag: string): any;
-  promptAddTag(): any;
-  confirmAddTag(): any;
-  setLink(): any;
-  confirmSetLink(): any;
-  shareNote(): any;
-  exportNote(): any;
-  showMoreOptions(): any;
-  addImage(): any;
-  addYoutube(): any;
-  confirmAddYoutube(): any;
-  insertTable(): any;
-  confirmAddImage(): any;
-  copyShareLink(): any;
-  downloadExport(format: 'pdf' | 'md' | 'html'): any;
-  closeModal(): any;
+  activeFilter: any;
+  expandedRowId: any;
+  restoringId: any;
+  confirmDialog: any;
+  allItems: any;
+  filteredItems: any;
+  totalCount: any;
+  visibleCount: any;
+  setFilter(filter: FilterType): any;
+  updateSearch(event: Event): any;
+  toggleRow(id: string): any;
+  canRestore(type: BinItemType): boolean;
+  openRestoreConfirm(id: string, title: string): any;
+  openDeleteConfirm(id: string, title: string): any;
+  openEmptyConfirm(): any;
+  cancelConfirm(): any;
+  confirmAction(): any;
+  emptyBin(): any;
+  getIconForType(type: string): string;
+  formatType(type: string): string;
+  formatDate(iso: string): string;
+  formatTime(iso: string): string;
 }
 ```
 
@@ -2906,100 +4070,85 @@ interface DataTab {
 
 ---
 
-## File: /apps/desktop/src/app/components/journals/journals.component.ts
+## File: /apps/desktop/src/app/components/knowledge/knowledge.component.ts
 
-### Class: JournalsComponent
+### Class: KnowledgeComponent
 ```typescript
-class JournalsComponent {
-  journalService: any;
-  aiService: any;
-  projects: any;
-  entries: any;
-  columns: any;
-  searchQuery: any;
-  projectSearchQuery: any;
-  selectedFilter: any;
+class KnowledgeComponent {
+  researchService: any;
   viewMode: any;
-  showEntryModal: any;
-  showProjectModal: any;
-  showSearchModal: any;
-  showProjectDropdown: any;
-  showColumnModal: any;
-  showExportModal: any;
-  showGoalsModal: any;
-  selectedSort: any;
-  selectedEntry: any;
-  editingEntry: any;
-  showAiPanel: any;
-  aiQuery: any;
-  aiResponse: any;
-  isAiLoading: any;
-  newEntryTitle: any;
-  newEntryType: any;
-  newEntryColumn: any;
-  newProjectTitle: any;
-  newColumnName: any;
-  newColumnColor: any;
-  exportFormat: any;
-  exportEntryId: any;
-  writingGoal: any;
-  writingGoalPeriod: any;
-  editor: Editor;
-  wordCount: any;
-  characterCount: any;
-  activeProject: any;
-  filteredEntries: any;
-  timelineEntries: any;
-  projectStats: any;
-  draggedEntry: { entry: JournalEntry, sourceCol: string } | null;
-  filteredProjects: any;
-  totalProjects: any;
-  totalEntries: any;
-  totalWords: any;
-  getEntriesForColumn(columnId: string): JournalEntry[];
-  ngOnInit(): any;
-  ngOnDestroy(): void;
-  updateEntryContent(content: string, preview: string): any;
-  updateEditingEntryTitle(title: string): any;
-  setLink(): any;
-  addImage(): any;
-  insertTable(): any;
-  selectProject(projectId: string): any;
-  togglePin(entryId: string, event: Event): any;
-  toggleSort(): any;
-  onDragStart(e: DragEvent, entry: JournalEntry, sourceCol: string): any;
-  onDragEnd(e: DragEvent): any;
-  onDragOver(e: DragEvent): any;
-  onDrop(e: DragEvent, targetCol: string): any;
-  openNewEntryModal(column: string): any;
-  createEntry(): any;
-  openEntryDetail(entryId: string): any;
-  closeEntryDetail(): any;
-  saveEntry(): any;
-  deleteEntry(entryId: string): any;
-  createProject(): any;
-  getColumnColor(columnId: string): string;
-  getProjectColumns(): JournalColumn[];
-  formatWordCount(count: number): string;
-  toggleSearch(): any;
-  getActiveProjectId(): string | undefined;
-  openColumnModal(): any;
-  createColumn(): any;
-  deleteColumn(columnId: string): any;
-  openExportModal(entryId: string): any;
-  exportEntry(): any;
-  openGoalsModal(): any;
-  saveWritingGoal(): any;
-  getWritingProgress(project: JournalProject): { current: number; target: number; percentage: number };
-  getStreakDays(project: JournalProject): number;
-  setViewMode(mode: 'kanban' | 'timeline'): any;
-  toggleAiPanel(): any;
-  askAi(): any;
-  generateAiSuggestion(): any;
-  insertAiContent(): any;
-  toggleProjectDropdown(): any;
-  requestDeleteProject(id: string, event: Event): any;
-  onDocumentClick(event: MouseEvent): any;
+  selectedCollection: any;
+  searchQuery: any;
+  filterStatus: any;
+  filterType: any;
+  showCollectionModal: any;
+  showSourceModal: any;
+  showSummaryModal: any;
+  showSourceDetail: any;
+  selectedSource: any;
+  showDeleteCollection: any;
+  showDeleteSource: any;
+  collectionToDelete: any;
+  sourceToDelete: any;
+  newCollectionName: any;
+  newCollectionDesc: any;
+  newCollectionColor: any;
+  collectionColors: any;
+  newSourceTitle: any;
+  newSourceUrl: any;
+  newSourceType: any;
+  newSourceTags: any;
+  newSourceDesc: any;
+  newSourceAuthor: any;
+  newSummaryTitle: any;
+  newSummaryContent: any;
+  newSummaryTags: any;
+  selectedSourceIds: any;
+  editNotes: any;
+  aiSourceAnalysis: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  sourceTypeOptions: any;
+  libraries: any;
+  filteredLibraries: any;
+  sources: any;
+  summaries: any;
+  filteredSources: any;
+  sourceStats: any;
+  totalSources: any;
+  hasActiveFilters: any;
+  getSourceTypeMeta(type: string): any;
+  getStatusMeta(status: string): any;
+  formatSourceMeta(source: ResearchSource): string;
+  openCollectionModal(): any;
+  closeCollectionModal(): any;
+  saveCollection(): any;
+  selectCollection(collection: ResearchCollection): any;
+  openDeleteCollection(collection: ResearchCollection, e: Event): any;
+  cancelDeleteCollection(): any;
+  confirmDeleteCollection(): any;
+  openSourceModal(): any;
+  closeSourceModal(): any;
+  saveSource(): any;
+  openSourceDetail(source: ResearchSource): any;
+  closeSourceDetail(): any;
+  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED'): any;
+  saveNotes(): any;
+  openDeleteSource(source: ResearchSource, e: Event): any;
+  cancelDeleteSource(): any;
+  confirmDeleteSource(): any;
+  openSummaryModal(): any;
+  closeSummaryModal(): any;
+  saveSummary(): any;
+  toggleSourceSelection(id: string): any;
+  isSourceSelected(id: string): any;
+  clearFilters(): any;
+  toggleAssistant(): any;
+  clearAiChat(): any;
+  sendAiMessage(text: string): any;
+  onKeyDown(e: KeyboardEvent): any;
 }
 ```
 
@@ -3011,9 +4160,10 @@ class JournalsComponent {
 ```typescript
 class MeetingsComponent {
   meetingsService: any;
+  deleteMeetingTarget: any;
   viewMode: any;
   viewFilter: any;
-  selectedProject: any;
+  selectedSpace: any;
   selectedTimeRange: any;
   sortBy: any;
   sortDirection: any;
@@ -3049,18 +4199,45 @@ class MeetingsComponent {
   datePickerDate: any;
   showQuickActions: any;
   showShortcutsHelp: any;
+  syncService: any;
+  providerMeta: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  showSyncModal: any;
+  syncActiveProvider: any;
+  syncNewName: any;
+  syncNewUrl: any;
+  syncAddError: any;
+  syncProviders: CalendarConnection['provider'][];
   meetingColors: any;
   filteredMeetings: any;
   calendarWeeks: any;
+  calendarHours: any;
+  calendarTitle: any;
+  weekDays: any;
+  yearMonths: any;
   availableProjects: any;
   upcomingSyncs: any;
   stats: any;
+  sidebarNavItems: any;
+  tableColumns: EnvTableColumn[];
+  tableActions: EnvTableAction[];
+  tableRows: any;
   meetingsByProject: any;
-  hasNoProject: any;
+  hasNoSpace: any;
   meetingsByStatus: any;
+  todayMeetings: any;
+  nextMeeting: any;
+  meetingTypeBreakdown: any;
   getMeetingsForDate(date: Date): Meeting[];
-  ngOnInit(): any;
-  ngOnDestroy(): any;
+  onNavItemClick(id: string): any;
+  onTableRowClick(row: { id: string }): any;
+  onTableAction(event: EnvTableActionEvent): any;
+  onTableSort(event: EnvTableSortEvent): any;
+  timeUntilMeeting(meeting: Meeting): string;
+  isMeetingPast(meeting: Meeting): boolean;
   onDocumentClick(event: MouseEvent): any;
   handleKeyboardShortcuts(event: KeyboardEvent): any;
   openCreateModal(): any;
@@ -3074,6 +4251,7 @@ class MeetingsComponent {
   saveEditing(): any;
   cancelEditing(): any;
   deleteMeeting(meeting: Meeting): any;
+  doDeleteMeeting(): any;
   cancelMeeting(meeting: Meeting): any;
   completeMeeting(meeting: Meeting): any;
   duplicateMeeting(meeting: Meeting): any;
@@ -3094,11 +4272,20 @@ class MeetingsComponent {
   deleteNote(noteId: string): any;
   addLabelToNew(): any;
   removeLabelFromNew(label: string): any;
+  navigatePrev(): any;
+  navigateNext(): any;
   previousMonth(): any;
   nextMonth(): any;
   goToToday(): any;
   isToday(date: Date): boolean;
   isCurrentMonth(date: Date): boolean;
+  getMeetingsForDay(date: Date): Meeting[];
+  getMeetingTopPx(startTime: string): number;
+  getMeetingHeightPx(startTime: string, endTime: string, duration: number): number;
+  formatHour(h: number): string;
+  getMonthMeetingDays(month: Date): Set<number>;
+  getYearMonthWeeks(month: Date): Date[][];
+  eventBg(color: string): string;
   selectCalendarDate(date: Date): any;
   formatTime(time: string): string;
   formatDate(dateStr: string): string;
@@ -3120,106 +4307,83 @@ class MeetingsComponent {
   trackByAgendaId(index: number, item: AgendaItem): string;
   trackByActionId(index: number, item: ActionItem): string;
   trackByNoteId(index: number, note: MeetingNote): string;
+  toggleAssistant(): any;
+  sendAiMessage(text: string): any;
+  clearAiChat(): any;
+  openSyncModal(): any;
+  closeSyncModal(): any;
+  addCalendarConnection(): any;
+  syncAllCalendars(): any;
+  trackByConnId(_: number, c: CalendarConnection): any;
 }
 ```
 
 ---
 
-## File: /apps/desktop/src/app/components/research/research.component.ts
+## File: /apps/desktop/src/app/components/spaces/spaces.component.ts
 
-### Class: ResearchComponent
+### Class: SpacesComponent
 ```typescript
-class ResearchComponent {
-  researchService: any;
-  viewMode: any;
-  selectedLibrary: any;
-  showLibraryModal: any;
-  showSourceModal: any;
-  showSummaryModal: any;
-  showSourceDetailPanel: any;
-  selectedSource: any;
-  showDeleteLibraryModal: any;
-  showDeleteSourceModal: any;
-  libraryToDelete: any;
-  sourceToDelete: any;
-  searchQuery: any;
-  filterStatus: any;
-  filterType: any;
-  newLibraryName: any;
-  newLibraryDesc: any;
-  newLibraryColor: any;
-  newSourceTitle: any;
-  newSourceUrl: any;
-  newSourceType: any;
-  newSourceTags: any;
-  newSourceDesc: any;
-  newSourceAuthor: any;
-  newSummaryTitle: any;
-  newSummaryContent: any;
-  newSummaryTags: any;
-  selectedSourceIds: any;
-  showAIPanel: any;
-  aiLoading: any;
-  aiSuggestions: any;
-  aiTopics: any;
-  aiSourceAnalysis: any;
-  showTopicDiscovery: any;
-  discoveredTopics: any;
-  showResearchPlanModal: any;
-  researchPlanTopic: any;
-  generatedPlan: any;
-  editNotes: any;
-  libraries: any;
-  filteredLibraries: any;
-  sources: any;
-  summaries: any;
-  filteredSources: any;
-  sourceStats: any;
-  openLibraryModal(): any;
-  closeLibraryModal(): any;
-  saveLibrary(): any;
-  selectLibrary(library: ResearchLibrary): any;
-  backToLibraries(): any;
-  deleteLibrary(library: ResearchLibrary, event: Event): any;
-  confirmDeleteLibrary(): any;
-  cancelDeleteLibrary(): any;
-  openSourceModal(): any;
-  closeSourceModal(): any;
-  saveSource(): any;
-  openSourceDetail(source: ResearchSource): any;
-  closeSourceDetail(): any;
-  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED'): any;
-  saveNotes(): any;
-  deleteCurrentSource(): any;
-  confirmDeleteSource(): any;
-  cancelDeleteSource(): any;
-  openSummaryModal(): any;
-  closeSummaryModal(): any;
-  saveSummary(): any;
-  toggleSourceSelection(sourceId: string): any;
-  isSourceSelected(sourceId: string): boolean;
-  showSources(): any;
-  showSummaries(): any;
-  getStatusColor(status: string): any;
-  getStatusVariant(status: string): 'default' | 'success' | 'warning' | 'error';
-  getStatusClass(status: string): string;
-  getStatClass(stat: string): string;
-  getPriorityVariant(priority: string): 'default' | 'success' | 'warning' | 'error';
-  getSourceIcon(type: string): any;
-  getSourceTypeLabel(type: string): string;
-  formatSourceMeta(source: ResearchSource): string;
-  toggleAIPanel(): any;
-  discoverTopics(): any;
-  analyzeSource(_source: ResearchSource): any;
-  generateAutoSummary(): any;
-  suggestSources(): any;
-  addSuggestedSource(suggestion: string): any;
-  closeTopicDiscovery(): any;
-  searchByTopic(topic: string): any;
-  openResearchPlanModal(): any;
-  closeResearchPlanModal(): any;
-  generateResearchPlan(): any;
-  implementResearchPlan(): any;
+class SpacesComponent {
+  workspaceService: any;
+  profiles: any;
+  activeProfile: any;
+  linkedSpace: any;
+  menuOpenId: any;
+  switching: any;
+  showModal: any;
+  editMode: any;
+  editProfileId: any;
+  showDeleteConfirm: any;
+  profileToDelete: any;
+  showDetails: any;
+  detailsProfile: any;
+  formName: any;
+  formColor: any;
+  formIcon: any;
+  colorOptions: any;
+  iconOptions: any;
+  toggleMenu(id: string): any;
+  closeMenu(): any;
+  isActive(id: string): any;
+  isDeletable(id: string): any;
+  getInitials(name: string): string;
+  switchTo(profile: WorkspaceProfile): any;
+  openNewModal(): any;
+  openEditModal(profile: WorkspaceProfile): any;
+  closeModal(): any;
+  saveProfile(): any;
+  openDetailsModal(profile: WorkspaceProfile): any;
+  closeDetails(): any;
+  openDeleteConfirm(profile: WorkspaceProfile): any;
+  cancelDelete(): any;
+  confirmDelete(): any;
+  onKeyDown(e: KeyboardEvent): any;
+}
+```
+
+---
+
+## File: /apps/desktop/src/app/components/titlebar/titlebar.component.ts
+
+### Class: TitlebarComponent
+```typescript
+class TitlebarComponent {
+  activeTab: any;
+  layout: any;
+  ngOnInit(): any;
+  setLayout(mode: NavLayout): any;
+}
+```
+
+---
+
+## File: /apps/desktop/src/app/components/update-banner/update-banner.component.ts
+
+### Class: UpdateBannerComponent
+```typescript
+class UpdateBannerComponent {
+  update: any;
 }
 ```
 
@@ -3326,190 +4490,32 @@ class ArticlesComponent {
 ### Class: BinComponent
 ```typescript
 class BinComponent {
-  items: any;
-  sortedItems: any;
-  trackById(index: number, item: BinItem): any;
-  formatType(type: string): string;
-  permanentlyDelete(id: string): any;
-  emptyBin(): any;
-}
-```
-
----
-
-## File: /apps/web/src/app/components/books/books.component.ts
-
-### Class: BooksComponent
-```typescript
-class BooksComponent {
-  booksService: any;
-  showAddModal: any;
-  newBook: any;
-  showDetailModal: any;
-  editingBook: any;
-  editedBook: any;
-  newNoteInput: any;
-  newNotePage: any;
-  showQuickActions: any;
-  showShortcutsHelp: any;
-  filteredBooks: any;
-  stats: any;
-  booksByCategory: any;
-  availableCategories: any;
-  selectedBook: any;
-  categories: BookCategory[];
-  ngOnInit(): any;
-  ngOnDestroy(): any;
-  onDocumentClick(event: MouseEvent): any;
-  onKeyDown(e: KeyboardEvent): any;
-  openAddModal(): any;
-  closeAddModal(): any;
-  addBook(): any;
-  openDetailModal(book: Book): any;
-  closeDetailModal(): any;
-  startEditing(): any;
-  cancelEditing(): any;
-  saveEditing(): any;
-  deleteBook(book: Book): any;
-  setStatus(book: Book, status: BookStatus): any;
-  addNote(): any;
-  removeNote(bookId: string, noteId: string): any;
-  toggleQuickActions(bookId: string, ev: Event): any;
-  getCategoryColor(cat: BookCategory): string;
-  getStatusIcon(status: BookStatus): string;
-  formatDate(iso: string): string;
-  formatShortDate(iso: string): string;
-  updateNewBook(key: K, value: Book[K]): any;
-  updateEditedBook(key: K, value: Book[K]): any;
-  openShortcutsHelp(): any;
-  closeShortcutsHelp(): any;
-}
-```
-
----
-
-## File: /apps/web/src/app/components/code-snippets/code-snippets.component.ts
-
-### Class: CodeSnippetsComponent
-```typescript
-class CodeSnippetsComponent {
-  snippetsService: any;
-  showAddModal: any;
-  newSnippet: any;
-  showDetailModal: any;
-  editingSnippet: any;
-  editedSnippet: any;
-  newTagInput: any;
-  showQuickActions: any;
-  showShortcutsHelp: any;
-  filteredSnippets: any;
-  stats: any;
-  snippetsByLang: any;
-  allTags: any;
-  selectedSnippet: any;
-  LANGS: any;
-  ngOnInit(): any;
-  ngOnDestroy(): any;
-  onDocumentClick(event: MouseEvent): any;
-  onKeyDown(e: KeyboardEvent): any;
-  openAddModal(): any;
-  closeAddModal(): any;
-  addSnippet(): any;
-  openDetailModal(snip: Snippet): any;
-  closeDetailModal(): any;
-  startEditing(): any;
-  cancelEditing(): any;
-  saveEditing(): any;
-  deleteSnippet(snip: Snippet): any;
-  copySnippet(snip: Snippet): any;
-  toggleQuickActions(id: string, ev: Event): any;
-  getLangColor(lang: SnippetLang): string;
-  getLineNumbers(content: string): number[];
-  formatRelative(iso: string): string;
-  updateNewSnippet(key: K, value: Snippet[K]): any;
-  updateEditedSnippet(key: K, value: Snippet[K]): any;
-  addTagToNew(): any;
-  removeTagFromNew(tag: string): any;
-  openShortcutsHelp(): any;
-  closeShortcutsHelp(): any;
-}
-```
-
----
-
-## File: /apps/web/src/app/components/daily-notes/daily-notes.component.ts
-
-### Class: DailyNotesComponent
-```typescript
-class DailyNotesComponent {
-  editor: Editor;
-  notes: any;
-  wordCount: any;
-  characterCount: any;
-  activeModal: any;
-  modalInputValue: any;
-  modalInputPlaceholder: any;
-  modalTitle: any;
-  tempNoteId: any;
-  selectedEntryId: any;
   searchQuery: any;
-  selectedFilter: any;
-  activeView: any;
-  openNotes: any;
-  noteGroups: any;
-  tagCategories: any;
-  showDropdown: any;
-  displayModalTitle: any;
-  filteredNotes: any;
-  allGroupsCollapsed: any;
-  allExpanded: any;
-  selectedNote: any;
-  allTagCategoriesExpanded: any;
-  shareBtnText: any;
-  handleEscape(event: Event): any;
-  ngOnInit(): any;
-  ngOnDestroy(): void;
-  updateNoteContent(content: string, preview: string): any;
-  handleNewNote(): any;
-  selectNote(id: string): any;
-  toggleGroup(groupId: string): any;
-  setFilter(filter: string): any;
-  isPinned(note: Note): boolean;
-  togglePin(note: Note, event: Event): any;
-  getNoteTags(note: Note): string[];
-  expandAll(): any;
-  collapseAll(): any;
-  toggleDropdown(): any;
-  handleNewFolder(): any;
-  confirmNewFolder(): any;
-  toggleExpandAll(): any;
-  closeNoteTab(noteId: string, event: Event): any;
-  getNoteById(id: string): Note | undefined;
-  onDocumentClick(event: MouseEvent): any;
-  switchView(view: 'folders' | 'tags'): any;
-  toggleTagCategory(categoryId: string): any;
-  toggleExpandAllTags(): any;
-  updateNoteTitle(title: string): any;
-  deleteCurrentNote(): any;
-  requestDeleteNote(noteId: string, event: Event): any;
-  confirmDeleteNote(): any;
-  addTag(tag: string): any;
-  removeTag(tag: string): any;
-  promptAddTag(): any;
-  confirmAddTag(): any;
-  setLink(): any;
-  confirmSetLink(): any;
-  shareNote(): any;
-  exportNote(): any;
-  showMoreOptions(): any;
-  addImage(): any;
-  addYoutube(): any;
-  confirmAddYoutube(): any;
-  insertTable(): any;
-  confirmAddImage(): any;
-  copyShareLink(): any;
-  downloadExport(format: 'pdf' | 'md' | 'html'): any;
-  closeModal(): any;
+  activeFilter: any;
+  expandedRowId: any;
+  restoringId: any;
+  confirmDialog: any;
+  allItems: any;
+  filteredItems: any;
+  totalCount: any;
+  visibleCount: any;
+  restorableCount: any;
+  oldestItem: any;
+  goBack(): any;
+  setFilter(filter: FilterType): any;
+  updateSearch(event: Event): any;
+  toggleRow(id: string): any;
+  openRestoreConfirm(id: string, title: string): any;
+  openDeleteConfirm(id: string, title: string): any;
+  openEmptyConfirm(): any;
+  cancelConfirm(): any;
+  confirmAction(): any;
+  emptyBin(): any;
+  canRestore(type: BinItemType): boolean;
+  getIconForType(type: BinItemType): string;
+  formatType(type: BinItemType): string;
+  formatRelativeTime(iso: string): string;
+  payloadPreview(item: BinItem): { label: string; value: string }[];
 }
 ```
 
@@ -3521,6 +4527,8 @@ class DailyNotesComponent {
 ```typescript
 class DeveloperSettingsComponent {
   isImporting: any;
+  importConfirm: any;
+  pendingImportFileName: any;
   activeTab: any;
   searchQuery: any;
   tabs: any;
@@ -3538,6 +4546,7 @@ class DeveloperSettingsComponent {
   getCellValue(row: Record<string, unknown>, col: string): string;
   copyToClipboard(): any;
   onImportFile(event: Event): any;
+  doImport(): any;
 }
 ```
 
@@ -3556,100 +4565,169 @@ interface DataTab {
 
 ---
 
-## File: /apps/web/src/app/components/journals/journals.component.ts
+## File: /apps/web/src/app/components/knowledge/knowledge.component.ts
 
-### Class: JournalsComponent
+### Class: KnowledgeComponent
 ```typescript
-class JournalsComponent {
-  journalService: any;
-  aiService: any;
-  projects: any;
-  entries: any;
-  columns: any;
-  searchQuery: any;
-  projectSearchQuery: any;
-  selectedFilter: any;
+class KnowledgeComponent {
+  researchService: any;
+  fileStorage: any;
+  store: any;
   viewMode: any;
-  showEntryModal: any;
-  showProjectModal: any;
-  showSearchModal: any;
-  showProjectDropdown: any;
-  showColumnModal: any;
-  showExportModal: any;
-  showGoalsModal: any;
-  selectedSort: any;
-  selectedEntry: any;
-  editingEntry: any;
-  showAiPanel: any;
-  aiQuery: any;
-  aiResponse: any;
-  isAiLoading: any;
-  newEntryTitle: any;
-  newEntryType: any;
-  newEntryColumn: any;
-  newProjectTitle: any;
-  newColumnName: any;
-  newColumnColor: any;
-  exportFormat: any;
-  exportEntryId: any;
-  writingGoal: any;
-  writingGoalPeriod: any;
-  editor: Editor;
-  wordCount: any;
-  characterCount: any;
-  activeProject: any;
-  filteredEntries: any;
-  timelineEntries: any;
-  projectStats: any;
-  draggedEntry: { entry: JournalEntry, sourceCol: string } | null;
-  filteredProjects: any;
-  totalProjects: any;
-  totalEntries: any;
-  totalWords: any;
-  getEntriesForColumn(columnId: string): JournalEntry[];
-  ngOnInit(): any;
-  ngOnDestroy(): void;
-  updateEntryContent(content: string, preview: string): any;
-  updateEditingEntryTitle(title: string): any;
-  setLink(): any;
-  addImage(): any;
-  insertTable(): any;
-  selectProject(projectId: string): any;
-  togglePin(entryId: string, event: Event): any;
-  toggleSort(): any;
-  onDragStart(e: DragEvent, entry: JournalEntry, sourceCol: string): any;
-  onDragEnd(e: DragEvent): any;
-  onDragOver(e: DragEvent): any;
-  onDrop(e: DragEvent, targetCol: string): any;
-  openNewEntryModal(column: string): any;
-  createEntry(): any;
-  openEntryDetail(entryId: string): any;
-  closeEntryDetail(): any;
-  saveEntry(): any;
-  deleteEntry(entryId: string): any;
-  createProject(): any;
-  getColumnColor(columnId: string): string;
-  getProjectColumns(): JournalColumn[];
-  formatWordCount(count: number): string;
-  toggleSearch(): any;
-  getActiveProjectId(): string | undefined;
-  openColumnModal(): any;
-  createColumn(): any;
-  deleteColumn(columnId: string): any;
-  openExportModal(entryId: string): any;
-  exportEntry(): any;
-  openGoalsModal(): any;
-  saveWritingGoal(): any;
-  getWritingProgress(project: JournalProject): { current: number; target: number; percentage: number };
-  getStreakDays(project: JournalProject): number;
-  setViewMode(mode: 'kanban' | 'timeline'): any;
-  toggleAiPanel(): any;
-  askAi(): any;
-  generateAiSuggestion(): any;
-  insertAiContent(): any;
-  toggleProjectDropdown(): any;
-  requestDeleteProject(id: string, event: Event): any;
-  onDocumentClick(event: MouseEvent): any;
+  selectedCollection: any;
+  fileFilterType: any;
+  isDraggingOver: any;
+  fileToDelete: any;
+  showDeleteFile: any;
+  filteredFiles: any;
+  searchQuery: any;
+  filterStatus: any;
+  filterType: any;
+  sortField: any;
+  sortDir: any;
+  showAddModal: any;
+  showNewCollectionForm: any;
+  addTab: any;
+  addNoteContent: any;
+  isRecording: any;
+  recordingDuration: any;
+  recordedBlob: any;
+  recordedUrl: any;
+  recordingError: any;
+  audioTitle: any;
+  showSummaryModal: any;
+  showSourceDetail: any;
+  selectedSource: any;
+  showDeleteCollection: any;
+  showDeleteSource: any;
+  showDeleteSummary: any;
+  collectionToDelete: any;
+  sourceToDelete: any;
+  summaryToDelete: any;
+  newCollectionName: any;
+  newCollectionDesc: any;
+  newCollectionColor: any;
+  collectionColors: any;
+  newSourceTitle: any;
+  newSourceUrl: any;
+  newSourceType: any;
+  newSourceTags: any;
+  newSourceDesc: any;
+  newSourceAuthor: any;
+  newSourceCollectionId: any;
+  fetchingMeta: any;
+  suggestingTags: any;
+  newSummaryTitle: any;
+  newSummaryContent: any;
+  newSummaryTags: any;
+  selectedSourceIds: any;
+  selectedFileIds: any;
+  generatingSummary: any;
+  editNotes: any;
+  editTitle: any;
+  editUrl: any;
+  editAuthor: any;
+  editDescription: any;
+  editTags: any;
+  generatingNotes: any;
+  showLinkTask: any;
+  taskSearch: any;
+  showUnsavedWarning: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  sourceTypeOptions: any;
+  sourceColumns: EnvTableColumn[];
+  fileColumns: EnvTableColumn[];
+  fileActions: EnvTableAction[];
+  fileTableRows: any;
+  summarySort: any;
+  summaryColumns: EnvTableColumn[];
+  summaryActions: EnvTableAction[];
+  summaryTableRows: any;
+  sourceActions: EnvTableAction[];
+  sourceTableRows: any;
+  collections: any;
+  sources: any;
+  summaries: any;
+  filteredSources: any;
+  collectionSourceCounts: any;
+  hasActiveFilters: any;
+  linkedTasks: any;
+  availableTasks: any;
+  hasTasks: any;
+  notesDirty: any;
+  collectionFiles: any;
+  onFileAction(event: EnvTableActionEvent): any;
+  fileMimeLabel(mimeType: string): string;
+  onSummarySort(event: EnvTableSortEvent): any;
+  onSummaryAction(event: EnvTableActionEvent): any;
+  onSourceRowClick(row: EnvTableRow): any;
+  onSourceAction(event: EnvTableActionEvent): any;
+  onSourceSort(event: EnvTableSortEvent): any;
+  getSourceTypeMeta(type: string): any;
+  formatDate(dateStr: string | undefined): string;
+  isSafeUrl(url: string | undefined): boolean;
+  formatSourceMeta(source: ResearchSource): string;
+  saveCollection(): any;
+  switchView(mode: ViewMode): any;
+  selectAllSources(): any;
+  selectCollection(collection: ResearchCollection): any;
+  moveSourceToCollection(sourceId: string, collectionId: string): any;
+  openDeleteCollection(collection: ResearchCollection, e: Event): any;
+  cancelDeleteCollection(): any;
+  confirmDeleteCollection(): any;
+  openAddModal(tab: 'url' | 'file' | 'note' | 'audio'): any;
+  closeAddModal(): any;
+  saveSource(): any;
+  saveNote(): any;
+  openFileInputFromModal(): any;
+  fetchMetadata(): any;
+  suggestTags(): any;
+  openSourceDetail(source: ResearchSource): any;
+  closeSourceDetail(): any;
+  discardNotesAndClose(): any;
+  cancelUnsavedWarning(): any;
+  saveSourceField(field: 'title' | 'url' | 'author' | 'description' | 'tags'): any;
+  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED'): any;
+  saveNotes(): any;
+  generateAiNotes(): any;
+  openDeleteSource(source: ResearchSource, e: Event): any;
+  cancelDeleteSource(): any;
+  confirmDeleteSource(): any;
+  linkTask(taskId: string): any;
+  unlinkTask(taskId: string): any;
+  openSummaryModal(): any;
+  closeSummaryModal(): any;
+  saveSummary(): any;
+  toggleFileSelection(id: string): any;
+  isFileSelected(id: string): any;
+  generateAiSummary(): any;
+  cancelDeleteSummary(): any;
+  confirmDeleteSummary(): any;
+  toggleSourceSelection(id: string): any;
+  isSourceSelected(id: string): any;
+  clearFilters(): any;
+  toggleAssistant(): any;
+  clearAiChat(): any;
+  sendAiMessage(text: string): any;
+  startRecording(): any;
+  stopRecording(): any;
+  discardRecording(): any;
+  saveAudioRecording(): any;
+  openAudioFileInput(): any;
+  formatDuration(seconds: number): string;
+  ngOnDestroy(): any;
+  onFileDrop(event: DragEvent): any;
+  onDragOver(event: DragEvent): any;
+  onDragLeave(): any;
+  openFileInput(): any;
+  openDeleteFile(file: StorageFile): any;
+  cancelDeleteFile(): any;
+  confirmDeleteFile(): any;
+  downloadFile(file: StorageFile): any;
+  onKeyDown(e: KeyboardEvent): any;
 }
 ```
 
@@ -3661,9 +4739,12 @@ class JournalsComponent {
 ```typescript
 class MeetingsComponent {
   meetingsService: any;
+  syncService: any;
+  providerMeta: any;
+  deleteMeetingTarget: any;
   viewMode: any;
   viewFilter: any;
-  selectedProject: any;
+  selectedSpace: any;
   selectedTimeRange: any;
   sortBy: any;
   sortDirection: any;
@@ -3699,18 +4780,43 @@ class MeetingsComponent {
   datePickerDate: any;
   showQuickActions: any;
   showShortcutsHelp: any;
+  showAssistant: any;
+  aiLoading: any;
+  aiMessages: any;
+  aiSuggestions: any;
+  showSyncModal: any;
+  syncActiveProvider: any;
+  syncNewName: any;
+  syncNewUrl: any;
+  syncAddError: any;
+  syncProviders: CalendarConnection['provider'][];
   meetingColors: any;
   filteredMeetings: any;
   calendarWeeks: any;
   availableProjects: any;
   upcomingSyncs: any;
   stats: any;
+  sidebarNavItems: any;
+  tableColumns: EnvTableColumn[];
+  tableActions: EnvTableAction[];
+  tableRows: any;
   meetingsByProject: any;
-  hasNoProject: any;
+  hasNoSpace: any;
+  nextMeeting: any;
+  todayMeetings: any;
+  meetingTypeBreakdown: any;
   meetingsByStatus: any;
+  calendarHours: any;
+  calendarTitle: any;
+  weekDays: any;
+  yearMonths: any;
   getMeetingsForDate(date: Date): Meeting[];
-  ngOnInit(): any;
-  ngOnDestroy(): any;
+  onNavItemClick(id: string): any;
+  onTableRowClick(row: { id: string }): any;
+  onTableAction(event: EnvTableActionEvent): any;
+  onTableSort(event: EnvTableSortEvent): any;
+  timeUntilMeeting(meeting: Meeting): string;
+  isMeetingPast(meeting: Meeting): boolean;
   onDocumentClick(event: MouseEvent): any;
   handleKeyboardShortcuts(event: KeyboardEvent): any;
   openCreateModal(): any;
@@ -3724,6 +4830,7 @@ class MeetingsComponent {
   saveEditing(): any;
   cancelEditing(): any;
   deleteMeeting(meeting: Meeting): any;
+  doDeleteMeeting(): any;
   cancelMeeting(meeting: Meeting): any;
   completeMeeting(meeting: Meeting): any;
   duplicateMeeting(meeting: Meeting): any;
@@ -3744,11 +4851,20 @@ class MeetingsComponent {
   deleteNote(noteId: string): any;
   addLabelToNew(): any;
   removeLabelFromNew(label: string): any;
+  navigatePrev(): any;
+  navigateNext(): any;
   previousMonth(): any;
   nextMonth(): any;
   goToToday(): any;
   isToday(date: Date): boolean;
   isCurrentMonth(date: Date): boolean;
+  getMeetingsForDay(date: Date): Meeting[];
+  getMeetingTopPx(startTime: string): number;
+  getMeetingHeightPx(startTime: string, endTime: string, duration: number): number;
+  formatHour(h: number): string;
+  getMonthMeetingDays(month: Date): Set<number>;
+  getYearMonthWeeks(month: Date): Date[][];
+  eventBg(color: string): string;
   selectCalendarDate(date: Date): any;
   formatTime(time: string): string;
   formatDate(dateStr: string): string;
@@ -3770,6 +4886,14 @@ class MeetingsComponent {
   trackByAgendaId(index: number, item: AgendaItem): string;
   trackByActionId(index: number, item: ActionItem): string;
   trackByNoteId(index: number, note: MeetingNote): string;
+  toggleAssistant(): any;
+  sendAiMessage(text: string): any;
+  clearAiChat(): any;
+  openSyncModal(): any;
+  closeSyncModal(): any;
+  addCalendarConnection(): any;
+  syncAllCalendars(): any;
+  trackByConnId(_: number, c: CalendarConnection): any;
 }
 ```
 
@@ -3803,101 +4927,45 @@ class OverviewComponent {
 
 ---
 
-## File: /apps/web/src/app/components/research/research.component.ts
+## File: /apps/web/src/app/components/spaces/spaces.component.ts
 
-### Class: ResearchComponent
+### Class: SpacesComponent
 ```typescript
-class ResearchComponent {
-  researchService: any;
-  viewMode: any;
-  selectedLibrary: any;
-  showLibraryModal: any;
-  showSourceModal: any;
-  showSummaryModal: any;
-  showSourceDetailPanel: any;
-  selectedSource: any;
-  showDeleteLibraryModal: any;
-  showDeleteSourceModal: any;
-  libraryToDelete: any;
-  sourceToDelete: any;
-  searchQuery: any;
-  filterStatus: any;
-  filterType: any;
-  newLibraryName: any;
-  newLibraryDesc: any;
-  newLibraryColor: any;
-  newSourceTitle: any;
-  newSourceUrl: any;
-  newSourceType: any;
-  newSourceTags: any;
-  newSourceDesc: any;
-  newSourceAuthor: any;
-  newSummaryTitle: any;
-  newSummaryContent: any;
-  newSummaryTags: any;
-  selectedSourceIds: any;
-  showAIPanel: any;
-  aiLoading: any;
-  aiSuggestions: any;
-  aiTopics: any;
-  aiSourceAnalysis: any;
-  showTopicDiscovery: any;
-  discoveredTopics: any;
-  showResearchPlanModal: any;
-  researchPlanTopic: any;
-  generatedPlan: any;
-  editNotes: any;
-  libraries: any;
-  filteredLibraries: any;
-  sources: any;
-  summaries: any;
-  filteredSources: any;
-  sourceStats: any;
-  openLibraryModal(): any;
-  closeLibraryModal(): any;
-  saveLibrary(): any;
-  selectLibrary(library: ResearchLibrary): any;
-  backToLibraries(): any;
-  deleteLibrary(library: ResearchLibrary, event: Event): any;
-  confirmDeleteLibrary(): any;
-  cancelDeleteLibrary(): any;
-  openSourceModal(): any;
-  closeSourceModal(): any;
-  saveSource(): any;
-  openSourceDetail(source: ResearchSource): any;
-  closeSourceDetail(): any;
-  updateSourceStatus(status: 'UNREAD' | 'READING' | 'PROCESSED'): any;
-  saveNotes(): any;
-  deleteCurrentSource(): any;
-  confirmDeleteSource(): any;
-  cancelDeleteSource(): any;
-  openSummaryModal(): any;
-  closeSummaryModal(): any;
-  saveSummary(): any;
-  toggleSourceSelection(sourceId: string): any;
-  isSourceSelected(sourceId: string): boolean;
-  showSources(): any;
-  showSummaries(): any;
-  getStatusColor(status: string): any;
-  getStatusVariant(status: string): 'default' | 'success' | 'warning' | 'error';
-  getStatusClass(status: string): string;
-  getStatClass(stat: string): string;
-  getPriorityVariant(priority: string): 'default' | 'success' | 'warning' | 'error';
-  getSourceIcon(type: string): any;
-  getSourceTypeLabel(type: string): string;
-  formatSourceMeta(source: ResearchSource): string;
-  toggleAIPanel(): any;
-  discoverTopics(): any;
-  analyzeSource(_source: ResearchSource): any;
-  generateAutoSummary(): any;
-  suggestSources(): any;
-  addSuggestedSource(suggestion: string): any;
-  closeTopicDiscovery(): any;
-  searchByTopic(topic: string): any;
-  openResearchPlanModal(): any;
-  closeResearchPlanModal(): any;
-  generateResearchPlan(): any;
-  implementResearchPlan(): any;
+class SpacesComponent {
+  workspaceService: any;
+  profiles: any;
+  activeProfile: any;
+  linkedSpace: any;
+  menuOpenId: any;
+  switching: any;
+  showModal: any;
+  editMode: any;
+  editProfileId: any;
+  showDeleteConfirm: any;
+  profileToDelete: any;
+  showDetails: any;
+  detailsProfile: any;
+  formName: any;
+  formColor: any;
+  formIcon: any;
+  colorOptions: any;
+  iconOptions: any;
+  toggleMenu(id: string): any;
+  closeMenu(): any;
+  isActive(id: string): any;
+  isDeletable(id: string): any;
+  getInitials(name: string): string;
+  switchTo(profile: WorkspaceProfile): any;
+  openNewModal(): any;
+  openEditModal(profile: WorkspaceProfile): any;
+  closeModal(): any;
+  saveProfile(): any;
+  openDetailsModal(profile: WorkspaceProfile): any;
+  closeDetails(): any;
+  openDeleteConfirm(profile: WorkspaceProfile): any;
+  cancelDelete(): any;
+  confirmDelete(): any;
+  onKeyDown(e: KeyboardEvent): any;
 }
 ```
 
@@ -3933,11 +5001,11 @@ function createTauriErrorHandler(message: string): (error: any) => void
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/novel-editor.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/composer.component.ts
 
-### Class: NovelEditorComponent
+### Class: ComposerComponent
 ```typescript
-class NovelEditorComponent {
+class ComposerComponent {
   editor: Editor;
   novelService: any;
   versionHistoryService: any;
@@ -3946,12 +5014,14 @@ class NovelEditorComponent {
   addInputRef: ElementRef<HTMLInputElement>;
   title: any;
   activeChapterId: any;
+  activeGroupId: any;
   wordCount: any;
   rightSidebarTab: any;
   activeNav: any;
   activeFrontMatterId: any;
   activePrologueId: any;
   focusMode: any;
+  showFocusToast: any;
   fullScreenMode: any;
   leftSidebarCollapsed: any;
   rightSidebarCollapsed: any;
@@ -3977,6 +5047,8 @@ class NovelEditorComponent {
   showContextPreview: any;
   novel: any;
   isLoading: any;
+  sectionLabel: any;
+  showExtendedTabs: any;
   activeCharacter: any;
   activeLocation: any;
   activeChapter: any;
@@ -3992,12 +5064,14 @@ class NovelEditorComponent {
   chaptersCompleted: any;
   mentionedCharacters: any;
   mentionedLocations: any;
-  dragStartIndex: any;
-  dragOverIndex: any;
   filteredChapters: any;
   linkModalOpen: any;
   linkUrl: any;
   linkText: any;
+  imageModalOpen: any;
+  imageUrl: any;
+  youtubeModalOpen: any;
+  youtubeUrl: any;
   toggleContextPreview(): any;
   ngOnInit(): any;
   ngAfterViewChecked(): any;
@@ -4045,18 +5119,14 @@ class NovelEditorComponent {
   addPrologue(): any;
   deletePrologue(): any;
   deleteFrontMatterItem(itemId: string, title: string): any;
-  updateUndoRedoState(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue'): any;
   performUndo(): any;
   performRedo(): any;
   openVersionHistory(): any;
   closeVersionHistory(): any;
   restoreVersion(versionId: string): any;
-  onDragStart(event: DragEvent, index: number, type: 'chapter' | 'group'): any;
-  onDragOver(event: DragEvent, index: number): any;
-  onDragEnd(): any;
-  onDrop(event: DragEvent, dropIndex: number, type: 'chapter' | 'group', groupId: string): any;
   selectSearchResult(result: { type: string, id: string }): any;
   toggleFocusMode(): any;
+  dismissFocusToast(): any;
   getCurrentContext(): string;
   getSelectedText(): string;
   sendAiMessage(prompt: string): any;
@@ -4067,8 +5137,6 @@ class NovelEditorComponent {
   applySuggestion(suggestion: AiSuggestion): any;
   clearAiConversation(): any;
   getTokenCount(): number;
-  formatMessage(content: string): string;
-  formatTime(date: Date): string;
   toggleFullScreen(): any;
   toggleBulkMode(): any;
   toggleChapterSelection(chapterId: string): any;
@@ -4082,8 +5150,12 @@ class NovelEditorComponent {
   insertLink(): any;
   cancelLinkModal(): any;
   addImage(): any;
+  insertImage(): any;
+  cancelImageModal(): any;
   insertTable(): any;
   addYoutube(): any;
+  insertYoutube(): any;
+  cancelYoutubeModal(): any;
   exportNovel(format: 'pdf' | 'docx' | 'md' | 'html'): any;
 }
 ```
@@ -4097,6 +5169,7 @@ class NovelEditorComponent {
 class LoginComponent {
   authService: any;
   router: any;
+  isTauri: any;
   email: any;
   password: any;
   loading: any;
@@ -4140,8 +5213,11 @@ class FooterComponent {
   currentStreak: any;
   sessionDuration: any;
   appVersion: any;
+  isCollapsed: any;
+  isOnline: any;
   ngOnInit(): any;
   ngOnDestroy(): any;
+  toggleCollapse(): any;
   streakIndicator(index: number): boolean;
 }
 ```
@@ -4156,6 +5232,7 @@ class HeaderComponent {
   activeTab: any;
   isImmersive: any;
   sidebarCollapsedChange: any;
+  subNavVisibleChange: any;
   quickFind?: QuickFindComponent;
   addNewModal?: AddNewModalComponent;
   settingsModal?: SettingsModalComponent;
@@ -4165,20 +5242,34 @@ class HeaderComponent {
   themeService: any;
   notificationService: any;
   userService: any;
+  showSpaceSwitcher: any;
+  spaces: any;
+  activeSpace: any;
+  binCount: any;
   unreadCount: any;
   user: any;
   userInitials: any;
   navigationLayout: any;
   isAvatarLoading: any;
   sidebarCollapsed: any;
-  tabs: any;
-  tabIcons: Record<string, string>;
+  voiceService: any;
+  isVoiceActive: any;
+  currentRouteSegment: any;
+  navItems: NavItem[];
+  toggleSpaceSwitcher(): any;
+  closeSpaceSwitcher(): any;
+  switchSpace(id: string): any;
+  manageSpaces(): any;
   getThemeIcon(): string;
   getNextTheme(): string;
   toggleTheme(): any;
+  toggleVoice(): any;
   onAvatarLoad(): any;
   onAvatarError(): any;
-  navigateTo(tab: string): any;
+  navigateTo(route: string): any;
+  getTabIcon(tab: string): string;
+  isItemActive(item: NavItem): boolean;
+  isWorkspaceActive(): boolean;
   openQuickFind(): any;
   openAddNew(): any;
   openSettings(): any;
@@ -4187,9 +5278,18 @@ class HeaderComponent {
   handleOpenSettings(): any;
   handleOpenProfile(): any;
   toggleSidebar(): any;
-  getTabIcon(tab: string): string;
   ngOnInit(): any;
   ngOnDestroy(): any;
+}
+```
+
+### Interface: NavItem
+```typescript
+interface NavItem {
+  id: string;
+  label: string;
+  icon: string;
+  route: string;
 }
 ```
 
@@ -4298,34 +5398,6 @@ class ServerErrorComponent {
 
 ---
 
-## File: /apps/desktop/src/app/components/projects/project-details/project-details.component.ts
-
-### Class: ProjectDetailsComponent
-```typescript
-class ProjectDetailsComponent {
-  store: any;
-  projectId: any;
-  newTaskTitle: any;
-  project: any;
-  projectTasks: any;
-  linkedNovels: any;
-  linkedJournals: any;
-  linkedMeetings: any;
-  linkedBooks: any;
-  linkedResearch: any;
-  linkedSnippets: any;
-  linkedArticles: any;
-  linkedJournalProjects: any;
-  addTask(): any;
-  deleteTask(taskId: string): any;
-  finalizeSession(): any;
-  getStatusColor(status: string): string;
-  getPriorityColor(priority: string): string;
-}
-```
-
----
-
 ## File: /apps/web/src/app/components/dashboard/global-tasks/global-tasks.component.ts
 
 ### Class: GlobalTasksComponent
@@ -4394,35 +5466,7 @@ class ServerErrorComponent {
 
 ---
 
-## File: /apps/web/src/app/components/projects/project-details/project-details.component.ts
-
-### Class: ProjectDetailsComponent
-```typescript
-class ProjectDetailsComponent {
-  store: any;
-  projectId: any;
-  newTaskTitle: any;
-  project: any;
-  projectTasks: any;
-  linkedNovels: any;
-  linkedJournals: any;
-  linkedMeetings: any;
-  linkedBooks: any;
-  linkedResearch: any;
-  linkedSnippets: any;
-  linkedArticles: any;
-  linkedJournalProjects: any;
-  addTask(): any;
-  deleteTask(taskId: string): any;
-  finalizeSession(): any;
-  getStatusColor(status: string): string;
-  getPriorityColor(priority: string): string;
-}
-```
-
----
-
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/character-details/character-details.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/editor/character-details/character-details.component.ts
 
 ### Class: CharacterDetailsComponent
 ```typescript
@@ -4435,12 +5479,13 @@ class CharacterDetailsComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/editor-header/editor-header.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/editor/editor-header/editor-header.component.ts
 
 ### Class: EditorHeaderComponent
 ```typescript
 class EditorHeaderComponent {
   activeNav: any;
+  showExtendedTabs: any;
   canUndo: any;
   canRedo: any;
   searchOpen: any;
@@ -4475,7 +5520,7 @@ interface SearchResult {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/editor-toolbar/editor-toolbar.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/editor/editor-toolbar/editor-toolbar.component.ts
 
 ### Class: EditorToolbarComponent
 ```typescript
@@ -4490,7 +5535,7 @@ class EditorToolbarComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/location-details/location-details.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/editor/location-details/location-details.component.ts
 
 ### Class: LocationDetailsComponent
 ```typescript
@@ -4503,7 +5548,7 @@ class LocationDetailsComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/manuscript-editor/manuscript-editor.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/editor/manuscript-editor/manuscript-editor.component.ts
 
 ### Class: ManuscriptEditorComponent
 ```typescript
@@ -4517,12 +5562,14 @@ class ManuscriptEditorComponent {
   lastSaved: any;
   titleChange: any;
   addNewChapter: any;
+  chapterStatusLabel(): string;
+  formatSaved(date: Date): string;
 }
 ```
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/editor/structure-editor/structure-editor.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/editor/structure-editor/structure-editor.component.ts
 
 ### Class: StructureEditorComponent
 ```typescript
@@ -4540,7 +5587,7 @@ class StructureEditorComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/add-modal/add-modal.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/modals/add-modal/add-modal.component.ts
 
 ### Class: AddModalComponent
 ```typescript
@@ -4573,7 +5620,7 @@ interface AddModalData {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/delete-modal/delete-modal.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/modals/delete-modal/delete-modal.component.ts
 
 ### Class: DeleteModalComponent
 ```typescript
@@ -4597,7 +5644,7 @@ interface DeleteModalData {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/link-modal/link-modal.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/modals/link-modal/link-modal.component.ts
 
 ### Class: LinkModalComponent
 ```typescript
@@ -4616,7 +5663,7 @@ class LinkModalComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/modals/version-history-modal/version-history-modal.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/modals/version-history-modal/version-history-modal.component.ts
 
 ### Class: VersionHistoryModalComponent
 ```typescript
@@ -4630,7 +5677,7 @@ class VersionHistoryModalComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/right-sidebar/ai-panel/ai-panel.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/right-sidebar/ai-panel/ai-panel.component.ts
 
 ### Class: AiPanelComponent
 ```typescript
@@ -4656,16 +5703,16 @@ class AiPanelComponent {
   clearSuggestions: any;
   toggleContextPreview: any;
   promptChange: any;
-  formatMessage(content: string): string;
+  formatMessage(content: string): SafeHtml;
   formatTime(date: Date): string;
-  ngAfterViewChecked(): any;
+  ngDoCheck(): any;
   handleChatEnter(event: KeyboardEvent): any;
 }
 ```
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/right-sidebar/manuscript-data/manuscript-data.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/right-sidebar/manuscript-data/manuscript-data.component.ts
 
 ### Class: ManuscriptDataComponent
 ```typescript
@@ -4687,7 +5734,7 @@ class ManuscriptDataComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/right-sidebar/notes-panel/notes-panel.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/right-sidebar/notes-panel/notes-panel.component.ts
 
 ### Class: NotesPanelComponent
 ```typescript
@@ -4695,12 +5742,19 @@ class NotesPanelComponent {
   notes: any;
   addNewNote: any;
   deleteNote: any;
+  updateNote: any;
+  editingNoteId: any;
+  editTitle: any;
+  editBody: any;
+  startEdit(note: EditorNote, event: Event): any;
+  commitEdit(id: string): any;
+  cancelEdit(): any;
 }
 ```
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/chapters-list/chapters-list.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/sidebar/chapters-list/chapters-list.component.ts
 
 ### Class: ChaptersListComponent
 ```typescript
@@ -4710,18 +5764,25 @@ class ChaptersListComponent {
   bulkMode: any;
   selectedChapters: any;
   addMenuOpen: any;
+  sectionLabel: any;
   selectChapter: any;
   toggleChapter: any;
   deleteChapter: any;
   deleteGroup: any;
+  renameChapter: any;
   toggleBulkMode: any;
   bulkDelete: any;
   toggleAddMenu: any;
   addNewActOrPart: any;
   addNewChapter: any;
   toggleChapterSelection: any;
+  renamingChapterId: any;
+  renameValue: any;
   dragStartIndex: any;
   dragOverIndex: any;
+  startRename(chap: Chapter, event: Event): any;
+  commitRename(id: string): any;
+  cancelRename(): any;
   onDragStart(event: DragEvent, index: number, type: 'chapter' | 'group'): any;
   onDragOver(event: DragEvent, index: number): any;
   onDragEnd(): any;
@@ -4731,7 +5792,7 @@ class ChaptersListComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/characters-list/characters-list.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/sidebar/characters-list/characters-list.component.ts
 
 ### Class: CharactersListComponent
 ```typescript
@@ -4746,7 +5807,7 @@ class CharactersListComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/locations-list/locations-list.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/sidebar/locations-list/locations-list.component.ts
 
 ### Class: LocationsListComponent
 ```typescript
@@ -4761,7 +5822,7 @@ class LocationsListComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/structure-view/structure-view.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/sidebar/structure-view/structure-view.component.ts
 
 ### Class: StructureViewComponent
 ```typescript
@@ -4784,7 +5845,7 @@ class StructureViewComponent {
 
 ---
 
-## File: /libs/feature-novels/src/lib/novels/novel-editor/components/sidebar/sync-status/sync-status.component.ts
+## File: /libs/feature-novels/src/lib/write/composer/components/sidebar/sync-status/sync-status.component.ts
 
 ### Class: SyncStatusComponent
 ```typescript

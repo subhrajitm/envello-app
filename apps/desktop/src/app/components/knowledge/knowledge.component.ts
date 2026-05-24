@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchLibrary, ResearchSource } from '@envello/core';
+import { ResearchService, ResearchCollection, ResearchSource } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, FeatureSidebarComponent } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries';
@@ -32,7 +32,7 @@ export class KnowledgeComponent {
 
   // ── View state ────────────────────────────────────────────────────────────
   viewMode        = signal<ViewMode>('sources');
-  selectedLibrary = signal<ResearchLibrary | null>(null);
+  selectedCollection = signal<ResearchCollection | null>(null);
 
   // ── Filter & Search ───────────────────────────────────────────────────────
   searchQuery  = signal('');
@@ -40,22 +40,22 @@ export class KnowledgeComponent {
   filterType   = signal<'ALL' | 'WEB' | 'PDF' | 'VIDEO' | 'INTERVIEW' | 'PHYSICAL'>('ALL');
 
   // ── Modals ────────────────────────────────────────────────────────────────
-  showLibraryModal    = signal(false);
+  showCollectionModal    = signal(false);
   showSourceModal     = signal(false);
   showSummaryModal    = signal(false);
   showSourceDetail    = signal(false);
   selectedSource      = signal<ResearchSource | null>(null);
-  showDeleteLibrary   = signal(false);
+  showDeleteCollection   = signal(false);
   showDeleteSource    = signal(false);
-  libraryToDelete     = signal<ResearchLibrary | null>(null);
+  collectionToDelete     = signal<ResearchCollection | null>(null);
   sourceToDelete      = signal<ResearchSource | null>(null);
 
-  // ── Library form ──────────────────────────────────────────────────────────
-  newLibraryName  = signal('');
-  newLibraryDesc  = signal('');
-  newLibraryColor = signal('#8b5cf6');
+  // ── Collection form ───────────────────────────────────────────────────────
+  newCollectionName  = signal('');
+  newCollectionDesc  = signal('');
+  newCollectionColor = signal('#8b5cf6');
 
-  readonly libraryColors = ['#8b5cf6','#f97316','#10b981','#3b82f6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
+  readonly collectionColors = ['#8b5cf6','#f97316','#10b981','#3b82f6','#ec4899','#f59e0b','#06b6d4','#ef4444'];
 
   // ── Source form ───────────────────────────────────────────────────────────
   newSourceTitle  = signal('');
@@ -81,10 +81,10 @@ export class KnowledgeComponent {
   aiMessages    = signal<AiPanelMessage[]>([]);
 
   readonly aiSuggestions = [
-    'How many sources are in this library?',
+    'How many sources are in this collection?',
     'Show unread sources',
     'Which sources have been processed?',
-    'Summarise the library topics',
+    'Summarise the collection topics',
     'Show all web sources',
   ];
 
@@ -103,12 +103,12 @@ export class KnowledgeComponent {
   });
 
   sources = computed(() => {
-    const lib = this.selectedLibrary();
+    const lib = this.selectedCollection();
     return lib ? this.researchService.getSourcesByCollection(lib.id) : [];
   });
 
   summaries = computed(() => {
-    const lib = this.selectedLibrary();
+    const lib = this.selectedCollection();
     return lib ? this.researchService.getSummariesByCollection(lib.id) : [];
   });
 
@@ -150,39 +150,39 @@ export class KnowledgeComponent {
     return parts.join(' · ');
   }
 
-  // ── Library actions ───────────────────────────────────────────────────────
-  openLibraryModal() {
-    this.newLibraryName.set(''); this.newLibraryDesc.set(''); this.newLibraryColor.set('#8b5cf6');
-    this.showLibraryModal.set(true);
+  // ── Collection actions ────────────────────────────────────────────────────
+  openCollectionModal() {
+    this.newCollectionName.set(''); this.newCollectionDesc.set(''); this.newCollectionColor.set('#8b5cf6');
+    this.showCollectionModal.set(true);
   }
-  closeLibraryModal() { this.showLibraryModal.set(false); }
+  closeCollectionModal() { this.showCollectionModal.set(false); }
 
-  saveLibrary() {
-    if (!this.newLibraryName()) return;
-    this.researchService.addCollection({ name: this.newLibraryName(), description: this.newLibraryDesc(), color: this.newLibraryColor() });
-    this.closeLibraryModal();
+  saveCollection() {
+    if (!this.newCollectionName()) return;
+    this.researchService.addCollection({ name: this.newCollectionName(), description: this.newCollectionDesc(), color: this.newCollectionColor() });
+    this.closeCollectionModal();
   }
 
-  selectLibrary(library: ResearchLibrary) {
-    this.selectedLibrary.set(library);
+  selectCollection(collection: ResearchCollection) {
+    this.selectedCollection.set(collection);
     this.viewMode.set('sources');
     this.searchQuery.set('');
     this.filterStatus.set('ALL');
     this.filterType.set('ALL');
   }
 
-  openDeleteLibrary(library: ResearchLibrary, e: Event) {
+  openDeleteCollection(collection: ResearchCollection, e: Event) {
     e.stopPropagation();
-    this.libraryToDelete.set(library);
-    this.showDeleteLibrary.set(true);
+    this.collectionToDelete.set(collection);
+    this.showDeleteCollection.set(true);
   }
-  cancelDeleteLibrary() { this.showDeleteLibrary.set(false); this.libraryToDelete.set(null); }
-  confirmDeleteLibrary() {
-    const lib = this.libraryToDelete();
+  cancelDeleteCollection() { this.showDeleteCollection.set(false); this.collectionToDelete.set(null); }
+  confirmDeleteCollection() {
+    const lib = this.collectionToDelete();
     if (lib) {
       this.researchService.deleteCollection(lib.id);
-      if (this.selectedLibrary()?.id === lib.id) this.selectedLibrary.set(null);
-      this.cancelDeleteLibrary();
+      if (this.selectedCollection()?.id === lib.id) this.selectedCollection.set(null);
+      this.cancelDeleteCollection();
     }
   }
 
@@ -195,10 +195,10 @@ export class KnowledgeComponent {
   closeSourceModal() { this.showSourceModal.set(false); }
 
   saveSource() {
-    const lib = this.selectedLibrary();
+    const lib = this.selectedCollection();
     if (!this.newSourceTitle() || !lib) return;
     this.researchService.addSource({
-      libraryId: lib.id, title: this.newSourceTitle(), url: this.newSourceUrl(),
+      collectionId: lib.id, title: this.newSourceTitle(), url: this.newSourceUrl(),
       sourceType: this.newSourceType(),
       tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
       description: this.newSourceDesc(), author: this.newSourceAuthor(), status: 'UNREAD',
@@ -251,10 +251,10 @@ export class KnowledgeComponent {
   closeSummaryModal() { this.showSummaryModal.set(false); }
 
   saveSummary() {
-    const lib = this.selectedLibrary();
+    const lib = this.selectedCollection();
     if (!this.newSummaryTitle() || !lib) return;
     this.researchService.addSummary({
-      libraryId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
+      collectionId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
       sourceIds: this.selectedSourceIds(),
       tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t),
     });
@@ -277,12 +277,12 @@ export class KnowledgeComponent {
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
-    const lib = this.selectedLibrary();
+    const lib = this.selectedCollection();
     const srcs = lib ? this.researchService.getSourcesByCollection(lib.id) : [];
     const q = text.toLowerCase();
     let response = '';
     if (q.includes('how many') || q.includes('count')) {
-      response = `Library **${lib?.name ?? 'N/A'}** has **${srcs.length}** source${srcs.length !== 1 ? 's' : ''}.\nUnread: ${srcs.filter(s => s.status === 'UNREAD').length} · Reading: ${srcs.filter(s => s.status === 'READING').length} · Processed: ${srcs.filter(s => s.status === 'PROCESSED').length}`;
+      response = `Collection **${lib?.name ?? 'N/A'}** has **${srcs.length}** source${srcs.length !== 1 ? 's' : ''}.\nUnread: ${srcs.filter(s => s.status === 'UNREAD').length} · Reading: ${srcs.filter(s => s.status === 'READING').length} · Processed: ${srcs.filter(s => s.status === 'PROCESSED').length}`;
     } else if (q.includes('unread')) {
       const u = srcs.filter(s => s.status === 'UNREAD');
       response = u.length ? `**${u.length}** unread:\n${u.map((s, i) => `${i + 1}. ${s.title}`).join('\n')}` : 'No unread sources.';
@@ -293,7 +293,7 @@ export class KnowledgeComponent {
       const w = srcs.filter(s => s.sourceType === 'WEB');
       response = w.length ? `**${w.length}** web source${w.length !== 1 ? 's' : ''}:\n${w.map((s, i) => `${i + 1}. ${s.title}`).join('\n')}` : 'No web sources.';
     } else {
-      response = `Library has ${srcs.length} sources. Ask about unread, processed, web sources, or request a summary.`;
+      response = `Collection has ${srcs.length} sources. Ask about unread, processed, web sources, or request a summary.`;
     }
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     this.aiLoading.set(false);
@@ -306,9 +306,9 @@ export class KnowledgeComponent {
       if (this.showSourceDetail())   this.closeSourceDetail();
       else if (this.showSummaryModal())  this.closeSummaryModal();
       else if (this.showSourceModal())   this.closeSourceModal();
-      else if (this.showLibraryModal())  this.closeLibraryModal();
+      else if (this.showCollectionModal())  this.closeCollectionModal();
       else if (this.showDeleteSource())  this.cancelDeleteSource();
-      else if (this.showDeleteLibrary()) this.cancelDeleteLibrary();
+      else if (this.showDeleteCollection()) this.cancelDeleteCollection();
     }
   }
 }

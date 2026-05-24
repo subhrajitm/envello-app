@@ -11,12 +11,10 @@ export interface ResearchCollection {
     lastModified: string;
 }
 
-/** @deprecated Use ResearchCollection */
-export type ResearchLibrary = ResearchCollection;
 
 export interface ResearchSource {
     id: string;
-    libraryId?: string;
+    collectionId?: string;
     title: string;
     sourceType: 'WEB' | 'PDF' | 'INTERVIEW' | 'PHYSICAL' | 'VIDEO' | 'ARTICLE';
     url?: string;
@@ -33,7 +31,7 @@ export interface ResearchSource {
 
 export interface ResearchSummary {
     id: string;
-    libraryId: string;
+    collectionId: string;
     title: string;
     content: string;
     sourceIds: string[];
@@ -53,8 +51,6 @@ export class ResearchService {
     sources = signal<ResearchSource[]>([]);
     summaries = signal<ResearchSummary[]>([]);
 
-    /** @deprecated Use collections */
-    get libraries() { return this.collections; }
 
     constructor() {
         this.loadFromDb();
@@ -100,10 +96,6 @@ export class ResearchService {
         return newCollection;
     }
 
-    /** @deprecated Use addCollection */
-    addLibrary(library: Omit<ResearchCollection, 'id' | 'createdDate' | 'lastModified'>) {
-        return this.addCollection(library);
-    }
 
     updateCollection(id: string, updates: Partial<ResearchCollection>) {
         this.collections.update(list =>
@@ -113,26 +105,18 @@ export class ResearchService {
         if (col) this.persistCollection(col);
     }
 
-    /** @deprecated Use updateCollection */
-    updateLibrary(id: string, updates: Partial<ResearchCollection>) {
-        return this.updateCollection(id, updates);
-    }
 
     async deleteCollection(id: string) {
-        const srcs = this.sources().filter(s => s.libraryId === id);
-        const sums = this.summaries().filter(s => s.libraryId === id);
+        const srcs = this.sources().filter(s => s.collectionId === id);
+        const sums = this.summaries().filter(s => s.collectionId === id);
         for (const s of srcs) await this.db.remove('research_sources', s.id).catch(() => { });
         for (const s of sums) await this.db.remove('research_summaries', s.id).catch(() => { });
-        this.sources.update(list => list.filter(s => s.libraryId !== id));
-        this.summaries.update(list => list.filter(s => s.libraryId !== id));
+        this.sources.update(list => list.filter(s => s.collectionId !== id));
+        this.summaries.update(list => list.filter(s => s.collectionId !== id));
         this.collections.update(list => list.filter(col => col.id !== id));
         await this.db.remove('research_collections', id).catch(e => logIfTauri('[ResearchService] remove collection failed', e));
     }
 
-    /** @deprecated Use deleteCollection */
-    deleteLibrary(id: string) {
-        return this.deleteCollection(id);
-    }
 
     // Source methods
     addSource(source: Omit<ResearchSource, 'id' | 'createdDate'>) {
@@ -167,13 +151,9 @@ export class ResearchService {
     }
 
     getSourcesByCollection(collectionId: string) {
-        return this.sources().filter(s => s.libraryId === collectionId);
+        return this.sources().filter(s => s.collectionId === collectionId);
     }
 
-    /** @deprecated Use getSourcesByCollection */
-    getSourcesByLibrary(libraryId: string) {
-        return this.getSourcesByCollection(libraryId);
-    }
 
     // Summary methods
     addSummary(summary: Omit<ResearchSummary, 'id' | 'createdDate' | 'lastModified'>) {
@@ -202,11 +182,7 @@ export class ResearchService {
     }
 
     getSummariesByCollection(collectionId: string) {
-        return this.summaries().filter(s => s.libraryId === collectionId);
+        return this.summaries().filter(s => s.collectionId === collectionId);
     }
 
-    /** @deprecated Use getSummariesByCollection */
-    getSummariesByLibrary(libraryId: string) {
-        return this.getSummariesByCollection(libraryId);
-    }
 }

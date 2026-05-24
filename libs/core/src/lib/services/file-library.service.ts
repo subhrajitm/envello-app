@@ -1,2 +1,2 @@
 /** @deprecated Use FileStorageService from file-storage.service.ts */
-export { FileStorageService as FileLibraryService, StorageFile as LibraryFile } from './file-storage.service';
+export { FileStorageService as FileLibraryService } from './file-storage.service';

@@ -1,18 +1,18 @@
 <div class="rs-view">
 
   <!-- ── SIDEBAR ── -->
-  <env-feature-sidebar [title]="'Library'">
+  <env-feature-sidebar [title]="'Knowledge'">
 
     <div class="rs-sb-libs">
       @for (lib of filteredLibraries(); track lib.id) {
-        <button class="rs-lib-item" [class.active]="selectedLibrary()?.id === lib.id"
-          (click)="selectLibrary(lib)">
+        <button class="rs-lib-item" [class.active]="selectedCollection()?.id === lib.id"
+          (click)="selectCollection(lib)">
           <span class="rs-lib-dot" [style.background]="lib.color"></span>
           <div class="rs-lib-info">
             <span class="rs-lib-name">{{ lib.name }}</span>
           </div>
           <span class="rs-lib-count">{{ researchService.getSourcesByCollection(lib.id).length }}</span>
-          <button class="rs-lib-del" (click)="openDeleteLibrary(lib, $event)" title="Delete library">
+          <button class="rs-lib-del" (click)="openDeleteCollection(lib, $event)" title="Delete collection">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </button>
@@ -34,7 +34,7 @@
       <div class="rs-search-wrap">
         <span class="material-symbols-outlined rs-search-icon">search</span>
         <input class="rs-search-input" type="text"
-          [placeholder]="selectedLibrary() ? 'Search sources…' : 'Search libraries…'"
+          [placeholder]="selectedCollection() ? 'Search sources…' : 'Search collections…'"
           [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
         @if (searchQuery()) {
           <button class="rs-search-clear" (click)="searchQuery.set('')">
@@ -43,18 +43,18 @@
         }
       </div>
 
-      @if (selectedLibrary(); as lib) {
+      @if (selectedCollection(); as lib) {
         <div class="rs-lib-breadcrumb">
           <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
           <span class="rs-lib-bc-name">{{ lib.name }}</span>
-          <button class="rs-lib-bc-close" (click)="selectedLibrary.set(null)" title="Back to all libraries">
+          <button class="rs-lib-bc-close" (click)="selectedCollection.set(null)" title="Back to all libraries">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
       }
 
       <div class="rs-toolbar-right">
-        @if (selectedLibrary() && hasActiveFilters()) {
+        @if (selectedCollection() && hasActiveFilters()) {
           <button class="rs-tool-btn" (click)="clearFilters()" title="Clear filters">
             <span class="material-symbols-outlined">filter_list_off</span>
           </button>
@@ -65,11 +65,11 @@
           AI
         </button>
         <div class="rs-tb-divider"></div>
-        <button class="rs-new-lib-tb-btn" (click)="openLibraryModal()">
+        <button class="rs-new-lib-tb-btn" (click)="openCollectionModal()">
           <span class="material-symbols-outlined">library_add</span>
-          New Library
+          New Collection
         </button>
-        @if (selectedLibrary()) {
+        @if (selectedCollection()) {
           @if (viewMode() === 'sources') {
             <button class="rs-add-btn" (click)="openSourceModal()">
               <span class="material-symbols-outlined">add</span>
@@ -85,7 +85,7 @@
       </div>
     </div>
 
-    @if (selectedLibrary(); as library) {
+    @if (selectedCollection(); as collection) {
 
       <!-- Tabs + status filters -->
       <div class="rs-tabs-bar">
@@ -151,7 +151,7 @@
               @if (sources().length === 0) {
                 <span class="material-symbols-outlined rs-empty-icon">article</span>
                 <p class="rs-empty-title">No sources yet</p>
-                <p class="rs-empty-sub">Add your first source to start building this research library.</p>
+                <p class="rs-empty-sub">Add your first source to start building this research collection.</p>
                 <button class="rs-add-btn" (click)="openSourceModal()">
                   <span class="material-symbols-outlined">add</span>
                   Add Source
@@ -280,13 +280,13 @@
           @if (filteredLibraries().length === 0 && searchQuery()) {
             No libraries match "{{ searchQuery() }}"
           } @else {
-            Select a library to get started
+            Select a collection to get started
           }
         </p>
-        <p class="rs-empty-sub">Choose a research library from the sidebar, or use <strong>New Library</strong> above to create one.</p>
+        <p class="rs-empty-sub">Choose a collection from the sidebar, or use <strong>New Collection</strong> above to create one.</p>
         <div class="rs-empty-libs">
           @for (lib of filteredLibraries().slice(0, 4); track lib.id) {
-            <button class="rs-empty-lib-chip" (click)="selectLibrary(lib)">
+            <button class="rs-empty-lib-chip" (click)="selectCollection(lib)">
               <span class="rs-lib-bc-dot" [style.background]="lib.color"></span>
               {{ lib.name }}
               <span class="rs-empty-chip-count">{{ researchService.getSourcesByCollection(lib.id).length }}</span>
@@ -301,8 +301,8 @@
   <!-- AI Panel -->
   @if (showAssistant()) {
     <env-ai-panel
-      title="Library Assistant"
-      placeholder="Ask about your library…"
+      title="Knowledge Assistant"
+      placeholder="Ask about your collection…"
       [suggestions]="aiSuggestions"
       [messages]="aiMessages()"
       [loading]="aiLoading()"
@@ -423,18 +423,18 @@
 }
 
 <!-- ── NEW LIBRARY MODAL ── -->
-@if (showLibraryModal()) {
-  <div class="rsa-backdrop" (click)="closeLibraryModal()">
+@if (showCollectionModal()) {
+  <div class="rsa-backdrop" (click)="closeCollectionModal()">
     <div class="rsa-modal rsa-modal--sm" (click)="$event.stopPropagation()">
 
       <div class="rsa-header">
         <div class="rsa-header-left">
           <span class="material-symbols-outlined rsa-header-icon">library_books</span>
-          <h2 class="rsa-header-title">New Library</h2>
+          <h2 class="rsa-header-title">New Collection</h2>
         </div>
         <div class="rsa-header-right">
           <kbd class="rsa-esc-key">Esc</kbd>
-          <button class="rsa-close-btn" (click)="closeLibraryModal()">
+          <button class="rsa-close-btn" (click)="closeCollectionModal()">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -442,25 +442,25 @@
 
       <div class="rsa-form-pane rsa-form-pane--solo">
         <div class="rsa-name-bar">
-          <span class="material-symbols-outlined" [style.color]="newLibraryColor()">library_books</span>
-          <input class="rsa-name-input" type="text" placeholder="Library name…" autofocus
-            [ngModel]="newLibraryName()" (ngModelChange)="newLibraryName.set($event)">
+          <span class="material-symbols-outlined" [style.color]="newCollectionColor()">library_books</span>
+          <input class="rsa-name-input" type="text" placeholder="Collection name…" autofocus
+            [ngModel]="newCollectionName()" (ngModelChange)="newCollectionName.set($event)">
         </div>
 
         <div class="rsa-field-group">
           <label class="rsa-label">Description</label>
-          <textarea class="rsa-textarea" rows="3" placeholder="What is this library for?"
-            [ngModel]="newLibraryDesc()" (ngModelChange)="newLibraryDesc.set($event)"></textarea>
+          <textarea class="rsa-textarea" rows="3" placeholder="What is this collection for?"
+            [ngModel]="newCollectionDesc()" (ngModelChange)="newCollectionDesc.set($event)"></textarea>
         </div>
 
         <div class="rsa-field-group">
           <label class="rsa-label">Color</label>
           <div class="rsa-color-picker">
-            @for (color of libraryColors; track color) {
-              <button class="rsa-color-opt" [class.active]="newLibraryColor() === color"
+            @for (color of collectionColors; track color) {
+              <button class="rsa-color-opt" [class.active]="newCollectionColor() === color"
                 [style.background]="color"
-                (click)="newLibraryColor.set(color)">
-                @if (newLibraryColor() === color) {
+                (click)="newCollectionColor.set(color)">
+                @if (newCollectionColor() === color) {
                   <span class="material-symbols-outlined">check</span>
                 }
               </button>
@@ -475,10 +475,10 @@
           <span class="rsa-hint"><kbd>Esc</kbd> Close</span>
         </div>
         <div class="rsa-footer-actions">
-          <button class="rsa-cancel-btn" (click)="closeLibraryModal()">Cancel</button>
-          <button class="rsa-create-btn" [disabled]="!newLibraryName()" (click)="saveLibrary()">
+          <button class="rsa-cancel-btn" (click)="closeCollectionModal()">Cancel</button>
+          <button class="rsa-create-btn" [disabled]="!newCollectionName()" (click)="saveCollection()">
             <span class="material-symbols-outlined">add</span>
-            Create Library
+            Create Collection
           </button>
         </div>
       </div>
@@ -662,20 +662,20 @@
 }
 
 <!-- ── DELETE LIBRARY ── -->
-@if (showDeleteLibrary()) {
-  <div class="rsa-backdrop" (click)="cancelDeleteLibrary()">
+@if (showDeleteCollection()) {
+  <div class="rsa-backdrop" (click)="cancelDeleteCollection()">
     <div class="rsa-modal rsa-modal--xs" (click)="$event.stopPropagation()">
       <div class="rsa-header">
         <div class="rsa-header-left">
           <span class="material-symbols-outlined rsa-header-icon" style="color:#ef4444">delete</span>
-          <h2 class="rsa-header-title">Delete Library</h2>
+          <h2 class="rsa-header-title">Delete Collection</h2>
         </div>
-        <button class="rsa-close-btn" (click)="cancelDeleteLibrary()">
+        <button class="rsa-close-btn" (click)="cancelDeleteCollection()">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
       <div class="rsa-delete-body">
-        @if (libraryToDelete(); as lib) {
+        @if (collectionToDelete(); as lib) {
           <p class="rsa-delete-msg">Delete <strong>"{{ lib.name }}"</strong> and all its sources?</p>
           <p class="rsa-delete-hint">This action cannot be undone.</p>
         }
@@ -683,8 +683,8 @@
       <div class="rsa-footer">
         <div></div>
         <div class="rsa-footer-actions">
-          <button class="rsa-cancel-btn" (click)="cancelDeleteLibrary()">Cancel</button>
-          <button class="rsa-del-confirm-btn" (click)="confirmDeleteLibrary()">
+          <button class="rsa-cancel-btn" (click)="cancelDeleteCollection()">Cancel</button>
+          <button class="rsa-del-confirm-btn" (click)="confirmDeleteCollection()">
             <span class="material-symbols-outlined">delete</span>
             Delete
           </button>

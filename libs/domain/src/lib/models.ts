@@ -230,15 +230,12 @@ export interface StorageFile {
     storagePath: string;
     publicUrl?: string;
     uploadedAt: string;
-    libraryId?: string;
+    collectionId?: string;
     sourceType?: 'task' | 'note' | 'research' | 'bookmark' | 'direct';
     sourceId?: string;
     description?: string;
     tags?: string[];
 }
-
-/** @deprecated Use StorageFile */
-export type LibraryFile = StorageFile;
 
 export interface BookmarkFolder {
     id: string;

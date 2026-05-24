@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchLibrary, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService } from '@envello/core';
+import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries' | 'files';
@@ -32,7 +32,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── View state ────────────────────────────────────────────────────────────
   viewMode        = signal<ViewMode>('sources');
-  selectedCollection = signal<ResearchLibrary | null>(null);
+  selectedCollection = signal<ResearchCollection | null>(null);
 
   // ── Files ─────────────────────────────────────────────────────────────────
   fileFilterType = signal<'all' | 'image' | 'document' | 'video' | 'audio'>('all');
@@ -43,7 +43,7 @@ export class KnowledgeComponent implements OnDestroy {
   filteredFiles = computed(() => {
     let list = this.fileStorage.files();
     const selectedLib = this.selectedCollection();
-    if (selectedLib) list = list.filter(f => f.libraryId === selectedLib.id);
+    if (selectedLib) list = list.filter(f => f.collectionId === selectedLib.id);
     const q = this.searchQuery().toLowerCase().trim();
     if (q) list = list.filter(f => f.name.toLowerCase().includes(q));
     const type = this.fileFilterType();
@@ -94,7 +94,7 @@ export class KnowledgeComponent implements OnDestroy {
   showDeleteCollection   = signal(false);
   showDeleteSource    = signal(false);
   showDeleteSummary   = signal(false);
-  collectionToDelete     = signal<ResearchLibrary | null>(null);
+  collectionToDelete     = signal<ResearchCollection | null>(null);
   sourceToDelete      = signal<ResearchSource | null>(null);
   summaryToDelete     = signal<ResearchSummary | null>(null);
 
@@ -375,7 +375,7 @@ export class KnowledgeComponent implements OnDestroy {
   collectionFiles = computed(() => {
     const lib = this.selectedCollection();
     if (!lib) return this.fileStorage.files();
-    return this.fileStorage.files().filter(f => f.libraryId === lib.id);
+    return this.fileStorage.files().filter(f => f.collectionId === lib.id);
   });
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -413,12 +413,12 @@ export class KnowledgeComponent implements OnDestroy {
     return parts.join(' · ') || '—';
   }
 
-  private resolveUploadLibraryId(): string | undefined {
+  private resolveUploadCollectionId(): string | undefined {
     return (this.showAddModal() ? this.newSourceCollectionId() : '') || this.selectedCollection()?.id;
   }
 
   // ── Collection actions ───────────────────────────────────────────────────────
-  saveLibrary() {
+  saveCollection() {
     if (!this.newCollectionName()) return;
     const newLib = this.researchService.addCollection({ name: this.newCollectionName(), description: this.newCollectionDesc(), color: this.newCollectionColor() });
     this.newSourceCollectionId.set(newLib.id);
@@ -440,25 +440,25 @@ export class KnowledgeComponent implements OnDestroy {
     this.filterType.set('ALL');
   }
 
-  selectLibrary(library: ResearchLibrary) {
-    this.selectedCollection.set(library);
+  selectCollection(collection: ResearchCollection) {
+    this.selectedCollection.set(collection);
     this.viewMode.set('sources');
     this.searchQuery.set('');
     this.filterStatus.set('ALL');
     this.filterType.set('ALL');
   }
 
-  moveSourceToCollection(sourceId: string, libraryId: string) {
-    const libId = libraryId || undefined;
-    this.researchService.updateSource(sourceId, { libraryId: libId });
+  moveSourceToCollection(sourceId: string, collectionId: string) {
+    const id = collectionId || undefined;
+    this.researchService.updateSource(sourceId, { collectionId: id });
     if (this.selectedSource()?.id === sourceId) {
-      this.selectedSource.update(cur => cur ? { ...cur, libraryId: libId } : null);
+      this.selectedSource.update(cur => cur ? { ...cur, collectionId: id } : null);
     }
   }
 
-  openDeleteCollection(library: ResearchLibrary, e: Event) {
+  openDeleteCollection(collection: ResearchCollection, e: Event) {
     e.stopPropagation();
-    this.collectionToDelete.set(library);
+    this.collectionToDelete.set(collection);
     this.showDeleteCollection.set(true);
   }
   cancelDeleteCollection() { this.showDeleteCollection.set(false); this.collectionToDelete.set(null); }
@@ -493,9 +493,9 @@ export class KnowledgeComponent implements OnDestroy {
 
   saveSource() {
     if (!this.newSourceTitle()) return;
-    const libraryId = this.selectedCollection()?.id ?? (this.newSourceCollectionId() || undefined);
+    const collectionId = this.selectedCollection()?.id ?? (this.newSourceCollectionId() || undefined);
     this.researchService.addSource({
-      libraryId, title: this.newSourceTitle(), url: this.newSourceUrl(),
+      collectionId, title: this.newSourceTitle(), url: this.newSourceUrl(),
       sourceType: this.newSourceType(),
       tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
       description: this.newSourceDesc(), author: this.newSourceAuthor(), status: 'UNREAD',
@@ -505,9 +505,9 @@ export class KnowledgeComponent implements OnDestroy {
 
   saveNote() {
     if (!this.newSourceTitle()) return;
-    const libraryId = this.selectedCollection()?.id ?? (this.newSourceCollectionId() || undefined);
+    const collectionId = this.selectedCollection()?.id ?? (this.newSourceCollectionId() || undefined);
     this.researchService.addSource({
-      libraryId, title: this.newSourceTitle(), sourceType: 'ARTICLE',
+      collectionId, title: this.newSourceTitle(), sourceType: 'ARTICLE',
       tags: this.newSourceTags().split(',').map(t => t.trim()).filter(t => t),
       notes: this.addNoteContent(), status: 'UNREAD',
     });
@@ -515,14 +515,14 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   openFileInputFromModal() {
-    const libraryId = this.resolveUploadLibraryId();
+    const collectionId = this.resolveUploadCollectionId();
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
     input.onchange = (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
       if (files.length) {
-        this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, libraryId);
+        this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, collectionId);
         this.closeAddModal();
       }
     };
@@ -709,7 +709,7 @@ export class KnowledgeComponent implements OnDestroy {
     const lib = this.selectedCollection();
     if (!this.newSummaryTitle() || !lib) return;
     this.researchService.addSummary({
-      libraryId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
+      collectionId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
       sourceIds: this.selectedSourceIds(),
       fileIds: this.selectedFileIds(),
       tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t),
@@ -844,20 +844,20 @@ export class KnowledgeComponent implements OnDestroy {
     const ext = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'm4a' : 'webm';
     const title = this.audioTitle().trim() || `Recording ${new Date().toLocaleString()}`;
     const file = new File([blob], `${title}.${ext}`, { type: blob.type });
-    await this.fileStorage.uploadMany([file], { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
+    await this.fileStorage.uploadMany([file], { type: 'direct', id: 'knowledge' }, this.resolveUploadCollectionId());
     this.discardRecording();
     this.closeAddModal();
   }
 
   openAudioFileInput() {
-    const libraryId = this.resolveUploadLibraryId();
+    const collectionId = this.resolveUploadCollectionId();
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'audio/*';
     input.multiple = true;
     input.onchange = (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
-      if (files.length) { this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, libraryId); this.closeAddModal(); }
+      if (files.length) { this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, collectionId); this.closeAddModal(); }
     };
     input.click();
   }
@@ -878,20 +878,20 @@ export class KnowledgeComponent implements OnDestroy {
     event.preventDefault();
     this.isDraggingOver.set(false);
     const files = Array.from(event.dataTransfer?.files ?? []);
-    if (files.length) this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, this.resolveUploadLibraryId());
+    if (files.length) this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, this.resolveUploadCollectionId());
   }
 
   onDragOver(event: DragEvent) { event.preventDefault(); this.isDraggingOver.set(true); }
   onDragLeave() { this.isDraggingOver.set(false); }
 
   openFileInput() {
-    const libraryId = this.resolveUploadLibraryId();
+    const collectionId = this.resolveUploadCollectionId();
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
     input.onchange = (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
-      if (files.length) this.fileStorage.uploadMany(files, { type: 'direct', id: 'library' }, libraryId);
+      if (files.length) this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, collectionId);
     };
     input.click();
   }

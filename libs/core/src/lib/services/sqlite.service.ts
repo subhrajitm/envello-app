@@ -35,8 +35,6 @@ export type BinItemDoc = BinItem;
 export type MeetingDoc = Meeting;
 export type ArticleDoc = Article;
 export type ResearchCollectionDoc = ResearchCollection;
-/** @deprecated Use ResearchCollectionDoc */
-export type ResearchLibraryDoc = ResearchCollectionDoc;
 export type ResearchSourceDoc = ResearchSource;
 export type ResearchSummaryDoc = ResearchSummary;
 export type ProjectDoc = Project;
@@ -317,7 +315,7 @@ export class SqliteService {
         await db.execute(`
       CREATE TABLE IF NOT EXISTS research_sources (
         id TEXT PRIMARY KEY,
-        libraryId TEXT,
+        collectionId TEXT,
         title TEXT,
         sourceType TEXT,
         url TEXT,
@@ -331,12 +329,18 @@ export class SqliteService {
         lastAccessed TEXT
       )
     `);
+        // Migrate: libraryId → collectionId column in research_sources
+        try {
+            await db.execute('ALTER TABLE research_sources RENAME COLUMN libraryId TO collectionId');
+        } catch {
+            // Column already renamed or table is fresh — both are fine
+        }
 
         // Research Summaries
         await db.execute(`
       CREATE TABLE IF NOT EXISTS research_summaries (
         id TEXT PRIMARY KEY,
-        libraryId TEXT,
+        collectionId TEXT,
         title TEXT,
         content TEXT,
         sourceIds TEXT,
@@ -345,6 +349,12 @@ export class SqliteService {
         lastModified TEXT
       )
     `);
+        // Migrate: libraryId → collectionId column in research_summaries
+        try {
+            await db.execute('ALTER TABLE research_summaries RENAME COLUMN libraryId TO collectionId');
+        } catch {
+            // Column already renamed or table is fresh — both are fine
+        }
 
         // Projects
         await db.execute(`
@@ -952,25 +962,10 @@ export class SqliteService {
         return this.researchCollectionsSubject.getValue();
     }
 
-    /** @deprecated Use upsertResearchCollection */
-    async upsertResearchLibrary(doc: ResearchCollectionDoc): Promise<void> {
-        return this.upsertResearchCollection(doc);
-    }
-
-    /** @deprecated Use getAllResearchCollections */
-    async getAllResearchLibraries(): Promise<ResearchCollectionDoc[]> {
-        return this.getAllResearchCollections();
-    }
-
     async removeResearchCollection(id: string): Promise<void> {
         const db = await this.getDb();
         await db.execute('DELETE FROM research_collections WHERE id = $1', [id]);
         await this.reloadResearchCollections();
-    }
-
-    /** @deprecated Use removeResearchCollection */
-    async removeResearchLibrary(id: string): Promise<void> {
-        return this.removeResearchCollection(id);
     }
 
     // ─── Research Sources ──────────────────────────────────────────────────────
@@ -987,11 +982,11 @@ export class SqliteService {
         const jsonDoc = { ...doc, tags: this.toJson(doc.tags) };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE research_sources SET libraryId=$1, title=$2, sourceType=$3, url=$4, description=$5, author=$6, publishDate=$7, tags=$8, status=$9, notes=$10, createdDate=$11, lastAccessed=$12 WHERE id=$13`,
-                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed, jsonDoc.id]);
+            await db.execute(`UPDATE research_sources SET collectionId=$1, title=$2, sourceType=$3, url=$4, description=$5, author=$6, publishDate=$7, tags=$8, status=$9, notes=$10, createdDate=$11, lastAccessed=$12 WHERE id=$13`,
+                [jsonDoc.collectionId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed, jsonDoc.id]);
         } else {
-            await db.execute(`INSERT INTO research_sources (id, libraryId, title, sourceType, url, description, author, publishDate, tags, status, notes, createdDate, lastAccessed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed]);
+            await db.execute(`INSERT INTO research_sources (id, collectionId, title, sourceType, url, description, author, publishDate, tags, status, notes, createdDate, lastAccessed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+                [jsonDoc.id, jsonDoc.collectionId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed]);
         }
         await this.reloadResearchSources();
     }
@@ -1020,11 +1015,11 @@ export class SqliteService {
         const jsonDoc = { ...doc, sourceIds: this.toJson(doc.sourceIds), tags: this.toJson(doc.tags) };
 
         if (exists.length > 0) {
-            await db.execute('UPDATE research_summaries SET libraryId=$1, title=$2, content=$3, sourceIds=$4, tags=$5, createdDate=$6, lastModified=$7 WHERE id=$8',
-                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified, jsonDoc.id]);
+            await db.execute('UPDATE research_summaries SET collectionId=$1, title=$2, content=$3, sourceIds=$4, tags=$5, createdDate=$6, lastModified=$7 WHERE id=$8',
+                [jsonDoc.collectionId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified, jsonDoc.id]);
         } else {
-            await db.execute('INSERT INTO research_summaries (id, libraryId, title, content, sourceIds, tags, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified]);
+            await db.execute('INSERT INTO research_summaries (id, collectionId, title, content, sourceIds, tags, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+                [jsonDoc.id, jsonDoc.collectionId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified]);
         }
         await this.reloadResearchSummaries();
     }

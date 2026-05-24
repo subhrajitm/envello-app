@@ -98,7 +98,7 @@ export class FileStorageService {
             size: file.size,
             storagePath,
             uploadedAt: new Date().toISOString(),
-            libraryId: collectionId,
+            collectionId: collectionId,
             sourceType: source?.type,
             sourceId: source?.id,
         };

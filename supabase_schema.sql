@@ -322,7 +322,7 @@ create policy "Users can all access their own research collections" on public.re
 create table if not exists public.research_sources (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
-  library_id text,
+  collection_id text,
   title text,
   source_type text,
   url text,
@@ -348,7 +348,7 @@ create policy "Users can all access their own research sources" on public.resear
 create table if not exists public.research_summaries (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
-  library_id text,
+  collection_id text,
   title text,
   content text,
   source_ids jsonb,

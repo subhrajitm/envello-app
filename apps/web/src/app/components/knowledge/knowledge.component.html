@@ -222,7 +222,7 @@
         }
 
       </div>
-    } @else if (selectedCollection(); as library) {
+    } @else if (selectedCollection(); as collection) {
 
       <!-- Tabs + status filters -->
       <div class="rs-tabs-bar">
@@ -543,8 +543,8 @@
           <!-- Collection assignment / move -->
           <div class="rsd-section">
             <label class="rsd-label">Collection</label>
-            <select class="rsd-library-select"
-              [ngModel]="source.libraryId ?? ''"
+            <select class="rsd-collection-select"
+              [ngModel]="source.collectionId ?? ''"
               (ngModelChange)="moveSourceToCollection(source.id, $event)">
               <option value="">No collection</option>
               @for (lib of collections(); track lib.id) {
