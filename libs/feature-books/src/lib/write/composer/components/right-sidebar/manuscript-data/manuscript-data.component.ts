@@ -26,4 +26,9 @@ export class ManuscriptDataComponent {
   activeChapterId = input<string | null>(null);
   mentionedCharacters = input.required<string[]>();
   mentionedLocations = input.required<string[]>();
+  writingType = input<string>('NOVEL');
+  sectionLabel = input<string>('Section');
+
+  get readingTime() { return Math.max(1, Math.ceil(this.totalNovelWords() / 200)); }
+  get estimatedPages() { return Math.max(1, Math.ceil(this.totalNovelWords() / 250)); }
 }

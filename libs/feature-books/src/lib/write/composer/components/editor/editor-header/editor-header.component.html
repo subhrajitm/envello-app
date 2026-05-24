@@ -124,6 +124,12 @@
                     <span class="material-symbols-outlined option-icon">description</span>
                     <span class="option-label">Export as Markdown</span>
                 </button>
+                @if (writingType() === 'SCRIPT') {
+                <button class="add-dropdown-option" (click)="exportNovel.emit('fountain'); toggleExportMenu.emit()">
+                    <span class="material-symbols-outlined option-icon">theaters</span>
+                    <span class="option-label">Export as Fountain (.fountain)</span>
+                </button>
+                }
             </div>
             }
         </div>

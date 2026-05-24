@@ -64,10 +64,10 @@ export class WriteComponent {
   aiMessages    = signal<AiPanelMessage[]>([]);
 
   readonly aiSuggestions = [
-    'How many pieces do I have?',
+    'How many writings do I have?',
     'Show me all drafts in progress',
     'What is my total word count?',
-    'Which pieces are ready to publish?',
+    'Which writings are ready to publish?',
     'Show a breakdown by writing type',
   ];
   // ── Table configuration ──────────────────────────────────────────────────
@@ -384,27 +384,27 @@ export class WriteComponent {
     let response = '';
 
     if (q.includes('how many') || q.includes('count')) {
-      response = `You have **${books.length}** piece${books.length !== 1 ? 's' : ''} in total.\n${this.writingTypes.map(t => {
+      response = `You have **${books.length}** writing${books.length !== 1 ? 's' : ''} in total.\n${this.writingTypes.map(t => {
         const n = books.filter(v => v.writingType === t.id).length;
         return n > 0 ? `${t.label}: ${n}` : null;
       }).filter(Boolean).join('\n')}`;
     } else if (q.includes('draft') || q.includes('in progress')) {
       const drafts = books.filter(n => n.status === 'DRAFTING' || n.status === 'REVISING');
       response = drafts.length
-        ? `**${drafts.length}** piece${drafts.length !== 1 ? 's' : ''} in progress:\n${drafts.map((n, i) => `${i + 1}. ${n.title} — ${n.status} (${n.progress}%)`).join('\n')}`
-        : 'No pieces currently in draft or revision.';
+        ? `**${drafts.length}** writing${drafts.length !== 1 ? 's' : ''} in progress:\n${drafts.map((n, i) => `${i + 1}. ${n.title} — ${n.status} (${n.progress}%)`).join('\n')}`
+        : 'No writings currently in draft or revision.';
     } else if (q.includes('word') || q.includes('total')) {
       const total = books.reduce((a, n) => a + n.wordCount, 0);
-      response = `Total word count: **${total.toLocaleString()}** words across ${books.length} pieces.\nAverage: ${books.length ? Math.round(total / books.length).toLocaleString() : 0} words per piece.`;
+      response = `Total word count: **${total.toLocaleString()}** words across ${books.length} writings.\nAverage: ${books.length ? Math.round(total / books.length).toLocaleString() : 0} words per writing.`;
     } else if (q.includes('publish') || q.includes('ready')) {
       const pub = books.filter(n => n.status === 'PUBLISHED');
       response = pub.length
-        ? `**${pub.length}** published piece${pub.length !== 1 ? 's' : ''}:\n${pub.map((n, i) => `${i + 1}. ${n.title}`).join('\n')}`
-        : 'No published pieces yet.';
+        ? `**${pub.length}** published writing${pub.length !== 1 ? 's' : ''}:\n${pub.map((n, i) => `${i + 1}. ${n.title}`).join('\n')}`
+        : 'No published writings yet.';
     } else if (q.includes('breakdown') || q.includes('type')) {
-      response = `Pieces by type:\n${this.writingTypes.map(t => `${t.label}: ${books.filter(n => n.writingType === t.id).length}`).join('\n')}`;
+      response = `Writing by type:\n${this.writingTypes.map(t => `${t.label}: ${books.filter(n => n.writingType === t.id).length}`).join('\n')}`;
     } else {
-      response = `You have ${books.length} piece${books.length !== 1 ? 's' : ''} with a total of ${books.reduce((a, n) => a + n.wordCount, 0).toLocaleString()} words. Ask about drafts, word counts, publishing status, or a breakdown by type.`;
+      response = `You have ${books.length} writing${books.length !== 1 ? 's' : ''} with a total of ${books.reduce((a, n) => a + n.wordCount, 0).toLocaleString()} words. Ask about drafts, word counts, publishing status, or a breakdown by type.`;
     }
 
     this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);

@@ -11,16 +11,27 @@
     </div>
 
     <div class="ai-actions">
-        <button class="btn-ai-primary" (click)="analyzeToneAndPacing.emit()" [disabled]="aiLoading() || !activeChapter()">
-            <span class="material-symbols-outlined">auto_fix_high</span>
-            Analyze Tone & Pacing
-        </button>
-        <div class="ai-btn-row">
-            <button class="btn-ai-sec" (click)="generateSuggestions.emit()" [disabled]="aiLoading() || !activeChapter()">
-                <span class="material-symbols-outlined">menu_book</span>
-                Suggest
+        @for (btn of primaryActions(); track btn.key) {
+            @if (btn.primary) {
+            <button class="btn-ai-primary" (click)="quickAction.emit(btn.key)"
+                [disabled]="aiLoading() || !activeChapter()">
+                <span class="material-symbols-outlined">{{ btn.icon }}</span>
+                {{ btn.label }}
             </button>
-            <button class="btn-ai-sec" (click)="summarizeChapter.emit()" [disabled]="aiLoading() || !activeChapter()">
+            }
+        }
+        <div class="ai-btn-row">
+            @for (btn of primaryActions(); track btn.key) {
+                @if (!btn.primary) {
+                <button class="btn-ai-sec" (click)="quickAction.emit(btn.key)"
+                    [disabled]="aiLoading() || !activeChapter()">
+                    <span class="material-symbols-outlined">{{ btn.icon }}</span>
+                    {{ btn.label }}
+                </button>
+                }
+            }
+            <button class="btn-ai-sec" (click)="summarizeChapter.emit()"
+                [disabled]="aiLoading() || !activeChapter()">
                 <span class="material-symbols-outlined">short_text</span>
                 Summarize
             </button>

@@ -88,7 +88,7 @@
             <app-editor-header [activeNav]="activeNav()" [canUndo]="canUndo()" [canRedo]="canRedo()"
                 [searchOpen]="searchOpen()" [searchQuery]="searchQuery()" [filteredResults]="filteredChapters()"
                 [focusMode]="focusMode()" [fullScreenMode]="fullScreenMode()" [exportMenuOpen]="exportMenuOpen()"
-                [showExtendedTabs]="showExtendedTabs()"
+                [showExtendedTabs]="showExtendedTabs()" [writingType]="writingType()"
                 (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()"
                 (toggleSearch)="toggleSearch()" (searchQueryChange)="searchQuery.set($event)"
                 (selectSearchResult)="selectSearchResult($event)" (toggleFocusMode)="toggleFocusMode()"
@@ -96,7 +96,7 @@
                 (toggleExportMenu)="toggleExportMenu()" (exportNovel)="exportNovel($event)" />
 
             @if (editor && (activeNav() === 'manuscript' || activeNav() === 'structure')) {
-            <app-editor-toolbar [editor]="editor" (openLinkModal)="openLinkModal()" (addImage)="addImage()"
+            <app-editor-toolbar [editor]="editor" [writingType]="writingType()" (openLinkModal)="openLinkModal()" (addImage)="addImage()"
                 (insertTable)="insertTable()" (addYoutube)="addYoutube()" />
             }
 
@@ -153,8 +153,9 @@
                     [aiPrompt]="aiPrompt()" [aiSuggestions]="aiSuggestions()"
                     [showContextPreview]="showContextPreview()" [tokenCount]="getTokenCount()"
                     [context]="getCurrentContext()" [activeChapter]="activeChapter()" [editor]="editor"
-                    (sendMessage)="sendAiMessage()" (analyzeToneAndPacing)="analyzeToneAndPacing()"
-                    (generateSuggestions)="generateSuggestions()" (summarizeChapter)="summarizeChapter()"
+                    [writingType]="writingType()"
+                    (sendMessage)="sendAiMessage()" (quickAction)="handleQuickAction($event)"
+                    (summarizeChapter)="summarizeChapter()"
                     (continueWriting)="continueWriting()" (applySuggestion)="applySuggestion($event)"
                     (clearConversation)="clearAiConversation()" (clearSuggestions)="aiSuggestions.set([])"
                     (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)" />
@@ -168,7 +169,8 @@
                     [totalChapters]="getTotalChapters()" [logline]="book()!.synopsis.logline"
                     [theme]="book()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
                     [goalProgress]="getGoalProgress()" [activeChapterId]="activeChapterId()"
-                    [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()" />
+                    [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()"
+                    [writingType]="writingType()" [sectionLabel]="sectionLabel()" />
                 }
             </div>
             @if (rightSidebarCollapsed()) {

@@ -91,5 +91,39 @@
             <span class="material-symbols-outlined">smart_display</span>
         </button>
     </div>
+    @if (writingType() === 'POETRY') {
+    <div class="toolbar-divider"></div>
+    <div class="toolbar-group">
+        <button class="toolbar-btn" title="Stanza Break"
+            (click)="editor().chain().focus().setHorizontalRule().run()">
+            <span class="material-symbols-outlined">horizontal_rule</span>
+        </button>
+    </div>
+    }
+    @if (writingType() === 'SCRIPT') {
+    <div class="toolbar-divider"></div>
+    <div class="toolbar-group toolbar-group--script">
+        <button class="toolbar-btn toolbar-btn--label" title="Scene Heading"
+            (click)="editor().chain().focus().toggleHeading({ level: 2 }).run()"
+            [class.active]="editor().isActive('heading', { level: 2 })">
+            SCENE
+        </button>
+        <button class="toolbar-btn toolbar-btn--label" title="Dialogue"
+            (click)="editor().chain().focus().toggleBlockquote().run()"
+            [class.active]="editor().isActive('blockquote')">
+            DLG
+        </button>
+    </div>
+    }
+    @if (writingType() === 'RESEARCH' || writingType() === 'ARTICLE' || writingType() === 'ESSAY') {
+    <div class="toolbar-divider"></div>
+    <div class="toolbar-group">
+        <button class="toolbar-btn toolbar-btn--label" title="Footnote / Aside"
+            (click)="editor().chain().focus().toggleBlockquote().run()"
+            [class.active]="editor().isActive('blockquote')">
+            FN
+        </button>
+    </div>
+    }
 </div>
 }

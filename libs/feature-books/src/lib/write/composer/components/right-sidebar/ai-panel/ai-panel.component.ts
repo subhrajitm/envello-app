@@ -1,4 +1,4 @@
-import { Component, input, output, ViewChild, ElementRef, DoCheck, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
+import { Component, input, output, computed, ViewChild, ElementRef, DoCheck, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -30,12 +30,42 @@ export class AiPanelComponent implements DoCheck {
   context = input.required<string>();
   activeChapter = input<any>(null);
   editor = input<Editor | null>(null);
-  
+  writingType = input<string>('NOVEL');
+
   @ViewChild('aiMessagesContainer') aiMessagesContainer!: ElementRef<HTMLDivElement>;
-  
+
+  readonly primaryActions = computed(() => {
+    switch (this.writingType()) {
+      case 'SCRIPT': return [
+        { key: 'refine-dialogue',  label: 'Refine Dialogue',  icon: 'record_voice_over', primary: true },
+        { key: 'scene-analysis',   label: 'Scene Analysis',   icon: 'theaters',          primary: false },
+      ];
+      case 'POETRY': return [
+        { key: 'analyze-meter',    label: 'Analyze Meter',    icon: 'music_note',        primary: true },
+        { key: 'check-rhyme',      label: 'Check Rhyme',      icon: 'spellcheck',        primary: false },
+      ];
+      case 'ARTICLE':
+      case 'BLOG_POST': return [
+        { key: 'improve-clarity',  label: 'Improve Clarity',  icon: 'auto_fix_high',     primary: true },
+        { key: 'check-flow',       label: 'Check Flow',       icon: 'trending_up',       primary: false },
+      ];
+      case 'ESSAY': return [
+        { key: 'strengthen-args',  label: 'Strengthen Arguments', icon: 'gavel',         primary: true },
+        { key: 'check-structure',  label: 'Check Structure',  icon: 'account_tree',      primary: false },
+      ];
+      case 'RESEARCH': return [
+        { key: 'summarize-findings', label: 'Summarize Findings', icon: 'summarize',     primary: true },
+        { key: 'check-consistency',  label: 'Check Consistency',  icon: 'fact_check',    primary: false },
+      ];
+      default: return [ // NOVEL, SHORT_STORY
+        { key: 'tone-pacing', label: 'Analyze Tone & Pacing', icon: 'auto_fix_high',     primary: true },
+        { key: 'suggest',     label: 'Suggest',               icon: 'menu_book',         primary: false },
+      ];
+    }
+  });
+
   sendMessage = output<string | void>();
-  analyzeToneAndPacing = output<void>();
-  generateSuggestions = output<void>();
+  quickAction = output<string>();
   summarizeChapter = output<void>();
   continueWriting = output<void>();
   applySuggestion = output<AiSuggestion>();

@@ -16,7 +16,8 @@ import { Editor } from '@tiptap/core';
 })
 export class EditorToolbarComponent {
   editor = input.required<Editor>();
-  
+  writingType = input<string>('NOVEL');
+
   openLinkModal = output<void>();
   addImage = output<void>();
   insertTable = output<void>();

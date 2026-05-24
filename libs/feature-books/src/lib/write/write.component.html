@@ -7,7 +7,7 @@
       <button class="wr-sb-item" [class.active]="!selectedType() && statusFilter() === 'ALL'"
         (click)="clearFilters()">
         <span class="material-symbols-outlined">edit_note</span>
-        <span class="wr-sb-label">All Pieces</span>
+        <span class="wr-sb-label">All Writings</span>
         <span class="wr-sb-count">{{ store.books().length }}</span>
       </button>
     </nav>
@@ -49,7 +49,7 @@
     <div class="wr-toolbar">
       <div class="wr-search-wrap">
         <span class="material-symbols-outlined wr-search-icon">search</span>
-        <input class="wr-search-input" type="text" placeholder="Search pieces…"
+        <input class="wr-search-input" type="text" placeholder="Search writing…"
           [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
         @if (searchQuery()) {
           <button class="wr-search-clear" (click)="searchQuery.set('')">
@@ -125,7 +125,7 @@
           @if (store.books().length === 0) {
             <span class="material-symbols-outlined wr-empty-icon">edit_note</span>
             <p class="wr-empty-title">Nothing here yet</p>
-            <p class="wr-empty-sub">Create your first piece to start writing books, articles, scripts and more.</p>
+            <p class="wr-empty-sub">Create your first writing to start writing books, articles, scripts and more.</p>
             <button class="wr-add-btn" (click)="openAddModal()">
               <span class="material-symbols-outlined">add</span>
               New Writing
@@ -369,7 +369,7 @@
 @if (showDeleteModal()) {
 <env-confirm-dialog
     [isOpen]="true"
-    title="Delete Piece"
+    title="Delete Writing"
     icon="delete_forever"
     variant="danger"
     confirmLabel="Delete"

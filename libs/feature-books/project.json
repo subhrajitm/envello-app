@@ -1,7 +1,7 @@
 {
-  "name": "feature-novels",
+  "name": "feature-books",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/feature-novels/src",
+  "sourceRoot": "libs/feature-books/src",
   "prefix": "lib",
   "projectType": "library",
   "tags": [],
@@ -12,8 +12,8 @@
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
       "options": {
-        "jestConfig": "libs/feature-novels/jest.config.ts",
-        "tsConfig": "libs/feature-novels/tsconfig.spec.json"
+        "jestConfig": "libs/feature-books/jest.config.ts",
+        "tsConfig": "libs/feature-books/tsconfig.spec.json"
       }
     },
     "lint": {

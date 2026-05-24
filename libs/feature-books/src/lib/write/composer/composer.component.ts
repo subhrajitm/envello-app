@@ -140,7 +140,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   book = this.bookService.activeBook;
   isLoading = signal(true);
 
-  private writingType = computed(() => {
+  writingType = computed(() => {
     const meta = this.store.books().find(n => n.id === this.bookId());
     return meta?.writingType ?? 'NOVEL';
   });
@@ -1547,7 +1547,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   // Export functionality
-  exportNovel(format: 'pdf' | 'docx' | 'md' | 'html') {
+  exportNovel(format: 'pdf' | 'docx' | 'md' | 'html' | 'fountain') {
     const book = this.book();
     if (!book) return;
 
@@ -1559,11 +1559,33 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
+    if (format === 'fountain') {
+      let fountain = `Title: ${book.title}\n\n`;
+      book.chapters.forEach(group => {
+        fountain += `\n\n`;
+        group.children.forEach(chap => {
+          fountain += `INT. ${chap.title.toUpperCase()} - DAY\n\n`;
+          const text = chap.content.replace(/<[^>]+>/g, '').trim();
+          fountain += `${text}\n\n`;
+        });
+      });
+      const blob = new Blob([fountain], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.fountain`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
     // Build HTML content for html / md / docx
     content = `<h1>${book.title}</h1>\n\n`;
 
+    const skipFrontMatter = ['ARTICLE', 'BLOG_POST'].includes(this.writingType());
+
     // Front Matter
-    if (book.frontMatter.length > 0) {
+    if (!skipFrontMatter && book.frontMatter.length > 0) {
       content += '<h2>Front Matter</h2>\n';
       book.frontMatter.forEach(item => {
         content += `<h3>${item.title}</h3>\n${item.content}\n\n`;
@@ -1571,17 +1593,25 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Prologue
-    if (book.prologue) {
+    if (!skipFrontMatter && book.prologue) {
       content += `<h2>${book.prologue.title}</h2>\n${book.prologue.content}\n\n`;
     }
 
     // Chapters
+    let totalWords = 0;
     book.chapters.forEach(group => {
       content += `<h2>${group.title}</h2>\n`;
       group.children.forEach(chap => {
         content += `<h3>${chap.title}</h3>\n${chap.content}\n\n`;
+        totalWords += chap.wordCount;
       });
     });
+
+    // Prepend reading time for BLOG_POST html export
+    if (format === 'html' && this.writingType() === 'BLOG_POST') {
+      const mins = Math.max(1, Math.ceil(totalWords / 200));
+      content = `<p class="reading-time">Reading time: ${mins} min</p>\n` + content;
+    }
 
     if (format === 'html') {
       const blob = new Blob([content], { type: 'text/html' });
@@ -1608,6 +1638,49 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       a.download = `${filename}.doc`;
       a.click();
       URL.revokeObjectURL(url);
+    }
+  }
+
+  async handleQuickAction(key: string) {
+    const chapter = this.activeChapter();
+    const content = chapter?.content ?? '';
+
+    const prompts: Record<string, { user: string; system: string }> = {
+      'tone-pacing':         { user: 'Analyze the tone and pacing of this chapter', system: 'You are an expert literary editor.' },
+      'suggest':             { user: 'Suggest improvements for this writing', system: 'You are a creative writing coach.' },
+      'refine-dialogue':     { user: 'Refine the dialogue in this scene for naturalness and character voice', system: 'You are a professional screenwriter and dialogue coach.' },
+      'scene-analysis':      { user: 'Analyze this scene: what is the dramatic objective, conflict, and how does it advance the story?', system: 'You are an expert screenplay analyst.' },
+      'analyze-meter':       { user: 'Analyze the meter, rhythm, and syllable patterns in this poem. Identify the form if recognizable.', system: 'You are an expert poetry critic and prosodist.' },
+      'check-rhyme':         { user: 'Identify the rhyme scheme of this poem. Note perfect, slant, and eye rhymes.', system: 'You are an expert poetry critic.' },
+      'improve-clarity':     { user: 'Review this content for clarity and readability. Flag jargon, passive voice, or unclear passages.', system: 'You are a professional editor specializing in clear, accessible writing.' },
+      'check-flow':          { user: 'Analyze the flow and structure: is there a clear hook, body, and conclusion? How can transitions improve?', system: 'You are an expert content editor.' },
+      'strengthen-args':     { user: 'Analyze the arguments in this text. Are they well-supported? Identify weak points or logical gaps.', system: 'You are an expert academic writing coach.' },
+      'check-structure':     { user: 'Review the structure: is the thesis clear? Does each paragraph support the central argument?', system: 'You are an expert essay editor.' },
+      'summarize-findings':  { user: 'Summarize the key findings and claims in this section concisely.', system: 'You are an expert research editor.' },
+      'check-consistency':   { user: 'Review this section for consistent terminology, claims, and internal logic.', system: 'You are a meticulous research editor.' },
+    };
+
+    if (key === 'suggest') { await this.generateSuggestions(); return; }
+
+    const p = prompts[key];
+    if (!p || !content) { this.aiError.set('Please select a section first.'); return; }
+
+    this.aiMessages.update(msgs => [...msgs, {
+      id: Date.now().toString(),
+      role: 'user' as const,
+      content: p.user,
+      timestamp: new Date()
+    }]);
+    this.aiLoading.set(true);
+    this.aiError.set(null);
+    try {
+      await this.streamIntoNewMessage(
+        this.aiService.streamMessage(`${p.user}:\n\n${content}`, p.system)
+      );
+    } catch {
+      this.aiError.set('AI request failed. Please try again.');
+    } finally {
+      this.aiLoading.set(false);
     }
   }
 }
