@@ -26,3 +26,4 @@ export * from './lib/ai-assistant-panel/ai-assistant-panel.component';
 export * from './lib/profile-manager/profile-manager.component';
 export * from './lib/table/table.component';
 export * from './lib/feature-sidebar/feature-sidebar.component';
+export * from './lib/toast/toast.component';

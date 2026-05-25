@@ -2,7 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { BinService } from './bin.service';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Novel, Project, Bookmark, BookmarkFolder } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -12,7 +12,7 @@ export class StoreService {
     notes = signal<Note[]>([]);
     planningItems = signal<PlanningItem[]>([]);
     activities = signal<Activity[]>([]);
-    novels = signal<Novel[]>([]);
+    books = signal<Book[]>([]);
     /** Persisted folder definitions for daily notes; loaded from DB on init. */
     noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
     bookmarks = signal<Bookmark[]>([]);
@@ -78,12 +78,12 @@ export class StoreService {
 
     private async loadFromDb(): Promise<void> {
         try {
-            const [tasks, notes, planningItems, activities, novels, folders, bookmarks, bookmarkFolders, spaces] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
                 this.db.getAll<Note>('notes'),
                 this.db.getAll<PlanningItem>('planning_items'),
                 this.db.getAll<Activity>('activities'),
-                this.db.getAll<Novel>('novels'),
+                this.db.getAll<Book>('books'),
                 this.db.getAll<{ id: string; name: string; icon: string }>('note_folders'),
                 this.db.getAll<Bookmark>('bookmarks'),
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
@@ -93,7 +93,7 @@ export class StoreService {
             this.notes.set(notes || []);
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
-            this.novels.set(novels || []);
+            this.books.set(books || []);
             this.bookmarks.set(bookmarks || []);
             this.bookmarkFolders.set(bookmarkFolders || []);
             this.spaces.set(spaces || []);
@@ -117,7 +117,7 @@ export class StoreService {
             this.notes.set([]);
             this.planningItems.set([]);
             this.activities.set([]);
-            this.novels.set([]);
+            this.books.set([]);
             this.noteFolders.set([{ id: 'personal', name: 'Personal', icon: 'folder' }]);
             this.bookmarks.set([]);
             this.bookmarkFolders.set([]);
@@ -247,10 +247,10 @@ export class StoreService {
         this.db.upsert('planning_items', item).catch(e => console.error('[StoreService] persist planning item failed', e));
     }
 
-    addNovel(novel: Novel) {
-        this.novels.update(novels => [...novels, novel]);
-        this.addActivity('Project started: ' + novel.title, 'system');
-        this.db.upsert('novels', novel).catch(e => console.error('[StoreService] persist novel failed', e));
+    addBook(book: Book) {
+        this.books.update(books => [...books, book]);
+        this.addActivity('Project started: ' + book.title, 'system');
+        this.db.upsert('books', book).catch(e => console.error('[StoreService] persist book failed', e));
     }
 
     addSpace(space: Project) {
@@ -273,21 +273,21 @@ export class StoreService {
         if (space) this.db.upsert('projects', space).catch(e => console.error('[StoreService] persist space failed', e));
     }
 
-    deleteNovel(id: string) {
-        const existing = this.novels();
-        const novel = existing.find(n => n.id === id);
-        if (novel) {
+    deleteBook(id: string) {
+        const existing = this.books();
+        const book = existing.find(n => n.id === id);
+        if (book) {
             this.bin.addToBin({
-                type: 'novel',
-                originalId: novel.id,
-                title: novel.title,
-                payload: novel,
+                type: 'book',
+                originalId: book.id,
+                title: book.title,
+                payload: book,
             });
         }
-        this.novels.set(existing.filter(n => n.id !== id));
-        this.addActivity('Novel deleted', 'system');
-        this.db.remove('novels', id).catch(e => console.error('[StoreService] remove novel failed', e));
-        this.db.remove('novel_content', id).catch(e => console.error('[StoreService] remove novel content failed', e));
+        this.books.set(existing.filter(n => n.id !== id));
+        this.addActivity('Book deleted', 'system');
+        this.db.remove('books', id).catch(e => console.error('[StoreService] remove book failed', e));
+        this.db.remove('book_content', id).catch(e => console.error('[StoreService] remove book content failed', e));
     }
 
     addBookmark(bookmark: Bookmark) {

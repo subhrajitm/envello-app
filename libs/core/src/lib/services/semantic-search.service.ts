@@ -1,0 +1,197 @@
+import { Injectable, inject, effect } from '@angular/core';
+import { OpenAIEmbeddings } from '@langchain/openai';
+import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
+import { OllamaEmbeddings } from '@langchain/ollama';
+import type { Embeddings } from '@langchain/core/embeddings';
+import { AiService } from './ai.service';
+import { StoreService } from './store.service';
+
+export interface SemanticResult {
+    id: string;
+    type: 'note' | 'task' | 'book' | 'bookmark';
+    title: string;
+    preview: string;
+    icon: string;
+    route: string;
+    tags?: string[];
+    badge?: string;
+    date?: string;
+}
+
+interface IndexEntry {
+    result: SemanticResult;
+    vector: number[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class SemanticSearchService {
+    private ai = inject(AiService);
+    private store = inject(StoreService);
+
+    private index: IndexEntry[] = [];
+    private dirty = true;
+    private indexing = false;
+    private cachedEmbeddings: Embeddings | null = null;
+    private cachedProvider = '';
+    private cachedKey = '';
+
+    constructor() {
+        effect(() => {
+            this.store.notes();
+            this.store.bookmarks();
+            this.store.tasks();
+            this.store.books();
+            this.dirty = true;
+        });
+
+        effect(() => {
+            this.ai.provider();
+            this.ai.apiKey();
+            this.cachedEmbeddings = null;
+            this.cachedProvider = '';
+            this.cachedKey = '';
+            this.index = [];
+            this.dirty = true;
+        });
+    }
+
+    get available(): boolean {
+        return this.resolveEmbeddings() !== null;
+    }
+
+    private resolveEmbeddings(): Embeddings | null {
+        const provider = this.ai.provider();
+        const key = this.ai.apiKey();
+
+        if (this.cachedProvider === provider && this.cachedKey === key && this.cachedEmbeddings) {
+            return this.cachedEmbeddings;
+        }
+
+        this.cachedProvider = provider;
+        this.cachedKey = key;
+        this.cachedEmbeddings = null;
+
+        if (provider === 'openai' && key) {
+            this.cachedEmbeddings = new OpenAIEmbeddings({
+                model: 'text-embedding-3-small',
+                configuration: { apiKey: key },
+            });
+        } else if (provider === 'gemini' && key) {
+            this.cachedEmbeddings = new GoogleGenerativeAIEmbeddings({
+                model: 'text-embedding-004',
+                apiKey: key,
+            });
+        } else if (provider === 'ollama') {
+            this.cachedEmbeddings = new OllamaEmbeddings({
+                model: 'nomic-embed-text',
+                baseUrl: 'http://localhost:11434',
+            });
+        }
+
+        return this.cachedEmbeddings;
+    }
+
+    private collectItems(): { text: string; result: SemanticResult }[] {
+        const items: { text: string; result: SemanticResult }[] = [];
+
+        this.store.notes().forEach(n => {
+            items.push({
+                text: [n.title, n.preview, ...(n.tags ?? [])].filter(Boolean).join(' '),
+                result: {
+                    id: n.id, type: 'note', title: n.title,
+                    preview: n.preview || '', icon: 'edit_note', route: '/daily-notes',
+                    tags: n.tags, date: n.lastEdited || n.date,
+                },
+            });
+        });
+
+        this.store.bookmarks().forEach(b => {
+            items.push({
+                text: [b.title, b.description, b.url, b.notes, ...(b.tags ?? [])].filter(Boolean).join(' '),
+                result: {
+                    id: b.id, type: 'bookmark', title: b.title,
+                    preview: b.url, icon: 'bookmark', route: '/bookmarks', tags: b.tags,
+                },
+            });
+        });
+
+        this.store.tasks().forEach(t => {
+            items.push({
+                text: [t.title, t.description, t.notes, t.project, ...(t.labels ?? [])].filter(Boolean).join(' '),
+                result: {
+                    id: t.id, type: 'task', title: t.title,
+                    preview: [t.project, t.priority].filter(Boolean).join(' · '),
+                    icon: 'check_circle', route: '/tasks', date: t.due, badge: t.status,
+                },
+            });
+        });
+
+        this.store.books().forEach(n => {
+            items.push({
+                text: [n.title, ...n.genre].filter(Boolean).join(' '),
+                result: {
+                    id: n.id, type: 'book', title: n.title,
+                    preview: n.genre.join(', '), icon: 'menu_book', route: '/write', badge: n.status,
+                },
+            });
+        });
+
+        return items;
+    }
+
+    private cosine(a: number[], b: number[]): number {
+        let dot = 0, magA = 0, magB = 0;
+        for (let i = 0; i < a.length; i++) {
+            dot += a[i] * b[i];
+            magA += a[i] * a[i];
+            magB += b[i] * b[i];
+        }
+        const denom = Math.sqrt(magA) * Math.sqrt(magB);
+        return denom === 0 ? 0 : dot / denom;
+    }
+
+    private async buildIndex(): Promise<void> {
+        if (this.indexing) return;
+        const embeddings = this.resolveEmbeddings();
+        if (!embeddings) return;
+
+        this.indexing = true;
+        try {
+            const items = this.collectItems();
+            if (items.length === 0) {
+                this.index = [];
+                this.dirty = false;
+                return;
+            }
+            const vectors = await embeddings.embedDocuments(items.map(i => i.text));
+            this.index = items.map((item, i) => ({ result: item.result, vector: vectors[i] }));
+            this.dirty = false;
+        } catch (e) {
+            console.error('[SemanticSearch] indexing failed:', e);
+        } finally {
+            this.indexing = false;
+        }
+    }
+
+    async search(query: string, k = 6): Promise<SemanticResult[]> {
+        if (!query.trim()) return [];
+        const embeddings = this.resolveEmbeddings();
+        if (!embeddings) return [];
+
+        if (this.dirty) await this.buildIndex();
+        if (this.index.length === 0) return [];
+
+        try {
+            const [queryVector] = await embeddings.embedDocuments([query]);
+            return this.index
+                .map(entry => ({ result: entry.result, score: this.cosine(queryVector, entry.vector) }))
+                .filter(({ score }) => score > 0.5)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, k)
+                .map(({ result }) => result);
+        } catch (e) {
+            console.error('[SemanticSearch] search failed:', e);
+            return [];
+        }
+    }
+}

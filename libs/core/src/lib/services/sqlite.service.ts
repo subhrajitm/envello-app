@@ -10,14 +10,14 @@ import type {
     Note,
     PlanningItem,
     Activity,
-    Novel,
+    Book,
 } from './store.service';
 import type { BinItem } from './bin.service';
 
 import type { Meeting } from './meetings.service';
 import type { Article } from './article.service';
 import type {
-    ResearchLibrary,
+    ResearchCollection,
     ResearchSource,
     ResearchSummary,
 } from './research.service';
@@ -29,12 +29,12 @@ export type TaskDoc = Task;
 export type NoteDoc = Note;
 export type PlanningItemDoc = PlanningItem;
 export type ActivityDoc = Activity;
-export type NovelDoc = Novel;
+export type BookDoc = Book;
 export type BinItemDoc = BinItem;
 
 export type MeetingDoc = Meeting;
 export type ArticleDoc = Article;
-export type ResearchLibraryDoc = ResearchLibrary;
+export type ResearchCollectionDoc = ResearchCollection;
 export type ResearchSourceDoc = ResearchSource;
 export type ResearchSummaryDoc = ResearchSummary;
 export type ProjectDoc = Project;
@@ -45,7 +45,7 @@ export type NoteFolderDoc = { id: string; name: string; icon: string };
 export type BookmarkDoc = Bookmark;
 export type BookmarkFolderDoc = BookmarkFolder;
 
-export interface NovelContentDoc {
+export interface BookContentDoc {
     id: string;
     data: string;
 }
@@ -62,12 +62,12 @@ export class SqliteService {
     private notesSubject = new BehaviorSubject<NoteDoc[]>([]);
     private planningItemsSubject = new BehaviorSubject<PlanningItemDoc[]>([]);
     private activitiesSubject = new BehaviorSubject<ActivityDoc[]>([]);
-    private novelsSubject = new BehaviorSubject<NovelDoc[]>([]);
+    private booksSubject = new BehaviorSubject<BookDoc[]>([]);
     private binItemsSubject = new BehaviorSubject<BinItemDoc[]>([]);
 
     private meetingsSubject = new BehaviorSubject<MeetingDoc[]>([]);
     private articlesSubject = new BehaviorSubject<ArticleDoc[]>([]);
-    private researchLibrariesSubject = new BehaviorSubject<ResearchLibraryDoc[]>([]);
+    private researchCollectionsSubject = new BehaviorSubject<ResearchCollectionDoc[]>([]);
     private researchSourcesSubject = new BehaviorSubject<ResearchSourceDoc[]>([]);
     private researchSummariesSubject = new BehaviorSubject<ResearchSummaryDoc[]>([]);
     private projectsSubject = new BehaviorSubject<ProjectDoc[]>([]);
@@ -195,9 +195,14 @@ export class SqliteService {
       )
     `);
 
-        // Novels
+        // Books (migrate from novels table if upgrading)
+        try {
+            await db.execute('ALTER TABLE novels RENAME TO books');
+        } catch {
+            // Already renamed or fresh install — both fine
+        }
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS novels (
+      CREATE TABLE IF NOT EXISTS books (
         id TEXT PRIMARY KEY,
         title TEXT,
         icon TEXT,
@@ -215,9 +220,14 @@ export class SqliteService {
       )
     `);
 
-        // Novel Content
+        // Book Content (migrate from novel_content table if upgrading)
+        try {
+            await db.execute('ALTER TABLE novel_content RENAME TO book_content');
+        } catch {
+            // Already renamed or fresh install — both fine
+        }
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS novel_content (
+      CREATE TABLE IF NOT EXISTS book_content (
         id TEXT PRIMARY KEY,
         data TEXT
       )
@@ -292,21 +302,16 @@ export class SqliteService {
       )
     `);
 
-        // Research Libraries
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS research_libraries (
-        id TEXT PRIMARY KEY,
-        name TEXT,
-        description TEXT,
-        color TEXT,
-        createdDate TEXT,
-        lastModified TEXT
-      )
-    `);
+        // Migrate: research_libraries → research_collections (safe no-op on fresh install)
+        try {
+            await db.execute('ALTER TABLE research_libraries RENAME TO research_collections');
+        } catch {
+            // Table already renamed or doesn't exist — both are fine
+        }
 
-        // Research Libraries
+        // Research Collections
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS research_libraries (
+      CREATE TABLE IF NOT EXISTS research_collections (
         id TEXT PRIMARY KEY,
         name TEXT,
         description TEXT,
@@ -320,7 +325,7 @@ export class SqliteService {
         await db.execute(`
       CREATE TABLE IF NOT EXISTS research_sources (
         id TEXT PRIMARY KEY,
-        libraryId TEXT,
+        collectionId TEXT,
         title TEXT,
         sourceType TEXT,
         url TEXT,
@@ -334,12 +339,18 @@ export class SqliteService {
         lastAccessed TEXT
       )
     `);
+        // Migrate: libraryId → collectionId column in research_sources
+        try {
+            await db.execute('ALTER TABLE research_sources RENAME COLUMN libraryId TO collectionId');
+        } catch {
+            // Column already renamed or table is fresh — both are fine
+        }
 
         // Research Summaries
         await db.execute(`
       CREATE TABLE IF NOT EXISTS research_summaries (
         id TEXT PRIMARY KEY,
-        libraryId TEXT,
+        collectionId TEXT,
         title TEXT,
         content TEXT,
         sourceIds TEXT,
@@ -348,6 +359,12 @@ export class SqliteService {
         lastModified TEXT
       )
     `);
+        // Migrate: libraryId → collectionId column in research_summaries
+        try {
+            await db.execute('ALTER TABLE research_summaries RENAME COLUMN libraryId TO collectionId');
+        } catch {
+            // Column already renamed or table is fresh — both are fine
+        }
 
         // Projects
         await db.execute(`
@@ -451,6 +468,28 @@ export class SqliteService {
         createdAt TEXT
       )
     `);
+
+        // App metadata — stores per-app key/value pairs (e.g. vault encryption key)
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+    }
+
+    async getAppMeta(key: string): Promise<string | null> {
+        const db = await this.getDb();
+        const rows = await db.select<{ value: string }[]>('SELECT value FROM app_meta WHERE key = $1', [key]);
+        return rows.length > 0 ? rows[0].value : null;
+    }
+
+    async setAppMeta(key: string, value: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute(
+            'INSERT INTO app_meta (key, value) VALUES ($1, $2) ON CONFLICT(key) DO UPDATE SET value = $2',
+            [key, value]
+        );
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -461,12 +500,12 @@ export class SqliteService {
             this.reloadNotes(),
             this.reloadPlanningItems(),
             this.reloadActivities(),
-            this.reloadNovels(),
+            this.reloadBooks(),
             this.reloadBinItems(),
 
             this.reloadMeetings(),
             this.reloadArticles(),
-            this.reloadResearchLibraries(),
+            this.reloadResearchCollections(),
             this.reloadResearchSources(),
             this.reloadResearchSummaries(),
             this.reloadProjects(),
@@ -696,70 +735,70 @@ export class SqliteService {
         await this.reloadActivities();
     }
 
-    // ─── Novels ────────────────────────────────────────────────────────────────
-    private async reloadNovels() {
+    // ─── Books ─────────────────────────────────────────────────────────────────
+    private async reloadBooks() {
         const db = await this.getDb();
-        const rows = await db.select<NovelDoc[]>('SELECT * FROM novels');
-        const parsed = rows.map((r: any) => this.parseRow<NovelDoc>(r, ['genre']));
-        this.novelsSubject.next(parsed);
+        const rows = await db.select<BookDoc[]>('SELECT * FROM books');
+        const parsed = rows.map((r: any) => this.parseRow<BookDoc>(r, ['genre']));
+        this.booksSubject.next(parsed);
     }
 
-    async upsertNovel(novel: NovelDoc): Promise<void> {
+    async upsertBook(book: BookDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM novels WHERE id = $1', [novel.id]);
-        const jsonNovel = { ...novel, genre: this.toJson(novel.genre) };
+        const exists = await db.select<any[]>('SELECT id FROM books WHERE id = $1', [book.id]);
+        const jsonBook = { ...book, genre: this.toJson(book.genre) };
 
         if (exists.length > 0) {
             await db.execute(`
-        UPDATE novels SET title=$1, icon=$2, status=$3, wordCount=$4, targetWordCount=$5, progress=$6, 
+        UPDATE books SET title=$1, icon=$2, status=$3, wordCount=$4, targetWordCount=$5, progress=$6,
         chapters=$7, notesCount=$8, createdDate=$9, lastUpdated=$10, genre=$11, isRecentlyUpdated=$12, coverImage=$13
         WHERE id=$14`,
-                [jsonNovel.title, jsonNovel.icon, jsonNovel.status, jsonNovel.wordCount, jsonNovel.targetWordCount, jsonNovel.progress,
-                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage, jsonNovel.id]);
+                [jsonBook.title, jsonBook.icon, jsonBook.status, jsonBook.wordCount, jsonBook.targetWordCount, jsonBook.progress,
+                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage, jsonBook.id]);
         } else {
             await db.execute(`
-        INSERT INTO novels (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage)
+        INSERT INTO books (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-                [jsonNovel.id, jsonNovel.title, jsonNovel.icon, jsonNovel.status, jsonNovel.wordCount, jsonNovel.targetWordCount, jsonNovel.progress,
-                jsonNovel.chapters, jsonNovel.notesCount, jsonNovel.createdDate, jsonNovel.lastUpdated, jsonNovel.genre, jsonNovel.isRecentlyUpdated, jsonNovel.coverImage]);
+                [jsonBook.id, jsonBook.title, jsonBook.icon, jsonBook.status, jsonBook.wordCount, jsonBook.targetWordCount, jsonBook.progress,
+                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage]);
         }
-        await this.reloadNovels();
+        await this.reloadBooks();
     }
 
-    novels$(): Observable<NovelDoc[]> {
-        return this.novelsSubject.asObservable();
+    books$(): Observable<BookDoc[]> {
+        return this.booksSubject.asObservable();
     }
 
-    async getAllNovels(): Promise<NovelDoc[]> {
-        return this.novelsSubject.getValue();
+    async getAllBooks(): Promise<BookDoc[]> {
+        return this.booksSubject.getValue();
     }
 
-    async removeNovel(id: string): Promise<void> {
+    async removeBook(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM novels WHERE id = $1', [id]);
-        await this.reloadNovels();
+        await db.execute('DELETE FROM books WHERE id = $1', [id]);
+        await this.reloadBooks();
     }
 
-    // ─── Novel Content ─────────────────────────────────────────────────────────
-    async getNovelContent(id: string): Promise<string | null> {
+    // ─── Book Content ──────────────────────────────────────────────────────────
+    async getBookContent(id: string): Promise<string | null> {
         const db = await this.getDb();
-        const rows = await db.select<NovelContentDoc[]>('SELECT * FROM novel_content WHERE id = $1', [id]);
+        const rows = await db.select<BookContentDoc[]>('SELECT * FROM book_content WHERE id = $1', [id]);
         return rows.length > 0 ? rows[0].data : null;
     }
 
-    async setNovelContent(id: string, data: string): Promise<void> {
+    async setBookContent(id: string, data: string): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM novel_content WHERE id = $1', [id]);
+        const exists = await db.select<any[]>('SELECT id FROM book_content WHERE id = $1', [id]);
         if (exists.length > 0) {
-            await db.execute('UPDATE novel_content SET data = $1 WHERE id = $2', [data, id]);
+            await db.execute('UPDATE book_content SET data = $1 WHERE id = $2', [data, id]);
         } else {
-            await db.execute('INSERT INTO novel_content (id, data) VALUES ($1, $2)', [id, data]);
+            await db.execute('INSERT INTO book_content (id, data) VALUES ($1, $2)', [id, data]);
         }
     }
 
-    async removeNovelContent(id: string): Promise<void> {
+    async removeBookContent(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM novel_content WHERE id = $1', [id]);
+        await db.execute('DELETE FROM book_content WHERE id = $1', [id]);
     }
 
     // ─── Bin Items ─────────────────────────────────────────────────────────────
@@ -908,35 +947,35 @@ export class SqliteService {
         await this.reloadArticles();
     }
 
-    // ─── Research Libraries ────────────────────────────────────────────────────
-    private async reloadResearchLibraries() {
+    // ─── Research Collections ──────────────────────────────────────────────────
+    private async reloadResearchCollections() {
         const db = await this.getDb();
-        const rows = await db.select<ResearchLibraryDoc[]>('SELECT * FROM research_libraries');
-        this.researchLibrariesSubject.next(rows);
+        const rows = await db.select<ResearchCollectionDoc[]>('SELECT * FROM research_collections');
+        this.researchCollectionsSubject.next(rows);
     }
 
-    async upsertResearchLibrary(doc: ResearchLibraryDoc): Promise<void> {
+    async upsertResearchCollection(doc: ResearchCollectionDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM research_libraries WHERE id = $1', [doc.id]);
+        const exists = await db.select<any[]>('SELECT id FROM research_collections WHERE id = $1', [doc.id]);
 
         if (exists.length > 0) {
-            await db.execute('UPDATE research_libraries SET name=$1, description=$2, color=$3, createdDate=$4, lastModified=$5 WHERE id=$6',
+            await db.execute('UPDATE research_collections SET name=$1, description=$2, color=$3, createdDate=$4, lastModified=$5 WHERE id=$6',
                 [doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified, doc.id]);
         } else {
-            await db.execute('INSERT INTO research_libraries (id, name, description, color, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6)',
+            await db.execute('INSERT INTO research_collections (id, name, description, color, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6)',
                 [doc.id, doc.name, doc.description, doc.color, doc.createdDate, doc.lastModified]);
         }
-        await this.reloadResearchLibraries();
+        await this.reloadResearchCollections();
     }
 
-    async getAllResearchLibraries(): Promise<ResearchLibraryDoc[]> {
-        return this.researchLibrariesSubject.getValue();
+    async getAllResearchCollections(): Promise<ResearchCollectionDoc[]> {
+        return this.researchCollectionsSubject.getValue();
     }
 
-    async removeResearchLibrary(id: string): Promise<void> {
+    async removeResearchCollection(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM research_libraries WHERE id = $1', [id]);
-        await this.reloadResearchLibraries();
+        await db.execute('DELETE FROM research_collections WHERE id = $1', [id]);
+        await this.reloadResearchCollections();
     }
 
     // ─── Research Sources ──────────────────────────────────────────────────────
@@ -953,11 +992,11 @@ export class SqliteService {
         const jsonDoc = { ...doc, tags: this.toJson(doc.tags) };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE research_sources SET libraryId=$1, title=$2, sourceType=$3, url=$4, description=$5, author=$6, publishDate=$7, tags=$8, status=$9, notes=$10, createdDate=$11, lastAccessed=$12 WHERE id=$13`,
-                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed, jsonDoc.id]);
+            await db.execute(`UPDATE research_sources SET collectionId=$1, title=$2, sourceType=$3, url=$4, description=$5, author=$6, publishDate=$7, tags=$8, status=$9, notes=$10, createdDate=$11, lastAccessed=$12 WHERE id=$13`,
+                [jsonDoc.collectionId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed, jsonDoc.id]);
         } else {
-            await db.execute(`INSERT INTO research_sources (id, libraryId, title, sourceType, url, description, author, publishDate, tags, status, notes, createdDate, lastAccessed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed]);
+            await db.execute(`INSERT INTO research_sources (id, collectionId, title, sourceType, url, description, author, publishDate, tags, status, notes, createdDate, lastAccessed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+                [jsonDoc.id, jsonDoc.collectionId, jsonDoc.title, jsonDoc.sourceType, jsonDoc.url, jsonDoc.description, jsonDoc.author, jsonDoc.publishDate, jsonDoc.tags, jsonDoc.status, jsonDoc.notes, jsonDoc.createdDate, jsonDoc.lastAccessed]);
         }
         await this.reloadResearchSources();
     }
@@ -986,11 +1025,11 @@ export class SqliteService {
         const jsonDoc = { ...doc, sourceIds: this.toJson(doc.sourceIds), tags: this.toJson(doc.tags) };
 
         if (exists.length > 0) {
-            await db.execute('UPDATE research_summaries SET libraryId=$1, title=$2, content=$3, sourceIds=$4, tags=$5, createdDate=$6, lastModified=$7 WHERE id=$8',
-                [jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified, jsonDoc.id]);
+            await db.execute('UPDATE research_summaries SET collectionId=$1, title=$2, content=$3, sourceIds=$4, tags=$5, createdDate=$6, lastModified=$7 WHERE id=$8',
+                [jsonDoc.collectionId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified, jsonDoc.id]);
         } else {
-            await db.execute('INSERT INTO research_summaries (id, libraryId, title, content, sourceIds, tags, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-                [jsonDoc.id, jsonDoc.libraryId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified]);
+            await db.execute('INSERT INTO research_summaries (id, collectionId, title, content, sourceIds, tags, createdDate, lastModified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+                [jsonDoc.id, jsonDoc.collectionId, jsonDoc.title, jsonDoc.content, jsonDoc.sourceIds, jsonDoc.tags, jsonDoc.createdDate, jsonDoc.lastModified]);
         }
         await this.reloadResearchSummaries();
     }
@@ -1232,20 +1271,20 @@ export class SqliteService {
 
         data.data.planning_items = await this.getAllPlanningItems();
         data.data.activities = await this.getAllActivities();
-        data.data.novels = await this.getAllNovels();
+        data.data.books = await this.getAllBooks();
         data.data.bin_items = await this.getAllBinItems();
 
         data.data.meetings = await this.getAllMeetings();
         data.data.articles = await this.getAllArticles();
-        data.data.research_libraries = await this.getAllResearchLibraries();
+        data.data.research_collections = await this.getAllResearchCollections();
         data.data.research_sources = await this.getAllResearchSources();
         data.data.research_summaries = await this.getAllResearchSummaries();
         data.data.projects = await this.getAllProjects();
 
-        // Novel Content
+        // Book Content
         const db = await this.getDb();
-        const contentRows = await db.select<NovelContentDoc[]>('SELECT * FROM novel_content');
-        data.data.novel_content = contentRows;
+        const contentRows = await db.select<BookContentDoc[]>('SELECT * FROM book_content');
+        data.data.book_content = contentRows;
 
         return data;
     }

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { SqliteService } from './sqlite.service';
 import { TauriService } from './tauri.service';
-import { Task, Note, PlanningItem, Activity, Novel, BinItem, Project } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, BinItem, Project } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -37,12 +37,12 @@ export class SqliteDataService implements DataService {
             case 'notes': return await this.sqlite.getAllNotes() as unknown as T[];
             case 'planning_items': return await this.sqlite.getAllPlanningItems() as unknown as T[];
             case 'activities': return await this.sqlite.getAllActivities() as unknown as T[];
-            case 'novels': return await this.sqlite.getAllNovels() as unknown as T[];
+            case 'books': return await this.sqlite.getAllBooks() as unknown as T[];
             case 'bin_items': return await this.sqlite.getAllBinItems() as unknown as T[];
 
             case 'meetings': return await this.sqlite.getAllMeetings() as unknown as T[];
             case 'articles': return await this.sqlite.getAllArticles() as unknown as T[];
-            case 'research_libraries': return await this.sqlite.getAllResearchLibraries() as unknown as T[];
+            case 'research_collections': return await this.sqlite.getAllResearchCollections() as unknown as T[];
             case 'research_sources': return await this.sqlite.getAllResearchSources() as unknown as T[];
             case 'research_summaries': return await this.sqlite.getAllResearchSummaries() as unknown as T[];
             case 'projects': return await this.sqlite.getAllProjects() as unknown as T[];
@@ -80,12 +80,12 @@ export class SqliteDataService implements DataService {
             case 'notes': return await this.sqlite.upsertNote(item as unknown as Note);
             case 'planning_items': return await this.sqlite.upsertPlanningItem(item as unknown as PlanningItem);
             case 'activities': return await this.sqlite.upsertActivity(item as unknown as Activity);
-            case 'novels': return await this.sqlite.upsertNovel(item as unknown as Novel);
+            case 'books': return await this.sqlite.upsertBook(item as unknown as Book);
             case 'bin_items': return await this.sqlite.upsertBinItem(item as unknown as BinItem);
 
             case 'meetings': return await this.sqlite.upsertMeeting(item as any);
             case 'articles': return await this.sqlite.upsertArticle(item as any);
-            case 'research_libraries': return await this.sqlite.upsertResearchLibrary(item as any);
+            case 'research_collections': return await this.sqlite.upsertResearchCollection(item as any);
             case 'research_sources': return await this.sqlite.upsertResearchSource(item as any);
             case 'research_summaries': return await this.sqlite.upsertResearchSummary(item as any);
             case 'projects': return await this.sqlite.upsertProject(item as unknown as Project);
@@ -115,13 +115,13 @@ export class SqliteDataService implements DataService {
             case 'tasks': return await this.sqlite.removeTask(id);
             case 'notes': return await this.sqlite.removeNote(id);
             case 'planning_items': return await this.sqlite.removePlanningItem(id);
-            case 'novels': return await this.sqlite.removeNovel(id);
+            case 'books': return await this.sqlite.removeBook(id);
             case 'bin_items': return await this.sqlite.removeBinItem(id);
-            case 'novel_content': return await this.sqlite.removeNovelContent(id);
+            case 'book_content': return await this.sqlite.removeBookContent(id);
 
             case 'meetings': return await this.sqlite.removeMeeting(id);
             case 'articles': return await this.sqlite.removeArticle(id);
-            case 'research_libraries': return await this.sqlite.removeResearchLibrary(id);
+            case 'research_collections': return await this.sqlite.removeResearchCollection(id);
             case 'research_sources': return await this.sqlite.removeResearchSource(id);
             case 'research_summaries': return await this.sqlite.removeResearchSummary(id);
             case 'projects': return await this.sqlite.removeProject(id);

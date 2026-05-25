@@ -1,11 +1,11 @@
 import { Component, signal, HostListener, inject, computed, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
-import { StoreService, Task, Note, Novel, Bookmark } from '@envello/core';
+import { StoreService, Task, Note, Book, Bookmark } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { MeetingsService, MEETING_COLORS } from '@envello/core';
-import { NovelContentService } from '@envello/core';
+import { BookContentService } from '@envello/core';
 
-type OptionCategory = 'create' | 'plan' | 'library';
+type OptionCategory = 'create' | 'plan' | 'knowledge';
 type SidebarCategoryId = 'all' | 'recent' | OptionCategory;
 
 interface AddNewOption {
@@ -46,7 +46,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private researchService = inject(ResearchService);
     private meetingsService = inject(MeetingsService);
 
-    private novelContentService = inject(NovelContentService);
+    private bookContentService = inject(BookContentService);
     isOpen = signal(false);
     searchQuery = signal('');
     isCreating = signal(false);
@@ -56,30 +56,33 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     selectedCategoryId = signal<SidebarCategoryId>('all');
 
     readonly categories: { id: OptionCategory; label: string; icon: string }[] = [
-        { id: 'plan',    label: 'Plan',    icon: 'task_alt' },
-        { id: 'library', label: 'Library', icon: 'local_library' },
-        { id: 'create',  label: 'Create',  icon: 'edit_note' }
+        { id: 'plan',      label: 'Plan',      icon: 'task_alt' },
+        { id: 'knowledge', label: 'Knowledge', icon: 'local_library' },
+        { id: 'create',    label: 'Create',    icon: 'edit_note' }
     ];
+
+    private readonly isTauri =
+        typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
     readonly options: AddNewOption[] = [
         // Plan
         { id: 'task',         title: 'Task',         description: 'Add a new task or to-do',            icon: 'check_circle',  route: '/tasks',         color: '#7eb3d4', category: 'plan',    shortcut: '1', keywords: ['task', 'todo', 'checklist'],           tag: 'TASK' },
-        { id: 'meeting',      title: 'Meeting',      description: 'Schedule a new meeting',              icon: 'groups',        route: '/meetings',      color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],                 tag: 'COLLAB' },
+        { id: 'meeting',      title: 'Meeting',      description: 'Schedule a new meeting',              icon: 'calendar_month', route: '/meetings',      color: '#d89090', category: 'plan',    shortcut: '2', keywords: ['meeting', 'schedule'],                 tag: 'COLLAB' },
         { id: 'note',         title: 'Note',         description: 'Quick note for today',                icon: 'edit_note',     route: '/daily-notes',   color: '#e8a87c', category: 'plan',    shortcut: '3', keywords: ['note', 'daily', 'today'],              tag: 'NOTE' },
-        // Library
-        { id: 'research',     title: 'Research',     description: 'Create a new research library',       icon: 'science',       route: '/research',      color: '#f4e89c', category: 'library', shortcut: '4', keywords: ['research', 'library'],                 tag: 'RESEARCH' },
-        { id: 'bookmark',     title: 'Bookmark',     description: 'Save a link or resource',             icon: 'bookmark',      route: '/bookmarks',     color: '#b48ce8', category: 'library', shortcut: '5', keywords: ['bookmark', 'link', 'url', 'save'],     tag: 'BOOKMARK' },
-        { id: 'vault',        title: 'Vault Entry',  description: 'Store a secret or credential',        icon: 'lock',          route: '/vault',         color: '#f59e0b', category: 'library', shortcut: '',  keywords: ['vault', 'credential', 'secret', 'key'], tag: 'VAULT' },
-        { id: 'subscription', title: 'Subscription', description: 'Track a vendor or subscription',      icon: 'credit_card',   route: '/subscriptions', color: '#34d399', category: 'library', shortcut: '',  keywords: ['subscription', 'vendor', 'billing'],   tag: 'VENDOR' },
+        // Knowledge
+        { id: 'research',     title: 'Knowledge',    description: 'Add sources, links, and notes to your knowledge base', icon: 'hub', route: '/knowledge', color: '#f4e89c', category: 'knowledge', shortcut: '4', keywords: ['research', 'knowledge', 'library', 'source'], tag: 'RESEARCH' },
+        { id: 'bookmark',     title: 'Bookmark',     description: 'Save a link or resource',             icon: 'bookmark',      route: '/bookmarks',     color: '#b48ce8', category: 'knowledge', shortcut: '5', keywords: ['bookmark', 'link', 'url', 'save'],     tag: 'BOOKMARK' },
+        ...( this.isTauri ? [{ id: 'vault', title: 'Vault Entry', description: 'Store a secret or credential', icon: 'lock', route: '/vault', color: '#f59e0b', category: 'knowledge' as OptionCategory, shortcut: '', keywords: ['vault', 'credential', 'secret', 'key'], tag: 'VAULT' }] : []),
+        { id: 'subscription', title: 'Subscription', description: 'Track a subscription',                icon: 'credit_card',   route: '/subscriptions', color: '#34d399', category: 'knowledge', shortcut: '',  keywords: ['subscription', 'billing'],             tag: 'SUBSCRIPTION' },
         // Create
-        { id: 'novel',        title: 'Write',        description: 'Start a new novel or writing project', icon: 'menu_book',    route: '/write',         color: '#c4a8d8', category: 'create',  shortcut: '7', keywords: ['novel', 'book', 'story', 'writing', 'draft'], tag: 'WRITE' },
+        { id: 'book',         title: 'Write',        description: 'Start a new book or writing project', icon: 'menu_book',    route: '/write',         color: '#c4a8d8', category: 'create',  shortcut: '7', keywords: ['novel', 'book', 'story', 'writing', 'draft'], tag: 'WRITE' },
     ];
 
     readonly sidebarCategories: { id: SidebarCategoryId; label: string; icon: string }[] = [
         { id: 'all',     label: 'All Templates', icon: 'grid_view' },
         { id: 'recent',  label: 'Recent',        icon: 'history' },
         { id: 'plan',    label: 'Plan',           icon: 'task_alt' },
-        { id: 'library', label: 'Library',        icon: 'local_library' },
+        { id: 'knowledge', label: 'Knowledge',      icon: 'local_library' },
         { id: 'create',  label: 'Create',         icon: 'edit_note' },
     ];
 
@@ -87,8 +90,8 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly itemCounts = computed(() => ({
         note:         this.store.notes().length,
         task:         this.store.tasks().length,
-        novel:        this.store.novels().length,
-        research:     this.researchService.libraries().length,
+        book:         this.store.books().length,
+        research:     this.researchService.collections().length,
         meeting:      this.meetingsService.meetings().length,
         bookmark:     this.store.bookmarks().length,
         vault:        0,
@@ -253,11 +256,11 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                     case 'task':
                         this.createTask();
                         break;
-                    case 'novel':
-                        this.createNovel();
+                    case 'book':
+                        this.createBook();
                         break;
                     case 'research':
-                        this.createResearchLibrary();
+                        this.createResearchCollection();
                         break;
                     case 'meeting':
                         this.createMeeting();
@@ -324,11 +327,11 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         this.router.navigate(['/tasks']);
     }
 
-    private createNovel() {
-        const id = `novel-${Date.now()}`;
-        const newNovel: Novel = {
+    private createBook() {
+        const id = `book-${Date.now()}`;
+        const newBook: Book = {
             id,
-            title: 'Untitled Novel',
+            title: 'Untitled Book',
             icon: '📖',
             status: 'PLANNING',
             wordCount: 0,
@@ -342,22 +345,22 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
             isRecentlyUpdated: true
         };
 
-        this.store.addNovel(newNovel);
+        this.store.addBook(newBook);
         // Persist asynchronously (fire and forget)
-        this.novelContentService.createAndPersistEmptyNovel(id, newNovel.title).catch(err =>
-            console.error('[AddNewModal] Failed to persist novel content:', err)
+        this.bookContentService.createAndPersistEmptyBook(id, newBook.title).catch(err =>
+            console.error('[AddNewModal] Failed to persist book content:', err)
         );
         this.router.navigate(['/write', id]);
     }
 
-    private createResearchLibrary() {
-        this.researchService.addLibrary({
-            name: 'New Research Library',
+    private createResearchCollection() {
+        this.researchService.addCollection({
+            name: 'New Collection',
             description: '',
             color: '#3b82f6'
         });
 
-        this.router.navigate(['/research']);
+        this.router.navigate(['/knowledge']);
     }
 
     private createMeeting() {

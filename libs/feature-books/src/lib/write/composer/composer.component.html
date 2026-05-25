@@ -1,0 +1,443 @@
+<div class="ne-layout flex flex-col h-full" [class.fullscreen]="fullScreenMode()">
+    <!-- Focus mode entry toast -->
+    @if (showFocusToast()) {
+      <div class="ne-focus-toast">
+        <span class="material-symbols-outlined" style="font-size:16px;opacity:0.8;">center_focus_strong</span>
+        Focus mode active — press <kbd>Esc</kbd> to exit
+        <button class="ne-focus-toast-close" (click)="dismissFocusToast()">
+          <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+        </button>
+      </div>
+    }
+    <!-- Workspace -->
+    @if (isLoading()) {
+    <div class="ne-loading-state">
+        <div class="loading-spinner">
+            <span class="material-symbols-outlined">auto_awesome</span>
+        </div>
+        <p class="loading-text">Loading…</p>
+    </div>
+    } @else {
+    <div class="ne-workspace">
+        <!-- Left Sidebar -->
+        <div class="ne-sidebar-left" [class.collapsed]="leftSidebarCollapsed()">
+            @if (leftSidebarCollapsed()) {
+            <button class="sidebar-toggle" (click)="toggleLeftSidebar()" title="Show sidebar">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            }
+
+            <!-- Sidebar header: mini back + search -->
+            <div class="ne-sidebar-header-action">
+                <button class="ne-btn-back-mini" (click)="goBack()" title="Back to Write">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div class="ne-sidebar-search" [class.active]="searchQuery()">
+                    <span class="material-symbols-outlined ne-sidebar-search-icon">search</span>
+                    <input class="ne-sidebar-search-input" type="text"
+                           [value]="searchQuery()"
+                           (input)="searchQuery.set($any($event.target).value)"
+                           placeholder="Search…" />
+                    @if (searchQuery()) {
+                    <button class="ne-sidebar-search-clear" (click)="searchQuery.set('')">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Inline search results -->
+            @if (searchQuery() && filteredChapters()?.length) {
+            <div class="ne-sidebar-search-results">
+                @for (result of filteredChapters()!; track result.id) {
+                <button class="ne-sidebar-search-result" (click)="selectSearchResult(result)">
+                    <span class="material-symbols-outlined result-icon">
+                        @if (result.type === 'chapter') { description }
+                        @else if (result.type === 'character') { account_circle }
+                        @else if (result.type === 'location') { public }
+                        @else { menu_book }
+                    </span>
+                    <div class="result-content">
+                        <div class="result-title">{{ result.title }}</div>
+                        @if (result.subtitle) { <div class="result-subtitle">{{ result.subtitle }}</div> }
+                    </div>
+                </button>
+                }
+            </div>
+            } @else if (searchQuery() && filteredChapters()?.length === 0) {
+            <div class="ne-sidebar-search-empty">No results for "{{ searchQuery() }}"</div>
+            }
+
+            <!-- ── ACCORDION CONTAINER ── -->
+            <div class="ne-acc-container">
+
+            <!-- ── CHAPTERS ACCORDION ── -->
+            @if (book()) {
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 0 > lastOpenIdx() ? 90 : 1">
+                <div class="ne-acc-hdr" (click)="toggleAccChapters()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accChapters()">chevron_right</span>
+                    <span class="ne-acc-title">{{ sectionLabel().toUpperCase() }}</span>
+                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
+                        @if (bulkMode()) {
+                        <button class="ne-toolbar-btn" (click)="bulkDeleteChapters()"
+                            [disabled]="selectedChapters().size === 0" title="Delete selected">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Exit bulk mode">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                        } @else {
+                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Bulk select">
+                            <span class="material-symbols-outlined">checklist</span>
+                        </button>
+                        }
+                        <div class="add-menu-wrapper relative">
+                            <span class="material-symbols-outlined icon-add"
+                                (click)="toggleAddMenu(); $event.stopPropagation()" title="Add">add</span>
+                            @if (addMenuOpen()) {
+                            <div class="add-dropdown-menu">
+                                <button class="add-dropdown-option" (click)="addNewActOrPart(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">folder</span>
+                                    <span class="option-label">Add Act/Part</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addNewChapter(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">description</span>
+                                    <span class="option-label">Add {{ sectionLabel().slice(0, -1) }}</span>
+                                </button>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                @if (accChapters()) {
+                <app-chapters-list [chapters]="book()!.chapters" [activeChapterId]="activeChapterId()"
+                    [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()"
+                    [sectionLabel]="sectionLabel()" [showHeader]="false"
+                    (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)"
+                    (deleteChapter)="deleteChapter($event.id, $event.title)"
+                    (deleteGroup)="deleteGroup($event.id, $event.title)"
+                    (renameChapter)="bookService.updateChapterTitle($event.id, $event.title)"
+                    (toggleBulkMode)="toggleBulkMode()"
+                    (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()"
+                    (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
+                    (toggleChapterSelection)="toggleChapterSelection($event)" />
+                }
+            </div>
+
+            <!-- ── STRUCTURE ACCORDION ── -->
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 1 > lastOpenIdx() ? 91 : 2">
+                <div class="ne-acc-hdr" (click)="toggleAccStructure()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accStructure()">chevron_right</span>
+                    <span class="ne-acc-title">STRUCTURE</span>
+                </div>
+                @if (accStructure()) {
+                <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
+                    [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
+                    [addMenuOpen]="structureFmAddMenuOpen()"
+                    (selectFrontMatterItem)="selectFrontMatterItem($event)"
+                    (selectPrologue)="selectPrologue()"
+                    (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
+                    (deletePrologue)="deletePrologue()" (addFrontMatterItem)="addFrontMatterItem($event)"
+                    (addPrologue)="addPrologue()" (toggleAddMenu)="toggleStructureFmAddMenu()" />
+                }
+            </div>
+
+            <!-- ── CHARACTERS ACCORDION ── -->
+            @if (showExtendedTabs()) {
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 2 > lastOpenIdx() ? 92 : 3">
+                <div class="ne-acc-hdr" (click)="toggleAccCharacters()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accCharacters()">chevron_right</span>
+                    <span class="ne-acc-title">CHARACTERS</span>
+                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
+                        <button class="ne-toolbar-btn" (click)="addNewCharacter()" title="Add character">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                </div>
+                @if (accCharacters()) {
+                <app-characters-list [characters]="book()!.characters" [selectedCharacterId]="selectedCharacterId()"
+                    [showHeader]="false"
+                    (selectCharacter)="selectCharacter($event)" (deleteCharacter)="deleteCharacter($event.id, $event.name)"
+                    (renameCharacter)="bookService.updateCharacter($event.id, { name: $event.name })"
+                    (addNewCharacter)="addNewCharacter()" />
+                }
+            </div>
+
+            <!-- ── LOCATIONS ACCORDION ── -->
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 3 > lastOpenIdx() ? 93 : 4">
+                <div class="ne-acc-hdr" (click)="toggleAccLocations()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accLocations()">chevron_right</span>
+                    <span class="ne-acc-title">LOCATIONS</span>
+                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
+                        <button class="ne-toolbar-btn" (click)="addNewLocation()" title="Add location">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                </div>
+                @if (accLocations()) {
+                <app-locations-list [locations]="book()!.locations" [selectedLocationId]="selectedLocationId()"
+                    [showHeader]="false"
+                    (selectLocation)="selectLocation($event)" (deleteLocation)="deleteLocation($event.id, $event.name)"
+                    (renameLocation)="bookService.updateLocation($event.id, { name: $event.name })"
+                    (addNewLocation)="addNewLocation()" />
+                }
+            </div>
+            }
+            }
+
+            <!-- Spacer: pushes closed (high-order) sections to the bottom -->
+            <div class="ne-acc-spacer"></div>
+
+            </div><!-- /ne-acc-container -->
+        </div>
+
+        <!-- Editor Canvas -->
+        <div class="ne-editor-area" [class.focus-mode]="focusMode()">
+            <app-editor-header [items]="editorTabItems()" [activeItemId]="editorActiveTabId()"
+                [canUndo]="canUndo()" [canRedo]="canRedo()"
+                (selectItem)="handleEditorTabSelect($event)"
+                (closeTab)="closeEditorTab($event)"
+                (performUndo)="performUndo()" (performRedo)="performRedo()" />
+
+            @if (editorActiveTabId()) {
+
+            @if (editor && (activeNav() === 'manuscript' || activeNav() === 'structure')) {
+            <app-editor-toolbar [editor]="editor" [writingType]="writingType()" (openLinkModal)="openLinkModal()" (addImage)="addImage()"
+                (insertTable)="insertTable()" (addYoutube)="addYoutube()" />
+            }
+
+            @if (activeNav() === 'manuscript') {
+            <app-manuscript-editor [editor]="editor" [activeChapterId]="activeChapterId()" [title]="title()"
+                [chapterStatus]="chapterStatus()" [chapterLastEdited]="chapterLastEdited()" [isSaving]="isSaving()"
+                [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)"
+                (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()" />
+            }
+
+            @if (activeNav() === 'structure' && book()) {
+            <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
+                [activePrologueId]="activePrologueId()" [frontMatter]="book()!.frontMatter"
+                [prologue]="book()!.prologue || null" (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()" />
+            }
+
+            @if (activeNav() === 'characters' && book()) {
+            <app-character-details [character]="activeCharacter()" (updateField)="onCharacterFieldUpdate($event)"
+                (addNewCharacter)="addNewCharacter()" />
+            }
+
+            @if (activeNav() === 'locations' && book()) {
+            <app-location-details [location]="activeLocation()" (updateField)="onLocationFieldUpdate($event)"
+                (addNewLocation)="addNewLocation()" />
+            }
+
+            } @else {
+            <!-- Welcome / empty state -->
+            <div class="ne-welcome-state">
+                <span class="material-symbols-outlined ne-welcome-icon">edit_note</span>
+                <p class="ne-welcome-title">Nothing open</p>
+                <p class="ne-welcome-hint">Select an item from the sidebar to start editing</p>
+            </div>
+            }
+        </div>
+
+        <!-- Right Sidebar: compact icon strip + expandable panel -->
+        <div class="ne-sidebar-right" [class.collapsed]="rightSidebarCollapsed()">
+            <!-- Expandable content panel -->
+            @if (!rightSidebarCollapsed()) {
+            <div class="ne-right-content">
+                @if (rightSidebarTab() === 'ai' && aiService.aiEnabled()) {
+                <app-ai-panel [aiMessages]="aiMessages()" [aiLoading]="aiLoading()" [aiError]="aiError()"
+                    [aiPrompt]="aiPrompt()" [aiSuggestions]="aiSuggestions()"
+                    [showContextPreview]="showContextPreview()" [tokenCount]="getTokenCount()"
+                    [context]="getCurrentContext()" [activeChapter]="activeChapter()" [editor]="editor"
+                    [writingType]="writingType()"
+                    (sendMessage)="sendAiMessage()" (quickAction)="handleQuickAction($event)"
+                    (summarizeChapter)="summarizeChapter()"
+                    (continueWriting)="continueWriting()" (applySuggestion)="applySuggestion($event)"
+                    (clearConversation)="clearAiConversation()" (clearSuggestions)="aiSuggestions.set([])"
+                    (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)" />
+                } @else if (rightSidebarTab() === 'notes' && book()) {
+                <app-notes-panel [notes]="book()!.notes" (addNewNote)="addNewNote()"
+                    (deleteNote)="deleteNote($event)"
+                    (updateNote)="bookService.updateNote($event.id, $event.title, $event.body)" />
+                } @else if (rightSidebarTab() === 'manuscript' && book()) {
+                <app-manuscript-data [totalNovelWords]="totalNovelWords()"
+                    [averageChapterLength]="averageChapterLength()" [chaptersCompleted]="chaptersCompleted()"
+                    [totalChapters]="getTotalChapters()" [logline]="book()!.synopsis.logline"
+                    [theme]="book()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
+                    [goalProgress]="getGoalProgress()" [activeChapterId]="activeChapterId()"
+                    [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()"
+                    [writingType]="writingType()" [sectionLabel]="sectionLabel()" />
+                }
+            </div>
+            }
+            <!-- Always-visible vertical icon strip -->
+            <div class="ne-right-strip">
+                <!-- Panel toggles (top) -->
+                @if (aiService.aiEnabled()) {
+                <button class="ne-strip-btn" [class.active]="!rightSidebarCollapsed() && rightSidebarTab() === 'ai'"
+                    (click)="setActiveTab('ai')" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                </button>
+                }
+                <button class="ne-strip-btn" [class.active]="!rightSidebarCollapsed() && rightSidebarTab() === 'notes'"
+                    (click)="setActiveTab('notes')" title="Notes">
+                    <span class="material-symbols-outlined">sticky_note_2</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="!rightSidebarCollapsed() && rightSidebarTab() === 'manuscript'"
+                    (click)="setActiveTab('manuscript')" title="Book Stats">
+                    <span class="material-symbols-outlined">bar_chart</span>
+                </button>
+
+                <!-- Spacer -->
+                <div class="ne-strip-spacer"></div>
+                <div class="ne-strip-divider"></div>
+
+                <!-- Utility buttons (bottom) -->
+                <div class="search-wrapper ne-strip-dropdown-wrapper">
+                    <button class="ne-strip-btn" [class.active]="searchOpen()" (click)="toggleSearch()" title="Search (⌘+K)">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                    @if (searchOpen()) {
+                    <div class="search-dropdown ne-strip-popup">
+                        <div class="search-input-wrapper">
+                            <span class="material-symbols-outlined search-icon">search</span>
+                            <input type="text" class="search-input" [value]="searchQuery()"
+                                (input)="searchQuery.set($any($event.target).value)"
+                                placeholder="Search chapters, characters, locations..."
+                                autofocus />
+                            @if (searchQuery()) {
+                            <button class="search-clear" (click)="searchQuery.set('')">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                            }
+                        </div>
+                        @if (filteredChapters() && filteredChapters()!.length > 0) {
+                        <div class="search-results">
+                            @for (result of filteredChapters()!; track result.id) {
+                            <button class="search-result-item" (click)="selectSearchResult(result)">
+                                <span class="material-symbols-outlined result-icon">
+                                    @if (result.type === 'chapter') { description }
+                                    @else if (result.type === 'character') { account_circle }
+                                    @else if (result.type === 'location') { public }
+                                    @else if (result.type === 'frontMatter') { menu_book }
+                                    @else if (result.type === 'prologue') { menu_book }
+                                </span>
+                                <div class="result-content">
+                                    <div class="result-title">{{ result.title }}</div>
+                                    @if (result.subtitle) {
+                                    <div class="result-subtitle">{{ result.subtitle }}</div>
+                                    }
+                                </div>
+                            </button>
+                            }
+                        </div>
+                        } @else if (searchQuery() && filteredChapters()?.length === 0) {
+                        <div class="search-empty">No results found</div>
+                        }
+                    </div>
+                    }
+                </div>
+                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" title="Focus Mode (⌘+\)">
+                    <span class="material-symbols-outlined">center_focus_strong</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" title="Full Screen (F11)">
+                    <span class="material-symbols-outlined">fullscreen</span>
+                </button>
+                <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History">
+                    <span class="material-symbols-outlined">history</span>
+                </button>
+                <div class="export-menu-wrapper ne-strip-dropdown-wrapper">
+                    <button class="ne-strip-btn" [class.active]="exportMenuOpen()" (click)="toggleExportMenu()" title="Export">
+                        <span class="material-symbols-outlined">download</span>
+                    </button>
+                    @if (exportMenuOpen()) {
+                    <div class="add-dropdown-menu ne-strip-popup">
+                        <button class="add-dropdown-option" (click)="exportNovel('pdf'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
+                            <span class="option-label">Export as PDF</span>
+                        </button>
+                        <button class="add-dropdown-option" (click)="exportNovel('docx'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">article</span>
+                            <span class="option-label">Export as Word (.doc)</span>
+                        </button>
+                        <button class="add-dropdown-option" (click)="exportNovel('html'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">code</span>
+                            <span class="option-label">Export as HTML</span>
+                        </button>
+                        <button class="add-dropdown-option" (click)="exportNovel('md'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">description</span>
+                            <span class="option-label">Export as Markdown</span>
+                        </button>
+                        @if (writingType() === 'SCRIPT') {
+                        <button class="add-dropdown-option" (click)="exportNovel('fountain'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">theaters</span>
+                            <span class="option-label">Export as Fountain (.fountain)</span>
+                        </button>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Modals -->
+    <app-delete-modal [modal]="deleteModal()" (confirm)="confirmDelete()" (cancel)="cancelDelete()" />
+
+    <app-link-modal [isOpen]="linkModalOpen()" [linkText]="linkText()" [linkUrl]="linkUrl()"
+        (linkTextChange)="linkText.set($event)" (linkUrlChange)="linkUrl.set($event)" (insert)="insertLink()"
+        (cancel)="cancelLinkModal()" />
+
+    <app-version-history-modal [isOpen]="versionHistoryOpen()" [versions]="versionHistory()"
+        (restore)="restoreVersion($event)" (close)="closeVersionHistory()" />
+
+    <app-add-modal [modal]="addModal()" (inputValueChange)="updateAddModalInput($event)"
+        (inputValue2Change)="updateAddModalInput2($event)" (confirm)="confirmAdd()" (cancel)="cancelAdd()" />
+
+    <!-- Image URL modal -->
+    @if (imageModalOpen()) {
+    <div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="cancelImageModal()">
+        <div class="ne-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">Insert Image</div>
+            <div class="ne-modal-body">
+                <div class="ne-modal-input-wrapper">
+                    <label class="ne-modal-label">Image URL</label>
+                    <input type="url" class="ne-modal-input" [value]="imageUrl()"
+                        (input)="imageUrl.set($any($event.target).value)"
+                        placeholder="https://example.com/image.png"
+                        (keydown.enter)="insertImage()" autofocus />
+                </div>
+            </div>
+            <div class="ne-modal-footer flex items-center justify-end gap-2">
+                <button class="ne-modal-btn cancel" (click)="cancelImageModal()">Cancel</button>
+                <button class="ne-modal-btn confirm" (click)="insertImage()" [disabled]="!imageUrl().trim()">Insert</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- YouTube URL modal -->
+    @if (youtubeModalOpen()) {
+    <div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="cancelYoutubeModal()">
+        <div class="ne-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">Insert YouTube Video</div>
+            <div class="ne-modal-body">
+                <div class="ne-modal-input-wrapper">
+                    <label class="ne-modal-label">YouTube URL</label>
+                    <input type="url" class="ne-modal-input" [value]="youtubeUrl()"
+                        (input)="youtubeUrl.set($any($event.target).value)"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        (keydown.enter)="insertYoutube()" autofocus />
+                </div>
+            </div>
+            <div class="ne-modal-footer flex items-center justify-end gap-2">
+                <button class="ne-modal-btn cancel" (click)="cancelYoutubeModal()">Cancel</button>
+                <button class="ne-modal-btn confirm" (click)="insertYoutube()" [disabled]="!youtubeUrl().trim()">Insert</button>
+            </div>
+        </div>
+    </div>
+    }
+
+</div>

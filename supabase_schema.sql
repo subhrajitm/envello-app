@@ -29,6 +29,7 @@ create table if not exists public.tasks (
   updated_at timestamptz default now()
 );
 alter table public.tasks enable row level security;
+drop policy if exists "Users can all access their own tasks" on public.tasks;
 create policy "Users can all access their own tasks" on public.tasks for all using (auth.uid() = user_id);
 
 
@@ -49,6 +50,7 @@ create table if not exists public.notes (
   created_at timestamptz default now()
 );
 alter table public.notes enable row level security;
+drop policy if exists "Users can all access their own notes" on public.notes;
 create policy "Users can all access their own notes" on public.notes for all using (auth.uid() = user_id);
 
 
@@ -65,6 +67,7 @@ create table if not exists public.planning_items (
   created_at timestamptz default now()
 );
 alter table public.planning_items enable row level security;
+drop policy if exists "Users can all access their own planning items" on public.planning_items;
 create policy "Users can all access their own planning items" on public.planning_items for all using (auth.uid() = user_id);
 
 
@@ -80,13 +83,14 @@ create table if not exists public.activities (
   created_at timestamptz default now()
 );
 alter table public.activities enable row level security;
+drop policy if exists "Users can all access their own activities" on public.activities;
 create policy "Users can all access their own activities" on public.activities for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
--- 5. Novels
+-- 5. Books (writing pieces — novels, stories, scripts, etc.)
 -- ──────────────────────────────────────────────────────
-create table if not exists public.novels (
+create table if not exists public.books (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   title text,
@@ -104,23 +108,25 @@ create table if not exists public.novels (
   cover_image text,
   created_at timestamptz default now()
 );
-alter table public.novels enable row level security;
-create policy "Users can all access their own novels" on public.novels for all using (auth.uid() = user_id);
+alter table public.books enable row level security;
+drop policy if exists "Users can all access their own books" on public.books;
+create policy "Users can all access their own books" on public.books for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
--- 6. Novel Content
---    Stores large content blobs or JSON structure for novels
+-- 6. Book Content
+--    Stores large content blobs or JSON structure for books
 -- ──────────────────────────────────────────────────────
-create table if not exists public.novel_content (
+create table if not exists public.book_content (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   data text, -- Storing JSON string or large text
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
-alter table public.novel_content enable row level security;
-create policy "Users can all access their own novel content" on public.novel_content for all using (auth.uid() = user_id);
+alter table public.book_content enable row level security;
+drop policy if exists "Users can all access their own book content" on public.book_content;
+create policy "Users can all access their own book content" on public.book_content for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
@@ -137,6 +143,7 @@ create table if not exists public.bin_items (
   payload jsonb
 );
 alter table public.bin_items enable row level security;
+drop policy if exists "Users can all access their own bin items" on public.bin_items;
 create policy "Users can all access their own bin items" on public.bin_items for all using (auth.uid() = user_id);
 
 
@@ -158,13 +165,14 @@ create table if not exists public.snippets (
   created_at timestamptz default now()
 );
 alter table public.snippets enable row level security;
+drop policy if exists "Users can all access their own snippets" on public.snippets;
 create policy "Users can all access their own snippets" on public.snippets for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
--- 9. Books
+-- 9. Library Books (reading library / book tracker)
 -- ──────────────────────────────────────────────────────
-create table if not exists public.books (
+create table if not exists public.library_books (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   title text,
@@ -182,8 +190,9 @@ create table if not exists public.books (
   updated_at_str text,
   created_at timestamptz default now()
 );
-alter table public.books enable row level security;
-create policy "Users can all access their own books" on public.books for all using (auth.uid() = user_id);
+alter table public.library_books enable row level security;
+drop policy if exists "Users can all access their own library books" on public.library_books;
+create policy "Users can all access their own library books" on public.library_books for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
@@ -222,6 +231,7 @@ create table if not exists public.meetings (
   created_at timestamptz default now()
 );
 alter table public.meetings enable row level security;
+drop policy if exists "Users can all access their own meetings" on public.meetings;
 create policy "Users can all access their own meetings" on public.meetings for all using (auth.uid() = user_id);
 
 
@@ -247,13 +257,51 @@ create table if not exists public.articles (
   created_at timestamptz default now()
 );
 alter table public.articles enable row level security;
+drop policy if exists "Users can all access their own articles" on public.articles;
 create policy "Users can all access their own articles" on public.articles for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
--- 15. Research Libraries
+-- 12. User Data (generic sync table for PouchDB → Supabase sync)
+--     All web-app collections sync here as JSONB blobs via SyncService.
+--     The primary key is composite so the same UUID in different
+--     collections/profiles never conflicts.
 -- ──────────────────────────────────────────────────────
-create table if not exists public.research_libraries (
+create table if not exists public.user_data (
+  id           text        not null,
+  user_id      uuid        references auth.users(id) not null default auth.uid(),
+  profile_id   text        not null default 'default',
+  collection   text        not null,
+  data         jsonb       not null default '{}',
+  deleted      boolean     not null default false,
+  updated_at   timestamptz not null default now(),
+  primary key (id, collection, profile_id)
+);
+alter table public.user_data enable row level security;
+drop policy if exists "Users can manage their own sync data" on public.user_data;
+create policy "Users can manage their own sync data"
+  on public.user_data for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Enable Realtime so subscribeRealtime() receives live cross-device updates.
+-- Idempotent: only adds the table if it isn't already a member of the publication.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'user_data'
+  ) then
+    alter publication supabase_realtime add table public.user_data;
+  end if;
+end $$;
+
+
+-- ──────────────────────────────────────────────────────
+-- 15. Research Collections (renamed from research_libraries)
+-- ──────────────────────────────────────────────────────
+-- Migration for existing deployments: ALTER TABLE public.research_libraries RENAME TO public.research_collections;
+create table if not exists public.research_collections (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
   name text,
@@ -263,8 +311,9 @@ create table if not exists public.research_libraries (
   last_modified text,
   created_at timestamptz default now()
 );
-alter table public.research_libraries enable row level security;
-create policy "Users can all access their own research libraries" on public.research_libraries for all using (auth.uid() = user_id);
+alter table public.research_collections enable row level security;
+drop policy if exists "Users can all access their own research collections" on public.research_collections;
+create policy "Users can all access their own research collections" on public.research_collections for all using (auth.uid() = user_id);
 
 
 -- ──────────────────────────────────────────────────────
@@ -273,7 +322,7 @@ create policy "Users can all access their own research libraries" on public.rese
 create table if not exists public.research_sources (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
-  library_id text,
+  collection_id text,
   title text,
   source_type text,
   url text,
@@ -285,9 +334,11 @@ create table if not exists public.research_sources (
   notes text,
   created_date text,
   last_accessed text,
+  linked_task_ids jsonb,
   created_at timestamptz default now()
 );
 alter table public.research_sources enable row level security;
+drop policy if exists "Users can all access their own research sources" on public.research_sources;
 create policy "Users can all access their own research sources" on public.research_sources for all using (auth.uid() = user_id);
 
 
@@ -297,7 +348,7 @@ create policy "Users can all access their own research sources" on public.resear
 create table if not exists public.research_summaries (
   id text primary key,
   user_id uuid references auth.users(id) not null default auth.uid(),
-  library_id text,
+  collection_id text,
   title text,
   content text,
   source_ids jsonb,
@@ -307,6 +358,7 @@ create table if not exists public.research_summaries (
   created_at timestamptz default now()
 );
 alter table public.research_summaries enable row level security;
+drop policy if exists "Users can all access their own research summaries" on public.research_summaries;
 create policy "Users can all access their own research summaries" on public.research_summaries for all using (auth.uid() = user_id);
 
 -- ──────────────────────────────────────────────────────
@@ -364,8 +416,34 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ──────────────────────────────────────────────────────
--- Optional: Storage Buckets Setup (Requires extension/admin)
+-- Storage: Library bucket + RLS policies
+-- Run in Supabase SQL Editor (Dashboard → SQL Editor)
 -- ──────────────────────────────────────────────────────
--- insert into storage.buckets (id, name, public) values ('envello-files', 'envello-files', false) on conflict do nothing;
--- create policy "Authenticated users can upload files" on storage.objects for insert with check (bucket_id = 'envello-files' and auth.role() = 'authenticated');
--- create policy "Users can see their own files" on storage.objects for select using (bucket_id = 'envello-files' and auth.uid() = owner);
+insert into storage.buckets (id, name, public, file_size_limit)
+  values ('knowledge-files', 'knowledge-files', false, 52428800)
+  on conflict (id) do nothing;
+
+-- Each file is stored as {user_id}/{file_id}.ext — policies scope by first path segment.
+drop policy if exists "Library: users can upload their own files" on storage.objects;
+create policy "Library: users can upload their own files"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'knowledge-files'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "Library: users can read their own files" on storage.objects;
+create policy "Library: users can read their own files"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'knowledge-files'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "Library: users can delete their own files" on storage.objects;
+create policy "Library: users can delete their own files"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'knowledge-files'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

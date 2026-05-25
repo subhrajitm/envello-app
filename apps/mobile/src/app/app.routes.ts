@@ -43,13 +43,13 @@ export const routes: Routes = [
   // Secondary routes (accessible within features)
   {
     path: 'write',
-    loadComponent: () => import('@envello/feature-novels').then(m => m.WriteComponent),
+    loadComponent: () => import('@envello/feature-books').then(m => m.WriteComponent),
     canActivate: [authGuard],
     data: {}
   },
   {
     path: 'write/:id',
-    loadComponent: () => import('@envello/feature-novels').then(m => m.ComposerComponent),
+    loadComponent: () => import('@envello/feature-books').then(m => m.ComposerComponent),
     canActivate: [authGuard],
     data: { fullScreen: true }
   },

@@ -128,12 +128,12 @@ export class BinComponent {
     switch (type) {
       case 'task': return 'task_alt';
       case 'daily-note': return 'edit_note';
-      case 'novel': return 'menu_book';
-      case 'novel-chapter': return 'article';
-      case 'novel-note': return 'sticky_note_2';
-      case 'novel-character': return 'person';
-      case 'novel-location': return 'location_on';
-      case 'novel-group': return 'folder';
+      case 'book': return 'menu_book';
+      case 'book-chapter': return 'article';
+      case 'book-note': return 'sticky_note_2';
+      case 'book-character': return 'person';
+      case 'book-location': return 'location_on';
+      case 'book-group': return 'folder';
       case 'meeting': return 'groups';
       default: return 'delete';
     }
@@ -142,12 +142,12 @@ export class BinComponent {
   formatType(type: BinItemType): string {
     switch (type) {
       case 'daily-note': return 'Daily Note';
-      case 'novel': return 'Novel';
-      case 'novel-chapter': return 'Chapter';
-      case 'novel-note': return 'Novel Note';
-      case 'novel-character': return 'Character';
-      case 'novel-location': return 'Location';
-      case 'novel-group': return 'Group';
+      case 'book': return 'Book';
+      case 'book-chapter': return 'Chapter';
+      case 'book-note': return 'Book Note';
+      case 'book-character': return 'Character';
+      case 'book-location': return 'Location';
+      case 'book-group': return 'Group';
       case 'task': return 'Task';
       case 'meeting': return 'Meeting';
       default: return type;

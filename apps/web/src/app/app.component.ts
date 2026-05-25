@@ -2,14 +2,14 @@ import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent } from '@envello/ui';
+import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent } from '@envello/ui';
 import { TauriService, SessionService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -109,13 +109,13 @@ export class AppComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       'workspace': 'Workspace',
       'write': 'Write',
-      'research': 'Research',
+      'knowledge': 'Knowledge',
       'daily-notes': 'Notes',
       'tasks': 'Tasks',
       'meetings': 'Meetings',
       'bookmarks': 'Bookmarks',
       'spaces':  'Spaces',
-      'vault': 'Vault',
+      // vault is desktop-only
       'subscriptions': 'Subscriptions',
       'bin': 'Bin',
       'activity-log': 'Activity Log',

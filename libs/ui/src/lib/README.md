@@ -50,7 +50,7 @@ Small labels for status, counts, or tags.
 Overlay modal with header, body, and footer slots.
 
 ```html
-<env-modal [isOpen]="show()" (closed)="show.set(false)" title="Create Library" size="md">
+<env-modal [isOpen]="show()" (closed)="show.set(false)" title="Create Collection" size="md">
   <div body>
     <p>Modal body content.</p>
   </div>
@@ -73,10 +73,10 @@ Centered empty state with icon, title, description, and optional action.
 ```html
 <env-empty-state
   icon="library_books"
-  title="No Library Selected"
-  description="Select a library from the sidebar or create a new one."
+  title="No Collection Selected"
+  description="Select a collection from the sidebar or create a new one."
 >
-  <env-button variant="primary" icon="add" (clicked)="create()">Create Library</env-button>
+  <env-button variant="primary" icon="add" (clicked)="create()">Create Collection</env-button>
 </env-empty-state>
 ```
 
@@ -105,7 +105,7 @@ Add the components you need to your `imports` array (standalone).
 
 ## Migration
 
-- **Research**: All modals (Create Library, Add Source, Create Summary, Topic Discovery, Research Plan) use `env-modal`. Empty states (No Library, No Sources, No Summaries) use `env-empty-state` + `env-button`. Sidebar add, header actions, AI close use `env-icon-button` / `env-button`.
+- **Research**: All modals (Create Collection, Add Source, Create Summary, Topic Discovery, Research Plan) use `env-modal`. Empty states (No Collection, No Sources, No Summaries) use `env-empty-state` + `env-button`. Sidebar add, header actions, AI close use `env-icon-button` / `env-button`.
 - **Daily Notes**: Single modal uses `env-modal`; empty state uses `env-empty-state` + `env-button`; footer actions use `env-button`.
 - **Journals**: New Entry, Project, Column, Export, Goals modals use `env-modal`; empty states use `env-empty-state` + `env-button`; sidebar add uses `env-icon-button`. Entry Detail and Search modals remain custom.
 - **Bin**: Empty state uses `env-empty-state`; Empty Bin / Delete use `env-button`.

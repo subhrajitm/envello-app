@@ -22,24 +22,25 @@ export const routes: Routes = [
 
   {
     path: 'write',
-    loadComponent: () => import('@envello/feature-novels').then(m => m.WriteComponent),
+    loadComponent: () => import('@envello/feature-books').then(m => m.WriteComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
     path: 'write/:id',
-    loadComponent: () => import('@envello/feature-novels').then(m => m.ComposerComponent),
+    loadComponent: () => import('@envello/feature-books').then(m => m.ComposerComponent),
     canActivate: [authGuard],
     data: { immersive: true },
   },
   { path: 'novels', redirectTo: 'write', pathMatch: 'full' },
   { path: 'articles', redirectTo: 'write', pathMatch: 'full' },
   {
-    path: 'research',
-    loadComponent: () => import('./components/research/research.component').then(m => m.ResearchComponent),
+    path: 'knowledge',
+    loadComponent: () => import('./components/knowledge/knowledge.component').then(m => m.KnowledgeComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
+  { path: 'library', redirectTo: 'knowledge', pathMatch: 'full' },
 
   {
     path: 'daily-notes',

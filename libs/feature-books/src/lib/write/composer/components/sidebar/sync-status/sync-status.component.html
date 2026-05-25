@@ -1,0 +1,13 @@
+<div class="ne-sync-status">
+    <div class="sync-line"></div>
+    <div class="sync-row">
+        <span class="sync-text">
+            {{ wordCount() }} words · {{ formattedTime() }}@if (goalProgress() !== null) { · {{ goalProgress() }}%}
+        </span>
+        @if (!leftSidebarCollapsed()) {
+        <button class="sidebar-toggle right" (click)="toggleSidebar.emit()" title="Hide sidebar (⌘+←)">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        }
+    </div>
+</div>

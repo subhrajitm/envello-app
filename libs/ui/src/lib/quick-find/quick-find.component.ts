@@ -1,9 +1,9 @@
 import { Component, inject, signal, computed, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService, MeetingsService } from '@envello/core';
+import { StoreService, MeetingsService, SemanticSearchService, AiService } from '@envello/core';
 
-type ResultType = 'note' | 'task' | 'novel' | 'bookmark' | 'meeting' | 'project' | 'command';
+type ResultType = 'note' | 'task' | 'book' | 'bookmark' | 'meeting' | 'project' | 'command';
 type FilterType = 'all' | ResultType;
 
 interface QuickFindResult {
@@ -28,26 +28,27 @@ interface ResultGroup {
 const TYPE_META: Record<ResultType, { label: string; icon: string; color: string }> = {
     note:     { label: 'Notes',     icon: 'edit_note',    color: '#22c55e' },
     task:     { label: 'Tasks',     icon: 'check_circle', color: '#fcd34d' },
-    novel:    { label: 'Novels',    icon: 'menu_book',    color: '#3b82f6' },
+    book:     { label: 'Books',     icon: 'menu_book',    color: '#3b82f6' },
     bookmark: { label: 'Bookmarks', icon: 'bookmark',     color: '#a855f7' },
-    meeting:  { label: 'Meetings',  icon: 'groups',       color: '#ec4899' },
-    project:  { label: 'Spaces',  icon: 'folder',       color: '#60a5fa' },
+    meeting:  { label: 'Meetings',  icon: 'calendar_month', color: '#ec4899' },
+    project:  { label: 'Spaces',    icon: 'folder',       color: '#60a5fa' },
     command:  { label: 'Commands',  icon: 'terminal',     color: '#94a3b8' },
 };
+
+const IS_TAURI = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-workspace',    type: 'command', title: 'Go to Workspace',    preview: 'Dashboard overview',          icon: 'dashboard',    route: '/workspace',     badge: '⌘1' },
     { id: 'cmd-tasks',        type: 'command', title: 'Go to Tasks',        preview: 'Manage your tasks',           icon: 'checklist',    route: '/tasks',         badge: '⌘2' },
     { id: 'cmd-notes',        type: 'command', title: 'Go to Notes',        preview: 'Daily notes & journals',      icon: 'edit_note',    route: '/daily-notes',   badge: '⌘3' },
-    { id: 'cmd-meetings',     type: 'command', title: 'Go to Meetings',     preview: 'Schedule & notes',            icon: 'groups',       route: '/meetings' },
-    { id: 'cmd-write',        type: 'command', title: 'Go to Write',        preview: 'Novels & creative projects',  icon: 'menu_book',    route: '/write' },
-    { id: 'cmd-research',     type: 'command', title: 'Go to Research',     preview: 'Articles & research',         icon: 'science',      route: '/research' },
+    { id: 'cmd-meetings',     type: 'command', title: 'Go to Meetings',     preview: 'Schedule & notes',            icon: 'calendar_month', route: '/meetings' },
+    { id: 'cmd-write',        type: 'command', title: 'Go to Write',        preview: 'Books & creative projects',   icon: 'menu_book',    route: '/write' },
+    { id: 'cmd-research',     type: 'command', title: 'Go to Knowledge',    preview: 'Articles & research',         icon: 'hub',          route: '/knowledge' },
     { id: 'cmd-bookmarks',    type: 'command', title: 'Go to Bookmarks',    preview: 'Saved links & resources',     icon: 'bookmarks',    route: '/bookmarks' },
-    { id: 'cmd-vault',        type: 'command', title: 'Go to Vault',        preview: 'Secrets & credentials',       icon: 'lock',         route: '/vault' },
-    { id: 'cmd-subscriptions',type: 'command', title: 'Go to Vendors',      preview: 'Subscriptions & vendors',     icon: 'credit_card',  route: '/subscriptions' },
+    ...( IS_TAURI ? [{ id: 'cmd-vault', type: 'command' as const, title: 'Go to Vault', preview: 'Secrets & credentials', icon: 'lock', route: '/vault' }] : []),
+    { id: 'cmd-subscriptions',type: 'command', title: 'Go to Subscriptions', preview: 'Manage subscriptions',        icon: 'credit_card',  route: '/subscriptions' },
     { id: 'cmd-activity',     type: 'command', title: 'Go to Activity Log', preview: 'View recent activity',        icon: 'history',      route: '/activity-log' },
     { id: 'cmd-bin',          type: 'command', title: 'Go to Bin',          preview: 'Deleted items',               icon: 'delete',       route: '/bin' },
-    { id: 'cmd-spaces',       type: 'command', title: 'Go to Spaces',     preview: 'Manage workspaces',           icon: 'folder',       route: '/spaces' },
 ];
 
 @Component({
@@ -62,18 +63,31 @@ export class QuickFindComponent {
     private store = inject(StoreService);
     private meetingsService = inject(MeetingsService);
     private router = inject(Router);
+    private semanticSearch = inject(SemanticSearchService);
+    private ai = inject(AiService);
 
     isOpen = signal(false);
     searchQuery = signal('');
     activeFilter = signal<FilterType>('all');
     selectedIndex = signal(0);
+    semanticResults = signal<QuickFindResult[]>([]);
+    isSearchingAI = signal(false);
+    aiAnswer = signal('');
+    isAiStreaming = signal(false);
+    aiSources = signal<QuickFindResult[]>([]);
+
+    private searchTimer: ReturnType<typeof setTimeout> | null = null;
+    private searchSequence = 0;
+    private aiAbortRequested = false;
 
     readonly typeMeta = TYPE_META;
-    readonly filterTypes: FilterType[] = ['all', 'note', 'task', 'novel', 'bookmark', 'meeting', 'project'];
+    readonly filterTypes: FilterType[] = ['all', 'note', 'task', 'book', 'bookmark', 'meeting'];
 
     isCommandMode = computed(() => this.searchQuery().startsWith('>'));
+    isAiMode = computed(() => this.searchQuery().startsWith('?'));
 
     flatResults = computed<QuickFindResult[]>(() => {
+        if (this.isAiMode()) return [];
         const query = this.searchQuery().trim();
         const filter = this.activeFilter();
 
@@ -89,7 +103,7 @@ export class QuickFindComponent {
     groups = computed<ResultGroup[]>(() => {
         const filter = this.activeFilter();
         const items = this.flatResults();
-        if (filter !== 'all' || this.isCommandMode()) return [];
+        if (filter !== 'all' || this.isCommandMode() || this.isAiMode()) return [];
 
         const map = new Map<ResultType, QuickFindResult[]>();
         for (const item of items) {
@@ -106,12 +120,10 @@ export class QuickFindComponent {
         }));
     });
 
-    // Flat list used for keyboard navigation
     navList = computed<QuickFindResult[]>(() => {
-        if (this.activeFilter() !== 'all' || this.isCommandMode()) {
-            return this.flatResults();
-        }
-        return this.groups().flatMap(g => g.items);
+        if (this.isAiMode()) return this.aiSources();
+        if (this.activeFilter() !== 'all' || this.isCommandMode()) return this.flatResults();
+        return [...this.groups().flatMap(g => g.items), ...this.semanticResults()];
     });
 
     totalCount = computed(() => this.navList().length);
@@ -126,6 +138,15 @@ export class QuickFindComponent {
         if (!this.isOpen()) return;
 
         if (event.key === 'Escape') { this.close(); return; }
+
+        if (this.isAiMode()) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                this.submitAiQuery();
+            }
+            return;
+        }
+
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             this.selectedIndex.update(i => Math.min(i + 1, this.totalCount() - 1));
@@ -150,6 +171,26 @@ export class QuickFindComponent {
         this.isOpen.set(false);
         this.searchQuery.set('');
         this.activeFilter.set('all');
+        this.semanticResults.set([]);
+        this.isSearchingAI.set(false);
+        this.aiAnswer.set('');
+        this.isAiStreaming.set(false);
+        this.aiAbortRequested = true;
+        this.aiSources.set([]);
+        if (this.searchTimer) clearTimeout(this.searchTimer);
+    }
+
+    clearQuery() {
+        this.searchQuery.set('');
+        this.activeFilter.set('all');
+        this.semanticResults.set([]);
+        this.isSearchingAI.set(false);
+        this.aiAnswer.set('');
+        this.isAiStreaming.set(false);
+        this.aiAbortRequested = true;
+        this.aiSources.set([]);
+        if (this.searchTimer) clearTimeout(this.searchTimer);
+        setTimeout(() => (document.querySelector('.qf-input') as HTMLInputElement)?.focus(), 10);
     }
 
     setFilter(f: FilterType) {
@@ -158,8 +199,86 @@ export class QuickFindComponent {
     }
 
     onInput(event: Event) {
-        this.searchQuery.set((event.target as HTMLInputElement).value);
+        const value = (event.target as HTMLInputElement).value;
+        this.searchQuery.set(value);
         this.selectedIndex.set(0);
+        // Reset AI answer when question changes
+        if (this.aiAnswer()) {
+            this.aiAnswer.set('');
+            this.aiSources.set([]);
+            this.aiAbortRequested = true;
+        }
+        this.scheduleSemanticSearch(value);
+    }
+
+    private scheduleSemanticSearch(query: string) {
+        if (this.searchTimer) clearTimeout(this.searchTimer);
+        if (query.length < 3 || query.startsWith('>') || query.startsWith('?') || !this.semanticSearch.available) {
+            this.semanticResults.set([]);
+            this.isSearchingAI.set(false);
+            return;
+        }
+        this.isSearchingAI.set(true);
+        const seq = ++this.searchSequence;
+        this.searchTimer = setTimeout(async () => {
+            const docs = await this.semanticSearch.search(query, 8);
+            if (seq !== this.searchSequence) return;
+            const lexicalIds = new Set(this.flatResults().map(r => r.id));
+            this.semanticResults.set(
+                docs
+                    .filter(d => !lexicalIds.has(d.id))
+                    .map(d => ({
+                        id: d.id,
+                        type: d.type as ResultType,
+                        title: d.title,
+                        preview: d.preview,
+                        icon: d.icon,
+                        route: d.route,
+                        tags: d.tags,
+                        badge: d.badge,
+                        date: d.date,
+                    }))
+            );
+            this.isSearchingAI.set(false);
+        }, 400);
+    }
+
+    async submitAiQuery() {
+        const question = this.searchQuery().slice(1).trim();
+        if (!question || this.isAiStreaming()) return;
+
+        this.aiAnswer.set('');
+        this.aiSources.set([]);
+        this.isAiStreaming.set(true);
+        this.aiAbortRequested = false;
+
+        const docs = await this.semanticSearch.search(question, 6);
+        const sources: QuickFindResult[] = docs.map(d => ({
+            id: d.id,
+            type: d.type as ResultType,
+            title: d.title,
+            preview: d.preview,
+            icon: d.icon,
+            route: d.route,
+        }));
+        this.aiSources.set(sources);
+
+        const context = docs.length > 0
+            ? `You are a helpful assistant for a personal productivity app. Answer the user's question using only the content below. Be concise.\n\n${docs.map(d => `[${d.type.toUpperCase()}] "${d.title}": ${d.preview}`).join('\n')}`
+            : `You are a helpful assistant for a personal productivity app. No relevant content was found in the user's data for this question. Let them know and answer helpfully from general knowledge if possible.`;
+
+        try {
+            for await (const chunk of this.ai.streamMessage(question, context)) {
+                if (this.aiAbortRequested) break;
+                this.aiAnswer.update(a => a + chunk);
+            }
+        } catch {
+            if (!this.aiAbortRequested) {
+                this.aiAnswer.set('Something went wrong. Please check your AI settings and try again.');
+            }
+        } finally {
+            this.isAiStreaming.set(false);
+        }
     }
 
     selectResult(result: QuickFindResult | undefined) {
@@ -179,6 +298,10 @@ export class QuickFindComponent {
     getFilterMeta(): { label: string; icon: string; color: string } {
         const f = this.activeFilter();
         return f !== 'all' ? TYPE_META[f] : { label: '', icon: '', color: '' };
+    }
+
+    getSemanticGlobalIndex(itemIndex: number): number {
+        return this.navList().length - this.semanticResults().length + itemIndex;
     }
 
     /** Returns the index of item i within group g in the flat navList, used for keyboard selection. */
@@ -210,9 +333,9 @@ export class QuickFindComponent {
                 icon: 'check_circle', route: '/tasks', date: t.due, badge: t.status
             }));
         }
-        if (filter === 'all' || filter === 'novel') {
-            this.store.novels().slice(0, 3).forEach(n => results.push({
-                id: n.id, type: 'novel', title: n.title,
+        if (filter === 'all' || filter === 'book') {
+            this.store.books().slice(0, 3).forEach(n => results.push({
+                id: n.id, type: 'book', title: n.title,
                 preview: n.genre?.join(', ') || n.status,
                 icon: 'menu_book', route: '/write', badge: n.status
             }));
@@ -227,17 +350,9 @@ export class QuickFindComponent {
             this.meetingsService.meetings().slice(0, 3).forEach(m => results.push({
                 id: m.id, type: 'meeting', title: m.title,
                 preview: m.description || m.project || '',
-                icon: 'groups', route: '/meetings', date: m.date
+                icon: 'calendar_month', route: '/meetings', date: m.date
             }));
         }
-        if (filter === 'all' || filter === 'project') {
-            this.store.spaces().slice(0, 3).forEach(p => results.push({
-                id: p.id, type: 'project', title: p.title,
-                preview: p.description || p.status,
-                icon: 'folder', route: '/spaces', badge: p.status
-            }));
-        }
-
         return results;
     }
 
@@ -256,11 +371,11 @@ export class QuickFindComponent {
                 .slice(0, 5)
                 .forEach(t => results.push({ id: t.id, type: 'task', title: t.title, preview: [t.project, t.priority].filter(Boolean).join(' · '), icon: 'check_circle', route: '/tasks', date: t.due, badge: t.status }));
         }
-        if (filter === 'all' || filter === 'novel') {
-            this.store.novels()
+        if (filter === 'all' || filter === 'book') {
+            this.store.books()
                 .filter(n => n.title.toLowerCase().includes(query) || n.genre?.some(g => g.toLowerCase().includes(query)))
                 .slice(0, 5)
-                .forEach(n => results.push({ id: n.id, type: 'novel', title: n.title, preview: n.genre?.join(', ') || '', icon: 'menu_book', route: '/write', badge: n.status }));
+                .forEach(n => results.push({ id: n.id, type: 'book', title: n.title, preview: n.genre?.join(', ') || '', icon: 'menu_book', route: '/write', badge: n.status }));
         }
         if (filter === 'all' || filter === 'bookmark') {
             this.store.bookmarks()
@@ -272,15 +387,8 @@ export class QuickFindComponent {
             this.meetingsService.meetings()
                 .filter(m => m.title.toLowerCase().includes(query) || m.description?.toLowerCase().includes(query) || m.project?.toLowerCase().includes(query))
                 .slice(0, 5)
-                .forEach(m => results.push({ id: m.id, type: 'meeting', title: m.title, preview: m.description || m.project || '', icon: 'groups', route: '/meetings', date: m.date }));
+                .forEach(m => results.push({ id: m.id, type: 'meeting', title: m.title, preview: m.description || m.project || '', icon: 'calendar_month', route: '/meetings', date: m.date }));
         }
-        if (filter === 'all' || filter === 'project') {
-            this.store.spaces()
-                .filter(p => p.title.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query))
-                .slice(0, 5)
-                .forEach(p => results.push({ id: p.id, type: 'project', title: p.title, preview: p.description || '', icon: 'folder', route: '/spaces', badge: p.status }));
-        }
-
         return results;
     }
 }

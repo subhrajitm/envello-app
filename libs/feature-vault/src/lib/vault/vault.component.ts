@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
-import { EncryptionUtil } from '@envello/core';
+import { AiService } from '@envello/core';
 import { Credential } from '@envello/domain';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
@@ -35,6 +35,7 @@ const URL_LABEL: Record<string, string> = {
 })
 export class VaultComponent {
   public vaultStore = inject(VaultStore);
+  private aiService = inject(AiService);
 
   readonly typeOptions = (Object.keys(TYPE_META) as Array<Credential['type']>).map(type => ({ type, ...TYPE_META[type] }));
 
@@ -64,10 +65,12 @@ export class VaultComponent {
   editProjectId   = signal('global');
 
   // ── Visibility & copy ────────────────────────────────────────────────────
-  visibleCreds    = signal<Set<string>>(new Set());
-  copiedId        = signal<string | null>(null);
-  deleteConfirmId = signal<string | null>(null);
-  private hideTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  visibleCreds      = signal<Set<string>>(new Set());
+  decryptedSecrets  = signal<Map<string, string>>(new Map());
+  copiedId          = signal<string | null>(null);
+  deleteConfirmId   = signal<string | null>(null);
+  private hideTimers      = new Map<string, ReturnType<typeof setTimeout>>();
+  private clipboardTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   // ── AI Assistant ─────────────────────────────────────────────────────────
   showAssistant = signal(false);
@@ -173,7 +176,7 @@ export class VaultComponent {
       type:     cred.type,
       username: cred.username || '—',
       secret:   this.visibleCreds().has(cred.id)
-                  ? this.decryptCred(cred.value)
+                  ? (this.decryptedSecrets().get(cred.id) ?? '…')
                   : '•  •  •  •  •  •  •  •',
       scope:    cred.projectId || 'global',
       date:     this.formatDate(cred.lastAccessedAt || cred.createdAt),
@@ -280,33 +283,52 @@ export class VaultComponent {
   }
 
   // ── Visibility & copy ────────────────────────────────────────────────────
-  toggleCredVisibility(id: string) {
+  async toggleCredVisibility(id: string) {
     const set = new Set(this.visibleCreds());
     if (set.has(id)) {
       set.delete(id);
       clearTimeout(this.hideTimers.get(id));
       this.hideTimers.delete(id);
+      const secrets = new Map(this.decryptedSecrets());
+      secrets.delete(id);
+      this.decryptedSecrets.set(secrets);
     } else {
       set.add(id);
       this.vaultStore.touchCredential(id);
+      const cred = this.vaultStore.credentials().find(c => c.id === id);
+      if (cred) {
+        const plain = await this.vaultStore.decryptValue(cred.value);
+        const secrets = new Map(this.decryptedSecrets());
+        secrets.set(id, plain);
+        this.decryptedSecrets.set(secrets);
+      }
       const timer = setTimeout(() => {
         const next = new Set(this.visibleCreds());
         next.delete(id);
         this.visibleCreds.set(next);
         this.hideTimers.delete(id);
+        const s = new Map(this.decryptedSecrets());
+        s.delete(id);
+        this.decryptedSecrets.set(s);
       }, 30_000);
       this.hideTimers.set(id, timer);
     }
     this.visibleCreds.set(set);
   }
 
-  decryptCred(cipher: string): string { return EncryptionUtil.decrypt(cipher); }
-
-  copyCred(id: string, cipher: string) {
-    navigator.clipboard.writeText(this.decryptCred(cipher));
+  async copyCred(id: string, cipher: string) {
+    const plain = await this.vaultStore.decryptValue(cipher);
+    await navigator.clipboard.writeText(plain);
     this.copiedId.set(id);
     this.vaultStore.touchCredential(id);
     setTimeout(() => this.copiedId.set(null), 1800);
+    // Auto-clear clipboard after 30s — same window as visibility timeout
+    clearTimeout(this.clipboardTimers.get(id));
+    const t = setTimeout(() => {
+      navigator.clipboard.writeText('').catch(() => {});
+      this.clipboardTimers.delete(id);
+    }, 30_000);
+    this.clipboardTimers.set(id, t);
   }
 
   // ── AI Assistant ─────────────────────────────────────────────────────────
@@ -317,52 +339,69 @@ export class VaultComponent {
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
+    try {
+      const creds = this.vaultStore.credentials();
+      // Never send secret values — metadata only
+      const credList = creds.map(c =>
+        `- [${TYPE_META[c.type]?.label ?? c.type}] ${c.name}${c.url ? ` (${c.url})` : ''}${c.lastAccessedAt ? ` | last accessed: ${this.formatDate(c.lastAccessedAt)}` : ' | never accessed'}${c.notes ? ' | has notes' : ''}`
+      ).join('\n');
+      const byType = Object.entries(TYPE_META).map(([type, m]) => {
+        const n = creds.filter(c => c.type === type).length;
+        return `${m.label}: ${n}`;
+      }).join(', ');
+      const context = [
+        'You are a vault assistant for the Envello productivity app. You help users manage their stored credentials.',
+        'IMPORTANT: You only have access to credential metadata (name, type, URL, last accessed). You do NOT have access to passwords, keys, or secret values — never generate or suggest actual secret values.',
+        `The user has ${creds.length} credential${creds.length !== 1 ? 's' : ''} stored. Breakdown: ${byType}.`,
+        creds.length ? `Credential metadata:\n${credList}` : 'No credentials stored yet.',
+        'You can help identify stale/unaccessed credentials, find missing URLs, summarize coverage by type, or give security hygiene advice. Be concise, use markdown lists.',
+      ].join('\n');
+      const aiResponse = await this.aiService.sendMessage(text, context);
+      const response = aiResponse || this.vaultFallback(text, creds);
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+    } catch {
+      const creds = this.vaultStore.credentials();
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: this.vaultFallback(text, creds) }]);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
 
-    const creds = this.vaultStore.credentials();
+  private vaultFallback(text: string, creds: Credential[]): string {
     const q = text.toLowerCase();
-    let response = '';
-
     if (q.includes('how many') || q.includes('count') || q.includes('stored')) {
       const byType = Object.entries(TYPE_META).map(([type, m]) => {
         const n = creds.filter(c => c.type === type).length;
         return n > 0 ? `${m.label}: ${n}` : null;
       }).filter(Boolean);
-      response = `You have **${creds.length}** credential${creds.length !== 1 ? 's' : ''} stored.\n${byType.join('\n')}`;
-    } else if (q.includes('recent') || q.includes('accessed')) {
+      return `You have **${creds.length}** credential${creds.length !== 1 ? 's' : ''} stored.\n${byType.join('\n')}`;
+    }
+    if (q.includes('recent') || q.includes('accessed')) {
       const recent = [...creds]
         .filter(c => c.lastAccessedAt)
         .sort((a, b) => (b.lastAccessedAt ?? '').localeCompare(a.lastAccessedAt ?? ''))
         .slice(0, 5);
-      response = recent.length
+      return recent.length
         ? `Recently accessed:\n${recent.map((c, i) => `${i + 1}. ${c.name} — ${this.formatDate(c.lastAccessedAt!)}`).join('\n')}`
-        : `No credentials have been accessed yet.`;
-    } else if (q.includes('api key') || q.includes('api_key')) {
+        : `No credentials accessed yet.`;
+    }
+    if (q.includes('api key') || q.includes('api_key')) {
       const keys = creds.filter(c => c.type === 'api_key');
-      response = keys.length
+      return keys.length
         ? `You have ${keys.length} API key${keys.length !== 1 ? 's' : ''}: ${keys.map(c => c.name).join(', ')}.`
         : `No API keys stored yet.`;
-    } else if (q.includes('no url') || q.includes('without url') || q.includes('missing url')) {
+    }
+    if (q.includes('no url') || q.includes('without url') || q.includes('missing url')) {
       const noUrl = creds.filter(c => !c.url);
-      response = noUrl.length
+      return noUrl.length
         ? `${noUrl.length} credential${noUrl.length !== 1 ? 's have' : ' has'} no URL: ${noUrl.slice(0, 5).map(c => c.name).join(', ')}${noUrl.length > 5 ? ` and ${noUrl.length - 5} more` : ''}.`
         : `All credentials have a URL set.`;
-    } else if (q.includes('breakdown') || q.includes('type')) {
-      const lines = Object.entries(TYPE_META).map(([type, m]) => {
-        const n = creds.filter(c => c.type === type).length;
-        return `${m.label}: ${n}`;
-      });
-      response = `Credentials by type:\n${lines.join('\n')}`;
-    } else {
-      response = `You have ${creds.length} credential${creds.length !== 1 ? 's' : ''} in the vault. Try asking about recent access, API keys, credentials without URLs, or a type breakdown.`;
     }
-
-    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-    this.aiLoading.set(false);
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
+    if (q.includes('breakdown') || q.includes('type')) {
+      const lines = Object.entries(TYPE_META).map(([type, m]) => `${m.label}: ${creds.filter(c => c.type === type).length}`);
+      return `Credentials by type:\n${lines.join('\n')}`;
+    }
+    return `You have ${creds.length} credential${creds.length !== 1 ? 's' : ''} in the vault. AI is unavailable — check Settings to configure a provider.`;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

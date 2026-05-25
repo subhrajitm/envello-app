@@ -1,0 +1,30 @@
+<div class="ne-editor-header">
+    <div class="ne-editor-tabs">
+        @for (item of items(); track item.id) {
+        <div class="ne-editor-tab" [class.active]="activeItemId() === item.id"
+            (click)="selectItem.emit(item.id)">
+            <span class="material-symbols-outlined tab-icon">{{ item.icon }}</span>
+            <span class="tab-label">{{ item.label }}</span>
+            <button class="tab-close-btn" (click)="closeTab.emit(item.id); $event.stopPropagation()" title="Close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        }
+    </div>
+    <div class="ne-editor-actions">
+        <div class="undo-redo-group">
+            <button class="action-btn"
+                    (click)="performUndo.emit()"
+                    [disabled]="!canUndo()"
+                    title="Undo (⌘+Z)">
+                <span class="material-symbols-outlined">undo</span>
+            </button>
+            <button class="action-btn"
+                    (click)="performRedo.emit()"
+                    [disabled]="!canRedo()"
+                    title="Redo (⌘+Shift+Z)">
+                <span class="material-symbols-outlined">redo</span>
+            </button>
+        </div>
+    </div>
+</div>

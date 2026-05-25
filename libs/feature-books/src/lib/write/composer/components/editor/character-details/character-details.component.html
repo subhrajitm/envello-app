@@ -1,0 +1,57 @@
+<div class="ne-details-canvas">
+    @if (character(); as activeChar) {
+    <div class="ne-ent-card">
+        <div class="ne-ent-header-bg"></div>
+        <div class="ne-ent-header-content">
+            <div class="ne-ent-avatar-xl">
+                <span class="material-symbols-outlined">account_circle</span>
+            </div>
+            <div class="ne-ent-title-group">
+                <input type="text" class="ne-ent-title-input" [value]="activeChar.name"
+                    (input)="updateField.emit({ id: activeChar.id, field: 'name', value: $any($event.target).value })"
+                    placeholder="Character Name" />
+                <div class="ne-ent-subtitle">CHARACTER PROFILE</div>
+            </div>
+        </div>
+
+        <div class="ne-ent-body">
+            <div class="ne-ent-grid-row">
+                <div class="ne-ent-field">
+                    <label>ROLE IN STORY</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined field-icon">badge</span>
+                        <input type="text" [value]="activeChar.role"
+                            (input)="updateField.emit({ id: activeChar.id, field: 'role', value: $any($event.target).value })"
+                            placeholder="e.g. Protagonist" />
+                    </div>
+                </div>
+                <div class="ne-ent-field">
+                    <label>ARCHETYPE</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined field-icon">category</span>
+                        <input type="text" [value]="activeChar.archetype"
+                            (input)="updateField.emit({ id: activeChar.id, field: 'archetype', value: $any($event.target).value })"
+                            placeholder="e.g. The Hero" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="ne-ent-field full-width">
+                <label>BIOGRAPHY & NOTES</label>
+                <textarea class="ne-ent-textarea" [value]="activeChar.description"
+                    (input)="updateField.emit({ id: activeChar.id, field: 'description', value: $any($event.target).value })"
+                    placeholder="Describe their appearance, personality, and backstory..."></textarea>
+            </div>
+        </div>
+    </div>
+    } @else {
+    <div class="ne-empty-state ne-empty-state--compact">
+        <span class="material-symbols-outlined ne-empty-icon-sm">group</span>
+        <p class="ne-empty-label">No character selected</p>
+        <button class="ne-btn-ghost-sm" (click)="addNewCharacter.emit()">
+            <span class="material-symbols-outlined">add</span>
+            New character
+        </button>
+    </div>
+    }
+</div>

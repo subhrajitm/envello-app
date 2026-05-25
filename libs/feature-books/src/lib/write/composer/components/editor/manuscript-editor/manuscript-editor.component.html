@@ -1,0 +1,59 @@
+<div class="ne-editor-canvas">
+    @if (!activeChapterId()) {
+    <div class="ne-empty-state">
+        <div class="empty-state-icon">
+            <span class="material-symbols-outlined">description</span>
+        </div>
+        <h3 class="empty-state-title">Nothing selected</h3>
+        <p class="empty-state-text">Select a section from the sidebar to start writing, or create a new one to begin.</p>
+        <button class="ne-btn-primary" (click)="addNewChapter.emit()">
+            <span class="material-symbols-outlined">add</span>
+            New Section
+        </button>
+    </div>
+    } @else {
+    <input type="text" class="ne-doc-title-input" [ngModel]="title()"
+        (ngModelChange)="titleChange.emit($event)" placeholder="Chapter Title" />
+
+    <div class="ne-doc-meta">
+        <div class="meta-row">
+            <!-- Clickable status badge with dropdown -->
+            <div class="status-menu-wrapper" style="position:relative;display:inline-flex;">
+                <button class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()"
+                        (click)="toggleStatusMenu($event)" title="Change status">
+                    <span class="material-symbols-outlined" style="font-size:13px;">{{ chapterStatusIcon() }}</span>
+                    {{ chapterStatusLabel() }}
+                    <span class="material-symbols-outlined" style="font-size:12px;opacity:0.6;">expand_more</span>
+                </button>
+                @if (statusMenuOpen()) {
+                <div class="add-dropdown-menu" style="top:calc(100% + 4px);left:0;right:auto;min-width:140px;">
+                    @for (opt of statusOptions; track opt.value) {
+                    <button class="add-dropdown-option" [class.active]="chapterStatus() === opt.value"
+                            (click)="selectStatus(opt.value, $event)">
+                        <span class="material-symbols-outlined option-icon">{{ opt.icon }}</span>
+                        <span class="option-label">{{ opt.label }}</span>
+                    </button>
+                    }
+                </div>
+                }
+            </div>
+            <span class="meta-sep">•</span>
+            <span class="save-indicator" [class.saving]="isSaving()">
+                @if (isSaving()) {
+                <span class="material-symbols-outlined text-xs">sync</span>
+                Saving…
+                } @else if (lastSaved()) {
+                <span class="material-symbols-outlined text-xs">check_circle</span>
+                Saved · {{ formatSaved(lastSaved()!) }}
+                } @else if (chapterLastEdited() !== 'Never') {
+                <span class="material-symbols-outlined text-xs">history</span>
+                Last edited: {{ chapterLastEdited() }}
+                }
+            </span>
+        </div>
+    </div>
+
+    <!-- Tiptap Editor -->
+    <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+    }
+</div>

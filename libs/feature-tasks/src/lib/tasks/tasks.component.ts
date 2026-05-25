@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task, NotificationService } from '@envello/core';
+import { StoreService, Task, NotificationService, FileStorageService, AiService } from '@envello/core';
 import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
@@ -23,6 +23,8 @@ type SubtaskDraft = { title: string; priority: Task['priority'] };
 export class TasksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
   private notificationService = inject(NotificationService);
+  private fileStorage = inject(FileStorageService);
+  private aiService = inject(AiService);
 
   // Left sidebar state
   sidebarSearch = signal<string>('');
@@ -2442,27 +2444,32 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (files.length === 0) return;
 
     this.uploadingFiles.set(true);
-
-    // Simulate file upload (in real app, upload to server)
-    const attachments = files.map((file, index) => ({
-      id: `${Date.now()}-${index}`,
-      name: file.name,
-      url: URL.createObjectURL(file), // In real app, this would be server URL
-      type: file.type,
-      size: file.size,
-      uploadedAt: new Date().toISOString()
-    }));
-
-    const task = this.store.tasks().find(t => t.id === taskId);
-    if (task) {
-      const existingAttachments = task.attachments || [];
-      this.store.updateTask(taskId, {
-        attachments: [...existingAttachments, ...attachments]
-      });
+    try {
+      const libFiles = await Promise.all(
+        files.map(f => this.fileStorage.upload(f, { type: 'task', id: taskId }))
+      );
+      const attachments = libFiles
+        .filter((lf): lf is typeof lf & { publicUrl: string } => !!lf.publicUrl)
+        .map(lf => ({
+          id: lf.id,
+          name: lf.name,
+          url: lf.publicUrl,
+          type: lf.mimeType,
+          size: lf.size,
+          uploadedAt: lf.uploadedAt,
+        }));
+      const task = this.store.tasks().find(t => t.id === taskId);
+      if (task) {
+        this.store.updateTask(taskId, {
+          attachments: [...(task.attachments ?? []), ...attachments],
+        });
+      }
+      this.filesToUpload.set([]);
+    } catch (e) {
+      this.notificationService.error('Upload failed', (e as Error).message ?? 'Could not upload files.');
+    } finally {
+      this.uploadingFiles.set(false);
     }
-
-    this.filesToUpload.set([]);
-    this.uploadingFiles.set(false);
   }
 
   removeAttachment(taskId: string, attachmentId: string) {
@@ -2556,7 +2563,6 @@ export class TasksComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     const scrollTop = target.scrollTop;
     const containerHeight = target.clientHeight;
-    const scrollHeight = target.scrollHeight;
 
     const tasks = this.filteredTasks();
     if (tasks.length <= 50) return;
@@ -2657,53 +2663,31 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
-
-    await new Promise(r => setTimeout(r, 700 + Math.random() * 400));
-
-    const tasks = this.store.tasks();
-    const q = text.toLowerCase();
-    let response = '';
-
-    if (q.includes('overdue')) {
-      const overdue = tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED');
-      response = overdue.length
-        ? `You have ${overdue.length} overdue task${overdue.length > 1 ? 's' : ''}: ${overdue.slice(0, 3).map(t => t.title).join(', ')}${overdue.length > 3 ? ` and ${overdue.length - 3} more` : '.'}`
-        : 'No overdue tasks — great job staying on top of things!';
-    } else if (q.includes('high priority') || q.includes('priority')) {
-      const high = tasks.filter(t => t.priority === 'HIGH' && t.status !== 'COMPLETED');
-      response = high.length
-        ? `${high.length} high-priority task${high.length > 1 ? 's' : ''}: ${high.slice(0, 3).map(t => t.title).join(', ')}${high.length > 3 ? ` and ${high.length - 3} more` : '.'}`
-        : 'No high-priority active tasks right now.';
-    } else if (q.includes('today')) {
-      const todayDate = new Date();
-      const today = tasks.filter(t => this.dueDateMatchesDay(t.due, todayDate));
-      response = today.length
-        ? `${today.length} task${today.length > 1 ? 's' : ''} due today: ${today.slice(0, 3).map(t => t.title).join(', ')}${today.length > 3 ? ` and ${today.length - 3} more` : '.'}`
-        : 'No tasks due today.';
-    } else if (q.includes('completed') || q.includes('done')) {
-      const done = tasks.filter(t => t.status === 'COMPLETED');
-      response = done.length
-        ? `${done.length} completed task${done.length > 1 ? 's' : ''}. Most recent: ${done.slice(-3).reverse().map(t => t.title).join(', ')}.`
-        : 'No completed tasks yet.';
-    } else if (q.includes('upcoming') || q.includes('deadline')) {
-      const todayDate = new Date();
-      const upcoming = tasks.filter(t => t.due && !this.dueDateMatchesDay(t.due, todayDate) && !this.isOverdue(t) && t.status !== 'COMPLETED');
-      response = upcoming.length
-        ? `${upcoming.length} upcoming task${upcoming.length > 1 ? 's' : ''}: ${upcoming.slice(0, 3).map(t => t.title).join(', ')}${upcoming.length > 3 ? ` and ${upcoming.length - 3} more` : '.'}`
-        : 'No upcoming tasks with due dates.';
-    } else {
+    try {
+      const tasks = this.store.tasks();
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const taskList = tasks.map(t => {
+        const overdue = t.due && t.status !== 'COMPLETED' && new Date(t.due) < today;
+        return `- [${t.status}] ${t.title} | priority: ${t.priority}${t.due ? ` | due: ${t.due}${overdue ? ' (OVERDUE)' : ''}` : ''}${t.project ? ` | project: ${t.project}` : ''}${t.labels?.length ? ` | labels: ${t.labels.join(', ')}` : ''}`;
+      }).join('\n');
       const active = tasks.filter(t => t.status !== 'COMPLETED').length;
-      const done = tasks.filter(t => t.status === 'COMPLETED').length;
-      response = `You have ${active} active task${active !== 1 ? 's' : ''} and ${done} completed. Try asking about overdue, high priority, today's tasks, or upcoming deadlines.`;
+      const completed = tasks.filter(t => t.status === 'COMPLETED').length;
+      const overdue = tasks.filter(t => t.due && t.status !== 'COMPLETED' && new Date(t.due) < today).length;
+      const context = [
+        'You are a task management assistant for the Envello productivity app.',
+        `Today is ${todayStr}.`,
+        `The user has ${tasks.length} total tasks: ${active} active, ${completed} completed, ${overdue} overdue.`,
+        tasks.length ? `Task list:\n${taskList}` : 'No tasks yet.',
+        'Answer concisely. Use markdown for lists. You can help prioritize, identify blockers, suggest next actions, or summarize workload.',
+      ].join('\n');
+      const response = await this.aiService.sendMessage(text, context);
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
+    } catch {
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);
+    } finally {
+      this.aiLoading.set(false);
     }
-
-    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-    this.aiLoading.set(false);
-
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
   }
 
   clearAiChat() { this.aiMessages.set([]); }
@@ -2714,44 +2698,24 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.detailsAiMessages.update(m => [...m, { role: 'user', text }]);
     this.detailsAiLoading.set(true);
     this.detailsAiInput.set('');
-
-    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
-
-    const q = text.toLowerCase();
-    let response = '';
-
-    if (q.includes('subtask') || q.includes('break')) {
-      response = task.description
-        ? `Suggested subtasks for "${task.title}":\n• Review and clarify requirements\n• Draft the main deliverable\n• Test and validate the outcome\n• Finalise and hand off`
-        : `Suggested subtasks for "${task.title}":\n• Plan the approach\n• Execute the main work\n• Review results\n• Finalise and close`;
-    } else if (q.includes('description') || q.includes('improve')) {
-      response = task.description
-        ? `Your description is a good start. Consider adding: the acceptance criteria, any blockers, and the expected outcome.`
-        : `A strong description covers: what needs to be done, why it matters, and the expected result. Try: "Complete [action] so that [benefit], resulting in [outcome]."`;
-    } else if (q.includes('time') || q.includes('estimate') || q.includes('duration')) {
-      const lvl = task.priority === 'HIGH' ? 'high' : task.priority === 'LOW' ? 'low' : 'medium';
-      response = `For a ${lvl}-priority task like "${task.title}":\n• Optimistic: 1–2 hours\n• Realistic: 2–4 hours\n• Pessimistic: 4–8 hours\n\nIf it exceeds 4 hours, consider breaking it into subtasks.`;
-    } else if (q.includes('label') || q.includes('tag') || q.includes('suggest label')) {
-      const suggestions: string[] = [];
-      if (task.priority === 'HIGH') suggestions.push('urgent');
-      if (task.due) suggestions.push('has-deadline');
-      if (task.subtasks?.length) suggestions.push('complex');
-      if (!suggestions.length) suggestions.push('general', 'needs-review');
-      response = `Suggested labels for "${task.title}": ${suggestions.join(', ')}.`;
-    } else if (q.includes('next') || q.includes('should i do')) {
-      const pending = (task.subtasks ?? []).filter(s => s.status !== 'COMPLETED');
-      response = pending.length
-        ? `Next step: work on the first pending subtask — "${pending[0].title}".${pending.length > 1 ? ` After that, tackle "${pending[1].title}".` : ''}`
-        : task.priority === 'HIGH'
-          ? `"${task.title}" is high priority with no subtasks — focus on completing it as soon as possible.`
-          : `Add a description and break "${task.title}" into smaller steps to make progress easier.`;
-    } else {
-      const subCount = task.subtasks?.length ?? 0;
-      response = `"${task.title}" is a ${task.priority.toLowerCase()}-priority task${task.due ? ` due ${task.due}` : ''} with ${subCount} subtask${subCount !== 1 ? 's' : ''}. I can help you break it into subtasks, improve the description, estimate time, suggest labels, or decide what to do next.`;
+    try {
+      const subtaskList = (task.subtasks ?? []).map(s => `  - [${s.status}] ${s.title}`).join('\n');
+      const context = [
+        'You are a task assistant for the Envello productivity app. Help the user manage this specific task.',
+        `Task: "${task.title}"`,
+        `Priority: ${task.priority} | Status: ${task.status}${task.due ? ` | Due: ${task.due}` : ''}${task.project ? ` | Project: ${task.project}` : ''}`,
+        task.description ? `Description: ${task.description}` : 'No description yet.',
+        task.subtasks?.length ? `Subtasks:\n${subtaskList}` : 'No subtasks.',
+        task.notes ? `Notes: ${task.notes}` : '',
+        'You can break the task into subtasks, improve the description, estimate time, suggest labels, or advise what to do next. Be concise and actionable. Use markdown lists.',
+      ].filter(Boolean).join('\n');
+      const response = await this.aiService.sendMessage(text, context);
+      this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
+    } catch {
+      this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);
+    } finally {
+      this.detailsAiLoading.set(false);
     }
-
-    this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-    this.detailsAiLoading.set(false);
   }
 
   clearDetailsAiChat() { this.detailsAiMessages.set([]); }
