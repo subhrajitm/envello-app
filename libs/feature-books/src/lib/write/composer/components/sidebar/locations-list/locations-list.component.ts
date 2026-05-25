@@ -17,6 +17,7 @@ import { Location } from '@envello/core';
 export class LocationsListComponent {
   locations = input.required<Location[]>();
   selectedLocationId = input.required<string | null>();
+  showHeader = input<boolean>(true);
   
   selectLocation = output<string>();
   deleteLocation = output<{ id: string; name?: string }>();

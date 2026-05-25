@@ -1,9 +1,11 @@
 <div class="ne-list-section">
+    @if (showHeader()) {
     <div class="ne-chap-header">
-        WORLD BUILDING
+        Locations
         <span class="material-symbols-outlined icon-add" (click)="addNewLocation.emit()"
             title="Add new location">add</span>
     </div>
+    }
     <div class="ne-simple-list">
         @for (loc of locations(); track loc.id) {
         <div class="ne-list-item" (click)="selectLocation.emit(loc.id)"

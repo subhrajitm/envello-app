@@ -24,6 +24,7 @@ export class ChaptersListComponent {
   selectedChapters = input.required<Set<string>>();
   addMenuOpen = input.required<boolean>();
   sectionLabel = input<string>('Chapters');
+  showHeader = input<boolean>(true);
   
   selectChapter = output<Chapter>();
   toggleChapter = output<ChapterGroup>();

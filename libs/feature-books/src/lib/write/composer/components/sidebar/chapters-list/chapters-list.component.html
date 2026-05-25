@@ -1,9 +1,10 @@
 <div class="ne-chapters-section">
+    @if (showHeader()) {
     <div class="ne-chap-header">
-        {{ sectionLabel() | uppercase }}
+        {{ sectionLabel() }}
         <div class="flex items-center gap-1">
             @if (bulkMode()) {
-            <button class="ne-toolbar-btn" (click)="bulkDelete.emit()" 
+            <button class="ne-toolbar-btn" (click)="bulkDelete.emit()"
                     [disabled]="selectedChapters().size === 0"
                     title="Delete selected">
                 <span class="material-symbols-outlined">delete</span>
@@ -34,6 +35,7 @@
             </div>
         </div>
     </div>
+    }
     <div class="ne-chapter-list">
         @for (group of chapters(); track group.id; let i = $index) {
         <div class="ne-chapter-group" 

@@ -45,15 +45,12 @@
         </div>
     </div>
     } @else {
-    <div class="ne-empty-state">
-        <div class="empty-state-icon">
-            <span class="material-symbols-outlined">group</span>
-        </div>
-        <h3 class="empty-state-title">No Character Selected</h3>
-        <p class="empty-state-text">Select a character from the sidebar to view and edit their details, or create a new character to get started.</p>
-        <button class="ne-btn-primary" (click)="addNewCharacter.emit()">
+    <div class="ne-empty-state ne-empty-state--compact">
+        <span class="material-symbols-outlined ne-empty-icon-sm">group</span>
+        <p class="ne-empty-label">No character selected</p>
+        <button class="ne-btn-ghost-sm" (click)="addNewCharacter.emit()">
             <span class="material-symbols-outlined">add</span>
-            Create Character
+            New character
         </button>
     </div>
     }

@@ -1,5 +1,6 @@
 <div class="ne-chapters-section">
     <!-- Front Matter Section -->
+    @if (activeSection() === 'frontMatter') {
     <div class="ne-structure-section">
         <div class="ne-chap-header">
             FRONT MATTER
@@ -54,9 +55,11 @@
             }
         </div>
     </div>
+    }
 
     <!-- Prologue Section -->
-    <div class="ne-structure-section mt-6">
+    @if (activeSection() === 'prologue') {
+    <div class="ne-structure-section">
         <div class="ne-chap-header">
             PROLOGUE
             @if (!prologue()) {
@@ -80,4 +83,5 @@
         </div>
         }
     </div>
+    }
 </div>

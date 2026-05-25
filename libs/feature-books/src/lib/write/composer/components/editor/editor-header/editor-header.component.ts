@@ -33,6 +33,8 @@ export class EditorHeaderComponent {
   fullScreenMode = input.required<boolean>();
   exportMenuOpen = input.required<boolean>();
   writingType = input<string>('NOVEL');
+  rightSidebarOpen = input<boolean>(true);
+  aiEnabled = input<boolean>(false);
 
   setActiveNav = output<'manuscript' | 'structure' | 'characters' | 'locations'>();
   performUndo = output<void>();
@@ -45,4 +47,5 @@ export class EditorHeaderComponent {
   openVersionHistory = output<void>();
   toggleExportMenu = output<void>();
   exportNovel = output<'pdf' | 'html' | 'md' | 'docx' | 'fountain'>();
+  toggleRightSidebar = output<void>();
 }

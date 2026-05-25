@@ -1,9 +1,11 @@
 <div class="ne-list-section">
+    @if (showHeader()) {
     <div class="ne-chap-header">
-        CAST LIST
+        Characters
         <span class="material-symbols-outlined icon-add" (click)="addNewCharacter.emit()"
             title="Add new character">add</span>
     </div>
+    }
     <div class="ne-simple-list">
         @for (char of characters(); track char.id) {
         <div class="ne-list-item" (click)="selectCharacter.emit(char.id)"

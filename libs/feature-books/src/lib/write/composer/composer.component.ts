@@ -17,7 +17,6 @@ import { LinkModalComponent } from './components/modals/link-modal/link-modal.co
 import { VersionHistoryModalComponent } from './components/modals/version-history-modal/version-history-modal.component';
 
 // Sidebar
-import { SyncStatusComponent } from './components/sidebar/sync-status/sync-status.component';
 import { ChaptersListComponent } from './components/sidebar/chapters-list/chapters-list.component';
 import { StructureViewComponent } from './components/sidebar/structure-view/structure-view.component';
 import { CharactersListComponent } from './components/sidebar/characters-list/characters-list.component';
@@ -48,7 +47,6 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     LinkModalComponent,
     VersionHistoryModalComponent,
     // Sidebar
-    SyncStatusComponent,
     ChaptersListComponent,
     StructureViewComponent,
     CharactersListComponent,
@@ -159,6 +157,35 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   showExtendedTabs = computed(() => {
     const t = this.writingType();
     return t === 'NOVEL' || t === 'SHORT_STORY' || t === 'SCRIPT';
+  });
+
+  // Accordion open/close state for left sidebar sections
+  accChapters = signal(true);
+  accStructure = signal(false);
+  accCharacters = signal(false);
+  accLocations = signal(false);
+
+  toggleAccChapters()   { this.accChapters.update(v => !v); }
+  toggleAccStructure()  {
+    const wasOpen = this.accStructure();
+    this.accStructure.update(v => !v);
+    if (wasOpen) this.activeStructureView.set(null); // reset content when closing
+  }
+  toggleAccCharacters() { this.accCharacters.update(v => !v); }
+  toggleAccLocations()  { this.accLocations.update(v => !v); }
+
+  anyAccOpen = computed(() =>
+    this.accChapters() || this.accStructure() || this.accCharacters() || this.accLocations()
+  );
+
+  // Index (0-3) of the last open accordion; -1 when none are open.
+  // Characters (2) and Locations (3) only exist in the DOM when showExtendedTabs() is true.
+  lastOpenIdx = computed(() => {
+    if (this.showExtendedTabs() && this.accLocations())  return 3;
+    if (this.showExtendedTabs() && this.accCharacters()) return 2;
+    if (this.accStructure())  return 1;
+    if (this.accChapters())   return 0;
+    return -1;
   });
 
   activeCharacter = computed(() => {
@@ -280,7 +307,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Time tracking interval
+    // Time tracking interval – guard against accidental double-init
+    if (this.timeInterval) clearInterval(this.timeInterval);
     this.timeInterval = window.setInterval(() => {
       const elapsed = Math.floor((Date.now() - this.sessionStartTime) / 1000);
       this.elapsedSeconds.set(elapsed);
@@ -348,12 +376,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy() {
-    if (this.timeInterval) {
-      clearInterval(this.timeInterval);
-    }
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout);
-    }
+    if (this.timeInterval) clearInterval(this.timeInterval);
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     this.editor.destroy();
   }
 
@@ -572,8 +597,19 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  // Add menu state
+  // Add menu state – chapters and structure have separate signals so opening one doesn't affect the other
   addMenuOpen = signal(false);
+  structureFmAddMenuOpen = signal(false);
+
+  // Structure accordion nav state
+  structureAddMenuOpen = signal(false);
+  activeStructureView = signal<'frontMatter' | 'prologue' | null>(null);
+
+  toggleStructureAddMenu() { this.structureAddMenuOpen.update(v => !v); }
+  closeStructureMenu() { this.structureAddMenuOpen.set(false); }
+
+  showFrontMatterSection() { this.activeStructureView.set('frontMatter'); this.closeStructureMenu(); }
+  showPrologueSection()    { this.activeStructureView.set('prologue');    this.closeStructureMenu(); }
 
   // Add Modal State
   addModal = signal<{
@@ -631,17 +667,15 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
           this.bookService.addChapter(targetGroupId, modal.inputValue.trim());
 
-          // Select the newly created chapter
-          setTimeout(() => {
-            const updatedBook = this.book();
-            if (updatedBook) {
-              const updatedGroup = updatedBook.chapters.find(g => g.id === targetGroupId);
-              if (updatedGroup && updatedGroup.children.length > chapterCountBefore) {
-                const newChapter = updatedGroup.children[updatedGroup.children.length - 1];
-                this.selectChapter(newChapter);
-              }
+          // Signal store updates synchronously — select the new chapter immediately
+          const updatedBook = this.book();
+          if (updatedBook) {
+            const updatedGroup = updatedBook.chapters.find(g => g.id === targetGroupId);
+            if (updatedGroup && updatedGroup.children.length > chapterCountBefore) {
+              const newChapter = updatedGroup.children[updatedGroup.children.length - 1];
+              this.selectChapter(newChapter);
             }
-          }, 10);
+          }
         }
       }
     } else if (modal.type === 'note') {
@@ -690,9 +724,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.shouldFocusInput = true;
   }
 
-  toggleAddMenu() {
-    this.addMenuOpen.update(v => !v);
-  }
+  toggleAddMenu() { this.addMenuOpen.update(v => !v); }
+  toggleStructureFmAddMenu() { this.structureFmAddMenuOpen.update(v => !v); }
 
   deleteChapter(chapterId: string, title?: string) {
     this.requestDelete('chapter', chapterId, title);

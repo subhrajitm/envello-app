@@ -1,4 +1,4 @@
-import { Component, input, output, computed, ViewChild, ElementRef, DoCheck, ChangeDetectionStrategy, ViewEncapsulation, inject } from '@angular/core';
+import { Component, input, output, computed, ViewChild, ElementRef, ChangeDetectionStrategy, ViewEncapsulation, inject, effect, SecurityContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -17,9 +17,15 @@ import { AiMessage, AiSuggestion } from '@envello/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
 })
-export class AiPanelComponent implements DoCheck {
+export class AiPanelComponent {
   private sanitizer = inject(DomSanitizer);
-  private lastMessageCount = 0;
+
+  constructor() {
+    effect(() => {
+      this.aiMessages().length;
+      this.scrollToBottom();
+    });
+  }
   aiMessages = input.required<AiMessage[]>();
   aiLoading = input.required<boolean>();
   aiError = input<string | null>(null);
@@ -34,32 +40,83 @@ export class AiPanelComponent implements DoCheck {
 
   @ViewChild('aiMessagesContainer') aiMessagesContainer!: ElementRef<HTMLDivElement>;
 
+  readonly isDocumentType = computed(() => {
+    const t = this.writingType();
+    return t === 'ESSAY' || t === 'ARTICLE' || t === 'BLOG_POST' || t === 'RESEARCH';
+  });
+
+  readonly panelTitle = computed(() => {
+    switch (this.writingType()) {
+      case 'ESSAY':      return 'Essay Assistant';
+      case 'ARTICLE':    return 'Article Assistant';
+      case 'BLOG_POST':  return 'Blog Assistant';
+      case 'RESEARCH':   return 'Research Assistant';
+      case 'POETRY':     return 'Poetry Assistant';
+      case 'SCRIPT':     return 'Script Assistant';
+      case 'SHORT_STORY':return 'Story Assistant';
+      default:           return 'Writing Assistant';
+    }
+  });
+
+  readonly placeholder = computed(() => {
+    switch (this.writingType()) {
+      case 'ESSAY':      return 'Ask about arguments, structure, or evidence…';
+      case 'ARTICLE':    return 'Ask about clarity, tone, or accuracy…';
+      case 'BLOG_POST':  return 'Ask about engagement, SEO, or flow…';
+      case 'RESEARCH':   return 'Ask about findings, citations, or gaps…';
+      case 'POETRY':     return 'Ask about meter, imagery, or emotion…';
+      case 'SCRIPT':     return 'Ask about dialogue, scene structure, or pacing…';
+      default:           return 'Ask about plot, characters, or style…';
+    }
+  });
+
+  readonly continueLabel = computed(() => {
+    switch (this.writingType()) {
+      case 'ESSAY':      return 'Continue Argument';
+      case 'RESEARCH':   return 'Continue Analysis';
+      case 'POETRY':     return 'Continue Poem';
+      case 'SCRIPT':     return 'Continue Scene';
+      default:           return 'Continue Writing';
+    }
+  });
+
+  readonly summarizeLabel = computed(() => {
+    switch (this.writingType()) {
+      case 'ESSAY':
+      case 'ARTICLE':
+      case 'BLOG_POST':  return 'Summarize Doc';
+      case 'RESEARCH':   return 'Key Findings';
+      case 'POETRY':     return 'Analyse Poem';
+      default:           return 'Summarize';
+    }
+  });
+
   readonly primaryActions = computed(() => {
     switch (this.writingType()) {
       case 'SCRIPT': return [
-        { key: 'refine-dialogue',  label: 'Refine Dialogue',  icon: 'record_voice_over', primary: true },
-        { key: 'scene-analysis',   label: 'Scene Analysis',   icon: 'theaters',          primary: false },
+        { key: 'refine-dialogue',  label: 'Refine Dialogue',  icon: 'record_voice_over' },
+        { key: 'scene-analysis',   label: 'Scene Analysis',   icon: 'theaters'          },
       ];
       case 'POETRY': return [
-        { key: 'analyze-meter',    label: 'Analyze Meter',    icon: 'music_note',        primary: true },
-        { key: 'check-rhyme',      label: 'Check Rhyme',      icon: 'spellcheck',        primary: false },
+        { key: 'analyze-meter',    label: 'Analyze Meter',    icon: 'music_note'        },
+        { key: 'check-rhyme',      label: 'Check Rhyme',      icon: 'spellcheck'        },
       ];
       case 'ARTICLE':
       case 'BLOG_POST': return [
-        { key: 'improve-clarity',  label: 'Improve Clarity',  icon: 'auto_fix_high',     primary: true },
-        { key: 'check-flow',       label: 'Check Flow',       icon: 'trending_up',       primary: false },
+        { key: 'improve-clarity',  label: 'Improve Clarity',  icon: 'auto_fix_high'     },
+        { key: 'check-flow',       label: 'Check Flow',       icon: 'trending_up'       },
       ];
       case 'ESSAY': return [
-        { key: 'strengthen-args',  label: 'Strengthen Arguments', icon: 'gavel',         primary: true },
-        { key: 'check-structure',  label: 'Check Structure',  icon: 'account_tree',      primary: false },
+        { key: 'strengthen-args',  label: 'Strengthen Args',  icon: 'gavel'             },
+        { key: 'check-structure',  label: 'Check Structure',  icon: 'account_tree'      },
       ];
       case 'RESEARCH': return [
-        { key: 'summarize-findings', label: 'Summarize Findings', icon: 'summarize',     primary: true },
-        { key: 'check-consistency',  label: 'Check Consistency',  icon: 'fact_check',    primary: false },
+        { key: 'summarize-findings', label: 'Summarize',      icon: 'summarize'         },
+        { key: 'check-consistency',  label: 'Consistency',    icon: 'fact_check'        },
       ];
       default: return [ // NOVEL, SHORT_STORY
-        { key: 'tone-pacing', label: 'Analyze Tone & Pacing', icon: 'auto_fix_high',     primary: true },
-        { key: 'suggest',     label: 'Suggest',               icon: 'menu_book',         primary: false },
+        { key: 'tone-pacing', label: 'Tone & Pacing',         icon: 'auto_fix_high'     },
+        { key: 'suggest',     label: 'Suggestions',           icon: 'menu_book'         },
       ];
     }
   });
@@ -73,6 +130,7 @@ export class AiPanelComponent implements DoCheck {
   clearSuggestions = output<void>();
   toggleContextPreview = output<void>();
   promptChange = output<string>();
+  cancelAi = output<void>();
   
   private escapeHtml(str: string): string {
     return str
@@ -88,10 +146,12 @@ export class AiPanelComponent implements DoCheck {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br>');
-    return this.sanitizer.bypassSecurityTrustHtml(formatted);
+    const safe = this.sanitizer.sanitize(SecurityContext.HTML, formatted) ?? '';
+    return this.sanitizer.bypassSecurityTrustHtml(safe);
   }
 
-  formatTime(date: Date): string {
+  formatTime(date: Date | undefined): string {
+    if (!date) return '';
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
@@ -101,14 +161,6 @@ export class AiPanelComponent implements DoCheck {
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h ago`;
     return date.toLocaleDateString();
-  }
-
-  ngDoCheck() {
-    const count = this.aiMessages().length;
-    if (count !== this.lastMessageCount) {
-      this.lastMessageCount = count;
-      this.scrollToBottom();
-    }
   }
 
   private scrollToBottom() {

@@ -153,8 +153,6 @@
 .ne-sidebar-left {
     width: 240px;
     min-width: 240px;
-    /* Prevent collapse */
-    /* Slightly wider for better tree readability */
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
@@ -163,6 +161,9 @@
     overflow: hidden;
     min-height: 0;
     height: 100%;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                min-width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.2s;
 }
 
 /* Ensure child components in left sidebar are flex children that can scroll */
@@ -267,6 +268,127 @@
     min-height: 0;
     /* Removed height: 0 to allow content to be visible */
     padding-top: 0;
+}
+
+/* ── VSCode-style accordion sections ── */
+.ne-acc-section {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.ne-acc-section:has(.ne-acc-hdr + *) {
+    /* section with open body can grow to take available space */
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.ne-acc-hdr {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 8px 0 4px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--bg-app);
+    transition: background 0.1s;
+    flex-shrink: 0;
+}
+
+.ne-acc-hdr:hover {
+    background: var(--bg-hover);
+}
+
+.ne-acc-chevron {
+    font-size: 14px !important;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    transform: rotate(0deg);
+    transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ne-acc-chevron.open {
+    transform: rotate(90deg);
+}
+
+.ne-acc-title {
+    flex: 1;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ne-acc-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.ne-acc-actions .ne-toolbar-btn,
+.ne-acc-actions .icon-add {
+    border: none;
+}
+
+.ne-acc-actions .ne-toolbar-btn:hover,
+.ne-acc-actions .icon-add:hover {
+    border: none;
+    box-shadow: none;
+}
+
+/* Accordion body: allow the open chapters section to scroll */
+.ne-acc-section > app-chapters-list,
+.ne-acc-section > app-structure-view,
+.ne-acc-section > app-characters-list,
+.ne-acc-section > app-locations-list,
+.ne-acc-section > app-outline-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* The sections that contain the list take remaining vertical space */
+.ne-acc-section > app-chapters-list .ne-chapters-section,
+.ne-acc-section > app-chapters-list .ne-chapter-list,
+.ne-acc-section > app-characters-list .ne-list-section,
+.ne-acc-section > app-characters-list .ne-simple-list,
+.ne-acc-section > app-locations-list .ne-list-section,
+.ne-acc-section > app-locations-list .ne-simple-list {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Accordion flex container — enables order-based bottom-pinning */
+.ne-acc-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Spacer lives at order: 50 — open sections (1-4) float above it,
+   closed sections (90+) sink below it */
+.ne-acc-spacer {
+    order: 50;
+    flex: 1;
+    min-height: 0;
+}
+
+/* The sidebar itself now just stacks accordions */
+.ne-sidebar-left {
+    overflow-y: hidden;
 }
 
 /* Enterprise-Level Sidebar Header Design - Matches Editor Toolbar Height */
@@ -407,6 +529,11 @@
     transform: translateX(2px);
 }
 
+.add-dropdown-option.active {
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    color: var(--accent-primary);
+}
+
 .add-dropdown-option .option-icon {
     font-size: 18px;
     color: var(--text-secondary);
@@ -433,6 +560,7 @@
     line-height: 1.4;
     color: var(--text-primary);
 }
+
 
 .ne-chapter-list {
     flex: 1;
@@ -786,6 +914,37 @@
     font-size: 18px;
 }
 
+.ai-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.ai-toggle-btn .material-symbols-outlined {
+    font-size: 15px;
+}
+
+.ai-toggle-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.ai-toggle-btn.active {
+    background: var(--accent-primary-dim);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
 .action-divider {
     width: 1px;
     background: var(--border-subtle);
@@ -799,11 +958,11 @@
 
 /* Editor Toolbar (similar to daily notes formatting-toolbar) */
 .ne-editor-toolbar {
-    padding: 8px 20px;
+    padding: 4px 20px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: stretch;
+    gap: 0;
     background: var(--bg-panel);
     position: relative;
     z-index: 0;
@@ -815,7 +974,39 @@
     display: none;
 }
 
-/* Toolbar Groups and Buttons (matching daily notes) */
+/* Labeled toolbar groups */
+.tbr-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 6px 3px;
+    gap: 2px;
+}
+
+.tbr-btns {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.tbr-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-disabled);
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.tbr-divider {
+    width: 1px;
+    background: var(--border-subtle);
+    margin: 6px 4px;
+    align-self: stretch;
+}
+
+/* Keep old names for compat with any remaining references */
 .toolbar-group {
     display: flex;
     gap: 2px;
@@ -826,12 +1017,12 @@
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 6px;
+    padding: 5px;
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all 0.15s;
 }
 
 .toolbar-btn:hover {
@@ -845,13 +1036,14 @@
 }
 
 .toolbar-btn .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 17px;
 }
 
 .toolbar-divider {
     width: 1px;
     background: var(--border-subtle);
-    margin: 0 8px;
+    margin: 0 6px;
+    align-self: stretch;
 }
 
 .toolbar-spacer {
@@ -1193,6 +1385,48 @@
     gap: 6px;
 }
 
+.ai-btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+}
+
+.btn-ai-action {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 6px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-height: 32px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-ai-action .material-symbols-outlined {
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.btn-ai-action:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-primary);
+    color: var(--text-primary);
+}
+
+.btn-ai-action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .btn-ai-primary {
     width: 100%;
     background: linear-gradient(135deg, var(--accent-primary-dim), var(--bg-hover));
@@ -1499,6 +1733,31 @@
         transform: scale(1);
         opacity: 1;
     }
+}
+
+.ai-cancel-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 4px;
+    padding: 2px 8px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.12s;
+}
+
+.ai-cancel-btn:hover {
+    background: color-mix(in srgb, var(--accent-danger, #e53e3e) 10%, transparent);
+    color: var(--accent-danger, #e53e3e);
+    border-color: var(--accent-danger, #e53e3e);
+}
+
+.ai-cancel-btn .material-symbols-outlined {
+    font-size: 14px;
 }
 
 .ai-error {
@@ -2550,6 +2809,46 @@
     font-weight: 500;
 }
 
+.ne-empty-state--compact {
+    margin-top: 0;
+    gap: 8px;
+    opacity: 0.6;
+}
+
+.ne-empty-icon-sm {
+    font-size: 28px !important;
+    opacity: 0.5;
+}
+
+.ne-empty-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin: 0;
+}
+
+.ne-btn-ghost-sm {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.ne-btn-ghost-sm:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.ne-btn-ghost-sm .material-symbols-outlined {
+    font-size: 14px;
+}
+
 .ne-btn-primary {
     background: var(--accent-primary);
     color: var(--bg-app);
@@ -3240,7 +3539,7 @@
     border-bottom: 1px solid var(--border-subtle);
 }
 
-.search-icon {
+.search-input-wrapper .search-icon {
     position: absolute;
     left: 20px;
     font-size: 18px;
@@ -3702,7 +4001,7 @@
     font-size: 12px !important;
 }
 
-.search-icon {
+.search-input-wrapper .search-icon {
     left: 18px !important;
     font-size: 16px !important;
 }

@@ -17,6 +17,7 @@ import { Character } from '@envello/core';
 export class CharactersListComponent {
   characters = input.required<Character[]>();
   selectedCharacterId = input.required<string | null>();
+  showHeader = input<boolean>(true);
   
   selectCharacter = output<string>();
   deleteCharacter = output<{ id: string; name?: string }>();

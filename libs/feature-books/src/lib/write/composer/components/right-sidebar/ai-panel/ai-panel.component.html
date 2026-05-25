@@ -1,7 +1,7 @@
 <div class="ne-ai-panel">
     <div class="ne-ai-header">
-        <span class="material-symbols-outlined icon-bolt">bolt</span>
-        AI COMPANION
+        <span class="material-symbols-outlined icon-bolt">auto_awesome</span>
+        {{ panelTitle() }}
         <div class="online-dot"></div>
         @if (aiMessages().length > 0) {
         <button class="clear-conversation-btn" (click)="clearConversation.emit()" title="Clear conversation">
@@ -11,35 +11,27 @@
     </div>
 
     <div class="ai-actions">
-        @for (btn of primaryActions(); track btn.key) {
-            @if (btn.primary) {
-            <button class="btn-ai-primary" (click)="quickAction.emit(btn.key)"
-                [disabled]="aiLoading() || !activeChapter()">
+        <div class="ai-btn-grid">
+            @for (btn of primaryActions(); track btn.key) {
+            <button class="btn-ai-action" (click)="quickAction.emit(btn.key)"
+                [disabled]="aiLoading() || (isDocumentType() ? !editor() : !activeChapter())"
+                [title]="btn.label">
                 <span class="material-symbols-outlined">{{ btn.icon }}</span>
                 {{ btn.label }}
             </button>
             }
-        }
-        <div class="ai-btn-row">
-            @for (btn of primaryActions(); track btn.key) {
-                @if (!btn.primary) {
-                <button class="btn-ai-sec" (click)="quickAction.emit(btn.key)"
-                    [disabled]="aiLoading() || !activeChapter()">
-                    <span class="material-symbols-outlined">{{ btn.icon }}</span>
-                    {{ btn.label }}
-                </button>
-                }
-            }
-            <button class="btn-ai-sec" (click)="summarizeChapter.emit()"
-                [disabled]="aiLoading() || !activeChapter()">
+            <button class="btn-ai-action" (click)="summarizeChapter.emit()"
+                [disabled]="aiLoading() || (isDocumentType() ? !editor() : !activeChapter())"
+                [title]="summarizeLabel()">
                 <span class="material-symbols-outlined">short_text</span>
-                Summarize
+                {{ summarizeLabel() }}
+            </button>
+            <button class="btn-ai-action" (click)="continueWriting.emit()"
+                [disabled]="aiLoading() || !editor()" [title]="continueLabel()">
+                <span class="material-symbols-outlined">arrow_forward</span>
+                {{ continueLabel() }}
             </button>
         </div>
-        <button class="btn-ai-sec btn-ai-full" (click)="continueWriting.emit()" [disabled]="aiLoading() || !editor()">
-            <span class="material-symbols-outlined">arrow_forward</span>
-            Continue Writing
-        </button>
     </div>
 
     <!-- Chat Messages -->
@@ -47,8 +39,8 @@
         @if (aiMessages().length === 0 && !aiLoading()) {
         <div class="ai-chat-empty">
             <span class="material-symbols-outlined">chat_bubble_outline</span>
-            <p>Start a conversation with AI</p>
-            <p class="empty-hint">Ask questions, get suggestions, or use quick actions above</p>
+            <p>Ask {{ panelTitle() }}</p>
+            <p class="empty-hint">{{ placeholder() }}</p>
         </div>
         }
         <div class="ai-messages" #aiMessagesContainer>
@@ -76,6 +68,9 @@
                     <div class="message-loading">
                         <span></span><span></span><span></span>
                     </div>
+                    <button class="ai-cancel-btn" (click)="cancelAi.emit()" title="Cancel">
+                        <span class="material-symbols-outlined">stop_circle</span>
+                    </button>
                 </div>
             </div>
             }
@@ -103,16 +98,15 @@
 
     <!-- Chat Input -->
     <div class="ai-chat-input-wrapper">
-        <div class="context-toggle" (click)="toggleContextPreview.emit()" title="Toggle context preview">
+        <div class="context-toggle" (click)="toggleContextPreview.emit()" [title]="tokenCount() + ' tokens in context'">
             <span class="material-symbols-outlined">info</span>
-            <span>{{ tokenCount() }} tokens</span>
         </div>
-        <textarea 
-            class="ai-chat-input" 
+        <textarea
+            class="ai-chat-input"
             [value]="aiPrompt()"
             (input)="promptChange.emit($any($event.target).value)"
             (keydown.enter)="handleChatEnter($any($event))"
-            placeholder="Ask AI to review, brainstorm, or expand..."
+            [placeholder]="placeholder()"
             rows="2"
             [disabled]="aiLoading()"
         ></textarea>

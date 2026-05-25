@@ -1,3 +1,18 @@
+.sync-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.sync-text {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Material Icons font for proper icon rendering */
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';

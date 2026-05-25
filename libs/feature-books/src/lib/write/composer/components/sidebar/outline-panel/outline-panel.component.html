@@ -1,0 +1,24 @@
+<div class="ne-outline-panel">
+    @if (showHeader()) {
+    <div class="ne-chap-header">
+        Outline
+    </div>
+    }
+
+    @if (outline().length === 0) {
+    <div class="outline-empty">
+        <span class="material-symbols-outlined">format_list_bulleted</span>
+        <p>No headings yet</p>
+        <span class="outline-hint">Use H1, H2, H3 to structure your document</span>
+    </div>
+    } @else {
+    <div class="outline-list">
+        @for (item of outline(); track item.pos) {
+        <button class="outline-item outline-h{{ item.level }}" (click)="goTo(item)" [title]="item.text">
+            <span class="outline-marker">H{{ item.level }}</span>
+            <span class="outline-text">{{ item.text || 'Untitled' }}</span>
+        </button>
+        }
+    </div>
+    }
+</div>

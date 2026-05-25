@@ -22,6 +22,7 @@ export class StructureViewComponent {
   activeFrontMatterId = input.required<string | null>();
   activePrologueId = input.required<string | null>();
   addMenuOpen = input.required<boolean>();
+  activeSection = input<'frontMatter' | 'prologue' | null>(null);
   
   selectFrontMatterItem = output<string>();
   selectPrologue = output<void>();

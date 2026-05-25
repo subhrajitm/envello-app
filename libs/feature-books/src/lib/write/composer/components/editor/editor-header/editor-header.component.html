@@ -133,5 +133,13 @@
             </div>
             }
         </div>
+        <div class="action-divider"></div>
+        <!-- AI / Tools sidebar toggle -->
+        <button class="ai-toggle-btn" [class.active]="rightSidebarOpen()"
+            (click)="toggleRightSidebar.emit()"
+            [title]="rightSidebarOpen() ? 'Hide AI panel' : 'Show AI panel'">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            <span>AI</span>
+        </button>
     </div>
 </div>

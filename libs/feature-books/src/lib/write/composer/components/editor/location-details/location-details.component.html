@@ -34,15 +34,12 @@
         </div>
     </div>
     } @else {
-    <div class="ne-empty-state">
-        <div class="empty-state-icon">
-            <span class="material-symbols-outlined">public</span>
-        </div>
-        <h3 class="empty-state-title">No Location Selected</h3>
-        <p class="empty-state-text">Select a location from the sidebar to view and edit its details, or create a new location to build your world.</p>
-        <button class="ne-btn-primary" (click)="addNewLocation.emit()">
+    <div class="ne-empty-state ne-empty-state--compact">
+        <span class="material-symbols-outlined ne-empty-icon-sm">public</span>
+        <p class="ne-empty-label">No location selected</p>
+        <button class="ne-btn-ghost-sm" (click)="addNewLocation.emit()">
             <span class="material-symbols-outlined">add</span>
-            Create Location
+            New location
         </button>
     </div>
     }

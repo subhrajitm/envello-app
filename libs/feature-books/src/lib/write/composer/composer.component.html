@@ -9,8 +9,6 @@
         </button>
       </div>
     }
-    <!-- Header Removed -->
-
     <!-- Workspace -->
     @if (isLoading()) {
     <div class="ne-loading-state">
@@ -21,15 +19,15 @@
     </div>
     } @else {
     <div class="ne-workspace">
-        <!-- Left Sidebar: Chapters -->
-        <!-- Left Sidebar: Chapters -->
+        <!-- Left Sidebar -->
         <div class="ne-sidebar-left" [class.collapsed]="leftSidebarCollapsed()">
             @if (leftSidebarCollapsed()) {
             <button class="sidebar-toggle" (click)="toggleLeftSidebar()" title="Show sidebar">
                 <span class="material-symbols-outlined">chevron_right</span>
             </button>
             }
-            <!-- Sidebar Back Action -->
+
+            <!-- Sidebar back action -->
             <div class="ne-sidebar-header-action">
                 <button class="ne-btn-back-sidebar" (click)="goBack()" title="Back to Write">
                     <span class="material-symbols-outlined text-sm">arrow_back</span>
@@ -37,50 +35,147 @@
                 </button>
             </div>
 
+            <!-- ── ACCORDION CONTAINER ── -->
+            <div class="ne-acc-container">
 
-            <!-- MANUSCRIPT VIEW -->
-            @if (activeNav() === 'manuscript' && book()) {
-            <app-chapters-list [chapters]="book()!.chapters" [activeChapterId]="activeChapterId()"
-                [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()"
-                [sectionLabel]="sectionLabel()"
-                (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)"
-                (deleteChapter)="deleteChapter($event.id, $event.title)"
-                (deleteGroup)="deleteGroup($event.id, $event.title)"
-                (renameChapter)="bookService.updateChapterTitle($event.id, $event.title)"
-                (toggleBulkMode)="toggleBulkMode()"
-                (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()"
-                (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
-                (toggleChapterSelection)="toggleChapterSelection($event)" />
+            <!-- ── CHAPTERS ACCORDION ── -->
+            @if (book()) {
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 0 > lastOpenIdx() ? 90 : 1">
+                <div class="ne-acc-hdr" (click)="toggleAccChapters()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accChapters()">chevron_right</span>
+                    <span class="ne-acc-title">{{ sectionLabel().toUpperCase() }}</span>
+                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
+                        @if (bulkMode()) {
+                        <button class="ne-toolbar-btn" (click)="bulkDeleteChapters()"
+                            [disabled]="selectedChapters().size === 0" title="Delete selected">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Exit bulk mode">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                        } @else {
+                        <button class="ne-toolbar-btn" (click)="toggleBulkMode()" title="Bulk select">
+                            <span class="material-symbols-outlined">checklist</span>
+                        </button>
+                        }
+                        <div class="add-menu-wrapper relative">
+                            <span class="material-symbols-outlined icon-add"
+                                (click)="toggleAddMenu(); $event.stopPropagation()" title="Add">add</span>
+                            @if (addMenuOpen()) {
+                            <div class="add-dropdown-menu">
+                                <button class="add-dropdown-option" (click)="addNewActOrPart(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">folder</span>
+                                    <span class="option-label">Add Act/Part</span>
+                                </button>
+                                <button class="add-dropdown-option" (click)="addNewChapter(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">description</span>
+                                    <span class="option-label">Add {{ sectionLabel().slice(0, -1) }}</span>
+                                </button>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                @if (accChapters()) {
+                <app-chapters-list [chapters]="book()!.chapters" [activeChapterId]="activeChapterId()"
+                    [bulkMode]="bulkMode()" [selectedChapters]="selectedChapters()" [addMenuOpen]="addMenuOpen()"
+                    [sectionLabel]="sectionLabel()" [showHeader]="false"
+                    (selectChapter)="selectChapter($event)" (toggleChapter)="toggleChapter($event)"
+                    (deleteChapter)="deleteChapter($event.id, $event.title)"
+                    (deleteGroup)="deleteGroup($event.id, $event.title)"
+                    (renameChapter)="bookService.updateChapterTitle($event.id, $event.title)"
+                    (toggleBulkMode)="toggleBulkMode()"
+                    (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()"
+                    (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
+                    (toggleChapterSelection)="toggleChapterSelection($event)" />
+                }
+            </div>
+
+            <!-- ── STRUCTURE ACCORDION ── -->
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 1 > lastOpenIdx() ? 91 : 2">
+                <div class="ne-acc-hdr" (click)="toggleAccStructure()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accStructure()">chevron_right</span>
+                    <span class="ne-acc-title">STRUCTURE</span>
+                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
+                        <div class="add-menu-wrapper relative">
+                            <span class="material-symbols-outlined icon-add"
+                                (click)="toggleStructureAddMenu(); $event.stopPropagation()" title="View">add</span>
+                            @if (structureAddMenuOpen()) {
+                            <div class="add-dropdown-menu">
+                                <button class="add-dropdown-option"
+                                    [class.active]="activeStructureView() === 'frontMatter'"
+                                    (click)="showFrontMatterSection(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">description</span>
+                                    <span class="option-label">Front Matter</span>
+                                </button>
+                                <button class="add-dropdown-option"
+                                    [class.active]="activeStructureView() === 'prologue'"
+                                    (click)="showPrologueSection(); $event.stopPropagation()">
+                                    <span class="material-symbols-outlined option-icon">menu_book</span>
+                                    <span class="option-label">Prologue</span>
+                                </button>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                @if (accStructure() && activeStructureView() !== null) {
+                <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
+                    [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
+                    [addMenuOpen]="structureFmAddMenuOpen()" [activeSection]="activeStructureView()"
+                    (selectFrontMatterItem)="selectFrontMatterItem($event)"
+                    (selectPrologue)="selectPrologue()"
+                    (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
+                    (deletePrologue)="deletePrologue()" (addFrontMatterItem)="addFrontMatterItem($event)"
+                    (addPrologue)="addPrologue()" (toggleAddMenu)="toggleStructureFmAddMenu()" />
+                }
+            </div>
+
+            <!-- ── CHARACTERS ACCORDION ── -->
+            @if (showExtendedTabs()) {
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 2 > lastOpenIdx() ? 92 : 3">
+                <div class="ne-acc-hdr" (click)="toggleAccCharacters()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accCharacters()">chevron_right</span>
+                    <span class="ne-acc-title">CHARACTERS</span>
+                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
+                        <button class="ne-toolbar-btn" (click)="addNewCharacter()" title="Add character">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                </div>
+                @if (accCharacters()) {
+                <app-characters-list [characters]="book()!.characters" [selectedCharacterId]="selectedCharacterId()"
+                    [showHeader]="false"
+                    (selectCharacter)="selectCharacter($event)" (deleteCharacter)="deleteCharacter($event.id, $event.name)"
+                    (addNewCharacter)="addNewCharacter()" />
+                }
+            </div>
+
+            <!-- ── LOCATIONS ACCORDION ── -->
+            <div class="ne-acc-section" [style.order]="anyAccOpen() && 3 > lastOpenIdx() ? 93 : 4">
+                <div class="ne-acc-hdr" (click)="toggleAccLocations()">
+                    <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accLocations()">chevron_right</span>
+                    <span class="ne-acc-title">LOCATIONS</span>
+                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
+                        <button class="ne-toolbar-btn" (click)="addNewLocation()" title="Add location">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                </div>
+                @if (accLocations()) {
+                <app-locations-list [locations]="book()!.locations" [selectedLocationId]="selectedLocationId()"
+                    [showHeader]="false"
+                    (selectLocation)="selectLocation($event)" (deleteLocation)="deleteLocation($event.id, $event.name)"
+                    (addNewLocation)="addNewLocation()" />
+                }
+            </div>
+            }
             }
 
-            <!-- STRUCTURE VIEW -->
-            @if (activeNav() === 'manuscript' && book()) {
-            <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
-                [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
-                [addMenuOpen]="addMenuOpen()" (selectFrontMatterItem)="selectFrontMatterItem($event)"
-                (selectPrologue)="selectPrologue()"
-                (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
-                (deletePrologue)="deletePrologue()" (addFrontMatterItem)="addFrontMatterItem($event)"
-                (addPrologue)="addPrologue()" (toggleAddMenu)="toggleAddMenu()" />
-            }
+            <!-- Spacer: pushes closed (high-order) sections to the bottom -->
+            <div class="ne-acc-spacer"></div>
 
-            <!-- CHARACTERS VIEW -->
-            @if (activeNav() === 'manuscript' && book()) {
-            <app-characters-list [characters]="book()!.characters" [selectedCharacterId]="selectedCharacterId()"
-                (selectCharacter)="selectCharacter($event)" (deleteCharacter)="deleteCharacter($event.id, $event.name)"
-                (addNewCharacter)="addNewCharacter()" />
-            }
-
-            <!-- LOCATIONS VIEW -->
-            @if (activeNav() === 'manuscript' && book()) {
-            <app-locations-list [locations]="book()!.locations" [selectedLocationId]="selectedLocationId()"
-                (selectLocation)="selectLocation($event)" (deleteLocation)="deleteLocation($event.id, $event.name)"
-                (addNewLocation)="addNewLocation()" />
-            }
-
-            <app-sync-status [wordCount]="wordCount()" [formattedTime]="getFormattedTime()"
-                [goalProgress]="activeChapterId() ? getGoalProgress() : null"
-                [leftSidebarCollapsed]="leftSidebarCollapsed()" (toggleSidebar)="toggleLeftSidebar()" />
+            </div><!-- /ne-acc-container -->
         </div>
 
         <!-- Editor Canvas -->
@@ -89,11 +184,13 @@
                 [searchOpen]="searchOpen()" [searchQuery]="searchQuery()" [filteredResults]="filteredChapters()"
                 [focusMode]="focusMode()" [fullScreenMode]="fullScreenMode()" [exportMenuOpen]="exportMenuOpen()"
                 [showExtendedTabs]="showExtendedTabs()" [writingType]="writingType()"
+                [rightSidebarOpen]="!rightSidebarCollapsed()" [aiEnabled]="aiService.aiEnabled()"
                 (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()"
                 (toggleSearch)="toggleSearch()" (searchQueryChange)="searchQuery.set($event)"
                 (selectSearchResult)="selectSearchResult($event)" (toggleFocusMode)="toggleFocusMode()"
                 (toggleFullScreen)="toggleFullScreen()" (openVersionHistory)="openVersionHistory()"
-                (toggleExportMenu)="toggleExportMenu()" (exportNovel)="exportNovel($event)" />
+                (toggleExportMenu)="toggleExportMenu()" (exportNovel)="exportNovel($event)"
+                (toggleRightSidebar)="toggleRightSidebar()" />
 
             @if (editor && (activeNav() === 'manuscript' || activeNav() === 'structure')) {
             <app-editor-toolbar [editor]="editor" [writingType]="writingType()" (openLinkModal)="openLinkModal()" (addImage)="addImage()"
@@ -113,12 +210,12 @@
                 (addPrologue)="addPrologue()" />
             }
 
-            @if (activeNav() === 'manuscript' && book()) {
+            @if (activeNav() === 'characters' && book()) {
             <app-character-details [character]="activeCharacter()" (updateField)="onCharacterFieldUpdate($event)"
                 (addNewCharacter)="addNewCharacter()" />
             }
 
-            @if (activeNav() === 'manuscript' && book()) {
+            @if (activeNav() === 'locations' && book()) {
             <app-location-details [location]="activeLocation()" (updateField)="onLocationFieldUpdate($event)"
                 (addNewLocation)="addNewLocation()" />
             }
@@ -126,11 +223,6 @@
 
         <!-- Right Sidebar: AI & Tools -->
         <div class="ne-sidebar-right" [class.collapsed]="rightSidebarCollapsed()">
-            @if (!rightSidebarCollapsed()) {
-            <button class="sidebar-toggle" (click)="toggleRightSidebar()" title="Hide sidebar">
-                <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-            }
             <div class="ne-right-tabs">
                 @if (aiService.aiEnabled()) {
                 <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'ai'" (click)="setActiveTab('ai')">
@@ -173,11 +265,6 @@
                     [writingType]="writingType()" [sectionLabel]="sectionLabel()" />
                 }
             </div>
-            @if (rightSidebarCollapsed()) {
-            <button class="sidebar-toggle right" (click)="toggleRightSidebar()" title="Show sidebar">
-                <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            }
         </div>
     </div>
     }
