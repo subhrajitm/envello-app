@@ -12,6 +12,12 @@
         }
     </div>
     <div class="ne-editor-actions">
+        @if (focusMode()) {
+        <button class="action-btn ne-exit-focus-btn" (click)="exitFocus.emit()" title="Exit Focus Mode (Esc)">
+            <span class="material-symbols-outlined">close_fullscreen</span>
+            <span class="ne-exit-focus-label">Exit Focus</span>
+        </button>
+        }
         <div class="undo-redo-group">
             <button class="action-btn"
                     (click)="performUndo.emit()"

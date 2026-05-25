@@ -32,9 +32,11 @@ export class EditorHeaderComponent {
   activeItemId = input<string | null>(null);
   canUndo      = input.required<boolean>();
   canRedo      = input.required<boolean>();
+  focusMode    = input<boolean>(false);
 
   selectItem  = output<string>();
   closeTab    = output<string>();
   performUndo = output<void>();
   performRedo = output<void>();
+  exitFocus   = output<void>();
 }

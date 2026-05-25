@@ -121,6 +121,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   versionHistory = signal<VersionSnapshot[]>([]);
   canUndo = signal(false);
   canRedo = signal(false);
+  editorActive = computed(() => this.activeNav() === 'manuscript' || this.activeNav() === 'structure');
 
   // AI Companion state
   aiMessages = signal<AiMessage[]>([]);
