@@ -112,6 +112,7 @@ export class ChaptersListComponent {
 
   onChapterDragOver(event: DragEvent, index: number, groupId: string) {
     event.stopPropagation();
+    if (this.dragType() !== 'chapter') return; // only chapter drags land on chapter slots
     event.preventDefault();
     this.chapterDragOverIndex.set(index);
     this.chapterDragOverGroupId.set(groupId);

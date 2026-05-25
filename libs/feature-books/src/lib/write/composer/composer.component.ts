@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -403,11 +403,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Effect to set initial title from book data
+    // Auto-select first chapter when book loads — but NOT when user closes the last tab.
+    // untracked() on activeChapterId ensures this effect only re-runs on book changes,
+    // not every time the user clears the active selection.
     effect(() => {
       const n = this.book();
-      if (n && !this.activeChapterId()) {
-        // Default to first chapter
+      if (n && !untracked(() => this.activeChapterId()) && !untracked(() => this.openTabIds()).length) {
         if (n.chapters.length > 0 && n.chapters[0].children.length > 0) {
           this.selectChapter(n.chapters[0].children[0]);
         }
@@ -706,6 +707,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
+    // Don't interfere with any open modal
+    if (this.addModal().isOpen || this.deleteModal().isOpen ||
+        this.imageModalOpen() || this.youtubeModalOpen() || this.showBulkMoveModal()) return;
     const target = event.target as HTMLElement;
     if (!target.closest('.add-menu-wrapper')) {
       this.addMenuOpen.set(false);
