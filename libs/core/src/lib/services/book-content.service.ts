@@ -360,6 +360,37 @@ export class BookContentService {
         this.schedulePersist();
     }
 
+    moveChapterBetweenGroups(chapterId: string, targetGroupId: string, targetIndex: number) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            let chapter: any = null;
+            const stripped = book.chapters.map(group => {
+                const found = group.children.find(c => c.id === chapterId);
+                if (found) chapter = found;
+                return { ...group, children: group.children.filter(c => c.id !== chapterId) };
+            });
+            if (!chapter) return book;
+            const newChapters = stripped.map(group => {
+                if (group.id === targetGroupId) {
+                    const children = [...group.children];
+                    children.splice(targetIndex, 0, chapter);
+                    return { ...group, children };
+                }
+                return group;
+            });
+            return { ...book, chapters: newChapters };
+        });
+        this.schedulePersist();
+    }
+
+    updateChapterGroupTitle(groupId: string, title: string) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            return { ...book, chapters: book.chapters.map(g => g.id === groupId ? { ...g, title } : g) };
+        });
+        this.schedulePersist();
+    }
+
     reorderChapterGroup(fromIndex: number, toIndex: number) {
         this.activeBook.update(book => {
             if (!book) return null;

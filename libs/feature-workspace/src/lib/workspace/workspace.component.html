@@ -157,13 +157,13 @@
     <!-- ── Right Sidebar — Recent Activity ── -->
     @defer (on idle) {
       <aside class="sidebar">
-        <div class="sidebar-section full-height" style="padding: 24px;">
+        <div class="sidebar-section full-height">
           <div class="dp-header">
             <h2 class="dp-title">Recent activity</h2>
             <div class="dp-progress" [title]="sidebarTasksCompleted() + ' of ' + store.tasks().length + ' tasks completed'">
               <svg class="progress-ring" width="24" height="24">
-                <circle class="progress-ring-bg" stroke="var(--border-color)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
-                <circle class="progress-ring-fill" stroke="var(--accent)" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" stroke-dasharray="62.83" [attr.stroke-dashoffset]="sidebarTasksDashOffset()" />
+                <circle class="progress-ring-bg" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
+                <circle class="progress-ring-fill" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" stroke-dasharray="62.83" [attr.stroke-dashoffset]="sidebarTasksDashOffset()" />
               </svg>
               <span class="dp-progress-text">{{ sidebarTasksCompleted() }}/{{ store.tasks().length }} done</span>
             </div>

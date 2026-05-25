@@ -4,6 +4,11 @@
         {{ sectionLabel() }}
         <div class="flex items-center gap-1">
             @if (bulkMode()) {
+            <button class="ne-toolbar-btn" (click)="bulkMove.emit()"
+                    [disabled]="selectedChapters().size === 0"
+                    title="Move selected to group">
+                <span class="material-symbols-outlined">drive_file_move</span>
+            </button>
             <button class="ne-toolbar-btn" (click)="bulkDelete.emit()"
                     [disabled]="selectedChapters().size === 0"
                     title="Delete selected">
@@ -38,21 +43,30 @@
     }
     <div class="ne-chapter-list">
         @for (group of chapters(); track group.id; let i = $index) {
-        <div class="ne-chapter-group" 
-             [class.drag-over]="dragOverIndex() === i && dragStartIndex() !== null"
-             draggable="true"
-             (dragstart)="onDragStart($event, i, 'group')"
-             (dragover)="onDragOver($event, i)"
+        <div class="ne-chapter-group"
+             [class.drag-over]="groupDragOverIndex() === i && dragType() === 'group'"
+             [class.chapter-drop-target]="groupDragOverIndex() === i && dragType() === 'chapter'"
+             [draggable]="dragType() !== 'chapter'"
+             (dragstart)="onGroupDragStart($event, i)"
+             (dragover)="onGroupDragOver($event, i)"
              (dragend)="onDragEnd()"
-             (drop)="onDrop($event, i, 'group')">
+             (drop)="onGroupDrop($event, i)">
             <div class="ne-chapter-item group-header" (click)="toggleChapter.emit(group)">
                 <span class="material-symbols-outlined drag-handle">drag_indicator</span>
-                <div class="ne-chap-info">
-                    <div class="ne-chap-title font-bold text-[11px] uppercase">
-                        {{ group.title }}
-                    </div>
+                <div class="ne-chap-info" (dblclick)="startGroupRename(group, $event)">
+                    @if (renamingGroupId() === group.id) {
+                    <input class="chap-rename-input" type="text"
+                        [ngModel]="renameValue()"
+                        (ngModelChange)="renameValue.set($event)"
+                        (keydown.enter)="commitGroupRename(group.id)"
+                        (keydown.escape)="cancelRename()"
+                        (blur)="commitGroupRename(group.id)"
+                        (click)="$event.stopPropagation()"
+                        autofocus />
+                    } @else {
+                    <div class="ne-chap-title font-bold text-[11px] uppercase">{{ group.title }}</div>
+                    }
                 </div>
-                <span class="group-chap-count">{{ group.children.length }}</span>
                 <span class="material-symbols-outlined list-delete chapter-delete group-delete"
                     (click)="deleteGroup.emit({ id: group.id, title: group.title }); $event.stopPropagation()"
                     title="Delete act/part">delete</span>
@@ -63,17 +77,21 @@
                 </button>
             </div>
             @if (group.expanded) {
-            <div class="ne-scene-list">
+            <div class="ne-scene-list"
+                 [class.drag-over-zone]="chapterDragOverGroupId() === group.id && dragType() === 'chapter' && group.children.length === 0"
+                 (dragover)="onChapterDragOver($event, group.children.length, group.id)"
+                 (drop)="onChapterDrop($event, group.children.length, group.id)"
+                 (dragend)="onDragEnd()">
                 @for (chap of group.children; track chap.id; let j = $index) {
-                <div class="ne-chapter-item" 
+                <div class="ne-chapter-item"
                      [class.active]="activeChapterId() === chap.id"
                      [class.selected]="selectedChapters().has(chap.id)"
-                     [class.drag-over]="dragOverIndex() === j && dragStartIndex() !== null"
+                     [class.drag-over]="chapterDragOverIndex() === j && chapterDragOverGroupId() === group.id && dragType() === 'chapter'"
                      [draggable]="!bulkMode()"
-                     (dragstart)="onDragStart($event, j, 'chapter')"
-                     (dragover)="onDragOver($event, j)"
+                     (dragstart)="onChapterDragStart($event, j, group.id)"
+                     (dragover)="onChapterDragOver($event, j, group.id)"
                      (dragend)="onDragEnd()"
-                     (drop)="onDrop($event, j, 'chapter', group.id)"
+                     (drop)="onChapterDrop($event, j, group.id)"
                      (click)="bulkMode() ? toggleChapterSelection.emit(chap.id) : selectChapter.emit(chap)">
                     @if (!bulkMode()) {
                     <span class="material-symbols-outlined drag-handle">drag_indicator</span>

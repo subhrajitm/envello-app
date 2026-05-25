@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 export interface DeleteModalData {
   isOpen: boolean;
-  type: 'chapter' | 'group' | 'character' | 'location' | 'note' | null;
+  type: 'chapter' | 'group' | 'character' | 'location' | 'note' | 'bulkChapters' | null;
   id: string | null;
   title: string;
   message: string;

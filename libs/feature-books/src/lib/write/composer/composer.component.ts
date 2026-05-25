@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -121,6 +121,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   versionHistory = signal<VersionSnapshot[]>([]);
   canUndo = signal(false);
   canRedo = signal(false);
+  editorActive = computed(() => this.activeNav() === 'manuscript' || this.activeNav() === 'structure');
 
   // AI Companion state
   aiMessages = signal<AiMessage[]>([]);
@@ -224,12 +225,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   closeEditorTab(id: string) {
-    const current = this.openTabIds();
-    const next = current.filter(i => i !== id);
+    const current  = this.openTabIds();
+    const wasActive = this.editorActiveTabId() === id; // capture before mutation
+    const idx      = current.indexOf(id);
+    const next     = current.filter(i => i !== id);
     this.openTabIds.set(next);
-    if (this.editorActiveTabId() === id) {
-      const idx = current.indexOf(id);
-      const fallback = next[idx] ?? next[idx - 1] ?? null;
+    if (wasActive) {
+      const fallback = next[Math.min(idx, next.length - 1)] ?? null;
       if (fallback) {
         this.handleEditorTabSelect(fallback);
       } else {
@@ -356,12 +358,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (this.editor) {
         if (chapterId) {
           const chapter = this.bookService.getChapter(chapterId);
-          if (chapter && this.editor.getHTML() !== chapter.content) {
-            this.editor.commands.setContent(chapter.content);
+          if (chapter) {
+            if (this.editor.getHTML() !== chapter.content) {
+              this.editor.commands.setContent(chapter.content);
+            }
             this.title.set(chapter.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
-            // Create initial snapshot if none exists
+            // Always create initial snapshot when first opening a chapter
             const versions = this.versionHistoryService.getVersions(chapterId, 'chapter');
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
@@ -370,8 +374,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         } else if (frontMatterId) {
           const book = this.book();
           const item = book?.frontMatter.find(fm => fm.id === frontMatterId);
-          if (item && this.editor.getHTML() !== item.content) {
-            this.editor.commands.setContent(item.content);
+          if (item) {
+            if (this.editor.getHTML() !== item.content) {
+              this.editor.commands.setContent(item.content);
+            }
             this.title.set(item.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
@@ -383,8 +389,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         } else if (prologueId) {
           const book = this.book();
           const prologue = book?.prologue;
-          if (prologue && this.editor.getHTML() !== prologue.content) {
-            this.editor.commands.setContent(prologue.content);
+          if (prologue) {
+            if (this.editor.getHTML() !== prologue.content) {
+              this.editor.commands.setContent(prologue.content);
+            }
             this.title.set(prologue.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
@@ -401,11 +409,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Effect to set initial title from book data
+    // Auto-select first chapter when book loads — but NOT when user closes the last tab.
+    // untracked() on activeChapterId ensures this effect only re-runs on book changes,
+    // not every time the user clears the active selection.
     effect(() => {
       const n = this.book();
-      if (n && !this.activeChapterId()) {
-        // Default to first chapter
+      if (n && !untracked(() => this.activeChapterId()) && !untracked(() => this.openTabIds()).length) {
         if (n.chapters.length > 0 && n.chapters[0].children.length > 0) {
           this.selectChapter(n.chapters[0].children[0]);
         }
@@ -579,9 +588,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   // Delete Modal State
+  showBulkMoveModal = signal(false);
+
   deleteModal = signal<{
     isOpen: boolean;
-    type: 'chapter' | 'group' | 'character' | 'location' | 'note' | null;
+    type: 'chapter' | 'group' | 'character' | 'location' | 'note' | 'bulkChapters' | null;
     id: string | null;
     title: string;
     message: string;
@@ -593,7 +604,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     message: ''
   });
 
-  requestDelete(type: 'chapter' | 'group' | 'character' | 'location' | 'note', id: string, name?: string) {
+  requestDelete(type: 'chapter' | 'group' | 'character' | 'location' | 'note' | 'bulkChapters', id: string, name?: string) {
     let title = 'Delete Item';
     let message = 'Are you sure you want to delete this item? This action cannot be undone.';
 
@@ -643,40 +654,47 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     switch (modal.type) {
       case 'chapter':
         this.bookService.deleteChapter(modal.id);
+        this.closeEditorTab(modal.id);
         if (this.activeChapterId() === modal.id) {
           this.activeChapterId.set(null);
           this.title.set('');
           this.editor.commands.clearContent();
         }
         break;
-      case 'group':
-        this.bookService.deleteChapterGroup(modal.id);
-        // Clear active chapter if it was in the deleted group
+      case 'group': {
         const book = this.book();
         const deletedGroup = book?.chapters.find(g => g.id === modal.id);
         if (deletedGroup) {
           const deletedChapterIds = deletedGroup.children.map(c => c.id);
+          deletedChapterIds.forEach(id => this.closeEditorTab(id));
           if (this.activeChapterId() && deletedChapterIds.includes(this.activeChapterId()!)) {
             this.activeChapterId.set(null);
             this.title.set('');
             this.editor.commands.clearContent();
           }
         }
+        this.bookService.deleteChapterGroup(modal.id);
         break;
+      }
       case 'character':
         this.bookService.deleteCharacter(modal.id);
+        this.closeEditorTab(modal.id);
         if (this.selectedCharacterId() === modal.id) {
           this.selectedCharacterId.set(null);
         }
         break;
       case 'location':
         this.bookService.deleteLocation(modal.id);
+        this.closeEditorTab(modal.id);
         if (this.selectedLocationId() === modal.id) {
           this.selectedLocationId.set(null);
         }
         break;
       case 'note':
         this.bookService.deleteNote(modal.id);
+        break;
+      case 'bulkChapters':
+        this.executeBulkDelete();
         break;
     }
 
@@ -695,6 +713,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
+    // Don't interfere with any open modal
+    if (this.addModal().isOpen || this.deleteModal().isOpen ||
+        this.imageModalOpen() || this.youtubeModalOpen() || this.showBulkMoveModal()) return;
     const target = event.target as HTMLElement;
     if (!target.closest('.add-menu-wrapper')) {
       this.addMenuOpen.set(false);
@@ -771,9 +792,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   addNewChapter(groupId?: string) {
     this.addMenuOpen.set(false);
     const book = this.book();
-    if (!book) {
-      return;
-    }
+    if (!book) return;
+
+    // Ensure manuscript section is active and visible
+    this.activeNav.set('manuscript');
+    this.accChapters.set(true);
 
     // If no groups exist, create one first
     if (book.chapters.length === 0) {
@@ -856,6 +879,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   addNewActOrPart() {
     this.addMenuOpen.set(false);
+    this.activeNav.set('manuscript');
+    this.accChapters.set(true);
     this.addModal.set({
       isOpen: true,
       type: 'act',
@@ -1192,7 +1217,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    if (!query || query.length < 2) return null; // Early return for short queries
+    if (!query) return null;
 
     const book = this.book();
     if (!book) return null;
@@ -1599,22 +1624,30 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   bulkDeleteChapters() {
+    const count = this.selectedChapters().size;
+    if (count === 0) return;
+    this.deleteModal.set({
+      isOpen: true,
+      type: 'bulkChapters',
+      id: 'bulk',
+      title: `Delete ${count} Chapter${count > 1 ? 's' : ''}?`,
+      message: `This will permanently delete ${count} selected chapter${count > 1 ? 's' : ''}. This action cannot be undone.`
+    });
+  }
+
+  private executeBulkDelete() {
+    // Capture snapshot before any mutations
     const selected = Array.from(this.selectedChapters());
-    if (selected.length === 0) return;
-
-    const book = this.book();
-    if (!book) return;
-
-    // Delete all selected chapters
+    const activeId = this.activeChapterId();
     selected.forEach(chapterId => {
       this.bookService.deleteChapter(chapterId);
-      if (this.activeChapterId() === chapterId) {
-        this.activeChapterId.set(null);
-        this.title.set('');
-        this.editor.commands.clearContent();
-      }
+      this.closeEditorTab(chapterId);
     });
-
+    if (activeId && selected.includes(activeId)) {
+      this.activeChapterId.set(null);
+      this.title.set('');
+      this.editor.commands.clearContent();
+    }
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
   }
@@ -1622,12 +1655,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   bulkMoveChapters(targetGroupId: string) {
     const selected = Array.from(this.selectedChapters());
     if (selected.length === 0) return;
-
     selected.forEach(chapterId => {
-      this.bookService.moveChapterToGroup?.(chapterId, targetGroupId);
+      this.bookService.moveChapterToGroup(chapterId, targetGroupId);
     });
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
+    this.showBulkMoveModal.set(false);
   }
 
   // Sidebar toggles

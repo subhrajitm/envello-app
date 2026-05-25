@@ -22,9 +22,26 @@
         <!-- Left Sidebar -->
         <div class="ne-sidebar-left" [class.collapsed]="leftSidebarCollapsed()">
             @if (leftSidebarCollapsed()) {
-            <button class="sidebar-toggle" (click)="toggleLeftSidebar()" title="Show sidebar">
-                <span class="material-symbols-outlined">chevron_right</span>
-            </button>
+            <div class="ne-sidebar-mini-strip">
+                <button class="ne-mini-nav-btn" [class.active]="activeNav() === 'manuscript'" (click)="setActiveNav('manuscript'); toggleLeftSidebar()" title="Chapters">
+                    <span class="material-symbols-outlined">menu_book</span>
+                </button>
+                <button class="ne-mini-nav-btn" [class.active]="activeNav() === 'structure'" (click)="setActiveNav('structure'); toggleLeftSidebar()" title="Structure">
+                    <span class="material-symbols-outlined">format_list_numbered</span>
+                </button>
+                @if (showExtendedTabs()) {
+                <button class="ne-mini-nav-btn" [class.active]="activeNav() === 'characters'" (click)="setActiveNav('characters'); toggleLeftSidebar()" title="Characters">
+                    <span class="material-symbols-outlined">group</span>
+                </button>
+                <button class="ne-mini-nav-btn" [class.active]="activeNav() === 'locations'" (click)="setActiveNav('locations'); toggleLeftSidebar()" title="Locations">
+                    <span class="material-symbols-outlined">public</span>
+                </button>
+                }
+                <div class="ne-mini-spacer"></div>
+                <button class="ne-mini-nav-btn" (click)="toggleLeftSidebar()" title="Expand sidebar">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
             }
 
             <!-- Sidebar header: mini back + search -->
@@ -117,8 +134,11 @@
                     (deleteChapter)="deleteChapter($event.id, $event.title)"
                     (deleteGroup)="deleteGroup($event.id, $event.title)"
                     (renameChapter)="bookService.updateChapterTitle($event.id, $event.title)"
+                    (renameGroup)="bookService.updateChapterGroupTitle($event.id, $event.title)"
                     (toggleBulkMode)="toggleBulkMode()"
-                    (bulkDelete)="bulkDeleteChapters()" (toggleAddMenu)="toggleAddMenu()"
+                    (bulkDelete)="bulkDeleteChapters()"
+                    (bulkMove)="showBulkMoveModal.set(true)"
+                    (toggleAddMenu)="toggleAddMenu()"
                     (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
                     (toggleChapterSelection)="toggleChapterSelection($event)" />
                 }
@@ -193,11 +213,14 @@
 
         <!-- Editor Canvas -->
         <div class="ne-editor-area" [class.focus-mode]="focusMode()">
+
             <app-editor-header [items]="editorTabItems()" [activeItemId]="editorActiveTabId()"
-                [canUndo]="canUndo()" [canRedo]="canRedo()"
+                [canUndo]="editorActive() && canUndo()" [canRedo]="editorActive() && canRedo()"
+                [focusMode]="focusMode()"
                 (selectItem)="handleEditorTabSelect($event)"
                 (closeTab)="closeEditorTab($event)"
-                (performUndo)="performUndo()" (performRedo)="performRedo()" />
+                (performUndo)="performUndo()" (performRedo)="performRedo()"
+                (exitFocus)="toggleFocusMode()" />
 
             @if (editorActiveTabId()) {
 
@@ -294,55 +317,11 @@
                 <div class="ne-strip-divider"></div>
 
                 <!-- Utility buttons (bottom) -->
-                <div class="search-wrapper ne-strip-dropdown-wrapper">
-                    <button class="ne-strip-btn" [class.active]="searchOpen()" (click)="toggleSearch()" title="Search (⌘+K)">
-                        <span class="material-symbols-outlined">search</span>
-                    </button>
-                    @if (searchOpen()) {
-                    <div class="search-dropdown ne-strip-popup">
-                        <div class="search-input-wrapper">
-                            <span class="material-symbols-outlined search-icon">search</span>
-                            <input type="text" class="search-input" [value]="searchQuery()"
-                                (input)="searchQuery.set($any($event.target).value)"
-                                placeholder="Search chapters, characters, locations..."
-                                autofocus />
-                            @if (searchQuery()) {
-                            <button class="search-clear" (click)="searchQuery.set('')">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                            }
-                        </div>
-                        @if (filteredChapters() && filteredChapters()!.length > 0) {
-                        <div class="search-results">
-                            @for (result of filteredChapters()!; track result.id) {
-                            <button class="search-result-item" (click)="selectSearchResult(result)">
-                                <span class="material-symbols-outlined result-icon">
-                                    @if (result.type === 'chapter') { description }
-                                    @else if (result.type === 'character') { account_circle }
-                                    @else if (result.type === 'location') { public }
-                                    @else if (result.type === 'frontMatter') { menu_book }
-                                    @else if (result.type === 'prologue') { menu_book }
-                                </span>
-                                <div class="result-content">
-                                    <div class="result-title">{{ result.title }}</div>
-                                    @if (result.subtitle) {
-                                    <div class="result-subtitle">{{ result.subtitle }}</div>
-                                    }
-                                </div>
-                            </button>
-                            }
-                        </div>
-                        } @else if (searchQuery() && filteredChapters()?.length === 0) {
-                        <div class="search-empty">No results found</div>
-                        }
-                    </div>
-                    }
-                </div>
-                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" title="Focus Mode (⌘+\)">
-                    <span class="material-symbols-outlined">center_focus_strong</span>
+                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" [title]="focusMode() ? 'Exit Focus Mode (⌘+\\)' : 'Focus Mode (⌘+\\)'">
+                    <span class="material-symbols-outlined">{{ focusMode() ? 'close_fullscreen' : 'center_focus_strong' }}</span>
                 </button>
-                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" title="Full Screen (F11)">
-                    <span class="material-symbols-outlined">fullscreen</span>
+                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" [title]="fullScreenMode() ? 'Exit Full Screen (F11)' : 'Full Screen (F11)'">
+                    <span class="material-symbols-outlined">{{ fullScreenMode() ? 'fullscreen_exit' : 'fullscreen' }}</span>
                 </button>
                 <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History">
                     <span class="material-symbols-outlined">history</span>
@@ -385,6 +364,31 @@
 
     <!-- Modals -->
     <app-delete-modal [modal]="deleteModal()" (confirm)="confirmDelete()" (cancel)="cancelDelete()" />
+
+    <!-- Bulk Move Modal -->
+    @if (showBulkMoveModal() && book()) {
+    <div class="ne-bulk-move-overlay" (click)="showBulkMoveModal.set(false)">
+        <div class="ne-bulk-move-modal" (click)="$event.stopPropagation()">
+            <div class="ne-bulk-move-header">
+                <span class="ne-bulk-move-title">Move {{ selectedChapters().size }} chapter{{ selectedChapters().size > 1 ? 's' : '' }} to</span>
+                <button class="ne-bulk-move-close" (click)="showBulkMoveModal.set(false)">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="ne-bulk-move-list">
+                @for (group of book()!.chapters; track group.id) {
+                <button class="ne-bulk-move-option" (click)="bulkMoveChapters(group.id)">
+                    <span class="material-symbols-outlined">folder</span>
+                    {{ group.title }}
+                    <span class="ne-bulk-move-count">{{ group.children.length }} ch.</span>
+                </button>
+                } @empty {
+                <div class="ne-bulk-move-empty">No groups available</div>
+                }
+            </div>
+        </div>
+    </div>
+    }
 
     <app-link-modal [isOpen]="linkModalOpen()" [linkText]="linkText()" [linkUrl]="linkUrl()"
         (linkTextChange)="linkText.set($event)" (linkUrlChange)="linkUrl.set($event)" (insert)="insertLink()"
