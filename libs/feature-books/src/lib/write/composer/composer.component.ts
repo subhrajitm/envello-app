@@ -358,12 +358,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (this.editor) {
         if (chapterId) {
           const chapter = this.bookService.getChapter(chapterId);
-          if (chapter && this.editor.getHTML() !== chapter.content) {
-            this.editor.commands.setContent(chapter.content);
+          if (chapter) {
+            if (this.editor.getHTML() !== chapter.content) {
+              this.editor.commands.setContent(chapter.content);
+            }
             this.title.set(chapter.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
-            // Create initial snapshot if none exists
+            // Always create initial snapshot when first opening a chapter
             const versions = this.versionHistoryService.getVersions(chapterId, 'chapter');
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
@@ -372,8 +374,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         } else if (frontMatterId) {
           const book = this.book();
           const item = book?.frontMatter.find(fm => fm.id === frontMatterId);
-          if (item && this.editor.getHTML() !== item.content) {
-            this.editor.commands.setContent(item.content);
+          if (item) {
+            if (this.editor.getHTML() !== item.content) {
+              this.editor.commands.setContent(item.content);
+            }
             this.title.set(item.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
@@ -385,8 +389,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         } else if (prologueId) {
           const book = this.book();
           const prologue = book?.prologue;
-          if (prologue && this.editor.getHTML() !== prologue.content) {
-            this.editor.commands.setContent(prologue.content);
+          if (prologue) {
+            if (this.editor.getHTML() !== prologue.content) {
+              this.editor.commands.setContent(prologue.content);
+            }
             this.title.set(prologue.title);
             const count = this.calculateWordCount(this.editor.getText());
             this.wordCount.set(count);
