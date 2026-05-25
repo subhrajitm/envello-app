@@ -96,33 +96,11 @@
                 <div class="ne-acc-hdr" (click)="toggleAccStructure()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accStructure()">chevron_right</span>
                     <span class="ne-acc-title">STRUCTURE</span>
-                    <div class="ne-acc-actions" (click)="$event.stopPropagation()">
-                        <div class="add-menu-wrapper relative">
-                            <span class="material-symbols-outlined icon-add"
-                                (click)="toggleStructureAddMenu(); $event.stopPropagation()" title="View">add</span>
-                            @if (structureAddMenuOpen()) {
-                            <div class="add-dropdown-menu">
-                                <button class="add-dropdown-option"
-                                    [class.active]="activeStructureView() === 'frontMatter'"
-                                    (click)="showFrontMatterSection(); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">description</span>
-                                    <span class="option-label">Front Matter</span>
-                                </button>
-                                <button class="add-dropdown-option"
-                                    [class.active]="activeStructureView() === 'prologue'"
-                                    (click)="showPrologueSection(); $event.stopPropagation()">
-                                    <span class="material-symbols-outlined option-icon">menu_book</span>
-                                    <span class="option-label">Prologue</span>
-                                </button>
-                            </div>
-                            }
-                        </div>
-                    </div>
                 </div>
-                @if (accStructure() && activeStructureView() !== null) {
+                @if (accStructure()) {
                 <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
                     [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
-                    [addMenuOpen]="structureFmAddMenuOpen()" [activeSection]="activeStructureView()"
+                    [addMenuOpen]="structureFmAddMenuOpen()"
                     (selectFrontMatterItem)="selectFrontMatterItem($event)"
                     (selectPrologue)="selectPrologue()"
                     (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
@@ -147,6 +125,7 @@
                 <app-characters-list [characters]="book()!.characters" [selectedCharacterId]="selectedCharacterId()"
                     [showHeader]="false"
                     (selectCharacter)="selectCharacter($event)" (deleteCharacter)="deleteCharacter($event.id, $event.name)"
+                    (renameCharacter)="bookService.updateCharacter($event.id, { name: $event.name })"
                     (addNewCharacter)="addNewCharacter()" />
                 }
             </div>
@@ -166,6 +145,7 @@
                 <app-locations-list [locations]="book()!.locations" [selectedLocationId]="selectedLocationId()"
                     [showHeader]="false"
                     (selectLocation)="selectLocation($event)" (deleteLocation)="deleteLocation($event.id, $event.name)"
+                    (renameLocation)="bookService.updateLocation($event.id, { name: $event.name })"
                     (addNewLocation)="addNewLocation()" />
                 }
             </div>
@@ -183,7 +163,8 @@
             <app-editor-header [activeNav]="activeNav()" [canUndo]="canUndo()" [canRedo]="canRedo()"
                 [searchOpen]="searchOpen()" [searchQuery]="searchQuery()" [filteredResults]="filteredChapters()"
                 [focusMode]="focusMode()" [fullScreenMode]="fullScreenMode()" [exportMenuOpen]="exportMenuOpen()"
-                [showExtendedTabs]="showExtendedTabs()" [writingType]="writingType()"
+                [writingType]="writingType()"
+                [hasCharacters]="hasCharactersContent()" [hasLocations]="hasLocationsContent()"
                 [rightSidebarOpen]="!rightSidebarCollapsed()" [aiEnabled]="aiService.aiEnabled()"
                 (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()"
                 (toggleSearch)="toggleSearch()" (searchQueryChange)="searchQuery.set($event)"
@@ -200,10 +181,11 @@
             @if (activeNav() === 'manuscript') {
             <app-manuscript-editor [editor]="editor" [activeChapterId]="activeChapterId()" [title]="title()"
                 [chapterStatus]="chapterStatus()" [chapterLastEdited]="chapterLastEdited()" [isSaving]="isSaving()"
-                [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)" (addNewChapter)="addNewChapter()" />
+                [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)"
+                (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()" />
             }
 
-            @if (activeNav() === 'manuscript' && book()) {
+            @if (activeNav() === 'structure' && book()) {
             <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
                 [activePrologueId]="activePrologueId()" [frontMatter]="book()!.frontMatter"
                 [prologue]="book()!.prologue || null" (addFrontMatterItem)="addFrontMatterItem($event)"

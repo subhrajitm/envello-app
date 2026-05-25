@@ -13,9 +13,20 @@
             <div class="ne-avatar-mini loc-mini">
                 <span class="material-symbols-outlined">public</span>
             </div>
-            <div class="list-info">
+            <div class="list-info" (dblclick)="startRename(loc, $event)">
+                @if (renamingId() === loc.id) {
+                <input class="chap-rename-input" type="text"
+                    [ngModel]="renameValue()"
+                    (ngModelChange)="renameValue.set($event)"
+                    (keydown.enter)="commitRename(loc.id)"
+                    (keydown.escape)="cancelRename()"
+                    (blur)="commitRename(loc.id)"
+                    (click)="$event.stopPropagation()"
+                    autofocus />
+                } @else {
                 <div class="list-title">{{ loc.name }}</div>
                 <div class="list-sub">{{ loc.type }}</div>
+                }
             </div>
             <span class="material-symbols-outlined list-delete"
                 (click)="deleteLocation.emit({ id: loc.id, name: loc.name }); $event.stopPropagation()"

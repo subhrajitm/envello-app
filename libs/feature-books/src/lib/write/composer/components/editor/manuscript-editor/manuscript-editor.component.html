@@ -17,7 +17,26 @@
 
     <div class="ne-doc-meta">
         <div class="meta-row">
-            <span class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()">{{ chapterStatusLabel() }}</span>
+            <!-- Clickable status badge with dropdown -->
+            <div class="status-menu-wrapper" style="position:relative;display:inline-flex;">
+                <button class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()"
+                        (click)="toggleStatusMenu($event)" title="Change status">
+                    <span class="material-symbols-outlined" style="font-size:13px;">{{ chapterStatusIcon() }}</span>
+                    {{ chapterStatusLabel() }}
+                    <span class="material-symbols-outlined" style="font-size:12px;opacity:0.6;">expand_more</span>
+                </button>
+                @if (statusMenuOpen()) {
+                <div class="add-dropdown-menu" style="top:calc(100% + 4px);left:0;right:auto;min-width:140px;">
+                    @for (opt of statusOptions; track opt.value) {
+                    <button class="add-dropdown-option" [class.active]="chapterStatus() === opt.value"
+                            (click)="selectStatus(opt.value, $event)">
+                        <span class="material-symbols-outlined option-icon">{{ opt.icon }}</span>
+                        <span class="option-label">{{ opt.label }}</span>
+                    </button>
+                    }
+                </div>
+                }
+            </div>
             <span class="meta-sep">•</span>
             <span class="save-indicator" [class.saving]="isSaving()">
                 @if (isSaving()) {

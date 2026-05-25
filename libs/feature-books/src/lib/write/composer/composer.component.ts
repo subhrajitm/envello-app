@@ -165,14 +165,26 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   accCharacters = signal(false);
   accLocations = signal(false);
 
-  toggleAccChapters()   { this.accChapters.update(v => !v); }
-  toggleAccStructure()  {
+  toggleAccChapters() {
+    const wasOpen = this.accChapters();
+    this.accChapters.update(v => !v);
+    if (!wasOpen) this.activeNav.set('manuscript');
+  }
+  toggleAccStructure() {
     const wasOpen = this.accStructure();
     this.accStructure.update(v => !v);
-    if (wasOpen) this.activeStructureView.set(null); // reset content when closing
+    if (!wasOpen) this.activeNav.set('structure');
   }
-  toggleAccCharacters() { this.accCharacters.update(v => !v); }
-  toggleAccLocations()  { this.accLocations.update(v => !v); }
+  toggleAccCharacters() {
+    const wasOpen = this.accCharacters();
+    this.accCharacters.update(v => !v);
+    if (!wasOpen) this.activeNav.set('characters');
+  }
+  toggleAccLocations() {
+    const wasOpen = this.accLocations();
+    this.accLocations.update(v => !v);
+    if (!wasOpen) this.activeNav.set('locations');
+  }
 
   anyAccOpen = computed(() =>
     this.accChapters() || this.accStructure() || this.accCharacters() || this.accLocations()
@@ -199,6 +211,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     const id = this.selectedLocationId();
     return n?.locations.find(l => l.id === id) ?? null;
   });
+
+  hasCharactersContent = computed(() => (this.book()?.characters.length ?? 0) > 0);
+  hasLocationsContent  = computed(() => (this.book()?.locations.length  ?? 0) > 0);
 
   activeChapter = computed(() => {
     const chapterId = this.activeChapterId();
@@ -414,8 +429,27 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     const extended = this.showExtendedTabs();
     if (!extended && (nav === 'characters' || nav === 'locations')) {
       this.activeNav.set('manuscript');
-    } else {
-      this.activeNav.set(nav);
+      return;
+    }
+
+    const prev = this.activeNav();
+    this.activeNav.set(nav);
+
+    // Sync the corresponding sidebar accordion open when a tab is clicked
+    if (nav === 'manuscript') {
+      this.accChapters.set(true);
+    } else if (nav === 'structure') {
+      this.accStructure.set(true);
+    } else if (nav === 'characters') {
+      this.accCharacters.set(true);
+    } else if (nav === 'locations') {
+      this.accLocations.set(true);
+    }
+
+    // When navigating away from Structure, clear stale selection so editor doesn't show stale content
+    if (prev === 'structure' && nav !== 'structure') {
+      this.activeFrontMatterId.set(null);
+      this.activePrologueId.set(null);
     }
   }
 
@@ -426,6 +460,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (activeId) {
       this.bookService.updateChapterTitle(activeId, newTitle);
     }
+  }
+
+  onChapterStatusChange(status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY') {
+    const activeId = this.activeChapterId();
+    if (activeId) this.bookService.updateChapterStatus(activeId, status);
   }
 
   // Delete Modal State
@@ -548,6 +587,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     const target = event.target as HTMLElement;
     if (!target.closest('.add-menu-wrapper')) {
       this.addMenuOpen.set(false);
+      this.structureFmAddMenuOpen.set(false);
     }
     if (!target.closest('.search-wrapper')) {
       this.searchOpen.set(false);
@@ -600,16 +640,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Add menu state – chapters and structure have separate signals so opening one doesn't affect the other
   addMenuOpen = signal(false);
   structureFmAddMenuOpen = signal(false);
-
-  // Structure accordion nav state
-  structureAddMenuOpen = signal(false);
-  activeStructureView = signal<'frontMatter' | 'prologue' | null>(null);
-
-  toggleStructureAddMenu() { this.structureAddMenuOpen.update(v => !v); }
-  closeStructureMenu() { this.structureAddMenuOpen.set(false); }
-
-  showFrontMatterSection() { this.activeStructureView.set('frontMatter'); this.closeStructureMenu(); }
-  showPrologueSection()    { this.activeStructureView.set('prologue');    this.closeStructureMenu(); }
 
   // Add Modal State
   addModal = signal<{
@@ -1382,11 +1412,25 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   applySuggestion(suggestion: AiSuggestion) {
     if (!this.editor) return;
 
-    if (suggestion.originalText && suggestion.position !== undefined) {
-      // Replace original text
-      const content = this.editor.getHTML();
-      const newContent = content.replace(suggestion.originalText, suggestion.content);
-      this.editor.commands.setContent(newContent);
+    if (suggestion.originalText) {
+      // Search text nodes in the ProseMirror doc for the original text and replace in-place
+      const { doc } = this.editor.state;
+      const search = suggestion.originalText;
+      let from = -1;
+      let to = -1;
+      doc.nodesBetween(0, doc.content.size, (node, pos) => {
+        if (from >= 0) return false;
+        if (node.isText && node.text) {
+          const idx = node.text.indexOf(search);
+          if (idx >= 0) { from = pos + idx; to = from + search.length; }
+        }
+        return true;
+      });
+      if (from >= 0) {
+        this.editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, suggestion.content).run();
+      } else {
+        this.editor.chain().focus().insertContent(suggestion.content).run();
+      }
     } else {
       // Insert at cursor
       this.editor.chain().focus().insertContent(suggestion.content).run();
@@ -1514,9 +1558,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     const text = this.linkText().trim() || url;
 
     if (this.editor.state.selection.empty) {
-      this.editor.chain().focus().insertContent(`<a href="${url}">${text}</a>`).run();
+      this.editor.chain().focus().insertContent({
+        type: 'text',
+        marks: [{ type: 'link', attrs: { href: url, target: '_blank' } }],
+        text,
+      }).run();
     } else {
-      this.editor.chain().focus().setLink({ href: url }).run();
+      this.editor.chain().focus().setLink({ href: url, target: '_blank' }).run();
     }
 
     this.linkModalOpen.set(false);
@@ -1579,6 +1627,35 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.youtubeUrl.set('');
   }
 
+  private htmlToMarkdown(html: string): string {
+    return html
+      .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
+      .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+      .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+      .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+      .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
+      .replace(/<(strong|b)[^>]*>(.*?)<\/\1>/gi, '**$2**')
+      .replace(/<(em|i)[^>]*>(.*?)<\/\1>/gi, '*$2*')
+      .replace(/<(del|s|strike)[^>]*>(.*?)<\/\1>/gi, '~~$2~~')
+      .replace(/<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/gi, '```\n$1\n```\n\n')
+      .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
+      .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, inner) =>
+        inner.trim().split('\n').map((l: string) => `> ${l}`).join('\n') + '\n\n')
+      .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+      .replace(/<\/(ul|ol)>/gi, '\n')
+      .replace(/<(ul|ol)[^>]*>/gi, '')
+      .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+      .replace(/<hr[^>]*>/gi, '---\n\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<p[^>]*>/gi, '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   // Export functionality
   exportNovel(format: 'pdf' | 'docx' | 'md' | 'html' | 'fountain') {
     const book = this.book();
@@ -1612,10 +1689,36 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    // Build HTML content for html / md / docx
-    content = `<h1>${book.title}</h1>\n\n`;
-
     const skipFrontMatter = ['ARTICLE', 'BLOG_POST'].includes(this.writingType());
+
+    if (format === 'md') {
+      // Build true markdown — do not use the shared HTML content variable
+      let md = `# ${book.title}\n\n`;
+      if (!skipFrontMatter && book.frontMatter.length > 0) {
+        md += '## Front Matter\n\n';
+        book.frontMatter.forEach(item => {
+          md += `### ${item.title}\n\n${this.htmlToMarkdown(item.content)}\n\n`;
+        });
+      }
+      if (!skipFrontMatter && book.prologue) {
+        md += `## ${book.prologue.title}\n\n${this.htmlToMarkdown(book.prologue.content)}\n\n`;
+      }
+      book.chapters.forEach(group => {
+        md += `## ${group.title}\n\n`;
+        group.children.forEach(chap => {
+          md += `### ${chap.title}\n\n${this.htmlToMarkdown(chap.content)}\n\n`;
+        });
+      });
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${filename}.md`; a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // Build HTML content for html / docx
+    content = `<h1>${book.title}</h1>\n\n`;
 
     // Front Matter
     if (!skipFrontMatter && book.frontMatter.length > 0) {
@@ -1650,26 +1753,18 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       const blob = new Blob([content], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } else if (format === 'md') {
-      const blob = new Blob([content], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.md`;
-      a.click();
+      a.href = url; a.download = `${filename}.html`; a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'docx') {
-      // Export as Word-compatible HTML (.doc) until a docx library is integrated
-      const blob = new Blob([content], { type: 'application/msword' });
+      // Word-compatible HTML until a native docx library is integrated
+      const wordHtml = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+        xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>${book.title}</title></head>
+        <body>${content}</body></html>`;
+      const blob = new Blob([wordHtml], { type: 'application/msword' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.doc`;
-      a.click();
+      a.href = url; a.download = `${filename}.doc`; a.click();
       URL.revokeObjectURL(url);
     }
   }

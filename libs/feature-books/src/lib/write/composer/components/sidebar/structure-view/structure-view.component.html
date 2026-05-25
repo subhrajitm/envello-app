@@ -1,6 +1,5 @@
 <div class="ne-chapters-section">
     <!-- Front Matter Section -->
-    @if (activeSection() === 'frontMatter') {
     <div class="ne-structure-section">
         <div class="ne-chap-header">
             FRONT MATTER
@@ -46,19 +45,23 @@
                 </span>
                 <div class="ne-chap-info">
                     <div class="ne-chap-title">{{ item.title }}</div>
-                    <div class="ne-chap-meta">{{ item.wordCount }} w</div>
+                    <div class="ne-chap-meta">{{ item.type }}</div>
                 </div>
                 <span class="material-symbols-outlined list-delete chapter-delete"
                     (click)="deleteFrontMatterItem.emit({ id: item.id, title: item.title }); $event.stopPropagation()"
                     title="Delete">delete</span>
             </div>
+            } @empty {
+            <div class="ne-structure-empty">
+                <span class="material-symbols-outlined">description</span>
+                <p>No front matter yet</p>
+                <span class="ne-structure-empty-hint">Tap + to add Title Page, Copyright, etc.</span>
+            </div>
             }
         </div>
     </div>
-    }
 
     <!-- Prologue Section -->
-    @if (activeSection() === 'prologue') {
     <div class="ne-structure-section">
         <div class="ne-chap-header">
             PROLOGUE
@@ -74,14 +77,21 @@
                 <div class="ne-chap-info">
                     <div class="ne-chap-title">{{ prologueData.title }}</div>
                     <div class="ne-chap-meta">
-                        <span class="ne-draft-tag">{{ prologueData.status }}</span> • {{ prologueData.wordCount }} w
+                        <span class="ne-draft-tag">{{ prologueData.status }}</span>
                     </div>
                 </div>
                 <span class="material-symbols-outlined list-delete chapter-delete"
                     (click)="deletePrologue.emit(); $event.stopPropagation()" title="Delete prologue">delete</span>
             </div>
         </div>
+        } @else {
+        <div class="ne-structure-empty">
+            <span class="material-symbols-outlined">menu_book</span>
+            <p>No prologue yet</p>
+            <button class="ne-structure-empty-btn" (click)="addPrologue.emit()">
+                <span class="material-symbols-outlined">add</span> Add Prologue
+            </button>
+        </div>
         }
     </div>
-    }
 </div>

@@ -13,9 +13,20 @@
             <div class="ne-avatar-mini">
                 <span class="material-symbols-outlined">account_circle</span>
             </div>
-            <div class="list-info">
+            <div class="list-info" (dblclick)="startRename(char, $event)">
+                @if (renamingId() === char.id) {
+                <input class="chap-rename-input" type="text"
+                    [ngModel]="renameValue()"
+                    (ngModelChange)="renameValue.set($event)"
+                    (keydown.enter)="commitRename(char.id)"
+                    (keydown.escape)="cancelRename()"
+                    (blur)="commitRename(char.id)"
+                    (click)="$event.stopPropagation()"
+                    autofocus />
+                } @else {
                 <div class="list-title">{{ char.name }}</div>
                 <div class="list-sub">{{ char.role }}</div>
+                }
             </div>
             <span class="material-symbols-outlined list-delete"
                 (click)="deleteCharacter.emit({ id: char.id, name: char.name }); $event.stopPropagation()"

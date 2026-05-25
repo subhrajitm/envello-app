@@ -1,25 +1,10 @@
 <div class="ne-editor-header">
     <div class="ne-editor-tabs">
-        <button class="ne-editor-tab" [class.active]="activeNav() === 'manuscript'"
-            (click)="setActiveNav.emit('manuscript')">
-            <span class="material-symbols-outlined tab-icon">description</span>
-            Manuscript
-        </button>
-        <button class="ne-editor-tab" [class.active]="activeNav() === 'structure'"
-            (click)="setActiveNav.emit('structure')">
-            <span class="material-symbols-outlined tab-icon">menu_book</span>
-            Structure
-        </button>
-        @if (showExtendedTabs()) {
-        <button class="ne-editor-tab" [class.active]="activeNav() === 'characters'"
-            (click)="setActiveNav.emit('characters')">
-            <span class="material-symbols-outlined tab-icon">group</span>
-            Characters
-        </button>
-        <button class="ne-editor-tab" [class.active]="activeNav() === 'locations'"
-            (click)="setActiveNav.emit('locations')">
-            <span class="material-symbols-outlined tab-icon">public</span>
-            Locations
+        @for (tab of tabs(); track tab.id) {
+        <button class="ne-editor-tab" [class.active]="activeNav() === tab.id"
+            (click)="setActiveNav.emit(tab.id)">
+            <span class="material-symbols-outlined tab-icon">{{ tab.icon }}</span>
+            {{ tab.label }}
         </button>
         }
     </div>

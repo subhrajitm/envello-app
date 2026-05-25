@@ -205,6 +205,22 @@ export class BookContentService {
         this.schedulePersist();
     }
 
+    updateChapterStatus(chapterId: string, status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY') {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            return {
+                ...book,
+                chapters: book.chapters.map(group => ({
+                    ...group,
+                    children: group.children.map(chap =>
+                        chap.id === chapterId ? { ...chap, status } : chap
+                    )
+                }))
+            };
+        });
+        this.schedulePersist();
+    }
+
     updateChapterTags(chapterId: string, tags: string[]) {
         this.activeBook.update(book => {
             if (!book) return null;
