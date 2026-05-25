@@ -581,9 +581,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   // Delete Modal State
+  showBulkMoveModal = signal(false);
+
   deleteModal = signal<{
     isOpen: boolean;
-    type: 'chapter' | 'group' | 'character' | 'location' | 'note' | null;
+    type: 'chapter' | 'group' | 'character' | 'location' | 'note' | 'bulkChapters' | null;
     id: string | null;
     title: string;
     message: string;
@@ -595,7 +597,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     message: ''
   });
 
-  requestDelete(type: 'chapter' | 'group' | 'character' | 'location' | 'note', id: string, name?: string) {
+  requestDelete(type: 'chapter' | 'group' | 'character' | 'location' | 'note' | 'bulkChapters', id: string, name?: string) {
     let title = 'Delete Item';
     let message = 'Are you sure you want to delete this item? This action cannot be undone.';
 
@@ -645,40 +647,47 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     switch (modal.type) {
       case 'chapter':
         this.bookService.deleteChapter(modal.id);
+        this.closeEditorTab(modal.id);
         if (this.activeChapterId() === modal.id) {
           this.activeChapterId.set(null);
           this.title.set('');
           this.editor.commands.clearContent();
         }
         break;
-      case 'group':
-        this.bookService.deleteChapterGroup(modal.id);
-        // Clear active chapter if it was in the deleted group
+      case 'group': {
         const book = this.book();
         const deletedGroup = book?.chapters.find(g => g.id === modal.id);
         if (deletedGroup) {
           const deletedChapterIds = deletedGroup.children.map(c => c.id);
+          deletedChapterIds.forEach(id => this.closeEditorTab(id));
           if (this.activeChapterId() && deletedChapterIds.includes(this.activeChapterId()!)) {
             this.activeChapterId.set(null);
             this.title.set('');
             this.editor.commands.clearContent();
           }
         }
+        this.bookService.deleteChapterGroup(modal.id);
         break;
+      }
       case 'character':
         this.bookService.deleteCharacter(modal.id);
+        this.closeEditorTab(modal.id);
         if (this.selectedCharacterId() === modal.id) {
           this.selectedCharacterId.set(null);
         }
         break;
       case 'location':
         this.bookService.deleteLocation(modal.id);
+        this.closeEditorTab(modal.id);
         if (this.selectedLocationId() === modal.id) {
           this.selectedLocationId.set(null);
         }
         break;
       case 'note':
         this.bookService.deleteNote(modal.id);
+        break;
+      case 'bulkChapters':
+        this.executeBulkDelete();
         break;
     }
 
@@ -773,9 +782,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   addNewChapter(groupId?: string) {
     this.addMenuOpen.set(false);
     const book = this.book();
-    if (!book) {
-      return;
-    }
+    if (!book) return;
+
+    // Ensure manuscript section is active and visible
+    this.activeNav.set('manuscript');
+    this.accChapters.set(true);
 
     // If no groups exist, create one first
     if (book.chapters.length === 0) {
@@ -858,6 +869,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   addNewActOrPart() {
     this.addMenuOpen.set(false);
+    this.activeNav.set('manuscript');
+    this.accChapters.set(true);
     this.addModal.set({
       isOpen: true,
       type: 'act',
@@ -1194,7 +1207,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    if (!query || query.length < 2) return null; // Early return for short queries
+    if (!query) return null;
 
     const book = this.book();
     if (!book) return null;
@@ -1601,22 +1614,30 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   bulkDeleteChapters() {
+    const count = this.selectedChapters().size;
+    if (count === 0) return;
+    this.deleteModal.set({
+      isOpen: true,
+      type: 'bulkChapters',
+      id: 'bulk',
+      title: `Delete ${count} Chapter${count > 1 ? 's' : ''}?`,
+      message: `This will permanently delete ${count} selected chapter${count > 1 ? 's' : ''}. This action cannot be undone.`
+    });
+  }
+
+  private executeBulkDelete() {
+    // Capture snapshot before any mutations
     const selected = Array.from(this.selectedChapters());
-    if (selected.length === 0) return;
-
-    const book = this.book();
-    if (!book) return;
-
-    // Delete all selected chapters
+    const activeId = this.activeChapterId();
     selected.forEach(chapterId => {
       this.bookService.deleteChapter(chapterId);
-      if (this.activeChapterId() === chapterId) {
-        this.activeChapterId.set(null);
-        this.title.set('');
-        this.editor.commands.clearContent();
-      }
+      this.closeEditorTab(chapterId);
     });
-
+    if (activeId && selected.includes(activeId)) {
+      this.activeChapterId.set(null);
+      this.title.set('');
+      this.editor.commands.clearContent();
+    }
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
   }
@@ -1624,12 +1645,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   bulkMoveChapters(targetGroupId: string) {
     const selected = Array.from(this.selectedChapters());
     if (selected.length === 0) return;
-
     selected.forEach(chapterId => {
-      this.bookService.moveChapterToGroup?.(chapterId, targetGroupId);
+      this.bookService.moveChapterToGroup(chapterId, targetGroupId);
     });
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
+    this.showBulkMoveModal.set(false);
   }
 
   // Sidebar toggles

@@ -32,6 +32,12 @@
                 (click)="deleteLocation.emit({ id: loc.id, name: loc.name }); $event.stopPropagation()"
                 title="Delete location">delete</span>
         </div>
+        } @empty {
+        <div class="ne-list-empty">
+            <span class="material-symbols-outlined">add_location</span>
+            <span>No locations yet</span>
+            <button class="ne-list-empty-btn" (click)="addNewLocation.emit()">Add location</button>
+        </div>
         }
     </div>
 </div>

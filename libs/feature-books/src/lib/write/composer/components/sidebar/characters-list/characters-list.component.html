@@ -32,6 +32,12 @@
                 (click)="deleteCharacter.emit({ id: char.id, name: char.name }); $event.stopPropagation()"
                 title="Delete character">delete</span>
         </div>
+        } @empty {
+        <div class="ne-list-empty">
+            <span class="material-symbols-outlined">person_add</span>
+            <span>No characters yet</span>
+            <button class="ne-list-empty-btn" (click)="addNewCharacter.emit()">Add character</button>
+        </div>
         }
     </div>
 </div>
