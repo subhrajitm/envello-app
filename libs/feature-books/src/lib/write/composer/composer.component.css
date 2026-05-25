@@ -211,17 +211,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    border: none;
+    background: var(--accent-primary-dim, color-mix(in srgb, var(--accent-primary) 15%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
     border-radius: 4px;
-    color: var(--text-tertiary);
+    color: var(--accent-primary);
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
 }
 
 .ne-btn-back-mini:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
+    background: color-mix(in srgb, var(--accent-primary) 25%, transparent);
+    color: var(--accent-primary);
 }
 
 .ne-btn-back-mini .material-symbols-outlined {
@@ -978,6 +978,76 @@
 
 .ne-editor-tab.active::after {
     display: none;
+}
+
+.tab-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tab-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: transparent;
+    border-radius: 3px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    flex-shrink: 0;
+    opacity: 0;
+    padding: 0;
+    transition: opacity 0.1s, background 0.1s, color 0.1s;
+    margin-left: 4px;
+}
+
+.tab-close-btn .material-symbols-outlined {
+    font-size: 13px;
+}
+
+.ne-editor-tab:hover .tab-close-btn,
+.ne-editor-tab.active .tab-close-btn {
+    opacity: 1;
+}
+
+.tab-close-btn:hover {
+    background: color-mix(in srgb, var(--accent-red, #ff4444) 15%, transparent);
+    color: var(--accent-red, #ff4444);
+}
+
+/* Welcome / empty state */
+.ne-welcome-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    user-select: none;
+}
+
+.ne-welcome-icon {
+    font-size: 48px;
+    opacity: 0.2;
+    color: var(--accent-primary);
+}
+
+.ne-welcome-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.ne-welcome-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin: 0;
 }
 
 /* Editor Actions (in header, similar to daily notes) */

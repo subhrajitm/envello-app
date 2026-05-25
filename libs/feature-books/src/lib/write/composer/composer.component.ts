@@ -215,6 +215,111 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   hasCharactersContent = computed(() => (this.book()?.characters.length ?? 0) > 0);
   hasLocationsContent  = computed(() => (this.book()?.locations.length  ?? 0) > 0);
 
+  openTabIds = signal<string[]>([]);
+
+  openEditorTab(id: string) {
+    if (!this.openTabIds().includes(id)) {
+      this.openTabIds.update(ids => [...ids, id]);
+    }
+  }
+
+  closeEditorTab(id: string) {
+    const current = this.openTabIds();
+    const next = current.filter(i => i !== id);
+    this.openTabIds.set(next);
+    if (this.editorActiveTabId() === id) {
+      const idx = current.indexOf(id);
+      const fallback = next[idx] ?? next[idx - 1] ?? null;
+      if (fallback) {
+        this.handleEditorTabSelect(fallback);
+      } else {
+        this.clearActiveSelection();
+      }
+    }
+  }
+
+  private clearActiveSelection() {
+    switch (this.activeNav()) {
+      case 'manuscript':
+        this.activeChapterId.set(null);
+        this.title.set('');
+        break;
+      case 'structure':
+        this.activeFrontMatterId.set(null);
+        this.activePrologueId.set(null);
+        break;
+      case 'characters':
+        this.selectedCharacterId.set(null);
+        break;
+      case 'locations':
+        this.selectedLocationId.set(null);
+        break;
+    }
+  }
+
+  private fmTypeIcon(type: string): string {
+    const map: Record<string, string> = {
+      'title-page': 'title', 'copyright': 'copyright', 'toc': 'list',
+      'dedication': 'favorite', 'foreword': 'menu_book', 'preface': 'description',
+    };
+    return map[type] ?? 'description';
+  }
+
+  editorTabItems = computed(() => {
+    const nav     = this.activeNav();
+    const book    = this.book();
+    const openIds = this.openTabIds();
+    if (!book) return [] as { id: string; label: string; icon: string }[];
+    let all: { id: string; label: string; icon: string }[];
+    switch (nav) {
+      case 'manuscript':
+        all = book.chapters.flatMap(g => g.children).map(c => ({ id: c.id, label: c.title, icon: 'description' }));
+        break;
+      case 'structure': {
+        all = book.frontMatter.map(fm => ({ id: fm.id, label: fm.title, icon: this.fmTypeIcon(fm.type) }));
+        if (book.prologue) all.push({ id: 'prologue', label: book.prologue.title || 'Prologue', icon: 'menu_book' });
+        break;
+      }
+      case 'characters':
+        all = book.characters.map(c => ({ id: c.id, label: c.name, icon: 'account_circle' }));
+        break;
+      case 'locations':
+        all = book.locations.map(l => ({ id: l.id, label: l.name, icon: 'public' }));
+        break;
+      default:
+        all = [];
+    }
+    return all.filter(item => openIds.includes(item.id));
+  });
+
+  editorActiveTabId = computed(() => {
+    switch (this.activeNav()) {
+      case 'manuscript':  return this.activeChapterId();
+      case 'structure':   return this.activeFrontMatterId() ?? (this.activePrologueId() ? 'prologue' : null);
+      case 'characters':  return this.selectedCharacterId();
+      case 'locations':   return this.selectedLocationId();
+    }
+  });
+
+  handleEditorTabSelect(id: string) {
+    switch (this.activeNav()) {
+      case 'manuscript': {
+        const chapter = this.book()?.chapters.flatMap(g => g.children).find(c => c.id === id);
+        if (chapter) this.selectChapter(chapter);
+        break;
+      }
+      case 'structure':
+        id === 'prologue' ? this.selectPrologue() : this.selectFrontMatterItem(id);
+        break;
+      case 'characters':
+        this.selectCharacter(id);
+        break;
+      case 'locations':
+        this.selectLocation(id);
+        break;
+    }
+  }
+
   activeChapter = computed(() => {
     const chapterId = this.activeChapterId();
     if (!chapterId) return null;
@@ -412,6 +517,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
         for (const group of book.chapters) {
           const found = group.children.find(c => c.id === chapter.id);
           if (found) {
+            this.openEditorTab(found.id);
             this.activeChapterId.set(found.id);
             this.activeGroupId.set(group.id);
             return;
@@ -800,6 +906,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectCharacter(charId: string) {
+    this.openEditorTab(charId);
     this.selectedCharacterId.set(charId);
   }
 
@@ -826,6 +933,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectLocation(locId: string) {
+    this.openEditorTab(locId);
     this.selectedLocationId.set(locId);
   }
 
@@ -942,12 +1050,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectFrontMatterItem(itemId: string) {
+    this.openEditorTab(itemId);
     this.activeFrontMatterId.set(itemId);
     this.activeChapterId.set(null);
     this.activePrologueId.set(null);
   }
 
   selectPrologue() {
+    this.openEditorTab('prologue');
     this.activePrologueId.set('prologue');
     this.activeChapterId.set(null);
     this.activeFrontMatterId.set(null);

@@ -193,10 +193,13 @@
 
         <!-- Editor Canvas -->
         <div class="ne-editor-area" [class.focus-mode]="focusMode()">
-            <app-editor-header [activeNav]="activeNav()" [canUndo]="canUndo()" [canRedo]="canRedo()"
-                [writingType]="writingType()"
-                [hasCharacters]="hasCharactersContent()" [hasLocations]="hasLocationsContent()"
-                (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()" />
+            <app-editor-header [items]="editorTabItems()" [activeItemId]="editorActiveTabId()"
+                [canUndo]="canUndo()" [canRedo]="canRedo()"
+                (selectItem)="handleEditorTabSelect($event)"
+                (closeTab)="closeEditorTab($event)"
+                (performUndo)="performUndo()" (performRedo)="performRedo()" />
+
+            @if (editorActiveTabId()) {
 
             @if (editor && (activeNav() === 'manuscript' || activeNav() === 'structure')) {
             <app-editor-toolbar [editor]="editor" [writingType]="writingType()" (openLinkModal)="openLinkModal()" (addImage)="addImage()"
@@ -225,6 +228,15 @@
             @if (activeNav() === 'locations' && book()) {
             <app-location-details [location]="activeLocation()" (updateField)="onLocationFieldUpdate($event)"
                 (addNewLocation)="addNewLocation()" />
+            }
+
+            } @else {
+            <!-- Welcome / empty state -->
+            <div class="ne-welcome-state">
+                <span class="material-symbols-outlined ne-welcome-icon">edit_note</span>
+                <p class="ne-welcome-title">Nothing open</p>
+                <p class="ne-welcome-hint">Select an item from the sidebar to start editing</p>
+            </div>
             }
         </div>
 
