@@ -224,12 +224,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   closeEditorTab(id: string) {
-    const current = this.openTabIds();
-    const next = current.filter(i => i !== id);
+    const current  = this.openTabIds();
+    const wasActive = this.editorActiveTabId() === id; // capture before mutation
+    const idx      = current.indexOf(id);
+    const next     = current.filter(i => i !== id);
     this.openTabIds.set(next);
-    if (this.editorActiveTabId() === id) {
-      const idx = current.indexOf(id);
-      const fallback = next[idx] ?? next[idx - 1] ?? null;
+    if (wasActive) {
+      const fallback = next[Math.min(idx, next.length - 1)] ?? null;
       if (fallback) {
         this.handleEditorTabSelect(fallback);
       } else {

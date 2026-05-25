@@ -294,50 +294,6 @@
                 <div class="ne-strip-divider"></div>
 
                 <!-- Utility buttons (bottom) -->
-                <div class="search-wrapper ne-strip-dropdown-wrapper">
-                    <button class="ne-strip-btn" [class.active]="searchOpen()" (click)="toggleSearch()" title="Search (⌘+K)">
-                        <span class="material-symbols-outlined">search</span>
-                    </button>
-                    @if (searchOpen()) {
-                    <div class="search-dropdown ne-strip-popup">
-                        <div class="search-input-wrapper">
-                            <span class="material-symbols-outlined search-icon">search</span>
-                            <input type="text" class="search-input" [value]="searchQuery()"
-                                (input)="searchQuery.set($any($event.target).value)"
-                                placeholder="Search chapters, characters, locations..."
-                                autofocus />
-                            @if (searchQuery()) {
-                            <button class="search-clear" (click)="searchQuery.set('')">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                            }
-                        </div>
-                        @if (filteredChapters() && filteredChapters()!.length > 0) {
-                        <div class="search-results">
-                            @for (result of filteredChapters()!; track result.id) {
-                            <button class="search-result-item" (click)="selectSearchResult(result)">
-                                <span class="material-symbols-outlined result-icon">
-                                    @if (result.type === 'chapter') { description }
-                                    @else if (result.type === 'character') { account_circle }
-                                    @else if (result.type === 'location') { public }
-                                    @else if (result.type === 'frontMatter') { menu_book }
-                                    @else if (result.type === 'prologue') { menu_book }
-                                </span>
-                                <div class="result-content">
-                                    <div class="result-title">{{ result.title }}</div>
-                                    @if (result.subtitle) {
-                                    <div class="result-subtitle">{{ result.subtitle }}</div>
-                                    }
-                                </div>
-                            </button>
-                            }
-                        </div>
-                        } @else if (searchQuery() && filteredChapters()?.length === 0) {
-                        <div class="search-empty">No results found</div>
-                        }
-                    </div>
-                    }
-                </div>
                 <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" title="Focus Mode (⌘+\)">
                     <span class="material-symbols-outlined">center_focus_strong</span>
                 </button>
