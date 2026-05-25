@@ -97,7 +97,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   private focusToastTimer?: ReturnType<typeof setTimeout>;
   fullScreenMode = signal(false);
   leftSidebarCollapsed = signal(false);
-  rightSidebarCollapsed = signal(false);
+  rightSidebarCollapsed = signal(true);
   searchOpen = signal(false);
   searchQuery = signal('');
   exportMenuOpen = signal(false);
@@ -422,7 +422,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   setActiveTab(tab: 'ai' | 'notes' | 'manuscript') {
-    this.rightSidebarTab.set(tab);
+    if (this.rightSidebarCollapsed() || this.rightSidebarTab() !== tab) {
+      this.rightSidebarTab.set(tab);
+      this.rightSidebarCollapsed.set(false);
+    } else {
+      this.rightSidebarCollapsed.set(true);
+    }
   }
 
   setActiveNav(nav: 'manuscript' | 'structure' | 'characters' | 'locations') {

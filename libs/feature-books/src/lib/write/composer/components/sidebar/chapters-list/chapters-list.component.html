@@ -47,11 +47,6 @@
              (drop)="onDrop($event, i, 'group')">
             <div class="ne-chapter-item group-header" (click)="toggleChapter.emit(group)">
                 <span class="material-symbols-outlined drag-handle">drag_indicator</span>
-                <button class="ne-collapse-btn">
-                    <span class="material-symbols-outlined">
-                        {{ group.expanded ? 'expand_more' : 'chevron_right' }}
-                    </span>
-                </button>
                 <div class="ne-chap-info">
                     <div class="ne-chap-title font-bold text-[11px] uppercase">
                         {{ group.title }}
@@ -61,6 +56,11 @@
                 <span class="material-symbols-outlined list-delete chapter-delete group-delete"
                     (click)="deleteGroup.emit({ id: group.id, title: group.title }); $event.stopPropagation()"
                     title="Delete act/part">delete</span>
+                <button class="ne-collapse-btn">
+                    <span class="material-symbols-outlined">
+                        {{ group.expanded ? 'expand_more' : 'chevron_right' }}
+                    </span>
+                </button>
             </div>
             @if (group.expanded) {
             <div class="ne-scene-list">

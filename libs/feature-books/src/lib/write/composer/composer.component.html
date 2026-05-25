@@ -27,13 +27,46 @@
             </button>
             }
 
-            <!-- Sidebar back action -->
+            <!-- Sidebar header: mini back + search -->
             <div class="ne-sidebar-header-action">
-                <button class="ne-btn-back-sidebar" (click)="goBack()" title="Back to Write">
-                    <span class="material-symbols-outlined text-sm">arrow_back</span>
-                    Write
+                <button class="ne-btn-back-mini" (click)="goBack()" title="Back to Write">
+                    <span class="material-symbols-outlined">arrow_back</span>
                 </button>
+                <div class="ne-sidebar-search" [class.active]="searchQuery()">
+                    <span class="material-symbols-outlined ne-sidebar-search-icon">search</span>
+                    <input class="ne-sidebar-search-input" type="text"
+                           [value]="searchQuery()"
+                           (input)="searchQuery.set($any($event.target).value)"
+                           placeholder="Search…" />
+                    @if (searchQuery()) {
+                    <button class="ne-sidebar-search-clear" (click)="searchQuery.set('')">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                    }
+                </div>
             </div>
+
+            <!-- Inline search results -->
+            @if (searchQuery() && filteredChapters()?.length) {
+            <div class="ne-sidebar-search-results">
+                @for (result of filteredChapters()!; track result.id) {
+                <button class="ne-sidebar-search-result" (click)="selectSearchResult(result)">
+                    <span class="material-symbols-outlined result-icon">
+                        @if (result.type === 'chapter') { description }
+                        @else if (result.type === 'character') { account_circle }
+                        @else if (result.type === 'location') { public }
+                        @else { menu_book }
+                    </span>
+                    <div class="result-content">
+                        <div class="result-title">{{ result.title }}</div>
+                        @if (result.subtitle) { <div class="result-subtitle">{{ result.subtitle }}</div> }
+                    </div>
+                </button>
+                }
+            </div>
+            } @else if (searchQuery() && filteredChapters()?.length === 0) {
+            <div class="ne-sidebar-search-empty">No results for "{{ searchQuery() }}"</div>
+            }
 
             <!-- ── ACCORDION CONTAINER ── -->
             <div class="ne-acc-container">
@@ -161,17 +194,9 @@
         <!-- Editor Canvas -->
         <div class="ne-editor-area" [class.focus-mode]="focusMode()">
             <app-editor-header [activeNav]="activeNav()" [canUndo]="canUndo()" [canRedo]="canRedo()"
-                [searchOpen]="searchOpen()" [searchQuery]="searchQuery()" [filteredResults]="filteredChapters()"
-                [focusMode]="focusMode()" [fullScreenMode]="fullScreenMode()" [exportMenuOpen]="exportMenuOpen()"
                 [writingType]="writingType()"
                 [hasCharacters]="hasCharactersContent()" [hasLocations]="hasLocationsContent()"
-                [rightSidebarOpen]="!rightSidebarCollapsed()" [aiEnabled]="aiService.aiEnabled()"
-                (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()"
-                (toggleSearch)="toggleSearch()" (searchQueryChange)="searchQuery.set($event)"
-                (selectSearchResult)="selectSearchResult($event)" (toggleFocusMode)="toggleFocusMode()"
-                (toggleFullScreen)="toggleFullScreen()" (openVersionHistory)="openVersionHistory()"
-                (toggleExportMenu)="toggleExportMenu()" (exportNovel)="exportNovel($event)"
-                (toggleRightSidebar)="toggleRightSidebar()" />
+                (setActiveNav)="setActiveNav($event)" (performUndo)="performUndo()" (performRedo)="performRedo()" />
 
             @if (editor && (activeNav() === 'manuscript' || activeNav() === 'structure')) {
             <app-editor-toolbar [editor]="editor" [writingType]="writingType()" (openLinkModal)="openLinkModal()" (addImage)="addImage()"
@@ -203,24 +228,10 @@
             }
         </div>
 
-        <!-- Right Sidebar: AI & Tools -->
+        <!-- Right Sidebar: compact icon strip + expandable panel -->
         <div class="ne-sidebar-right" [class.collapsed]="rightSidebarCollapsed()">
-            <div class="ne-right-tabs">
-                @if (aiService.aiEnabled()) {
-                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'ai'" (click)="setActiveTab('ai')">
-                    <span class="material-symbols-outlined icon-tab">bolt</span>
-                </button>
-                }
-                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'notes'"
-                    (click)="setActiveTab('notes')">
-                    <span class="material-symbols-outlined icon-tab">sticky_note_2</span>
-                </button>
-                <button class="ne-tab-btn" [class.active]="rightSidebarTab() === 'manuscript'"
-                    (click)="setActiveTab('manuscript')">
-                    <span class="material-symbols-outlined icon-tab">description</span>
-                </button>
-            </div>
-
+            <!-- Expandable content panel -->
+            @if (!rightSidebarCollapsed()) {
             <div class="ne-right-content">
                 @if (rightSidebarTab() === 'ai' && aiService.aiEnabled()) {
                 <app-ai-panel [aiMessages]="aiMessages()" [aiLoading]="aiLoading()" [aiError]="aiError()"
@@ -246,6 +257,115 @@
                     [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()"
                     [writingType]="writingType()" [sectionLabel]="sectionLabel()" />
                 }
+            </div>
+            }
+            <!-- Always-visible vertical icon strip -->
+            <div class="ne-right-strip">
+                <!-- Panel toggles (top) -->
+                @if (aiService.aiEnabled()) {
+                <button class="ne-strip-btn" [class.active]="!rightSidebarCollapsed() && rightSidebarTab() === 'ai'"
+                    (click)="setActiveTab('ai')" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                </button>
+                }
+                <button class="ne-strip-btn" [class.active]="!rightSidebarCollapsed() && rightSidebarTab() === 'notes'"
+                    (click)="setActiveTab('notes')" title="Notes">
+                    <span class="material-symbols-outlined">sticky_note_2</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="!rightSidebarCollapsed() && rightSidebarTab() === 'manuscript'"
+                    (click)="setActiveTab('manuscript')" title="Book Stats">
+                    <span class="material-symbols-outlined">bar_chart</span>
+                </button>
+
+                <!-- Spacer -->
+                <div class="ne-strip-spacer"></div>
+                <div class="ne-strip-divider"></div>
+
+                <!-- Utility buttons (bottom) -->
+                <div class="search-wrapper ne-strip-dropdown-wrapper">
+                    <button class="ne-strip-btn" [class.active]="searchOpen()" (click)="toggleSearch()" title="Search (⌘+K)">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                    @if (searchOpen()) {
+                    <div class="search-dropdown ne-strip-popup">
+                        <div class="search-input-wrapper">
+                            <span class="material-symbols-outlined search-icon">search</span>
+                            <input type="text" class="search-input" [value]="searchQuery()"
+                                (input)="searchQuery.set($any($event.target).value)"
+                                placeholder="Search chapters, characters, locations..."
+                                autofocus />
+                            @if (searchQuery()) {
+                            <button class="search-clear" (click)="searchQuery.set('')">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                            }
+                        </div>
+                        @if (filteredChapters() && filteredChapters()!.length > 0) {
+                        <div class="search-results">
+                            @for (result of filteredChapters()!; track result.id) {
+                            <button class="search-result-item" (click)="selectSearchResult(result)">
+                                <span class="material-symbols-outlined result-icon">
+                                    @if (result.type === 'chapter') { description }
+                                    @else if (result.type === 'character') { account_circle }
+                                    @else if (result.type === 'location') { public }
+                                    @else if (result.type === 'frontMatter') { menu_book }
+                                    @else if (result.type === 'prologue') { menu_book }
+                                </span>
+                                <div class="result-content">
+                                    <div class="result-title">{{ result.title }}</div>
+                                    @if (result.subtitle) {
+                                    <div class="result-subtitle">{{ result.subtitle }}</div>
+                                    }
+                                </div>
+                            </button>
+                            }
+                        </div>
+                        } @else if (searchQuery() && filteredChapters()?.length === 0) {
+                        <div class="search-empty">No results found</div>
+                        }
+                    </div>
+                    }
+                </div>
+                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" title="Focus Mode (⌘+\)">
+                    <span class="material-symbols-outlined">center_focus_strong</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" title="Full Screen (F11)">
+                    <span class="material-symbols-outlined">fullscreen</span>
+                </button>
+                <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History">
+                    <span class="material-symbols-outlined">history</span>
+                </button>
+                <div class="export-menu-wrapper ne-strip-dropdown-wrapper">
+                    <button class="ne-strip-btn" [class.active]="exportMenuOpen()" (click)="toggleExportMenu()" title="Export">
+                        <span class="material-symbols-outlined">download</span>
+                    </button>
+                    @if (exportMenuOpen()) {
+                    <div class="add-dropdown-menu ne-strip-popup">
+                        <button class="add-dropdown-option" (click)="exportNovel('pdf'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
+                            <span class="option-label">Export as PDF</span>
+                        </button>
+                        <button class="add-dropdown-option" (click)="exportNovel('docx'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">article</span>
+                            <span class="option-label">Export as Word (.doc)</span>
+                        </button>
+                        <button class="add-dropdown-option" (click)="exportNovel('html'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">code</span>
+                            <span class="option-label">Export as HTML</span>
+                        </button>
+                        <button class="add-dropdown-option" (click)="exportNovel('md'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">description</span>
+                            <span class="option-label">Export as Markdown</span>
+                        </button>
+                        @if (writingType() === 'SCRIPT') {
+                        <button class="add-dropdown-option" (click)="exportNovel('fountain'); toggleExportMenu()">
+                            <span class="material-symbols-outlined option-icon">theaters</span>
+                            <span class="option-label">Export as Fountain (.fountain)</span>
+                        </button>
+                        }
+                    </div>
+                    }
+                </div>
             </div>
         </div>
     </div>
