@@ -21,13 +21,13 @@
         <div class="undo-redo-group">
             <button class="action-btn"
                     (click)="performUndo.emit()"
-                    [disabled]="!canUndo()"
+                    [disabled]="!activeItemId() || !canUndo()"
                     title="Undo (⌘+Z)">
                 <span class="material-symbols-outlined">undo</span>
             </button>
             <button class="action-btn"
                     (click)="performRedo.emit()"
-                    [disabled]="!canRedo()"
+                    [disabled]="!activeItemId() || !canRedo()"
                     title="Redo (⌘+Shift+Z)">
                 <span class="material-symbols-outlined">redo</span>
             </button>

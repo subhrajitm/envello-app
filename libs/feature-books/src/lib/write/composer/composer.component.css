@@ -1412,7 +1412,7 @@
     flex-direction: row;
     background: var(--bg-app);
     border-left: 1px solid var(--border-subtle);
-    overflow: hidden;
+    overflow: visible;
     min-height: 0;
     height: 100%;
     width: 40px;
