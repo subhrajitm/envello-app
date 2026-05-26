@@ -1,4 +1,4 @@
-import { Component, input, output, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { Component, input, output, ViewChild, ElementRef, effect, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -22,22 +22,24 @@ export interface AddModalData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
 })
-export class AddModalComponent implements AfterViewChecked {
+export class AddModalComponent {
   modal = input.required<AddModalData>();
   inputValueChange = output<string>();
   inputValue2Change = output<string>();
   confirm = output<void>();
   cancel = output<void>();
-  
-  @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
-  private shouldFocusInput = false;
 
-  ngAfterViewChecked() {
-    if (this.shouldFocusInput && this.addInputRef?.nativeElement) {
-      this.addInputRef.nativeElement.focus();
-      this.addInputRef.nativeElement.select();
-      this.shouldFocusInput = false;
-    }
+  @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
+
+  constructor() {
+    effect(() => {
+      if (this.modal().isOpen) {
+        setTimeout(() => {
+          this.addInputRef?.nativeElement?.focus();
+          this.addInputRef?.nativeElement?.select();
+        }, 0);
+      }
+    });
   }
 
   onInputChange(value: string) {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -69,15 +69,13 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
   styleUrl: './composer.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ComposerComponent implements OnInit, OnDestroy {
   editor!: Editor;
   bookService = inject(BookContentService);
   versionHistoryService = inject(VersionHistoryService);
   aiService = inject(AiService);
   private store = inject(StoreService);
   route = inject(ActivatedRoute);
-  @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
-  private shouldFocusInput = false;
   private timeInterval?: number;
   private saveTimeout?: ReturnType<typeof setTimeout>;
 
@@ -102,7 +100,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   rightSidebarCollapsed = signal(true);
   searchOpen = signal(false);
   searchQuery = signal('');
-  exportMenuOpen = signal(false);
   exportModalOpen = signal(false);
 
   // Computed helpers for the export modal
@@ -522,14 +519,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.bookService.loadBook(id).then(() => this.isLoading.set(false));
   }
 
-  ngAfterViewChecked() {
-    if (this.shouldFocusInput && this.addInputRef?.nativeElement) {
-      this.addInputRef.nativeElement.focus();
-      this.addInputRef.nativeElement.select();
-      this.shouldFocusInput = false;
-    }
-  }
-
   ngOnDestroy() {
     if (this.timeInterval) clearInterval(this.timeInterval);
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
@@ -546,18 +535,15 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectChapter(chapter: Chapter | { id: string }) {
-    if ('id' in chapter) {
-      const book = this.book();
-      if (book) {
-        for (const group of book.chapters) {
-          const found = group.children.find(c => c.id === chapter.id);
-          if (found) {
-            this.openEditorTab(found.id);
-            this.activeChapterId.set(found.id);
-            this.activeGroupId.set(group.id);
-            return;
-          }
-        }
+    const book = this.book();
+    if (!book) return;
+    for (const group of book.chapters) {
+      const found = group.children.find(c => c.id === chapter.id);
+      if (found) {
+        this.openEditorTab(found.id);
+        this.activeChapterId.set(found.id);
+        this.activeGroupId.set(group.id);
+        return;
       }
     }
   }
@@ -603,8 +589,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   onTitleChange(newTitle: string) {
     this.title.set(newTitle);
     const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
     if (activeId) {
       this.bookService.updateChapterTitle(activeId, newTitle);
+    } else if (frontMatterId) {
+      this.bookService.updateFrontMatterTitle(frontMatterId, newTitle);
+    } else if (prologueId) {
+      this.bookService.updatePrologueTitle(newTitle);
     }
   }
 
@@ -768,12 +760,16 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    // Escape to close modals
+    // Escape to close modals (highest-priority first)
     if (event.key === 'Escape') {
       if (this.imageModalOpen()) { this.cancelImageModal(); return; }
       if (this.youtubeModalOpen()) { this.cancelYoutubeModal(); return; }
+      if (this.linkModalOpen()) { this.cancelLinkModal(); return; }
       if (this.addModal().isOpen) { this.cancelAdd(); return; }
       if (this.deleteModal().isOpen) { this.cancelDelete(); return; }
+      if (this.exportModalOpen()) { this.exportModalOpen.set(false); return; }
+      if (this.versionHistoryOpen()) { this.closeVersionHistory(); return; }
+      if (this.showBulkMoveModal()) { this.showBulkMoveModal.set(false); return; }
       if (this.searchOpen()) { this.searchOpen.set(false); }
     }
 
@@ -832,7 +828,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       title: 'Add New Chapter',
       inputValue: 'Untitled Chapter'
     });
-    this.shouldFocusInput = true;
   }
 
   confirmAdd() {
@@ -910,7 +905,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       title: 'Add New Act/Part',
       inputValue: 'New Part'
     });
-    this.shouldFocusInput = true;
   }
 
   toggleAddMenu() { this.addMenuOpen.update(v => !v); }
@@ -933,7 +927,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       inputValue: '',
       inputValue2: ''
     });
-    this.shouldFocusInput = true;
   }
 
   deleteNote(noteId: string) {
@@ -945,12 +938,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Character management
   addNewCharacter() {
+    const before = new Set((this.book()?.characters ?? []).map(c => c.id));
     this.bookService.addCharacter('New Character');
-    // Auto-select the newly created character (assuming it's the last one)
-    const n = this.book();
-    if (n && n.characters.length > 0) {
-      this.selectedCharacterId.set(n.characters[n.characters.length - 1].id);
-    }
+    const newChar = this.book()?.characters.find(c => !before.has(c.id));
+    if (newChar) this.selectCharacter(newChar.id);
   }
 
   selectCharacter(charId: string) {
@@ -973,11 +964,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Location management
   addNewLocation() {
+    const before = new Set((this.book()?.locations ?? []).map(l => l.id));
     this.bookService.addLocation('New Location');
-    const n = this.book();
-    if (n && n.locations.length > 0) {
-      this.selectedLocationId.set(n.locations[n.locations.length - 1].id);
-    }
+    const newLoc = this.book()?.locations.find(l => !before.has(l.id));
+    if (newLoc) this.selectLocation(newLoc.id);
   }
 
   selectLocation(locId: string) {
@@ -1006,13 +996,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     return `${mins}m ${secs}s`;
   }
 
-  // Writing goals
-  getGoalProgress(): number {
-    const current = this.wordCount();
+  goalProgress = computed(() => {
     const target = this.targetWordCount();
     if (target === 0) return 0;
-    return Math.min(Math.round((current / target) * 100), 100);
-  }
+    return Math.min(Math.round((this.totalNovelWords() / target) * 100), 100);
+  });
 
   // Novel statistics
   totalNovelWords = computed(() => {
@@ -1057,15 +1045,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     return completed;
   });
 
-  getTotalChapters(): number {
+  totalChapters = computed(() => {
     const book = this.book();
     if (!book) return 0;
-    let total = 0;
-    book.chapters.forEach(group => {
-      total += group.children.length;
-    });
-    return total;
-  }
+    return book.chapters.reduce((sum, g) => sum + g.children.length, 0);
+  });
 
   // Front Matter Management
   getFrontMatterTypeLabel(type: string): string {
@@ -1118,11 +1102,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   deletePrologue() {
     this.bookService.deletePrologue();
+    this.closeEditorTab('prologue');
     this.activePrologueId.set(null);
   }
 
   deleteFrontMatterItem(itemId: string, title: string) {
     this.bookService.deleteFrontMatterItem(itemId);
+    this.closeEditorTab(itemId);
     if (this.activeFrontMatterId() === itemId) {
       this.activeFrontMatterId.set(null);
       this.title.set('');
@@ -1207,12 +1193,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Character/Location Mentions - converted to computed signals for performance
   mentionedCharacters = computed(() => {
     const chapterId = this.activeChapterId();
-    if (!chapterId || !this.editor) return [];
+    if (!chapterId) return [];
 
     const chapter = this.activeChapter();
     if (!chapter) return [];
 
-    const content = chapter.content.toLowerCase();
+    const content = chapter.content.replace(/<[^>]+>/g, ' ').toLowerCase();
     const book = this.book();
     if (!book) return [];
 
@@ -1223,12 +1209,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   mentionedLocations = computed(() => {
     const chapterId = this.activeChapterId();
-    if (!chapterId || !this.editor) return [];
+    if (!chapterId) return [];
 
     const chapter = this.activeChapter();
     if (!chapter) return [];
 
-    const content = chapter.content.toLowerCase();
+    const content = chapter.content.replace(/<[^>]+>/g, ' ').toLowerCase();
     const book = this.book();
     if (!book) return [];
 
@@ -1534,9 +1520,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   async continueWriting() {
     if (!this.editor) return;
 
-    const content = this.editor.getHTML();
-    const cursorPosition = this.editor.state.selection.anchor;
-    const preceding = content.substring(Math.max(0, cursorPosition - 1000), cursorPosition);
+    const anchor = this.editor.state.selection.anchor;
+    const docSize = this.editor.state.doc.content.size;
+    const from = Math.max(0, anchor - 1000);
+    const preceding = this.editor.state.doc.textBetween(from, Math.min(anchor, docSize), '\n');
 
     this.aiMessages.update(msgs => [...msgs, {
       id: Date.now().toString(),
@@ -1700,10 +1687,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.searchOpen.update(v => !v);
   }
 
-  toggleExportMenu() {
-    this.exportMenuOpen.update(v => !v);
-  }
-
   handleExport(request: ExportRequest) {
     this.exportModalOpen.set(false);
     const { scopeKeys, format } = request;
@@ -1717,7 +1700,8 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!book) return;
 
     // Collect items in natural order: front matter → prologue → chapters
-    const items: { title: string; content: string }[] = [];
+    const isScript = this.writingType() === 'SCRIPT';
+    const items: { title: string; content: string; isScene?: boolean }[] = [];
     for (const fm of book.frontMatter) {
       if (scopeKeys.includes(`item:${fm.id}`)) items.push({ title: fm.title, content: fm.content });
     }
@@ -1726,7 +1710,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     for (const group of book.chapters) {
       for (const chapter of group.children) {
-        if (scopeKeys.includes(`item:${chapter.id}`)) items.push({ title: chapter.title, content: chapter.content });
+        if (scopeKeys.includes(`item:${chapter.id}`)) items.push({ title: chapter.title, content: chapter.content, isScene: isScript });
       }
     }
 
@@ -1751,7 +1735,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.triggerDownload(`export-selection`, this.buildContent(items, format), format);
   }
 
-  private buildContent(items: { title: string; content: string }[], format: Exclude<ExportFormat, 'pdf'>): { body: string; mime: string; ext: string } {
+  private buildContent(items: { title: string; content: string; isScene?: boolean }[], format: Exclude<ExportFormat, 'pdf'>): { body: string; mime: string; ext: string } {
     if (format === 'md') {
       return {
         body: items.map(i => `# ${i.title}\n\n${this.htmlToMarkdown(i.content)}`).join('\n\n---\n\n'),
@@ -1760,20 +1744,25 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     if (format === 'html') {
       return {
-        body: items.map(i => `<h1>${i.title}</h1>\n${i.content}`).join('\n<hr>\n'),
+        body: items.map(i => `<h1>${this.escapeHtml(i.title)}</h1>\n${i.content}`).join('\n<hr>\n'),
         mime: 'text/html', ext: 'html'
       };
     }
     if (format === 'docx') {
-      const body = items.map(i => `<h1>${i.title}</h1>${i.content}`).join('<hr>');
+      const body = items.map(i => `<h1>${this.escapeHtml(i.title)}</h1>${i.content}`).join('<hr>');
       return {
         body: `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${body}</body></html>`,
         mime: 'application/msword', ext: 'doc'
       };
     }
-    // fountain
+    // fountain — only script scenes get scene headings; everything else is treated as prose
     return {
-      body: items.map(i => `INT. ${i.title.toUpperCase()} - DAY\n\n${i.content.replace(/<[^>]+>/g, '').trim()}`).join('\n\n'),
+      body: items.map(i => {
+        const text = i.content.replace(/<[^>]+>/g, '').trim();
+        return i.isScene
+          ? `INT. ${i.title.toUpperCase()} - DAY\n\n${text}`
+          : `${i.title.toUpperCase()}\n\n${text}`;
+      }).join('\n\n'),
       mime: 'text/plain', ext: 'fountain'
     };
   }
@@ -1786,10 +1775,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     URL.revokeObjectURL(url);
   }
 
+  private escapeHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   private printContent(items: { title: string; content: string }[], docTitle: string) {
     const sections = items.map((item, i) =>
       `<section${i > 0 ? ' class="pb"' : ''}>
-        <h1>${item.title}</h1>
+        <h1>${this.escapeHtml(item.title)}</h1>
         <div class="body">${item.content}</div>
       </section>`
     ).join('\n');
@@ -1798,7 +1791,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>${docTitle}</title>
+<title>${this.escapeHtml(docTitle)}</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   @page { size: A4; margin: 2.5cm; }

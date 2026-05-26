@@ -90,7 +90,7 @@
 
             <!-- ── CHAPTERS ACCORDION ── -->
             @if (book()) {
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 0 > lastOpenIdx() ? 90 : 1">
+            <div class="ne-acc-section" [style.order]="!accChapters() && lastOpenIdx() > 0 ? 90 : 1">
                 <div class="ne-acc-hdr" (click)="toggleAccChapters()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accChapters()">chevron_right</span>
                     <span class="ne-acc-title">{{ sectionLabel().toUpperCase() }}</span>
@@ -145,7 +145,7 @@
             </div>
 
             <!-- ── STRUCTURE ACCORDION ── -->
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 1 > lastOpenIdx() ? 91 : 2">
+            <div class="ne-acc-section" [style.order]="!accStructure() && lastOpenIdx() > 1 ? 91 : 2">
                 <div class="ne-acc-hdr" (click)="toggleAccStructure()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accStructure()">chevron_right</span>
                     <span class="ne-acc-title">STRUCTURE</span>
@@ -164,7 +164,7 @@
 
             <!-- ── CHARACTERS ACCORDION ── -->
             @if (showExtendedTabs()) {
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 2 > lastOpenIdx() ? 92 : 3">
+            <div class="ne-acc-section" [style.order]="!accCharacters() && lastOpenIdx() > 2 ? 92 : 3">
                 <div class="ne-acc-hdr" (click)="toggleAccCharacters()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accCharacters()">chevron_right</span>
                     <span class="ne-acc-title">CHARACTERS</span>
@@ -184,7 +184,7 @@
             </div>
 
             <!-- ── LOCATIONS ACCORDION ── -->
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 3 > lastOpenIdx() ? 93 : 4">
+            <div class="ne-acc-section" [style.order]="4">
                 <div class="ne-acc-hdr" (click)="toggleAccLocations()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accLocations()">chevron_right</span>
                     <span class="ne-acc-title">LOCATIONS</span>
@@ -286,9 +286,9 @@
                 } @else if (rightSidebarTab() === 'manuscript' && book()) {
                 <app-manuscript-data [totalNovelWords]="totalNovelWords()"
                     [averageChapterLength]="averageChapterLength()" [chaptersCompleted]="chaptersCompleted()"
-                    [totalChapters]="getTotalChapters()" [logline]="book()!.synopsis.logline"
+                    [totalChapters]="totalChapters()" [logline]="book()!.synopsis.logline"
                     [theme]="book()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
-                    [goalProgress]="getGoalProgress()" [activeChapterId]="activeChapterId()"
+                    [goalProgress]="goalProgress()" [activeChapterId]="activeChapterId()"
                     [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()"
                     [writingType]="writingType()" [sectionLabel]="sectionLabel()" />
                 }
