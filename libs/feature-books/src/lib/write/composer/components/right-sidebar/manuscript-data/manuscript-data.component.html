@@ -23,39 +23,18 @@
                 </div>
             </div>
             <!-- Type-specific metrics -->
-            @if (writingType() === 'SCRIPT') {
             <div class="stats-grid">
+                @if (writingType() === 'SCRIPT') {
                 <div class="stat-card-mini">
                     <div class="stat-label-mini">Est. Pages</div>
                     <div class="stat-value-mini">{{ estimatedPages }}</div>
                 </div>
+                }
                 <div class="stat-card-mini">
                     <div class="stat-label-mini">Reading Time</div>
                     <div class="stat-value-mini">{{ readingTime }} min</div>
                 </div>
             </div>
-            } @else if (writingType() === 'BLOG_POST' || writingType() === 'ARTICLE') {
-            <div class="stats-grid">
-                <div class="stat-card-mini">
-                    <div class="stat-label-mini">Reading Time</div>
-                    <div class="stat-value-mini">{{ readingTime }} min</div>
-                </div>
-            </div>
-            } @else if (writingType() === 'POETRY') {
-            <div class="stats-grid">
-                <div class="stat-card-mini">
-                    <div class="stat-label-mini">Reading Time</div>
-                    <div class="stat-value-mini">{{ readingTime }} min</div>
-                </div>
-            </div>
-            } @else {
-            <div class="stats-grid">
-                <div class="stat-card-mini">
-                    <div class="stat-label-mini">Reading Time</div>
-                    <div class="stat-value-mini">{{ readingTime }} min</div>
-                </div>
-            </div>
-            }
         </div>
 
         <div class="meta-section">

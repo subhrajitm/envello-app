@@ -169,11 +169,12 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
   sectionLabel = computed(() => {
     switch (this.writingType()) {
+      case 'NOVEL':
+      case 'SHORT_STORY': return 'Chapters';
       case 'SCRIPT':      return 'Scenes';
       case 'POETRY':      return 'Stanzas';
       case 'ESSAY':
       case 'RESEARCH':    return 'Parts';
-      case 'NOVEL':       return 'Chapters';
       default:            return 'Sections';
     }
   });
@@ -181,6 +182,12 @@ export class ComposerComponent implements OnInit, OnDestroy {
   showExtendedTabs = computed(() => {
     const t = this.writingType();
     return t === 'NOVEL' || t === 'SHORT_STORY' || t === 'SCRIPT';
+  });
+
+  // ARTICLE and BLOG_POST have no concept of front matter or prologue
+  showStructureAccordion = computed(() => {
+    const t = this.writingType();
+    return t !== 'ARTICLE' && t !== 'BLOG_POST';
   });
 
   // Accordion open/close state for left sidebar sections
@@ -1598,6 +1605,13 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.aiError.set(null);
   }
 
+  cancelAiStream() {
+    // Stops the loading spinner; the in-flight stream will drain silently in the background.
+    // Full abort requires AbortController support in AiService — tracked separately.
+    this.aiLoading.set(false);
+    this.aiError.set(null);
+  }
+
   getTokenCount(): number {
     const context = this.getCurrentContext();
     return this.aiService.estimateTokens(context);
@@ -2000,7 +2014,9 @@ export class ComposerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const skipFrontMatter = ['ARTICLE', 'BLOG_POST'].includes(this.writingType());
+    // ARTICLE and BLOG_POST have no front matter concept.
+    // ESSAY and POETRY may have a title page but never prologue-style opening material.
+    const skipFrontMatter = ['ARTICLE', 'BLOG_POST', 'ESSAY', 'POETRY'].includes(this.writingType());
 
     if (format === 'md') {
       // Build true markdown — do not use the shared HTML content variable

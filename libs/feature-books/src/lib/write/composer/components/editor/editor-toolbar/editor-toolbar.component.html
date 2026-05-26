@@ -33,10 +33,12 @@
             [class.active]="editor().isActive('heading', { level: 1 })" title="Heading 1">
             <span class="material-symbols-outlined">format_h1</span>
         </button>
+        @if (writingType() !== 'SCRIPT') {
         <button class="toolbar-btn" (click)="editor().chain().focus().toggleHeading({ level: 2 }).run()"
             [class.active]="editor().isActive('heading', { level: 2 })" title="Heading 2">
             <span class="material-symbols-outlined">format_h2</span>
         </button>
+        }
         <button class="toolbar-btn" (click)="editor().chain().focus().toggleHeading({ level: 3 }).run()"
             [class.active]="editor().isActive('heading', { level: 3 })" title="Heading 3">
             <span class="material-symbols-outlined">format_h3</span>

@@ -14,14 +14,14 @@
         <div class="ai-btn-grid">
             @for (btn of primaryActions(); track btn.key) {
             <button class="btn-ai-action" (click)="quickAction.emit(btn.key)"
-                [disabled]="aiLoading() || (isDocumentType() ? !editor() : !activeChapter())"
+                [disabled]="aiLoading() || !activeChapter()"
                 [title]="btn.label">
                 <span class="material-symbols-outlined">{{ btn.icon }}</span>
                 {{ btn.label }}
             </button>
             }
             <button class="btn-ai-action" (click)="summarizeChapter.emit()"
-                [disabled]="aiLoading() || (isDocumentType() ? !editor() : !activeChapter())"
+                [disabled]="aiLoading() || !activeChapter()"
                 [title]="summarizeLabel()">
                 <span class="material-symbols-outlined">short_text</span>
                 {{ summarizeLabel() }}

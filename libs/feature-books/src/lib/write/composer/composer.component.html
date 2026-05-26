@@ -145,6 +145,7 @@
             </div>
 
             <!-- ── STRUCTURE ACCORDION ── -->
+            @if (showStructureAccordion()) {
             <div class="ne-acc-section" [style.order]="!accStructure() && lastOpenIdx() > 1 ? 91 : 2">
                 <div class="ne-acc-hdr" (click)="toggleAccStructure()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accStructure()">chevron_right</span>
@@ -153,7 +154,7 @@
                 @if (accStructure()) {
                 <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
                     [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
-                    [addMenuOpen]="structureFmAddMenuOpen()"
+                    [addMenuOpen]="structureFmAddMenuOpen()" [writingType]="writingType()"
                     (selectFrontMatterItem)="selectFrontMatterItem($event)"
                     (selectPrologue)="selectPrologue()"
                     (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
@@ -161,6 +162,7 @@
                     (addPrologue)="addPrologue()" (toggleAddMenu)="toggleStructureFmAddMenu()" />
                 }
             </div>
+            }
 
             <!-- ── CHARACTERS ACCORDION ── -->
             @if (showExtendedTabs()) {
@@ -278,7 +280,8 @@
                     (summarizeChapter)="summarizeChapter()"
                     (continueWriting)="continueWriting()" (applySuggestion)="applySuggestion($event)"
                     (clearConversation)="clearAiConversation()" (clearSuggestions)="aiSuggestions.set([])"
-                    (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)" />
+                    (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)"
+                    (cancelAi)="cancelAiStream()" />
                 } @else if (rightSidebarTab() === 'notes' && book()) {
                 <app-notes-panel [notes]="book()!.notes" (addNewNote)="addNewNote()"
                     (deleteNote)="deleteNote($event)"
