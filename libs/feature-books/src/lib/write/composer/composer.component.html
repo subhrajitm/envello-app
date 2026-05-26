@@ -326,37 +326,9 @@
                 <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History">
                     <span class="material-symbols-outlined">history</span>
                 </button>
-                <div class="export-menu-wrapper ne-strip-dropdown-wrapper">
-                    <button class="ne-strip-btn" [class.active]="exportMenuOpen()" (click)="toggleExportMenu()" title="Export">
-                        <span class="material-symbols-outlined">download</span>
-                    </button>
-                    @if (exportMenuOpen()) {
-                    <div class="add-dropdown-menu ne-strip-popup">
-                        <button class="add-dropdown-option" (click)="exportNovel('pdf'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
-                            <span class="option-label">Export as PDF</span>
-                        </button>
-                        <button class="add-dropdown-option" (click)="exportNovel('docx'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">article</span>
-                            <span class="option-label">Export as Word (.doc)</span>
-                        </button>
-                        <button class="add-dropdown-option" (click)="exportNovel('html'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">code</span>
-                            <span class="option-label">Export as HTML</span>
-                        </button>
-                        <button class="add-dropdown-option" (click)="exportNovel('md'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">description</span>
-                            <span class="option-label">Export as Markdown</span>
-                        </button>
-                        @if (writingType() === 'SCRIPT') {
-                        <button class="add-dropdown-option" (click)="exportNovel('fountain'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">theaters</span>
-                            <span class="option-label">Export as Fountain (.fountain)</span>
-                        </button>
-                        }
-                    </div>
-                    }
-                </div>
+                <button class="ne-strip-btn" [class.active]="exportModalOpen()" (click)="exportModalOpen.set(true)" title="Export">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
             </div>
         </div>
     </div>
@@ -396,6 +368,18 @@
 
     <app-version-history-modal [isOpen]="versionHistoryOpen()" [versions]="versionHistory()"
         (restore)="restoreVersion($event)" (close)="closeVersionHistory()" />
+
+    @if (exportModalOpen()) {
+    <app-export-modal
+        [chapters]="exportChapters()"
+        [frontMatter]="exportFrontMatter()"
+        [prologue]="exportPrologue()"
+        [writingType]="writingType()"
+        [activeItemId]="editorActiveTabId()"
+        [sectionLabel]="sectionLabel()"
+        (exportRequest)="handleExport($event)"
+        (cancel)="exportModalOpen.set(false)" />
+    }
 
     <app-add-modal [modal]="addModal()" (inputValueChange)="updateAddModalInput($event)"
         (inputValue2Change)="updateAddModalInput2($event)" (confirm)="confirmAdd()" (cancel)="cancelAdd()" />

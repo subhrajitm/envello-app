@@ -15,6 +15,7 @@ import { DeleteModalComponent, DeleteModalData } from './components/modals/delet
 import { AddModalComponent, AddModalData } from './components/modals/add-modal/add-modal.component';
 import { LinkModalComponent } from './components/modals/link-modal/link-modal.component';
 import { VersionHistoryModalComponent } from './components/modals/version-history-modal/version-history-modal.component';
+import { ExportModalComponent, ExportRequest, ExportFormat } from './components/modals/export-modal/export-modal.component';
 
 // Sidebar
 import { ChaptersListComponent } from './components/sidebar/chapters-list/chapters-list.component';
@@ -46,6 +47,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     AddModalComponent,
     LinkModalComponent,
     VersionHistoryModalComponent,
+    ExportModalComponent,
     // Sidebar
     ChaptersListComponent,
     StructureViewComponent,
@@ -101,6 +103,30 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   searchOpen = signal(false);
   searchQuery = signal('');
   exportMenuOpen = signal(false);
+  exportModalOpen = signal(false);
+
+  // Computed helpers for the export modal
+  exportChapters = computed(() => {
+    const book = this.book();
+    if (!book) return [];
+    return book.chapters.map(g => ({
+      groupId: g.id,
+      groupTitle: g.title,
+      wordCount: g.children.reduce((s, c) => s + c.wordCount, 0),
+      items: g.children.map(c => ({ id: c.id, title: c.title, wordCount: c.wordCount, status: c.status }))
+    }));
+  });
+
+  exportFrontMatter = computed(() => {
+    const book = this.book();
+    if (!book) return [];
+    return book.frontMatter.map(fm => ({ id: fm.id, title: fm.title, type: fm.type, wordCount: fm.wordCount }));
+  });
+
+  exportPrologue = computed(() => {
+    const book = this.book();
+    return book?.prologue ? { title: book.prologue.title || 'Prologue', wordCount: book.prologue.wordCount } : null;
+  });
 
   // Bulk selection
   selectedChapters = signal<Set<string>>(new Set());
@@ -723,9 +749,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     if (!target.closest('.search-wrapper')) {
       this.searchOpen.set(false);
-    }
-    if (!target.closest('.export-menu-wrapper')) {
-      this.exportMenuOpen.set(false);
     }
   }
 
@@ -1681,6 +1704,149 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.exportMenuOpen.update(v => !v);
   }
 
+  handleExport(request: ExportRequest) {
+    this.exportModalOpen.set(false);
+    const { scopeKeys, format } = request;
+
+    if (scopeKeys.includes('book')) {
+      this.exportNovel(format);
+      return;
+    }
+
+    const book = this.book();
+    if (!book) return;
+
+    // Collect items in natural order: front matter → prologue → chapters
+    const items: { title: string; content: string }[] = [];
+    for (const fm of book.frontMatter) {
+      if (scopeKeys.includes(`item:${fm.id}`)) items.push({ title: fm.title, content: fm.content });
+    }
+    if (scopeKeys.includes('prologue') && book.prologue) {
+      items.push({ title: book.prologue.title || 'Prologue', content: book.prologue.content });
+    }
+    for (const group of book.chapters) {
+      for (const chapter of group.children) {
+        if (scopeKeys.includes(`item:${chapter.id}`)) items.push({ title: chapter.title, content: chapter.content });
+      }
+    }
+
+    if (items.length === 0) return;
+
+    if (format === 'pdf') {
+      const title = items.length === 1 ? items[0].title : 'Selected Content';
+      this.printContent(items, title);
+      return;
+    }
+
+    if (items.length === 1) { this.exportSingleItem(items[0].title, items[0].content, format); return; }
+    this.exportMultipleItems(items, format);
+  }
+
+  private exportSingleItem(title: string, content: string, format: Exclude<ExportFormat, 'pdf'>) {
+    const filename = title.toLowerCase().replace(/\s+/g, '-');
+    this.triggerDownload(filename, this.buildContent([{ title, content }], format), format);
+  }
+
+  private exportMultipleItems(items: { title: string; content: string }[], format: Exclude<ExportFormat, 'pdf'>) {
+    this.triggerDownload(`export-selection`, this.buildContent(items, format), format);
+  }
+
+  private buildContent(items: { title: string; content: string }[], format: Exclude<ExportFormat, 'pdf'>): { body: string; mime: string; ext: string } {
+    if (format === 'md') {
+      return {
+        body: items.map(i => `# ${i.title}\n\n${this.htmlToMarkdown(i.content)}`).join('\n\n---\n\n'),
+        mime: 'text/markdown', ext: 'md'
+      };
+    }
+    if (format === 'html') {
+      return {
+        body: items.map(i => `<h1>${i.title}</h1>\n${i.content}`).join('\n<hr>\n'),
+        mime: 'text/html', ext: 'html'
+      };
+    }
+    if (format === 'docx') {
+      const body = items.map(i => `<h1>${i.title}</h1>${i.content}`).join('<hr>');
+      return {
+        body: `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${body}</body></html>`,
+        mime: 'application/msword', ext: 'doc'
+      };
+    }
+    // fountain
+    return {
+      body: items.map(i => `INT. ${i.title.toUpperCase()} - DAY\n\n${i.content.replace(/<[^>]+>/g, '').trim()}`).join('\n\n'),
+      mime: 'text/plain', ext: 'fountain'
+    };
+  }
+
+  private triggerDownload(filename: string, content: { body: string; mime: string; ext: string }, _format: string) {
+    const blob = new Blob([content.body], { type: content.mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${filename}.${content.ext}`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private printContent(items: { title: string; content: string }[], docTitle: string) {
+    const sections = items.map((item, i) =>
+      `<section${i > 0 ? ' class="pb"' : ''}>
+        <h1>${item.title}</h1>
+        <div class="body">${item.content}</div>
+      </section>`
+    ).join('\n');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${docTitle}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  @page { size: A4; margin: 2.5cm; }
+  html, body { background: #fff; color: #000; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 12pt;
+    line-height: 1.75;
+  }
+  section { margin-bottom: 0; }
+  section.pb { page-break-before: always; }
+  h1 {
+    font-size: 20pt;
+    font-weight: bold;
+    text-align: center;
+    margin: 1em 0 2em;
+    page-break-after: avoid;
+  }
+  h2 { font-size: 14pt; margin: 1.5em 0 0.5em; page-break-after: avoid; }
+  h3 { font-size: 13pt; margin: 1.2em 0 0.4em; page-break-after: avoid; }
+  .body > p { margin-bottom: 0; text-indent: 1.5em; orphans: 3; widows: 3; }
+  .body > p:first-child,
+  .body > p + h2 + p,
+  .body > p + h3 + p { text-indent: 0; }
+  blockquote { margin: 0.8em 2em; font-style: italic; }
+  strong, b { font-weight: bold; }
+  em, i { font-style: italic; }
+  ul, ol { margin: 0.6em 0 0.6em 2em; }
+  li { margin-bottom: 0.2em; }
+  hr { border: none; border-top: 1px solid #999; margin: 2em auto; width: 40%; }
+</style>
+</head>
+<body>${sections}</body>
+</html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:1px;height:1px;border:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return; }
+    doc.open(); doc.write(html); doc.close();
+    iframe.addEventListener('load', () => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => document.body.removeChild(iframe), 500);
+    }, { once: true });
+  }
+
 
   // Link insertion
   linkModalOpen = signal(false);
@@ -1813,7 +1979,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     let filename = book.title.toLowerCase().replace(/\s+/g, '-');
 
     if (format === 'pdf') {
-      window.print();
+      const items: { title: string; content: string }[] = [];
+      book.frontMatter.forEach(fm => items.push({ title: fm.title, content: fm.content }));
+      if (book.prologue) items.push({ title: book.prologue.title || 'Prologue', content: book.prologue.content });
+      book.chapters.forEach(g => g.children.forEach(c => items.push({ title: c.title, content: c.content })));
+      this.printContent(items, book.title);
       return;
     }
 

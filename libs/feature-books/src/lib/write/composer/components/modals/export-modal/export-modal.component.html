@@ -1,0 +1,91 @@
+<env-modal title="Export" [isOpen]="true" size="md" (closed)="cancel.emit()">
+
+  <div class="ne-export-body">
+
+    <!-- ── Scope ── -->
+    <div class="ne-export-section">
+      <div class="ne-export-section-header">
+        <span class="ne-export-section-label">Content</span>
+        <button class="ne-export-link-btn" (click)="selectAll()" [disabled]="isSelected('book')">
+          Select all
+        </button>
+      </div>
+
+      <div class="ne-export-scope-list">
+        <table class="ne-export-table">
+          <thead>
+            <tr>
+              <th class="ne-th-check"></th>
+              <th class="ne-th-title">Title</th>
+              <th class="ne-th-section">Section</th>
+              <th class="ne-th-words">Words</th>
+              <th class="ne-th-status">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of flatRows(); track row.key) {
+              @if (row.isSep) {
+                <tr class="ne-tr-sep"><td colspan="5"></td></tr>
+              } @else {
+                <tr class="ne-tr"
+                    [class.ne-tr-book]="row.isBook"
+                    [class.selected]="isSelected(row.key)"
+                    [class.dim]="!row.isBook && isSelected('book')"
+                    (click)="toggle(row.key)">
+                  <td class="ne-td-check">
+                    <span class="ne-export-check" [class.checked]="isSelected(row.key)">
+                      <span class="material-symbols-outlined">{{ isSelected(row.key) ? 'check_box' : 'check_box_outline_blank' }}</span>
+                    </span>
+                  </td>
+                  <td class="ne-td-title">{{ row.title }}</td>
+                  <td class="ne-td-section">{{ row.section }}</td>
+                  <td class="ne-td-words">{{ fmtWc(row.wordCount) }}</td>
+                  <td class="ne-td-status">
+                    @if (row.status) {
+                      <span class="ne-export-status-dot ne-status-{{ statusClass(row.status) }}"></span>
+                      <span class="ne-status-label">{{ row.status | titlecase }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Selection summary -->
+      <div class="ne-export-summary">
+        <span class="ne-export-summary-dot"></span>
+        {{ selectionSummary() }}
+      </div>
+    </div>
+
+    <!-- ── Format ── -->
+    <div class="ne-export-section">
+      <div class="ne-export-section-label">Format</div>
+      <div class="ne-export-format-row">
+        @for (fmt of formats(); track fmt.key) {
+        <button class="ne-export-chip" [class.selected]="selectedFormat() === fmt.key"
+                (click)="selectedFormat.set(fmt.key)">
+          <span class="material-symbols-outlined">{{ fmt.icon }}</span>
+          {{ fmt.label }}
+        </button>
+        }
+      </div>
+      @if (selectedFormat() === 'pdf') {
+      <p class="ne-export-note">Opens a clean formatted document in the browser print dialog.</p>
+      }
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div footer class="ne-export-footer">
+    <button class="ne-export-btn ne-export-btn-cancel" (click)="cancel.emit()">Cancel</button>
+    <button class="ne-export-btn ne-export-btn-confirm" (click)="onExport()" [disabled]="!canExport()">
+      <span class="material-symbols-outlined">download</span>
+      Export
+    </button>
+  </div>
+
+</env-modal>
