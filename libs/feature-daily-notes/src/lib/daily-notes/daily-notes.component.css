@@ -1710,108 +1710,186 @@ tiptap-editor:focus,
     font-size: 16px;
 }
 
-/* ─── Right Compact Sidebar ────────────────────────────────────────────────── */
+/* ─── Right Sidebar: composer-style strip + expandable panel ──────────────── */
 .dn-right-sidebar {
-    width: 52px;
-    border-left: 1px solid var(--border-subtle);
-    background: var(--bg-panel);
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 0;
+    flex-direction: row;
+    background: var(--bg-app);
+    border-left: 1px solid var(--border-subtle);
+    min-height: 0;
+    height: 100%;
+    width: 40px;
+    min-width: 40px;
     flex-shrink: 0;
 }
 
-.dn-right-sidebar::-webkit-scrollbar {
-    display: none;
+.dn-right-sidebar:not(.collapsed) {
+    width: 300px;
+    min-width: 300px;
 }
 
-.rs-section {
+.dn-right-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
+    min-height: 0;
+    border-right: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
 }
 
-.rs-spacer {
+.dn-right-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dn-right-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dn-right-content::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 2px;
+}
+
+/* Override env-ai-panel when embedded in the sidebar */
+.dn-right-content ::ng-deep .ai-panel {
+    width: 100%;
+    min-width: 0;
+    border-left: none;
     flex: 1;
 }
 
-.rs-section-label {
-    font-size: 8px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-tertiary);
-    opacity: 0.7;
-    margin-bottom: 2px;
-}
-
-.rs-btn-group {
+/* Always-visible icon strip (reuse composer's ne-right-strip styles) */
+.ne-right-strip {
+    width: 40px;
+    min-width: 40px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 8px 0;
     gap: 2px;
+    background: var(--bg-panel);
 }
 
+.ne-strip-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: background 0.15s, color 0.15s;
+}
 
-.rs-divider {
+.ne-strip-btn:hover:not([disabled]) {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}
+
+.ne-strip-btn[disabled] {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.ne-strip-btn.active {
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+.ne-strip-btn--danger {
+    color: var(--accent-red);
+}
+
+.ne-strip-btn--danger:hover:not([disabled]) {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--accent-red);
+}
+
+.ne-strip-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.ne-strip-spacer {
+    flex: 1;
+}
+
+.ne-strip-divider {
     width: 100%;
     height: 1px;
     background: var(--border-subtle);
-    margin: 6px 0;
+    margin: 4px 0;
+    flex-shrink: 0;
 }
 
-/* Right sidebar dropdown positioning — open to the left */
-.rs-dropdown {
-    right: calc(100% + 6px) !important;
-    left: auto !important;
-    top: 0 !important;
-    min-width: 140px;
+/* ─── Shared panel header ──────────────────────────────────────────────────── */
+.dn-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 44px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
 }
 
-/* Info dropdown near bottom — open upward */
-.info-dropdown.rs-dropdown {
-    top: auto !important;
-    bottom: 0 !important;
+.dn-panel-header .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--accent-primary);
 }
 
-.rs-dropdown--wide {
-    min-width: 200px;
-    padding: 6px;
+/* ─── Format panel ─────────────────────────────────────────────────────────── */
+.dn-format-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
-.rs-dropdown-section {
-    margin-bottom: 2px;
+.dn-format-section {
+    padding: 10px 10px 4px;
 }
 
-.rs-dropdown-subtitle {
+.dn-format-label {
     font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: var(--text-tertiary);
-    padding: 4px 6px 3px;
-    opacity: 0.7;
+    margin-bottom: 6px;
+    padding: 0 2px;
 }
 
-.rs-dropdown-grid {
+.dn-format-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 4px 10px;
+}
+
+.dn-fmt-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
 }
 
-.rs-dd-btn {
+.dn-fmt-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
-    padding: 6px 4px;
+    padding: 7px 4px;
     background: transparent;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.12s;
@@ -1819,31 +1897,121 @@ tiptap-editor:focus,
     font-weight: 500;
 }
 
-.rs-dd-btn:hover {
+.dn-fmt-btn:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
 }
 
-.rs-dd-btn.active {
-    background: var(--accent-primary-dim);
+.dn-fmt-btn.active {
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
     color: var(--accent-primary);
 }
 
-.rs-dd-btn .material-symbols-outlined {
-    font-size: 16px;
+.dn-fmt-btn .material-symbols-outlined {
+    font-size: 17px;
 }
 
-.rs-dropdown-divider {
-    height: 1px;
-    background: var(--border-subtle);
-    margin: 4px 6px;
+/* ─── Info panel ───────────────────────────────────────────────────────────── */
+.dn-info-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
-.rs-divider--sm {
-    width: 20px;
-    height: 1px;
-    background: var(--border-subtle);
-    margin: 2px 0;
+.dn-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 2px;
+}
+
+.dn-info-icon {
+    font-size: 15px !important;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.dn-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.dn-info-label {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.dn-info-value {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.dn-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.dn-stat-card {
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dn-stat-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+}
+
+.dn-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.dn-info-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.dn-info-tag {
+    padding: 3px 8px;
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.dn-info-save-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 2px;
+}
+
+.dn-info-saved-icon {
+    font-size: 15px !important;
+    color: var(--accent-green);
+}
+
+.dn-info-saved-text {
+    font-size: 11px;
+    color: var(--accent-green);
+    font-weight: 500;
 }
 
 

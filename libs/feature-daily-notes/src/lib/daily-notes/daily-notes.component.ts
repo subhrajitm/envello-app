@@ -113,10 +113,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   });
 
   showDropdown = signal<boolean>(false);
-  showFormatMenu = signal<boolean>(false);
-  showInfoMenu = signal<boolean>(false);
-  showMediaMenu = signal<boolean>(false);
   activeFolderMenuId = signal<string | null>(null);
+
+  // Right sidebar panel
+  rightPanelCollapsed = signal(true);
+  rightPanelTab = signal<'ai' | 'format' | 'info'>('ai');
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
@@ -607,23 +608,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.showDropdown.update(show => !show);
   }
 
-  toggleInfoMenu() {
-    this.showInfoMenu.update(v => !v);
-    if (this.showFormatMenu()) this.showFormatMenu.set(false);
-    if (this.showMediaMenu()) this.showMediaMenu.set(false);
+  setRightTab(tab: 'ai' | 'format' | 'info') {
+    if (this.rightPanelCollapsed() || this.rightPanelTab() !== tab) {
+      this.rightPanelTab.set(tab);
+      this.rightPanelCollapsed.set(false);
+    } else {
+      this.rightPanelCollapsed.set(true);
+    }
   }
-
-  toggleFormatMenu() {
-    this.showFormatMenu.update(v => !v);
-    if (this.showMediaMenu()) this.showMediaMenu.set(false);
-  }
-
-  toggleMediaMenu() {
-    this.showMediaMenu.update(v => !v);
-    if (this.showFormatMenu()) this.showFormatMenu.set(false);
-    if (this.showInfoMenu()) this.showInfoMenu.set(false);
-  }
-
 
   setFormat(type: 'paragraph' | 'h1' | 'h2' | 'h3') {
     if (!this.editor) return;
@@ -633,7 +625,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const level = parseInt(type.slice(1), 10) as 1 | 2 | 3;
       this.editor.chain().focus().toggleHeading({ level }).run();
     }
-    this.showFormatMenu.set(false);
   }
 
   duplicateNote(note: Note) {
@@ -700,9 +691,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     if (!target.closest('.dropdown-wrapper') && !target.closest('.color-picker-wrapper')) {
       if (this.showDropdown()) this.showDropdown.set(false);
-      if (this.showFormatMenu()) this.showFormatMenu.set(false);
-      if (this.showInfoMenu()) this.showInfoMenu.set(false);
-      if (this.showMediaMenu()) this.showMediaMenu.set(false);
       if (this.showColorPicker()) this.showColorPicker.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {
@@ -949,9 +937,8 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
   }
 
   // ── AI Assistant ─────────────────────────────────────────────────────────────
-  showAssistant = signal(false);
-  aiLoading     = signal(false);
-  aiMessages    = signal<AiPanelMessage[]>([]);
+  aiLoading  = signal(false);
+  aiMessages = signal<AiPanelMessage[]>([]);
 
   readonly aiSuggestions = [
     'Create a 500 words note on AI: Danger to society',
@@ -960,8 +947,6 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     'What tags do I use most?',
     'Find my pinned notes',
   ];
-
-  toggleAssistant() { this.showAssistant.update(v => !v); }
 
   async sendAiMessage(text: string) {
     if (!text || this.aiLoading()) return;
