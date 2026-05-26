@@ -9,6 +9,13 @@
         </button>
       </div>
     }
+    <!-- Typewriter mode toast -->
+    @if (showTypewriterToast()) {
+      <div class="ne-focus-toast typewriter-toast">
+        <span class="material-symbols-outlined" style="font-size:16px;opacity:0.8;">keyboard</span>
+        Typewriter mode {{ typewriterMode() ? 'on' : 'off' }} — cursor stays centered
+      </div>
+    }
     <!-- Workspace -->
     @if (isLoading()) {
     <div class="ne-loading-state">
@@ -85,6 +92,21 @@
             <div class="ne-sidebar-search-empty">No results for "{{ searchQuery() }}"</div>
             }
 
+            <!-- Recently edited chapters -->
+            @if (recentChapters().length > 0) {
+            <div class="ne-recent-section">
+                <div class="ne-recent-label">RECENT</div>
+                @for (chap of recentChapters(); track chap.id) {
+                <button class="ne-recent-item" [class.active]="activeChapterId() === chap.id"
+                    (click)="selectChapter(chap)">
+                    <span class="chap-status-dot status-dot-{{ chap.status.toLowerCase() }}"></span>
+                    <span class="ne-recent-title">{{ chap.title }}</span>
+                    <span class="ne-recent-wc">{{ chap.wordCount }}</span>
+                </button>
+                }
+            </div>
+            }
+
             <!-- ── ACCORDION CONTAINER ── -->
             <div class="ne-acc-container">
 
@@ -140,7 +162,8 @@
                     (bulkMove)="showBulkMoveModal.set(true)"
                     (toggleAddMenu)="toggleAddMenu()"
                     (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
-                    (toggleChapterSelection)="toggleChapterSelection($event)" />
+                    (toggleChapterSelection)="toggleChapterSelection($event)"
+                    (quickExport)="quickExportChapter($event)" />
                 }
             </div>
 
@@ -214,7 +237,7 @@
         </div>
 
         <!-- Editor Canvas -->
-        <div class="ne-editor-area" [class.focus-mode]="focusMode()">
+        <div class="ne-editor-area" [class.focus-mode]="focusMode()" [class.typewriter-mode]="typewriterMode()">
 
             <app-editor-header [items]="editorTabItems()" [activeItemId]="editorActiveTabId()"
                 [canUndo]="editorActive() && canUndo()" [canRedo]="editorActive() && canRedo()"
@@ -234,8 +257,12 @@
             @if (activeNav() === 'manuscript') {
             <app-manuscript-editor [editor]="editor" [activeChapterId]="activeChapterId()" [title]="title()"
                 [chapterStatus]="chapterStatus()" [chapterLastEdited]="chapterLastEdited()" [isSaving]="isSaving()"
-                [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)"
-                (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()" />
+                [lastSaved]="lastSaved()" [wordCount]="wordCount()" [sessionWords]="sessionWords()"
+                [chapterSummary]="activeChapter()?.summary ?? ''"
+                (titleChange)="onTitleChange($event)"
+                (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()"
+                (summaryChange)="updateChapterSummary($event)"
+                (quickAction)="$event === 'continue-writing' ? continueWriting() : handleQuickAction($event)" />
             }
 
             @if (activeNav() === 'structure' && book()) {
@@ -293,7 +320,8 @@
                     [theme]="book()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
                     [goalProgress]="goalProgress()" [activeChapterId]="activeChapterId()"
                     [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()"
-                    [writingType]="writingType()" [sectionLabel]="sectionLabel()" />
+                    [writingType]="writingType()" [sectionLabel]="sectionLabel()"
+                    (characterClicked)="navigateToCharacter($event)" />
                 }
             </div>
             }
@@ -320,6 +348,9 @@
                 <div class="ne-strip-divider"></div>
 
                 <!-- Utility buttons (bottom) -->
+                <button class="ne-strip-btn" [class.active]="typewriterMode()" (click)="toggleTypewriterMode()" [title]="typewriterMode() ? 'Typewriter Mode On (⌘T)' : 'Typewriter Mode (⌘T)'">
+                    <span class="material-symbols-outlined">keyboard</span>
+                </button>
                 <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" [title]="focusMode() ? 'Exit Focus Mode (⌘+\\)' : 'Focus Mode (⌘+\\)'">
                     <span class="material-symbols-outlined">{{ focusMode() ? 'close_fullscreen' : 'center_focus_strong' }}</span>
                 </button>

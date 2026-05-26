@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import FloatingMenu from '@tiptap/extension-floating-menu';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BookContentService, Chapter, ChapterGroup } from '@envello/core';
@@ -95,6 +96,9 @@ export class ComposerComponent implements OnInit, OnDestroy {
   focusMode = signal(false);
   showFocusToast = signal(false);
   private focusToastTimer?: ReturnType<typeof setTimeout>;
+  typewriterMode = signal(false);
+  showTypewriterToast = signal(false);
+  private typewriterToastTimer?: ReturnType<typeof setTimeout>;
   fullScreenMode = signal(false);
   leftSidebarCollapsed = signal(false);
   rightSidebarCollapsed = signal(true);
@@ -133,6 +137,21 @@ export class ComposerComponent implements OnInit, OnDestroy {
   sessionStartTime = Date.now();
   elapsedSeconds = signal(0);
   targetWordCount = signal(2500);
+
+  // Recently edited chapters (up to 5 most recent)
+  recentChapterIds = signal<string[]>([]);
+  recentChapters = computed(() => {
+    const book = this.book();
+    if (!book) return [] as Chapter[];
+    const flat = book.chapters.flatMap(g => g.children);
+    return this.recentChapterIds()
+      .map(id => flat.find(c => c.id === id))
+      .filter(Boolean) as Chapter[];
+  });
+
+  // Session word count (words written since session start)
+  private sessionStartTotal = 0;
+  sessionWords = computed(() => Math.max(0, this.totalNovelWords() - this.sessionStartTotal));
   private bookId = signal('');
 
   // Auto-save state
@@ -400,6 +419,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
             }
+            setTimeout(() => this.editor?.commands.focus('end'), 0);
           }
         } else if (frontMatterId) {
           const book = this.book();
@@ -415,6 +435,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', item.content, item.title, count, true);
             }
+            setTimeout(() => this.editor?.commands.focus('end'), 0);
           }
         } else if (prologueId) {
           const book = this.book();
@@ -430,6 +451,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion('prologue', 'prologue', prologue.content, prologue.title, count, true);
             }
+            setTimeout(() => this.editor?.commands.focus('end'), 0);
           }
         } else if (!chapterId && !frontMatterId && !prologueId) {
           this.editor.commands.clearContent();
@@ -485,6 +507,11 @@ export class ComposerComponent implements OnInit, OnDestroy {
         Placeholder.configure({
           placeholder: 'Start writing your chapter...',
         }),
+        FloatingMenu.configure({
+          pluginKey: 'composerFloatingMenu',
+          shouldShow: ({ editor }) =>
+            editor.isActive('paragraph') && editor.state.selection.$from.parent.content.size === 0,
+        }),
       ],
       content: '', // Initial content will be set by effect
       onTransaction: ({ editor }) => {
@@ -523,13 +550,17 @@ export class ComposerComponent implements OnInit, OnDestroy {
     });
 
     // Load book data from DB (async)
-    this.bookService.loadBook(id).then(() => this.isLoading.set(false));
+    this.bookService.loadBook(id).then(() => {
+      this.isLoading.set(false);
+      this.sessionStartTotal = this.totalNovelWords();
+    });
   }
 
   ngOnDestroy() {
     if (this.timeInterval) clearInterval(this.timeInterval);
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
+    if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
     this.editor.destroy();
   }
 
@@ -550,6 +581,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
         this.openEditorTab(found.id);
         this.activeChapterId.set(found.id);
         this.activeGroupId.set(group.id);
+        this.recentChapterIds.update(ids => [found.id, ...ids.filter(id => id !== found.id)].slice(0, 5));
         return;
       }
     }
@@ -784,6 +816,25 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if ((event.metaKey || event.ctrlKey) && event.key === '\\') {
       event.preventDefault();
       this.focusMode.update(v => !v);
+      return;
+    }
+
+    // Cmd/Ctrl + T for typewriter mode
+    if ((event.metaKey || event.ctrlKey) && event.key === 't') {
+      event.preventDefault();
+      this.toggleTypewriterMode();
+      return;
+    }
+
+    // Alt+Down / Alt+Up for chapter navigation
+    if (event.altKey && event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.navigateChapter('next');
+      return;
+    }
+    if (event.altKey && event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.navigateChapter('prev');
       return;
     }
 
@@ -1367,6 +1418,54 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.showFocusToast.set(false);
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     localStorage.setItem('envello-focus-toast-seen', 'true');
+  }
+
+  toggleTypewriterMode() {
+    this.typewriterMode.update(v => !v);
+    if (this.typewriterMode()) {
+      this.showTypewriterToast.set(true);
+      if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
+      this.typewriterToastTimer = setTimeout(() => this.showTypewriterToast.set(false), 3000);
+    } else {
+      this.showTypewriterToast.set(false);
+      if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
+    }
+  }
+
+  navigateChapter(direction: 'prev' | 'next') {
+    const book = this.book();
+    if (!book) return;
+    const all = book.chapters.flatMap(g => g.children);
+    if (all.length === 0) return;
+    const idx = all.findIndex(c => c.id === this.activeChapterId());
+    if (idx === -1) { this.selectChapter(all[0]); return; }
+    const target = direction === 'next' ? idx + 1 : idx - 1;
+    if (target >= 0 && target < all.length) this.selectChapter(all[target]);
+  }
+
+  navigateToCharacter(name: string) {
+    const char = this.book()?.characters.find(c => c.name === name);
+    if (char) { this.selectCharacter(char.id); this.setActiveNav('characters'); }
+  }
+
+  updateChapterSummary(summary: string) {
+    const id = this.activeChapterId();
+    if (id) this.bookService.updateChapterSummary(id, summary);
+  }
+
+  quickExportChapter(chapterId: string) {
+    const book = this.book();
+    if (!book) return;
+    const chapter = book.chapters.flatMap(g => g.children).find(c => c.id === chapterId);
+    if (!chapter) return;
+    const md = `# ${chapter.title}\n\n${this.htmlToMarkdown(chapter.content)}`;
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${chapter.title.toLowerCase().replace(/\s+/g, '-')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   private async streamIntoNewMessage(stream: AsyncIterable<string>): Promise<void> {

@@ -1374,6 +1374,12 @@
 ::ng-deep .ProseMirror {
     outline: none;
     min-height: 300px;
+    caret-color: var(--accent-primary, #6366f1);
+}
+
+/* Keep cursor visible even when editor loses focus momentarily */
+::ng-deep .ProseMirror:focus {
+    caret-color: var(--accent-primary, #6366f1);
 }
 
 ::ng-deep .ProseMirror p {
@@ -3137,7 +3143,7 @@
 .drag-handle {
     font-size: 14px;
     color: var(--text-tertiary);
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: grab;
     flex-shrink: 0;
     transition: opacity 0.15s;
@@ -3145,7 +3151,7 @@
 
 .ne-chapter-item:hover .drag-handle,
 .ne-chapter-group:hover > .ne-chapter-item .drag-handle {
-    opacity: 0.6;
+    opacity: 0.8;
 }
 
 .drag-handle:active {
@@ -3164,6 +3170,10 @@
 
 .status-dot-empty {
     background: var(--text-disabled, #555);
+}
+
+.status-dot-draft {
+    background: #60a5fa;
 }
 
 .status-dot-editing {
@@ -4995,3 +5005,213 @@
   transition: color 0.15s;
 }
 .ne-focus-toast-close:hover { color: rgba(255, 255, 255, 0.9); }
+
+/* Typewriter toast variant */
+.typewriter-toast { bottom: 80px; }
+
+/* Typewriter mode: keep cursor vertically centered */
+.ne-editor-area.typewriter-mode .ne-editor-text {
+  scroll-padding-top: 40vh;
+  scroll-padding-bottom: 40vh;
+}
+.ne-editor-area.typewriter-mode tiptap-editor {
+  scroll-padding-top: 40vh;
+  scroll-padding-bottom: 40vh;
+}
+.ne-editor-area.typewriter-mode .ProseMirror {
+  padding-bottom: 40vh;
+  padding-top: 20vh;
+}
+
+/* Recently edited section in left sidebar */
+.ne-recent-section {
+  padding: 8px 8px 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ne-recent-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  padding: 0 4px 4px;
+}
+
+.ne-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  padding: 4px 4px;
+  border-radius: 4px;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.ne-recent-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.ne-recent-item.active { color: var(--accent-primary); background: color-mix(in srgb, var(--accent-primary) 10%, transparent); }
+
+.ne-recent-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ne-recent-wc {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+/* Word count chip in manuscript editor meta row */
+.word-count-chip {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.session-words-chip {
+  font-size: 10px;
+  color: #4ade80;
+  font-weight: 600;
+  background: color-mix(in srgb, #4ade80 12%, transparent);
+  padding: 1px 5px;
+  border-radius: 10px;
+}
+
+/* Chapter word count in sidebar list */
+.chap-word-count {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  min-width: 24px;
+  text-align: right;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.ne-chapter-item:hover .chap-word-count { opacity: 1; }
+.ne-chapter-item.active .chap-word-count { opacity: 0.6; }
+
+/* Quick export button on chapter hover */
+.chap-quick-export {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.chap-quick-export .material-symbols-outlined { font-size: 13px; }
+
+.ne-chapter-item:hover .chap-quick-export { display: flex; }
+.chap-quick-export:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+/* Floating menu in manuscript editor */
+.ms-floating-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.ms-float-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.12s, color 0.12s;
+}
+
+.ms-float-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.ms-float-btn.ai-btn { color: var(--accent-primary); }
+.ms-float-btn.ai-btn:hover { background: color-mix(in srgb, var(--accent-primary) 12%, transparent); }
+.ms-float-btn .material-symbols-outlined { font-size: 16px; }
+
+.ms-float-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+/* Synopsis pane at bottom of editor */
+.ms-synopsis-pane {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-panel);
+  flex-shrink: 0;
+}
+
+.ms-synopsis-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 6px 16px;
+  text-align: left;
+  transition: color 0.12s;
+}
+
+.ms-synopsis-toggle:hover { color: var(--text-secondary); }
+.ms-synopsis-toggle .material-symbols-outlined { font-size: 14px; }
+
+.ms-synopsis-hint {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text-disabled);
+}
+
+.ms-synopsis-input {
+  width: 100%;
+  background: var(--bg-app);
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 10px 16px;
+  resize: none;
+  outline: none;
+  font-family: var(--font-sans);
+}
+
+.ms-synopsis-input:focus { color: var(--text-primary); background: var(--bg-panel); }
+
+/* Character mention badges as clickable buttons */
+.mention-btn {
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.12s, transform 0.12s;
+}
+
+.mention-btn:hover { opacity: 0.8; transform: translateY(-1px); }

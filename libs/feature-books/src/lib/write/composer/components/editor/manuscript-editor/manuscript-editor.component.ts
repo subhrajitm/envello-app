@@ -2,12 +2,12 @@ import { Component, input, output, signal, HostListener, ChangeDetectionStrategy
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
-import { TiptapEditorDirective } from 'ngx-tiptap';
+import { TiptapEditorDirective, TiptapFloatingMenuDirective } from 'ngx-tiptap';
 
 @Component({
   selector: 'app-manuscript-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapFloatingMenuDirective],
   templateUrl: './manuscript-editor.component.html',
   styleUrls: [
     './manuscript-editor.component.css',
@@ -67,8 +67,16 @@ export class ManuscriptEditorComponent {
   chapterLastEdited = input.required<string>();
   isSaving = input.required<boolean>();
   lastSaved = input<Date | null>(null);
+  wordCount = input<number>(0);
+  sessionWords = input<number>(0);
+  chapterSummary = input<string>('');
+
+  synopsisOpen = signal(false);
+  toggleSynopsis() { this.synopsisOpen.update(v => !v); }
 
   titleChange = output<string>();
   statusChange = output<'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY'>();
   addNewChapter = output<void>();
+  summaryChange = output<string>();
+  quickAction = output<string>();
 }

@@ -65,7 +65,8 @@
                 <div class="mentions-label">Characters:</div>
                 <div class="mentions-list">
                     @for (char of mentionedCharacters(); track char) {
-                    <span class="mention-badge character-mention">{{ char }}</span>
+                    <button class="mention-badge character-mention mention-btn"
+                        (click)="characterClicked.emit(char)" title="Go to character">{{ char }}</button>
                     }
                 </div>
             </div>
