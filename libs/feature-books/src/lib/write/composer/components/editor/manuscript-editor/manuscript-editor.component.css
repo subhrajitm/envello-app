@@ -1,3 +1,106 @@
+/* Bubble menu (text selection toolbar) */
+.ms-bubble-menu {
+    display: flex;
+    align-items: center;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    padding: 4px;
+    gap: 2px;
+    z-index: 1000;
+}
+
+.ms-bubble-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, color 0.12s;
+}
+
+.ms-bubble-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.ms-bubble-btn.active {
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    color: var(--accent-primary);
+}
+
+.ms-bubble-btn .material-symbols-outlined { font-size: 18px; }
+
+.ms-bubble-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--border-subtle);
+    margin: 0 3px;
+    flex-shrink: 0;
+}
+
+.ms-bubble-ai-wrapper {
+    position: relative;
+}
+
+.ms-bubble-ai-btn {
+    color: var(--accent-primary);
+}
+
+.ms-bubble-ai-btn:hover,
+.ms-bubble-ai-btn.active {
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    color: var(--accent-primary);
+}
+
+.ms-bubble-ai-dropdown {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    padding: 4px;
+    min-width: 148px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.ms-bubble-ai-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background 0.12s, color 0.12s;
+    width: 100%;
+    text-align: left;
+}
+
+.ms-bubble-ai-option:hover {
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    color: var(--accent-primary);
+}
+
+.ms-bubble-ai-option .material-symbols-outlined {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
 /* Material Icons font for proper icon rendering */
 .material-symbols-outlined {
     font-family: 'Material Symbols Outlined';

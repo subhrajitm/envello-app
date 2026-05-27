@@ -1,0 +1,73 @@
+.lec-card {
+  background: var(--bg-panel);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  overflow: visible;
+  transition: box-shadow 0.2s, background 0.2s, max-width 0.25s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.lec-card:focus-within {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.lec-actions-top {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+.lec-color-picker-wrapper {
+  position: relative;
+}
+
+.lec-color-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  padding: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 120px;
+  z-index: 100;
+}
+
+.lec-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, border-color 0.1s;
+  background: var(--bg-hover);
+  padding: 0;
+}
+
+.lec-color-swatch:hover { transform: scale(1.15); border-color: var(--border-highlight); }
+.lec-color-swatch.active { border-color: var(--accent-primary); transform: scale(1.1); }
+
+.lec-swatch--none {
+  background: var(--bg-panel);
+  border: 2px dashed var(--border-subtle);
+}
+
+.lec-swatch--none:hover { border-color: var(--text-tertiary); }
+
+.lec-swatch-none-icon {
+  font-size: 12px !important;
+  color: var(--text-tertiary);
+}

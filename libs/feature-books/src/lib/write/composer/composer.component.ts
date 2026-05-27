@@ -4,6 +4,10 @@ import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import FloatingMenu from '@tiptap/extension-floating-menu';
+import BubbleMenu from '@tiptap/extension-bubble-menu';
+import Underline from '@tiptap/extension-underline';
+import Highlight from '@tiptap/extension-highlight';
+import Link from '@tiptap/extension-link';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BookContentService, Chapter, ChapterGroup } from '@envello/core';
@@ -528,6 +532,14 @@ export class ComposerComponent implements OnInit, OnDestroy {
           shouldShow: ({ editor }) =>
             editor.isActive('paragraph') && editor.state.selection.$from.parent.content.size === 0,
         }),
+        BubbleMenu.configure({
+          pluginKey: 'composerBubbleMenu',
+          shouldShow: ({ editor }) =>
+            !editor.view.state.selection.empty && editor.isEditable,
+        }),
+        Underline,
+        Highlight.configure({ multicolor: true }),
+        Link.configure({ openOnClick: false }),
       ],
       content: '', // Initial content will be set by effect
       onTransaction: ({ editor }) => {
@@ -2208,6 +2220,34 @@ export class ComposerComponent implements OnInit, OnDestroy {
       const a = document.createElement('a');
       a.href = url; a.download = `${filename}.doc`; a.click();
       URL.revokeObjectURL(url);
+    }
+  }
+
+  async handleSelectionAction(action: string) {
+    if (!this.editor) return;
+    const { from, to } = this.editor.state.selection;
+    if (from === to) return;
+    const selectedText = this.editor.state.doc.textBetween(from, to, '\n');
+    if (!selectedText.trim()) return;
+
+    const prompts: Record<string, { user: string; system: string }> = {
+      'improve':  { user: `Improve the following text while preserving its meaning and style:\n\n${selectedText}`, system: 'You are an expert editor. Return only the improved text, no explanation.' },
+      'rephrase': { user: `Rephrase the following text in a fresh, natural way:\n\n${selectedText}`, system: 'You are a creative writing assistant. Return only the rephrased text, no explanation.' },
+      'shorter':  { user: `Make the following text more concise without losing the key meaning:\n\n${selectedText}`, system: 'You are an expert editor. Return only the shortened text, no explanation.' },
+      'longer':   { user: `Expand and elaborate on the following text:\n\n${selectedText}`, system: 'You are a creative writing assistant. Return only the expanded text, no explanation.' },
+    };
+
+    const p = prompts[action];
+    if (!p) return;
+
+    this.isSaving.set(true);
+    try {
+      const result = await this.aiService.sendMessage(p.user, p.system);
+      this.editor.chain().focus().insertContentAt({ from, to }, result.trim()).run();
+    } catch {
+      this.aiError.set('AI action failed. Check your provider settings.');
+    } finally {
+      this.isSaving.set(false);
     }
   }
 

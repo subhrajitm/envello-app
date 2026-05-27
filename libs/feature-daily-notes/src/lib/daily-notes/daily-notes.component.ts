@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { StoreService, Note, AiService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, EditorCardComponent } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -39,7 +39,7 @@ interface NoteGroup {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, EditorCardComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -71,7 +71,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   searchQuery = signal<string>('');
   selectedFilter = signal<string>('all');
   selectedTag = signal<string>('');
-  showColorPicker = signal<boolean>(false);
   isFullWidth = signal<boolean>(false);
   showTagInput = signal<boolean>(false);
   tagInputValue = signal<string>('');
@@ -118,6 +117,29 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   // Right sidebar panel
   rightPanelCollapsed = signal(true);
   rightPanelTab = signal<'ai' | 'format' | 'info'>('ai');
+
+  // Focus / Typewriter / Fullscreen modes
+  focusMode = signal(false);
+  showFocusToast = signal(false);
+  private focusToastTimer?: ReturnType<typeof setTimeout>;
+  typewriterMode = signal(false);
+  showTypewriterToast = signal(false);
+  private typewriterToastTimer?: ReturnType<typeof setTimeout>;
+  fullScreenMode = signal(false);
+  leftSidebarCollapsed = signal(false);
+
+  // Session word count
+  private sessionStartWords = 0;
+  private sessionNoteId = '';
+  sessionWords = signal(0);
+
+  // Auto-save indicator
+  isSaving = signal(false);
+  lastSaved = signal<Date | null>(null);
+  private saveTimeout?: ReturnType<typeof setTimeout>;
+
+  // AI bubble menu
+  showAiBubbleMenu = signal(false);
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
@@ -401,8 +423,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         const plainText = editor.getText();
         const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
         this.updateNoteContent(content, preview);
-        this.wordCount.set(editor.storage.characterCount.words());
+        const words = editor.storage.characterCount.words();
+        this.wordCount.set(words);
         this.characterCount.set(editor.storage.characterCount.characters());
+        const currentNoteId = this.selectedEntryId();
+        if (this.sessionNoteId !== currentNoteId) {
+          this.sessionNoteId = currentNoteId;
+          this.sessionStartWords = words;
+        }
+        this.sessionWords.set(Math.max(0, words - this.sessionStartWords));
       },
     });
 
@@ -414,15 +443,105 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.editor) {
-      this.editor.destroy();
-    }
+    if (this.editor) this.editor.destroy();
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
+    if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
   }
 
   updateNoteContent(content: string, preview: string) {
     const activeId = this.selectedEntryId();
-    if (activeId) {
+    if (!activeId) return;
+    this.isSaving.set(true);
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => {
       this.store.updateNote(activeId, { content, preview });
+      this.isSaving.set(false);
+      this.lastSaved.set(new Date());
+    }, 1000);
+  }
+
+  formatSaved(date: Date): string {
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  toggleFocusMode() {
+    this.focusMode.update(v => !v);
+    if (this.focusMode()) {
+      this.leftSidebarCollapsed.set(true);
+      this.rightPanelCollapsed.set(true);
+      const seenKey = 'envello-dn-focus-toast-seen';
+      if (!localStorage.getItem(seenKey)) {
+        this.showFocusToast.set(true);
+        if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
+        this.focusToastTimer = setTimeout(() => {
+          this.showFocusToast.set(false);
+          localStorage.setItem(seenKey, 'true');
+        }, 4000);
+      }
+    } else {
+      this.leftSidebarCollapsed.set(false);
+      this.rightPanelCollapsed.set(false);
+      this.showFocusToast.set(false);
+    }
+  }
+
+  dismissFocusToast() {
+    this.showFocusToast.set(false);
+    if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
+    localStorage.setItem('envello-dn-focus-toast-seen', 'true');
+  }
+
+  toggleTypewriterMode() {
+    this.typewriterMode.update(v => !v);
+    if (this.typewriterMode()) {
+      this.showTypewriterToast.set(true);
+      if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
+      this.typewriterToastTimer = setTimeout(() => this.showTypewriterToast.set(false), 3000);
+    } else {
+      this.showTypewriterToast.set(false);
+      if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
+    }
+  }
+
+  toggleFullScreen() {
+    this.fullScreenMode.update(v => !v);
+    if (this.fullScreenMode()) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  toggleAiBubbleMenu(event: Event) {
+    event.stopPropagation();
+    this.showAiBubbleMenu.update(v => !v);
+  }
+
+  async handleSelectionAction(action: string) {
+    if (!this.editor) return;
+    const { from, to } = this.editor.state.selection;
+    if (from === to) return;
+    const selectedText = this.editor.state.doc.textBetween(from, to, '\n');
+    if (!selectedText.trim()) return;
+    const prompts: Record<string, { user: string; system: string }> = {
+      'improve':  { user: `Improve the following text while preserving its meaning and style:\n\n${selectedText}`, system: 'You are an expert editor. Return only the improved text, no explanation.' },
+      'rephrase': { user: `Rephrase the following text in a fresh, natural way:\n\n${selectedText}`, system: 'You are a creative writing assistant. Return only the rephrased text, no explanation.' },
+      'shorter':  { user: `Make the following text more concise without losing the key meaning:\n\n${selectedText}`, system: 'You are an expert editor. Return only the shortened text, no explanation.' },
+      'longer':   { user: `Expand and elaborate on the following text:\n\n${selectedText}`, system: 'You are a creative writing assistant. Return only the expanded text, no explanation.' },
+    };
+    const p = prompts[action];
+    if (!p) return;
+    this.isSaving.set(true);
+    try {
+      const result = await this.aiService.sendMessage(p.user, p.system);
+      this.editor.chain().focus().insertContentAt({ from, to }, result.trim()).run();
+    } catch { /* silent */ } finally {
+      this.isSaving.set(false);
     }
   }
 
@@ -530,6 +649,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (!this.openNotes().includes(id)) {
       this.openNotes.update(tabs => [...tabs, id]);
     }
+    this.lastSaved.set(null);
+    this.isSaving.set(false);
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    // Reset session word tracking for this note
+    this.sessionNoteId = '';
+    this.sessionWords.set(0);
   }
 
   toggleGroup(groupId: string) {
@@ -575,7 +700,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   setNoteBgColor(color: string) {
     const id = this.selectedEntryId();
     if (id) this.store.updateNote(id, { bgColor: color });
-    this.showColorPicker.set(false);
   }
 
   submitTagInput() {
@@ -683,21 +807,47 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if ((event.metaKey || event.ctrlKey) && event.key === 'n' && this.activeModal() === 'none') {
       event.preventDefault();
       this.handleNewNote();
+      return;
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault();
+      return;
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === '\\') {
+      event.preventDefault();
+      this.toggleFocusMode();
+      return;
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === 't') {
+      event.preventDefault();
+      this.toggleTypewriterMode();
+      return;
+    }
+    if (event.key === 'F11') {
+      event.preventDefault();
+      this.toggleFullScreen();
+      return;
+    }
+    if (event.key === 'Escape') {
+      if (this.activeModal() !== 'none') { event.preventDefault(); this.closeModal(); return; }
+      if (this.focusMode()) { this.toggleFocusMode(); return; }
     }
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.dropdown-wrapper') && !target.closest('.color-picker-wrapper')) {
+    if (!target.closest('.dropdown-wrapper')) {
       if (this.showDropdown()) this.showDropdown.set(false);
-      if (this.showColorPicker()) this.showColorPicker.set(false);
     }
     if (!target.closest('.folder-menu-wrapper')) {
       if (this.activeFolderMenuId()) this.activeFolderMenuId.set(null);
     }
     if (!target.closest('.tag-input-wrapper') && !target.closest('.add-tag-btn')) {
       if (this.showTagInput()) this.submitTagInput();
+    }
+    if (!target.closest('.bubble-ai-wrapper')) {
+      if (this.showAiBubbleMenu()) this.showAiBubbleMenu.set(false);
     }
   }
 

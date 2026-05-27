@@ -1,0 +1,40 @@
+<div class="lec-card" [ngClass]="cardBgColor()" [class.lec-card--full-width]="isFullWidth()">
+  <div class="lec-actions-top">
+    <div class="lec-color-picker-wrapper">
+      <env-icon-button
+        icon="format_color_fill"
+        variant="ghost"
+        [size]="28"
+        title="Background color"
+        [active]="!!cardBgColor() || showColorPicker()"
+        (clicked)="toggleColorPicker()"
+      />
+      @if (showColorPicker()) {
+      <div class="lec-color-picker-dropdown">
+        @for (color of bgColors(); track color) {
+        <button
+          class="lec-color-swatch"
+          [class.active]="cardBgColor() === color"
+          [class.lec-swatch--none]="color === ''"
+          [ngClass]="color || ''"
+          (click)="selectColor(color)"
+          [title]="colorTitle(color)"
+        >
+          @if (!color) {
+          <span class="material-symbols-outlined lec-swatch-none-icon">close</span>
+          }
+        </button>
+        }
+      </div>
+      }
+    </div>
+    <env-icon-button
+      [icon]="isFullWidth() ? 'view_column' : 'view_stream'"
+      variant="ghost"
+      [size]="28"
+      [title]="isFullWidth() ? 'Boxed width' : 'Full width'"
+      (clicked)="fullWidthChange.emit(!isFullWidth())"
+    />
+  </div>
+  <ng-content />
+</div>

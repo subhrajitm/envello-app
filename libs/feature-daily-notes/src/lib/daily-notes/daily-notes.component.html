@@ -1,4 +1,22 @@
-<div class="daily-notes-view flex flex-row h-full">
+<div class="daily-notes-view flex flex-row h-full" [class.dn-fullscreen]="fullScreenMode()">
+
+    <!-- Focus mode toast -->
+    @if (showFocusToast()) {
+    <div class="dn-focus-toast">
+        <span class="material-symbols-outlined" style="font-size:16px;">center_focus_strong</span>
+        Focus mode on — press <kbd>⌘\</kbd> to exit
+        <button class="dn-focus-toast-close" (click)="dismissFocusToast()">
+            <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+        </button>
+    </div>
+    }
+    <!-- Typewriter mode toast -->
+    @if (showTypewriterToast()) {
+    <div class="dn-focus-toast dn-typewriter-toast">
+        <span class="material-symbols-outlined" style="font-size:16px;">keyboard</span>
+        Typewriter mode {{ typewriterMode() ? 'on' : 'off' }} — cursor stays centered
+    </div>
+    }
 
     <!-- Modals -->
     <env-modal
@@ -83,7 +101,7 @@
         </div>
     </env-modal>
 
-    <div class="dn-sidebar">
+    <div class="dn-sidebar" [class.collapsed]="focusMode() || leftSidebarCollapsed()">
         <!-- Search Bar -->
         <div class="dn-search-header">
             <div class="search-container">
@@ -239,27 +257,13 @@
         <!-- Editor Body — content + right sidebar side by side -->
         <div class="dn-editor-body">
         <!-- Editor Content -->
-        <div class="dn-editor-content">
-            <div class="editor-container" [ngClass]="noteBgClass()" [class.full-width]="isFullWidth()">
-                <div class="editor-actions-top">
-                    <env-icon-button [icon]="isFullWidth() ? 'view_column' : 'view_stream'" variant="ghost" [size]="28" [title]="isFullWidth() ? 'Boxed width' : 'Full width'" (clicked)="isFullWidth.set(!isFullWidth())" />
-                    <div class="color-picker-wrapper">
-                        <env-icon-button icon="format_color_fill" variant="ghost" [size]="28" title="Background color" [active]="showColorPicker()" (clicked)="showColorPicker.set(!showColorPicker())" />
-                        @if (showColorPicker()) {
-                    <div class="color-picker-dropdown">
-                        @for (color of bgColors; track color) {
-                        <button class="color-swatch" [class]="'color-swatch' + (color ? ' ' + color : ' color-swatch--none')"
-                            [class.active]="noteBgClass() === color"
-                            (click)="setNoteBgColor(color)" title="{{ color ? color.replace('note-bg--', '') : 'Default' }}">
-                            @if (!color) {
-                            <span class="material-symbols-outlined color-swatch-none-icon">close</span>
-                            }
-                        </button>
-                        }
-                        </div>
-                        }
-                    </div>
-                </div>
+        <div class="dn-editor-content" [class.typewriter-mode]="typewriterMode()">
+            <lib-editor-card
+                [cardBgColor]="noteBgClass()"
+                [isFullWidth]="isFullWidth()"
+                [bgColors]="bgColors"
+                (fullWidthChange)="isFullWidth.set($event)"
+                (bgColorChange)="setNoteBgColor($event)">
                 <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
                     (ngModelChange)="updateNoteTitle($event)"
                     (keydown.enter)="checkAiTitleCommand(note.title)"
@@ -332,6 +336,33 @@
                             [class.active]="editor.isActive('codeBlock')">
                             <span class="material-symbols-outlined">code</span>
                         </button>
+                        <div class="bubble-divider"></div>
+                        <div class="bubble-ai-wrapper">
+                            <button class="bubble-btn bubble-ai-btn" [class.active]="showAiBubbleMenu()"
+                                (click)="toggleAiBubbleMenu($event)" title="AI actions">
+                                <span class="material-symbols-outlined">auto_awesome</span>
+                            </button>
+                            @if (showAiBubbleMenu()) {
+                            <div class="bubble-ai-dropdown">
+                                <button class="bubble-ai-option" (click)="handleSelectionAction('improve'); showAiBubbleMenu.set(false)">
+                                    <span class="material-symbols-outlined">auto_fix_high</span>
+                                    Improve
+                                </button>
+                                <button class="bubble-ai-option" (click)="handleSelectionAction('rephrase'); showAiBubbleMenu.set(false)">
+                                    <span class="material-symbols-outlined">refresh</span>
+                                    Rephrase
+                                </button>
+                                <button class="bubble-ai-option" (click)="handleSelectionAction('shorter'); showAiBubbleMenu.set(false)">
+                                    <span class="material-symbols-outlined">compress</span>
+                                    Make shorter
+                                </button>
+                                <button class="bubble-ai-option" (click)="handleSelectionAction('longer'); showAiBubbleMenu.set(false)">
+                                    <span class="material-symbols-outlined">expand</span>
+                                    Make longer
+                                </button>
+                            </div>
+                            }
+                        </div>
                     </div>
                 </tiptap-bubble-menu>
 
@@ -366,7 +397,7 @@
                 </tiptap-floating-menu>
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
-            </div>
+            </lib-editor-card>
         </div>
 
         <!-- Right Sidebar: composer-style icon strip + expandable panel -->
@@ -532,6 +563,12 @@
                                 <div class="dn-stat-label">Chars</div>
                                 <div class="dn-stat-value">{{ characterCount() }}</div>
                             </div>
+                            @if (sessionWords() > 0) {
+                            <div class="dn-stat-card">
+                                <div class="dn-stat-label">Session</div>
+                                <div class="dn-stat-value dn-stat-session">+{{ sessionWords() }}</div>
+                            </div>
+                            }
                         </div>
                     </div>
                     @if (getNoteTags(note).length > 0) {
@@ -548,8 +585,16 @@
                     <div class="dn-format-divider"></div>
                     <div class="dn-format-section">
                         <div class="dn-info-save-row">
+                            @if (isSaving()) {
+                            <span class="material-symbols-outlined dn-info-saved-icon dn-info-saving">sync</span>
+                            <span class="dn-info-saved-text">Saving…</span>
+                            } @else if (lastSaved()) {
+                            <span class="material-symbols-outlined dn-info-saved-icon">check_circle</span>
+                            <span class="dn-info-saved-text">Saved · {{ formatSaved(lastSaved()!) }}</span>
+                            } @else {
                             <span class="material-symbols-outlined dn-info-saved-icon">cloud_done</span>
                             <span class="dn-info-saved-text">All changes saved</span>
+                            }
                         </div>
                     </div>
                 </div>
@@ -571,6 +616,19 @@
                     <span class="material-symbols-outlined">info</span>
                 </button>
                 <div class="ne-strip-spacer"></div>
+                <div class="ne-strip-divider"></div>
+                <button class="ne-strip-btn" [class.active]="typewriterMode()" (click)="toggleTypewriterMode()"
+                    [title]="typewriterMode() ? 'Typewriter Mode On (⌘T)' : 'Typewriter Mode (⌘T)'">
+                    <span class="material-symbols-outlined">keyboard</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()"
+                    [title]="focusMode() ? 'Exit Focus Mode (⌘\\)' : 'Focus Mode (⌘\\)'">
+                    <span class="material-symbols-outlined">{{ focusMode() ? 'close_fullscreen' : 'center_focus_strong' }}</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()"
+                    [title]="fullScreenMode() ? 'Exit Full Screen (F11)' : 'Full Screen (F11)'">
+                    <span class="material-symbols-outlined">{{ fullScreenMode() ? 'fullscreen_exit' : 'fullscreen' }}</span>
+                </button>
                 <div class="ne-strip-divider"></div>
                 @if (editor) {
                 <button class="ne-strip-btn" (click)="editor.chain().focus().undo().run()" [disabled]="!editor.can().undo()" title="Undo">

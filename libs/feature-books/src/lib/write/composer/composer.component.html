@@ -261,7 +261,7 @@
                 [isFullWidth]="editorFullWidth()" [cardBgColor]="editorBgColor()"
                 (titleChange)="onTitleChange($event)"
                 (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()"
-                (quickAction)="$event === 'continue-writing' ? continueWriting() : handleQuickAction($event)"
+                (quickAction)="$event === 'continue-writing' ? continueWriting() : $event === 'link' ? openLinkModal() : $event.startsWith('ai-select:') ? handleSelectionAction($event.slice(10)) : handleQuickAction($event)"
                 (fullWidthChange)="editorFullWidth.set($event)"
                 (bgColorChange)="setEditorBgColor($event)" />
             }

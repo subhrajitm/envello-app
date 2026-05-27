@@ -12,32 +12,12 @@
         </button>
     </div>
     } @else {
-    <div class="ms-editor-card" [ngClass]="cardBgColor()" [class.ms-card--full-width]="isFullWidth()">
-
-        <!-- Card top actions: full-width toggle + color picker -->
-        <div class="ms-editor-actions-top">
-            <div class="ms-color-picker-wrapper" style="position:relative;">
-                <button class="ms-action-btn" [class.active]="cardBgColor()" (click)="toggleColorPicker($event)" title="Card color">
-                    <span class="material-symbols-outlined">palette</span>
-                </button>
-                @if (showColorPicker()) {
-                <div class="ms-color-picker-dropdown" (click)="$event.stopPropagation()">
-                    @for (color of bgColors; track color) {
-                    <button class="ms-color-swatch"
-                        [class.active]="cardBgColor() === color"
-                        [class.ms-swatch--none]="color === ''"
-                        [ngClass]="color || ''"
-                        (click)="selectBgColor(color, $event)"
-                        [title]="color ? color.replace('ms-bg--', '') : 'Default'">
-                    </button>
-                    }
-                </div>
-                }
-            </div>
-            <button class="ms-action-btn" [class.active]="isFullWidth()" (click)="fullWidthChange.emit(!isFullWidth())" [title]="isFullWidth() ? 'Restore width' : 'Full width'">
-                <span class="material-symbols-outlined">{{ isFullWidth() ? 'close_fullscreen' : 'open_in_full' }}</span>
-            </button>
-        </div>
+    <lib-editor-card
+        [cardBgColor]="cardBgColor()"
+        [isFullWidth]="isFullWidth()"
+        [bgColors]="bgColors"
+        (bgColorChange)="bgColorChange.emit($event)"
+        (fullWidthChange)="fullWidthChange.emit($event)">
 
         <!-- Card body: title + meta + editor -->
         <div class="ms-card-body">
@@ -87,6 +67,77 @@
                 </div>
             </div>
 
+            <!-- Bubble menu (appears on text selection) -->
+            <tiptap-bubble-menu [editor]="editor()">
+                <div class="ms-bubble-menu">
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleBold().run()"
+                        [class.active]="editor().isActive('bold')" title="Bold">
+                        <span class="material-symbols-outlined">format_bold</span>
+                    </button>
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleItalic().run()"
+                        [class.active]="editor().isActive('italic')" title="Italic">
+                        <span class="material-symbols-outlined">format_italic</span>
+                    </button>
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleUnderline().run()"
+                        [class.active]="editor().isActive('underline')" title="Underline">
+                        <span class="material-symbols-outlined">format_underlined</span>
+                    </button>
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleStrike().run()"
+                        [class.active]="editor().isActive('strike')" title="Strikethrough">
+                        <span class="material-symbols-outlined">strikethrough_s</span>
+                    </button>
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleHighlight().run()"
+                        [class.active]="editor().isActive('highlight')" title="Highlight">
+                        <span class="material-symbols-outlined">ink_highlighter</span>
+                    </button>
+                    <div class="ms-bubble-divider"></div>
+                    <button class="ms-bubble-btn" (click)="quickAction.emit('link')"
+                        [class.active]="editor().isActive('link')" title="Insert link">
+                        <span class="material-symbols-outlined">link</span>
+                    </button>
+                    <div class="ms-bubble-divider"></div>
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleHeading({ level: 1 }).run()"
+                        [class.active]="editor().isActive('heading', { level: 1 })" title="Heading 1">
+                        <span class="material-symbols-outlined">format_h1</span>
+                    </button>
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleHeading({ level: 2 }).run()"
+                        [class.active]="editor().isActive('heading', { level: 2 })" title="Heading 2">
+                        <span class="material-symbols-outlined">format_h2</span>
+                    </button>
+                    <button class="ms-bubble-btn" (click)="editor().chain().focus().toggleBlockquote().run()"
+                        [class.active]="editor().isActive('blockquote')" title="Quote">
+                        <span class="material-symbols-outlined">format_quote</span>
+                    </button>
+                    <div class="ms-bubble-divider"></div>
+                    <div class="ms-bubble-ai-wrapper">
+                        <button class="ms-bubble-btn ms-bubble-ai-btn" [class.active]="showAiBubbleMenu()"
+                            (click)="toggleAiBubbleMenu($event)" title="AI actions">
+                            <span class="material-symbols-outlined">auto_awesome</span>
+                        </button>
+                        @if (showAiBubbleMenu()) {
+                        <div class="ms-bubble-ai-dropdown">
+                            <button class="ms-bubble-ai-option" (click)="quickAction.emit('ai-select:improve'); showAiBubbleMenu.set(false)">
+                                <span class="material-symbols-outlined">auto_fix_high</span>
+                                Improve
+                            </button>
+                            <button class="ms-bubble-ai-option" (click)="quickAction.emit('ai-select:rephrase'); showAiBubbleMenu.set(false)">
+                                <span class="material-symbols-outlined">refresh</span>
+                                Rephrase
+                            </button>
+                            <button class="ms-bubble-ai-option" (click)="quickAction.emit('ai-select:shorter'); showAiBubbleMenu.set(false)">
+                                <span class="material-symbols-outlined">compress</span>
+                                Make shorter
+                            </button>
+                            <button class="ms-bubble-ai-option" (click)="quickAction.emit('ai-select:longer'); showAiBubbleMenu.set(false)">
+                                <span class="material-symbols-outlined">expand</span>
+                                Make longer
+                            </button>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </tiptap-bubble-menu>
+
             <!-- Tiptap Floating Menu (shows on empty new lines) -->
             <tiptap-floating-menu [editor]="editor()">
                 <div class="ms-floating-menu">
@@ -116,6 +167,6 @@
             <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
         </div>
 
-    </div>
+    </lib-editor-card>
     }
 </div>
