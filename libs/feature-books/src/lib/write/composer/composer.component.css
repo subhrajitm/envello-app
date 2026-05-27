@@ -1250,9 +1250,7 @@
 .ne-editor-canvas {
     width: 100%;
     max-width: 100%;
-    /* Fill full width so scrollbar is at edge */
-    padding: 32px 0 64px 0;
-    /* No side padding */
+    padding: 32px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1277,6 +1275,128 @@
     box-sizing: border-box;
 }
 
+/* Card resets the inherited canvas child padding — card body handles its own */
+.ms-editor-card {
+    padding: 0;
+    max-width: 860px;
+    background: var(--bg-panel);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    overflow: visible; /* allow action buttons to escape the card bounds */
+    transition: box-shadow 0.2s, background 0.2s, max-width 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* must not compress — canvas scrolls instead */
+    position: relative;
+}
+
+.ms-editor-card:focus-within {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Full-width mode */
+.ms-editor-card.ms-card--full-width {
+    max-width: calc(100% - 40px);
+}
+
+/* Card top-right action buttons */
+.ms-editor-actions-top {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+}
+
+.ms-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+}
+
+.ms-action-btn:hover,
+.ms-action-btn.active {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+    border-color: var(--border-highlight);
+}
+
+.ms-action-btn .material-symbols-outlined { font-size: 16px; }
+
+/* Color picker dropdown */
+.ms-color-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    padding: 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    min-width: 120px;
+    z-index: 100;
+}
+
+.ms-color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.1s;
+    background: var(--bg-hover);
+}
+
+.ms-color-swatch:hover { transform: scale(1.2); border-color: var(--border-highlight); }
+.ms-color-swatch.active { border-color: var(--accent-primary); transform: scale(1.15); }
+
+.ms-color-swatch.ms-swatch--none {
+    background: var(--bg-panel);
+    border: 2px dashed var(--border-subtle);
+}
+.ms-color-swatch.ms-swatch--none:hover { border-color: var(--text-tertiary); }
+
+/* Card background color tints */
+.ms-bg--rose      { background: color-mix(in srgb, #f43f5e 10%, var(--bg-panel)); }
+.ms-bg--orange    { background: color-mix(in srgb, #f97316 10%, var(--bg-panel)); }
+.ms-bg--yellow    { background: color-mix(in srgb, #eab308 10%, var(--bg-panel)); }
+.ms-bg--green     { background: color-mix(in srgb, #22c55e 10%, var(--bg-panel)); }
+.ms-bg--cyan      { background: color-mix(in srgb, #06b6d4 10%, var(--bg-panel)); }
+.ms-bg--blue      { background: color-mix(in srgb, #3b82f6 10%, var(--bg-panel)); }
+.ms-bg--purple    { background: color-mix(in srgb, #a855f7 10%, var(--bg-panel)); }
+.ms-bg--pink      { background: color-mix(in srgb, #ec4899 10%, var(--bg-panel)); }
+.ms-bg--warm      { background: color-mix(in srgb, #b45309 8%,  var(--bg-panel)); }
+.ms-bg--cool      { background: color-mix(in srgb, #0ea5e9 8%,  var(--bg-panel)); }
+
+/* Swatch colours match card tints */
+.ms-color-swatch.ms-bg--rose   { background: color-mix(in srgb, #f43f5e 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--orange { background: color-mix(in srgb, #f97316 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--yellow { background: color-mix(in srgb, #eab308 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--green  { background: color-mix(in srgb, #22c55e 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--cyan   { background: color-mix(in srgb, #06b6d4 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--blue   { background: color-mix(in srgb, #3b82f6 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--purple { background: color-mix(in srgb, #a855f7 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--pink   { background: color-mix(in srgb, #ec4899 25%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--warm   { background: color-mix(in srgb, #b45309 22%, var(--bg-panel)); }
+.ms-color-swatch.ms-bg--cool   { background: color-mix(in srgb, #0ea5e9 22%, var(--bg-panel)); }
+
+.ms-card-body {
+    padding: 48px 56px 32px 56px;
+}
+
 .ne-doc-title-input {
     width: 100%;
     background: transparent;
@@ -1287,7 +1407,6 @@
     color: var(--text-primary);
     margin: 0 0 16px 0;
     font-family: var(--font-serif, 'Georgia', serif);
-    /* Use variable or nicer fallback */
     padding: 0;
 }
 
@@ -1301,7 +1420,7 @@
     color: var(--text-tertiary);
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-bottom: 48px;
+    margin-bottom: 40px;
 }
 
 .meta-sep {
@@ -3169,19 +3288,19 @@
 }
 
 .status-dot-empty {
-    background: var(--text-disabled, #555);
+    background: #6b7280;
 }
 
 .status-dot-draft {
-    background: #60a5fa;
+    background: #3b82f6;
 }
 
 .status-dot-editing {
-    background: #fcd34d;
+    background: #f59e0b;
 }
 
 .status-dot-done {
-    background: #4ade80;
+    background: #16a34a;
 }
 
 /* Inline Rename Input */
@@ -4255,12 +4374,6 @@
    EDITOR CANVAS - COMPACT
    ============================================ */
 
-.ne-editor-canvas {
-    padding: 20px 0 40px 0 !important;
-    max-width: none !important;
-    width: 100% !important;
-}
-
 .ne-editor-canvas > * {
     max-width: 800px;
     margin-left: auto;
@@ -5158,54 +5271,6 @@
   flex-shrink: 0;
 }
 
-/* Synopsis pane at bottom of editor */
-.ms-synopsis-pane {
-  border-top: 1px solid var(--border-subtle);
-  background: var(--bg-panel);
-  flex-shrink: 0;
-}
-
-.ms-synopsis-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-tertiary);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  padding: 6px 16px;
-  text-align: left;
-  transition: color 0.12s;
-}
-
-.ms-synopsis-toggle:hover { color: var(--text-secondary); }
-.ms-synopsis-toggle .material-symbols-outlined { font-size: 14px; }
-
-.ms-synopsis-hint {
-  font-weight: 400;
-  font-style: italic;
-  color: var(--text-disabled);
-}
-
-.ms-synopsis-input {
-  width: 100%;
-  background: var(--bg-app);
-  border: none;
-  border-top: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-  padding: 10px 16px;
-  resize: none;
-  outline: none;
-  font-family: var(--font-sans);
-}
-
-.ms-synopsis-input:focus { color: var(--text-primary); background: var(--bg-panel); }
 
 /* Character mention badges as clickable buttons */
 .mention-btn {

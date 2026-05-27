@@ -79,6 +79,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   route = inject(ActivatedRoute);
   private timeInterval?: number;
   private saveTimeout?: ReturnType<typeof setTimeout>;
+  private lastFocusedId: string | null = null;
 
   // State
   title = signal('');
@@ -91,6 +92,10 @@ export class ComposerComponent implements OnInit, OnDestroy {
   // Structure view state
   activeFrontMatterId = signal<string | null>(null);
   activePrologueId = signal<string | null>(null);
+
+  // Editor card display state
+  editorFullWidth = signal(false);
+  editorBgColor = computed(() => this.activeChapter()?.bgColor ?? '');
 
   // UI State
   focusMode = signal(false);
@@ -419,7 +424,11 @@ export class ComposerComponent implements OnInit, OnDestroy {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
             }
-            setTimeout(() => this.editor?.commands.focus('end'), 0);
+            // Only auto-focus when switching to a different chapter — not on title/content updates
+            if (this.lastFocusedId !== chapterId) {
+              this.lastFocusedId = chapterId;
+              setTimeout(() => this.editor?.commands.focus('end'), 0);
+            }
           }
         } else if (frontMatterId) {
           const book = this.book();
@@ -435,7 +444,10 @@ export class ComposerComponent implements OnInit, OnDestroy {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', item.content, item.title, count, true);
             }
-            setTimeout(() => this.editor?.commands.focus('end'), 0);
+            if (this.lastFocusedId !== frontMatterId) {
+              this.lastFocusedId = frontMatterId;
+              setTimeout(() => this.editor?.commands.focus('end'), 0);
+            }
           }
         } else if (prologueId) {
           const book = this.book();
@@ -451,12 +463,16 @@ export class ComposerComponent implements OnInit, OnDestroy {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion('prologue', 'prologue', prologue.content, prologue.title, count, true);
             }
-            setTimeout(() => this.editor?.commands.focus('end'), 0);
+            if (this.lastFocusedId !== 'prologue') {
+              this.lastFocusedId = 'prologue';
+              setTimeout(() => this.editor?.commands.focus('end'), 0);
+            }
           }
         } else if (!chapterId && !frontMatterId && !prologueId) {
           this.editor.commands.clearContent();
           this.title.set('');
           this.wordCount.set(0);
+          this.lastFocusedId = null;
         }
       }
     });
@@ -1448,9 +1464,9 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if (char) { this.selectCharacter(char.id); this.setActiveNav('characters'); }
   }
 
-  updateChapterSummary(summary: string) {
+  setEditorBgColor(color: string) {
     const id = this.activeChapterId();
-    if (id) this.bookService.updateChapterSummary(id, summary);
+    if (id) this.bookService.updateChapterBgColor(id, color);
   }
 
   quickExportChapter(chapterId: string) {

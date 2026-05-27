@@ -33,7 +33,8 @@ export interface Chapter {
     status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
     wordCount: number;
     lastEdited: string;
-    summary?: string; // Chapter summary
+    summary?: string;
+    bgColor?: string;
     tags?: string[]; // Tags for organization
     template?: string; // Template used
     plotPoints?: {
@@ -254,6 +255,20 @@ export class BookContentService {
                 })
             }));
 
+            return { ...book, chapters: newChapters };
+        });
+        this.schedulePersist();
+    }
+
+    updateChapterBgColor(chapterId: string, bgColor: string) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            const newChapters = book.chapters.map(group => ({
+                ...group,
+                children: group.children.map(chap =>
+                    chap.id === chapterId ? { ...chap, bgColor } : chap
+                )
+            }));
             return { ...book, chapters: newChapters };
         });
         this.schedulePersist();

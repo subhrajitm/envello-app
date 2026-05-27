@@ -258,11 +258,12 @@
             <app-manuscript-editor [editor]="editor" [activeChapterId]="activeChapterId()" [title]="title()"
                 [chapterStatus]="chapterStatus()" [chapterLastEdited]="chapterLastEdited()" [isSaving]="isSaving()"
                 [lastSaved]="lastSaved()" [wordCount]="wordCount()" [sessionWords]="sessionWords()"
-                [chapterSummary]="activeChapter()?.summary ?? ''"
+                [isFullWidth]="editorFullWidth()" [cardBgColor]="editorBgColor()"
                 (titleChange)="onTitleChange($event)"
                 (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()"
-                (summaryChange)="updateChapterSummary($event)"
-                (quickAction)="$event === 'continue-writing' ? continueWriting() : handleQuickAction($event)" />
+                (quickAction)="$event === 'continue-writing' ? continueWriting() : handleQuickAction($event)"
+                (fullWidthChange)="editorFullWidth.set($event)"
+                (bgColorChange)="setEditorBgColor($event)" />
             }
 
             @if (activeNav() === 'structure' && book()) {
