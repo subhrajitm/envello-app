@@ -691,9 +691,6 @@
 
 .editor-container.full-width {
     max-width: 100%;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 40px 64px;
 }
 
 .editor-container:focus-within {
