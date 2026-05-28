@@ -23,9 +23,8 @@ import TextAlign from '@tiptap/extension-text-align';
 import Youtube from '@tiptap/extension-youtube';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
-import BubbleMenu from '@tiptap/extension-bubble-menu';
-import FloatingMenu from '@tiptap/extension-floating-menu';
-import { TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective } from 'ngx-tiptap';
+import { BubbleMenuPluginProps } from '@tiptap/extension-bubble-menu';
+import { TiptapEditorDirective, TiptapBubbleMenuDirective } from 'ngx-tiptap';
 
 interface NoteGroup {
   id: string;
@@ -39,7 +38,7 @@ interface NoteGroup {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, TiptapFloatingMenuDirective, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, TiptapBubbleMenuDirective, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -50,6 +49,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
   editor!: Editor;
+
+  floatingMenuVisible = signal(false);
+  floatingMenuPos = signal({ top: 0, left: 0 });
+
+  // Bubble menu hides whenever our floating menu is visible (signal read is synchronous,
+  // works correctly even inside the BubbleMenuPlugin's 250ms updateDelay callback)
+  readonly bubbleMenuShouldShow: BubbleMenuPluginProps['shouldShow'] = ({ editor }) =>
+    !editor.view.state.selection.empty && editor.isEditable && !this.floatingMenuVisible();
 
   aiGenerating = signal(false);
 
@@ -347,6 +354,29 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     });
   }
 
+  @HostListener('mousedown', ['$event'])
+  onEditorMouseDown(event: MouseEvent) {
+    // Single click inside editor: hide floating menu so drag-select shows only the bubble menu.
+    // detail >= 2 means a dblclick second-press — let dblclick handler take over.
+    if (event.detail < 2 && (event.target as HTMLElement).closest('.dn-editor-text')) {
+      this.floatingMenuVisible.set(false);
+    }
+  }
+
+  @HostListener('dblclick', ['$event'])
+  onEditorDblClick(event: MouseEvent) {
+    if (!(event.target as HTMLElement).closest('.dn-editor-text')) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
+    const menuHeight = 44;
+    const gap = 8;
+    const top = rect.top < menuHeight + gap ? rect.bottom + gap : rect.top - menuHeight - gap;
+    this.floatingMenuPos.set({ top, left: rect.left + rect.width / 2 });
+    this.floatingMenuVisible.set(true);
+  }
+
   @HostListener('document:keydown.escape', ['$event'])
   handleEscape(event: Event) {
     if (this.activeModal() !== 'none') {
@@ -363,18 +393,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         }),
         Placeholder.configure({
           placeholder: 'Press \'/\' for commands...',
-        }),
-        BubbleMenu.configure({
-          pluginKey: 'bubbleMenu',
-          shouldShow: ({ editor }) => {
-            return !editor.view.state.selection.empty && editor.isEditable;
-          },
-        }),
-        FloatingMenu.configure({
-          pluginKey: 'floatingMenu',
-          shouldShow: ({ editor }) => {
-            return editor.isActive('paragraph') && editor.state.selection.$from.parent.content.size === 0;
-          },
         }),
         Link.configure({ openOnClick: false }),
         Image,
@@ -404,6 +422,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         this.wordCount.set(editor.storage.characterCount.words());
         this.characterCount.set(editor.storage.characterCount.characters());
       },
+    });
+
+    // Only hide on cursor-only (empty) selection; showing is driven by dblclick below
+    this.editor.on('selectionUpdate', () => {
+      const { from, to } = this.editor.state.selection;
+      if (from === to) this.floatingMenuVisible.set(false);
     });
 
     // If navigated here with a specific note ID (e.g. from workspace prompt), open it directly.
@@ -698,6 +722,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.tag-input-wrapper') && !target.closest('.add-tag-btn')) {
       if (this.showTagInput()) this.submitTagInput();
+    }
+    if (!target.closest('.floating-menu') && !target.closest('.dn-editor-text')) {
+      this.floatingMenuVisible.set(false);
     }
   }
 

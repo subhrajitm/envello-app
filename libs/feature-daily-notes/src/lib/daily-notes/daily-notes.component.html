@@ -302,7 +302,7 @@
                     }
                 </div>
 
-                <tiptap-bubble-menu [editor]="editor">
+                <tiptap-bubble-menu [editor]="editor" [shouldShow]="bubbleMenuShouldShow">
                     <div class="bubble-menu">
                         <button class="bubble-btn" (click)="editor.chain().focus().toggleBold().run()"
                             [class.active]="editor.isActive('bold')">
@@ -335,35 +335,38 @@
                     </div>
                 </tiptap-bubble-menu>
 
-                <tiptap-floating-menu [editor]="editor">
-                    <div class="floating-menu">
-                        <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-                            [class.active]="editor.isActive('heading', { level: 1 })">
-                            <span class="material-symbols-outlined">format_h1</span>
-                        </button>
-                        <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                            [class.active]="editor.isActive('heading', { level: 2 })">
-                            <span class="material-symbols-outlined">format_h2</span>
-                        </button>
-                        <button class="float-btn" (click)="editor.chain().focus().toggleBulletList().run()"
-                            [class.active]="editor.isActive('bulletList')">
-                            <span class="material-symbols-outlined">format_list_bulleted</span>
-                        </button>
-                        <button class="float-btn" (click)="editor.chain().focus().toggleTaskList().run()"
-                            [class.active]="editor.isActive('taskList')">
-                            <span class="material-symbols-outlined">check_box</span>
-                        </button>
-                        <button class="float-btn" (click)="addImage()">
-                            <span class="material-symbols-outlined">image</span>
-                        </button>
-                        <button class="float-btn" (click)="insertTable()">
-                            <span class="material-symbols-outlined">table</span>
-                        </button>
-                        <button class="float-btn" (click)="addYoutube()">
-                            <span class="material-symbols-outlined">smart_display</span>
-                        </button>
-                    </div>
-                </tiptap-floating-menu>
+                @if (floatingMenuVisible()) {
+                <div class="floating-menu"
+                     [style.top.px]="floatingMenuPos().top"
+                     [style.left.px]="floatingMenuPos().left"
+                     (mousedown)="$event.preventDefault()">
+                    <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+                        [class.active]="editor.isActive('heading', { level: 1 })">
+                        <span class="material-symbols-outlined">format_h1</span>
+                    </button>
+                    <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+                        [class.active]="editor.isActive('heading', { level: 2 })">
+                        <span class="material-symbols-outlined">format_h2</span>
+                    </button>
+                    <button class="float-btn" (click)="editor.chain().focus().toggleBulletList().run()"
+                        [class.active]="editor.isActive('bulletList')">
+                        <span class="material-symbols-outlined">format_list_bulleted</span>
+                    </button>
+                    <button class="float-btn" (click)="editor.chain().focus().toggleTaskList().run()"
+                        [class.active]="editor.isActive('taskList')">
+                        <span class="material-symbols-outlined">check_box</span>
+                    </button>
+                    <button class="float-btn" (click)="addImage()">
+                        <span class="material-symbols-outlined">image</span>
+                    </button>
+                    <button class="float-btn" (click)="insertTable()">
+                        <span class="material-symbols-outlined">table</span>
+                    </button>
+                    <button class="float-btn" (click)="addYoutube()">
+                        <span class="material-symbols-outlined">smart_display</span>
+                    </button>
+                </div>
+                }
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
             </div>
