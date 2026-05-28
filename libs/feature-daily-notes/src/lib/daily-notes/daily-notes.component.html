@@ -302,71 +302,30 @@
                     }
                 </div>
 
-                <tiptap-bubble-menu [editor]="editor" [shouldShow]="bubbleMenuShouldShow">
-                    <div class="bubble-menu">
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleBold().run()"
-                            [class.active]="editor.isActive('bold')">
-                            <span class="material-symbols-outlined">format_bold</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleItalic().run()"
-                            [class.active]="editor.isActive('italic')">
-                            <span class="material-symbols-outlined">format_italic</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleUnderline().run()"
-                            [class.active]="editor.isActive('underline')">
-                            <span class="material-symbols-outlined">format_underlined</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleStrike().run()"
-                            [class.active]="editor.isActive('strike')">
-                            <span class="material-symbols-outlined">strikethrough_s</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleHighlight().run()"
-                            [class.active]="editor.isActive('highlight')">
-                            <span class="material-symbols-outlined">ink_highlighter</span>
-                        </button>
-                        <div class="bubble-divider"></div>
-                        <button class="bubble-btn" (click)="setLink()" [class.active]="editor.isActive('link')">
-                            <span class="material-symbols-outlined">link</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleCodeBlock().run()"
-                            [class.active]="editor.isActive('codeBlock')">
-                            <span class="material-symbols-outlined">code</span>
-                        </button>
-                    </div>
-                </tiptap-bubble-menu>
-
-                @if (floatingMenuVisible()) {
-                <div class="floating-menu"
-                     [style.top.px]="floatingMenuPos().top"
-                     [style.left.px]="floatingMenuPos().left"
-                     (mousedown)="$event.preventDefault()">
-                    <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-                        [class.active]="editor.isActive('heading', { level: 1 })">
-                        <span class="material-symbols-outlined">format_h1</span>
-                    </button>
-                    <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                        [class.active]="editor.isActive('heading', { level: 2 })">
-                        <span class="material-symbols-outlined">format_h2</span>
-                    </button>
-                    <button class="float-btn" (click)="editor.chain().focus().toggleBulletList().run()"
-                        [class.active]="editor.isActive('bulletList')">
-                        <span class="material-symbols-outlined">format_list_bulleted</span>
-                    </button>
-                    <button class="float-btn" (click)="editor.chain().focus().toggleTaskList().run()"
-                        [class.active]="editor.isActive('taskList')">
+                <env-editor-floating-menu [editor]="editor" trigger="selection">
+                    <!-- Notes-specific extras: task list, insert media, AI -->
+                    <div class="env-float-divider"></div>
+                    <button class="env-float-btn" (click)="editor.chain().focus().toggleTaskList().run()"
+                        title="Task list">
                         <span class="material-symbols-outlined">check_box</span>
                     </button>
-                    <button class="float-btn" (click)="addImage()">
+                    <button class="env-float-btn" (click)="addImage()" title="Image">
                         <span class="material-symbols-outlined">image</span>
                     </button>
-                    <button class="float-btn" (click)="insertTable()">
+                    <button class="env-float-btn" (click)="insertTable()" title="Table">
                         <span class="material-symbols-outlined">table</span>
                     </button>
-                    <button class="float-btn" (click)="addYoutube()">
+                    <button class="env-float-btn" (click)="addYoutube()" title="Video">
                         <span class="material-symbols-outlined">smart_display</span>
                     </button>
-                </div>
-                }
+                    <div class="env-float-divider"></div>
+                    <button class="env-float-btn ai-btn" (click)="setRightTab('ai')" title="AI: Continue writing">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                    </button>
+                    <button class="env-float-btn ai-btn" (click)="setRightTab('ai')" title="AI: Suggest">
+                        <span class="material-symbols-outlined">tips_and_updates</span>
+                    </button>
+                </env-editor-floating-menu>
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
             </div>

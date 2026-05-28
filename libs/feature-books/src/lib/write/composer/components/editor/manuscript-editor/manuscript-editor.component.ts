@@ -1,13 +1,14 @@
-import { Component, input, output, signal, HostListener, ChangeDetectionStrategy, ViewEncapsulation, OnInit, DestroyRef, ElementRef, inject } from '@angular/core';
+import { Component, input, output, signal, HostListener, ChangeDetectionStrategy, ViewEncapsulation, ElementRef, inject } from '@angular/core';
 import { CommonModule, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
 import { TiptapEditorDirective } from 'ngx-tiptap';
+import { EditorFloatingMenuComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-manuscript-editor',
   standalone: true,
-  imports: [CommonModule, NgClass, FormsModule, TiptapEditorDirective],
+  imports: [CommonModule, NgClass, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent],
   templateUrl: './manuscript-editor.component.html',
   styleUrls: [
     './manuscript-editor.component.css',
@@ -16,9 +17,8 @@ import { TiptapEditorDirective } from 'ngx-tiptap';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None
 })
-export class ManuscriptEditorComponent implements OnInit {
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly hostEl = inject(ElementRef<HTMLElement>).nativeElement;
+export class ManuscriptEditorComponent {
+  readonly hostEl = inject(ElementRef<HTMLElement>).nativeElement;
 
   statusMenuOpen = signal(false);
 
@@ -45,53 +45,11 @@ export class ManuscriptEditorComponent implements OnInit {
     'ms-bg--warm', 'ms-bg--cool',
   ];
 
-  floatingMenuVisible = signal(false);
-  floatingMenuPos = signal({ top: 0, left: 0 });
-
-  ngOnInit() {
-    const editor = this.editor();
-    const onSelectionUpdate = () => {
-      const { from, to } = editor.state.selection;
-      if (from !== to) {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const rect = sel.getRangeAt(0).getBoundingClientRect();
-          if (rect.width > 0 || rect.height > 0) {
-            // contain: layout on app-manuscript-editor makes it the containing block
-            // for position:fixed children, so coords must be host-relative
-            const hostRect = this.hostEl.getBoundingClientRect();
-            const menuHeight = 44;
-            const gap = 8;
-            const absTop = rect.top < menuHeight + gap
-              ? rect.bottom + gap
-              : rect.top - menuHeight - gap;
-            this.floatingMenuPos.set({
-              top: absTop - hostRect.top,
-              left: rect.left - hostRect.left + rect.width / 2
-            });
-            this.floatingMenuVisible.set(true);
-            return;
-          }
-        }
-      }
-      this.floatingMenuVisible.set(false);
-    };
-    editor.on('selectionUpdate', onSelectionUpdate);
-    this.destroyRef.onDestroy(() => editor.off('selectionUpdate', onSelectionUpdate));
-  }
-
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.status-menu-wrapper')) {
-      this.statusMenuOpen.set(false);
-    }
-    if (!target.closest('.ms-color-picker-wrapper')) {
-      this.showColorPicker.set(false);
-    }
-    if (!target.closest('.ms-floating-menu') && !target.closest('.ne-editor-text')) {
-      this.floatingMenuVisible.set(false);
-    }
+    if (!target.closest('.status-menu-wrapper')) this.statusMenuOpen.set(false);
+    if (!target.closest('.ms-color-picker-wrapper')) this.showColorPicker.set(false);
   }
 
   toggleStatusMenu(event: Event) {

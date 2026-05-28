@@ -87,33 +87,17 @@
                 </div>
             </div>
 
-            <!-- Floating menu: shows on double-click or text selection -->
-            @if (floatingMenuVisible()) {
-            <div class="ms-floating-menu"
-                 [style.top.px]="floatingMenuPos().top"
-                 [style.left.px]="floatingMenuPos().left"
-                 (mousedown)="$event.preventDefault()">
-                <button class="ms-float-btn" (click)="editor().chain().focus().toggleHeading({ level: 1 }).run()" title="Heading 1">
-                    <span class="material-symbols-outlined">format_h1</span>
-                </button>
-                <button class="ms-float-btn" (click)="editor().chain().focus().toggleHeading({ level: 2 }).run()" title="Heading 2">
-                    <span class="material-symbols-outlined">format_h2</span>
-                </button>
-                <button class="ms-float-btn" (click)="editor().chain().focus().toggleBulletList().run()" title="Bullet list">
-                    <span class="material-symbols-outlined">format_list_bulleted</span>
-                </button>
-                <button class="ms-float-btn" (click)="editor().chain().focus().toggleBlockquote().run()" title="Quote">
-                    <span class="material-symbols-outlined">format_quote</span>
-                </button>
-                <div class="ms-float-divider"></div>
-                <button class="ms-float-btn ai-btn" (click)="quickAction.emit('continue-writing')" title="AI: Continue writing">
+            <!-- Floating menu: shows on text selection or double-click -->
+            <env-editor-floating-menu [editor]="editor()" trigger="selection" [containEl]="hostEl">
+                <!-- AI extras specific to the book composer -->
+                <div class="env-float-divider"></div>
+                <button class="env-float-btn ai-btn" (click)="quickAction.emit('continue-writing')" title="AI: Continue writing">
                     <span class="material-symbols-outlined">auto_awesome</span>
                 </button>
-                <button class="ms-float-btn ai-btn" (click)="quickAction.emit('suggest')" title="AI: Suggest">
+                <button class="env-float-btn ai-btn" (click)="quickAction.emit('suggest')" title="AI: Suggest">
                     <span class="material-symbols-outlined">tips_and_updates</span>
                 </button>
-            </div>
-            }
+            </env-editor-floating-menu>
 
             <!-- Tiptap Editor -->
             <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
