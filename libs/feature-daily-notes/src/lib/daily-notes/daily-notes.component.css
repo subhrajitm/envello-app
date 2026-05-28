@@ -1216,9 +1216,10 @@ tiptap-editor:focus,
 }
 
 /* Pre-position tiptap host elements so they're never in the flex flow.
-   TipTap overrides visibility/position via inline styles once initialized. */
-tiptap-bubble-menu,
-tiptap-floating-menu {
+   TipTap overrides visibility/position via inline styles once initialized.
+   Scoped to daily-notes to avoid interfering with composer tiptap menus. */
+.dn-editor-content tiptap-bubble-menu,
+.dn-editor-content tiptap-floating-menu {
     position: absolute;
     visibility: hidden;
     z-index: 1000;

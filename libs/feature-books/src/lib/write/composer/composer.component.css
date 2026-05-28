@@ -1285,8 +1285,18 @@
     flex-shrink: 0;
 }
 
+/* When card is full-width, remove the host's max-width and padding constraints */
+.ne-editor-canvas > *:has(.lec-card--full-width) {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+
 .ne-editor-canvas .lec-card.lec-card--full-width {
-    max-width: calc(100% - 40px);
+    max-width: none;
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* Card background color tints */
@@ -1413,22 +1423,22 @@
 }
 
 /* Target Tiptap ProseMirror container */
-::ng-deep .ProseMirror {
+.ProseMirror {
     outline: none;
     min-height: 300px;
     caret-color: var(--accent-primary, #6366f1);
 }
 
 /* Keep cursor visible even when editor loses focus momentarily */
-::ng-deep .ProseMirror:focus {
+.ProseMirror:focus {
     caret-color: var(--accent-primary, #6366f1);
 }
 
-::ng-deep .ProseMirror p {
+.ProseMirror p {
     margin-bottom: 24px;
 }
 
-::ng-deep .ProseMirror blockquote {
+.ProseMirror blockquote {
     background: var(--bg-panel);
     border-left: 3px solid var(--accent-primary);
     padding: 16px 24px;
@@ -4296,16 +4306,6 @@
 /* ============================================
    EDITOR CANVAS - COMPACT
    ============================================ */
-
-.ne-editor-canvas > * {
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 32px;
-    padding-right: 32px;
-    width: 100%;
-    box-sizing: border-box;
-}
 
 .ne-doc-title-input {
     font-size: 28px !important;

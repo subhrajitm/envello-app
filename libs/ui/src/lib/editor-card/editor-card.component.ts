@@ -1,4 +1,4 @@
-import { Component, input, output, signal, HostListener, HostBinding, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { Component, input, output, signal, HostListener, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { IconButtonComponent } from '../icon-button/icon-button.component';
 
@@ -12,7 +12,6 @@ import { IconButtonComponent } from '../icon-button/icon-button.component';
   encapsulation: ViewEncapsulation.None,
 })
 export class EditorCardComponent {
-  @HostBinding('style.display') readonly hostDisplay = 'contents';
 
   showColorPicker = signal(false);
 
