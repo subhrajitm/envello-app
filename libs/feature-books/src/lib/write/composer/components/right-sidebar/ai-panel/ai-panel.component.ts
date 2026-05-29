@@ -131,6 +131,7 @@ export class AiPanelComponent {
   toggleContextPreview = output<void>();
   promptChange = output<string>();
   cancelAi = output<void>();
+  closed = output<void>();
   
   private escapeHtml(str: string): string {
     return str

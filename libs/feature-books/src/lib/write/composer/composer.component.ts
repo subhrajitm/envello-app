@@ -106,7 +106,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   activePrologueId = signal<string | null>(null);
 
   // Editor card display state
-  editorFullWidth = signal(false);
+  editorFullWidth = signal(true);
   editorBgColor = computed(() => this.activeChapter()?.bgColor ?? '');
 
   // UI State

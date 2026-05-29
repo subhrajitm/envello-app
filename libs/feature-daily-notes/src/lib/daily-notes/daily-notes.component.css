@@ -951,8 +951,6 @@
 
 .dn-editor-text .ProseMirror {
     outline: none;
-    font-size: 15px;
-    line-height: 1.75;
     color: var(--text-primary);
     padding: 0;
 }
@@ -1116,8 +1114,9 @@ li[data-type="taskItem"] input[type="checkbox"] {
 
 /* Tiptap Editor Styling - Notion-esque */
 .dn-editor-text .ProseMirror {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    font-size: 16px;
+    font-family: var(--editor-font, var(--font-sans));
+    font-size: var(--editor-font-size, 15px);
+    line-height: var(--editor-line-height, 1.75);
     min-height: 50vh;
 }
 

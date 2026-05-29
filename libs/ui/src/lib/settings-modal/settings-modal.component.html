@@ -123,10 +123,22 @@
                             <span class="setting-desc">Choose your writing font family</span>
                         </div>
                         <select class="select-input" [value]="editorFont()" (change)="setEditorFont($event)">
-                            <option value="serif">Serif (Georgia)</option>
                             <option value="sans">Sans-serif (Inter)</option>
+                            <option value="serif">Serif (Georgia)</option>
                             <option value="mono">Monospace (JetBrains Mono)</option>
                         </select>
+                    </div>
+
+                    <div class="setting-item flex flex-col gap-2">
+                        <div class="setting-label-group">
+                            <label>Font Size</label>
+                            <span class="setting-desc">Editor text size in pixels</span>
+                        </div>
+                        <div class="setting-control">
+                            <input type="range" min="13" max="22" step="1" [value]="editorFontSize()"
+                                (input)="setEditorFontSize($event)" class="range-slider">
+                            <span class="control-value">{{ editorFontSize() }}px</span>
+                        </div>
                     </div>
 
                     <div class="setting-item flex flex-col gap-2">

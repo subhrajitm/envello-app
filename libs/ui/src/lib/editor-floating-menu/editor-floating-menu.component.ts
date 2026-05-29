@@ -91,6 +91,7 @@ import { Editor } from '@tiptap/core';
 })
 export class EditorFloatingMenuComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private stateFramePending = false;
 
   editor    = input.required<Editor>();
   trigger   = input<'dblclick' | 'selection'>('dblclick');
@@ -121,6 +122,15 @@ export class EditorFloatingMenuComponent implements OnInit {
   ngOnInit() {
     const editor = this.editor();
 
+    const scheduleStateUpdate = () => {
+      if (this.stateFramePending) return;
+      this.stateFramePending = true;
+      requestAnimationFrame(() => {
+        this.stateFramePending = false;
+        this.updateEditorState();
+      });
+    };
+
     const onSelectionUpdate = () => {
       const { from, to } = editor.state.selection;
       if (from !== to && this.trigger() === 'selection') {
@@ -128,10 +138,10 @@ export class EditorFloatingMenuComponent implements OnInit {
       } else if (from === to) {
         this.hide();
       }
-      this.updateEditorState();
+      scheduleStateUpdate();
     };
 
-    const onTransaction = () => this.updateEditorState();
+    const onTransaction = () => scheduleStateUpdate();
 
     editor.on('selectionUpdate', onSelectionUpdate);
     editor.on('transaction', onTransaction);

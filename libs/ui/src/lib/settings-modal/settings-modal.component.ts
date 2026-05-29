@@ -47,7 +47,8 @@ export class SettingsModalComponent {
   compactMode = signal(false);
   animations = signal(true);
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
-  editorFont = signal('serif');
+  editorFont = signal('sans');
+  editorFontSize = signal(16);
   lineHeight = signal(1.8);
   autoSave = signal(true);
   spellCheck = signal(true);
@@ -176,6 +177,12 @@ export class SettingsModalComponent {
     document.documentElement.style.setProperty('--editor-font', this.getFontFamily(value));
   }
 
+  setEditorFontSize(event: Event) {
+    const value = parseInt((event.target as HTMLInputElement).value);
+    this.editorFontSize.set(value);
+    document.documentElement.style.setProperty('--editor-font-size', `${value}px`);
+  }
+
   setLineHeight(event: Event) {
     const value = parseFloat((event.target as HTMLInputElement).value);
     this.lineHeight.set(value);
@@ -188,10 +195,15 @@ export class SettingsModalComponent {
 
   toggleSpellCheck() {
     this.spellCheck.set(!this.spellCheck());
+    const enabled = this.spellCheck();
+    document.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el => {
+      el.setAttribute('spellcheck', enabled ? 'true' : 'false');
+    });
   }
 
   toggleFocusMode() {
     this.focusMode.set(!this.focusMode());
+    window.dispatchEvent(new CustomEvent('focusModeChanged', { detail: this.focusMode() }));
   }
 
   // Notification settings
@@ -267,6 +279,7 @@ export class SettingsModalComponent {
       animations: this.animations(),
       navigationLayout: this.navigationLayout(),
       editorFont: this.editorFont(),
+      editorFontSize: this.editorFontSize(),
       lineHeight: this.lineHeight(),
       autoSave: this.autoSave(),
       spellCheck: this.spellCheck(),
@@ -299,7 +312,8 @@ export class SettingsModalComponent {
     this.compactMode.set(false);
     this.animations.set(true);
     this.navigationLayout.set('minimized');
-    this.editorFont.set('serif');
+    this.editorFont.set('sans');
+    this.editorFontSize.set(16);
     this.lineHeight.set(1.8);
     this.autoSave.set(true);
     this.spellCheck.set(true);
@@ -322,6 +336,7 @@ export class SettingsModalComponent {
     // Reset CSS variables
     document.documentElement.style.removeProperty('--base-font-size');
     document.documentElement.style.removeProperty('--editor-font');
+    document.documentElement.style.removeProperty('--editor-font-size');
     document.documentElement.style.removeProperty('--editor-line-height');
     document.body.classList.remove('compact-mode', 'no-animations');
 
@@ -338,7 +353,8 @@ export class SettingsModalComponent {
         this.compactMode.set(settings.compactMode || false);
         this.animations.set(settings.animations !== false);
         this.navigationLayout.set(settings.navigationLayout || 'minimized');
-        this.editorFont.set(settings.editorFont || 'serif');
+        this.editorFont.set(settings.editorFont || 'sans');
+        this.editorFontSize.set(settings.editorFontSize || 16);
         this.lineHeight.set(settings.lineHeight || 1.8);
         this.autoSave.set(settings.autoSave !== false);
         this.spellCheck.set(settings.spellCheck !== false);
@@ -356,8 +372,16 @@ export class SettingsModalComponent {
         if (settings.editorFont) {
           document.documentElement.style.setProperty('--editor-font', this.getFontFamily(settings.editorFont));
         }
+        if (settings.editorFontSize) {
+          document.documentElement.style.setProperty('--editor-font-size', `${settings.editorFontSize}px`);
+        }
         if (settings.lineHeight) {
           document.documentElement.style.setProperty('--editor-line-height', settings.lineHeight.toString());
+        }
+        if (!settings.spellCheck) {
+          document.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el => {
+            el.setAttribute('spellcheck', 'false');
+          });
         }
         if (settings.compactMode) {
           document.body.classList.add('compact-mode');

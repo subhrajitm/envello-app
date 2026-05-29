@@ -309,7 +309,7 @@
                     (continueWriting)="continueWriting()" (applySuggestion)="applySuggestion($event)"
                     (clearConversation)="clearAiConversation()" (clearSuggestions)="aiSuggestions.set([])"
                     (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)"
-                    (cancelAi)="cancelAiStream()" />
+                    (cancelAi)="cancelAiStream()" (closed)="rightSidebarCollapsed.set(true)" />
                 } @else if (rightSidebarTab() === 'notes' && book()) {
                 <app-notes-panel [notes]="book()!.notes" (addNewNote)="addNewNote()"
                     (deleteNote)="deleteNote($event)"

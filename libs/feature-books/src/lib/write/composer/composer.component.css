@@ -1283,7 +1283,7 @@
     min-height: 100%;
     background: var(--bg-panel);
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--border-subtle);
     overflow: visible; /* allow action buttons to escape the card bounds */
     transition: box-shadow 0.2s, background 0.2s, max-width 0.25s ease;
     display: flex;
@@ -1293,12 +1293,16 @@
 }
 
 .ms-editor-card:focus-within {
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--border-highlight);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--border-main);
 }
 
 /* Full-width mode */
 .ms-editor-card.ms-card--full-width {
     max-width: 100%;
+}
+
+.ne-editor-canvas:has(.ms-card--full-width) {
+    padding: 12px;
 }
 
 /* Card top-right action buttons */
@@ -1396,7 +1400,7 @@
 .ms-color-swatch.ms-bg--cool   { background: color-mix(in srgb, #0ea5e9 22%, var(--bg-panel)); }
 
 .ms-card-body {
-    padding: 48px 56px 32px 56px;
+    padding: 40px 48px 48px 48px;
 }
 
 .ne-doc-title-input {
@@ -1404,11 +1408,11 @@
     background: transparent;
     border: none;
     outline: none;
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 16px 0;
-    font-family: var(--font-serif, 'Georgia', serif);
+    margin: 0 0 12px 0;
+    font-family: var(--font-sans);
     padding: 0;
 }
 
@@ -1422,7 +1426,7 @@
     color: var(--text-tertiary);
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-bottom: 40px;
+    margin-bottom: 28px;
 }
 
 .meta-sep {
@@ -1487,10 +1491,10 @@
 
 /* Tiptap Editor Styles */
 .ne-editor-text {
-    font-family: var(--font-serif);
-    font-size: 18px;
-    line-height: 1.8;
-    color: var(--text-secondary);
+    font-family: var(--editor-font, var(--font-sans));
+    font-size: var(--editor-font-size, 17px);
+    line-height: var(--editor-line-height, 1.85);
+    color: var(--text-primary);
     outline: none;
 }
 
@@ -1507,30 +1511,36 @@
 }
 
 ::ng-deep .ProseMirror p {
-    margin-bottom: 24px;
+    margin-bottom: 32px;
 }
 
 ::ng-deep .ProseMirror blockquote {
-    background: var(--bg-panel);
-    border-left: 3px solid var(--accent-primary);
-    padding: 16px 24px;
-    margin: 24px 0;
+    background: transparent;
+    border-left: 3px solid var(--border-highlight);
+    padding: 2px 0 2px 20px;
+    margin: 32px 0;
     font-style: italic;
     color: var(--text-secondary);
+}
+
+::ng-deep .ProseMirror hr {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 40px 0;
 }
 
 ::ng-deep .ProseMirror h1,
 ::ng-deep .ProseMirror h2,
 ::ng-deep .ProseMirror h3 {
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     color: var(--text-primary);
     line-height: 1.3;
 }
 
-::ng-deep .ProseMirror h1 { font-size: 1.75em; margin: 1.2em 0 0.4em; }
-::ng-deep .ProseMirror h2 { font-size: 1.35em; margin: 1.4em 0 0.3em; }
-::ng-deep .ProseMirror h3 { font-size: 1.15em; margin: 1.2em 0 0.3em; }
+::ng-deep .ProseMirror h1 { font-size: 1.75em; margin: 1.4em 0 0.6em; }
+::ng-deep .ProseMirror h2 { font-size: 1.35em; margin: 1.4em 0 0.5em; }
+::ng-deep .ProseMirror h3 { font-size: 1.1em;  margin: 1.2em 0 0.5em; }
 
 /* Editor Footer */
 .ne-editor-footer {
@@ -1541,7 +1551,7 @@
 }
 
 .editor-placeholder {
-    font-family: 'Georgia', serif;
+    font-family: var(--font-sans);
     font-style: italic;
     color: var(--accent-primary);
     opacity: 0.7;
@@ -1711,6 +1721,27 @@
 }
 
 .clear-conversation-btn .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.ai-panel-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 3px 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s;
+}
+
+.ai-panel-close-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.ai-panel-close-btn .material-symbols-outlined {
     font-size: 14px;
 }
 
@@ -3539,7 +3570,7 @@
     border: none;
     outline: none;
     width: 100%;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
 }
 
 .ne-ent-subtitle {
@@ -3627,7 +3658,7 @@
     resize: vertical;
     outline: none;
     transition: border 0.2s;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
 }
 
 .ne-ent-textarea:focus {

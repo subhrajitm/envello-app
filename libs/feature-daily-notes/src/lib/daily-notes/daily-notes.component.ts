@@ -49,6 +49,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
   editor!: Editor;
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  private formatFramePending = false;
+  private _cleanupFormatListener: (() => void) | null = null;
 
   aiGenerating = signal(false);
 
@@ -392,31 +395,46 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         },
       },
       onUpdate: ({ editor }) => {
-        const content = editor.getHTML();
-        const plainText = editor.getText();
-        const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
-        this.updateNoteContent(content, preview);
+        // Update word/char counts immediately (cheap signal sets)
         this.wordCount.set(editor.storage.characterCount.words());
         this.characterCount.set(editor.storage.characterCount.characters());
+        // Debounce the store write — avoids a DataService write on every keystroke
+        if (this.saveTimeout) clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => {
+          const content = editor.getHTML();
+          const plainText = editor.getText();
+          const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
+          this.updateNoteContent(content, preview);
+        }, 500);
       },
     });
 
-    this.editor.on('transaction', () => {
-      const e = this.editor;
-      this.formatState.set({
-        bold: e.isActive('bold'), italic: e.isActive('italic'),
-        underline: e.isActive('underline'), strike: e.isActive('strike'),
-        highlight: e.isActive('highlight'), link: e.isActive('link'),
-        paragraph: e.isActive('paragraph'),
-        h1: e.isActive('heading', { level: 1 }), h2: e.isActive('heading', { level: 2 }),
-        h3: e.isActive('heading', { level: 3 }),
-        alignLeft: e.isActive({ textAlign: 'left' }), alignCenter: e.isActive({ textAlign: 'center' }),
-        alignRight: e.isActive({ textAlign: 'right' }), alignJustify: e.isActive({ textAlign: 'justify' }),
-        bulletList: e.isActive('bulletList'), orderedList: e.isActive('orderedList'),
-        taskList: e.isActive('taskList'), codeBlock: e.isActive('codeBlock'),
-        blockquote: e.isActive('blockquote'),
+    // Throttle formatState updates to one per animation frame — avoids 19× isActive()
+    // calls and 23 template re-evaluations on every keystroke/transaction
+    const onTransaction = () => {
+      if (this.formatFramePending) return;
+      this.formatFramePending = true;
+      requestAnimationFrame(() => {
+        this.formatFramePending = false;
+        const e = this.editor;
+        if (!e) return;
+        this.formatState.set({
+          bold: e.isActive('bold'), italic: e.isActive('italic'),
+          underline: e.isActive('underline'), strike: e.isActive('strike'),
+          highlight: e.isActive('highlight'), link: e.isActive('link'),
+          paragraph: e.isActive('paragraph'),
+          h1: e.isActive('heading', { level: 1 }), h2: e.isActive('heading', { level: 2 }),
+          h3: e.isActive('heading', { level: 3 }),
+          alignLeft: e.isActive({ textAlign: 'left' }), alignCenter: e.isActive({ textAlign: 'center' }),
+          alignRight: e.isActive({ textAlign: 'right' }), alignJustify: e.isActive({ textAlign: 'justify' }),
+          bulletList: e.isActive('bulletList'), orderedList: e.isActive('orderedList'),
+          taskList: e.isActive('taskList'), codeBlock: e.isActive('codeBlock'),
+          blockquote: e.isActive('blockquote'),
+        });
       });
-    });
+    };
+    this.editor.on('transaction', onTransaction);
+    this._cleanupFormatListener = () => this.editor.off('transaction', onTransaction);
 
 
     // If navigated here with a specific note ID (e.g. from workspace prompt), open it directly.
@@ -427,6 +445,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    this._cleanupFormatListener?.();
     if (this.editor) {
       this.editor.destroy();
     }
