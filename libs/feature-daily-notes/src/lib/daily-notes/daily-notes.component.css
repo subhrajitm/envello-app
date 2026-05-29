@@ -949,21 +949,21 @@
     min-height: 200px;
 }
 
-.dn-editor-text .ProseMirror {
+::ng-deep .dn-editor-text .ProseMirror {
     outline: none;
     color: var(--text-primary);
     padding: 0;
 }
 
-.dn-editor-text .ProseMirror p {
+::ng-deep .dn-editor-text .ProseMirror p {
     margin: 0 0 0.5em;
 }
 
-.dn-editor-text .ProseMirror p:last-child {
+::ng-deep .dn-editor-text .ProseMirror p:last-child {
     margin-bottom: 0;
 }
 
-.dn-editor-text .ProseMirror p.is-editor-empty:first-child::before {
+::ng-deep .dn-editor-text .ProseMirror p.is-editor-empty:first-child::before {
     color: var(--text-tertiary);
     content: attr(data-placeholder);
     float: left;
@@ -1113,23 +1113,23 @@ li[data-type="taskItem"] input[type="checkbox"] {
 }
 
 /* Tiptap Editor Styling - Notion-esque */
-.dn-editor-text .ProseMirror {
+::ng-deep .dn-editor-text .ProseMirror {
     font-family: var(--editor-font, var(--font-sans));
     font-size: var(--editor-font-size, 15px);
     line-height: var(--editor-line-height, 1.75);
     min-height: 50vh;
 }
 
-.dn-editor-text .ProseMirror:focus {
+::ng-deep .dn-editor-text .ProseMirror:focus {
     color: var(--text-primary);
 }
 
-.dn-editor-text .ProseMirror ::selection {
+::ng-deep .dn-editor-text .ProseMirror ::selection {
     background-color: rgba(var(--accent-primary-rgb, 59, 130, 246), 0.25);
     color: inherit;
 }
 
-.dn-editor-text .ProseMirror blockquote {
+::ng-deep .dn-editor-text .ProseMirror blockquote {
     border-left: 3px solid var(--accent-primary);
     margin: 1em 0;
     padding: 16px 20px;
@@ -1139,7 +1139,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
     border-radius: 0 8px 8px 0;
 }
 
-.dn-editor-text .ProseMirror pre {
+::ng-deep .dn-editor-text .ProseMirror pre {
     background: #1e1e1e;
     color: #e0e0e0;
     font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
@@ -1241,7 +1241,7 @@ input:focus,
 .dn-entry-heading-input:focus,
 .modal-input:focus,
 .dn-editor-text:focus,
-.dn-editor-text .ProseMirror:focus {
+::ng-deep .dn-editor-text .ProseMirror:focus {
     outline: none !important;
 }
 
@@ -1261,7 +1261,7 @@ input:focus,
 }
 
 /* Editor itself - pure clean focus */
-.dn-editor-text .ProseMirror:focus {
+::ng-deep .dn-editor-text .ProseMirror:focus {
     outline: none;
     /* No border change, just cursor input */
 }

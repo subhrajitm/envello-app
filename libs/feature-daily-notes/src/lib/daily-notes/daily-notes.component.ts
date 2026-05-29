@@ -52,6 +52,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
   private formatFramePending = false;
   private _cleanupFormatListener: (() => void) | null = null;
+  private lastLoadedNoteId = '';
+
+  canUndo = signal(false);
+  canRedo = signal(false);
 
   aiGenerating = signal(false);
 
@@ -348,10 +352,18 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     effect(() => {
       const note = this.selectedNote();
       if (note && this.editor) {
-        const content = note.content || '';
-        if (this.editor.getHTML() !== content) {
-          this.editor.commands.setContent(content);
+        const content = note.content ?? '';
+        const noteChanged = note.id !== this.lastLoadedNoteId;
+        // Always reload on note switch (even if content happens to be identical)
+        // and reload when content arrives async from DB after a cold switch.
+        // Pass false so setContent doesn't fire onUpdate → no spurious auto-save.
+        if (noteChanged || this.editor.getHTML() !== content) {
+          this.lastLoadedNoteId = note.id;
+          this.editor.commands.setContent(content, { emitUpdate: false });
         }
+      } else if (!note && this.editor && this.lastLoadedNoteId) {
+        this.lastLoadedNoteId = '';
+        this.editor.commands.setContent('', { emitUpdate: false });
       }
     });
   }
@@ -394,6 +406,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           class: 'dn-editor-text focus:outline-none',
         },
       },
+      onTransaction: ({ editor }) => {
+        // Update undo/redo availability on every transaction — required for OnPush
+        this.canUndo.set(editor.can().undo());
+        this.canRedo.set(editor.can().redo());
+      },
       onUpdate: ({ editor }) => {
         // Update word/char counts immediately (cheap signal sets)
         this.wordCount.set(editor.storage.characterCount.words());
@@ -410,8 +427,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     });
 
     // Throttle formatState updates to one per animation frame — avoids 19× isActive()
-    // calls and 23 template re-evaluations on every keystroke/transaction
-    const onTransaction = () => {
+    // calls and template re-evaluations on every keystroke/transaction
+    const onFormatTransaction = () => {
       if (this.formatFramePending) return;
       this.formatFramePending = true;
       requestAnimationFrame(() => {
@@ -433,8 +450,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         });
       });
     };
-    this.editor.on('transaction', onTransaction);
-    this._cleanupFormatListener = () => this.editor.off('transaction', onTransaction);
+    this.editor.on('transaction', onFormatTransaction);
+    this._cleanupFormatListener = () => this.editor.off('transaction', onFormatTransaction);
 
 
     // If navigated here with a specific note ID (e.g. from workspace prompt), open it directly.
@@ -558,6 +575,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   selectNote(id: string) {
+    // Eagerly set editor content from the store cache to eliminate the stale-content
+    // flash that would otherwise show while loadNoteContent fetches from DB.
+    if (this.editor && id !== this.lastLoadedNoteId) {
+      const cached = this.notes().find(n => n.id === id);
+      this.lastLoadedNoteId = id;
+      this.editor.commands.setContent(cached?.content ?? '', { emitUpdate: false });
+    }
     this.selectedEntryId.set(id);
     this.store.loadNoteContent(id);
     if (!this.openNotes().includes(id)) {

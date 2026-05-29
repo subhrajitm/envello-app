@@ -539,10 +539,10 @@
                 <div class="ne-strip-spacer"></div>
                 <div class="ne-strip-divider"></div>
                 @if (editor) {
-                <button class="ne-strip-btn" (click)="editor.chain().focus().undo().run()" [disabled]="!editor.can().undo()" title="Undo">
+                <button class="ne-strip-btn" (click)="editor.chain().focus().undo().run()" [disabled]="!canUndo()" title="Undo">
                     <span class="material-symbols-outlined">undo</span>
                 </button>
-                <button class="ne-strip-btn" (click)="editor.chain().focus().redo().run()" [disabled]="!editor.can().redo()" title="Redo">
+                <button class="ne-strip-btn" (click)="editor.chain().focus().redo().run()" [disabled]="!canRedo()" title="Redo">
                     <span class="material-symbols-outlined">redo</span>
                 </button>
                 }
