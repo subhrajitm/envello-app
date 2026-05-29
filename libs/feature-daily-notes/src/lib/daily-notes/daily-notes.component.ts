@@ -125,6 +125,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   dragOverFolderId = signal<string | null>(null);
   draggingNoteId = signal<string | null>(null);
 
+  formatState = signal({
+    bold: false, italic: false, underline: false, strike: false, highlight: false, link: false,
+    paragraph: false, h1: false, h2: false, h3: false,
+    alignLeft: false, alignCenter: false, alignRight: false, alignJustify: false,
+    bulletList: false, orderedList: false, taskList: false, codeBlock: false, blockquote: false,
+  });
+
   private readonly SELECTION_KEY = 'envello-daily-notes-selection';
 
   displayModalTitle = computed(() => {
@@ -392,6 +399,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         this.wordCount.set(editor.storage.characterCount.words());
         this.characterCount.set(editor.storage.characterCount.characters());
       },
+    });
+
+    this.editor.on('transaction', () => {
+      const e = this.editor;
+      this.formatState.set({
+        bold: e.isActive('bold'), italic: e.isActive('italic'),
+        underline: e.isActive('underline'), strike: e.isActive('strike'),
+        highlight: e.isActive('highlight'), link: e.isActive('link'),
+        paragraph: e.isActive('paragraph'),
+        h1: e.isActive('heading', { level: 1 }), h2: e.isActive('heading', { level: 2 }),
+        h3: e.isActive('heading', { level: 3 }),
+        alignLeft: e.isActive({ textAlign: 'left' }), alignCenter: e.isActive({ textAlign: 'center' }),
+        alignRight: e.isActive({ textAlign: 'right' }), alignJustify: e.isActive({ textAlign: 'justify' }),
+        bulletList: e.isActive('bulletList'), orderedList: e.isActive('orderedList'),
+        taskList: e.isActive('taskList'), codeBlock: e.isActive('codeBlock'),
+        blockquote: e.isActive('blockquote'),
+      });
     });
 
 
@@ -825,6 +849,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
   }
 
   confirmSetLink() {
+    if (!this.editor) return;
     const url = this.modalInputValue();
     if (url === '') {
       this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
@@ -863,6 +888,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
   }
 
   insertTable() {
+    if (!this.editor) return;
     this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
 
@@ -921,6 +947,8 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
   closeModal() {
     this.activeModal.set('none');
     this.modalInputValue.set('');
+    this.modalTitle.set('');
+    this.modalInputPlaceholder.set('');
     this.tempNoteId.set('');
     this.tempFolderId.set('');
   }
@@ -931,6 +959,9 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
 
   async continueWriting() {
     if (!this.editor) return;
+    // Collapse selection to end so insertContent appends rather than replacing selected text
+    const { to } = this.editor.state.selection;
+    this.editor.chain().focus().setTextSelection(to).run();
     const anchor  = this.editor.state.selection.anchor;
     const docSize = this.editor.state.doc.content.size;
     const from    = Math.max(0, anchor - 1000);
@@ -1065,59 +1096,64 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     }
 
     // ── Stat queries ─────────────────────────────────────────────────────────
-    await new Promise(r => setTimeout(r, 500 + Math.random() * 300));
+    try {
+      await new Promise(r => setTimeout(r, 500 + Math.random() * 300));
 
-    const notes = this.notes();
-    const q = text.toLowerCase();
-    let response = '';
+      const notes = this.notes();
+      const q = text.toLowerCase();
+      let response = '';
 
-    if (q.includes('how many') || q.includes('count')) {
-      response = `You have ${notes.length} note${notes.length !== 1 ? 's' : ''} across ${this.noteGroups().length} folder${this.noteGroups().length !== 1 ? 's' : ''}.`;
-    } else if (q.includes('tag')) {
-      const tags = this.allTags();
-      response = tags.length
-        ? `Your top tags: ${tags.slice(0, 5).map(t => `#${t.name} (${t.count})`).join(', ')}.`
-        : 'No tags used yet. Add tags to notes to organize them.';
-    } else if (q.includes('today')) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayNotes = notes.filter(n => {
-        const ts = parseInt(n.id, 10);
-        const d = !isNaN(ts) && ts > 1e12 ? new Date(ts) : new Date(n.date);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === today.getTime();
-      });
-      response = todayNotes.length
-        ? `${todayNotes.length} note${todayNotes.length > 1 ? 's' : ''} created today: ${todayNotes.map(n => n.title).join(', ')}.`
-        : 'No notes created today yet.';
-    } else if (q.includes('folder') || q.includes('most')) {
-      const counts: Record<string, number> = {};
-      notes.forEach(n => {
-        const fid = n.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
-        counts[fid] = (counts[fid] ?? 0) + 1;
-      });
-      const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-      const labels = top.map(([id, count]) => {
-        const name = this.noteGroups().find(g => g.id === id)?.name ?? id;
-        return `${name} (${count})`;
-      });
-      response = labels.length ? `Top folders by note count: ${labels.join(', ')}.` : 'No folders found.';
-    } else if (q.includes('pin')) {
-      const pinned = notes.filter(n => this.isPinned(n));
-      response = pinned.length
-        ? `${pinned.length} pinned note${pinned.length > 1 ? 's' : ''}: ${pinned.map(n => n.title).join(', ')}.`
-        : 'No pinned notes. Pin notes from the note list to keep them at the top.';
-    } else {
-      response = `You have ${notes.length} notes across ${this.noteGroups().length} folders. Try asking me to create a note, or ask about tags, today's notes, folders, or pinned notes.`;
+      if (q.includes('how many') || q.includes('count')) {
+        response = `You have ${notes.length} note${notes.length !== 1 ? 's' : ''} across ${this.noteGroups().length} folder${this.noteGroups().length !== 1 ? 's' : ''}.`;
+      } else if (q.includes('tag')) {
+        const tags = this.allTags();
+        response = tags.length
+          ? `Your top tags: ${tags.slice(0, 5).map(t => `#${t.name} (${t.count})`).join(', ')}.`
+          : 'No tags used yet. Add tags to notes to organize them.';
+      } else if (q.includes('today')) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayNotes = notes.filter(n => {
+          const ts = parseInt(n.id, 10);
+          const d = !isNaN(ts) && ts > 1e12 ? new Date(ts) : new Date(n.date);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime() === today.getTime();
+        });
+        response = todayNotes.length
+          ? `${todayNotes.length} note${todayNotes.length > 1 ? 's' : ''} created today: ${todayNotes.map(n => n.title).join(', ')}.`
+          : 'No notes created today yet.';
+      } else if (q.includes('folder') || q.includes('most')) {
+        const counts: Record<string, number> = {};
+        notes.forEach(n => {
+          const fid = n.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
+          counts[fid] = (counts[fid] ?? 0) + 1;
+        });
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        const labels = top.map(([id, count]) => {
+          const name = this.noteGroups().find(g => g.id === id)?.name ?? id;
+          return `${name} (${count})`;
+        });
+        response = labels.length ? `Top folders by note count: ${labels.join(', ')}.` : 'No folders found.';
+      } else if (q.includes('pin')) {
+        const pinned = notes.filter(n => this.isPinned(n));
+        response = pinned.length
+          ? `${pinned.length} pinned note${pinned.length > 1 ? 's' : ''}: ${pinned.map(n => n.title).join(', ')}.`
+          : 'No pinned notes. Pin notes from the note list to keep them at the top.';
+      } else {
+        response = `You have ${notes.length} notes across ${this.noteGroups().length} folders. Try asking me to create a note, or ask about tags, today's notes, folders, or pinned notes.`;
+      }
+
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
+
+      setTimeout(() => {
+        const el = document.querySelector('.ai-panel-messages');
+        if (el) el.scrollTop = el.scrollHeight;
+      }, 50);
+    } catch {
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Please try again.' }]);
+    } finally {
+      this.aiLoading.set(false);
     }
-
-    this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-    this.aiLoading.set(false);
-
-    setTimeout(() => {
-      const el = document.querySelector('.ai-panel-messages');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
   }
 
   clearAiChat() { this.aiMessages.set([]); }

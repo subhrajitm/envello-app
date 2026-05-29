@@ -4,25 +4,37 @@
   z-index: 1000;
   transform: translateX(-50%);
   display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 6px;
+  flex-direction: column;
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
   animation: env-float-in 0.12s ease;
-  white-space: nowrap;
-}
-
-.env-floating-menu--ask {
-  padding: 4px 4px 4px 12px;
-  gap: 4px;
+  min-width: max-content;
 }
 
 @keyframes env-float-in {
   from { opacity: 0; transform: translateX(-50%) translateY(4px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Rows ──────────────────────────────────────────────────────────── */
+.env-float-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+}
+
+/* Row 1 (AI): subtle separator below */
+.env-float-row--ai {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Ask-changes input mode: single row */
+.env-floating-menu--ask .env-float-row {
+  padding: 4px 4px 4px 12px;
+  gap: 4px;
 }
 
 /* ── Divider ───────────────────────────────────────────────────────── */
@@ -72,7 +84,11 @@
   font-size: 14px;
 }
 
-/* AI buttons projected from parent */
+/* AI buttons projected from parent — styled via .env-float-ai-group wrapper */
+.env-float-ai-group {
+  display: contents; /* children appear as direct flex items in the row */
+}
+
 .env-float-btn.ai-btn {
   color: var(--accent-primary);
 }

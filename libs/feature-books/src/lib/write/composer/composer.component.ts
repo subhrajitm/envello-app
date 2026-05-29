@@ -2,6 +2,18 @@ import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untrack
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
+import Highlight from '@tiptap/extension-highlight';
+import TextAlign from '@tiptap/extension-text-align';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Image from '@tiptap/extension-image';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
+import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
 import FloatingMenu from '@tiptap/extension-floating-menu';
 import { FormsModule } from '@angular/forms';
@@ -520,6 +532,18 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.editor = new Editor({
       extensions: [
         StarterKit,
+        Link.configure({ openOnClick: false }),
+        Underline,
+        Highlight.configure({ multicolor: true }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        TaskList,
+        TaskItem.configure({ nested: true }),
+        Image,
+        Table.configure({ resizable: true }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        Youtube.configure({ controls: true }),
         Placeholder.configure({
           placeholder: 'Start writing your chapter...',
         }),
@@ -2290,6 +2314,8 @@ export class ComposerComponent implements OnInit, OnDestroy {
       }
       return;
     }
+
+    if (key === 'link') { this.openLinkModal(); return; }
 
     const p = prompts[key];
     if (!p || !content) { this.aiError.set('Please select a section first.'); return; }

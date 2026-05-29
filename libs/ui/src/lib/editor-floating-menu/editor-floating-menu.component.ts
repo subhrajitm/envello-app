@@ -10,70 +10,78 @@ import { Editor } from '@tiptap/core';
   encapsulation: ViewEncapsulation.None,
   template: `
     @if (menuVisible()) {
-      <div class="env-floating-menu" [class.env-floating-menu--ask]="askChangesMode()"
+      <div class="env-floating-menu"
+           [class.env-floating-menu--ask]="askChangesMode()"
            [style.top.px]="menuPos().top"
            [style.left.px]="menuPos().left"
            (mousedown)="$event.preventDefault()">
 
         @if (askChangesMode()) {
-          <!-- Ask-changes input mode -->
-          <input class="env-ask-input"
-                 placeholder="Describe changes"
-                 [value]="askChangesText()"
-                 (input)="askChangesText.set($any($event.target).value)"
-                 (keydown.enter)="submitAskChanges()"
-                 (keydown.escape)="exitAskChanges()" />
-          <button class="env-float-btn env-ask-submit-btn" (click)="submitAskChanges()" title="Submit">
-            <span class="material-symbols-outlined">arrow_upward</span>
-          </button>
-        } @else {
-          <!-- Ask-changes trigger -->
-          <button class="env-ask-btn" (click)="enterAskChanges()" title="Ask AI to make changes (⌘K)">
-            Ask for changes
-            <kbd class="env-ask-kbd">⌘K</kbd>
-          </button>
-
-          <div class="env-float-divider"></div>
-
-          <!-- Link / Bold / Italic -->
-          <button class="env-float-btn" [class.active]="formattingState().link"
-                  (click)="toggleLink()" title="Link">
-            <span class="material-symbols-outlined">link</span>
-          </button>
-          <button class="env-float-btn env-fmt-btn" [class.active]="formattingState().bold"
-                  (click)="editor().chain().focus().toggleBold().run()" title="Bold (⌘B)">
-            <strong>B</strong>
-          </button>
-          <button class="env-float-btn env-fmt-btn" [class.active]="formattingState().italic"
-                  (click)="editor().chain().focus().toggleItalic().run()" title="Italic (⌘I)">
-            <em>I</em>
-          </button>
-
-          <div class="env-float-divider"></div>
-
-          <!-- Block-type dropdown -->
-          <div class="env-type-picker-wrapper">
-            <button class="env-type-btn" [class.open]="showTypeDropdown()"
-                    (click)="toggleTypeDropdown($event)" title="Block type">
-              {{ currentBlockLabel() }}
-              <span class="material-symbols-outlined" style="font-size:14px;line-height:1">expand_more</span>
+          <!-- Single-row input mode -->
+          <div class="env-float-row">
+            <input class="env-ask-input"
+                   placeholder="Describe changes"
+                   [value]="askChangesText()"
+                   (input)="askChangesText.set($any($event.target).value)"
+                   (keydown.enter)="submitAskChanges()"
+                   (keydown.escape)="exitAskChanges()" />
+            <button class="env-float-btn env-ask-submit-btn" (click)="submitAskChanges()" title="Submit">
+              <span class="material-symbols-outlined">arrow_upward</span>
             </button>
-            @if (showTypeDropdown()) {
-              <div class="env-type-dropdown" (click)="$event.stopPropagation()">
-                @for (bt of blockTypes; track bt.label) {
-                  <button class="env-type-option" [class.active]="currentBlockLabel() === bt.label"
-                          (click)="applyBlockType(bt.label, $event)">
-                    <span class="env-type-option-label"
-                          [class.env-type-heading]="bt.label.startsWith('Heading')">{{ bt.label }}</span>
-                    <span class="env-type-shortcut">{{ bt.shortcut }}</span>
-                  </button>
-                }
-              </div>
-            }
+          </div>
+        } @else {
+
+          <!-- Row 1: Ask for changes + AI actions (projected via .env-float-ai-group) -->
+          <div class="env-float-row env-float-row--ai">
+            <button class="env-ask-btn" (click)="enterAskChanges()" title="Ask AI to make changes (⌘K)">
+              Ask for changes
+              <kbd class="env-ask-kbd">⌘K</kbd>
+            </button>
+            <div class="env-float-divider"></div>
+            <ng-content select=".env-float-ai-group" />
           </div>
 
-          <!-- Editor-specific extras projected by the parent (AI actions, task list, etc.) -->
-          <ng-content />
+          <!-- Row 2: Formatting controls + tool extras (projected as direct children) -->
+          <div class="env-float-row env-float-row--fmt">
+            <button class="env-float-btn" [class.active]="formattingState().link"
+                    (click)="linkClick.emit()" title="Link">
+              <span class="material-symbols-outlined">link</span>
+            </button>
+            <button class="env-float-btn env-fmt-btn" [class.active]="formattingState().bold"
+                    (click)="editor().chain().focus().toggleBold().run()" title="Bold (⌘B)">
+              <strong>B</strong>
+            </button>
+            <button class="env-float-btn env-fmt-btn" [class.active]="formattingState().italic"
+                    (click)="editor().chain().focus().toggleItalic().run()" title="Italic (⌘I)">
+              <em>I</em>
+            </button>
+            <div class="env-float-divider"></div>
+
+            <!-- Block-type dropdown -->
+            <div class="env-type-picker-wrapper">
+              <button class="env-type-btn" [class.open]="showTypeDropdown()"
+                      (click)="toggleTypeDropdown($event)" title="Block type">
+                {{ currentBlockLabel() }}
+                <span class="material-symbols-outlined" style="font-size:14px;line-height:1">expand_more</span>
+              </button>
+              @if (showTypeDropdown()) {
+                <div class="env-type-dropdown" (click)="$event.stopPropagation()">
+                  @for (bt of blockTypes; track bt.label) {
+                    <button class="env-type-option" [class.active]="currentBlockLabel() === bt.label"
+                            (click)="applyBlockType(bt.label, $event)">
+                      <span class="env-type-option-label"
+                            [class.env-type-heading]="bt.label.startsWith('Heading')">{{ bt.label }}</span>
+                      <span class="env-type-shortcut">{{ bt.shortcut }}</span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Editor-specific tool extras projected by the parent (task list, image, etc.) -->
+            <ng-content />
+          </div>
+
         }
       </div>
     }
@@ -85,23 +93,21 @@ export class EditorFloatingMenuComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   editor    = input.required<Editor>();
-  /** 'dblclick': show only on double-click.
-   *  'selection': show on any non-empty selection AND double-click. */
   trigger   = input<'dblclick' | 'selection'>('dblclick');
-  /** Pass the host HTMLElement when inside a `contain: layout` ancestor. */
   containEl = input<HTMLElement | null>(null);
 
   readonly visibleChange = output<boolean>();
-  /** Emits when user submits an "Ask for changes" instruction. */
-  readonly askChanges = output<string>();
+  readonly askChanges    = output<string>();
+  /** Emits when user clicks the link button — parent should open its own link modal. */
+  readonly linkClick     = output<void>();
 
-  protected menuVisible      = signal(false);
-  protected menuPos          = signal({ top: 0, left: 0 });
-  protected showTypeDropdown = signal(false);
-  protected askChangesMode   = signal(false);
-  protected askChangesText   = signal('');
+  protected menuVisible       = signal(false);
+  protected menuPos           = signal({ top: 0, left: 0 });
+  protected showTypeDropdown  = signal(false);
+  protected askChangesMode    = signal(false);
+  protected askChangesText    = signal('');
   protected currentBlockLabel = signal('Text');
-  protected formattingState  = signal({ bold: false, italic: false, link: false });
+  protected formattingState   = signal({ bold: false, italic: false, link: false });
 
   protected readonly blockTypes = [
     { label: 'Text',          shortcut: '⌥⌘0' },
@@ -152,7 +158,6 @@ export class EditorFloatingMenuComponent implements OnInit {
     if (!target.closest('.env-type-dropdown') && !target.closest('.env-type-picker-wrapper')) {
       this.showTypeDropdown.set(false);
     }
-
     if (inMenu) return;
     if (inEditor && event.detail < 2) { this.hide(); return; }
     if (!inEditor) this.hide();
@@ -208,16 +213,6 @@ export class EditorFloatingMenuComponent implements OnInit {
     this.showTypeDropdown.set(false);
   }
 
-  protected toggleLink() {
-    const e = this.editor();
-    if (e.isActive('link')) {
-      e.chain().focus().unsetLink().run();
-    } else {
-      const url = window.prompt('Enter URL:');
-      if (url) e.chain().focus().setLink({ href: url }).run();
-    }
-  }
-
   private updateEditorState() {
     const e = this.editor();
     this.formattingState.set({
@@ -225,12 +220,12 @@ export class EditorFloatingMenuComponent implements OnInit {
       italic: e.isActive('italic'),
       link:   e.isActive('link'),
     });
-    if (e.isActive('heading', { level: 1 }))   this.currentBlockLabel.set('Heading 1');
+    if (e.isActive('heading', { level: 1 }))      this.currentBlockLabel.set('Heading 1');
     else if (e.isActive('heading', { level: 2 })) this.currentBlockLabel.set('Heading 2');
     else if (e.isActive('heading', { level: 3 })) this.currentBlockLabel.set('Heading 3');
-    else if (e.isActive('orderedList'))           this.currentBlockLabel.set('Numbered list');
-    else if (e.isActive('bulletList'))            this.currentBlockLabel.set('Bulleted list');
-    else                                          this.currentBlockLabel.set('Text');
+    else if (e.isActive('orderedList'))            this.currentBlockLabel.set('Numbered list');
+    else if (e.isActive('bulletList'))             this.currentBlockLabel.set('Bulleted list');
+    else                                           this.currentBlockLabel.set('Text');
   }
 
   private showAtSelection() {
@@ -240,7 +235,7 @@ export class EditorFloatingMenuComponent implements OnInit {
     if (rect.width === 0 && rect.height === 0) return;
 
     const containRect = this.containEl()?.getBoundingClientRect() ?? { top: 0, left: 0 };
-    const menuHeight = 44, gap = 8;
+    const menuHeight = 78, gap = 8; // taller for 2 rows
     const absTop = rect.top < menuHeight + gap ? rect.bottom + gap : rect.top - menuHeight - gap;
 
     this.menuPos.set({
