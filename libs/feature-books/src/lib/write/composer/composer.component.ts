@@ -2230,6 +2230,41 @@ export class ComposerComponent implements OnInit, OnDestroy {
       'check-consistency':   { user: 'Review this section for consistent terminology, claims, and internal logic.', system: 'You are a meticulous research editor.' },
     };
 
+    if (key.startsWith('ask-changes:')) {
+      const instruction = key.replace('ask-changes:', '').trim();
+      if (!instruction) return;
+      this.setActiveTab('ai');
+      const selectedText = this.getSelectedText();
+      const context = selectedText || content;
+      if (!context) { this.aiError.set('Please select text to apply changes to.'); return; }
+      const userMsg = selectedText
+        ? `${instruction} (applied to selected text)`
+        : instruction;
+      this.aiMessages.update(msgs => [...msgs, {
+        id: Date.now().toString(),
+        role: 'user' as const,
+        content: userMsg,
+        timestamp: new Date()
+      }]);
+      this.aiLoading.set(true);
+      this.aiError.set(null);
+      try {
+        await this.streamIntoNewMessage(
+          this.aiService.streamMessage(
+            selectedText
+              ? `Apply this instruction to the following text and return only the revised version:\n\nInstruction: ${instruction}\n\nText:\n${selectedText}`
+              : `Apply this instruction to the chapter content:\n\nInstruction: ${instruction}\n\nContent:\n${context}`,
+            'You are a professional editor. Return only the revised text without explanation.'
+          )
+        );
+      } catch {
+        this.aiError.set('AI request failed. Please try again.');
+      } finally {
+        this.aiLoading.set(false);
+      }
+      return;
+    }
+
     if (key === 'suggest') {
       this.setActiveTab('ai');
       const selectedText = this.getSelectedText();

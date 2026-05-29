@@ -10,40 +10,71 @@ import { Editor } from '@tiptap/core';
   encapsulation: ViewEncapsulation.None,
   template: `
     @if (menuVisible()) {
-      <div class="env-floating-menu"
+      <div class="env-floating-menu" [class.env-floating-menu--ask]="askChangesMode()"
            [style.top.px]="menuPos().top"
            [style.left.px]="menuPos().left"
            (mousedown)="$event.preventDefault()">
 
-        <!-- Standard formatting buttons — identical across all editors -->
-        <button class="env-float-btn"
-                (click)="editor().chain().focus().toggleHeading({ level: 1 }).run()"
-                title="Heading 1">
-          <span class="material-symbols-outlined">format_h1</span>
-        </button>
-        <button class="env-float-btn"
-                (click)="editor().chain().focus().toggleHeading({ level: 2 }).run()"
-                title="Heading 2">
-          <span class="material-symbols-outlined">format_h2</span>
-        </button>
-        <button class="env-float-btn"
-                (click)="editor().chain().focus().toggleBulletList().run()"
-                title="Bullet list">
-          <span class="material-symbols-outlined">format_list_bulleted</span>
-        </button>
-        <button class="env-float-btn"
-                (click)="editor().chain().focus().toggleOrderedList().run()"
-                title="Ordered list">
-          <span class="material-symbols-outlined">format_list_numbered</span>
-        </button>
-        <button class="env-float-btn"
-                (click)="editor().chain().focus().toggleBlockquote().run()"
-                title="Quote">
-          <span class="material-symbols-outlined">format_quote</span>
-        </button>
+        @if (askChangesMode()) {
+          <!-- Ask-changes input mode -->
+          <input class="env-ask-input"
+                 placeholder="Describe changes"
+                 [value]="askChangesText()"
+                 (input)="askChangesText.set($any($event.target).value)"
+                 (keydown.enter)="submitAskChanges()"
+                 (keydown.escape)="exitAskChanges()" />
+          <button class="env-float-btn env-ask-submit-btn" (click)="submitAskChanges()" title="Submit">
+            <span class="material-symbols-outlined">arrow_upward</span>
+          </button>
+        } @else {
+          <!-- Ask-changes trigger -->
+          <button class="env-ask-btn" (click)="enterAskChanges()" title="Ask AI to make changes (⌘K)">
+            Ask for changes
+            <kbd class="env-ask-kbd">⌘K</kbd>
+          </button>
 
-        <!-- Editor-specific extras projected by the parent (e.g. AI actions, task list) -->
-        <ng-content />
+          <div class="env-float-divider"></div>
+
+          <!-- Link / Bold / Italic -->
+          <button class="env-float-btn" [class.active]="formattingState().link"
+                  (click)="toggleLink()" title="Link">
+            <span class="material-symbols-outlined">link</span>
+          </button>
+          <button class="env-float-btn env-fmt-btn" [class.active]="formattingState().bold"
+                  (click)="editor().chain().focus().toggleBold().run()" title="Bold (⌘B)">
+            <strong>B</strong>
+          </button>
+          <button class="env-float-btn env-fmt-btn" [class.active]="formattingState().italic"
+                  (click)="editor().chain().focus().toggleItalic().run()" title="Italic (⌘I)">
+            <em>I</em>
+          </button>
+
+          <div class="env-float-divider"></div>
+
+          <!-- Block-type dropdown -->
+          <div class="env-type-picker-wrapper">
+            <button class="env-type-btn" [class.open]="showTypeDropdown()"
+                    (click)="toggleTypeDropdown($event)" title="Block type">
+              {{ currentBlockLabel() }}
+              <span class="material-symbols-outlined" style="font-size:14px;line-height:1">expand_more</span>
+            </button>
+            @if (showTypeDropdown()) {
+              <div class="env-type-dropdown" (click)="$event.stopPropagation()">
+                @for (bt of blockTypes; track bt.label) {
+                  <button class="env-type-option" [class.active]="currentBlockLabel() === bt.label"
+                          (click)="applyBlockType(bt.label, $event)">
+                    <span class="env-type-option-label"
+                          [class.env-type-heading]="bt.label.startsWith('Heading')">{{ bt.label }}</span>
+                    <span class="env-type-shortcut">{{ bt.shortcut }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Editor-specific extras projected by the parent (AI actions, task list, etc.) -->
+          <ng-content />
+        }
       </div>
     }
   `,
@@ -54,21 +85,36 @@ export class EditorFloatingMenuComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   editor    = input.required<Editor>();
-  /** 'dblclick': show only on double-click (use alongside a bubble menu for inline formatting).
-   *  'selection': show on any non-empty selection AND double-click (no bubble menu present). */
+  /** 'dblclick': show only on double-click.
+   *  'selection': show on any non-empty selection AND double-click. */
   trigger   = input<'dblclick' | 'selection'>('dblclick');
-  /** Pass the host HTMLElement when inside a `contain: layout` ancestor so position: fixed
-   *  coords are correctly offset. Leave null for normal viewport-relative positioning. */
+  /** Pass the host HTMLElement when inside a `contain: layout` ancestor. */
   containEl = input<HTMLElement | null>(null);
 
-  /** Emits true/false on visibility change — bind to a signal used by bubbleMenuShouldShow. */
   readonly visibleChange = output<boolean>();
+  /** Emits when user submits an "Ask for changes" instruction. */
+  readonly askChanges = output<string>();
 
-  protected menuVisible = signal(false);
-  protected menuPos     = signal({ top: 0, left: 0 });
+  protected menuVisible      = signal(false);
+  protected menuPos          = signal({ top: 0, left: 0 });
+  protected showTypeDropdown = signal(false);
+  protected askChangesMode   = signal(false);
+  protected askChangesText   = signal('');
+  protected currentBlockLabel = signal('Text');
+  protected formattingState  = signal({ bold: false, italic: false, link: false });
+
+  protected readonly blockTypes = [
+    { label: 'Text',          shortcut: '⌥⌘0' },
+    { label: 'Heading 1',     shortcut: '⌥⌘1' },
+    { label: 'Heading 2',     shortcut: '⌥⌘2' },
+    { label: 'Heading 3',     shortcut: '⌥⌘3' },
+    { label: 'Numbered list', shortcut: '⌥⌘4' },
+    { label: 'Bulleted list', shortcut: '⌥⌘5' },
+  ];
 
   ngOnInit() {
     const editor = this.editor();
+
     const onSelectionUpdate = () => {
       const { from, to } = editor.state.selection;
       if (from !== to && this.trigger() === 'selection') {
@@ -76,9 +122,17 @@ export class EditorFloatingMenuComponent implements OnInit {
       } else if (from === to) {
         this.hide();
       }
+      this.updateEditorState();
     };
+
+    const onTransaction = () => this.updateEditorState();
+
     editor.on('selectionUpdate', onSelectionUpdate);
-    this.destroyRef.onDestroy(() => editor.off('selectionUpdate', onSelectionUpdate));
+    editor.on('transaction', onTransaction);
+    this.destroyRef.onDestroy(() => {
+      editor.off('selectionUpdate', onSelectionUpdate);
+      editor.off('transaction', onTransaction);
+    });
   }
 
   @HostListener('document:dblclick', ['$event'])
@@ -95,9 +149,88 @@ export class EditorFloatingMenuComponent implements OnInit {
     const inEditor = editorEl.contains(target);
     const inMenu   = !!target.closest('.env-floating-menu');
 
+    if (!target.closest('.env-type-dropdown') && !target.closest('.env-type-picker-wrapper')) {
+      this.showTypeDropdown.set(false);
+    }
+
     if (inMenu) return;
     if (inEditor && event.detail < 2) { this.hide(); return; }
     if (!inEditor) this.hide();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      if (this.menuVisible() && !this.askChangesMode()) {
+        event.preventDefault();
+        this.enterAskChanges();
+      }
+    }
+  }
+
+  protected enterAskChanges() {
+    this.askChangesText.set('');
+    this.askChangesMode.set(true);
+    setTimeout(() => {
+      (document.querySelector('.env-ask-input') as HTMLInputElement | null)?.focus();
+    }, 30);
+  }
+
+  protected exitAskChanges() {
+    this.askChangesMode.set(false);
+    this.askChangesText.set('');
+  }
+
+  protected submitAskChanges() {
+    const text = this.askChangesText().trim();
+    if (!text) { this.exitAskChanges(); return; }
+    this.askChanges.emit(text);
+    this.exitAskChanges();
+    this.hide();
+  }
+
+  protected toggleTypeDropdown(event: MouseEvent) {
+    event.stopPropagation();
+    this.showTypeDropdown.update(v => !v);
+  }
+
+  protected applyBlockType(label: string, event: MouseEvent) {
+    event.stopPropagation();
+    const e = this.editor();
+    switch (label) {
+      case 'Text':          e.chain().focus().setParagraph().run(); break;
+      case 'Heading 1':     e.chain().focus().toggleHeading({ level: 1 }).run(); break;
+      case 'Heading 2':     e.chain().focus().toggleHeading({ level: 2 }).run(); break;
+      case 'Heading 3':     e.chain().focus().toggleHeading({ level: 3 }).run(); break;
+      case 'Numbered list': e.chain().focus().toggleOrderedList().run(); break;
+      case 'Bulleted list': e.chain().focus().toggleBulletList().run(); break;
+    }
+    this.showTypeDropdown.set(false);
+  }
+
+  protected toggleLink() {
+    const e = this.editor();
+    if (e.isActive('link')) {
+      e.chain().focus().unsetLink().run();
+    } else {
+      const url = window.prompt('Enter URL:');
+      if (url) e.chain().focus().setLink({ href: url }).run();
+    }
+  }
+
+  private updateEditorState() {
+    const e = this.editor();
+    this.formattingState.set({
+      bold:   e.isActive('bold'),
+      italic: e.isActive('italic'),
+      link:   e.isActive('link'),
+    });
+    if (e.isActive('heading', { level: 1 }))   this.currentBlockLabel.set('Heading 1');
+    else if (e.isActive('heading', { level: 2 })) this.currentBlockLabel.set('Heading 2');
+    else if (e.isActive('heading', { level: 3 })) this.currentBlockLabel.set('Heading 3');
+    else if (e.isActive('orderedList'))           this.currentBlockLabel.set('Numbered list');
+    else if (e.isActive('bulletList'))            this.currentBlockLabel.set('Bulleted list');
+    else                                          this.currentBlockLabel.set('Text');
   }
 
   private showAtSelection() {
@@ -124,6 +257,8 @@ export class EditorFloatingMenuComponent implements OnInit {
     if (this.menuVisible()) {
       this.menuVisible.set(false);
       this.visibleChange.emit(false);
+      this.showTypeDropdown.set(false);
+      this.exitAskChanges();
     }
   }
 }

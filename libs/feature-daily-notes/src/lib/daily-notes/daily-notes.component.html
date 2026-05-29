@@ -302,7 +302,8 @@
                     }
                 </div>
 
-                <env-editor-floating-menu [editor]="editor" trigger="selection">
+                <env-editor-floating-menu [editor]="editor" trigger="selection"
+                    (askChanges)="handleAskChanges($event)">
                     <!-- Notes-specific extras: task list, insert media, AI -->
                     <div class="env-float-divider"></div>
                     <button class="env-float-btn" (click)="editor.chain().focus().toggleTaskList().run()"

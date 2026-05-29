@@ -984,6 +984,37 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     }
   }
 
+  async handleAskChanges(instruction: string) {
+    if (!this.editor || !instruction.trim()) return;
+    const { from, to } = this.editor.state.selection;
+    const selectedText = from !== to ? this.editor.state.doc.textBetween(from, to) : '';
+    const context = selectedText || this.editor.getText().trim();
+    if (!context) return;
+
+    this.setRightTab('ai');
+    const userMsg = selectedText ? `${instruction} (applied to selected text)` : instruction;
+    this.aiMessages.update(m => [...m, { role: 'user', text: userMsg }]);
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: '' }]);
+    this.aiLoading.set(true);
+    try {
+      for await (const chunk of this.aiService.streamMessage(
+        selectedText
+          ? `Apply this instruction to the following text and return only the revised version:\n\nInstruction: ${instruction}\n\nText:\n${selectedText}`
+          : `Apply this instruction to the note:\n\nInstruction: ${instruction}\n\nContent:\n${context}`,
+        'You are a professional editor. Return only the revised text without explanation.'
+      )) {
+        this.aiMessages.update(msgs => {
+          const last = msgs[msgs.length - 1];
+          return [...msgs.slice(0, -1), { ...last, text: last.text + chunk }];
+        });
+      }
+    } catch {
+      this.aiMessages.update(m => [...m.slice(0, -1), { role: 'assistant', text: 'Failed to apply changes. Please try again.' }]);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
   readonly aiSuggestions = [
     'Create a 500 words note on AI: Danger to society',
     'Write a note about productivity habits',
