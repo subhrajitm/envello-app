@@ -319,10 +319,10 @@
                         <span class="material-symbols-outlined">smart_display</span>
                     </button>
                     <div class="env-float-divider"></div>
-                    <button class="env-float-btn ai-btn" (click)="setRightTab('ai')" title="AI: Continue writing">
+                    <button class="env-float-btn ai-btn" (click)="continueWriting()" title="AI: Continue writing">
                         <span class="material-symbols-outlined">auto_awesome</span>
                     </button>
-                    <button class="env-float-btn ai-btn" (click)="setRightTab('ai')" title="AI: Suggest">
+                    <button class="env-float-btn ai-btn" (click)="handleSuggest()" title="AI: Suggest">
                         <span class="material-symbols-outlined">tips_and_updates</span>
                     </button>
                 </env-editor-floating-menu>

@@ -2230,7 +2230,31 @@ export class ComposerComponent implements OnInit, OnDestroy {
       'check-consistency':   { user: 'Review this section for consistent terminology, claims, and internal logic.', system: 'You are a meticulous research editor.' },
     };
 
-    if (key === 'suggest') { await this.generateSuggestions(); return; }
+    if (key === 'suggest') {
+      this.setActiveTab('ai');
+      const selectedText = this.getSelectedText();
+      const context = selectedText || content;
+      if (!context) { this.aiError.set('Please select a section first.'); return; }
+      const userMsg = selectedText ? 'Suggest improvements for this selected text' : 'Suggest improvements for this writing';
+      this.aiMessages.update(msgs => [...msgs, {
+        id: Date.now().toString(),
+        role: 'user' as const,
+        content: userMsg,
+        timestamp: new Date()
+      }]);
+      this.aiLoading.set(true);
+      this.aiError.set(null);
+      try {
+        await this.streamIntoNewMessage(
+          this.aiService.streamMessage(`${userMsg}:\n\n${context}`, 'You are a creative writing coach.')
+        );
+      } catch {
+        this.aiError.set('Failed to get suggestions. Please try again.');
+      } finally {
+        this.aiLoading.set(false);
+      }
+      return;
+    }
 
     const p = prompts[key];
     if (!p || !content) { this.aiError.set('Please select a section first.'); return; }

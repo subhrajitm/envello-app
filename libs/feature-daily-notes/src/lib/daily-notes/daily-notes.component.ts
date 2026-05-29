@@ -929,6 +929,61 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
   aiLoading  = signal(false);
   aiMessages = signal<AiPanelMessage[]>([]);
 
+  async continueWriting() {
+    if (!this.editor) return;
+    const anchor  = this.editor.state.selection.anchor;
+    const docSize = this.editor.state.doc.content.size;
+    const from    = Math.max(0, anchor - 1000);
+    const preceding = this.editor.state.doc.textBetween(from, Math.min(anchor, docSize), '\n');
+
+    this.setRightTab('ai');
+    this.aiMessages.update(m => [...m, { role: 'user', text: 'Continue writing from cursor position' }]);
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: '' }]);
+    this.aiLoading.set(true);
+    try {
+      for await (const chunk of this.aiService.streamMessage(
+        `Continue the writing from this point (write 2-3 sentences):\n\n${preceding}`,
+        'You are a helpful writing assistant.'
+      )) {
+        this.editor.chain().focus().insertContent(chunk).run();
+        this.aiMessages.update(msgs => {
+          const last = msgs[msgs.length - 1];
+          return [...msgs.slice(0, -1), { ...last, text: last.text + chunk }];
+        });
+      }
+    } catch {
+      this.aiMessages.update(m => [...m.slice(0, -1), { role: 'assistant', text: 'Failed to continue writing. Please try again.' }]);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
+  async handleSuggest() {
+    if (!this.editor) return;
+    const content = this.editor.getText().trim();
+    if (!content) return;
+
+    this.setRightTab('ai');
+    this.aiMessages.update(m => [...m, { role: 'user', text: 'Suggest improvements for this note' }]);
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: '' }]);
+    this.aiLoading.set(true);
+    try {
+      for await (const chunk of this.aiService.streamMessage(
+        `Suggest improvements for this writing:\n\n${content}`,
+        'You are a creative writing coach.'
+      )) {
+        this.aiMessages.update(msgs => {
+          const last = msgs[msgs.length - 1];
+          return [...msgs.slice(0, -1), { ...last, text: last.text + chunk }];
+        });
+      }
+    } catch {
+      this.aiMessages.update(m => [...m.slice(0, -1), { role: 'assistant', text: 'Failed to get suggestions. Please try again.' }]);
+    } finally {
+      this.aiLoading.set(false);
+    }
+  }
+
   readonly aiSuggestions = [
     'Create a 500 words note on AI: Danger to society',
     'Write a note about productivity habits',
