@@ -25,8 +25,13 @@ export class VersionHistoryService {
     // Store history for each content item
     private histories = new Map<string, VersionHistory>();
     
-    // Maximum versions to keep per item
-    private readonly MAX_VERSIONS = 50;
+    private get MAX_VERSIONS(): number {
+        const saved = localStorage.getItem('envello-settings');
+        if (saved) {
+            try { return JSON.parse(saved).versionHistoryLimit || 50; } catch { /* ignore */ }
+        }
+        return 50;
+    }
     
     // Debounce time for auto-snapshots (ms)
     private readonly SNAPSHOT_DEBOUNCE = 30000; // 30 seconds

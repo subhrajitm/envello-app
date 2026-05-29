@@ -13,7 +13,7 @@
         <!-- Content -->
         <div class="settings-content">
             <!-- Sidebar -->
-            <div class="settings-sidebar flex flex-col gap-1">
+            <div class="settings-sidebar flex flex-col">
                 @for (section of sections; track section.id) {
                 <button class="settings-nav-item flex items-center gap-2 w-full"
                     [class.active]="activeSection() === section.id" (click)="setActiveSection(section.id)">
@@ -49,10 +49,10 @@
                         </div>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Font Size</label>
-                            <span class="setting-desc">Adjust text size across the app</span>
+                            <span class="setting-desc">Text size across the app</span>
                         </div>
                         <div class="setting-control">
                             <input type="range" min="12" max="20" [value]="fontSize()" (input)="setFontSize($event)"
@@ -61,26 +61,27 @@
                         </div>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Compact Mode</label>
-                            <span class="setting-desc">Reduce spacing for more content</span>
+                    <div class="settings-pair">
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Compact Mode</label>
+                                <span class="setting-desc">Reduce spacing</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="compactMode()" (change)="toggleCompactMode()">
+                                <span class="toggle-track"></span>
+                            </label>
                         </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="compactMode()" (change)="toggleCompactMode()">
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Animations</label>
-                            <span class="setting-desc">Enable smooth transitions</span>
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Animations</label>
+                                <span class="setting-desc">Smooth transitions</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="animations()" (change)="toggleAnimations()">
+                                <span class="toggle-track"></span>
+                            </label>
                         </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="animations()" (change)="toggleAnimations()">
-                            <span class="toggle-track"></span>
-                        </label>
                     </div>
 
                     <div class="setting-item flex flex-col gap-2">
@@ -117,22 +118,22 @@
                         <p>Configure your writing experience</p>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Editor Font</label>
-                            <span class="setting-desc">Choose your writing font family</span>
+                            <span class="setting-desc">Writing font family</span>
                         </div>
-                        <select class="select-input" [value]="editorFont()" (change)="setEditorFont($event)">
+                        <select class="select-input" style="min-width:160px" [value]="editorFont()" (change)="setEditorFont($event)">
                             <option value="sans">Sans-serif (Inter)</option>
                             <option value="serif">Serif (Georgia)</option>
                             <option value="mono">Monospace (JetBrains Mono)</option>
                         </select>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Font Size</label>
-                            <span class="setting-desc">Editor text size in pixels</span>
+                            <span class="setting-desc">Editor text size</span>
                         </div>
                         <div class="setting-control">
                             <input type="range" min="13" max="22" step="1" [value]="editorFontSize()"
@@ -141,7 +142,7 @@
                         </div>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Line Height</label>
                             <span class="setting-desc">Spacing between lines</span>
@@ -153,29 +154,30 @@
                         </div>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Auto-save</label>
-                            <span class="setting-desc">Save work every 30 seconds</span>
+                    <div class="settings-pair">
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Auto-save</label>
+                                <span class="setting-desc">Save every 30s</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="autoSave()" (change)="toggleAutoSave()">
+                                <span class="toggle-track"></span>
+                            </label>
                         </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="autoSave()" (change)="toggleAutoSave()">
-                            <span class="toggle-track"></span>
-                        </label>
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Spell Check</label>
+                                <span class="setting-desc">Check as you type</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="spellCheck()" (change)="toggleSpellCheck()">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Spell Check</label>
-                            <span class="setting-desc">Check spelling as you type</span>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="spellCheck()" (change)="toggleSpellCheck()">
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Focus Mode</label>
                             <span class="setting-desc">Dim inactive paragraphs</span>
@@ -212,10 +214,10 @@
                         <p>Configure AI providers and API keys</p>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Enable AI Features</label>
-                            <span class="setting-desc">Turn on/off AI assistance across the app</span>
+                            <span class="setting-desc">AI assistance across the app</span>
                         </div>
                         <label class="toggle">
                             <input type="checkbox" [checked]="aiService.aiEnabled()" (change)="aiService.toggleAi()">
@@ -259,12 +261,12 @@
                     </div>
                     }
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Model</label>
                             <span class="setting-desc">Specific model identifier</span>
                         </div>
-                        <div class="setting-control w-full">
+                        <div class="setting-control" style="min-width:200px">
                             <select class="select-input w-full" [ngModel]="aiModel()"
                                 (ngModelChange)="aiModel.set($event); testStatus.set('idle')">
                                 @if (aiProvider() === 'openai') {
@@ -354,30 +356,31 @@
                         <p>Manage how you receive updates</p>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Desktop Notifications</label>
-                            <span class="setting-desc">Show system notifications</span>
+                    <div class="settings-pair">
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Desktop Notifications</label>
+                                <span class="setting-desc">Show system notifications</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="desktopNotifications()"
+                                    (change)="toggleDesktopNotifications()">
+                                <span class="toggle-track"></span>
+                            </label>
                         </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="desktopNotifications()"
-                                (change)="toggleDesktopNotifications()">
-                            <span class="toggle-track"></span>
-                        </label>
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Sound Effects</label>
+                                <span class="setting-desc">Play sounds for actions</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="soundEffects()" (change)="toggleSoundEffects()">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Sound Effects</label>
-                            <span class="setting-desc">Play sounds for actions</span>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="soundEffects()" (change)="toggleSoundEffects()">
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Daily Summary</label>
                             <span class="setting-desc">Receive daily progress report</span>
@@ -412,25 +415,27 @@
                             }
                         </div>
                     </div>
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Compact Mode</label>
-                            <span class="setting-desc">Reduce padding and spacing throughout the UI</span>
+                    <div class="settings-pair">
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Compact Mode</label>
+                                <span class="setting-desc">Reduce padding and spacing</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="compactMode()" (change)="toggleCompactMode()">
+                                <span class="toggle-track"></span>
+                            </label>
                         </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="compactMode()" (change)="toggleCompactMode()">
-                            <span class="toggle-track"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item flex flex-col gap-2">
-                        <div class="setting-label-group">
-                            <label>Animations</label>
-                            <span class="setting-desc">Enable transitions and animations</span>
+                        <div class="setting-item setting-row">
+                            <div class="setting-label-group">
+                                <label>Animations</label>
+                                <span class="setting-desc">Enable transitions</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" [checked]="animations()" (change)="toggleAnimations()">
+                                <span class="toggle-track"></span>
+                            </label>
                         </div>
-                        <label class="toggle">
-                            <input type="checkbox" [checked]="animations()" (change)="toggleAnimations()">
-                            <span class="toggle-track"></span>
-                        </label>
                     </div>
                 </div>
                 }
@@ -443,7 +448,7 @@
                         <p>Storage, backup and sync preferences</p>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Analytics</label>
                             <span class="setting-desc">Share anonymous usage data to improve Envello</span>
@@ -454,13 +459,13 @@
                         </label>
                     </div>
 
-                    <div class="setting-item flex flex-col gap-2">
+                    <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Export Data</label>
                             <span class="setting-desc">Download all your data as a JSON archive</span>
                         </div>
                         <div class="setting-control">
-                            <env-button variant="secondary">Export All Data</env-button>
+                            <env-button variant="secondary" (clicked)="exportAllData()">Export All Data</env-button>
                         </div>
                     </div>
 
@@ -475,7 +480,7 @@
                         </div>
                     </div>
 
-                    <env-button variant="danger">Clear All Data</env-button>
+                    <env-button variant="danger" (clicked)="clearAllData()">Clear All Data</env-button>
                 </div>
                 }
 
@@ -518,9 +523,9 @@
                     </div>
 
                     <div class="action-buttons flex gap-2">
-                        <env-button variant="secondary">Check Updates</env-button>
-                        <env-button variant="secondary">Documentation</env-button>
-                        <env-button variant="secondary">Report Issue</env-button>
+                        <env-button variant="secondary" (clicked)="checkUpdates()">Check Updates</env-button>
+                        <env-button variant="secondary" (clicked)="openDocs()">Documentation</env-button>
+                        <env-button variant="secondary" (clicked)="reportIssue()">Report Issue</env-button>
                     </div>
                 </div>
                 }
@@ -548,5 +553,18 @@
     (confirmed)="doResetToDefaults()"
     (cancelled)="resetConfirm.set(false)">
     All settings will be reset to their default values. This cannot be undone.
+</env-confirm-dialog>
+}
+
+@if (clearDataConfirm()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Clear All Data"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Clear Everything"
+    (confirmed)="doClearAllData()"
+    (cancelled)="clearDataConfirm.set(false)">
+    This will permanently delete all your tasks, notes, books, and bookmarks. This cannot be undone.
 </env-confirm-dialog>
 }

@@ -113,6 +113,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   focusMode = signal(false);
   showFocusToast = signal(false);
   private focusToastTimer?: ReturnType<typeof setTimeout>;
+  private _focusModeHandler?: (e: Event) => void;
   typewriterMode = signal(false);
   showTypewriterToast = signal(false);
   private typewriterToastTimer?: ReturnType<typeof setTimeout>;
@@ -589,6 +590,13 @@ export class ComposerComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Listen for focus mode changes from settings
+    this._focusModeHandler = (e: Event) => {
+      const enabled = (e as CustomEvent<boolean>).detail;
+      if (enabled !== this.focusMode()) this.toggleFocusMode();
+    };
+    window.addEventListener('focusModeChanged', this._focusModeHandler);
+
     // Load book data from DB (async)
     this.bookService.loadBook(id).then(() => {
       this.isLoading.set(false);
@@ -601,6 +609,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
+    if (this._focusModeHandler) window.removeEventListener('focusModeChanged', this._focusModeHandler);
     this.editor.destroy();
   }
 

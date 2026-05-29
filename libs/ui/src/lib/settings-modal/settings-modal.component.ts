@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../button/button.component';
 import { IconButtonComponent } from '../icon-button/icon-button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
-import { ThemeService, Theme } from '@envello/core';
+import { ThemeService, Theme, StoreService } from '@envello/core';
 import { AiService, AiProvider } from '@envello/core';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
@@ -35,11 +35,13 @@ interface AiProviderOption {
 })
 export class SettingsModalComponent {
   private themeService = inject(ThemeService);
+  private storeService = inject(StoreService);
   aiService = inject(AiService);
 
   isOpen = signal(false);
   activeSection = signal('general');
   resetConfirm = signal(false);
+  clearDataConfirm = signal(false);
 
   // Settings state
   currentTheme = signal<Theme>('dark');
@@ -301,6 +303,45 @@ export class SettingsModalComponent {
     this.close();
   }
 
+  exportAllData() {
+    const data = {
+      exportedAt: new Date().toISOString(),
+      tasks: this.storeService.tasks(),
+      notes: this.storeService.notes(),
+      books: this.storeService.books(),
+      bookmarks: this.storeService.bookmarks(),
+      bookmarkFolders: this.storeService.bookmarkFolders(),
+      planningItems: this.storeService.planningItems(),
+      spaces: this.storeService.spaces(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `envello-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  clearAllData() {
+    this.clearDataConfirm.set(true);
+  }
+
+  async doClearAllData() {
+    this.clearDataConfirm.set(false);
+    localStorage.removeItem('envello-settings');
+    localStorage.removeItem('theme');
+    // Clear all in-memory store signals and close modal
+    this.storeService.tasks.set([]);
+    this.storeService.notes.set([]);
+    this.storeService.books.set([]);
+    this.storeService.bookmarks.set([]);
+    this.storeService.bookmarkFolders.set([]);
+    this.storeService.planningItems.set([]);
+    this.storeService.spaces.set([]);
+    this.close();
+  }
+
   resetToDefaults() {
     this.resetConfirm.set(true);
   }
@@ -393,6 +434,18 @@ export class SettingsModalComponent {
         console.error('Failed to load settings:', e);
       }
     }
+  }
+
+  checkUpdates() {
+    window.open('https://github.com/envello-app/envello/releases', '_blank');
+  }
+
+  openDocs() {
+    window.open('https://github.com/envello-app/envello/wiki', '_blank');
+  }
+
+  reportIssue() {
+    window.open('https://github.com/envello-app/envello/issues/new', '_blank');
   }
 
   private getFontFamily(font: string): string {
