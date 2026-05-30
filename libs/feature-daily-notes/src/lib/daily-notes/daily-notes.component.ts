@@ -369,15 +369,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     effect(() => {
       const note = this.selectedNote();
       if (note && this.editor) {
-        const content = note.content ?? '';
-        const noteChanged = note.id !== this.lastLoadedNoteId;
-        // Normalize Tiptap's empty-paragraph representation so we don't
-        // spuriously call setContent on every notes() mutation for an empty note.
-        const editorHtml = this.editor.getHTML();
-        const normalizedEditor = (editorHtml === '<p></p>' || editorHtml === '<p><br></p>') ? '' : editorHtml;
-        if (noteChanged || normalizedEditor !== content) {
+        if (note.id !== this.lastLoadedNoteId) {
           this.lastLoadedNoteId = note.id;
-          this.editor.commands.setContent(content, { emitUpdate: false });
+          this.editor.commands.setContent(note.content ?? '', { emitUpdate: false });
         }
       } else if (!note && this.editor && this.lastLoadedNoteId) {
         this.lastLoadedNoteId = '';
