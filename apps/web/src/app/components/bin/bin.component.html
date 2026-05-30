@@ -34,22 +34,6 @@
         </div>
     </div>
 
-    <!-- Stats Bar -->
-    <div class="bin-stats-bar">
-        <div class="stat-item">
-            <span class="stat-label">DISPLAYING</span>
-            <span class="stat-value">{{ visibleCount() }} <span class="stat-sub">/ {{ totalCount() }}</span></span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">RESTORABLE</span>
-            <span class="stat-value status-green">{{ restorableCount() }}</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">OLDEST ITEM</span>
-            <span class="stat-value">{{ oldestItem() ? formatRelativeTime(oldestItem()!.deletedAt) : '—' }}</span>
-        </div>
-    </div>
-
     <!-- Table -->
     <div class="bin-container">
         <div class="bin-table-header">

@@ -370,11 +370,11 @@
 }
 
 .progress-ring-bg {
-  stroke: var(--border-color);
+  stroke: var(--border-highlight);
 }
 
 .progress-ring-fill {
-  stroke: var(--accent);
+  stroke: var(--accent-primary);
   stroke-linecap: round;
   transition: stroke-dashoffset 0.35s ease;
 }
