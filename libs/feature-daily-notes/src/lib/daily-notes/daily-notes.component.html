@@ -111,7 +111,7 @@
             </button>
             <button class="dn-quick-item" [class.active]="selectedFilter() === 'pinned' && !selectedTag()" (click)="setFilter('pinned')">
                 <span class="material-symbols-outlined dn-quick-icon">push_pin</span>
-                <span class="dn-quick-label">Favourites</span>
+                <span class="dn-quick-label">Pinned</span>
                 <span class="dn-quick-count">{{ pinnedCount() }}</span>
             </button>
         </div>
@@ -219,7 +219,7 @@
     <!-- Editor Pane -->
     <div class="dn-editor">
         @if (selectedNote(); as note) {
-        <!-- Editor Header — Tabs + New Note button only -->
+        <!-- Editor Header — Tabs + save indicator + New Note button -->
         <div class="dn-editor-header">
             <div class="dn-editor-tabs">
                 @for (noteId of openNotes(); track noteId) {
@@ -233,6 +233,19 @@
                 }
                 }
                 <env-icon-button icon="add" variant="borderless" [size]="28" title="New note" class="editor-tab-add" (clicked)="handleNewNote()" />
+            </div>
+            <div class="dn-save-status">
+                @if (isSaving()) {
+                <span class="dn-save-indicator saving">
+                    <span class="material-symbols-outlined">sync</span>
+                    Saving…
+                </span>
+                } @else if (lastSaved()) {
+                <span class="dn-save-indicator saved">
+                    <span class="material-symbols-outlined">cloud_done</span>
+                    Saved
+                </span>
+                }
             </div>
         </div>
 
@@ -260,10 +273,10 @@
                         }
                     </div>
                 </div>
-                <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
+                <input #titleInput type="text" class="dn-entry-heading-input" [ngModel]="titleInputValue()"
                     (ngModelChange)="updateNoteTitle($event)"
-                    (keydown.enter)="checkAiTitleCommand(note.title)"
-                    [placeholder]="aiGenerating() ? 'Generating…' : 'Note title… (or type an AI prompt and press Enter)'"
+                    (keydown.enter)="checkAiTitleCommand(titleInputValue())"
+                    [placeholder]="aiGenerating() ? 'Generating…' : 'Note title…'"
                     [disabled]="aiGenerating()" />
 
                 @if (aiGenerating()) {
@@ -332,6 +345,22 @@
                 </env-editor-floating-menu>
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
+
+                <!-- Editor status bar: word count + active tags -->
+                <div class="dn-editor-statusbar">
+                    <span class="dn-statusbar-words">{{ wordCount() }} words</span>
+                    @if (getNoteTags(note).length > 0) {
+                    <span class="dn-statusbar-divider">·</span>
+                    <div class="dn-statusbar-tags">
+                        @for (tag of getNoteTags(note); track tag) {
+                        <button class="dn-statusbar-tag" [class.active]="selectedTag() === tag"
+                            (click)="selectTag(tag)" title="Filter by #{{ tag }}">
+                            #{{ tag }}
+                        </button>
+                        }
+                    </div>
+                    }
+                </div>
             </div>
         </div>
 
@@ -506,7 +535,10 @@
                         <div class="dn-format-label">TAGS</div>
                         <div class="dn-info-tags">
                             @for (tag of getNoteTags(note); track tag) {
-                            <span class="dn-info-tag">{{ tag }}</span>
+                            <button class="dn-info-tag" [class.active]="selectedTag() === tag"
+                                (click)="selectTag(tag)" title="Filter by #{{ tag }}">
+                                #{{ tag }}
+                            </button>
                             }
                         </div>
                     </div>

@@ -90,7 +90,11 @@ export class StoreService {
                 this.db.getAll<Project>('projects'),
             ]);
             this.tasks.set(tasks || []);
-            this.notes.set(notes || []);
+            // Merge: preserve any in-memory notes whose IDs aren't in the DB yet
+            // (newly created notes that haven't been persisted before this reload fires).
+            const dbNoteIds = new Set((notes || []).map(n => n.id));
+            const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
+            this.notes.set([...pendingNotes, ...(notes || [])]);
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
             this.books.set(books || []);
@@ -183,8 +187,9 @@ export class StoreService {
     async addNote(note: Note) {
         this.notes.update(notes => [note, ...notes]);
         this.addActivity("Entry added to '" + note.title + "'", 'entry');
-        await this.saveNoteContentToFile(note.id, note.content || '');
+        // Persist to DB immediately so a concurrent loadFromDb() won't lose this note.
         this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
+        await this.saveNoteContentToFile(note.id, note.content || '');
     }
 
     updateNote(id: string, updates: Partial<Note>) {
@@ -218,8 +223,14 @@ export class StoreService {
 
         const note = this.notes().find(n => n.id === id);
         if (note && note.filePath !== filePath) {
-            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, filePath } : n));
-            this.db.upsert('notes', { ...note, filePath });
+            // Update DB only — do NOT mutate the notes() signal here.
+            // A signal write would trigger the content-loading effect in the editor
+            // component, which compares editor HTML to note.content. At this point
+            // note.content may be stale (captured at the last debounce cycle) while
+            // the editor has newer in-flight content, causing typing to get reverted.
+            this.db.upsert('notes', { ...note, filePath }).catch(e =>
+                console.error('[StoreService] persist note filePath failed', e)
+            );
         }
     }
 

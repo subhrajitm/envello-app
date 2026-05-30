@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Note, AiService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
@@ -50,12 +50,22 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private aiService = inject(AiService);
   editor!: Editor;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  private titleSaveTimeout: ReturnType<typeof setTimeout> | null = null;
   private formatFramePending = false;
   private _cleanupFormatListener: (() => void) | null = null;
   private lastLoadedNoteId = '';
+  private lastTitleNoteId = '';
+
+  // Local copy of the title shown in the input. Decoupled from notes() so the
+  // input stays instant while the store write is debounced at 300 ms.
+  titleInputValue = signal('');
+
+  @ViewChild('titleInput') titleInputRef?: ElementRef<HTMLInputElement>;
 
   canUndo = signal(false);
   canRedo = signal(false);
+  isSaving = signal(false);
+  lastSaved = signal<Date | null>(null);
 
   aiGenerating = signal(false);
 
@@ -354,16 +364,28 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       if (note && this.editor) {
         const content = note.content ?? '';
         const noteChanged = note.id !== this.lastLoadedNoteId;
-        // Always reload on note switch (even if content happens to be identical)
-        // and reload when content arrives async from DB after a cold switch.
-        // Pass false so setContent doesn't fire onUpdate → no spurious auto-save.
-        if (noteChanged || this.editor.getHTML() !== content) {
+        // Normalize Tiptap's empty-paragraph representation so we don't
+        // spuriously call setContent on every notes() mutation for an empty note.
+        const editorHtml = this.editor.getHTML();
+        const normalizedEditor = (editorHtml === '<p></p>' || editorHtml === '<p><br></p>') ? '' : editorHtml;
+        if (noteChanged || normalizedEditor !== content) {
           this.lastLoadedNoteId = note.id;
           this.editor.commands.setContent(content, { emitUpdate: false });
         }
       } else if (!note && this.editor && this.lastLoadedNoteId) {
         this.lastLoadedNoteId = '';
         this.editor.commands.setContent('', { emitUpdate: false });
+      }
+    });
+
+    // Sync the local title input signal when the selected note changes.
+    // Only fires on note-ID changes — NOT on every notes() mutation — so
+    // the debounced store write never overwrites the user's in-flight typing.
+    effect(() => {
+      const note = this.selectedNote();
+      if (note && note.id !== this.lastTitleNoteId) {
+        this.lastTitleNoteId = note.id;
+        this.titleInputValue.set(note.title);
       }
     });
   }
@@ -384,7 +406,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           codeBlock: false,
         }),
         Placeholder.configure({
-          placeholder: 'Press \'/\' for commands...',
+          placeholder: 'Start writing...',
         }),
         Link.configure({ openOnClick: false }),
         Image,
@@ -406,28 +428,29 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           class: 'dn-editor-text focus:outline-none',
         },
       },
-      onTransaction: ({ editor }) => {
-        // Update undo/redo availability on every transaction — required for OnPush
-        this.canUndo.set(editor.can().undo());
-        this.canRedo.set(editor.can().redo());
-      },
       onUpdate: ({ editor }) => {
-        // Update word/char counts immediately (cheap signal sets)
-        this.wordCount.set(editor.storage.characterCount.words());
-        this.characterCount.set(editor.storage.characterCount.characters());
         // Debounce the store write — avoids a DataService write on every keystroke
+        this.isSaving.set(true);
         if (this.saveTimeout) clearTimeout(this.saveTimeout);
         this.saveTimeout = setTimeout(() => {
           const content = editor.getHTML();
           const plainText = editor.getText();
           const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
           this.updateNoteContent(content, preview);
+          this.isSaving.set(false);
+          this.lastSaved.set(new Date());
         }, 500);
       },
     });
 
-    // Throttle formatState updates to one per animation frame — avoids 19× isActive()
-    // calls and template re-evaluations on every keystroke/transaction
+    // One RAF per animation frame handles all reactive signal updates:
+    // canUndo/canRedo, word/char counts, and format state.
+    // Previously these were split across onTransaction (per-keystroke) and a RAF
+    // callback, causing multiple CD cycles per keystroke. Now there is at most
+    // one CD run per frame regardless of typing speed.
+    // formatState uses a shallow-equality guard — its object literal is new on
+    // every call, so without the guard Angular would dirty 17 template bindings
+    // at 60 fps even when no formatting has changed.
     const onFormatTransaction = () => {
       if (this.formatFramePending) return;
       this.formatFramePending = true;
@@ -435,7 +458,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         this.formatFramePending = false;
         const e = this.editor;
         if (!e) return;
-        this.formatState.set({
+
+        this.canUndo.set(e.can().undo());
+        this.canRedo.set(e.can().redo());
+        this.wordCount.set(e.storage.characterCount.words());
+        this.characterCount.set(e.storage.characterCount.characters());
+
+        const next = {
           bold: e.isActive('bold'), italic: e.isActive('italic'),
           underline: e.isActive('underline'), strike: e.isActive('strike'),
           highlight: e.isActive('highlight'), link: e.isActive('link'),
@@ -447,7 +476,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
           bulletList: e.isActive('bulletList'), orderedList: e.isActive('orderedList'),
           taskList: e.isActive('taskList'), codeBlock: e.isActive('codeBlock'),
           blockquote: e.isActive('blockquote'),
-        });
+        };
+        const cur = this.formatState();
+        if ((Object.keys(next) as (keyof typeof next)[]).some(k => next[k] !== cur[k])) {
+          this.formatState.set(next);
+        }
       });
     };
     this.editor.on('transaction', onFormatTransaction);
@@ -463,10 +496,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    this.flushTitleSave();
     this._cleanupFormatListener?.();
     if (this.editor) {
       this.editor.destroy();
     }
+  }
+
+  private flushTitleSave() {
+    if (!this.titleSaveTimeout) return;
+    clearTimeout(this.titleSaveTimeout);
+    this.titleSaveTimeout = null;
+    const id = this.selectedEntryId();
+    if (id) this.store.updateNote(id, { title: this.titleInputValue() });
   }
 
   updateNoteContent(content: string, preview: string) {
@@ -478,10 +520,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   handleNewNote() {
     const folderId = this.selectedNote()?.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
+    const now = new Date();
+    const datePart = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timePart = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const defaultTitle = `${datePart} · ${timePart}`;
     const newNote: Note = {
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      title: '',
+      id: now.getTime().toString(),
+      date: datePart,
+      title: defaultTitle,
       preview: '',
       content: '',
       tags: [],
@@ -489,6 +535,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     };
     this.store.addNote(newNote);
     this.selectNote(newNote.id);
+    // Select all text in the title field so the user can immediately overwrite it
+    setTimeout(() => {
+      const el = this.titleInputRef?.nativeElement;
+      if (el) { el.focus(); el.select(); }
+    }, 50);
   }
 
   moveNoteToFolder(noteId: string, targetFolderId: string) {
@@ -575,6 +626,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   selectNote(id: string) {
+    this.flushTitleSave();
     // Eagerly set editor content from the store cache to eliminate the stale-content
     // flash that would otherwise show while loadNoteContent fetches from DB.
     if (this.editor && id !== this.lastLoadedNoteId) {
@@ -759,10 +811,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   updateNoteTitle(title: string) {
+    this.titleInputValue.set(title);
     const activeId = this.selectedEntryId();
-    if (activeId) {
+    if (!activeId) return;
+    if (this.titleSaveTimeout) clearTimeout(this.titleSaveTimeout);
+    this.titleSaveTimeout = setTimeout(() => {
+      this.titleSaveTimeout = null;
       this.store.updateNote(activeId, { title });
-    }
+    }, 300);
   }
 
   private parseNoteCreationIntent(text: string): { topic: string; wordCount: number } | null {
@@ -812,6 +868,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     if (!activeId) return;
 
     const cleanTitle = intent.topic.charAt(0).toUpperCase() + intent.topic.slice(1);
+    this.titleInputValue.set(cleanTitle);
     this.store.updateNote(activeId, { title: cleanTitle });
     this.aiGenerating.set(true);
 
