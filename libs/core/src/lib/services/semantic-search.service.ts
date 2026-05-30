@@ -105,7 +105,12 @@ export class SemanticSearchService {
             });
         });
 
-        this.store.tasks().forEach(t => {
+        const flattenTasks = (tasks: ReturnType<typeof this.store.tasks>): ReturnType<typeof this.store.tasks> => {
+            const out: ReturnType<typeof this.store.tasks> = [];
+            for (const t of tasks) { out.push(t); if (t.subtasks?.length) out.push(...flattenTasks(t.subtasks as any)); }
+            return out;
+        };
+        flattenTasks(this.store.tasks()).forEach(t => {
             items.push({
                 text: [t.title, t.description, t.notes, t.project, ...(t.labels ?? [])].filter(Boolean).join(' '),
                 result: {

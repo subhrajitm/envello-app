@@ -252,20 +252,61 @@ export class QuickFindComponent {
         this.isAiStreaming.set(true);
         this.aiAbortRequested = false;
 
-        const docs = await this.semanticSearch.search(question, 6);
-        const sources: QuickFindResult[] = docs.map(d => ({
-            id: d.id,
-            type: d.type as ResultType,
-            title: d.title,
-            preview: d.preview,
-            icon: d.icon,
-            route: d.route,
-        }));
-        this.aiSources.set(sources);
+        // ── Build context directly from store (always available) ──────────────
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const fmt = (d: Date) => d.toISOString().split('T')[0];
 
-        const context = docs.length > 0
-            ? `You are a helpful assistant for a personal productivity app. Answer the user's question using only the content below. Be concise.\n\n${docs.map(d => `[${d.type.toUpperCase()}] "${d.title}": ${d.preview}`).join('\n')}`
-            : `You are a helpful assistant for a personal productivity app. No relevant content was found in the user's data for this question. Let them know and answer helpfully from general knowledge if possible.`;
+        const flattenTasks = (tasks: ReturnType<typeof this.store.tasks>): ReturnType<typeof this.store.tasks> => {
+            const result: ReturnType<typeof this.store.tasks> = [];
+            for (const t of tasks) {
+                result.push(t);
+                if (t.subtasks?.length) result.push(...flattenTasks(t.subtasks as any));
+            }
+            return result;
+        };
+
+        const allTasks = flattenTasks(this.store.tasks());
+        const pendingTasks = allTasks.filter(t => t.status !== 'COMPLETED');
+        const tasksBlock = pendingTasks.slice(0, 100)
+            .map(t => `  - "${t.title}" | status: ${t.status} | due: ${t.due || 'none'} | priority: ${t.priority || 'none'} | project: ${t.project || 'none'}${t.parentId ? ' | subtask: yes' : ''}`)
+            .join('\n') || '  (none)';
+
+        const notesBlock = this.store.notes().slice(0, 20)
+            .map(n => `  - "${n.title}": ${n.preview || ''}`)
+            .join('\n') || '  (none)';
+
+        const meetingsBlock = this.meetingsService.meetings().slice(0, 20)
+            .map(m => `  - "${m.title}" on ${m.date || 'no date'}: ${m.description || ''}`)
+            .join('\n') || '  (none)';
+
+        const context = `You are a helpful assistant embedded in Envello, a personal productivity app.
+Answer using the user's actual data below. Be concise and specific.
+Tasks include both top-level tasks and subtasks. "due" dates are in YYYY-MM-DD format.
+
+TODAY: ${fmt(today)}  |  TOMORROW: ${fmt(tomorrow)}
+
+PENDING TASKS — including subtasks (${pendingTasks.length} pending of ${allTasks.length} total):
+${tasksBlock}
+
+RECENT NOTES:
+${notesBlock}
+
+MEETINGS:
+${meetingsBlock}`;
+
+        // ── Optionally augment with semantic search sources ───────────────────
+        const sources: QuickFindResult[] = [];
+        try {
+            const docs = await this.semanticSearch.search(question, 6);
+            sources.push(...docs.map(d => ({
+                id: d.id, type: d.type as ResultType,
+                title: d.title, preview: d.preview,
+                icon: d.icon, route: d.route,
+            })));
+        } catch { /* embeddings not configured — skip */ }
+        this.aiSources.set(sources);
 
         try {
             for await (const chunk of this.ai.streamMessage(question, context)) {
