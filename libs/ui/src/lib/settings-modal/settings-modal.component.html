@@ -242,7 +242,7 @@
                         </div>
                     </div>
 
-                    @if (aiProvider() !== 'mock' && aiProvider() !== 'ollama') {
+                    @if (aiProvider() !== 'mock' && aiProvider() !== 'ollama' && aiProvider() !== 'local') {
                     <div class="setting-item flex flex-col gap-2">
                         <div class="setting-label-group">
                             <label>API Key</label>
@@ -261,6 +261,40 @@
                     </div>
                     }
 
+                    <!-- On-device model: download progress -->
+                    @if (aiProvider() === 'local') {
+                    <div class="setting-item flex flex-col gap-2">
+                        @if (aiService.localModelStatus() === 'downloading') {
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;opacity:0.7;">
+                                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;">{{ aiService.localDownloadFile() || 'Downloading model…' }}</span>
+                                <span>{{ aiService.localDownloadProgress() }}%</span>
+                            </div>
+                            <div style="height:4px;border-radius:2px;background:var(--border-subtle);overflow:hidden;">
+                                <div style="height:100%;border-radius:2px;background:var(--accent-primary);transition:width 0.3s ease;"
+                                    [style.width.%]="aiService.localDownloadProgress()"></div>
+                            </div>
+                            <span style="font-size:11px;opacity:0.55;">Model is cached in your browser after the first download.</span>
+                        </div>
+                        } @else if (aiService.localModelStatus() === 'ready') {
+                        <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--accent-green);">
+                            <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
+                            On-device model loaded and ready
+                        </div>
+                        } @else if (aiService.localModelStatus() === 'error') {
+                        <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--accent-red);">
+                            <span class="material-symbols-outlined" style="font-size:16px;">error</span>
+                            Failed to load model — check console for details
+                        </div>
+                        } @else {
+                        <p style="font-size:12px;opacity:0.6;line-height:1.5;">
+                            Runs entirely in your browser — no API key required.<br>
+                            The model (~700 MB) downloads once and is cached locally.
+                        </p>
+                        }
+                    </div>
+                    }
+
                     <div class="setting-item setting-row">
                         <div class="setting-label-group">
                             <label>Model</label>
@@ -269,7 +303,11 @@
                         <div class="setting-control" style="min-width:200px">
                             <select class="select-input w-full" [ngModel]="aiModel()"
                                 (ngModelChange)="aiModel.set($event); testStatus.set('idle')">
-                                @if (aiProvider() === 'openai') {
+                                @if (aiProvider() === 'local') {
+                                <option value="HuggingFaceTB/SmolLM2-360M-Instruct">SmolLM2 360M (Recommended)</option>
+                                <option value="HuggingFaceTB/SmolLM2-135M-Instruct">SmolLM2 135M (Fastest, ~270 MB)</option>
+                                <option value="Qwen/Qwen2.5-0.5B-Instruct">Qwen2.5 0.5B (Better quality, ~1 GB)</option>
+                                } @else if (aiProvider() === 'openai') {
                                 <option value="gpt-4o">gpt-4o (Recommended)</option>
                                 <option value="gpt-4o-mini">gpt-4o-mini (Faster & Cheaper)</option>
                                 <option value="o1-preview">o1-preview (Advanced Reasoning)</option>
@@ -311,6 +349,9 @@
                                 @if (testStatus() === 'testing') {
                                 <span class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite;">progress_activity</span>
                                 Testing…
+                                } @else if (aiProvider() === 'local') {
+                                <span class="material-symbols-outlined" style="font-size:16px;">download</span>
+                                Load Model
                                 } @else {
                                 <span class="material-symbols-outlined" style="font-size:16px;">wifi_tethering</span>
                                 Test Connection
@@ -335,13 +376,19 @@
                             <span class="info-label">Current Provider</span>
                             <span class="info-value">{{ aiProvider() | titlecase }}</span>
                         </div>
+                        @if (aiProvider() !== 'local') {
                         <div class="info-row">
                             <span class="info-label">Key Storage</span>
                             <span class="info-value">{{ 'Session (local only)' }}</span>
                         </div>
+                        }
                         <p class="text-muted-hint text-[11px] mt-3 leading-relaxed">
+                            @if (aiProvider() === 'local') {
+                            Runs fully in-browser via Transformers.js (ONNX). No data leaves your device.
+                            } @else {
                             Envello uses LangChain to connect to various AI providers.
                             Keys are stored locally on your device and never sent to Envello servers.
+                            }
                         </p>
                     </div>
                     }

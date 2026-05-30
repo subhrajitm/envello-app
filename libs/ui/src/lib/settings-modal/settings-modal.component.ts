@@ -89,13 +89,14 @@ export class SettingsModalComponent {
   ];
 
   aiProviders: AiProviderOption[] = [
-    { value: 'mock',      label: 'Demo Mode (Offline)', icon: 'science' },
-    { value: 'openai',    label: 'OpenAI (GPT)',         icon: 'psychology' },
-    { value: 'anthropic', label: 'Anthropic (Claude)',   icon: 'smart_toy' },
-    { value: 'gemini',    label: 'Google (Gemini)',      icon: 'auto_awesome' },
-    { value: 'grok',      label: 'xAI (Grok)',           icon: 'bolt' },
-    { value: 'deepseek',  label: 'DeepSeek',             icon: 'water' },
-    { value: 'ollama',    label: 'Ollama (Local)',        icon: 'terminal' },
+    { value: 'mock',      label: 'Demo Mode',            icon: 'science' },
+    { value: 'local',     label: 'On-Device AI',         icon: 'memory' },
+    { value: 'openai',    label: 'OpenAI (GPT)',          icon: 'psychology' },
+    { value: 'anthropic', label: 'Anthropic (Claude)',    icon: 'smart_toy' },
+    { value: 'gemini',    label: 'Google (Gemini)',       icon: 'auto_awesome' },
+    { value: 'grok',      label: 'xAI (Grok)',            icon: 'bolt' },
+    { value: 'deepseek',  label: 'DeepSeek',              icon: 'water' },
+    { value: 'ollama',    label: 'Ollama (Local)',         icon: 'terminal' },
   ];
 
   constructor() {
@@ -265,6 +266,7 @@ export class SettingsModalComponent {
     else if (provider === 'grok') this.aiModel.set('grok-3');
     else if (provider === 'deepseek') this.aiModel.set('deepseek-chat');
     else if (provider === 'ollama') this.aiModel.set('llama3');
+    else if (provider === 'local') this.aiModel.set('HuggingFaceTB/SmolLM2-360M-Instruct');
     else this.aiModel.set('');
   }
 

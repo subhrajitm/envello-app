@@ -8,7 +8,9 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatXAI } from '@langchain/xai';
 import { SupabaseService } from './supabase.service';
 
-export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek';
+export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek' | 'local';
+
+export type LocalModelStatus = 'idle' | 'downloading' | 'ready' | 'error';
 
 export interface AiMessage {
     id: string;
@@ -35,8 +37,19 @@ export class AiService {
     modelName = signal<string>('gpt-4o');
     apiKey = signal<string>('');
 
+    /** Status of the on-device model worker */
+    localModelStatus = signal<LocalModelStatus>('idle');
+    /** Download progress 0–100 */
+    localDownloadProgress = signal<number>(0);
+    /** Currently downloading file name */
+    localDownloadFile = signal<string>('');
+
     private chatModel?: BaseChatModel;
     private sb = inject(SupabaseService);
+
+    private localWorker: Worker | null = null;
+    /** Pending streaming callbacks keyed by generation ID */
+    private localCallbacks = new Map<string, { chunk: (t: string) => void; done: () => void; error: (m: string) => void }>();
 
     // Platform-level fallback config loaded from Supabase on init
     private platformProvider: AiProvider = 'mock';
@@ -119,7 +132,10 @@ export class AiService {
         const effectiveModel = m || this.platformModel;
 
         try {
-            if (effectiveProvider === 'openai' && effectiveKey) {
+            if (effectiveProvider === 'local') {
+                this.chatModel = undefined;
+                this.initLocalWorker(effectiveModel || 'HuggingFaceTB/SmolLM2-360M-Instruct');
+            } else if (effectiveProvider === 'openai' && effectiveKey) {
                 this.chatModel = new ChatOpenAI({ model: effectiveModel, configuration: { apiKey: effectiveKey } });
             } else if (effectiveProvider === 'anthropic' && effectiveKey) {
                 this.chatModel = new ChatAnthropic({ model: effectiveModel, apiKey: effectiveKey });
@@ -141,6 +157,106 @@ export class AiService {
             console.error('Failed to initialize AI model:', e);
             this.chatModel = undefined;
         }
+    }
+
+    private initLocalWorker(model: string) {
+        const workerUrl = (globalThis as any).__AI_WORKER_URL__;
+        if (!workerUrl) {
+            console.warn('[AiService] Local worker URL not registered');
+            this.localModelStatus.set('error');
+            return;
+        }
+        if (this.localWorker) {
+            this.localWorker.terminate();
+            this.localWorker = null;
+        }
+        this.localModelStatus.set('downloading');
+        this.localDownloadProgress.set(0);
+        this.localDownloadFile.set('');
+
+        this.localWorker = new Worker(workerUrl, { type: 'module' });
+        this.localWorker.onmessage = ({ data }: MessageEvent) => {
+            switch (data.type) {
+                case 'progress': {
+                    const pct = data.total > 0 ? Math.round((data.loaded / data.total) * 100) : 0;
+                    this.localDownloadProgress.set(pct);
+                    this.localDownloadFile.set(data.file ?? '');
+                    break;
+                }
+                case 'ready':
+                    this.localModelStatus.set('ready');
+                    this.localDownloadProgress.set(100);
+                    break;
+                case 'chunk': {
+                    const cb = this.localCallbacks.get(data.id);
+                    if (cb) cb.chunk(data.text);
+                    break;
+                }
+                case 'done': {
+                    const cb = this.localCallbacks.get(data.id);
+                    if (cb) { cb.done(); this.localCallbacks.delete(data.id); }
+                    break;
+                }
+                case 'error': {
+                    if (data.id) {
+                        const cb = this.localCallbacks.get(data.id);
+                        if (cb) { cb.error(data.message); this.localCallbacks.delete(data.id); }
+                    } else {
+                        console.error('[AiService] Local worker error:', data.message);
+                        this.localModelStatus.set('error');
+                    }
+                    break;
+                }
+            }
+        };
+        this.localWorker.onerror = (e) => {
+            console.error('[AiService] Local worker crash:', e);
+            this.localModelStatus.set('error');
+        };
+        this.localWorker.postMessage({ type: 'init', model });
+    }
+
+    private async *streamLocal(
+        messages: { role: string; content: string }[],
+        maxTokens = 512,
+    ): AsyncIterable<string> {
+        if (!this.localWorker || this.localModelStatus() !== 'ready') {
+            yield '[On-device model not ready — please wait for download to complete.]';
+            return;
+        }
+        const id = crypto.randomUUID();
+        const worker = this.localWorker;
+        const queue: string[] = [];
+        let finished = false;
+        let pendingResolve: (() => void) | null = null;
+
+        const waitForItem = (): Promise<void> =>
+            new Promise(r => { pendingResolve = r; });
+
+        this.localCallbacks.set(id, {
+            chunk: (text: string) => {
+                queue.push(text);
+                if (pendingResolve) { const r = pendingResolve; pendingResolve = null; r(); }
+            },
+            done: () => {
+                finished = true;
+                if (pendingResolve) { const r = pendingResolve; pendingResolve = null; r(); }
+            },
+            error: (msg: string) => {
+                queue.push(`[Error: ${msg}]`);
+                finished = true;
+                if (pendingResolve) { const r = pendingResolve; pendingResolve = null; r(); }
+            },
+        });
+
+        worker.postMessage({ type: 'generate', id, messages, maxTokens });
+
+        while (!finished || queue.length > 0) {
+            if (queue.length === 0 && !finished) await waitForItem();
+            while (queue.length > 0) yield queue.shift()!;
+        }
+
+        this.localCallbacks.delete(id);
     }
 
     private async logUsage(prompt: string, response: string) {
@@ -168,6 +284,17 @@ export class AiService {
      * Returns 'success' or throws with an error message.
      */
     async testConfig(provider: AiProvider, model: string, key: string): Promise<void> {
+        if (provider === 'mock') return;
+        if (provider === 'local') {
+            if (this.localModelStatus() === 'ready') return;
+            if (this.localModelStatus() === 'downloading') {
+                throw new Error('Model is still downloading. Please wait.');
+            }
+            // Trigger download if not started
+            this.initLocalWorker(model || 'HuggingFaceTB/SmolLM2-360M-Instruct');
+            throw new Error('Model download started. Check the progress indicator below.');
+        }
+
         let tempModel: BaseChatModel | undefined;
 
         if (provider === 'openai' && key) {
@@ -185,8 +312,6 @@ export class AiService {
                 model: model || 'deepseek-chat',
                 configuration: { apiKey: key, baseURL: 'https://api.deepseek.com/v1' }
             });
-        } else if (provider === 'mock') {
-            return; // Mock always succeeds
         } else {
             throw new Error('API key is required for this provider.');
         }
@@ -199,7 +324,15 @@ export class AiService {
         if (!this.aiEnabled()) return '';
 
         let result: string;
-        if (this.chatModel) {
+        if (this.provider() === 'local') {
+            const msgs = [
+                { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
+                { role: 'user', content: prompt },
+            ];
+            let full = '';
+            for await (const chunk of this.streamLocal(msgs)) full += chunk;
+            result = full;
+        } else if (this.chatModel) {
             try {
                 const messages = [
                     new SystemMessage(context || 'You are a helpful creative writing assistant.'),
@@ -221,6 +354,15 @@ export class AiService {
 
     async *streamMessage(prompt: string, context?: string): AsyncIterable<string> {
         if (!this.aiEnabled()) return;
+
+        if (this.provider() === 'local') {
+            const msgs = [
+                { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
+                { role: 'user', content: prompt },
+            ];
+            yield* this.streamLocal(msgs);
+            return;
+        }
 
         if (this.chatModel) {
             try {
