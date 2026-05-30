@@ -31,9 +31,9 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* Ask-changes input mode: single row */
-.env-floating-menu--ask .env-float-row {
-  padding: 4px 4px 4px 12px;
+/* Ask-changes input mode: expand row 1 to fit the input */
+.env-float-row--ai:has(.env-ask-input--full) {
+  padding: 4px 4px 4px 10px;
   gap: 4px;
 }
 
@@ -118,18 +118,8 @@
   background: var(--bg-hover);
 }
 
-.env-ask-kbd {
-  font-family: inherit;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  background: var(--bg-subtle, var(--bg-hover));
-  border: 1px solid var(--border-subtle);
-  border-radius: 3px;
-  padding: 1px 4px;
-  letter-spacing: 0.02em;
-}
 
-/* ── Ask-changes input mode ────────────────────────────────────────── */
+/* ── Ask-changes input ─────────────────────────────────────────────── */
 .env-ask-input {
   flex: 1;
   min-width: 220px;
@@ -139,6 +129,12 @@
   color: var(--text-primary);
   font-size: 13px;
   padding: 4px 0;
+}
+
+/* Full-width variant — fills the row, hiding the AI buttons */
+.env-ask-input--full {
+  width: 100%;
+  min-width: 280px;
 }
 
 .env-ask-input::placeholder {

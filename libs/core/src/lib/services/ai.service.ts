@@ -317,22 +317,17 @@ export class AiService {
         }
 
         if (this.currentModel) {
-            try {
-                const messages: ChatMessage[] = [
-                    { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
-                    { role: 'user', content: prompt },
-                ];
-                const { text } = await generateText({
-                    model: this.currentModel,
-                    messages,
-                    abortSignal: AbortSignal.timeout(this.REQUEST_TIMEOUT_MS),
-                });
-                this.logUsage(prompt, text);
-                return text;
-            } catch (e) {
-                console.error('AI request failed:', e);
-                return this.getMockResponse();
-            }
+            const messages: ChatMessage[] = [
+                { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
+                { role: 'user', content: prompt },
+            ];
+            const { text } = await generateText({
+                model: this.currentModel,
+                messages,
+                abortSignal: AbortSignal.timeout(this.REQUEST_TIMEOUT_MS),
+            });
+            this.logUsage(prompt, text);
+            return text;
         }
 
         return this.getMockResponse();
@@ -351,21 +346,17 @@ export class AiService {
         }
 
         if (this.currentModel) {
-            try {
-                const messages: ChatMessage[] = [
-                    { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
-                    { role: 'user', content: prompt },
-                ];
-                const { textStream } = streamText({
-                    model: this.currentModel,
-                    messages,
-                    abortSignal: AbortSignal.timeout(this.REQUEST_TIMEOUT_MS),
-                });
-                for await (const chunk of textStream) yield chunk;
-                return;
-            } catch (e) {
-                console.error('AI stream failed:', e);
-            }
+            const messages: ChatMessage[] = [
+                { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
+                { role: 'user', content: prompt },
+            ];
+            const { textStream } = streamText({
+                model: this.currentModel,
+                messages,
+                abortSignal: AbortSignal.timeout(this.REQUEST_TIMEOUT_MS),
+            });
+            for await (const chunk of textStream) yield chunk;
+            return;
         }
 
         yield* this.getMockStream();

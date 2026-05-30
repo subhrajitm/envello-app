@@ -89,8 +89,8 @@
             <div class="search-container">
                 <span class="material-symbols-outlined search-icon">search</span>
                 <input type="text" class="dn-search-input" placeholder="Search notes..."
-                    [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-                @if (searchQuery()) {
+                    [ngModel]="searchInput()" (ngModelChange)="onSearchInput($event)" />
+                @if (searchInput()) {
                 <env-icon-button icon="close" variant="borderless" [size]="20" title="Clear search" (clicked)="clearSearch()" style="position:absolute;right:6px;" />
                 }
             </div>
@@ -132,10 +132,10 @@
             (dragover)="onListDragOver($event)"
             (dragleave)="onListDragLeave($event)"
             (drop)="onListDrop($event)">
-            @if (filteredNotes().length === 0 && searchQuery()) {
+            @if (filteredNotes().length === 0 && searchInput()) {
             <div class="sidebar-empty-state">
                 <span class="material-symbols-outlined sidebar-empty-icon">search_off</span>
-                <span class="sidebar-empty-text">No results for "{{ searchQuery() }}"</span>
+                <span class="sidebar-empty-text">No results for "{{ searchInput() }}"</span>
                 <button class="sidebar-empty-action" (click)="clearSearch()">Clear search</button>
             </div>
             } @else if (noteGroups().length === 0) {
@@ -376,9 +376,13 @@
                     [suggestions]="aiSuggestions"
                     [messages]="aiMessages()"
                     [loading]="aiLoading()"
+                    [canCancel]="aiLoading()"
+                    [applyText]="pendingApply()?.text ?? null"
                     (send)="sendAiMessage($event)"
                     (cleared)="clearAiChat()"
                     (closed)="rightPanelCollapsed.set(true)"
+                    (cancel)="cancelAiStream()"
+                    (applyClicked)="applyAiChanges()"
                 ></env-ai-panel>
                 } @else if (rightPanelTab() === 'format') {
                 @if (editor) {

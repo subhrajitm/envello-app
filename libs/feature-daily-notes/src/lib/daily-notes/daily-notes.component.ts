@@ -51,6 +51,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   editor!: Editor;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
   private titleSaveTimeout: ReturnType<typeof setTimeout> | null = null;
+  private searchDebounceId: ReturnType<typeof setTimeout> | null = null;
   private formatFramePending = false;
   private _cleanupFormatListener: (() => void) | null = null;
   private lastLoadedNoteId = '';
@@ -84,7 +85,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   tempFolderId = signal<string>('');
 
   selectedEntryId = signal<string>('');
-  searchQuery = signal<string>('');
+  searchInput = signal<string>('');   // instant — drives the input field
+  searchQuery = signal<string>('');   // debounced — drives filteredNotes
   selectedFilter = signal<string>('all');
   selectedTag = signal<string>('');
   showColorPicker = signal<boolean>(false);
@@ -403,6 +405,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     });
   }
 
+  @HostListener('window:beforeunload')
+  onBeforeUnload() { this.flushTitleSave(); }
+
   @HostListener('document:keydown.escape', ['$event'])
   handleEscape(event: Event) {
     if (this.activeModal() !== 'none') {
@@ -477,22 +482,39 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         this.wordCount.set(e.storage.characterCount.words());
         this.characterCount.set(e.storage.characterCount.characters());
 
-        const next = {
-          bold: e.isActive('bold'), italic: e.isActive('italic'),
-          underline: e.isActive('underline'), strike: e.isActive('strike'),
-          highlight: e.isActive('highlight'), link: e.isActive('link'),
-          paragraph: e.isActive('paragraph'),
-          h1: e.isActive('heading', { level: 1 }), h2: e.isActive('heading', { level: 2 }),
-          h3: e.isActive('heading', { level: 3 }),
-          alignLeft: e.isActive({ textAlign: 'left' }), alignCenter: e.isActive({ textAlign: 'center' }),
-          alignRight: e.isActive({ textAlign: 'right' }), alignJustify: e.isActive({ textAlign: 'justify' }),
-          bulletList: e.isActive('bulletList'), orderedList: e.isActive('orderedList'),
-          taskList: e.isActive('taskList'), codeBlock: e.isActive('codeBlock'),
-          blockquote: e.isActive('blockquote'),
-        };
+        const bold        = e.isActive('bold');
+        const italic      = e.isActive('italic');
+        const underline   = e.isActive('underline');
+        const strike      = e.isActive('strike');
+        const highlight   = e.isActive('highlight');
+        const link        = e.isActive('link');
+        const paragraph   = e.isActive('paragraph');
+        const h1          = e.isActive('heading', { level: 1 });
+        const h2          = e.isActive('heading', { level: 2 });
+        const h3          = e.isActive('heading', { level: 3 });
+        const alignLeft   = e.isActive({ textAlign: 'left' });
+        const alignCenter = e.isActive({ textAlign: 'center' });
+        const alignRight  = e.isActive({ textAlign: 'right' });
+        const alignJustify = e.isActive({ textAlign: 'justify' });
+        const bulletList  = e.isActive('bulletList');
+        const orderedList = e.isActive('orderedList');
+        const taskList    = e.isActive('taskList');
+        const codeBlock   = e.isActive('codeBlock');
+        const blockquote  = e.isActive('blockquote');
+
         const cur = this.formatState();
-        if ((Object.keys(next) as (keyof typeof next)[]).some(k => next[k] !== cur[k])) {
-          this.formatState.set(next);
+        if (cur.bold !== bold || cur.italic !== italic || cur.underline !== underline ||
+            cur.strike !== strike || cur.highlight !== highlight || cur.link !== link ||
+            cur.paragraph !== paragraph || cur.h1 !== h1 || cur.h2 !== h2 || cur.h3 !== h3 ||
+            cur.alignLeft !== alignLeft || cur.alignCenter !== alignCenter ||
+            cur.alignRight !== alignRight || cur.alignJustify !== alignJustify ||
+            cur.bulletList !== bulletList || cur.orderedList !== orderedList ||
+            cur.taskList !== taskList || cur.codeBlock !== codeBlock || cur.blockquote !== blockquote) {
+          this.formatState.set({
+            bold, italic, underline, strike, highlight, link, paragraph,
+            h1, h2, h3, alignLeft, alignCenter, alignRight, alignJustify,
+            bulletList, orderedList, taskList, codeBlock, blockquote,
+          });
         }
       });
     };
@@ -509,6 +531,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    if (this.searchDebounceId) clearTimeout(this.searchDebounceId);
     this.flushTitleSave();
     this._cleanupFormatListener?.();
     if (this.editor) {
@@ -660,7 +683,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     );
   }
 
+  onSearchInput(value: string) {
+    this.searchInput.set(value);
+    if (this.searchDebounceId) clearTimeout(this.searchDebounceId);
+    this.searchDebounceId = setTimeout(() => { this.searchQuery.set(value); }, 150);
+  }
+
   clearSearch() {
+    if (this.searchDebounceId) clearTimeout(this.searchDebounceId);
+    this.searchInput.set('');
     this.searchQuery.set('');
   }
 
@@ -856,14 +887,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return { topic, wordCount };
   }
 
-  private async generateNoteContent(topic: string, wordCount: number): Promise<string> {
-    const prompt = `Write a well-structured note of approximately ${wordCount} words on the topic: "${topic}".
-Use clear paragraphs with smooth transitions. Start directly with the content — do not include a title heading.
-Return plain text with paragraph breaks (double newline between paragraphs). No markdown headings or bullet points.`;
-    return this.aiService.sendMessage(prompt,
-      'You are a knowledgeable and articulate note-taking assistant. Write informative, engaging content.');
-  }
-
   private plainToHtml(text: string): string {
     return text
       .split(/\n{2,}/)
@@ -873,6 +896,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
 
   async checkAiTitleCommand(title: string) {
     if (this.aiGenerating()) return;
+    if (!this.aiService.aiEnabled() || this.aiService.provider() === 'mock') return;
 
     const intent = this.parseNoteCreationIntent(title.trim());
     if (!intent) return;
@@ -884,12 +908,30 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     this.titleInputValue.set(cleanTitle);
     this.store.updateNote(activeId, { title: cleanTitle });
     this.aiGenerating.set(true);
+    if (this.editor) this.editor.commands.setContent('<p></p>');
 
+    const prompt = `Write a well-structured note of approximately ${intent.wordCount} words on the topic: "${intent.topic}".
+Use clear paragraphs with smooth transitions. Start directly with the content — do not include a title heading.
+Return plain text with paragraph breaks (double newline between paragraphs). No markdown headings or bullet points.`;
+
+    let accumulated = '';
+    let lastUpdate  = 0;
     try {
-      const generated = await this.generateNoteContent(intent.topic, intent.wordCount);
-      const html = this.plainToHtml(generated);
+      for await (const chunk of this.aiService.streamMessage(
+        prompt,
+        'You are a knowledgeable and articulate note-taking assistant. Write informative, engaging content.'
+      )) {
+        accumulated += chunk;
+        if (accumulated.length - lastUpdate >= 80) {
+          if (this.editor) this.editor.commands.setContent(this.plainToHtml(accumulated));
+          lastUpdate = accumulated.length;
+        }
+      }
+      const html = this.plainToHtml(accumulated);
       if (this.editor) this.editor.commands.setContent(html);
-      this.store.updateNote(activeId, { content: html, preview: generated.substring(0, 120) });
+      this.store.updateNote(activeId, { content: html, preview: accumulated.substring(0, 120) });
+    } catch {
+      if (this.editor) this.editor.commands.setContent('<p></p>');
     } finally {
       this.aiGenerating.set(false);
     }
@@ -1068,33 +1110,99 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
   }
 
   // ── AI Assistant ─────────────────────────────────────────────────────────────
-  aiLoading  = signal(false);
-  aiMessages = signal<AiPanelMessage[]>([]);
+  aiLoading    = signal(false);
+  aiMessages   = signal<AiPanelMessage[]>([]);
+  pendingApply = signal<{ text: string; from: number; to: number } | null>(null);
+  private aiAbort = false;
+
+  cancelAiStream() {
+    this.aiAbort = true;
+  }
+
+  applyAiChanges() {
+    const pending = this.pendingApply();
+    if (!pending || !this.editor) return;
+    const { text, from, to } = pending;
+    if (from !== to) {
+      this.editor.chain().focus().setTextSelection({ from, to }).insertContent(text).run();
+    } else {
+      const html = this.plainToHtml(text);
+      this.editor.commands.setContent(html);
+      const noteId = this.selectedEntryId();
+      if (noteId) this.store.updateNote(noteId, { content: html, preview: text.substring(0, 120) });
+    }
+    this.pendingApply.set(null);
+  }
+
+  private buildNotesAiContext(): string {
+    const notes = this.notes();
+    const notesSummary = notes.slice(0, 40)
+      .map(n => `  - "${n.title}"${n.tags?.filter(t => t !== 'pinned').length ? ` [${n.tags!.filter(t => t !== 'pinned').join(', ')}]` : ''}${n.preview ? `: ${n.preview.substring(0, 80)}` : ''}`)
+      .join('\n') || '  (none)';
+    const folders = this.noteGroups().map(g => g.name).join(', ') || 'none';
+    const pinned  = notes.filter(n => this.isPinned(n)).map(n => n.title);
+    return `You are a helpful assistant embedded in Envello Notes.
+Answer using the user's actual notes data below. Be concise and specific.
+TODAY: ${new Date().toISOString().split('T')[0]}
+FOLDERS: ${folders}
+NOTES (${notes.length} total):
+${notesSummary}
+PINNED: ${pinned.length ? pinned.join(', ') : 'none'}`;
+  }
+
+  private openAiPanel() {
+    this.rightPanelTab.set('ai');
+    this.rightPanelCollapsed.set(false);
+  }
 
   async continueWriting() {
     if (!this.editor) return;
-    // Collapse selection to end so insertContent appends rather than replacing selected text
+    if (!this.aiService.aiEnabled()) {
+      this.openAiPanel();
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'AI is disabled. Enable it in Settings → AI.' }]);
+      return;
+    }
+
     const { to } = this.editor.state.selection;
     this.editor.chain().focus().setTextSelection(to).run();
-    const anchor  = this.editor.state.selection.anchor;
-    const docSize = this.editor.state.doc.content.size;
-    const from    = Math.max(0, anchor - 1000);
-    const preceding = this.editor.state.doc.textBetween(from, Math.min(anchor, docSize), '\n');
+    const anchor    = this.editor.state.selection.anchor;
+    const docSize   = this.editor.state.doc.content.size;
+    const preceding = this.editor.state.doc.textBetween(Math.max(0, anchor - 1000), Math.min(anchor, docSize), '\n');
+    const note      = this.selectedNote();
+    const noteMeta  = note ? `The note title is "${note.title}".` : '';
 
-    this.setRightTab('ai');
+    this.openAiPanel();
     this.aiMessages.update(m => [...m, { role: 'user', text: 'Continue writing from cursor position' }]);
     this.aiMessages.update(m => [...m, { role: 'assistant', text: '' }]);
     this.aiLoading.set(true);
+    this.aiAbort = false;
+    let accumulated = '';
+    let pending = '';
+    let rafScheduled = false;
+    const flush = () => {
+      if (!pending) return;
+      const text = pending; pending = ''; rafScheduled = false;
+      this.aiMessages.update(msgs => {
+        const last = msgs[msgs.length - 1];
+        return [...msgs.slice(0, -1), { ...last, text: last.text + text }];
+      });
+    };
     try {
       for await (const chunk of this.aiService.streamMessage(
         `Continue the writing from this point (write 2-3 sentences):\n\n${preceding}`,
-        'You are a helpful writing assistant.'
+        `You are a helpful writing assistant. ${noteMeta}`
       )) {
-        this.editor.chain().focus().insertContent(chunk).run();
-        this.aiMessages.update(msgs => {
-          const last = msgs[msgs.length - 1];
-          return [...msgs.slice(0, -1), { ...last, text: last.text + chunk }];
-        });
+        if (this.aiAbort) break;
+        accumulated += chunk;
+        pending += chunk;
+        if (!rafScheduled) { rafScheduled = true; requestAnimationFrame(flush); }
+      }
+      flush();
+      // Single insertion after stream completes — avoids per-chunk transaction races
+      if (accumulated && !this.aiAbort) {
+        this.editor.view.dispatch(
+          this.editor.state.tr.insertText(accumulated, this.editor.state.selection.anchor)
+        );
       }
     } catch {
       this.aiMessages.update(m => [...m.slice(0, -1), { role: 'assistant', text: 'Failed to continue writing. Please try again.' }]);
@@ -1105,23 +1213,44 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
 
   async handleSuggest() {
     if (!this.editor) return;
+    if (!this.aiService.aiEnabled()) {
+      this.openAiPanel();
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'AI is disabled. Enable it in Settings → AI.' }]);
+      return;
+    }
     const content = this.editor.getText().trim();
     if (!content) return;
 
-    this.setRightTab('ai');
+    const note    = this.selectedNote();
+    const noteMeta = note
+      ? `Note title: "${note.title}".${note.tags?.filter(t => t !== 'pinned').length ? ` Tags: ${note.tags!.filter(t => t !== 'pinned').join(', ')}.` : ''}`
+      : '';
+
+    this.openAiPanel();
     this.aiMessages.update(m => [...m, { role: 'user', text: 'Suggest improvements for this note' }]);
     this.aiMessages.update(m => [...m, { role: 'assistant', text: '' }]);
     this.aiLoading.set(true);
+    this.aiAbort = false;
+    let pending = '';
+    let rafScheduled = false;
+    const flush = () => {
+      if (!pending) return;
+      const text = pending; pending = ''; rafScheduled = false;
+      this.aiMessages.update(msgs => {
+        const last = msgs[msgs.length - 1];
+        return [...msgs.slice(0, -1), { ...last, text: last.text + text }];
+      });
+    };
     try {
       for await (const chunk of this.aiService.streamMessage(
         `Suggest improvements for this writing:\n\n${content}`,
-        'You are a creative writing coach.'
+        `You are a creative writing coach. ${noteMeta}`
       )) {
-        this.aiMessages.update(msgs => {
-          const last = msgs[msgs.length - 1];
-          return [...msgs.slice(0, -1), { ...last, text: last.text + chunk }];
-        });
+        if (this.aiAbort) break;
+        pending += chunk;
+        if (!rafScheduled) { rafScheduled = true; requestAnimationFrame(flush); }
       }
+      flush();
     } catch {
       this.aiMessages.update(m => [...m.slice(0, -1), { role: 'assistant', text: 'Failed to get suggestions. Please try again.' }]);
     } finally {
@@ -1131,27 +1260,65 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
 
   async handleAskChanges(instruction: string) {
     if (!this.editor || !instruction.trim()) return;
+    if (!this.aiService.aiEnabled()) {
+      this.openAiPanel();
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'AI is disabled. Enable it in Settings → AI.' }]);
+      return;
+    }
+
     const { from, to } = this.editor.state.selection;
     const selectedText = from !== to ? this.editor.state.doc.textBetween(from, to) : '';
-    const context = selectedText || this.editor.getText().trim();
-    if (!context) return;
+    const noteText     = this.editor.getText().trim();
+    const note         = this.selectedNote();
+    const isEmpty      = !selectedText && !noteText;
 
-    this.setRightTab('ai');
+    // Require at least a note title when the body is empty
+    if (isEmpty && !note?.title) return;
+
+    this.openAiPanel();
+    this.pendingApply.set(null);
+
+    let prompt: string;
+    let systemCtx: string;
     const userMsg = selectedText ? `${instruction} (applied to selected text)` : instruction;
+
+    if (selectedText) {
+      prompt    = `Apply this instruction to the following text and return only the revised version:\n\nInstruction: ${instruction}\n\nText:\n${selectedText}`;
+      systemCtx = 'You are a professional editor. Return only the revised text without explanation.';
+    } else if (noteText) {
+      prompt    = `Apply this instruction to the note:\n\nInstruction: ${instruction}\n\nContent:\n${noteText}`;
+      systemCtx = 'You are a professional editor. Return only the revised text without explanation.';
+    } else {
+      // Empty note — generate content from the title + instruction
+      prompt    = `Note title: "${note!.title}"\n\nInstruction: ${instruction}\n\nWrite the note content based on the title and instruction. Return only the body content — no title heading.`;
+      systemCtx = 'You are a knowledgeable writing assistant. Write clear, well-structured content with natural paragraph breaks.';
+    }
+
     this.aiMessages.update(m => [...m, { role: 'user', text: userMsg }]);
     this.aiMessages.update(m => [...m, { role: 'assistant', text: '' }]);
     this.aiLoading.set(true);
+    this.aiAbort = false;
+    let accumulated = '';
+    let pending = '';
+    let rafScheduled = false;
+    const flush = () => {
+      if (!pending) return;
+      const text = pending; pending = ''; rafScheduled = false;
+      this.aiMessages.update(msgs => {
+        const last = msgs[msgs.length - 1];
+        return [...msgs.slice(0, -1), { ...last, text: last.text + text }];
+      });
+    };
     try {
-      for await (const chunk of this.aiService.streamMessage(
-        selectedText
-          ? `Apply this instruction to the following text and return only the revised version:\n\nInstruction: ${instruction}\n\nText:\n${selectedText}`
-          : `Apply this instruction to the note:\n\nInstruction: ${instruction}\n\nContent:\n${context}`,
-        'You are a professional editor. Return only the revised text without explanation.'
-      )) {
-        this.aiMessages.update(msgs => {
-          const last = msgs[msgs.length - 1];
-          return [...msgs.slice(0, -1), { ...last, text: last.text + chunk }];
-        });
+      for await (const chunk of this.aiService.streamMessage(prompt, systemCtx)) {
+        if (this.aiAbort) break;
+        accumulated += chunk;
+        pending += chunk;
+        if (!rafScheduled) { rafScheduled = true; requestAnimationFrame(flush); }
+      }
+      flush();
+      if (!this.aiAbort && accumulated) {
+        this.pendingApply.set({ text: accumulated, from, to });
       }
     } catch {
       this.aiMessages.update(m => [...m.slice(0, -1), { role: 'assistant', text: 'Failed to apply changes. Please try again.' }]);
@@ -1172,29 +1339,35 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     if (!text || this.aiLoading()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
+    this.aiAbort = false;
 
     // ── Note creation intent ──────────────────────────────────────────────────
     const intent = this.parseNoteCreationIntent(text);
     if (intent) {
+      if (!this.aiService.aiEnabled() || this.aiService.provider() === 'mock') {
+        this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Configure an AI provider in Settings to generate note content.' }]);
+        this.aiLoading.set(false);
+        return;
+      }
       try {
-        const generated = await this.generateNoteContent(intent.topic, intent.wordCount);
+        const generated = await this.aiService.sendMessage(
+          `Write a well-structured note of approximately ${intent.wordCount} words on the topic: "${intent.topic}".
+Use clear paragraphs with smooth transitions. Start directly with the content — do not include a title heading.
+Return plain text with paragraph breaks (double newline between paragraphs). No markdown headings or bullet points.`,
+          'You are a knowledgeable and articulate note-taking assistant. Write informative, engaging content.'
+        );
         const html = this.plainToHtml(generated);
-
         const cleanTitle = intent.topic.charAt(0).toUpperCase() + intent.topic.slice(1);
-        const noteId = Date.now().toString();
+        const noteId   = Date.now().toString();
         const folderId = this.selectedNote()?.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
         const newNote: Note = {
           id: noteId,
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          title: cleanTitle,
-          preview: generated.substring(0, 120),
-          content: html,
-          tags: [],
-          folderId,
+          title: cleanTitle, preview: generated.substring(0, 120),
+          content: html, tags: [], folderId,
         };
         this.store.addNote(newNote);
         this.selectNote(noteId);
-
         this.aiMessages.update(m => [...m, {
           role: 'assistant',
           text: `Done! Created "${cleanTitle}" (~${intent.wordCount} words). It's open in the editor now.`
@@ -1209,68 +1382,95 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
       return;
     }
 
-    // ── Stat queries ─────────────────────────────────────────────────────────
+    // ── Instant local stat queries ────────────────────────────────────────────
+    const notes = this.notes();
+    const q     = text.toLowerCase();
+    let localResponse = '';
+
+    if ((q.includes('how many') || q.includes('count')) && q.includes('note')) {
+      localResponse = `You have ${notes.length} note${notes.length !== 1 ? 's' : ''} across ${this.noteGroups().length} folder${this.noteGroups().length !== 1 ? 's' : ''}.`;
+    } else if (q.includes('tag')) {
+      const tags = this.allTags();
+      localResponse = tags.length
+        ? `Your top tags: ${tags.slice(0, 5).map(t => `#${t.name} (${t.count})`).join(', ')}.`
+        : 'No tags used yet. Add tags to notes to organize them.';
+    } else if (q.includes('today') && (q.includes('note') || q.includes('creat'))) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayNotes = notes.filter(n => {
+        const ts = parseInt(n.id, 10);
+        const d  = !isNaN(ts) && ts > 1e12 ? new Date(ts) : new Date(n.date);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() === today.getTime();
+      });
+      localResponse = todayNotes.length
+        ? `${todayNotes.length} note${todayNotes.length > 1 ? 's' : ''} created today: ${todayNotes.map(n => n.title).join(', ')}.`
+        : 'No notes created today yet.';
+    } else if ((q.includes('folder') || q.includes('most')) && !q.includes('today')) {
+      const counts: Record<string, number> = {};
+      notes.forEach(n => {
+        const fid = n.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
+        counts[fid] = (counts[fid] ?? 0) + 1;
+      });
+      const top    = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const labels = top.map(([id, count]) => {
+        const name = this.noteGroups().find(g => g.id === id)?.name ?? id;
+        return `${name} (${count})`;
+      });
+      localResponse = labels.length ? `Top folders by note count: ${labels.join(', ')}.` : 'No folders found.';
+    } else if (q.includes('pin')) {
+      const pinned = notes.filter(n => this.isPinned(n));
+      localResponse = pinned.length
+        ? `${pinned.length} pinned note${pinned.length > 1 ? 's' : ''}: ${pinned.map(n => n.title).join(', ')}.`
+        : 'No pinned notes. Pin notes from the note list to keep them at the top.';
+    }
+
+    if (localResponse) {
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: localResponse }]);
+      this.aiLoading.set(false);
+      return;
+    }
+
+    // ── General AI query with note context ────────────────────────────────────
+    if (!this.aiService.aiEnabled()) {
+      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'AI is disabled. Enable it in Settings → AI.' }]);
+      this.aiLoading.set(false);
+      return;
+    }
+    this.aiMessages.update(m => [...m, { role: 'assistant', text: '' }]);
+    let pending = '';
+    let rafScheduled = false;
+    const flush = () => {
+      if (!pending) return;
+      const text = pending; pending = ''; rafScheduled = false;
+      this.aiMessages.update(msgs => {
+        const last = msgs[msgs.length - 1];
+        return [...msgs.slice(0, -1), { ...last, text: last.text + text }];
+      });
+    };
     try {
-      await new Promise(r => setTimeout(r, 500 + Math.random() * 300));
-
-      const notes = this.notes();
-      const q = text.toLowerCase();
-      let response = '';
-
-      if (q.includes('how many') || q.includes('count')) {
-        response = `You have ${notes.length} note${notes.length !== 1 ? 's' : ''} across ${this.noteGroups().length} folder${this.noteGroups().length !== 1 ? 's' : ''}.`;
-      } else if (q.includes('tag')) {
-        const tags = this.allTags();
-        response = tags.length
-          ? `Your top tags: ${tags.slice(0, 5).map(t => `#${t.name} (${t.count})`).join(', ')}.`
-          : 'No tags used yet. Add tags to notes to organize them.';
-      } else if (q.includes('today')) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayNotes = notes.filter(n => {
-          const ts = parseInt(n.id, 10);
-          const d = !isNaN(ts) && ts > 1e12 ? new Date(ts) : new Date(n.date);
-          d.setHours(0, 0, 0, 0);
-          return d.getTime() === today.getTime();
-        });
-        response = todayNotes.length
-          ? `${todayNotes.length} note${todayNotes.length > 1 ? 's' : ''} created today: ${todayNotes.map(n => n.title).join(', ')}.`
-          : 'No notes created today yet.';
-      } else if (q.includes('folder') || q.includes('most')) {
-        const counts: Record<string, number> = {};
-        notes.forEach(n => {
-          const fid = n.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
-          counts[fid] = (counts[fid] ?? 0) + 1;
-        });
-        const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-        const labels = top.map(([id, count]) => {
-          const name = this.noteGroups().find(g => g.id === id)?.name ?? id;
-          return `${name} (${count})`;
-        });
-        response = labels.length ? `Top folders by note count: ${labels.join(', ')}.` : 'No folders found.';
-      } else if (q.includes('pin')) {
-        const pinned = notes.filter(n => this.isPinned(n));
-        response = pinned.length
-          ? `${pinned.length} pinned note${pinned.length > 1 ? 's' : ''}: ${pinned.map(n => n.title).join(', ')}.`
-          : 'No pinned notes. Pin notes from the note list to keep them at the top.';
-      } else {
-        response = `You have ${notes.length} notes across ${this.noteGroups().length} folders. Try asking me to create a note, or ask about tags, today's notes, folders, or pinned notes.`;
+      for await (const chunk of this.aiService.streamMessage(text, this.buildNotesAiContext())) {
+        if (this.aiAbort) break;
+        pending += chunk;
+        if (!rafScheduled) { rafScheduled = true; requestAnimationFrame(flush); }
       }
-
-      this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
-
-      setTimeout(() => {
-        const el = document.querySelector('.ai-panel-messages');
-        if (el) el.scrollTop = el.scrollHeight;
-      }, 50);
+      flush();
+      // Drop placeholder if nothing was generated (e.g. aborted immediately)
+      const msgs = this.aiMessages();
+      if (msgs.length && msgs[msgs.length - 1].role === 'assistant' && !msgs[msgs.length - 1].text) {
+        this.aiMessages.update(m => m.slice(0, -1));
+      }
     } catch {
-      this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Please try again.' }]);
+      this.aiMessages.update(m => [...m.slice(0, -1), { role: 'assistant', text: 'Something went wrong. Please try again.' }]);
     } finally {
       this.aiLoading.set(false);
     }
   }
 
-  clearAiChat() { this.aiMessages.set([]); }
+  clearAiChat() {
+    this.aiMessages.set([]);
+    this.pendingApply.set(null);
+  }
 
   // ─── HTML → Markdown conversion ─────────────────────────────────────────────
 
