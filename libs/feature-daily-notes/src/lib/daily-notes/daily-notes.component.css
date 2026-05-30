@@ -683,9 +683,10 @@
     width: 100%;
     background: var(--bg-panel);
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     padding: 40px 48px;
-    transition: box-shadow 0.2s, background 0.2s, max-width 0.25s ease;
+    transition: box-shadow 0.2s, border-color 0.2s, background 0.2s, max-width 0.25s ease;
     position: relative;
 }
 
@@ -694,7 +695,8 @@
 }
 
 .editor-container:focus-within {
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--border-highlight);
+    border-color: var(--border-subtle);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.06);
 }
 
 /* Editor Top Actions (full-width toggle, color picker) */

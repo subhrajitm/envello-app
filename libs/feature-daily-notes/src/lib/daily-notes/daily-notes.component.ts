@@ -88,7 +88,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   selectedFilter = signal<string>('all');
   selectedTag = signal<string>('');
   showColorPicker = signal<boolean>(false);
-  isFullWidth = signal<boolean>(false);
+  isFullWidth = signal<boolean>(
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('envello-daily-notes-full-width') !== 'false'
+      : true
+  );
   showTagInput = signal<boolean>(false);
   tagInputValue = signal<string>('');
   renamingFolderId = signal<string | null>(null);
@@ -150,6 +154,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   });
 
   private readonly SELECTION_KEY = 'envello-daily-notes-selection';
+  private readonly FULL_WIDTH_KEY = 'envello-daily-notes-full-width';
 
   displayModalTitle = computed(() => {
     const t = this.modalTitle();
@@ -375,6 +380,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       } else if (!note && this.editor && this.lastLoadedNoteId) {
         this.lastLoadedNoteId = '';
         this.editor.commands.setContent('', { emitUpdate: false });
+      }
+    });
+
+    // Persist the full-width preference so it survives hard refresh.
+    effect(() => {
+      const fw = this.isFullWidth();
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.FULL_WIDTH_KEY, fw ? 'true' : 'false');
       }
     });
 

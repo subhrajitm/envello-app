@@ -105,8 +105,13 @@ export class ComposerComponent implements OnInit, OnDestroy {
   activeFrontMatterId = signal<string | null>(null);
   activePrologueId = signal<string | null>(null);
 
-  // Editor card display state
-  editorFullWidth = signal(true);
+  // Editor card display state — persisted so hard-refresh keeps the user's choice.
+  private readonly FULL_WIDTH_KEY = 'envello-composer-full-width';
+  editorFullWidth = signal<boolean>(
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('envello-composer-full-width') !== 'false'
+      : true
+  );
   editorBgColor = computed(() => this.activeChapter()?.bgColor ?? '');
 
   // UI State
@@ -416,6 +421,12 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   constructor(private router: Router) {
+    effect(() => {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.FULL_WIDTH_KEY, this.editorFullWidth() ? 'true' : 'false');
+      }
+    });
+
     // Effect to update editor content when active chapter changes
     effect(() => {
       const chapterId = this.activeChapterId();
