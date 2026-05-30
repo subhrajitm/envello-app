@@ -37,11 +37,11 @@ export class StoreService {
     private initMarkdownWorker() {
         if (typeof Worker === 'undefined') return;
         try {
-            // Worker script is bundled by the app — resolved at build time via the URL pattern.
-            // Falls back gracefully if the app is built without worker support (e.g., desktop SSR).
-            const workerUrl = (globalThis as any).__MARKDOWN_WORKER_URL__;
-            if (!workerUrl) return;
-            this.markdownWorker = new Worker(workerUrl, { type: 'module' });
+            // Worker is pre-created in apps/web/src/main.ts (inline new Worker(new URL(...)) so
+            // esbuild/Vite detect and compile it in both dev and production).
+            const worker = (globalThis as any).__MARKDOWN_WORKER__ as Worker | undefined;
+            if (!worker) return;
+            this.markdownWorker = worker;
             this.markdownWorker.onmessage = ({ data }: MessageEvent<{ id: string; markdown?: string; error?: string }>) => {
                 const cb = this.workerCallbacks.get(data.id);
                 if (cb) {

@@ -237,7 +237,12 @@ export class SettingsModalComponent {
     try {
       await this.aiService.testConfig(this.aiProvider(), this.aiModel(), this.aiKey());
       this.testStatus.set('success');
-      this.testMessage.set('Connection successful!');
+      if (this.aiProvider() === 'local') {
+        const status = this.aiService.localModelStatus();
+        this.testMessage.set(status === 'ready' ? 'Model ready!' : 'Downloading… check progress above.');
+      } else {
+        this.testMessage.set('Connection successful!');
+      }
     } catch (e: any) {
       this.testStatus.set('error');
       this.testMessage.set(e?.message ?? 'Connection failed. Check your key and model.');

@@ -48,6 +48,7 @@ export class AiService {
     private sb = inject(SupabaseService);
 
     private localWorker: Worker | null = null;
+    private localCurrentModel = '';
     /** Pending streaming callbacks keyed by generation ID */
     private localCallbacks = new Map<string, { chunk: (t: string) => void; done: () => void; error: (m: string) => void }>();
 
@@ -126,9 +127,11 @@ export class AiService {
         const userKey = this.apiKey();
         const m = this.modelName();
 
-        // If user has no key set, try using the platform provider + key
-        const effectiveProvider = userKey ? p : (this.platformKey ? this.platformProvider : p);
-        const effectiveKey = userKey || this.platformKey;
+        // Key-free providers (local, ollama, mock) are never overridden by platform config.
+        // For key-requiring providers, fall back to platform key/provider when the user has none.
+        const needsKey = p !== 'local' && p !== 'ollama' && p !== 'mock';
+        const effectiveProvider = (needsKey && !userKey && this.platformKey) ? this.platformProvider : p;
+        const effectiveKey = userKey || (needsKey ? this.platformKey : '');
         const effectiveModel = m || this.platformModel;
 
         try {
@@ -160,21 +163,31 @@ export class AiService {
     }
 
     private initLocalWorker(model: string) {
-        const workerUrl = (globalThis as any).__AI_WORKER_URL__;
-        if (!workerUrl) {
-            console.warn('[AiService] Local worker URL not registered');
+        // Worker is pre-created in apps/web/src/main.ts with the inline new Worker(new URL(...))
+        // pattern required for esbuild/Vite to detect and compile it in dev + production.
+        const worker = (globalThis as any).__AI_WORKER__ as Worker | undefined;
+        if (!worker) {
+            console.warn('[AiService] AI inference worker not available');
             this.localModelStatus.set('error');
             return;
         }
-        if (this.localWorker) {
-            this.localWorker.terminate();
-            this.localWorker = null;
-        }
+
+        // Skip if this exact model is already loading or loaded — avoid restarting the download.
+        const currentStatus = this.localModelStatus();
+        const alreadyActive = this.localWorker === worker
+            && this.localCurrentModel === model
+            && (currentStatus === 'downloading' || currentStatus === 'ready');
+        if (alreadyActive) return;
+
+        // Drain any pending generation callbacks before re-initialising.
+        this.drainLocalCallbacks('Model reinitialized');
+
+        this.localWorker = worker;
+        this.localCurrentModel = model;
         this.localModelStatus.set('downloading');
         this.localDownloadProgress.set(0);
         this.localDownloadFile.set('');
 
-        this.localWorker = new Worker(workerUrl, { type: 'module' });
         this.localWorker.onmessage = ({ data }: MessageEvent) => {
             switch (data.type) {
                 case 'progress': {
@@ -212,8 +225,17 @@ export class AiService {
         this.localWorker.onerror = (e) => {
             console.error('[AiService] Local worker crash:', e);
             this.localModelStatus.set('error');
+            // Unblock any in-progress streamLocal generators so isProcessing doesn't hang.
+            this.drainLocalCallbacks('Worker crashed');
         };
         this.localWorker.postMessage({ type: 'init', model });
+    }
+
+    private drainLocalCallbacks(reason: string) {
+        for (const [, cb] of this.localCallbacks) {
+            cb.error(reason);
+        }
+        this.localCallbacks.clear();
     }
 
     private async *streamLocal(
@@ -286,13 +308,14 @@ export class AiService {
     async testConfig(provider: AiProvider, model: string, key: string): Promise<void> {
         if (provider === 'mock') return;
         if (provider === 'local') {
-            if (this.localModelStatus() === 'ready') return;
-            if (this.localModelStatus() === 'downloading') {
-                throw new Error('Model is still downloading. Please wait.');
+            if (this.localModelStatus() === 'error') {
+                throw new Error('Model failed to load. Check the browser console for details.');
             }
-            // Trigger download if not started
-            this.initLocalWorker(model || 'HuggingFaceTB/SmolLM2-360M-Instruct');
-            throw new Error('Model download started. Check the progress indicator below.');
+            // idle or downloading: trigger/re-use the worker and return success
+            if (this.localModelStatus() === 'idle') {
+                this.initLocalWorker(model || 'HuggingFaceTB/SmolLM2-360M-Instruct');
+            }
+            return; // success — progress indicator shows status
         }
 
         let tempModel: BaseChatModel | undefined;

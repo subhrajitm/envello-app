@@ -27,19 +27,12 @@ type TextGenPipeline = Awaited<ReturnType<typeof pipeline<'text-generation'>>>;
 
 let currentPipe: TextGenPipeline | null = null;
 let currentModel = '';
+let isLoadingModel = false;
 let abortedIds = new Set<string>();
 
-class ProgressCallback {
-  constructor(private readonly postFn: typeof postMessage) {}
-  __call__(ev: { status: string; file?: string; loaded?: number; total?: number }) {
-    if (ev.status === 'progress' && ev.file) {
-      this.postFn({
-        type: 'progress',
-        file: ev.file,
-        loaded: ev.loaded ?? 0,
-        total: ev.total ?? 0,
-      });
-    }
+function onProgress(ev: { status: string; file?: string; loaded?: number; total?: number }) {
+  if (ev.status === 'progress' && ev.file) {
+    postMessage({ type: 'progress', file: ev.file, loaded: ev.loaded ?? 0, total: ev.total ?? 0 });
   }
 }
 
@@ -48,22 +41,26 @@ async function initPipeline(model: string): Promise<void> {
     postMessage({ type: 'ready' });
     return;
   }
+  // Prevent concurrent loads of the same model — ignore duplicate requests while loading.
+  if (isLoadingModel && currentModel === model) return;
   if (currentPipe) {
     (currentPipe as any).dispose?.();
     currentPipe = null;
   }
   currentModel = model;
+  isLoadingModel = true;
   try {
     currentPipe = await pipeline('text-generation', model, {
       dtype: 'q4',
-      // @ts-ignore — progress_callback is valid at runtime
-      progress_callback: new ProgressCallback(postMessage),
-    });
+      progress_callback: onProgress,
+    } as any);
     postMessage({ type: 'ready' });
   } catch (e: any) {
     currentPipe = null;
     currentModel = '';
     postMessage({ type: 'error', id: null, message: e?.message ?? 'Model load failed' });
+  } finally {
+    isLoadingModel = false;
   }
 }
 
@@ -93,8 +90,9 @@ async function generate(
 
     await (currentPipe as any)(messages, {
       max_new_tokens: maxTokens,
-      do_sample: false,
-      temperature: 1.0,
+      do_sample: true,
+      temperature: 0.7,
+      top_p: 0.9,
       streamer,
     });
 
