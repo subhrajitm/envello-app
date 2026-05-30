@@ -281,6 +281,18 @@ export class AiService {
         this.localCallbacks.delete(id);
     }
 
+    private readonly REQUEST_TIMEOUT_MS = 60_000;
+    private readonly TEST_TIMEOUT_MS = 15_000;
+
+    private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+        return Promise.race([
+            promise,
+            new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error(`AI request timed out after ${ms / 1000}s`)), ms)
+            ),
+        ]);
+    }
+
     private async logUsage(prompt: string, response: string) {
         try {
             const { data: { user } } = await this.sb.client.auth.getUser();
@@ -339,7 +351,7 @@ export class AiService {
             throw new Error('API key is required for this provider.');
         }
 
-        const response = await tempModel.invoke([new HumanMessage('Hi')]);
+        const response = await this.withTimeout(tempModel.invoke([new HumanMessage('Hi')]), this.TEST_TIMEOUT_MS);
         if (!response.content) throw new Error('Empty response from model.');
     }
 
@@ -361,7 +373,7 @@ export class AiService {
                     new SystemMessage(context || 'You are a helpful creative writing assistant.'),
                     new HumanMessage(prompt)
                 ];
-                const response = await this.chatModel.invoke(messages);
+                const response = await this.withTimeout(this.chatModel.invoke(messages), this.REQUEST_TIMEOUT_MS);
                 result = typeof response.content === 'string' ? response.content : JSON.stringify(response.content);
             } catch (e) {
                 console.error('AI Request failed:', e);
@@ -388,12 +400,14 @@ export class AiService {
         }
 
         if (this.chatModel) {
+            const ac = new AbortController();
+            const timeoutId = setTimeout(() => ac.abort(), this.REQUEST_TIMEOUT_MS);
             try {
                 const messages = [
                     new SystemMessage(context || 'You are a helpful creative writing assistant.'),
                     new HumanMessage(prompt)
                 ];
-                const stream = await this.chatModel.stream(messages);
+                const stream = await this.chatModel.stream(messages, { signal: ac.signal });
                 for await (const chunk of stream) {
                     const text = typeof chunk.content === 'string'
                         ? chunk.content
@@ -402,7 +416,13 @@ export class AiService {
                 }
                 return;
             } catch (e) {
-                console.error('AI stream failed:', e);
+                if ((e as any)?.name === 'AbortError') {
+                    console.error('[AiService] Stream timed out');
+                } else {
+                    console.error('AI stream failed:', e);
+                }
+            } finally {
+                clearTimeout(timeoutId);
             }
         }
 
