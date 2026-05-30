@@ -21,6 +21,7 @@ type SubtaskDraft = { title: string; priority: Task['priority'] };
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TasksComponent implements OnInit, OnDestroy {
+  readonly today = new Date();
   store = inject(StoreService);
   private notificationService = inject(NotificationService);
   private fileStorage = inject(FileStorageService);

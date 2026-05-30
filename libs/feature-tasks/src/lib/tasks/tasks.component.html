@@ -1174,7 +1174,7 @@
                     <span class="td-prop-label">Created</span>
                     <div class="td-prop-value">
                         <span class="material-symbols-outlined td-prop-icon">event_available</span>
-                        <span>{{ task.createdAt ? (task.createdAt | date:'MMM d, y') : '—' }}</span>
+                        <span>{{ (task.createdAt || today) | date:'MMM d, y' }}</span>
                     </div>
                 </div>
 
