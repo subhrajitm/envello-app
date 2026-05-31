@@ -208,6 +208,7 @@
     --accent-blue: #000000;
     --accent-red: #000000;
     --accent-green: #000000;
+    --accent-green-solid: #000000;
     --accent-purple: #000000;
     --accent-yellow: #e5e5e5;
     --accent-pink: #000000;
@@ -250,6 +251,7 @@
     --accent-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     --accent-red: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     --accent-green: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    --accent-green-solid: #22c55e;
     --accent-purple: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
 }
 

@@ -234,19 +234,6 @@
                 }
                 <env-icon-button icon="add" variant="borderless" [size]="28" title="New note" class="editor-tab-add" (clicked)="handleNewNote()" />
             </div>
-            <div class="dn-save-status">
-                @if (isSaving()) {
-                <span class="dn-save-indicator saving">
-                    <span class="material-symbols-outlined">sync</span>
-                    Saving…
-                </span>
-                } @else if (lastSaved()) {
-                <span class="dn-save-indicator saved">
-                    <span class="material-symbols-outlined">cloud_done</span>
-                    Saved
-                </span>
-                }
-            </div>
         </div>
 
         <!-- Editor Body — content + right sidebar side by side -->
@@ -572,6 +559,12 @@
                     (click)="setRightTab('info')" title="Note Info">
                     <span class="material-symbols-outlined">info</span>
                 </button>
+                <span class="dn-save-indicator"
+                    [class.saving]="isSaving()"
+                    [class.saved]="!isSaving() && !!lastSaved()"
+                    [title]="isSaving() ? 'Saving…' : 'Saved'">
+                    <span class="material-symbols-outlined">{{ isSaving() ? 'sync' : 'cloud_done' }}</span>
+                </span>
                 <div class="ne-strip-spacer"></div>
                 <div class="ne-strip-divider"></div>
                 @if (editor) {

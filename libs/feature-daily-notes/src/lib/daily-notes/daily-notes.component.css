@@ -2127,29 +2127,26 @@ tiptap-editor:focus,
 }
 
 /* ─── Save Status Indicator ──────────────────────────────────────────────────── */
-.dn-save-status {
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    height: 100%;
-    flex-shrink: 0;
-}
-
 .dn-save-indicator {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 500;
-    white-space: nowrap;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    opacity: 0;
+    color: var(--text-tertiary);
+    transition: color 0.25s ease, opacity 0.25s ease;
+    pointer-events: none;
 }
 
 .dn-save-indicator .material-symbols-outlined {
-    font-size: 14px;
+    font-size: 18px;
 }
 
 .dn-save-indicator.saving {
+    opacity: 1;
     color: var(--text-tertiary);
+    pointer-events: auto;
 }
 
 .dn-save-indicator.saving .material-symbols-outlined {
@@ -2162,8 +2159,10 @@ tiptap-editor:focus,
 }
 
 .dn-save-indicator.saved {
-    color: var(--accent-green);
-    opacity: 0.85;
+    opacity: 0.9;
+    /* --accent-green can be a gradient in some themes; fall back to a solid green */
+    color: var(--accent-green-solid, #22c55e);
+    pointer-events: auto;
 }
 
 /* ─── Editor Status Bar ──────────────────────────────────────────────────────── */
