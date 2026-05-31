@@ -515,32 +515,34 @@
 
 .dn-editor-header {
     padding: 0;
-    border-bottom: 1px solid var(--border-subtle);
     display: flex;
-    align-items: flex-end;
-    background: var(--bg-panel);
+    align-items: stretch;
+    background: var(--bg-subtle);
     height: 44px;
     position: relative;
     z-index: 1;
 }
 
-.dn-editor-tabs {
-    display: flex;
-    align-items: flex-end;
-    gap: 0;
-    flex: 1;
-    min-width: 0;
-    /* Allow shrinking */
-    padding: 0 12px 0 12px;
-    height: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    position: relative;
-    z-index: 1;
-    top: 1px;
+.dn-editor-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-subtle);
+    pointer-events: none;
 }
 
-/* Hide scrollbar */
+.dn-editor-tabs {
+    display: flex;
+    align-items: stretch;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 .dn-editor-tabs::-webkit-scrollbar {
     display: none;
 }
@@ -548,48 +550,38 @@
 .editor-tab {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 5px;
+    gap: 7px;
+    padding: 0 12px;
     background: transparent;
-    border: 1px solid transparent;
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
+    border: none;
+    border-right: 1px solid var(--border-subtle);
+    border-radius: 0;
     color: var(--text-tertiary);
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s, opacity 0.15s;
+    transition: background 0.15s, color 0.15s;
     white-space: nowrap;
-    position: relative;
-    max-width: 200px;
-    margin-bottom: -1px;
-    opacity: 0.7;
+    max-width: 180px;
+    flex-shrink: 0;
 }
+
+/* .editor-tab:first-child {
+    border-left: 1px solid var(--border-subtle);
+} */
 
 .editor-tab:hover {
     background: var(--bg-hover);
-    color: var(--text-primary);
-    opacity: 1;
-}
-
-.editor-tab:hover .tab-close {
-    opacity: 1;
+    color: var(--text-secondary);
 }
 
 .editor-tab.active {
     background: var(--bg-panel);
     color: var(--text-primary);
-    opacity: 1;
-    border-color: var(--border-subtle);
+    font-weight: 500;
     border-top: 2px solid var(--accent-primary);
-    border-bottom: 1px solid var(--bg-panel);
-    /* Connect to toolbar */
-    z-index: 1;
     position: relative;
-}
-
-.editor-tab.active::after {
-    display: none;
+    z-index: 2;
 }
 
 .editor-tab.pinned .tab-icon {
@@ -597,7 +589,7 @@
 }
 
 .tab-icon {
-    font-size: 16px;
+    font-size: 15px;
     flex-shrink: 0;
 }
 
@@ -614,26 +606,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
+    background: var(--bg-active);
     border: none;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
     cursor: pointer;
-    padding: 2px;
-    border-radius: 3px;
+    padding: 0;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
     opacity: 0;
-    transition: all 0.2s;
+    transition: opacity 0.15s, background 0.15s;
     flex-shrink: 0;
+    margin-left: 2px;
 }
 
 .tab-close:hover {
-    background: var(--bg-hover);
+    background: var(--border-highlight);
     color: var(--text-primary);
 }
 
 .tab-close .material-symbols-outlined {
-    font-size: 14px;
+    font-size: 12px;
+    line-height: 1;
 }
 
+.editor-tab:hover .tab-close,
 .editor-tab.active .tab-close {
     opacity: 1;
 }
@@ -655,18 +652,9 @@
     display: flex;
     flex-direction: column;
     z-index: 0;
+    background-color: #fff;
 }
 
-.dn-editor-content::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 24px;
-    right: 24px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
-    opacity: 0.5;
-}
 
 .dn-empty-wrap {
     flex: 1;
@@ -1597,22 +1585,21 @@ tiptap-editor:focus,
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 40px;
+    height: 100%;
     background: transparent;
-    border: 1px dashed var(--border-subtle);
-    border-radius: 6px;
+    border: none;
+    /* border-right: 1px solid var(--border-subtle); */
+    border-radius: 0;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.15s;
-    margin: auto 0 6px 4px;
+    transition: background 0.15s, color 0.15s;
     flex-shrink: 0;
 }
 
 .editor-tab-add:hover {
     background: var(--bg-hover);
-    color: var(--text-primary);
-    border-color: var(--border-highlight);
+    color: var(--text-secondary);
 }
 
 .editor-tab-add .material-symbols-outlined {
