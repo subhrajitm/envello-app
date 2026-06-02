@@ -1,4 +1,13 @@
-<div class="ne-editor-header">
+<div class="ne-editor-header" [class.ne-editor-header--entity]="!!entityTitle()">
+
+    @if (entityTitle()) {
+    <!-- Entity browse mode: title + count in place of tabs -->
+    <div class="ne-ent-hdr-left">
+        <span class="material-symbols-outlined ne-tbl-bar-icon">{{ entityIcon() }}</span>
+        <span class="ne-tbl-bar-title">{{ entityTitle() }}</span>
+        <span class="ne-tbl-badge">{{ entityCount() }}</span>
+    </div>
+    } @else {
     <div class="ne-editor-tabs">
         @for (item of items(); track item.id) {
         <div class="ne-editor-tab" [class.active]="activeItemId() === item.id"
@@ -11,11 +20,19 @@
         </div>
         }
     </div>
+    }
+
     <div class="ne-editor-actions">
         @if (focusMode()) {
         <button class="action-btn ne-exit-focus-btn" (click)="exitFocus.emit()" title="Exit Focus Mode (Esc)">
             <span class="material-symbols-outlined">close_fullscreen</span>
             <span class="ne-exit-focus-label">Exit Focus</span>
+        </button>
+        }
+        @if (entityTitle()) {
+        <button class="ne-tbl-add-btn" (click)="addEntityClick.emit()">
+            <span class="material-symbols-outlined">add</span>
+            Add {{ singularEntityTitle() }}
         </button>
         }
         <div class="undo-redo-group">

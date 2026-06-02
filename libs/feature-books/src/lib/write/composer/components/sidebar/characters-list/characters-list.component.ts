@@ -36,7 +36,8 @@ export class CharactersListComponent {
 
   commitRename(id: string) {
     const name = this.renameValue().trim();
-    if (name) this.renameCharacter.emit({ id, name });
+    if (!name) return;
+    this.renameCharacter.emit({ id, name });
     this.renamingId.set(null);
   }
 

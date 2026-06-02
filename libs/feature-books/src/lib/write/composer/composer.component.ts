@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -43,6 +43,7 @@ import { ManuscriptEditorComponent } from './components/editor/manuscript-editor
 import { StructureEditorComponent } from './components/editor/structure-editor/structure-editor.component';
 import { CharacterDetailsComponent } from './components/editor/character-details/character-details.component';
 import { LocationDetailsComponent } from './components/editor/location-details/location-details.component';
+import { EntityTableComponent, EntityTableRow, EntityTableColumn, EntityTablePopupField } from './components/editor/entity-table/entity-table.component';
 
 // Right Sidebar
 import { AiPanelComponent } from './components/right-sidebar/ai-panel/ai-panel.component';
@@ -73,6 +74,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     StructureEditorComponent,
     CharacterDetailsComponent,
     LocationDetailsComponent,
+    EntityTableComponent,
     // Right Sidebar
     AiPanelComponent,
     NotesPanelComponent,
@@ -239,39 +241,53 @@ export class ComposerComponent implements OnInit, OnDestroy {
   accLocations = signal(false);
 
   toggleAccChapters() {
-    const wasOpen = this.accChapters();
-    this.accChapters.update(v => !v);
-    if (!wasOpen) this.activeNav.set('manuscript');
+    if (!this.accChapters()) {
+      this.accStructure.set(false);
+      this.accCharacters.set(false);
+      this.accLocations.set(false);
+      this.accChapters.set(true);
+      this.activeNav.set('manuscript');
+    } else {
+      this.accChapters.set(false);
+    }
   }
   toggleAccStructure() {
-    const wasOpen = this.accStructure();
-    this.accStructure.update(v => !v);
-    if (!wasOpen) this.activeNav.set('structure');
+    if (!this.accStructure()) {
+      this.accChapters.set(false);
+      this.accCharacters.set(false);
+      this.accLocations.set(false);
+      this.accStructure.set(true);
+      this.activeNav.set('structure');
+    } else {
+      this.accStructure.set(false);
+    }
   }
   toggleAccCharacters() {
-    const wasOpen = this.accCharacters();
-    this.accCharacters.update(v => !v);
-    if (!wasOpen) this.activeNav.set('characters');
+    if (!this.accCharacters()) {
+      this.accChapters.set(false);
+      this.accStructure.set(false);
+      this.accLocations.set(false);
+      this.accCharacters.set(true);
+      this.activeNav.set('characters');
+    } else {
+      this.accCharacters.set(false);
+    }
   }
   toggleAccLocations() {
-    const wasOpen = this.accLocations();
-    this.accLocations.update(v => !v);
-    if (!wasOpen) this.activeNav.set('locations');
+    if (!this.accLocations()) {
+      this.accChapters.set(false);
+      this.accStructure.set(false);
+      this.accCharacters.set(false);
+      this.accLocations.set(true);
+      this.activeNav.set('locations');
+    } else {
+      this.accLocations.set(false);
+    }
   }
 
   anyAccOpen = computed(() =>
     this.accChapters() || this.accStructure() || this.accCharacters() || this.accLocations()
   );
-
-  // Index (0-3) of the last open accordion; -1 when none are open.
-  // Characters (2) and Locations (3) only exist in the DOM when showExtendedTabs() is true.
-  lastOpenIdx = computed(() => {
-    if (this.showExtendedTabs() && this.accLocations())  return 3;
-    if (this.showExtendedTabs() && this.accCharacters()) return 2;
-    if (this.accStructure())  return 1;
-    if (this.accChapters())   return 0;
-    return -1;
-  });
 
   activeCharacter = computed(() => {
     const n = this.book();
@@ -680,10 +696,15 @@ export class ComposerComponent implements OnInit, OnDestroy {
       this.accLocations.set(true);
     }
 
-    // When navigating away from Structure, clear stale selection so editor doesn't show stale content
     if (prev === 'structure' && nav !== 'structure') {
       this.activeFrontMatterId.set(null);
       this.activePrologueId.set(null);
+    }
+    if (prev === 'characters' && nav !== 'characters') {
+      this.selectedCharacterId.set(null);
+    }
+    if (prev === 'locations' && nav !== 'locations') {
+      this.selectedLocationId.set(null);
     }
   }
 
@@ -1057,10 +1078,66 @@ export class ComposerComponent implements OnInit, OnDestroy {
   selectedCharacterId = signal<string | null>(null);
   selectedLocationId = signal<string | null>(null);
 
+  // ── Entity table ViewChild refs (used to trigger Add popup from editor-header) ──
+  @ViewChild('charTable') charTable?: EntityTableComponent;
+  @ViewChild('locTable')  locTable?: EntityTableComponent;
+
+  entityHeaderTitle = computed(() => {
+    if (this.editorActiveTabId()) return '';
+    if (this.activeNav() === 'characters') return 'Characters';
+    if (this.activeNav() === 'locations')  return 'Locations';
+    return '';
+  });
+  entityHeaderIcon = computed(() => {
+    if (this.editorActiveTabId()) return '';
+    if (this.activeNav() === 'characters') return 'group';
+    if (this.activeNav() === 'locations')  return 'map';
+    return '';
+  });
+  entityHeaderCount = computed(() => {
+    if (this.editorActiveTabId()) return 0;
+    if (this.activeNav() === 'characters') return this.book()?.characters.length ?? 0;
+    if (this.activeNav() === 'locations')  return this.book()?.locations.length  ?? 0;
+    return 0;
+  });
+  onAddEntityClick() {
+    this.charTable?.openPopup();
+    this.locTable?.openPopup();
+  }
+
+  // ── Entity table config ──
+  readonly characterColumns: EntityTableColumn[] = [
+    { label: 'Role in Story' },
+    { label: 'Archetype' },
+  ];
+  readonly characterPopupFields: EntityTablePopupField[] = [
+    { id: 'name', label: 'Name', placeholder: 'e.g. Aria Whitmore' },
+    { id: 'role', label: 'Role in Story', placeholder: 'e.g. Protagonist', defaultValue: 'Supporting' },
+    { id: 'archetype', label: 'Archetype', placeholder: 'e.g. The Hero' },
+  ];
+  characterRows = computed<EntityTableRow[]>(() =>
+    (this.book()?.characters ?? []).map(c => ({ id: c.id, name: c.name, values: [c.role, c.archetype] }))
+  );
+
+  readonly locationColumns: EntityTableColumn[] = [
+    { label: 'Type' },
+  ];
+  readonly locationPopupFields: EntityTablePopupField[] = [
+    { id: 'name', label: 'Name', placeholder: 'e.g. The Dark Forest' },
+    { id: 'type', label: 'Location Type', placeholder: 'e.g. City, Wilderness', defaultValue: 'Location' },
+  ];
+  locationRows = computed<EntityTableRow[]>(() =>
+    (this.book()?.locations ?? []).map(l => ({ id: l.id, name: l.name, values: [l.type] }))
+  );
+
   // Character management
-  addNewCharacter() {
+  addNewCharacter(data: { name?: string; role?: string; archetype?: string } = {}) {
     const before = new Set((this.book()?.characters ?? []).map(c => c.id));
-    this.bookService.addCharacter('New Character');
+    this.bookService.addCharacter(
+      data.name ?? 'New Character',
+      data.role ?? 'Supporting',
+      data.archetype ?? '',
+    );
     const newChar = this.book()?.characters.find(c => !before.has(c.id));
     if (newChar) this.selectCharacter(newChar.id);
   }
@@ -1085,9 +1162,9 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   // Location management
-  addNewLocation() {
+  addNewLocation(data: { name?: string; type?: string } = {}) {
     const before = new Set((this.book()?.locations ?? []).map(l => l.id));
-    this.bookService.addLocation('New Location');
+    this.bookService.addLocation(data.name ?? 'New Location', data.type ?? 'Location');
     const newLoc = this.book()?.locations.find(l => !before.has(l.id));
     if (newLoc) this.selectLocation(newLoc.id);
   }

@@ -1,41 +1,59 @@
 <div class="ne-details-canvas">
-    @if (location(); as activeLoc) {
+    @if (location(); as loc) {
     <div class="ne-ent-card">
-        <div class="ne-ent-header-bg loc-bg"></div>
-        <div class="ne-ent-header-content">
-            <div class="ne-ent-avatar-xl loc-avatar">
-                <span class="material-symbols-outlined">public</span>
-            </div>
-            <div class="ne-ent-title-group">
-                <input type="text" class="ne-ent-title-input" [value]="activeLoc.name"
-                    (input)="updateField.emit({ id: activeLoc.id, field: 'name', value: $any($event.target).value })"
-                    placeholder="Location Name" />
-                <div class="ne-ent-subtitle">LOCATION DETAILS</div>
-            </div>
-        </div>
 
-        <div class="ne-ent-body">
-            <div class="ne-ent-field">
-                <label>LOCATION TYPE</label>
-                <div class="input-wrapper">
-                    <span class="material-symbols-outlined field-icon">terrain</span>
-                    <input type="text" [value]="activeLoc.type"
-                        (input)="updateField.emit({ id: activeLoc.id, field: 'type', value: $any($event.target).value })"
-                        placeholder="e.g. City, Planet, Room" />
+        <!-- ── HEADER ── -->
+        <div class="ne-ent-hdr">
+            <div class="ne-ent-icon-sq">
+                <span class="material-symbols-outlined">map</span>
+            </div>
+            <div class="ne-ent-hdr-body">
+                <input class="ne-ent-name-input" [value]="loc.name"
+                    (input)="updateField.emit({ id: loc.id, field: 'name', value: $any($event.target).value })"
+                    placeholder="Location Name" spellcheck="false" />
+                <div class="ne-ent-hdr-meta">
+                    <span class="ne-ent-type-pill">
+                        <span class="material-symbols-outlined">location_on</span>
+                        LOCATION
+                    </span>
+                    @if (loc.type) {
+                    <span class="ne-ent-attr-chip">{{ loc.type }}</span>
+                    }
                 </div>
             </div>
+        </div>
 
-            <div class="ne-ent-field full-width">
-                <label>DESCRIPTION & LORE</label>
-                <textarea class="ne-ent-textarea" [value]="activeLoc.description"
-                    (input)="updateField.emit({ id: activeLoc.id, field: 'description', value: $any($event.target).value })"
-                    placeholder="Describe the atmosphere, history, and key features..."></textarea>
+        <!-- ── GEOGRAPHY ── -->
+        <div class="ne-ent-section">
+            <div class="ne-ent-sec-hdr">
+                <span class="material-symbols-outlined">terrain</span>
+                GEOGRAPHY
+            </div>
+            <div class="ne-ent-props-grid">
+                <div class="ne-ent-prop ne-ent-prop--full">
+                    <label for="loc-type">LOCATION TYPE</label>
+                    <input id="loc-type" type="text" [value]="loc.type"
+                        (input)="updateField.emit({ id: loc.id, field: 'type', value: $any($event.target).value })"
+                        placeholder="e.g. City, Wilderness, Space Station" />
+                </div>
             </div>
         </div>
+
+        <!-- ── DESCRIPTION & LORE ── -->
+        <div class="ne-ent-section ne-ent-section--grow">
+            <div class="ne-ent-sec-hdr">
+                <span class="material-symbols-outlined">auto_stories</span>
+                DESCRIPTION & LORE
+            </div>
+            <textarea class="ne-ent-prose" [value]="loc.description"
+                (input)="updateField.emit({ id: loc.id, field: 'description', value: $any($event.target).value })"
+                placeholder="Describe the atmosphere, history, and key features..."></textarea>
+        </div>
+
     </div>
     } @else {
     <div class="ne-empty-state ne-empty-state--compact">
-        <span class="material-symbols-outlined ne-empty-icon-sm">public</span>
+        <span class="material-symbols-outlined ne-empty-icon-sm">location_on</span>
         <p class="ne-empty-label">No location selected</p>
         <button class="ne-btn-ghost-sm" (click)="addNewLocation.emit()">
             <span class="material-symbols-outlined">add</span>

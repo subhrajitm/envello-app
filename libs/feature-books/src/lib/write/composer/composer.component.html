@@ -112,7 +112,7 @@
 
             <!-- ── CHAPTERS ACCORDION ── -->
             @if (book()) {
-            <div class="ne-acc-section" [style.order]="!accChapters() && lastOpenIdx() > 0 ? 90 : 1">
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccChapters()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accChapters()">chevron_right</span>
                     <span class="ne-acc-title">{{ sectionLabel().toUpperCase() }}</span>
@@ -169,10 +169,10 @@
 
             <!-- ── STRUCTURE ACCORDION ── -->
             @if (showStructureAccordion()) {
-            <div class="ne-acc-section" [style.order]="!accStructure() && lastOpenIdx() > 1 ? 91 : 2">
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccStructure()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accStructure()">chevron_right</span>
-                    <span class="ne-acc-title">STRUCTURE</span>
+                    <span class="ne-acc-title">STRUCTURE ({{ book()!.frontMatter.length + (book()!.prologue ? 1 : 0) }})</span>
                 </div>
                 @if (accStructure()) {
                 <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
@@ -189,10 +189,10 @@
 
             <!-- ── CHARACTERS ACCORDION ── -->
             @if (showExtendedTabs()) {
-            <div class="ne-acc-section" [style.order]="!accCharacters() && lastOpenIdx() > 2 ? 92 : 3">
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccCharacters()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accCharacters()">chevron_right</span>
-                    <span class="ne-acc-title">CHARACTERS</span>
+                    <span class="ne-acc-title">CHARACTERS ({{ book()!.characters.length }})</span>
                     <div class="ne-acc-actions" (click)="$event.stopPropagation()">
                         <button class="ne-toolbar-btn" (click)="addNewCharacter()" title="Add character">
                             <span class="material-symbols-outlined">add</span>
@@ -209,10 +209,10 @@
             </div>
 
             <!-- ── LOCATIONS ACCORDION ── -->
-            <div class="ne-acc-section" [style.order]="4">
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccLocations()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accLocations()">chevron_right</span>
-                    <span class="ne-acc-title">LOCATIONS</span>
+                    <span class="ne-acc-title">LOCATIONS ({{ book()!.locations.length }})</span>
                     <div class="ne-acc-actions" (click)="$event.stopPropagation()">
                         <button class="ne-toolbar-btn" (click)="addNewLocation()" title="Add location">
                             <span class="material-symbols-outlined">add</span>
@@ -242,10 +242,13 @@
             <app-editor-header [items]="editorTabItems()" [activeItemId]="editorActiveTabId()"
                 [canUndo]="editorActive() && canUndo()" [canRedo]="editorActive() && canRedo()"
                 [focusMode]="focusMode()"
+                [entityTitle]="entityHeaderTitle()" [entityIcon]="entityHeaderIcon()"
+                [entityCount]="entityHeaderCount()"
                 (selectItem)="handleEditorTabSelect($event)"
                 (closeTab)="closeEditorTab($event)"
                 (performUndo)="performUndo()" (performRedo)="performRedo()"
-                (exitFocus)="toggleFocusMode()" />
+                (exitFocus)="toggleFocusMode()"
+                (addEntityClick)="onAddEntityClick()" />
 
             @if (editorActiveTabId()) {
 
@@ -284,12 +287,35 @@
             }
 
             } @else {
+            <!-- Table views when no tab open -->
+            @if (activeNav() === 'characters' && book()) {
+            <app-entity-table #charTable
+                [columns]="characterColumns" [items]="characterRows()"
+                emptyIcon="person_add" emptyTitle="No characters yet"
+                emptyHint="Track your cast — roles, archetypes, and backstories"
+                popupTitle="Add Character" popupIcon="person_add"
+                [popupFields]="characterPopupFields" [popupGridFields]="true"
+                (selectItem)="selectCharacter($event)"
+                (deleteItem)="deleteCharacter($event.id, $event.name)"
+                (addItem)="addNewCharacter({ name: $event['name'], role: $event['role'], archetype: $event['archetype'] })" />
+            } @else if (activeNav() === 'locations' && book()) {
+            <app-entity-table #locTable
+                [columns]="locationColumns" [items]="locationRows()"
+                emptyIcon="add_location" emptyTitle="No locations yet"
+                emptyHint="Build your world — cities, planets, rooms, and realms"
+                popupTitle="Add Location" popupIcon="add_location"
+                [popupFields]="locationPopupFields" [popupGridFields]="false"
+                (selectItem)="selectLocation($event)"
+                (deleteItem)="deleteLocation($event.id, $event.name)"
+                (addItem)="addNewLocation({ name: $event['name'], type: $event['type'] })" />
+            } @else {
             <!-- Welcome / empty state -->
             <div class="ne-welcome-state">
                 <span class="material-symbols-outlined ne-welcome-icon">edit_note</span>
                 <p class="ne-welcome-title">Nothing open</p>
                 <p class="ne-welcome-hint">Select an item from the sidebar to start editing</p>
             </div>
+            }
             }
         </div>
 

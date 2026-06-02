@@ -1,48 +1,64 @@
 <div class="ne-details-canvas">
-    @if (character(); as activeChar) {
+    @if (character(); as c) {
     <div class="ne-ent-card">
-        <div class="ne-ent-header-bg"></div>
-        <div class="ne-ent-header-content">
-            <div class="ne-ent-avatar-xl">
-                <span class="material-symbols-outlined">account_circle</span>
+
+        <!-- ── HEADER ── -->
+        <div class="ne-ent-hdr ne-ent-hdr--char">
+            <div class="ne-ent-monogram" [style.background]="avatarColor(c.name)">
+                {{ (c.name[0] || '?').toUpperCase() }}
             </div>
-            <div class="ne-ent-title-group">
-                <input type="text" class="ne-ent-title-input" [value]="activeChar.name"
-                    (input)="updateField.emit({ id: activeChar.id, field: 'name', value: $any($event.target).value })"
-                    placeholder="Character Name" />
-                <div class="ne-ent-subtitle">CHARACTER PROFILE</div>
+            <div class="ne-ent-hdr-body">
+                <input class="ne-ent-name-input" [value]="c.name"
+                    (input)="updateField.emit({ id: c.id, field: 'name', value: $any($event.target).value })"
+                    placeholder="Character Name" spellcheck="false" />
+                <div class="ne-ent-hdr-meta">
+                    <span class="ne-ent-type-pill">
+                        <span class="material-symbols-outlined">person</span>
+                        CHARACTER
+                    </span>
+                    @if (c.role) {
+                    <span class="ne-ent-attr-chip">{{ c.role }}</span>
+                    }
+                    @if (c.archetype) {
+                    <span class="ne-ent-attr-chip ne-ent-attr-chip--muted">{{ c.archetype }}</span>
+                    }
+                </div>
             </div>
         </div>
 
-        <div class="ne-ent-body">
-            <div class="ne-ent-grid-row">
-                <div class="ne-ent-field">
-                    <label>ROLE IN STORY</label>
-                    <div class="input-wrapper">
-                        <span class="material-symbols-outlined field-icon">badge</span>
-                        <input type="text" [value]="activeChar.role"
-                            (input)="updateField.emit({ id: activeChar.id, field: 'role', value: $any($event.target).value })"
-                            placeholder="e.g. Protagonist" />
-                    </div>
-                </div>
-                <div class="ne-ent-field">
-                    <label>ARCHETYPE</label>
-                    <div class="input-wrapper">
-                        <span class="material-symbols-outlined field-icon">category</span>
-                        <input type="text" [value]="activeChar.archetype"
-                            (input)="updateField.emit({ id: activeChar.id, field: 'archetype', value: $any($event.target).value })"
-                            placeholder="e.g. The Hero" />
-                    </div>
-                </div>
+        <!-- ── PROFILE ATTRIBUTES ── -->
+        <div class="ne-ent-section">
+            <div class="ne-ent-sec-hdr">
+                <span class="material-symbols-outlined">manage_accounts</span>
+                PROFILE ATTRIBUTES
             </div>
-
-            <div class="ne-ent-field full-width">
-                <label>BIOGRAPHY & NOTES</label>
-                <textarea class="ne-ent-textarea" [value]="activeChar.description"
-                    (input)="updateField.emit({ id: activeChar.id, field: 'description', value: $any($event.target).value })"
-                    placeholder="Describe their appearance, personality, and backstory..."></textarea>
+            <div class="ne-ent-props-grid">
+                <div class="ne-ent-prop">
+                    <label for="char-role">ROLE IN STORY</label>
+                    <input id="char-role" type="text" [value]="c.role"
+                        (input)="updateField.emit({ id: c.id, field: 'role', value: $any($event.target).value })"
+                        placeholder="e.g. Protagonist" />
+                </div>
+                <div class="ne-ent-prop">
+                    <label for="char-archetype">ARCHETYPE</label>
+                    <input id="char-archetype" type="text" [value]="c.archetype"
+                        (input)="updateField.emit({ id: c.id, field: 'archetype', value: $any($event.target).value })"
+                        placeholder="e.g. The Hero" />
+                </div>
             </div>
         </div>
+
+        <!-- ── BIOGRAPHY ── -->
+        <div class="ne-ent-section ne-ent-section--grow">
+            <div class="ne-ent-sec-hdr">
+                <span class="material-symbols-outlined">history_edu</span>
+                BIOGRAPHY & NOTES
+            </div>
+            <textarea class="ne-ent-prose" [value]="c.description"
+                (input)="updateField.emit({ id: c.id, field: 'description', value: $any($event.target).value })"
+                placeholder="Describe their appearance, personality, and backstory..."></textarea>
+        </div>
+
     </div>
     } @else {
     <div class="ne-empty-state ne-empty-state--compact">

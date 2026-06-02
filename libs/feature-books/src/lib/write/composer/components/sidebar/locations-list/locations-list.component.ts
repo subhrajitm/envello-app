@@ -36,7 +36,8 @@ export class LocationsListComponent {
 
   commitRename(id: string) {
     const name = this.renameValue().trim();
-    if (name) this.renameLocation.emit({ id, name });
+    if (!name) return;
+    this.renameLocation.emit({ id, name });
     this.renamingId.set(null);
   }
 

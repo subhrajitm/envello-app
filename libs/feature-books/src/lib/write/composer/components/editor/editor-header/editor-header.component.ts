@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { Component, input, output, computed, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface EditorTabItem {
@@ -34,9 +34,20 @@ export class EditorHeaderComponent {
   canRedo      = input.required<boolean>();
   focusMode    = input<boolean>(false);
 
-  selectItem  = output<string>();
-  closeTab    = output<string>();
-  performUndo = output<void>();
-  performRedo = output<void>();
-  exitFocus   = output<void>();
+  // Entity mode (characters / locations browse view)
+  entityTitle = input<string>('');
+  entityIcon  = input<string>('');
+  entityCount = input<number>(0);
+
+  selectItem      = output<string>();
+  closeTab        = output<string>();
+  performUndo     = output<void>();
+  performRedo     = output<void>();
+  exitFocus       = output<void>();
+  addEntityClick  = output<void>();
+
+  singularEntityTitle = computed(() => {
+    const t = this.entityTitle();
+    return t.endsWith('s') ? t.slice(0, -1) : t;
+  });
 }
