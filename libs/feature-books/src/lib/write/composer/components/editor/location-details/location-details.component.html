@@ -30,11 +30,23 @@
                 GEOGRAPHY
             </div>
             <div class="ne-ent-props-grid">
-                <div class="ne-ent-prop ne-ent-prop--full">
+                <div class="ne-ent-prop">
                     <label for="loc-type">LOCATION TYPE</label>
                     <input id="loc-type" type="text" [value]="loc.type"
                         (input)="updateField.emit({ id: loc.id, field: 'type', value: $any($event.target).value })"
                         placeholder="e.g. City, Wilderness, Space Station" />
+                </div>
+                <div class="ne-ent-prop">
+                    <label for="loc-climate">CLIMATE / ATMOSPHERE</label>
+                    <input id="loc-climate" type="text" [value]="loc.climate ?? ''"
+                        (input)="updateField.emit({ id: loc.id, field: 'climate', value: $any($event.target).value })"
+                        placeholder="e.g. Frozen tundra, Humid jungle" />
+                </div>
+                <div class="ne-ent-prop ne-ent-prop--full">
+                    <label for="loc-significance">STORY SIGNIFICANCE</label>
+                    <input id="loc-significance" type="text" [value]="loc.significance ?? ''"
+                        (input)="updateField.emit({ id: loc.id, field: 'significance', value: $any($event.target).value })"
+                        placeholder="e.g. Where the final confrontation takes place" />
                 </div>
             </div>
         </div>

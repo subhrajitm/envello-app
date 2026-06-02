@@ -1,6 +1,7 @@
 import { Component, input, output, signal, computed, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Character, CharacterRelationship } from '@envello/core';
+import { avatarColor } from '../../../utils/avatar-color.util';
 
 @Component({
   selector: 'app-character-relationships',
@@ -17,6 +18,7 @@ export class CharacterRelationshipsComponent {
 
   addRelationship    = output<{ fromId: string; toId: string; label: string }>();
   deleteRelationship = output<string>();
+  addCharacter       = output<void>();
 
   // Add-relationship popup state
   popupOpen = signal(false);
@@ -24,10 +26,19 @@ export class CharacterRelationshipsComponent {
   toId      = signal('');
   relLabel  = signal('');
 
+  isDuplicate = computed(() => {
+    const from = this.fromId(), to = this.toId();
+    if (!from || !to || from === to) return false;
+    return this.relationships().some(r =>
+      (r.fromId === from && r.toId === to) || (r.fromId === to && r.toId === from)
+    );
+  });
+
   canSubmit = computed(() =>
     !!this.fromId() && !!this.toId() &&
     this.fromId() !== this.toId() &&
-    this.relLabel().trim().length > 0
+    this.relLabel().trim().length > 0 &&
+    !this.isDuplicate()
   );
 
   // SVG canvas dimensions
@@ -63,6 +74,10 @@ export class CharacterRelationshipsComponent {
     return { x: Math.round((a.x + b.x) / 2), y: Math.round((a.y + b.y) / 2) };
   }
 
+  pillWidth(label: string): number {
+    return Math.max(80, Math.min(220, label.length * 7 + 24));
+  }
+
   openPopup() {
     this.fromId.set('');
     this.toId.set('');
@@ -76,13 +91,5 @@ export class CharacterRelationshipsComponent {
     this.popupOpen.set(false);
   }
 
-  private static readonly PALETTE = [
-    '#6366f1', '#8b5cf6', '#f97316', '#14b8a6',
-    '#3b82f6', '#84cc16', '#f43f5e', '#f59e0b',
-  ];
-
-  avatarColor(name: string): string {
-    const code = (name || '').charCodeAt(0) || 0;
-    return CharacterRelationshipsComponent.PALETTE[code % 8];
-  }
+  readonly avatarColor = avatarColor;
 }

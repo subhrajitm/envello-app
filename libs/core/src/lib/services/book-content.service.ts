@@ -76,6 +76,10 @@ export interface Character {
     role: string;
     archetype: string;
     description: string;
+    age?: string;
+    motivation?: string;
+    flaw?: string;
+    arc?: string;
 }
 
 export interface Location {
@@ -83,6 +87,8 @@ export interface Location {
     name: string;
     type: string;
     description: string;
+    climate?: string;
+    significance?: string;
 }
 
 export interface EditorNote {
@@ -290,7 +296,7 @@ export class BookContentService {
             const newChapters = book.chapters.map(group => {
                 if (group.id === groupId) {
                     const newChapter: Chapter = {
-                        id: `c${Date.now()}`,
+                        id: crypto.randomUUID(),
                         title,
                         content: '',
                         status: 'EMPTY',
@@ -305,6 +311,38 @@ export class BookContentService {
             return { ...book, chapters: newChapters };
         });
         this.schedulePersist();
+    }
+
+    duplicateChapter(chapterId: string): string | null {
+        let newId: string | null = null;
+        this.activeBook.update(book => {
+            if (!book) return null;
+            let sourceChapter: Chapter | undefined;
+            let sourceGroupId: string | undefined;
+            for (const group of book.chapters) {
+                const found = group.children.find(c => c.id === chapterId);
+                if (found) { sourceChapter = found; sourceGroupId = group.id; break; }
+            }
+            if (!sourceChapter || !sourceGroupId) return book;
+            newId = crypto.randomUUID();
+            const copy: Chapter = {
+                ...sourceChapter,
+                id: newId,
+                title: `${sourceChapter.title} (Copy)`,
+                status: 'DRAFT',
+                lastEdited: 'Just now',
+            };
+            return {
+                ...book,
+                chapters: book.chapters.map(group =>
+                    group.id === sourceGroupId
+                        ? { ...group, children: [...group.children, copy] }
+                        : group
+                ),
+            };
+        });
+        this.schedulePersist();
+        return newId;
     }
 
     deleteChapter(chapterId: string) {
@@ -352,7 +390,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newGroup: ChapterGroup = {
-                id: `g${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 expanded: true,
                 children: []
@@ -487,7 +525,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newNote: EditorNote = {
-                id: `n${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 body,
                 date: 'Just now',
@@ -538,7 +576,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newCharacter: Character = {
-                id: `ch${Date.now()}`,
+                id: crypto.randomUUID(),
                 name,
                 role,
                 archetype,
@@ -592,7 +630,7 @@ export class BookContentService {
     addRelationship(fromId: string, toId: string, label: string) {
         this.activeBook.update(book => {
             if (!book) return null;
-            const rel: CharacterRelationship = { id: `rel${Date.now()}`, fromId, toId, label };
+            const rel: CharacterRelationship = { id: crypto.randomUUID(), fromId, toId, label };
             return { ...book, relationships: [...(book.relationships ?? []), rel] };
         });
         this.schedulePersist();
@@ -612,7 +650,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newLocation: Location = {
-                id: `l${Date.now()}`,
+                id: crypto.randomUUID(),
                 name,
                 type,
                 description
@@ -679,7 +717,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newItem: FrontMatterItem = {
-                id: `fm${Date.now()}`,
+                id: crypto.randomUUID(),
                 type,
                 title,
                 content: '',
@@ -748,7 +786,7 @@ export class BookContentService {
             if (!book) return null;
 
             const prologue: Prologue = {
-                id: `pro${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 content: '',
                 status: 'EMPTY',

@@ -40,6 +40,7 @@ export class ChaptersListComponent {
   addNewChapter = output<void>();
   toggleChapterSelection = output<string>();
   quickExport = output<string>();
+  duplicateChapter = output<string>();
 
   // Inline rename state
   renamingChapterId = signal<string | null>(null);

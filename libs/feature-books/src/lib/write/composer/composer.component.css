@@ -867,7 +867,9 @@
 .ne-editor-area > app-manuscript-editor,
 .ne-editor-area > app-structure-editor,
 .ne-editor-area > app-character-editor,
-.ne-editor-area > app-location-editor {
+.ne-editor-area > app-location-editor,
+.ne-editor-area > app-character-details,
+.ne-editor-area > app-location-details {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3062,11 +3064,13 @@
 
 /* Detailed Character & Location Views */
 .ne-details-canvas {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
     padding: 32px 48px;
-    /* Removed flex/overflow to let parent handle scrolling, matching manuscript view */
 }
 
 .ne-card-detail {
@@ -4600,6 +4604,58 @@
     height: 28px !important;
 }
 
+/* ── Modal inline error ── */
+.ne-modal-error {
+    font-size: 11px;
+    color: #ef4444;
+    margin-top: 6px;
+}
+
+/* ── Keyboard shortcuts panel ── */
+.ne-shortcuts-modal {
+    width: 480px;
+    max-width: 95vw;
+}
+
+.ne-shortcuts-body {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.ne-shortcuts-group-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+}
+
+.ne-shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.ne-shortcut-row kbd {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: inherit;
+    white-space: nowrap;
+    flex-shrink: 0;
+    color: var(--text-primary);
+}
+
 /* ============================================
    SEARCH - COMPACT
    ============================================ */
@@ -5232,23 +5288,6 @@
 }
 .ne-focus-toast-close:hover { color: rgba(255, 255, 255, 0.9); }
 
-/* Typewriter toast variant */
-.typewriter-toast { bottom: 80px; }
-
-/* Typewriter mode: keep cursor vertically centered */
-.ne-editor-area.typewriter-mode .ne-editor-text {
-  scroll-padding-top: 40vh;
-  scroll-padding-bottom: 40vh;
-}
-.ne-editor-area.typewriter-mode tiptap-editor {
-  scroll-padding-top: 40vh;
-  scroll-padding-bottom: 40vh;
-}
-.ne-editor-area.typewriter-mode .ProseMirror {
-  padding-bottom: 40vh;
-  padding-top: 20vh;
-}
-
 /* Recently edited section in left sidebar */
 .ne-recent-section {
   padding: 8px 8px 4px;
@@ -5846,4 +5885,77 @@
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
+}
+
+/* ── Entity header search bar ── */
+.ne-ent-hdr-search {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 200px;
+    flex-shrink: 0;
+    margin: auto 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 0 8px;
+    height: 28px;
+    background: transparent;
+    transition: border-color 0.15s;
+}
+
+.ne-ent-hdr-search:focus-within {
+    border-color: var(--accent-primary);
+}
+
+.ne-tbl-search-icon {
+    font-size: 15px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.ne-tbl-search-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.ne-tbl-search-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.ne-tbl-search-clear {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.ne-tbl-search-clear:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.ne-tbl-search-clear .material-symbols-outlined {
+    font-size: 15px;
+}
+
+/* ── Relationship popup error ── */
+.ne-popup-err {
+    font-size: 11px;
+    color: #ef4444;
+    margin: -4px 0 4px;
+    padding: 6px 10px;
+    background: color-mix(in srgb, #ef4444 8%, transparent);
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, #ef4444 20%, transparent);
 }

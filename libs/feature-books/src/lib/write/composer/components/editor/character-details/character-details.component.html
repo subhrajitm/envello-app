@@ -45,6 +45,30 @@
                         (input)="updateField.emit({ id: c.id, field: 'archetype', value: $any($event.target).value })"
                         placeholder="e.g. The Hero" />
                 </div>
+                <div class="ne-ent-prop">
+                    <label for="char-age">AGE</label>
+                    <input id="char-age" type="text" [value]="c.age ?? ''"
+                        (input)="updateField.emit({ id: c.id, field: 'age', value: $any($event.target).value })"
+                        placeholder="e.g. 32" />
+                </div>
+                <div class="ne-ent-prop">
+                    <label for="char-motivation">MOTIVATION</label>
+                    <input id="char-motivation" type="text" [value]="c.motivation ?? ''"
+                        (input)="updateField.emit({ id: c.id, field: 'motivation', value: $any($event.target).value })"
+                        placeholder="e.g. Avenge her family" />
+                </div>
+                <div class="ne-ent-prop">
+                    <label for="char-flaw">FLAW</label>
+                    <input id="char-flaw" type="text" [value]="c.flaw ?? ''"
+                        (input)="updateField.emit({ id: c.id, field: 'flaw', value: $any($event.target).value })"
+                        placeholder="e.g. Overconfident" />
+                </div>
+                <div class="ne-ent-prop">
+                    <label for="char-arc">CHARACTER ARC</label>
+                    <input id="char-arc" type="text" [value]="c.arc ?? ''"
+                        (input)="updateField.emit({ id: c.id, field: 'arc', value: $any($event.target).value })"
+                        placeholder="e.g. Learns to trust others" />
+                </div>
             </div>
         </div>
 

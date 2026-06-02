@@ -64,6 +64,9 @@ export class EntityTableComponent {
     (this.popupValues()[this.popupFields()[0]?.id ?? ''] ?? '').trim().length > 0
   );
 
+  // ── Search ──
+  searchQuery = input<string>('');
+
   // ── env-table integration ──
   readonly tableActions: EnvTableAction[] = [
     { key: 'delete', label: 'Delete', icon: 'delete', danger: true, bulk: false },
@@ -78,13 +81,23 @@ export class EntityTableComponent {
     })),
   ]);
 
-  envRows = computed<EnvTableRow[]>(() =>
+  private allRows = computed<EnvTableRow[]>(() =>
     this.items().map(item => {
       const row: EnvTableRow = { id: item.id, _name: { name: item.name } };
       item.values.forEach((val, i) => { row[`_val${i}`] = val || '—'; });
       return row;
     })
   );
+
+  envRows = computed<EnvTableRow[]>(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    if (!q) return this.allRows();
+    return this.allRows().filter(row => {
+      const nameCell = row['_name'];
+      const name = typeof nameCell === 'object' ? (nameCell as { name: string }).name : String(nameCell);
+      return name.toLowerCase().includes(q);
+    });
+  });
 
   onRowClick(row: EnvTableRow) {
     this.selectItem.emit(row['id']);

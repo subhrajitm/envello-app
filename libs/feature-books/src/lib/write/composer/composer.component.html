@@ -9,13 +9,6 @@
         </button>
       </div>
     }
-    <!-- Typewriter mode toast -->
-    @if (showTypewriterToast()) {
-      <div class="ne-focus-toast typewriter-toast">
-        <span class="material-symbols-outlined" style="font-size:16px;opacity:0.8;">keyboard</span>
-        Typewriter mode {{ typewriterMode() ? 'on' : 'off' }} — cursor stays centered
-      </div>
-    }
     <!-- Workspace -->
     @if (isLoading()) {
     <div class="ne-loading-state">
@@ -53,7 +46,7 @@
 
             <!-- Sidebar header: mini back + search -->
             <div class="ne-sidebar-header-action">
-                <button class="ne-btn-back-mini" (click)="goBack()" title="Back to Write">
+                <button class="ne-btn-back-mini" (click)="goBack()" title="Back to Write" aria-label="Back to Write">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </button>
                 <div class="ne-sidebar-search" [class.active]="searchQuery()">
@@ -163,7 +156,8 @@
                     (toggleAddMenu)="toggleAddMenu()"
                     (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
                     (toggleChapterSelection)="toggleChapterSelection($event)"
-                    (quickExport)="quickExportChapter($event)" />
+                    (quickExport)="quickExportChapter($event)"
+                    (duplicateChapter)="duplicateChapter($event)" />
                 }
             </div>
 
@@ -237,7 +231,7 @@
         </div>
 
         <!-- Editor Canvas -->
-        <div class="ne-editor-area" [class.focus-mode]="focusMode()" [class.typewriter-mode]="typewriterMode()">
+        <div class="ne-editor-area" [class.focus-mode]="focusMode()">
 
             <app-editor-header [items]="editorTabItems()" [activeItemId]="editorActiveTabId()"
                 [canUndo]="editorActive() && canUndo()" [canRedo]="editorActive() && canRedo()"
@@ -246,12 +240,14 @@
                 [entityCount]="entityHeaderCount()"
                 [viewModes]="entityHeaderTitle() && activeNav() === 'characters' ? charViewModes : []"
                 [activeViewMode]="charView()"
+                [searchQuery]="entitySearchQuery()"
                 (selectItem)="handleEditorTabSelect($event)"
                 (closeTab)="closeEditorTab($event)"
                 (performUndo)="performUndo()" (performRedo)="performRedo()"
                 (exitFocus)="toggleFocusMode()"
                 (addEntityClick)="onAddEntityClick()"
-                (viewModeChange)="charView.set($any($event))" />
+                (viewModeChange)="charView.set($any($event))"
+                (searchQueryChange)="entitySearchQuery.set($event)" />
 
             @if (editorActiveTabId()) {
 
@@ -275,8 +271,9 @@
             @if (activeNav() === 'structure' && book()) {
             <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
                 [activePrologueId]="activePrologueId()" [frontMatter]="book()!.frontMatter"
-                [prologue]="book()!.prologue || null" (addFrontMatterItem)="addFrontMatterItem($event)"
-                (addPrologue)="addPrologue()" />
+                [prologue]="book()!.prologue || null" [isFullWidth]="editorFullWidth()"
+                (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()" (fullWidthChange)="editorFullWidth.set($event)" />
             }
 
             @if (activeNav() === 'characters' && book()) {
@@ -290,17 +287,25 @@
             }
 
             } @else {
-            <!-- Table / relationship views when no tab open -->
-            @if (activeNav() === 'characters' && book()) {
+            <!-- No-tab views: structure overview, entity tables, welcome state -->
+            @if (activeNav() === 'structure' && book()) {
+            <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
+                [activePrologueId]="activePrologueId()" [frontMatter]="book()!.frontMatter"
+                [prologue]="book()!.prologue || null" [isFullWidth]="editorFullWidth()"
+                (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()" (fullWidthChange)="editorFullWidth.set($event)" />
+            } @else if (activeNav() === 'characters' && book()) {
             @if (charView() === 'relationships') {
             <app-character-relationships
                 [characters]="book()!.characters"
                 [relationships]="book()!.relationships ?? []"
                 (addRelationship)="onAddRelationship($event)"
-                (deleteRelationship)="onDeleteRelationship($event)" />
+                (deleteRelationship)="onDeleteRelationship($event)"
+                (addCharacter)="addNewCharacter()" />
             } @else {
             <app-entity-table #charTable
                 [columns]="characterColumns" [items]="characterRows()"
+                [searchQuery]="entitySearchQuery()"
                 emptyIcon="person_add" emptyTitle="No characters yet"
                 emptyHint="Track your cast — roles, archetypes, and backstories"
                 popupTitle="Add Character" popupIcon="person_add"
@@ -312,6 +317,7 @@
             } @else if (activeNav() === 'locations' && book()) {
             <app-entity-table #locTable
                 [columns]="locationColumns" [items]="locationRows()"
+                [searchQuery]="entitySearchQuery()"
                 emptyIcon="add_location" emptyTitle="No locations yet"
                 emptyHint="Build your world — cities, planets, rooms, and realms"
                 popupTitle="Add Location" popupIcon="add_location"
@@ -386,19 +392,16 @@
                 <div class="ne-strip-divider"></div>
 
                 <!-- Utility buttons (bottom) -->
-                <button class="ne-strip-btn" [class.active]="typewriterMode()" (click)="toggleTypewriterMode()" [title]="typewriterMode() ? 'Typewriter Mode On (⌘T)' : 'Typewriter Mode (⌘T)'">
-                    <span class="material-symbols-outlined">keyboard</span>
-                </button>
-                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" [title]="focusMode() ? 'Exit Focus Mode (⌘+\\)' : 'Focus Mode (⌘+\\)'">
+                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" [title]="focusMode() ? 'Exit Focus Mode (⌘+\\)' : 'Focus Mode (⌘+\\)'" [attr.aria-label]="focusMode() ? 'Exit Focus Mode' : 'Focus Mode'">
                     <span class="material-symbols-outlined">{{ focusMode() ? 'close_fullscreen' : 'center_focus_strong' }}</span>
                 </button>
-                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" [title]="fullScreenMode() ? 'Exit Full Screen (F11)' : 'Full Screen (F11)'">
+                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" [title]="fullScreenMode() ? 'Exit Full Screen (F11)' : 'Full Screen (F11)'" [attr.aria-label]="fullScreenMode() ? 'Exit Full Screen' : 'Full Screen'">
                     <span class="material-symbols-outlined">{{ fullScreenMode() ? 'fullscreen_exit' : 'fullscreen' }}</span>
                 </button>
-                <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History">
+                <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History" aria-label="Version History">
                     <span class="material-symbols-outlined">history</span>
                 </button>
-                <button class="ne-strip-btn" [class.active]="exportModalOpen()" (click)="exportModalOpen.set(true)" title="Export">
+                <button class="ne-strip-btn" [class.active]="exportModalOpen()" (click)="exportModalOpen.set(true)" title="Export" aria-label="Export">
                     <span class="material-symbols-outlined">download</span>
                 </button>
             </div>
@@ -456,6 +459,36 @@
     <app-add-modal [modal]="addModal()" (inputValueChange)="updateAddModalInput($event)"
         (inputValue2Change)="updateAddModalInput2($event)" (confirm)="confirmAdd()" (cancel)="cancelAdd()" />
 
+    <!-- Keyboard Shortcuts Panel -->
+    @if (showShortcuts()) {
+    <div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="showShortcuts.set(false)">
+        <div class="ne-modal ne-shortcuts-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">Keyboard Shortcuts</div>
+            <div class="ne-shortcuts-body">
+                <div class="ne-shortcuts-group">
+                    <div class="ne-shortcuts-group-title">Navigation</div>
+                    <div class="ne-shortcut-row"><kbd>⌘K</kbd><span>Search book contents</span></div>
+                    <div class="ne-shortcut-row"><kbd>Alt ↑</kbd><span>Previous chapter</span></div>
+                    <div class="ne-shortcut-row"><kbd>Alt ↓</kbd><span>Next chapter</span></div>
+                </div>
+                <div class="ne-shortcuts-group">
+                    <div class="ne-shortcuts-group-title">View</div>
+                    <div class="ne-shortcut-row"><kbd>⌘\</kbd><span>Toggle focus mode</span></div>
+                    <div class="ne-shortcut-row"><kbd>F11</kbd><span>Toggle full screen</span></div>
+                    <div class="ne-shortcut-row"><kbd>?</kbd><span>Show / hide shortcuts</span></div>
+                </div>
+                <div class="ne-shortcuts-group">
+                    <div class="ne-shortcuts-group-title">Editor</div>
+                    <div class="ne-shortcut-row"><kbd>⌘Z</kbd><span>Undo</span></div>
+                    <div class="ne-shortcut-row"><kbd>⌘⇧Z</kbd><span>Redo</span></div>
+                    <div class="ne-shortcut-row"><kbd>⌘S</kbd><span>Save (auto-saves)</span></div>
+                    <div class="ne-shortcut-row"><kbd>Esc</kbd><span>Close modal / exit focus</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
     <!-- Image URL modal -->
     @if (imageModalOpen()) {
     <div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="cancelImageModal()">
@@ -465,9 +498,12 @@
                 <div class="ne-modal-input-wrapper">
                     <label class="ne-modal-label">Image URL</label>
                     <input type="url" class="ne-modal-input" [value]="imageUrl()"
-                        (input)="imageUrl.set($any($event.target).value)"
+                        (input)="imageUrl.set($any($event.target).value); imageUrlError.set('')"
                         placeholder="https://example.com/image.png"
                         (keydown.enter)="insertImage()" autofocus />
+                    @if (imageUrlError()) {
+                    <p class="ne-modal-error">{{ imageUrlError() }}</p>
+                    }
                 </div>
             </div>
             <div class="ne-modal-footer flex items-center justify-end gap-2">
@@ -487,9 +523,12 @@
                 <div class="ne-modal-input-wrapper">
                     <label class="ne-modal-label">YouTube URL</label>
                     <input type="url" class="ne-modal-input" [value]="youtubeUrl()"
-                        (input)="youtubeUrl.set($any($event.target).value)"
+                        (input)="youtubeUrl.set($any($event.target).value); youtubeUrlError.set('')"
                         placeholder="https://www.youtube.com/watch?v=..."
                         (keydown.enter)="insertYoutube()" autofocus />
+                    @if (youtubeUrlError()) {
+                    <p class="ne-modal-error">{{ youtubeUrlError() }}</p>
+                    }
                 </div>
             </div>
             <div class="ne-modal-footer flex items-center justify-end gap-2">

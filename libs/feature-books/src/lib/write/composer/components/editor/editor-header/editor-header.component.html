@@ -7,6 +7,17 @@
         <span class="ne-tbl-bar-title">{{ entityTitle() }}</span>
         <span class="ne-tbl-badge">{{ entityCount() }}</span>
     </div>
+    <div class="ne-ent-hdr-search">
+        <span class="material-symbols-outlined ne-tbl-search-icon">search</span>
+        <input class="ne-tbl-search-input" type="text"
+               [ngModel]="searchQuery()" (ngModelChange)="searchQueryChange.emit($event)"
+               placeholder="Search…" />
+        @if (searchQuery()) {
+        <button class="ne-tbl-search-clear" (click)="searchQueryChange.emit('')">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        }
+    </div>
     } @else {
     <div class="ne-editor-tabs">
         @for (item of items(); track item.id) {
@@ -45,19 +56,23 @@
             Add {{ singularEntityTitle() }}
         </button>
         }
+        @if (!entityTitle()) {
         <div class="undo-redo-group">
             <button class="action-btn"
                     (click)="performUndo.emit()"
                     [disabled]="!activeItemId() || !canUndo()"
-                    title="Undo (⌘+Z)">
+                    title="Undo (⌘+Z)"
+                    aria-label="Undo">
                 <span class="material-symbols-outlined">undo</span>
             </button>
             <button class="action-btn"
                     (click)="performRedo.emit()"
                     [disabled]="!activeItemId() || !canRedo()"
-                    title="Redo (⌘+Shift+Z)">
+                    title="Redo (⌘+Shift+Z)"
+                    aria-label="Redo">
                 <span class="material-symbols-outlined">redo</span>
             </button>
         </div>
+        }
     </div>
 </div>

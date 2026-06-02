@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ChangeDetectionStrategy, ViewChild, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -15,7 +15,6 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
-import FloatingMenu from '@tiptap/extension-floating-menu';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BookContentService, Chapter, ChapterGroup } from '@envello/core';
@@ -123,15 +122,16 @@ export class ComposerComponent implements OnInit, OnDestroy {
   showFocusToast = signal(false);
   private focusToastTimer?: ReturnType<typeof setTimeout>;
   private _focusModeHandler?: (e: Event) => void;
-  typewriterMode = signal(false);
-  showTypewriterToast = signal(false);
-  private typewriterToastTimer?: ReturnType<typeof setTimeout>;
   fullScreenMode = signal(false);
   leftSidebarCollapsed = signal(false);
   rightSidebarCollapsed = signal(true);
   searchOpen = signal(false);
   searchQuery = signal('');
+  entitySearchQuery = signal('');
   exportModalOpen = signal(false);
+  showShortcuts = signal(false);
+
+  private _beforeUnloadHandler?: (e: BeforeUnloadEvent) => void;
 
   // Computed helpers for the export modal
   exportChapters = computed(() => {
@@ -555,6 +555,27 @@ export class ComposerComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Debounced mention scan — re-runs when chapter or book changes, but not on every signal write
+    effect(() => {
+      const chapter = this.activeChapter();
+      const book = this.book();
+      clearTimeout(this._mentionDebounce);
+      if (!chapter || !book) {
+        this.mentionedCharacters.set([]);
+        this.mentionedLocations.set([]);
+        return;
+      }
+      this._mentionDebounce = setTimeout(() => {
+        const content = chapter.content.replace(/<[^>]+>/g, ' ').toLowerCase();
+        this.mentionedCharacters.set(
+          book.characters.filter(c => content.includes(c.name.toLowerCase())).map(c => c.name)
+        );
+        this.mentionedLocations.set(
+          book.locations.filter(l => content.includes(l.name.toLowerCase())).map(l => l.name)
+        );
+      }, 1500);
+    });
+
     // Time tracking interval – guard against accidental double-init
     if (this.timeInterval) clearInterval(this.timeInterval);
     this.timeInterval = window.setInterval(() => {
@@ -585,11 +606,6 @@ export class ComposerComponent implements OnInit, OnDestroy {
         Youtube.configure({ controls: true }),
         Placeholder.configure({
           placeholder: 'Start writing your chapter...',
-        }),
-        FloatingMenu.configure({
-          pluginKey: 'composerFloatingMenu',
-          shouldShow: ({ editor }) =>
-            editor.isActive('paragraph') && editor.state.selection.$from.parent.content.size === 0,
         }),
       ],
       content: '', // Initial content will be set by effect
@@ -628,6 +644,15 @@ export class ComposerComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Guard unsaved content on page close
+    this._beforeUnloadHandler = (e: BeforeUnloadEvent) => {
+      if (this.saveTimeout) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', this._beforeUnloadHandler);
+
     // Listen for focus mode changes from settings
     this._focusModeHandler = (e: Event) => {
       const enabled = (e as CustomEvent<boolean>).detail;
@@ -646,8 +671,9 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if (this.timeInterval) clearInterval(this.timeInterval);
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
-    if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
+    if (this._mentionDebounce) clearTimeout(this._mentionDebounce);
     if (this._focusModeHandler) window.removeEventListener('focusModeChanged', this._focusModeHandler);
+    if (this._beforeUnloadHandler) window.removeEventListener('beforeunload', this._beforeUnloadHandler);
     this.editor.destroy();
   }
 
@@ -693,17 +719,13 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
     const prev = this.activeNav();
     this.activeNav.set(nav);
+    this.entitySearchQuery.set('');
 
-    // Sync the corresponding sidebar accordion open when a tab is clicked
-    if (nav === 'manuscript') {
-      this.accChapters.set(true);
-    } else if (nav === 'structure') {
-      this.accStructure.set(true);
-    } else if (nav === 'characters') {
-      this.accCharacters.set(true);
-    } else if (nav === 'locations') {
-      this.accLocations.set(true);
-    }
+    // Sync the corresponding sidebar accordion — close all then open the active one
+    this.accChapters.set(nav === 'manuscript');
+    this.accStructure.set(nav === 'structure');
+    this.accCharacters.set(nav === 'characters');
+    this.accLocations.set(nav === 'locations');
 
     if (prev === 'structure' && nav !== 'structure') {
       this.activeFrontMatterId.set(null);
@@ -892,8 +914,15 @@ export class ComposerComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // ? key to show shortcuts (only when not in a text input/textarea)
+    if (event.key === '?' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) {
+      this.showShortcuts.update(v => !v);
+      return;
+    }
+
     // Escape to close modals (highest-priority first)
     if (event.key === 'Escape') {
+      if (this.showShortcuts()) { this.showShortcuts.set(false); return; }
       if (this.imageModalOpen()) { this.cancelImageModal(); return; }
       if (this.youtubeModalOpen()) { this.cancelYoutubeModal(); return; }
       if (this.linkModalOpen()) { this.cancelLinkModal(); return; }
@@ -909,13 +938,6 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if ((event.metaKey || event.ctrlKey) && event.key === '\\') {
       event.preventDefault();
       this.focusMode.update(v => !v);
-      return;
-    }
-
-    // Cmd/Ctrl + T for typewriter mode
-    if ((event.metaKey || event.ctrlKey) && event.key === 't') {
-      event.preventDefault();
-      this.toggleTypewriterMode();
       return;
     }
 
@@ -1061,6 +1083,14 @@ export class ComposerComponent implements OnInit, OnDestroy {
   toggleAddMenu() { this.addMenuOpen.update(v => !v); }
   toggleStructureFmAddMenu() { this.structureFmAddMenuOpen.update(v => !v); }
 
+  duplicateChapter(chapterId: string) {
+    const newId = this.bookService.duplicateChapter(chapterId);
+    if (newId) {
+      const newChapter = this.book()?.chapters.flatMap(g => g.children).find(c => c.id === newId);
+      if (newChapter) this.selectChapter(newChapter);
+    }
+  }
+
   deleteChapter(chapterId: string, title?: string) {
     this.requestDelete('chapter', chapterId, title);
   }
@@ -1118,7 +1148,16 @@ export class ComposerComponent implements OnInit, OnDestroy {
     return 0;
   });
   onAddEntityClick() {
-    this.charTable?.openPopup();
+    if (this.activeNav() === 'characters') {
+      if (this.charView() === 'relationships') {
+        // Switch to table view so charTable ViewChild is rendered, then open popup
+        this.charView.set('table');
+        setTimeout(() => this.charTable?.openPopup(), 0);
+      } else {
+        this.charTable?.openPopup();
+      }
+      return;
+    }
     this.locTable?.openPopup();
   }
 
@@ -1417,38 +1456,10 @@ export class ComposerComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Character/Location Mentions - converted to computed signals for performance
-  mentionedCharacters = computed(() => {
-    const chapterId = this.activeChapterId();
-    if (!chapterId) return [];
-
-    const chapter = this.activeChapter();
-    if (!chapter) return [];
-
-    const content = chapter.content.replace(/<[^>]+>/g, ' ').toLowerCase();
-    const book = this.book();
-    if (!book) return [];
-
-    return book.characters
-      .filter(char => content.includes(char.name.toLowerCase()))
-      .map(char => char.name);
-  });
-
-  mentionedLocations = computed(() => {
-    const chapterId = this.activeChapterId();
-    if (!chapterId) return [];
-
-    const chapter = this.activeChapter();
-    if (!chapter) return [];
-
-    const content = chapter.content.replace(/<[^>]+>/g, ' ').toLowerCase();
-    const book = this.book();
-    if (!book) return [];
-
-    return book.locations
-      .filter(loc => content.includes(loc.name.toLowerCase()))
-      .map(loc => loc.name);
-  });
+  // Character/Location Mentions — debounced to avoid scanning HTML on every keystroke
+  mentionedCharacters = signal<string[]>([]);
+  mentionedLocations = signal<string[]>([]);
+  private _mentionDebounce?: ReturnType<typeof setTimeout>;
 
   // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {
@@ -1587,18 +1598,6 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.showFocusToast.set(false);
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     localStorage.setItem('envello-focus-toast-seen', 'true');
-  }
-
-  toggleTypewriterMode() {
-    this.typewriterMode.update(v => !v);
-    if (this.typewriterMode()) {
-      this.showTypewriterToast.set(true);
-      if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
-      this.typewriterToastTimer = setTimeout(() => this.showTypewriterToast.set(false), 3000);
-    } else {
-      this.showTypewriterToast.set(false);
-      if (this.typewriterToastTimer) clearTimeout(this.typewriterToastTimer);
-    }
   }
 
   navigateChapter(direction: 'prev' | 'next') {
@@ -1928,17 +1927,30 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   private executeBulkDelete() {
-    // Capture snapshot before any mutations
-    const selected = Array.from(this.selectedChapters());
+    const selected = new Set(this.selectedChapters());
     const activeId = this.activeChapterId();
+    const book = this.book();
+
+    // Find a fallback chapter before any mutations
+    let fallback: Chapter | null = null;
+    if (activeId && selected.has(activeId) && book) {
+      const all = book.chapters.flatMap(g => g.children);
+      fallback = all.find(c => !selected.has(c.id)) ?? null;
+    }
+
     selected.forEach(chapterId => {
       this.bookService.deleteChapter(chapterId);
       this.closeEditorTab(chapterId);
     });
-    if (activeId && selected.includes(activeId)) {
-      this.activeChapterId.set(null);
-      this.title.set('');
-      this.editor.commands.clearContent();
+
+    if (activeId && selected.has(activeId)) {
+      if (fallback) {
+        this.selectChapter(fallback);
+      } else {
+        this.activeChapterId.set(null);
+        this.title.set('');
+        this.editor.commands.clearContent();
+      }
     }
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
@@ -2170,6 +2182,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   // Image modal
   imageModalOpen = signal(false);
   imageUrl = signal('');
+  imageUrlError = signal('');
 
   addImage() {
     if (!this.editor) return;
@@ -2178,15 +2191,23 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   insertImage() {
-    if (!this.editor || !this.imageUrl().trim()) return;
-    this.editor.chain().focus().setImage({ src: this.imageUrl().trim() }).run();
+    if (!this.editor) return;
+    const url = this.imageUrl().trim();
+    if (!url) return;
+    if (!/^https?:\/\/.+/i.test(url)) {
+      this.imageUrlError.set('Please enter a valid URL starting with http:// or https://');
+      return;
+    }
+    this.editor.chain().focus().setImage({ src: url }).run();
     this.imageModalOpen.set(false);
     this.imageUrl.set('');
+    this.imageUrlError.set('');
   }
 
   cancelImageModal() {
     this.imageModalOpen.set(false);
     this.imageUrl.set('');
+    this.imageUrlError.set('');
   }
 
   insertTable() {
@@ -2204,21 +2225,50 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.youtubeModalOpen.set(true);
   }
 
+  youtubeUrlError = signal('');
+
   insertYoutube() {
-    if (!this.editor || !this.youtubeUrl().trim()) return;
-    this.editor.chain().focus().setYoutubeVideo({ src: this.youtubeUrl().trim() }).run();
+    if (!this.editor) return;
+    const raw = this.youtubeUrl().trim();
+    if (!raw) return;
+    const src = this.extractYoutubeUrl(raw);
+    if (!src) {
+      this.youtubeUrlError.set('Please enter a valid YouTube URL');
+      return;
+    }
+    this.editor.chain().focus().setYoutubeVideo({ src }).run();
     this.youtubeModalOpen.set(false);
     this.youtubeUrl.set('');
+    this.youtubeUrlError.set('');
+  }
+
+  private extractYoutubeUrl(input: string): string | null {
+    // Accept full URLs and short youtu.be links; return the canonical form tiptap expects
+    const patterns = [
+      /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const re of patterns) {
+      const m = input.match(re);
+      if (m) return `https://www.youtube.com/watch?v=${m[1]}`;
+    }
+    return null;
   }
 
   cancelYoutubeModal() {
     this.youtubeModalOpen.set(false);
     this.youtubeUrl.set('');
+    this.youtubeUrlError.set('');
   }
 
   private htmlToMarkdown(html: string): string {
     return html
       .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
+      // Images → ![alt](src)
+      .replace(/<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*\/?>/gi, '![$1]($2)')
+      .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)')
+      .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)')
+      // Tables → GFM
+      .replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_, inner) => this.tableToMarkdown(inner))
       .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
       .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
       .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
@@ -2243,6 +2293,27 @@ export class ComposerComponent implements OnInit, OnDestroy {
       .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
+  }
+
+  private tableToMarkdown(tableHtml: string): string {
+    const rows: string[][] = [];
+    const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    const cellRe = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    let rowMatch: RegExpExecArray | null;
+    while ((rowMatch = rowRe.exec(tableHtml)) !== null) {
+      const cells: string[] = [];
+      let cellMatch: RegExpExecArray | null;
+      const cellReCopy = new RegExp(cellRe.source, 'gi');
+      while ((cellMatch = cellReCopy.exec(rowMatch[1])) !== null) {
+        cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
+      }
+      if (cells.length) rows.push(cells);
+    }
+    if (!rows.length) return '';
+    const cols = Math.max(...rows.map(r => r.length));
+    const pad = (r: string[]) => '| ' + Array.from({ length: cols }, (_, i) => r[i] ?? '').join(' | ') + ' |';
+    const sep = '| ' + Array.from({ length: cols }, () => '---').join(' | ') + ' |';
+    return [pad(rows[0]), sep, ...rows.slice(1).map(pad)].join('\n') + '\n\n';
   }
 
   // Export functionality

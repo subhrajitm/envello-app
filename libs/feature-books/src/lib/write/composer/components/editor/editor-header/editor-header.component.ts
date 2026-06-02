@@ -1,5 +1,5 @@
 import { Component, input, output, computed, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 export interface EditorTabItem {
   id: string;
@@ -18,7 +18,7 @@ export interface SearchResult {
 @Component({
   selector: 'app-editor-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [FormsModule],
   templateUrl: './editor-header.component.html',
   styleUrls: [
     './editor-header.component.css',
@@ -42,6 +42,10 @@ export class EditorHeaderComponent {
   // Optional view-mode toggle shown in entity mode
   viewModes       = input<Array<{ key: string; icon: string; label: string }>>([]);
   activeViewMode  = input<string>('');
+
+  // Search (entity mode only)
+  searchQuery       = input<string>('');
+  searchQueryChange = output<string>();
 
   selectItem      = output<string>();
   closeTab        = output<string>();

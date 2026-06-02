@@ -6,6 +6,10 @@
         <span class="material-symbols-outlined">group_add</span>
         <p class="ne-tbl-empty-title">No characters yet</p>
         <p class="ne-tbl-empty-hint">Add characters first, then map their relationships</p>
+        <button class="ne-btn-ghost-sm" (click)="addCharacter.emit()">
+            <span class="material-symbols-outlined">add</span>
+            Add character
+        </button>
     </div>
 
     } @else {
@@ -30,10 +34,12 @@
                 <line class="ne-rel-line"
                       [attr.x1]="nodePos(rel.fromId).x" [attr.y1]="nodePos(rel.fromId).y"
                       [attr.x2]="nodePos(rel.toId).x"   [attr.y2]="nodePos(rel.toId).y" />
-                <!-- Label pill -->
+                <!-- Label pill (dynamic width based on text length) -->
                 <rect class="ne-rel-label-bg"
-                      [attr.x]="midPoint(rel).x - 46" [attr.y]="midPoint(rel).y - 11"
-                      width="92" height="22" rx="11" />
+                      [attr.x]="midPoint(rel).x - pillWidth(rel.label) / 2"
+                      [attr.y]="midPoint(rel).y - 11"
+                      [attr.width]="pillWidth(rel.label)"
+                      height="22" rx="11" />
                 <text class="ne-rel-label-text"
                       [attr.x]="midPoint(rel).x" [attr.y]="midPoint(rel).y + 4">
                     {{ rel.label }}
@@ -41,9 +47,11 @@
                 <!-- Delete ×  -->
                 <g class="ne-rel-del" (click)="deleteRelationship.emit(rel.id)">
                     <circle class="ne-rel-del-bg"
-                            [attr.cx]="midPoint(rel).x + 50" [attr.cy]="midPoint(rel).y - 7" r="9" />
+                            [attr.cx]="midPoint(rel).x + pillWidth(rel.label) / 2 + 10"
+                            [attr.cy]="midPoint(rel).y - 7" r="9" />
                     <text class="ne-rel-del-x"
-                          [attr.x]="midPoint(rel).x + 50" [attr.y]="midPoint(rel).y - 3">×</text>
+                          [attr.x]="midPoint(rel).x + pillWidth(rel.label) / 2 + 10"
+                          [attr.y]="midPoint(rel).y - 3">×</text>
                 </g>
             </g>
             }
@@ -104,6 +112,9 @@
                         </select>
                     </div>
                 </div>
+                @if (isDuplicate()) {
+                <p class="ne-popup-err">A relationship between these two characters already exists.</p>
+                }
                 <div class="ne-popup-field">
                     <label for="rel-label">
                         Relationship <span class="ne-popup-req">*</span>
