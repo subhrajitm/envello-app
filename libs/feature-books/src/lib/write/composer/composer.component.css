@@ -897,16 +897,26 @@
 /* Editor Header (similar to daily notes dn-editor-header) */
 .ne-editor-header {
     padding: 0;
-    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    background: var(--bg-panel);
+    align-items: stretch;
+    background: var(--bg-subtle);
     height: 44px;
     position: relative;
     z-index: 1;
     flex-shrink: 0;
     box-sizing: border-box;
+}
+
+.ne-editor-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-subtle);
+    pointer-events: none;
 }
 
 .ne-editor-header.hidden {
@@ -915,20 +925,13 @@
 
 .ne-editor-tabs {
     display: flex;
-    align-items: flex-end;
-    gap: 0;
+    align-items: stretch;
     flex: 1;
     min-width: 0;
-    padding: 0 12px 0 12px;
-    height: 100%;
     overflow-x: auto;
     overflow-y: hidden;
-    position: relative;
-    z-index: 1;
-    top:1px;
 }
 
-/* Hide scrollbar */
 .ne-editor-tabs::-webkit-scrollbar {
     display: none;
 }
@@ -936,50 +939,34 @@
 .ne-editor-tab {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 7px;
+    padding: 0 12px;
     background: transparent;
-    border: 1px solid transparent;
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
+    border: none;
+    border-right: 1px solid var(--border-subtle);
+    border-radius: 0;
     color: var(--text-tertiary);
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 400;
     cursor: pointer;
-    transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    transition: background 0.15s, color 0.15s;
     white-space: nowrap;
-    position: relative;
-    max-width: 200px;
-    margin-bottom: -1px;
-    opacity: 0.7;
-    /* Prevent repaint glitches */
-    transform: translateZ(0);
-    backface-visibility: hidden;
+    max-width: 180px;
+    flex-shrink: 0;
 }
 
 .ne-editor-tab:hover {
     background: var(--bg-hover);
-    color: var(--text-primary);
-    opacity: 1;
+    color: var(--text-secondary);
 }
 
 .ne-editor-tab.active {
     background: var(--bg-panel);
     color: var(--text-primary);
-    opacity: 1;
-    border-color: var(--border-subtle);
+    font-weight: 500;
     border-top: 2px solid var(--accent-primary);
-    border-bottom: 1px solid var(--bg-panel);
-    z-index: 1;
     position: relative;
-    transition: background-color 0.08s ease, color 0.08s ease, border-color 0.08s ease;
-    /* Prevent repaint glitches */
-    transform: translateZ(0);
-    backface-visibility: hidden;
-}
-
-.ne-editor-tab.active::after {
-    display: none;
+    z-index: 2;
 }
 
 .tab-label {
@@ -993,22 +980,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border: none;
-    background: transparent;
-    border-radius: 3px;
-    color: var(--text-tertiary);
+    background: var(--bg-active);
+    border-radius: 50%;
+    color: var(--text-secondary);
     cursor: pointer;
     flex-shrink: 0;
     opacity: 0;
     padding: 0;
-    transition: opacity 0.1s, background 0.1s, color 0.1s;
-    margin-left: 4px;
+    transition: opacity 0.15s, background 0.15s;
+    margin-left: 2px;
 }
 
 .tab-close-btn .material-symbols-outlined {
-    font-size: 13px;
+    font-size: 12px;
+    line-height: 1;
 }
 
 .ne-editor-tab:hover .tab-close-btn,
@@ -1017,8 +1005,8 @@
 }
 
 .tab-close-btn:hover {
-    background: color-mix(in srgb, var(--accent-red, #ff4444) 15%, transparent);
-    color: var(--accent-red, #ff4444);
+    background: var(--border-highlight);
+    color: var(--text-primary);
 }
 
 /* Welcome / empty state */
@@ -1057,11 +1045,12 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 8px 12px;
+    padding: 0 12px;
     flex-shrink: 0;
     position: relative;
     z-index: 2;
-    background: var(--bg-panel);
+    background: var(--bg-subtle);
+    border-left: 1px solid var(--border-subtle);
 }
 
 .ne-exit-focus-btn {

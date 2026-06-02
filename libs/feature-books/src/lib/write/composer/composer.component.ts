@@ -297,15 +297,17 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   closeEditorTab(id: string) {
-    const current  = this.openTabIds();
-    const wasActive = this.editorActiveTabId() === id; // capture before mutation
-    const idx      = current.indexOf(id);
-    const next     = current.filter(i => i !== id);
-    this.openTabIds.set(next);
+    const wasActive = this.editorActiveTabId() === id;
+    // Capture position within the current nav's visible tabs before removal
+    const navItems = this.editorTabItems();
+    const navIdx   = navItems.findIndex(t => t.id === id);
+    this.openTabIds.set(this.openTabIds().filter(i => i !== id));
     if (wasActive) {
-      const fallback = next[Math.min(idx, next.length - 1)] ?? null;
+      // editorTabItems() recomputes after openTabIds mutation — fallback stays in current nav
+      const remaining = this.editorTabItems();
+      const fallback  = remaining[Math.min(navIdx, remaining.length - 1)] ?? null;
       if (fallback) {
-        this.handleEditorTabSelect(fallback);
+        this.handleEditorTabSelect(fallback.id);
       } else {
         this.clearActiveSelection();
       }
@@ -638,6 +640,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
     for (const group of book.chapters) {
       const found = group.children.find(c => c.id === chapter.id);
       if (found) {
+        if (this.activeNav() !== 'manuscript') this.setActiveNav('manuscript');
         this.openEditorTab(found.id);
         this.activeChapterId.set(found.id);
         this.activeGroupId.set(group.id);
@@ -1063,6 +1066,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   selectCharacter(charId: string) {
+    if (this.activeNav() !== 'characters') this.setActiveNav('characters');
     this.openEditorTab(charId);
     this.selectedCharacterId.set(charId);
   }
@@ -1089,6 +1093,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   selectLocation(locId: string) {
+    if (this.activeNav() !== 'locations') this.setActiveNav('locations');
     this.openEditorTab(locId);
     this.selectedLocationId.set(locId);
   }
@@ -1200,6 +1205,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   selectFrontMatterItem(itemId: string) {
+    if (this.activeNav() !== 'structure') this.setActiveNav('structure');
     this.openEditorTab(itemId);
     this.activeFrontMatterId.set(itemId);
     this.activeChapterId.set(null);
@@ -1207,6 +1213,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   }
 
   selectPrologue() {
+    if (this.activeNav() !== 'structure') this.setActiveNav('structure');
     this.openEditorTab('prologue');
     this.activePrologueId.set('prologue');
     this.activeChapterId.set(null);
