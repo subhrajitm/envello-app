@@ -5665,3 +5665,185 @@
 }
 
 .mention-btn:hover { opacity: 0.8; transform: translateY(-1px); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   EDITOR-HEADER: view-mode toggle
+   ════════════════════════════════════════════════════════════════════════════ */
+.ne-view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 7px;
+    padding: 2px;
+}
+
+.ne-view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+
+.ne-view-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.ne-view-btn.active {
+    background: var(--bg-panel);
+    color: var(--accent-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ne-view-btn .material-symbols-outlined { font-size: 16px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CHARACTER RELATIONSHIP MAP
+   ════════════════════════════════════════════════════════════════════════════ */
+.ne-rel-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--bg-app);
+}
+
+.ne-rel-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    flex-shrink: 0;
+}
+
+.ne-rel-canvas {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.ne-rel-svg {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    overflow: visible;
+}
+
+/* ── Edges ── */
+.ne-rel-line {
+    stroke: var(--border-main);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+}
+
+.ne-rel-edge:hover .ne-rel-line {
+    stroke: var(--accent-primary);
+    stroke-dasharray: none;
+}
+
+.ne-rel-label-bg {
+    fill: var(--bg-panel);
+    stroke: var(--border-subtle);
+    stroke-width: 1;
+}
+
+.ne-rel-label-text {
+    font-size: 10px;
+    font-weight: 600;
+    fill: var(--text-secondary);
+    text-anchor: middle;
+    dominant-baseline: auto;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    letter-spacing: 0.02em;
+}
+
+.ne-rel-del { cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+.ne-rel-edge:hover .ne-rel-del { opacity: 1; }
+
+.ne-rel-del-bg {
+    fill: var(--bg-hover);
+    stroke: var(--border-subtle);
+    stroke-width: 1;
+}
+
+.ne-rel-del:hover .ne-rel-del-bg { fill: color-mix(in srgb, #ef4444 14%, transparent); stroke: #ef4444; }
+
+.ne-rel-del-x {
+    font-size: 13px;
+    font-weight: 700;
+    fill: var(--text-tertiary);
+    text-anchor: middle;
+    dominant-baseline: auto;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    pointer-events: none;
+}
+
+.ne-rel-del:hover .ne-rel-del-x { fill: #ef4444; }
+
+/* ── Nodes ── */
+.ne-rel-node { cursor: default; }
+
+.ne-rel-avatar {
+    transition: filter 0.15s;
+}
+
+.ne-rel-node:hover .ne-rel-avatar { filter: brightness(1.12); }
+
+.ne-rel-initial {
+    font-size: 16px;
+    font-weight: 800;
+    fill: #fff;
+    text-anchor: middle;
+    dominant-baseline: auto;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    pointer-events: none;
+    letter-spacing: -0.5px;
+}
+
+.ne-rel-char-name {
+    font-size: 11px;
+    font-weight: 500;
+    fill: var(--text-primary);
+    text-anchor: middle;
+    dominant-baseline: auto;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    pointer-events: none;
+}
+
+/* ── Popup: select override ── */
+.ne-rel-select {
+    width: 100%;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    cursor: pointer;
+}
+
+.ne-rel-select:focus { border-color: var(--accent-primary); }
+
+.ne-editor-area > app-character-relationships {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}

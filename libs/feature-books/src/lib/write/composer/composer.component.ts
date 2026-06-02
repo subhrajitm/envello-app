@@ -44,6 +44,7 @@ import { StructureEditorComponent } from './components/editor/structure-editor/s
 import { CharacterDetailsComponent } from './components/editor/character-details/character-details.component';
 import { LocationDetailsComponent } from './components/editor/location-details/location-details.component';
 import { EntityTableComponent, EntityTableRow, EntityTableColumn, EntityTablePopupField } from './components/editor/entity-table/entity-table.component';
+import { CharacterRelationshipsComponent } from './components/editor/character-relationships/character-relationships.component';
 
 // Right Sidebar
 import { AiPanelComponent } from './components/right-sidebar/ai-panel/ai-panel.component';
@@ -75,6 +76,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     CharacterDetailsComponent,
     LocationDetailsComponent,
     EntityTableComponent,
+    CharacterRelationshipsComponent,
     // Right Sidebar
     AiPanelComponent,
     NotesPanelComponent,
@@ -543,6 +545,13 @@ export class ComposerComponent implements OnInit, OnDestroy {
       const meta = this.store.books().find(n => n.id === this.bookId());
       if (meta?.targetWordCount) {
         this.targetWordCount.set(meta.targetWordCount);
+      }
+    });
+
+    // Reset character view mode when navigating away from characters
+    effect(() => {
+      if (this.activeNav() !== 'characters') {
+        untracked(() => this.charView.set('table'));
       }
     });
 
@@ -1082,6 +1091,14 @@ export class ComposerComponent implements OnInit, OnDestroy {
   @ViewChild('charTable') charTable?: EntityTableComponent;
   @ViewChild('locTable')  locTable?: EntityTableComponent;
 
+  // ── Character view mode: table | relationships ──
+  charView = signal<'table' | 'relationships'>('table');
+
+  readonly charViewModes = [
+    { key: 'table',         icon: 'table_rows', label: 'List view' },
+    { key: 'relationships', icon: 'hub',        label: 'Relationship map' },
+  ];
+
   entityHeaderTitle = computed(() => {
     if (this.editorActiveTabId()) return '';
     if (this.activeNav() === 'characters') return 'Characters';
@@ -1159,6 +1176,14 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
   deleteCharacter(charId: string, name?: string) {
     this.requestDelete('character', charId, name);
+  }
+
+  onAddRelationship(data: { fromId: string; toId: string; label: string }) {
+    this.bookService.addRelationship(data.fromId, data.toId, data.label);
+  }
+
+  onDeleteRelationship(id: string) {
+    this.bookService.deleteRelationship(id);
   }
 
   // Location management

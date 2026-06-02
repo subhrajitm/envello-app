@@ -244,11 +244,14 @@
                 [focusMode]="focusMode()"
                 [entityTitle]="entityHeaderTitle()" [entityIcon]="entityHeaderIcon()"
                 [entityCount]="entityHeaderCount()"
+                [viewModes]="entityHeaderTitle() && activeNav() === 'characters' ? charViewModes : []"
+                [activeViewMode]="charView()"
                 (selectItem)="handleEditorTabSelect($event)"
                 (closeTab)="closeEditorTab($event)"
                 (performUndo)="performUndo()" (performRedo)="performRedo()"
                 (exitFocus)="toggleFocusMode()"
-                (addEntityClick)="onAddEntityClick()" />
+                (addEntityClick)="onAddEntityClick()"
+                (viewModeChange)="charView.set($any($event))" />
 
             @if (editorActiveTabId()) {
 
@@ -287,8 +290,15 @@
             }
 
             } @else {
-            <!-- Table views when no tab open -->
+            <!-- Table / relationship views when no tab open -->
             @if (activeNav() === 'characters' && book()) {
+            @if (charView() === 'relationships') {
+            <app-character-relationships
+                [characters]="book()!.characters"
+                [relationships]="book()!.relationships ?? []"
+                (addRelationship)="onAddRelationship($event)"
+                (deleteRelationship)="onDeleteRelationship($event)" />
+            } @else {
             <app-entity-table #charTable
                 [columns]="characterColumns" [items]="characterRows()"
                 emptyIcon="person_add" emptyTitle="No characters yet"
@@ -298,6 +308,7 @@
                 (selectItem)="selectCharacter($event)"
                 (deleteItem)="deleteCharacter($event.id, $event.name)"
                 (addItem)="addNewCharacter({ name: $event['name'], role: $event['role'], archetype: $event['archetype'] })" />
+            }
             } @else if (activeNav() === 'locations' && book()) {
             <app-entity-table #locTable
                 [columns]="locationColumns" [items]="locationRows()"

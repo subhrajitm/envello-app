@@ -4,6 +4,13 @@ import { StoreService } from './store.service';
 import { BinService } from './bin.service';
 import { SqliteService } from './sqlite.service';
 
+export interface CharacterRelationship {
+    id: string;
+    fromId: string;
+    toId: string;
+    label: string;
+}
+
 export interface BookContent {
     id: string; // Links to StoreService Book.id
     title: string;
@@ -17,6 +24,7 @@ export interface BookContent {
     characters: Character[];
     locations: Location[];
     notes: EditorNote[];
+    relationships?: CharacterRelationship[];
 }
 
 export interface ChapterGroup {
@@ -570,7 +578,30 @@ export class BookContentService {
                 });
             }
 
-            return { ...book, characters: book.characters.filter(char => char.id !== characterId) };
+            return {
+                ...book,
+                characters: book.characters.filter(char => char.id !== characterId),
+                relationships: (book.relationships ?? []).filter(
+                    r => r.fromId !== characterId && r.toId !== characterId
+                ),
+            };
+        });
+        this.schedulePersist();
+    }
+
+    addRelationship(fromId: string, toId: string, label: string) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            const rel: CharacterRelationship = { id: `rel${Date.now()}`, fromId, toId, label };
+            return { ...book, relationships: [...(book.relationships ?? []), rel] };
+        });
+        this.schedulePersist();
+    }
+
+    deleteRelationship(id: string) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            return { ...book, relationships: (book.relationships ?? []).filter(r => r.id !== id) };
         });
         this.schedulePersist();
     }
@@ -845,7 +876,8 @@ export class BookContentService {
             ],
             characters: [],
             locations: [],
-            notes: []
+            notes: [],
+            relationships: []
         };
     }
 }

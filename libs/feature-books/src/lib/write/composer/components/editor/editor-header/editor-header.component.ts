@@ -39,12 +39,17 @@ export class EditorHeaderComponent {
   entityIcon  = input<string>('');
   entityCount = input<number>(0);
 
+  // Optional view-mode toggle shown in entity mode
+  viewModes       = input<Array<{ key: string; icon: string; label: string }>>([]);
+  activeViewMode  = input<string>('');
+
   selectItem      = output<string>();
   closeTab        = output<string>();
   performUndo     = output<void>();
   performRedo     = output<void>();
   exitFocus       = output<void>();
   addEntityClick  = output<void>();
+  viewModeChange  = output<string>();
 
   singularEntityTitle = computed(() => {
     const t = this.entityTitle();

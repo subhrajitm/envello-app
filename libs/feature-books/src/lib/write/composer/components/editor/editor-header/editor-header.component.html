@@ -29,6 +29,16 @@
             <span class="ne-exit-focus-label">Exit Focus</span>
         </button>
         }
+        @if (entityTitle() && viewModes().length > 0) {
+        <div class="ne-view-toggle">
+            @for (mode of viewModes(); track mode.key) {
+            <button class="ne-view-btn" [class.active]="activeViewMode() === mode.key"
+                    [title]="mode.label" (click)="viewModeChange.emit(mode.key)">
+                <span class="material-symbols-outlined">{{ mode.icon }}</span>
+            </button>
+            }
+        </div>
+        }
         @if (entityTitle()) {
         <button class="ne-tbl-add-btn" (click)="addEntityClick.emit()">
             <span class="material-symbols-outlined">add</span>

@@ -1,0 +1,134 @@
+<div class="ne-rel-view">
+
+    <!-- ── Empty state ── -->
+    @if (characters().length === 0) {
+    <div class="ne-tbl-empty">
+        <span class="material-symbols-outlined">group_add</span>
+        <p class="ne-tbl-empty-title">No characters yet</p>
+        <p class="ne-tbl-empty-hint">Add characters first, then map their relationships</p>
+    </div>
+
+    } @else {
+
+    <!-- ── Graph toolbar ── -->
+    <div class="ne-rel-toolbar">
+        <button class="ne-tbl-add-btn" (click)="openPopup()">
+            <span class="material-symbols-outlined">add</span>
+            Add Relationship
+        </button>
+    </div>
+
+    <!-- ── SVG graph ── -->
+    <div class="ne-rel-canvas">
+        <svg class="ne-rel-svg"
+             [attr.viewBox]="'0 0 ' + W + ' ' + H"
+             preserveAspectRatio="xMidYMid meet">
+
+            <!-- Relationship edges -->
+            @for (rel of relationships(); track rel.id) {
+            <g class="ne-rel-edge">
+                <line class="ne-rel-line"
+                      [attr.x1]="nodePos(rel.fromId).x" [attr.y1]="nodePos(rel.fromId).y"
+                      [attr.x2]="nodePos(rel.toId).x"   [attr.y2]="nodePos(rel.toId).y" />
+                <!-- Label pill -->
+                <rect class="ne-rel-label-bg"
+                      [attr.x]="midPoint(rel).x - 46" [attr.y]="midPoint(rel).y - 11"
+                      width="92" height="22" rx="11" />
+                <text class="ne-rel-label-text"
+                      [attr.x]="midPoint(rel).x" [attr.y]="midPoint(rel).y + 4">
+                    {{ rel.label }}
+                </text>
+                <!-- Delete ×  -->
+                <g class="ne-rel-del" (click)="deleteRelationship.emit(rel.id)">
+                    <circle class="ne-rel-del-bg"
+                            [attr.cx]="midPoint(rel).x + 50" [attr.cy]="midPoint(rel).y - 7" r="9" />
+                    <text class="ne-rel-del-x"
+                          [attr.x]="midPoint(rel).x + 50" [attr.y]="midPoint(rel).y - 3">×</text>
+                </g>
+            </g>
+            }
+
+            <!-- Character nodes -->
+            @for (char of characters(); track char.id) {
+            <g class="ne-rel-node"
+               [attr.transform]="'translate(' + nodePos(char.id).x + ',' + nodePos(char.id).y + ')'">
+                <circle class="ne-rel-avatar" r="30" [attr.fill]="avatarColor(char.name)" />
+                <text class="ne-rel-initial" dy="0.36em">
+                    {{ (char.name[0] || '?').toUpperCase() }}
+                </text>
+                <text class="ne-rel-char-name" [attr.y]="48">{{ char.name }}</text>
+            </g>
+            }
+
+        </svg>
+    </div>
+
+    }<!-- end @else -->
+
+    <!-- ── Add Relationship Popup ── -->
+    @if (popupOpen()) {
+    <div class="ne-popup-backdrop" (click)="popupOpen.set(false)">
+        <div class="ne-popup" (click)="$event.stopPropagation()">
+            <div class="ne-popup-hdr">
+                <div class="ne-popup-hdr-left">
+                    <div class="ne-popup-icon">
+                        <span class="material-symbols-outlined">share</span>
+                    </div>
+                    <span class="ne-popup-title">Add Relationship</span>
+                </div>
+                <button class="ne-popup-close" (click)="popupOpen.set(false)">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="ne-popup-body">
+                <div class="ne-popup-row">
+                    <div class="ne-popup-field">
+                        <label for="rel-from">From</label>
+                        <select id="rel-from" class="ne-rel-select"
+                                [ngModel]="fromId()" (ngModelChange)="fromId.set($event)">
+                            <option value="">Select character…</option>
+                            @for (c of characters(); track c.id) {
+                            <option [value]="c.id">{{ c.name }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="ne-popup-field">
+                        <label for="rel-to">To</label>
+                        <select id="rel-to" class="ne-rel-select"
+                                [ngModel]="toId()" (ngModelChange)="toId.set($event)">
+                            <option value="">Select character…</option>
+                            @for (c of characters(); track c.id) {
+                            <option [value]="c.id">{{ c.name }}</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="ne-popup-field">
+                    <label for="rel-label">
+                        Relationship <span class="ne-popup-req">*</span>
+                    </label>
+                    <input id="rel-label" type="text"
+                           [ngModel]="relLabel()" (ngModelChange)="relLabel.set($event)"
+                           placeholder="e.g. Best friends, Rival, Mentor…"
+                           (keydown.enter)="submitRelationship()"
+                           (keydown.escape)="popupOpen.set(false)" />
+                </div>
+            </div>
+
+            <div class="ne-popup-footer">
+                <button class="ne-popup-btn ne-popup-btn--cancel" (click)="popupOpen.set(false)">
+                    Cancel
+                </button>
+                <button class="ne-popup-btn ne-popup-btn--primary"
+                        [class.ne-popup-btn--disabled]="!canSubmit()"
+                        (click)="submitRelationship()">
+                    <span class="material-symbols-outlined">add</span>
+                    Add Relationship
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+</div>
