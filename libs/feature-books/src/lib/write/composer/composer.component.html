@@ -238,6 +238,7 @@
                 [focusMode]="focusMode()"
                 [entityTitle]="entityHeaderTitle()" [entityIcon]="entityHeaderIcon()"
                 [entityCount]="entityHeaderCount()"
+                [isEntityDetail]="(activeNav() === 'characters' || activeNav() === 'locations') && !!editorActiveTabId()"
                 [viewModes]="entityHeaderTitle() && activeNav() === 'characters' ? charViewModes : []"
                 [activeViewMode]="charView()"
                 [searchQuery]="entitySearchQuery()"
@@ -245,6 +246,7 @@
                 (closeTab)="closeEditorTab($event)"
                 (performUndo)="performUndo()" (performRedo)="performRedo()"
                 (exitFocus)="toggleFocusMode()"
+                (save)="performEntitySave()"
                 (addEntityClick)="onAddEntityClick()"
                 (viewModeChange)="charView.set($any($event))"
                 (searchQueryChange)="entitySearchQuery.set($event)" />

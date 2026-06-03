@@ -56,7 +56,14 @@
             Add {{ singularEntityTitle() }}
         </button>
         }
-        @if (!entityTitle()) {
+        @if (isEntityDetail()) {
+        <button class="action-btn ne-save-btn" [class.ne-save-btn--saved]="savedFlash()"
+                (click)="onSave()" title="Save (⌘S)">
+            <span class="material-symbols-outlined">{{ savedFlash() ? 'check_circle' : 'save' }}</span>
+            <span class="ne-save-label">{{ savedFlash() ? 'Saved' : 'Save' }}</span>
+        </button>
+        }
+        @if (!entityTitle() && !isEntityDetail()) {
         <div class="undo-redo-group">
             <button class="action-btn"
                     (click)="performUndo.emit()"

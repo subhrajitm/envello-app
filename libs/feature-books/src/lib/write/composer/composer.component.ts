@@ -640,6 +640,24 @@ export class ComposerComponent implements OnInit, OnDestroy {
         }),
       ],
       content: '', // Initial content will be set by effect
+      editorProps: {
+        handleClick: (_view, _pos, event) => {
+          const target = event.target as HTMLElement;
+          const mention = target.closest('[data-type="mention"]') as HTMLElement | null;
+          if (!mention) return false;
+          const id = mention.getAttribute('data-id');
+          const mentionType = (mention.getAttribute('data-mention-type') ?? 'character') as 'character' | 'location';
+          if (id) {
+            if (mentionType === 'character') {
+              this.selectCharacter(id);
+            } else {
+              this.selectLocation(id);
+            }
+            return true;
+          }
+          return false;
+        },
+      },
       onTransaction: ({ editor }) => {
         this.canUndo.set(editor.can().undo());
         this.canRedo.set(editor.can().redo());
@@ -703,6 +721,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     if (this._mentionDebounce) clearTimeout(this._mentionDebounce);
+    if (this._mentionLabelDebounce) clearTimeout(this._mentionLabelDebounce);
     if (this._focusModeHandler) window.removeEventListener('focusModeChanged', this._focusModeHandler);
     if (this._beforeUnloadHandler) window.removeEventListener('beforeunload', this._beforeUnloadHandler);
     this.editor.destroy();
@@ -1237,6 +1256,9 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
   updateCharacterField(charId: string, field: string, value: string | string[]) {
     this.bookService.updateCharacter(charId, { [field]: value } as never);
+    if (field === 'name' && typeof value === 'string') {
+      this.updateMentionLabels(charId, value);
+    }
   }
 
   // Handler for component output
@@ -1272,6 +1294,9 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
   updateLocationField(locId: string, field: string, value: string | string[]) {
     this.bookService.updateLocation(locId, { [field]: value } as never);
+    if (field === 'name' && typeof value === 'string') {
+      this.updateMentionLabels(locId, value);
+    }
   }
 
   // Handler for component output
@@ -1422,6 +1447,77 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.editor?.chain().focus().redo().run();
   }
 
+  performEntitySave() {
+    // Fields auto-save on every change; this is a manual confirmation trigger
+  }
+
+  // Update @mention chips across the live editor and all stored chapter/frontmatter/prologue HTML
+  private updateMentionLabels(entityId: string, newName: string) {
+    clearTimeout(this._mentionLabelDebounce);
+    this._mentionLabelDebounce = setTimeout(() => {
+      const book = this.book();
+      if (!book) return;
+
+      // 1. Live editor: dispatch a ProseMirror transaction to update mention node attrs
+      if (this.editor && !this.editor.isDestroyed) {
+        const { state, view } = this.editor;
+        const tr = state.tr;
+        let changed = false;
+        state.doc.descendants((node, pos) => {
+          if (node.type.name === 'mention' && node.attrs['id'] === entityId) {
+            tr.setNodeMarkup(pos, undefined, { ...node.attrs, label: newName });
+            changed = true;
+          }
+        });
+        if (changed) view.dispatch(tr);
+      }
+
+      // 2. Stored content: patch HTML for every chapter / front-matter / prologue
+      //    that is NOT currently loaded in the live editor (editor's onUpdate handles that one).
+      const activeChapterId   = this.activeChapterId();
+      const activeFrontMatter = this.activeFrontMatterId();
+      const activePrologue    = this.activePrologueId();
+
+      for (const group of book.chapters) {
+        for (const chapter of group.children) {
+          if (!chapter.content || chapter.id === activeChapterId) continue;
+          const patched = this.patchMentionInHtml(chapter.content, entityId, newName);
+          if (patched !== chapter.content) {
+            this.bookService.updateChapterContent(chapter.id, patched, chapter.wordCount);
+          }
+        }
+      }
+
+      for (const item of book.frontMatter) {
+        if (!item.content || item.id === activeFrontMatter) continue;
+        const patched = this.patchMentionInHtml(item.content, entityId, newName);
+        if (patched !== item.content) {
+          this.bookService.updateFrontMatterContent(item.id, patched, item.wordCount);
+        }
+      }
+
+      if (book.prologue?.content && !activePrologue) {
+        const patched = this.patchMentionInHtml(book.prologue.content, entityId, newName);
+        if (patched !== book.prologue.content) {
+          this.bookService.updatePrologueContent(patched, book.prologue.wordCount);
+        }
+      }
+    }, 400);
+  }
+
+  // Parse HTML, replace data-label + text of matching mention nodes, return updated HTML
+  private patchMentionInHtml(html: string, entityId: string, newLabel: string): string {
+    if (!html.includes(entityId)) return html; // fast exit — no mention of this entity
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    let changed = false;
+    doc.querySelectorAll(`[data-type="mention"][data-id="${CSS.escape(entityId)}"]`).forEach(el => {
+      el.setAttribute('data-label', newLabel);
+      el.textContent = `@${newLabel}`;
+      changed = true;
+    });
+    return changed ? doc.body.innerHTML : html;
+  }
+
   openVersionHistory() {
     const activeId = this.activeChapterId();
     const frontMatterId = this.activeFrontMatterId();
@@ -1491,6 +1587,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   mentionedCharacters = signal<string[]>([]);
   mentionedLocations = signal<string[]>([]);
   private _mentionDebounce?: ReturnType<typeof setTimeout>;
+  private _mentionLabelDebounce?: ReturnType<typeof setTimeout>;
 
   // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {

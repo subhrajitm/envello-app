@@ -23,15 +23,18 @@
         </div>
 
         <div class="ne-loc-hero-info">
-            <input class="ne-loc-name-input" [value]="loc.name"
-                (input)="emit(loc.id, 'name', $any($event.target).value)"
-                placeholder="Location Name" spellcheck="false" />
+            <div class="ne-loc-name-field">
+                <label class="ne-loc-name-label">NAME</label>
+                <input class="ne-loc-name-input" [value]="loc.name"
+                    (input)="emit(loc.id, 'name', $any($event.target).value)"
+                    placeholder="Enter location name…" spellcheck="false" />
+            </div>
             <div class="ne-loc-hero-meta">
                 <span class="ne-ent-type-pill">
                     <span class="material-symbols-outlined">location_on</span>
                     LOCATION
                 </span>
-                <input class="ne-loc-type-input" type="text" [value]="loc.type ?? ''"
+                <input class="ne-loc-type-input" type="text" [value]="loc.type"
                     (input)="emit(loc.id, 'type', $any($event.target).value)"
                     placeholder="Set type…"
                     (click)="$event.stopPropagation()" />
@@ -53,7 +56,7 @@
             <div class="ne-char-fields">
                 <div class="ne-char-field">
                     <label>TYPE</label>
-                    <input type="text" [value]="loc.type ?? ''"
+                    <input type="text" [value]="loc.type"
                         (input)="emit(loc.id, 'type', $any($event.target).value)"
                         placeholder="e.g. City, Forest, Cave" />
                 </div>

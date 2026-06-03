@@ -1,4 +1,4 @@
-import { Component, input, output, computed, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { Component, input, output, computed, signal, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 export interface EditorTabItem {
@@ -47,6 +47,8 @@ export class EditorHeaderComponent {
   searchQuery       = input<string>('');
   searchQueryChange = output<string>();
 
+  isEntityDetail = input<boolean>(false);
+
   selectItem      = output<string>();
   closeTab        = output<string>();
   performUndo     = output<void>();
@@ -54,6 +56,17 @@ export class EditorHeaderComponent {
   exitFocus       = output<void>();
   addEntityClick  = output<void>();
   viewModeChange  = output<string>();
+  save            = output<void>();
+
+  savedFlash = signal(false);
+  private _savedTimer?: ReturnType<typeof setTimeout>;
+
+  onSave() {
+    this.save.emit();
+    this.savedFlash.set(true);
+    clearTimeout(this._savedTimer);
+    this._savedTimer = setTimeout(() => this.savedFlash.set(false), 1800);
+  }
 
   singularEntityTitle = computed(() => {
     const t = this.entityTitle();

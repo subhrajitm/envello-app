@@ -128,7 +128,7 @@ export class BookContentService {
             const raw = await this.db.getBookContent(id);
             if (raw) {
                 const data = JSON.parse(raw) as BookContent;
-                this.activeBook.set(data);
+                this.activeBook.set(this.migrateBookContent(data));
                 return;
             }
             const data = this.createEmptyBook(id);
@@ -141,7 +141,7 @@ export class BookContentService {
             const localData = localStorage.getItem(`book_content_${id}`);
             if (localData) {
                 try {
-                    this.activeBook.set(JSON.parse(localData));
+                    this.activeBook.set(this.migrateBookContent(JSON.parse(localData)));
                 } catch (parseError) {
                     console.error('Failed to parse local storage book data', parseError);
                     this.activeBook.set(this.createEmptyBook(id));
@@ -589,7 +589,8 @@ export class BookContentService {
                 name,
                 role,
                 archetype,
-                description
+                description,
+                tags: []
             };
             this.store.addActivity(`Added character '${name}'`, 'entry');
             return { ...book, characters: [...book.characters, newCharacter] };
@@ -662,7 +663,8 @@ export class BookContentService {
                 id: crypto.randomUUID(),
                 name,
                 type,
-                description
+                description,
+                tags: []
             };
             this.store.addActivity(`Added location '${name}'`, 'entry');
             return { ...book, locations: [...book.locations, newLocation] };
@@ -910,6 +912,27 @@ export class BookContentService {
             logIfTauri('[BookContentService] Persist failed, falling back to LocalStorage', e);
             localStorage.setItem(`book_content_${id}`, JSON.stringify(data));
         }
+    }
+
+    // Ensure fields added after initial release are present on loaded data
+    private migrateBookContent(data: BookContent): BookContent {
+        return {
+            ...data,
+            relationships: data.relationships ?? [],
+            characters: (data.characters ?? []).map(c => ({
+                ...c,
+                role:        c.role        ?? '',
+                archetype:   c.archetype   ?? '',
+                description: c.description ?? '',
+                tags:        c.tags        ?? [],
+            })),
+            locations: (data.locations ?? []).map(l => ({
+                ...l,
+                type:        l.type        ?? 'Location',
+                description: l.description ?? '',
+                tags:        l.tags        ?? [],
+            })),
+        };
     }
 
     private createEmptyBook(id: string, title: string = 'Untitled Book'): BookContent {

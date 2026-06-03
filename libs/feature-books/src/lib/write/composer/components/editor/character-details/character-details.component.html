@@ -17,9 +17,12 @@
         </div>
 
         <div class="ne-char-hero-info">
-            <input class="ne-char-name-input" [value]="c.name"
-                (input)="emit(c.id, 'name', $any($event.target).value)"
-                placeholder="Character Name" spellcheck="false" />
+            <div class="ne-char-name-field">
+                <label class="ne-char-name-label">NAME</label>
+                <input class="ne-char-name-input" [value]="c.name"
+                    (input)="emit(c.id, 'name', $any($event.target).value)"
+                    placeholder="Enter character name…" spellcheck="false" />
+            </div>
             <div class="ne-char-hero-meta">
                 <span class="ne-ent-type-pill">
                     <span class="material-symbols-outlined">person</span>

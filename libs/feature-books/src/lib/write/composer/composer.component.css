@@ -4150,6 +4150,43 @@
     gap: 4px;
 }
 
+/* ── Save button (entity detail: character / location) ── */
+.ne-save-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px 5px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ne-save-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-default);
+}
+
+.ne-save-btn--saved {
+    color: var(--success, #22c55e) !important;
+    border-color: var(--success, #22c55e) !important;
+    background: color-mix(in srgb, var(--success, #22c55e) 10%, transparent) !important;
+}
+
+.ne-save-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.ne-save-label {
+    letter-spacing: 0.02em;
+}
+
 .toolbar-sep-vertical {
     width: 1px;
     height: 20px;
@@ -5973,10 +6010,21 @@
     font-weight: 600;
     line-height: 1.6;
     white-space: nowrap;
-    cursor: default;
+    cursor: pointer;
     user-select: none;
     font-family: var(--font-sans);
     vertical-align: baseline;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.ne-mention:hover {
+    background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+    border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
+}
+
+.ne-mention[data-mention-type="location"]:hover {
+    background: color-mix(in srgb, #10b981 20%, transparent);
+    border-color: color-mix(in srgb, #10b981 45%, transparent);
 }
 
 .ne-mention[data-mention-type="location"] {
@@ -6078,19 +6126,20 @@
 .ne-char-hero {
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 22px 28px 20px;
+    gap: 14px;
+    padding: 10px 20px;
     border-bottom: 1px solid var(--border-subtle);
     border-left: 3px solid var(--accent-primary);
     background: var(--bg-panel);
     flex-shrink: 0;
+    min-height: 0;
 }
 
 /* Portrait circle */
 .ne-char-portrait-wrap {
     position: relative;
-    width: 64px;
-    height: 64px;
+    width: 42px;
+    height: 42px;
     flex-shrink: 0;
     cursor: pointer;
     border-radius: 50%;
@@ -6106,16 +6155,16 @@
 }
 
 .ne-char-monogram {
-    width: 64px;
-    height: 64px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 800;
     color: #fff;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
     font-family: var(--font-sans);
     user-select: none;
 }
@@ -6133,36 +6182,71 @@
 }
 
 .ne-char-portrait-wrap:hover .ne-char-portrait-overlay { opacity: 1; }
-.ne-char-portrait-overlay .material-symbols-outlined { font-size: 22px; color: #fff; }
+.ne-char-portrait-overlay .material-symbols-outlined { font-size: 16px; color: #fff; }
 
 /* Name + meta */
 .ne-char-hero-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Name field: label + input stacked */
+.ne-char-name-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.ne-char-name-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    line-height: 1;
+    user-select: none;
 }
 
 .ne-char-name-input {
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--text-primary);
+    height: 28px;
+    padding: 0 10px;
     background: transparent;
-    border: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
     outline: none;
     width: 100%;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
     font-family: var(--font-sans);
-    padding: 0;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
 }
 
-.ne-char-name-input::placeholder { color: var(--text-tertiary); font-weight: 400; }
+.ne-char-name-input:hover {
+    border-color: var(--border-default, var(--accent-primary-dim));
+}
+
+.ne-char-name-input:focus {
+    border-color: var(--accent-primary);
+}
+
+.ne-char-name-input::placeholder {
+    color: var(--text-tertiary);
+    font-weight: 400;
+}
 
 .ne-char-hero-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 5px;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .ne-char-hero-tag {
@@ -6683,12 +6767,13 @@
 .ne-loc-hero {
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 22px 28px 20px;
+    gap: 14px;
+    padding: 10px 20px;
     border-bottom: 1px solid var(--border-subtle);
     border-left: 3px solid var(--accent-primary);
     background: var(--bg-panel);
     flex-shrink: 0;
+    min-height: 0;
 }
 
 /* icon square with overlay */
@@ -6698,9 +6783,9 @@
 }
 
 .ne-loc-icon-sq {
-    width: 64px;
-    height: 64px;
-    border-radius: 10px;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
     background: var(--accent-primary-dim);
     display: flex;
     align-items: center;
@@ -6712,7 +6797,7 @@
 }
 
 .ne-loc-icon-sq .material-symbols-outlined {
-    font-size: 32px;
+    font-size: 22px;
     color: var(--accent-primary);
 }
 
@@ -6732,7 +6817,7 @@
 }
 
 .ne-loc-icon-overlay .material-symbols-outlined {
-    font-size: 20px;
+    font-size: 14px;
     color: #fff;
 }
 
@@ -6785,33 +6870,64 @@
     flex: 1;
     min-width: 0;
     display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* name field: label + search-style input */
+.ne-loc-name-field {
+    display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.ne-loc-name-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    line-height: 1;
+    user-select: none;
 }
 
 .ne-loc-name-input {
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--text-primary);
+    height: 28px;
+    padding: 0 10px;
     background: transparent;
-    border: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
     outline: none;
-    font-family: var(--font-sans);
     width: 100%;
-    padding: 0;
-    letter-spacing: -0.3px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.ne-loc-name-input:hover {
+    border-color: var(--border-default, var(--accent-primary-dim));
+}
+
+.ne-loc-name-input:focus {
+    border-color: var(--accent-primary);
 }
 
 .ne-loc-name-input::placeholder {
-    color: var(--text-quaternary, var(--text-tertiary));
+    color: var(--text-tertiary);
     font-weight: 400;
 }
 
 .ne-loc-hero-meta {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 /* inline type input in hero meta */
