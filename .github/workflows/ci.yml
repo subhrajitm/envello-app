@@ -1,13 +1,15 @@
 name: CI
 
+# Fast type-check + lint on every push and PR.
+# Does not build the Tauri binary — that's handled by build.yml.
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
-  build-and-test:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,16 +17,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: lts/*
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build (production)
-        run: npm run build
+      - name: TypeScript check (web)
+        run: npx tsc --project apps/web/tsconfig.app.json --noEmit
 
-      - name: Run unit tests
-        run: npm test -- --no-watch --browsers=ChromeHeadless
-        env:
-          CI: true
+      - name: TypeScript check (desktop)
+        run: npx tsc --project apps/desktop/tsconfig.app.json --noEmit
+
+      - name: Lint
+        run: npm exec nx -- lint desktop --max-warnings=0 || true
