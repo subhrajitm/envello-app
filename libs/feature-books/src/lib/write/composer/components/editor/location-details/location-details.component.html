@@ -4,62 +4,117 @@
 
         <!-- ── HEADER ── -->
         <div class="ne-ent-hdr">
-            <div class="ne-ent-icon-sq">
-                <span class="material-symbols-outlined">map</span>
+            <div class="ne-ent-icon-sq-wrap">
+                <div class="ne-ent-icon-sq ne-ent-icon-sq--picker"
+                    (click)="toggleIconPicker($event)"
+                    title="Change location icon">
+                    <span class="material-symbols-outlined">{{ loc.icon || 'location_on' }}</span>
+                    <div class="ne-ent-icon-overlay">
+                        <span class="material-symbols-outlined">edit</span>
+                    </div>
+                </div>
+                @if (showIconPicker()) {
+                <div class="ne-icon-picker-popover">
+                    @for (icon of locationIcons; track icon) {
+                    <button class="ne-icon-picker-btn" [class.active]="(loc.icon || 'location_on') === icon"
+                        (click)="selectIcon(icon)" [title]="icon">
+                        <span class="material-symbols-outlined">{{ icon }}</span>
+                    </button>
+                    }
+                </div>
+                }
             </div>
             <div class="ne-ent-hdr-body">
                 <input class="ne-ent-name-input" [value]="loc.name"
-                    (input)="updateField.emit({ id: loc.id, field: 'name', value: $any($event.target).value })"
+                    (input)="emit(loc.id, 'name', $any($event.target).value)"
                     placeholder="Location Name" spellcheck="false" />
                 <div class="ne-ent-hdr-meta">
                     <span class="ne-ent-type-pill">
                         <span class="material-symbols-outlined">location_on</span>
                         LOCATION
                     </span>
-                    @if (loc.type) {
-                    <span class="ne-ent-attr-chip">{{ loc.type }}</span>
-                    }
+                    <input class="ne-ent-type-inline" type="text" [value]="loc.type"
+                        (input)="emit(loc.id, 'type', $any($event.target).value)"
+                        placeholder="Set type…"
+                        (click)="$event.stopPropagation()" />
                 </div>
             </div>
         </div>
 
         <!-- ── GEOGRAPHY ── -->
         <div class="ne-ent-section">
-            <div class="ne-ent-sec-hdr">
+            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleGeography()">
                 <span class="material-symbols-outlined">terrain</span>
                 GEOGRAPHY
+                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!geographyCollapsed()">expand_more</span>
             </div>
+            @if (!geographyCollapsed()) {
             <div class="ne-ent-props-grid">
-                <div class="ne-ent-prop">
-                    <label for="loc-type">LOCATION TYPE</label>
-                    <input id="loc-type" type="text" [value]="loc.type"
-                        (input)="updateField.emit({ id: loc.id, field: 'type', value: $any($event.target).value })"
-                        placeholder="e.g. City, Wilderness, Space Station" />
-                </div>
                 <div class="ne-ent-prop">
                     <label for="loc-climate">CLIMATE / ATMOSPHERE</label>
                     <input id="loc-climate" type="text" [value]="loc.climate ?? ''"
-                        (input)="updateField.emit({ id: loc.id, field: 'climate', value: $any($event.target).value })"
+                        (input)="emit(loc.id, 'climate', $any($event.target).value)"
                         placeholder="e.g. Frozen tundra, Humid jungle" />
+                </div>
+                <div class="ne-ent-prop">
+                    <label for="loc-population">POPULATION / SCALE</label>
+                    <input id="loc-population" type="text" [value]="loc.population ?? ''"
+                        (input)="emit(loc.id, 'population', $any($event.target).value)"
+                        placeholder="e.g. 500,000 inhabitants" />
                 </div>
                 <div class="ne-ent-prop ne-ent-prop--full">
                     <label for="loc-significance">STORY SIGNIFICANCE</label>
                     <input id="loc-significance" type="text" [value]="loc.significance ?? ''"
-                        (input)="updateField.emit({ id: loc.id, field: 'significance', value: $any($event.target).value })"
+                        (input)="emit(loc.id, 'significance', $any($event.target).value)"
                         placeholder="e.g. Where the final confrontation takes place" />
                 </div>
+                <div class="ne-ent-prop ne-ent-prop--full">
+                    <label for="loc-features">NOTABLE FEATURES</label>
+                    <input id="loc-features" type="text" [value]="loc.features ?? ''"
+                        (input)="emit(loc.id, 'features', $any($event.target).value)"
+                        placeholder="e.g. Ancient ruins, underground tunnels" />
+                </div>
             </div>
+            }
         </div>
 
         <!-- ── DESCRIPTION & LORE ── -->
-        <div class="ne-ent-section ne-ent-section--grow">
-            <div class="ne-ent-sec-hdr">
+        <div class="ne-ent-section">
+            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleDescription()">
                 <span class="material-symbols-outlined">auto_stories</span>
                 DESCRIPTION & LORE
+                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!descriptionCollapsed()">expand_more</span>
             </div>
-            <textarea class="ne-ent-prose" [value]="loc.description"
-                (input)="updateField.emit({ id: loc.id, field: 'description', value: $any($event.target).value })"
-                placeholder="Describe the atmosphere, history, and key features..."></textarea>
+            @if (!descriptionCollapsed()) {
+            <div class="ne-ent-prose-wrap">
+                <tiptap-editor [editor]="descriptionEditor" class="ne-ent-prose-editor"></tiptap-editor>
+            </div>
+            }
+        </div>
+
+        <!-- ── TAGS ── -->
+        <div class="ne-ent-section">
+            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleTags()">
+                <span class="material-symbols-outlined">label</span>
+                TAGS
+                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!tagsCollapsed()">expand_more</span>
+            </div>
+            @if (!tagsCollapsed()) {
+            <div class="ne-ent-tags">
+                @for (tag of (loc.tags ?? []); track tag) {
+                <span class="ne-ent-tag">
+                    {{ tag }}
+                    <button class="ne-ent-tag-remove" (click)="removeTag(tag)" title="Remove tag">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </span>
+                }
+                <input class="ne-ent-tag-input" type="text"
+                    [ngModel]="tagInput()" (ngModelChange)="tagInput.set($event)"
+                    (keydown)="addTag($event)"
+                    placeholder="Add tag…" />
+            </div>
+            }
         </div>
 
     </div>

@@ -4,12 +4,21 @@
 
         <!-- ── HEADER ── -->
         <div class="ne-ent-hdr ne-ent-hdr--char">
-            <div class="ne-ent-monogram" [style.background]="avatarColor(c.name)">
-                {{ (c.name[0] || '?').toUpperCase() }}
+            <div class="ne-ent-portrait-wrap" (click)="startEditPortrait()" title="Set portrait image">
+                @if (c.portraitUrl) {
+                <img class="ne-ent-portrait-img" [src]="c.portraitUrl" [alt]="c.name" />
+                } @else {
+                <div class="ne-ent-monogram" [style.background]="avatarColor(c.name)">
+                    {{ (c.name[0] || '?').toUpperCase() }}
+                </div>
+                }
+                <div class="ne-ent-portrait-overlay">
+                    <span class="material-symbols-outlined">photo_camera</span>
+                </div>
             </div>
             <div class="ne-ent-hdr-body">
                 <input class="ne-ent-name-input" [value]="c.name"
-                    (input)="updateField.emit({ id: c.id, field: 'name', value: $any($event.target).value })"
+                    (input)="emit(c.id, 'name', $any($event.target).value)"
                     placeholder="Character Name" spellcheck="false" />
                 <div class="ne-ent-hdr-meta">
                     <span class="ne-ent-type-pill">
@@ -26,61 +35,134 @@
             </div>
         </div>
 
+        @if (editingPortrait()) {
+        <div class="ne-portrait-url-row">
+            <span class="material-symbols-outlined">link</span>
+            <input class="ne-portrait-url-input" type="url"
+                [ngModel]="portraitUrlDraft()" (ngModelChange)="portraitUrlDraft.set($event)"
+                placeholder="https://example.com/portrait.jpg"
+                (keydown.enter)="commitPortrait()"
+                (keydown.escape)="editingPortrait.set(false)"
+                autofocus />
+            <button class="ne-portrait-url-save" (click)="commitPortrait()">Save</button>
+            <button class="ne-portrait-url-cancel" (click)="editingPortrait.set(false)">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        }
+
         <!-- ── PROFILE ATTRIBUTES ── -->
         <div class="ne-ent-section">
-            <div class="ne-ent-sec-hdr">
+            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleProfile()">
                 <span class="material-symbols-outlined">manage_accounts</span>
                 PROFILE ATTRIBUTES
+                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!profileCollapsed()">expand_more</span>
             </div>
+            @if (!profileCollapsed()) {
             <div class="ne-ent-props-grid">
                 <div class="ne-ent-prop">
                     <label for="char-role">ROLE IN STORY</label>
                     <input id="char-role" type="text" [value]="c.role"
-                        (input)="updateField.emit({ id: c.id, field: 'role', value: $any($event.target).value })"
+                        (input)="emit(c.id, 'role', $any($event.target).value)"
                         placeholder="e.g. Protagonist" />
                 </div>
                 <div class="ne-ent-prop">
                     <label for="char-archetype">ARCHETYPE</label>
                     <input id="char-archetype" type="text" [value]="c.archetype"
-                        (input)="updateField.emit({ id: c.id, field: 'archetype', value: $any($event.target).value })"
+                        (input)="emit(c.id, 'archetype', $any($event.target).value)"
                         placeholder="e.g. The Hero" />
                 </div>
                 <div class="ne-ent-prop">
                     <label for="char-age">AGE</label>
                     <input id="char-age" type="text" [value]="c.age ?? ''"
-                        (input)="updateField.emit({ id: c.id, field: 'age', value: $any($event.target).value })"
+                        (input)="emit(c.id, 'age', $any($event.target).value)"
                         placeholder="e.g. 32" />
+                </div>
+                <div class="ne-ent-prop">
+                    <label for="char-occupation">OCCUPATION</label>
+                    <input id="char-occupation" type="text" [value]="c.occupation ?? ''"
+                        (input)="emit(c.id, 'occupation', $any($event.target).value)"
+                        placeholder="e.g. Detective, Farmer" />
+                </div>
+                <div class="ne-ent-prop ne-ent-prop--full">
+                    <label for="char-aliases">ALSO KNOWN AS</label>
+                    <input id="char-aliases" type="text" [value]="c.aliases ?? ''"
+                        (input)="emit(c.id, 'aliases', $any($event.target).value)"
+                        placeholder="Nicknames or aliases" />
                 </div>
                 <div class="ne-ent-prop">
                     <label for="char-motivation">MOTIVATION</label>
                     <input id="char-motivation" type="text" [value]="c.motivation ?? ''"
-                        (input)="updateField.emit({ id: c.id, field: 'motivation', value: $any($event.target).value })"
+                        (input)="emit(c.id, 'motivation', $any($event.target).value)"
                         placeholder="e.g. Avenge her family" />
                 </div>
                 <div class="ne-ent-prop">
                     <label for="char-flaw">FLAW</label>
                     <input id="char-flaw" type="text" [value]="c.flaw ?? ''"
-                        (input)="updateField.emit({ id: c.id, field: 'flaw', value: $any($event.target).value })"
+                        (input)="emit(c.id, 'flaw', $any($event.target).value)"
                         placeholder="e.g. Overconfident" />
                 </div>
-                <div class="ne-ent-prop">
+                <div class="ne-ent-prop ne-ent-prop--full">
                     <label for="char-arc">CHARACTER ARC</label>
                     <input id="char-arc" type="text" [value]="c.arc ?? ''"
-                        (input)="updateField.emit({ id: c.id, field: 'arc', value: $any($event.target).value })"
+                        (input)="emit(c.id, 'arc', $any($event.target).value)"
                         placeholder="e.g. Learns to trust others" />
                 </div>
             </div>
+            }
+        </div>
+
+        <!-- ── APPEARANCE ── -->
+        <div class="ne-ent-section">
+            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleAppearance()">
+                <span class="material-symbols-outlined">face</span>
+                APPEARANCE
+                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!appearanceCollapsed()">expand_more</span>
+            </div>
+            @if (!appearanceCollapsed()) {
+            <div class="ne-ent-prose-wrap">
+                <tiptap-editor [editor]="appearanceEditor" class="ne-ent-prose-editor"></tiptap-editor>
+            </div>
+            }
         </div>
 
         <!-- ── BIOGRAPHY ── -->
-        <div class="ne-ent-section ne-ent-section--grow">
-            <div class="ne-ent-sec-hdr">
+        <div class="ne-ent-section">
+            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleBiography()">
                 <span class="material-symbols-outlined">history_edu</span>
                 BIOGRAPHY & NOTES
+                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!biographyCollapsed()">expand_more</span>
             </div>
-            <textarea class="ne-ent-prose" [value]="c.description"
-                (input)="updateField.emit({ id: c.id, field: 'description', value: $any($event.target).value })"
-                placeholder="Describe their appearance, personality, and backstory..."></textarea>
+            @if (!biographyCollapsed()) {
+            <div class="ne-ent-prose-wrap">
+                <tiptap-editor [editor]="biographyEditor" class="ne-ent-prose-editor"></tiptap-editor>
+            </div>
+            }
+        </div>
+
+        <!-- ── TAGS ── -->
+        <div class="ne-ent-section">
+            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleTags()">
+                <span class="material-symbols-outlined">label</span>
+                TAGS
+                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!tagsCollapsed()">expand_more</span>
+            </div>
+            @if (!tagsCollapsed()) {
+            <div class="ne-ent-tags">
+                @for (tag of (c.tags ?? []); track tag) {
+                <span class="ne-ent-tag">
+                    {{ tag }}
+                    <button class="ne-ent-tag-remove" (click)="removeTag(tag)" title="Remove tag">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </span>
+                }
+                <input class="ne-ent-tag-input" type="text"
+                    [ngModel]="tagInput()" (ngModelChange)="tagInput.set($event)"
+                    (keydown)="addTag($event)"
+                    placeholder="Add tag…" />
+            </div>
+            }
         </div>
 
     </div>

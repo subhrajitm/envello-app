@@ -80,6 +80,11 @@ export interface Character {
     motivation?: string;
     flaw?: string;
     arc?: string;
+    appearance?: string;
+    occupation?: string;
+    aliases?: string;
+    portraitUrl?: string;
+    tags?: string[];
 }
 
 export interface Location {
@@ -89,6 +94,10 @@ export interface Location {
     description: string;
     climate?: string;
     significance?: string;
+    population?: string;
+    features?: string;
+    icon?: string;
+    tags?: string[];
 }
 
 export interface EditorNote {

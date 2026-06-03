@@ -15,6 +15,8 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
+import Mention from '@tiptap/extension-mention';
+import { buildMentionSuggestion } from './mention-suggestion';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BookContentService, Chapter, ChapterGroup } from '@envello/core';
@@ -606,6 +608,35 @@ export class ComposerComponent implements OnInit, OnDestroy {
         Youtube.configure({ controls: true }),
         Placeholder.configure({
           placeholder: 'Start writing your chapter...',
+        }),
+        Mention.extend({
+          addAttributes() {
+            return {
+              ...this.parent?.(),
+              mentionType: {
+                default: 'character',
+                parseHTML: el => el.getAttribute('data-mention-type') ?? 'character',
+                renderHTML: attrs => ({ 'data-mention-type': attrs['mentionType'] }),
+              },
+            };
+          },
+        }).configure({
+          HTMLAttributes: { class: 'ne-mention' },
+          renderText: ({ node }) => `@${node.attrs['label'] ?? node.attrs['id']}`,
+          suggestion: buildMentionSuggestion((query) => {
+            const book = this.book();
+            if (!book) return [];
+            const chars = book.characters.map(c => ({
+              id: c.id, label: c.name, mentionType: 'character' as const,
+            }));
+            const locs = book.locations.map(l => ({
+              id: l.id, label: l.name, mentionType: 'location' as const,
+            }));
+            const q = query.toLowerCase();
+            return [...chars, ...locs]
+              .filter(item => !q || item.label.toLowerCase().includes(q))
+              .slice(0, 12);
+          }),
         }),
       ],
       content: '', // Initial content will be set by effect
@@ -1204,12 +1235,12 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.selectedCharacterId.set(charId);
   }
 
-  updateCharacterField(charId: string, field: string, value: string) {
-    this.bookService.updateCharacter(charId, { [field]: value });
+  updateCharacterField(charId: string, field: string, value: string | string[]) {
+    this.bookService.updateCharacter(charId, { [field]: value } as never);
   }
 
   // Handler for component output
-  onCharacterFieldUpdate(data: { id: string; field: string; value: string }) {
+  onCharacterFieldUpdate(data: { id: string; field: string; value: string | string[] }) {
     this.updateCharacterField(data.id, data.field, data.value);
   }
 
@@ -1239,12 +1270,12 @@ export class ComposerComponent implements OnInit, OnDestroy {
     this.selectedLocationId.set(locId);
   }
 
-  updateLocationField(locId: string, field: string, value: string) {
-    this.bookService.updateLocation(locId, { [field]: value });
+  updateLocationField(locId: string, field: string, value: string | string[]) {
+    this.bookService.updateLocation(locId, { [field]: value } as never);
   }
 
   // Handler for component output
-  onLocationFieldUpdate(data: { id: string; field: string; value: string }) {
+  onLocationFieldUpdate(data: { id: string; field: string; value: string | string[] }) {
     this.updateLocationField(data.id, data.field, data.value);
   }
 
