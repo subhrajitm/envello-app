@@ -1,5 +1,5 @@
 /* Intelligent Capture Theme - Compact Enterprise */
-@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fonts loaded globally from styles.css — no per-component import needed */
 
 :host {
   /* Palette - Mapped to Global Theme */
@@ -78,7 +78,7 @@
 }
 
 .big-input-display {
-  font-family: var(--font-serif, 'Georgia', serif);
+  font-family: var(--font-sans);
   font-size: 36px;
   line-height: 1.2;
   color: var(--text-primary);

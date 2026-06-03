@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+/* ── Bundled fonts — no internet required ───────────────────────────────── */
+
+/* Inter (UI sans-serif) */
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+/* JetBrains Mono (code / monospace) */
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+/* Atkinson Hyperlegible (reading / accessibility) */
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+
+/* Courier Prime (typewriter theme) */
+@import '@fontsource/courier-prime/400.css';
+@import '@fontsource/courier-prime/700.css';
+
+/* Merriweather (workspace serif) */
+@import '@fontsource/merriweather/300.css';
+@import '@fontsource/merriweather/400.css';
+@import '@fontsource/merriweather/700.css';
+@import '@fontsource/merriweather/300-italic.css';
+
+/* Material Symbols Outlined (icon font) */
+@import 'material-symbols/outlined.css';
+
 :root {
     --titlebar-height: 28px; /* Tauri overlay title bar */
     /* Kindle Paperwhite Aesthetic (DEFAULT) */
