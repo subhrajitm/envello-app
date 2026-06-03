@@ -30,11 +30,6 @@ export class CharacterDetailsComponent implements OnInit, OnDestroy {
 
   readonly avatarColor = avatarColor;
 
-  profileCollapsed = signal(false);
-  appearanceCollapsed = signal(false);
-  biographyCollapsed = signal(false);
-  tagsCollapsed = signal(false);
-
   editingPortrait = signal(false);
   portraitUrlDraft = signal('');
   tagInput = signal('');
@@ -128,9 +123,4 @@ export class CharacterDetailsComponent implements OnInit, OnDestroy {
     if (c) this.updateField.emit({ id: c.id, field: 'portraitUrl', value: this.portraitUrlDraft() });
     this.editingPortrait.set(false);
   }
-
-  toggleProfile() { this.profileCollapsed.update(v => !v); }
-  toggleAppearance() { this.appearanceCollapsed.update(v => !v); }
-  toggleBiography() { this.biographyCollapsed.update(v => !v); }
-  toggleTags() { this.tagsCollapsed.update(v => !v); }
 }

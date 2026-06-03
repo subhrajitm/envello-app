@@ -27,10 +27,6 @@ export class LocationDetailsComponent implements OnInit, OnDestroy {
   updateField = output<{ id: string; field: string; value: string | string[] }>();
   addNewLocation = output<void>();
 
-  geographyCollapsed = signal(false);
-  descriptionCollapsed = signal(false);
-  tagsCollapsed = signal(false);
-
   showIconPicker = signal(false);
   tagInput = signal('');
 
@@ -90,6 +86,11 @@ export class LocationDetailsComponent implements OnInit, OnDestroy {
     this.showIconPicker.set(false);
   }
 
+  toggleIconPicker(e: Event) {
+    e.stopPropagation();
+    this.showIconPicker.update(v => !v);
+  }
+
   addTag(event: KeyboardEvent) {
     if (event.key !== 'Enter' && event.key !== ',') return;
     event.preventDefault();
@@ -110,14 +111,9 @@ export class LocationDetailsComponent implements OnInit, OnDestroy {
     this.updateField.emit({ id: loc.id, field: 'tags', value: (loc.tags ?? []).filter(t => t !== tag) });
   }
 
-  toggleGeography() { this.geographyCollapsed.update(v => !v); }
-  toggleDescription() { this.descriptionCollapsed.update(v => !v); }
-  toggleTags() { this.tagsCollapsed.update(v => !v); }
-  toggleIconPicker(e: Event) { e.stopPropagation(); this.showIconPicker.update(v => !v); }
-
   @HostListener('document:click', ['$event'])
   onDocClick(e: MouseEvent) {
-    if (!(e.target as HTMLElement).closest('.ne-ent-icon-sq-wrap')) {
+    if (!(e.target as HTMLElement).closest('.ne-loc-icon-wrap')) {
       this.showIconPicker.set(false);
     }
   }

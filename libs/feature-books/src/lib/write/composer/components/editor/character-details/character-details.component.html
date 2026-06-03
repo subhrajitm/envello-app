@@ -1,158 +1,126 @@
-<div class="ne-details-canvas">
+<div class="ne-char-layout">
     @if (character(); as c) {
-    <div class="ne-ent-card">
 
-        <!-- ── HEADER ── -->
-        <div class="ne-ent-hdr ne-ent-hdr--char">
-            <div class="ne-ent-portrait-wrap" (click)="startEditPortrait()" title="Set portrait image">
-                @if (c.portraitUrl) {
-                <img class="ne-ent-portrait-img" [src]="c.portraitUrl" [alt]="c.name" />
-                } @else {
-                <div class="ne-ent-monogram" [style.background]="avatarColor(c.name)">
-                    {{ (c.name[0] || '?').toUpperCase() }}
-                </div>
+    <!-- ── HERO HEADER ─────────────────────────────────────────── -->
+    <div class="ne-char-hero">
+        <div class="ne-char-portrait-wrap" (click)="startEditPortrait()" title="Set portrait image">
+            @if (c.portraitUrl) {
+            <img class="ne-char-portrait-img" [src]="c.portraitUrl" [alt]="c.name" />
+            } @else {
+            <div class="ne-char-monogram" [style.background]="avatarColor(c.name)">
+                {{ (c.name[0] || '?').toUpperCase() }}
+            </div>
+            }
+            <div class="ne-char-portrait-overlay">
+                <span class="material-symbols-outlined">photo_camera</span>
+            </div>
+        </div>
+
+        <div class="ne-char-hero-info">
+            <input class="ne-char-name-input" [value]="c.name"
+                (input)="emit(c.id, 'name', $any($event.target).value)"
+                placeholder="Character Name" spellcheck="false" />
+            <div class="ne-char-hero-meta">
+                <span class="ne-ent-type-pill">
+                    <span class="material-symbols-outlined">person</span>
+                    CHARACTER
+                </span>
+                @if (c.role) {
+                <span class="ne-ent-attr-chip">{{ c.role }}</span>
                 }
-                <div class="ne-ent-portrait-overlay">
-                    <span class="material-symbols-outlined">photo_camera</span>
-                </div>
-            </div>
-            <div class="ne-ent-hdr-body">
-                <input class="ne-ent-name-input" [value]="c.name"
-                    (input)="emit(c.id, 'name', $any($event.target).value)"
-                    placeholder="Character Name" spellcheck="false" />
-                <div class="ne-ent-hdr-meta">
-                    <span class="ne-ent-type-pill">
-                        <span class="material-symbols-outlined">person</span>
-                        CHARACTER
-                    </span>
-                    @if (c.role) {
-                    <span class="ne-ent-attr-chip">{{ c.role }}</span>
-                    }
-                    @if (c.archetype) {
-                    <span class="ne-ent-attr-chip ne-ent-attr-chip--muted">{{ c.archetype }}</span>
-                    }
-                </div>
+                @if (c.archetype) {
+                <span class="ne-ent-attr-chip ne-ent-attr-chip--muted">{{ c.archetype }}</span>
+                }
+                @for (tag of (c.tags ?? []); track tag) {
+                <span class="ne-char-hero-tag">{{ tag }}</span>
+                }
             </div>
         </div>
+    </div>
 
-        @if (editingPortrait()) {
-        <div class="ne-portrait-url-row">
-            <span class="material-symbols-outlined">link</span>
-            <input class="ne-portrait-url-input" type="url"
-                [ngModel]="portraitUrlDraft()" (ngModelChange)="portraitUrlDraft.set($event)"
-                placeholder="https://example.com/portrait.jpg"
-                (keydown.enter)="commitPortrait()"
-                (keydown.escape)="editingPortrait.set(false)"
-                autofocus />
-            <button class="ne-portrait-url-save" (click)="commitPortrait()">Save</button>
-            <button class="ne-portrait-url-cancel" (click)="editingPortrait.set(false)">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        }
+    @if (editingPortrait()) {
+    <div class="ne-portrait-url-row">
+        <span class="material-symbols-outlined">link</span>
+        <input class="ne-portrait-url-input" type="url"
+            [ngModel]="portraitUrlDraft()" (ngModelChange)="portraitUrlDraft.set($event)"
+            placeholder="https://example.com/portrait.jpg"
+            (keydown.enter)="commitPortrait()"
+            (keydown.escape)="editingPortrait.set(false)"
+            autofocus />
+        <button class="ne-portrait-url-save" (click)="commitPortrait()">Save</button>
+        <button class="ne-portrait-url-cancel" (click)="editingPortrait.set(false)">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+    }
 
-        <!-- ── PROFILE ATTRIBUTES ── -->
-        <div class="ne-ent-section">
-            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleProfile()">
-                <span class="material-symbols-outlined">manage_accounts</span>
-                PROFILE ATTRIBUTES
-                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!profileCollapsed()">expand_more</span>
-            </div>
-            @if (!profileCollapsed()) {
-            <div class="ne-ent-props-grid">
-                <div class="ne-ent-prop">
-                    <label for="char-role">ROLE IN STORY</label>
-                    <input id="char-role" type="text" [value]="c.role"
+    <!-- ── BODY: sidebar + main ────────────────────────────────── -->
+    <div class="ne-char-body">
+
+        <!-- LEFT SIDEBAR ── attributes + tags -->
+        <div class="ne-char-sidebar">
+
+            <div class="ne-char-section-label">PROFILE</div>
+
+            <div class="ne-char-fields">
+                <div class="ne-char-field">
+                    <label>ROLE IN STORY</label>
+                    <input type="text" [value]="c.role"
                         (input)="emit(c.id, 'role', $any($event.target).value)"
                         placeholder="e.g. Protagonist" />
                 </div>
-                <div class="ne-ent-prop">
-                    <label for="char-archetype">ARCHETYPE</label>
-                    <input id="char-archetype" type="text" [value]="c.archetype"
+                <div class="ne-char-field">
+                    <label>ARCHETYPE</label>
+                    <input type="text" [value]="c.archetype"
                         (input)="emit(c.id, 'archetype', $any($event.target).value)"
                         placeholder="e.g. The Hero" />
                 </div>
-                <div class="ne-ent-prop">
-                    <label for="char-age">AGE</label>
-                    <input id="char-age" type="text" [value]="c.age ?? ''"
+                <div class="ne-char-field">
+                    <label>AGE</label>
+                    <input type="text" [value]="c.age ?? ''"
                         (input)="emit(c.id, 'age', $any($event.target).value)"
                         placeholder="e.g. 32" />
                 </div>
-                <div class="ne-ent-prop">
-                    <label for="char-occupation">OCCUPATION</label>
-                    <input id="char-occupation" type="text" [value]="c.occupation ?? ''"
+                <div class="ne-char-field">
+                    <label>OCCUPATION</label>
+                    <input type="text" [value]="c.occupation ?? ''"
                         (input)="emit(c.id, 'occupation', $any($event.target).value)"
-                        placeholder="e.g. Detective, Farmer" />
+                        placeholder="e.g. Detective" />
                 </div>
-                <div class="ne-ent-prop ne-ent-prop--full">
-                    <label for="char-aliases">ALSO KNOWN AS</label>
-                    <input id="char-aliases" type="text" [value]="c.aliases ?? ''"
+                <div class="ne-char-field">
+                    <label>ALSO KNOWN AS</label>
+                    <input type="text" [value]="c.aliases ?? ''"
                         (input)="emit(c.id, 'aliases', $any($event.target).value)"
                         placeholder="Nicknames or aliases" />
                 </div>
-                <div class="ne-ent-prop">
-                    <label for="char-motivation">MOTIVATION</label>
-                    <input id="char-motivation" type="text" [value]="c.motivation ?? ''"
+                <div class="ne-char-field">
+                    <label>MOTIVATION</label>
+                    <input type="text" [value]="c.motivation ?? ''"
                         (input)="emit(c.id, 'motivation', $any($event.target).value)"
                         placeholder="e.g. Avenge her family" />
                 </div>
-                <div class="ne-ent-prop">
-                    <label for="char-flaw">FLAW</label>
-                    <input id="char-flaw" type="text" [value]="c.flaw ?? ''"
+                <div class="ne-char-field">
+                    <label>FLAW</label>
+                    <input type="text" [value]="c.flaw ?? ''"
                         (input)="emit(c.id, 'flaw', $any($event.target).value)"
                         placeholder="e.g. Overconfident" />
                 </div>
-                <div class="ne-ent-prop ne-ent-prop--full">
-                    <label for="char-arc">CHARACTER ARC</label>
-                    <input id="char-arc" type="text" [value]="c.arc ?? ''"
+                <div class="ne-char-field">
+                    <label>CHARACTER ARC</label>
+                    <input type="text" [value]="c.arc ?? ''"
                         (input)="emit(c.id, 'arc', $any($event.target).value)"
-                        placeholder="e.g. Learns to trust others" />
+                        placeholder="e.g. Learns to trust" />
                 </div>
             </div>
-            }
-        </div>
 
-        <!-- ── APPEARANCE ── -->
-        <div class="ne-ent-section">
-            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleAppearance()">
-                <span class="material-symbols-outlined">face</span>
-                APPEARANCE
-                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!appearanceCollapsed()">expand_more</span>
-            </div>
-            @if (!appearanceCollapsed()) {
-            <div class="ne-ent-prose-wrap">
-                <tiptap-editor [editor]="appearanceEditor" class="ne-ent-prose-editor"></tiptap-editor>
-            </div>
-            }
-        </div>
+            <div class="ne-char-sidebar-divider"></div>
 
-        <!-- ── BIOGRAPHY ── -->
-        <div class="ne-ent-section">
-            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleBiography()">
-                <span class="material-symbols-outlined">history_edu</span>
-                BIOGRAPHY & NOTES
-                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!biographyCollapsed()">expand_more</span>
-            </div>
-            @if (!biographyCollapsed()) {
-            <div class="ne-ent-prose-wrap">
-                <tiptap-editor [editor]="biographyEditor" class="ne-ent-prose-editor"></tiptap-editor>
-            </div>
-            }
-        </div>
-
-        <!-- ── TAGS ── -->
-        <div class="ne-ent-section">
-            <div class="ne-ent-sec-hdr ne-ent-sec-hdr--toggle" (click)="toggleTags()">
-                <span class="material-symbols-outlined">label</span>
-                TAGS
-                <span class="ne-sec-chevron material-symbols-outlined" [class.ne-sec-chevron--up]="!tagsCollapsed()">expand_more</span>
-            </div>
-            @if (!tagsCollapsed()) {
+            <div class="ne-char-section-label">TAGS</div>
             <div class="ne-ent-tags">
                 @for (tag of (c.tags ?? []); track tag) {
                 <span class="ne-ent-tag">
                     {{ tag }}
-                    <button class="ne-ent-tag-remove" (click)="removeTag(tag)" title="Remove tag">
+                    <button class="ne-ent-tag-remove" (click)="removeTag(tag)" title="Remove">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </span>
@@ -162,10 +130,32 @@
                     (keydown)="addTag($event)"
                     placeholder="Add tag…" />
             </div>
-            }
+
+        </div>
+
+        <!-- RIGHT MAIN ── prose editors -->
+        <div class="ne-char-main">
+
+            <div class="ne-char-prose-section">
+                <div class="ne-char-prose-hdr">
+                    <span class="material-symbols-outlined">face</span>
+                    APPEARANCE
+                </div>
+                <tiptap-editor [editor]="appearanceEditor" class="ne-char-prose-tiptap"></tiptap-editor>
+            </div>
+
+            <div class="ne-char-prose-section">
+                <div class="ne-char-prose-hdr">
+                    <span class="material-symbols-outlined">history_edu</span>
+                    BIOGRAPHY & NOTES
+                </div>
+                <tiptap-editor [editor]="biographyEditor" class="ne-char-prose-tiptap"></tiptap-editor>
+            </div>
+
         </div>
 
     </div>
+
     } @else {
     <div class="ne-empty-state ne-empty-state--compact">
         <span class="material-symbols-outlined ne-empty-icon-sm">group</span>

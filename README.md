@@ -1,20 +1,243 @@
 # Envello
 
-A distraction-free productivity and creative writing workspace. Envello combines task management, note-taking, novel writing, research organization, project tracking, and credential vaulting into a single desktop-first application with web support.
+> A distraction-free productivity and creative writing workspace — built for writers, developers, and solo operators.
 
-Built with Angular + Tauri for desktop, with a shared architecture across all platforms.
+Envello combines **book writing**, **task management**, **daily notes**, **research organization**, **project tracking**, **bookmark management**, and **credential vaulting** into a single desktop-first application with full web and mobile support.
+
+---
+
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph Apps["Client Applications"]
+        D["🖥 Desktop\nTauri v2 + Angular\nmacOS · Windows · Linux"]
+        W["🌐 Web PWA\nAngular · Browser"]
+        M["📱 Mobile\nTauri Mobile\niOS · Android"]
+        A["⚙️ Admin\nAngular SPA · Browser"]
+    end
+
+    subgraph Features["Feature Libraries  (@envello/feature-*)"]
+        direction LR
+        FB[feature-books\nManuscript editor]
+        FT[feature-tasks\nTask management]
+        FN[feature-daily-notes\nJournaling]
+        FK[feature-bookmarks\nBookmark manager]
+        FV[feature-vault\nCredential store]
+        FVN[feature-vendor\nSubscriptions]
+        FW[feature-workspace\nDashboard]
+    end
+
+    subgraph Platform["Platform Libraries"]
+        UI["@envello/ui\n28 shared components"]
+        STATE["@envello/state\nAngular Signals store"]
+        CORE["@envello/core\nSingleton services\n(Auth · AI · Theme · SQLite)"]
+        DATA["@envello/data\nDataService interface"]
+        DOMAIN["@envello/domain\nPure TypeScript types"]
+    end
+
+    subgraph Persistence["Persistence"]
+        SQLITE[("SQLite\nDesktop · Mobile\n@tauri-apps/plugin-sql")]
+        POUCHDB[("PouchDB\nWeb (IndexedDB)")]
+        SUPABASE[("Supabase\nPostgres + Auth\nCloud sync for Web")]
+    end
+
+    subgraph AI["AI Providers  (LangChain.js)"]
+        direction LR
+        OAI[OpenAI\nGPT-4o]
+        ANT[Anthropic\nClaude 3.5]
+        GEM[Google\nGemini 2.0]
+        XAI[xAI Grok]
+        OLL[Ollama\nLocal models]
+    end
+
+    Apps --> Features
+    Features --> UI & STATE
+    STATE & UI --> CORE
+    CORE --> DATA
+    DATA --> DOMAIN
+
+    D & M --> SQLITE
+    W --> POUCHDB --> SUPABASE
+    CORE --> AI
+```
+
+---
+
+## Library Dependency Layers
+
+```mermaid
+graph BT
+    DOMAIN["@envello/domain\nPure TypeScript interfaces\nNo Angular dependency"]
+    DATA["@envello/data\nAbstract DataService\nSQLite + PouchDB adapters"]
+    STATE["@envello/state\nAngular Signals global store\nStoreService · BinService · VaultStore"]
+    CORE["@envello/core\nSingleton services\nAuth · AI · Tauri bridge · Theme"]
+    UI["@envello/ui\n28 reusable components\nButton · Modal · Sidebar · Dialog…"]
+    FEATURES["feature-* (7 libs)\nSelf-contained feature modules"]
+    APPS["apps/\ndesktop · web · mobile · admin · landing"]
+
+    DOMAIN --> DATA
+    DOMAIN --> STATE
+    DATA --> CORE
+    STATE --> CORE
+    CORE --> UI
+    CORE --> FEATURES
+    UI --> FEATURES
+    FEATURES --> APPS
+
+    style DOMAIN fill:#f0fdf4,stroke:#86efac
+    style DATA fill:#fefce8,stroke:#fde047
+    style STATE fill:#fefce8,stroke:#fde047
+    style CORE fill:#fff7ed,stroke:#fdba74
+    style UI fill:#eff6ff,stroke:#93c5fd
+    style FEATURES fill:#faf5ff,stroke:#c4b5fd
+    style APPS fill:#f0f9ff,stroke:#7dd3fc
+```
+
+---
+
+## CI/CD Pipeline
+
+```mermaid
+flowchart TD
+    PUSH["git push → main"] --> CI["ci.yml\nTypeScript check\n+ ESLint\n~2 min"]
+    PUSH --> BUILD["build.yml\nBuild all 4 platforms\nin parallel\n~10–15 min"]
+
+    BUILD --> MA["macOS arm64\n.dmg"]
+    BUILD --> MX["macOS x64\n.dmg"]
+    BUILD --> WN["Windows\n.msi + .exe"]
+    BUILD --> LX["Linux\n.AppImage + .deb"]
+
+    MA & MX & WN & LX --> ART["GitHub Actions Artifacts\nDownloadable 30 days"]
+
+    TAG["git tag v1.x.x\ngit push --tags"] --> REL["release.yml\nSigned + Notarized\nbuild on all platforms"]
+    REL --> GHR["GitHub Release\nPublic installers\nPermanent links"]
+    GHR --> UPD["In-app Updater\nauto-notified via\nGitHub endpoint"]
+
+    style CI fill:#dcfce7,stroke:#4ade80
+    style BUILD fill:#dbeafe,stroke:#60a5fa
+    style REL fill:#fef9c3,stroke:#facc15
+    style GHR fill:#f3e8ff,stroke:#a78bfa
+    style UPD fill:#ffedd5,stroke:#fb923c
+```
 
 ---
 
 ## Apps
 
-| App | Type | Platform | Port | Description |
-|-----|------|----------|------|-------------|
-| `desktop` | Tauri + Angular | macOS / Windows / Linux | 4200 | Native desktop app with SQLite persistence |
-| `web` | Angular PWA | Browser | 4200 | Web app with PouchDB (IndexedDB) + Supabase cloud sync |
-| `mobile` | Tauri Mobile | iOS / Android | 4202 | Mobile app (Tauri iOS & Android targets) |
-| `admin` | Angular SPA | Browser | 4201 | Admin dashboard — AI config, users, feature flags, usage |
-| `landing` | Angular SPA | Browser | — | Marketing landing page |
+| App | Platform | Port | Description |
+|-----|----------|------|-------------|
+| `desktop` | Tauri v2 + Angular — macOS / Windows / Linux | 4200 | Native desktop app with SQLite persistence |
+| `web` | Angular PWA — Browser | 4200 | Web app with PouchDB (IndexedDB) + Supabase cloud sync |
+| `mobile` | Tauri Mobile — iOS / Android | 4202 | Mobile app (Tauri iOS & Android targets) |
+| `admin` | Angular SPA — Browser | 4201 | Admin dashboard — AI config, users, feature flags, usage |
+| `landing` | Angular SPA — Browser | — | Marketing landing page |
+
+---
+
+## Features
+
+### Book / Manuscript Editor (`feature-books`)
+
+A full-featured long-form writing workspace:
+
+| Component | Description |
+|-----------|-------------|
+| **Manuscript editor** | Tiptap v3 rich-text editor — bold, italic, headings, tables, task lists, code blocks, images, YouTube embeds |
+| **@mention characters** | Type `@` while writing to insert a linked character or location chip — autocomplete from your book's cast |
+| **Chapter management** | Create, reorder (drag & drop), group into Acts/Parts, duplicate, bulk-move, bulk-delete |
+| **Character details** | Name, role, archetype, occupation, age, aliases, motivation, flaw, arc, portrait image, tags, rich-text appearance & biography sections |
+| **Location details** | Name, type (inline editable), climate, population, notable features, story significance, icon picker, tags, rich-text description |
+| **Character relationships** | SVG radial graph showing character connections with labelled edges |
+| **Front matter & Prologue** | Title page, copyright, TOC, dedication, foreword, preface |
+| **Synopsis** | Logline + theme |
+| **Notes** | Chapter-linked editor notes |
+| **Version history** | Per-chapter snapshots with restore |
+| **Word count & goals** | Live word count, daily writing goal progress |
+| **Focus mode** | Distraction-free full-screen writing |
+| **Export** | Chapter export as Markdown |
+| **Keyboard shortcuts panel** | `?` to open all shortcuts |
+
+### Tasks (`feature-tasks`)
+
+Full task management with priority, due dates, subtasks, dependencies, recurring patterns, Pomodoro timer, focus mode, timeline view, voice input, AI assistant, and undo/redo.
+
+### Daily Notes (`feature-daily-notes`)
+
+Rich-text journaling with Tiptap editor (tables, task lists, code blocks, images, YouTube embeds), folder-based organization, AI note generation, and note backgrounds.
+
+### Bookmarks (`feature-bookmarks`)
+
+Bookmark manager with table/grid views, folder organization, pinning, archiving, tagging, color accents, and AI integration.
+
+### Vault (`feature-vault`)
+
+Encrypted credential manager for logins, API keys, SSH keys, database connections, and secure notes.
+
+### Vendors (`feature-vendor`)
+
+Subscription/vendor tracker with ~60 vendor presets, billing cycles, cost calculation, and renewal reminders.
+
+### Workspace (`feature-workspace`)
+
+Main dashboard hub with overview, recent activity, voice input, quick-add command bar, and CPU/latency metrics.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Frontend | Angular (Standalone Components + Signals) | v20 |
+| Desktop/Mobile runtime | Tauri (Rust + Webview) | v2 |
+| Styling | TailwindCSS + CSS Custom Properties | v4 |
+| Rich-text editor | Tiptap (16+ extensions incl. @mention) | v3 |
+| AI orchestration | LangChain.js (6 providers) | latest |
+| Desktop database | SQLite via `@tauri-apps/plugin-sql` | — |
+| Web database | PouchDB + Supabase | — |
+| Backend / Auth | Supabase (Postgres, RLS, Realtime) | v2 |
+| Monorepo build | Nx | v22 |
+| State management | Angular Signals (no NgRx) | — |
+
+---
+
+## Monorepo Structure
+
+```
+envello/
+├── apps/
+│   ├── desktop/            # Tauri desktop app
+│   │   └── src-tauri/      # Rust backend (moved from root in earlier sessions)
+│   ├── web/                # Angular PWA
+│   ├── mobile/             # Tauri mobile (iOS + Android)
+│   │   └── src-tauri/      # Mobile Rust backend
+│   ├── admin/              # Admin dashboard
+│   └── landing/            # Marketing page
+│
+├── libs/
+│   ├── domain/             # Pure TS interfaces: Task, Note, Book, Project, Character…
+│   ├── data/               # Persistence abstraction (SQLite / PouchDB adapters)
+│   ├── state/              # Global Signals store: StoreService, BinService, VaultStore
+│   ├── core/               # Singleton services: Auth, AI, Theme, Tauri bridge, SQLite
+│   ├── ui/                 # ~28 reusable standalone Angular components
+│   ├── feature-books/      # Book/manuscript writing workspace
+│   ├── feature-tasks/      # Task management
+│   ├── feature-daily-notes/# Journaling
+│   ├── feature-bookmarks/  # Bookmark manager
+│   ├── feature-vault/      # Credential vault
+│   ├── feature-vendor/     # Subscription tracker
+│   └── feature-workspace/  # Dashboard hub
+│
+├── src-tauri/              # Rust backend (Tauri v2) — desktop
+├── supabase/
+│   └── migrations/         # SQL: profiles, AI config, feature flags, usage logs
+│
+└── .github/
+    └── workflows/
+        ├── ci.yml          # TypeScript check + lint (every push/PR)
+        ├── build.yml       # Build all platforms → artifacts (every push to main)
+        └── release.yml     # Signed release (on version tag)
+```
 
 ---
 
@@ -22,236 +245,170 @@ Built with Angular + Tauri for desktop, with a shared architecture across all pl
 
 ### Prerequisites
 
-- Node.js v22+
-- npm v10+
-- Rust (latest stable) — required for Tauri desktop and mobile builds
-- Xcode — required for iOS builds
-- Android Studio + NDK — required for Android builds
-
-### Install
+| Tool | Version | Required for |
+|------|---------|-------------|
+| Node.js | v22+ | All |
+| npm | v10+ | All |
+| Rust (stable) | latest | Desktop + Mobile builds |
+| Xcode | latest | iOS builds |
+| Android Studio + NDK | latest | Android builds |
 
 ```bash
+# Install Node dependencies
 npm install
+
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 ---
 
 ## Commands
 
-All commands use `npm exec nx` (the project convention). Never invoke `ng`, `jest`, or `tsc` directly.
+> All commands use `npm exec nx`. Never invoke `ng`, `jest`, or `tsc` directly.
 
 ### Dev Servers
 
 ```bash
-# Desktop — browser-only preview (Angular on http://localhost:4200)
+# Desktop — browser-only preview (fast, no Rust compile)
 npm exec nx serve desktop
 
-# Desktop — native Tauri window (compiles Rust + opens the OS window)
+# Desktop — native Tauri window (compiles Rust + opens OS window)
 npm exec tauri dev
 
-# Web PWA (http://localhost:4200)
+# Web PWA
 npm exec nx serve web
 
-# Mobile — browser preview (http://localhost:4202)
+# Mobile — browser preview
 npm exec nx serve mobile
 
-# Mobile — native iOS simulator
-npm exec nx run mobile:tauri-ios
-
-# Mobile — native Android emulator
-npm exec nx run mobile:tauri-android
-
-# Admin dashboard (http://localhost:4201)
+# Admin dashboard
 npm exec nx serve admin
-
-# Landing page
-npm exec nx serve landing
 ```
-
-> **Desktop preview note:** `npm exec nx serve desktop` opens the Angular app in your browser for fast UI iteration. To open the actual native macOS/Windows/Linux window (Rust + Webview), use `npm exec tauri dev` — it automatically starts the Angular dev server first via `beforeDevCommand`.
 
 ### Build
 
 ```bash
-# Desktop — Angular frontend build
+# Desktop frontend (Angular only)
 npm exec nx build desktop
 
-# Desktop — production native binaries (macOS .dmg, Windows .exe, Linux .AppImage)
+# Desktop native binary (.dmg / .exe / .AppImage)
 npm exec tauri build
-
-# Desktop — specific configuration
-npm exec nx build desktop --configuration development
-npm exec nx build desktop --configuration staging
-npm exec nx build desktop --configuration production   # default
 
 # Web PWA
 npm exec nx build web
 
-# Mobile — iOS release build
-npm exec nx run mobile:tauri-ios-build
-
-# Mobile — Android release build
-npm exec nx run mobile:tauri-android-build
-
-# Admin dashboard
-npm exec nx build admin
-
-# Landing page
-npm exec nx build landing
-
-# Build everything at once
+# Build everything
 npm exec nx run-many --target=build --all
-```
-
-### Preview (static build)
-
-```bash
-# Serve a production build locally (no live reload)
-npm exec nx run admin:serve-static
-npm exec nx run landing:serve-static
-```
-
-### npm Script Aliases
-
-The following short-form aliases are defined in `package.json`:
-
-```bash
-npm run dev            # = npm exec nx serve desktop (Angular dev server)
-npm exec tauri dev     # Native desktop window
-npm run build          # = npm exec nx build desktop
-npm run build:staging  # = npm exec nx build desktop --configuration staging
-npm run build:prod     # = npm exec nx build desktop --configuration production
-npm run watch          # = npm exec nx build desktop --watch --configuration development
-npm run start:web      # = npm exec nx serve web
-npm run build:web      # = npm exec nx build web
 ```
 
 ### Test
 
 ```bash
-# All projects
-npm exec nx run-many --target=test
-
-# Specific project
 npm exec nx test desktop
 npm exec nx test web
-npm exec nx test admin
-
-# Single library
 npm exec nx test feature-tasks
-npm exec nx test feature-daily-notes
 ```
 
-### Lint
+### Lint & Format
 
 ```bash
-# All projects
 npm exec nx run-many --target=lint
-
-# Specific project
-npm exec nx lint desktop
-npm exec nx lint web
-npm exec nx lint admin
-```
-
-### Format
-
-```bash
-# Auto-format all files (Prettier)
 npm exec nx format:write
-
-# Check formatting without writing
-npm exec nx format:check
 ```
 
-### Project Graph
+### Other
 
 ```bash
-# Open interactive dependency graph in browser
+# Interactive dependency graph
 npm exec nx graph
-```
 
-### AI Context
-
-```bash
-# Regenerate AI_CONTEXT.md (auto-generated API surface for LLM agents)
+# Regenerate AI context file
 npm run generate:context
 ```
 
 ---
 
-## Architecture
+## CI/CD
 
-### Nx Monorepo Structure
+Three GitHub Actions workflows run automatically:
 
-```
-envello/
-├── apps/
-│   ├── desktop/        # Tauri desktop app (Angular frontend + Rust backend)
-│   ├── web/            # Angular PWA
-│   ├── mobile/         # Tauri mobile (iOS + Android)
-│   ├── admin/          # Admin dashboard
-│   └── landing/        # Marketing page
-├── libs/
-│   ├── domain/         # Pure TS interfaces (Task, Note, Novel, Project, etc.)
-│   ├── data/           # Persistence abstraction (SQLite / PouchDB adapters)
-│   ├── state/          # Global state (Angular Signals) — StoreService, BinService, VaultStore, etc.
-│   ├── core/           # Singleton services (Auth, AI, Theme, Tauri bridge, etc.)
-│   ├── ui/             # ~28 reusable UI components (Button, Modal, Sidebar, etc.)
-│   └── feature-*/      # Feature modules (tasks, novels, projects, vault, etc.)
-├── src-tauri/          # Rust backend (Tauri v2) — used by desktop and mobile
-└── supabase/
-    └── migrations/     # SQL migrations for Supabase (profiles, AI config, feature flags, usage logs)
+### `ci.yml` — on every push and PR to `main`
+Fast feedback: TypeScript check + ESLint. Runs in ~2 minutes.
+
+### `build.yml` — on every push to `main`
+Builds the desktop app on all 4 platforms in parallel. Produces downloadable artifacts in the Actions tab (kept 30 days). No git tag required.
+
+### `release.yml` — on version tags
+
+```bash
+# Bump version in tauri.conf.json, then:
+git tag v0.2.0
+git push --tags
 ```
 
-### Dependency Flow
+Builds signed + notarized installers on all platforms, creates a GitHub Release with public download links, and notifies the in-app updater.
 
-```
-Feature libs → UI + State → Core + Data → Domain
-```
+### Required GitHub Secrets
 
-| Layer | Library | Description |
-|-------|---------|-------------|
-| Domain | `@envello/domain` | Pure TypeScript interfaces — no Angular |
-| Data | `@envello/data` | `DataService` persistence contract with SQLite and PouchDB implementations |
-| State | `@envello/state` | Angular Signals-based global store |
-| Core | `@envello/core` | Singleton services — Auth, AI, Theme, Tauri, SQLite, Supabase |
-| UI | `@envello/ui` | ~28 reusable standalone Angular components |
+Go to **Settings → Secrets and variables → Actions** and add:
 
-### State Management
-
-Angular Signals exclusively. No NgRx, no BehaviorSubjects.
-
-### Persistence
-
-| Platform | Storage | Sync |
-|----------|---------|------|
-| Desktop | SQLite via `@tauri-apps/plugin-sql` (Rust-backed) | Local only |
-| Web | PouchDB (IndexedDB) | Supabase cloud sync |
-| Mobile | SQLite via `@tauri-apps/plugin-sql` | Local only |
-
-Adapter pattern in `libs/data` — platform-specific implementation is swapped at boot via `app.config.ts`.
+| Secret | Purpose |
+|--------|---------|
+| `TAURI_SIGNING_PRIVATE_KEY` | Signs update bundles (already generated) |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Password for the signing key |
+| `APPLE_CERTIFICATE` | Base64-encoded `.p12` — Apple Distribution cert |
+| `APPLE_CERTIFICATE_PASSWORD` | `.p12` export password |
+| `APPLE_SIGNING_IDENTITY` | e.g. `Developer ID Application: Name (TEAMID)` |
+| `APPLE_ID` | Apple developer email |
+| `APPLE_ID_PASSWORD` | App-specific password from appleid.apple.com |
+| `APPLE_TEAM_ID` | 10-char team ID from developer.apple.com |
 
 ---
 
-## Features
+## Publishing
 
-### Core Modules
+### macOS App Store
 
-| Feature | Library | Description |
-|---------|---------|-------------|
-| Tasks | `@envello/feature-tasks` | Full task management with priority, due dates, subtasks, dependencies, recurring patterns, Pomodoro timer, focus mode, timeline view, voice input, AI assistant, and undo/redo |
-| Daily Notes | `@envello/feature-daily-notes` | Rich-text journaling with Tiptap editor (tables, task lists, code blocks, images, YouTube embeds), folder-based organization, AI generation, and note backgrounds |
-| Novels | `@envello/feature-novels` | Long-form fiction editor with chapter management, character/location tracking, synopsis, plot points, front matter, chapter groups, and version history |
-| Projects | `@envello/feature-projects` | Project containers with progress tracking, word counts, team members, linked resources, due dates, and priority |
-| Bookmarks | `@envello/feature-bookmarks` | Bookmark manager with table/grid views, folder organization, pinning, archiving, tagging, and AI integration |
-| Vault | `@envello/feature-vault` | Encrypted credential manager for logins, API keys, SSH keys, database connections, and secure notes |
-| Vendors | `@envello/feature-vendor` | Subscription/vendor tracker with ~60 vendor presets, billing cycles, cost calculation, and renewal reminders |
-| Workspace | `@envello/feature-workspace` | Main dashboard hub with overview, recent activity, voice input, quick-add command bar, and CPU/latency metrics |
+1. Create App ID `com.envello.app` in Apple Developer portal
+2. Generate **Apple Distribution** + **Mac Installer Distribution** certificates
+3. Add `Entitlements.plist` with App Sandbox entitlements
+4. Set `"macOSPrivateApi": false` (or justify its use in review notes)
+5. Disable `plugins.updater` for App Store builds (App Store handles updates)
+6. Build: `npm exec tauri build -- --config tauri.appstore.conf.json`
+7. Package: `productbuild --component Envello.app /Applications --sign "3rd Party Mac Developer Installer: ..." Envello.pkg`
+8. Upload via **Transporter**, then submit in **App Store Connect**
 
-### AI Integration
+### Microsoft Store
 
-Multi-provider AI assistant powered by LangChain.js. The platform admin sets a default provider + key; users can override with their own (BYOK).
+1. Register in **Microsoft Partner Center**, reserve app name "Envello"
+2. Build on Windows: `npm exec tauri build`
+3. Convert `.msi` to `.msix` using the **MSIX Packaging Tool** (free from Microsoft Store)
+4. Associate the MSIX with your Partner Center listing
+5. Upload in Partner Center → New submission → Packages
+6. Review: 3–5 business days
+
+---
+
+## Themes
+
+7 runtime-switchable themes:
+
+| Theme | Style |
+|-------|-------|
+| Kindle Paperwhite | Warm matte paper, amber accent — desktop default |
+| Enterprise Dark | Zinc dark, gold accent — web default |
+| Dark | True black, gold accent |
+| Light | Clean paper aesthetic |
+| Colorful | White background, vibrant palette |
+| Typewriter | Minimal monochrome, warm paper |
+| Enterprise Light | Professional with subtle gradients |
+
+---
+
+## AI Integration
+
+Multi-provider AI assistant powered by LangChain.js. Platform admin sets a default provider + API key; users can override with their own (BYOK).
 
 | Provider | Models |
 |----------|--------|
@@ -260,63 +417,27 @@ Multi-provider AI assistant powered by LangChain.js. The platform admin sets a d
 | Google | Gemini 2.0 Flash, Gemini 1.5 Pro |
 | xAI | Grok |
 | DeepSeek | deepseek-chat |
-| Ollama | Local models (llama3, etc.) |
+| Ollama | Local models (llama3, mistral, etc.) |
 
-Integrated into Daily Notes (AI note generation), Tasks (subtask breakdown, time estimates), Bookmarks, and Vendor modules.
+---
 
-### Admin Dashboard
+## Admin Dashboard
 
-Accessible at `/admin`. Requires `role = 'admin'` in the `profiles` Supabase table.
+Accessible at `/admin`. Requires `role = 'admin'` in the Supabase `profiles` table.
 
-| Page | URL | Description |
-|------|-----|-------------|
-| Dashboard | `/admin` | Total users, AI requests today, active flags, recent activity |
-| AI Settings | `/admin/ai-settings` | Platform provider, model, API key, global AI on/off |
-| Users | `/admin/users` | View all users, promote to admin, suspend accounts |
-| Usage | `/admin/usage` | AI usage logs by user, provider, and time period; CSV export |
-| Feature Flags | `/admin/feature-flags` | Toggle platform features globally |
-
-**Bootstrap first admin:**
 ```sql
--- Run in Supabase Dashboard → SQL Editor after running the migration
+-- Bootstrap first admin (run in Supabase Dashboard → SQL Editor)
 UPDATE public.profiles SET role = 'admin' WHERE id = '<your-user-uuid>';
 -- Get your UUID: SELECT id, email FROM auth.users;
 ```
 
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Angular v20 (Standalone Components, Signals) |
-| Desktop | Tauri v2 (Rust + Webview) |
-| Mobile | Tauri v2 iOS + Android |
-| Styling | TailwindCSS v4 + CSS Variables |
-| Rich Text | Tiptap v3 (15+ extensions) |
-| AI | LangChain.js (6 providers) |
-| Database (Desktop/Mobile) | SQLite via `@tauri-apps/plugin-sql` |
-| Database (Web) | PouchDB + Supabase |
-| Backend | Supabase (Auth, Postgres, RLS, Realtime) |
-| Build | Nx v22 + Angular Build + Tauri CLI v2 |
-| Testing | Jest, Karma |
-| Linting | ESLint with Nx module boundary enforcement |
-
----
-
-## Themes
-
-7 theme variants — switchable at runtime:
-
-| Theme | Style |
-|-------|-------|
-| Kindle Paperwhite | Warm matte paper, amber accent (desktop default) |
-| Enterprise Dark | Zinc dark, gold accent (web default) |
-| Dark | True black, gold accent |
-| Light | Kindle Paperwhite aesthetic |
-| Colorful | White background, colorful palette |
-| Typewriter | Minimal monochrome, warm paper |
-| Enterprise Light | Clean professional with gradients |
+| Page | Description |
+|------|-------------|
+| Dashboard | Users, AI requests, active flags, recent activity |
+| AI Settings | Platform provider, model, API key, global AI toggle |
+| Users | View all users, promote to admin, suspend accounts |
+| Usage | AI usage logs by user/provider/time; CSV export |
+| Feature Flags | Toggle platform features globally |
 
 ---
 
@@ -328,10 +449,10 @@ UPDATE public.profiles SET role = 'admin' WHERE id = '<your-user-uuid>';
 | [CHANGELOG.md](./CHANGELOG.md) | Release history |
 | [AI_CONTEXT.md](./AI_CONTEXT.md) | Auto-generated API surface for LLM agents |
 | [AGENTS.md](./AGENTS.md) | Nx workspace agent instructions |
-| [supabase/migrations/](./supabase/migrations/) | Database migrations |
+| [supabase/migrations/](./supabase/migrations/) | Database schema migrations |
 
 ---
 
 ## License
 
-Proprietary / Private.
+Proprietary — All rights reserved.
