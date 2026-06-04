@@ -14,6 +14,7 @@ export class ModalComponent {
   @Input() title = '';
   @Input() size: 'sm' | 'md' | 'large' | 'xl' = 'md';
   @Input() showClose = true;
+  @Input() noBodyScroll = false;
 
   closed = output<void>();
 

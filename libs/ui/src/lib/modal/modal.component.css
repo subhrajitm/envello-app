@@ -52,8 +52,18 @@
 
 .env-modal-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px;
+}
+
+.env-modal-body--no-scroll {
+  overflow: hidden;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .env-modal-footer {

@@ -23,7 +23,7 @@
           />
         }
       </div>
-      <div class="env-modal-body">
+      <div class="env-modal-body" [class.env-modal-body--no-scroll]="noBodyScroll">
         <ng-content select="[body]"></ng-content>
         <!-- default slot for body content without [body] -->
         <ng-content></ng-content>
