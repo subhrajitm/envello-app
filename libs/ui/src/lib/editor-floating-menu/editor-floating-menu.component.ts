@@ -270,12 +270,14 @@ export class EditorFloatingMenuComponent implements OnInit {
 
     // After first paint we know the popup's actual rendered width; clamp so it stays
     // fully inside the editor area (overflow:hidden clips anything outside).
+    // When containEl is absent (viewport-fixed editors) use the viewport width instead.
     requestAnimationFrame(() => {
       if (!this.menuVisible()) return;
       const menu = document.querySelector('.env-floating-menu') as HTMLElement | null;
-      if (!menu || !containWidth) return;
+      if (!menu) return;
       const half = menu.offsetWidth / 2;
-      const safeLeft = Math.max(half + 4, Math.min(relLeft, containWidth - half - 4));
+      const containerW = containWidth || window.innerWidth;
+      const safeLeft = Math.max(half + 4, Math.min(relLeft, containerW - half - 4));
       this.menuPos.update(p => ({ ...p, left: safeLeft }));
     });
   }
