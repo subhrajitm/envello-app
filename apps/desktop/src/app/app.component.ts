@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService } from '@envello/core';
+import { AuthService, BookContentService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent } from '@envello/ui';
@@ -36,7 +36,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private updateService = inject(UpdateService);
   authService = inject(AuthService);
+  private bookContentService = inject(BookContentService);
   private unlistenFileDrop?: () => void;
+  private unlistenCloseRequested?: () => void;
 
   currentTab = signal('Workspace');
   /** Current URL segment — updated on every navigation */
@@ -93,6 +95,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.tauriService.setTitle('').catch(() => { /* ignore */ });
     });
     this.setupTauriFileDrop();
+    this.setupTauriCloseHandler();
     // Check for updates 3s after launch to avoid blocking startup
     setTimeout(() => this.updateService.checkForUpdate(), 3000);
   }
@@ -103,11 +106,27 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
+  private async setupTauriCloseHandler(): Promise<void> {
+    if (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window || '__TAURI__' in window)) return;
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      const win = getCurrentWindow();
+      this.unlistenCloseRequested = await win.onCloseRequested(async (event) => {
+        event.preventDefault();
+        await this.bookContentService.flushPersist();
+        await win.destroy();
+      });
+    } catch {
+      // Non-Tauri or API unavailable — ignore
+    }
+  }
+
   ngOnDestroy() {
     if (this.navigationLayoutListener) {
       window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
     }
     this.unlistenFileDrop?.();
+    this.unlistenCloseRequested?.();
   }
 
   private loadNavigationLayout() {

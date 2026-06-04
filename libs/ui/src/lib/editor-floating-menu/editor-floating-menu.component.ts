@@ -250,18 +250,34 @@ export class EditorFloatingMenuComponent implements OnInit {
       top = coords.top; bottom = coords.bottom; left = coords.left; width = 0;
     }
 
-    const containRect = this.containEl()?.getBoundingClientRect() ?? { top: 0, left: 0 };
+    const contain = this.containEl();
+    const containRect = contain?.getBoundingClientRect() ?? { top: 0, left: 0 };
+    const containWidth = contain?.offsetWidth ?? 0;
     const menuHeight = 78, gap = 8;
     const absTop = top < menuHeight + gap ? bottom + gap : top - menuHeight - gap;
 
+    // Center the popup on the selection (relative to the layout-containment containing block).
+    const relLeft = left - containRect.left + width / 2;
+
     this.menuPos.set({
       top:  absTop - containRect.top,
-      left: left - containRect.left + width / 2,
+      left: Math.max(relLeft, 10),
     });
     if (!this.menuVisible()) {
       this.menuVisible.set(true);
       this.visibleChange.emit(true);
     }
+
+    // After first paint we know the popup's actual rendered width; clamp so it stays
+    // fully inside the editor area (overflow:hidden clips anything outside).
+    requestAnimationFrame(() => {
+      if (!this.menuVisible()) return;
+      const menu = document.querySelector('.env-floating-menu') as HTMLElement | null;
+      if (!menu || !containWidth) return;
+      const half = menu.offsetWidth / 2;
+      const safeLeft = Math.max(half + 4, Math.min(relLeft, containWidth - half - 4));
+      this.menuPos.update(p => ({ ...p, left: safeLeft }));
+    });
   }
 
   private hide() {

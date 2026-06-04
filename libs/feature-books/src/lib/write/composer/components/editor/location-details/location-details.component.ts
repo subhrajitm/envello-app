@@ -111,6 +111,13 @@ export class LocationDetailsComponent implements OnInit, OnDestroy {
     this.updateField.emit({ id: loc.id, field: 'tags', value: (loc.tags ?? []).filter(t => t !== tag) });
   }
 
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault();
+    }
+  }
+
   @HostListener('document:click', ['$event'])
   onDocClick(e: MouseEvent) {
     if (!(e.target as HTMLElement).closest('.ne-loc-icon-wrap')) {

@@ -1,6 +1,6 @@
 import {
   Component, input, output, signal, effect,
-  OnInit, OnDestroy,
+  OnInit, OnDestroy, HostListener,
   ChangeDetectionStrategy, ViewEncapsulation
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -82,6 +82,13 @@ export class CharacterDetailsComponent implements OnInit, OnDestroy {
         if (char) this.updateField.emit({ id: char.id, field: 'description', value: editor.getHTML() });
       },
     });
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault();
+    }
   }
 
   ngOnDestroy() {

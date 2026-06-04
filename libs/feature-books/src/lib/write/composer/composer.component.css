@@ -857,6 +857,7 @@
     min-height: 0;
     height: 100%;
     position: relative;
+    z-index: 1;
     padding-right: 0;
     margin-right: 0;
     /* Prevent layout shift during tab switching */

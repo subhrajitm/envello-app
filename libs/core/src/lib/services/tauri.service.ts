@@ -6,24 +6,14 @@ import { Injectable, signal, computed } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class TauriService {
-  private _isTauri = signal<boolean | null>(null);
+  private _isTauri = signal<boolean>(
+    typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
+  );
 
-  /** True when running inside Tauri; false in browser; null before first check. */
+  /** True when running inside Tauri; false in browser. */
   isTauri = computed(() => this._isTauri());
 
-  constructor() {
-    this.detectTauri();
-  }
-
-  private async detectTauri(): Promise<void> {
-    try {
-      const { getVersion } = await import('@tauri-apps/api/app');
-      await getVersion();
-      this._isTauri.set(true);
-    } catch {
-      this._isTauri.set(false);
-    }
-  }
+  constructor() {}
 
   /** App name (Tauri only). */
   async getName(): Promise<string> {

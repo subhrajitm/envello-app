@@ -693,9 +693,19 @@ export class ComposerComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Guard unsaved content on page close
+    // Guard unsaved content on page close / reload
     this._beforeUnloadHandler = (e: BeforeUnloadEvent) => {
-      if (this.saveTimeout) {
+      const hasPendingEditorSave = !!this.saveTimeout;
+      const hasPendingDbWrite = this.bookService.hasPendingPersist();
+      if (hasPendingEditorSave || hasPendingDbWrite) {
+        // Flush editor content synchronously into bookService
+        if (hasPendingEditorSave) {
+          clearTimeout(this.saveTimeout);
+          this.saveTimeout = undefined;
+          this.flushEditorContent();
+        }
+        // Kick off the DB write — best-effort, may not complete before unload
+        this.bookService.flushPersist();
         e.preventDefault();
         e.returnValue = '';
       }
@@ -718,13 +728,32 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.timeInterval) clearInterval(this.timeInterval);
-    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    // Flush any pending editor content to bookService before destroying
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = undefined;
+      this.flushEditorContent();
+    }
+    // Initiate immediate DB write (fire-and-forget; completes async while app stays alive)
+    this.bookService.flushPersist();
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     if (this._mentionDebounce) clearTimeout(this._mentionDebounce);
     if (this._mentionLabelDebounce) clearTimeout(this._mentionLabelDebounce);
     if (this._focusModeHandler) window.removeEventListener('focusModeChanged', this._focusModeHandler);
     if (this._beforeUnloadHandler) window.removeEventListener('beforeunload', this._beforeUnloadHandler);
     this.editor.destroy();
+  }
+
+  private flushEditorContent(): void {
+    if (!this.editor || this.editor.isDestroyed) return;
+    const content = this.editor.getHTML();
+    const count = this.calculateWordCount(this.editor.getText());
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+    if (activeId) this.bookService.updateChapterContent(activeId, content, count);
+    else if (frontMatterId) this.bookService.updateFrontMatterContent(frontMatterId, content, count);
+    else if (prologueId) this.bookService.updatePrologueContent(content, count);
   }
 
   goBack() {
@@ -957,10 +986,16 @@ export class ComposerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Cmd/Ctrl + S to save (prevent default browser save)
+    // Cmd/Ctrl + S: flush pending debounced save immediately
     if ((event.metaKey || event.ctrlKey) && event.key === 's') {
       event.preventDefault();
-      // Auto-save is already handled, but we can show a toast/indicator
+      if (this.saveTimeout) {
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = undefined;
+        this.flushEditorContent();
+        this.isSaving.set(false);
+        this.lastSaved.set(new Date());
+      }
       return;
     }
 

@@ -86,22 +86,23 @@ export class SqliteService {
     }
 
     /**
-     * Check if running in Tauri environment
+     * Check if running in Tauri environment.
+     * Must check __TAURI_INTERNALS__ (always injected by Tauri 2) rather than __TAURI__
+     * which is only present when withGlobalTauri: true.
      */
     private isTauri(): boolean {
-        return typeof window !== 'undefined' && '__TAURI__' in window;
+        return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
     }
 
     async getDb(): Promise<Database> {
         if (this.db) return this.db;
         if (this.initPromise) return this.initPromise;
 
+        this.initPromise = this.initDb();
         try {
-            this.initPromise = this.initDb();
             return await this.initPromise;
         } catch (error) {
-            // If initialization fails (e.g., not in Tauri), return a rejected promise
-            // This will be caught by individual methods
+            this.initPromise = null; // Allow retry on next call
             throw error;
         }
     }
@@ -118,18 +119,27 @@ export class SqliteService {
             const profileId = this.profileService.activeProfileId() || 'default';
             const dbName = profileId === 'default' ? 'envello.db' : `envello_${profileId}.db`;
 
+            console.log(`[SqliteService] Opening database: ${dbName}`);
             const db = await Database.load(`sqlite:${dbName}`);
+
+            // Set this.db before createTables/loadAllData so that reloadX() methods
+            // can call getDb() without deadlocking. Reset to null if setup fails.
             this.db = db;
+            try {
+                await this.createTables(db);
+                await this.loadAllData();
+            } catch (setupError) {
+                this.db = null; // Connection unusable without tables/data
+                throw setupError;
+            }
 
-            await this.createTables(db);
-            await this.loadAllData(); // Load initial data into subjects
-
-            console.log(`[SqliteService] Database initialized successfully for profile ${profileId}`);
+            console.log(`[SqliteService] Database ready for profile ${profileId}`);
+            // Notify StoreService that DB data is now available.
+            window.dispatchEvent(new CustomEvent('envello:db-ready'));
             return db;
         } catch (error) {
-            // Only log errors if we're in Tauri (unexpected errors)
             if (this.isTauri()) {
-                console.error('Failed to initialize SQLite DB:', error);
+                console.error('[SqliteService] Failed to initialize SQLite DB:', error);
             }
             throw error;
         }

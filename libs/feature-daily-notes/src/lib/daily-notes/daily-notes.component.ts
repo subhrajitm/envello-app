@@ -831,6 +831,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.handleNewNote();
     }
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault();
+      if (this.saveTimeout) {
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = null;
+        const content = this.editor?.getHTML() ?? '';
+        const plainText = this.editor?.getText() ?? '';
+        const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
+        this.updateNoteContent(content, preview);
+        this.isSaving.set(false);
+        this.lastSaved.set(new Date());
+      }
+    }
   }
 
   @HostListener('document:click', ['$event'])

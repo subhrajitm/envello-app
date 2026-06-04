@@ -30,8 +30,9 @@ export class StoreService {
     constructor() {
         this.loadFromDb();
         this.initMarkdownWorker();
-        // Re-load signals after PouchDbDataService applies pulled Supabase records.
+        // Re-load after Supabase sync (web) or after SQLite DB becomes ready (desktop).
         window.addEventListener('envello:sync-complete', () => this.loadFromDb());
+        window.addEventListener('envello:db-ready', () => this.loadFromDb());
     }
 
     private initMarkdownWorker() {
@@ -76,7 +77,7 @@ export class StoreService {
         }
     }
 
-    private async loadFromDb(): Promise<void> {
+    private async loadFromDb(retries = 1): Promise<void> {
         try {
             const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
@@ -117,6 +118,11 @@ export class StoreService {
             }
         } catch (e) {
             console.error('[StoreService] loadFromDb failed', e);
+            if (retries > 0) {
+                // Single retry after 500ms — handles transient Tauri startup race
+                setTimeout(() => this.loadFromDb(0), 500);
+                return;
+            }
             this.tasks.set([]);
             this.notes.set([]);
             this.planningItems.set([]);

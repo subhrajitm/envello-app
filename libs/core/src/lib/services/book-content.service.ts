@@ -163,10 +163,29 @@ export class BookContentService {
 
             this.db.setBookContent(n.id, JSON.stringify(n)).catch(e => {
                 logIfTauri('[BookContentService] persist failed', e);
-                // Fallback to LocalStorage
                 localStorage.setItem(`book_content_${n.id}`, JSON.stringify(n));
             });
         }, PERSIST_DEBOUNCE_MS);
+    }
+
+    hasPendingPersist(): boolean {
+        return this.persistTimeout !== null;
+    }
+
+    /** Cancel any pending debounce and immediately write current state to DB. */
+    async flushPersist(): Promise<void> {
+        if (this.persistTimeout) {
+            clearTimeout(this.persistTimeout);
+            this.persistTimeout = null;
+        }
+        const n = this.activeBook();
+        if (!n) return;
+        try {
+            await this.db.setBookContent(n.id, JSON.stringify(n));
+        } catch (e) {
+            logIfTauri('[BookContentService] flush persist failed', e);
+            localStorage.setItem(`book_content_${n.id}`, JSON.stringify(n));
+        }
     }
 
     getChapter(chapterId: string): Chapter | undefined {
