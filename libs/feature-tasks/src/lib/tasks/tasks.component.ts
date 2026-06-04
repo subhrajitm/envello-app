@@ -217,7 +217,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Calendar dropdown state
   showDatePicker = signal<boolean>(false);
   datePickerDate = signal<Date>(new Date());
-  datePickerContext = signal<'new' | 'details'>('new');
+  datePickerContext = signal<'new' | 'details' | 'new-start'>('new');
 
   // Folder dropdown state
   showFolderDropdown = signal<boolean>(false);
@@ -624,7 +624,7 @@ export class TasksComponent implements OnInit, OnDestroy {
         await this.uploadFiles(taskId);
       }
 
-      this.closeNewTaskDialog();
+      this.closeNewTaskDialog(true);
       this.isLoading.set(false);
     } catch (error) {
       this.isLoading.set(false);
@@ -1050,7 +1050,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Folder dropdown position
   folderDropdownPosition = signal<{ top: number; left: number } | null>(null);
 
-  toggleDatePicker(event?: Event, context: 'new' | 'details' = 'new') {
+  toggleDatePicker(event?: Event, context: 'new' | 'details' | 'new-start' = 'new') {
     this.datePickerContext.set(context);
     this.showDatePicker.update(v => {
       if (!v) {
@@ -1090,13 +1090,21 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (!isCurrentMonth) return;
     const selectedDate = new Date(this.datePickerDate());
     selectedDate.setDate(day);
-    const isDetails = this.datePickerContext() === 'details';
-    const timeStr = isDetails ? this.editedTaskDueTime() : this.newTaskDueTime();
-    const dateString = this.buildDateString(selectedDate, timeStr);
-    if (isDetails) {
-      this.editedTaskDue.set(dateString);
+    const ctx = this.datePickerContext();
+    if (ctx === 'new-start') {
+      const y = selectedDate.getFullYear();
+      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const d = String(selectedDate.getDate()).padStart(2, '0');
+      this.newTaskStartDate.set(`${y}-${m}-${d}`);
     } else {
-      this.newTaskDue.set(dateString);
+      const isDetails = ctx === 'details';
+      const timeStr = isDetails ? this.editedTaskDueTime() : this.newTaskDueTime();
+      const dateString = this.buildDateString(selectedDate, timeStr);
+      if (isDetails) {
+        this.editedTaskDue.set(dateString);
+      } else {
+        this.newTaskDue.set(dateString);
+      }
     }
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
@@ -1106,21 +1114,32 @@ export class TasksComponent implements OnInit, OnDestroy {
     const date = new Date();
     if (option === 'tomorrow') date.setDate(date.getDate() + 1);
     if (option === 'next-week') date.setDate(date.getDate() + (8 - date.getDay()));
-    const isDetails = this.datePickerContext() === 'details';
-    const timeStr = isDetails ? this.editedTaskDueTime() : this.newTaskDueTime();
-    const dateString = this.buildDateString(date, timeStr);
-    if (isDetails) {
-      this.editedTaskDue.set(dateString);
+    const ctx = this.datePickerContext();
+    if (ctx === 'new-start') {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      this.newTaskStartDate.set(`${y}-${m}-${d}`);
     } else {
-      this.newTaskDue.set(dateString);
+      const isDetails = ctx === 'details';
+      const timeStr = isDetails ? this.editedTaskDueTime() : this.newTaskDueTime();
+      const dateString = this.buildDateString(date, timeStr);
+      if (isDetails) {
+        this.editedTaskDue.set(dateString);
+      } else {
+        this.newTaskDue.set(dateString);
+      }
     }
     this.showDatePicker.set(false);
     this.datePickerPosition.set(null);
   }
 
   clearTaskDue() {
-    if (this.datePickerContext() === 'details') {
+    const ctx = this.datePickerContext();
+    if (ctx === 'details') {
       this.editedTaskDue.set(undefined);
+    } else if (ctx === 'new-start') {
+      this.newTaskStartDate.set('');
     } else {
       this.newTaskDue.set(undefined);
     }

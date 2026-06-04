@@ -517,12 +517,13 @@
     (closed)="closeNewTaskDialog()"
     [showClose]="true"
     size="large"
+    [noBodyScroll]="true"
 >
-    <div header style="display:flex;align-items:center;gap:8px;width:100%">
-        <h2 class="env-modal-title">
-            <span class="material-symbols-outlined">add_task</span>
-            <span>New Task</span>
-        </h2>
+    <div header class="td-header-row">
+        <div class="td-header-context" style="flex:1">
+            <span class="material-symbols-outlined td-header-context-icon">add_task</span>
+            <span class="td-header-context-label">New Task</span>
+        </div>
         <div class="modal-header-actions">
             <button type="button" class="template-btn" (click)="newTaskTemplateOpen.set(!newTaskTemplateOpen())" title="Use a template">
                 <span class="material-symbols-outlined">dashboard_customize</span>
@@ -586,7 +587,7 @@
                         </div>
                         }
                         <div class="td-add-subtask-row">
-                            <span class="material-symbols-outlined td-add-subtask-icon">add</span>
+                            <span class="material-symbols-outlined td-add-subtask-icon" style="color:var(--text-tertiary)">add</span>
                             <input type="text" class="td-add-subtask-input"
                                    placeholder="Add sub-task"
                                    [value]="newSubtaskInput()"
@@ -667,6 +668,18 @@
                     </div>
                 </div>
 
+                <!-- Start date -->
+                <div class="td-prop-row">
+                    <span class="td-prop-label">Start date</span>
+                    <button class="td-prop-value td-prop-btn" type="button"
+                            (click)="toggleDatePicker($event, 'new-start')">
+                        <span class="material-symbols-outlined td-prop-icon">event_available</span>
+                        <span [class.td-prop-placeholder]="!newTaskStartDate()">
+                            {{ newTaskStartDate() ? (newTaskStartDate() | date:'MMM d, y') : 'No date' }}
+                        </span>
+                    </button>
+                </div>
+
                 <!-- Labels -->
                 <div class="td-prop-row td-prop-row--block">
                     <div class="td-prop-row-header">
@@ -681,9 +694,10 @@
                             </button>
                         </span>
                         }
-                        <div style="position:relative">
+                        <div style="position:relative;flex:1;min-width:80px">
                             <input type="text"
                                    class="td-label-input"
+                                   style="width:100%"
                                    placeholder="Add label…"
                                    [value]="newTaskLabelInput()"
                                    (input)="newTaskLabelInput.set($any($event.target).value); showLabelAutocomplete.set(true)"
@@ -702,56 +716,6 @@
                     </div>
                 </div>
 
-                <!-- Reminders -->
-                <div class="td-prop-row td-prop-row--block">
-                    <div class="td-prop-row-header">
-                        <span class="td-prop-label">Reminder</span>
-                        <button class="td-prop-add-btn" type="button"
-                                (click)="showNewTaskReminderPicker.set(!showNewTaskReminderPicker()); $event.stopPropagation()">
-                            <span class="material-symbols-outlined">add</span>
-                        </button>
-                    </div>
-                    @if (showNewTaskReminderPicker()) {
-                    <div class="td-reminder-picker" (click)="$event.stopPropagation()">
-                        @for (preset of REMINDER_PRESETS; track preset.value) {
-                        <button class="td-reminder-preset" type="button"
-                                [class.active]="newTaskReminderTimes().includes(preset.value)"
-                                (click)="addNewTaskReminderPreset(preset.value)">
-                            <span class="material-symbols-outlined">schedule</span>
-                            {{ preset.label }}
-                            @if (newTaskReminderTimes().includes(preset.value)) {
-                            <span class="material-symbols-outlined td-reminder-check">check</span>
-                            }
-                        </button>
-                        }
-                    </div>
-                    }
-                    @if (newTaskHasReminder() && newTaskReminderTimes().length > 0) {
-                    <div class="td-reminder-chips">
-                        @for (r of newTaskReminderTimes(); track r) {
-                        <span class="td-reminder-chip">
-                            <span class="material-symbols-outlined">notifications</span>
-                            {{ r }}
-                            <button type="button" class="td-reminder-remove" (click)="removeNewTaskReminderPreset(r)">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                        </span>
-                        }
-                    </div>
-                    }
-                </div>
-
-                <!-- Start date -->
-                <div class="td-prop-row">
-                    <span class="td-prop-label">Start date</span>
-                    <div class="td-prop-value">
-                        <span class="material-symbols-outlined td-prop-icon">event_available</span>
-                        <input type="date" class="nt-input"
-                               [value]="newTaskStartDate()"
-                               (change)="newTaskStartDate.set($any($event.target).value)">
-                    </div>
-                </div>
-
                 <!-- Depends on -->
                 <div class="td-prop-row td-prop-row--block">
                     <div class="td-prop-row-header">
@@ -767,8 +731,9 @@
                             </button>
                         </div>
                         }
-                        <div style="position:relative">
+                        <div style="position:relative;width:100%">
                             <input type="text" class="td-label-input"
+                                   style="width:100%"
                                    placeholder="Search tasks…"
                                    [value]="newTaskDependencyInput()"
                                    (input)="newTaskDependencyInput.set($any($event.target).value); showDependencySearch.set(true)"
@@ -842,11 +807,50 @@
                 }
                 }
 
+                <!-- Reminders — last so picker expansion has no rows below to overlap -->
+                <div class="td-prop-row td-prop-row--block">
+                    <div class="td-prop-row-header">
+                        <span class="td-prop-label">Reminder</span>
+                        <button class="td-prop-add-btn" type="button"
+                                (click)="showNewTaskReminderPicker.set(!showNewTaskReminderPicker()); $event.stopPropagation()">
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                    </div>
+                    @if (showNewTaskReminderPicker()) {
+                    <div class="td-reminder-picker" (click)="$event.stopPropagation()">
+                        @for (preset of REMINDER_PRESETS; track preset.value) {
+                        <button class="td-reminder-preset" type="button"
+                                [class.active]="newTaskReminderTimes().includes(preset.value)"
+                                (click)="addNewTaskReminderPreset(preset.value)">
+                            <span class="material-symbols-outlined">schedule</span>
+                            {{ preset.label }}
+                            @if (newTaskReminderTimes().includes(preset.value)) {
+                            <span class="material-symbols-outlined td-reminder-check">check</span>
+                            }
+                        </button>
+                        }
+                    </div>
+                    }
+                    @if (newTaskHasReminder() && newTaskReminderTimes().length > 0) {
+                    <div class="td-reminder-chips">
+                        @for (r of newTaskReminderTimes(); track r) {
+                        <span class="td-reminder-chip">
+                            <span class="material-symbols-outlined">notifications</span>
+                            {{ r }}
+                            <button type="button" class="td-reminder-remove" (click)="removeNewTaskReminderPreset(r)">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </span>
+                        }
+                    </div>
+                    }
+                </div>
+
             </div>
         </div>
     </div>
 
-    <div footer>
+    <div footer style="display: contents;">
         <button type="button" class="btn-minimal-cancel" (click)="closeNewTaskDialog()">Cancel</button>
         <button type="button"
                 class="btn-minimal-save"
@@ -1426,7 +1430,8 @@
         }
     </div>
 
-    <!-- Time input -->
+    <!-- Time input (not shown for start date) -->
+    @if (datePickerContext() !== 'new-start') {
     <div class="dp-divider"></div>
     <div class="dp-time-row">
         <span class="material-symbols-outlined dp-time-icon">schedule</span>
@@ -1434,6 +1439,7 @@
                [value]="datePickerContext() === 'details' ? editedTaskDueTime() : newTaskDueTime()"
                (change)="datePickerContext() === 'details' ? updateDetailsTime($any($event.target).value) : updateDueTime($any($event.target).value)">
     </div>
+    }
 </div>
 }
 </div>
