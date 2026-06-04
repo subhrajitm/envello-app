@@ -31,14 +31,18 @@ export class AddModalComponent {
 
   @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
 
+  private _wasOpen = false;
+
   constructor() {
     effect(() => {
-      if (this.modal().isOpen) {
+      const isOpen = this.modal().isOpen;
+      if (isOpen && !this._wasOpen) {
         setTimeout(() => {
           this.addInputRef?.nativeElement?.focus();
           this.addInputRef?.nativeElement?.select();
         }, 0);
       }
+      this._wasOpen = isOpen;
     });
   }
 
