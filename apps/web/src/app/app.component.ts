@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
@@ -13,7 +13,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   title = 'envello';
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
@@ -32,6 +32,20 @@ export class AppComponent implements OnInit, OnDestroy {
   navigationLayout = signal<'vertical' | 'horizontal' | 'minimized'>('minimized');
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
+
+  async ngAfterViewInit() {
+    const timeout = new Promise<void>(resolve => setTimeout(resolve, 3000));
+    await Promise.race([document.fonts.ready, timeout]);
+    const loader = document.getElementById('al');
+    const bar = document.getElementById('al-bar');
+    if (!loader) return;
+    // Snap bar to 100% then fade the whole overlay
+    if (bar) bar.style.width = '100%';
+    setTimeout(() => {
+      loader.classList.add('al-out');
+      setTimeout(() => loader.remove(), 450);
+    }, 250);
+  }
 
   ngOnInit() {
     this.setupSwUpdate();
