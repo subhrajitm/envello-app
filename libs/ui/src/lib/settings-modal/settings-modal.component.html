@@ -306,7 +306,6 @@
                                 @if (aiProvider() === 'local') {
                                 <option value="HuggingFaceTB/SmolLM2-360M-Instruct">SmolLM2 360M (Recommended)</option>
                                 <option value="HuggingFaceTB/SmolLM2-135M-Instruct">SmolLM2 135M (Fastest, ~270 MB)</option>
-                                <option value="Qwen/Qwen2.5-0.5B-Instruct">Qwen2.5 0.5B (Better quality, ~1 GB)</option>
                                 } @else if (aiProvider() === 'openai') {
                                 <option value="gpt-4o">gpt-4o (Recommended)</option>
                                 <option value="gpt-4o-mini">gpt-4o-mini (Faster & Cheaper)</option>
@@ -332,7 +331,6 @@
                                 <option value="llama3.2">llama3.2</option>
                                 <option value="mistral">mistral</option>
                                 <option value="deepseek-coder">deepseek-coder</option>
-                                <option value="qwen2.5">qwen2.5</option>
                                 } @else {
                                 <option value="">Demo Mode</option>
                                 }
