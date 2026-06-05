@@ -1141,20 +1141,18 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     this.pendingApply.set(null);
   }
 
-  private buildNotesAiContext(): string {
-    const notes = this.notes();
-    const notesSummary = notes.slice(0, 40)
-      .map(n => `  - "${n.title}"${n.tags?.filter(t => t !== 'pinned').length ? ` [${n.tags!.filter(t => t !== 'pinned').join(', ')}]` : ''}${n.preview ? `: ${n.preview.substring(0, 80)}` : ''}`)
-      .join('\n') || '  (none)';
-    const folders = this.noteGroups().map(g => g.name).join(', ') || 'none';
-    const pinned  = notes.filter(n => this.isPinned(n)).map(n => n.title);
-    return `You are a helpful assistant embedded in Envello Notes.
-Answer using the user's actual notes data below. Be concise and specific.
+  private buildNoteAiContext(): string {
+    const note = this.selectedNote();
+    if (!note) return 'You are a helpful writing assistant embedded in Envello Notes. No note is currently open.';
+    const content = this.editor?.getText().trim() || '';
+    const tags = note.tags?.filter(t => t !== 'pinned').join(', ') || 'none';
+    return `You are a helpful writing assistant embedded in Envello Notes.
+Help the user with their currently open note. Be concise and specific.
 TODAY: ${new Date().toISOString().split('T')[0]}
-FOLDERS: ${folders}
-NOTES (${notes.length} total):
-${notesSummary}
-PINNED: ${pinned.length ? pinned.join(', ') : 'none'}`;
+NOTE TITLE: "${note.title}"
+TAGS: ${tags}
+CONTENT:
+${content.substring(0, 2000)}`;
   }
 
   private openAiPanel() {
@@ -1335,11 +1333,11 @@ PINNED: ${pinned.length ? pinned.join(', ') : 'none'}`;
   }
 
   readonly aiSuggestions = [
-    'Create a 500 words note on AI: Danger to society',
-    'Write a note about productivity habits',
-    'How many notes do I have?',
-    'What tags do I use most?',
-    'Find my pinned notes',
+    'Summarize this note',
+    'Improve the writing',
+    'Fix grammar and spelling',
+    'Expand with more detail',
+    'Create a bullet point summary',
   ];
 
   async sendAiMessage(text: string) {
@@ -1348,97 +1346,7 @@ PINNED: ${pinned.length ? pinned.join(', ') : 'none'}`;
     this.aiLoading.set(true);
     this.aiAbort = false;
 
-    // ── Note creation intent ──────────────────────────────────────────────────
-    const intent = this.parseNoteCreationIntent(text);
-    if (intent) {
-      if (!this.aiService.aiEnabled() || this.aiService.provider() === 'mock') {
-        this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Configure an AI provider in Settings to generate note content.' }]);
-        this.aiLoading.set(false);
-        return;
-      }
-      try {
-        const generated = await this.aiService.sendMessage(
-          `Write a well-structured note of approximately ${intent.wordCount} words on the topic: "${intent.topic}".
-Use clear paragraphs with smooth transitions. Start directly with the content — do not include a title heading.
-Return plain text with paragraph breaks (double newline between paragraphs). No markdown headings or bullet points.`,
-          'You are a knowledgeable and articulate note-taking assistant. Write informative, engaging content.'
-        );
-        const html = this.plainToHtml(generated);
-        const cleanTitle = intent.topic.charAt(0).toUpperCase() + intent.topic.slice(1);
-        const noteId   = Date.now().toString();
-        const folderId = this.selectedNote()?.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
-        const newNote: Note = {
-          id: noteId,
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          title: cleanTitle, preview: generated.substring(0, 120),
-          content: html, tags: [], folderId,
-        };
-        this.store.addNote(newNote);
-        this.selectNote(noteId);
-        this.aiMessages.update(m => [...m, {
-          role: 'assistant',
-          text: `Done! Created "${cleanTitle}" (~${intent.wordCount} words). It's open in the editor now.`
-        }]);
-      } catch {
-        this.aiMessages.update(m => [...m, {
-          role: 'assistant',
-          text: 'Failed to generate note content. Check your AI provider settings and try again.'
-        }]);
-      }
-      this.aiLoading.set(false);
-      return;
-    }
-
-    // ── Instant local stat queries ────────────────────────────────────────────
-    const notes = this.notes();
-    const q     = text.toLowerCase();
-    let localResponse = '';
-
-    if ((q.includes('how many') || q.includes('count')) && q.includes('note')) {
-      localResponse = `You have ${notes.length} note${notes.length !== 1 ? 's' : ''} across ${this.noteGroups().length} folder${this.noteGroups().length !== 1 ? 's' : ''}.`;
-    } else if (q.includes('tag')) {
-      const tags = this.allTags();
-      localResponse = tags.length
-        ? `Your top tags: ${tags.slice(0, 5).map(t => `#${t.name} (${t.count})`).join(', ')}.`
-        : 'No tags used yet. Add tags to notes to organize them.';
-    } else if (q.includes('today') && (q.includes('note') || q.includes('creat'))) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayNotes = notes.filter(n => {
-        const ts = parseInt(n.id, 10);
-        const d  = !isNaN(ts) && ts > 1e12 ? new Date(ts) : new Date(n.date);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === today.getTime();
-      });
-      localResponse = todayNotes.length
-        ? `${todayNotes.length} note${todayNotes.length > 1 ? 's' : ''} created today: ${todayNotes.map(n => n.title).join(', ')}.`
-        : 'No notes created today yet.';
-    } else if ((q.includes('folder') || q.includes('most')) && !q.includes('today')) {
-      const counts: Record<string, number> = {};
-      notes.forEach(n => {
-        const fid = n.folderId ?? this.noteGroups()[0]?.id ?? 'personal';
-        counts[fid] = (counts[fid] ?? 0) + 1;
-      });
-      const top    = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-      const labels = top.map(([id, count]) => {
-        const name = this.noteGroups().find(g => g.id === id)?.name ?? id;
-        return `${name} (${count})`;
-      });
-      localResponse = labels.length ? `Top folders by note count: ${labels.join(', ')}.` : 'No folders found.';
-    } else if (q.includes('pin')) {
-      const pinned = notes.filter(n => this.isPinned(n));
-      localResponse = pinned.length
-        ? `${pinned.length} pinned note${pinned.length > 1 ? 's' : ''}: ${pinned.map(n => n.title).join(', ')}.`
-        : 'No pinned notes. Pin notes from the note list to keep them at the top.';
-    }
-
-    if (localResponse) {
-      this.aiMessages.update(m => [...m, { role: 'assistant', text: localResponse }]);
-      this.aiLoading.set(false);
-      return;
-    }
-
-    // ── General AI query with note context ────────────────────────────────────
+    // ── AI query scoped to the open note ─────────────────────────────────────
     if (!this.aiService.aiEnabled()) {
       this.aiMessages.update(m => [...m, { role: 'assistant', text: 'AI is disabled. Enable it in Settings → AI.' }]);
       this.aiLoading.set(false);
@@ -1456,7 +1364,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
       });
     };
     try {
-      for await (const chunk of this.aiService.streamMessage(text, this.buildNotesAiContext())) {
+      for await (const chunk of this.aiService.streamMessage(text, this.buildNoteAiContext())) {
         if (this.aiAbort) break;
         pending += chunk;
         if (!rafScheduled) { rafScheduled = true; requestAnimationFrame(flush); }

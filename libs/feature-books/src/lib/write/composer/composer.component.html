@@ -358,7 +358,8 @@
                 } @else if (rightSidebarTab() === 'notes' && book()) {
                 <app-notes-panel [notes]="book()!.notes" (addNewNote)="addNewNote()"
                     (deleteNote)="deleteNote($event)"
-                    (updateNote)="bookService.updateNote($event.id, $event.title, $event.body)" />
+                    (updateNote)="bookService.updateNote($event.id, $event.title, $event.body)"
+                    (closed)="rightSidebarCollapsed.set(true)" />
                 } @else if (rightSidebarTab() === 'manuscript' && book()) {
                 <app-manuscript-data [totalNovelWords]="totalNovelWords()"
                     [averageChapterLength]="averageChapterLength()" [chaptersCompleted]="chaptersCompleted()"
@@ -367,7 +368,8 @@
                     [goalProgress]="goalProgress()" [activeChapterId]="activeChapterId()"
                     [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()"
                     [writingType]="writingType()" [sectionLabel]="sectionLabel()"
-                    (characterClicked)="navigateToCharacter($event)" />
+                    (characterClicked)="navigateToCharacter($event)"
+                    (closed)="rightSidebarCollapsed.set(true)" />
                 }
             </div>
             }

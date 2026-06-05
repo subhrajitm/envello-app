@@ -1742,6 +1742,31 @@ tiptap-editor:focus,
     color: var(--accent-primary);
 }
 
+.dn-panel-close {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.dn-panel-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.dn-panel-close .material-symbols-outlined {
+    font-size: 16px;
+    color: inherit;
+}
+
 /* ─── Format panel ─────────────────────────────────────────────────────────── */
 .dn-format-panel {
     display: flex;
