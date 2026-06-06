@@ -54,7 +54,7 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
             .from('user_data')
             .upsert(
               { id, user_id: userId, profile_id: profileId, collection, data: {}, deleted: true, updated_at: now },
-              { onConflict: 'id,collection,profile_id' }
+              { onConflict: 'user_id,profile_id,collection,id' }
             );
         } else {
           let data: any = {};
@@ -64,7 +64,7 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
             .from('user_data')
             .upsert(
               { id, user_id: userId, profile_id: profileId, collection, data, deleted: false, updated_at: now },
-              { onConflict: 'id,collection,profile_id' }
+              { onConflict: 'user_id,profile_id,collection,id' }
             );
         }
       }
