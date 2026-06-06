@@ -11,4 +11,5 @@ export const environment = {
     aiSuggestions: true,
     offlineMode: false,
   },
+  powerSyncUrl: '',
 };

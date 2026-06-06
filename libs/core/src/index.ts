@@ -29,3 +29,5 @@ export * from './lib/services/sync.service';
 export * from './lib/services/semantic-search.service';
 export * from './lib/services/file-storage.service';
 export * from './lib/services/vault-key.service';
+export * from './lib/services/powersync.service';
+export * from './lib/services/powersync-data.service';
