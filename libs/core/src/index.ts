@@ -31,3 +31,6 @@ export * from './lib/services/file-storage.service';
 export * from './lib/services/vault-key.service';
 export * from './lib/services/powersync.service';
 export * from './lib/services/powersync-data.service';
+export * from './lib/services/desktop-sync-settings.service';
+export * from './lib/services/desktop-backup.service';
+export * from './lib/services/desktop-data.service';

@@ -6,6 +6,8 @@ import { IconButtonComponent } from '../icon-button/icon-button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService } from '@envello/core';
 import { AiService, AiProvider } from '@envello/core';
+import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS } from '@envello/core';
+import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 interface SettingsSection {
@@ -60,6 +62,24 @@ export class SettingsModalComponent {
   dailySummary = signal(false);
   analytics = signal(true);
   versionHistoryLimit = signal(50);
+
+  // Backup / sync (desktop only)
+  readonly syncSettings = inject(DesktopSyncSettingsService);
+  private readonly dataService = inject(DataService);
+  readonly backupCollections = BACKUP_ELIGIBLE_COLLECTIONS;
+  readonly isDesktop = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+  restoreStatus = signal<Record<string, 'idle' | 'restoring' | 'done' | 'error'>>({});
+
+  async restoreCollection(id: string): Promise<void> {
+    if (!(this.dataService instanceof DesktopDataService)) return;
+    this.restoreStatus.update(s => ({ ...s, [id]: 'restoring' }));
+    try {
+      await this.dataService.restoreCollection(id);
+      this.restoreStatus.update(s => ({ ...s, [id]: 'done' }));
+    } catch {
+      this.restoreStatus.update(s => ({ ...s, [id]: 'error' }));
+    }
+  }
 
   // AI State
   aiProvider = signal<AiProvider>('mock');

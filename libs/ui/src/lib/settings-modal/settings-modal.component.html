@@ -525,6 +525,44 @@
                         </div>
                     </div>
 
+                    @if (isDesktop) {
+                    <div class="section-divider"></div>
+                    <div class="section-header" style="margin-top: 0.5rem">
+                        <h4>Cloud Backup</h4>
+                        <p>Choose which collections to back up to the cloud. Vault and credentials are always local-only.</p>
+                    </div>
+                    <div class="backup-grid">
+                        @for (col of backupCollections; track col.id) {
+                        <div class="setting-item setting-row backup-row">
+                            <span class="setting-label-group">
+                                <label>{{ col.label }}</label>
+                            </span>
+                            <div class="backup-actions">
+                                @if (syncSettings.isEnabled(col.id)) {
+                                <button class="restore-btn"
+                                    [disabled]="restoreStatus()[col.id] === 'restoring'"
+                                    (click)="restoreCollection(col.id)">
+                                    @if (restoreStatus()[col.id] === 'restoring') { Restoring… }
+                                    @else if (restoreStatus()[col.id] === 'done') { ✓ Restored }
+                                    @else { Restore }
+                                </button>
+                                }
+                                <label class="toggle">
+                                    <input type="checkbox"
+                                        [checked]="syncSettings.isEnabled(col.id)"
+                                        (change)="syncSettings.toggle(col.id)">
+                                    <span class="toggle-track"></span>
+                                </label>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                    <div class="setting-row" style="margin-top: 0.75rem; gap: 0.5rem; display: flex;">
+                        <env-button variant="secondary" (clicked)="syncSettings.enableAll()">Enable All</env-button>
+                        <env-button variant="secondary" (clicked)="syncSettings.disableAll()">Disable All</env-button>
+                    </div>
+                    }
+
                     <env-button variant="danger" (clicked)="clearAllData()">Clear All Data</env-button>
                 </div>
                 }
