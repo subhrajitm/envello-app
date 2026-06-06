@@ -55,6 +55,9 @@ export class DesktopDataService extends DataService {
     for (const item of items) {
       await this.sqlite.upsert(collection, item);
     }
+    if (items.length > 0) {
+      window.dispatchEvent(new CustomEvent('envello:sync-complete'));
+    }
     return items.length;
   }
 

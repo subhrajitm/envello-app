@@ -48,7 +48,8 @@ export class DesktopBackupService {
       .update({ deleted: true, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('collection', collection)
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .eq('profile_id', this.profileId);
 
     if (error) console.error('[DesktopBackupService] softDelete failed', collection, error);
   }
@@ -61,6 +62,7 @@ export class DesktopBackupService {
       .from('user_data')
       .select('data')
       .eq('user_id', userId)
+      .eq('profile_id', this.profileId)
       .eq('collection', collection)
       .eq('deleted', false);
 
