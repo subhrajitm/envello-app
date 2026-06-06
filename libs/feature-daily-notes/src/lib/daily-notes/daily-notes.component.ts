@@ -116,6 +116,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   // Track open notes as tabs
   openNotes = signal<string[]>([]);
+  /** True when the user explicitly closed all tabs — prevents the notes effect from auto-restoring. */
+  private allTabsClosed = false;
 
   // Note groups for organization (synced from store so they persist across reloads)
   noteGroups = signal<NoteGroup[]>([]);
@@ -344,6 +346,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       // which bypasses the guard and re-opens the note from stale localStorage.
       const selectedId = untracked(() => this.selectedEntryId());
       const openIds = untracked(() => this.openNotes());
+      // User deliberately closed all tabs — don't auto-restore until they open one.
+      if (this.allTabsClosed && openIds.length === 0) return;
       const noteIds = new Set(notes.map((n) => n.id));
       const hasValidSelection = selectedId && noteIds.has(selectedId);
       const hasValidTabs = openIds.length > 0 && openIds.some((id) => noteIds.has(id));
@@ -656,6 +660,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   selectNote(id: string) {
+    this.allTabsClosed = false;
     this.flushTitleSave();
     // Eagerly set editor content from the store cache to eliminate the stale-content
     // flash that would otherwise show while loadNoteContent fetches from DB.
@@ -815,8 +820,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   closeNoteTab(noteId: string) {
     this.openNotes.update(tabs => tabs.filter(id => id !== noteId));
+    const remainingTabs = this.openNotes();
+    if (remainingTabs.length === 0) {
+      this.allTabsClosed = true;
+    }
     if (this.selectedEntryId() === noteId) {
-      const remainingTabs = this.openNotes();
       this.selectedEntryId.set(remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1] : '');
     }
   }
