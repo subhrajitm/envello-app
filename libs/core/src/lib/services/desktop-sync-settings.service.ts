@@ -18,6 +18,7 @@ export const BACKUP_ELIGIBLE_COLLECTIONS = [
   { id: 'bookmarks',             label: 'Bookmarks' },
   { id: 'bookmark_folders',      label: 'Bookmark Folders' },
   { id: 'subscriptions',         label: 'Subscriptions' },
+  { id: 'book_content',          label: 'Book Content' },
 ] as const;
 
 @Injectable({ providedIn: 'root' })

@@ -3,6 +3,8 @@ import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
 import { BinService } from './bin.service';
 import { SqliteService } from './sqlite.service';
+import { DesktopBackupService } from './desktop-backup.service';
+import { DesktopSyncSettingsService } from './desktop-sync-settings.service';
 
 export interface CharacterRelationship {
     id: string;
@@ -118,9 +120,32 @@ export class BookContentService {
     store = inject(StoreService);
     private bin = inject(BinService);
     private db = inject(SqliteService);
+    private backup = inject(DesktopBackupService);
+    private syncSettings = inject(DesktopSyncSettingsService);
     private persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() { }
+
+    private pushBackup(data: BookContent): void {
+        if (!this.syncSettings.isEnabled('book_content')) return;
+        this.backup.push('book_content', data).catch(() => {});
+    }
+
+    async restoreFromBackup(): Promise<number> {
+        const items = await this.backup.pullCollection<BookContent>('book_content');
+        for (const item of items) {
+            try {
+                await this.db.setBookContent(item.id, JSON.stringify(item));
+            } catch {
+                localStorage.setItem(`book_content_${item.id}`, JSON.stringify(item));
+            }
+        }
+        const active = this.activeBook();
+        if (active && items.some(i => i.id === active.id)) {
+            await this.loadBook(active.id);
+        }
+        return items.length;
+    }
 
     async loadBook(id: string): Promise<void> {
         this.activeBook.set(null);
@@ -134,6 +159,7 @@ export class BookContentService {
             const data = this.createEmptyBook(id);
             this.activeBook.set(data);
             await this.db.setBookContent(id, JSON.stringify(data));
+            this.pushBackup(data);
         } catch (e) {
             logIfTauri('[BookContentService] loadBook failed', e);
 
@@ -165,6 +191,7 @@ export class BookContentService {
                 logIfTauri('[BookContentService] persist failed', e);
                 localStorage.setItem(`book_content_${n.id}`, JSON.stringify(n));
             });
+            this.pushBackup(n);
         }, PERSIST_DEBOUNCE_MS);
     }
 
@@ -186,6 +213,7 @@ export class BookContentService {
             logIfTauri('[BookContentService] flush persist failed', e);
             localStorage.setItem(`book_content_${n.id}`, JSON.stringify(n));
         }
+        this.pushBackup(n);
     }
 
     getChapter(chapterId: string): Chapter | undefined {
@@ -920,6 +948,7 @@ export class BookContentService {
         } catch {
             localStorage.setItem(`book_content_${newId}`, JSON.stringify(data));
         }
+        this.pushBackup(data);
     }
 
     /** Create and persist empty novel content (e.g. when adding a new book from the list). */
@@ -931,6 +960,7 @@ export class BookContentService {
             logIfTauri('[BookContentService] Persist failed, falling back to LocalStorage', e);
             localStorage.setItem(`book_content_${id}`, JSON.stringify(data));
         }
+        this.pushBackup(data);
     }
 
     // Ensure fields added after initial release are present on loaded data
