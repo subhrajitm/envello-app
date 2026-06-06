@@ -436,6 +436,37 @@ export class MeetingsComponent {
     this.sortDirection.set(event.direction);
   }
 
+  handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
+    const ids = [...event.selectedIds] as string[];
+    switch (event.actionKey) {
+      case 'duplicate':
+        ids.forEach(id => {
+          const m = this.meetingsService.meetings().find(m => m.id === id);
+          if (m) this.meetingsService.duplicateMeeting(m.id);
+        });
+        break;
+      case 'cancel':
+        ids.forEach(id => this.meetingsService.cancelMeeting(id));
+        break;
+      case 'delete':
+        this.bulkDeleteIds.set(ids);
+        break;
+    }
+  }
+
+  bulkDeleteIds = signal<string[] | null>(null);
+
+  confirmBulkDelete() {
+    const ids = this.bulkDeleteIds();
+    if (ids) {
+      ids.forEach(id => {
+        const m = this.meetingsService.meetings().find(m => m.id === id);
+        if (m) this.meetingsService.deleteMeeting(m.id);
+      });
+    }
+    this.bulkDeleteIds.set(null);
+  }
+
   /** Meetings grouped by project for sidebar */
   meetingsByProject = computed(() => {
     const map = new Map<string, number>();
@@ -525,7 +556,13 @@ export class MeetingsComponent {
     
     // Escape to close modals, shortcuts help, or quick dropdown
     if (event.key === 'Escape') {
-      if (this.showCreateModal()) {
+      if (this.deleteMeetingTarget()) {
+        this.deleteMeetingTarget.set(null);
+        event.preventDefault();
+      } else if (this.subItemDeleteTarget()) {
+        this.subItemDeleteTarget.set(null);
+        event.preventDefault();
+      } else if (this.showCreateModal()) {
         this.closeCreateModal();
         event.preventDefault();
       } else if (this.showDetailsModal()) {
