@@ -127,9 +127,9 @@
     color: var(--text-primary);
 }
 .qf-filter-pill.active {
-    background: var(--text-primary);
+    background: var(--accent-primary);
     color: var(--bg-app);
-    border-color: var(--text-primary);
+    border-color: var(--accent-primary);
     font-weight: 600;
 }
 
