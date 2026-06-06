@@ -10,7 +10,6 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
 import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.component';
-import { SettingsModalComponent } from '../../settings-modal/settings-modal.component';
 import { NotificationCenterComponent } from '../../notification-center/notification-center.component';
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
@@ -27,7 +26,7 @@ export interface NavItem {
 @Component({
   selector: 'lib-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, SettingsModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -39,7 +38,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @Output() subNavVisibleChange = new EventEmitter<boolean>();
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
-  @ViewChild(SettingsModalComponent) settingsModal?: SettingsModalComponent;
   @ViewChild(NotificationCenterComponent) notificationCenter?: NotificationCenterComponent;
   @ViewChild(ProfileMenuComponent) profileMenu?: ProfileMenuComponent;
   @ViewChild(ProfileEditorComponent) profileEditor?: ProfileEditorComponent;
@@ -229,7 +227,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   openSettings() {
-    this.settingsModal?.open();
+    this.router.navigate(['/settings']);
   }
 
   openNotifications() {
@@ -241,7 +239,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   handleOpenSettings() {
-    this.settingsModal?.open();
+    this.router.navigate(['/settings']);
   }
 
   handleOpenProfile() {

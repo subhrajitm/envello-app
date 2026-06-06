@@ -154,6 +154,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'spaces':    'Spaces',
       'bin':                'Bin',
       'activity-log':       'Activity Log',
+      'settings':           'Settings',
       'developer-settings': 'Developer Settings',
       'bookmarks':          'Bookmarks',
       'vault':              'Vault',
