@@ -44,11 +44,17 @@ export class SubscriptionStore {
 
     constructor() {
         this.loadSubscriptions();
+        window.addEventListener('envello:db-ready',      () => this.loadSubscriptions());
+        window.addEventListener('envello:sync-complete', () => this.loadSubscriptions());
     }
 
     private async loadSubscriptions() {
-        const subs = await this.db.getSubscriptions();
-        this.subscriptionsSignal.set(subs);
+        try {
+            const subs = await this.db.getSubscriptions();
+            this.subscriptionsSignal.set(subs);
+        } catch (e) {
+            console.error('[SubscriptionStore] loadSubscriptions failed', e);
+        }
     }
 
     async addSubscription(sub: Subscription) {

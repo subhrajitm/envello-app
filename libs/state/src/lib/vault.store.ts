@@ -22,11 +22,17 @@ export class VaultStore {
 
     constructor() {
         this.loadCredentials();
+        window.addEventListener('envello:db-ready',      () => this.loadCredentials());
+        window.addEventListener('envello:sync-complete', () => this.loadCredentials());
     }
 
     private async loadCredentials() {
-        const creds = await this.db.getCredentials();
-        this.credentialsSignal.set(creds);
+        try {
+            const creds = await this.db.getCredentials();
+            this.credentialsSignal.set(creds);
+        } catch (e) {
+            console.error('[VaultStore] loadCredentials failed', e);
+        }
     }
 
     async addCredential(cred: Omit<Credential, 'value'> & { unencryptedValue: string }) {

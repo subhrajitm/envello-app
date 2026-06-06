@@ -19,6 +19,7 @@ export class BinService {
 
     constructor() {
         this.loadFromDb();
+        window.addEventListener('envello:db-ready', () => this.loadFromDb());
     }
 
     private async loadFromDb(): Promise<void> {

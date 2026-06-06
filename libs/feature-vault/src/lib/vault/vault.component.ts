@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
@@ -67,7 +67,10 @@ export class VaultComponent {
   // ── Visibility & copy ────────────────────────────────────────────────────
   visibleCreds      = signal<Set<string>>(new Set());
   decryptedSecrets  = signal<Map<string, string>>(new Map());
+  decryptingId      = signal<string | null>(null);
+  decryptErrors     = signal<Set<string>>(new Set());
   copiedId          = signal<string | null>(null);
+  clipboardCleared  = signal(false);
   deleteConfirmId   = signal<string | null>(null);
   private hideTimers      = new Map<string, ReturnType<typeof setTimeout>>();
   private clipboardTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -169,20 +172,37 @@ export class VaultComponent {
     { key: 'delete',           label: 'Delete',       icon: 'delete', danger: true },
   ];
 
-  tableRows = computed(() =>
-    this.filteredCredentials().map(cred => ({
-      id:       cred.id,
-      name:     cred.name,
-      type:     cred.type,
-      username: cred.username || '—',
-      secret:   this.visibleCreds().has(cred.id)
-                  ? (this.decryptedSecrets().get(cred.id) ?? '…')
-                  : '•  •  •  •  •  •  •  •',
-      scope:    cred.projectId || 'global',
-      date:     this.formatDate(cred.lastAccessedAt || cred.createdAt),
-      _cred:    cred,
-    }))
-  );
+  tableRows = computed(() => {
+    const visible  = this.visibleCreds();
+    const secrets  = this.decryptedSecrets();
+    const loading  = this.decryptingId();
+    const errors   = this.decryptErrors();
+    const copied   = this.copiedId();
+    return this.filteredCredentials().map(cred => {
+      let secret: string;
+      if (loading === cred.id) {
+        secret = 'Decrypting…';
+      } else if (errors.has(cred.id)) {
+        secret = '⚠ Decryption error';
+      } else if (visible.has(cred.id)) {
+        secret = secrets.get(cred.id) ?? '…';
+      } else if (copied === cred.id) {
+        secret = '✓ Copied!';
+      } else {
+        secret = '•  •  •  •  •  •  •  •';
+      }
+      return {
+        id:       cred.id,
+        name:     cred.name,
+        type:     cred.type,
+        username: cred.username || '—',
+        secret,
+        scope:    cred.projectId || 'global',
+        date:     this.formatDate(cred.lastAccessedAt || cred.createdAt),
+        _cred:    cred,
+      };
+    });
+  });
 
   handleTableAction(event: EnvTableActionEvent) {
     const cred = event.row['_cred'] as Credential | undefined;
@@ -303,28 +323,45 @@ export class VaultComponent {
       const secrets = new Map(this.decryptedSecrets());
       secrets.delete(id);
       this.decryptedSecrets.set(secrets);
+      this.visibleCreds.set(set);
     } else {
-      set.add(id);
+      this.decryptingId.set(id);
       this.vaultStore.touchCredential(id);
       const cred = this.vaultStore.credentials().find(c => c.id === id);
       if (cred) {
-        const plain = await this.vaultStore.decryptValue(cred.value);
-        const secrets = new Map(this.decryptedSecrets());
-        secrets.set(id, plain);
-        this.decryptedSecrets.set(secrets);
+        try {
+          const plain = await this.vaultStore.decryptValue(cred.value);
+          const secrets = new Map(this.decryptedSecrets());
+          secrets.set(id, plain);
+          this.decryptedSecrets.set(secrets);
+          const errSet = new Set(this.decryptErrors());
+          errSet.delete(id);
+          this.decryptErrors.set(errSet);
+          set.add(id);
+          const timer = setTimeout(() => {
+            const next = new Set(this.visibleCreds());
+            next.delete(id);
+            this.visibleCreds.set(next);
+            this.hideTimers.delete(id);
+            const s = new Map(this.decryptedSecrets());
+            s.delete(id);
+            this.decryptedSecrets.set(s);
+          }, 30_000);
+          this.hideTimers.set(id, timer);
+        } catch {
+          const errSet = new Set(this.decryptErrors());
+          errSet.add(id);
+          this.decryptErrors.set(errSet);
+          setTimeout(() => {
+            const e = new Set(this.decryptErrors());
+            e.delete(id);
+            this.decryptErrors.set(e);
+          }, 3_000);
+        }
       }
-      const timer = setTimeout(() => {
-        const next = new Set(this.visibleCreds());
-        next.delete(id);
-        this.visibleCreds.set(next);
-        this.hideTimers.delete(id);
-        const s = new Map(this.decryptedSecrets());
-        s.delete(id);
-        this.decryptedSecrets.set(s);
-      }, 30_000);
-      this.hideTimers.set(id, timer);
+      this.decryptingId.set(null);
+      this.visibleCreds.set(set);
     }
-    this.visibleCreds.set(set);
   }
 
   async copyCred(id: string, cipher: string) {
@@ -333,11 +370,13 @@ export class VaultComponent {
     this.copiedId.set(id);
     this.vaultStore.touchCredential(id);
     setTimeout(() => this.copiedId.set(null), 1800);
-    // Auto-clear clipboard after 30s — same window as visibility timeout
+    // Auto-clear clipboard after 30s and show brief notification
     clearTimeout(this.clipboardTimers.get(id));
     const t = setTimeout(() => {
       navigator.clipboard.writeText('').catch(() => {});
       this.clipboardTimers.delete(id);
+      this.clipboardCleared.set(true);
+      setTimeout(() => this.clipboardCleared.set(false), 2500);
     }, 30_000);
     this.clipboardTimers.set(id, t);
   }
@@ -414,6 +453,27 @@ export class VaultComponent {
     }
     return `You have ${creds.length} credential${creds.length !== 1 ? 's' : ''} in the vault. AI is unavailable — check Settings to configure a provider.`;
   }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent) {
+    if (this.formMode() === null) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeForm();
+    } else if (event.key === 'Enter' && !event.shiftKey) {
+      const tag = (event.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        event.preventDefault();
+        if (this.formMode() === 'edit') this.saveEdit();
+        else this.addCredential();
+      }
+    }
+  }
+
+  // ── Dynamic scope sidebar ─────────────────────────────────────────────────
+  scopeOptions = computed(() =>
+    Object.entries(this.countByScope()).map(([scope, count]) => ({ scope, count }))
+  );
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   getTypeMeta(type: string) { return TYPE_META[type] ?? TYPE_META['login']; }

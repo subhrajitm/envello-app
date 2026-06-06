@@ -12,14 +12,19 @@
       <div class="vt-sb-section-hdr">
         <span class="vt-sb-section-label">Scope</span>
       </div>
-      <button
-        class="vt-sb-item"
-        [class.active]="selectedScope() === 'global'"
-        (click)="selectedScope.set(selectedScope() === 'global' ? '' : 'global')">
-        <span class="material-symbols-outlined vt-sb-item-icon">public</span>
-        <span class="vt-sb-item-label">Global</span>
-        <span class="vt-sb-count">{{ countByScope()['global'] || 0 }}</span>
-      </button>
+      @for (opt of scopeOptions(); track opt.scope) {
+        <button
+          class="vt-sb-item"
+          [class.active]="selectedScope() === opt.scope"
+          (click)="selectedScope.set(selectedScope() === opt.scope ? '' : opt.scope)">
+          <span class="material-symbols-outlined vt-sb-item-icon">{{ opt.scope === 'global' ? 'public' : 'folder' }}</span>
+          <span class="vt-sb-item-label">{{ opt.scope === 'global' ? 'Global' : opt.scope }}</span>
+          <span class="vt-sb-count">{{ opt.count }}</span>
+        </button>
+      }
+      @if (scopeOptions().length === 0) {
+        <span class="vt-sb-item-label" style="padding: 4px 8px; opacity: 0.4; font-size: 11px;">No scopes yet</span>
+      }
     </div>
 
   </env-feature-sidebar>
@@ -271,12 +276,19 @@
 @if (deleteConfirmId(); as credId) {
 <env-confirm-dialog
     [isOpen]="true"
-    title="Delete Credential"
-    icon="delete_forever"
+    title="Move to Bin"
+    icon="delete"
     variant="danger"
-    confirmLabel="Delete"
+    confirmLabel="Move to Bin"
     (confirmed)="confirmDelete(credId)"
     (cancelled)="deleteConfirmId.set(null)">
-    This credential will be permanently deleted. This cannot be undone.
+    This credential will be moved to the Bin and can be restored later.
 </env-confirm-dialog>
+}
+
+@if (clipboardCleared()) {
+  <div class="vt-clipboard-toast">
+    <span class="material-symbols-outlined" style="font-size:14px;">content_paste_off</span>
+    Clipboard cleared
+  </div>
 }

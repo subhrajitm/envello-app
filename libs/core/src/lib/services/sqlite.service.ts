@@ -403,11 +403,22 @@ export class SqliteService {
         name TEXT,
         type TEXT,
         value TEXT,
+        username TEXT,
+        url TEXT,
+        notes TEXT,
         projectId TEXT,
         createdAt TEXT,
-        createdBy TEXT
+        createdBy TEXT,
+        updatedAt TEXT,
+        lastAccessedAt TEXT
       )
     `);
+        // Migration: add optional columns to existing databases
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN username TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN url TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN notes TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN updatedAt TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN lastAccessedAt TEXT`); } catch { /* already exists */ }
 
         // Subscriptions
         await db.execute(`
@@ -1111,11 +1122,15 @@ export class SqliteService {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM credentials WHERE id = $1', [item.id]);
         if (exists.length > 0) {
-            await db.execute(`UPDATE credentials SET name=$1, type=$2, value=$3, projectId=$4, createdAt=$5, createdBy=$6 WHERE id=$7`,
-                [item.name, item.type, item.value, item.projectId, item.createdAt, item.createdBy, item.id]);
+            await db.execute(
+                `UPDATE credentials SET name=$1, type=$2, value=$3, username=$4, url=$5, notes=$6, projectId=$7, createdAt=$8, createdBy=$9, updatedAt=$10, lastAccessedAt=$11 WHERE id=$12`,
+                [item.name, item.type, item.value, item.username ?? null, item.url ?? null, item.notes ?? null,
+                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null, item.id]);
         } else {
-            await db.execute(`INSERT INTO credentials (id, name, type, value, projectId, createdAt, createdBy) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [item.id, item.name, item.type, item.value, item.projectId, item.createdAt, item.createdBy]);
+            await db.execute(
+                `INSERT INTO credentials (id, name, type, value, username, url, notes, projectId, createdAt, createdBy, updatedAt, lastAccessedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+                [item.id, item.name, item.type, item.value, item.username ?? null, item.url ?? null, item.notes ?? null,
+                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null]);
         }
         await this.reloadCredentials();
     }

@@ -536,3 +536,28 @@
 .vta-form-pane::-webkit-scrollbar { width: 5px; }
 .vta-form-pane::-webkit-scrollbar-track { background: transparent; }
 .vta-form-pane::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 3px; }
+
+/* Clipboard-cleared toast */
+.vt-clipboard-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg-overlay, #1e1e1e);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  animation: vt-toast-in 0.2s ease;
+}
+@keyframes vt-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+

@@ -41,6 +41,8 @@ export class ArticleService {
   constructor() {
     this.loadFromDb();
     this.initMarkdown();
+    window.addEventListener('envello:db-ready',      () => this.loadFromDb());
+    window.addEventListener('envello:sync-complete', () => this.loadFromDb());
   }
 
   private async initMarkdown() {
