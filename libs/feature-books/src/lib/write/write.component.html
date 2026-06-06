@@ -154,6 +154,7 @@
             rowIdKey="id"
             (rowClick)="openBook($event['id'])"
             (actionClick)="handleTableAction($event)"
+            (bulkActionClick)="handleBulkAction($event)"
             (sortChange)="handleTableSort($event)"
           ></env-table>
         </div>

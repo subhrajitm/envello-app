@@ -528,7 +528,8 @@ export class SqliteService {
         ]);
     }
 
-    private toJson(obj: any): string {
+    private toJson(obj: any): string | null {
+        if (obj === undefined || obj === null) return null;
         return JSON.stringify(obj);
     }
 
@@ -540,24 +541,19 @@ export class SqliteService {
         }
     }
 
-    /**
-     * Generic helper to parse fields specifically.
-     * Basic SQLite returns everything as strings or numbers. 
-     * We need to parse JSON fields back to objects/arrays.
-     */
-    private parseRow<T>(row: any, jsonFields: string[] = []): T {
+    private parseRow<T>(row: any, jsonFields: string[] = [], boolFields: string[] = []): T {
         const res: any = { ...row };
-        // Handle booleans (stored as 0/1 or 'true'/'false' depending on how it was inserted, but tauri plugin might return boolean or number)
-        // Actually tauri-plugin-sql with sqlite parses booleans as 1/0 usually unless types are strict.
-        // Let's assume we need to handle JSON fields manually.
         for (const field of jsonFields) {
             if (res[field]) {
                 res[field] = this.fromJson(res[field]);
             }
         }
-        // Also convert booleans if they came back as numbers? 
-        // Typescript should handle it if we cast, but at runtime it might be 0/1.
-        // For now we assume standard casting works for primitives or we fix as issues arise.
+        // tauri-plugin-sql returns SQLite BOOLEAN columns as 0/1 integers (or occasionally
+        // as the strings "true"/"false"). Normalize to proper JS booleans so that
+        // filters like `!b.isArchived` behave correctly in all cases.
+        for (const field of boolFields) {
+            res[field] = res[field] === true || res[field] === 1 || res[field] === 'true';
+        }
         return res as T;
     }
 
@@ -1206,14 +1202,21 @@ export class SqliteService {
     private async reloadBookmarks() {
         const db = await this.getDb();
         const rows = await db.select<any[]>('SELECT * FROM bookmarks');
-        const parsed = rows.map((r: any) => this.parseRow<BookmarkDoc>(r, ['tags']));
+        const parsed = rows.map((r: any) => this.parseRow<BookmarkDoc>(r, ['tags'], ['isArchived', 'isPinned']));
         this.bookmarksSubject.next(parsed);
     }
     async getAllBookmarks(): Promise<BookmarkDoc[]> { return this.bookmarksSubject.getValue(); }
     async upsertBookmark(item: BookmarkDoc): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM bookmarks WHERE id = $1', [item.id]);
-        const j = { ...item, tags: this.toJson(item.tags) };
+        const j = {
+            ...item,
+            tags: this.toJson(item.tags),
+            // Store booleans as explicit integers so SQLite always gets 0/1,
+            // never a JS boolean or string that may round-trip incorrectly.
+            isArchived: item.isArchived ? 1 : 0,
+            isPinned: item.isPinned ? 1 : 0,
+        };
         if (exists.length > 0) {
             await db.execute(
                 `UPDATE bookmarks SET title=$1, url=$2, description=$3, faviconUrl=$4, tags=$5, folderId=$6, createdAt=$7, lastVisited=$8, visitCount=$9, notes=$10, color=$11, isArchived=$12, isPinned=$13 WHERE id=$14`,

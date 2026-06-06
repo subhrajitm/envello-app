@@ -277,6 +277,18 @@ export class WriteComponent {
     }
   }
 
+  handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
+    const { selectedIds, actionKey } = event;
+    const affected = this.tableRows().filter(r => selectedIds.has(r['id'])).map(r => r['book'] as Book);
+    for (const book of affected) {
+      if (!book) continue;
+      switch (actionKey) {
+        case 'duplicate': this.duplicateBook(book); break;
+        case 'delete':    this.store.deleteBook(book.id); break;
+      }
+    }
+  }
+
   handleTableSort(event: any) {
     const map: Record<string, 'UPDATED' | 'CREATED' | 'TITLE' | 'PROGRESS'> = {
       title:    'TITLE',

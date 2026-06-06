@@ -135,6 +135,9 @@ export class BinComponent {
       case 'book-location': return 'location_on';
       case 'book-group': return 'folder';
       case 'meeting': return 'groups';
+      case 'bookmark': return 'bookmark';
+      case 'credential': return 'lock';
+      case 'subscription': return 'subscriptions';
       default: return 'delete';
     }
   }
@@ -150,6 +153,9 @@ export class BinComponent {
       case 'book-group': return 'Group';
       case 'task': return 'Task';
       case 'meeting': return 'Meeting';
+      case 'bookmark': return 'Bookmark';
+      case 'credential': return 'Credential';
+      case 'subscription': return 'Subscription';
       default: return type;
     }
   }
@@ -170,12 +176,16 @@ export class BinComponent {
     const p: any = item.payload;
     if (!p || typeof p !== 'object') return [];
     const fields: { label: string; value: string }[] = [];
-    if (p['id'])        fields.push({ label: 'ORIGINAL ID', value: p['id'] });
-    if (p['status'])    fields.push({ label: 'STATUS',      value: p['status'] });
-    if (p['priority'])  fields.push({ label: 'PRIORITY',    value: p['priority'] });
-    if (p['due'])       fields.push({ label: 'DUE DATE',    value: p['due'] });
-    if (p['date'])      fields.push({ label: 'DATE',        value: p['date'] });
-    if (p['createdAt']) fields.push({ label: 'CREATED',     value: p['createdAt'] });
+    if (p['id'])          fields.push({ label: 'ORIGINAL ID', value: p['id'] });
+    if (p['url'])         fields.push({ label: 'URL',         value: p['url'] });
+    if (p['type'])        fields.push({ label: 'TYPE',        value: p['type'] });
+    if (p['status'])      fields.push({ label: 'STATUS',      value: p['status'] });
+    if (p['priority'])    fields.push({ label: 'PRIORITY',    value: p['priority'] });
+    if (p['price'])       fields.push({ label: 'PRICE',       value: String(p['price']) });
+    if (p['renewalDate']) fields.push({ label: 'RENEWAL',     value: p['renewalDate'] });
+    if (p['due'])         fields.push({ label: 'DUE DATE',    value: p['due'] });
+    if (p['date'])        fields.push({ label: 'DATE',        value: p['date'] });
+    if (p['createdAt'])   fields.push({ label: 'CREATED',     value: p['createdAt'] });
     return fields.slice(0, 4);
   }
 }

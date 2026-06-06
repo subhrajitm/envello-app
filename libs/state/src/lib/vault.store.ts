@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
 import { Credential } from '@envello/domain';
+import { BinService } from './bin.service';
 import { EncryptionUtil, AuthService, VaultKeyService } from '@envello/core';
 
 @Injectable({
@@ -10,6 +11,7 @@ export class VaultStore {
     private db = inject(DataService);
     private auth = inject(AuthService);
     private vaultKey = inject(VaultKeyService);
+    private bin = inject(BinService);
 
     private credentialsSignal = signal<Credential[]>([]);
     public credentials = this.credentialsSignal.asReadonly();
@@ -60,6 +62,10 @@ export class VaultStore {
     }
 
     async deleteCredential(id: string) {
+        const cred = this.credentials().find(c => c.id === id);
+        if (cred) {
+            this.bin.addToBin({ type: 'credential', originalId: id, title: cred.name, payload: cred });
+        }
         await this.db.deleteCredential(id);
         await this.loadCredentials();
     }

@@ -4,11 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { ButtonComponent } from '../button/button.component';
-import { IconButtonComponent } from '../icon-button/icon-button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService } from '@envello/core';
 import { AiService, AiProvider } from '@envello/core';
-import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService } from '@envello/core';
+import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
@@ -34,7 +33,7 @@ interface AiProviderOption {
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, IconButtonComponent, EnvLogoComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, EnvLogoComponent, ConfirmDialogComponent],
   templateUrl: './settings-page.component.html',
   styleUrl: './settings-page.component.css'
 })
@@ -70,6 +69,7 @@ export class SettingsPageComponent implements OnInit {
   readonly syncSettings = inject(DesktopSyncSettingsService);
   private readonly dataService = inject(DataService);
   private readonly bookContent = inject(BookContentService);
+  private readonly tauri = inject(TauriService);
   readonly backupCollections = BACKUP_ELIGIBLE_COLLECTIONS;
   readonly isDesktop = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
   restoreStatus = signal<Record<string, 'idle' | 'restoring' | 'done' | 'error'>>({});
@@ -365,9 +365,9 @@ export class SettingsPageComponent implements OnInit {
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
   }
 
-  checkUpdates() { window.open('https://github.com/envello-app/envello/releases', '_blank'); }
-  openDocs() { window.open('https://github.com/envello-app/envello/wiki', '_blank'); }
-  reportIssue() { window.open('https://github.com/envello-app/envello/issues/new', '_blank'); }
+  checkUpdates() { this.tauri.openUrl('https://github.com/envello-app/envello/releases'); }
+  openDocs() { this.tauri.openUrl('https://github.com/envello-app/envello/wiki'); }
+  reportIssue() { this.tauri.openUrl('https://github.com/envello-app/envello/issues/new'); }
 
   private loadSettings() {
     const saved = localStorage.getItem('envello-settings');

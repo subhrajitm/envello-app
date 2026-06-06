@@ -242,6 +242,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
           rowIdKey="id"
           (rowClick)="openDetails($any($event['_sub']))"
           (actionClick)="handleTableAction($event)"
+          (bulkActionClick)="handleBulkAction($event)"
           (sortChange)="handleTableSort($event)"
         ></env-table>
       }
@@ -1114,6 +1115,14 @@ export class VendorComponent {
             case 'view':   this.openDetails(sub); break;
             case 'edit':   this.openEditForm(sub); break;
             case 'delete': this.deleteConfirmId.set(sub.id); break;
+        }
+    }
+
+    async handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
+        if (event.actionKey === 'delete') {
+            for (const id of event.selectedIds) {
+                await this.subscriptionStore.deleteSubscription(id as string);
+            }
         }
     }
 

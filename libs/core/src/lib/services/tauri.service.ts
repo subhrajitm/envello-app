@@ -47,6 +47,30 @@ export class TauriService {
     }
   }
 
+  /** Open URL in a Tauri child WebviewWindow. Falls back to system browser if window creation fails. */
+  async openInWebview(url: string, title = 'Envello — Web Preview'): Promise<void> {
+    if (!this._isTauri()) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    try {
+      const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+      const win = new WebviewWindow(`preview-${Date.now()}`, {
+        url,
+        title,
+        width: 1100,
+        height: 750,
+        center: true,
+        resizable: true,
+        decorations: true,
+      });
+      // If the window emits an error, fall back to system browser
+      win.once('tauri://error', () => this.openUrl(url));
+    } catch {
+      await this.openUrl(url);
+    }
+  }
+
   /** Show native save dialog and return selected path, or null if cancelled (Tauri only). */
   async saveFile(options: { defaultPath?: string; filters?: { name: string; extensions: string[] }[] }): Promise<string | null> {
     if (!this._isTauri()) return null;

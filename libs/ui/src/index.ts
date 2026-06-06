@@ -29,3 +29,4 @@ export * from './lib/table/table.component';
 export * from './lib/feature-sidebar/feature-sidebar.component';
 export * from './lib/toast/toast.component';
 export * from './lib/editor-floating-menu/editor-floating-menu.component';
+export * from './lib/web-preview/web-preview.component';

@@ -195,6 +195,17 @@ export class VaultComponent {
     }
   }
 
+  handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
+    const { selectedIds, actionKey } = event;
+    const affected = this.filteredCredentials().filter(c => selectedIds.has(c.id));
+    for (const cred of affected) {
+      switch (actionKey) {
+        case 'toggleVisibility': this.toggleCredVisibility(cred.id); break;
+        case 'delete':           this.vaultStore.deleteCredential(cred.id); break;
+      }
+    }
+  }
+
   handleTableSort(event: EnvTableSortEvent) {
     const colMap: Record<string, 'name' | 'type' | 'createdAt'> = {
       name: 'name', type: 'type', date: 'createdAt',

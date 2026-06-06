@@ -1,12 +1,13 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { DataService } from '@envello/data';
-import { BinItem, BinItemType } from '@envello/domain';
+import { BinItem, BinItemType, Credential, Subscription } from '@envello/domain';
 
 const COLLECTION_MAP: Partial<Record<BinItemType, string>> = {
     'task': 'tasks',
     'daily-note': 'notes',
     'book': 'books',
     'meeting': 'meetings',
+    'bookmark': 'bookmarks',
 };
 
 @Injectable({
@@ -45,11 +46,17 @@ export class BinService {
         const item = this.items().find(i => i.id === binItemId);
         if (!item) return false;
 
-        const collection = COLLECTION_MAP[item.type];
-        if (!collection) return false;
-
         try {
-            await this.db.upsert(collection, item.payload);
+            const collection = COLLECTION_MAP[item.type];
+            if (collection) {
+                await this.db.upsert(collection, item.payload);
+            } else if (item.type === 'credential') {
+                await this.db.saveCredential(item.payload as Credential);
+            } else if (item.type === 'subscription') {
+                await this.db.saveSubscription(item.payload as Subscription);
+            } else {
+                return false;
+            }
             this.permanentlyDelete(binItemId);
             // Signal StoreService to reload so the restored item appears immediately.
             window.dispatchEvent(new CustomEvent('envello:sync-complete'));
@@ -62,7 +69,7 @@ export class BinService {
 
     /** Check if a bin item's type is restorable. */
     canRestore(type: BinItemType): boolean {
-        return type in COLLECTION_MAP;
+        return type in COLLECTION_MAP || type === 'credential' || type === 'subscription';
     }
 
     permanentlyDelete(binItemId: string) {

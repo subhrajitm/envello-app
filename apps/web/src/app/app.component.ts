@@ -2,14 +2,14 @@ import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal } from '@an
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent } from '@envello/ui';
+import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
 import { TauriService, SessionService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

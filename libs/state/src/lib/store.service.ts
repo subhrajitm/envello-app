@@ -322,6 +322,10 @@ export class StoreService {
     }
 
     deleteBookmark(id: string) {
+        const bookmark = this.bookmarks().find(b => b.id === id);
+        if (bookmark) {
+            this.bin.addToBin({ type: 'bookmark', originalId: id, title: bookmark.title || bookmark.url, payload: bookmark });
+        }
         this.bookmarks.update(list => list.filter(b => b.id !== id));
         this.addActivity('Bookmark removed', 'system');
         this.db.remove('bookmarks', id).catch(e => console.error('[StoreService] remove bookmark failed', e));

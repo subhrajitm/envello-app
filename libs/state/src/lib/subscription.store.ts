@@ -1,12 +1,14 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
 import { Subscription } from '@envello/domain';
+import { BinService } from './bin.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class SubscriptionStore {
     private db = inject(DataService);
+    private bin = inject(BinService);
 
     // State
     private subscriptionsSignal = signal<Subscription[]>([]);
@@ -68,6 +70,10 @@ export class SubscriptionStore {
     }
 
     async deleteSubscription(id: string) {
+        const sub = this.subscriptions().find(s => s.id === id);
+        if (sub) {
+            this.bin.addToBin({ type: 'subscription', originalId: id, title: sub.name, payload: sub });
+        }
         await this.db.deleteSubscription(id);
         await this.loadSubscriptions();
     }

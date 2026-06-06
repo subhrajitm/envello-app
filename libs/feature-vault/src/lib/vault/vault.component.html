@@ -95,6 +95,7 @@
           rowIdKey="id"
           (rowClick)="openEditForm($any($event['_cred']))"
           (actionClick)="handleTableAction($event)"
+          (bulkActionClick)="handleBulkAction($event)"
           (sortChange)="handleTableSort($event)"
         ></env-table>
       }
