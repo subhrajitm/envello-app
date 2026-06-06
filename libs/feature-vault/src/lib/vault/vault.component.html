@@ -286,6 +286,19 @@
 </env-confirm-dialog>
 }
 
+@if (bulkDeleteConfirm(); as ids) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Move to Bin"
+    icon="delete"
+    variant="danger"
+    confirmLabel="Move to Bin"
+    (confirmed)="confirmBulkDelete()"
+    (cancelled)="bulkDeleteConfirm.set(null)">
+    <strong>{{ ids.length }} credential{{ ids.length !== 1 ? 's' : '' }}</strong> will be moved to the Bin and can be restored later.
+</env-confirm-dialog>
+}
+
 @if (clipboardCleared()) {
   <div class="vt-clipboard-toast">
     <span class="material-symbols-outlined" style="font-size:14px;">content_paste_off</span>

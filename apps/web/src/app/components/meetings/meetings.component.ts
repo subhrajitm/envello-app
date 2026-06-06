@@ -32,6 +32,7 @@ export class MeetingsComponent {
   
   // Delete confirm
   deleteMeetingTarget = signal<Meeting | null>(null);
+  subItemDeleteTarget = signal<{ type: 'agenda' | 'action' | 'note'; id: string } | null>(null);
 
   // View state
   viewMode = signal<MeetingViewMode>('calendar');
@@ -832,12 +833,7 @@ export class MeetingsComponent {
   }
   
   deleteAgendaItem(itemId: string) {
-    const meeting = this.selectedMeeting();
-    if (!meeting) return;
-    
-    this.meetingsService.deleteAgendaItem(meeting.id, itemId);
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
-    if (updated) this.selectedMeeting.set(updated);
+    this.subItemDeleteTarget.set({ type: 'agenda', id: itemId });
   }
   
   // Action items methods
@@ -874,12 +870,7 @@ export class MeetingsComponent {
   }
   
   deleteActionItem(itemId: string) {
-    const meeting = this.selectedMeeting();
-    if (!meeting) return;
-    
-    this.meetingsService.deleteActionItem(meeting.id, itemId);
-    const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
-    if (updated) this.selectedMeeting.set(updated);
+    this.subItemDeleteTarget.set({ type: 'action', id: itemId });
   }
   
   convertToTask(actionItem: ActionItem) {
@@ -905,12 +896,21 @@ export class MeetingsComponent {
   }
   
   deleteNote(noteId: string) {
+    this.subItemDeleteTarget.set({ type: 'note', id: noteId });
+  }
+
+  confirmSubItemDelete() {
+    const target = this.subItemDeleteTarget();
     const meeting = this.selectedMeeting();
-    if (!meeting) return;
-    
-    this.meetingsService.deleteNote(meeting.id, noteId);
+    if (!target || !meeting) { this.subItemDeleteTarget.set(null); return; }
+    switch (target.type) {
+      case 'agenda': this.meetingsService.deleteAgendaItem(meeting.id, target.id); break;
+      case 'action': this.meetingsService.deleteActionItem(meeting.id, target.id); break;
+      case 'note':   this.meetingsService.deleteNote(meeting.id, target.id); break;
+    }
     const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
     if (updated) this.selectedMeeting.set(updated);
+    this.subItemDeleteTarget.set(null);
   }
   
   // Labels methods

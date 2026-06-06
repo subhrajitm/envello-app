@@ -370,13 +370,15 @@
 @if (showDeleteModal()) {
 <env-confirm-dialog
     [isOpen]="true"
-    title="Delete Writing"
+    [title]="bulkDeleteIds() ? 'Delete Books' : 'Delete Writing'"
     icon="delete_forever"
     variant="danger"
     confirmLabel="Delete"
     (confirmed)="confirmDeleteBook()"
     (cancelled)="cancelDeleteBook()">
-    @if (bookToDelete(); as book) {
+    @if (bulkDeleteIds(); as ids) {
+        Delete <strong>{{ ids.length }} book{{ ids.length !== 1 ? 's' : '' }}</strong>? They can be restored from the bin later.
+    } @else if (bookToDelete(); as book) {
         Delete <strong>"{{ book.title }}"</strong>? You can restore it from the bin later.
     }
 </env-confirm-dialog>

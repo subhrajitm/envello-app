@@ -1103,3 +1103,16 @@
     Delete <strong>{{ meeting.title }}</strong>? This action cannot be undone.
 </env-confirm-dialog>
 }
+
+@if (subItemDeleteTarget(); as target) {
+<env-confirm-dialog
+    [isOpen]="true"
+    [title]="target.type === 'agenda' ? 'Remove Agenda Item' : target.type === 'action' ? 'Remove Action Item' : 'Remove Note'"
+    icon="delete"
+    variant="danger"
+    confirmLabel="Remove"
+    (confirmed)="confirmSubItemDelete()"
+    (cancelled)="subItemDeleteTarget.set(null)">
+    This item will be permanently removed from the meeting.
+</env-confirm-dialog>
+}

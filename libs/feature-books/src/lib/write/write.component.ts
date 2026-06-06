@@ -56,6 +56,7 @@ export class WriteComponent {
   // ── Delete modal ───────────────────────────────────────────────────────────
   showDeleteModal = signal(false);
   bookToDelete   = signal<Book | null>(null);
+  bulkDeleteIds  = signal<string[] | null>(null);
   bookMenuOpen   = signal<string | null>(null);
 
   // ── AI Assistant ──────────────────────────────────────────────────────────
@@ -284,7 +285,10 @@ export class WriteComponent {
       if (!book) continue;
       switch (actionKey) {
         case 'duplicate': this.duplicateBook(book); break;
-        case 'delete':    this.store.deleteBook(book.id); break;
+        case 'delete':
+          this.bulkDeleteIds.set(affected.filter(b => b).map(b => b.id));
+          this.showDeleteModal.set(true);
+          return;
       }
     }
   }
@@ -331,10 +335,20 @@ export class WriteComponent {
     this.showDeleteModal.set(true);
     this.closeBookMenu();
   }
-  cancelDeleteBook() { this.showDeleteModal.set(false); this.bookToDelete.set(null); }
+  cancelDeleteBook() {
+    this.showDeleteModal.set(false);
+    this.bookToDelete.set(null);
+    this.bulkDeleteIds.set(null);
+  }
   confirmDeleteBook() {
-    const book = this.bookToDelete();
-    if (book) { this.store.deleteBook(book.id); this.cancelDeleteBook(); }
+    const ids = this.bulkDeleteIds();
+    if (ids) {
+      ids.forEach(id => this.store.deleteBook(id));
+    } else {
+      const book = this.bookToDelete();
+      if (book) this.store.deleteBook(book.id);
+    }
+    this.cancelDeleteBook();
   }
 
   // ── Add modal ─────────────────────────────────────────────────────────────

@@ -72,6 +72,7 @@ export class VaultComponent {
   copiedId          = signal<string | null>(null);
   clipboardCleared  = signal(false);
   deleteConfirmId   = signal<string | null>(null);
+  bulkDeleteConfirm = signal<string[] | null>(null);
   private hideTimers      = new Map<string, ReturnType<typeof setTimeout>>();
   private clipboardTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -218,11 +219,13 @@ export class VaultComponent {
   handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
     const { selectedIds, actionKey } = event;
     const affected = this.filteredCredentials().filter(c => selectedIds.has(c.id));
-    for (const cred of affected) {
-      switch (actionKey) {
-        case 'toggleVisibility': this.toggleCredVisibility(cred.id); break;
-        case 'delete':           this.vaultStore.deleteCredential(cred.id); break;
-      }
+    switch (actionKey) {
+      case 'toggleVisibility':
+        affected.forEach(c => this.toggleCredVisibility(c.id));
+        break;
+      case 'delete':
+        this.bulkDeleteConfirm.set(affected.map(c => c.id));
+        break;
     }
   }
 
@@ -311,6 +314,12 @@ export class VaultComponent {
     this.vaultStore.deleteCredential(id);
     this.deleteConfirmId.set(null);
     if (this.editingId() === id) this.closeForm();
+  }
+
+  confirmBulkDelete() {
+    const ids = this.bulkDeleteConfirm();
+    if (ids) ids.forEach(id => this.vaultStore.deleteCredential(id));
+    this.bulkDeleteConfirm.set(null);
   }
 
   // ── Visibility & copy ────────────────────────────────────────────────────

@@ -571,13 +571,26 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @if (deleteConfirmId(); as subId) {
 <env-confirm-dialog
     [isOpen]="true"
-    title="Delete Subscription"
-    icon="delete_forever"
+    title="Move to Bin"
+    icon="delete"
     variant="danger"
-    confirmLabel="Delete"
+    confirmLabel="Move to Bin"
     (confirmed)="doDelete(subId)"
     (cancelled)="deleteConfirmId.set(null)">
-    This subscription will be permanently deleted. This cannot be undone.
+    This subscription will be moved to the Bin and can be restored later.
+</env-confirm-dialog>
+}
+
+@if (bulkDeleteConfirm(); as ids) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Move to Bin"
+    icon="delete"
+    variant="danger"
+    confirmLabel="Move to Bin"
+    (confirmed)="confirmBulkDelete()"
+    (cancelled)="bulkDeleteConfirm.set(null)">
+    <strong>{{ ids.length }} subscription{{ ids.length !== 1 ? 's' : '' }}</strong> will be moved to the Bin and can be restored later.
 </env-confirm-dialog>
 }
   `,
@@ -955,7 +968,8 @@ export class VendorComponent {
     });
 
     // ── Modal / delete state ──────────────────────────────────────────────
-    deleteConfirmId = signal<string | null>(null);
+    deleteConfirmId   = signal<string | null>(null);
+    bulkDeleteConfirm = signal<string[] | null>(null);
     showImportModal = signal(false);
     importText      = signal('');
     viewingSub      = signal<Subscription | null>(null);
@@ -1118,12 +1132,20 @@ export class VendorComponent {
         }
     }
 
-    async handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
+    handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
         if (event.actionKey === 'delete') {
-            for (const id of event.selectedIds) {
-                await this.subscriptionStore.deleteSubscription(id as string);
+            this.bulkDeleteConfirm.set([...event.selectedIds] as string[]);
+        }
+    }
+
+    async confirmBulkDelete() {
+        const ids = this.bulkDeleteConfirm();
+        if (ids) {
+            for (const id of ids) {
+                await this.subscriptionStore.deleteSubscription(id);
             }
         }
+        this.bulkDeleteConfirm.set(null);
     }
 
     handleTableSort(event: EnvTableSortEvent) {
