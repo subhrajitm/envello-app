@@ -14,7 +14,9 @@ export class StoreService {
     activities = signal<Activity[]>([]);
     books = signal<Book[]>([]);
     /** Persisted folder definitions for daily notes; loaded from DB on init. */
-    noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
+    noteFolders = signal<{ id: string; name: string; icon: string }[]>([
+        { id: 'personal', name: 'Personal', icon: 'folder' },
+    ]);
     bookmarks = signal<Bookmark[]>([]);
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);

@@ -1,10 +1,16 @@
 import { Injectable, inject, effect, OnDestroy } from '@angular/core';
-import { PowerSyncDatabase } from '@powersync/web';
+import { PowerSyncDatabase, WASQLiteOpenFactory } from '@powersync/web';
 import { AppSchema } from '../config/powersync.schema';
 import { SupabasePowerSyncConnector } from './powersync-connector';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
 import { environment } from '../environments/environment';
+
+// Pre-built UMD workers served as static assets; avoids esbuild trying to
+// bundle the SharedWorker from inside node_modules (which Angular cannot do).
+// Chunk files use publicPath = (worker directory)/../ so "assets/worker/" is required.
+const DB_WORKER   = '/assets/worker/WASQLiteDB.umd.js';
+const SYNC_WORKER = '/assets/worker/SharedSyncImplementation.umd.js';
 
 @Injectable({ providedIn: 'root' })
 export class PowerSyncService implements OnDestroy {
@@ -13,12 +19,29 @@ export class PowerSyncService implements OnDestroy {
 
   readonly db = new PowerSyncDatabase({
     schema: AppSchema,
-    database: { dbFilename: 'envello.db' },
+    database: new WASQLiteOpenFactory({
+      dbFilename: 'envello.db',
+      worker: DB_WORKER,
+    }),
+    sync: {
+      worker: SYNC_WORKER,
+    },
   });
+
+  /** Resolves once the SQLite engine is open and ready for queries. */
+  readonly ready: Promise<void>;
 
   private watchAbort = new AbortController();
 
   constructor() {
+    this.ready = this.db.init().then(() => {
+      window.dispatchEvent(new CustomEvent('envello:db-ready'));
+    }).catch(err => {
+      console.error('[PowerSyncService] DB init failed', err);
+    });
+
+    this.watchTableChanges();
+
     effect(() => {
       const user = this.auth.currentUser();
       const isGuest = this.auth.isGuest();
@@ -29,26 +52,23 @@ export class PowerSyncService implements OnDestroy {
           this.auth,
           environment.powerSyncUrl
         );
-        this.db.connect(connector).then(() => this.watchTableChanges());
+        this.db.connect(connector);
       } else {
-        this.watchAbort.abort();
-        this.watchAbort = new AbortController();
         this.db.disconnect();
       }
     });
   }
 
   private watchTableChanges(): void {
+    // This watcher runs for the full service lifetime; aborted only on ngOnDestroy.
     const signal = this.watchAbort.signal;
     (async () => {
       try {
-        // onChange fires on ANY row-level change (INSERT, UPDATE, DELETE),
-        // unlike watch() which only fires when the query result changes.
         for await (const _ of this.db.onChange({ tables: ['user_data'], signal })) {
           window.dispatchEvent(new CustomEvent('envello:sync-complete'));
         }
       } catch {
-        // AbortError on disconnect — expected
+        // AbortError on ngOnDestroy — expected
       }
     })();
   }

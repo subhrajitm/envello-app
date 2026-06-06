@@ -34,7 +34,8 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
 
     const userId = this.auth.currentUser()?.id;
     if (!userId) {
-      await transaction.complete();
+      // Do NOT complete — let PowerSync retry once auth is available.
+      // Calling complete() without uploading would permanently drop the CRUD entry.
       return;
     }
 

@@ -11,5 +11,5 @@ export const environment = {
     aiSuggestions: true,
     offlineMode: false,
   },
-  powerSyncUrl: '',
+  powerSyncUrl: 'https://6a23035e0ef84ed6719f380d.powersync.journeyapps.com',
 };
