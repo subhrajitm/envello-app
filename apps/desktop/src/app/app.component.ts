@@ -113,7 +113,9 @@ export class AppComponent implements OnInit, OnDestroy {
       const win = getCurrentWindow();
       this.unlistenCloseRequested = await win.onCloseRequested(async (event) => {
         event.preventDefault();
-        await this.bookContentService.flushPersist();
+        try {
+          await this.bookContentService.flushPersist();
+        } catch { /* non-fatal — still close */ }
         await win.destroy();
       });
     } catch {
