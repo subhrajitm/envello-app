@@ -1,6 +1,6 @@
 /* ── Host & view ── */
-:host { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; }
-.rs-view { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg-app); }
+:host { display: block; width: 100%; height: 100%; }
+.rs-view { display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg-app); }
 
 /* ── Sidebar (container handled by env-feature-sidebar) ── */
 

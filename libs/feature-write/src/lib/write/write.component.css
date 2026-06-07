@@ -1,6 +1,6 @@
 /* ── Host & view ── */
-:host { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; }
-.wr-view { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; background: var(--bg-app); }
+:host { display: block; width: 100%; height: 100%; }
+.wr-view { display: flex; width: 100%; height: 100%; overflow: hidden; background: var(--bg-app); }
 
 /* ── Sidebar (container handled by env-feature-sidebar) ── */
 .wr-sb-nav     { padding: 4px 6px; flex-shrink: 0; }
