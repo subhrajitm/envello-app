@@ -6,7 +6,7 @@ import { Location } from '@angular/common';
 import { ButtonComponent } from '../button/button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService } from '@envello/core';
-import { AiService, AiProvider } from '@envello/core';
+import { AiService, AiProvider, AiFeature, AiFeatureConfig } from '@envello/core';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -159,6 +159,112 @@ export class SettingsPageComponent implements OnInit {
     { value: 'deepseek',  label: 'DeepSeek',            icon: 'water' },
     { value: 'ollama',    label: 'Ollama (Local)',       icon: 'terminal' },
   ];
+
+  readonly aiFeatureDefs: { id: AiFeature; label: string; icon: string; hint: string }[] = [
+    { id: 'writing',   label: 'Writing',     icon: 'edit',           hint: 'Editor assist, improve, expand' },
+    { id: 'research',  label: 'Research',    icon: 'travel_explore', hint: 'Web research & sourcing' },
+    { id: 'summarize', label: 'Summarize',   icon: 'summarize',      hint: 'Article & content summaries' },
+    { id: 'chat',      label: 'Chat',        icon: 'chat',           hint: 'General AI assistant' },
+  ];
+
+  extraProvidersNeeded = computed<AiProvider[]>(() => {
+    const global = this.aiProvider();
+    const seen = new Set<AiProvider>();
+    for (const fc of Object.values(this.aiService.featureConfigs())) {
+      if (fc && fc.provider !== global && fc.provider !== 'mock' && fc.provider !== 'local' && fc.provider !== 'ollama') {
+        seen.add(fc.provider);
+      }
+    }
+    return [...seen];
+  });
+
+  getFeatureProvider(feature: AiFeature): string {
+    return this.aiService.featureConfigs()[feature]?.provider ?? '';
+  }
+
+  getFeatureModel(feature: AiFeature): string {
+    return this.aiService.featureConfigs()[feature]?.model ?? '';
+  }
+
+  setFeatureProvider(feature: AiFeature, provider: string) {
+    if (!provider) {
+      this.aiService.updateFeatureConfig(feature, null);
+      return;
+    }
+    const p = provider as AiProvider;
+    const model = this.getDefaultModelForProvider(p);
+    this.aiService.updateFeatureConfig(feature, { provider: p, model });
+  }
+
+  setFeatureModel(feature: AiFeature, model: string) {
+    const existing = this.aiService.featureConfigs()[feature];
+    if (existing) this.aiService.updateFeatureConfig(feature, { ...existing, model });
+  }
+
+  getDefaultModelForProvider(provider: AiProvider): string {
+    switch (provider) {
+      case 'openai':    return 'gpt-4o';
+      case 'anthropic': return 'claude-sonnet-4-6';
+      case 'gemini':    return 'gemini-2.5-flash';
+      case 'grok':      return 'grok-3';
+      case 'deepseek':  return 'deepseek-chat';
+      case 'ollama':    return 'llama3';
+      case 'local':     return 'HuggingFaceTB/SmolLM2-360M-Instruct';
+      default:          return '';
+    }
+  }
+
+  getModelsForProvider(provider: AiProvider): { value: string; label: string }[] {
+    switch (provider) {
+      case 'openai':    return [
+        { value: 'gpt-4o',      label: 'gpt-4o' },
+        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Faster)' },
+        { value: 'o1-mini',     label: 'o1-mini (Reasoning)' },
+      ];
+      case 'anthropic': return [
+        { value: 'claude-opus-4-6',          label: 'claude-opus-4-6 (Powerful)' },
+        { value: 'claude-sonnet-4-6',         label: 'claude-sonnet-4-6' },
+        { value: 'claude-haiku-4-5-20251001', label: 'claude-haiku-4-5 (Fastest)' },
+      ];
+      case 'gemini': return [
+        { value: 'gemini-2.5-pro',   label: 'gemini-2.5-pro' },
+        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash' },
+      ];
+      case 'grok': return [
+        { value: 'grok-3',      label: 'grok-3' },
+        { value: 'grok-3-mini', label: 'grok-3-mini (Faster)' },
+      ];
+      case 'deepseek': return [
+        { value: 'deepseek-chat',     label: 'deepseek-chat' },
+        { value: 'deepseek-reasoner', label: 'deepseek-reasoner (R1)' },
+      ];
+      case 'ollama': return [
+        { value: 'llama3',   label: 'llama3' },
+        { value: 'mistral',  label: 'mistral' },
+        { value: 'gemma3',   label: 'gemma3' },
+      ];
+      case 'local': return [
+        { value: 'HuggingFaceTB/SmolLM2-360M-Instruct', label: 'SmolLM2 360M' },
+        { value: 'HuggingFaceTB/SmolLM2-135M-Instruct', label: 'SmolLM2 135M (Fastest)' },
+      ];
+      default: return [];
+    }
+  }
+
+  getProviderLabel(provider: AiProvider): string {
+    return this.aiProviders.find(p => p.value === provider)?.label ?? provider;
+  }
+
+  getApiKeyPlaceholderFor(provider: AiProvider): string {
+    switch (provider) {
+      case 'openai':    return 'sk-...';
+      case 'anthropic': return 'sk-ant-...';
+      case 'gemini':    return 'AIza...';
+      case 'grok':      return 'xai-...';
+      case 'deepseek':  return 'sk-...';
+      default:          return 'Enter API key';
+    }
+  }
 
   constructor() {
     this.currentTheme.set(this.themeService.theme());

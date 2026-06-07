@@ -10,6 +10,8 @@ import { createXai } from '@ai-sdk/xai';
 import { SupabaseService } from './supabase.service';
 
 export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek' | 'local';
+export type AiFeature = 'writing' | 'research' | 'summarize' | 'chat';
+export interface AiFeatureConfig { provider: AiProvider; model: string; }
 
 export type LocalModelStatus = 'idle' | 'downloading' | 'ready' | 'error';
 
@@ -37,6 +39,8 @@ export class AiService {
     provider = signal<AiProvider>('mock');
     modelName = signal<string>('gpt-4o');
     apiKey = signal<string>('');
+    featureConfigs = signal<Partial<Record<AiFeature, AiFeatureConfig>>>({});
+    extraProviderKeys = signal<Partial<Record<AiProvider, string>>>({});
 
     localModelStatus = signal<LocalModelStatus>('idle');
     localDownloadProgress = signal<number>(0);
@@ -74,6 +78,11 @@ export class AiService {
         const savedKey = this.keyStorage.getItem('ai-key');
         if (savedKey) this.apiKey.set(savedKey);
 
+        const savedFc = localStorage.getItem('ai-feature-configs');
+        if (savedFc) try { this.featureConfigs.set(JSON.parse(savedFc)); } catch {}
+        const savedEk = this.keyStorage.getItem('ai-extra-keys');
+        if (savedEk) try { this.extraProviderKeys.set(JSON.parse(savedEk)); } catch {}
+
         this.loadPlatformConfig().then(() => this.initModel());
 
         effect(() => {
@@ -81,6 +90,8 @@ export class AiService {
             localStorage.setItem('ai-provider', this.provider());
             localStorage.setItem('ai-model', this.modelName());
             this.keyStorage.setItem('ai-key', this.apiKey());
+            localStorage.setItem('ai-feature-configs', JSON.stringify(this.featureConfigs()));
+            this.keyStorage.setItem('ai-extra-keys', JSON.stringify(this.extraProviderKeys()));
         });
     }
 
@@ -108,6 +119,38 @@ export class AiService {
         if (model) this.modelName.set(model);
         if (key) this.apiKey.set(key);
         this.initModel();
+    }
+
+    updateFeatureConfig(feature: AiFeature, config: AiFeatureConfig | null) {
+        this.featureConfigs.update(c => {
+            const n = { ...c };
+            if (config) n[feature] = config;
+            else delete n[feature];
+            return n;
+        });
+    }
+
+    setExtraProviderKey(provider: AiProvider, key: string) {
+        this.extraProviderKeys.update(k => ({ ...k, [provider]: key }));
+    }
+
+    getKeyForProvider(provider: AiProvider): string {
+        if (provider === this.provider()) return this.apiKey();
+        return this.extraProviderKeys()[provider] ?? '';
+    }
+
+    private resolveConfig(feature?: AiFeature): { model: LanguageModel | undefined; isLocal: boolean } {
+        if (feature) {
+            const fc = this.featureConfigs()[feature];
+            if (fc) {
+                const key = this.getKeyForProvider(fc.provider);
+                return {
+                    model: (fc.provider === 'local' || fc.provider === 'mock') ? undefined : this.buildModel(fc.provider, fc.model, key),
+                    isLocal: fc.provider === 'local',
+                };
+            }
+        }
+        return { model: this.currentModel, isLocal: this.provider() === 'local' };
     }
 
     private buildModel(provider: AiProvider, model: string, key: string): LanguageModel | undefined {
@@ -302,10 +345,12 @@ export class AiService {
         if (!text) throw new Error('Empty response from model.');
     }
 
-    async sendMessage(prompt: string, context?: string): Promise<string> {
+    async sendMessage(prompt: string, context?: string, feature?: AiFeature): Promise<string> {
         if (!this.aiEnabled()) return '';
 
-        if (this.provider() === 'local') {
+        const { model, isLocal } = this.resolveConfig(feature);
+
+        if (isLocal) {
             const msgs = [
                 { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
                 { role: 'user', content: prompt },
@@ -316,13 +361,13 @@ export class AiService {
             return full;
         }
 
-        if (this.currentModel) {
+        if (model) {
             const messages: ChatMessage[] = [
                 { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
                 { role: 'user', content: prompt },
             ];
             const { text } = await generateText({
-                model: this.currentModel,
+                model,
                 messages,
                 abortSignal: AbortSignal.timeout(this.REQUEST_TIMEOUT_MS),
             });
@@ -333,10 +378,12 @@ export class AiService {
         return this.getMockResponse();
     }
 
-    async *streamMessage(prompt: string, context?: string): AsyncIterable<string> {
+    async *streamMessage(prompt: string, context?: string, feature?: AiFeature): AsyncIterable<string> {
         if (!this.aiEnabled()) return;
 
-        if (this.provider() === 'local') {
+        const { model, isLocal } = this.resolveConfig(feature);
+
+        if (isLocal) {
             const msgs = [
                 { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
                 { role: 'user', content: prompt },
@@ -345,13 +392,13 @@ export class AiService {
             return;
         }
 
-        if (this.currentModel) {
+        if (model) {
             const messages: ChatMessage[] = [
                 { role: 'system', content: context || 'You are a helpful creative writing assistant.' },
                 { role: 'user', content: prompt },
             ];
             const { textStream } = streamText({
-                model: this.currentModel,
+                model,
                 messages,
                 abortSignal: AbortSignal.timeout(this.REQUEST_TIMEOUT_MS),
             });
@@ -389,43 +436,38 @@ export class AiService {
     }
 
     async analyzeToneAndPacing(content: string): Promise<string> {
-        if (this.currentModel) {
-            return this.sendMessage(
-                `Analyze the tone and pacing of the following text:\n\n${content}`,
-                'You are an expert literary editor.'
-            );
-        }
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return `**Tone Analysis:**\nThe overall tone is consistent and engaging.\n\n**Pacing Analysis:**\nThe pacing is well-balanced.`;
+        return this.sendMessage(
+            `Analyze the tone and pacing of the following text:\n\n${content}`,
+            'You are an expert literary editor.',
+            'writing'
+        );
     }
 
     async generateSuggestions(content: string): Promise<AiSuggestion[]> {
-        if (this.currentModel) {
-            try {
-                const prompt = `Read the following text and provide 2 improvement suggestions in strictly valid JSON format.
-                Output format: Array of objects with keys: id (string), type ("improvement"), content (string), originalText (string), position (number).
-                Text: "${content.substring(0, 500)}..."`;
-                const response = await this.sendMessage(prompt, 'You are a JSON-speaking writing assistant. Output ONLY JSON.');
-                const cleanJson = response.replace(/```json/g, '').replace(/```/g, '').trim();
-                return JSON.parse(cleanJson);
-            } catch (e) {
-                console.error('Failed to parse AI JSON', e);
-            }
+        try {
+            const prompt = `Read the following text and provide 2 improvement suggestions in strictly valid JSON format.
+            Output format: Array of objects with keys: id (string), type ("improvement"), content (string), originalText (string), position (number).
+            Text: "${content.substring(0, 500)}..."`;
+            const response = await this.sendMessage(prompt, 'You are a JSON-speaking writing assistant. Output ONLY JSON.', 'writing');
+            if (response.startsWith('[MOCK]')) throw new Error('mock');
+            const cleanJson = response.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(cleanJson);
+        } catch {
+            return [{
+                id: '1',
+                type: 'improvement',
+                content: 'Consider increasing the tension here.',
+                originalText: content.substring(0, 20),
+                position: 0,
+            }];
         }
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        return [{
-            id: '1',
-            type: 'improvement',
-            content: 'Consider increasing the tension here.',
-            originalText: content.substring(0, 20),
-            position: 0,
-        }];
     }
 
     async summarizeContent(content: string): Promise<string> {
         return this.sendMessage(
             `Summarize the following content in 50 words or less:\n\n${content}`,
-            'You are a concise summarizer.'
+            'You are a concise summarizer.',
+            'summarize'
         );
     }
 
@@ -433,21 +475,24 @@ export class AiService {
         const preceding = content.substring(Math.max(0, cursorPosition - 1000), cursorPosition);
         return this.sendMessage(
             `Continue the story from this point (write 2-3 sentences):\n\n${preceding}`,
-            'You are a creative fiction writer.'
+            'You are a creative fiction writer.',
+            'writing'
         );
     }
 
     async improveText(selectedText: string): Promise<string> {
         return this.sendMessage(
             `Rewrite the following text to improve flow and descriptive quality:\n\n${selectedText}`,
-            'You are a master editor.'
+            'You are a master editor.',
+            'writing'
         );
     }
 
     async expandIdea(idea: string): Promise<string> {
         return this.sendMessage(
             `Expand this idea into a full paragraph:\n\n${idea}`,
-            'You are a creative writer.'
+            'You are a creative writer.',
+            'writing'
         );
     }
 

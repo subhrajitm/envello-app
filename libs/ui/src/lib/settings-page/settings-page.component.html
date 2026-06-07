@@ -461,6 +461,67 @@
             }
           </p>
         </div>
+
+        <!-- Per-feature model overrides -->
+        <div class="setting-item flex flex-col gap-3">
+          <div class="setting-label-group">
+            <label>Per-Feature Models</label>
+            <span class="setting-desc">Use a different provider or model for specific AI tasks. Leave as "Default" to inherit the global setting above.</span>
+          </div>
+          <div class="feature-models-grid">
+            <div class="feature-models-header">
+              <span class="feature-col-label">Feature</span>
+              <span class="feature-col-label">Provider</span>
+              <span class="feature-col-label">Model</span>
+            </div>
+            @for (feat of aiFeatureDefs; track feat.id) {
+            <div class="feature-model-row">
+              <div class="feature-model-label">
+                <span class="material-symbols-outlined feature-icon">{{ feat.icon }}</span>
+                <span>{{ feat.label }}</span>
+                <span class="feature-model-hint">{{ feat.hint }}</span>
+              </div>
+              <select class="select-input feature-select" [ngModel]="getFeatureProvider(feat.id)"
+                (ngModelChange)="setFeatureProvider(feat.id, $event)">
+                <option value="">Default ({{ aiProvider() | titlecase }})</option>
+                @for (p of aiProviders; track p.value) {
+                <option [value]="p.value">{{ p.label }}</option>
+                }
+              </select>
+              @if (getFeatureProvider(feat.id)) {
+              <select class="select-input feature-select" [ngModel]="getFeatureModel(feat.id)"
+                (ngModelChange)="setFeatureModel(feat.id, $event)">
+                @for (m of getModelsForProvider($any(getFeatureProvider(feat.id))); track m.value) {
+                <option [value]="m.value">{{ m.label }}</option>
+                }
+              </select>
+              } @else {
+              <span class="feature-na">—</span>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Extra API keys for feature-specific providers -->
+        @if (extraProvidersNeeded().length > 0) {
+        <div class="setting-item flex flex-col gap-2">
+          <div class="setting-label-group">
+            <label>Additional API Keys</label>
+            <span class="setting-desc">Keys for providers used only by per-feature overrides above</span>
+          </div>
+          @for (prov of extraProvidersNeeded(); track prov) {
+          <div class="api-key-row">
+            <span class="provider-key-badge">{{ getProviderLabel(prov) }}</span>
+            <input type="password" class="form-input"
+              [ngModel]="aiService.extraProviderKeys()[prov] || ''"
+              (ngModelChange)="aiService.setExtraProviderKey(prov, $event)"
+              [placeholder]="getApiKeyPlaceholderFor(prov)" spellcheck="false">
+          </div>
+          }
+        </div>
+        }
+
         }
       </div>
       }
