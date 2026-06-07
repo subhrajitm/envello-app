@@ -130,14 +130,14 @@
 .voice-btn.active {
   color: var(--accent-primary);
   background: var(--bg-active);
-  box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 0 var(--accent-primary-dim);
   animation: voice-pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes voice-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5); }
-  70%  { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  0%   { box-shadow: 0 0 0 0 var(--accent-primary-dim); }
+  70%  { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 .voice-indicator {
@@ -692,10 +692,10 @@
   align-items: center;
   gap: 10px;
   padding: 8px 18px;
-  background: #18181b;
-  border: 1px solid #3f3f46;
+  background: var(--bg-element);
+  border: 1px solid var(--border-highlight);
   border-radius: 99px; /* Pill shaped */
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
@@ -704,7 +704,7 @@
 }
 
 .voice-active-banner .material-symbols-outlined {
-  color: #fbbf24; /* Amber icon */
+  color: var(--accent-primary);
 }
 
 @keyframes banner-drop {
@@ -713,10 +713,10 @@
 }
 
 .voice-banner-dismiss {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover);
   border: none;
   cursor: pointer;
-  color: #a1a1aa;
+  color: var(--text-tertiary);
   padding: 4px;
   border-radius: 50%;
   display: flex;
@@ -724,9 +724,9 @@
   margin-left: 8px;
   transition: all 0.2s;
 }
-.voice-banner-dismiss:hover { 
-  color: #ffffff; 
-  background: rgba(255, 255, 255, 0.2);
+.voice-banner-dismiss:hover {
+  color: var(--text-primary);
+  background: var(--bg-active);
 }
 
 /* ── Sidebar utility area (Bin, etc.) ── */
