@@ -303,6 +303,8 @@ export class PouchDbDataService implements DataService {
         console.log('[PouchDbDataService] importData invoked.', data);
     }
 
+    async pullFromRemote(_: string): Promise<void> {}
+
     // ─── Vault & Subscriptions ───────────────────────────────────────────────────
 
     async saveCredential(credential: Credential): Promise<void> {

@@ -133,6 +133,8 @@ export class PowerSyncDataService implements DataService {
     console.log('[PowerSyncDataService] importData', data);
   }
 
+  async pullFromRemote(_: string): Promise<void> {}
+
   // ─── Local Vault helpers (credentials — never leave the device) ──────────────
 
   private async getVaultAll<T>(type: string): Promise<T[]> {

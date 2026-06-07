@@ -13,16 +13,30 @@ export class UserPreferencesService implements OnDestroy {
   private readonly dataService = inject(DataService);
   private readonly themeService = inject(ThemeService);
 
-  private readonly syncHandler = () => this.syncFromDb();
+  private readonly syncHandler    = () => this.syncFromDb();
+  private readonly dbReadyHandler = () => this.onDbReady();
 
   constructor() {
+    // sync-complete: fired by PowerSync, PouchDB, and desktop after restoreCollection
     window.addEventListener('envello:sync-complete', this.syncHandler);
-    window.addEventListener('envello:db-ready',     this.syncHandler);
+    // db-ready: fired when the local DB is initialised — pull remote state first
+    window.addEventListener('envello:db-ready',     this.dbReadyHandler);
   }
 
   ngOnDestroy() {
     window.removeEventListener('envello:sync-complete', this.syncHandler);
-    window.removeEventListener('envello:db-ready',     this.syncHandler);
+    window.removeEventListener('envello:db-ready',     this.dbReadyHandler);
+  }
+
+  /**
+   * On DB-ready: fetch the latest remote copy (desktop → Supabase REST; PS/PouchDB → no-op
+   * since they manage sync themselves), then read from local DB and apply.
+   */
+  private async onDbReady(): Promise<void> {
+    await this.dataService.pullFromRemote(COLLECTION).catch(() => {});
+    // Always read local DB after pull — covers the case where pullFromRemote found nothing
+    // and didn't fire sync-complete, so syncHandler wouldn't have run yet.
+    await this.syncFromDb();
   }
 
   /** Persist preferences to both localStorage (instant) and the synced DB. */
