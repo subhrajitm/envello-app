@@ -1,7 +1,7 @@
 {
-  "name": "feature-books",
+  "name": "feature-write",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/feature-books/src",
+  "sourceRoot": "libs/feature-write/src",
   "prefix": "lib",
   "projectType": "library",
   "tags": [],
@@ -12,8 +12,8 @@
         "{workspaceRoot}/coverage/{projectRoot}"
       ],
       "options": {
-        "jestConfig": "libs/feature-books/jest.config.ts",
-        "tsConfig": "libs/feature-books/tsconfig.spec.json"
+        "jestConfig": "libs/feature-write/jest.config.ts",
+        "tsConfig": "libs/feature-write/tsconfig.spec.json"
       }
     },
     "lint": {

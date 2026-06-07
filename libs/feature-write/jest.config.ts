@@ -1,8 +1,8 @@
 export default {
-  displayName: 'feature-books',
+  displayName: 'feature-write',
   preset: '../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: '../../coverage/libs/feature-books',
+  coverageDirectory: '../../coverage/libs/feature-write',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

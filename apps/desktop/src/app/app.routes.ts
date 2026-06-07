@@ -22,13 +22,13 @@ export const routes: Routes = [
 
   {
     path: 'write',
-    loadComponent: () => import('@envello/feature-books').then(m => m.WriteComponent),
+    loadComponent: () => import('@envello/feature-write').then(m => m.WriteComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
     path: 'write/:id',
-    loadComponent: () => import('@envello/feature-books').then(m => m.ComposerComponent),
+    loadComponent: () => import('@envello/feature-write').then(m => m.ComposerComponent),
     canActivate: [authGuard],
     data: { immersive: true },
   },
