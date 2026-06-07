@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { MeetingsComponent } from './meetings.component';
-import { MeetingsService, TauriService } from '@envello/core';
+import { MeetingsService, CalendarSyncService, AiService } from '@envello/core';
 
 describe('MeetingsComponent', () => {
   let component: MeetingsComponent;
@@ -22,18 +22,38 @@ describe('MeetingsComponent', () => {
       addMeeting: jest.fn(),
       updateMeeting: jest.fn(),
       deleteMeeting: jest.fn(),
+      cancelMeeting: jest.fn(),
+      completeMeeting: jest.fn(),
+      duplicateMeeting: jest.fn(),
+      createRecurringSeries: jest.fn(),
+      addAttendee: jest.fn(),
+      removeAttendee: jest.fn(),
+      addAgendaItem: jest.fn(),
+      updateAgendaItem: jest.fn(),
+      deleteAgendaItem: jest.fn(),
+      addActionItem: jest.fn(),
+      updateActionItem: jest.fn(),
+      deleteActionItem: jest.fn(),
+      convertActionItemToTask: jest.fn(),
+      addNote: jest.fn(),
+      deleteNote: jest.fn(),
     };
-    const tauriSpy = {
-      saveFile: jest.fn(),
-      openFileDialog: jest.fn(),
-      setTitle: jest.fn(),
+    const syncSpy = {
+      connections: signal([]),
+      addConnection: jest.fn(),
+      syncConnection: jest.fn(),
+      syncAll: jest.fn(),
+    };
+    const aiSpy = {
+      sendMessage: jest.fn().mockResolvedValue(''),
     };
 
     await TestBed.configureTestingModule({
       imports: [MeetingsComponent],
       providers: [
-        { provide: MeetingsService, useValue: meetingsSpy },
-        { provide: TauriService,    useValue: tauriSpy },
+        { provide: MeetingsService,     useValue: meetingsSpy },
+        { provide: CalendarSyncService, useValue: syncSpy },
+        { provide: AiService,           useValue: aiSpy },
       ],
     }).compileComponents();
 

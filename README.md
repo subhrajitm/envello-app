@@ -26,6 +26,9 @@ graph TB
         FV[feature-vault\nCredential store]
         FVN[feature-vendor\nSubscriptions]
         FW[feature-workspace\nDashboard]
+        FS[feature-spaces\nWorkspace profiles]
+        FM[feature-meetings\nCalendar & meetings]
+        FKN[feature-knowledge\nResearch & files]
     end
 
     subgraph Platform["Platform Libraries"]
@@ -73,7 +76,7 @@ graph BT
     STATE["@envello/state\nAngular Signals global store\nStoreService · BinService · VaultStore"]
     CORE["@envello/core\nSingleton services\nAuth · AI · Tauri bridge · Theme"]
     UI["@envello/ui\n28 reusable components\nButton · Modal · Sidebar · Dialog…"]
-    FEATURES["feature-* (7 libs)\nfeature-write · tasks · daily-notes\nbookmarks · vault · vendor · workspace"]
+    FEATURES["feature-* (10 libs)\nwrite · tasks · daily-notes · bookmarks\nvault · vendor · workspace\nspaces · meetings · knowledge"]
     APPS["apps/\ndesktop · web · mobile · admin · landing"]
 
     DOMAIN --> DATA
@@ -226,7 +229,10 @@ envello/
 │   ├── feature-bookmarks/  # Bookmark manager
 │   ├── feature-vault/      # Credential vault
 │   ├── feature-vendor/     # Subscription tracker
-│   └── feature-workspace/  # Dashboard hub
+│   ├── feature-workspace/  # Dashboard hub
+│   ├── feature-spaces/     # Workspace profiles
+│   ├── feature-meetings/   # Calendar & meetings
+│   └── feature-knowledge/  # Research collections & files
 │
 ├── src-tauri/              # Rust backend (Tauri v2) — desktop
 ├── supabase/

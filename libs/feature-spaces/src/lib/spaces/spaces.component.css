@@ -53,12 +53,14 @@
   border-radius: 12px;
   cursor: pointer;
   overflow: visible;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.18s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .sp-card:hover {
   background: var(--bg-hover);
   border-color: var(--border-highlight);
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
 }
 .sp-card.active {
   border-color: var(--accent-primary);
@@ -68,6 +70,7 @@
 .sp-card.active:hover {
   border-color: var(--accent-primary);
   box-shadow: none;
+  transform: none;
 }
 
 /* 3-dot menu trigger */
@@ -199,6 +202,14 @@
   max-width: 100%;
 }
 .sp-card-meta { font-size: 10.5px; color: var(--text-tertiary); }
+
+/* Card action buttons row */
+.sp-card-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 2px;
+}
 
 /* ── Switching overlay ───────────────────────────────────────────────────── */
 .sp-switching-overlay {

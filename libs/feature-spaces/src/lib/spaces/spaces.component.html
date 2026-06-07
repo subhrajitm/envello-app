@@ -52,6 +52,14 @@
         <!-- Last accessed -->
         <span class="sp-card-meta">{{ profile.lastAccessed | date:'MMM d' }}</span>
 
+        <!-- Direct action buttons (for non-deletable / active profiles, still show info/edit) -->
+        @if (!isDeletable(profile.id)) {
+          <div class="sp-card-actions" (click)="$event.stopPropagation()">
+            <env-icon-button icon="info" variant="ghost" [size]="28"
+              title="Details" (clicked)="openDetailsModal(profile)" />
+          </div>
+        }
+
       </div>
     }
 
@@ -196,6 +204,17 @@
       }
     </div>
 
+    @if (linkedSpace()?.progress != null) {
+      <div class="sp-detail-section">
+        <div class="sp-detail-section-hdr">
+          <span class="sp-detail-section-label">Progress</span>
+          <span class="sp-detail-section-val">{{ linkedSpace()?.progress }}%</span>
+        </div>
+        <div class="sp-progress-bar">
+          <div class="sp-progress-fill" [style.width.%]="linkedSpace()?.progress"></div>
+        </div>
+      </div>
+    }
 
     <!-- Linked Resources -->
     <div class="sp-detail-section">
