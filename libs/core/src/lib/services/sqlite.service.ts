@@ -86,22 +86,23 @@ export class SqliteService {
     }
 
     /**
-     * Check if running in Tauri environment
+     * Check if running in Tauri environment.
+     * Must check __TAURI_INTERNALS__ (always injected by Tauri 2) rather than __TAURI__
+     * which is only present when withGlobalTauri: true.
      */
     private isTauri(): boolean {
-        return typeof window !== 'undefined' && '__TAURI__' in window;
+        return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
     }
 
     async getDb(): Promise<Database> {
         if (this.db) return this.db;
         if (this.initPromise) return this.initPromise;
 
+        this.initPromise = this.initDb();
         try {
-            this.initPromise = this.initDb();
             return await this.initPromise;
         } catch (error) {
-            // If initialization fails (e.g., not in Tauri), return a rejected promise
-            // This will be caught by individual methods
+            this.initPromise = null; // Allow retry on next call
             throw error;
         }
     }
@@ -118,18 +119,27 @@ export class SqliteService {
             const profileId = this.profileService.activeProfileId() || 'default';
             const dbName = profileId === 'default' ? 'envello.db' : `envello_${profileId}.db`;
 
+            console.log(`[SqliteService] Opening database: ${dbName}`);
             const db = await Database.load(`sqlite:${dbName}`);
+
+            // Set this.db before createTables/loadAllData so that reloadX() methods
+            // can call getDb() without deadlocking. Reset to null if setup fails.
             this.db = db;
+            try {
+                await this.createTables(db);
+                await this.loadAllData();
+            } catch (setupError) {
+                this.db = null; // Connection unusable without tables/data
+                throw setupError;
+            }
 
-            await this.createTables(db);
-            await this.loadAllData(); // Load initial data into subjects
-
-            console.log(`[SqliteService] Database initialized successfully for profile ${profileId}`);
+            console.log(`[SqliteService] Database ready for profile ${profileId}`);
+            // Notify StoreService that DB data is now available.
+            window.dispatchEvent(new CustomEvent('envello:db-ready'));
             return db;
         } catch (error) {
-            // Only log errors if we're in Tauri (unexpected errors)
             if (this.isTauri()) {
-                console.error('Failed to initialize SQLite DB:', error);
+                console.error('[SqliteService] Failed to initialize SQLite DB:', error);
             }
             throw error;
         }
@@ -393,11 +403,22 @@ export class SqliteService {
         name TEXT,
         type TEXT,
         value TEXT,
+        username TEXT,
+        url TEXT,
+        notes TEXT,
         projectId TEXT,
         createdAt TEXT,
-        createdBy TEXT
+        createdBy TEXT,
+        updatedAt TEXT,
+        lastAccessedAt TEXT
       )
     `);
+        // Migration: add optional columns to existing databases
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN username TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN url TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN notes TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN updatedAt TEXT`); } catch { /* already exists */ }
+        try { await db.execute(`ALTER TABLE credentials ADD COLUMN lastAccessedAt TEXT`); } catch { /* already exists */ }
 
         // Subscriptions
         await db.execute(`
@@ -518,7 +539,8 @@ export class SqliteService {
         ]);
     }
 
-    private toJson(obj: any): string {
+    private toJson(obj: any): string | null {
+        if (obj === undefined || obj === null) return null;
         return JSON.stringify(obj);
     }
 
@@ -530,24 +552,19 @@ export class SqliteService {
         }
     }
 
-    /**
-     * Generic helper to parse fields specifically.
-     * Basic SQLite returns everything as strings or numbers. 
-     * We need to parse JSON fields back to objects/arrays.
-     */
-    private parseRow<T>(row: any, jsonFields: string[] = []): T {
+    private parseRow<T>(row: any, jsonFields: string[] = [], boolFields: string[] = []): T {
         const res: any = { ...row };
-        // Handle booleans (stored as 0/1 or 'true'/'false' depending on how it was inserted, but tauri plugin might return boolean or number)
-        // Actually tauri-plugin-sql with sqlite parses booleans as 1/0 usually unless types are strict.
-        // Let's assume we need to handle JSON fields manually.
         for (const field of jsonFields) {
             if (res[field]) {
                 res[field] = this.fromJson(res[field]);
             }
         }
-        // Also convert booleans if they came back as numbers? 
-        // Typescript should handle it if we cast, but at runtime it might be 0/1.
-        // For now we assume standard casting works for primitives or we fix as issues arise.
+        // tauri-plugin-sql returns SQLite BOOLEAN columns as 0/1 integers (or occasionally
+        // as the strings "true"/"false"). Normalize to proper JS booleans so that
+        // filters like `!b.isArchived` behave correctly in all cases.
+        for (const field of boolFields) {
+            res[field] = res[field] === true || res[field] === 1 || res[field] === 'true';
+        }
         return res as T;
     }
 
@@ -1105,11 +1122,15 @@ export class SqliteService {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM credentials WHERE id = $1', [item.id]);
         if (exists.length > 0) {
-            await db.execute(`UPDATE credentials SET name=$1, type=$2, value=$3, projectId=$4, createdAt=$5, createdBy=$6 WHERE id=$7`,
-                [item.name, item.type, item.value, item.projectId, item.createdAt, item.createdBy, item.id]);
+            await db.execute(
+                `UPDATE credentials SET name=$1, type=$2, value=$3, username=$4, url=$5, notes=$6, projectId=$7, createdAt=$8, createdBy=$9, updatedAt=$10, lastAccessedAt=$11 WHERE id=$12`,
+                [item.name, item.type, item.value, item.username ?? null, item.url ?? null, item.notes ?? null,
+                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null, item.id]);
         } else {
-            await db.execute(`INSERT INTO credentials (id, name, type, value, projectId, createdAt, createdBy) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [item.id, item.name, item.type, item.value, item.projectId, item.createdAt, item.createdBy]);
+            await db.execute(
+                `INSERT INTO credentials (id, name, type, value, username, url, notes, projectId, createdAt, createdBy, updatedAt, lastAccessedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+                [item.id, item.name, item.type, item.value, item.username ?? null, item.url ?? null, item.notes ?? null,
+                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null]);
         }
         await this.reloadCredentials();
     }
@@ -1196,14 +1217,21 @@ export class SqliteService {
     private async reloadBookmarks() {
         const db = await this.getDb();
         const rows = await db.select<any[]>('SELECT * FROM bookmarks');
-        const parsed = rows.map((r: any) => this.parseRow<BookmarkDoc>(r, ['tags']));
+        const parsed = rows.map((r: any) => this.parseRow<BookmarkDoc>(r, ['tags'], ['isArchived', 'isPinned']));
         this.bookmarksSubject.next(parsed);
     }
     async getAllBookmarks(): Promise<BookmarkDoc[]> { return this.bookmarksSubject.getValue(); }
     async upsertBookmark(item: BookmarkDoc): Promise<void> {
         const db = await this.getDb();
         const exists = await db.select<any[]>('SELECT id FROM bookmarks WHERE id = $1', [item.id]);
-        const j = { ...item, tags: this.toJson(item.tags) };
+        const j = {
+            ...item,
+            tags: this.toJson(item.tags),
+            // Store booleans as explicit integers so SQLite always gets 0/1,
+            // never a JS boolean or string that may round-trip incorrectly.
+            isArchived: item.isArchived ? 1 : 0,
+            isPinned: item.isPinned ? 1 : 0,
+        };
         if (exists.length > 0) {
             await db.execute(
                 `UPDATE bookmarks SET title=$1, url=$2, description=$3, faviconUrl=$4, tags=$5, folderId=$6, createdAt=$7, lastVisited=$8, visitCount=$9, notes=$10, color=$11, isArchived=$12, isPinned=$13 WHERE id=$14`,

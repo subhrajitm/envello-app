@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService } from '@envello/core';
+import { AuthService, BookContentService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
-import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent } from '@envello/ui';
+import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
 import { UpdateBannerComponent } from './components/update-banner/update-banner.component';
 import { TitlebarComponent } from './components/titlebar/titlebar.component';
 import { UpdateService } from './services/update.service';
@@ -24,7 +24,7 @@ const SUB_NAV_ROUTES = new Set([
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, UpdateBannerComponent, TitlebarComponent, ToastComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, UpdateBannerComponent, TitlebarComponent, ToastComponent, WebPreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -36,7 +36,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private sessionService = inject(SessionService);
   private updateService = inject(UpdateService);
   authService = inject(AuthService);
+  private bookContentService = inject(BookContentService);
   private unlistenFileDrop?: () => void;
+  private unlistenCloseRequested?: () => void;
 
   currentTab = signal('Workspace');
   /** Current URL segment — updated on every navigation */
@@ -93,6 +95,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.tauriService.setTitle('').catch(() => { /* ignore */ });
     });
     this.setupTauriFileDrop();
+    this.setupTauriCloseHandler();
     // Check for updates 3s after launch to avoid blocking startup
     setTimeout(() => this.updateService.checkForUpdate(), 3000);
   }
@@ -103,11 +106,29 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
+  private async setupTauriCloseHandler(): Promise<void> {
+    if (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window || '__TAURI__' in window)) return;
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      const win = getCurrentWindow();
+      this.unlistenCloseRequested = await win.onCloseRequested(async (event) => {
+        event.preventDefault();
+        try {
+          await this.bookContentService.flushPersist();
+        } catch { /* non-fatal — still close */ }
+        await win.destroy();
+      });
+    } catch {
+      // Non-Tauri or API unavailable — ignore
+    }
+  }
+
   ngOnDestroy() {
     if (this.navigationLayoutListener) {
       window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
     }
     this.unlistenFileDrop?.();
+    this.unlistenCloseRequested?.();
   }
 
   private loadNavigationLayout() {
@@ -133,6 +154,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'spaces':    'Spaces',
       'bin':                'Bin',
       'activity-log':       'Activity Log',
+      'settings':           'Settings',
       'developer-settings': 'Developer Settings',
       'bookmarks':          'Bookmarks',
       'vault':              'Vault',

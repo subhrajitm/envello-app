@@ -29,6 +29,16 @@
             "glob": "manifest.webmanifest",
             "input": "apps/web/src",
             "output": "/"
+          },
+          {
+            "glob": "*.umd.js",
+            "input": "node_modules/@powersync/web/dist/worker",
+            "output": "assets/worker"
+          },
+          {
+            "glob": "*.wasm",
+            "input": "node_modules/@powersync/web/dist",
+            "output": "assets"
           }
         ],
         "styles": [
@@ -92,6 +102,12 @@
     },
     "serve": {
       "executor": "@angular-devkit/build-angular:dev-server",
+      "options": {
+        "headers": {
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "Cross-Origin-Embedder-Policy": "require-corp"
+        }
+      },
       "configurations": {
         "production": {
           "buildTarget": "web:build:production"

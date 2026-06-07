@@ -8,20 +8,23 @@
             <span class="material-symbols-outlined">delete_sweep</span>
         </button>
         }
+        <button class="ai-panel-close-btn" (click)="closed.emit()" title="Close AI assistant">
+            <span class="material-symbols-outlined">close</span>
+        </button>
     </div>
 
     <div class="ai-actions">
         <div class="ai-btn-grid">
             @for (btn of primaryActions(); track btn.key) {
             <button class="btn-ai-action" (click)="quickAction.emit(btn.key)"
-                [disabled]="aiLoading() || (isDocumentType() ? !editor() : !activeChapter())"
+                [disabled]="aiLoading() || !activeChapter()"
                 [title]="btn.label">
                 <span class="material-symbols-outlined">{{ btn.icon }}</span>
                 {{ btn.label }}
             </button>
             }
             <button class="btn-ai-action" (click)="summarizeChapter.emit()"
-                [disabled]="aiLoading() || (isDocumentType() ? !editor() : !activeChapter())"
+                [disabled]="aiLoading() || !activeChapter()"
                 [title]="summarizeLabel()">
                 <span class="material-symbols-outlined">short_text</span>
                 {{ summarizeLabel() }}

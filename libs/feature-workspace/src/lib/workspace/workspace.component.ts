@@ -150,15 +150,24 @@ export class WorkspaceComponent {
   /** Local YYYY-MM-DD date string for today, recomputed every minute via systemTime */
   private todayStr = computed(() => this.localDateStr(this.systemTime()));
 
+  private allTasksFlat = computed(() => {
+    const flatten = (tasks: Task[]): Task[] => {
+      const out: Task[] = [];
+      for (const t of tasks) { out.push(t); if ((t as any).subtasks?.length) out.push(...flatten((t as any).subtasks)); }
+      return out;
+    };
+    return flatten(this.store.tasks() as Task[]);
+  });
+
   overdueTasks = computed(() =>
-    this.store.tasks()
+    this.allTasksFlat()
       .filter(t => t.status !== 'COMPLETED' && t.due && t.due < this.todayStr())
       .sort((a, b) => (a.due || '').localeCompare(b.due || ''))
       .slice(0, 4)
   );
 
   dueTodayTasks = computed(() =>
-    this.store.tasks()
+    this.allTasksFlat()
       .filter(t => t.status !== 'COMPLETED' && t.due === this.todayStr())
       .sort((a, b) => {
         const p = { HIGH: 0, MEDIUM: 1, LOW: 2 } as Record<string, number>;
@@ -188,14 +197,14 @@ export class WorkspaceComponent {
   });
 
   linkedEntities = computed(() => ({
-    tasks: this.store.tasks().filter(t => t.status !== 'COMPLETED').length,
+    tasks: this.allTasksFlat().filter(t => t.status !== 'COMPLETED').length,
   }));
 
   userName = computed(() => this.userService.userName());
 
-  sidebarTasksCompleted = computed(() => this.store.tasks().filter(t => t.status === 'COMPLETED').length);
+  sidebarTasksCompleted = computed(() => this.allTasksFlat().filter(t => t.status === 'COMPLETED').length);
   sidebarTasksDashOffset = computed(() => {
-    const total = this.store.tasks().length;
+    const total = this.allTasksFlat().length;
     if (total === 0) return 62.83;
     const progress = this.sidebarTasksCompleted() / total;
     return 62.83 - (62.83 * progress);

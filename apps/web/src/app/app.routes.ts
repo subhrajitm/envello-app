@@ -73,6 +73,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'settings',
+    loadComponent: () => import('@envello/ui').then(m => m.SettingsPageComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'developer-settings',
     loadComponent: () => import('./components/developer-settings/developer-settings.component').then(m => m.DeveloperSettingsComponent),
     canActivate: [authGuard],

@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { SqliteService } from './sqlite.service';
-import { TauriService } from './tauri.service';
 import { Task, Note, PlanningItem, Activity, Book, BinItem, Project } from '@envello/domain';
 
 @Injectable({
@@ -9,14 +8,19 @@ import { Task, Note, PlanningItem, Activity, Book, BinItem, Project } from '@env
 })
 export class SqliteDataService implements DataService {
     private sqlite = inject(SqliteService);
-    private tauri = inject(TauriService);
+
+    /** Synchronous Tauri detection — checks __TAURI_INTERNALS__ (always present in Tauri 2
+     *  regardless of withGlobalTauri) so this returns the correct value immediately at startup. */
+    private isTauri(): boolean {
+        return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+    }
 
     private getFallbackKey(collection: string) {
         return `envello_local_${collection}`;
     }
 
     async getAll<T>(collection: string): Promise<T[]> {
-        if (!this.tauri.isTauri()) {
+        if (!this.isTauri()) {
             try {
                 const data = localStorage.getItem(this.getFallbackKey(collection));
                 return data ? JSON.parse(data) : [];
@@ -59,7 +63,7 @@ export class SqliteDataService implements DataService {
     }
 
     async upsert<T>(collection: string, item: T): Promise<void> {
-        if (!this.tauri.isTauri()) {
+        if (!this.isTauri()) {
             try {
                 const items = await this.getAll<T>(collection);
                 const index = items.findIndex((i: any) => i.id === (item as any).id);
@@ -100,7 +104,7 @@ export class SqliteDataService implements DataService {
     }
 
     async remove(collection: string, id: string): Promise<void> {
-        if (!this.tauri.isTauri()) {
+        if (!this.isTauri()) {
             try {
                 const items = await this.getAll<any>(collection);
                 const filtered = items.filter((i: any) => i.id !== id);

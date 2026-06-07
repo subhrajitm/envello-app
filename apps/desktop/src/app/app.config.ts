@@ -9,8 +9,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from '@envello/state';
-import { SqliteDataService } from '@envello/core';
-import { FileSystemService } from '@envello/core';
+import { DesktopDataService, FileSystemService } from '@envello/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, errorRetryInterceptor])),
     provideAnimationsAsync(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
-    { provide: DataService, useClass: SqliteDataService },
+    { provide: DataService, useClass: DesktopDataService },
     { provide: FILE_SYSTEM, useClass: FileSystemService }
   ],
 };

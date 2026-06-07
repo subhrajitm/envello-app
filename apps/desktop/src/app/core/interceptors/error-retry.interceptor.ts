@@ -10,7 +10,8 @@ import { LoggingService } from '@envello/core';
 import { Router } from '@angular/router';
 
 const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 1000;
+const BASE_RETRY_DELAY_MS = 1000;
+const MAX_RETRY_DELAY_MS = 8000;
 
 /**
  * Handles HTTP errors: retries transient failures, logs, and redirects to server-error on 5xx.
@@ -31,8 +32,9 @@ export const errorRetryInterceptor: HttpInterceptorFn = (
           (error.status >= 500 || error.status === 0) &&
           count <= MAX_RETRIES;
         if (!isRetryable) return throwError(() => error);
-        logging.warn(`HTTP retry ${count}/${MAX_RETRIES}`, req.url);
-        return timer(RETRY_DELAY_MS);
+        const delayMs = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, count - 1), MAX_RETRY_DELAY_MS);
+        logging.warn(`HTTP retry ${count}/${MAX_RETRIES} (${delayMs}ms)`, req.url);
+        return timer(delayMs);
       },
     }),
     catchError((error: unknown) => {

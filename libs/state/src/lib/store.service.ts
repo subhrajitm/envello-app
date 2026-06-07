@@ -14,7 +14,9 @@ export class StoreService {
     activities = signal<Activity[]>([]);
     books = signal<Book[]>([]);
     /** Persisted folder definitions for daily notes; loaded from DB on init. */
-    noteFolders = signal<{ id: string; name: string; icon: string }[]>([]);
+    noteFolders = signal<{ id: string; name: string; icon: string }[]>([
+        { id: 'personal', name: 'Personal', icon: 'folder' },
+    ]);
     bookmarks = signal<Bookmark[]>([]);
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
@@ -30,18 +32,19 @@ export class StoreService {
     constructor() {
         this.loadFromDb();
         this.initMarkdownWorker();
-        // Re-load signals after PouchDbDataService applies pulled Supabase records.
+        // Re-load after Supabase sync (web) or after SQLite DB becomes ready (desktop).
         window.addEventListener('envello:sync-complete', () => this.loadFromDb());
+        window.addEventListener('envello:db-ready', () => this.loadFromDb());
     }
 
     private initMarkdownWorker() {
         if (typeof Worker === 'undefined') return;
         try {
-            // Worker script is bundled by the app — resolved at build time via the URL pattern.
-            // Falls back gracefully if the app is built without worker support (e.g., desktop SSR).
-            const workerUrl = (globalThis as any).__MARKDOWN_WORKER_URL__;
-            if (!workerUrl) return;
-            this.markdownWorker = new Worker(workerUrl, { type: 'module' });
+            // Worker is pre-created in apps/web/src/main.ts (inline new Worker(new URL(...)) so
+            // esbuild/Vite detect and compile it in both dev and production).
+            const worker = (globalThis as any).__MARKDOWN_WORKER__ as Worker | undefined;
+            if (!worker) return;
+            this.markdownWorker = worker;
             this.markdownWorker.onmessage = ({ data }: MessageEvent<{ id: string; markdown?: string; error?: string }>) => {
                 const cb = this.workerCallbacks.get(data.id);
                 if (cb) {
@@ -76,7 +79,7 @@ export class StoreService {
         }
     }
 
-    private async loadFromDb(): Promise<void> {
+    private async loadFromDb(retries = 1): Promise<void> {
         try {
             const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
@@ -90,7 +93,11 @@ export class StoreService {
                 this.db.getAll<Project>('projects'),
             ]);
             this.tasks.set(tasks || []);
-            this.notes.set(notes || []);
+            // Merge: preserve any in-memory notes whose IDs aren't in the DB yet
+            // (newly created notes that haven't been persisted before this reload fires).
+            const dbNoteIds = new Set((notes || []).map(n => n.id));
+            const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
+            this.notes.set([...pendingNotes, ...(notes || [])]);
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
             this.books.set(books || []);
@@ -113,6 +120,11 @@ export class StoreService {
             }
         } catch (e) {
             console.error('[StoreService] loadFromDb failed', e);
+            if (retries > 0) {
+                // Single retry after 500ms — handles transient Tauri startup race
+                setTimeout(() => this.loadFromDb(0), 500);
+                return;
+            }
             this.tasks.set([]);
             this.notes.set([]);
             this.planningItems.set([]);
@@ -183,8 +195,9 @@ export class StoreService {
     async addNote(note: Note) {
         this.notes.update(notes => [note, ...notes]);
         this.addActivity("Entry added to '" + note.title + "'", 'entry');
-        await this.saveNoteContentToFile(note.id, note.content || '');
+        // Persist to DB immediately so a concurrent loadFromDb() won't lose this note.
         this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
+        await this.saveNoteContentToFile(note.id, note.content || '');
     }
 
     updateNote(id: string, updates: Partial<Note>) {
@@ -218,8 +231,14 @@ export class StoreService {
 
         const note = this.notes().find(n => n.id === id);
         if (note && note.filePath !== filePath) {
-            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, filePath } : n));
-            this.db.upsert('notes', { ...note, filePath });
+            // Update DB only — do NOT mutate the notes() signal here.
+            // A signal write would trigger the content-loading effect in the editor
+            // component, which compares editor HTML to note.content. At this point
+            // note.content may be stale (captured at the last debounce cycle) while
+            // the editor has newer in-flight content, causing typing to get reverted.
+            this.db.upsert('notes', { ...note, filePath }).catch(e =>
+                console.error('[StoreService] persist note filePath failed', e)
+            );
         }
     }
 
@@ -303,6 +322,10 @@ export class StoreService {
     }
 
     deleteBookmark(id: string) {
+        const bookmark = this.bookmarks().find(b => b.id === id);
+        if (bookmark) {
+            this.bin.addToBin({ type: 'bookmark', originalId: id, title: bookmark.title || bookmark.url, payload: bookmark });
+        }
         this.bookmarks.update(list => list.filter(b => b.id !== id));
         this.addActivity('Bookmark removed', 'system');
         this.db.remove('bookmarks', id).catch(e => console.error('[StoreService] remove bookmark failed', e));

@@ -121,6 +121,9 @@ export class BinComponent {
       case 'book-location':   return 'location_on';
       case 'book-group':      return 'group';
       case 'meeting':         return 'event';
+      case 'bookmark':        return 'bookmark';
+      case 'credential':      return 'lock';
+      case 'subscription':    return 'subscriptions';
       default:                return 'delete';
     }
   }
@@ -133,6 +136,9 @@ export class BinComponent {
       case 'book-character':  return 'Character';
       case 'book-location':   return 'Location';
       case 'book-group':      return 'Group';
+      case 'bookmark':        return 'Bookmark';
+      case 'credential':      return 'Credential';
+      case 'subscription':    return 'Subscription';
       default:                return type.charAt(0).toUpperCase() + type.slice(1);
     }
   }

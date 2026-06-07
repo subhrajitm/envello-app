@@ -1,4 +1,4 @@
-<div class="activity-log-page flex flex-col h-full">
+<div class="activity-log-page">
     <div class="al-header">
         <div class="al-header-top flex items-center justify-between">
             <button class="back-btn" (click)="goBack()">
@@ -27,21 +27,6 @@
                 (click)="setFilter('SYNC')">SYNC</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI
                 TOOLS</button>
-        </div>
-    </div>
-
-    <div class="al-stats-bar compact-stats">
-        <div class="stat-item">
-            <span class="stat-label">DISPLAYING</span>
-            <span class="stat-value">{{ visibleCount() }} <span class="stat-sub">/ {{ totalCount() }}</span></span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">SYSTEM STATUS</span>
-            <span class="stat-value status-ok">OPERATIONAL</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">LAST SYNC</span>
-            <span class="stat-value">JUST NOW</span>
         </div>
     </div>
 

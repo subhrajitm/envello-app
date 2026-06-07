@@ -3,6 +3,15 @@ import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
 import { BinService } from './bin.service';
 import { SqliteService } from './sqlite.service';
+import { DesktopBackupService } from './desktop-backup.service';
+import { DesktopSyncSettingsService } from './desktop-sync-settings.service';
+
+export interface CharacterRelationship {
+    id: string;
+    fromId: string;
+    toId: string;
+    label: string;
+}
 
 export interface BookContent {
     id: string; // Links to StoreService Book.id
@@ -17,6 +26,7 @@ export interface BookContent {
     characters: Character[];
     locations: Location[];
     notes: EditorNote[];
+    relationships?: CharacterRelationship[];
 }
 
 export interface ChapterGroup {
@@ -33,7 +43,8 @@ export interface Chapter {
     status: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY';
     wordCount: number;
     lastEdited: string;
-    summary?: string; // Chapter summary
+    summary?: string;
+    bgColor?: string;
     tags?: string[]; // Tags for organization
     template?: string; // Template used
     plotPoints?: {
@@ -67,6 +78,15 @@ export interface Character {
     role: string;
     archetype: string;
     description: string;
+    age?: string;
+    motivation?: string;
+    flaw?: string;
+    arc?: string;
+    appearance?: string;
+    occupation?: string;
+    aliases?: string;
+    portraitUrl?: string;
+    tags?: string[];
 }
 
 export interface Location {
@@ -74,6 +94,12 @@ export interface Location {
     name: string;
     type: string;
     description: string;
+    climate?: string;
+    significance?: string;
+    population?: string;
+    features?: string;
+    icon?: string;
+    tags?: string[];
 }
 
 export interface EditorNote {
@@ -94,9 +120,32 @@ export class BookContentService {
     store = inject(StoreService);
     private bin = inject(BinService);
     private db = inject(SqliteService);
+    private backup = inject(DesktopBackupService);
+    private syncSettings = inject(DesktopSyncSettingsService);
     private persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor() { }
+
+    private pushBackup(data: BookContent): void {
+        if (!this.syncSettings.isEnabled('book_content')) return;
+        this.backup.push('book_content', data).catch(() => {});
+    }
+
+    async restoreFromBackup(): Promise<number> {
+        const items = await this.backup.pullCollection<BookContent>('book_content');
+        for (const item of items) {
+            try {
+                await this.db.setBookContent(item.id, JSON.stringify(item));
+            } catch {
+                localStorage.setItem(`book_content_${item.id}`, JSON.stringify(item));
+            }
+        }
+        const active = this.activeBook();
+        if (active && items.some(i => i.id === active.id)) {
+            await this.loadBook(active.id);
+        }
+        return items.length;
+    }
 
     async loadBook(id: string): Promise<void> {
         this.activeBook.set(null);
@@ -104,12 +153,13 @@ export class BookContentService {
             const raw = await this.db.getBookContent(id);
             if (raw) {
                 const data = JSON.parse(raw) as BookContent;
-                this.activeBook.set(data);
+                this.activeBook.set(this.migrateBookContent(data));
                 return;
             }
             const data = this.createEmptyBook(id);
             this.activeBook.set(data);
             await this.db.setBookContent(id, JSON.stringify(data));
+            this.pushBackup(data);
         } catch (e) {
             logIfTauri('[BookContentService] loadBook failed', e);
 
@@ -117,7 +167,7 @@ export class BookContentService {
             const localData = localStorage.getItem(`book_content_${id}`);
             if (localData) {
                 try {
-                    this.activeBook.set(JSON.parse(localData));
+                    this.activeBook.set(this.migrateBookContent(JSON.parse(localData)));
                 } catch (parseError) {
                     console.error('Failed to parse local storage book data', parseError);
                     this.activeBook.set(this.createEmptyBook(id));
@@ -139,10 +189,31 @@ export class BookContentService {
 
             this.db.setBookContent(n.id, JSON.stringify(n)).catch(e => {
                 logIfTauri('[BookContentService] persist failed', e);
-                // Fallback to LocalStorage
                 localStorage.setItem(`book_content_${n.id}`, JSON.stringify(n));
             });
+            this.pushBackup(n);
         }, PERSIST_DEBOUNCE_MS);
+    }
+
+    hasPendingPersist(): boolean {
+        return this.persistTimeout !== null;
+    }
+
+    /** Cancel any pending debounce and immediately write current state to DB. */
+    async flushPersist(): Promise<void> {
+        if (this.persistTimeout) {
+            clearTimeout(this.persistTimeout);
+            this.persistTimeout = null;
+        }
+        const n = this.activeBook();
+        if (!n) return;
+        try {
+            await this.db.setBookContent(n.id, JSON.stringify(n));
+        } catch (e) {
+            logIfTauri('[BookContentService] flush persist failed', e);
+            localStorage.setItem(`book_content_${n.id}`, JSON.stringify(n));
+        }
+        this.pushBackup(n);
     }
 
     getChapter(chapterId: string): Chapter | undefined {
@@ -259,6 +330,20 @@ export class BookContentService {
         this.schedulePersist();
     }
 
+    updateChapterBgColor(chapterId: string, bgColor: string) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            const newChapters = book.chapters.map(group => ({
+                ...group,
+                children: group.children.map(chap =>
+                    chap.id === chapterId ? { ...chap, bgColor } : chap
+                )
+            }));
+            return { ...book, chapters: newChapters };
+        });
+        this.schedulePersist();
+    }
+
     // Chapter Management
     addChapter(groupId: string, title: string = 'Untitled Chapter') {
         this.activeBook.update(book => {
@@ -267,7 +352,7 @@ export class BookContentService {
             const newChapters = book.chapters.map(group => {
                 if (group.id === groupId) {
                     const newChapter: Chapter = {
-                        id: `c${Date.now()}`,
+                        id: crypto.randomUUID(),
                         title,
                         content: '',
                         status: 'EMPTY',
@@ -282,6 +367,38 @@ export class BookContentService {
             return { ...book, chapters: newChapters };
         });
         this.schedulePersist();
+    }
+
+    duplicateChapter(chapterId: string): string | null {
+        let newId: string | null = null;
+        this.activeBook.update(book => {
+            if (!book) return null;
+            let sourceChapter: Chapter | undefined;
+            let sourceGroupId: string | undefined;
+            for (const group of book.chapters) {
+                const found = group.children.find(c => c.id === chapterId);
+                if (found) { sourceChapter = found; sourceGroupId = group.id; break; }
+            }
+            if (!sourceChapter || !sourceGroupId) return book;
+            newId = crypto.randomUUID();
+            const copy: Chapter = {
+                ...sourceChapter,
+                id: newId,
+                title: `${sourceChapter.title} (Copy)`,
+                status: 'DRAFT',
+                lastEdited: 'Just now',
+            };
+            return {
+                ...book,
+                chapters: book.chapters.map(group =>
+                    group.id === sourceGroupId
+                        ? { ...group, children: [...group.children, copy] }
+                        : group
+                ),
+            };
+        });
+        this.schedulePersist();
+        return newId;
     }
 
     deleteChapter(chapterId: string) {
@@ -329,7 +446,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newGroup: ChapterGroup = {
-                id: `g${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 expanded: true,
                 children: []
@@ -464,7 +581,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newNote: EditorNote = {
-                id: `n${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 body,
                 date: 'Just now',
@@ -515,11 +632,12 @@ export class BookContentService {
             if (!book) return null;
 
             const newCharacter: Character = {
-                id: `ch${Date.now()}`,
+                id: crypto.randomUUID(),
                 name,
                 role,
                 archetype,
-                description
+                description,
+                tags: []
             };
             this.store.addActivity(`Added character '${name}'`, 'entry');
             return { ...book, characters: [...book.characters, newCharacter] };
@@ -555,7 +673,30 @@ export class BookContentService {
                 });
             }
 
-            return { ...book, characters: book.characters.filter(char => char.id !== characterId) };
+            return {
+                ...book,
+                characters: book.characters.filter(char => char.id !== characterId),
+                relationships: (book.relationships ?? []).filter(
+                    r => r.fromId !== characterId && r.toId !== characterId
+                ),
+            };
+        });
+        this.schedulePersist();
+    }
+
+    addRelationship(fromId: string, toId: string, label: string) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            const rel: CharacterRelationship = { id: crypto.randomUUID(), fromId, toId, label };
+            return { ...book, relationships: [...(book.relationships ?? []), rel] };
+        });
+        this.schedulePersist();
+    }
+
+    deleteRelationship(id: string) {
+        this.activeBook.update(book => {
+            if (!book) return null;
+            return { ...book, relationships: (book.relationships ?? []).filter(r => r.id !== id) };
         });
         this.schedulePersist();
     }
@@ -566,10 +707,11 @@ export class BookContentService {
             if (!book) return null;
 
             const newLocation: Location = {
-                id: `l${Date.now()}`,
+                id: crypto.randomUUID(),
                 name,
                 type,
-                description
+                description,
+                tags: []
             };
             this.store.addActivity(`Added location '${name}'`, 'entry');
             return { ...book, locations: [...book.locations, newLocation] };
@@ -633,7 +775,7 @@ export class BookContentService {
             if (!book) return null;
 
             const newItem: FrontMatterItem = {
-                id: `fm${Date.now()}`,
+                id: crypto.randomUUID(),
                 type,
                 title,
                 content: '',
@@ -702,7 +844,7 @@ export class BookContentService {
             if (!book) return null;
 
             const prologue: Prologue = {
-                id: `pro${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 content: '',
                 status: 'EMPTY',
@@ -806,6 +948,7 @@ export class BookContentService {
         } catch {
             localStorage.setItem(`book_content_${newId}`, JSON.stringify(data));
         }
+        this.pushBackup(data);
     }
 
     /** Create and persist empty novel content (e.g. when adding a new book from the list). */
@@ -817,6 +960,28 @@ export class BookContentService {
             logIfTauri('[BookContentService] Persist failed, falling back to LocalStorage', e);
             localStorage.setItem(`book_content_${id}`, JSON.stringify(data));
         }
+        this.pushBackup(data);
+    }
+
+    // Ensure fields added after initial release are present on loaded data
+    private migrateBookContent(data: BookContent): BookContent {
+        return {
+            ...data,
+            relationships: data.relationships ?? [],
+            characters: (data.characters ?? []).map(c => ({
+                ...c,
+                role:        c.role        ?? '',
+                archetype:   c.archetype   ?? '',
+                description: c.description ?? '',
+                tags:        c.tags        ?? [],
+            })),
+            locations: (data.locations ?? []).map(l => ({
+                ...l,
+                type:        l.type        ?? 'Location',
+                description: l.description ?? '',
+                tags:        l.tags        ?? [],
+            })),
+        };
     }
 
     private createEmptyBook(id: string, title: string = 'Untitled Book'): BookContent {
@@ -830,7 +995,8 @@ export class BookContentService {
             ],
             characters: [],
             locations: [],
-            notes: []
+            notes: [],
+            relationships: []
         };
     }
 }

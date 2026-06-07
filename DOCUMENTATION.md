@@ -75,7 +75,7 @@ The repository follows a standard Nx Monorepo layout.
 │   ├── ui/                 # Shared Components (Auth, Layout, Modals, Widgets)
 │   ├── feature-bookmarks/  # Bookmark manager feature
 │   ├── feature-daily-notes/# Daily notes feature
-│   ├── feature-novels/     # Creative writing feature
+│   ├── feature-books/      # Creative writing feature
 │   ├── feature-tasks/      # Task management feature
 │   ├── feature-vault/      # Vault (secure storage) feature
 │   ├── feature-vendor/     # Vendor management feature

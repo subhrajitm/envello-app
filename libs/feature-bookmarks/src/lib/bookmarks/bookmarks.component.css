@@ -468,8 +468,9 @@
   color: var(--text-tertiary);
   text-align: center;
 }
-.bm-table-empty .material-symbols-outlined { font-size: 40px; opacity: 0.3; }
+.bm-empty-icon { font-size: 40px; opacity: 0.3; }
 .bm-table-empty p { font-size: 13px; margin: 0; }
+.bm-empty-subtitle { font-size: 12px; color: var(--text-tertiary); opacity: 0.7; }
 
 /* ═══════════════════════════════════════════════════════
    GRID VIEW

@@ -117,6 +117,13 @@
                         <div class="ne-chap-title">{{ chap.title }}</div>
                         }
                     </div>
+                    <span class="chap-word-count">{{ chap.wordCount }}</span>
+                    <button class="chap-quick-export" (click)="duplicateChapter.emit(chap.id); $event.stopPropagation()" title="Duplicate chapter" aria-label="Duplicate chapter">
+                        <span class="material-symbols-outlined">content_copy</span>
+                    </button>
+                    <button class="chap-quick-export" (click)="quickExport.emit(chap.id); $event.stopPropagation()" title="Export as Markdown" aria-label="Export as Markdown">
+                        <span class="material-symbols-outlined">download</span>
+                    </button>
                     <span class="material-symbols-outlined list-delete chapter-delete"
                         (click)="deleteChapter.emit({ id: chap.id, title: chap.title }); $event.stopPropagation()"
                         title="Delete chapter">delete</span>

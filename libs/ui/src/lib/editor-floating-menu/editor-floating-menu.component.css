@@ -1,0 +1,236 @@
+/* ── Container ─────────────────────────────────────────────────────── */
+.env-floating-menu {
+  position: fixed;
+  z-index: 1000;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+  animation: env-float-in 0.12s ease;
+  min-width: max-content;
+}
+
+@keyframes env-float-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Rows ──────────────────────────────────────────────────────────── */
+.env-float-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+}
+
+/* Row 1 (AI): subtle separator below */
+.env-float-row--ai {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Ask-changes input mode: expand row 1 to fit the input */
+.env-float-row--ai:has(.env-ask-input--full) {
+  padding: 4px 4px 4px 10px;
+  gap: 4px;
+}
+
+/* ── Divider ───────────────────────────────────────────────────────── */
+.env-float-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+/* ── Icon buttons ──────────────────────────────────────────────────── */
+.env-float-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+
+.env-float-btn:hover,
+.env-float-btn.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.env-float-btn .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Bold / Italic text buttons */
+.env-fmt-btn {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.env-fmt-btn strong,
+.env-fmt-btn em {
+  font-size: 14px;
+}
+
+/* AI buttons projected from parent — styled via .env-float-ai-group wrapper */
+.env-float-ai-group {
+  display: contents; /* children appear as direct flex items in the row */
+}
+
+.env-float-btn.ai-btn {
+  color: var(--accent-primary);
+}
+
+.env-float-btn.ai-btn:hover {
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+/* ── "Ask for changes" trigger button ──────────────────────────────── */
+.env-ask-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+
+.env-ask-btn:hover {
+  background: var(--bg-hover);
+}
+
+
+/* ── Ask-changes input ─────────────────────────────────────────────── */
+.env-ask-input {
+  flex: 1;
+  min-width: 220px;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+/* Full-width variant — fills the row, hiding the AI buttons */
+.env-ask-input--full {
+  width: 100%;
+  min-width: 280px;
+}
+
+.env-ask-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.env-ask-submit-btn {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  background: var(--text-secondary) !important;
+  color: var(--bg-panel) !important;
+}
+
+.env-ask-submit-btn:hover {
+  background: var(--text-primary) !important;
+  color: var(--bg-panel) !important;
+}
+
+.env-ask-submit-btn .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* ── Block-type dropdown ───────────────────────────────────────────── */
+.env-type-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.env-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+
+.env-type-btn:hover,
+.env-type-btn.open {
+  background: var(--bg-hover);
+}
+
+.env-type-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  min-width: 200px;
+  padding: 4px;
+  z-index: 1001;
+}
+
+.env-type-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.env-type-option:hover {
+  background: var(--bg-hover);
+}
+
+.env-type-option.active {
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+.env-type-option-label {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.env-type-heading {
+  font-weight: 700;
+}
+
+.env-type-shortcut {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}

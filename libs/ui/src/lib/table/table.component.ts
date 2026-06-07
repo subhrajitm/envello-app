@@ -127,6 +127,18 @@ export class TableComponent implements OnChanges {
       this._pageSize.set(this.pageSize);
       this._pageSizeInitialised = true;
     }
+    // When rows change, purge selected IDs that no longer exist in the list.
+    // This handles deleted / archived items that disappear from the current view.
+    if (changes['rows']) {
+      const currentIds = new Set(this.rows.map(r => r[this.rowIdKey]));
+      this.selectedIds.update(set => {
+        const next = new Set(set);
+        for (const id of next) {
+          if (!currentIds.has(id)) next.delete(id);
+        }
+        return next;
+      });
+    }
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────────
@@ -229,6 +241,12 @@ export class TableComponent implements OnChanges {
 
   onAction(row: EnvTableRow, actionKey: string) {
     this.openMenuId.set(null);
+    const id = row[this.rowIdKey];
+    this.selectedIds.update(set => {
+      const next = new Set(set);
+      next.delete(id);
+      return next;
+    });
     this.actionClick.emit({ row, actionKey });
   }
 
@@ -286,9 +304,6 @@ export class TableComponent implements OnChanges {
 
   onBulkAction(actionKey: string) {
     const ids = this.selectedIds();
-    this.rows
-      .filter(row => ids.has(row[this.rowIdKey]))
-      .forEach(row => this.actionClick.emit({ row, actionKey }));
     this.bulkActionClick.emit({ selectedIds: ids, actionKey });
     this.clearSelection();
   }

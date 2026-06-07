@@ -7,6 +7,11 @@
       <span class="ai-panel-title">{{ title() }}</span>
     </div>
     <div class="ai-panel-header-right">
+      @if (loading() && canCancel()) {
+        <button class="ai-panel-btn ai-panel-btn--cancel" (click)="cancel.emit()" title="Stop generating">
+          <span class="material-symbols-outlined">stop_circle</span>
+        </button>
+      }
       @if (messages().length > 0) {
         <button class="ai-panel-btn" (click)="cleared.emit()" title="Clear chat">
           <span class="material-symbols-outlined">refresh</span>
@@ -19,7 +24,7 @@
   </div>
 
   <!-- Messages area -->
-  <div class="ai-panel-messages">
+  <div class="ai-panel-messages" #messagesContainer>
 
     @if (messages().length === 0) {
       <div class="ai-panel-welcome">
@@ -40,14 +45,22 @@
       }
     }
 
-    @for (msg of messages(); track $index) {
+    @for (msg of messages(); track $index; let last = $last) {
       <div class="ai-panel-msg"
            [class.ai-panel-msg--user]="msg.role === 'user'"
            [class.ai-panel-msg--assistant]="msg.role === 'assistant'">
         @if (msg.role === 'assistant') {
           <span class="ai-panel-msg-icon material-symbols-outlined">auto_awesome</span>
         }
-        <div class="ai-panel-msg-bubble">{{ msg.text }}</div>
+        <div class="ai-panel-msg-content">
+          <div class="ai-panel-msg-bubble">{{ msg.text }}</div>
+          @if (last && msg.role === 'assistant' && !loading() && applyText()) {
+            <button class="ai-panel-apply-btn" (click)="applyClicked.emit()">
+              <span class="material-symbols-outlined">edit_document</span>
+              Apply to note
+            </button>
+          }
+        </div>
       </div>
     }
 

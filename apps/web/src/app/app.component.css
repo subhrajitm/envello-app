@@ -6,7 +6,7 @@
     right: 0;
     z-index: 10000;
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
     display: flex;
     align-items: center;
     justify-content: center;

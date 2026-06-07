@@ -54,6 +54,8 @@ export class ResearchService {
 
     constructor() {
         this.loadFromDb();
+        window.addEventListener('envello:db-ready',      () => this.loadFromDb());
+        window.addEventListener('envello:sync-complete', () => this.loadFromDb());
     }
 
     private async loadFromDb(): Promise<void> {

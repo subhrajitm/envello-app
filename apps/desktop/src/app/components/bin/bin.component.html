@@ -22,6 +22,9 @@
                 <button class="filter-pill" [class.active]="activeFilter() === 'book'" (click)="setFilter('book')">Books</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">Meetings</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'book-chapter'" (click)="setFilter('book-chapter')">Chapters</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'bookmark'" (click)="setFilter('bookmark')">Bookmarks</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'subscription'" (click)="setFilter('subscription')">Subscriptions</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'credential'" (click)="setFilter('credential')">Vault</button>
             </div>
         </div>
         <div class="filter-group search-group">

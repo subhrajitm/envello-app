@@ -223,7 +223,7 @@
   top: -4px;
   right: -4px;
   background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary-text);
   font-size: 10px;
   min-width: 16px;
   height: 16px;
@@ -377,7 +377,7 @@
   justify-content: center;
   font-size: 10px;
   font-weight: 600;
-  color: #fff;
+  color: var(--accent-primary-text);
   flex-shrink: 0;
 }
 .mt-av:first-child { margin-left: 0; }
@@ -511,7 +511,7 @@
 }
 .mt-cal-today-btn:hover {
   background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary-text);
   border-color: var(--accent-primary);
 }
 
@@ -666,7 +666,7 @@
 }
 .mt-cal-wv-day-hdr.today .mt-cal-wv-day-num {
   background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary-text);
 }
 .mt-cal-wv-body {
   flex: 1;
@@ -818,7 +818,7 @@
 }
 .mt-cal-day--today .mt-cal-day-num {
   background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary-text);
   font-weight: 700;
 }
 
@@ -1263,7 +1263,7 @@
 
 .mta-btn--primary {
   background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary-text);
   border-color: var(--accent-primary);
 }
 .mta-btn--primary:hover:not(:disabled) { filter: brightness(1.1); }
@@ -1356,7 +1356,7 @@
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
-  color: #fff;
+  color: var(--accent-primary-text);
   flex-shrink: 0;
 }
 .mta-attendee-info { flex: 1; min-width: 0; }

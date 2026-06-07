@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -15,10 +15,14 @@ import { InputComponent } from '../../input/input.component';
     templateUrl: './sign-up.component.html',
     styleUrls: ['./sign-up.component.css']
 })
-export class SignUpComponent {
+export class SignUpComponent implements AfterViewInit, OnDestroy {
     authService = inject(AuthService);
     private userService = inject(UserService);
     private router = inject(Router);
+
+    @ViewChild('linesCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+    private animId = 0;
+    private resizeObs?: ResizeObserver;
 
     constructor() {
         effect(() => {
@@ -26,6 +30,103 @@ export class SignUpComponent {
                 this.router.navigate(['/workspace']);
             }
         });
+    }
+
+    ngAfterViewInit() { this.startLines(); }
+
+    ngOnDestroy() {
+        cancelAnimationFrame(this.animId);
+        this.resizeObs?.disconnect();
+    }
+
+    private startLines() {
+        const canvas = this.canvasRef?.nativeElement;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d')!;
+        const [r, g, b] = this.accentRgb();
+
+        const fit = () => {
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            if (!w || !h) return;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+        fit();
+        this.resizeObs = new ResizeObserver(fit);
+        this.resizeObs.observe(canvas);
+
+        const BS = 6;
+        const GAP = 6;
+        const STEP = BS + GAP;
+        const TAIL = 14;
+        const HEAD_ALPHA = 0.12;
+        const BASE_ALPHA = 0.010;
+
+        let hPos: number[] = [], hSpeed: number[] = [];
+        let vPos: number[] = [], vSpeed: number[] = [];
+        let lastRows = 0, lastCols = 0;
+
+        const initPulses = (rows: number, cols: number) => {
+            hPos   = Array.from({ length: rows }, () => Math.random() * cols);
+            hSpeed = Array.from({ length: rows }, () => 0.04 + Math.random() * 0.05);
+            vPos   = Array.from({ length: cols }, () => Math.random() * rows);
+            vSpeed = Array.from({ length: cols }, () => 0.03 + Math.random() * 0.04);
+            lastRows = rows; lastCols = cols;
+        };
+
+        const contrib = (pos: number, idx: number): number => {
+            const offset = pos - idx;
+            if (offset < -1 || offset >= TAIL) return 0;
+            if (offset < 0) return HEAD_ALPHA * (offset + 1);
+            return HEAD_ALPHA * Math.exp(-offset * 0.32);
+        };
+
+        const draw = () => {
+            const W = canvas.offsetWidth;
+            const H = canvas.offsetHeight;
+            ctx.clearRect(0, 0, W, H);
+
+            const cols = Math.ceil(W / STEP) + 1;
+            const rows = Math.ceil(H / STEP) + 1;
+
+            if (rows !== lastRows || cols !== lastCols) initPulses(rows, cols);
+
+            for (let rr = 0; rr < rows; rr++) {
+                hPos[rr] += hSpeed[rr];
+                if (hPos[rr] - TAIL > cols) hPos[rr] = -1;
+            }
+            for (let c = 0; c < cols; c++) {
+                vPos[c] += vSpeed[c];
+                if (vPos[c] - TAIL > rows) vPos[c] = -1;
+            }
+
+            for (let rr = 0; rr < rows; rr++) {
+                for (let c = 0; c < cols; c++) {
+                    const alpha = BASE_ALPHA + Math.min(contrib(hPos[rr], c) + contrib(vPos[c], rr), 0.85);
+                    ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+                    ctx.fillRect(c * STEP, rr * STEP, BS, BS);
+                }
+            }
+
+            this.animId = requestAnimationFrame(draw);
+        };
+        draw();
+    }
+
+    private accentRgb(): [number, number, number] {
+        const theme = document.documentElement.getAttribute('data-theme') || 'light';
+        const map: Record<string, [number, number, number]> = {
+            'dark':             [255, 215,   0],
+            'enterprise-dark':  [251, 191,  36],
+            'light':            [180,  83,   9],
+            'colorful':         [240, 125,  89],
+            'typewriter':       [ 60,  60,  60],
+            'enterprise-light': [245, 158,  11],
+        };
+        return map[theme] ?? map['light'];
     }
 
     currentStep = signal(1);

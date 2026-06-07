@@ -21,6 +21,7 @@ export class NotesPanelComponent {
   addNewNote = output<void>();
   deleteNote = output<string>();
   updateNote = output<{ id: string; title: string; body: string }>();
+  closed = output<void>();
 
   editingNoteId = signal<string | null>(null);
   editTitle = signal('');

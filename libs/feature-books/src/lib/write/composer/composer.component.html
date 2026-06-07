@@ -46,7 +46,7 @@
 
             <!-- Sidebar header: mini back + search -->
             <div class="ne-sidebar-header-action">
-                <button class="ne-btn-back-mini" (click)="goBack()" title="Back to Write">
+                <button class="ne-btn-back-mini" (click)="goBack()" title="Back to Write" aria-label="Back to Write">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </button>
                 <div class="ne-sidebar-search" [class.active]="searchQuery()">
@@ -85,12 +85,27 @@
             <div class="ne-sidebar-search-empty">No results for "{{ searchQuery() }}"</div>
             }
 
+            <!-- Recently edited chapters -->
+            @if (recentChapters().length > 0) {
+            <div class="ne-recent-section">
+                <div class="ne-recent-label">RECENT</div>
+                @for (chap of recentChapters(); track chap.id) {
+                <button class="ne-recent-item" [class.active]="activeChapterId() === chap.id"
+                    (click)="selectChapter(chap)">
+                    <span class="chap-status-dot status-dot-{{ chap.status.toLowerCase() }}"></span>
+                    <span class="ne-recent-title">{{ chap.title }}</span>
+                    <span class="ne-recent-wc">{{ chap.wordCount }}</span>
+                </button>
+                }
+            </div>
+            }
+
             <!-- ── ACCORDION CONTAINER ── -->
             <div class="ne-acc-container">
 
             <!-- ── CHAPTERS ACCORDION ── -->
             @if (book()) {
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 0 > lastOpenIdx() ? 90 : 1">
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccChapters()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accChapters()">chevron_right</span>
                     <span class="ne-acc-title">{{ sectionLabel().toUpperCase() }}</span>
@@ -140,20 +155,23 @@
                     (bulkMove)="showBulkMoveModal.set(true)"
                     (toggleAddMenu)="toggleAddMenu()"
                     (addNewActOrPart)="addNewActOrPart()" (addNewChapter)="addNewChapter()"
-                    (toggleChapterSelection)="toggleChapterSelection($event)" />
+                    (toggleChapterSelection)="toggleChapterSelection($event)"
+                    (quickExport)="quickExportChapter($event)"
+                    (duplicateChapter)="duplicateChapter($event)" />
                 }
             </div>
 
             <!-- ── STRUCTURE ACCORDION ── -->
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 1 > lastOpenIdx() ? 91 : 2">
+            @if (showStructureAccordion()) {
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccStructure()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accStructure()">chevron_right</span>
-                    <span class="ne-acc-title">STRUCTURE</span>
+                    <span class="ne-acc-title">STRUCTURE ({{ book()!.frontMatter.length + (book()!.prologue ? 1 : 0) }})</span>
                 </div>
                 @if (accStructure()) {
                 <app-structure-view [frontMatter]="book()!.frontMatter" [prologue]="book()!.prologue || null"
                     [activeFrontMatterId]="activeFrontMatterId()" [activePrologueId]="activePrologueId()"
-                    [addMenuOpen]="structureFmAddMenuOpen()"
+                    [addMenuOpen]="structureFmAddMenuOpen()" [writingType]="writingType()"
                     (selectFrontMatterItem)="selectFrontMatterItem($event)"
                     (selectPrologue)="selectPrologue()"
                     (deleteFrontMatterItem)="deleteFrontMatterItem($event.id, $event.title)"
@@ -161,13 +179,14 @@
                     (addPrologue)="addPrologue()" (toggleAddMenu)="toggleStructureFmAddMenu()" />
                 }
             </div>
+            }
 
             <!-- ── CHARACTERS ACCORDION ── -->
             @if (showExtendedTabs()) {
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 2 > lastOpenIdx() ? 92 : 3">
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccCharacters()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accCharacters()">chevron_right</span>
-                    <span class="ne-acc-title">CHARACTERS</span>
+                    <span class="ne-acc-title">CHARACTERS ({{ book()!.characters.length }})</span>
                     <div class="ne-acc-actions" (click)="$event.stopPropagation()">
                         <button class="ne-toolbar-btn" (click)="addNewCharacter()" title="Add character">
                             <span class="material-symbols-outlined">add</span>
@@ -184,10 +203,10 @@
             </div>
 
             <!-- ── LOCATIONS ACCORDION ── -->
-            <div class="ne-acc-section" [style.order]="anyAccOpen() && 3 > lastOpenIdx() ? 93 : 4">
+            <div class="ne-acc-section" >
                 <div class="ne-acc-hdr" (click)="toggleAccLocations()">
                     <span class="material-symbols-outlined ne-acc-chevron" [class.open]="accLocations()">chevron_right</span>
-                    <span class="ne-acc-title">LOCATIONS</span>
+                    <span class="ne-acc-title">LOCATIONS ({{ book()!.locations.length }})</span>
                     <div class="ne-acc-actions" (click)="$event.stopPropagation()">
                         <button class="ne-toolbar-btn" (click)="addNewLocation()" title="Add location">
                             <span class="material-symbols-outlined">add</span>
@@ -217,10 +236,20 @@
             <app-editor-header [items]="editorTabItems()" [activeItemId]="editorActiveTabId()"
                 [canUndo]="editorActive() && canUndo()" [canRedo]="editorActive() && canRedo()"
                 [focusMode]="focusMode()"
+                [entityTitle]="entityHeaderTitle()" [entityIcon]="entityHeaderIcon()"
+                [entityCount]="entityHeaderCount()"
+                [isEntityDetail]="(activeNav() === 'characters' || activeNav() === 'locations') && !!editorActiveTabId()"
+                [viewModes]="entityHeaderTitle() && activeNav() === 'characters' ? charViewModes : []"
+                [activeViewMode]="charView()"
+                [searchQuery]="entitySearchQuery()"
                 (selectItem)="handleEditorTabSelect($event)"
                 (closeTab)="closeEditorTab($event)"
                 (performUndo)="performUndo()" (performRedo)="performRedo()"
-                (exitFocus)="toggleFocusMode()" />
+                (exitFocus)="toggleFocusMode()"
+                (save)="performEntitySave()"
+                (addEntityClick)="onAddEntityClick()"
+                (viewModeChange)="charView.set($any($event))"
+                (searchQueryChange)="entitySearchQuery.set($event)" />
 
             @if (editorActiveTabId()) {
 
@@ -232,15 +261,21 @@
             @if (activeNav() === 'manuscript') {
             <app-manuscript-editor [editor]="editor" [activeChapterId]="activeChapterId()" [title]="title()"
                 [chapterStatus]="chapterStatus()" [chapterLastEdited]="chapterLastEdited()" [isSaving]="isSaving()"
-                [lastSaved]="lastSaved()" (titleChange)="onTitleChange($event)"
-                (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()" />
+                [lastSaved]="lastSaved()" [wordCount]="wordCount()" [sessionWords]="sessionWords()"
+                [isFullWidth]="editorFullWidth()" [cardBgColor]="editorBgColor()"
+                (titleChange)="onTitleChange($event)"
+                (statusChange)="onChapterStatusChange($event)" (addNewChapter)="addNewChapter()"
+                (quickAction)="$event === 'continue-writing' ? continueWriting() : handleQuickAction($event)"
+                (fullWidthChange)="editorFullWidth.set($event)"
+                (bgColorChange)="setEditorBgColor($event)" />
             }
 
             @if (activeNav() === 'structure' && book()) {
             <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
                 [activePrologueId]="activePrologueId()" [frontMatter]="book()!.frontMatter"
-                [prologue]="book()!.prologue || null" (addFrontMatterItem)="addFrontMatterItem($event)"
-                (addPrologue)="addPrologue()" />
+                [prologue]="book()!.prologue || null" [isFullWidth]="editorFullWidth()"
+                (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()" (fullWidthChange)="editorFullWidth.set($event)" />
             }
 
             @if (activeNav() === 'characters' && book()) {
@@ -254,12 +289,52 @@
             }
 
             } @else {
+            <!-- No-tab views: structure overview, entity tables, welcome state -->
+            @if (activeNav() === 'structure' && book()) {
+            <app-structure-editor [editor]="editor" [activeFrontMatterId]="activeFrontMatterId()"
+                [activePrologueId]="activePrologueId()" [frontMatter]="book()!.frontMatter"
+                [prologue]="book()!.prologue || null" [isFullWidth]="editorFullWidth()"
+                (addFrontMatterItem)="addFrontMatterItem($event)"
+                (addPrologue)="addPrologue()" (fullWidthChange)="editorFullWidth.set($event)" />
+            } @else if (activeNav() === 'characters' && book()) {
+            @if (charView() === 'relationships') {
+            <app-character-relationships
+                [characters]="book()!.characters"
+                [relationships]="book()!.relationships ?? []"
+                (addRelationship)="onAddRelationship($event)"
+                (deleteRelationship)="onDeleteRelationship($event)"
+                (addCharacter)="addNewCharacter()" />
+            } @else {
+            <app-entity-table #charTable
+                [columns]="characterColumns" [items]="characterRows()"
+                [searchQuery]="entitySearchQuery()"
+                emptyIcon="person_add" emptyTitle="No characters yet"
+                emptyHint="Track your cast — roles, archetypes, and backstories"
+                popupTitle="Add Character" popupIcon="person_add"
+                [popupFields]="characterPopupFields" [popupGridFields]="true"
+                (selectItem)="selectCharacter($event)"
+                (deleteItem)="deleteCharacter($event.id, $event.name)"
+                (addItem)="addNewCharacter({ name: $event['name'], role: $event['role'], archetype: $event['archetype'] })" />
+            }
+            } @else if (activeNav() === 'locations' && book()) {
+            <app-entity-table #locTable
+                [columns]="locationColumns" [items]="locationRows()"
+                [searchQuery]="entitySearchQuery()"
+                emptyIcon="add_location" emptyTitle="No locations yet"
+                emptyHint="Build your world — cities, planets, rooms, and realms"
+                popupTitle="Add Location" popupIcon="add_location"
+                [popupFields]="locationPopupFields" [popupGridFields]="false"
+                (selectItem)="selectLocation($event)"
+                (deleteItem)="deleteLocation($event.id, $event.name)"
+                (addItem)="addNewLocation({ name: $event['name'], type: $event['type'] })" />
+            } @else {
             <!-- Welcome / empty state -->
             <div class="ne-welcome-state">
                 <span class="material-symbols-outlined ne-welcome-icon">edit_note</span>
                 <p class="ne-welcome-title">Nothing open</p>
                 <p class="ne-welcome-hint">Select an item from the sidebar to start editing</p>
             </div>
+            }
             }
         </div>
 
@@ -278,19 +353,23 @@
                     (summarizeChapter)="summarizeChapter()"
                     (continueWriting)="continueWriting()" (applySuggestion)="applySuggestion($event)"
                     (clearConversation)="clearAiConversation()" (clearSuggestions)="aiSuggestions.set([])"
-                    (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)" />
+                    (toggleContextPreview)="toggleContextPreview()" (promptChange)="aiPrompt.set($event)"
+                    (cancelAi)="cancelAiStream()" (closed)="rightSidebarCollapsed.set(true)" />
                 } @else if (rightSidebarTab() === 'notes' && book()) {
                 <app-notes-panel [notes]="book()!.notes" (addNewNote)="addNewNote()"
                     (deleteNote)="deleteNote($event)"
-                    (updateNote)="bookService.updateNote($event.id, $event.title, $event.body)" />
+                    (updateNote)="bookService.updateNote($event.id, $event.title, $event.body)"
+                    (closed)="rightSidebarCollapsed.set(true)" />
                 } @else if (rightSidebarTab() === 'manuscript' && book()) {
                 <app-manuscript-data [totalNovelWords]="totalNovelWords()"
                     [averageChapterLength]="averageChapterLength()" [chaptersCompleted]="chaptersCompleted()"
-                    [totalChapters]="getTotalChapters()" [logline]="book()!.synopsis.logline"
+                    [totalChapters]="totalChapters()" [logline]="book()!.synopsis.logline"
                     [theme]="book()!.synopsis.theme" [wordCount]="wordCount()" [targetWordCount]="targetWordCount()"
-                    [goalProgress]="getGoalProgress()" [activeChapterId]="activeChapterId()"
+                    [goalProgress]="goalProgress()" [activeChapterId]="activeChapterId()"
                     [mentionedCharacters]="mentionedCharacters()" [mentionedLocations]="mentionedLocations()"
-                    [writingType]="writingType()" [sectionLabel]="sectionLabel()" />
+                    [writingType]="writingType()" [sectionLabel]="sectionLabel()"
+                    (characterClicked)="navigateToCharacter($event)"
+                    (closed)="rightSidebarCollapsed.set(true)" />
                 }
             </div>
             }
@@ -317,46 +396,18 @@
                 <div class="ne-strip-divider"></div>
 
                 <!-- Utility buttons (bottom) -->
-                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" [title]="focusMode() ? 'Exit Focus Mode (⌘+\\)' : 'Focus Mode (⌘+\\)'">
+                <button class="ne-strip-btn" [class.active]="focusMode()" (click)="toggleFocusMode()" [title]="focusMode() ? 'Exit Focus Mode (⌘+\\)' : 'Focus Mode (⌘+\\)'" [attr.aria-label]="focusMode() ? 'Exit Focus Mode' : 'Focus Mode'">
                     <span class="material-symbols-outlined">{{ focusMode() ? 'close_fullscreen' : 'center_focus_strong' }}</span>
                 </button>
-                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" [title]="fullScreenMode() ? 'Exit Full Screen (F11)' : 'Full Screen (F11)'">
+                <button class="ne-strip-btn" [class.active]="fullScreenMode()" (click)="toggleFullScreen()" [title]="fullScreenMode() ? 'Exit Full Screen (F11)' : 'Full Screen (F11)'" [attr.aria-label]="fullScreenMode() ? 'Exit Full Screen' : 'Full Screen'">
                     <span class="material-symbols-outlined">{{ fullScreenMode() ? 'fullscreen_exit' : 'fullscreen' }}</span>
                 </button>
-                <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History">
+                <button class="ne-strip-btn" (click)="openVersionHistory()" title="Version History" aria-label="Version History">
                     <span class="material-symbols-outlined">history</span>
                 </button>
-                <div class="export-menu-wrapper ne-strip-dropdown-wrapper">
-                    <button class="ne-strip-btn" [class.active]="exportMenuOpen()" (click)="toggleExportMenu()" title="Export">
-                        <span class="material-symbols-outlined">download</span>
-                    </button>
-                    @if (exportMenuOpen()) {
-                    <div class="add-dropdown-menu ne-strip-popup">
-                        <button class="add-dropdown-option" (click)="exportNovel('pdf'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">picture_as_pdf</span>
-                            <span class="option-label">Export as PDF</span>
-                        </button>
-                        <button class="add-dropdown-option" (click)="exportNovel('docx'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">article</span>
-                            <span class="option-label">Export as Word (.doc)</span>
-                        </button>
-                        <button class="add-dropdown-option" (click)="exportNovel('html'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">code</span>
-                            <span class="option-label">Export as HTML</span>
-                        </button>
-                        <button class="add-dropdown-option" (click)="exportNovel('md'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">description</span>
-                            <span class="option-label">Export as Markdown</span>
-                        </button>
-                        @if (writingType() === 'SCRIPT') {
-                        <button class="add-dropdown-option" (click)="exportNovel('fountain'); toggleExportMenu()">
-                            <span class="material-symbols-outlined option-icon">theaters</span>
-                            <span class="option-label">Export as Fountain (.fountain)</span>
-                        </button>
-                        }
-                    </div>
-                    }
-                </div>
+                <button class="ne-strip-btn" [class.active]="exportModalOpen()" (click)="exportModalOpen.set(true)" title="Export" aria-label="Export">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
             </div>
         </div>
     </div>
@@ -397,8 +448,50 @@
     <app-version-history-modal [isOpen]="versionHistoryOpen()" [versions]="versionHistory()"
         (restore)="restoreVersion($event)" (close)="closeVersionHistory()" />
 
+    @if (exportModalOpen()) {
+    <app-export-modal
+        [chapters]="exportChapters()"
+        [frontMatter]="exportFrontMatter()"
+        [prologue]="exportPrologue()"
+        [writingType]="writingType()"
+        [activeItemId]="editorActiveTabId()"
+        [sectionLabel]="sectionLabel()"
+        (exportRequest)="handleExport($event)"
+        (cancel)="exportModalOpen.set(false)" />
+    }
+
     <app-add-modal [modal]="addModal()" (inputValueChange)="updateAddModalInput($event)"
         (inputValue2Change)="updateAddModalInput2($event)" (confirm)="confirmAdd()" (cancel)="cancelAdd()" />
+
+    <!-- Keyboard Shortcuts Panel -->
+    @if (showShortcuts()) {
+    <div class="ne-modal-overlay fixed inset-0 flex items-center justify-center z-[9999]" (click)="showShortcuts.set(false)">
+        <div class="ne-modal ne-shortcuts-modal flex flex-col rounded-lg shadow-xl" (click)="$event.stopPropagation()">
+            <div class="ne-modal-header">Keyboard Shortcuts</div>
+            <div class="ne-shortcuts-body">
+                <div class="ne-shortcuts-group">
+                    <div class="ne-shortcuts-group-title">Navigation</div>
+                    <div class="ne-shortcut-row"><kbd>⌘K</kbd><span>Search book contents</span></div>
+                    <div class="ne-shortcut-row"><kbd>Alt ↑</kbd><span>Previous chapter</span></div>
+                    <div class="ne-shortcut-row"><kbd>Alt ↓</kbd><span>Next chapter</span></div>
+                </div>
+                <div class="ne-shortcuts-group">
+                    <div class="ne-shortcuts-group-title">View</div>
+                    <div class="ne-shortcut-row"><kbd>⌘\</kbd><span>Toggle focus mode</span></div>
+                    <div class="ne-shortcut-row"><kbd>F11</kbd><span>Toggle full screen</span></div>
+                    <div class="ne-shortcut-row"><kbd>?</kbd><span>Show / hide shortcuts</span></div>
+                </div>
+                <div class="ne-shortcuts-group">
+                    <div class="ne-shortcuts-group-title">Editor</div>
+                    <div class="ne-shortcut-row"><kbd>⌘Z</kbd><span>Undo</span></div>
+                    <div class="ne-shortcut-row"><kbd>⌘⇧Z</kbd><span>Redo</span></div>
+                    <div class="ne-shortcut-row"><kbd>⌘S</kbd><span>Save (auto-saves)</span></div>
+                    <div class="ne-shortcut-row"><kbd>Esc</kbd><span>Close modal / exit focus</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
 
     <!-- Image URL modal -->
     @if (imageModalOpen()) {
@@ -409,9 +502,12 @@
                 <div class="ne-modal-input-wrapper">
                     <label class="ne-modal-label">Image URL</label>
                     <input type="url" class="ne-modal-input" [value]="imageUrl()"
-                        (input)="imageUrl.set($any($event.target).value)"
+                        (input)="imageUrl.set($any($event.target).value); imageUrlError.set('')"
                         placeholder="https://example.com/image.png"
                         (keydown.enter)="insertImage()" autofocus />
+                    @if (imageUrlError()) {
+                    <p class="ne-modal-error">{{ imageUrlError() }}</p>
+                    }
                 </div>
             </div>
             <div class="ne-modal-footer flex items-center justify-end gap-2">
@@ -431,9 +527,12 @@
                 <div class="ne-modal-input-wrapper">
                     <label class="ne-modal-label">YouTube URL</label>
                     <input type="url" class="ne-modal-input" [value]="youtubeUrl()"
-                        (input)="youtubeUrl.set($any($event.target).value)"
+                        (input)="youtubeUrl.set($any($event.target).value); youtubeUrlError.set('')"
                         placeholder="https://www.youtube.com/watch?v=..."
                         (keydown.enter)="insertYoutube()" autofocus />
+                    @if (youtubeUrlError()) {
+                    <p class="ne-modal-error">{{ youtubeUrlError() }}</p>
+                    }
                 </div>
             </div>
             <div class="ne-modal-footer flex items-center justify-end gap-2">

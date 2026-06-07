@@ -12,48 +12,100 @@
         </button>
     </div>
     } @else {
-    <input type="text" class="ne-doc-title-input" [ngModel]="title()"
-        (ngModelChange)="titleChange.emit($event)" placeholder="Chapter Title" />
+    <div class="ms-editor-card" [ngClass]="cardBgColor()" [class.ms-card--full-width]="isFullWidth()">
 
-    <div class="ne-doc-meta">
-        <div class="meta-row">
-            <!-- Clickable status badge with dropdown -->
-            <div class="status-menu-wrapper" style="position:relative;display:inline-flex;">
-                <button class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()"
-                        (click)="toggleStatusMenu($event)" title="Change status">
-                    <span class="material-symbols-outlined" style="font-size:13px;">{{ chapterStatusIcon() }}</span>
-                    {{ chapterStatusLabel() }}
-                    <span class="material-symbols-outlined" style="font-size:12px;opacity:0.6;">expand_more</span>
+        <!-- Card top actions: full-width toggle + color picker -->
+        <div class="ms-editor-actions-top">
+            <div class="ms-color-picker-wrapper" style="position:relative;">
+                <button class="ms-action-btn" [class.active]="cardBgColor()" (click)="toggleColorPicker($event)" title="Card color">
+                    <span class="material-symbols-outlined">palette</span>
                 </button>
-                @if (statusMenuOpen()) {
-                <div class="add-dropdown-menu" style="top:calc(100% + 4px);left:0;right:auto;min-width:140px;">
-                    @for (opt of statusOptions; track opt.value) {
-                    <button class="add-dropdown-option" [class.active]="chapterStatus() === opt.value"
-                            (click)="selectStatus(opt.value, $event)">
-                        <span class="material-symbols-outlined option-icon">{{ opt.icon }}</span>
-                        <span class="option-label">{{ opt.label }}</span>
+                @if (showColorPicker()) {
+                <div class="ms-color-picker-dropdown" (click)="$event.stopPropagation()">
+                    @for (color of bgColors; track color) {
+                    <button class="ms-color-swatch"
+                        [class.active]="cardBgColor() === color"
+                        [class.ms-swatch--none]="color === ''"
+                        [ngClass]="color || ''"
+                        (click)="selectBgColor(color, $event)"
+                        [title]="color ? color.replace('ms-bg--', '') : 'Default'">
                     </button>
                     }
                 </div>
                 }
             </div>
-            <span class="meta-sep">•</span>
-            <span class="save-indicator" [class.saving]="isSaving()">
-                @if (isSaving()) {
-                <span class="material-symbols-outlined text-xs">sync</span>
-                Saving…
-                } @else if (lastSaved()) {
-                <span class="material-symbols-outlined text-xs">check_circle</span>
-                Saved · {{ formatSaved(lastSaved()!) }}
-                } @else if (chapterLastEdited() !== 'Never') {
-                <span class="material-symbols-outlined text-xs">history</span>
-                Last edited: {{ chapterLastEdited() }}
-                }
-            </span>
+            <button class="ms-action-btn" [class.active]="isFullWidth()" (click)="fullWidthChange.emit(!isFullWidth())" [title]="isFullWidth() ? 'Restore width' : 'Full width'">
+                <span class="material-symbols-outlined">{{ isFullWidth() ? 'close_fullscreen' : 'open_in_full' }}</span>
+            </button>
         </div>
-    </div>
 
-    <!-- Tiptap Editor -->
-    <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+        <!-- Card body: title + meta + editor -->
+        <div class="ms-card-body">
+            <input type="text" class="ne-doc-title-input" [ngModel]="title()"
+                (ngModelChange)="titleChange.emit($event)" placeholder="Chapter Title" />
+
+            <div class="ne-doc-meta">
+                <div class="meta-row">
+                    <!-- Clickable status badge with dropdown -->
+                    <div class="status-menu-wrapper" style="position:relative;display:inline-flex;">
+                        <button class="status-badge" [class]="'status-' + chapterStatus().toLowerCase()"
+                                (click)="toggleStatusMenu($event)" title="Change status">
+                            <span class="material-symbols-outlined" style="font-size:13px;">{{ chapterStatusIcon() }}</span>
+                            {{ chapterStatusLabel() }}
+                            <span class="material-symbols-outlined" style="font-size:12px;opacity:0.6;">expand_more</span>
+                        </button>
+                        @if (statusMenuOpen()) {
+                        <div class="add-dropdown-menu" style="top:calc(100% + 4px);left:0;right:auto;min-width:140px;">
+                            @for (opt of statusOptions; track opt.value) {
+                            <button class="add-dropdown-option" [class.active]="chapterStatus() === opt.value"
+                                    (click)="selectStatus(opt.value, $event)">
+                                <span class="material-symbols-outlined option-icon">{{ opt.icon }}</span>
+                                <span class="option-label">{{ opt.label }}</span>
+                            </button>
+                            }
+                        </div>
+                        }
+                    </div>
+                    <span class="meta-sep">•</span>
+                    <span class="save-indicator" [class.saving]="isSaving()">
+                        @if (isSaving()) {
+                        <span class="material-symbols-outlined text-xs">sync</span>
+                        Saving…
+                        } @else if (lastSaved()) {
+                        <span class="material-symbols-outlined text-xs">check_circle</span>
+                        Saved · {{ formatSaved(lastSaved()!) }}
+                        } @else if (chapterLastEdited() !== 'Never') {
+                        <span class="material-symbols-outlined text-xs">history</span>
+                        Last edited: {{ chapterLastEdited() }}
+                        }
+                    </span>
+                    <span class="meta-sep">•</span>
+                    <span class="word-count-chip">{{ wordCount() | number }} words</span>
+                    @if (sessionWords() > 0) {
+                    <span class="session-words-chip">+{{ sessionWords() }} today</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Floating menu: shows on text selection or double-click -->
+            <env-editor-floating-menu [editor]="editor()" trigger="selection" [containEl]="hostEl"
+                (askChanges)="quickAction.emit('ask-changes:' + $event)"
+                (linkClick)="quickAction.emit('link')">
+                <!-- AI buttons go to row 1 via the named slot -->
+                <div class="env-float-ai-group">
+                    <button class="env-float-btn ai-btn" (click)="quickAction.emit('continue-writing')" title="AI: Continue writing">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                    </button>
+                    <button class="env-float-btn ai-btn" (click)="quickAction.emit('suggest')" title="AI: Suggest">
+                        <span class="material-symbols-outlined">tips_and_updates</span>
+                    </button>
+                </div>
+            </env-editor-floating-menu>
+
+            <!-- Tiptap Editor -->
+            <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+        </div>
+
+    </div>
     }
 </div>

@@ -29,6 +29,9 @@ export class ManuscriptDataComponent {
   writingType = input<string>('NOVEL');
   sectionLabel = input<string>('Section');
 
+  characterClicked = output<string>();
+  closed = output<void>();
+
   get readingTime() { return Math.max(1, Math.ceil(this.totalNovelWords() / 200)); }
   get estimatedPages() { return Math.max(1, Math.ceil(this.totalNovelWords() / 250)); }
 }

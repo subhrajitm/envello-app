@@ -149,7 +149,10 @@ export type BinItemType =
     | 'book-character'
     | 'book-location'
     | 'task'
-    | 'meeting';
+    | 'meeting'
+    | 'bookmark'
+    | 'credential'
+    | 'subscription';
 
 export interface BinItem {
     id: string;

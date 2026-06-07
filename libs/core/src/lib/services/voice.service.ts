@@ -63,16 +63,16 @@ export class VoiceService {
       };
 
       this.recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        if (event.error === 'not-allowed' || event.error === 'no-speech') {
-          // If not permitted, cancel the active state.
-          if (event.error === 'not-allowed') {
-            this.isVoiceActive.set(false);
-          }
+        if (event.error === 'not-allowed') {
+          console.error('Voice: microphone access denied. On desktop, ensure the app has microphone entitlement.');
+          this.isVoiceActive.set(false);
+          this.isRecognizing = false;
+        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          console.error('Speech recognition error:', event.error);
         }
       };
     } else {
-      console.warn('Speech Recognition API not supported in this browser.');
+      console.warn('Voice: Web Speech API not available in this environment.');
     }
   }
 

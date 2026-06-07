@@ -89,8 +89,8 @@
             <div class="search-container">
                 <span class="material-symbols-outlined search-icon">search</span>
                 <input type="text" class="dn-search-input" placeholder="Search notes..."
-                    [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-                @if (searchQuery()) {
+                    [ngModel]="searchInput()" (ngModelChange)="onSearchInput($event)" />
+                @if (searchInput()) {
                 <env-icon-button icon="close" variant="borderless" [size]="20" title="Clear search" (clicked)="clearSearch()" style="position:absolute;right:6px;" />
                 }
             </div>
@@ -111,7 +111,7 @@
             </button>
             <button class="dn-quick-item" [class.active]="selectedFilter() === 'pinned' && !selectedTag()" (click)="setFilter('pinned')">
                 <span class="material-symbols-outlined dn-quick-icon">push_pin</span>
-                <span class="dn-quick-label">Favourites</span>
+                <span class="dn-quick-label">Pinned</span>
                 <span class="dn-quick-count">{{ pinnedCount() }}</span>
             </button>
         </div>
@@ -132,10 +132,10 @@
             (dragover)="onListDragOver($event)"
             (dragleave)="onListDragLeave($event)"
             (drop)="onListDrop($event)">
-            @if (filteredNotes().length === 0 && searchQuery()) {
+            @if (filteredNotes().length === 0 && searchInput()) {
             <div class="sidebar-empty-state">
                 <span class="material-symbols-outlined sidebar-empty-icon">search_off</span>
-                <span class="sidebar-empty-text">No results for "{{ searchQuery() }}"</span>
+                <span class="sidebar-empty-text">No results for "{{ searchInput() }}"</span>
                 <button class="sidebar-empty-action" (click)="clearSearch()">Clear search</button>
             </div>
             } @else if (noteGroups().length === 0) {
@@ -219,7 +219,7 @@
     <!-- Editor Pane -->
     <div class="dn-editor">
         @if (selectedNote(); as note) {
-        <!-- Editor Header — Tabs + New Note button only -->
+        <!-- Editor Header — Tabs + save indicator + New Note button -->
         <div class="dn-editor-header">
             <div class="dn-editor-tabs">
                 @for (noteId of openNotes(); track noteId) {
@@ -227,14 +227,13 @@
                 <button class="editor-tab" [class.active]="selectedEntryId() === noteId"
                     [class.pinned]="isPinned(tabNote)" (click)="selectNote(noteId)">
                     <span class="material-symbols-outlined tab-icon">{{ isPinned(tabNote) ? 'push_pin' : 'description' }}</span>
-                    <span class="tab-label">{{ tabNote.title }}</span>
+                    <span class="tab-label">{{ tabNote.title || 'Untitled' }}</span>
                     <env-icon-button icon="close" variant="borderless" [size]="20" title="Close tab" class="tab-close" (click)="$event.stopPropagation()" (clicked)="closeNoteTab(noteId)" />
                 </button>
                 }
                 }
                 <env-icon-button icon="add" variant="borderless" [size]="28" title="New note" class="editor-tab-add" (clicked)="handleNewNote()" />
             </div>
-            <env-icon-button icon="auto_awesome" variant="ghost" [size]="36" title="AI Assistant" [active]="showAssistant()" (clicked)="toggleAssistant()" style="margin:auto 8px auto 2px;" />
         </div>
 
         <!-- Editor Body — content + right sidebar side by side -->
@@ -261,10 +260,10 @@
                         }
                     </div>
                 </div>
-                <input type="text" class="dn-entry-heading-input" [ngModel]="note.title"
+                <input #titleInput type="text" class="dn-entry-heading-input" [ngModel]="titleInputValue()"
                     (ngModelChange)="updateNoteTitle($event)"
-                    (keydown.enter)="checkAiTitleCommand(note.title)"
-                    [placeholder]="aiGenerating() ? 'Generating…' : 'Note title… (or type an AI prompt and press Enter)'"
+                    (keydown.enter)="checkAiTitleCommand(titleInputValue())"
+                    [placeholder]="aiGenerating() ? 'Generating…' : 'Note title…'"
                     [disabled]="aiGenerating()" />
 
                 @if (aiGenerating()) {
@@ -303,279 +302,300 @@
                     }
                 </div>
 
-                <tiptap-bubble-menu [editor]="editor">
-                    <div class="bubble-menu">
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleBold().run()"
-                            [class.active]="editor.isActive('bold')">
-                            <span class="material-symbols-outlined">format_bold</span>
+                <env-editor-floating-menu [editor]="editor" trigger="selection"
+                    (askChanges)="handleAskChanges($event)"
+                    (linkClick)="setLink()">
+                    <!-- AI buttons go to row 1 via the named slot -->
+                    <div class="env-float-ai-group">
+                        <button class="env-float-btn ai-btn" (click)="continueWriting()" title="AI: Continue writing">
+                            <span class="material-symbols-outlined">auto_awesome</span>
                         </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleItalic().run()"
-                            [class.active]="editor.isActive('italic')">
-                            <span class="material-symbols-outlined">format_italic</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleUnderline().run()"
-                            [class.active]="editor.isActive('underline')">
-                            <span class="material-symbols-outlined">format_underlined</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleStrike().run()"
-                            [class.active]="editor.isActive('strike')">
-                            <span class="material-symbols-outlined">strikethrough_s</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleHighlight().run()"
-                            [class.active]="editor.isActive('highlight')">
-                            <span class="material-symbols-outlined">ink_highlighter</span>
-                        </button>
-                        <div class="bubble-divider"></div>
-                        <button class="bubble-btn" (click)="setLink()" [class.active]="editor.isActive('link')">
-                            <span class="material-symbols-outlined">link</span>
-                        </button>
-                        <button class="bubble-btn" (click)="editor.chain().focus().toggleCodeBlock().run()"
-                            [class.active]="editor.isActive('codeBlock')">
-                            <span class="material-symbols-outlined">code</span>
+                        <button class="env-float-btn ai-btn" (click)="handleSuggest()" title="AI: Suggest">
+                            <span class="material-symbols-outlined">tips_and_updates</span>
                         </button>
                     </div>
-                </tiptap-bubble-menu>
-
-                <tiptap-floating-menu [editor]="editor">
-                    <div class="floating-menu">
-                        <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-                            [class.active]="editor.isActive('heading', { level: 1 })">
-                            <span class="material-symbols-outlined">format_h1</span>
-                        </button>
-                        <button class="float-btn" (click)="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-                            [class.active]="editor.isActive('heading', { level: 2 })">
-                            <span class="material-symbols-outlined">format_h2</span>
-                        </button>
-                        <button class="float-btn" (click)="editor.chain().focus().toggleBulletList().run()"
-                            [class.active]="editor.isActive('bulletList')">
-                            <span class="material-symbols-outlined">format_list_bulleted</span>
-                        </button>
-                        <button class="float-btn" (click)="editor.chain().focus().toggleTaskList().run()"
-                            [class.active]="editor.isActive('taskList')">
-                            <span class="material-symbols-outlined">check_box</span>
-                        </button>
-                        <button class="float-btn" (click)="addImage()">
-                            <span class="material-symbols-outlined">image</span>
-                        </button>
-                        <button class="float-btn" (click)="insertTable()">
-                            <span class="material-symbols-outlined">table</span>
-                        </button>
-                        <button class="float-btn" (click)="addYoutube()">
-                            <span class="material-symbols-outlined">smart_display</span>
-                        </button>
-                    </div>
-                </tiptap-floating-menu>
+                    <!-- Tool buttons go to row 2 as default content -->
+                    <div class="env-float-divider"></div>
+                    <button class="env-float-btn" (click)="editor.chain().focus().toggleTaskList().run()"
+                        title="Task list">
+                        <span class="material-symbols-outlined">check_box</span>
+                    </button>
+                    <button class="env-float-btn" (click)="addImage()" title="Image">
+                        <span class="material-symbols-outlined">image</span>
+                    </button>
+                    <button class="env-float-btn" (click)="insertTable()" title="Table">
+                        <span class="material-symbols-outlined">table</span>
+                    </button>
+                    <button class="env-float-btn" (click)="addYoutube()" title="Video">
+                        <span class="material-symbols-outlined">smart_display</span>
+                    </button>
+                </env-editor-floating-menu>
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
-            </div>
-        </div>
 
-        <!-- Right Compact Sidebar — Note Actions -->
-        <aside class="dn-right-sidebar">
-            @if (editor) {
-            <env-icon-button icon="edit" variant="primary" [size]="36" title="Focus editor" (clicked)="editor.chain().focus().run()" style="border-radius:8px;" />
-            }
-
-            <div class="rs-divider"></div>
-
-            <div class="rs-section">
-                <span class="rs-section-label">Format</span>
-                <div class="rs-btn-group">
-                    <div class="dropdown-wrapper">
-                        <env-icon-button icon="text_format" variant="borderless" [size]="34" title="Formatting" [active]="showFormatMenu()" (clicked)="toggleFormatMenu()" />
-                        @if (showFormatMenu()) {
-                        <div class="format-dropdown dropdown-menu rs-dropdown rs-dropdown--wide">
-                            <div class="rs-dropdown-section">
-                                <div class="rs-dropdown-subtitle">Headings</div>
-                                <div class="rs-dropdown-grid">
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('paragraph')" (click)="setFormat('paragraph')">
-                                        <span class="material-symbols-outlined">format_paragraph</span>
-                                        <span>Normal</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('heading', {level: 1})" (click)="setFormat('h1')">
-                                        <span class="material-symbols-outlined">format_h1</span>
-                                        <span>H1</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('heading', {level: 2})" (click)="setFormat('h2')">
-                                        <span class="material-symbols-outlined">format_h2</span>
-                                        <span>H2</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('heading', {level: 3})" (click)="setFormat('h3')">
-                                        <span class="material-symbols-outlined">format_h3</span>
-                                        <span>H3</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="rs-dropdown-divider"></div>
-                            <div class="rs-dropdown-section">
-                                <div class="rs-dropdown-subtitle">Inline</div>
-                                <div class="rs-dropdown-grid">
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('bold')" (click)="editor.chain().focus().toggleBold().run()" title="Bold">
-                                        <span class="material-symbols-outlined">format_bold</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('italic')" (click)="editor.chain().focus().toggleItalic().run()" title="Italic">
-                                        <span class="material-symbols-outlined">format_italic</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('underline')" (click)="editor.chain().focus().toggleUnderline().run()" title="Underline">
-                                        <span class="material-symbols-outlined">format_underlined</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('strike')" (click)="editor.chain().focus().toggleStrike().run()" title="Strikethrough">
-                                        <span class="material-symbols-outlined">strikethrough_s</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('highlight')" (click)="editor.chain().focus().toggleHighlight().run()" title="Highlight">
-                                        <span class="material-symbols-outlined">ink_highlighter</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="rs-dropdown-divider"></div>
-                            <div class="rs-dropdown-section">
-                                <div class="rs-dropdown-subtitle">Alignment</div>
-                                <div class="rs-dropdown-grid">
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive({ textAlign: 'left' })" (click)="editor.chain().focus().setTextAlign('left').run()" title="Align Left">
-                                        <span class="material-symbols-outlined">format_align_left</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive({ textAlign: 'center' })" (click)="editor.chain().focus().setTextAlign('center').run()" title="Align Center">
-                                        <span class="material-symbols-outlined">format_align_center</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive({ textAlign: 'right' })" (click)="editor.chain().focus().setTextAlign('right').run()" title="Align Right">
-                                        <span class="material-symbols-outlined">format_align_right</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive({ textAlign: 'justify' })" (click)="editor.chain().focus().setTextAlign('justify').run()" title="Justify">
-                                        <span class="material-symbols-outlined">format_align_justify</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="rs-dropdown-divider"></div>
-                            <div class="rs-dropdown-section">
-                                <div class="rs-dropdown-subtitle">Lists</div>
-                                <div class="rs-dropdown-grid">
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('bulletList')" (click)="editor.chain().focus().toggleBulletList().run()" title="Bullet list">
-                                        <span class="material-symbols-outlined">format_list_bulleted</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('orderedList')" (click)="editor.chain().focus().toggleOrderedList().run()" title="Ordered list">
-                                        <span class="material-symbols-outlined">format_list_numbered</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('taskList')" (click)="editor.chain().focus().toggleTaskList().run()" title="Task list">
-                                        <span class="material-symbols-outlined">check_box</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="rs-dropdown-divider"></div>
-                            <div class="rs-dropdown-section">
-                                <div class="rs-dropdown-subtitle">Blocks</div>
-                                <div class="rs-dropdown-grid">
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('codeBlock')" (click)="editor.chain().focus().toggleCodeBlock().run()" title="Code block">
-                                        <span class="material-symbols-outlined">code</span>
-                                    </button>
-                                    <button class="rs-dd-btn" [class.active]="editor.isActive('blockquote')" (click)="editor.chain().focus().toggleBlockquote().run()" title="Blockquote">
-                                        <span class="material-symbols-outlined">format_quote</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                <!-- Editor status bar: word count + active tags -->
+                <div class="dn-editor-statusbar">
+                    <span class="dn-statusbar-words">{{ wordCount() }} words</span>
+                    @if (getNoteTags(note).length > 0) {
+                    <span class="dn-statusbar-divider">·</span>
+                    <div class="dn-statusbar-tags">
+                        @for (tag of getNoteTags(note); track tag) {
+                        <button class="dn-statusbar-tag" [class.active]="selectedTag() === tag"
+                            (click)="selectTag(tag)" title="Filter by #{{ tag }}">
+                            #{{ tag }}
+                        </button>
                         }
                     </div>
-                </div>
-            </div>
-
-            <div class="rs-divider"></div>
-
-            <div class="rs-section">
-                <span class="rs-section-label">Media</span>
-                <div class="rs-btn-group">
-                    <div class="dropdown-wrapper">
-                        <env-icon-button icon="perm_media" variant="borderless" [size]="34" title="Insert media" [active]="showMediaMenu()" (clicked)="toggleMediaMenu()" />
-                        @if (showMediaMenu()) {
-                        <div class="dropdown-menu rs-dropdown">
-                            <button class="dropdown-item" (click)="setLink(); showMediaMenu.set(false)">
-                                <span class="material-symbols-outlined">link</span>
-                                <span>Link</span>
-                            </button>
-                            <button class="dropdown-item" (click)="addImage(); showMediaMenu.set(false)">
-                                <span class="material-symbols-outlined">image</span>
-                                <span>Image</span>
-                            </button>
-                            <button class="dropdown-item" (click)="insertTable(); showMediaMenu.set(false)">
-                                <span class="material-symbols-outlined">table</span>
-                                <span>Table</span>
-                            </button>
-                            <button class="dropdown-item" (click)="addYoutube(); showMediaMenu.set(false)">
-                                <span class="material-symbols-outlined">smart_display</span>
-                                <span>YouTube</span>
-                            </button>
-                        </div>
-                        }
-                    </div>
-                </div>
-            </div>
-
-            <div class="rs-divider"></div>
-
-            <div class="rs-section">
-                <span class="rs-section-label">Actions</span>
-                <div class="rs-btn-group">
-                    <env-icon-button [icon]="isPinned(note) ? 'keep_off' : 'keep'" variant="borderless" [size]="34" [title]="isPinned(note) ? 'Unpin note' : 'Pin note'" [active]="isPinned(note)" (clicked)="togglePin(note)" />
-                    <env-icon-button icon="label" variant="borderless" [size]="34" title="Add tag" (clicked)="showTagInput.set(true)" />
-                    <env-icon-button icon="content_copy" variant="borderless" [size]="34" title="Duplicate" (clicked)="duplicateNote(note)" />
-                    <env-icon-button icon="download" variant="borderless" [size]="34" title="Export" (clicked)="exportNote()" />
-                    @if (editor) {
-                    <div class="rs-divider--sm"></div>
-                    <env-icon-button icon="undo" variant="borderless" [size]="34" title="Undo" [disabled]="!editor.can().undo()" (clicked)="editor.chain().focus().undo().run()" />
-                    <env-icon-button icon="redo" variant="borderless" [size]="34" title="Redo" [disabled]="!editor.can().redo()" (clicked)="editor.chain().focus().redo().run()" />
                     }
                 </div>
             </div>
+        </div>
 
-            <div class="rs-divider"></div>
-
-            <div class="rs-section">
-                <span class="rs-section-label">Info</span>
-                <div class="rs-btn-group">
-                    <div class="dropdown-wrapper">
-                        <env-icon-button icon="info" variant="borderless" [size]="34" title="Note info" [active]="showInfoMenu()" (clicked)="toggleInfoMenu()" />
-                        @if (showInfoMenu()) {
-                        <div class="info-dropdown dropdown-menu rs-dropdown">
-                            <div class="info-dropdown-title">Note info</div>
-                            <div class="info-row info-row--stacked">
-                                <span class="material-symbols-outlined info-icon">calendar_today</span>
-                                <div class="info-row-content">
-                                    <span class="info-label">Created</span>
-                                    <span class="info-value">{{ note.date }}</span>
-                                </div>
-                            </div>
-                            <div class="info-row info-row--stacked">
-                                <span class="material-symbols-outlined info-icon">schedule</span>
-                                <div class="info-row-content">
-                                    <span class="info-label">Time</span>
-                                    <span class="info-value">{{ formatTime(note.id, note.lastEdited) }}</span>
-                                </div>
-                            </div>
-                            <div class="info-divider"></div>
-                            <div class="info-row">
-                                <span class="material-symbols-outlined info-icon">article</span>
-                                <span class="info-label">Words</span>
-                                <span class="info-value">{{ wordCount() }}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="material-symbols-outlined info-icon">text_fields</span>
-                                <span class="info-label">Chars</span>
-                                <span class="info-value">{{ characterCount() }}</span>
-                            </div>
-                            <div class="info-divider"></div>
-                            <div class="info-row info-save-status">
-                                <span class="material-symbols-outlined info-icon saved">cloud_done</span>
-                                <span class="info-value saved">All changes saved</span>
-                            </div>
+        <!-- Right Sidebar: composer-style icon strip + expandable panel -->
+        <div class="dn-right-sidebar" [class.collapsed]="rightPanelCollapsed()">
+            <!-- Expandable content panel -->
+            @if (!rightPanelCollapsed()) {
+            <div class="dn-right-content">
+                @if (rightPanelTab() === 'ai') {
+                <env-ai-panel
+                    title="Notes Assistant"
+                    placeholder="Ask about your notes…"
+                    [suggestions]="aiSuggestions"
+                    [messages]="aiMessages()"
+                    [loading]="aiLoading()"
+                    [canCancel]="aiLoading()"
+                    [applyText]="pendingApply()?.text ?? null"
+                    (send)="sendAiMessage($event)"
+                    (cleared)="clearAiChat()"
+                    (closed)="rightPanelCollapsed.set(true)"
+                    (cancel)="cancelAiStream()"
+                    (applyClicked)="applyAiChanges()"
+                ></env-ai-panel>
+                } @else if (rightPanelTab() === 'format') {
+                @if (editor) {
+                <div class="dn-format-panel">
+                    <div class="dn-panel-header">
+                        <span class="material-symbols-outlined">text_format</span>
+                        FORMAT
+                        <button class="dn-panel-close" (click)="rightPanelCollapsed.set(true)" title="Close">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <div class="dn-format-section">
+                        <div class="dn-format-label">HEADINGS</div>
+                        <div class="dn-fmt-grid">
+                            <button class="dn-fmt-btn" [class.active]="formatState().paragraph" (click)="setFormat('paragraph')">
+                                <span class="material-symbols-outlined">format_paragraph</span>
+                                Normal
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().h1" (click)="setFormat('h1')">
+                                <span class="material-symbols-outlined">format_h1</span>
+                                H1
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().h2" (click)="setFormat('h2')">
+                                <span class="material-symbols-outlined">format_h2</span>
+                                H2
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().h3" (click)="setFormat('h3')">
+                                <span class="material-symbols-outlined">format_h3</span>
+                                H3
+                            </button>
                         </div>
-                        }
+                    </div>
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-format-label">INLINE</div>
+                        <div class="dn-fmt-grid">
+                            <button class="dn-fmt-btn" [class.active]="formatState().bold" (click)="editor.chain().focus().toggleBold().run()" title="Bold">
+                                <span class="material-symbols-outlined">format_bold</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().italic" (click)="editor.chain().focus().toggleItalic().run()" title="Italic">
+                                <span class="material-symbols-outlined">format_italic</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().underline" (click)="editor.chain().focus().toggleUnderline().run()" title="Underline">
+                                <span class="material-symbols-outlined">format_underlined</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().strike" (click)="editor.chain().focus().toggleStrike().run()" title="Strikethrough">
+                                <span class="material-symbols-outlined">strikethrough_s</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().highlight" (click)="editor.chain().focus().toggleHighlight().run()" title="Highlight">
+                                <span class="material-symbols-outlined">ink_highlighter</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-format-label">ALIGNMENT</div>
+                        <div class="dn-fmt-grid">
+                            <button class="dn-fmt-btn" [class.active]="formatState().alignLeft" (click)="editor.chain().focus().setTextAlign('left').run()" title="Left">
+                                <span class="material-symbols-outlined">format_align_left</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().alignCenter" (click)="editor.chain().focus().setTextAlign('center').run()" title="Center">
+                                <span class="material-symbols-outlined">format_align_center</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().alignRight" (click)="editor.chain().focus().setTextAlign('right').run()" title="Right">
+                                <span class="material-symbols-outlined">format_align_right</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().alignJustify" (click)="editor.chain().focus().setTextAlign('justify').run()" title="Justify">
+                                <span class="material-symbols-outlined">format_align_justify</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-format-label">LISTS</div>
+                        <div class="dn-fmt-grid">
+                            <button class="dn-fmt-btn" [class.active]="formatState().bulletList" (click)="editor.chain().focus().toggleBulletList().run()" title="Bullet list">
+                                <span class="material-symbols-outlined">format_list_bulleted</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().orderedList" (click)="editor.chain().focus().toggleOrderedList().run()" title="Numbered list">
+                                <span class="material-symbols-outlined">format_list_numbered</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().taskList" (click)="editor.chain().focus().toggleTaskList().run()" title="Task list">
+                                <span class="material-symbols-outlined">check_box</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-format-label">BLOCKS</div>
+                        <div class="dn-fmt-grid">
+                            <button class="dn-fmt-btn" [class.active]="formatState().codeBlock" (click)="editor.chain().focus().toggleCodeBlock().run()" title="Code block">
+                                <span class="material-symbols-outlined">code</span>
+                            </button>
+                            <button class="dn-fmt-btn" [class.active]="formatState().blockquote" (click)="editor.chain().focus().toggleBlockquote().run()" title="Blockquote">
+                                <span class="material-symbols-outlined">format_quote</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-format-label">INSERT</div>
+                        <div class="dn-fmt-grid">
+                            <button class="dn-fmt-btn" [class.active]="formatState().link" (click)="setLink()" title="Link">
+                                <span class="material-symbols-outlined">link</span>
+                            </button>
+                            <button class="dn-fmt-btn" (click)="addImage()" title="Image">
+                                <span class="material-symbols-outlined">image</span>
+                            </button>
+                            <button class="dn-fmt-btn" (click)="insertTable()" title="Table">
+                                <span class="material-symbols-outlined">table</span>
+                            </button>
+                            <button class="dn-fmt-btn" (click)="addYoutube()" title="YouTube">
+                                <span class="material-symbols-outlined">smart_display</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
+                }
+                } @else if (rightPanelTab() === 'info') {
+                <div class="dn-info-panel">
+                    <div class="dn-panel-header">
+                        <span class="material-symbols-outlined">info</span>
+                        NOTE INFO
+                        <button class="dn-panel-close" (click)="rightPanelCollapsed.set(true)" title="Close">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <div class="dn-format-section">
+                        <div class="dn-info-row">
+                            <span class="material-symbols-outlined dn-info-icon">calendar_today</span>
+                            <div class="dn-info-content">
+                                <span class="dn-info-label">Created</span>
+                                <span class="dn-info-value">{{ note.date }}</span>
+                            </div>
+                        </div>
+                        <div class="dn-info-row">
+                            <span class="material-symbols-outlined dn-info-icon">schedule</span>
+                            <div class="dn-info-content">
+                                <span class="dn-info-label">Time</span>
+                                <span class="dn-info-value">{{ formatTime(note.id, note.lastEdited) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-stat-grid">
+                            <div class="dn-stat-card">
+                                <div class="dn-stat-label">Words</div>
+                                <div class="dn-stat-value">{{ wordCount() }}</div>
+                            </div>
+                            <div class="dn-stat-card">
+                                <div class="dn-stat-label">Chars</div>
+                                <div class="dn-stat-value">{{ characterCount() }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    @if (getNoteTags(note).length > 0) {
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-format-label">TAGS</div>
+                        <div class="dn-info-tags">
+                            @for (tag of getNoteTags(note); track tag) {
+                            <button class="dn-info-tag" [class.active]="selectedTag() === tag"
+                                (click)="selectTag(tag)" title="Filter by #{{ tag }}">
+                                #{{ tag }}
+                            </button>
+                            }
+                        </div>
+                    </div>
+                    }
+                    <div class="dn-format-divider"></div>
+                    <div class="dn-format-section">
+                        <div class="dn-info-save-row">
+                            <span class="material-symbols-outlined dn-info-saved-icon">cloud_done</span>
+                            <span class="dn-info-saved-text">All changes saved</span>
+                        </div>
+                    </div>
+                </div>
+                }
             </div>
-
-            <div class="rs-spacer"></div>
-
-            <env-icon-button icon="delete" variant="danger" [size]="34" title="Delete note" style="margin-bottom:8px;" (clicked)="deleteCurrentNote()" />
-        </aside>
+            }
+            <!-- Always-visible icon strip -->
+            <div class="ne-right-strip">
+                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'ai'"
+                    (click)="setRightTab('ai')" title="AI Assistant">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'format'"
+                    (click)="setRightTab('format')" title="Format">
+                    <span class="material-symbols-outlined">text_format</span>
+                </button>
+                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'info'"
+                    (click)="setRightTab('info')" title="Note Info">
+                    <span class="material-symbols-outlined">info</span>
+                </button>
+                <span class="dn-save-indicator"
+                    [class.saving]="isSaving()"
+                    [class.saved]="!isSaving() && !!lastSaved()"
+                    [title]="isSaving() ? 'Saving…' : 'Saved'">
+                    <span class="material-symbols-outlined">{{ isSaving() ? 'sync' : 'cloud_done' }}</span>
+                </span>
+                <div class="ne-strip-spacer"></div>
+                <div class="ne-strip-divider"></div>
+                @if (editor) {
+                <button class="ne-strip-btn" (click)="editor.chain().focus().undo().run()" [disabled]="!canUndo()" title="Undo">
+                    <span class="material-symbols-outlined">undo</span>
+                </button>
+                <button class="ne-strip-btn" (click)="editor.chain().focus().redo().run()" [disabled]="!canRedo()" title="Redo">
+                    <span class="material-symbols-outlined">redo</span>
+                </button>
+                }
+                <button class="ne-strip-btn" [class.active]="isPinned(note)" (click)="togglePin(note)"
+                    [title]="isPinned(note) ? 'Unpin note' : 'Pin note'">
+                    <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
+                </button>
+                <button class="ne-strip-btn" (click)="duplicateNote(note)" title="Duplicate note">
+                    <span class="material-symbols-outlined">content_copy</span>
+                </button>
+                <button class="ne-strip-btn" (click)="exportNote()" title="Export">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
+                <button class="ne-strip-btn ne-strip-btn--danger" (click)="deleteCurrentNote()" title="Delete note">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+        </div>
         </div>
 
         } @else {
@@ -592,16 +612,4 @@
         </div>
         }
     </div>
-    @if (showAssistant()) {
-        <env-ai-panel
-            title="Notes Assistant"
-            placeholder="Ask about your notes…"
-            [suggestions]="aiSuggestions"
-            [messages]="aiMessages()"
-            [loading]="aiLoading()"
-            (send)="sendAiMessage($event)"
-            (cleared)="clearAiChat()"
-            (closed)="showAssistant.set(false)"
-        ></env-ai-panel>
-    }
 </div>

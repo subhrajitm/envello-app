@@ -1,5 +1,5 @@
-import { Component, input, output, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, computed, signal, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 export interface EditorTabItem {
   id: string;
@@ -18,7 +18,7 @@ export interface SearchResult {
 @Component({
   selector: 'app-editor-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [FormsModule],
   templateUrl: './editor-header.component.html',
   styleUrls: [
     './editor-header.component.css',
@@ -34,9 +34,42 @@ export class EditorHeaderComponent {
   canRedo      = input.required<boolean>();
   focusMode    = input<boolean>(false);
 
-  selectItem  = output<string>();
-  closeTab    = output<string>();
-  performUndo = output<void>();
-  performRedo = output<void>();
-  exitFocus   = output<void>();
+  // Entity mode (characters / locations browse view)
+  entityTitle = input<string>('');
+  entityIcon  = input<string>('');
+  entityCount = input<number>(0);
+
+  // Optional view-mode toggle shown in entity mode
+  viewModes       = input<Array<{ key: string; icon: string; label: string }>>([]);
+  activeViewMode  = input<string>('');
+
+  // Search (entity mode only)
+  searchQuery       = input<string>('');
+  searchQueryChange = output<string>();
+
+  isEntityDetail = input<boolean>(false);
+
+  selectItem      = output<string>();
+  closeTab        = output<string>();
+  performUndo     = output<void>();
+  performRedo     = output<void>();
+  exitFocus       = output<void>();
+  addEntityClick  = output<void>();
+  viewModeChange  = output<string>();
+  save            = output<void>();
+
+  savedFlash = signal(false);
+  private _savedTimer?: ReturnType<typeof setTimeout>;
+
+  onSave() {
+    this.save.emit();
+    this.savedFlash.set(true);
+    clearTimeout(this._savedTimer);
+    this._savedTimer = setTimeout(() => this.savedFlash.set(false), 1800);
+  }
+
+  singularEntityTitle = computed(() => {
+    const t = this.entityTitle();
+    return t.endsWith('s') ? t.slice(0, -1) : t;
+  });
 }

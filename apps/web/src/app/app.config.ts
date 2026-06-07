@@ -11,8 +11,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from '@envello/state';
-import { PouchDbDataService as DatabaseService } from '@envello/core';
-import { FileSystemService } from '@envello/core';
+import { PowerSyncDataService, FileSystemService } from '@envello/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -30,7 +29,7 @@ export const appConfig: ApplicationConfig = {
       registrationStrategy: 'registerWhenStable:30000'
     }),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
-    { provide: DataService, useExisting: DatabaseService },
+    { provide: DataService, useExisting: PowerSyncDataService },
     { provide: FILE_SYSTEM, useExisting: FileSystemService }
   ],
 };

@@ -1,41 +1,129 @@
-<div class="ne-details-canvas">
-    @if (location(); as activeLoc) {
-    <div class="ne-ent-card">
-        <div class="ne-ent-header-bg loc-bg"></div>
-        <div class="ne-ent-header-content">
-            <div class="ne-ent-avatar-xl loc-avatar">
-                <span class="material-symbols-outlined">public</span>
-            </div>
-            <div class="ne-ent-title-group">
-                <input type="text" class="ne-ent-title-input" [value]="activeLoc.name"
-                    (input)="updateField.emit({ id: activeLoc.id, field: 'name', value: $any($event.target).value })"
-                    placeholder="Location Name" />
-                <div class="ne-ent-subtitle">LOCATION DETAILS</div>
-            </div>
-        </div>
+<div class="ne-loc-layout">
+    @if (location(); as loc) {
 
-        <div class="ne-ent-body">
-            <div class="ne-ent-field">
-                <label>LOCATION TYPE</label>
-                <div class="input-wrapper">
-                    <span class="material-symbols-outlined field-icon">terrain</span>
-                    <input type="text" [value]="activeLoc.type"
-                        (input)="updateField.emit({ id: activeLoc.id, field: 'type', value: $any($event.target).value })"
-                        placeholder="e.g. City, Planet, Room" />
+    <!-- ── HERO HEADER ─────────────────────────────────────────── -->
+    <div class="ne-loc-hero">
+        <div class="ne-loc-icon-wrap">
+            <div class="ne-loc-icon-sq" (click)="toggleIconPicker($event)" title="Change location icon">
+                <span class="material-symbols-outlined">{{ loc.icon || 'location_on' }}</span>
+                <div class="ne-loc-icon-overlay">
+                    <span class="material-symbols-outlined">edit</span>
                 </div>
             </div>
+            @if (showIconPicker()) {
+            <div class="ne-loc-icon-picker">
+                @for (icon of locationIcons; track icon) {
+                <button class="ne-loc-icon-picker-btn" [class.active]="(loc.icon || 'location_on') === icon"
+                    (click)="selectIcon(icon)" [title]="icon">
+                    <span class="material-symbols-outlined">{{ icon }}</span>
+                </button>
+                }
+            </div>
+            }
+        </div>
 
-            <div class="ne-ent-field full-width">
-                <label>DESCRIPTION & LORE</label>
-                <textarea class="ne-ent-textarea" [value]="activeLoc.description"
-                    (input)="updateField.emit({ id: activeLoc.id, field: 'description', value: $any($event.target).value })"
-                    placeholder="Describe the atmosphere, history, and key features..."></textarea>
+        <div class="ne-loc-hero-info">
+            <div class="ne-loc-name-field">
+                <label class="ne-loc-name-label">NAME</label>
+                <input class="ne-loc-name-input" [value]="loc.name"
+                    (input)="emit(loc.id, 'name', $any($event.target).value)"
+                    placeholder="Enter location name…" spellcheck="false" />
+            </div>
+            <div class="ne-loc-hero-meta">
+                <span class="ne-ent-type-pill">
+                    <span class="material-symbols-outlined">location_on</span>
+                    LOCATION
+                </span>
+                <input class="ne-loc-type-input" type="text" [value]="loc.type"
+                    (input)="emit(loc.id, 'type', $any($event.target).value)"
+                    placeholder="Set type…"
+                    (click)="$event.stopPropagation()" />
+                @for (tag of (loc.tags ?? []); track tag) {
+                <span class="ne-char-hero-tag">{{ tag }}</span>
+                }
             </div>
         </div>
     </div>
+
+    <!-- ── BODY: sidebar + main ────────────────────────────────── -->
+    <div class="ne-char-body">
+
+        <!-- LEFT SIDEBAR ── geography fields + tags -->
+        <div class="ne-char-sidebar">
+
+            <div class="ne-char-section-label">GEOGRAPHY</div>
+
+            <div class="ne-char-fields">
+                <div class="ne-char-field">
+                    <label>TYPE</label>
+                    <input type="text" [value]="loc.type"
+                        (input)="emit(loc.id, 'type', $any($event.target).value)"
+                        placeholder="e.g. City, Forest, Cave" />
+                </div>
+                <div class="ne-char-field">
+                    <label>CLIMATE / ATMOSPHERE</label>
+                    <input type="text" [value]="loc.climate ?? ''"
+                        (input)="emit(loc.id, 'climate', $any($event.target).value)"
+                        placeholder="e.g. Frozen tundra" />
+                </div>
+                <div class="ne-char-field">
+                    <label>POPULATION / SCALE</label>
+                    <input type="text" [value]="loc.population ?? ''"
+                        (input)="emit(loc.id, 'population', $any($event.target).value)"
+                        placeholder="e.g. 500,000 inhabitants" />
+                </div>
+                <div class="ne-char-field">
+                    <label>STORY SIGNIFICANCE</label>
+                    <input type="text" [value]="loc.significance ?? ''"
+                        (input)="emit(loc.id, 'significance', $any($event.target).value)"
+                        placeholder="e.g. Final confrontation" />
+                </div>
+                <div class="ne-char-field">
+                    <label>NOTABLE FEATURES</label>
+                    <input type="text" [value]="loc.features ?? ''"
+                        (input)="emit(loc.id, 'features', $any($event.target).value)"
+                        placeholder="e.g. Ancient ruins" />
+                </div>
+            </div>
+
+            <div class="ne-char-sidebar-divider"></div>
+
+            <div class="ne-char-section-label">TAGS</div>
+            <div class="ne-ent-tags">
+                @for (tag of (loc.tags ?? []); track tag) {
+                <span class="ne-ent-tag">
+                    {{ tag }}
+                    <button class="ne-ent-tag-remove" (click)="removeTag(tag)" title="Remove">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </span>
+                }
+                <input class="ne-ent-tag-input" type="text"
+                    [ngModel]="tagInput()" (ngModelChange)="tagInput.set($event)"
+                    (keydown)="addTag($event)"
+                    placeholder="Add tag…" />
+            </div>
+
+        </div>
+
+        <!-- RIGHT MAIN ── description prose editor -->
+        <div class="ne-char-main">
+
+            <div class="ne-char-prose-section">
+                <div class="ne-char-prose-hdr">
+                    <span class="material-symbols-outlined">auto_stories</span>
+                    DESCRIPTION & LORE
+                </div>
+                <tiptap-editor [editor]="descriptionEditor" class="ne-char-prose-tiptap ne-loc-prose-tiptap"></tiptap-editor>
+            </div>
+
+        </div>
+
+    </div>
+
     } @else {
     <div class="ne-empty-state ne-empty-state--compact">
-        <span class="material-symbols-outlined ne-empty-icon-sm">public</span>
+        <span class="material-symbols-outlined ne-empty-icon-sm">location_on</span>
         <p class="ne-empty-label">No location selected</p>
         <button class="ne-btn-ghost-sm" (click)="addNewLocation.emit()">
             <span class="material-symbols-outlined">add</span>

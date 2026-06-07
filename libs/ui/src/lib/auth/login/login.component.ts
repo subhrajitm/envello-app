@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, TauriService } from '@envello/core';
@@ -12,19 +12,8 @@ import { ButtonComponent } from '../../button/button.component';
   imports: [CommonModule, FormsModule, RouterModule, EnvLogoComponent, ButtonComponent],
   template: `
     <div class="login-container">
-      <div class="wave-bg">
-        <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-        viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
-          <defs>
-            <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
-          </defs>
-          <g class="parallax">
-            <use xlink:href="#gentle-wave" x="48" y="0" />
-            <use xlink:href="#gentle-wave" x="48" y="3" />
-            <use xlink:href="#gentle-wave" x="48" y="5" />
-            <use xlink:href="#gentle-wave" x="48" y="7" />
-          </g>
-        </svg>
+      <div class="lines-bg">
+        <canvas #linesCanvas class="lines-canvas"></canvas>
       </div>
       
       <div *ngIf="!authService.isAuthenticated()" class="login-content">
@@ -136,58 +125,18 @@ import { ButtonComponent } from '../../button/button.component';
       z-index: 10;
     }
     
-    .wave-bg {
+    .lines-bg {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 35vh;
-      min-height: 200px;
+      inset: 0;
       overflow: hidden;
       z-index: 1;
       pointer-events: none;
     }
-    
-    .waves {
-      position: absolute;
-      bottom: 0;
+
+    .lines-canvas {
       width: 100%;
       height: 100%;
-      min-height: 100px;
-      max-height: 250px;
-    }
-    
-    .parallax > use {
-      animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
-    }
-    .parallax > use:nth-child(1) {
-      animation-delay: -2s;
-      animation-duration: 7s;
-      fill: var(--text-tertiary);
-      opacity: 0.1;
-    }
-    .parallax > use:nth-child(2) {
-      animation-delay: -3s;
-      animation-duration: 10s;
-      fill: var(--accent-primary-dim);
-      opacity: 0.2;
-    }
-    .parallax > use:nth-child(3) {
-      animation-delay: -4s;
-      animation-duration: 13s;
-      fill: var(--accent-primary);
-      opacity: 0.15;
-    }
-    .parallax > use:nth-child(4) {
-      animation-delay: -5s;
-      animation-duration: 20s;
-      fill: var(--accent-primary);
-      opacity: 0.3;
-    }
-    
-    @keyframes move-forever {
-      0% { transform: translate3d(-90px, 0, 0); }
-      100% { transform: translate3d(85px, 0, 0); }
+      display: block;
     }
 
     @keyframes fadeIn {
@@ -319,10 +268,14 @@ import { ButtonComponent } from '../../button/button.component';
 
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit, OnDestroy {
   authService = inject(AuthService);
   router = inject(Router);
   isTauri = inject(TauriService).isTauri;
+
+  @ViewChild('linesCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+  private animId = 0;
+  private resizeObs?: ResizeObserver;
 
   email = '';
   password = '';
@@ -335,6 +288,113 @@ export class LoginComponent {
         this.router.navigate(['/workspace']);
       }
     });
+  }
+
+  ngAfterViewInit() {
+    this.startLines();
+  }
+
+  ngOnDestroy() {
+    cancelAnimationFrame(this.animId);
+    this.resizeObs?.disconnect();
+  }
+
+  private startLines() {
+    const canvas = this.canvasRef?.nativeElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const [r, g, b] = this.accentRgb();
+
+    const fit = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      if (!w || !h) return;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    fit();
+    this.resizeObs = new ResizeObserver(fit);
+    this.resizeObs.observe(canvas);
+
+    const BS = 6;
+    const GAP = 6;
+    const STEP = BS + GAP;
+    const TAIL = 14;
+    const HEAD_ALPHA = 0.12;
+    const BASE_ALPHA = 0.010;
+
+    let hPos: number[]   = [];  // fractional col position per row
+    let hSpeed: number[] = [];
+    let vPos: number[]   = [];  // fractional row position per col
+    let vSpeed: number[] = [];
+    let lastRows = 0;
+    let lastCols = 0;
+
+    const initPulses = (rows: number, cols: number) => {
+      hPos   = Array.from({ length: rows }, () => Math.random() * cols);
+      hSpeed = Array.from({ length: rows }, () => 0.04 + Math.random() * 0.05);
+      vPos   = Array.from({ length: cols }, () => Math.random() * rows);
+      vSpeed = Array.from({ length: cols }, () => 0.03 + Math.random() * 0.04);
+      lastRows = rows;
+      lastCols = cols;
+    };
+
+    // Alpha contribution from a pulse at fractional `pos` for block at `idx`
+    const contrib = (pos: number, idx: number): number => {
+      const offset = pos - idx;
+      if (offset < -1 || offset >= TAIL) return 0;
+      if (offset < 0) return HEAD_ALPHA * (offset + 1);       // smooth entry
+      return HEAD_ALPHA * Math.exp(-offset * 0.32);           // exponential tail
+    };
+
+    const draw = () => {
+      const W = canvas.offsetWidth;
+      const H = canvas.offsetHeight;
+      ctx.clearRect(0, 0, W, H);
+
+      const cols = Math.ceil(W / STEP) + 1;
+      const rows = Math.ceil(H / STEP) + 1;
+
+      if (rows !== lastRows || cols !== lastCols) initPulses(rows, cols);
+
+      for (let rr = 0; rr < rows; rr++) {
+        hPos[rr] += hSpeed[rr];
+        if (hPos[rr] - TAIL > cols) hPos[rr] = -1;
+      }
+      for (let c = 0; c < cols; c++) {
+        vPos[c] += vSpeed[c];
+        if (vPos[c] - TAIL > rows) vPos[c] = -1;
+      }
+
+      for (let rr = 0; rr < rows; rr++) {
+        for (let c = 0; c < cols; c++) {
+          const ha = contrib(hPos[rr], c);
+          const va = contrib(vPos[c], rr);
+          const alpha = BASE_ALPHA + Math.min(ha + va, 0.85);
+
+          ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+          ctx.fillRect(c * STEP, rr * STEP, BS, BS);
+        }
+      }
+
+      this.animId = requestAnimationFrame(draw);
+    };
+    draw();
+  }
+
+  private accentRgb(): [number, number, number] {
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    const map: Record<string, [number, number, number]> = {
+      'dark':             [255, 215,   0],
+      'enterprise-dark':  [251, 191,  36],
+      'light':            [180,  83,   9],
+      'colorful':         [240, 125,  89],
+      'typewriter':       [ 60,  60,  60],
+      'enterprise-light': [245, 158,  11],
+    };
+    return map[theme] ?? map['light'];
   }
 
   async handleLogin() {

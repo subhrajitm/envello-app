@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StoreService, Bookmark, BookmarkFolder, AiService } from '@envello/core';
+import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService } from '@envello/core';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
@@ -20,6 +20,7 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
   private aiService = inject(AiService);
+  private webPreview = inject(WebPreviewService);
 
   // ── View state ──────────────────────────────────────────────────────────────
   selectedView = signal<BookmarkView>('all');
@@ -198,13 +199,29 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     { key: 'createdAt', header: 'Added', sortable: true },
   ];
 
-  readonly tableActions: EnvTableAction[] = [
+  tableActions = computed<EnvTableAction[]>(() => [
     { key: 'open', label: 'Open', icon: 'open_in_new', bulk: false },
     { key: 'togglePin', label: 'Toggle pin', icon: 'push_pin' },
     { key: 'edit', label: 'Edit', icon: 'edit', bulk: false },
-    { key: 'toggleArchive', label: 'Archive', icon: 'archive' },
+    {
+      key: 'toggleArchive',
+      label: this.selectedView() === 'archived' ? 'Unarchive' : 'Archive',
+      icon: this.selectedView() === 'archived' ? 'unarchive' : 'archive',
+    },
     { key: 'delete', label: 'Delete', icon: 'delete', danger: true },
-  ];
+  ]);
+
+  emptyStateConfig = computed(() => {
+    const view = this.selectedView();
+    const hasFilter = !!this.searchQuery() || this.selectedTags().length > 0;
+    if (hasFilter) return { icon: 'search_off', title: 'No results found', subtitle: '', showAdd: false };
+    switch (view) {
+      case 'pinned':   return { icon: 'push_pin', title: 'No pinned bookmarks', subtitle: 'Pin a bookmark to find it here quickly', showAdd: false };
+      case 'archived': return { icon: 'archive',  title: 'No archived bookmarks', subtitle: 'Archive bookmarks to declutter your view', showAdd: false };
+      case 'recent':   return { icon: 'history',  title: 'No recent bookmarks', subtitle: 'Your latest additions will appear here', showAdd: false };
+      default:         return { icon: 'bookmarks', title: 'No bookmarks yet', subtitle: '', showAdd: true };
+    }
+  });
 
   tableRows = computed(() => this.filteredBookmarks().map(bookmark => ({
     id: bookmark.id,
@@ -404,7 +421,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       visitCount: (bookmark.visitCount ?? 0) + 1,
     });
     const url = /^https?:\/\//i.test(bookmark.url) ? bookmark.url : `https://${bookmark.url}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    this.webPreview.open(url, bookmark.title || bookmark.url);
   }
 
   // ── Tag filtering ─────────────────────────────────────────────────────────────
@@ -534,6 +551,18 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       case 'delete':
         this.requestDelete(bookmark.id);
         break;
+    }
+  }
+
+  handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
+    const { selectedIds, actionKey } = event;
+    const affected = this.store.bookmarks().filter(b => selectedIds.has(b.id));
+    for (const bookmark of affected) {
+      switch (actionKey) {
+        case 'togglePin':     this.togglePin(bookmark); break;
+        case 'toggleArchive': this.toggleArchive(bookmark); break;
+        case 'delete':        this.store.deleteBookmark(bookmark.id); break;
+      }
     }
   }
 

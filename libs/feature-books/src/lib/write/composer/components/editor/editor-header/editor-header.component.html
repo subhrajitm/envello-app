@@ -1,4 +1,24 @@
-<div class="ne-editor-header">
+<div class="ne-editor-header" [class.ne-editor-header--entity]="!!entityTitle()">
+
+    @if (entityTitle()) {
+    <!-- Entity browse mode: title + count in place of tabs -->
+    <div class="ne-ent-hdr-left">
+        <span class="material-symbols-outlined ne-tbl-bar-icon">{{ entityIcon() }}</span>
+        <span class="ne-tbl-bar-title">{{ entityTitle() }}</span>
+        <span class="ne-tbl-badge">{{ entityCount() }}</span>
+    </div>
+    <div class="ne-ent-hdr-search">
+        <span class="material-symbols-outlined ne-tbl-search-icon">search</span>
+        <input class="ne-tbl-search-input" type="text"
+               [ngModel]="searchQuery()" (ngModelChange)="searchQueryChange.emit($event)"
+               placeholder="Search…" />
+        @if (searchQuery()) {
+        <button class="ne-tbl-search-clear" (click)="searchQueryChange.emit('')">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        }
+    </div>
+    } @else {
     <div class="ne-editor-tabs">
         @for (item of items(); track item.id) {
         <div class="ne-editor-tab" [class.active]="activeItemId() === item.id"
@@ -11,6 +31,8 @@
         </div>
         }
     </div>
+    }
+
     <div class="ne-editor-actions">
         @if (focusMode()) {
         <button class="action-btn ne-exit-focus-btn" (click)="exitFocus.emit()" title="Exit Focus Mode (Esc)">
@@ -18,19 +40,46 @@
             <span class="ne-exit-focus-label">Exit Focus</span>
         </button>
         }
+        @if (entityTitle() && viewModes().length > 0) {
+        <div class="ne-view-toggle">
+            @for (mode of viewModes(); track mode.key) {
+            <button class="ne-view-btn" [class.active]="activeViewMode() === mode.key"
+                    [title]="mode.label" (click)="viewModeChange.emit(mode.key)">
+                <span class="material-symbols-outlined">{{ mode.icon }}</span>
+            </button>
+            }
+        </div>
+        }
+        @if (entityTitle()) {
+        <button class="ne-tbl-add-btn" (click)="addEntityClick.emit()">
+            <span class="material-symbols-outlined">add</span>
+            Add {{ singularEntityTitle() }}
+        </button>
+        }
+        @if (isEntityDetail()) {
+        <button class="action-btn ne-save-btn" [class.ne-save-btn--saved]="savedFlash()"
+                (click)="onSave()" title="Save (⌘S)">
+            <span class="material-symbols-outlined">{{ savedFlash() ? 'check_circle' : 'save' }}</span>
+            <span class="ne-save-label">{{ savedFlash() ? 'Saved' : 'Save' }}</span>
+        </button>
+        }
+        @if (!entityTitle() && !isEntityDetail()) {
         <div class="undo-redo-group">
             <button class="action-btn"
                     (click)="performUndo.emit()"
-                    [disabled]="!canUndo()"
-                    title="Undo (⌘+Z)">
+                    [disabled]="!activeItemId() || !canUndo()"
+                    title="Undo (⌘+Z)"
+                    aria-label="Undo">
                 <span class="material-symbols-outlined">undo</span>
             </button>
             <button class="action-btn"
                     (click)="performRedo.emit()"
-                    [disabled]="!canRedo()"
-                    title="Redo (⌘+Shift+Z)">
+                    [disabled]="!activeItemId() || !canRedo()"
+                    title="Redo (⌘+Shift+Z)"
+                    aria-label="Redo">
                 <span class="material-symbols-outlined">redo</span>
             </button>
         </div>
+        }
     </div>
 </div>

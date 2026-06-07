@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+/* ── Bundled fonts — no internet required ───────────────────────────────── */
+
+/* Inter (UI sans-serif) */
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+/* JetBrains Mono (code / monospace) */
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+/* Atkinson Hyperlegible (reading / accessibility) */
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+
+/* Courier Prime (typewriter theme) */
+@import '@fontsource/courier-prime/400.css';
+@import '@fontsource/courier-prime/700.css';
+
+/* Merriweather (workspace serif) */
+@import '@fontsource/merriweather/300.css';
+@import '@fontsource/merriweather/400.css';
+@import '@fontsource/merriweather/700.css';
+@import '@fontsource/merriweather/300-italic.css';
+
+/* Material Symbols Outlined (icon font) */
+@import 'material-symbols/outlined.css';
+
 :root {
     --titlebar-height: 28px; /* Tauri overlay title bar */
     /* Kindle Paperwhite Aesthetic (DEFAULT) */
@@ -135,6 +165,7 @@
     --accent-blue: #000000;
     --accent-red: #000000;
     --accent-green: #000000;
+    --accent-green-solid: #000000;
     --accent-purple: #000000;
     --accent-yellow: #e5e5e5;
     --accent-pink: #000000;
@@ -278,6 +309,7 @@
     --accent-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     --accent-red: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     --accent-green: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    --accent-green-solid: #22c55e;
     --accent-purple: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
 }
 

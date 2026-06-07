@@ -1,23 +1,57 @@
 <div class="ne-editor-canvas">
+
     @if (activeFrontMatterId() && frontMatter().length > 0) {
         @for (item of frontMatter(); track item.id) {
             @if (item.id === activeFrontMatterId()) {
-            <input type="text" class="ne-doc-title-input" [ngModel]="item.title"
-                (ngModelChange)="bookService.updateFrontMatterTitle(item.id, $event)"
-                [placeholder]="getFrontMatterTypeLabel(item.type)" />
-            <div class="ne-doc-meta">{{ item.wordCount }} w</div>
-            <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+            <div class="ms-editor-card" [class.ms-card--full-width]="isFullWidth()">
+                <div class="ms-editor-actions-top">
+                    <button class="ms-action-btn" [class.active]="isFullWidth()"
+                            (click)="fullWidthChange.emit(!isFullWidth())"
+                            [title]="isFullWidth() ? 'Restore width' : 'Full width'">
+                        <span class="material-symbols-outlined">{{ isFullWidth() ? 'close_fullscreen' : 'open_in_full' }}</span>
+                    </button>
+                </div>
+                <div class="ms-card-body">
+                    <input type="text" class="ne-doc-title-input"
+                        [ngModel]="item.title"
+                        (ngModelChange)="bookService.updateFrontMatterTitle(item.id, $event)"
+                        [placeholder]="getFrontMatterTypeLabel(item.type)" />
+                    <div class="ne-doc-meta">
+                        <span class="ne-draft-tag">{{ getFrontMatterTypeLabel(item.type) }}</span>
+                        <span class="meta-sep">•</span>
+                        <span class="word-count-chip">{{ item.wordCount }} words</span>
+                    </div>
+                    <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+                </div>
+            </div>
             }
         }
+
     } @else if (activePrologueId() && prologue()) {
-        @if (prologue(); as prologueData) {
-        <input type="text" class="ne-doc-title-input" [ngModel]="prologueData.title"
-            (ngModelChange)="bookService.updatePrologueTitle($event)" placeholder="Prologue Title" />
-        <div class="ne-doc-meta">
-            <span class="ne-draft-tag">{{ prologueData.status }}</span> • {{ prologueData.wordCount }} w
+        @if (prologue(); as p) {
+        <div class="ms-editor-card" [class.ms-card--full-width]="isFullWidth()">
+            <div class="ms-editor-actions-top">
+                <button class="ms-action-btn" [class.active]="isFullWidth()"
+                        (click)="fullWidthChange.emit(!isFullWidth())"
+                        [title]="isFullWidth() ? 'Restore width' : 'Full width'">
+                    <span class="material-symbols-outlined">{{ isFullWidth() ? 'close_fullscreen' : 'open_in_full' }}</span>
+                </button>
+            </div>
+            <div class="ms-card-body">
+                <input type="text" class="ne-doc-title-input"
+                    [ngModel]="p.title"
+                    (ngModelChange)="bookService.updatePrologueTitle($event)"
+                    placeholder="Prologue Title" />
+                <div class="ne-doc-meta">
+                    <span class="ne-draft-tag">{{ p.status }}</span>
+                    <span class="meta-sep">•</span>
+                    <span class="word-count-chip">{{ p.wordCount }} words</span>
+                </div>
+                <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
+            </div>
         </div>
-        <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
         }
+
     } @else {
     <div class="ne-empty-state">
         <div class="empty-state-icon">
@@ -39,4 +73,5 @@
         </div>
     </div>
     }
+
 </div>

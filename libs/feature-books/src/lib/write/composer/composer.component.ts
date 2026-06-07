@@ -1,8 +1,22 @@
-import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, computed, untracked, HostListener, ChangeDetectionStrategy, ViewChild, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
+import Highlight from '@tiptap/extension-highlight';
+import TextAlign from '@tiptap/extension-text-align';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Image from '@tiptap/extension-image';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
+import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
+import Mention from '@tiptap/extension-mention';
+import { buildMentionSuggestion } from './mention-suggestion';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BookContentService, Chapter, ChapterGroup } from '@envello/core';
@@ -15,6 +29,7 @@ import { DeleteModalComponent, DeleteModalData } from './components/modals/delet
 import { AddModalComponent, AddModalData } from './components/modals/add-modal/add-modal.component';
 import { LinkModalComponent } from './components/modals/link-modal/link-modal.component';
 import { VersionHistoryModalComponent } from './components/modals/version-history-modal/version-history-modal.component';
+import { ExportModalComponent, ExportRequest, ExportFormat } from './components/modals/export-modal/export-modal.component';
 
 // Sidebar
 import { ChaptersListComponent } from './components/sidebar/chapters-list/chapters-list.component';
@@ -29,6 +44,8 @@ import { ManuscriptEditorComponent } from './components/editor/manuscript-editor
 import { StructureEditorComponent } from './components/editor/structure-editor/structure-editor.component';
 import { CharacterDetailsComponent } from './components/editor/character-details/character-details.component';
 import { LocationDetailsComponent } from './components/editor/location-details/location-details.component';
+import { EntityTableComponent, EntityTableRow, EntityTableColumn, EntityTablePopupField } from './components/editor/entity-table/entity-table.component';
+import { CharacterRelationshipsComponent } from './components/editor/character-relationships/character-relationships.component';
 
 // Right Sidebar
 import { AiPanelComponent } from './components/right-sidebar/ai-panel/ai-panel.component';
@@ -46,6 +63,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     AddModalComponent,
     LinkModalComponent,
     VersionHistoryModalComponent,
+    ExportModalComponent,
     // Sidebar
     ChaptersListComponent,
     StructureViewComponent,
@@ -58,6 +76,8 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     StructureEditorComponent,
     CharacterDetailsComponent,
     LocationDetailsComponent,
+    EntityTableComponent,
+    CharacterRelationshipsComponent,
     // Right Sidebar
     AiPanelComponent,
     NotesPanelComponent,
@@ -67,17 +87,16 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
   styleUrl: './composer.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ComposerComponent implements OnInit, OnDestroy {
   editor!: Editor;
   bookService = inject(BookContentService);
   versionHistoryService = inject(VersionHistoryService);
   aiService = inject(AiService);
   private store = inject(StoreService);
   route = inject(ActivatedRoute);
-  @ViewChild('addInput') addInputRef!: ElementRef<HTMLInputElement>;
-  private shouldFocusInput = false;
   private timeInterval?: number;
   private saveTimeout?: ReturnType<typeof setTimeout>;
+  private lastFocusedId: string | null = null;
 
   // State
   title = signal('');
@@ -91,16 +110,53 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   activeFrontMatterId = signal<string | null>(null);
   activePrologueId = signal<string | null>(null);
 
+  // Editor card display state — persisted so hard-refresh keeps the user's choice.
+  private readonly FULL_WIDTH_KEY = 'envello-composer-full-width';
+  editorFullWidth = signal<boolean>(
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('envello-composer-full-width') !== 'false'
+      : true
+  );
+  editorBgColor = computed(() => this.activeChapter()?.bgColor ?? '');
+
   // UI State
   focusMode = signal(false);
   showFocusToast = signal(false);
   private focusToastTimer?: ReturnType<typeof setTimeout>;
+  private _focusModeHandler?: (e: Event) => void;
   fullScreenMode = signal(false);
   leftSidebarCollapsed = signal(false);
   rightSidebarCollapsed = signal(true);
   searchOpen = signal(false);
   searchQuery = signal('');
-  exportMenuOpen = signal(false);
+  entitySearchQuery = signal('');
+  exportModalOpen = signal(false);
+  showShortcuts = signal(false);
+
+  private _beforeUnloadHandler?: (e: BeforeUnloadEvent) => void;
+
+  // Computed helpers for the export modal
+  exportChapters = computed(() => {
+    const book = this.book();
+    if (!book) return [];
+    return book.chapters.map(g => ({
+      groupId: g.id,
+      groupTitle: g.title,
+      wordCount: g.children.reduce((s, c) => s + c.wordCount, 0),
+      items: g.children.map(c => ({ id: c.id, title: c.title, wordCount: c.wordCount, status: c.status }))
+    }));
+  });
+
+  exportFrontMatter = computed(() => {
+    const book = this.book();
+    if (!book) return [];
+    return book.frontMatter.map(fm => ({ id: fm.id, title: fm.title, type: fm.type, wordCount: fm.wordCount }));
+  });
+
+  exportPrologue = computed(() => {
+    const book = this.book();
+    return book?.prologue ? { title: book.prologue.title || 'Prologue', wordCount: book.prologue.wordCount } : null;
+  });
 
   // Bulk selection
   selectedChapters = signal<Set<string>>(new Set());
@@ -110,6 +166,21 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   sessionStartTime = Date.now();
   elapsedSeconds = signal(0);
   targetWordCount = signal(2500);
+
+  // Recently edited chapters (up to 5 most recent)
+  recentChapterIds = signal<string[]>([]);
+  recentChapters = computed(() => {
+    const book = this.book();
+    if (!book) return [] as Chapter[];
+    const flat = book.chapters.flatMap(g => g.children);
+    return this.recentChapterIds()
+      .map(id => flat.find(c => c.id === id))
+      .filter(Boolean) as Chapter[];
+  });
+
+  // Session word count (words written since session start)
+  private sessionStartTotal = 0;
+  sessionWords = computed(() => Math.max(0, this.totalNovelWords() - this.sessionStartTotal));
   private bookId = signal('');
 
   // Auto-save state
@@ -146,11 +217,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   sectionLabel = computed(() => {
     switch (this.writingType()) {
+      case 'NOVEL':
+      case 'SHORT_STORY': return 'Chapters';
       case 'SCRIPT':      return 'Scenes';
       case 'POETRY':      return 'Stanzas';
       case 'ESSAY':
       case 'RESEARCH':    return 'Parts';
-      case 'NOVEL':       return 'Chapters';
       default:            return 'Sections';
     }
   });
@@ -160,6 +232,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     return t === 'NOVEL' || t === 'SHORT_STORY' || t === 'SCRIPT';
   });
 
+  // ARTICLE and BLOG_POST have no concept of front matter or prologue
+  showStructureAccordion = computed(() => {
+    const t = this.writingType();
+    return t !== 'ARTICLE' && t !== 'BLOG_POST';
+  });
+
   // Accordion open/close state for left sidebar sections
   accChapters = signal(true);
   accStructure = signal(false);
@@ -167,39 +245,53 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   accLocations = signal(false);
 
   toggleAccChapters() {
-    const wasOpen = this.accChapters();
-    this.accChapters.update(v => !v);
-    if (!wasOpen) this.activeNav.set('manuscript');
+    if (!this.accChapters()) {
+      this.accStructure.set(false);
+      this.accCharacters.set(false);
+      this.accLocations.set(false);
+      this.accChapters.set(true);
+      this.activeNav.set('manuscript');
+    } else {
+      this.accChapters.set(false);
+    }
   }
   toggleAccStructure() {
-    const wasOpen = this.accStructure();
-    this.accStructure.update(v => !v);
-    if (!wasOpen) this.activeNav.set('structure');
+    if (!this.accStructure()) {
+      this.accChapters.set(false);
+      this.accCharacters.set(false);
+      this.accLocations.set(false);
+      this.accStructure.set(true);
+      this.activeNav.set('structure');
+    } else {
+      this.accStructure.set(false);
+    }
   }
   toggleAccCharacters() {
-    const wasOpen = this.accCharacters();
-    this.accCharacters.update(v => !v);
-    if (!wasOpen) this.activeNav.set('characters');
+    if (!this.accCharacters()) {
+      this.accChapters.set(false);
+      this.accStructure.set(false);
+      this.accLocations.set(false);
+      this.accCharacters.set(true);
+      this.activeNav.set('characters');
+    } else {
+      this.accCharacters.set(false);
+    }
   }
   toggleAccLocations() {
-    const wasOpen = this.accLocations();
-    this.accLocations.update(v => !v);
-    if (!wasOpen) this.activeNav.set('locations');
+    if (!this.accLocations()) {
+      this.accChapters.set(false);
+      this.accStructure.set(false);
+      this.accCharacters.set(false);
+      this.accLocations.set(true);
+      this.activeNav.set('locations');
+    } else {
+      this.accLocations.set(false);
+    }
   }
 
   anyAccOpen = computed(() =>
     this.accChapters() || this.accStructure() || this.accCharacters() || this.accLocations()
   );
-
-  // Index (0-3) of the last open accordion; -1 when none are open.
-  // Characters (2) and Locations (3) only exist in the DOM when showExtendedTabs() is true.
-  lastOpenIdx = computed(() => {
-    if (this.showExtendedTabs() && this.accLocations())  return 3;
-    if (this.showExtendedTabs() && this.accCharacters()) return 2;
-    if (this.accStructure())  return 1;
-    if (this.accChapters())   return 0;
-    return -1;
-  });
 
   activeCharacter = computed(() => {
     const n = this.book();
@@ -225,15 +317,17 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   closeEditorTab(id: string) {
-    const current  = this.openTabIds();
-    const wasActive = this.editorActiveTabId() === id; // capture before mutation
-    const idx      = current.indexOf(id);
-    const next     = current.filter(i => i !== id);
-    this.openTabIds.set(next);
+    const wasActive = this.editorActiveTabId() === id;
+    // Capture position within the current nav's visible tabs before removal
+    const navItems = this.editorTabItems();
+    const navIdx   = navItems.findIndex(t => t.id === id);
+    this.openTabIds.set(this.openTabIds().filter(i => i !== id));
     if (wasActive) {
-      const fallback = next[Math.min(idx, next.length - 1)] ?? null;
+      // editorTabItems() recomputes after openTabIds mutation — fallback stays in current nav
+      const remaining = this.editorTabItems();
+      const fallback  = remaining[Math.min(navIdx, remaining.length - 1)] ?? null;
       if (fallback) {
-        this.handleEditorTabSelect(fallback);
+        this.handleEditorTabSelect(fallback.id);
       } else {
         this.clearActiveSelection();
       }
@@ -349,6 +443,12 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   constructor(private router: Router) {
+    effect(() => {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.FULL_WIDTH_KEY, this.editorFullWidth() ? 'true' : 'false');
+      }
+    });
+
     // Effect to update editor content when active chapter changes
     effect(() => {
       const chapterId = this.activeChapterId();
@@ -370,6 +470,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(chapterId, 'chapter', chapter.content, chapter.title, count, true);
             }
+            // Only auto-focus when switching to a different chapter — not on title/content updates
+            if (this.lastFocusedId !== chapterId) {
+              this.lastFocusedId = chapterId;
+              setTimeout(() => this.editor?.commands.focus('end'), 0);
+            }
           }
         } else if (frontMatterId) {
           const book = this.book();
@@ -384,6 +489,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             const versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
             if (versions.length === 0) {
               this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', item.content, item.title, count, true);
+            }
+            if (this.lastFocusedId !== frontMatterId) {
+              this.lastFocusedId = frontMatterId;
+              setTimeout(() => this.editor?.commands.focus('end'), 0);
             }
           }
         } else if (prologueId) {
@@ -400,11 +509,16 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
             if (versions.length === 0) {
               this.versionHistoryService.addVersion('prologue', 'prologue', prologue.content, prologue.title, count, true);
             }
+            if (this.lastFocusedId !== 'prologue') {
+              this.lastFocusedId = 'prologue';
+              setTimeout(() => this.editor?.commands.focus('end'), 0);
+            }
           }
         } else if (!chapterId && !frontMatterId && !prologueId) {
           this.editor.commands.clearContent();
           this.title.set('');
           this.wordCount.set(0);
+          this.lastFocusedId = null;
         }
       }
     });
@@ -436,6 +550,34 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
+    // Reset character view mode when navigating away from characters
+    effect(() => {
+      if (this.activeNav() !== 'characters') {
+        untracked(() => this.charView.set('table'));
+      }
+    });
+
+    // Debounced mention scan — re-runs when chapter or book changes, but not on every signal write
+    effect(() => {
+      const chapter = this.activeChapter();
+      const book = this.book();
+      clearTimeout(this._mentionDebounce);
+      if (!chapter || !book) {
+        this.mentionedCharacters.set([]);
+        this.mentionedLocations.set([]);
+        return;
+      }
+      this._mentionDebounce = setTimeout(() => {
+        const content = chapter.content.replace(/<[^>]+>/g, ' ').toLowerCase();
+        this.mentionedCharacters.set(
+          book.characters.filter(c => content.includes(c.name.toLowerCase())).map(c => c.name)
+        );
+        this.mentionedLocations.set(
+          book.locations.filter(l => content.includes(l.name.toLowerCase())).map(l => l.name)
+        );
+      }, 1500);
+    });
+
     // Time tracking interval – guard against accidental double-init
     if (this.timeInterval) clearInterval(this.timeInterval);
     this.timeInterval = window.setInterval(() => {
@@ -452,11 +594,70 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.editor = new Editor({
       extensions: [
         StarterKit,
+        Link.configure({ openOnClick: false }),
+        Underline,
+        Highlight.configure({ multicolor: true }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        TaskList,
+        TaskItem.configure({ nested: true }),
+        Image,
+        Table.configure({ resizable: true }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        Youtube.configure({ controls: true }),
         Placeholder.configure({
           placeholder: 'Start writing your chapter...',
         }),
+        Mention.extend({
+          addAttributes() {
+            return {
+              ...this.parent?.(),
+              mentionType: {
+                default: 'character',
+                parseHTML: el => el.getAttribute('data-mention-type') ?? 'character',
+                renderHTML: attrs => ({ 'data-mention-type': attrs['mentionType'] }),
+              },
+            };
+          },
+        }).configure({
+          HTMLAttributes: { class: 'ne-mention' },
+          renderText: ({ node }) => `@${node.attrs['label'] ?? node.attrs['id']}`,
+          suggestion: buildMentionSuggestion((query) => {
+            const book = this.book();
+            if (!book) return [];
+            const chars = book.characters.map(c => ({
+              id: c.id, label: c.name, mentionType: 'character' as const,
+            }));
+            const locs = book.locations.map(l => ({
+              id: l.id, label: l.name, mentionType: 'location' as const,
+            }));
+            const q = query.toLowerCase();
+            return [...chars, ...locs]
+              .filter(item => !q || item.label.toLowerCase().includes(q))
+              .slice(0, 12);
+          }),
+        }),
       ],
       content: '', // Initial content will be set by effect
+      editorProps: {
+        handleClick: (_view, _pos, event) => {
+          const target = event.target as HTMLElement;
+          const mention = target.closest('[data-type="mention"]') as HTMLElement | null;
+          if (!mention) return false;
+          const id = mention.getAttribute('data-id');
+          const mentionType = (mention.getAttribute('data-mention-type') ?? 'character') as 'character' | 'location';
+          if (id) {
+            if (mentionType === 'character') {
+              this.selectCharacter(id);
+            } else {
+              this.selectLocation(id);
+            }
+            return true;
+          }
+          return false;
+        },
+      },
       onTransaction: ({ editor }) => {
         this.canUndo.set(editor.can().undo());
         this.canRedo.set(editor.can().redo());
@@ -492,23 +693,67 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
 
-    // Load book data from DB (async)
-    this.bookService.loadBook(id).then(() => this.isLoading.set(false));
-  }
+    // Guard unsaved content on page close / reload
+    this._beforeUnloadHandler = (e: BeforeUnloadEvent) => {
+      const hasPendingEditorSave = !!this.saveTimeout;
+      const hasPendingDbWrite = this.bookService.hasPendingPersist();
+      if (hasPendingEditorSave || hasPendingDbWrite) {
+        // Flush editor content synchronously into bookService
+        if (hasPendingEditorSave) {
+          clearTimeout(this.saveTimeout);
+          this.saveTimeout = undefined;
+          this.flushEditorContent();
+        }
+        // Kick off the DB write — best-effort, may not complete before unload
+        this.bookService.flushPersist();
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', this._beforeUnloadHandler);
 
-  ngAfterViewChecked() {
-    if (this.shouldFocusInput && this.addInputRef?.nativeElement) {
-      this.addInputRef.nativeElement.focus();
-      this.addInputRef.nativeElement.select();
-      this.shouldFocusInput = false;
-    }
+    // Listen for focus mode changes from settings
+    this._focusModeHandler = (e: Event) => {
+      const enabled = (e as CustomEvent<boolean>).detail;
+      if (enabled !== this.focusMode()) this.toggleFocusMode();
+    };
+    window.addEventListener('focusModeChanged', this._focusModeHandler);
+
+    // Load book data from DB (async)
+    this.bookService.loadBook(id).then(() => {
+      this.isLoading.set(false);
+      this.sessionStartTotal = this.totalNovelWords();
+    });
   }
 
   ngOnDestroy() {
     if (this.timeInterval) clearInterval(this.timeInterval);
-    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    // Flush any pending editor content to bookService before destroying
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = undefined;
+      this.flushEditorContent();
+    }
+    // Initiate immediate DB write (fire-and-forget; completes async while app stays alive)
+    this.bookService.flushPersist();
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
+    if (this._mentionDebounce) clearTimeout(this._mentionDebounce);
+    if (this._mentionLabelDebounce) clearTimeout(this._mentionLabelDebounce);
+    if (this._focusModeHandler) window.removeEventListener('focusModeChanged', this._focusModeHandler);
+    if (this._beforeUnloadHandler) window.removeEventListener('beforeunload', this._beforeUnloadHandler);
     this.editor.destroy();
+  }
+
+  private flushEditorContent(): void {
+    if (!this.editor || this.editor.isDestroyed) return;
+    const content = this.editor.getHTML();
+    const count = this.calculateWordCount(this.editor.getText());
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+    if (activeId) this.bookService.updateChapterContent(activeId, content, count);
+    else if (frontMatterId) this.bookService.updateFrontMatterContent(frontMatterId, content, count);
+    else if (prologueId) this.bookService.updatePrologueContent(content, count);
   }
 
   goBack() {
@@ -520,18 +765,17 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectChapter(chapter: Chapter | { id: string }) {
-    if ('id' in chapter) {
-      const book = this.book();
-      if (book) {
-        for (const group of book.chapters) {
-          const found = group.children.find(c => c.id === chapter.id);
-          if (found) {
-            this.openEditorTab(found.id);
-            this.activeChapterId.set(found.id);
-            this.activeGroupId.set(group.id);
-            return;
-          }
-        }
+    const book = this.book();
+    if (!book) return;
+    for (const group of book.chapters) {
+      const found = group.children.find(c => c.id === chapter.id);
+      if (found) {
+        if (this.activeNav() !== 'manuscript') this.setActiveNav('manuscript');
+        this.openEditorTab(found.id);
+        this.activeChapterId.set(found.id);
+        this.activeGroupId.set(group.id);
+        this.recentChapterIds.update(ids => [found.id, ...ids.filter(id => id !== found.id)].slice(0, 5));
+        return;
       }
     }
   }
@@ -554,22 +798,23 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     const prev = this.activeNav();
     this.activeNav.set(nav);
+    this.entitySearchQuery.set('');
 
-    // Sync the corresponding sidebar accordion open when a tab is clicked
-    if (nav === 'manuscript') {
-      this.accChapters.set(true);
-    } else if (nav === 'structure') {
-      this.accStructure.set(true);
-    } else if (nav === 'characters') {
-      this.accCharacters.set(true);
-    } else if (nav === 'locations') {
-      this.accLocations.set(true);
-    }
+    // Sync the corresponding sidebar accordion — close all then open the active one
+    this.accChapters.set(nav === 'manuscript');
+    this.accStructure.set(nav === 'structure');
+    this.accCharacters.set(nav === 'characters');
+    this.accLocations.set(nav === 'locations');
 
-    // When navigating away from Structure, clear stale selection so editor doesn't show stale content
     if (prev === 'structure' && nav !== 'structure') {
       this.activeFrontMatterId.set(null);
       this.activePrologueId.set(null);
+    }
+    if (prev === 'characters' && nav !== 'characters') {
+      this.selectedCharacterId.set(null);
+    }
+    if (prev === 'locations' && nav !== 'locations') {
+      this.selectedLocationId.set(null);
     }
   }
 
@@ -577,8 +822,14 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   onTitleChange(newTitle: string) {
     this.title.set(newTitle);
     const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
     if (activeId) {
       this.bookService.updateChapterTitle(activeId, newTitle);
+    } else if (frontMatterId) {
+      this.bookService.updateFrontMatterTitle(frontMatterId, newTitle);
+    } else if (prologueId) {
+      this.bookService.updatePrologueTitle(newTitle);
     }
   }
 
@@ -724,9 +975,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!target.closest('.search-wrapper')) {
       this.searchOpen.set(false);
     }
-    if (!target.closest('.export-menu-wrapper')) {
-      this.exportMenuOpen.set(false);
-    }
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -738,19 +986,36 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    // Cmd/Ctrl + S to save (prevent default browser save)
+    // Cmd/Ctrl + S: flush pending debounced save immediately
     if ((event.metaKey || event.ctrlKey) && event.key === 's') {
       event.preventDefault();
-      // Auto-save is already handled, but we can show a toast/indicator
+      if (this.saveTimeout) {
+        clearTimeout(this.saveTimeout);
+        this.saveTimeout = undefined;
+        this.flushEditorContent();
+        this.isSaving.set(false);
+        this.lastSaved.set(new Date());
+      }
       return;
     }
 
-    // Escape to close modals
+    // ? key to show shortcuts (only when not in a text input/textarea)
+    if (event.key === '?' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) {
+      this.showShortcuts.update(v => !v);
+      return;
+    }
+
+    // Escape to close modals (highest-priority first)
     if (event.key === 'Escape') {
+      if (this.showShortcuts()) { this.showShortcuts.set(false); return; }
       if (this.imageModalOpen()) { this.cancelImageModal(); return; }
       if (this.youtubeModalOpen()) { this.cancelYoutubeModal(); return; }
+      if (this.linkModalOpen()) { this.cancelLinkModal(); return; }
       if (this.addModal().isOpen) { this.cancelAdd(); return; }
       if (this.deleteModal().isOpen) { this.cancelDelete(); return; }
+      if (this.exportModalOpen()) { this.exportModalOpen.set(false); return; }
+      if (this.versionHistoryOpen()) { this.closeVersionHistory(); return; }
+      if (this.showBulkMoveModal()) { this.showBulkMoveModal.set(false); return; }
       if (this.searchOpen()) { this.searchOpen.set(false); }
     }
 
@@ -758,6 +1023,18 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     if ((event.metaKey || event.ctrlKey) && event.key === '\\') {
       event.preventDefault();
       this.focusMode.update(v => !v);
+      return;
+    }
+
+    // Alt+Down / Alt+Up for chapter navigation
+    if (event.altKey && event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.navigateChapter('next');
+      return;
+    }
+    if (event.altKey && event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.navigateChapter('prev');
       return;
     }
 
@@ -809,7 +1086,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       title: 'Add New Chapter',
       inputValue: 'Untitled Chapter'
     });
-    this.shouldFocusInput = true;
   }
 
   confirmAdd() {
@@ -887,11 +1163,18 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       title: 'Add New Act/Part',
       inputValue: 'New Part'
     });
-    this.shouldFocusInput = true;
   }
 
   toggleAddMenu() { this.addMenuOpen.update(v => !v); }
   toggleStructureFmAddMenu() { this.structureFmAddMenuOpen.update(v => !v); }
+
+  duplicateChapter(chapterId: string) {
+    const newId = this.bookService.duplicateChapter(chapterId);
+    if (newId) {
+      const newChapter = this.book()?.chapters.flatMap(g => g.children).find(c => c.id === newId);
+      if (newChapter) this.selectChapter(newChapter);
+    }
+  }
 
   deleteChapter(chapterId: string, title?: string) {
     this.requestDelete('chapter', chapterId, title);
@@ -910,7 +1193,6 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       inputValue: '',
       inputValue2: ''
     });
-    this.shouldFocusInput = true;
   }
 
   deleteNote(noteId: string) {
@@ -920,27 +1202,102 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   selectedCharacterId = signal<string | null>(null);
   selectedLocationId = signal<string | null>(null);
 
-  // Character management
-  addNewCharacter() {
-    this.bookService.addCharacter('New Character');
-    // Auto-select the newly created character (assuming it's the last one)
-    const n = this.book();
-    if (n && n.characters.length > 0) {
-      this.selectedCharacterId.set(n.characters[n.characters.length - 1].id);
+  // ── Entity table ViewChild refs (used to trigger Add popup from editor-header) ──
+  @ViewChild('charTable') charTable?: EntityTableComponent;
+  @ViewChild('locTable')  locTable?: EntityTableComponent;
+
+  // ── Character view mode: table | relationships ──
+  charView = signal<'table' | 'relationships'>('table');
+
+  readonly charViewModes = [
+    { key: 'table',         icon: 'table_rows', label: 'List view' },
+    { key: 'relationships', icon: 'hub',        label: 'Relationship map' },
+  ];
+
+  entityHeaderTitle = computed(() => {
+    if (this.editorActiveTabId()) return '';
+    if (this.activeNav() === 'characters') return 'Characters';
+    if (this.activeNav() === 'locations')  return 'Locations';
+    return '';
+  });
+  entityHeaderIcon = computed(() => {
+    if (this.editorActiveTabId()) return '';
+    if (this.activeNav() === 'characters') return 'group';
+    if (this.activeNav() === 'locations')  return 'map';
+    return '';
+  });
+  entityHeaderCount = computed(() => {
+    if (this.editorActiveTabId()) return 0;
+    if (this.activeNav() === 'characters') return this.book()?.characters.length ?? 0;
+    if (this.activeNav() === 'locations')  return this.book()?.locations.length  ?? 0;
+    return 0;
+  });
+  onAddEntityClick() {
+    if (this.activeNav() === 'characters') {
+      if (this.charView() === 'relationships') {
+        // Switch to table view so charTable ViewChild is rendered, then open popup
+        this.charView.set('table');
+        setTimeout(() => this.charTable?.openPopup(), 0);
+      } else {
+        this.charTable?.openPopup();
+      }
+      return;
     }
+    this.locTable?.openPopup();
+  }
+
+  // ── Entity table config ──
+  readonly characterColumns: EntityTableColumn[] = [
+    { label: 'Role in Story' },
+    { label: 'Archetype' },
+  ];
+  readonly characterPopupFields: EntityTablePopupField[] = [
+    { id: 'name', label: 'Name', placeholder: 'e.g. Aria Whitmore' },
+    { id: 'role', label: 'Role in Story', placeholder: 'e.g. Protagonist', defaultValue: 'Supporting' },
+    { id: 'archetype', label: 'Archetype', placeholder: 'e.g. The Hero' },
+  ];
+  characterRows = computed<EntityTableRow[]>(() =>
+    (this.book()?.characters ?? []).map(c => ({ id: c.id, name: c.name, values: [c.role, c.archetype] }))
+  );
+
+  readonly locationColumns: EntityTableColumn[] = [
+    { label: 'Type' },
+  ];
+  readonly locationPopupFields: EntityTablePopupField[] = [
+    { id: 'name', label: 'Name', placeholder: 'e.g. The Dark Forest' },
+    { id: 'type', label: 'Location Type', placeholder: 'e.g. City, Wilderness', defaultValue: 'Location' },
+  ];
+  locationRows = computed<EntityTableRow[]>(() =>
+    (this.book()?.locations ?? []).map(l => ({ id: l.id, name: l.name, values: [l.type] }))
+  );
+
+  // Character management
+  addNewCharacter(data: { name?: string; role?: string; archetype?: string } = {}) {
+    const before = new Set((this.book()?.characters ?? []).map(c => c.id));
+    this.bookService.addCharacter(
+      data.name ?? 'New Character',
+      data.role ?? 'Supporting',
+      data.archetype ?? '',
+    );
+    const newChar = this.book()?.characters.find(c => !before.has(c.id));
+    if (newChar) this.selectCharacter(newChar.id);
   }
 
   selectCharacter(charId: string) {
+    if (this.activeNav() !== 'characters') this.setActiveNav('characters');
     this.openEditorTab(charId);
     this.selectedCharacterId.set(charId);
   }
 
-  updateCharacterField(charId: string, field: string, value: string) {
-    this.bookService.updateCharacter(charId, { [field]: value });
+  updateCharacterField(charId: string, field: string, value: string | string[]) {
+    this.bookService.updateCharacter(charId, { [field]: value } as never);
+    if (field === 'name' && typeof value === 'string') {
+      this.updateMentionLabels(charId, value);
+    }
   }
 
   // Handler for component output
-  onCharacterFieldUpdate(data: { id: string; field: string; value: string }) {
+  onCharacterFieldUpdate(data: { id: string; field: string; value: string | string[] }) {
     this.updateCharacterField(data.id, data.field, data.value);
   }
 
@@ -948,26 +1305,37 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.requestDelete('character', charId, name);
   }
 
+  onAddRelationship(data: { fromId: string; toId: string; label: string }) {
+    this.bookService.addRelationship(data.fromId, data.toId, data.label);
+  }
+
+  onDeleteRelationship(id: string) {
+    this.bookService.deleteRelationship(id);
+  }
+
   // Location management
-  addNewLocation() {
-    this.bookService.addLocation('New Location');
-    const n = this.book();
-    if (n && n.locations.length > 0) {
-      this.selectedLocationId.set(n.locations[n.locations.length - 1].id);
-    }
+  addNewLocation(data: { name?: string; type?: string } = {}) {
+    const before = new Set((this.book()?.locations ?? []).map(l => l.id));
+    this.bookService.addLocation(data.name ?? 'New Location', data.type ?? 'Location');
+    const newLoc = this.book()?.locations.find(l => !before.has(l.id));
+    if (newLoc) this.selectLocation(newLoc.id);
   }
 
   selectLocation(locId: string) {
+    if (this.activeNav() !== 'locations') this.setActiveNav('locations');
     this.openEditorTab(locId);
     this.selectedLocationId.set(locId);
   }
 
-  updateLocationField(locId: string, field: string, value: string) {
-    this.bookService.updateLocation(locId, { [field]: value });
+  updateLocationField(locId: string, field: string, value: string | string[]) {
+    this.bookService.updateLocation(locId, { [field]: value } as never);
+    if (field === 'name' && typeof value === 'string') {
+      this.updateMentionLabels(locId, value);
+    }
   }
 
   // Handler for component output
-  onLocationFieldUpdate(data: { id: string; field: string; value: string }) {
+  onLocationFieldUpdate(data: { id: string; field: string; value: string | string[] }) {
     this.updateLocationField(data.id, data.field, data.value);
   }
 
@@ -983,13 +1351,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     return `${mins}m ${secs}s`;
   }
 
-  // Writing goals
-  getGoalProgress(): number {
-    const current = this.wordCount();
+  goalProgress = computed(() => {
     const target = this.targetWordCount();
     if (target === 0) return 0;
-    return Math.min(Math.round((current / target) * 100), 100);
-  }
+    return Math.min(Math.round((this.totalNovelWords() / target) * 100), 100);
+  });
 
   // Novel statistics
   totalNovelWords = computed(() => {
@@ -1034,15 +1400,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     return completed;
   });
 
-  getTotalChapters(): number {
+  totalChapters = computed(() => {
     const book = this.book();
     if (!book) return 0;
-    let total = 0;
-    book.chapters.forEach(group => {
-      total += group.children.length;
-    });
-    return total;
-  }
+    return book.chapters.reduce((sum, g) => sum + g.children.length, 0);
+  });
 
   // Front Matter Management
   getFrontMatterTypeLabel(type: string): string {
@@ -1075,6 +1437,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectFrontMatterItem(itemId: string) {
+    if (this.activeNav() !== 'structure') this.setActiveNav('structure');
     this.openEditorTab(itemId);
     this.activeFrontMatterId.set(itemId);
     this.activeChapterId.set(null);
@@ -1082,6 +1445,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectPrologue() {
+    if (this.activeNav() !== 'structure') this.setActiveNav('structure');
     this.openEditorTab('prologue');
     this.activePrologueId.set('prologue');
     this.activeChapterId.set(null);
@@ -1095,11 +1459,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   deletePrologue() {
     this.bookService.deletePrologue();
+    this.closeEditorTab('prologue');
     this.activePrologueId.set(null);
   }
 
   deleteFrontMatterItem(itemId: string, title: string) {
     this.bookService.deleteFrontMatterItem(itemId);
+    this.closeEditorTab(itemId);
     if (this.activeFrontMatterId() === itemId) {
       this.activeFrontMatterId.set(null);
       this.title.set('');
@@ -1114,6 +1480,77 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   performRedo() {
     this.editor?.chain().focus().redo().run();
+  }
+
+  performEntitySave() {
+    // Fields auto-save on every change; this is a manual confirmation trigger
+  }
+
+  // Update @mention chips across the live editor and all stored chapter/frontmatter/prologue HTML
+  private updateMentionLabels(entityId: string, newName: string) {
+    clearTimeout(this._mentionLabelDebounce);
+    this._mentionLabelDebounce = setTimeout(() => {
+      const book = this.book();
+      if (!book) return;
+
+      // 1. Live editor: dispatch a ProseMirror transaction to update mention node attrs
+      if (this.editor && !this.editor.isDestroyed) {
+        const { state, view } = this.editor;
+        const tr = state.tr;
+        let changed = false;
+        state.doc.descendants((node, pos) => {
+          if (node.type.name === 'mention' && node.attrs['id'] === entityId) {
+            tr.setNodeMarkup(pos, undefined, { ...node.attrs, label: newName });
+            changed = true;
+          }
+        });
+        if (changed) view.dispatch(tr);
+      }
+
+      // 2. Stored content: patch HTML for every chapter / front-matter / prologue
+      //    that is NOT currently loaded in the live editor (editor's onUpdate handles that one).
+      const activeChapterId   = this.activeChapterId();
+      const activeFrontMatter = this.activeFrontMatterId();
+      const activePrologue    = this.activePrologueId();
+
+      for (const group of book.chapters) {
+        for (const chapter of group.children) {
+          if (!chapter.content || chapter.id === activeChapterId) continue;
+          const patched = this.patchMentionInHtml(chapter.content, entityId, newName);
+          if (patched !== chapter.content) {
+            this.bookService.updateChapterContent(chapter.id, patched, chapter.wordCount);
+          }
+        }
+      }
+
+      for (const item of book.frontMatter) {
+        if (!item.content || item.id === activeFrontMatter) continue;
+        const patched = this.patchMentionInHtml(item.content, entityId, newName);
+        if (patched !== item.content) {
+          this.bookService.updateFrontMatterContent(item.id, patched, item.wordCount);
+        }
+      }
+
+      if (book.prologue?.content && !activePrologue) {
+        const patched = this.patchMentionInHtml(book.prologue.content, entityId, newName);
+        if (patched !== book.prologue.content) {
+          this.bookService.updatePrologueContent(patched, book.prologue.wordCount);
+        }
+      }
+    }, 400);
+  }
+
+  // Parse HTML, replace data-label + text of matching mention nodes, return updated HTML
+  private patchMentionInHtml(html: string, entityId: string, newLabel: string): string {
+    if (!html.includes(entityId)) return html; // fast exit — no mention of this entity
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    let changed = false;
+    doc.querySelectorAll(`[data-type="mention"][data-id="${CSS.escape(entityId)}"]`).forEach(el => {
+      el.setAttribute('data-label', newLabel);
+      el.textContent = `@${newLabel}`;
+      changed = true;
+    });
+    return changed ? doc.body.innerHTML : html;
   }
 
   openVersionHistory() {
@@ -1181,38 +1618,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  // Character/Location Mentions - converted to computed signals for performance
-  mentionedCharacters = computed(() => {
-    const chapterId = this.activeChapterId();
-    if (!chapterId || !this.editor) return [];
-
-    const chapter = this.activeChapter();
-    if (!chapter) return [];
-
-    const content = chapter.content.toLowerCase();
-    const book = this.book();
-    if (!book) return [];
-
-    return book.characters
-      .filter(char => content.includes(char.name.toLowerCase()))
-      .map(char => char.name);
-  });
-
-  mentionedLocations = computed(() => {
-    const chapterId = this.activeChapterId();
-    if (!chapterId || !this.editor) return [];
-
-    const chapter = this.activeChapter();
-    if (!chapter) return [];
-
-    const content = chapter.content.toLowerCase();
-    const book = this.book();
-    if (!book) return [];
-
-    return book.locations
-      .filter(loc => content.includes(loc.name.toLowerCase()))
-      .map(loc => loc.name);
-  });
+  // Character/Location Mentions — debounced to avoid scanning HTML on every keystroke
+  mentionedCharacters = signal<string[]>([]);
+  mentionedLocations = signal<string[]>([]);
+  private _mentionDebounce?: ReturnType<typeof setTimeout>;
+  private _mentionLabelDebounce?: ReturnType<typeof setTimeout>;
 
   // Search functionality - optimized with early returns and cached lowercase
   filteredChapters = computed(() => {
@@ -1351,6 +1761,42 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.showFocusToast.set(false);
     if (this.focusToastTimer) clearTimeout(this.focusToastTimer);
     localStorage.setItem('envello-focus-toast-seen', 'true');
+  }
+
+  navigateChapter(direction: 'prev' | 'next') {
+    const book = this.book();
+    if (!book) return;
+    const all = book.chapters.flatMap(g => g.children);
+    if (all.length === 0) return;
+    const idx = all.findIndex(c => c.id === this.activeChapterId());
+    if (idx === -1) { this.selectChapter(all[0]); return; }
+    const target = direction === 'next' ? idx + 1 : idx - 1;
+    if (target >= 0 && target < all.length) this.selectChapter(all[target]);
+  }
+
+  navigateToCharacter(name: string) {
+    const char = this.book()?.characters.find(c => c.name === name);
+    if (char) { this.selectCharacter(char.id); this.setActiveNav('characters'); }
+  }
+
+  setEditorBgColor(color: string) {
+    const id = this.activeChapterId();
+    if (id) this.bookService.updateChapterBgColor(id, color);
+  }
+
+  quickExportChapter(chapterId: string) {
+    const book = this.book();
+    if (!book) return;
+    const chapter = book.chapters.flatMap(g => g.children).find(c => c.id === chapterId);
+    if (!chapter) return;
+    const md = `# ${chapter.title}\n\n${this.htmlToMarkdown(chapter.content)}`;
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${chapter.title.toLowerCase().replace(/\s+/g, '-')}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   private async streamIntoNewMessage(stream: AsyncIterable<string>): Promise<void> {
@@ -1511,9 +1957,10 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   async continueWriting() {
     if (!this.editor) return;
 
-    const content = this.editor.getHTML();
-    const cursorPosition = this.editor.state.selection.anchor;
-    const preceding = content.substring(Math.max(0, cursorPosition - 1000), cursorPosition);
+    const anchor = this.editor.state.selection.anchor;
+    const docSize = this.editor.state.doc.content.size;
+    const from = Math.max(0, anchor - 1000);
+    const preceding = this.editor.state.doc.textBetween(from, Math.min(anchor, docSize), '\n');
 
     this.aiMessages.update(msgs => [...msgs, {
       id: Date.now().toString(),
@@ -1588,6 +2035,13 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.aiError.set(null);
   }
 
+  cancelAiStream() {
+    // Stops the loading spinner; the in-flight stream will drain silently in the background.
+    // Full abort requires AbortController support in AiService — tracked separately.
+    this.aiLoading.set(false);
+    this.aiError.set(null);
+  }
+
   getTokenCount(): number {
     const context = this.getCurrentContext();
     return this.aiService.estimateTokens(context);
@@ -1636,17 +2090,30 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private executeBulkDelete() {
-    // Capture snapshot before any mutations
-    const selected = Array.from(this.selectedChapters());
+    const selected = new Set(this.selectedChapters());
     const activeId = this.activeChapterId();
+    const book = this.book();
+
+    // Find a fallback chapter before any mutations
+    let fallback: Chapter | null = null;
+    if (activeId && selected.has(activeId) && book) {
+      const all = book.chapters.flatMap(g => g.children);
+      fallback = all.find(c => !selected.has(c.id)) ?? null;
+    }
+
     selected.forEach(chapterId => {
       this.bookService.deleteChapter(chapterId);
       this.closeEditorTab(chapterId);
     });
-    if (activeId && selected.includes(activeId)) {
-      this.activeChapterId.set(null);
-      this.title.set('');
-      this.editor.commands.clearContent();
+
+    if (activeId && selected.has(activeId)) {
+      if (fallback) {
+        this.selectChapter(fallback);
+      } else {
+        this.activeChapterId.set(null);
+        this.title.set('');
+        this.editor.commands.clearContent();
+      }
     }
     this.selectedChapters.set(new Set());
     this.bulkMode.set(false);
@@ -1677,8 +2144,157 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.searchOpen.update(v => !v);
   }
 
-  toggleExportMenu() {
-    this.exportMenuOpen.update(v => !v);
+  handleExport(request: ExportRequest) {
+    this.exportModalOpen.set(false);
+    const { scopeKeys, format } = request;
+
+    if (scopeKeys.includes('book')) {
+      this.exportNovel(format);
+      return;
+    }
+
+    const book = this.book();
+    if (!book) return;
+
+    // Collect items in natural order: front matter → prologue → chapters
+    const isScript = this.writingType() === 'SCRIPT';
+    const items: { title: string; content: string; isScene?: boolean }[] = [];
+    for (const fm of book.frontMatter) {
+      if (scopeKeys.includes(`item:${fm.id}`)) items.push({ title: fm.title, content: fm.content });
+    }
+    if (scopeKeys.includes('prologue') && book.prologue) {
+      items.push({ title: book.prologue.title || 'Prologue', content: book.prologue.content });
+    }
+    for (const group of book.chapters) {
+      for (const chapter of group.children) {
+        if (scopeKeys.includes(`item:${chapter.id}`)) items.push({ title: chapter.title, content: chapter.content, isScene: isScript });
+      }
+    }
+
+    if (items.length === 0) return;
+
+    if (format === 'pdf') {
+      const title = items.length === 1 ? items[0].title : 'Selected Content';
+      this.printContent(items, title);
+      return;
+    }
+
+    if (items.length === 1) { this.exportSingleItem(items[0].title, items[0].content, format); return; }
+    this.exportMultipleItems(items, format);
+  }
+
+  private exportSingleItem(title: string, content: string, format: Exclude<ExportFormat, 'pdf'>) {
+    const filename = title.toLowerCase().replace(/\s+/g, '-');
+    this.triggerDownload(filename, this.buildContent([{ title, content }], format), format);
+  }
+
+  private exportMultipleItems(items: { title: string; content: string }[], format: Exclude<ExportFormat, 'pdf'>) {
+    this.triggerDownload(`export-selection`, this.buildContent(items, format), format);
+  }
+
+  private buildContent(items: { title: string; content: string; isScene?: boolean }[], format: Exclude<ExportFormat, 'pdf'>): { body: string; mime: string; ext: string } {
+    if (format === 'md') {
+      return {
+        body: items.map(i => `# ${i.title}\n\n${this.htmlToMarkdown(i.content)}`).join('\n\n---\n\n'),
+        mime: 'text/markdown', ext: 'md'
+      };
+    }
+    if (format === 'html') {
+      return {
+        body: items.map(i => `<h1>${this.escapeHtml(i.title)}</h1>\n${i.content}`).join('\n<hr>\n'),
+        mime: 'text/html', ext: 'html'
+      };
+    }
+    if (format === 'docx') {
+      const body = items.map(i => `<h1>${this.escapeHtml(i.title)}</h1>${i.content}`).join('<hr>');
+      return {
+        body: `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${body}</body></html>`,
+        mime: 'application/msword', ext: 'doc'
+      };
+    }
+    // fountain — only script scenes get scene headings; everything else is treated as prose
+    return {
+      body: items.map(i => {
+        const text = i.content.replace(/<[^>]+>/g, '').trim();
+        return i.isScene
+          ? `INT. ${i.title.toUpperCase()} - DAY\n\n${text}`
+          : `${i.title.toUpperCase()}\n\n${text}`;
+      }).join('\n\n'),
+      mime: 'text/plain', ext: 'fountain'
+    };
+  }
+
+  private triggerDownload(filename: string, content: { body: string; mime: string; ext: string }, _format: string) {
+    const blob = new Blob([content.body], { type: content.mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${filename}.${content.ext}`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private escapeHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  private printContent(items: { title: string; content: string }[], docTitle: string) {
+    const sections = items.map((item, i) =>
+      `<section${i > 0 ? ' class="pb"' : ''}>
+        <h1>${this.escapeHtml(item.title)}</h1>
+        <div class="body">${item.content}</div>
+      </section>`
+    ).join('\n');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${this.escapeHtml(docTitle)}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  @page { size: A4; margin: 2.5cm; }
+  html, body { background: #fff; color: #000; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 12pt;
+    line-height: 1.75;
+  }
+  section { margin-bottom: 0; }
+  section.pb { page-break-before: always; }
+  h1 {
+    font-size: 20pt;
+    font-weight: bold;
+    text-align: center;
+    margin: 1em 0 2em;
+    page-break-after: avoid;
+  }
+  h2 { font-size: 14pt; margin: 1.5em 0 0.5em; page-break-after: avoid; }
+  h3 { font-size: 13pt; margin: 1.2em 0 0.4em; page-break-after: avoid; }
+  .body > p { margin-bottom: 0; text-indent: 1.5em; orphans: 3; widows: 3; }
+  .body > p:first-child,
+  .body > p + h2 + p,
+  .body > p + h3 + p { text-indent: 0; }
+  blockquote { margin: 0.8em 2em; font-style: italic; }
+  strong, b { font-weight: bold; }
+  em, i { font-style: italic; }
+  ul, ol { margin: 0.6em 0 0.6em 2em; }
+  li { margin-bottom: 0.2em; }
+  hr { border: none; border-top: 1px solid #999; margin: 2em auto; width: 40%; }
+</style>
+</head>
+<body>${sections}</body>
+</html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:1px;height:1px;border:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return; }
+    doc.open(); doc.write(html); doc.close();
+    iframe.addEventListener('load', () => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => document.body.removeChild(iframe), 500);
+    }, { once: true });
   }
 
 
@@ -1729,6 +2345,7 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Image modal
   imageModalOpen = signal(false);
   imageUrl = signal('');
+  imageUrlError = signal('');
 
   addImage() {
     if (!this.editor) return;
@@ -1737,15 +2354,23 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   insertImage() {
-    if (!this.editor || !this.imageUrl().trim()) return;
-    this.editor.chain().focus().setImage({ src: this.imageUrl().trim() }).run();
+    if (!this.editor) return;
+    const url = this.imageUrl().trim();
+    if (!url) return;
+    if (!/^https?:\/\/.+/i.test(url)) {
+      this.imageUrlError.set('Please enter a valid URL starting with http:// or https://');
+      return;
+    }
+    this.editor.chain().focus().setImage({ src: url }).run();
     this.imageModalOpen.set(false);
     this.imageUrl.set('');
+    this.imageUrlError.set('');
   }
 
   cancelImageModal() {
     this.imageModalOpen.set(false);
     this.imageUrl.set('');
+    this.imageUrlError.set('');
   }
 
   insertTable() {
@@ -1763,21 +2388,50 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.youtubeModalOpen.set(true);
   }
 
+  youtubeUrlError = signal('');
+
   insertYoutube() {
-    if (!this.editor || !this.youtubeUrl().trim()) return;
-    this.editor.chain().focus().setYoutubeVideo({ src: this.youtubeUrl().trim() }).run();
+    if (!this.editor) return;
+    const raw = this.youtubeUrl().trim();
+    if (!raw) return;
+    const src = this.extractYoutubeUrl(raw);
+    if (!src) {
+      this.youtubeUrlError.set('Please enter a valid YouTube URL');
+      return;
+    }
+    this.editor.chain().focus().setYoutubeVideo({ src }).run();
     this.youtubeModalOpen.set(false);
     this.youtubeUrl.set('');
+    this.youtubeUrlError.set('');
+  }
+
+  private extractYoutubeUrl(input: string): string | null {
+    // Accept full URLs and short youtu.be links; return the canonical form tiptap expects
+    const patterns = [
+      /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const re of patterns) {
+      const m = input.match(re);
+      if (m) return `https://www.youtube.com/watch?v=${m[1]}`;
+    }
+    return null;
   }
 
   cancelYoutubeModal() {
     this.youtubeModalOpen.set(false);
     this.youtubeUrl.set('');
+    this.youtubeUrlError.set('');
   }
 
   private htmlToMarkdown(html: string): string {
     return html
       .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
+      // Images → ![alt](src)
+      .replace(/<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*\/?>/gi, '![$1]($2)')
+      .replace(/<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi, '![$2]($1)')
+      .replace(/<img[^>]*src="([^"]*)"[^>]*\/?>/gi, '![]($1)')
+      // Tables → GFM
+      .replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_, inner) => this.tableToMarkdown(inner))
       .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
       .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
       .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
@@ -1804,6 +2458,27 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       .trim();
   }
 
+  private tableToMarkdown(tableHtml: string): string {
+    const rows: string[][] = [];
+    const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    const cellRe = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    let rowMatch: RegExpExecArray | null;
+    while ((rowMatch = rowRe.exec(tableHtml)) !== null) {
+      const cells: string[] = [];
+      let cellMatch: RegExpExecArray | null;
+      const cellReCopy = new RegExp(cellRe.source, 'gi');
+      while ((cellMatch = cellReCopy.exec(rowMatch[1])) !== null) {
+        cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
+      }
+      if (cells.length) rows.push(cells);
+    }
+    if (!rows.length) return '';
+    const cols = Math.max(...rows.map(r => r.length));
+    const pad = (r: string[]) => '| ' + Array.from({ length: cols }, (_, i) => r[i] ?? '').join(' | ') + ' |';
+    const sep = '| ' + Array.from({ length: cols }, () => '---').join(' | ') + ' |';
+    return [pad(rows[0]), sep, ...rows.slice(1).map(pad)].join('\n') + '\n\n';
+  }
+
   // Export functionality
   exportNovel(format: 'pdf' | 'docx' | 'md' | 'html' | 'fountain') {
     const book = this.book();
@@ -1813,7 +2488,11 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
     let filename = book.title.toLowerCase().replace(/\s+/g, '-');
 
     if (format === 'pdf') {
-      window.print();
+      const items: { title: string; content: string }[] = [];
+      book.frontMatter.forEach(fm => items.push({ title: fm.title, content: fm.content }));
+      if (book.prologue) items.push({ title: book.prologue.title || 'Prologue', content: book.prologue.content });
+      book.chapters.forEach(g => g.children.forEach(c => items.push({ title: c.title, content: c.content })));
+      this.printContent(items, book.title);
       return;
     }
 
@@ -1837,7 +2516,9 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    const skipFrontMatter = ['ARTICLE', 'BLOG_POST'].includes(this.writingType());
+    // ARTICLE and BLOG_POST have no front matter concept.
+    // ESSAY and POETRY may have a title page but never prologue-style opening material.
+    const skipFrontMatter = ['ARTICLE', 'BLOG_POST', 'ESSAY', 'POETRY'].includes(this.writingType());
 
     if (format === 'md') {
       // Build true markdown — do not use the shared HTML content variable
@@ -1936,7 +2617,68 @@ export class ComposerComponent implements OnInit, OnDestroy, AfterViewChecked {
       'check-consistency':   { user: 'Review this section for consistent terminology, claims, and internal logic.', system: 'You are a meticulous research editor.' },
     };
 
-    if (key === 'suggest') { await this.generateSuggestions(); return; }
+    if (key.startsWith('ask-changes:')) {
+      const instruction = key.replace('ask-changes:', '').trim();
+      if (!instruction) return;
+      this.setActiveTab('ai');
+      const selectedText = this.getSelectedText();
+      const context = selectedText || content;
+      if (!context) { this.aiError.set('Please select text to apply changes to.'); return; }
+      const userMsg = selectedText
+        ? `${instruction} (applied to selected text)`
+        : instruction;
+      this.aiMessages.update(msgs => [...msgs, {
+        id: Date.now().toString(),
+        role: 'user' as const,
+        content: userMsg,
+        timestamp: new Date()
+      }]);
+      this.aiLoading.set(true);
+      this.aiError.set(null);
+      try {
+        await this.streamIntoNewMessage(
+          this.aiService.streamMessage(
+            selectedText
+              ? `Apply this instruction to the following text and return only the revised version:\n\nInstruction: ${instruction}\n\nText:\n${selectedText}`
+              : `Apply this instruction to the chapter content:\n\nInstruction: ${instruction}\n\nContent:\n${context}`,
+            'You are a professional editor. Return only the revised text without explanation.'
+          )
+        );
+      } catch {
+        this.aiError.set('AI request failed. Please try again.');
+      } finally {
+        this.aiLoading.set(false);
+      }
+      return;
+    }
+
+    if (key === 'suggest') {
+      this.setActiveTab('ai');
+      const selectedText = this.getSelectedText();
+      const context = selectedText || content;
+      if (!context) { this.aiError.set('Please select a section first.'); return; }
+      const userMsg = selectedText ? 'Suggest improvements for this selected text' : 'Suggest improvements for this writing';
+      this.aiMessages.update(msgs => [...msgs, {
+        id: Date.now().toString(),
+        role: 'user' as const,
+        content: userMsg,
+        timestamp: new Date()
+      }]);
+      this.aiLoading.set(true);
+      this.aiError.set(null);
+      try {
+        await this.streamIntoNewMessage(
+          this.aiService.streamMessage(`${userMsg}:\n\n${context}`, 'You are a creative writing coach.')
+        );
+      } catch {
+        this.aiError.set('Failed to get suggestions. Please try again.');
+      } finally {
+        this.aiLoading.set(false);
+      }
+      return;
+    }
+
+    if (key === 'link') { this.openLinkModal(); return; }
 
     const p = prompts[key];
     if (!p || !content) { this.aiError.set('Please select a section first.'); return; }

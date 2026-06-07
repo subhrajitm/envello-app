@@ -347,6 +347,7 @@
         rowIdKey="id"
         (rowClick)="onTableRowClick($any($event))"
         (actionClick)="onTableAction($event)"
+        (bulkActionClick)="handleBulkAction($event)"
         (sortChange)="onTableSort($event)">
       </env-table>
       }
@@ -1101,5 +1102,31 @@
     (confirmed)="doDeleteMeeting()"
     (cancelled)="deleteMeetingTarget.set(null)">
     Delete <strong>{{ meeting.title }}</strong>? This action cannot be undone.
+</env-confirm-dialog>
+}
+
+@if (subItemDeleteTarget(); as target) {
+<env-confirm-dialog
+    [isOpen]="true"
+    [title]="target.type === 'agenda' ? 'Remove Agenda Item' : target.type === 'action' ? 'Remove Action Item' : 'Remove Note'"
+    icon="delete"
+    variant="danger"
+    confirmLabel="Remove"
+    (confirmed)="confirmSubItemDelete()"
+    (cancelled)="subItemDeleteTarget.set(null)">
+    This item will be permanently removed from the meeting.
+</env-confirm-dialog>
+}
+
+@if (bulkDeleteIds(); as ids) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Meetings"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmBulkDelete()"
+    (cancelled)="bulkDeleteIds.set(null)">
+    Delete <strong>{{ ids.length }} meeting{{ ids.length !== 1 ? 's' : '' }}</strong>? This action cannot be undone.
 </env-confirm-dialog>
 }

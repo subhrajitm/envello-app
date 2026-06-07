@@ -296,6 +296,29 @@ begin
   end if;
 end $$;
 
+-- ──────────────────────────────────────────────────────
+-- PowerSync WAL publication
+-- Required for PowerSync to receive row-level change events.
+-- Run once; idempotent via the existence check above.
+-- After deploying, set POWERSYNC_URL in your environment files.
+-- ──────────────────────────────────────────────────────
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication where pubname = 'powersync'
+  ) then
+    create publication powersync for table public.user_data;
+  else
+    -- Add user_data if the publication already exists but doesn't include it
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'powersync' and tablename = 'user_data'
+    ) then
+      alter publication powersync add table public.user_data;
+    end if;
+  end if;
+end $$;
+
 
 -- ──────────────────────────────────────────────────────
 -- 15. Research Collections (renamed from research_libraries)

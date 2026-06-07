@@ -1,13 +1,14 @@
-import { Component, input, output, signal, HostListener, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, signal, HostListener, ChangeDetectionStrategy, ViewEncapsulation, ElementRef, inject } from '@angular/core';
+import { CommonModule, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
 import { TiptapEditorDirective } from 'ngx-tiptap';
+import { EditorFloatingMenuComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-manuscript-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective],
+  imports: [CommonModule, NgClass, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent],
   templateUrl: './manuscript-editor.component.html',
   styleUrls: [
     './manuscript-editor.component.css',
@@ -17,6 +18,8 @@ import { TiptapEditorDirective } from 'ngx-tiptap';
   encapsulation: ViewEncapsulation.None
 })
 export class ManuscriptEditorComponent {
+  readonly hostEl = inject(ElementRef<HTMLElement>).nativeElement;
+
   statusMenuOpen = signal(false);
 
   readonly statusOptions: { value: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY'; label: string; icon: string }[] = [
@@ -34,16 +37,35 @@ export class ManuscriptEditorComponent {
     return this.statusOptions.find(o => o.value === this.chapterStatus())?.icon ?? 'radio_button_unchecked';
   }
 
+  showColorPicker = signal(false);
+
+  readonly bgColors = [
+    '', 'ms-bg--rose', 'ms-bg--orange', 'ms-bg--yellow', 'ms-bg--green',
+    'ms-bg--cyan', 'ms-bg--blue', 'ms-bg--purple', 'ms-bg--pink',
+    'ms-bg--warm', 'ms-bg--cool',
+  ];
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
-    if (!(event.target as HTMLElement).closest('.status-menu-wrapper')) {
-      this.statusMenuOpen.set(false);
-    }
+    const target = event.target as HTMLElement;
+    if (!target.closest('.status-menu-wrapper')) this.statusMenuOpen.set(false);
+    if (!target.closest('.ms-color-picker-wrapper')) this.showColorPicker.set(false);
   }
 
   toggleStatusMenu(event: Event) {
     event.stopPropagation();
     this.statusMenuOpen.update(v => !v);
+  }
+
+  toggleColorPicker(event: Event) {
+    event.stopPropagation();
+    this.showColorPicker.update(v => !v);
+  }
+
+  selectBgColor(color: string, event: Event) {
+    event.stopPropagation();
+    this.bgColorChange.emit(color);
+    this.showColorPicker.set(false);
   }
 
   selectStatus(value: 'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY', event: Event) {
@@ -67,8 +89,15 @@ export class ManuscriptEditorComponent {
   chapterLastEdited = input.required<string>();
   isSaving = input.required<boolean>();
   lastSaved = input<Date | null>(null);
+  wordCount = input<number>(0);
+  sessionWords = input<number>(0);
+  isFullWidth = input<boolean>(false);
+  cardBgColor = input<string>('');
 
   titleChange = output<string>();
   statusChange = output<'DRAFT' | 'EDITING' | 'DONE' | 'EMPTY'>();
   addNewChapter = output<void>();
+  quickAction = output<string>();
+  fullWidthChange = output<boolean>();
+  bgColorChange = output<string>();
 }

@@ -1,0 +1,100 @@
+<div class="ne-tbl-view">
+
+    <!-- ── Table / Empty ── -->
+    @if (items().length > 0) {
+    <env-table
+        class="env-table--compact"
+        [showToolbar]="false"
+        [showPagination]="false"
+        [columns]="envColumns()"
+        [rows]="envRows()"
+        [actions]="tableActions"
+        rowIdKey="id"
+        (rowClick)="onRowClick($event)"
+        (actionClick)="onActionClick($event)">
+    </env-table>
+    } @else {
+    <div class="ne-tbl-empty">
+        <span class="material-symbols-outlined">{{ emptyIcon() }}</span>
+        <p class="ne-tbl-empty-title">{{ emptyTitle() }}</p>
+        <p class="ne-tbl-empty-hint">{{ emptyHint() }}</p>
+        <button class="ne-btn-ghost-sm" (click)="openPopup()">
+            <span class="material-symbols-outlined">add</span>
+            Add your first {{ singularTitle().toLowerCase() }}
+        </button>
+    </div>
+    }
+
+    <!-- ── Add Popup ── -->
+    @if (popupOpen()) {
+    <div class="ne-popup-backdrop" (click)="closePopup()">
+        <div class="ne-popup" (click)="$event.stopPropagation()">
+            <div class="ne-popup-hdr">
+                <div class="ne-popup-hdr-left">
+                    <div class="ne-popup-icon">
+                        <span class="material-symbols-outlined">{{ popupIcon() }}</span>
+                    </div>
+                    <span class="ne-popup-title">{{ popupTitle() }}</span>
+                </div>
+                <button class="ne-popup-close" (click)="closePopup()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="ne-popup-body">
+                <!-- First field: Name, always full-width -->
+                <div class="ne-popup-field">
+                    <label [for]="'pop-' + popupFields()[0].id">
+                        {{ popupFields()[0].label }} <span class="ne-popup-req">*</span>
+                    </label>
+                    <input [id]="'pop-' + popupFields()[0].id" type="text"
+                        [ngModel]="getFieldValue(popupFields()[0].id)"
+                        (ngModelChange)="setFieldValue(popupFields()[0].id, $event)"
+                        [placeholder]="popupFields()[0].placeholder || ''"
+                        (keydown.enter)="submitPopup()" (keydown.escape)="closePopup()" />
+                </div>
+
+                <!-- Remaining fields: 2-col grid or stacked -->
+                @if (remainingFields().length > 0) {
+                  @if (popupGridFields() && remainingFields().length >= 2) {
+                  <div class="ne-popup-row">
+                    @for (field of remainingFields(); track field.id) {
+                    <div class="ne-popup-field">
+                        <label [for]="'pop-' + field.id">{{ field.label }}</label>
+                        <input [id]="'pop-' + field.id" type="text"
+                            [ngModel]="getFieldValue(field.id)"
+                            (ngModelChange)="setFieldValue(field.id, $event)"
+                            [placeholder]="field.placeholder || ''"
+                            (keydown.escape)="closePopup()" />
+                    </div>
+                    }
+                  </div>
+                  } @else {
+                  @for (field of remainingFields(); track field.id) {
+                  <div class="ne-popup-field">
+                      <label [for]="'pop-' + field.id">{{ field.label }}</label>
+                      <input [id]="'pop-' + field.id" type="text"
+                          [ngModel]="getFieldValue(field.id)"
+                          (ngModelChange)="setFieldValue(field.id, $event)"
+                          [placeholder]="field.placeholder || ''"
+                          (keydown.enter)="submitPopup()" (keydown.escape)="closePopup()" />
+                  </div>
+                  }
+                  }
+                }
+            </div>
+
+            <div class="ne-popup-footer">
+                <button class="ne-popup-btn ne-popup-btn--cancel" (click)="closePopup()">Cancel</button>
+                <button class="ne-popup-btn ne-popup-btn--primary"
+                    [class.ne-popup-btn--disabled]="!firstFieldTrimmed()"
+                    (click)="submitPopup()">
+                    <span class="material-symbols-outlined">add</span>
+                    {{ popupTitle() }}
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+</div>
