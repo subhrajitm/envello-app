@@ -273,11 +273,11 @@
 
 .sidebar-item--active {
     background: var(--accent-primary);
-    color: white;
+    color: var(--accent-primary-text);
 }
 
 .sidebar-item--active .sidebar-icon {
-    color: white;
+    color: var(--accent-primary-text);
 }
 
 .sidebar-icon {
@@ -286,7 +286,7 @@
 }
 
 .sidebar-item--active .sidebar-icon {
-    color: white;
+    color: var(--accent-primary-text);
 }
 
 .sidebar-label {
@@ -429,7 +429,7 @@
 .content-card:hover .content-card-shortcut,
 .content-card--focused .content-card-shortcut {
     background: var(--accent-primary);
-    color: white;
+    color: var(--accent-primary-text);
     border-color: var(--accent-primary);
 }
 

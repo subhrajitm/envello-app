@@ -280,7 +280,7 @@
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
-  color: #fff;
+  color: var(--accent-primary-text);
   flex-shrink: 0;
 }
 /* When showing an image, hide the text initials */
@@ -603,7 +603,7 @@
 .env-table-pg-num:hover { background: var(--bg-hover); color: var(--text-primary); }
 .env-table-pg-num.active {
   background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary-text);
   border-color: var(--accent-primary);
 }
 

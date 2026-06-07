@@ -484,7 +484,7 @@
 .header-nav {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border-subtle);
   background: var(--bg-app);
   padding: 0;
   height: 32px;
@@ -505,7 +505,7 @@
   height: 100%;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-top: 2px solid transparent;
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 600;
@@ -522,7 +522,7 @@
 .nav-tab.active {
   background: var(--bg-active);
   color: var(--accent-primary);
-  border-bottom-color: var(--accent-primary);
+  border-color: var(--accent-primary);
   font-weight: 700;
   text-shadow: 0 0 1px rgba(252, 211, 77, 0.4);
 }

@@ -428,7 +428,7 @@
 
 .toggle input:checked+.toggle-track:before {
     transform: translateX(20px);
-    background: white;
+    background: var(--accent-primary-text);
 }
 
 /* Select Input */

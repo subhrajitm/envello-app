@@ -579,7 +579,7 @@
     background: var(--bg-panel);
     color: var(--text-primary);
     font-weight: 500;
-    border-top: 2px solid var(--accent-primary);
+    border-left: 2px solid var(--accent-primary);
     position: relative;
     z-index: 2;
 }
@@ -651,7 +651,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    background-color: #fff;
+    background-color: var(--bg-panel);
 }
 
 

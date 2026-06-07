@@ -3569,7 +3569,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: #fff;
+    color: var(--accent-primary-text);
 }
 
 .ne-ent-icon-sq .material-symbols-outlined {
@@ -5513,7 +5513,7 @@
     align-items: center;
     gap: 4px;
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
     border: none;
     border-radius: 6px;
     padding: 7px 14px;
@@ -5746,7 +5746,7 @@
 
 .ne-popup-btn--primary {
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
 }
 
 .ne-popup-btn--primary:hover:not(.ne-popup-btn--disabled) {
@@ -6503,7 +6503,7 @@
 .ne-portrait-url-save {
     padding: 5px 12px;
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
     border: none;
     border-radius: 6px;
     font-size: 12px;

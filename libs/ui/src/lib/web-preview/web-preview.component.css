@@ -164,7 +164,7 @@ iframe {
 .open-btn {
   padding: 7px 16px;
   background: var(--accent-primary);
-  color: #fff;
+  color: var(--accent-primary-text);
   border: none;
   border-radius: 6px;
   font-size: 13px;

@@ -963,7 +963,7 @@
 .task-subtask-checkbox.checked {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
-    color: white;
+    color: var(--accent-primary-text);
 }
 
 .task-subtask-checkbox .material-symbols-outlined {
@@ -2107,7 +2107,7 @@
 .new-task-subtask-add-btn:hover:not(:disabled) {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
-    color: white;
+    color: var(--accent-primary-text);
 }
 
 .new-task-subtask-add-btn:disabled {
@@ -5176,7 +5176,7 @@ textarea:focus-visible {
     top: -40px;
     left: 0;
     background: var(--accent-primary);
-    color: white;
+    color: var(--accent-primary-text);
     padding: 8px 16px;
     text-decoration: none;
     z-index: 10000;
@@ -5997,7 +5997,7 @@ textarea:focus-visible {
 .td-recurring-toggle.active {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
 }
 .td-recurring-toggle .material-symbols-outlined {
     font-size: 15px;
@@ -6741,7 +6741,7 @@ textarea:focus-visible {
 .add-subtask-btn:hover:not(:disabled) {
     background: var(--accent-primary);
     border-color: var(--accent-primary);
-    color: white;
+    color: var(--accent-primary-text);
 }
 
 .add-subtask-btn:disabled {
@@ -6935,7 +6935,7 @@ textarea:focus-visible {
 
 .btn-primary-compact {
     background: var(--accent-primary);
-    color: white;
+    color: var(--accent-primary-text);
     border-color: var(--accent-primary);
 }
 
@@ -7251,7 +7251,7 @@ textarea:focus-visible {
 
 .dp-day--today {
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
     font-weight: 700;
 }
 
@@ -7438,7 +7438,7 @@ textarea:focus-visible {
 
 .td-ai-msg--user .td-ai-msg-text {
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
     border-radius: 10px 10px 2px 10px;
     padding: 4px 10px;
     max-width: 80%;
@@ -7523,7 +7523,7 @@ textarea:focus-visible {
     border-radius: 50%;
     border: none;
     background: var(--accent-primary);
-    color: #fff;
+    color: var(--accent-primary-text);
     cursor: pointer;
     flex-shrink: 0;
     transition: opacity 0.15s, transform 0.1s;
