@@ -292,7 +292,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Load and listen for nav section visibility changes
     this.loadNavVisibility();
     this.navVisibilityListener = (event: CustomEvent) => {
-      this.hiddenNavItemIds.set(event.detail ?? []);
+      const d = event.detail;
+      if (d && !Array.isArray(d)) {
+        this.hiddenNavItemIds.set(this.isTauri ? (d.desktop ?? []) : (d.web ?? []));
+      } else {
+        this.hiddenNavItemIds.set(d ?? []);
+      }
     };
     window.addEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
 
@@ -351,7 +356,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
       const saved = localStorage.getItem('envello-settings');
       if (saved) {
         const settings = JSON.parse(saved);
-        this.hiddenNavItemIds.set(settings.hiddenNavItems ?? []);
+        const hn = settings.hiddenNavItems;
+        if (hn && !Array.isArray(hn)) {
+          this.hiddenNavItemIds.set(this.isTauri ? (hn.desktop ?? []) : (hn.web ?? []));
+        } else if (Array.isArray(hn)) {
+          this.hiddenNavItemIds.set(hn);
+        }
       }
     } catch { }
   }

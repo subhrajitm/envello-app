@@ -119,20 +119,22 @@ export class SettingsPageComponent implements OnInit {
     { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    desktopOnly: false },
   ];
 
-  hiddenNavItems = signal<string[]>([]);
+  hiddenNavItems = signal<{ web: string[]; desktop: string[] }>({ web: [], desktop: [] });
 
-  isNavItemHidden(id: string): boolean {
-    return this.hiddenNavItems().includes(id);
+  isNavItemHidden(id: string, platform: 'web' | 'desktop'): boolean {
+    return this.hiddenNavItems()[platform].includes(id);
   }
 
-  toggleNavItemVisibility(id: string) {
+  toggleNavItemVisibility(id: string, platform: 'web' | 'desktop') {
     const current = this.hiddenNavItems();
-    const next = current.includes(id) ? current.filter(x => x !== id) : [...current, id];
+    const list = current[platform];
+    const nextList = list.includes(id) ? list.filter(x => x !== id) : [...list, id];
     const visibleCount = this.allNavItemDefs.filter(item => {
-      if (item.desktopOnly && !this.isDesktop) return false;
-      return !next.includes(item.id);
+      if (item.desktopOnly && platform === 'web') return false;
+      return !nextList.includes(item.id);
     }).length;
     if (visibleCount === 0) return;
+    const next = { ...current, [platform]: nextList };
     this.hiddenNavItems.set(next);
     window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: next }));
   }
@@ -384,8 +386,9 @@ export class SettingsPageComponent implements OnInit {
     this.aiProvider.set('mock');
     this.aiModel.set('');
     this.aiKey.set('');
-    this.hiddenNavItems.set([]);
-    window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: [] }));
+    const emptyVisibility = { web: [], desktop: [] };
+    this.hiddenNavItems.set(emptyVisibility);
+    window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: emptyVisibility }));
     this.aiService.updateConfig('mock', '', '');
     this.themeService.theme.set('light');
     localStorage.removeItem('envello-settings');
@@ -422,7 +425,10 @@ export class SettingsPageComponent implements OnInit {
       this.dailySummary.set(s.dailySummary || false);
       this.analytics.set(s.analytics !== false);
       this.versionHistoryLimit.set(s.versionHistoryLimit || 50);
-      this.hiddenNavItems.set(s.hiddenNavItems ?? []);
+      const hn = s.hiddenNavItems;
+      if (hn && !Array.isArray(hn)) {
+        this.hiddenNavItems.set({ web: hn.web ?? [], desktop: hn.desktop ?? [] });
+      }
       if (s.fontSize)     document.documentElement.style.setProperty('--base-font-size', `${s.fontSize}px`);
       if (s.editorFont)   document.documentElement.style.setProperty('--editor-font', this.getFontFamily(s.editorFont));
       if (s.editorFontSize) document.documentElement.style.setProperty('--editor-font-size', `${s.editorFontSize}px`);

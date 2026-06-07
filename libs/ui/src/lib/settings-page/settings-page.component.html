@@ -90,35 +90,65 @@
       <div class="settings-section">
         <div class="section-header">
           <h2>Sections</h2>
-          <p>Choose which sections appear in the navigation</p>
+          <p>Control which sections are visible per platform — web and desktop can have different navigation.</p>
         </div>
 
-        <div class="settings-pair">
+        <div class="sections-grid">
+          <!-- Column headers -->
+          <div class="sections-grid-header">
+            <span class="sections-col-label">Section</span>
+            <span class="sections-platform-label">
+              <span class="material-symbols-outlined">public</span>
+              Web
+            </span>
+            <span class="sections-platform-label">
+              <span class="material-symbols-outlined">desktop_windows</span>
+              Desktop
+            </span>
+          </div>
+
           @for (item of allNavItemDefs; track item.id) {
-            @if (!item.desktopOnly || isDesktop) {
-            <div class="setting-item setting-row">
-              <div class="setting-label-group">
-                <span class="nav-section-icon material-symbols-outlined">{{ item.icon }}</span>
-                <div>
-                  <label>{{ item.label }}</label>
-                  @if (item.desktopOnly) {
-                    <span class="badge-platform">Desktop only</span>
-                  }
-                </div>
+          <div class="sections-grid-row">
+            <!-- Section name -->
+            <div class="sections-item-label">
+              <span class="nav-section-icon material-symbols-outlined">{{ item.icon }}</span>
+              <span>{{ item.label }}</span>
+              @if (item.desktopOnly) {
+                <span class="badge-platform">Desktop only</span>
+              }
+            </div>
+
+            <!-- Web toggle -->
+            @if (item.desktopOnly) {
+              <div class="sections-toggle-cell sections-na" title="Not available on web">
+                <span class="material-symbols-outlined">remove</span>
               </div>
+            } @else {
+              <div class="sections-toggle-cell">
+                <label class="toggle">
+                  <input type="checkbox"
+                    [checked]="!isNavItemHidden(item.id, 'web')"
+                    (change)="toggleNavItemVisibility(item.id, 'web')">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+            }
+
+            <!-- Desktop toggle -->
+            <div class="sections-toggle-cell">
               <label class="toggle">
                 <input type="checkbox"
-                  [checked]="!isNavItemHidden(item.id)"
-                  (change)="toggleNavItemVisibility(item.id)">
+                  [checked]="!isNavItemHidden(item.id, 'desktop')"
+                  (change)="toggleNavItemVisibility(item.id, 'desktop')">
                 <span class="toggle-track"></span>
               </label>
             </div>
-            }
+          </div>
           }
         </div>
 
         <p class="hint-text" style="margin-top:1rem">
-          Hidden sections are removed from the navigation bar. At least one section must remain visible.
+          Changes preview live. At least one section must remain visible per platform.
         </p>
       </div>
       }
