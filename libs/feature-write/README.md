@@ -1,7 +1,7 @@
-# feature-novels
+# feature-write
 
-This library was generated with [Nx](https://nx.dev).
+Long-form writing workspace — manuscript editor, chapter management, characters, locations, and AI writing assistant.
 
 ## Running unit tests
 
-Run `nx test feature-novels` to execute the unit tests.
+Run `npm exec nx test feature-write` to execute the unit tests.
