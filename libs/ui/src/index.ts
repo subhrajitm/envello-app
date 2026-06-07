@@ -11,7 +11,6 @@ export * from './lib/layout/header/header.component';
 export * from './lib/layout/footer/footer.component';
 export * from './lib/quick-find/quick-find.component';
 export * from './lib/add-new-modal/add-new-modal.component';
-export * from './lib/settings-modal/settings-modal.component';
 export * from './lib/settings-page/settings-page.component';
 export * from './lib/notification-center/notification-center.component';
 export * from './lib/profile-menu/profile-menu.component';
