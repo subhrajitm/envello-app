@@ -19,6 +19,7 @@ export class PowerSyncDataService implements DataService {
     'projects',
     'note_folders',
     'subscriptions',
+    'user_preferences',
   ]);
 
   /** Never synced — stored in the local-only `local_vault` table. */

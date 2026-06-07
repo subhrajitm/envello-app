@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService, BookContentService } from '@envello/core';
+import { AuthService, BookContentService, UserPreferencesService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
@@ -37,6 +37,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private updateService = inject(UpdateService);
   authService = inject(AuthService);
   private bookContentService = inject(BookContentService);
+  private userPrefsService = inject(UserPreferencesService);
   private unlistenFileDrop?: () => void;
   private unlistenCloseRequested?: () => void;
 

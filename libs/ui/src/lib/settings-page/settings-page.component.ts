@@ -5,7 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { ButtonComponent } from '../button/button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
-import { ThemeService, Theme, StoreService } from '@envello/core';
+import { ThemeService, Theme, StoreService, UserPreferencesService } from '@envello/core';
 import { AiService, AiProvider } from '@envello/core';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService } from '@envello/core';
 import { DataService } from '@envello/data';
@@ -43,6 +43,7 @@ export class SettingsPageComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private location = inject(Location);
+  private userPrefsService = inject(UserPreferencesService);
   aiService = inject(AiService);
 
   activeSection = signal('general');
@@ -174,6 +175,11 @@ export class SettingsPageComponent implements OnInit {
         this.activeSection.set(section);
       }
     });
+
+    // Refresh signals from DB (catches settings synced from another device)
+    this.userPrefsService.loadFromDb().then(prefs => {
+      if (prefs) this.applyToSignals(prefs);
+    });
   }
 
   @HostListener('document:keydown.escape')
@@ -302,7 +308,7 @@ export class SettingsPageComponent implements OnInit {
     this.versionHistoryLimit.set(parseInt((event.target as HTMLInputElement).value));
   }
 
-  saveSettings() {
+  async saveSettings() {
     const settings = {
       theme: this.currentTheme(),
       fontSize: this.fontSize(),
@@ -322,7 +328,7 @@ export class SettingsPageComponent implements OnInit {
       versionHistoryLimit: this.versionHistoryLimit(),
       hiddenNavItems: this.hiddenNavItems(),
     };
-    localStorage.setItem('envello-settings', JSON.stringify(settings));
+    await this.userPrefsService.save(settings);
     this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: this.navigationLayout() }));
     this.goBack();
@@ -409,36 +415,40 @@ export class SettingsPageComponent implements OnInit {
     const saved = localStorage.getItem('envello-settings');
     if (!saved) return;
     try {
-      const s = JSON.parse(saved);
-      this.fontSize.set(s.fontSize || 14);
-      this.compactMode.set(s.compactMode || false);
-      this.animations.set(s.animations !== false);
-      this.navigationLayout.set(s.navigationLayout || 'minimized');
-      this.editorFont.set(s.editorFont || 'sans');
-      this.editorFontSize.set(s.editorFontSize || 16);
-      this.lineHeight.set(s.lineHeight || 1.8);
-      this.autoSave.set(s.autoSave !== false);
-      this.spellCheck.set(s.spellCheck !== false);
-      this.focusMode.set(s.focusMode || false);
-      this.desktopNotifications.set(s.desktopNotifications || false);
-      this.soundEffects.set(s.soundEffects !== false);
-      this.dailySummary.set(s.dailySummary || false);
-      this.analytics.set(s.analytics !== false);
-      this.versionHistoryLimit.set(s.versionHistoryLimit || 50);
-      const hn = s.hiddenNavItems;
-      if (hn && !Array.isArray(hn)) {
-        this.hiddenNavItems.set({ web: hn.web ?? [], desktop: hn.desktop ?? [] });
-      }
-      if (s.fontSize)     document.documentElement.style.setProperty('--base-font-size', `${s.fontSize}px`);
-      if (s.editorFont)   document.documentElement.style.setProperty('--editor-font', this.getFontFamily(s.editorFont));
-      if (s.editorFontSize) document.documentElement.style.setProperty('--editor-font-size', `${s.editorFontSize}px`);
-      if (s.lineHeight)   document.documentElement.style.setProperty('--editor-line-height', s.lineHeight.toString());
-      if (!s.spellCheck)  document.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el => el.setAttribute('spellcheck', 'false'));
-      if (s.compactMode)  document.body.classList.add('compact-mode');
-      if (s.animations === false) document.body.classList.add('no-animations');
+      this.applyToSignals(JSON.parse(saved));
     } catch (e) {
       console.error('Failed to load settings:', e);
     }
+  }
+
+  private applyToSignals(s: Record<string, any>) {
+    if (s['fontSize'])           this.fontSize.set(s['fontSize']);
+    if (s['compactMode'] !== undefined) this.compactMode.set(s['compactMode']);
+    if (s['animations'] !== undefined)  this.animations.set(s['animations'] !== false);
+    if (s['navigationLayout'])   this.navigationLayout.set(s['navigationLayout']);
+    if (s['editorFont'])         this.editorFont.set(s['editorFont']);
+    if (s['editorFontSize'])     this.editorFontSize.set(s['editorFontSize']);
+    if (s['lineHeight'])         this.lineHeight.set(s['lineHeight']);
+    if (s['autoSave'] !== undefined)    this.autoSave.set(s['autoSave'] !== false);
+    if (s['spellCheck'] !== undefined)  this.spellCheck.set(s['spellCheck'] !== false);
+    if (s['focusMode'] !== undefined)   this.focusMode.set(s['focusMode']);
+    if (s['desktopNotifications'] !== undefined) this.desktopNotifications.set(s['desktopNotifications']);
+    if (s['soundEffects'] !== undefined) this.soundEffects.set(s['soundEffects'] !== false);
+    if (s['dailySummary'] !== undefined) this.dailySummary.set(s['dailySummary']);
+    if (s['analytics'] !== undefined)    this.analytics.set(s['analytics'] !== false);
+    if (s['versionHistoryLimit'])        this.versionHistoryLimit.set(s['versionHistoryLimit']);
+    const hn = s['hiddenNavItems'];
+    if (hn && !Array.isArray(hn)) {
+      this.hiddenNavItems.set({ web: hn.web ?? [], desktop: hn.desktop ?? [] });
+    }
+    // Apply DOM effects
+    if (s['fontSize'])       document.documentElement.style.setProperty('--base-font-size', `${s['fontSize']}px`);
+    if (s['editorFont'])     document.documentElement.style.setProperty('--editor-font', this.getFontFamily(s['editorFont']));
+    if (s['editorFontSize']) document.documentElement.style.setProperty('--editor-font-size', `${s['editorFontSize']}px`);
+    if (s['lineHeight'])     document.documentElement.style.setProperty('--editor-line-height', String(s['lineHeight']));
+    if (!s['spellCheck'])    document.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el => el.setAttribute('spellcheck', 'false'));
+    document.body.classList.toggle('compact-mode',  !!s['compactMode']);
+    document.body.classList.toggle('no-animations', s['animations'] === false);
   }
 
   private getFontFamily(font: string): string {

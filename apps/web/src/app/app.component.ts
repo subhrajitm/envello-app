@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
-import { TauriService, SessionService } from '@envello/core';
+import { TauriService, SessionService, UserPreferencesService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
@@ -19,6 +19,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
   private tauriService = inject(TauriService);
   private sessionService = inject(SessionService);
+  private userPrefsService = inject(UserPreferencesService);
   private swUpdate = inject(SwUpdate, { optional: true });
   private unlistenFileDrop?: () => void;
 

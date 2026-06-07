@@ -1,4 +1,5 @@
 export * from './lib/services/ai.service';
+export * from './lib/services/user-preferences.service';
 export * from './lib/services/tauri.service';
 export * from './lib/services/logging.service';
 export * from './lib/services/article.service';

@@ -26,6 +26,7 @@ export class PouchDbDataService implements DataService {
         'credentials',
         'subscriptions',
         'credential_subscription_links',
+        'user_preferences',
     ]);
 
     /**
