@@ -57,9 +57,9 @@ Domain lib (libs/domain)  — shared types & interfaces
 - **`@envello/domain`** — Pure TypeScript interfaces and types (no Angular)
 - **`@envello/data`** — Abstract `DataService` interface for persistence
 - **`@envello/state`** — Angular Signals-based global store (`StoreService`)
-- **`@envello/core`** — Singleton services (Auth, Tauri, SQLite, File System, `authGuard`)
+- **`@envello/core`** — Singleton services (Auth, Tauri, SQLite, File System, `authGuard`, `MeetingsService`, `VoiceService`, `ArticleService`, `ResearchService`)
 - **`@envello/ui`** — Reusable standalone Angular components
-- **`@envello/feature-*`** — Self-contained feature libraries (tasks, novels, projects, etc.)
+- **`@envello/feature-*`** — Self-contained feature libraries (tasks, books, bookmarks, vault, vendor, daily-notes, etc.)
 
 ### Platform-Specific Persistence
 
@@ -75,6 +75,10 @@ Angular Signals are used exclusively for reactive state. No NgRx or BehaviorSubj
 ### Routing
 
 All feature routes use `loadComponent()` for lazy loading. Protected routes are guarded by `authGuard` from `@envello/core`. Route data `{ hasSidebar: false }` controls layout.
+
+### Voice Input
+
+`VoiceService` (`libs/core`) provides global voice dictation via the Web Speech API (`webkitSpeechRecognition`). Activated by holding Ctrl (500 ms) or clicking the mic button in the header. On macOS desktop, requires the `com.apple.security.device.audio-input` entitlement (`src-tauri/entitlements.plist`).
 
 ### AI Integration
 
