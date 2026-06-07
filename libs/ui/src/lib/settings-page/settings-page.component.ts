@@ -99,6 +99,7 @@ export class SettingsPageComponent implements OnInit {
 
   sections: SettingsSection[] = [
     { id: 'general',       label: 'General',          description: 'Navigation, layout and accessibility',  icon: 'tune' },
+    { id: 'sections',      label: 'Sections',          description: 'Show or hide navigation sections',      icon: 'grid_view' },
     { id: 'appearance',    label: 'Appearance',        description: 'Colors, themes and fonts',              icon: 'palette' },
     { id: 'editor',        label: 'Editor',            description: 'Writing experience and tools',          icon: 'edit_note' },
     { id: 'ai',            label: 'AI & Integrations', description: 'Configure AI providers and API keys',   icon: 'smart_toy' },
@@ -106,6 +107,35 @@ export class SettingsPageComponent implements OnInit {
     { id: 'data',          label: 'Data & Sync',       description: 'Backup, storage and sync options',      icon: 'sync' },
     { id: 'about',         label: 'About',             description: 'Version and system information',        icon: 'info' }
   ];
+
+  readonly allNavItemDefs = [
+    { id: 'tasks',         label: 'Tasks',         icon: 'checklist',    desktopOnly: false },
+    { id: 'meetings',      label: 'Meetings',       icon: 'calendar_month', desktopOnly: false },
+    { id: 'daily-notes',   label: 'Notes',          icon: 'note',         desktopOnly: false },
+    { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',          desktopOnly: false },
+    { id: 'write',         label: 'Write',          icon: 'edit',         desktopOnly: false },
+    { id: 'vault',         label: 'Vault',          icon: 'lock',         desktopOnly: true  },
+    { id: 'subscriptions', label: 'Subscriptions',  icon: 'credit_card',  desktopOnly: false },
+    { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    desktopOnly: false },
+  ];
+
+  hiddenNavItems = signal<string[]>([]);
+
+  isNavItemHidden(id: string): boolean {
+    return this.hiddenNavItems().includes(id);
+  }
+
+  toggleNavItemVisibility(id: string) {
+    const current = this.hiddenNavItems();
+    const next = current.includes(id) ? current.filter(x => x !== id) : [...current, id];
+    const visibleCount = this.allNavItemDefs.filter(item => {
+      if (item.desktopOnly && !this.isDesktop) return false;
+      return !next.includes(item.id);
+    }).length;
+    if (visibleCount === 0) return;
+    this.hiddenNavItems.set(next);
+    window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: next }));
+  }
 
   themes: ThemeOption[] = [
     { value: 'dark',             label: 'Midnight',   icon: 'nights_stay' },
@@ -288,6 +318,7 @@ export class SettingsPageComponent implements OnInit {
       dailySummary: this.dailySummary(),
       analytics: this.analytics(),
       versionHistoryLimit: this.versionHistoryLimit(),
+      hiddenNavItems: this.hiddenNavItems(),
     };
     localStorage.setItem('envello-settings', JSON.stringify(settings));
     this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
@@ -353,6 +384,8 @@ export class SettingsPageComponent implements OnInit {
     this.aiProvider.set('mock');
     this.aiModel.set('');
     this.aiKey.set('');
+    this.hiddenNavItems.set([]);
+    window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: [] }));
     this.aiService.updateConfig('mock', '', '');
     this.themeService.theme.set('light');
     localStorage.removeItem('envello-settings');
@@ -389,6 +422,7 @@ export class SettingsPageComponent implements OnInit {
       this.dailySummary.set(s.dailySummary || false);
       this.analytics.set(s.analytics !== false);
       this.versionHistoryLimit.set(s.versionHistoryLimit || 50);
+      this.hiddenNavItems.set(s.hiddenNavItems ?? []);
       if (s.fontSize)     document.documentElement.style.setProperty('--base-font-size', `${s.fontSize}px`);
       if (s.editorFont)   document.documentElement.style.setProperty('--editor-font', this.getFontFamily(s.editorFont));
       if (s.editorFontSize) document.documentElement.style.setProperty('--editor-font-size', `${s.editorFontSize}px`);

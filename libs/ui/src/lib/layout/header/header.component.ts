@@ -112,20 +112,32 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly isTauri =
     typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
-  navItems: NavItem[] = [
-    { id: 'tasks',       label: 'Tasks',    icon: 'checklist', route: 'tasks' },
-    { id: 'meetings',    label: 'Meetings', icon: 'calendar_month', route: 'meetings' },
-    { id: 'daily-notes', label: 'Notes',    icon: 'note',      route: 'daily-notes' },
-    { id: 'knowledge',   label: 'Knowledge',  icon: 'hub', route: 'knowledge' },
-    { id: 'write',       label: 'Write',    icon: 'edit',      route: 'write' },
-    ...( this.isTauri ? [{ id: 'vault', label: 'Vault', icon: 'lock', route: 'vault' }] : [] as NavItem[]),
-    { id: 'subscriptions',label: 'Subscriptions', icon: 'credit_card',route: 'subscriptions' },
-    { id: 'bookmarks',   label: 'Bookmarks', icon: 'bookmarks', route: 'bookmarks' },
+  private readonly navItemDefs: NavItem[] = [
+    { id: 'tasks',         label: 'Tasks',         icon: 'checklist',    route: 'tasks' },
+    { id: 'meetings',      label: 'Meetings',       icon: 'calendar_month', route: 'meetings' },
+    { id: 'daily-notes',   label: 'Notes',          icon: 'note',         route: 'daily-notes' },
+    { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',          route: 'knowledge' },
+    { id: 'write',         label: 'Write',          icon: 'edit',         route: 'write' },
+    { id: 'vault',         label: 'Vault',          icon: 'lock',         route: 'vault' },
+    { id: 'subscriptions', label: 'Subscriptions',  icon: 'credit_card',  route: 'subscriptions' },
+    { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    route: 'bookmarks' },
   ];
+
+  private hiddenNavItemIds = signal<string[]>([]);
+
+  private navVisibilityListener?: (event: CustomEvent) => void;
+
+  navItems = computed(() => {
+    const hidden = this.hiddenNavItemIds();
+    return this.navItemDefs.filter(item => {
+      if (item.id === 'vault' && !this.isTauri) return false;
+      return !hidden.includes(item.id);
+    });
+  });
 
   // All flat items (for activeTab matching across sections)
   get allNavItems(): NavItem[] {
-    return this.navItems;
+    return this.navItems();
   }
 
 
@@ -203,7 +215,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   getTabIcon(tab: string): string {
-    return this.navItems.find(i => i.label === tab || i.id === tab)?.icon || 'circle';
+    return this.navItemDefs.find(i => i.label === tab || i.id === tab)?.icon || 'circle';
   }
 
   isItemActive(item: NavItem): boolean {
@@ -277,6 +289,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
     };
     window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
 
+    // Load and listen for nav section visibility changes
+    this.loadNavVisibility();
+    this.navVisibilityListener = (event: CustomEvent) => {
+      this.hiddenNavItemIds.set(event.detail ?? []);
+    };
+    window.addEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
+
     // Apply initial layout
     this.applyNavigationLayout();
 
@@ -303,6 +322,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.navigationLayoutListener) {
       window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
     }
+    if (this.navVisibilityListener) {
+      window.removeEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
+    }
     this.routeSub?.unsubscribe();
   }
 
@@ -322,6 +344,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
         console.error('Failed to load navigation layout:', e);
       }
     }
+  }
+
+  private loadNavVisibility() {
+    try {
+      const saved = localStorage.getItem('envello-settings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        this.hiddenNavItemIds.set(settings.hiddenNavItems ?? []);
+      }
+    } catch { }
   }
 
   private applyNavigationLayout() {

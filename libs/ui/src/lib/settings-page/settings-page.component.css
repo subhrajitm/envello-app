@@ -692,3 +692,23 @@
   .topbar-section { display: none; }
   .topbar-sep { display: none; }
 }
+
+/* ── Section visibility ── */
+.nav-section-icon {
+  font-size: 18px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.badge-platform {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-primary-dim);
+  color: var(--accent-primary);
+  margin-left: 6px;
+  vertical-align: middle;
+}

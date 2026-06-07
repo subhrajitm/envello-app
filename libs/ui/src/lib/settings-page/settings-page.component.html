@@ -85,6 +85,44 @@
       </div>
       }
 
+      <!-- Sections -->
+      @if (activeSection() === 'sections') {
+      <div class="settings-section">
+        <div class="section-header">
+          <h2>Sections</h2>
+          <p>Choose which sections appear in the navigation</p>
+        </div>
+
+        <div class="settings-pair">
+          @for (item of allNavItemDefs; track item.id) {
+            @if (!item.desktopOnly || isDesktop) {
+            <div class="setting-item setting-row">
+              <div class="setting-label-group">
+                <span class="nav-section-icon material-symbols-outlined">{{ item.icon }}</span>
+                <div>
+                  <label>{{ item.label }}</label>
+                  @if (item.desktopOnly) {
+                    <span class="badge-platform">Desktop only</span>
+                  }
+                </div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox"
+                  [checked]="!isNavItemHidden(item.id)"
+                  (change)="toggleNavItemVisibility(item.id)">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            }
+          }
+        </div>
+
+        <p class="hint-text" style="margin-top:1rem">
+          Hidden sections are removed from the navigation bar. At least one section must remain visible.
+        </p>
+      </div>
+      }
+
       <!-- Appearance -->
       @if (activeSection() === 'appearance') {
       <div class="settings-section">
