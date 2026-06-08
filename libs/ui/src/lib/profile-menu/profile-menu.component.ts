@@ -16,11 +16,11 @@ import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcu
   animations: [
     trigger('slideDown', [
       transition(':enter', [
-        style({ transform: 'translateY(-8px) scale(0.98)', opacity: 0 }),
-        animate('180ms ease-out', style({ transform: 'translateY(0) scale(1)', opacity: 1 }))
+        style({ transform: 'scale(0.98)', opacity: 0 }),
+        animate('180ms ease-out', style({ transform: 'scale(1)', opacity: 1 }))
       ]),
       transition(':leave', [
-        animate('150ms ease-in', style({ transform: 'translateY(-8px) scale(0.98)', opacity: 0 }))
+        animate('150ms ease-in', style({ transform: 'scale(0.98)', opacity: 0 }))
       ])
     ])
   ]

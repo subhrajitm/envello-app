@@ -1027,12 +1027,10 @@ li[data-type="taskItem"] input[type="checkbox"] {
 
 @keyframes slideUp {
     from {
-        transform: translateY(20px);
         opacity: 0;
     }
 
     to {
-        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -1082,12 +1080,10 @@ li[data-type="taskItem"] input[type="checkbox"] {
 @keyframes fadeInContent {
     from {
         opacity: 0;
-        transform: translateY(10px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 

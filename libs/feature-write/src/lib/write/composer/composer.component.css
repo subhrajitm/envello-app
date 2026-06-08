@@ -582,11 +582,9 @@
 @keyframes dropdownFadeIn {
     from {
         opacity: 0;
-        transform: translateY(-4px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -2026,11 +2024,9 @@
 @keyframes messageSlideIn {
     from {
         opacity: 0;
-        transform: translateY(6px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -5324,8 +5320,8 @@
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from { opacity: 0; transform: translateX(-50%); }
+  to   { opacity: 1; transform: translateX(-50%); }
 }
 
 .ne-focus-toast kbd {

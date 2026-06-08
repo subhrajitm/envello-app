@@ -217,7 +217,6 @@
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    animation: fadeIn 0.3s ease-out;
 }
 
 /* Main Form Area */
@@ -231,7 +230,6 @@
 }
 
 .step-content-wrapper {
-    animation: fadeIn 0.3s ease-out;
 }
 
 .step-heading {
@@ -564,15 +562,6 @@
 
 
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-}
 
 /* Screen reader only */
 .sr-only {

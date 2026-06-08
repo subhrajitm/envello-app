@@ -120,7 +120,6 @@ import { ButtonComponent } from '../../button/button.component';
       border-radius: 6px;
       padding: 28px 24px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      animation: fadeIn 0.3s ease-out;
       position: relative;
       z-index: 10;
     }
@@ -140,10 +139,6 @@ import { ButtonComponent } from '../../button/button.component';
       background: var(--bg-app);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
 
     .login-header {
       text-align: center;
