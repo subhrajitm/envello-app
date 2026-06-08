@@ -16,7 +16,7 @@ import { ButtonComponent } from '../../button/button.component';
         <canvas #linesCanvas class="lines-canvas"></canvas>
       </div>
       
-      <div *ngIf="!authService.isAuthenticated()" class="login-content">
+      <div class="login-content">
         <!-- Logo Section -->
         <div class="login-header">
           <div class="logo-wrapper">
@@ -137,11 +137,12 @@ import { ButtonComponent } from '../../button/button.component';
       width: 100%;
       height: 100%;
       display: block;
+      background: var(--bg-app);
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
 
     .login-header {
@@ -302,6 +303,8 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
   private startLines() {
     const canvas = this.canvasRef?.nativeElement;
     if (!canvas) return;
+    // Skip animation on Tauri — transparent window causes compositor flicker
+    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) return;
     const ctx = canvas.getContext('2d')!;
     const [r, g, b] = this.accentRgb();
 
@@ -315,7 +318,11 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     fit();
-    this.resizeObs = new ResizeObserver(fit);
+    let fitTimer: ReturnType<typeof setTimeout>;
+    this.resizeObs = new ResizeObserver(() => {
+      clearTimeout(fitTimer);
+      fitTimer = setTimeout(fit, 50);
+    });
     this.resizeObs.observe(canvas);
 
     const BS = 6;

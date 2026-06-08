@@ -1,12 +1,10 @@
-import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { EnvLogoComponent } from '../../logo/logo.component';
-import { ButtonComponent } from '../../button/button.component';
-import { InputComponent } from '../../input/input.component';
 
 @Component({
     selector: 'app-sign-up',
@@ -42,6 +40,8 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
     private startLines() {
         const canvas = this.canvasRef?.nativeElement;
         if (!canvas) return;
+        // Skip animation on Tauri — transparent window causes compositor flicker
+        if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) return;
         const ctx = canvas.getContext('2d')!;
         const [r, g, b] = this.accentRgb();
 
@@ -55,7 +55,11 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         };
         fit();
-        this.resizeObs = new ResizeObserver(fit);
+        let fitTimer: ReturnType<typeof setTimeout>;
+        this.resizeObs = new ResizeObserver(() => {
+            clearTimeout(fitTimer);
+            fitTimer = setTimeout(fit, 50);
+        });
         this.resizeObs.observe(canvas);
 
         const BS = 6;
@@ -137,7 +141,7 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
         password: '',
         confirmPassword: '',
         fullName: '',
-        role: 'Writer', // Default
+        role: 'Productivity',
         preferences: {
             emailNotifications: true,
             autoBackup: true
@@ -215,48 +219,37 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
         this.loading.set(true);
         this.error.set(null);
 
-        // 1. Create Auth User
         const success = await this.authService.signUp(this.formData.email, this.formData.password);
 
-        if (success) {
-            // 2. Wait a bit for the session or user to be established if needed, 
-            // but AuthService.signUp usually returns true if the request was sent.
-            // However, we effectively need to update the profile *after* account creation.
-            // Since SignUp usually signs in automatically (or we might need to verify email),
-            // we'll assume for this flow we can proceed. 
-            // Note: Supabase might require email confirmation unless disabled. 
-            // If email confirmation is ON, we can't create profile immediately if RLS requires uid().
-            // For this implementation, we assume we can proceed or we show a success message.
-
-            // We will try to update the profile via UserService if we are logged in.
-            // If email verification is required, this part might fail until they verify.
-
-            // For now, let's treat success as "Check your email" or "Welcome"
-            // If auto-login is enabled in Supabase config:
-            setTimeout(async () => {
-                // Attempt to update profile with specific data
-                if (this.authService.isAuthenticated()) {
-                    await this.userService.updateProfile({
-                        name: this.formData.fullName,
-                        role: this.formData.role,
-                        preferences: {
-                            ...this.userService.user()!.preferences, // keep defaults
-                            emailNotifications: this.formData.preferences.emailNotifications,
-                            autoBackup: this.formData.preferences.autoBackup
-                        }
-                    });
-                    this.router.navigate(['/workspace']);
-                } else {
-                    // Likely email verification needed
-                    this.error.set('Account created! Please verify your email before logging in.');
-                    // Go to login after delay?
-                }
-                this.loading.set(false);
-            }, 1000);
-
-        } else {
+        if (!success) {
             this.error.set('Sign up failed. Please try again or use a different email.');
             this.loading.set(false);
+            return;
         }
+
+        // Wait briefly for session to establish (Supabase auto-confirms or requires email verification)
+        setTimeout(async () => {
+            if (this.authService.isAuthenticated()) {
+                await this.userService.updateProfile({
+                    name: this.formData.fullName,
+                    role: this.formData.role,
+                    preferences: {
+                        ...this.userService.user()!.preferences,
+                        emailNotifications: this.formData.preferences.emailNotifications,
+                        autoBackup: this.formData.preferences.autoBackup
+                    }
+                });
+                this.router.navigate(['/workspace']);
+            } else {
+                this.error.set('Account created! Please verify your email before logging in.');
+            }
+            this.loading.set(false);
+        }, 1000);
+    }
+
+    @HostListener('keydown.enter', ['$event'])
+    handleEnter(event: Event) {
+        event.preventDefault();
+        this.nextStep();
     }
 }
