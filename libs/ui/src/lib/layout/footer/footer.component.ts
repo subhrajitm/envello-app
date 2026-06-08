@@ -1,7 +1,6 @@
 import { Component, signal, OnInit, OnDestroy, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserService, TauriService } from '@envello/core';
-// import { environment } from '../../../../environments/environment'; // Environment might not be accessible easily from libs, assume injected or ignore for now
+import { UserService, TauriService, APP_VERSION } from '@envello/core';
 
 @Component({
   selector: 'app-footer',
@@ -13,12 +12,11 @@ import { UserService, TauriService } from '@envello/core';
 export class FooterComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private tauriService = inject(TauriService);
-  // Stats from User Service
+  private readonly injectedVersion = inject(APP_VERSION);
   private userStats = computed(() => this.userService.user()?.stats);
 
-  // Signals for UI
   currentStreak = computed(() => this.userStats()?.daysActive || 0);
-  appVersion = signal('0.1.0');
+  appVersion = signal(this.injectedVersion);
   isCollapsed = signal(false);
   isOnline = signal(navigator.onLine);
 

@@ -7,7 +7,7 @@ export const environment = {
   apiBaseUrl: 'http://localhost:3000/api',
   logLevel: 'debug' as const,
   enableDebugTools: true,
-  version: '0.1.0-dev',
+  version: '0.1.1-dev',
   featureFlags: {
     aiSuggestions: true,
     offlineMode: false,

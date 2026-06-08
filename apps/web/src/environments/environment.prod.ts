@@ -7,7 +7,7 @@ export const environment = {
   apiBaseUrl: '/api',
   logLevel: 'warn' as const,
   enableDebugTools: false,
-  version: '0.1.0',
+  version: '0.1.1',
   featureFlags: {
     aiSuggestions: false,
     offlineMode: false,

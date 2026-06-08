@@ -5,7 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { ButtonComponent } from '../button/button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
-import { ThemeService, Theme, StoreService, UserPreferencesService } from '@envello/core';
+import { ThemeService, Theme, StoreService, UserPreferencesService, APP_VERSION } from '@envello/core';
 import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService } from '@envello/core';
 import { DataService } from '@envello/data';
@@ -44,6 +44,7 @@ export class SettingsPageComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
   private userPrefsService = inject(UserPreferencesService);
+  readonly appVersion = inject(APP_VERSION);
   aiService = inject(AiService);
 
   // Navigation / dialog state

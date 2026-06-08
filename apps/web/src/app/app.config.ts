@@ -11,7 +11,8 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from '@envello/state';
-import { PowerSyncDataService, FileSystemService } from '@envello/core';
+import { PowerSyncDataService, FileSystemService, APP_VERSION } from '@envello/core';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -30,6 +31,7 @@ export const appConfig: ApplicationConfig = {
     }),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: DataService, useExisting: PowerSyncDataService },
-    { provide: FILE_SYSTEM, useExisting: FileSystemService }
+    { provide: FILE_SYSTEM, useExisting: FileSystemService },
+    { provide: APP_VERSION, useValue: environment.version }
   ],
 };
