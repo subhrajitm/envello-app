@@ -59,14 +59,14 @@
       @if (viewMode() === 'list') {
       <div class="mt-list">
         @if (filteredMeetings().length === 0) {
-        <div class="mt-empty">
-          <span class="material-symbols-outlined mt-empty-icon">event_busy</span>
-          <div class="mt-empty-title">{{ searchQuery() ? 'No results' : 'No meetings' }}</div>
-          <div class="mt-empty-body">{{ searchQuery() ? 'Adjust your search.' : 'Schedule your first meeting.' }}</div>
-          @if (!searchQuery()) {
-          <button class="mta-btn mta-btn--primary" (click)="openCreateModal()">+ New Meeting</button>
-          }
-        </div>
+          <env-empty-state
+            [compact]="true"
+            [icon]="searchQuery() ? 'search_off' : 'event_busy'"
+            [title]="searchQuery() ? 'No results' : 'No meetings'"
+            [description]="searchQuery() ? 'Adjust your search.' : 'Schedule your first meeting.'"
+            [ctaLabel]="!searchQuery() ? '+ New Meeting' : ''"
+            (ctaClicked)="openCreateModal()">
+          </env-empty-state>
         } @else {
         @for (meeting of filteredMeetings(); track meeting.id) {
         <div class="mt-item" [class.mt-item--done]="meeting.status === 'completed'"

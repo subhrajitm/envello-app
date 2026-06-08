@@ -2,7 +2,7 @@ import { Component, signal, computed, inject, HostListener, OnDestroy } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow, EmptyStateComponent } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries' | 'files';
 type SortField = 'title' | 'status' | 'type' | 'date';
@@ -20,7 +20,7 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
 @Component({
   selector: 'app-knowledge',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EmptyStateComponent],
   templateUrl: './knowledge.component.html',
   styleUrl: './knowledge.component.css'
 })

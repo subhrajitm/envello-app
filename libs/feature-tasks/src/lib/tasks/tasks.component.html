@@ -124,18 +124,23 @@
                     </div>
                     }
                 } @else if(filteredTasks().length === 0 && calendarDaySubtasks().length === 0 && todaySubtasks().length === 0 && upcomingSubtasks().length === 0) {
-                    <div class="tasks-empty-state">
-                        <div class="tasks-empty-icon">
-                            <span class="material-symbols-outlined">task_alt</span>
-                        </div>
-                        <h3 class="tasks-empty-title">
-                            {{ store.tasks().length === 0 ? 'You’re all set to start' : 'No tasks found' }}
-                        </h3>
-                        <p class="tasks-empty-body">
-                            {{ store.tasks().length === 0 ? 'Create your first task to kick off your workspace.' : 'No tasks match the current filter or search criteria.' }}
-                        </p>
-                        <button class="btn-primary" (click)="openNewTaskDialog()">+ New Task</button>
-                    </div>
+                    @if (store.tasks().length === 0) {
+                      <env-empty-state
+                        icon="task_alt"
+                        title="You're all set to start"
+                        description="Create your first task to kick off your workspace."
+                        ctaLabel="+ New Task"
+                        (ctaClicked)="openNewTaskDialog()">
+                      </env-empty-state>
+                    } @else {
+                      <env-empty-state
+                        icon="search_off"
+                        title="No tasks found"
+                        description="No tasks match the current filter or search criteria."
+                        secondaryCtaLabel="Clear Filters"
+                        (secondaryCtaClicked)="sidebarSearch.set(''); selectedView.set('inbox')">
+                      </env-empty-state>
+                    }
                 } @else {
                     @for (item of flatListItems(); track $index) {
 

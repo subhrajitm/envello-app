@@ -326,9 +326,13 @@
                   }
                 </div>
               } @else {
-                <span class="material-symbols-outlined rs-empty-icon">search_off</span>
-                <p class="rs-empty-title">No sources match your filters</p>
-                <button class="rs-tool-btn" (click)="clearFilters()">Clear Filters</button>
+                <env-empty-state
+                  [compact]="true"
+                  icon="search_off"
+                  title="No sources match your filters"
+                  secondaryCtaLabel="Clear Filters"
+                  (secondaryCtaClicked)="clearFilters()">
+                </env-empty-state>
               }
             </div>
           } @else {
@@ -350,15 +354,14 @@
         } @else if (viewMode() === 'summaries') {
 
           @if (summaries().length === 0) {
-            <div class="rs-empty">
-              <span class="material-symbols-outlined rs-empty-icon">summarize</span>
-              <p class="rs-empty-title">No summaries yet</p>
-              <p class="rs-empty-sub">Create a summary to synthesize insights from your sources.</p>
-              <button class="rs-add-btn" (click)="openSummaryModal()">
-                <span class="material-symbols-outlined">add</span>
-                New Summary
-              </button>
-            </div>
+            <env-empty-state
+              icon="summarize"
+              title="No summaries yet"
+              description="Create a summary to synthesize insights from your sources."
+              ctaLabel="New Summary"
+              ctaIcon="add"
+              (ctaClicked)="openSummaryModal()">
+            </env-empty-state>
           } @else {
             <env-table
               class="env-table--compact"
@@ -452,9 +455,13 @@
                 }
               </div>
             } @else {
-              <span class="material-symbols-outlined rs-empty-icon">search_off</span>
-              <p class="rs-empty-title">No sources match your filters</p>
-              <button class="rs-tool-btn" (click)="clearFilters()">Clear Filters</button>
+              <env-empty-state
+                [compact]="true"
+                icon="search_off"
+                title="No sources match your filters"
+                secondaryCtaLabel="Clear Filters"
+                (secondaryCtaClicked)="clearFilters()">
+              </env-empty-state>
             }
           </div>
         } @else {

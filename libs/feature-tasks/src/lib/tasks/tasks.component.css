@@ -4399,48 +4399,6 @@
     margin-left: auto;
 }
 
-/* Empty state for tasks grid */
-.tasks-empty-state {
-    padding: 40px 32px;
-    text-align: left;
-    background: var(--bg-app);
-}
-
-.tasks-empty-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-}
-
-.tasks-empty-icon .material-symbols-outlined {
-    font-size: 24px;
-    color: var(--accent-primary);
-}
-
-.tasks-empty-title {
-    margin: 0 0 4px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.tasks-empty-body {
-    margin: 0 0 16px 0;
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.tasks-empty-state .btn-text {
-    padding: 4px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
-    font-size: 12px;
-}
 
 /* Text button (used for Description preview/edit toggle) */
 .btn-text {

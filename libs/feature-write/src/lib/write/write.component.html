@@ -121,21 +121,23 @@
     <div class="wr-content">
 
       @if (filteredBooks().length === 0) {
-        <div class="wr-empty">
-          @if (store.books().length === 0) {
-            <span class="material-symbols-outlined wr-empty-icon">edit_note</span>
-            <p class="wr-empty-title">Nothing here yet</p>
-            <p class="wr-empty-sub">Create your first writing to start writing books, articles, scripts and more.</p>
-            <button class="wr-add-btn" (click)="openAddModal()">
-              <span class="material-symbols-outlined">add</span>
-              New Writing
-            </button>
-          } @else {
-            <span class="material-symbols-outlined wr-empty-icon">search_off</span>
-            <p class="wr-empty-title">No results match your filters</p>
-            <button class="wr-tool-btn" (click)="clearFilters()">Clear Filters</button>
-          }
-        </div>
+        @if (store.books().length === 0) {
+          <env-empty-state
+            icon="edit_note"
+            title="Nothing here yet"
+            description="Create your first writing to start writing books, articles, scripts and more."
+            ctaLabel="New Writing"
+            ctaIcon="add"
+            (ctaClicked)="openAddModal()">
+          </env-empty-state>
+        } @else {
+          <env-empty-state
+            icon="search_off"
+            title="No results match your filters"
+            secondaryCtaLabel="Clear Filters"
+            (secondaryCtaClicked)="clearFilters()">
+          </env-empty-state>
+        }
       } @else if (viewMode() === 'LIST') {
 
         <!-- List view with reusable table -->

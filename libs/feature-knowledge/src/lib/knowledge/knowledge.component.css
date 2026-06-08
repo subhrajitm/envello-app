@@ -258,9 +258,6 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 60px 20px; text-align: center;
 }
-.rs-empty-icon  { font-size: 36px; opacity: 0.3; margin-bottom: 14px; display: block; color: var(--text-tertiary); }
-.rs-empty-title { font-size: 14px; font-weight: 500; color: var(--text-primary); margin: 0 0 6px; }
-.rs-empty-sub   { font-size: 12.5px; color: var(--text-tertiary); margin: 0 auto 20px; max-width: 340px; line-height: 1.65; }
 .rs-empty--zone { padding: 20px; }
 
 /* ── Source table ── */

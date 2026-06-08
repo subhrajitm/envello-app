@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SubscriptionStore } from '@envello/state';
 import { Subscription } from '@envello/domain';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -91,7 +91,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
+    imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
 <div class="vs-view">
@@ -211,29 +211,25 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     <!-- Table -->
     <div class="vs-table-wrap">
       @if (filteredSubs().length === 0) {
-        <div class="vs-empty">
-          @if (subscriptionStore.subscriptions().length === 0) {
-            <span class="material-symbols-outlined vs-empty-icon">subscriptions</span>
-            <p class="vs-empty-title">No subscriptions yet</p>
-            <p class="vs-empty-sub">Track your SaaS costs — add one manually or import a list.</p>
-            <div class="vs-empty-actions">
-              <button class="vs-add-btn" (click)="openAddForm()">
-                <span class="material-symbols-outlined">add</span>
-                Add Subscription
-              </button>
-              <button class="vs-tool-btn" (click)="showImportModal.set(true)">
-                <span class="material-symbols-outlined">upload</span>
-                Import
-              </button>
-            </div>
-          } @else {
-            <span class="material-symbols-outlined vs-empty-icon">search_off</span>
-            <p class="vs-empty-title">No results match your filters</p>
-            <div class="vs-empty-actions">
-              <button class="vs-tool-btn" (click)="clearFilters()">Clear Filters</button>
-            </div>
-          }
-        </div>
+        @if (subscriptionStore.subscriptions().length === 0) {
+          <env-empty-state
+            icon="subscriptions"
+            title="No subscriptions yet"
+            description="Track your SaaS costs — add one manually or import a list."
+            ctaLabel="Add Subscription"
+            ctaIcon="add"
+            secondaryCtaLabel="Import"
+            (ctaClicked)="openAddForm()"
+            (secondaryCtaClicked)="showImportModal.set(true)">
+          </env-empty-state>
+        } @else {
+          <env-empty-state
+            icon="search_off"
+            title="No results match your filters"
+            secondaryCtaLabel="Clear Filters"
+            (secondaryCtaClicked)="clearFilters()">
+          </env-empty-state>
+        }
       } @else {
         <env-table
           class="env-table--compact"
@@ -711,13 +707,6 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
     /* ── Table ── */
     .vs-table-wrap { flex: 1 1 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-
-    /* Empty state */
-    .vs-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
-    .vs-empty-icon  { font-size: 32px; opacity: 0.4; margin-bottom: 12px; display: block; }
-    .vs-empty-title { font-size: 14px; font-weight: 500; color: var(--text-primary); margin: 0 0 4px; }
-    .vs-empty-sub   { font-size: 12px; color: var(--text-tertiary); margin: 0 0 16px; }
-    .vs-empty-actions { display: flex; gap: 8px; justify-content: center; }
 
     /* ── Form modal ── */
     .vendor-form-body { padding: 4px 0; }
