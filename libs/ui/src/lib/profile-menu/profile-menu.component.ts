@@ -16,11 +16,11 @@ import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcu
   animations: [
     trigger('slideDown', [
       transition(':enter', [
-        style({ transform: 'translateY(-10px)', opacity: 0 }),
-        animate('200ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
+        style({ transform: 'translateY(-8px) scale(0.98)', opacity: 0 }),
+        animate('180ms ease-out', style({ transform: 'translateY(0) scale(1)', opacity: 1 }))
       ]),
       transition(':leave', [
-        animate('150ms ease-in', style({ transform: 'translateY(-10px)', opacity: 0 }))
+        animate('150ms ease-in', style({ transform: 'translateY(-8px) scale(0.98)', opacity: 0 }))
       ])
     ])
   ]
@@ -70,8 +70,8 @@ export class ProfileMenuComponent {
   }
 
   manageProfiles() {
-    this.router.navigate(['/profiles']);
     this.close();
+    this.router.navigate(['/profiles']);
   }
 
   open() {
@@ -87,33 +87,32 @@ export class ProfileMenuComponent {
   }
 
   openProfile() {
-    this.onOpenProfile.emit();
     this.close();
+    this.onOpenProfile.emit();
   }
 
   openSettings() {
-    this.onOpenSettings.emit();
     this.close();
+    this.onOpenSettings.emit();
   }
 
   openActivity() {
-    this.router.navigate(['/activity-log']);
     this.close();
+    this.router.navigate(['/activity-log']);
   }
 
   openDeveloperSettings() {
-    this.router.navigate(['/developer-settings']);
     this.close();
+    this.router.navigate(['/developer-settings']);
   }
 
   openHelp() {
-    console.log('Opening help & support...');
     this.close();
   }
 
   openBin() {
-    this.router.navigate(['/bin']);
     this.close();
+    this.router.navigate(['/bin']);
   }
 
   openKeyboardShortcuts() {

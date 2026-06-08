@@ -1,4 +1,4 @@
-<div class="profile-dropdown" *ngIf="isOpen()" [@slideDown]>
+<div class="profile-dropdown" *ngIf="isOpen()" [@slideDown] (click)="$event.stopPropagation()">
     <!-- User Info Section -->
     <div class="profile-header flex items-center gap-3">
         <div class="profile-avatar-large">
