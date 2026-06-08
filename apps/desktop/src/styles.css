@@ -277,42 +277,6 @@
     --accent-primary-text: #ffffff;
 }
 
-[data-theme="enterprise-light"] {
-    /* Enterprise Light Theme - Clean Professional with Gradients */
-    --bg-app: linear-gradient(135deg, #fafafa 0%, #f5f5f5 50%, #fafafa 100%);
-    /* Subtle gradient background */
-    --bg-panel: #ffffff;
-    --bg-hover: linear-gradient(135deg, #f4f4f5 0%, #f0f0f0 100%);
-    /* Gradient hover state */
-    --bg-active: linear-gradient(135deg, #e4e4e7 0%, #e0e0e0 100%);
-    /* Gradient active state */
-
-    --border-subtle: #e4e4e7;
-    /* Zinc 200 */
-    --border-main: #d4d4d8;
-    /* Zinc 300 */
-    --border-highlight: #a1a1aa;
-    /* Zinc 400 */
-
-    --text-primary: #18181b;
-    /* Zinc 900 */
-    --text-secondary: #52525b;
-    /* Zinc 600 */
-    --text-tertiary: #a1a1aa;
-    /* Zinc 400 */
-
-    --accent-primary: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #f59e0b 100%);
-    /* Amber gradient */
-    --accent-primary-dim: rgba(245, 158, 11, 0.1);
-    --accent-primary-text: #ffffff;
-
-    --accent-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    --accent-red: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    --accent-green: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-    --accent-green-solid: #22c55e;
-    --accent-purple: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
-}
-
 [data-theme="typewriter"] .panel,
 [data-theme="typewriter"] .card,
 [data-theme="typewriter"] .btn,

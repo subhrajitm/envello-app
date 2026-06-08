@@ -184,7 +184,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   getThemeIcon(): string {
     const theme = this.theme;
     if (theme === 'dark' || theme === 'enterprise-dark') return 'dark_mode';
-    if (theme === 'light' || theme === 'enterprise-light' || theme === 'typewriter') return 'light_mode';
+    if (theme === 'light' || theme === 'typewriter') return 'light_mode';
     return 'palette';
   }
 

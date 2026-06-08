@@ -124,7 +124,6 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
             'light':            [180,  83,   9],
             'colorful':         [240, 125,  89],
             'typewriter':       [ 60,  60,  60],
-            'enterprise-light': [245, 158,  11],
         };
         return map[theme] ?? map['light'];
     }
