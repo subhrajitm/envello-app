@@ -18,7 +18,7 @@
 /* Search Header — Compass style */
 .dn-search-header {
     height: 44px;
-    padding: 0 14px;
+    padding: 0 16px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
@@ -113,7 +113,7 @@
 /* Section Header — Compass "CONNECTIONS (2)" style */
 .dn-section-header {
     height: 44px;
-    padding: 0 14px;
+    padding: 0 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;

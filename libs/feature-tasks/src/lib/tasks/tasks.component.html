@@ -163,7 +163,7 @@
                                         (click)="toggleCalendarSubtaskStatus(item.task, $event)"
                                         [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
                                     @if (item.task.status === 'COMPLETED') {
-                                        <span class="material-symbols-outlined" style="color: #0b7a5a; font-size: 22px;">check_circle</span>
+                                        <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 22px;">check_circle</span>
                                     } @else {
                                         <span class="material-symbols-outlined" style="color: var(--border-color); font-size: 22px;">radio_button_unchecked</span>
                                     }
@@ -282,7 +282,7 @@
                                         [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
                                         [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
                                     @if (item.task.status === 'COMPLETED') {
-                                        <span class="material-symbols-outlined" style="color: #0b7a5a; font-size: 22px;">check_circle</span>
+                                        <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 22px;">check_circle</span>
                                     } @else if (hasIncompleteSubtasks(item.task)) {
                                         <span class="material-symbols-outlined" style="font-size:16px;color:var(--text-tertiary)">lock</span>
                                     } @else {
