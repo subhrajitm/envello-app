@@ -1,0 +1,174 @@
+<div class="home-page">
+
+  <!-- ── Greeting header ────────────────────────────────────────────────── -->
+  <div class="home-header">
+    <div class="greeting">
+      <h1 class="greeting-text">{{ greeting() }}</h1>
+      <p class="greeting-date">{{ todayDate() }}</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>{{ stats().tasks }} active</span>
+      </div>
+      <div class="stat-pill">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span>{{ stats().meetings }} today</span>
+      </div>
+      <div class="stat-pill">
+        <span class="material-symbols-outlined">bookmarks</span>
+        <span>{{ stats().bookmarks }} saved</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick create ───────────────────────────────────────────────────── -->
+  <div class="quick-create-section">
+    <p class="section-label">Quick Create</p>
+    <div class="quick-create-row">
+      <button class="create-btn" (click)="createNote()">
+        <span class="create-btn-icon" style="background: #e8a87c22; color: #e8a87c;">
+          <span class="material-symbols-outlined">edit_note</span>
+        </span>
+        <span>Note</span>
+      </button>
+      <button class="create-btn" (click)="createTask()">
+        <span class="create-btn-icon" style="background: #7eb3d422; color: #7eb3d4;">
+          <span class="material-symbols-outlined">check_circle</span>
+        </span>
+        <span>Task</span>
+      </button>
+      <button class="create-btn" (click)="goTo('/meetings')">
+        <span class="create-btn-icon" style="background: #d8909022; color: #d89090;">
+          <span class="material-symbols-outlined">calendar_month</span>
+        </span>
+        <span>Meeting</span>
+      </button>
+      <button class="create-btn" (click)="createBookmark()">
+        <span class="create-btn-icon" style="background: #b48ce822; color: #b48ce8;">
+          <span class="material-symbols-outlined">bookmark</span>
+        </span>
+        <span>Bookmark</span>
+      </button>
+      <button class="create-btn" (click)="createBook()">
+        <span class="create-btn-icon" style="background: #c4a8d822; color: #c4a8d8;">
+          <span class="material-symbols-outlined">menu_book</span>
+        </span>
+        <span>Write</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Today section ──────────────────────────────────────────────────── -->
+  <section class="today-section">
+    <div class="section-header">
+      <p class="section-label">Today</p>
+    </div>
+    <div class="today-grid">
+
+      <!-- Active Tasks -->
+      <div class="today-card">
+        <div class="today-card-header">
+          <span class="material-symbols-outlined today-card-icon" style="color: #7eb3d4;">check_circle</span>
+          <span class="today-card-title">Tasks</span>
+          <span class="today-card-count">{{ activeTasks().length }}</span>
+          <button class="today-card-action" (click)="goTo('/tasks')">View all</button>
+        </div>
+        @if (activeTasks().length === 0) {
+          <div class="today-empty">
+            <span class="material-symbols-outlined">task_alt</span>
+            <span>No active tasks</span>
+          </div>
+        } @else {
+          <div class="today-list">
+            @for (task of activeTasks(); track task.id) {
+              <div class="today-item" (click)="goTo('/tasks')">
+                <span class="today-item-dot" [class]="'priority-' + getPriorityClass(task.priority)"></span>
+                <span class="today-item-text">{{ task.title }}</span>
+                <span class="today-item-badge task-status">{{ task.status }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Today's Meetings -->
+      <div class="today-card">
+        <div class="today-card-header">
+          <span class="material-symbols-outlined today-card-icon" style="color: #d89090;">calendar_month</span>
+          <span class="today-card-title">Meetings</span>
+          <span class="today-card-count">{{ todayMeetings().length }}</span>
+          <button class="today-card-action" (click)="goTo('/meetings')">View all</button>
+        </div>
+        @if (todayMeetings().length === 0) {
+          <div class="today-empty">
+            <span class="material-symbols-outlined">event_available</span>
+            <span>No meetings today</span>
+          </div>
+        } @else {
+          <div class="today-list">
+            @for (meeting of todayMeetings(); track meeting.id) {
+              <div class="today-item" (click)="goTo('/meetings')">
+                <span class="meeting-time-dot" [style.background]="meeting.color"></span>
+                <span class="today-item-text">{{ meeting.title }}</span>
+                <span class="today-item-time">{{ meeting.startTime }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Recent section ─────────────────────────────────────────────────── -->
+  <section class="recent-section">
+    <div class="section-header">
+      <p class="section-label">Recent</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="recent-tabs">
+      @for (tab of tabs; track tab.id) {
+        <button
+          class="recent-tab"
+          [class.active]="activeTab() === tab.id"
+          (click)="setTab(tab.id)"
+        >
+          {{ tab.label }}
+          @if (tab.id !== 'all') {
+            <span class="tab-count">{{ getTabCount(tab.id) }}</span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- Grid -->
+    @if (filteredRecent().length === 0) {
+      <div class="recent-empty">
+        <span class="material-symbols-outlined">inbox</span>
+        <p>Nothing here yet</p>
+      </div>
+    } @else {
+      <div class="recent-grid">
+        @for (entry of filteredRecent(); track entry.id) {
+          <div class="recent-card" (click)="openEntry(entry)">
+            <div class="recent-card-icon" [style.background]="entry.color + '22'" [style.color]="entry.color">
+              <span class="material-symbols-outlined">{{ entry.icon }}</span>
+            </div>
+            <div class="recent-card-body">
+              <p class="recent-card-title">{{ entry.title }}</p>
+              <span class="recent-card-meta">{{ entry.meta }}</span>
+            </div>
+            @if (entry.status) {
+              <span class="recent-card-status" [class]="'status-' + entry.status.toLowerCase().replace(' ', '-')">
+                {{ entry.status }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+</div>

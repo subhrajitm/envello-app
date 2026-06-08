@@ -14,6 +14,12 @@ export const routes: Routes = [
     data: { hasSidebar: false, fullScreen: true }
   },
   {
+    path: 'home',
+    loadComponent: () => import('@envello/feature-home').then(m => m.HomeComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'workspace',
     loadComponent: () => import('@envello/feature-workspace').then(m => m.WorkspaceComponent),
     canActivate: [authGuard],

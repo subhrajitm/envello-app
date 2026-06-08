@@ -114,6 +114,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
   private readonly navItemDefs: NavItem[] = [
+    { id: 'home',          label: 'Home',           icon: 'home',         route: 'home' },
     { id: 'tasks',         label: 'Tasks',         icon: 'checklist',    route: 'tasks' },
     { id: 'meetings',      label: 'Meetings',       icon: 'calendar_month', route: 'meetings' },
     { id: 'daily-notes',   label: 'Notes',          icon: 'note',         route: 'daily-notes' },

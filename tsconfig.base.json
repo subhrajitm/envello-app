@@ -22,6 +22,7 @@
       "@envello/feature-vault": ["libs/feature-vault/src/index.ts"],
       "@envello/feature-vendor": ["libs/feature-vendor/src/index.ts"],
       "@envello/feature-daily-notes": ["libs/feature-daily-notes/src/index.ts"],
+      "@envello/feature-home": ["libs/feature-home/src/index.ts"],
       "@envello/feature-bookmarks": ["libs/feature-bookmarks/src/index.ts"],
       "@envello/feature-spaces": ["libs/feature-spaces/src/index.ts"],
       "@envello/feature-meetings": ["libs/feature-meetings/src/index.ts"],
