@@ -95,6 +95,68 @@
             </label>
           </div>
         </div>
+
+        @if (isDesktop) {
+          <div class="section-divider"></div>
+          <div class="section-header" style="margin-top:0">
+            <h3>Window</h3>
+            <p>Desktop window behaviour</p>
+          </div>
+          <div class="settings-pair">
+            <div class="setting-item setting-row">
+              <div class="setting-label-group">
+                <label>Launch at Login</label>
+                <span class="setting-desc">Start Envello automatically when you log in</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" [checked]="launchAtLogin()" (change)="toggleLaunchAtLogin()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="setting-item setting-row">
+              <div class="setting-label-group">
+                <label>Always on Top</label>
+                <span class="setting-desc">Keep Envello above all other windows</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" [checked]="alwaysOnTop()" (change)="toggleAlwaysOnTop()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="setting-item setting-row">
+              <div class="setting-label-group">
+                <label>Minimize to Tray on Close</label>
+                <span class="setting-desc">Keep running in the system tray instead of quitting</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" [checked]="minimizeToTray()" (change)="toggleMinimizeToTray()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="section-header" style="margin-top:8px">
+            <h3>Global Shortcuts</h3>
+            <p>Work even when Envello is in the background</p>
+          </div>
+          <div class="info-card">
+            <div class="info-row">
+              <span class="info-label"><kbd class="kbd">⌘ ⇧ N</kbd></span>
+              <span class="info-value">Open Quick Note</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label"><kbd class="kbd">⌘ ⇧ T</kbd></span>
+              <span class="info-value">Jump to Tasks</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label"><kbd class="kbd">⌘ ⇧ W</kbd></span>
+              <span class="info-value">Jump to Workspace</span>
+            </div>
+            <p class="hint-text" style="margin-top:0.5rem">
+              Shortcuts bring Envello to the foreground from any app.
+            </p>
+          </div>
+        }
       </div>
       }
 
@@ -741,7 +803,25 @@
             <span class="info-label">License</span>
             <span class="info-value">MIT</span>
           </div>
+          @if (isDesktop && osType()) {
+            <div class="info-card-small">
+              <span class="info-label">OS</span>
+              <span class="info-value">{{ osType() }}{{ osArch() ? ' · ' + osArch() : '' }}</span>
+            </div>
+          }
         </div>
+
+        @if (isDesktop) {
+          <div class="info-card" style="margin-top:0">
+            <div class="info-row">
+              <span class="info-label">Deep Link Scheme</span>
+              <span class="info-value" style="font-family:var(--font-mono);font-size:11px;">envello://</span>
+            </div>
+            <p class="hint-text" style="margin-top:0.5rem">
+              Open notes from other apps: <code style="font-size:11px;">envello://note/&lt;id&gt;</code>
+            </p>
+          </div>
+        }
 
         <div class="action-buttons flex gap-2">
           <env-button variant="secondary" (clicked)="checkUpdates()">Check Updates</env-button>

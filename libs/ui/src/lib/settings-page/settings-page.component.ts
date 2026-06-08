@@ -76,6 +76,13 @@ export class SettingsPageComponent implements OnInit {
   dailySummary = signal(false);
   analytics = signal(true);
   versionHistoryLimit = signal(50);
+  // Desktop-only window settings
+  launchAtLogin = signal(false);
+  alwaysOnTop = signal(false);
+  minimizeToTray = signal(false);
+  // OS info (populated async on desktop)
+  osType = signal('');
+  osArch = signal('');
 
   readonly syncSettings = inject(DesktopSyncSettingsService);
   private readonly dataService = inject(DataService);
@@ -325,6 +332,11 @@ export class SettingsPageComponent implements OnInit {
     this.userPrefsService.loadFromDb().then(prefs => {
       if (prefs) this.applyToSignals(prefs);
     });
+    if (this.isDesktop) {
+      this.tauri.isAutoStartEnabled().then(v => this.launchAtLogin.set(v));
+      this.tauri.getOsType().then(v => this.osType.set(v));
+      this.tauri.getOsArch().then(v => this.osArch.set(v));
+    }
   }
 
   @HostListener('document:keydown.escape')
@@ -419,6 +431,25 @@ export class SettingsPageComponent implements OnInit {
   toggleDailySummary() { this.dailySummary.set(!this.dailySummary()); this.isDirty.set(true); }
   toggleAnalytics()    { this.analytics.set(!this.analytics());       this.isDirty.set(true); }
 
+  async toggleLaunchAtLogin() {
+    const next = !this.launchAtLogin();
+    this.launchAtLogin.set(next);
+    await this.tauri.setAutoStart(next);
+    this.isDirty.set(true);
+  }
+
+  async toggleAlwaysOnTop() {
+    const next = !this.alwaysOnTop();
+    this.alwaysOnTop.set(next);
+    await this.tauri.setAlwaysOnTop(next);
+    this.isDirty.set(true);
+  }
+
+  toggleMinimizeToTray() {
+    this.minimizeToTray.set(!this.minimizeToTray());
+    this.isDirty.set(true);
+  }
+
   async testConnection() {
     this.testStatus.set('testing');
     this.testMessage.set('');
@@ -484,6 +515,8 @@ export class SettingsPageComponent implements OnInit {
       analytics: this.analytics(),
       versionHistoryLimit: this.versionHistoryLimit(),
       hiddenNavItems: this.hiddenNavItems(),
+      alwaysOnTop: this.alwaysOnTop(),
+      minimizeToTray: this.minimizeToTray(),
     };
     await this.userPrefsService.save(settings);
     this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
@@ -551,6 +584,8 @@ export class SettingsPageComponent implements OnInit {
     this.soundEffects.set(true);
     this.dailySummary.set(false);
     this.analytics.set(true);
+    this.alwaysOnTop.set(false);
+    this.minimizeToTray.set(false);
     this.aiProvider.set('mock');
     this.aiModel.set('');
     this.aiKey.set('');
@@ -559,6 +594,7 @@ export class SettingsPageComponent implements OnInit {
     window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: emptyVisibility }));
     this.aiService.updateConfig('mock', '', '');
     this.themeService.setTheme('light');
+    this.tauri.setAlwaysOnTop(false).catch(() => {});
     localStorage.removeItem('envello-settings');
     localStorage.setItem('theme', 'light');
     document.documentElement.style.removeProperty('--base-font-size');
@@ -567,13 +603,13 @@ export class SettingsPageComponent implements OnInit {
     document.documentElement.style.removeProperty('--editor-line-height');
     document.body.classList.remove('compact-mode', 'no-animations');
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
-    // Persist defaults to DB so sync-complete doesn't restore old settings
     this.userPrefsService.save({
       theme: 'light', fontSize: 14, compactMode: false, animations: true,
       navigationLayout: 'minimized', editorFont: 'sans', editorFontSize: 16,
       lineHeight: 1.8, autoSave: true, spellCheck: true, focusMode: false,
       desktopNotifications: false, soundEffects: true, dailySummary: false,
       analytics: true, versionHistoryLimit: 50, hiddenNavItems: { web: [], desktop: [] },
+      alwaysOnTop: false, minimizeToTray: false,
     });
     this.isDirty.set(false);
   }
@@ -606,6 +642,8 @@ export class SettingsPageComponent implements OnInit {
     if (s['dailySummary'] !== undefined)   this.dailySummary.set(s['dailySummary']);
     if (s['analytics'] !== undefined)      this.analytics.set(s['analytics'] !== false);
     if (s['versionHistoryLimit'])          this.versionHistoryLimit.set(s['versionHistoryLimit']);
+    if (s['alwaysOnTop'] !== undefined)    this.alwaysOnTop.set(!!s['alwaysOnTop']);
+    if (s['minimizeToTray'] !== undefined) this.minimizeToTray.set(!!s['minimizeToTray']);
     const hn = s['hiddenNavItems'];
     if (hn && !Array.isArray(hn)) {
       this.hiddenNavItems.set({ web: hn.web ?? [], desktop: hn.desktop ?? [] });
