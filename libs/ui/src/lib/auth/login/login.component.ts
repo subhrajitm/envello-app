@@ -298,10 +298,15 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
   private startLines() {
     const canvas = this.canvasRef?.nativeElement;
     if (!canvas) return;
-    // Skip animation on Tauri — transparent window causes compositor flicker
-    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) return;
     const ctx = canvas.getContext('2d')!;
     const [r, g, b] = this.accentRgb();
+    // Read bg-app as a real rgb() value so canvas can paint solid pixels instead of
+    // using clearRect (which exposes Tauri's transparent window to the macOS desktop)
+    const tmp = document.createElement('div');
+    document.body.appendChild(tmp);
+    tmp.style.background = 'var(--bg-app)';
+    const bgColor = getComputedStyle(tmp).backgroundColor || '#ffffff';
+    document.body.removeChild(tmp);
 
     const fit = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -354,7 +359,8 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     const draw = () => {
       const W = canvas.offsetWidth;
       const H = canvas.offsetHeight;
-      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, W, H);
 
       const cols = Math.ceil(W / STEP) + 1;
       const rows = Math.ceil(H / STEP) + 1;
