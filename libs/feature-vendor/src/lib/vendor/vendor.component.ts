@@ -229,7 +229,9 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
           } @else {
             <span class="material-symbols-outlined vs-empty-icon">search_off</span>
             <p class="vs-empty-title">No results match your filters</p>
-            <button class="vs-tool-btn" (click)="clearFilters()">Clear Filters</button>
+            <div class="vs-empty-actions">
+              <button class="vs-tool-btn" (click)="clearFilters()">Clear Filters</button>
+            </div>
           }
         </div>
       } @else {

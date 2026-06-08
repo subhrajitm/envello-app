@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task, NotificationService, FileStorageService, AiService } from '@envello/core';
-import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
@@ -15,7 +15,7 @@ type SubtaskDraft = { title: string; priority: Task['priority'] };
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent],
+  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent, EmptyStateComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

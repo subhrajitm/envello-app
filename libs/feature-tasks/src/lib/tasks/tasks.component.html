@@ -295,21 +295,24 @@
         <!-- Thumbnails / Card View -->
         <div class="tasks-thumbnails-container">
             @if(filteredTasks().length === 0) {
-            <div class="empty-state">
-                <div class="empty-icon-circle">
-                    <span class="material-symbols-outlined">task</span>
-                </div>
-                @if (store.tasks().length === 0) {
-                <h3>No tasks yet</h3>
-                <p>Create your first task to get started.</p>
-                <button class="btn-primary" (click)="openNewTaskDialog()">Create task</button>
-                } @else {
-                <h3>No tasks found</h3>
-                <p>No tasks match the current filter or search criteria.</p>
-                <button class="btn-text" (click)="sidebarSearch.set(''); selectedView.set('inbox')">Clear
-                    filters</button>
-                }
-            </div>
+            @if (store.tasks().length === 0) {
+              <env-empty-state
+                icon="task_alt"
+                title="No tasks yet"
+                description="Create your first task to kick off your workspace."
+                ctaLabel="New Task"
+                ctaIcon="add"
+                (ctaClicked)="openNewTaskDialog()">
+              </env-empty-state>
+            } @else {
+              <env-empty-state
+                icon="search_off"
+                title="No tasks found"
+                description="No tasks match the current filter or search criteria."
+                secondaryCtaLabel="Clear filters"
+                (secondaryCtaClicked)="sidebarSearch.set(''); selectedView.set('inbox')">
+              </env-empty-state>
+            }
             } @else {
             <div class="thumbs-grid">
                 @for (task of filteredTasks(); track task.id) {

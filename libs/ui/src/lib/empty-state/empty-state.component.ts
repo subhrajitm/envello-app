@@ -15,5 +15,7 @@ export class EmptyStateComponent {
   @Input() compact = false;
   @Input() ctaLabel = '';
   @Input() ctaIcon = '';
+  @Input() secondaryCtaLabel = '';
   @Output() ctaClicked = new EventEmitter<void>();
+  @Output() secondaryCtaClicked = new EventEmitter<void>();
 }

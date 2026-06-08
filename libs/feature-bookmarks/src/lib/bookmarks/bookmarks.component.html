@@ -157,6 +157,9 @@
                 Add your first bookmark
               </button>
             }
+            @if (emptyStateConfig().showClear) {
+              <button class="bm-clear-btn" (click)="clearFilters()">Clear Filters</button>
+            }
           </div>
         } @else {
           <env-table
@@ -191,6 +194,9 @@
               <span class="material-symbols-outlined">add</span>
               Add your first bookmark
             </button>
+          }
+          @if (emptyStateConfig().showClear) {
+            <button class="bm-clear-btn" (click)="clearFilters()">Clear Filters</button>
           }
         </div>
       }
@@ -563,13 +569,13 @@
 @if (showDeleteConfirm()) {
 <env-confirm-dialog
     [isOpen]="true"
-    title="Delete Bookmark"
+    [title]="deleteConfirmTitle"
     icon="delete_forever"
     variant="danger"
     confirmLabel="Delete"
     (confirmed)="confirmDelete()"
     (cancelled)="showDeleteConfirm.set(false)">
-    This bookmark will be permanently deleted. This cannot be undone.
+    {{ deleteConfirmMessage }}
 </env-confirm-dialog>
 }
 
