@@ -301,6 +301,9 @@ export class SettingsPageComponent implements OnInit {
   setTheme(theme: Theme) {
     this.currentTheme.set(theme);
     this.themeService.setTheme(theme);
+    // Persist immediately so sync-complete events don't revert the preview
+    const stored = JSON.parse(localStorage.getItem('envello-settings') || '{}');
+    this.userPrefsService.save({ ...stored, theme });
   }
 
   setFontSize(event: Event) {
@@ -528,6 +531,7 @@ export class SettingsPageComponent implements OnInit {
   }
 
   private applyToSignals(s: Record<string, any>) {
+    if (s['theme'])              this.currentTheme.set(s['theme']);
     if (s['fontSize'])           this.fontSize.set(s['fontSize']);
     if (s['compactMode'] !== undefined) this.compactMode.set(s['compactMode']);
     if (s['animations'] !== undefined)  this.animations.set(s['animations'] !== false);

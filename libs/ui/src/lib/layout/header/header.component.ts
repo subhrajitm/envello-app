@@ -1,6 +1,6 @@
 import { Component, Input, inject, ViewChild, signal, computed, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ThemeService, Theme } from '@envello/core';
+import { ThemeService, Theme, UserPreferencesService, AppPreferences } from '@envello/core';
 import { NotificationService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
@@ -43,6 +43,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @ViewChild(ProfileEditorComponent) profileEditor?: ProfileEditorComponent;
 
   themeService = inject(ThemeService);
+  private userPrefsService = inject(UserPreferencesService);
   notificationService = inject(NotificationService);
   userService = inject(UserService);
   private binService = inject(BinService);
@@ -196,6 +197,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleTheme() {
     this.themeService.toggleTheme();
+    // Persist new theme to DB so sync-complete doesn't revert it
+    const stored = JSON.parse(localStorage.getItem('envello-settings') || '{}') as AppPreferences;
+    this.userPrefsService.save({ ...stored, theme: this.themeService.theme() });
   }
 
   toggleVoice() {

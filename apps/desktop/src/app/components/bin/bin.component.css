@@ -8,7 +8,7 @@
 
 /* ─── Page Layout ─── */
 .bin-page {
-    padding: 32px 40px;
+    padding: 20px;
     height: 100%;
     background: var(--bg-app);
     color: var(--text-primary);
