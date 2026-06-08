@@ -6,7 +6,7 @@ import { Location } from '@angular/common';
 import { ButtonComponent } from '../button/button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService } from '@envello/core';
-import { AiService, AiProvider, AiFeature, AiFeatureConfig } from '@envello/core';
+import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -46,10 +46,19 @@ export class SettingsPageComponent implements OnInit {
   private userPrefsService = inject(UserPreferencesService);
   aiService = inject(AiService);
 
+  // Navigation / dialog state
   activeSection = signal('general');
   resetConfirm = signal(false);
   clearDataConfirm = signal(false);
+  unsavedConfirm = signal(false);
 
+  // Dirty tracking & feedback
+  isDirty = signal(false);
+  lastSectionError = signal<'web' | 'desktop' | null>(null);
+  saveStatus = signal<'idle' | 'saving' | 'saved'>('idle');
+  exportDone = signal(false);
+
+  // Settings signals
   currentTheme = signal<Theme>('dark');
   fontSize = signal(14);
   compactMode = signal(false);
@@ -89,12 +98,30 @@ export class SettingsPageComponent implements OnInit {
     }
   }
 
+  // AI signals
   aiProvider = signal<AiProvider>('mock');
   aiModel = signal('');
   aiKey = signal('');
   showApiKey = signal(false);
   testStatus = signal<'idle' | 'testing' | 'success' | 'error'>('idle');
   testMessage = signal('');
+
+  /** Feature overrides whose provider has no API key configured — shown as warnings. */
+  featureOverridesWithMissingKey = computed<AiFeature[]>(() => {
+    const configs = this.aiService.featureConfigs();
+    const globalProvider = this.aiProvider();
+    const globalKey = this.aiKey();
+    const extraKeys = this.aiService.extraProviderKeys();
+    return this.aiFeatureDefs
+      .filter(feat => {
+        const cfg = configs[feat.id];
+        if (!cfg) return false;
+        const p = cfg.provider;
+        if (p === 'mock' || p === 'local' || p === 'ollama') return false;
+        return p === globalProvider ? !globalKey : !extraKeys[p];
+      })
+      .map(f => f.id);
+  });
 
   activeLabel = computed(() => this.sections.find(s => s.id === this.activeSection())?.label ?? 'Settings');
 
@@ -110,14 +137,14 @@ export class SettingsPageComponent implements OnInit {
   ];
 
   readonly allNavItemDefs = [
-    { id: 'tasks',         label: 'Tasks',         icon: 'checklist',    desktopOnly: false },
+    { id: 'tasks',         label: 'Tasks',         icon: 'checklist',      desktopOnly: false },
     { id: 'meetings',      label: 'Meetings',       icon: 'calendar_month', desktopOnly: false },
-    { id: 'daily-notes',   label: 'Notes',          icon: 'note',         desktopOnly: false },
-    { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',          desktopOnly: false },
-    { id: 'write',         label: 'Write',          icon: 'edit',         desktopOnly: false },
-    { id: 'vault',         label: 'Vault',          icon: 'lock',         desktopOnly: true  },
-    { id: 'subscriptions', label: 'Subscriptions',  icon: 'credit_card',  desktopOnly: false },
-    { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    desktopOnly: false },
+    { id: 'daily-notes',   label: 'Notes',          icon: 'note',           desktopOnly: false },
+    { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',            desktopOnly: false },
+    { id: 'write',         label: 'Write',          icon: 'edit',           desktopOnly: false },
+    { id: 'vault',         label: 'Vault',          icon: 'lock',           desktopOnly: true  },
+    { id: 'subscriptions', label: 'Subscriptions',  icon: 'credit_card',    desktopOnly: false },
+    { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',      desktopOnly: false },
   ];
 
   hiddenNavItems = signal<{ web: string[]; desktop: string[] }>({ web: [], desktop: [] });
@@ -134,36 +161,42 @@ export class SettingsPageComponent implements OnInit {
       if (item.desktopOnly && platform === 'web') return false;
       return !nextList.includes(item.id);
     }).length;
-    if (visibleCount === 0) return;
+    if (visibleCount === 0) {
+      this.lastSectionError.set(platform);
+      setTimeout(() => this.lastSectionError.set(null), 2500);
+      return;
+    }
+    this.lastSectionError.set(null);
+    this.isDirty.set(true);
     const next = { ...current, [platform]: nextList };
     this.hiddenNavItems.set(next);
     window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: next }));
   }
 
   themes: ThemeOption[] = [
-    { value: 'dark',             label: 'Midnight',   icon: 'nights_stay' },
-    { value: 'enterprise-dark',  label: 'Pro Dark',   icon: 'dark_mode' },
-    { value: 'light',            label: 'Paper',      icon: 'light_mode' },
-    { value: 'colorful',         label: 'Colorful',   icon: 'palette' },
-    { value: 'typewriter',       label: 'Typewriter', icon: 'article' }
+    { value: 'dark',            label: 'Midnight',   icon: 'nights_stay' },
+    { value: 'enterprise-dark', label: 'Pro Dark',   icon: 'dark_mode' },
+    { value: 'light',           label: 'Paper',      icon: 'light_mode' },
+    { value: 'colorful',        label: 'Colorful',   icon: 'palette' },
+    { value: 'typewriter',      label: 'Typewriter', icon: 'article' }
   ];
 
   aiProviders: AiProviderOption[] = [
-    { value: 'mock',      label: 'Demo Mode',          icon: 'science' },
-    { value: 'local',     label: 'On-Device AI',       icon: 'memory' },
-    { value: 'openai',    label: 'OpenAI (GPT)',        icon: 'psychology' },
-    { value: 'anthropic', label: 'Anthropic (Claude)', icon: 'smart_toy' },
-    { value: 'gemini',    label: 'Google (Gemini)',     icon: 'auto_awesome' },
-    { value: 'grok',      label: 'xAI (Grok)',          icon: 'bolt' },
-    { value: 'deepseek',  label: 'DeepSeek',            icon: 'water' },
-    { value: 'ollama',    label: 'Ollama (Local)',       icon: 'terminal' },
+    { value: 'mock',      label: 'Demo Mode',           icon: 'science' },
+    { value: 'local',     label: 'On-Device AI',        icon: 'memory' },
+    { value: 'openai',    label: 'OpenAI (GPT)',         icon: 'psychology' },
+    { value: 'anthropic', label: 'Anthropic (Claude)',  icon: 'smart_toy' },
+    { value: 'gemini',    label: 'Google (Gemini)',      icon: 'auto_awesome' },
+    { value: 'grok',      label: 'xAI (Grok)',           icon: 'bolt' },
+    { value: 'deepseek',  label: 'DeepSeek',             icon: 'water' },
+    { value: 'ollama',    label: 'Ollama (Local)',        icon: 'terminal' },
   ];
 
   readonly aiFeatureDefs: { id: AiFeature; label: string; icon: string; hint: string }[] = [
-    { id: 'writing',   label: 'Writing',     icon: 'edit',           hint: 'Editor assist, improve, expand' },
-    { id: 'research',  label: 'Research',    icon: 'travel_explore', hint: 'Web research & sourcing' },
-    { id: 'summarize', label: 'Summarize',   icon: 'summarize',      hint: 'Article & content summaries' },
-    { id: 'chat',      label: 'Chat',        icon: 'chat',           hint: 'General AI assistant' },
+    { id: 'writing',   label: 'Writing',   icon: 'edit',           hint: 'Editor assist, improve, expand' },
+    { id: 'research',  label: 'Research',  icon: 'travel_explore', hint: 'Web research & sourcing' },
+    { id: 'summarize', label: 'Summarize', icon: 'summarize',      hint: 'Article & content summaries' },
+    { id: 'chat',      label: 'Chat',      icon: 'chat',           hint: 'General AI assistant' },
   ];
 
   extraProvidersNeeded = computed<AiProvider[]>(() => {
@@ -188,16 +221,19 @@ export class SettingsPageComponent implements OnInit {
   setFeatureProvider(feature: AiFeature, provider: string) {
     if (!provider) {
       this.aiService.updateFeatureConfig(feature, null);
-      return;
+    } else {
+      const p = provider as AiProvider;
+      this.aiService.updateFeatureConfig(feature, { provider: p, model: this.getDefaultModelForProvider(p) });
     }
-    const p = provider as AiProvider;
-    const model = this.getDefaultModelForProvider(p);
-    this.aiService.updateFeatureConfig(feature, { provider: p, model });
+    this.isDirty.set(true);
   }
 
   setFeatureModel(feature: AiFeature, model: string) {
     const existing = this.aiService.featureConfigs()[feature];
-    if (existing) this.aiService.updateFeatureConfig(feature, { ...existing, model });
+    if (existing) {
+      this.aiService.updateFeatureConfig(feature, { ...existing, model });
+      this.isDirty.set(true);
+    }
   }
 
   getDefaultModelForProvider(provider: AiProvider): string {
@@ -215,35 +251,40 @@ export class SettingsPageComponent implements OnInit {
 
   getModelsForProvider(provider: AiProvider): { value: string; label: string }[] {
     switch (provider) {
-      case 'openai':    return [
-        { value: 'gpt-4o',      label: 'gpt-4o' },
-        { value: 'gpt-4o-mini', label: 'gpt-4o-mini (Faster)' },
-        { value: 'o1-mini',     label: 'o1-mini (Reasoning)' },
+      case 'openai': return [
+        { value: 'gpt-4o',       label: 'gpt-4o (Recommended)' },
+        { value: 'gpt-4o-mini',  label: 'gpt-4o-mini (Faster & Cheaper)' },
+        { value: 'o1-preview',   label: 'o1-preview (Advanced Reasoning)' },
+        { value: 'o1-mini',      label: 'o1-mini (Reasoning, Fast)' },
       ];
       case 'anthropic': return [
-        { value: 'claude-opus-4-6',          label: 'claude-opus-4-6 (Powerful)' },
-        { value: 'claude-sonnet-4-6',         label: 'claude-sonnet-4-6' },
-        { value: 'claude-haiku-4-5-20251001', label: 'claude-haiku-4-5 (Fastest)' },
+        { value: 'claude-opus-4-6',           label: 'claude-opus-4-6 (Most Capable)' },
+        { value: 'claude-sonnet-4-6',          label: 'claude-sonnet-4-6 (Recommended)' },
+        { value: 'claude-haiku-4-5-20251001',  label: 'claude-haiku-4-5 (Fastest)' },
       ];
       case 'gemini': return [
-        { value: 'gemini-2.5-pro',   label: 'gemini-2.5-pro' },
-        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash' },
+        { value: 'gemini-2.5-pro',   label: 'gemini-2.5-pro (Most Capable)' },
+        { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash (Recommended)' },
+        { value: 'gemini-1.5-pro',   label: 'gemini-1.5-pro (Stable)' },
       ];
       case 'grok': return [
-        { value: 'grok-3',      label: 'grok-3' },
+        { value: 'grok-3',      label: 'grok-3 (Latest)' },
         { value: 'grok-3-mini', label: 'grok-3-mini (Faster)' },
+        { value: 'grok-2',      label: 'grok-2 (Stable)' },
       ];
       case 'deepseek': return [
-        { value: 'deepseek-chat',     label: 'deepseek-chat' },
-        { value: 'deepseek-reasoner', label: 'deepseek-reasoner (R1)' },
+        { value: 'deepseek-chat',     label: 'deepseek-chat (Recommended)' },
+        { value: 'deepseek-reasoner', label: 'deepseek-reasoner (R1, Chain-of-Thought)' },
       ];
       case 'ollama': return [
-        { value: 'llama3',   label: 'llama3' },
-        { value: 'mistral',  label: 'mistral' },
-        { value: 'gemma3',   label: 'gemma3' },
+        { value: 'llama3',         label: 'llama3' },
+        { value: 'llama3.2',       label: 'llama3.2' },
+        { value: 'mistral',        label: 'mistral' },
+        { value: 'gemma3',         label: 'gemma3' },
+        { value: 'deepseek-coder', label: 'deepseek-coder' },
       ];
       case 'local': return [
-        { value: 'HuggingFaceTB/SmolLM2-360M-Instruct', label: 'SmolLM2 360M' },
+        { value: 'HuggingFaceTB/SmolLM2-360M-Instruct', label: 'SmolLM2 360M (Recommended)' },
         { value: 'HuggingFaceTB/SmolLM2-135M-Instruct', label: 'SmolLM2 135M (Fastest)' },
       ];
       default: return [];
@@ -280,8 +321,6 @@ export class SettingsPageComponent implements OnInit {
         this.activeSection.set(section);
       }
     });
-
-    // Refresh signals from DB (catches settings synced from another device)
     this.userPrefsService.loadFromDb().then(prefs => {
       if (prefs) this.applyToSignals(prefs);
     });
@@ -289,6 +328,16 @@ export class SettingsPageComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   goBack() {
+    if (this.isDirty()) {
+      this.unsavedConfirm.set(true);
+      return;
+    }
+    this.location.back();
+  }
+
+  confirmLeave() {
+    this.isDirty.set(false);
+    this.unsavedConfirm.set(false);
     this.location.back();
   }
 
@@ -300,74 +349,74 @@ export class SettingsPageComponent implements OnInit {
   setTheme(theme: Theme) {
     this.currentTheme.set(theme);
     this.themeService.setTheme(theme);
-    // Persist immediately so sync-complete events don't revert the preview
     const stored = JSON.parse(localStorage.getItem('envello-settings') || '{}');
     this.userPrefsService.save({ ...stored, theme });
   }
 
   setFontSize(event: Event) {
-    const value = parseInt((event.target as HTMLInputElement).value);
-    this.fontSize.set(value);
-    document.documentElement.style.setProperty('--base-font-size', `${value}px`);
+    this.fontSize.set(parseInt((event.target as HTMLInputElement).value));
+    document.documentElement.style.setProperty('--base-font-size', `${this.fontSize()}px`);
+    this.isDirty.set(true);
   }
 
   toggleCompactMode() {
     this.compactMode.set(!this.compactMode());
     document.body.classList.toggle('compact-mode', this.compactMode());
+    this.isDirty.set(true);
   }
 
   toggleAnimations() {
     this.animations.set(!this.animations());
     document.body.classList.toggle('no-animations', !this.animations());
+    this.isDirty.set(true);
   }
 
   setNavigationLayout(layout: 'vertical' | 'horizontal' | 'minimized') {
     this.navigationLayout.set(layout);
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: layout }));
+    this.isDirty.set(true);
   }
 
   setEditorFont(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.editorFont.set(value);
     document.documentElement.style.setProperty('--editor-font', this.getFontFamily(value));
+    this.isDirty.set(true);
   }
 
   setEditorFontSize(event: Event) {
-    const value = parseInt((event.target as HTMLInputElement).value);
-    this.editorFontSize.set(value);
-    document.documentElement.style.setProperty('--editor-font-size', `${value}px`);
+    this.editorFontSize.set(parseInt((event.target as HTMLInputElement).value));
+    document.documentElement.style.setProperty('--editor-font-size', `${this.editorFontSize()}px`);
+    this.isDirty.set(true);
   }
 
   setLineHeight(event: Event) {
-    const value = parseFloat((event.target as HTMLInputElement).value);
-    this.lineHeight.set(value);
-    document.documentElement.style.setProperty('--editor-line-height', value.toString());
+    this.lineHeight.set(parseFloat((event.target as HTMLInputElement).value));
+    document.documentElement.style.setProperty('--editor-line-height', this.lineHeight().toString());
+    this.isDirty.set(true);
   }
 
-  toggleAutoSave() { this.autoSave.set(!this.autoSave()); }
-
-  toggleSpellCheck() {
+  toggleAutoSave()    { this.autoSave.set(!this.autoSave());       this.isDirty.set(true); }
+  toggleSpellCheck()  {
     this.spellCheck.set(!this.spellCheck());
-    document.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el => {
-      el.setAttribute('spellcheck', this.spellCheck() ? 'true' : 'false');
-    });
+    document.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el =>
+      el.setAttribute('spellcheck', this.spellCheck() ? 'true' : 'false')
+    );
+    this.isDirty.set(true);
   }
-
-  toggleFocusMode() {
+  toggleFocusMode()   {
     this.focusMode.set(!this.focusMode());
     window.dispatchEvent(new CustomEvent('focusModeChanged', { detail: this.focusMode() }));
+    this.isDirty.set(true);
   }
-
   toggleDesktopNotifications() {
     this.desktopNotifications.set(!this.desktopNotifications());
-    if (this.desktopNotifications() && 'Notification' in window) {
-      Notification.requestPermission();
-    }
+    if (this.desktopNotifications() && 'Notification' in window) Notification.requestPermission();
+    this.isDirty.set(true);
   }
-
-  toggleSoundEffects() { this.soundEffects.set(!this.soundEffects()); }
-  toggleDailySummary() { this.dailySummary.set(!this.dailySummary()); }
-  toggleAnalytics() { this.analytics.set(!this.analytics()); }
+  toggleSoundEffects() { this.soundEffects.set(!this.soundEffects()); this.isDirty.set(true); }
+  toggleDailySummary() { this.dailySummary.set(!this.dailySummary()); this.isDirty.set(true); }
+  toggleAnalytics()    { this.analytics.set(!this.analytics());       this.isDirty.set(true); }
 
   async testConnection() {
     this.testStatus.set('testing');
@@ -402,21 +451,20 @@ export class SettingsPageComponent implements OnInit {
     this.testStatus.set('idle');
     this.testMessage.set('');
     this.aiProvider.set(provider);
-    if (provider === 'openai')    this.aiModel.set('gpt-4o');
-    else if (provider === 'anthropic') this.aiModel.set('claude-sonnet-4-6');
-    else if (provider === 'gemini')    this.aiModel.set('gemini-2.5-flash');
-    else if (provider === 'grok')      this.aiModel.set('grok-3');
-    else if (provider === 'deepseek')  this.aiModel.set('deepseek-chat');
-    else if (provider === 'ollama')    this.aiModel.set('llama3');
-    else if (provider === 'local')     this.aiModel.set('HuggingFaceTB/SmolLM2-360M-Instruct');
-    else this.aiModel.set('');
+    this.aiModel.set(this.getDefaultModelForProvider(provider));
+    this.isDirty.set(true);
   }
+
+  setAiKey(key: string)   { this.aiKey.set(key);     this.testStatus.set('idle'); this.isDirty.set(true); }
+  setAiModel(model: string) { this.aiModel.set(model); this.testStatus.set('idle'); this.isDirty.set(true); }
 
   setVersionHistoryLimit(event: Event) {
     this.versionHistoryLimit.set(parseInt((event.target as HTMLInputElement).value));
+    this.isDirty.set(true);
   }
 
   async saveSettings() {
+    this.saveStatus.set('saving');
     const settings = {
       theme: this.currentTheme(),
       fontSize: this.fontSize(),
@@ -439,7 +487,9 @@ export class SettingsPageComponent implements OnInit {
     await this.userPrefsService.save(settings);
     this.aiService.updateConfig(this.aiProvider(), this.aiModel(), this.aiKey());
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: this.navigationLayout() }));
-    this.goBack();
+    this.isDirty.set(false);
+    this.saveStatus.set('saved');
+    setTimeout(() => { this.saveStatus.set('idle'); this.location.back(); }, 800);
   }
 
   exportAllData() {
@@ -460,6 +510,8 @@ export class SettingsPageComponent implements OnInit {
     a.download = `envello-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    this.exportDone.set(true);
+    setTimeout(() => this.exportDone.set(false), 2500);
   }
 
   clearAllData() { this.clearDataConfirm.set(true); }
@@ -475,7 +527,8 @@ export class SettingsPageComponent implements OnInit {
     this.storeService.bookmarkFolders.set([]);
     this.storeService.planningItems.set([]);
     this.storeService.spaces.set([]);
-    this.goBack();
+    this.isDirty.set(false);
+    this.location.back();
   }
 
   resetToDefaults() { this.resetConfirm.set(true); }
@@ -504,7 +557,7 @@ export class SettingsPageComponent implements OnInit {
     this.hiddenNavItems.set(emptyVisibility);
     window.dispatchEvent(new CustomEvent('navVisibilityChanged', { detail: emptyVisibility }));
     this.aiService.updateConfig('mock', '', '');
-    this.themeService.theme.set('light');
+    this.themeService.setTheme('light');
     localStorage.removeItem('envello-settings');
     localStorage.setItem('theme', 'light');
     document.documentElement.style.removeProperty('--base-font-size');
@@ -513,44 +566,49 @@ export class SettingsPageComponent implements OnInit {
     document.documentElement.style.removeProperty('--editor-line-height');
     document.body.classList.remove('compact-mode', 'no-animations');
     window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: 'minimized' }));
+    // Persist defaults to DB so sync-complete doesn't restore old settings
+    this.userPrefsService.save({
+      theme: 'light', fontSize: 14, compactMode: false, animations: true,
+      navigationLayout: 'minimized', editorFont: 'sans', editorFontSize: 16,
+      lineHeight: 1.8, autoSave: true, spellCheck: true, focusMode: false,
+      desktopNotifications: false, soundEffects: true, dailySummary: false,
+      analytics: true, versionHistoryLimit: 50, hiddenNavItems: { web: [], desktop: [] },
+    });
+    this.isDirty.set(false);
   }
 
   checkUpdates() { this.tauri.openUrl('https://github.com/envello-app/envello/releases'); }
-  openDocs() { this.tauri.openUrl('https://github.com/envello-app/envello/wiki'); }
-  reportIssue() { this.tauri.openUrl('https://github.com/envello-app/envello/issues/new'); }
+  openDocs()     { this.tauri.openUrl('https://github.com/envello-app/envello/wiki'); }
+  reportIssue()  { this.tauri.openUrl('https://github.com/envello-app/envello/issues/new'); }
 
   private loadSettings() {
     const saved = localStorage.getItem('envello-settings');
     if (!saved) return;
-    try {
-      this.applyToSignals(JSON.parse(saved));
-    } catch (e) {
-      console.error('Failed to load settings:', e);
-    }
+    try { this.applyToSignals(JSON.parse(saved)); }
+    catch (e) { console.error('Failed to load settings:', e); }
   }
 
   private applyToSignals(s: Record<string, any>) {
-    if (s['theme'])              this.currentTheme.set(s['theme']);
-    if (s['fontSize'])           this.fontSize.set(s['fontSize']);
-    if (s['compactMode'] !== undefined) this.compactMode.set(s['compactMode']);
-    if (s['animations'] !== undefined)  this.animations.set(s['animations'] !== false);
-    if (s['navigationLayout'])   this.navigationLayout.set(s['navigationLayout']);
-    if (s['editorFont'])         this.editorFont.set(s['editorFont']);
-    if (s['editorFontSize'])     this.editorFontSize.set(s['editorFontSize']);
-    if (s['lineHeight'])         this.lineHeight.set(s['lineHeight']);
-    if (s['autoSave'] !== undefined)    this.autoSave.set(s['autoSave'] !== false);
-    if (s['spellCheck'] !== undefined)  this.spellCheck.set(s['spellCheck'] !== false);
-    if (s['focusMode'] !== undefined)   this.focusMode.set(s['focusMode']);
+    if (s['theme'])                        this.currentTheme.set(s['theme']);
+    if (s['fontSize'])                     this.fontSize.set(s['fontSize']);
+    if (s['compactMode'] !== undefined)    this.compactMode.set(s['compactMode']);
+    if (s['animations'] !== undefined)     this.animations.set(s['animations'] !== false);
+    if (s['navigationLayout'])             this.navigationLayout.set(s['navigationLayout']);
+    if (s['editorFont'])                   this.editorFont.set(s['editorFont']);
+    if (s['editorFontSize'])               this.editorFontSize.set(s['editorFontSize']);
+    if (s['lineHeight'])                   this.lineHeight.set(s['lineHeight']);
+    if (s['autoSave'] !== undefined)       this.autoSave.set(s['autoSave'] !== false);
+    if (s['spellCheck'] !== undefined)     this.spellCheck.set(s['spellCheck'] !== false);
+    if (s['focusMode'] !== undefined)      this.focusMode.set(s['focusMode']);
     if (s['desktopNotifications'] !== undefined) this.desktopNotifications.set(s['desktopNotifications']);
-    if (s['soundEffects'] !== undefined) this.soundEffects.set(s['soundEffects'] !== false);
-    if (s['dailySummary'] !== undefined) this.dailySummary.set(s['dailySummary']);
-    if (s['analytics'] !== undefined)    this.analytics.set(s['analytics'] !== false);
-    if (s['versionHistoryLimit'])        this.versionHistoryLimit.set(s['versionHistoryLimit']);
+    if (s['soundEffects'] !== undefined)   this.soundEffects.set(s['soundEffects'] !== false);
+    if (s['dailySummary'] !== undefined)   this.dailySummary.set(s['dailySummary']);
+    if (s['analytics'] !== undefined)      this.analytics.set(s['analytics'] !== false);
+    if (s['versionHistoryLimit'])          this.versionHistoryLimit.set(s['versionHistoryLimit']);
     const hn = s['hiddenNavItems'];
     if (hn && !Array.isArray(hn)) {
       this.hiddenNavItems.set({ web: hn.web ?? [], desktop: hn.desktop ?? [] });
     }
-    // Apply DOM effects
     if (s['fontSize'])       document.documentElement.style.setProperty('--base-font-size', `${s['fontSize']}px`);
     if (s['editorFont'])     document.documentElement.style.setProperty('--editor-font', this.getFontFamily(s['editorFont']));
     if (s['editorFontSize']) document.documentElement.style.setProperty('--editor-font-size', `${s['editorFontSize']}px`);

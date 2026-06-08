@@ -12,6 +12,19 @@
       </div>
     </div>
     <div class="topbar-actions">
+      @if (saveStatus() === 'saving') {
+        <span class="save-status">
+          <span class="material-symbols-outlined" style="font-size:15px;animation:spin 1s linear infinite;">progress_activity</span>
+          Saving…
+        </span>
+      } @else if (saveStatus() === 'saved') {
+        <span class="save-status save-status--ok">
+          <span class="material-symbols-outlined" style="font-size:15px;">check_circle</span>
+          Saved
+        </span>
+      } @else if (isDirty()) {
+        <span class="save-status save-status--dirty">Unsaved changes</span>
+      }
       <env-button variant="ghost" (clicked)="resetToDefaults()">Reset to Defaults</env-button>
       <env-button variant="primary" (clicked)="saveSettings()">Save Changes</env-button>
     </div>
@@ -147,9 +160,16 @@
           }
         </div>
 
-        <p class="hint-text" style="margin-top:1rem">
-          Changes preview live. At least one section must remain visible per platform.
-        </p>
+        @if (lastSectionError()) {
+          <p class="sections-last-error">
+            <span class="material-symbols-outlined" style="font-size:15px;">info</span>
+            Can't hide — at least one section must remain visible on {{ lastSectionError() === 'web' ? 'Web' : 'Desktop' }}.
+          </p>
+        } @else {
+          <p class="hint-text" style="margin-top:1rem">
+            Changes preview live. At least one section must remain visible per platform.
+          </p>
+        }
       </div>
       }
 
@@ -329,7 +349,7 @@
           </div>
           <div class="api-key-row">
             <input [type]="showApiKey() ? 'text' : 'password'" [ngModel]="aiKey()"
-              (ngModelChange)="aiKey.set($event); testStatus.set('idle')"
+              (ngModelChange)="setAiKey($event)"
               class="form-input" [placeholder]="getApiKeyPlaceholder()" spellcheck="false">
             <button type="button" class="key-toggle-btn" (click)="showApiKey.set(!showApiKey())"
               [title]="showApiKey() ? 'Hide API key' : 'Show API key'">
@@ -377,7 +397,7 @@
           </div>
           <div class="setting-control" style="min-width:220px">
             <select class="select-input w-full" [ngModel]="aiModel()"
-              (ngModelChange)="aiModel.set($event); testStatus.set('idle')">
+              (ngModelChange)="setAiModel($event)">
               @if (aiProvider() === 'local') {
               <option value="HuggingFaceTB/SmolLM2-360M-Instruct">SmolLM2 360M (Recommended)</option>
               <option value="HuggingFaceTB/SmolLM2-135M-Instruct">SmolLM2 135M (Fastest, ~270 MB)</option>
@@ -475,11 +495,18 @@
               <span class="feature-col-label">Model</span>
             </div>
             @for (feat of aiFeatureDefs; track feat.id) {
-            <div class="feature-model-row">
+            <div class="feature-model-row" [class.feature-model-row--warn]="featureOverridesWithMissingKey().includes(feat.id)">
               <div class="feature-model-label">
                 <span class="material-symbols-outlined feature-icon">{{ feat.icon }}</span>
                 <span>{{ feat.label }}</span>
-                <span class="feature-model-hint">{{ feat.hint }}</span>
+                @if (featureOverridesWithMissingKey().includes(feat.id)) {
+                  <span class="feature-warn-badge" title="API key missing for this provider">
+                    <span class="material-symbols-outlined" style="font-size:13px;">key_off</span>
+                    No key
+                  </span>
+                } @else {
+                  <span class="feature-model-hint">{{ feat.hint }}</span>
+                }
               </div>
               <select class="select-input feature-select" [ngModel]="getFeatureProvider(feat.id)"
                 (ngModelChange)="setFeatureProvider(feat.id, $event)">
@@ -547,11 +574,11 @@
           </div>
           <div class="setting-item setting-row">
             <div class="setting-label-group">
-              <label>Sound Effects</label>
+              <label>Sound Effects <span class="badge-coming-soon">Coming soon</span></label>
               <span class="setting-desc">Play sounds for actions</span>
             </div>
-            <label class="toggle">
-              <input type="checkbox" [checked]="soundEffects()" (change)="toggleSoundEffects()">
+            <label class="toggle" title="Coming soon">
+              <input type="checkbox" [checked]="soundEffects()" (change)="toggleSoundEffects()" disabled>
               <span class="toggle-track"></span>
             </label>
           </div>
@@ -559,11 +586,11 @@
 
         <div class="setting-item setting-row">
           <div class="setting-label-group">
-            <label>Daily Summary</label>
+            <label>Daily Summary <span class="badge-coming-soon">Coming soon</span></label>
             <span class="setting-desc">Receive daily progress report</span>
           </div>
-          <label class="toggle">
-            <input type="checkbox" [checked]="dailySummary()" (change)="toggleDailySummary()">
+          <label class="toggle" title="Coming soon">
+            <input type="checkbox" [checked]="dailySummary()" (change)="toggleDailySummary()" disabled>
             <span class="toggle-track"></span>
           </label>
         </div>
@@ -580,11 +607,11 @@
 
         <div class="setting-item setting-row">
           <div class="setting-label-group">
-            <label>Analytics</label>
+            <label>Analytics <span class="badge-coming-soon">Coming soon</span></label>
             <span class="setting-desc">Share anonymous usage data to improve Envello</span>
           </div>
-          <label class="toggle">
-            <input type="checkbox" [checked]="analytics()" (change)="toggleAnalytics()">
+          <label class="toggle" title="Coming soon">
+            <input type="checkbox" [checked]="analytics()" (change)="toggleAnalytics()" disabled>
             <span class="toggle-track"></span>
           </label>
         </div>
@@ -594,15 +621,21 @@
             <label>Export Data</label>
             <span class="setting-desc">Download all your data as a JSON archive</span>
           </div>
-          <div class="setting-control">
+          <div class="setting-control" style="display:flex;align-items:center;gap:0.6rem;">
             <env-button variant="secondary" (clicked)="exportAllData()">Export All Data</env-button>
+            @if (exportDone()) {
+              <span class="export-done-label">
+                <span class="material-symbols-outlined" style="font-size:15px;">check_circle</span>
+                Downloaded
+              </span>
+            }
           </div>
         </div>
 
         <div class="info-card">
           <div class="info-row">
             <span class="info-label">Storage Mode</span>
-            <span class="info-value">Local (SQLite)</span>
+            <span class="info-value">{{ isDesktop ? 'On-device' : 'Local (browser)' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Sync Status</span>
@@ -701,10 +734,6 @@
             <span class="info-value">{{ isDesktop ? 'Desktop' : 'Web' }}</span>
           </div>
           <div class="info-card-small">
-            <span class="info-label">Framework</span>
-            <span class="info-value">Angular 20</span>
-          </div>
-          <div class="info-card-small">
             <span class="info-label">Updated</span>
             <span class="info-value">Jun 2026</span>
           </div>
@@ -749,5 +778,19 @@
   (confirmed)="doClearAllData()"
   (cancelled)="clearDataConfirm.set(false)">
   This will permanently delete all your tasks, notes, books, and bookmarks. This cannot be undone.
+</env-confirm-dialog>
+}
+
+@if (unsavedConfirm()) {
+<env-confirm-dialog
+  [isOpen]="true"
+  title="Unsaved Changes"
+  icon="warning"
+  variant="danger"
+  confirmLabel="Leave Without Saving"
+  cancelLabel="Stay"
+  (confirmed)="confirmLeave()"
+  (cancelled)="unsavedConfirm.set(false)">
+  You have unsaved changes. If you leave now, your changes will be lost.
 </env-confirm-dialog>
 }
