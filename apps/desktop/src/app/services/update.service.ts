@@ -2,6 +2,8 @@ import { Injectable, signal } from '@angular/core';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
+const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 @Injectable({ providedIn: 'root' })
 export class UpdateService {
   available = signal(false);
@@ -14,6 +16,7 @@ export class UpdateService {
   private pending: Update | null = null;
 
   async checkForUpdate(): Promise<void> {
+    if (!isTauri()) return;
     try {
       const update = await check();
       if (update?.available) {
@@ -23,8 +26,7 @@ export class UpdateService {
         this.available.set(true);
       }
     } catch (e: any) {
-      // Silently ignore network errors on startup check
-      console.warn('[UpdateService] check failed:', e?.message ?? e);
+      // Silently ignore — network unavailable or no release found yet
     }
   }
 
