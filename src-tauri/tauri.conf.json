@@ -6,7 +6,7 @@
     "beforeDevCommand": "CI=true npm run dev",
     "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:4200",
-    "frontendDist": "../dist/apps/desktop"
+    "frontendDist": "../dist/apps/desktop/browser"
   },
   "app": {
     "macOSPrivateApi": true,
