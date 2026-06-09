@@ -596,20 +596,18 @@
 @if (showDetailsModal() && selectedMeeting()) {
 <div class="mta-backdrop" (click)="closeDetailsModal()">
   <div class="mta-modal mta-modal--xl" (click)="$event.stopPropagation()">
-    <div class="mta-modal-hdr mta-modal-hdr--meeting" [style.--mc]="selectedMeeting()!.color">
-      <div class="mta-mhdr-bar"></div>
-      <div class="mta-mhdr-content">
-        @if (editingMeeting()) {
-        <input type="text" class="mta-details-title-input" [value]="editedMeeting().title"
-          (input)="updateEditedMeetingField('title', $any($event.target).value)" />
-        } @else {
-        <h2 class="mta-details-title">{{ selectedMeeting()!.title }}</h2>
-        }
-        <div class="mta-details-status">
-          <span class="mta-status-dot" [style.backgroundColor]="getStatusColor(selectedMeeting()!.status)"></span>
-          <span>{{ selectedMeeting()!.status | titlecase }}</span>
-        </div>
-      </div>
+    <div class="mta-modal-hdr">
+      <span class="mta-mhdr-dot" [style.background]="selectedMeeting()!.color"></span>
+      @if (editingMeeting()) {
+      <input type="text" class="mta-input mta-mhdr-title-input" [value]="editedMeeting().title"
+        (input)="updateEditedMeetingField('title', $any($event.target).value)" />
+      } @else {
+      <span class="mta-modal-title">{{ selectedMeeting()!.title }}</span>
+      }
+      <span class="mta-mhdr-status">
+        <span class="mta-status-dot" [style.backgroundColor]="getStatusColor(selectedMeeting()!.status)"></span>
+        {{ selectedMeeting()!.status | titlecase }}
+      </span>
       <button class="mta-modal-close" (click)="closeDetailsModal()">
         <span class="material-symbols-outlined">close</span>
       </button>
@@ -649,7 +647,7 @@
                 (input)="updateEditedMeetingField('date', $any($event.target).value)" />
               <input type="time" class="mta-input mta-input--sm" [value]="editedMeeting().startTime"
                 (input)="updateEditedMeetingField('startTime', $any($event.target).value)" />
-              <span>to</span>
+              <span class="mta-time-sep">to</span>
               <input type="time" class="mta-input mta-input--sm" [value]="editedMeeting().endTime"
                 (input)="updateEditedMeetingField('endTime', $any($event.target).value)" />
             </div>
