@@ -1,6 +1,6 @@
 {
   "productName": "Envello",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "identifier": "com.envello.app",
   "build": {
     "beforeDevCommand": "CI=true npm run dev",
