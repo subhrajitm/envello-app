@@ -137,7 +137,7 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
     }
 
     currentStep = signal(1);
-    totalSteps = 3;
+    totalSteps = 4;
 
     // Form Data
     formData = {
@@ -152,28 +152,36 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
         }
     };
 
+    verificationCode = signal('');
+    resendCooldown = signal(0);
+    private resendTimer?: ReturnType<typeof setInterval>;
+
     loading = signal(false);
     error = signal<string | null>(null);
 
     steps = [
         { number: 1, title: 'Credentials', status: 'active' },
         { number: 2, title: 'Personal Info', status: 'pending' },
-        { number: 3, title: 'Preferences', status: 'pending' }
+        { number: 3, title: 'Preferences', status: 'pending' },
+        { number: 4, title: 'Verify Email', status: 'pending' },
     ];
 
     nextStep() {
-        if (this.currentStep() < this.totalSteps) {
-            if (this.validateStep(this.currentStep())) {
-                this.currentStep.set(this.currentStep() + 1);
-                this.updateStepStatuses();
-            }
+        if (this.currentStep() === this.totalSteps) {
+            this.verifyAndComplete();
+            return;
+        }
+        if (!this.validateStep(this.currentStep())) return;
+        if (this.currentStep() === 3) {
+            this.initiateSignUp();
         } else {
-            this.completeSignUp();
+            this.currentStep.set(this.currentStep() + 1);
+            this.updateStepStatuses();
         }
     }
 
     prevStep() {
-        if (this.currentStep() > 1) {
+        if (this.currentStep() > 1 && this.currentStep() < 4) {
             this.currentStep.set(this.currentStep() - 1);
             this.updateStepStatuses();
         }
@@ -215,39 +223,105 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
                 this.error.set('Please enter your full name.');
                 return false;
             }
+        } else if (step === 4) {
+            if (this.verificationCode().trim().length < 6) {
+                this.error.set('Please enter the 6-digit code from your email.');
+                return false;
+            }
         }
         return true;
     }
 
-    async completeSignUp() {
+    async initiateSignUp() {
         this.loading.set(true);
         this.error.set(null);
 
-        const success = await this.authService.signUp(this.formData.email, this.formData.password);
+        const errorMsg = await this.authService.signUp(this.formData.email, this.formData.password);
 
-        if (!success) {
-            this.error.set('Sign up failed. Please try again or use a different email.');
+        if (errorMsg) {
+            this.error.set(
+                errorMsg.toLowerCase().includes('rate limit')
+                    ? 'Too many attempts. Please wait a few minutes before trying again.'
+                    : errorMsg
+            );
             this.loading.set(false);
             return;
         }
 
-        // Wait briefly for session to establish (Supabase auto-confirms or requires email verification)
-        setTimeout(async () => {
-            if (this.authService.isAuthenticated()) {
-                await this.userService.updateProfile({
-                    name: this.formData.fullName,
-                    role: this.formData.role,
-                    preferences: {
-                        ...this.userService.user()!.preferences,
-                        emailNotifications: this.formData.preferences.emailNotifications,
-                        autoBackup: this.formData.preferences.autoBackup
-                    }
-                });
-                this.router.navigate(['/workspace']);
-            } else {
-                this.error.set('Account created! Please verify your email before logging in.');
-            }
+        // If email confirmation is disabled in Supabase, the session is created
+        // immediately and the user is already authenticated — skip OTP step.
+        if (this.authService.isAuthenticated()) {
+            await this.applyProfileAndNavigate();
+            return;
+        }
+
+        this.currentStep.set(4);
+        this.updateStepStatuses();
+        this.startResendCooldown();
+        this.loading.set(false);
+    }
+
+    async verifyAndComplete() {
+        if (!this.validateStep(4)) return;
+
+        this.loading.set(true);
+        this.error.set(null);
+
+        const success = await this.authService.verifySignupOtp(
+            this.formData.email,
+            this.verificationCode().trim()
+        );
+
+        if (!success) {
+            this.error.set('Invalid or expired code. Please try again or request a new one.');
             this.loading.set(false);
+            return;
+        }
+
+        // Wait for auth state to propagate
+        setTimeout(() => this.applyProfileAndNavigate(), 500);
+    }
+
+    private async applyProfileAndNavigate() {
+        if (this.authService.isAuthenticated()) {
+            await this.userService.updateProfile({
+                name: this.formData.fullName,
+                role: this.formData.role,
+                preferences: {
+                    ...this.userService.user()!.preferences,
+                    emailNotifications: this.formData.preferences.emailNotifications,
+                    autoBackup: this.formData.preferences.autoBackup
+                }
+            });
+            this.router.navigate(['/workspace']);
+        }
+        this.loading.set(false);
+    }
+
+    async resendCode() {
+        if (this.resendCooldown() > 0) return;
+        this.loading.set(true);
+        const success = await this.authService.resendSignupOtp(this.formData.email);
+        this.loading.set(false);
+        if (success) {
+            this.error.set(null);
+            this.startResendCooldown();
+        } else {
+            this.error.set('Failed to resend code. Please try again.');
+        }
+    }
+
+    private startResendCooldown() {
+        this.resendCooldown.set(60);
+        clearInterval(this.resendTimer);
+        this.resendTimer = setInterval(() => {
+            const n = this.resendCooldown() - 1;
+            if (n <= 0) {
+                this.resendCooldown.set(0);
+                clearInterval(this.resendTimer);
+            } else {
+                this.resendCooldown.set(n);
+            }
         }, 1000);
     }
 

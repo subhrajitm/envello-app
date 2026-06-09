@@ -432,12 +432,12 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
-    const success = await this.authService.signUp(this.email, this.password);
+    const errorMsg = await this.authService.signUp(this.email, this.password);
 
-    if (success) {
+    if (!errorMsg) {
       this.error.set('Account created! Please check your email to verify.');
     } else {
-      this.error.set('Sign up failed. Please try again.');
+      this.error.set(errorMsg);
     }
     this.loading.set(false);
   }

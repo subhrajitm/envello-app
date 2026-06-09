@@ -198,9 +198,41 @@
                     </div>
                     }
 
+                    <!-- Step 4: Verify Email -->
+                    @if (currentStep() === 4) {
+                    <div class="step-content-wrapper">
+                        <h1 class="step-heading">Verify Your Email</h1>
+                        <p class="step-description">We sent a 6-digit code to <strong>{{ formData.email }}</strong></p>
+
+                        <div class="form-fields">
+                            <div class="form-group">
+                                <label class="form-label">Verification Code</label>
+                                <input type="text" inputmode="numeric" maxlength="6"
+                                    class="form-input otp-input" placeholder="000000"
+                                    [ngModel]="verificationCode()" (ngModelChange)="verificationCode.set($event)"
+                                    autofocus>
+                            </div>
+
+                            <div class="resend-section">
+                                @if (resendCooldown() > 0) {
+                                <span class="resend-timer">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    Resend available in {{ resendCooldown() }}s
+                                </span>
+                                } @else {
+                                <button type="button" class="resend-btn" (click)="resendCode()" [disabled]="loading()">
+                                    <span class="material-symbols-outlined">send</span>
+                                    Resend code
+                                </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    }
+
                     <!-- Navigation -->
                     <div class="form-actions">
-                        @if (currentStep() > 1) {
+                        @if (currentStep() > 1 && currentStep() < 4) {
                         <button (click)="prevStep()" class="btn-secondary">
                             <span class="material-symbols-outlined">arrow_back</span>
                             Back
@@ -212,7 +244,7 @@
                             <span class="loading-spinner"></span>
                             <span>Processing...</span>
                             } @else {
-                            <span>{{ currentStep() === totalSteps ? 'Complete Setup' : 'Continue' }}</span>
+                            <span>{{ currentStep() === totalSteps ? 'Verify & Complete' : 'Continue' }}</span>
                             <span class="material-symbols-outlined">arrow_forward</span>
                             }
                         </button>

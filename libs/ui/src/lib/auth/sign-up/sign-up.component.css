@@ -599,3 +599,67 @@
     gap: 8px;
     margin-bottom: 24px;
 }
+
+/* OTP Input */
+.otp-input {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    text-align: center;
+    padding: 14px 16px;
+    font-family: monospace;
+}
+
+.otp-input::placeholder {
+    font-size: 18px;
+    letter-spacing: 8px;
+    font-weight: 400;
+}
+
+/* Resend Section */
+.resend-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+}
+
+.resend-timer {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.resend-timer .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.resend-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.resend-btn:hover:not(:disabled) {
+    background: var(--accent-primary-dim);
+}
+
+.resend-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.resend-btn .material-symbols-outlined {
+    font-size: 14px;
+}
