@@ -102,4 +102,5 @@ jobs:
             | Linux | `Envello_*_amd64.AppImage` |
           releaseDraft: false
           prerelease: false
+          tauriScript: npx tauri
           args: ${{ matrix.args }}
