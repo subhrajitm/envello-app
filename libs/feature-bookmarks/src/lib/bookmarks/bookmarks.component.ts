@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetection
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService } from '@envello/core';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 type BookmarkView = 'all' | 'pinned' | 'archived' | 'recent';
@@ -12,7 +12,7 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 @Component({
   selector: 'app-bookmarks',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent],
   templateUrl: './bookmarks.component.html',
   styleUrl: './bookmarks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -65,6 +65,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   // ── Delete confirmation ──────────────────────────────────────────────────────
   showDeleteConfirm = signal<boolean>(false);
   deletingBookmarkId = signal<string>('');
+  deletingBulkIds    = signal<string[]>([]);
 
   // ── Keyboard shortcuts help ──────────────────────────────────────────────────
   showShortcutsHelp = signal<boolean>(false);
@@ -214,12 +215,12 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   emptyStateConfig = computed(() => {
     const view = this.selectedView();
     const hasFilter = !!this.searchQuery() || this.selectedTags().length > 0;
-    if (hasFilter) return { icon: 'search_off', title: 'No results found', subtitle: '', showAdd: false };
+    if (hasFilter) return { icon: 'search_off', title: 'No results found', subtitle: '', showAdd: false, showClear: true };
     switch (view) {
-      case 'pinned':   return { icon: 'push_pin', title: 'No pinned bookmarks', subtitle: 'Pin a bookmark to find it here quickly', showAdd: false };
-      case 'archived': return { icon: 'archive',  title: 'No archived bookmarks', subtitle: 'Archive bookmarks to declutter your view', showAdd: false };
-      case 'recent':   return { icon: 'history',  title: 'No recent bookmarks', subtitle: 'Your latest additions will appear here', showAdd: false };
-      default:         return { icon: 'bookmarks', title: 'No bookmarks yet', subtitle: '', showAdd: true };
+      case 'pinned':   return { icon: 'push_pin', title: 'No pinned bookmarks', subtitle: 'Pin a bookmark to find it here quickly', showAdd: false, showClear: false };
+      case 'archived': return { icon: 'archive',  title: 'No archived bookmarks', subtitle: 'Archive bookmarks to declutter your view', showAdd: false, showClear: false };
+      case 'recent':   return { icon: 'history',  title: 'No recent bookmarks', subtitle: 'Your latest additions will appear here', showAdd: false, showClear: false };
+      default:         return { icon: 'bookmarks', title: 'No bookmarks yet', subtitle: '', showAdd: true, showClear: false };
     }
   });
 
@@ -397,13 +398,38 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   // ── Delete ────────────────────────────────────────────────────────────────────
   requestDelete(id: string) {
     this.deletingBookmarkId.set(id);
+    this.deletingBulkIds.set([]);
+    this.showDeleteConfirm.set(true);
+  }
+
+  requestBulkDelete(ids: string[]) {
+    this.deletingBulkIds.set(ids);
+    this.deletingBookmarkId.set('');
     this.showDeleteConfirm.set(true);
   }
 
   confirmDelete() {
-    this.store.deleteBookmark(this.deletingBookmarkId());
+    const bulk = this.deletingBulkIds();
+    if (bulk.length > 0) {
+      bulk.forEach(id => this.store.deleteBookmark(id));
+    } else {
+      this.store.deleteBookmark(this.deletingBookmarkId());
+    }
     this.showDeleteConfirm.set(false);
     this.deletingBookmarkId.set('');
+    this.deletingBulkIds.set([]);
+  }
+
+  get deleteConfirmTitle(): string {
+    const count = this.deletingBulkIds().length;
+    return count > 1 ? `Delete ${count} Bookmarks` : 'Delete Bookmark';
+  }
+
+  get deleteConfirmMessage(): string {
+    const count = this.deletingBulkIds().length;
+    return count > 1
+      ? `${count} bookmarks will be permanently deleted. This cannot be undone.`
+      : 'This bookmark will be permanently deleted. This cannot be undone.';
   }
 
   // ── Quick actions ─────────────────────────────────────────────────────────────
@@ -557,11 +583,14 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
     const { selectedIds, actionKey } = event;
     const affected = this.store.bookmarks().filter(b => selectedIds.has(b.id));
+    if (actionKey === 'delete') {
+      this.requestBulkDelete(affected.map(b => b.id));
+      return;
+    }
     for (const bookmark of affected) {
       switch (actionKey) {
         case 'togglePin':     this.togglePin(bookmark); break;
         case 'toggleArchive': this.toggleArchive(bookmark); break;
-        case 'delete':        this.store.deleteBookmark(bookmark.id); break;
       }
     }
   }

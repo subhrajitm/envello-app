@@ -12,6 +12,19 @@
       </div>
     </div>
     <div class="topbar-actions">
+      @if (saveStatus() === 'saving') {
+        <span class="save-status">
+          <span class="material-symbols-outlined" style="font-size:15px;animation:spin 1s linear infinite;">progress_activity</span>
+          Saving…
+        </span>
+      } @else if (saveStatus() === 'saved') {
+        <span class="save-status save-status--ok">
+          <span class="material-symbols-outlined" style="font-size:15px;">check_circle</span>
+          Saved
+        </span>
+      } @else if (isDirty()) {
+        <span class="save-status save-status--dirty">Unsaved changes</span>
+      }
       <env-button variant="ghost" (clicked)="resetToDefaults()">Reset to Defaults</env-button>
       <env-button variant="primary" (clicked)="saveSettings()">Save Changes</env-button>
     </div>
@@ -82,6 +95,143 @@
             </label>
           </div>
         </div>
+
+        @if (isDesktop) {
+          <div class="section-divider"></div>
+          <div class="section-header" style="margin-top:0">
+            <h3>Window</h3>
+            <p>Desktop window behaviour</p>
+          </div>
+          <div class="settings-pair">
+            <div class="setting-item setting-row">
+              <div class="setting-label-group">
+                <label>Launch at Login</label>
+                <span class="setting-desc">Start Envello automatically when you log in</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" [checked]="launchAtLogin()" (change)="toggleLaunchAtLogin()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="setting-item setting-row">
+              <div class="setting-label-group">
+                <label>Always on Top</label>
+                <span class="setting-desc">Keep Envello above all other windows</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" [checked]="alwaysOnTop()" (change)="toggleAlwaysOnTop()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="setting-item setting-row">
+              <div class="setting-label-group">
+                <label>Minimize to Tray on Close</label>
+                <span class="setting-desc">Keep running in the system tray instead of quitting</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" [checked]="minimizeToTray()" (change)="toggleMinimizeToTray()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="section-header" style="margin-top:8px">
+            <h3>Global Shortcuts</h3>
+            <p>Work even when Envello is in the background</p>
+          </div>
+          <div class="info-card">
+            <div class="info-row">
+              <span class="info-label"><kbd class="kbd">⌘ ⇧ N</kbd></span>
+              <span class="info-value">Open Quick Note</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label"><kbd class="kbd">⌘ ⇧ T</kbd></span>
+              <span class="info-value">Jump to Tasks</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label"><kbd class="kbd">⌘ ⇧ W</kbd></span>
+              <span class="info-value">Jump to Workspace</span>
+            </div>
+            <p class="hint-text" style="margin-top:0.5rem">
+              Shortcuts bring Envello to the foreground from any app.
+            </p>
+          </div>
+        }
+      </div>
+      }
+
+      <!-- Sections -->
+      @if (activeSection() === 'sections') {
+      <div class="settings-section">
+        <div class="section-header">
+          <h2>Sections</h2>
+          <p>Control which sections are visible per platform — web and desktop can have different navigation.</p>
+        </div>
+
+        <div class="sections-grid">
+          <!-- Column headers -->
+          <div class="sections-grid-header">
+            <span class="sections-col-label">Section</span>
+            <span class="sections-platform-label">
+              <span class="material-symbols-outlined">public</span>
+              Web
+            </span>
+            <span class="sections-platform-label">
+              <span class="material-symbols-outlined">desktop_windows</span>
+              Desktop
+            </span>
+          </div>
+
+          @for (item of allNavItemDefs; track item.id) {
+          <div class="sections-grid-row">
+            <!-- Section name -->
+            <div class="sections-item-label">
+              <span class="nav-section-icon material-symbols-outlined">{{ item.icon }}</span>
+              <span>{{ item.label }}</span>
+              @if (item.desktopOnly) {
+                <span class="badge-platform">Desktop only</span>
+              }
+            </div>
+
+            <!-- Web toggle -->
+            @if (item.desktopOnly) {
+              <div class="sections-toggle-cell sections-na" title="Not available on web">
+                <span class="material-symbols-outlined">remove</span>
+              </div>
+            } @else {
+              <div class="sections-toggle-cell">
+                <label class="toggle">
+                  <input type="checkbox"
+                    [checked]="!isNavItemHidden(item.id, 'web')"
+                    (change)="toggleNavItemVisibility(item.id, 'web')">
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+            }
+
+            <!-- Desktop toggle -->
+            <div class="sections-toggle-cell">
+              <label class="toggle">
+                <input type="checkbox"
+                  [checked]="!isNavItemHidden(item.id, 'desktop')"
+                  (change)="toggleNavItemVisibility(item.id, 'desktop')">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+          }
+        </div>
+
+        @if (lastSectionError()) {
+          <p class="sections-last-error">
+            <span class="material-symbols-outlined" style="font-size:15px;">info</span>
+            Can't hide — at least one section must remain visible on {{ lastSectionError() === 'web' ? 'Web' : 'Desktop' }}.
+          </p>
+        } @else {
+          <p class="hint-text" style="margin-top:1rem">
+            Changes preview live. At least one section must remain visible per platform.
+          </p>
+        }
       </div>
       }
 
@@ -261,7 +411,7 @@
           </div>
           <div class="api-key-row">
             <input [type]="showApiKey() ? 'text' : 'password'" [ngModel]="aiKey()"
-              (ngModelChange)="aiKey.set($event); testStatus.set('idle')"
+              (ngModelChange)="setAiKey($event)"
               class="form-input" [placeholder]="getApiKeyPlaceholder()" spellcheck="false">
             <button type="button" class="key-toggle-btn" (click)="showApiKey.set(!showApiKey())"
               [title]="showApiKey() ? 'Hide API key' : 'Show API key'">
@@ -309,7 +459,7 @@
           </div>
           <div class="setting-control" style="min-width:220px">
             <select class="select-input w-full" [ngModel]="aiModel()"
-              (ngModelChange)="aiModel.set($event); testStatus.set('idle')">
+              (ngModelChange)="setAiModel($event)">
               @if (aiProvider() === 'local') {
               <option value="HuggingFaceTB/SmolLM2-360M-Instruct">SmolLM2 360M (Recommended)</option>
               <option value="HuggingFaceTB/SmolLM2-135M-Instruct">SmolLM2 135M (Fastest, ~270 MB)</option>
@@ -393,6 +543,74 @@
             }
           </p>
         </div>
+
+        <!-- Per-feature model overrides -->
+        <div class="setting-item flex flex-col gap-3">
+          <div class="setting-label-group">
+            <label>Per-Feature Models</label>
+            <span class="setting-desc">Use a different provider or model for specific AI tasks. Leave as "Default" to inherit the global setting above.</span>
+          </div>
+          <div class="feature-models-grid">
+            <div class="feature-models-header">
+              <span class="feature-col-label">Feature</span>
+              <span class="feature-col-label">Provider</span>
+              <span class="feature-col-label">Model</span>
+            </div>
+            @for (feat of aiFeatureDefs; track feat.id) {
+            <div class="feature-model-row" [class.feature-model-row--warn]="featureOverridesWithMissingKey().includes(feat.id)">
+              <div class="feature-model-label">
+                <span class="material-symbols-outlined feature-icon">{{ feat.icon }}</span>
+                <span>{{ feat.label }}</span>
+                @if (featureOverridesWithMissingKey().includes(feat.id)) {
+                  <span class="feature-warn-badge" title="API key missing for this provider">
+                    <span class="material-symbols-outlined" style="font-size:13px;">key_off</span>
+                    No key
+                  </span>
+                } @else {
+                  <span class="feature-model-hint">{{ feat.hint }}</span>
+                }
+              </div>
+              <select class="select-input feature-select" [ngModel]="getFeatureProvider(feat.id)"
+                (ngModelChange)="setFeatureProvider(feat.id, $event)">
+                <option value="">Default ({{ aiProvider() | titlecase }})</option>
+                @for (p of aiProviders; track p.value) {
+                <option [value]="p.value">{{ p.label }}</option>
+                }
+              </select>
+              @if (getFeatureProvider(feat.id)) {
+              <select class="select-input feature-select" [ngModel]="getFeatureModel(feat.id)"
+                (ngModelChange)="setFeatureModel(feat.id, $event)">
+                @for (m of getModelsForProvider($any(getFeatureProvider(feat.id))); track m.value) {
+                <option [value]="m.value">{{ m.label }}</option>
+                }
+              </select>
+              } @else {
+              <span class="feature-na">—</span>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Extra API keys for feature-specific providers -->
+        @if (extraProvidersNeeded().length > 0) {
+        <div class="setting-item flex flex-col gap-2">
+          <div class="setting-label-group">
+            <label>Additional API Keys</label>
+            <span class="setting-desc">Keys for providers used only by per-feature overrides above</span>
+          </div>
+          @for (prov of extraProvidersNeeded(); track prov) {
+          <div class="api-key-row">
+            <span class="provider-key-badge">{{ getProviderLabel(prov) }}</span>
+            <input type="password" class="form-input"
+              [ngModel]="aiService.extraProviderKeys()[prov] || ''"
+              (ngModelChange)="aiService.setExtraProviderKey(prov, $event)"
+              [placeholder]="getApiKeyPlaceholderFor(prov)" spellcheck="false">
+          </div>
+          }
+        </div>
+        }
+
         }
       </div>
       }
@@ -418,11 +636,11 @@
           </div>
           <div class="setting-item setting-row">
             <div class="setting-label-group">
-              <label>Sound Effects</label>
+              <label>Sound Effects <span class="badge-coming-soon">Coming soon</span></label>
               <span class="setting-desc">Play sounds for actions</span>
             </div>
-            <label class="toggle">
-              <input type="checkbox" [checked]="soundEffects()" (change)="toggleSoundEffects()">
+            <label class="toggle" title="Coming soon">
+              <input type="checkbox" [checked]="soundEffects()" (change)="toggleSoundEffects()" disabled>
               <span class="toggle-track"></span>
             </label>
           </div>
@@ -430,11 +648,11 @@
 
         <div class="setting-item setting-row">
           <div class="setting-label-group">
-            <label>Daily Summary</label>
+            <label>Daily Summary <span class="badge-coming-soon">Coming soon</span></label>
             <span class="setting-desc">Receive daily progress report</span>
           </div>
-          <label class="toggle">
-            <input type="checkbox" [checked]="dailySummary()" (change)="toggleDailySummary()">
+          <label class="toggle" title="Coming soon">
+            <input type="checkbox" [checked]="dailySummary()" (change)="toggleDailySummary()" disabled>
             <span class="toggle-track"></span>
           </label>
         </div>
@@ -451,11 +669,11 @@
 
         <div class="setting-item setting-row">
           <div class="setting-label-group">
-            <label>Analytics</label>
+            <label>Analytics <span class="badge-coming-soon">Coming soon</span></label>
             <span class="setting-desc">Share anonymous usage data to improve Envello</span>
           </div>
-          <label class="toggle">
-            <input type="checkbox" [checked]="analytics()" (change)="toggleAnalytics()">
+          <label class="toggle" title="Coming soon">
+            <input type="checkbox" [checked]="analytics()" (change)="toggleAnalytics()" disabled>
             <span class="toggle-track"></span>
           </label>
         </div>
@@ -465,15 +683,21 @@
             <label>Export Data</label>
             <span class="setting-desc">Download all your data as a JSON archive</span>
           </div>
-          <div class="setting-control">
+          <div class="setting-control" style="display:flex;align-items:center;gap:0.6rem;">
             <env-button variant="secondary" (clicked)="exportAllData()">Export All Data</env-button>
+            @if (exportDone()) {
+              <span class="export-done-label">
+                <span class="material-symbols-outlined" style="font-size:15px;">check_circle</span>
+                Downloaded
+              </span>
+            }
           </div>
         </div>
 
         <div class="info-card">
           <div class="info-row">
             <span class="info-label">Storage Mode</span>
-            <span class="info-value">Local (SQLite)</span>
+            <span class="info-value">{{ isDesktop ? 'On-device' : 'Local (browser)' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Sync Status</span>
@@ -561,7 +785,7 @@
           </div>
           <div class="about-info">
             <h4>Envello</h4>
-            <p class="version">Version 1.0.0</p>
+            <p class="version">v{{ appVersion }}</p>
             <p class="tagline">Your all-in-one creative workspace</p>
           </div>
         </div>
@@ -572,10 +796,6 @@
             <span class="info-value">{{ isDesktop ? 'Desktop' : 'Web' }}</span>
           </div>
           <div class="info-card-small">
-            <span class="info-label">Framework</span>
-            <span class="info-value">Angular 20</span>
-          </div>
-          <div class="info-card-small">
             <span class="info-label">Updated</span>
             <span class="info-value">Jun 2026</span>
           </div>
@@ -583,7 +803,25 @@
             <span class="info-label">License</span>
             <span class="info-value">MIT</span>
           </div>
+          @if (isDesktop && osType()) {
+            <div class="info-card-small">
+              <span class="info-label">OS</span>
+              <span class="info-value">{{ osType() }}{{ osArch() ? ' · ' + osArch() : '' }}</span>
+            </div>
+          }
         </div>
+
+        @if (isDesktop) {
+          <div class="info-card" style="margin-top:0">
+            <div class="info-row">
+              <span class="info-label">Deep Link Scheme</span>
+              <span class="info-value" style="font-family:var(--font-mono);font-size:11px;">envello://</span>
+            </div>
+            <p class="hint-text" style="margin-top:0.5rem">
+              Open notes from other apps: <code style="font-size:11px;">envello://note/&lt;id&gt;</code>
+            </p>
+          </div>
+        }
 
         <div class="action-buttons flex gap-2">
           <env-button variant="secondary" (clicked)="checkUpdates()">Check Updates</env-button>
@@ -620,5 +858,19 @@
   (confirmed)="doClearAllData()"
   (cancelled)="clearDataConfirm.set(false)">
   This will permanently delete all your tasks, notes, books, and bookmarks. This cannot be undone.
+</env-confirm-dialog>
+}
+
+@if (unsavedConfirm()) {
+<env-confirm-dialog
+  [isOpen]="true"
+  title="Unsaved Changes"
+  icon="warning"
+  variant="danger"
+  confirmLabel="Leave Without Saving"
+  cancelLabel="Stay"
+  (confirmed)="confirmLeave()"
+  (cancelled)="unsavedConfirm.set(false)">
+  You have unsaved changes. If you leave now, your changes will be lost.
 </env-confirm-dialog>
 }

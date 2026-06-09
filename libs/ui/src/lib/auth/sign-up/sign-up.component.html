@@ -2,7 +2,6 @@
     <div class="lines-bg">
         <canvas #linesCanvas class="lines-canvas"></canvas>
     </div>
-    @if (!authService.isAuthenticated()) {
     <div class="signup-content">
         <!-- Header -->
         <div class="signup-header">
@@ -51,7 +50,7 @@
                 <div class="form-container">
                     <!-- Step 1: Credentials -->
                     @if (currentStep() === 1) {
-                    <div class="step-content-wrapper animate-fadeIn">
+                    <div class="step-content-wrapper">
                         <h1 class="step-heading">Create Your Account</h1>
                         <p class="step-description">Enter your credentials to get started with Envello</p>
 
@@ -80,7 +79,7 @@
 
                     <!-- Step 2: Personal Info -->
                     @if (currentStep() === 2) {
-                    <div class="step-content-wrapper animate-fadeIn">
+                    <div class="step-content-wrapper">
                         <h1 class="step-heading">Personal Information</h1>
                         <p class="step-description">Tell us about yourself and choose your role</p>
 
@@ -94,6 +93,20 @@
                             <div class="role-selection">
                                 <label class="role-label">Choose Your Role</label>
                                 <div class="role-grid">
+                                    <label class="role-card" [class.selected]="formData.role === 'Productivity'">
+                                        <input type="radio" name="role" class="sr-only" (click)="selectRole('Productivity')"
+                                            [checked]="formData.role === 'Productivity'" />
+                                        <div class="role-header">
+                                            <span class="role-title">Productivity</span>
+                                            <div class="role-indicator">
+                                                @if (formData.role === 'Productivity') {
+                                                <span class="material-symbols-outlined">check_circle</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        <p class="role-description">Tasks, meetings, planning and staying organised</p>
+                                    </label>
+
                                     <label class="role-card" [class.selected]="formData.role === 'Writer'">
                                         <input type="radio" name="role" class="sr-only" (click)="selectRole('Writer')"
                                             [checked]="formData.role === 'Writer'" />
@@ -105,22 +118,35 @@
                                                 }
                                             </div>
                                         </div>
-                                        <p class="role-description">Create manuscripts, journals, and build immersive
-                                            worlds</p>
+                                        <p class="role-description">Notes, long-form writing, books and manuscripts</p>
                                     </label>
 
-                                    <label class="role-card" [class.selected]="formData.role === 'Reader'">
-                                        <input type="radio" name="role" class="sr-only" (click)="selectRole('Reader')"
-                                            [checked]="formData.role === 'Reader'" />
+                                    <label class="role-card" [class.selected]="formData.role === 'Researcher'">
+                                        <input type="radio" name="role" class="sr-only" (click)="selectRole('Researcher')"
+                                            [checked]="formData.role === 'Researcher'" />
                                         <div class="role-header">
-                                            <span class="role-title">Reader</span>
+                                            <span class="role-title">Researcher</span>
                                             <div class="role-indicator">
-                                                @if (formData.role === 'Reader') {
+                                                @if (formData.role === 'Researcher') {
                                                 <span class="material-symbols-outlined">check_circle</span>
                                                 }
                                             </div>
                                         </div>
-                                        <p class="role-description">Review drafts, provide feedback, and beta read</p>
+                                        <p class="role-description">Knowledge base, bookmarks and source management</p>
+                                    </label>
+
+                                    <label class="role-card" [class.selected]="formData.role === 'All-in-one'">
+                                        <input type="radio" name="role" class="sr-only" (click)="selectRole('All-in-one')"
+                                            [checked]="formData.role === 'All-in-one'" />
+                                        <div class="role-header">
+                                            <span class="role-title">All-in-one</span>
+                                            <div class="role-indicator">
+                                                @if (formData.role === 'All-in-one') {
+                                                <span class="material-symbols-outlined">check_circle</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        <p class="role-description">Everything — notes, tasks, writing, research</p>
                                     </label>
                                 </div>
                             </div>
@@ -130,7 +156,7 @@
 
                     <!-- Step 3: Preferences -->
                     @if (currentStep() === 3) {
-                    <div class="step-content-wrapper animate-fadeIn">
+                    <div class="step-content-wrapper">
                         <h1 class="step-heading">Preferences</h1>
                         <p class="step-description">Customize your workspace settings</p>
 
@@ -172,9 +198,41 @@
                     </div>
                     }
 
+                    <!-- Step 4: Verify Email -->
+                    @if (currentStep() === 4) {
+                    <div class="step-content-wrapper">
+                        <h1 class="step-heading">Verify Your Email</h1>
+                        <p class="step-description">We sent a 6-digit code to <strong>{{ formData.email }}</strong></p>
+
+                        <div class="form-fields">
+                            <div class="form-group">
+                                <label class="form-label">Verification Code</label>
+                                <input type="text" inputmode="numeric" maxlength="6"
+                                    class="form-input otp-input" placeholder="000000"
+                                    [ngModel]="verificationCode()" (ngModelChange)="verificationCode.set($event)"
+                                    autofocus>
+                            </div>
+
+                            <div class="resend-section">
+                                @if (resendCooldown() > 0) {
+                                <span class="resend-timer">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    Resend available in {{ resendCooldown() }}s
+                                </span>
+                                } @else {
+                                <button type="button" class="resend-btn" (click)="resendCode()" [disabled]="loading()">
+                                    <span class="material-symbols-outlined">send</span>
+                                    Resend code
+                                </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    }
+
                     <!-- Navigation -->
                     <div class="form-actions">
-                        @if (currentStep() > 1) {
+                        @if (currentStep() > 1 && currentStep() < 4) {
                         <button (click)="prevStep()" class="btn-secondary">
                             <span class="material-symbols-outlined">arrow_back</span>
                             Back
@@ -186,7 +244,7 @@
                             <span class="loading-spinner"></span>
                             <span>Processing...</span>
                             } @else {
-                            <span>{{ currentStep() === totalSteps ? 'Complete Setup' : 'Continue' }}</span>
+                            <span>{{ currentStep() === totalSteps ? 'Verify & Complete' : 'Continue' }}</span>
                             <span class="material-symbols-outlined">arrow_forward</span>
                             }
                         </button>
@@ -202,5 +260,4 @@
             </section>
         </div>
     </div>
-    }
 </div>

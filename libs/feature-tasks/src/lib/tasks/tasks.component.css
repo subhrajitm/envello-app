@@ -1390,48 +1390,6 @@
     padding-right: 4px;
 }
 
-/* Empty state for thumbnails view */
-.empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 40px 24px;
-    text-align: center;
-    color: var(--text-secondary);
-}
-
-.empty-state h3 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.empty-state p {
-    margin: 0;
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.empty-icon-circle {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 4px;
-}
-
-.empty-icon-circle .material-symbols-outlined {
-    font-size: 24px;
-    color: var(--accent-primary);
-}
-
 /* "No due date" placeholder text in thumb cards */
 .no-data {
     font-size: 11px;
@@ -4441,48 +4399,6 @@
     margin-left: auto;
 }
 
-/* Empty state for tasks grid */
-.tasks-empty-state {
-    padding: 40px 32px;
-    text-align: left;
-    background: var(--bg-app);
-}
-
-.tasks-empty-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-}
-
-.tasks-empty-icon .material-symbols-outlined {
-    font-size: 24px;
-    color: var(--accent-primary);
-}
-
-.tasks-empty-title {
-    margin: 0 0 4px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.tasks-empty-body {
-    margin: 0 0 16px 0;
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.tasks-empty-state .btn-text {
-    padding: 4px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
-    font-size: 12px;
-}
 
 /* Text button (used for Description preview/edit toggle) */
 .btn-text {
@@ -5105,13 +5021,11 @@
     bottom: 24px;
     right: 24px;
     z-index: 3000;
-    transform: translateY(100px);
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 
 .error-toast.show {
-    transform: translateY(0);
     opacity: 1;
 }
 
@@ -7122,8 +7036,8 @@ textarea:focus-visible {
 }
 
 @keyframes dp-fade-in {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 .dp-shortcuts {
@@ -7780,8 +7694,8 @@ textarea:focus-visible {
 }
 
 @keyframes quickCaptureIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 .quick-capture-icon {

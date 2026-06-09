@@ -9,7 +9,8 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorRetryInterceptor } from './core/interceptors/error-retry.interceptor';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from '@envello/state';
-import { DesktopDataService, FileSystemService } from '@envello/core';
+import { DesktopDataService, FileSystemService, APP_VERSION } from '@envello/core';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,6 +25,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: DataService, useClass: DesktopDataService },
-    { provide: FILE_SYSTEM, useClass: FileSystemService }
+    { provide: FILE_SYSTEM, useClass: FileSystemService },
+    { provide: APP_VERSION, useValue: environment.version }
   ],
 };

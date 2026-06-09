@@ -16,7 +16,7 @@ import { ButtonComponent } from '../../button/button.component';
         <canvas #linesCanvas class="lines-canvas"></canvas>
       </div>
       
-      <div *ngIf="!authService.isAuthenticated()" class="login-content">
+      <div class="login-content">
         <!-- Logo Section -->
         <div class="login-header">
           <div class="logo-wrapper">
@@ -120,7 +120,6 @@ import { ButtonComponent } from '../../button/button.component';
       border-radius: 6px;
       padding: 28px 24px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      animation: fadeIn 0.3s ease-out;
       position: relative;
       z-index: 10;
     }
@@ -137,12 +136,9 @@ import { ButtonComponent } from '../../button/button.component';
       width: 100%;
       height: 100%;
       display: block;
+      background: var(--bg-app);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
 
     .login-header {
       text-align: center;
@@ -304,6 +300,13 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
     const [r, g, b] = this.accentRgb();
+    // Read bg-app as a real rgb() value so canvas can paint solid pixels instead of
+    // using clearRect (which exposes Tauri's transparent window to the macOS desktop)
+    const tmp = document.createElement('div');
+    document.body.appendChild(tmp);
+    tmp.style.background = 'var(--bg-app)';
+    const bgColor = getComputedStyle(tmp).backgroundColor || '#ffffff';
+    document.body.removeChild(tmp);
 
     const fit = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -315,7 +318,11 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     fit();
-    this.resizeObs = new ResizeObserver(fit);
+    let fitTimer: ReturnType<typeof setTimeout>;
+    this.resizeObs = new ResizeObserver(() => {
+      clearTimeout(fitTimer);
+      fitTimer = setTimeout(fit, 50);
+    });
     this.resizeObs.observe(canvas);
 
     const BS = 6;
@@ -352,7 +359,8 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     const draw = () => {
       const W = canvas.offsetWidth;
       const H = canvas.offsetHeight;
-      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, W, H);
 
       const cols = Math.ceil(W / STEP) + 1;
       const rows = Math.ceil(H / STEP) + 1;
@@ -392,7 +400,6 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
       'light':            [180,  83,   9],
       'colorful':         [240, 125,  89],
       'typewriter':       [ 60,  60,  60],
-      'enterprise-light': [245, 158,  11],
     };
     return map[theme] ?? map['light'];
   }
@@ -425,12 +432,12 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
-    const success = await this.authService.signUp(this.email, this.password);
+    const errorMsg = await this.authService.signUp(this.email, this.password);
 
-    if (success) {
+    if (!errorMsg) {
       this.error.set('Account created! Please check your email to verify.');
     } else {
-      this.error.set('Sign up failed. Please try again.');
+      this.error.set(errorMsg);
     }
     this.loading.set(false);
   }

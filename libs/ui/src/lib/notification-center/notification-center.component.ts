@@ -13,11 +13,11 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
   animations: [
     trigger('slideIn', [
       transition(':enter', [
-        style({ transform: 'translateX(100%)', opacity: 0 }),
-        animate('200ms ease-out', style({ transform: 'translateX(0)', opacity: 1 }))
+        style({ opacity: 0 }),
+        animate('200ms ease-out', style({ opacity: 1 }))
       ]),
       transition(':leave', [
-        animate('200ms ease-in', style({ transform: 'translateX(100%)', opacity: 0 }))
+        animate('200ms ease-in', style({ opacity: 0 }))
       ])
     ])
   ]

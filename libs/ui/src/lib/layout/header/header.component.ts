@@ -1,6 +1,6 @@
 import { Component, Input, inject, ViewChild, signal, computed, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ThemeService, Theme } from '@envello/core';
+import { ThemeService, Theme, UserPreferencesService, AppPreferences } from '@envello/core';
 import { NotificationService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
@@ -43,6 +43,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @ViewChild(ProfileEditorComponent) profileEditor?: ProfileEditorComponent;
 
   themeService = inject(ThemeService);
+  private userPrefsService = inject(UserPreferencesService);
   notificationService = inject(NotificationService);
   userService = inject(UserService);
   private binService = inject(BinService);
@@ -112,20 +113,32 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly isTauri =
     typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
-  navItems: NavItem[] = [
-    { id: 'tasks',       label: 'Tasks',    icon: 'checklist', route: 'tasks' },
-    { id: 'meetings',    label: 'Meetings', icon: 'calendar_month', route: 'meetings' },
-    { id: 'daily-notes', label: 'Notes',    icon: 'note',      route: 'daily-notes' },
-    { id: 'knowledge',   label: 'Knowledge',  icon: 'hub', route: 'knowledge' },
-    { id: 'write',       label: 'Write',    icon: 'edit',      route: 'write' },
-    ...( this.isTauri ? [{ id: 'vault', label: 'Vault', icon: 'lock', route: 'vault' }] : [] as NavItem[]),
-    { id: 'subscriptions',label: 'Subscriptions', icon: 'credit_card',route: 'subscriptions' },
-    { id: 'bookmarks',   label: 'Bookmarks', icon: 'bookmarks', route: 'bookmarks' },
+  private readonly navItemDefs: NavItem[] = [
+    { id: 'tasks',         label: 'Tasks',         icon: 'checklist',    route: 'tasks' },
+    { id: 'meetings',      label: 'Meetings',       icon: 'calendar_month', route: 'meetings' },
+    { id: 'daily-notes',   label: 'Notes',          icon: 'note',         route: 'daily-notes' },
+    { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',          route: 'knowledge' },
+    { id: 'write',         label: 'Write',          icon: 'edit',         route: 'write' },
+    { id: 'vault',         label: 'Vault',          icon: 'lock',         route: 'vault' },
+    { id: 'subscriptions', label: 'Subscriptions',  icon: 'credit_card',  route: 'subscriptions' },
+    { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    route: 'bookmarks' },
   ];
+
+  private hiddenNavItemIds = signal<string[]>([]);
+
+  private navVisibilityListener?: (event: CustomEvent) => void;
+
+  navItems = computed(() => {
+    const hidden = this.hiddenNavItemIds();
+    return this.navItemDefs.filter(item => {
+      if (item.id === 'vault' && !this.isTauri) return false;
+      return !hidden.includes(item.id);
+    });
+  });
 
   // All flat items (for activeTab matching across sections)
   get allNavItems(): NavItem[] {
-    return this.navItems;
+    return this.navItems();
   }
 
 
@@ -171,7 +184,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   getThemeIcon(): string {
     const theme = this.theme;
     if (theme === 'dark' || theme === 'enterprise-dark') return 'dark_mode';
-    if (theme === 'light' || theme === 'enterprise-light' || theme === 'typewriter') return 'light_mode';
+    if (theme === 'light' || theme === 'typewriter') return 'light_mode';
     return 'palette';
   }
 
@@ -184,6 +197,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleTheme() {
     this.themeService.toggleTheme();
+    // Persist new theme to DB so sync-complete doesn't revert it
+    const stored = JSON.parse(localStorage.getItem('envello-settings') || '{}') as AppPreferences;
+    this.userPrefsService.save({ ...stored, theme: this.themeService.theme() });
   }
 
   toggleVoice() {
@@ -203,7 +219,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   getTabIcon(tab: string): string {
-    return this.navItems.find(i => i.label === tab || i.id === tab)?.icon || 'circle';
+    return this.navItemDefs.find(i => i.label === tab || i.id === tab)?.icon || 'circle';
   }
 
   isItemActive(item: NavItem): boolean {
@@ -277,6 +293,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     };
     window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
 
+    // Load and listen for nav section visibility changes
+    this.loadNavVisibility();
+    this.navVisibilityListener = (event: CustomEvent) => {
+      const d = event.detail;
+      if (d && !Array.isArray(d)) {
+        this.hiddenNavItemIds.set(this.isTauri ? (d.desktop ?? []) : (d.web ?? []));
+      } else {
+        this.hiddenNavItemIds.set(d ?? []);
+      }
+    };
+    window.addEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
+
     // Apply initial layout
     this.applyNavigationLayout();
 
@@ -303,6 +331,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.navigationLayoutListener) {
       window.removeEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
     }
+    if (this.navVisibilityListener) {
+      window.removeEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
+    }
     this.routeSub?.unsubscribe();
   }
 
@@ -322,6 +353,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
         console.error('Failed to load navigation layout:', e);
       }
     }
+  }
+
+  private loadNavVisibility() {
+    try {
+      const saved = localStorage.getItem('envello-settings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        const hn = settings.hiddenNavItems;
+        if (hn && !Array.isArray(hn)) {
+          this.hiddenNavItemIds.set(this.isTauri ? (hn.desktop ?? []) : (hn.web ?? []));
+        } else if (Array.isArray(hn)) {
+          this.hiddenNavItemIds.set(hn);
+        }
+      }
+    } catch { }
   }
 
   private applyNavigationLayout() {

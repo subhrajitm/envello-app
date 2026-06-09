@@ -345,14 +345,10 @@
   gap: 8px;
 }
 
-.dp-title::before {
-  content: '';
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent);
+.dp-title-icon {
+  font-size: 17px;
+  color: var(--accent);
+  flex-shrink: 0;
 }
 
 .dp-progress {
@@ -912,8 +908,8 @@
 }
 
 @keyframes slide-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .created-icon {

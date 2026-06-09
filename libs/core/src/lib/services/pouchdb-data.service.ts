@@ -26,6 +26,7 @@ export class PouchDbDataService implements DataService {
         'credentials',
         'subscriptions',
         'credential_subscription_links',
+        'user_preferences',
     ]);
 
     /**
@@ -301,6 +302,8 @@ export class PouchDbDataService implements DataService {
     async importData(data: any): Promise<void> {
         console.log('[PouchDbDataService] importData invoked.', data);
     }
+
+    async pullFromRemote(_: string): Promise<void> {}
 
     // ─── Vault & Subscriptions ───────────────────────────────────────────────────
 

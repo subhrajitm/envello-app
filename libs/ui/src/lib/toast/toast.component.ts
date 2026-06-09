@@ -59,8 +59,8 @@ interface Toast {
       color: var(--text-primary);
     }
     @keyframes toast-in {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
     .toast--success { border-left: 3px solid var(--accent-green, #22c55e); }
     .toast--error   { border-left: 3px solid var(--accent-red,   #ef4444); }

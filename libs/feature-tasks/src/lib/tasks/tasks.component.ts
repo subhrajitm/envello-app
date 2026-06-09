@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task, NotificationService, FileStorageService, AiService } from '@envello/core';
-import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
+import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
@@ -15,7 +15,7 @@ type SubtaskDraft = { title: string; priority: Task['priority'] };
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent],
+  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent, EmptyStateComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -26,6 +26,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private fileStorage = inject(FileStorageService);
   private aiService = inject(AiService);
+  private themeService = inject(ThemeService);
+  private userPrefsService = inject(UserPreferencesService);
 
   // Left sidebar state
   sidebarSearch = signal<string>('');
@@ -112,9 +114,6 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   // Undo/Redo
-
-  // Theme
-  theme = signal<'light' | 'dark'>('light');
 
   // File upload
   uploadingFiles = signal<boolean>(false);
@@ -2021,13 +2020,6 @@ export class TasksComponent implements OnInit, OnDestroy {
   pomodoroInterval: any = null;
 
   ngOnInit() {
-    // Initialize theme
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      this.theme.set(savedTheme);
-    }
-    document.documentElement.setAttribute('data-theme', this.theme());
-
     // Initialize font size
     const savedFontSize = localStorage.getItem('fontSize') as 'small' | 'medium' | 'large' | null;
     if (savedFontSize) {
@@ -2596,11 +2588,9 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   // Theme switching
   toggleTheme() {
-    const current = this.theme();
-    const newTheme = current === 'light' ? 'dark' : 'light';
-    this.theme.set(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
+    this.themeService.toggleTheme();
+    const stored = JSON.parse(localStorage.getItem('envello-settings') || '{}') as AppPreferences;
+    this.userPrefsService.save({ ...stored, theme: this.themeService.theme() });
   }
 
   setFontSize(size: 'small' | 'medium' | 'large') {

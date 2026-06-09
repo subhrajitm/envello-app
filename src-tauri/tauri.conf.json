@@ -51,6 +51,12 @@
       "endpoints": [
         "https://github.com/subhrajitm/envello-app/releases/latest/download/latest.json"
       ]
+    },
+    "deep-link": {
+      "mobile": [],
+      "desktop": {
+        "schemes": ["envello"]
+      }
     }
   }
 }

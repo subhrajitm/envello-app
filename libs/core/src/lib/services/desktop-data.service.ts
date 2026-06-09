@@ -16,12 +16,15 @@ export class DesktopDataService extends DataService {
   private readonly auth = inject(AuthService);
 
   private shouldSync(collection: string): boolean {
-    return (
-      !NEVER_SYNC.has(collection) &&
-      !!this.auth.currentUser() &&
-      !this.auth.isGuest() &&
-      this.settings.isEnabled(collection)
-    );
+    if (NEVER_SYNC.has(collection)) return false;
+    if (!this.auth.currentUser() || this.auth.isGuest()) return false;
+    // Preferences always sync cross-device without requiring explicit backup opt-in
+    if (collection === 'user_preferences') return true;
+    return this.settings.isEnabled(collection);
+  }
+
+  override async pullFromRemote(collection: string): Promise<void> {
+    await this.restoreCollection(collection);
   }
 
   async getAll<T>(collection: string): Promise<T[]> {

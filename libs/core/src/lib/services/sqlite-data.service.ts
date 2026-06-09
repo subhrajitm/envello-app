@@ -144,6 +144,8 @@ export class SqliteDataService implements DataService {
         // If we need import logic here, we can delegate or implement
     }
 
+    async pullFromRemote(_: string): Promise<void> {}
+
     // ─── Vault & Subscriptions ──────────────────────────────────────────────────
     async saveCredential(credential: any): Promise<void> { return this.upsert('credentials', credential); }
     async getCredentials(): Promise<any[]> { return this.getAll('credentials'); }

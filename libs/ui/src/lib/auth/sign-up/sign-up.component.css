@@ -21,6 +21,7 @@
     width: 100%;
     height: 100%;
     display: block;
+    background: var(--bg-app);
 }
 
 .signup-content {
@@ -216,7 +217,6 @@
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    animation: fadeIn 0.3s ease-out;
 }
 
 /* Main Form Area */
@@ -230,7 +230,6 @@
 }
 
 .step-content-wrapper {
-    animation: fadeIn 0.3s ease-out;
 }
 
 .step-heading {
@@ -563,22 +562,6 @@
 
 
 
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-}
 
 /* Screen reader only */
 .sr-only {
@@ -615,4 +598,68 @@
     flex-direction: column;
     gap: 8px;
     margin-bottom: 24px;
+}
+
+/* OTP Input */
+.otp-input {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    text-align: center;
+    padding: 14px 16px;
+    font-family: monospace;
+}
+
+.otp-input::placeholder {
+    font-size: 18px;
+    letter-spacing: 8px;
+    font-weight: 400;
+}
+
+/* Resend Section */
+.resend-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+}
+
+.resend-timer {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.resend-timer .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.resend-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.resend-btn:hover:not(:disabled) {
+    background: var(--accent-primary-dim);
+}
+
+.resend-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.resend-btn .material-symbols-outlined {
+    font-size: 14px;
 }

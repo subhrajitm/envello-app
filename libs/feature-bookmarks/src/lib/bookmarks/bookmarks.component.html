@@ -145,19 +145,16 @@
     @if (viewMode() === 'table') {
       <div class="bm-table-wrap">
         @if (filteredBookmarks().length === 0) {
-          <div class="bm-table-empty">
-            <span class="material-symbols-outlined bm-empty-icon">{{ emptyStateConfig().icon }}</span>
-            <p>{{ emptyStateConfig().title }}</p>
-            @if (emptyStateConfig().subtitle) {
-              <p class="bm-empty-subtitle">{{ emptyStateConfig().subtitle }}</p>
-            }
-            @if (emptyStateConfig().showAdd) {
-              <button class="bm-add-btn" (click)="openAddModal()">
-                <span class="material-symbols-outlined">add</span>
-                Add your first bookmark
-              </button>
-            }
-          </div>
+          <env-empty-state
+            [icon]="emptyStateConfig().icon"
+            [title]="emptyStateConfig().title"
+            [description]="emptyStateConfig().subtitle"
+            [ctaLabel]="emptyStateConfig().showAdd ? 'Add your first bookmark' : ''"
+            ctaIcon="add"
+            [secondaryCtaLabel]="emptyStateConfig().showClear ? 'Clear Filters' : ''"
+            (ctaClicked)="openAddModal()"
+            (secondaryCtaClicked)="clearFilters()">
+          </env-empty-state>
         } @else {
           <env-table
             class="env-table--compact"
@@ -180,19 +177,16 @@
     <!-- ── GRID VIEW ── -->
     @if (viewMode() === 'grid') {
       @if (filteredBookmarks().length === 0) {
-        <div class="bm-table-empty">
-          <span class="material-symbols-outlined bm-empty-icon">{{ emptyStateConfig().icon }}</span>
-          <p>{{ emptyStateConfig().title }}</p>
-          @if (emptyStateConfig().subtitle) {
-            <p class="bm-empty-subtitle">{{ emptyStateConfig().subtitle }}</p>
-          }
-          @if (emptyStateConfig().showAdd) {
-            <button class="bm-add-btn" (click)="openAddModal()">
-              <span class="material-symbols-outlined">add</span>
-              Add your first bookmark
-            </button>
-          }
-        </div>
+        <env-empty-state
+          [icon]="emptyStateConfig().icon"
+          [title]="emptyStateConfig().title"
+          [description]="emptyStateConfig().subtitle"
+          [ctaLabel]="emptyStateConfig().showAdd ? 'Add your first bookmark' : ''"
+          ctaIcon="add"
+          [secondaryCtaLabel]="emptyStateConfig().showClear ? 'Clear Filters' : ''"
+          (ctaClicked)="openAddModal()"
+          (secondaryCtaClicked)="clearFilters()">
+        </env-empty-state>
       }
       <div class="bm-grid">
         @for (bm of filteredBookmarks(); track bm.id) {
@@ -563,13 +557,13 @@
 @if (showDeleteConfirm()) {
 <env-confirm-dialog
     [isOpen]="true"
-    title="Delete Bookmark"
+    [title]="deleteConfirmTitle"
     icon="delete_forever"
     variant="danger"
     confirmLabel="Delete"
     (confirmed)="confirmDelete()"
     (cancelled)="showDeleteConfirm.set(false)">
-    This bookmark will be permanently deleted. This cannot be undone.
+    {{ deleteConfirmMessage }}
 </env-confirm-dialog>
 }
 

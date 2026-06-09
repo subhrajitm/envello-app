@@ -1,6 +1,6 @@
 [package]
 name = "envello"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Tauri note-taking application"
 authors = ["you"]
 license = ""
@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["macos-private-api", "default"] }
+tauri = { version = "2", features = ["macos-private-api", "tray-icon", "default"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-notification = "2"
@@ -23,6 +23,13 @@ serde_json = "1.0"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+tauri-plugin-window-state = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-deep-link = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-os = "2"
 
 [features]
 # This feature is used for production builds or when `devPath` points to the filesystem

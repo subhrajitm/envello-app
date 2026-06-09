@@ -1,6 +1,6 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ThemeService } from '@envello/core';
+import { ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
 import { AiService, AiProvider } from '@envello/core';
 
 const ONBOARDING_KEY = 'envello-onboarding-complete';
@@ -16,6 +16,7 @@ type UseCase = 'writing' | 'tasks' | 'research' | 'all';
 })
 export class OnboardingComponent implements OnInit {
   private themeService = inject(ThemeService);
+  private userPrefsService = inject(UserPreferencesService);
   private aiService = inject(AiService);
 
   isOpen = signal(false);
@@ -36,7 +37,6 @@ export class OnboardingComponent implements OnInit {
   themes: { id: string; label: string; icon: string }[] = [
     { id: 'dark',              label: 'Midnight',   icon: 'nights_stay' },
     { id: 'enterprise-dark',   label: 'Pro Dark',   icon: 'dark_mode' },
-    { id: 'enterprise-light',  label: 'Pro Light',  icon: 'wb_sunny' },
     { id: 'light',             label: 'Paper',      icon: 'light_mode' },
     { id: 'colorful',          label: 'Colorful',   icon: 'palette' },
   ];
@@ -75,21 +75,18 @@ export class OnboardingComponent implements OnInit {
   selectTheme(id: string) {
     this.selectedTheme.set(id);
     this.themeService.setTheme(id as any);
+    const stored = JSON.parse(localStorage.getItem('envello-settings') || '{}') as AppPreferences;
+    this.userPrefsService.save({ ...stored, theme: id });
   }
 
   selectAiProvider(id: AiProvider) { this.selectedAiProvider.set(id); }
 
   finish() {
-    // Apply theme
-    this.themeService.setTheme(this.selectedTheme() as any);
-    // Apply AI provider
+    const theme = this.selectedTheme();
+    this.themeService.setTheme(theme as any);
     this.aiService.updateConfig(this.selectedAiProvider(), '', '');
-    // Persist settings
-    const saved = localStorage.getItem('envello-settings');
-    const settings = saved ? JSON.parse(saved) : {};
-    settings.theme = this.selectedTheme();
-    settings.onboardingUseCase = this.selectedUseCase();
-    localStorage.setItem('envello-settings', JSON.stringify(settings));
+    const stored = JSON.parse(localStorage.getItem('envello-settings') || '{}') as AppPreferences;
+    this.userPrefsService.save({ ...stored, theme, onboardingUseCase: this.selectedUseCase() });
     localStorage.setItem(ONBOARDING_KEY, 'true');
     this.isOpen.set(false);
   }

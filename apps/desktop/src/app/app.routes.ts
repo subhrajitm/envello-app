@@ -22,13 +22,13 @@ export const routes: Routes = [
 
   {
     path: 'write',
-    loadComponent: () => import('@envello/feature-books').then(m => m.WriteComponent),
+    loadComponent: () => import('@envello/feature-write').then(m => m.WriteComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
   {
     path: 'write/:id',
-    loadComponent: () => import('@envello/feature-books').then(m => m.ComposerComponent),
+    loadComponent: () => import('@envello/feature-write').then(m => m.ComposerComponent),
     canActivate: [authGuard],
     data: { immersive: true },
   },
@@ -36,7 +36,7 @@ export const routes: Routes = [
   { path: 'articles', redirectTo: 'write', pathMatch: 'full' },
   {
     path: 'knowledge',
-    loadComponent: () => import('./components/knowledge/knowledge.component').then(m => m.KnowledgeComponent),
+    loadComponent: () => import('@envello/feature-knowledge').then(m => m.KnowledgeComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
@@ -56,7 +56,7 @@ export const routes: Routes = [
   },
   {
     path: 'meetings',
-    loadComponent: () => import('./components/meetings/meetings.component').then(m => m.MeetingsComponent),
+    loadComponent: () => import('@envello/feature-meetings').then(m => m.MeetingsComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },
@@ -105,7 +105,7 @@ export const routes: Routes = [
   },
   {
     path: 'spaces',
-    loadComponent: () => import('./components/spaces/spaces.component').then(m => m.SpacesComponent),
+    loadComponent: () => import('@envello/feature-spaces').then(m => m.SpacesComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

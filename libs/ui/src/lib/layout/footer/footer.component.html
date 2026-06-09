@@ -21,11 +21,7 @@
         <span class="sync-dot" [class]="syncStatusClass"></span>
         <span class="footer-label">{{ syncStatusLabel }}</span>
       </div>
-      <div class="footer-item flex items-center gap-2">
-        <span class="material-symbols-outlined footer-icon">timer</span>
-        <span class="footer-label">{{ sessionDuration() }}</span>
-      </div>
-      <div class="footer-item footer-version" title="App version">v{{ appVersion() }}</div>
+<div class="footer-item footer-version" title="App version">v{{ appVersion() }}</div>
     </div>
   } @else {
     <div class="footer-collapsed-bar">

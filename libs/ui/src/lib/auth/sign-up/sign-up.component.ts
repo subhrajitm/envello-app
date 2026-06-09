@@ -1,12 +1,10 @@
-import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { EnvLogoComponent } from '../../logo/logo.component';
-import { ButtonComponent } from '../../button/button.component';
-import { InputComponent } from '../../input/input.component';
 
 @Component({
     selector: 'app-sign-up',
@@ -44,6 +42,11 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
         if (!canvas) return;
         const ctx = canvas.getContext('2d')!;
         const [r, g, b] = this.accentRgb();
+        const tmp = document.createElement('div');
+        document.body.appendChild(tmp);
+        tmp.style.background = 'var(--bg-app)';
+        const bgColor = getComputedStyle(tmp).backgroundColor || '#ffffff';
+        document.body.removeChild(tmp);
 
         const fit = () => {
             const dpr = window.devicePixelRatio || 1;
@@ -55,7 +58,11 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         };
         fit();
-        this.resizeObs = new ResizeObserver(fit);
+        let fitTimer: ReturnType<typeof setTimeout>;
+        this.resizeObs = new ResizeObserver(() => {
+            clearTimeout(fitTimer);
+            fitTimer = setTimeout(fit, 50);
+        });
         this.resizeObs.observe(canvas);
 
         const BS = 6;
@@ -87,7 +94,8 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
         const draw = () => {
             const W = canvas.offsetWidth;
             const H = canvas.offsetHeight;
-            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, W, H);
 
             const cols = Math.ceil(W / STEP) + 1;
             const rows = Math.ceil(H / STEP) + 1;
@@ -124,13 +132,12 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
             'light':            [180,  83,   9],
             'colorful':         [240, 125,  89],
             'typewriter':       [ 60,  60,  60],
-            'enterprise-light': [245, 158,  11],
         };
         return map[theme] ?? map['light'];
     }
 
     currentStep = signal(1);
-    totalSteps = 3;
+    totalSteps = 4;
 
     // Form Data
     formData = {
@@ -138,12 +145,16 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
         password: '',
         confirmPassword: '',
         fullName: '',
-        role: 'Writer', // Default
+        role: 'Productivity',
         preferences: {
             emailNotifications: true,
             autoBackup: true
         }
     };
+
+    verificationCode = signal('');
+    resendCooldown = signal(0);
+    private resendTimer?: ReturnType<typeof setInterval>;
 
     loading = signal(false);
     error = signal<string | null>(null);
@@ -151,22 +162,26 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
     steps = [
         { number: 1, title: 'Credentials', status: 'active' },
         { number: 2, title: 'Personal Info', status: 'pending' },
-        { number: 3, title: 'Preferences', status: 'pending' }
+        { number: 3, title: 'Preferences', status: 'pending' },
+        { number: 4, title: 'Verify Email', status: 'pending' },
     ];
 
     nextStep() {
-        if (this.currentStep() < this.totalSteps) {
-            if (this.validateStep(this.currentStep())) {
-                this.currentStep.set(this.currentStep() + 1);
-                this.updateStepStatuses();
-            }
+        if (this.currentStep() === this.totalSteps) {
+            this.verifyAndComplete();
+            return;
+        }
+        if (!this.validateStep(this.currentStep())) return;
+        if (this.currentStep() === 3) {
+            this.initiateSignUp();
         } else {
-            this.completeSignUp();
+            this.currentStep.set(this.currentStep() + 1);
+            this.updateStepStatuses();
         }
     }
 
     prevStep() {
-        if (this.currentStep() > 1) {
+        if (this.currentStep() > 1 && this.currentStep() < 4) {
             this.currentStep.set(this.currentStep() - 1);
             this.updateStepStatuses();
         }
@@ -208,56 +223,111 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
                 this.error.set('Please enter your full name.');
                 return false;
             }
+        } else if (step === 4) {
+            if (this.verificationCode().trim().length < 6) {
+                this.error.set('Please enter the 6-digit code from your email.');
+                return false;
+            }
         }
         return true;
     }
 
-    async completeSignUp() {
+    async initiateSignUp() {
         this.loading.set(true);
         this.error.set(null);
 
-        // 1. Create Auth User
-        const success = await this.authService.signUp(this.formData.email, this.formData.password);
+        const errorMsg = await this.authService.signUp(this.formData.email, this.formData.password);
 
-        if (success) {
-            // 2. Wait a bit for the session or user to be established if needed, 
-            // but AuthService.signUp usually returns true if the request was sent.
-            // However, we effectively need to update the profile *after* account creation.
-            // Since SignUp usually signs in automatically (or we might need to verify email),
-            // we'll assume for this flow we can proceed. 
-            // Note: Supabase might require email confirmation unless disabled. 
-            // If email confirmation is ON, we can't create profile immediately if RLS requires uid().
-            // For this implementation, we assume we can proceed or we show a success message.
-
-            // We will try to update the profile via UserService if we are logged in.
-            // If email verification is required, this part might fail until they verify.
-
-            // For now, let's treat success as "Check your email" or "Welcome"
-            // If auto-login is enabled in Supabase config:
-            setTimeout(async () => {
-                // Attempt to update profile with specific data
-                if (this.authService.isAuthenticated()) {
-                    await this.userService.updateProfile({
-                        name: this.formData.fullName,
-                        role: this.formData.role,
-                        preferences: {
-                            ...this.userService.user()!.preferences, // keep defaults
-                            emailNotifications: this.formData.preferences.emailNotifications,
-                            autoBackup: this.formData.preferences.autoBackup
-                        }
-                    });
-                    this.router.navigate(['/workspace']);
-                } else {
-                    // Likely email verification needed
-                    this.error.set('Account created! Please verify your email before logging in.');
-                    // Go to login after delay?
-                }
-                this.loading.set(false);
-            }, 1000);
-
-        } else {
-            this.error.set('Sign up failed. Please try again or use a different email.');
+        if (errorMsg) {
+            this.error.set(
+                errorMsg.toLowerCase().includes('rate limit')
+                    ? 'Too many attempts. Please wait a few minutes before trying again.'
+                    : errorMsg
+            );
             this.loading.set(false);
+            return;
         }
+
+        // If email confirmation is disabled in Supabase, the session is created
+        // immediately and the user is already authenticated — skip OTP step.
+        if (this.authService.isAuthenticated()) {
+            await this.applyProfileAndNavigate();
+            return;
+        }
+
+        this.currentStep.set(4);
+        this.updateStepStatuses();
+        this.startResendCooldown();
+        this.loading.set(false);
+    }
+
+    async verifyAndComplete() {
+        if (!this.validateStep(4)) return;
+
+        this.loading.set(true);
+        this.error.set(null);
+
+        const success = await this.authService.verifySignupOtp(
+            this.formData.email,
+            this.verificationCode().trim()
+        );
+
+        if (!success) {
+            this.error.set('Invalid or expired code. Please try again or request a new one.');
+            this.loading.set(false);
+            return;
+        }
+
+        // Wait for auth state to propagate
+        setTimeout(() => this.applyProfileAndNavigate(), 500);
+    }
+
+    private async applyProfileAndNavigate() {
+        if (this.authService.isAuthenticated()) {
+            await this.userService.updateProfile({
+                name: this.formData.fullName,
+                role: this.formData.role,
+                preferences: {
+                    ...this.userService.user()!.preferences,
+                    emailNotifications: this.formData.preferences.emailNotifications,
+                    autoBackup: this.formData.preferences.autoBackup
+                }
+            });
+            this.router.navigate(['/workspace']);
+        }
+        this.loading.set(false);
+    }
+
+    async resendCode() {
+        if (this.resendCooldown() > 0) return;
+        this.loading.set(true);
+        const success = await this.authService.resendSignupOtp(this.formData.email);
+        this.loading.set(false);
+        if (success) {
+            this.error.set(null);
+            this.startResendCooldown();
+        } else {
+            this.error.set('Failed to resend code. Please try again.');
+        }
+    }
+
+    private startResendCooldown() {
+        this.resendCooldown.set(60);
+        clearInterval(this.resendTimer);
+        this.resendTimer = setInterval(() => {
+            const n = this.resendCooldown() - 1;
+            if (n <= 0) {
+                this.resendCooldown.set(0);
+                clearInterval(this.resendTimer);
+            } else {
+                this.resendCooldown.set(n);
+            }
+        }, 1000);
+    }
+
+    @HostListener('keydown.enter', ['$event'])
+    handleEnter(event: Event) {
+        event.preventDefault();
+        this.nextStep();
     }
 }

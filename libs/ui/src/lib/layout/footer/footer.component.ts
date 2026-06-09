@@ -1,7 +1,6 @@
-import { Component, signal, OnInit, OnDestroy, inject, computed, effect, HostListener } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserService, TauriService } from '@envello/core';
-// import { environment } from '../../../../environments/environment'; // Environment might not be accessible easily from libs, assume injected or ignore for now
+import { UserService, TauriService, APP_VERSION } from '@envello/core';
 
 @Component({
   selector: 'app-footer',
@@ -13,18 +12,13 @@ import { UserService, TauriService } from '@envello/core';
 export class FooterComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private tauriService = inject(TauriService);
-  // Stats from User Service
+  private readonly injectedVersion = inject(APP_VERSION);
   private userStats = computed(() => this.userService.user()?.stats);
 
-  // Signals for UI
   currentStreak = computed(() => this.userStats()?.daysActive || 0);
-  sessionDuration = signal('00:00:00');
-  appVersion = signal('0.1.0');
+  appVersion = signal(this.injectedVersion);
   isCollapsed = signal(false);
   isOnline = signal(navigator.onLine);
-
-  private sessionStartTime: number = Date.now();
-  private timerInterval: any;
 
   constructor() {
     effect(() => {
@@ -35,7 +29,6 @@ export class FooterComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.startSessionTimer();
     // Restore collapsed state
     const saved = localStorage.getItem('envello-footer-collapsed');
     if (saved === 'true') this.isCollapsed.set(true);
@@ -47,7 +40,6 @@ export class FooterComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.stopSessionTimer();
     window.removeEventListener('online', this._onOnline!);
     window.removeEventListener('offline', this._onOffline!);
   }
@@ -76,29 +68,4 @@ export class FooterComponent implements OnInit, OnDestroy {
     return index < streak;
   }
 
-  private startSessionTimer() {
-    this.sessionStartTime = Date.now(); // Reset start time on init
-
-    this.timerInterval = setInterval(() => {
-      const now = Date.now();
-      const diff = now - this.sessionStartTime;
-      this.sessionDuration.set(this.formatDuration(diff));
-    }, 1000);
-  }
-
-  private stopSessionTimer() {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
-  }
-
-  private formatDuration(ms: number): string {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const pad = (num: number) => num.toString().padStart(2, '0');
-    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-  }
 }

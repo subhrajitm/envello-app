@@ -2,7 +2,7 @@
 
 > A distraction-free productivity and creative writing workspace — built for writers, developers, and solo operators.
 
-Envello combines **book writing**, **task management**, **daily notes**, **research organization**, **project tracking**, **bookmark management**, and **credential vaulting** into a single desktop-first application with full web and mobile support.
+Envello combines **long-form writing**, **task management**, **daily notes**, **research organization**, **project tracking**, **bookmark management**, and **credential vaulting** into a single desktop-first application with full web and mobile support.
 
 ---
 
@@ -19,13 +19,16 @@ graph TB
 
     subgraph Features["Feature Libraries  (@envello/feature-*)"]
         direction LR
-        FB[feature-books\nManuscript editor]
+        FWR[feature-write\nManuscript editor]
         FT[feature-tasks\nTask management]
         FN[feature-daily-notes\nJournaling]
         FK[feature-bookmarks\nBookmark manager]
         FV[feature-vault\nCredential store]
         FVN[feature-vendor\nSubscriptions]
         FW[feature-workspace\nDashboard]
+        FS[feature-spaces\nWorkspace profiles]
+        FM[feature-meetings\nCalendar & meetings]
+        FKN[feature-knowledge\nResearch & files]
     end
 
     subgraph Platform["Platform Libraries"]
@@ -42,7 +45,7 @@ graph TB
         SUPABASE[("Supabase\nPostgres + Auth\nCloud sync for Web")]
     end
 
-    subgraph AI["AI Providers  (LangChain.js)"]
+    subgraph AI["AI Providers  (Vercel AI SDK)"]
         direction LR
         OAI[OpenAI\nGPT-4o]
         ANT[Anthropic\nClaude 3.5]
@@ -73,7 +76,7 @@ graph BT
     STATE["@envello/state\nAngular Signals global store\nStoreService · BinService · VaultStore"]
     CORE["@envello/core\nSingleton services\nAuth · AI · Tauri bridge · Theme"]
     UI["@envello/ui\n28 reusable components\nButton · Modal · Sidebar · Dialog…"]
-    FEATURES["feature-* (7 libs)\nSelf-contained feature modules"]
+    FEATURES["feature-* (10 libs)\nwrite · tasks · daily-notes · bookmarks\nvault · vendor · workspace\nspaces · meetings · knowledge"]
     APPS["apps/\ndesktop · web · mobile · admin · landing"]
 
     DOMAIN --> DATA
@@ -137,9 +140,9 @@ flowchart TD
 
 ## Features
 
-### Book / Manuscript Editor (`feature-books`)
+### Write / Manuscript Editor (`feature-write`)
 
-A full-featured long-form writing workspace:
+A full-featured long-form writing workspace supporting novels, short stories, articles, essays, scripts, poetry, blog posts, and research:
 
 | Component | Description |
 |-----------|-------------|
@@ -192,7 +195,7 @@ Main dashboard hub with overview, recent activity, voice input, quick-add comman
 | Desktop/Mobile runtime | Tauri (Rust + Webview) | v2 |
 | Styling | TailwindCSS + CSS Custom Properties | v4 |
 | Rich-text editor | Tiptap (16+ extensions incl. @mention) | v3 |
-| AI orchestration | LangChain.js (6 providers) | latest |
+| AI orchestration | Vercel AI SDK (8 providers) | latest |
 | Desktop database | SQLite via `@tauri-apps/plugin-sql` | — |
 | Web database | PouchDB + Supabase | — |
 | Backend / Auth | Supabase (Postgres, RLS, Realtime) | v2 |
@@ -220,13 +223,16 @@ envello/
 │   ├── state/              # Global Signals store: StoreService, BinService, VaultStore
 │   ├── core/               # Singleton services: Auth, AI, Theme, Tauri bridge, SQLite
 │   ├── ui/                 # ~28 reusable standalone Angular components
-│   ├── feature-books/      # Book/manuscript writing workspace
+│   ├── feature-write/      # Long-form writing workspace (novels, essays, scripts…)
 │   ├── feature-tasks/      # Task management
 │   ├── feature-daily-notes/# Journaling
 │   ├── feature-bookmarks/  # Bookmark manager
 │   ├── feature-vault/      # Credential vault
 │   ├── feature-vendor/     # Subscription tracker
-│   └── feature-workspace/  # Dashboard hub
+│   ├── feature-workspace/  # Dashboard hub
+│   ├── feature-spaces/     # Workspace profiles
+│   ├── feature-meetings/   # Calendar & meetings
+│   └── feature-knowledge/  # Research collections & files
 │
 ├── src-tauri/              # Rust backend (Tauri v2) — desktop
 ├── supabase/
@@ -408,16 +414,18 @@ Go to **Settings → Secrets and variables → Actions** and add:
 
 ## AI Integration
 
-Multi-provider AI assistant powered by LangChain.js. Platform admin sets a default provider + API key; users can override with their own (BYOK).
+Multi-provider AI assistant powered by the Vercel AI SDK. Platform admin sets a default provider + API key; users can override with their own key (BYOK) and configure different models per feature (writing, research, summarise, chat).
 
 | Provider | Models |
 |----------|--------|
-| OpenAI | GPT-4o, GPT-4o-mini |
-| Anthropic | Claude 3.5 Sonnet, Claude 3 Haiku |
-| Google | Gemini 2.0 Flash, Gemini 1.5 Pro |
-| xAI | Grok |
-| DeepSeek | deepseek-chat |
-| Ollama | Local models (llama3, mistral, etc.) |
+| OpenAI | gpt-4o, gpt-4o-mini, o1-mini |
+| Anthropic | claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 |
+| Google | gemini-2.5-pro, gemini-2.5-flash |
+| xAI | grok-3, grok-3-mini |
+| DeepSeek | deepseek-chat, deepseek-reasoner (R1) |
+| Ollama | Local models (llama3, mistral, gemma3…) |
+| On-Device | HuggingFace Transformers.js (ONNX, no API key) |
+| Demo | Mock mode — no key required |
 
 ---
 

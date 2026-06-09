@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService, BookContentService } from '@envello/core';
+import { AuthService, BookContentService, UserPreferencesService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
@@ -8,18 +8,16 @@ import { TitlebarComponent } from './components/titlebar/titlebar.component';
 import { UpdateService } from './services/update.service';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
-/**
- * Routes that belong to a section with multiple siblings → show sub-nav bar.
- * Workspace ('workspace' / '') and Today (single item: 'daily-notes') do NOT show it.
- */
 const SUB_NAV_ROUTES = new Set([
-  // Plan section
-  'tasks', 'meetings',
-  // Knowledge section
-  'knowledge',
-  // Create section
-  'write', 'spaces',
+  'tasks', 'meetings', 'knowledge', 'write', 'spaces',
 ]);
+
+// Global shortcuts registered at app level
+const GLOBAL_SHORTCUTS: Record<string, string> = {
+  'CommandOrControl+Shift+N': '/daily-notes',      // Quick note
+  'CommandOrControl+Shift+T': '/tasks',            // Jump to tasks
+  'CommandOrControl+Shift+W': '/workspace',        // Jump to workspace
+};
 
 @Component({
   selector: 'app-root',
@@ -37,21 +35,20 @@ export class AppComponent implements OnInit, OnDestroy {
   private updateService = inject(UpdateService);
   authService = inject(AuthService);
   private bookContentService = inject(BookContentService);
+  private userPrefsService = inject(UserPreferencesService);
+
   private unlistenFileDrop?: () => void;
   private unlistenCloseRequested?: () => void;
+  private unlistenDeepLink?: () => void;
+  private unlistenTrayNewNote?: () => void;
 
   currentTab = signal('Workspace');
-  /** Current URL segment — updated on every navigation */
   currentRoute = signal('');
   hasSidebar = signal(true);
   isImmersive = signal(false);
   isFullScreen = signal(false);
   sidebarCollapsed = signal(true);
-  /**
-   * True when the sub-nav bar should appear:
-   * - the current page belongs to a section with siblings, AND
-   * - the sidebar is NOT collapsed (flyout covers minimized mode)
-   */
+
   subNavVisible = computed(() =>
     SUB_NAV_ROUTES.has(this.currentRoute()) && !this.sidebarCollapsed()
   );
@@ -60,16 +57,13 @@ export class AppComponent implements OnInit, OnDestroy {
   private navigationLayoutListener?: (event: CustomEvent) => void;
 
   ngOnInit() {
-    // Load navigation layout from localStorage
     this.loadNavigationLayout();
 
-    // Listen for navigation layout changes from settings
     this.navigationLayoutListener = (event: CustomEvent) => {
       this.navigationLayout.set(event.detail);
     };
     window.addEventListener('navigationLayoutChanged', this.navigationLayoutListener as EventListener);
 
-    // Seed route from initial URL (before any NavigationEnd fires)
     this.currentRoute.set(this.router.url.split('/')[1]?.split('?')[0] ?? '');
 
     this.router.events.pipe(
@@ -81,22 +75,21 @@ export class AppComponent implements OnInit, OnDestroy {
       }),
       mergeMap(route => route.data)
     ).subscribe(data => {
-      this.hasSidebar.set(data['hasSidebar'] !== false); // default to true if not specified? React logic was whitelist.
+      this.hasSidebar.set(data['hasSidebar'] !== false);
       this.isImmersive.set(!!data['immersive']);
       this.isFullScreen.set(!!data['fullScreen']);
 
-      // Map path to Tab Name for Header
       const url = this.router.url.split('/')[1]?.split('?')[0] ?? '';
-      const tabName = this.mapUrlToTabName(url);
-      this.currentTab.set(tabName);
+      this.currentTab.set(this.mapUrlToTabName(url));
       this.currentRoute.set(url);
-
-      // Native window title intentionally left blank — custom titlebar div handles display
       this.tauriService.setTitle('').catch(() => { /* ignore */ });
     });
+
     this.setupTauriFileDrop();
     this.setupTauriCloseHandler();
-    // Check for updates 3s after launch to avoid blocking startup
+    this.setupGlobalShortcuts();
+    this.setupDeepLinks();
+    this.setupTrayEvents();
     setTimeout(() => this.updateService.checkForUpdate(), 3000);
   }
 
@@ -107,20 +100,70 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private async setupTauriCloseHandler(): Promise<void> {
-    if (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window || '__TAURI__' in window)) return;
+    if (!this.tauriService.isTauri()) return;
     try {
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       const win = getCurrentWindow();
       this.unlistenCloseRequested = await win.onCloseRequested(async (event) => {
         event.preventDefault();
-        try {
-          await this.bookContentService.flushPersist();
-        } catch { /* non-fatal — still close */ }
-        await win.destroy();
+        try { await this.bookContentService.flushPersist(); } catch { /* non-fatal */ }
+        // Respect "minimize to tray" setting — hide instead of destroy if enabled
+        const settings = JSON.parse(localStorage.getItem('envello-settings') || '{}');
+        if (settings['minimizeToTray']) {
+          await win.hide();
+        } else {
+          await win.destroy();
+        }
       });
-    } catch {
-      // Non-Tauri or API unavailable — ignore
-    }
+    } catch { /* Non-Tauri or API unavailable */ }
+  }
+
+  private async setupGlobalShortcuts(): Promise<void> {
+    if (!this.tauriService.isTauri()) return;
+    try {
+      for (const [shortcut, route] of Object.entries(GLOBAL_SHORTCUTS)) {
+        await this.tauriService.registerShortcut(shortcut, () => {
+          this.tauriService.showWindow();
+          this.router.navigate([route]);
+        });
+      }
+    } catch { /* shortcuts may already be registered or OS denied */ }
+  }
+
+  private async setupDeepLinks(): Promise<void> {
+    if (!this.tauriService.isTauri()) return;
+    // Handle deep link that launched this instance
+    const launchUrl = await this.tauriService.getLaunchDeepLink();
+    if (launchUrl) this.handleDeepLink(launchUrl);
+    // Handle deep links while the app is running
+    this.unlistenDeepLink = await this.tauriService.onDeepLink((url) => {
+      this.tauriService.showWindow();
+      this.handleDeepLink(url);
+    });
+  }
+
+  private handleDeepLink(url: string): void {
+    try {
+      // envello://note/<id>    → /daily-notes?id=<id>
+      // envello://task/<id>   → /tasks?id=<id>
+      // envello://workspace   → /workspace
+      const { pathname } = new URL(url.replace('envello://', 'https://envello.app/'));
+      const [, section, id] = pathname.split('/');
+      const routeMap: Record<string, string> = {
+        note: '/daily-notes', task: '/tasks', workspace: '/workspace',
+        write: '/write', bookmarks: '/bookmarks', knowledge: '/knowledge',
+      };
+      const route = routeMap[section];
+      if (route) {
+        this.router.navigate([route], id ? { queryParams: { id } } : {});
+      }
+    } catch { /* malformed URL */ }
+  }
+
+  private async setupTrayEvents(): Promise<void> {
+    this.unlistenTrayNewNote = await this.tauriService.onTrayNewNote(() => {
+      this.router.navigate(['/daily-notes']);
+    });
   }
 
   ngOnDestroy() {
@@ -129,6 +172,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
     this.unlistenFileDrop?.();
     this.unlistenCloseRequested?.();
+    this.unlistenDeepLink?.();
+    this.unlistenTrayNewNote?.();
+    this.tauriService.unregisterAllShortcuts().catch(() => {});
   }
 
   private loadNavigationLayout() {
@@ -137,28 +183,17 @@ export class AppComponent implements OnInit, OnDestroy {
       try {
         const settings = JSON.parse(saved);
         this.navigationLayout.set(settings.navigationLayout || 'minimized');
-      } catch (e) {
-        console.error('Failed to load navigation layout:', e);
-      }
+      } catch { /* ignore */ }
     }
   }
 
   mapUrlToTabName(url: string): string {
     const map: Record<string, string> = {
-      'workspace':   'Workspace',
-      'tasks':       'Tasks',
-      'meetings':    'Meetings',
-      'daily-notes': 'Notes',
-      'knowledge':   'Knowledge',
-      'write':       'Write',
-      'spaces':    'Spaces',
-      'bin':                'Bin',
-      'activity-log':       'Activity Log',
-      'settings':           'Settings',
-      'developer-settings': 'Developer Settings',
-      'bookmarks':          'Bookmarks',
-      'vault':              'Vault',
-      'subscriptions':      'Subscriptions'
+      'workspace': 'Workspace', 'tasks': 'Tasks', 'meetings': 'Meetings',
+      'daily-notes': 'Notes', 'knowledge': 'Knowledge', 'write': 'Write',
+      'spaces': 'Spaces', 'bin': 'Bin', 'activity-log': 'Activity Log',
+      'settings': 'Settings', 'developer-settings': 'Developer Settings',
+      'bookmarks': 'Bookmarks', 'vault': 'Vault', 'subscriptions': 'Subscriptions',
     };
     return map[url] || 'Workspace';
   }

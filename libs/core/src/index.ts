@@ -1,4 +1,5 @@
 export * from './lib/services/ai.service';
+export * from './lib/services/user-preferences.service';
 export * from './lib/services/tauri.service';
 export * from './lib/services/logging.service';
 export * from './lib/services/article.service';
@@ -35,3 +36,4 @@ export * from './lib/services/desktop-sync-settings.service';
 export * from './lib/services/desktop-backup.service';
 export * from './lib/services/desktop-data.service';
 export * from './lib/services/web-preview.service';
+export * from './lib/tokens/app-version.token';

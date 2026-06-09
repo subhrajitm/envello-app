@@ -1,0 +1,1132 @@
+<div class="mt-view">
+
+  <!-- Left Sidebar -->
+  <env-feature-sidebar
+    [title]="'Meetings'"
+    [navItems]="sidebarNavItems()"
+    [activeNavId]="viewFilter()"
+    (navItemClick)="onNavItemClick($event)">
+
+  </env-feature-sidebar>
+
+  <!-- Main Area -->
+  <div class="mt-main">
+
+    <!-- Toolbar -->
+    <div class="mt-toolbar">
+      <div class="mt-search-wrap">
+        <span class="material-symbols-outlined mt-search-icon">search</span>
+        <input type="text" class="mt-search" placeholder="Search meetings..."
+          [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+        @if (searchQuery()) {
+        <button class="mt-search-clear" (click)="searchQuery.set('')" title="Clear">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+        }
+      </div>
+      <div class="mt-toolbar-right">
+        <div class="mt-view-toggle">
+          <button class="mt-vt-btn" [class.active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')" title="Calendar">
+            <span class="material-symbols-outlined">calendar_month</span>
+          </button>
+          <button class="mt-vt-btn" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table">
+            <span class="material-symbols-outlined">table_rows</span>
+          </button>
+        </div>
+        <button class="mt-sync-btn" [class.mt-sync-btn--active]="syncService.connections().length > 0"
+          (click)="openSyncModal()" title="Sync external calendars">
+          <span class="material-symbols-outlined">sync</span>
+          @if (syncService.connections().length > 0) {
+          <span class="mt-sync-badge">{{ syncService.connections().length }}</span>
+          }
+        </button>
+        <button class="mt-ai-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+          <span class="material-symbols-outlined">auto_awesome</span>
+          <span>AI</span>
+        </button>
+        <div class="mt-tb-divider"></div>
+        <button class="mt-add-btn" (click)="openCreateModal()">
+          <span class="material-symbols-outlined">add</span>
+          New Meeting
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="mt-content">
+
+      <!-- List View -->
+      @if (viewMode() === 'list') {
+      <div class="mt-list">
+        @if (filteredMeetings().length === 0) {
+          <env-empty-state
+            [compact]="true"
+            [icon]="searchQuery() ? 'search_off' : 'event_busy'"
+            [title]="searchQuery() ? 'No results' : 'No meetings'"
+            [description]="searchQuery() ? 'Adjust your search.' : 'Schedule your first meeting.'"
+            [ctaLabel]="!searchQuery() ? '+ New Meeting' : ''"
+            (ctaClicked)="openCreateModal()">
+          </env-empty-state>
+        } @else {
+        @for (meeting of filteredMeetings(); track meeting.id) {
+        <div class="mt-item" [class.mt-item--done]="meeting.status === 'completed'"
+          [class.mt-item--cancelled]="meeting.status === 'cancelled'"
+          [style.border-left-color]="meeting.color" (click)="openDetailsModal(meeting)">
+          <div class="mt-item-main">
+            <div class="mt-item-title-row">
+              <span class="mt-item-type-icon">
+                <span class="material-symbols-outlined">{{ getMeetingTypeIcon(meeting.meetingType) }}</span>
+              </span>
+              <span class="mt-item-title">{{ meeting.title }}</span>
+              @if (meeting.status === 'cancelled') {
+              <span class="mt-item-badge mt-item-badge--cancelled">Cancelled</span>
+              }
+              @if (meeting.status === 'completed') {
+              <span class="mt-item-badge mt-item-badge--done">Done</span>
+              }
+              @if (meeting.priority === 'HIGH' && meeting.status !== 'cancelled') {
+              <span class="mt-item-priority-dot"></span>
+              }
+            </div>
+            <div class="mt-item-meta">
+              <span class="mt-item-meta-item">
+                <span class="material-symbols-outlined">calendar_today</span>
+                {{ getRelativeDate(meeting.date) }} · {{ formatTime(meeting.startTime) }}
+                @if (meeting.duration) { <span>&nbsp;· {{ meeting.duration }}m</span> }
+              </span>
+              @if (meeting.project) {
+              <span class="mt-item-meta-item">
+                <span class="material-symbols-outlined">folder</span>
+                {{ meeting.project }}
+              </span>
+              }
+              @for (label of meeting.labels ?? []; track label) {
+              <span class="mt-item-label">#{{ label }}</span>
+              }
+            </div>
+          </div>
+          <div class="mt-item-attendees" (click)="$event.stopPropagation()">
+            <div class="mt-avatars">
+              @for (a of meeting.attendees.slice(0, 3); track a.id) {
+              <div class="mt-av" [title]="a.name" [style.backgroundImage]="a.avatar ? 'url(' + a.avatar + ')' : ''">
+                @if (!a.avatar) { {{ a.name.charAt(0) }} }
+              </div>
+              }
+              @if (meeting.attendees.length > 3) {
+              <div class="mt-av mt-av--more">+{{ meeting.attendees.length - 3 }}</div>
+              }
+            </div>
+          </div>
+          <div class="mt-item-actions" (click)="$event.stopPropagation()">
+            @if (meeting.actionItems && getOpenActionItemsCount(meeting) > 0) {
+            <span class="mt-items-badge">
+              <span class="material-symbols-outlined">task_alt</span>
+              {{ getOpenActionItemsCount(meeting) }}
+            </span>
+            }
+            @if (meeting.meetingLink) {
+            <button class="mt-icon-btn" (click)="joinMeeting(meeting, $event)" title="Join">
+              <span class="material-symbols-outlined">videocam</span>
+            </button>
+            }
+            <button class="mt-icon-btn" (click)="toggleQuickActions(meeting.id, $event)" title="More">
+              <span class="material-symbols-outlined">more_horiz</span>
+            </button>
+            @if (showQuickActions() === meeting.id) {
+            <div class="mt-quick-menu row-actions">
+              <button class="mt-qm-item" (click)="openDetailsModal(meeting); showQuickActions.set(null)">
+                <span class="material-symbols-outlined">visibility</span> View
+              </button>
+              <button class="mt-qm-item" (click)="duplicateMeeting(meeting); showQuickActions.set(null)">
+                <span class="material-symbols-outlined">content_copy</span> Duplicate
+              </button>
+              @if (meeting.status === 'scheduled') {
+              <button class="mt-qm-item" (click)="cancelMeeting(meeting); showQuickActions.set(null)">
+                <span class="material-symbols-outlined">event_busy</span> Cancel
+              </button>
+              }
+              <button class="mt-qm-item mt-qm-item--danger" (click)="deleteMeeting(meeting); showQuickActions.set(null)">
+                <span class="material-symbols-outlined">delete</span> Delete
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+        }
+        }
+      </div>
+      }
+
+      <!-- Calendar View -->
+      @if (viewMode() === 'calendar') {
+      <div class="mt-calendar">
+
+        <!-- Calendar Header -->
+        <div class="mt-cal-hdr">
+          <div class="mt-cal-nav">
+            <button class="mt-cal-nav-btn" (click)="navigatePrev()">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <h2 class="mt-cal-title">{{ calendarTitle() }}</h2>
+            <button class="mt-cal-nav-btn" (click)="navigateNext()">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          <div class="mt-cal-view-tabs">
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='day'"   (click)="calendarView.set('day')">Day</button>
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='week'"  (click)="calendarView.set('week')">Week</button>
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='month'" (click)="calendarView.set('month')">Month</button>
+            <button class="mt-cal-vtab" [class.active]="calendarView()==='year'"  (click)="calendarView.set('year')">Year</button>
+          </div>
+          <div class="mt-cal-hdr-right">
+            @if (filteredMeetings().length > 0) {
+            <span class="mt-cal-count">{{ filteredMeetings().length }} meeting{{ filteredMeetings().length !== 1 ? 's' : '' }}</span>
+            }
+            <button class="mt-cal-today-btn" (click)="goToToday()">Today</button>
+          </div>
+        </div>
+
+        <!-- ── Day View ─────────────────────────────────────────────── -->
+        @if (calendarView() === 'day') {
+        <div class="mt-cal-day-view">
+          <div class="mt-cal-tl">
+            <div class="mt-cal-tl-gutter">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-h-label">{{ formatHour(h) }}</div>
+              }
+            </div>
+            <div class="mt-cal-tl-col" [class.mt-cal-tl-col--today]="isToday(calendarDate())">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-slot" (click)="selectCalendarDate(calendarDate())"></div>
+              }
+              @for (m of getMeetingsForDay(calendarDate()); track m.id) {
+              <div class="mt-cal-tl-event"
+                [style.top.px]="getMeetingTopPx(m.startTime)"
+                [style.height.px]="getMeetingHeightPx(m.startTime, m.endTime, m.duration)"
+                [style.background]="eventBg(m.color)"
+                (click)="openDetailsModal(m)">
+                <span class="mt-cal-tl-event-time">{{ formatTime(m.startTime) }}@if(m.endTime){–{{ formatTime(m.endTime) }}}</span>
+                <span class="mt-cal-tl-event-title">{{ m.title }}</span>
+                @if (m.attendees.length > 1) {
+                <span class="mt-cal-tl-event-att">{{ m.attendees.length }} people</span>
+                }
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- ── Week View ────────────────────────────────────────────── -->
+        @if (calendarView() === 'week') {
+        <div class="mt-cal-week-view">
+          <div class="mt-cal-wv-hdr">
+            <div class="mt-cal-tl-gutter"></div>
+            @for (day of weekDays(); track day.getTime()) {
+            <div class="mt-cal-wv-day-hdr" [class.today]="isToday(day)">
+              <span class="mt-cal-wv-day-name">{{ day | date:'EEE' }}</span>
+              <span class="mt-cal-wv-day-num">{{ day.getDate() }}</span>
+            </div>
+            }
+          </div>
+          <div class="mt-cal-wv-body">
+            <div class="mt-cal-tl-gutter">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-h-label">{{ formatHour(h) }}</div>
+              }
+            </div>
+            @for (day of weekDays(); track day.getTime()) {
+            <div class="mt-cal-wv-col" [class.today]="isToday(day)">
+              @for (h of calendarHours; track h) {
+              <div class="mt-cal-tl-slot" (click)="selectCalendarDate(day)"></div>
+              }
+              @for (m of getMeetingsForDay(day); track m.id) {
+              <div class="mt-cal-tl-event"
+                [style.top.px]="getMeetingTopPx(m.startTime)"
+                [style.height.px]="getMeetingHeightPx(m.startTime, m.endTime, m.duration)"
+                [style.background]="eventBg(m.color)"
+                (click)="openDetailsModal(m); $event.stopPropagation()">
+                <span class="mt-cal-tl-event-time">{{ formatTime(m.startTime) }}</span>
+                <span class="mt-cal-tl-event-title">{{ m.title }}</span>
+              </div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- ── Month View ───────────────────────────────────────────── -->
+        @if (calendarView() === 'month') {
+        <div class="mt-cal-grid">
+          <div class="mt-cal-weekdays">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="mt-cal-days">
+            @for (week of calendarWeeks(); track week[0].getTime()) {
+            <div class="mt-cal-week">
+              @for (day of week; track day.getTime()) {
+              <div class="mt-cal-day"
+                [class.mt-cal-day--other]="!isCurrentMonth(day)"
+                [class.mt-cal-day--today]="isToday(day)"
+                [class.mt-cal-day--weekend]="day.getDay() === 0 || day.getDay() === 6"
+                (click)="selectCalendarDate(day)">
+                <div class="mt-cal-day-hdr">
+                  <span class="mt-cal-day-num">{{ day.getDate() }}</span>
+                  @if (getMeetingsForDate(day).length > 0) {
+                  <span class="mt-cal-day-badge">{{ getMeetingsForDate(day).length }}</span>
+                  }
+                </div>
+                <div class="mt-cal-day-events">
+                  @for (m of getMeetingsForDate(day).slice(0, 3); track m.id) {
+                  <div class="mt-cal-event"
+                    [style.--ev-color]="m.color"
+                    [class.mt-cal-event--cancelled]="m.status === 'cancelled'"
+                    (click)="openDetailsModal(m); $event.stopPropagation()"
+                    [title]="m.title + ' · ' + formatTime(m.startTime)">
+                    <span class="mt-cal-event-time">{{ formatTime(m.startTime) }}</span>
+                    <span class="mt-cal-event-title">{{ m.title }}</span>
+                    @if (m.attendees.length > 1) {
+                    <span class="mt-cal-event-att">{{ m.attendees.length }}</span>
+                    }
+                  </div>
+                  }
+                  @if (getMeetingsForDate(day).length > 3) {
+                  <button class="mt-cal-more" (click)="$event.stopPropagation()">
+                    +{{ getMeetingsForDate(day).length - 3 }} more
+                  </button>
+                  }
+                </div>
+              </div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- ── Year View ────────────────────────────────────────────── -->
+        @if (calendarView() === 'year') {
+        <div class="mt-cal-year-view">
+          @for (month of yearMonths(); track month.getTime()) {
+          <div class="mt-cal-ym" (click)="calendarDate.set(month); calendarView.set('month')">
+            <div class="mt-cal-ym-title">{{ month | date:'MMMM' }}</div>
+            <div class="mt-cal-ym-weekdays">
+              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+            @for (week of getYearMonthWeeks(month); track week[0].getTime()) {
+            <div class="mt-cal-ym-week">
+              @for (day of week; track day.getTime()) {
+              <div class="mt-cal-ym-day"
+                [class.other]="day.getMonth() !== month.getMonth()"
+                [class.today]="isToday(day)"
+                [class.has-events]="day.getMonth() === month.getMonth() && getMonthMeetingDays(month).has(day.getDate())">
+                {{ day.getDate() }}
+              </div>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+
+      </div>
+      }
+
+      <!-- Table View -->
+      @if (viewMode() === 'table') {
+      <env-table
+        class="env-table--compact"
+        [columns]="tableColumns"
+        [rows]="tableRows()"
+        [actions]="tableActions"
+        [showToolbar]="false"
+        [showSortFilter]="false"
+        [showSearch]="false"
+        rowIdKey="id"
+        (rowClick)="onTableRowClick($any($event))"
+        (actionClick)="onTableAction($event)"
+        (bulkActionClick)="handleBulkAction($event)"
+        (sortChange)="onTableSort($event)">
+      </env-table>
+      }
+
+    </div><!-- /mt-content -->
+  </div><!-- /mt-main -->
+</div><!-- /mt-view -->
+
+<!-- ─── AI Assistant Panel ──────────────────────────────────────────────────── -->
+@if (showAssistant()) {
+  <env-ai-panel
+    title="Meetings Assistant"
+    placeholder="Ask about your meetings…"
+    [suggestions]="aiSuggestions"
+    [messages]="aiMessages()"
+    [loading]="aiLoading()"
+    (send)="sendAiMessage($event)"
+    (cleared)="clearAiChat()"
+    (closed)="toggleAssistant()"
+  ></env-ai-panel>
+}
+
+<!-- ─── Create Meeting Modal ────────────────────────────────────────────────── -->
+@if (showCreateModal()) {
+<div class="mta-backdrop" (click)="closeCreateModal()">
+  <div class="mta-modal mta-modal--lg" (click)="$event.stopPropagation()">
+    <div class="mta-modal-hdr">
+      <span class="mta-modal-title">New Meeting</span>
+      <button class="mta-modal-close" (click)="closeCreateModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="mta-modal-body mta-modal-body--scroll">
+      <div class="mta-form">
+        <div class="mta-fg">
+          <label class="mta-label">Meeting Title *</label>
+          <input type="text" class="mta-input" placeholder="Enter meeting title..."
+            [value]="newMeeting().title || ''"
+            (input)="updateNewMeetingField('title', $any($event.target).value)" autofocus />
+        </div>
+        <div class="mta-fg">
+          <label class="mta-label">Description</label>
+          <textarea class="mta-textarea" placeholder="Add meeting description..."
+            [value]="newMeeting().description || ''"
+            (input)="updateNewMeetingField('description', $any($event.target).value)"></textarea>
+        </div>
+        <div class="mta-row">
+          <div class="mta-fg">
+            <label class="mta-label">Date *</label>
+            <input type="date" class="mta-input" [value]="newMeeting().date"
+              (input)="updateNewMeetingField('date', $any($event.target).value)" />
+          </div>
+          <div class="mta-fg">
+            <label class="mta-label">Start Time *</label>
+            <input type="time" class="mta-input" [value]="newMeeting().startTime"
+              (input)="updateNewMeetingField('startTime', $any($event.target).value)" />
+          </div>
+          <div class="mta-fg">
+            <label class="mta-label">End Time</label>
+            <input type="time" class="mta-input" [value]="newMeeting().endTime"
+              (input)="updateNewMeetingField('endTime', $any($event.target).value)" />
+          </div>
+        </div>
+        <div class="mta-row">
+          <div class="mta-fg">
+            <label class="mta-label">Meeting Type</label>
+            <select class="mta-select" [value]="newMeeting().meetingType"
+              (change)="updateNewMeetingField('meetingType', $any($event.target).value)">
+              <option value="video">Video Call</option>
+              <option value="phone">Phone Call</option>
+              <option value="in-person">In Person</option>
+              <option value="hybrid">Hybrid</option>
+            </select>
+          </div>
+          @if (newMeeting().meetingType === 'video' || newMeeting().meetingType === 'hybrid') {
+          <div class="mta-fg">
+            <label class="mta-label">Platform</label>
+            <select class="mta-select" [value]="newMeeting().platform"
+              (change)="updateNewMeetingField('platform', $any($event.target).value)">
+              <option value="zoom">Zoom</option>
+              <option value="teams">Microsoft Teams</option>
+              <option value="meet">Google Meet</option>
+              <option value="discord">Discord</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          }
+        </div>
+        @if (newMeeting().meetingType === 'video' || newMeeting().meetingType === 'hybrid') {
+        <div class="mta-fg">
+          <label class="mta-label">Meeting Link</label>
+          <input type="url" class="mta-input" placeholder="https://..."
+            [value]="newMeeting().meetingLink || ''"
+            (input)="updateNewMeetingField('meetingLink', $any($event.target).value)" />
+        </div>
+        }
+        @if (newMeeting().meetingType === 'in-person' || newMeeting().meetingType === 'hybrid') {
+        <div class="mta-fg">
+          <label class="mta-label">Location</label>
+          <input type="text" class="mta-input" placeholder="Room, address, etc."
+            [value]="newMeeting().location || ''"
+            (input)="updateNewMeetingField('location', $any($event.target).value)" />
+        </div>
+        }
+        <div class="mta-fg">
+          <label class="mta-label">Project</label>
+          <input type="text" class="mta-input" placeholder="Enter or select project..."
+            [value]="newMeeting().project || ''" list="mta-projects-list"
+            (input)="updateNewMeetingField('project', $any($event.target).value)" />
+          <datalist id="mta-projects-list">
+            @for (project of availableProjects(); track project) {
+            <option [value]="project">{{ project }}</option>
+            }
+          </datalist>
+        </div>
+        <div class="mta-row">
+          <div class="mta-fg">
+            <label class="mta-label">Priority</label>
+            <select class="mta-select" [value]="newMeeting().priority"
+              (change)="updateNewMeetingField('priority', $any($event.target).value)">
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+            </select>
+          </div>
+          <div class="mta-fg">
+            <label class="mta-label">Color</label>
+            <div class="mta-colors">
+              @for (color of meetingColors; track color) {
+              <button type="button" class="mta-color-btn" [style.backgroundColor]="color"
+                [class.mta-color-btn--active]="newMeeting().color === color"
+                (click)="updateNewMeetingField('color', color)">
+                @if (newMeeting().color === color) {
+                <span class="material-symbols-outlined">check</span>
+                }
+              </button>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="mta-fg">
+          <label class="mta-label">Attendees</label>
+          <div class="mta-input-row">
+            <input type="text" class="mta-input" placeholder="Add attendee name..."
+              [value]="newAttendeeInput()" (input)="newAttendeeInput.set($any($event.target).value)"
+              (keyup.enter)="addAttendeeToNew()" />
+            <button class="mta-icon-btn" [disabled]="!newAttendeeInput().trim()" (click)="addAttendeeToNew()">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+          </div>
+          @if (newMeeting().attendees && newMeeting().attendees!.length > 0) {
+          <div class="mta-chips">
+            @for (attendee of newMeeting().attendees!; track attendee.id) {
+            <span class="mta-chip">{{ attendee.name }}
+              <button type="button" class="mta-chip-rm" (click)="removeAttendeeFromNew(attendee.id)">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+            }
+          </div>
+          }
+        </div>
+        <div class="mta-fg">
+          <label class="mta-label">Agenda Items</label>
+          <div class="mta-input-row">
+            <input type="text" class="mta-input" placeholder="Add agenda item..."
+              [value]="newAgendaInput()" (input)="newAgendaInput.set($any($event.target).value)"
+              (keyup.enter)="addAgendaItemToNew()" />
+            <button class="mta-icon-btn" [disabled]="!newAgendaInput().trim()" (click)="addAgendaItemToNew()">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+          </div>
+          @if (newMeeting().agenda && newMeeting().agenda!.length > 0) {
+          <div class="mta-chips">
+            @for (item of newMeeting().agenda!; track item.id; let i = $index) {
+            <span class="mta-chip"><span class="mta-chip-num">{{ i + 1 }}</span>{{ item.title }}
+              <button type="button" class="mta-chip-rm" (click)="removeAgendaItemFromNew(item.id)">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+            }
+          </div>
+          }
+        </div>
+        <div class="mta-fg">
+          <label class="mta-label">Labels</label>
+          <div class="mta-input-row">
+            <input type="text" class="mta-input" placeholder="Add label..."
+              [value]="newLabelInput()" (input)="newLabelInput.set($any($event.target).value)"
+              (keyup.enter)="addLabelToNew()" />
+            <button class="mta-icon-btn" [disabled]="!newLabelInput().trim()" (click)="addLabelToNew()">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+          </div>
+          @if (newMeeting().labels && newMeeting().labels!.length > 0) {
+          <div class="mta-chips">
+            @for (label of newMeeting().labels!; track label) {
+            <span class="mta-chip">#{{ label }}
+              <button type="button" class="mta-chip-rm" (click)="removeLabelFromNew(label)">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+            }
+          </div>
+          }
+        </div>
+        <div class="mta-fg">
+          <label class="mta-checkbox-label">
+            <input type="checkbox" [checked]="showRecurringOptions()"
+              (change)="showRecurringOptions.set($any($event.target).checked)" />
+            <span>Make this a recurring meeting</span>
+          </label>
+        </div>
+        @if (showRecurringOptions()) {
+        <div class="mta-row">
+          <div class="mta-fg">
+            <label class="mta-label">Repeat</label>
+            <select class="mta-select" [value]="recurringPattern()"
+              (change)="recurringPattern.set($any($event.target).value)">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Bi-weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div class="mta-fg">
+            <label class="mta-label">Occurrences</label>
+            <input type="number" class="mta-input" min="2" max="52" [value]="recurringCount()"
+              (input)="recurringCount.set(+$any($event.target).value)" />
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    <div class="mta-modal-foot">
+      <button class="mta-btn mta-btn--ghost" (click)="closeCreateModal()">Cancel</button>
+      <button class="mta-btn mta-btn--primary" (click)="createMeeting()" [disabled]="!newMeeting().title?.trim()">
+        {{ showRecurringOptions() ? 'Create Series' : 'Create Meeting' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ─── Meeting Details Modal ───────────────────────────────────────────────── -->
+@if (showDetailsModal() && selectedMeeting()) {
+<div class="mta-backdrop" (click)="closeDetailsModal()">
+  <div class="mta-modal mta-modal--xl" (click)="$event.stopPropagation()">
+    <div class="mta-modal-hdr mta-modal-hdr--meeting" [style.--mc]="selectedMeeting()!.color">
+      <div class="mta-mhdr-bar"></div>
+      <div class="mta-mhdr-content">
+        @if (editingMeeting()) {
+        <input type="text" class="mta-details-title-input" [value]="editedMeeting().title"
+          (input)="updateEditedMeetingField('title', $any($event.target).value)" />
+        } @else {
+        <h2 class="mta-details-title">{{ selectedMeeting()!.title }}</h2>
+        }
+        <div class="mta-details-status">
+          <span class="mta-status-dot" [style.backgroundColor]="getStatusColor(selectedMeeting()!.status)"></span>
+          <span>{{ selectedMeeting()!.status | titlecase }}</span>
+        </div>
+      </div>
+      <button class="mta-modal-close" (click)="closeDetailsModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="mta-details-tabs">
+      <button class="mta-dtab" [class.active]="detailsTab() === 'overview'" (click)="detailsTab.set('overview')">Overview</button>
+      <button class="mta-dtab" [class.active]="detailsTab() === 'agenda'" (click)="detailsTab.set('agenda')">
+        Agenda
+        @if (selectedMeeting()!.agenda?.length) {
+        <span class="mta-dtab-count">{{ selectedMeeting()!.agenda!.length }}</span>
+        }
+      </button>
+      <button class="mta-dtab" [class.active]="detailsTab() === 'notes'" (click)="detailsTab.set('notes')">
+        Notes
+        @if (selectedMeeting()!.notes?.length) {
+        <span class="mta-dtab-count">{{ selectedMeeting()!.notes!.length }}</span>
+        }
+      </button>
+      <button class="mta-dtab" [class.active]="detailsTab() === 'action-items'" (click)="detailsTab.set('action-items')">
+        Action Items
+        @if (getOpenActionItemsCount(selectedMeeting()!) > 0) {
+        <span class="mta-dtab-count mta-dtab-count--accent">{{ getOpenActionItemsCount(selectedMeeting()!) }}</span>
+        }
+      </button>
+    </div>
+    <div class="mta-modal-body mta-modal-body--scroll">
+
+      @if (detailsTab() === 'overview') {
+      <div class="mta-overview">
+        <div class="mta-detail-row">
+          <span class="material-symbols-outlined mta-detail-icon">schedule</span>
+          <div class="mta-detail-content">
+            <div class="mta-detail-label">Date & Time</div>
+            @if (editingMeeting()) {
+            <div class="mta-edit-row">
+              <input type="date" class="mta-input mta-input--sm" [value]="editedMeeting().date"
+                (input)="updateEditedMeetingField('date', $any($event.target).value)" />
+              <input type="time" class="mta-input mta-input--sm" [value]="editedMeeting().startTime"
+                (input)="updateEditedMeetingField('startTime', $any($event.target).value)" />
+              <span>to</span>
+              <input type="time" class="mta-input mta-input--sm" [value]="editedMeeting().endTime"
+                (input)="updateEditedMeetingField('endTime', $any($event.target).value)" />
+            </div>
+            } @else {
+            <div class="mta-detail-value">{{ formatFullDate(selectedMeeting()!.date) }}</div>
+            <div class="mta-detail-sub">{{ formatTime(selectedMeeting()!.startTime) }}
+              @if (selectedMeeting()!.endTime) { – {{ formatTime(selectedMeeting()!.endTime!) }} }
+              @if (selectedMeeting()!.duration) { ({{ selectedMeeting()!.duration }}min) }
+            </div>
+            }
+          </div>
+        </div>
+        <div class="mta-detail-row">
+          <span class="material-symbols-outlined mta-detail-icon">{{ getMeetingTypeIcon(selectedMeeting()!.meetingType) }}</span>
+          <div class="mta-detail-content">
+            <div class="mta-detail-label">{{ selectedMeeting()!.meetingType | titlecase }} Meeting</div>
+            @if (editingMeeting()) {
+            <input type="text" class="mta-input" placeholder="Meeting link or location"
+              [value]="editedMeeting().meetingLink || editedMeeting().location || ''"
+              (input)="updateEditedMeetingField(selectedMeeting()!.meetingLink ? 'meetingLink' : 'location', $any($event.target).value)" />
+            } @else {
+            @if (selectedMeeting()!.meetingLink) {
+            <a class="mta-detail-link" [href]="selectedMeeting()!.meetingLink" target="_blank" rel="noopener noreferrer">
+              {{ selectedMeeting()!.meetingLink }}
+            </a>
+            }
+            @if (selectedMeeting()!.location) {
+            <div class="mta-detail-value">{{ selectedMeeting()!.location }}</div>
+            }
+            }
+          </div>
+        </div>
+        @if (selectedMeeting()!.project || editingMeeting()) {
+        <div class="mta-detail-row">
+          <span class="material-symbols-outlined mta-detail-icon">folder</span>
+          <div class="mta-detail-content">
+            <div class="mta-detail-label">Project</div>
+            @if (editingMeeting()) {
+            <input type="text" class="mta-input" [value]="editedMeeting().project || ''"
+              (input)="updateEditedMeetingField('project', $any($event.target).value)" />
+            } @else {
+            <div class="mta-detail-value">{{ selectedMeeting()!.project }}</div>
+            }
+          </div>
+        </div>
+        }
+        <div class="mta-detail-row">
+          <span class="material-symbols-outlined mta-detail-icon">description</span>
+          <div class="mta-detail-content">
+            <div class="mta-detail-label">Description</div>
+            @if (editingMeeting()) {
+            <textarea class="mta-textarea" [value]="editedMeeting().description || ''"
+              (input)="updateEditedMeetingField('description', $any($event.target).value)"
+              placeholder="Add a description..."></textarea>
+            } @else {
+            <div class="mta-detail-value">{{ selectedMeeting()!.description || 'No description' }}</div>
+            }
+          </div>
+        </div>
+        <div class="mta-detail-row">
+          <span class="material-symbols-outlined mta-detail-icon">group</span>
+          <div class="mta-detail-content">
+            <div class="mta-detail-label">
+              Attendees ({{ selectedMeeting()!.attendees.length }})
+              @if (!editingMeeting()) {
+              <button type="button" class="mta-add-inline" (click)="showAddAttendee.set(true)">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+              }
+            </div>
+            <div class="mta-attendees-list">
+              @for (attendee of selectedMeeting()!.attendees; track attendee.id) {
+              <div class="mta-attendee-item">
+                <div class="mta-attendee-av" [style.backgroundImage]="attendee.avatar ? 'url(' + attendee.avatar + ')' : ''">
+                  @if (!attendee.avatar) { {{ attendee.name.charAt(0) }} }
+                </div>
+                <div class="mta-attendee-info">
+                  <span class="mta-attendee-name">{{ attendee.name }}</span>
+                  @if (attendee.role) {
+                  <span class="mta-attendee-role">{{ attendee.role }}</span>
+                  }
+                </div>
+                @if (attendee.status) {
+                <span class="mta-attendee-status mta-attendee-status--{{ attendee.status }}">
+                  @switch (attendee.status) {
+                  @case ('accepted') { <span class="material-symbols-outlined">check_circle</span> }
+                  @case ('declined') { <span class="material-symbols-outlined">cancel</span> }
+                  @case ('tentative') { <span class="material-symbols-outlined">help</span> }
+                  @default { <span class="material-symbols-outlined">pending</span> }
+                  }
+                </span>
+                }
+                @if (editingMeeting()) {
+                <button type="button" class="mta-rm-btn" (click)="removeAttendee(attendee.id)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+                }
+              </div>
+              }
+            </div>
+            @if (showAddAttendee()) {
+            <div class="mta-add-attendee-form">
+              <input type="text" class="mta-input mta-input--sm" placeholder="Name"
+                [value]="newAttendeeName()" (input)="newAttendeeName.set($any($event.target).value)" />
+              <input type="email" class="mta-input mta-input--sm" placeholder="Email (optional)"
+                [value]="newAttendeeEmail()" (input)="newAttendeeEmail.set($any($event.target).value)" />
+              <select class="mta-select mta-select--sm" [value]="newAttendeeRole()"
+                (change)="newAttendeeRole.set($any($event.target).value)">
+                <option value="required">Required</option>
+                <option value="optional">Optional</option>
+              </select>
+              <button class="mta-btn mta-btn--primary mta-btn--sm" (click)="addAttendeeToMeeting()"
+                [disabled]="!newAttendeeName().trim()">Add</button>
+              <button class="mta-btn mta-btn--ghost mta-btn--sm" (click)="showAddAttendee.set(false)">Cancel</button>
+            </div>
+            }
+          </div>
+        </div>
+        @if (selectedMeeting()!.labels?.length) {
+        <div class="mta-detail-row">
+          <span class="material-symbols-outlined mta-detail-icon">label</span>
+          <div class="mta-detail-content">
+            <div class="mta-detail-label">Labels</div>
+            <div class="mta-labels-row">
+              @for (label of selectedMeeting()!.labels!; track label) {
+              <span class="mta-label-tag">#{{ label }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+      }
+
+      @if (detailsTab() === 'agenda') {
+      <div class="mta-tab-content">
+        <div class="mta-input-row mta-input-row--3">
+          <input type="text" class="mta-input" placeholder="Add agenda item..."
+            [value]="newAgendaItemTitle()" (input)="newAgendaItemTitle.set($any($event.target).value)"
+            (keyup.enter)="addAgendaItem()" />
+          <input type="number" class="mta-input mta-input--sm" placeholder="Min" min="5" step="5"
+            [value]="newAgendaItemDuration()"
+            (input)="newAgendaItemDuration.set(+$any($event.target).value)" />
+          <input type="text" class="mta-input" placeholder="Presenter (optional)"
+            [value]="newAgendaItemPresenter()"
+            (input)="newAgendaItemPresenter.set($any($event.target).value)" />
+          <button class="mta-btn mta-btn--primary mta-btn--sm" (click)="addAgendaItem()"
+            [disabled]="!newAgendaItemTitle().trim()">Add</button>
+        </div>
+        @if (selectedMeeting()!.agenda?.length) {
+        <div class="mta-agenda-list">
+          @for (item of selectedMeeting()!.agenda!; track item.id; let i = $index) {
+          <div class="mta-agenda-item" [class.mta-agenda-item--done]="item.completed">
+            <button type="button" class="mta-check-btn" (click)="toggleAgendaItem(item.id)">
+              <span class="material-symbols-outlined">{{ item.completed ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            </button>
+            <span class="mta-agenda-num">{{ i + 1 }}</span>
+            <div class="mta-agenda-content">
+              <span class="mta-agenda-title">{{ item.title }}</span>
+              <div class="mta-agenda-meta">
+                @if (item.duration) { <span>{{ item.duration }} min</span> }
+                @if (item.presenter) { <span>· {{ item.presenter }}</span> }
+              </div>
+            </div>
+            <button class="mta-rm-btn" (click)="deleteAgendaItem(item.id)">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+          }
+        </div>
+        } @else {
+        <div class="mta-tab-empty">
+          <span class="material-symbols-outlined">list_alt</span>
+          <p>No agenda items yet</p>
+        </div>
+        }
+      </div>
+      }
+
+      @if (detailsTab() === 'notes') {
+      <div class="mta-tab-content">
+        <div class="mta-fg">
+          <textarea class="mta-textarea" placeholder="Add a note..."
+            [value]="newNoteInput()" (input)="newNoteInput.set($any($event.target).value)"></textarea>
+          <button class="mta-btn mta-btn--primary mta-btn--sm" style="margin-top:8px" (click)="addNote()"
+            [disabled]="!newNoteInput().trim()">Add Note</button>
+        </div>
+        @if (selectedMeeting()!.notes?.length) {
+        <div class="mta-notes-list">
+          @for (note of selectedMeeting()!.notes!; track note.id) {
+          <div class="mta-note-item">
+            <div class="mta-note-hdr">
+              <span class="mta-note-time">{{ note.createdAt | date:'short' }}</span>
+              @if (note.createdBy) { <span class="mta-note-author">{{ note.createdBy }}</span> }
+              <button class="mta-rm-btn" (click)="deleteNote(note.id)">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+            <div class="mta-note-content">{{ note.content }}</div>
+          </div>
+          }
+        </div>
+        } @else {
+        <div class="mta-tab-empty">
+          <span class="material-symbols-outlined">note</span>
+          <p>No notes yet</p>
+        </div>
+        }
+      </div>
+      }
+
+      @if (detailsTab() === 'action-items') {
+      <div class="mta-tab-content">
+        <div class="mta-input-row mta-input-row--3">
+          <input type="text" class="mta-input" placeholder="Add action item..."
+            [value]="newActionItemInput()" (input)="newActionItemInput.set($any($event.target).value)"
+            (keyup.enter)="addActionItem()" />
+          <input type="text" class="mta-input mta-input--sm" placeholder="Assignee"
+            [value]="newActionItemAssignee()"
+            (input)="newActionItemAssignee.set($any($event.target).value)" />
+          <select class="mta-select mta-select--sm" [value]="newActionItemPriority()"
+            (change)="newActionItemPriority.set($any($event.target).value)">
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+          <button class="mta-btn mta-btn--primary mta-btn--sm" (click)="addActionItem()"
+            [disabled]="!newActionItemInput().trim()">Add</button>
+        </div>
+        @if (selectedMeeting()!.actionItems?.length) {
+        <div class="mta-action-list">
+          @for (item of selectedMeeting()!.actionItems!; track item.id) {
+          <div class="mta-action-item" [class.mta-action-item--done]="item.status === 'completed'">
+            <button type="button" class="mta-check-btn" (click)="toggleActionItem(item.id)">
+              <span class="material-symbols-outlined">{{ item.status === 'completed' ? 'check_circle' : 'radio_button_unchecked' }}</span>
+            </button>
+            <div class="mta-action-content">
+              <span class="mta-action-title">{{ item.title }}</span>
+              <div class="mta-action-meta">
+                @if (item.assignee) {
+                <span><span class="material-symbols-outlined">person</span>{{ item.assignee }}</span>
+                }
+                @if (item.priority) {
+                <span class="mta-priority mta-priority--{{ item.priority | lowercase }}">{{ item.priority }}</span>
+                }
+                @if (item.linkedTaskId) {
+                <span><span class="material-symbols-outlined">link</span> Linked to task</span>
+                }
+              </div>
+            </div>
+            <div class="mta-action-btns">
+              @if (!item.linkedTaskId && item.status !== 'completed') {
+              <button type="button" class="mt-icon-btn" title="Convert to Task" (click)="convertToTask(item)">
+                <span class="material-symbols-outlined">task_alt</span>
+              </button>
+              }
+              <button type="button" class="mt-icon-btn mt-icon-btn--danger" (click)="deleteActionItem(item.id)">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <div class="mta-tab-empty">
+          <span class="material-symbols-outlined">task_alt</span>
+          <p>No action items yet</p>
+        </div>
+        }
+      </div>
+      }
+
+    </div>
+    <div class="mta-modal-foot">
+      @if (editingMeeting()) {
+      <button class="mta-btn mta-btn--ghost" (click)="cancelEditing()">Cancel</button>
+      <button class="mta-btn mta-btn--primary" (click)="saveEditing()">Save</button>
+      } @else {
+      <button class="mta-btn mta-btn--ghost" (click)="startEditing()">
+        <span class="material-symbols-outlined">edit</span> Edit
+      </button>
+      @if (selectedMeeting()!.meetingLink) {
+      <button class="mta-btn mta-btn--primary" (click)="joinMeeting(selectedMeeting()!)">
+        <span class="material-symbols-outlined">video_call</span> Join
+      </button>
+      }
+      @if (selectedMeeting()!.status === 'scheduled') {
+      <button class="mta-btn mta-btn--primary" (click)="completeMeeting(selectedMeeting()!)">
+        <span class="material-symbols-outlined">check_circle</span> Mark Complete
+      </button>
+      <button class="mta-btn mta-btn--ghost" (click)="cancelMeeting(selectedMeeting()!)">
+        <span class="material-symbols-outlined">event_busy</span> Cancel Meeting
+      </button>
+      }
+      <button class="mta-btn mta-btn--ghost" (click)="duplicateMeeting(selectedMeeting()!)">
+        <span class="material-symbols-outlined">content_copy</span> Duplicate
+      </button>
+      <button class="mta-btn mta-btn--danger" (click)="deleteMeeting(selectedMeeting()!)">
+        <span class="material-symbols-outlined">delete</span> Delete
+      </button>
+      }
+    </div>
+  </div>
+</div>
+}
+
+<!-- ─── Calendar Sync Modal ─────────────────────────────────────────────────── -->
+@if (showSyncModal()) {
+<div class="mta-backdrop" (click)="closeSyncModal()">
+  <div class="mta-modal mta-modal--md" (click)="$event.stopPropagation()">
+    <div class="mta-modal-hdr">
+      <span class="mta-modal-title">Sync External Calendars</span>
+      <button class="mta-modal-close" (click)="closeSyncModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="mta-modal-body mta-modal-body--scroll">
+      <div class="mta-sync-tabs">
+        @for (p of syncProviders; track p) {
+        <button class="mta-sync-tab" [class.active]="syncActiveProvider() === p"
+          (click)="syncActiveProvider.set(p)">
+          <span class="material-symbols-outlined">{{ providerMeta[p].icon }}</span>
+          {{ providerMeta[p].label }}
+        </button>
+        }
+      </div>
+      <div class="mta-sync-form">
+        <div class="mta-sync-help">
+          <span class="material-symbols-outlined">info</span>
+          {{ providerMeta[syncActiveProvider()].helpText }}
+        </div>
+        <div class="mta-fg">
+          <label class="mta-label">Connection Name</label>
+          <input type="text" class="mta-input" placeholder="e.g. Work Calendar"
+            [value]="syncNewName()" (input)="syncNewName.set($any($event.target).value)" />
+        </div>
+        <div class="mta-fg">
+          <label class="mta-label">ICS / iCal URL</label>
+          <input type="url" class="mta-input"
+            [placeholder]="providerMeta[syncActiveProvider()].placeholder"
+            [value]="syncNewUrl()" (input)="syncNewUrl.set($any($event.target).value)" />
+        </div>
+        @if (syncAddError()) {
+        <div class="mta-sync-error">
+          <span class="material-symbols-outlined">error</span>
+          {{ syncAddError() }}
+        </div>
+        }
+        <button class="mta-btn mta-btn--primary" (click)="addCalendarConnection()"
+          [disabled]="!syncNewName().trim() || !syncNewUrl().trim()">
+          Connect Calendar
+        </button>
+      </div>
+      @if (syncService.connections().length > 0) {
+      <div class="mta-sync-connections">
+        <div class="mta-sync-conn-hdr">
+          <span class="material-symbols-outlined">link</span>
+          Connected Calendars
+          <span class="mta-sync-conn-cnt">{{ syncService.connections().length }}</span>
+          <button class="mta-btn mta-btn--ghost mta-btn--sm" style="margin-left:auto" (click)="syncAllCalendars()"
+            [disabled]="syncService.syncing().size > 0">
+            <span class="material-symbols-outlined" [class.spinning]="syncService.syncing().size > 0">sync</span>
+            Sync All
+          </button>
+        </div>
+        <div class="mta-sync-conn-list">
+          @for (conn of syncService.connections(); track conn.id) {
+          <div class="mta-sync-conn-item" [class.mta-sync-conn-item--disabled]="!conn.enabled">
+            <div class="mta-sync-conn-dot" [style.background]="conn.color"></div>
+            <div class="mta-sync-conn-info">
+              <div class="mta-sync-conn-name">{{ conn.name }}</div>
+              <div class="mta-sync-conn-meta">
+                <span>{{ providerMeta[conn.provider].label }}</span>
+                @if (conn.error) {
+                <span class="mta-sync-err">· {{ conn.error }}</span>
+                } @else {
+                <span>· {{ syncService.formatLastSync(conn) }}</span>
+                @if (conn.lastSyncCount !== undefined) {
+                <span class="mta-sync-imported">{{ conn.lastSyncCount }} imported</span>
+                }
+                }
+              </div>
+            </div>
+            <div class="mta-sync-conn-actions">
+              <button class="mt-icon-btn" (click)="syncService.toggleEnabled(conn.id)"
+                [title]="conn.enabled ? 'Disable' : 'Enable'">
+                <span class="material-symbols-outlined">{{ conn.enabled ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+              <button class="mt-icon-btn" (click)="syncService.syncConnection(conn.id)"
+                [disabled]="syncService.isSyncing(conn.id)" title="Sync now">
+                <span class="material-symbols-outlined" [class.spinning]="syncService.isSyncing(conn.id)">sync</span>
+              </button>
+              <button class="mt-icon-btn mt-icon-btn--danger" (click)="syncService.removeConnection(conn.id)" title="Remove">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+    <div class="mta-modal-foot">
+      <button class="mta-btn mta-btn--ghost" (click)="closeSyncModal()">Close</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ─── Keyboard Shortcuts Modal ────────────────────────────────────────────── -->
+@if (showShortcutsHelp()) {
+<div class="mta-backdrop" (click)="closeShortcutsHelp()">
+  <div class="mta-modal mta-modal--sm" (click)="$event.stopPropagation()">
+    <div class="mta-modal-hdr">
+      <span class="mta-modal-title">Keyboard Shortcuts</span>
+      <button class="mta-modal-close" (click)="closeShortcutsHelp()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="mta-modal-body">
+      <div class="mta-shortcuts">
+        <div class="mta-shortcuts-group">
+          <h4>Navigation</h4>
+          <div class="mta-shortcut"><span>Switch to All view</span><kbd>1</kbd></div>
+          <div class="mta-shortcut"><span>Switch to Today view</span><kbd>2</kbd></div>
+          <div class="mta-shortcut"><span>Switch to Upcoming view</span><kbd>3</kbd></div>
+          <div class="mta-shortcut"><span>Switch to Past view</span><kbd>4</kbd></div>
+          <div class="mta-shortcut"><span>Cycle view modes</span><kbd>V</kbd></div>
+        </div>
+        <div class="mta-shortcuts-group">
+          <h4>Actions</h4>
+          <div class="mta-shortcut"><span>New meeting</span><kbd>⌘</kbd>+<kbd>N</kbd></div>
+          <div class="mta-shortcut"><span>Search</span><kbd>⌘</kbd>+<kbd>K</kbd></div>
+          <div class="mta-shortcut"><span>Close modal</span><kbd>Esc</kbd></div>
+          <div class="mta-shortcut"><span>Show shortcuts</span><kbd>⌘</kbd>+<kbd>/</kbd></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@if (deleteMeetingTarget(); as meeting) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Meeting"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="doDeleteMeeting()"
+    (cancelled)="deleteMeetingTarget.set(null)">
+    Delete <strong>{{ meeting.title }}</strong>? This action cannot be undone.
+</env-confirm-dialog>
+}
+
+@if (subItemDeleteTarget(); as target) {
+<env-confirm-dialog
+    [isOpen]="true"
+    [title]="target.type === 'agenda' ? 'Remove Agenda Item' : target.type === 'action' ? 'Remove Action Item' : 'Remove Note'"
+    icon="delete"
+    variant="danger"
+    confirmLabel="Remove"
+    (confirmed)="confirmSubItemDelete()"
+    (cancelled)="subItemDeleteTarget.set(null)">
+    This item will be permanently removed from the meeting.
+</env-confirm-dialog>
+}
+
+@if (bulkDeleteIds(); as ids) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Meetings"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmBulkDelete()"
+    (cancelled)="bulkDeleteIds.set(null)">
+    Delete <strong>{{ ids.length }} meeting{{ ids.length !== 1 ? 's' : '' }}</strong>? This action cannot be undone.
+</env-confirm-dialog>
+}

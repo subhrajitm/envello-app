@@ -14,7 +14,7 @@
     min-height: 0;
     overflow: hidden;
     flex-direction: column;
-    padding: 24px 32px;
+    padding: 20px;
     background: var(--bg-app);
     color: var(--text-primary);
 }

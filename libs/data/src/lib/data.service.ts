@@ -8,6 +8,13 @@ export abstract class DataService {
     // Optional: Bulk operations for migration/import
     abstract importData(data: any): Promise<void>;
 
+    /**
+     * Pull the latest remote copy of a collection into local storage.
+     * PowerSync/PouchDB handle sync automatically so this is a no-op for them.
+     * DesktopDataService overrides this to fetch from Supabase via REST.
+     */
+    pullFromRemote(_collection: string): Promise<void> { return Promise.resolve(); }
+
     // Vault & Subscriptions
     abstract saveCredential(credential: Credential): Promise<void>;
     abstract getCredentials(): Promise<Credential[]>;

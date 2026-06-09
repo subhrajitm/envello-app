@@ -19,6 +19,7 @@ export class PowerSyncDataService implements DataService {
     'projects',
     'note_folders',
     'subscriptions',
+    'user_preferences',
   ]);
 
   /** Never synced — stored in the local-only `local_vault` table. */
@@ -131,6 +132,8 @@ export class PowerSyncDataService implements DataService {
   async importData(data: any): Promise<void> {
     console.log('[PowerSyncDataService] importData', data);
   }
+
+  async pullFromRemote(_: string): Promise<void> {}
 
   // ─── Local Vault helpers (credentials — never leave the device) ──────────────
 

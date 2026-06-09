@@ -85,7 +85,7 @@ export class AuthService {
     return true;
   }
 
-  async signUp(email: string, password: string): Promise<boolean> {
+  async signUp(email: string, password: string): Promise<string | null> {
     this.logging.info('AuthService.signUp');
     const { data, error } = await this.supabase.client.auth.signUp({
       email,
@@ -94,6 +94,33 @@ export class AuthService {
 
     if (error) {
       this.logging.error('Sign up failed', error.message);
+      return error.message;
+    }
+    return null;
+  }
+
+  async verifySignupOtp(email: string, token: string): Promise<boolean> {
+    this.logging.info('AuthService.verifySignupOtp');
+    const { error } = await this.supabase.client.auth.verifyOtp({
+      email,
+      token,
+      type: 'signup',
+    });
+    if (error) {
+      this.logging.error('OTP verification failed', error.message);
+      return false;
+    }
+    return true;
+  }
+
+  async resendSignupOtp(email: string): Promise<boolean> {
+    this.logging.info('AuthService.resendSignupOtp');
+    const { error } = await this.supabase.client.auth.resend({
+      type: 'signup',
+      email,
+    });
+    if (error) {
+      this.logging.error('Resend OTP failed', error.message);
       return false;
     }
     return true;
