@@ -589,6 +589,36 @@
                             <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">subdirectory_arrow_right</span>
                             <span class="td-subtask-title">{{ subtask.title }}</span>
                             <span class="subtask-priority-badge" [class]="'priority-badge-' + subtask.priority.toLowerCase()">{{ subtask.priority | titlecase }}</span>
+
+                            <div class="td-subtask-date-wrap">
+                                @if (subtask.due) {
+                                <button class="td-subtask-date-chip" type="button"
+                                        (click)="toggleNewSubtaskDatePopover($index, $event)"
+                                        title="Change due date">
+                                    <span class="material-symbols-outlined">calendar_today</span>
+                                    <span>{{ formatSubtaskDue(subtask.due) }}</span>
+                                </button>
+                                } @else {
+                                <button class="td-subtask-date-btn" type="button"
+                                        (click)="toggleNewSubtaskDatePopover($index, $event)"
+                                        title="Set due date">
+                                    <span class="material-symbols-outlined">calendar_today</span>
+                                </button>
+                                }
+                                @if (newSubtaskDateIdx() === $index) {
+                                <div class="td-subtask-date-popover" (click)="$event.stopPropagation()">
+                                    <input type="date" class="td-subtask-date-input"
+                                           [value]="subtaskDueToInputValue(subtask.due)"
+                                           (change)="setNewSubtaskDue($index, $any($event.target).value)"
+                                           autoFocus>
+                                    @if (subtask.due) {
+                                    <button type="button" class="td-subtask-date-clear"
+                                            (click)="setNewSubtaskDue($index, '')">Clear</button>
+                                    }
+                                </div>
+                                }
+                            </div>
+
                             <button type="button" class="td-subtask-delete" (click)="removeSubtask($index)">
                                 <span class="material-symbols-outlined">close</span>
                             </button>
@@ -990,6 +1020,20 @@
 </div>
 }
 
+<!-- Subtask delete confirmation -->
+@if (subtaskDeletePending()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete sub-task?"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmDeleteSubtask()"
+    (cancelled)="subtaskDeletePending.set(null)">
+    "{{ subtaskDeletePending()!.title }}" will be permanently removed.
+</env-confirm-dialog>
+}
+
 <!-- Keyboard Shortcuts Help -->
 @if (showShortcutsHelp()) {
 <div class="shortcuts-help-overlay" (click)="showShortcutsHelp.set(false)">
@@ -1165,6 +1209,37 @@
                                   (click)="startEditSubtask(subtask)"
                                   title="Click to edit">{{ subtask.title }}</span>
                             }
+
+                            <div class="td-subtask-date-wrap">
+                                @if (subtask.due) {
+                                <button class="td-subtask-date-chip"
+                                        [class.td-subtask-date-chip--overdue]="isOverdue(subtask)"
+                                        type="button"
+                                        (click)="toggleSubtaskDatePopover(subtask.id, $event)"
+                                        title="Change due date">
+                                    <span class="material-symbols-outlined">calendar_today</span>
+                                    <span>{{ formatSubtaskDue(subtask.due) }}</span>
+                                </button>
+                                } @else {
+                                <button class="td-subtask-date-btn" type="button"
+                                        (click)="toggleSubtaskDatePopover(subtask.id, $event)"
+                                        title="Set due date">
+                                    <span class="material-symbols-outlined">calendar_today</span>
+                                </button>
+                                }
+                                @if (subtaskDatePopoverId() === subtask.id) {
+                                <div class="td-subtask-date-popover" (click)="$event.stopPropagation()">
+                                    <input type="date" class="td-subtask-date-input"
+                                           [value]="subtaskDueToInputValue(subtask.due)"
+                                           (change)="setSubtaskDue(task, subtask.id, $any($event.target).value)"
+                                           autoFocus>
+                                    @if (subtask.due) {
+                                    <button type="button" class="td-subtask-date-clear"
+                                            (click)="clearSubtaskDue(task, subtask.id)">Clear</button>
+                                    }
+                                </div>
+                                }
+                            </div>
 
                             <button class="td-subtask-delete"
                                     type="button"

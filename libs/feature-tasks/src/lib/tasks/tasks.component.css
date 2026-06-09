@@ -5690,7 +5690,7 @@ textarea:focus-visible {
 }
 
 .td-subtask-delete {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 20px;
@@ -5701,9 +5701,10 @@ textarea:focus-visible {
     color: var(--text-tertiary);
     cursor: pointer;
     flex-shrink: 0;
-    margin-left: auto;
     padding: 0;
-    transition: color 0.15s, background 0.15s;
+    opacity: 0;
+    pointer-events: none;
+    transition: color 0.15s, background 0.15s, opacity 0.15s;
 }
 
 .td-subtask-delete .material-symbols-outlined {
@@ -5717,7 +5718,8 @@ textarea:focus-visible {
 
 .td-subtask-item:hover .td-subtask-delete,
 .td-subtask-item--editing .td-subtask-delete {
-    display: flex;
+    opacity: 1;
+    pointer-events: auto;
 }
 .td-subtask-checkbox {
     width: 18px !important;
@@ -5770,6 +5772,119 @@ textarea:focus-visible {
     padding: 2px 6px;
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 14%, transparent);
+}
+
+/* Subtask date controls */
+.td-subtask-date-wrap {
+    position: relative;
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.td-subtask-date-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: color 0.15s, background 0.15s, opacity 0.15s;
+}
+.td-subtask-date-btn .material-symbols-outlined {
+    font-size: 13px;
+}
+.td-subtask-date-btn:hover {
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+}
+.td-subtask-item:hover .td-subtask-date-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.td-subtask-date-chip {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border: none;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    color: var(--accent-primary);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+.td-subtask-date-chip .material-symbols-outlined {
+    font-size: 11px;
+}
+.td-subtask-date-chip:hover {
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+.td-subtask-date-chip--overdue {
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 10%, transparent);
+    color: var(--color-danger, #ef4444);
+}
+.td-subtask-date-chip--overdue:hover {
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 18%, transparent);
+}
+
+.td-subtask-date-popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    min-width: 160px;
+}
+.td-subtask-date-input {
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    padding: 4px 6px;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+}
+.td-subtask-date-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 14%, transparent);
+}
+.td-subtask-date-clear {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    text-align: left;
+    transition: color 0.15s, background 0.15s;
+}
+.td-subtask-date-clear:hover {
+    color: var(--color-danger, #ef4444);
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 8%, transparent);
 }
 .td-add-subtask-row {
     display: flex;

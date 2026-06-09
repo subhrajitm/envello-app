@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
-import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent } from '@envello/ui';
+import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
@@ -10,12 +10,12 @@ type TaskListItem =
   | { kind: 'task'; task: Task }
   | { kind: 'subtask'; task: Task; parentTitle: string };
 
-type SubtaskDraft = { title: string; priority: Task['priority'] };
+type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent, EmptyStateComponent],
+  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -80,6 +80,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   newSubtaskTitle = signal<string>('');
   editingSubtaskId = signal<string | null>(null);
   editingSubtaskTitle = signal<string>('');
+  subtaskDatePopoverId = signal<string | null>(null);
+  newSubtaskDateIdx = signal<number | null>(null);
+  subtaskDeletePending = signal<{ parentTask: Task; subtaskId: string; title: string } | null>(null);
   showReminderPicker = signal<boolean>(false);
   showNewTaskReminderPicker = signal<boolean>(false);
 
@@ -373,6 +376,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskSubtasks.set([]);
     this.newSubtaskInput.set('');
     this.newSubtaskPriority.set('MEDIUM');
+    this.subtaskDatePopoverId.set(null);
+    this.newSubtaskDateIdx.set(null);
     this.newTaskTemplateOpen.set(false);
     this.newTaskRecurring.set(false);
     this.newTaskRecurringPattern.set('weekly');
@@ -580,7 +585,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         priority: st.priority,
         hours: '0.5H',
         status: 'ACTIVE' as Task['status'],
-        parentId: taskId
+        parentId: taskId,
+        due: st.due
       }))
       : undefined;
 
@@ -1300,6 +1306,14 @@ export class TasksComponent implements OnInit, OnDestroy {
       }
     }
 
+    // Close subtask date popovers if clicking outside
+    if (this.subtaskDatePopoverId() && !target.closest('.td-subtask-date-wrap')) {
+      this.subtaskDatePopoverId.set(null);
+    }
+    if (this.newSubtaskDateIdx() !== null && !target.closest('.td-subtask-date-wrap')) {
+      this.newSubtaskDateIdx.set(null);
+    }
+
     // Close folder dropdown if clicking outside
     if (this.showFolderDropdown()) {
       if (!target.closest('.task-modal-folder-dropdown') &&
@@ -1768,9 +1782,66 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   deleteSubtask(parentTask: Task, subtaskId: string) {
-    const fresh = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
-    const updated = (fresh.subtasks ?? []).filter(s => s.id !== subtaskId);
+    const subtask = parentTask.subtasks?.find(s => s.id === subtaskId);
+    this.subtaskDeletePending.set({ parentTask, subtaskId, title: subtask?.title ?? 'this sub-task' });
+  }
+
+  confirmDeleteSubtask() {
+    const pending = this.subtaskDeletePending();
+    if (!pending) return;
+    const fresh = this.store.tasks().find(t => t.id === pending.parentTask.id) ?? pending.parentTask;
+    const updated = (fresh.subtasks ?? []).filter(s => s.id !== pending.subtaskId);
     this.store.updateTask(fresh.id, { subtasks: updated });
+    this.subtaskDeletePending.set(null);
+  }
+
+  toggleSubtaskDatePopover(id: string, event: Event) {
+    event.stopPropagation();
+    this.subtaskDatePopoverId.set(this.subtaskDatePopoverId() === id ? null : id);
+  }
+
+  setSubtaskDue(parentTask: Task, subtaskId: string, isoDate: string) {
+    const fresh = this.store.tasks().find(t => t.id === parentTask.id) ?? parentTask;
+    const updated = (fresh.subtasks ?? []).map(s =>
+      s.id === subtaskId ? { ...s, due: isoDate || undefined } : s
+    );
+    this.store.updateTask(fresh.id, { subtasks: updated });
+    this.subtaskDatePopoverId.set(null);
+  }
+
+  clearSubtaskDue(parentTask: Task, subtaskId: string) {
+    this.setSubtaskDue(parentTask, subtaskId, '');
+  }
+
+  toggleNewSubtaskDatePopover(idx: number, event: Event) {
+    event.stopPropagation();
+    this.newSubtaskDateIdx.set(this.newSubtaskDateIdx() === idx ? null : idx);
+  }
+
+  setNewSubtaskDue(idx: number, isoDate: string) {
+    this.newTaskSubtasks.update(subs =>
+      subs.map((s, i) => i === idx ? { ...s, due: isoDate || undefined } : s)
+    );
+    this.newSubtaskDateIdx.set(null);
+  }
+
+  subtaskDueToInputValue(due: string | undefined): string {
+    if (!due) return '';
+    if (/^\d{4}-\d{2}-\d{2}/.test(due)) return due.substring(0, 10);
+    const parsed = this.parseDateFromString(due);
+    return parsed ? parsed.toISOString().substring(0, 10) : '';
+  }
+
+  formatSubtaskDue(due: string | undefined): string {
+    if (!due) return '';
+    const parsed = this.parseDateFromString(due);
+    if (!parsed) return due;
+    const today = new Date();
+    if (parsed.toDateString() === today.toDateString()) return 'Today';
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    if (parsed.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+    return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   // Focus mode
