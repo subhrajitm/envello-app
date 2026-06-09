@@ -100,7 +100,7 @@ export class AiService {
             const { data } = await this.sb.client
                 .from('platform_ai_config')
                 .select('provider, model_name, api_key, ai_enabled')
-                .single();
+                .maybeSingle();
             if (data) {
                 this.platformProvider = (data.provider as AiProvider) ?? 'mock';
                 this.platformModel = data.model_name ?? '';
