@@ -6,6 +6,7 @@ import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
 import { BinService } from '@envello/core';
 import { WorkspaceProfileService, StoreService } from '@envello/core';
+import { SyncService } from '@envello/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
@@ -100,6 +101,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   voiceService = inject(VoiceService);
   isVoiceActive = this.voiceService.isVoiceActive;
+
+  private readonly syncService = inject(SyncService);
+  readonly isSyncing = this.syncService.isSyncing;
+  readonly syncDone = signal(false);
+  private syncDoneTimer: ReturnType<typeof setTimeout> | null = null;
+  private syncCompleteListener = () => {
+    this.syncDone.set(true);
+    if (this.syncDoneTimer) clearTimeout(this.syncDoneTimer);
+    this.syncDoneTimer = setTimeout(() => this.syncDone.set(false), 3000);
+  };
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
@@ -304,6 +315,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       }
     };
     window.addEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
+    window.addEventListener('envello:sync-complete', this.syncCompleteListener);
 
     // Apply initial layout
     this.applyNavigationLayout();
@@ -334,6 +346,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.navVisibilityListener) {
       window.removeEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
     }
+    window.removeEventListener('envello:sync-complete', this.syncCompleteListener);
+    if (this.syncDoneTimer) clearTimeout(this.syncDoneTimer);
     this.routeSub?.unsubscribe();
   }
 

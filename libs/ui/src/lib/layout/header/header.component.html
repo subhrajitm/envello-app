@@ -57,6 +57,19 @@
           <span class="material-symbols-outlined btn-icon-inner">add</span>
           <span>Add New</span>
         </button>
+
+        @if (isSyncing()) {
+          <div class="sync-chip sync-chip--syncing">
+            <span class="sync-spinner"></span>
+            <span>Syncing…</span>
+          </div>
+        } @else if (syncDone()) {
+          <div class="sync-chip sync-chip--done">
+            <span class="material-symbols-outlined" style="font-size:13px;line-height:1">check</span>
+            <span>Synced</span>
+          </div>
+        }
+
         <button class="icon-btn notification-btn" (click)="openNotifications()">
           <span class="material-symbols-outlined">notifications</span>
           @if (unreadCount() > 0) {
