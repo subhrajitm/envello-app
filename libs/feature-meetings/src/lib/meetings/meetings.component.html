@@ -354,21 +354,21 @@
 
     </div><!-- /mt-content -->
   </div><!-- /mt-main -->
-</div><!-- /mt-view -->
 
-<!-- ─── AI Assistant Panel ──────────────────────────────────────────────────── -->
-@if (showAssistant()) {
-  <env-ai-panel
-    title="Meetings Assistant"
-    placeholder="Ask about your meetings…"
-    [suggestions]="aiSuggestions"
-    [messages]="aiMessages()"
-    [loading]="aiLoading()"
-    (send)="sendAiMessage($event)"
-    (cleared)="clearAiChat()"
-    (closed)="toggleAssistant()"
-  ></env-ai-panel>
-}
+  @if (showAssistant()) {
+    <env-ai-panel
+      title="Meetings Assistant"
+      placeholder="Ask about your meetings…"
+      [suggestions]="aiSuggestions"
+      [messages]="aiMessages()"
+      [loading]="aiLoading()"
+      (send)="sendAiMessage($event)"
+      (cleared)="clearAiChat()"
+      (closed)="toggleAssistant()"
+    ></env-ai-panel>
+  }
+
+</div><!-- /mt-view -->
 
 <!-- ─── Create Meeting Modal ────────────────────────────────────────────────── -->
 @if (showCreateModal()) {
