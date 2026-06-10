@@ -60,8 +60,11 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
             );
           if (error) throw new Error(`[PowerSyncConnector] delete upsert failed: ${error.message}`);
         } else {
+          const raw = op.opData?.['data'];
           let data: any = {};
-          try { data = JSON.parse(op.opData?.['data'] ?? '{}'); } catch { /* keep empty */ }
+          try {
+            data = typeof raw === 'string' ? JSON.parse(raw) : (raw ?? {});
+          } catch { /* keep empty */ }
 
           const { error } = await this.supabase.client
             .from('user_data')
