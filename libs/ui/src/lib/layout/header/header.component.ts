@@ -105,6 +105,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly syncService = inject(SyncService);
   readonly syncError = this.syncService.syncError;
   readonly syncAnimating = signal(false);
+  readonly isActivelySyncing = computed(() => this.syncService.isSyncing() || this.syncAnimating());
   private syncAnimTimer: ReturnType<typeof setTimeout> | null = null;
   private syncCompleteListener = () => {
     this.syncAnimating.set(true);
@@ -115,6 +116,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     const msg = (e as CustomEvent).detail ?? 'Sync failed';
     this.syncService.reportError(msg);
   };
+
+  triggerManualSync(): void {
+    window.dispatchEvent(new CustomEvent('envello:manual-sync'));
+  }
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';

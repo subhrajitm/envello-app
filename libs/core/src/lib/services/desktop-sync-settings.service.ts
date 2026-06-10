@@ -57,9 +57,11 @@ export class DesktopSyncSettingsService {
   private load(): Set<string> {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+      return raw
+        ? new Set(JSON.parse(raw) as string[])
+        : new Set(BACKUP_ELIGIBLE_COLLECTIONS.map(c => c.id));
     } catch {
-      return new Set();
+      return new Set(BACKUP_ELIGIBLE_COLLECTIONS.map(c => c.id));
     }
   }
 

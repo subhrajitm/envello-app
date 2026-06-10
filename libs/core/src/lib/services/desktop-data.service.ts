@@ -18,9 +18,14 @@ export class DesktopDataService extends DataService {
   private readonly syncService = inject(SyncService);
 
   private realtimeUnsub: (() => void) | null = null;
+  private readonly manualSyncListener = () => {
+    this.syncService.pull().then(records => this.applyRemoteRecords(records));
+  };
 
   constructor() {
     super();
+    window.addEventListener('envello:manual-sync', this.manualSyncListener);
+
     effect(() => {
       const user = this.auth.currentUser();
       const isGuest = this.auth.isGuest();
@@ -29,7 +34,6 @@ export class DesktopDataService extends DataService {
       this.realtimeUnsub = null;
 
       if (user && !isGuest) {
-        // Pull all records changed since last sync, then subscribe for live updates
         this.syncService.pull().then(records => this.applyRemoteRecords(records));
         this.realtimeUnsub = this.syncService.subscribeRealtime(record =>
           this.applyRemoteRecords([record])

@@ -141,30 +141,44 @@
 }
 
 /* ── Sync icon ───────────────────────────────────────────────────── */
-.sync-icon {
+.sync-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
   color: var(--text-disabled);
-  pointer-events: none;
-  user-select: none;
-  transition: color 0.2s;
+  transition: color 0.15s, background 0.15s;
+  padding: 0;
 }
 
-.sync-icon .material-symbols-outlined {
+.sync-icon-btn:hover:not(:disabled) {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.sync-icon-btn:disabled {
+  cursor: default;
+}
+
+.sync-icon-btn .material-symbols-outlined {
   font-size: 16px;
   display: inline-block;
 }
 
-.sync-icon--spinning {
+.sync-icon-btn.sync-icon--spinning {
   color: var(--accent-primary);
 }
 
-.sync-icon--spinning .material-symbols-outlined {
-  animation: sync-rotate 0.8s cubic-bezier(0.4, 0, 0.2, 1) 1;
+.sync-icon-btn.sync-icon--spinning .material-symbols-outlined {
+  animation: sync-rotate 0.8s linear infinite;
 }
 
-.sync-icon--error {
+.sync-icon-btn.sync-icon--error {
   color: #dc2626;
 }
 

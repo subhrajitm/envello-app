@@ -58,17 +58,19 @@
           <span>Add New</span>
         </button>
 
-        <span
-          class="sync-icon"
-          [class.sync-icon--spinning]="syncAnimating() && !syncError()"
+        <button
+          class="sync-icon-btn"
+          [class.sync-icon--spinning]="isActivelySyncing() && !syncError()"
           [class.sync-icon--error]="syncError()"
-          [title]="syncError() ?? (syncAnimating() ? 'Syncing…' : 'Up to date')"
-          aria-label="Sync status"
+          [title]="syncError() ?? (isActivelySyncing() ? 'Syncing…' : 'Click to sync now')"
+          [disabled]="isActivelySyncing()"
+          (click)="triggerManualSync()"
+          aria-label="Sync data"
         >
           <span class="material-symbols-outlined">
             {{ syncError() ? 'sync_problem' : 'sync' }}
           </span>
-        </span>
+        </button>
 
         <button class="icon-btn notification-btn" (click)="openNotifications()">
           <span class="material-symbols-outlined">notifications</span>
