@@ -22,7 +22,7 @@ import type {
     ResearchSource,
     ResearchSummary,
 } from './research.service';
-import type { Project, Credential, Subscription, CredentialSubscriptionLink, Bookmark, BookmarkFolder } from '@envello/domain';
+import type { Project, Credential, Transaction, CredentialTransactionLink, Bookmark, BookmarkFolder } from '@envello/domain';
 
 // const DB_NAME = 'envello.db'; // Removed, now determined dynamically by profile
 
@@ -40,8 +40,8 @@ export type ResearchSourceDoc = ResearchSource;
 export type ResearchSummaryDoc = ResearchSummary;
 export type ProjectDoc = Project;
 export type CredentialDoc = Credential;
-export type SubscriptionDoc = Subscription;
-export type CredentialSubscriptionLinkDoc = CredentialSubscriptionLink;
+export type TransactionDoc = Transaction;
+export type CredentialTransactionLinkDoc = CredentialTransactionLink;
 export type NoteFolderDoc = { id: string; name: string; icon: string };
 export type BookmarkDoc = Bookmark;
 export type BookmarkFolderDoc = BookmarkFolder;
@@ -73,8 +73,8 @@ export class SqliteService {
     private researchSummariesSubject = new BehaviorSubject<ResearchSummaryDoc[]>([]);
     private projectsSubject = new BehaviorSubject<ProjectDoc[]>([]);
     private credentialsSubject = new BehaviorSubject<CredentialDoc[]>([]);
-    private subscriptionsSubject = new BehaviorSubject<SubscriptionDoc[]>([]);
-    private linksSubject = new BehaviorSubject<CredentialSubscriptionLinkDoc[]>([]);
+    private transactionsSubject = new BehaviorSubject<TransactionDoc[]>([]);
+    private linksSubject = new BehaviorSubject<CredentialTransactionLinkDoc[]>([]);
     private noteFoldersSubject = new BehaviorSubject<NoteFolderDoc[]>([]);
     private bookmarksSubject = new BehaviorSubject<BookmarkDoc[]>([]);
     private bookmarkFoldersSubject = new BehaviorSubject<BookmarkFolderDoc[]>([]);
@@ -422,34 +422,72 @@ export class SqliteService {
         try { await db.execute(`ALTER TABLE credentials ADD COLUMN updatedAt TEXT`); } catch { /* already exists */ }
         try { await db.execute(`ALTER TABLE credentials ADD COLUMN lastAccessedAt TEXT`); } catch { /* already exists */ }
 
-        // Subscriptions
+        // Transactions (replaces legacy subscriptions table)
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS subscriptions (
+      CREATE TABLE IF NOT EXISTS transactions (
         id TEXT PRIMARY KEY,
         name TEXT,
+        type TEXT DEFAULT 'recurring',
         category TEXT,
-        price REAL,
+        amount REAL,
+        currency TEXT,
+        date TEXT,
         billingCycle TEXT,
-        renewalDate TEXT,
+        status TEXT,
         ownerId TEXT,
         projectId TEXT,
-        notes TEXT,
-        status TEXT,
-        currency TEXT
+        notes TEXT
       )
     `);
-        // Migration: add status/currency to existing databases that lack them
-        try { await db.execute(`ALTER TABLE subscriptions ADD COLUMN status TEXT`); } catch { /* already exists */ }
-        try { await db.execute(`ALTER TABLE subscriptions ADD COLUMN currency TEXT`); } catch { /* already exists */ }
-
-        // Credential Subscription Links
+        // Keep legacy subscriptions table for migration reads only
         await db.execute(`
-      CREATE TABLE IF NOT EXISTS credential_subscription_links (
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY, name TEXT, category TEXT, price REAL,
+        billingCycle TEXT, renewalDate TEXT, ownerId TEXT, projectId TEXT,
+        notes TEXT, status TEXT, currency TEXT
+      )
+    `);
+        // One-time migration: copy subscriptions → transactions, then clear the source
+        try {
+            const legacy = await db.select<any[]>('SELECT * FROM subscriptions');
+            if (legacy.length > 0) {
+                for (const r of legacy) {
+                    await db.execute(
+                        `INSERT OR IGNORE INTO transactions (id, name, type, category, amount, currency, date, billingCycle, status, ownerId, projectId, notes)
+                         VALUES ($1,$2,'recurring',$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                        [r.id, r.name, r.category, r.price ?? 0, r.currency ?? 'USD', r.renewalDate ?? '', r.billingCycle ?? 'monthly', r.status ?? 'active', r.ownerId ?? null, r.projectId ?? null, r.notes ?? null]
+                    );
+                }
+                await db.execute('DELETE FROM subscriptions');
+            }
+        } catch { /* migration already done or table empty */ }
+
+        // Credential Transaction Links (replaces credential_subscription_links)
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS credential_transaction_links (
         id TEXT PRIMARY KEY,
         credentialId TEXT,
-        subscriptionId TEXT
+        transactionId TEXT
       )
     `);
+        // One-time migration from old link table
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS credential_subscription_links (
+        id TEXT PRIMARY KEY, credentialId TEXT, subscriptionId TEXT
+      )
+    `);
+        try {
+            const legacyLinks = await db.select<any[]>('SELECT * FROM credential_subscription_links');
+            if (legacyLinks.length > 0) {
+                for (const r of legacyLinks) {
+                    await db.execute(
+                        'INSERT OR IGNORE INTO credential_transaction_links (id, credentialId, transactionId) VALUES ($1, $2, $3)',
+                        [r.id, r.credentialId, r.subscriptionId]
+                    );
+                }
+                await db.execute('DELETE FROM credential_subscription_links');
+            }
+        } catch { /* already migrated */ }
 
         // Note Folders
         await db.execute(`
@@ -533,7 +571,7 @@ export class SqliteService {
             this.reloadResearchSummaries(),
             this.reloadProjects(),
             this.reloadCredentials(),
-            this.reloadSubscriptions(),
+            this.reloadTransactions(),
             this.reloadLinks(),
             this.reloadNoteFolders(),
             this.reloadBookmarks(),
@@ -1113,7 +1151,7 @@ export class SqliteService {
         return this.projectsSubject.asObservable();
     }
 
-    // ─── Vault & Subscriptions ──────────────────────────────────────────────────
+    // ─── Vault & Transactions ───────────────────────────────────────────────────
     private async reloadCredentials() {
         const db = await this.getDb();
         const rows = await db.select<CredentialDoc[]>('SELECT * FROM credentials');
@@ -1142,53 +1180,55 @@ export class SqliteService {
         await this.reloadCredentials();
     }
 
-    private async reloadSubscriptions() {
+    private async reloadTransactions() {
         const db = await this.getDb();
-        const rows = await db.select<SubscriptionDoc[]>('SELECT * FROM subscriptions');
-        this.subscriptionsSubject.next(rows);
+        const rows = await db.select<TransactionDoc[]>('SELECT * FROM transactions');
+        this.transactionsSubject.next(rows);
     }
-    async getAllSubscriptions(): Promise<SubscriptionDoc[]> { return this.subscriptionsSubject.getValue(); }
-    async upsertSubscription(item: SubscriptionDoc): Promise<void> {
+    async getAllTransactions(): Promise<TransactionDoc[]> { return this.transactionsSubject.getValue(); }
+    async upsertTransaction(item: TransactionDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM subscriptions WHERE id = $1', [item.id]);
+        const exists = await db.select<any[]>('SELECT id FROM transactions WHERE id = $1', [item.id]);
         if (exists.length > 0) {
             await db.execute(
-                `UPDATE subscriptions SET name=$1, category=$2, price=$3, billingCycle=$4, renewalDate=$5, ownerId=$6, projectId=$7, notes=$8, status=$9, currency=$10 WHERE id=$11`,
-                [item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes, item.status, item.currency, item.id]);
+                `UPDATE transactions SET name=$1, type=$2, category=$3, amount=$4, currency=$5, date=$6, billingCycle=$7, status=$8, ownerId=$9, projectId=$10, notes=$11 WHERE id=$12`,
+                [item.name, item.type ?? 'recurring', item.category ?? null, item.amount, item.currency ?? null,
+                 item.date, item.billingCycle ?? null, item.status ?? null, item.ownerId ?? null, item.projectId ?? null, item.notes ?? null, item.id]);
         } else {
             await db.execute(
-                `INSERT INTO subscriptions (id, name, category, price, billingCycle, renewalDate, ownerId, projectId, notes, status, currency) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-                [item.id, item.name, item.category, item.price, item.billingCycle, item.renewalDate, item.ownerId, item.projectId, item.notes, item.status, item.currency]);
+                `INSERT INTO transactions (id, name, type, category, amount, currency, date, billingCycle, status, ownerId, projectId, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+                [item.id, item.name, item.type ?? 'recurring', item.category ?? null, item.amount, item.currency ?? null,
+                 item.date, item.billingCycle ?? null, item.status ?? null, item.ownerId ?? null, item.projectId ?? null, item.notes ?? null]);
         }
-        await this.reloadSubscriptions();
+        await this.reloadTransactions();
     }
-    async removeSubscription(id: string): Promise<void> {
+    async removeTransaction(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM subscriptions WHERE id = $1', [id]);
-        await this.reloadSubscriptions();
+        await db.execute('DELETE FROM transactions WHERE id = $1', [id]);
+        await this.reloadTransactions();
     }
 
     private async reloadLinks() {
         const db = await this.getDb();
-        const rows = await db.select<CredentialSubscriptionLinkDoc[]>('SELECT * FROM credential_subscription_links');
+        const rows = await db.select<CredentialTransactionLinkDoc[]>('SELECT * FROM credential_transaction_links');
         this.linksSubject.next(rows);
     }
-    async getAllLinks(): Promise<CredentialSubscriptionLinkDoc[]> { return this.linksSubject.getValue(); }
-    async upsertLink(item: CredentialSubscriptionLinkDoc): Promise<void> {
+    async getAllLinks(): Promise<CredentialTransactionLinkDoc[]> { return this.linksSubject.getValue(); }
+    async upsertLink(item: CredentialTransactionLinkDoc): Promise<void> {
         const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM credential_subscription_links WHERE id = $1', [item.id]);
+        const exists = await db.select<any[]>('SELECT id FROM credential_transaction_links WHERE id = $1', [item.id]);
         if (exists.length > 0) {
-            await db.execute(`UPDATE credential_subscription_links SET credentialId=$1, subscriptionId=$2 WHERE id=$3`,
-                [item.credentialId, item.subscriptionId, item.id]);
+            await db.execute(`UPDATE credential_transaction_links SET credentialId=$1, transactionId=$2 WHERE id=$3`,
+                [item.credentialId, item.transactionId, item.id]);
         } else {
-            await db.execute(`INSERT INTO credential_subscription_links (id, credentialId, subscriptionId) VALUES ($1, $2, $3)`,
-                [item.id, item.credentialId, item.subscriptionId]);
+            await db.execute(`INSERT INTO credential_transaction_links (id, credentialId, transactionId) VALUES ($1, $2, $3)`,
+                [item.id, item.credentialId, item.transactionId]);
         }
         await this.reloadLinks();
     }
     async removeLink(id: string): Promise<void> {
         const db = await this.getDb();
-        await db.execute('DELETE FROM credential_subscription_links WHERE id = $1', [id]);
+        await db.execute('DELETE FROM credential_transaction_links WHERE id = $1', [id]);
         await this.reloadLinks();
     }
 

@@ -165,7 +165,7 @@ export class SettingsPageComponent implements OnInit {
     { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',            desktopOnly: false },
     { id: 'write',         label: 'Write',          icon: 'edit',           desktopOnly: false },
     { id: 'vault',         label: 'Vault',          icon: 'lock',           desktopOnly: true  },
-    { id: 'subscriptions', label: 'Subscriptions',  icon: 'credit_card',    desktopOnly: false },
+    { id: 'transactions',  label: 'Transactions',   icon: 'receipt_long',   desktopOnly: false },
     { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',      desktopOnly: false },
   ];
 

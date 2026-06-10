@@ -32,7 +32,7 @@
             <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">MEETINGS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'book-chapter'" (click)="setFilter('book-chapter')">CHAPTERS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'bookmark'" (click)="setFilter('bookmark')">BOOKMARKS</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'subscription'" (click)="setFilter('subscription')">SUBSCRIPTIONS</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'transaction'" (click)="setFilter('transaction')">TRANSACTIONS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'credential'" (click)="setFilter('credential')">VAULT</button>
         </div>
     </div>
@@ -56,7 +56,7 @@
                 </div>
                 <div class="bin-empty-body">
                     {{ totalCount() === 0
-                        ? 'Deleted tasks, notes, books, bookmarks, vault credentials, and subscriptions will appear here.'
+                        ? 'Deleted tasks, notes, books, bookmarks, vault credentials, and transactions will appear here.'
                         : 'Try selecting a different filter or clearing the search.' }}
                 </div>
             </div>

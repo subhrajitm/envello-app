@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { DataService } from '@envello/data';
-import { BinItem, BinItemType, Credential, Subscription } from '@envello/domain';
+import { BinItem, BinItemType, Credential, Transaction } from '@envello/domain';
 
 const COLLECTION_MAP: Partial<Record<BinItemType, string>> = {
     'task': 'tasks',
@@ -53,8 +53,8 @@ export class BinService {
                 await this.db.upsert(collection, item.payload);
             } else if (item.type === 'credential') {
                 await this.db.saveCredential(item.payload as Credential);
-            } else if (item.type === 'subscription') {
-                await this.db.saveSubscription(item.payload as Subscription);
+            } else if (item.type === 'transaction') {
+                await this.db.saveTransaction(item.payload as Transaction);
             } else {
                 return false;
             }
@@ -70,7 +70,7 @@ export class BinService {
 
     /** Check if a bin item's type is restorable. */
     canRestore(type: BinItemType): boolean {
-        return type in COLLECTION_MAP || type === 'credential' || type === 'subscription';
+        return type in COLLECTION_MAP || type === 'credential' || type === 'transaction';
     }
 
     permanentlyDelete(binItemId: string) {

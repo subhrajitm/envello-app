@@ -193,7 +193,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'daily-notes': 'Notes', 'knowledge': 'Knowledge', 'write': 'Write',
       'spaces': 'Spaces', 'bin': 'Bin', 'activity-log': 'Activity Log',
       'settings': 'Settings', 'developer-settings': 'Developer Settings',
-      'bookmarks': 'Bookmarks', 'vault': 'Vault', 'subscriptions': 'Subscriptions',
+      'bookmarks': 'Bookmarks', 'vault': 'Vault', 'transactions': 'Transactions',
     };
     return map[url] || 'Workspace';
   }

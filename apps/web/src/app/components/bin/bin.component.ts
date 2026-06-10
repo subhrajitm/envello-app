@@ -137,7 +137,7 @@ export class BinComponent {
       case 'meeting': return 'groups';
       case 'bookmark': return 'bookmark';
       case 'credential': return 'lock';
-      case 'subscription': return 'subscriptions';
+      case 'transaction': return 'receipt_long';
       default: return 'delete';
     }
   }
@@ -155,7 +155,7 @@ export class BinComponent {
       case 'meeting': return 'Meeting';
       case 'bookmark': return 'Bookmark';
       case 'credential': return 'Credential';
-      case 'subscription': return 'Subscription';
+      case 'transaction': return 'Transaction';
       default: return type;
     }
   }

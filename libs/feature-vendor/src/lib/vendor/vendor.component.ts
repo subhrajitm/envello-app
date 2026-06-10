@@ -1,8 +1,8 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SubscriptionStore } from '@envello/state';
-import { Subscription } from '@envello/domain';
+import { TransactionStore } from '@envello/state';
+import { Transaction, TransactionType } from '@envello/domain';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
@@ -22,6 +22,15 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
     active:    { label: 'Active',    color: '#4ade80', bg: 'rgba(74,222,128,0.1)'  },
     paused:    { label: 'Paused',    color: '#fbbf24', bg: 'rgba(251,191,36,0.1)'  },
     cancelled: { label: 'Cancelled', color: '#94a3b8', bg: 'rgba(148,163,184,0.1)' },
+    completed: { label: 'Completed', color: '#60a5fa', bg: 'rgba(96,165,250,0.1)'  },
+};
+
+const TYPE_META: Record<TransactionType, { label: string; icon: string; color: string }> = {
+    'recurring': { label: 'Recurring',  icon: 'autorenew',        color: '#60a5fa' },
+    'one-time':  { label: 'One-time',   icon: 'toll',             color: '#a78bfa' },
+    'bill':      { label: 'Bills',      icon: 'receipt',          color: '#fb923c' },
+    'purchase':  { label: 'Purchases',  icon: 'shopping_bag',     color: '#4ade80' },
+    'refund':    { label: 'Refunds',    icon: 'currency_exchange', color: '#34d399' },
 };
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR', 'JPY'];
@@ -97,16 +106,30 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 <div class="vs-view">
 
   <!-- ── SIDEBAR ── -->
-  <env-feature-sidebar [title]="'Subscriptions'">
+  <env-feature-sidebar [title]="'Transactions'">
 
     <nav class="vs-sb-nav">
       <button class="vs-sb-item"
-        [class.active]="!selectedStatus() && !selectedCategory() && !selectedCycle()"
+        [class.active]="selectedType() === null"
         (click)="clearFilters()">
-        <span class="material-symbols-outlined">subscriptions</span>
+        <span class="material-symbols-outlined">receipt_long</span>
         <span class="vs-sb-label">All</span>
-        <span class="vs-sb-count">{{ subscriptionStore.subscriptions().length }}</span>
+        <span class="vs-sb-count">{{ transactionStore.transactions().length }}</span>
       </button>
+      @for (type of typeOptions; track type) {
+        <button class="vs-sb-item" [class.active]="selectedType() === type"
+          (click)="toggleTypeFilter(type)">
+          <span class="material-symbols-outlined" [style.color]="typeMeta(type).color">{{ typeMeta(type).icon }}</span>
+          <span class="vs-sb-label">{{ typeMeta(type).label }}</span>
+          <span class="vs-sb-count">{{ countByType()[type] || 0 }}</span>
+        </button>
+      }
+    </nav>
+
+    <div class="vs-sb-divider"></div>
+
+    <div class="vs-sb-section">
+      <div class="vs-sb-section-title">Status</div>
       <button class="vs-sb-item" [class.active]="selectedStatus() === 'active'"
         (click)="toggleStatusFilter('active')">
         <span class="vs-status-dot vs-dot-active"></span>
@@ -125,38 +148,6 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
         <span class="vs-sb-label">Cancelled</span>
         <span class="vs-sb-count">{{ cancelledCount() }}</span>
       </button>
-    </nav>
-
-    <div class="vs-sb-divider"></div>
-
-    <div class="vs-sb-section">
-      <div class="vs-sb-section-title">Billing Cycle</div>
-      <button class="vs-sb-item" [class.active]="selectedCycle() === 'monthly'"
-        (click)="toggleCycleFilter('monthly')">
-        <span class="material-symbols-outlined">calendar_month</span>
-        <span class="vs-sb-label">Monthly</span>
-      </button>
-      <button class="vs-sb-item" [class.active]="selectedCycle() === 'yearly'"
-        (click)="toggleCycleFilter('yearly')">
-        <span class="material-symbols-outlined">event_repeat</span>
-        <span class="vs-sb-label">Yearly</span>
-      </button>
-    </div>
-
-    <div class="vs-sb-divider"></div>
-
-    <div class="vs-sb-section">
-      <div class="vs-sb-section-title">Category</div>
-      @for (cat of categoryOptions; track cat) {
-        <button class="vs-sb-item" [class.active]="selectedCategory() === cat"
-          (click)="toggleCategoryFilter(cat)">
-          <span class="material-symbols-outlined">{{ categoryIcon(cat) }}</span>
-          <span class="vs-sb-label capitalize">{{ cat }}</span>
-          @if (countByCategory()[cat]) {
-            <span class="vs-sb-count">{{ countByCategory()[cat] }}</span>
-          }
-        </button>
-      }
     </div>
   </env-feature-sidebar>
 
@@ -167,7 +158,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     <div class="vs-toolbar">
       <div class="vs-search-wrap">
         <span class="material-symbols-outlined vs-search-icon">search</span>
-        <input class="vs-search-input" type="text" placeholder="Search subscriptions…"
+        <input class="vs-search-input" type="text" placeholder="Search transactions…"
           [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
       </div>
 <div class="vs-toolbar-right">
@@ -188,7 +179,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
         <div class="vs-tb-divider"></div>
         <button class="vs-add-btn" (click)="openAddForm()">
           <span class="material-symbols-outlined">add</span>
-          Add Subscription
+          Add Transaction
         </button>
       </div>
     </div>
@@ -198,10 +189,10 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
       <div class="vs-banner">
         <span class="material-symbols-outlined vs-banner-icon">notifications_active</span>
         <span class="vs-banner-label">Renewing soon:</span>
-        @for (sub of upcomingBanner(); track sub.id) {
-          @let bdays = daysUntil(sub.renewalDate);
+        @for (t of upcomingBanner(); track t.id) {
+          @let bdays = daysUntil(t.date);
           <span class="vs-banner-chip" [class.vs-banner-urgent]="bdays !== null && bdays <= 3">
-            {{ sub.name }}
+            {{ t.name }}
             <span class="vs-banner-days">{{ bdays === 0 ? 'today' : 'in ' + bdays + 'd' }}</span>
           </span>
         }
@@ -210,13 +201,13 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
     <!-- Table -->
     <div class="vs-table-wrap">
-      @if (filteredSubs().length === 0) {
-        @if (subscriptionStore.subscriptions().length === 0) {
+      @if (filteredTransactions().length === 0) {
+        @if (transactionStore.transactions().length === 0) {
           <env-empty-state
-            icon="subscriptions"
-            title="No subscriptions yet"
-            description="Track your SaaS costs — add one manually or import a list."
-            ctaLabel="Add Subscription"
+            icon="receipt_long"
+            title="No transactions yet"
+            description="Track your costs — add one manually or import a list."
+            ctaLabel="Add Transaction"
             ctaIcon="add"
             secondaryCtaLabel="Import"
             (ctaClicked)="openAddForm()"
@@ -238,7 +229,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
           [actions]="tableActions"
           [showToolbar]="false"
           rowIdKey="id"
-          (rowClick)="openDetails($any($event['_sub']))"
+          (rowClick)="openDetails($any($event['_tx']))"
           (actionClick)="handleTableAction($event)"
           (bulkActionClick)="handleBulkAction($event)"
           (sortChange)="handleTableSort($event)"
@@ -250,8 +241,8 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
   <!-- AI panel -->
   @if (showAssistant()) {
     <env-ai-panel
-      title="Subscriptions Assistant"
-      placeholder="Ask about your subscriptions…"
+      title="Transactions Assistant"
+      placeholder="Ask about your transactions…"
       [suggestions]="aiSuggestions"
       [messages]="aiMessages()"
       [loading]="aiLoading()"
@@ -267,7 +258,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 @if (formMode() !== null) {
   <env-modal
     [isOpen]="true"
-    [title]="formMode() === 'add' ? 'New Subscription' : 'Edit Subscription'"
+    [title]="formMode() === 'add' ? 'New Transaction' : 'Edit Transaction'"
     size="large"
     (closed)="closeForm()">
 
@@ -337,10 +328,20 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
         </div>
       </div>
 
-      <!-- Row 2: Price · Cycle · Renewal -->
+      <!-- Row 2: Type · Amount -->
       <div class="form-row" style="margin-top:12px">
+        <div class="form-group fg-2">
+          <label class="form-label">Type</label>
+          <div class="seg-ctrl">
+            @for (opt of typeOptions; track opt) {
+              <button type="button" class="seg-btn"
+                [class.seg-active]="formType() === opt"
+                (click)="formType.set(opt)">{{ typeMeta(opt).label }}</button>
+            }
+          </div>
+        </div>
         <div class="form-group">
-          <label class="form-label">Price</label>
+          <label class="form-label">Amount</label>
           <div class="price-wrap">
             <button type="button" class="currency-btn"
               (click)="rotateCurrency()"
@@ -348,37 +349,43 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
               {{ formCurrency() }}
             </button>
             <input type="number" step="0.01" min="0" class="form-input price-input"
-              [ngModel]="formPrice()" (ngModelChange)="formPrice.set($event)"
+              [ngModel]="formAmount()" (ngModelChange)="formAmount.set($event)"
               placeholder="0.00">
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Billing Cycle</label>
-          <div class="seg-ctrl">
-            <button type="button" class="seg-btn"
-              [class.seg-active]="formCycle() === 'monthly'"
-              (click)="setCycle('monthly')">Monthly</button>
-            <button type="button" class="seg-btn"
-              [class.seg-active]="formCycle() === 'yearly'"
-              (click)="setCycle('yearly')">Yearly</button>
+      </div>
+
+      <!-- Row 3: Billing Cycle (recurring only) · Date -->
+      <div class="form-row" style="margin-top:12px">
+        @if (formType() === 'recurring') {
+          <div class="form-group">
+            <label class="form-label">Billing Cycle</label>
+            <div class="seg-ctrl">
+              <button type="button" class="seg-btn"
+                [class.seg-active]="formCycle() === 'monthly'"
+                (click)="setCycle('monthly')">Monthly</button>
+              <button type="button" class="seg-btn"
+                [class.seg-active]="formCycle() === 'yearly'"
+                (click)="setCycle('yearly')">Yearly</button>
+            </div>
           </div>
-        </div>
+        }
         <div class="form-group fg-1">
-          <label class="form-label">Next Renewal</label>
+          <label class="form-label">{{ formType() === 'recurring' || formType() === 'bill' ? 'Next Due Date' : 'Date' }}</label>
           <div class="renewal-wrap">
             <input type="date" class="form-input renewal-input"
-              [ngModel]="formRenewal()" (ngModelChange)="formRenewal.set($event)">
+              [ngModel]="formDate()" (ngModelChange)="formDate.set($event)">
             <div class="shortcut-row">
-              <button type="button" class="shortcut-btn" title="+1 month"  (click)="addRenewalOffset(1)">+1m</button>
-              <button type="button" class="shortcut-btn" title="+3 months" (click)="addRenewalOffset(3)">+3m</button>
-              <button type="button" class="shortcut-btn" title="+6 months" (click)="addRenewalOffset(6)">+6m</button>
-              <button type="button" class="shortcut-btn" title="+1 year"   (click)="addRenewalOffset(12)">+1y</button>
+              <button type="button" class="shortcut-btn" title="+1 month"  (click)="addDateOffset(1)">+1m</button>
+              <button type="button" class="shortcut-btn" title="+3 months" (click)="addDateOffset(3)">+3m</button>
+              <button type="button" class="shortcut-btn" title="+6 months" (click)="addDateOffset(6)">+6m</button>
+              <button type="button" class="shortcut-btn" title="+1 year"   (click)="addDateOffset(12)">+1y</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Row 3: Status -->
+      <!-- Row 4: Status -->
       <div class="form-row" style="margin-top:12px">
         <div class="form-group">
           <label class="form-label">Status</label>
@@ -424,7 +431,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%;align-items:center">
       @if (!canSave() && formName()) {
         <span class="save-hint">
-          {{ formPrice() <= 0 ? 'Enter a price' : !formRenewal() ? 'Pick a renewal date' : '' }}
+          {{ formAmount() <= 0 ? 'Enter an amount' : '' }}
         </span>
       }
       <button type="button" class="vendor-cancel-btn" (click)="closeForm()">Cancel</button>
@@ -446,20 +453,20 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
 <!-- ── BULK IMPORT MODAL ── -->
 @if (showImportModal()) {
-  <env-modal [isOpen]="true" title="Import Subscriptions" (closed)="showImportModal.set(false)">
+  <env-modal [isOpen]="true" title="Import Transactions" (closed)="showImportModal.set(false)">
     <div body class="import-body">
       <p class="import-hint">
-        One subscription per line.<br>
-        Format: <code>Name, Price, Cycle, Category, Currency</code><br>
-        <span style="color:var(--text-tertiary)">Cycle is <code>monthly</code> or <code>yearly</code>. Category and Currency are optional — known vendors are auto-detected.</span>
+        One transaction per line.<br>
+        Format: <code>Name, Amount, Type, Category, Currency, Cycle</code><br>
+        <span style="color:var(--text-tertiary)">Type is <code>recurring</code>, <code>one-time</code>, <code>bill</code>, <code>purchase</code>, or <code>refund</code>. Cycle (<code>monthly</code>/<code>yearly</code>) applies to recurring only. Category and Currency are optional.</span>
       </p>
       <textarea class="import-textarea"
         [ngModel]="importText()" (ngModelChange)="importText.set($event)"
-        placeholder="GitHub, 4, monthly&#10;AWS, 150, monthly&#10;Figma, 180, yearly, design&#10;1Password, 36, yearly, security, USD"></textarea>
+        placeholder="GitHub, 4, recurring, software, USD, monthly&#10;AWS, 150, bill&#10;Figma, 180, recurring, design, USD, yearly&#10;Laptop, 1200, purchase"></textarea>
       @if (importPreviewCount() > 0) {
         <p class="import-count">
           <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">check_circle</span>
-          {{ importPreviewCount() }} subscription{{ importPreviewCount() === 1 ? '' : 's' }} ready to import
+          {{ importPreviewCount() }} transaction{{ importPreviewCount() === 1 ? '' : 's' }} ready to import
         </p>
       }
     </div>
@@ -474,62 +481,74 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 }
 
 <!-- ── VIEW DETAILS MODAL ── -->
-@if (viewingSub(); as sub) {
+@if (viewingTx(); as tx) {
   <env-modal [isOpen]="true" [title]="''" size="large" (closed)="closeDetails()">
     <div body class="detail-body">
 
       <div class="detail-hero">
-        <div class="detail-avatar" [style.background]="avatarBg(sub.name)">
-          {{ sub.name.charAt(0).toUpperCase() }}
+        <div class="detail-avatar" [style.background]="avatarBg(tx.name)">
+          {{ tx.name.charAt(0).toUpperCase() }}
         </div>
         <div class="detail-hero-text">
-          <h2 class="detail-name">{{ sub.name }}</h2>
-          <span class="vs-status-badge" style="display:inline-block;margin-top:4px"
-            [style.color]="statusMeta(sub.status).color"
-            [style.background]="statusMeta(sub.status).bg">
-            {{ statusMeta(sub.status).label }}
-          </span>
+          <h2 class="detail-name">{{ tx.name }}</h2>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <span class="vs-status-badge" style="display:inline-block"
+              [style.color]="statusMeta(tx.status).color"
+              [style.background]="statusMeta(tx.status).bg">
+              {{ statusMeta(tx.status).label }}
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text-tertiary)">
+              <span class="material-symbols-outlined" style="font-size:13px" [style.color]="typeMeta(tx.type).color">{{ typeMeta(tx.type).icon }}</span>
+              {{ typeMeta(tx.type).label }}
+            </span>
+          </div>
         </div>
         <div class="detail-cost-block">
-          <div class="detail-price">{{ currencySymbol(sub.currency) }}{{ sub.price | number:'1.2-2' }}</div>
-          <div class="detail-cycle">per {{ sub.billingCycle === 'monthly' ? 'month' : 'year' }}</div>
+          <div class="detail-price">{{ currencySymbol(tx.currency) }}{{ tx.amount | number:'1.2-2' }}</div>
+          @if (tx.type === 'recurring' && tx.billingCycle) {
+            <div class="detail-cycle">per {{ tx.billingCycle === 'monthly' ? 'month' : tx.billingCycle === 'weekly' ? 'week' : 'year' }}</div>
+          }
         </div>
       </div>
 
-      <div class="detail-equiv">
-        @if (sub.billingCycle === 'yearly') {
-          <div class="detail-equiv-chip">
-            <span class="equiv-label">Monthly equivalent</span>
-            <span class="equiv-value">{{ monthlyCost(sub) }}</span>
-          </div>
-        }
-        @if (sub.billingCycle === 'monthly') {
-          <div class="detail-equiv-chip">
-            <span class="equiv-label">Yearly equivalent</span>
-            <span class="equiv-value">{{ yearlyCost(sub) }}</span>
-          </div>
-        }
-      </div>
+      @if (tx.type === 'recurring') {
+        <div class="detail-equiv">
+          @if (tx.billingCycle === 'yearly') {
+            <div class="detail-equiv-chip">
+              <span class="equiv-label">Monthly equivalent</span>
+              <span class="equiv-value">{{ monthlyCost(tx) }}</span>
+            </div>
+          }
+          @if (tx.billingCycle === 'monthly') {
+            <div class="detail-equiv-chip">
+              <span class="equiv-label">Yearly equivalent</span>
+              <span class="equiv-value">{{ yearlyCost(tx) }}</span>
+            </div>
+          }
+        </div>
+      }
 
       <div class="detail-grid">
         <div class="detail-field">
           <span class="detail-field-label">Category</span>
-          <span class="detail-field-value capitalize">{{ sub.category || '—' }}</span>
+          <span class="detail-field-value capitalize">{{ tx.category || '—' }}</span>
         </div>
         <div class="detail-field">
           <span class="detail-field-label">Currency</span>
-          <span class="detail-field-value">{{ sub.currency || 'USD' }}</span>
+          <span class="detail-field-value">{{ tx.currency || 'USD' }}</span>
         </div>
+        @if (tx.type === 'recurring' && tx.billingCycle) {
+          <div class="detail-field">
+            <span class="detail-field-label">Billing Cycle</span>
+            <span class="detail-field-value capitalize">{{ tx.billingCycle }}</span>
+          </div>
+        }
         <div class="detail-field">
-          <span class="detail-field-label">Billing Cycle</span>
-          <span class="detail-field-value capitalize">{{ sub.billingCycle }}</span>
-        </div>
-        <div class="detail-field">
-          <span class="detail-field-label">Next Renewal</span>
+          <span class="detail-field-label">{{ tx.type === 'recurring' || tx.type === 'bill' ? 'Due Date' : 'Date' }}</span>
           <div class="detail-field-value" style="display:flex;align-items:center;gap:8px">
-            {{ formatDate(sub.renewalDate) }}
-            @let days = daysUntil(sub.renewalDate);
-            @if (days !== null && sub.status !== 'cancelled') {
+            {{ formatDate(tx.date) }}
+            @let days = daysUntil(tx.date);
+            @if (days !== null && tx.status !== 'cancelled' && (tx.type === 'recurring' || tx.type === 'bill')) {
               <span class="vs-days-chip"
                 [class.vs-days-ok]="days > 30"
                 [class.vs-days-caution]="days <= 30 && days > 7"
@@ -541,16 +560,16 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
         </div>
         <div class="detail-field">
           <span class="detail-field-label">Project Scope</span>
-          <span class="detail-field-value">{{ sub.projectId || 'global' }}</span>
+          <span class="detail-field-value">{{ tx.projectId || 'global' }}</span>
         </div>
         <div class="detail-field">
           <span class="detail-field-label">ID</span>
-          <span class="detail-field-value detail-id">{{ sub.id }}</span>
+          <span class="detail-field-value detail-id">{{ tx.id }}</span>
         </div>
-        @if (sub.notes) {
+        @if (tx.notes) {
           <div class="detail-field detail-field-full">
             <span class="detail-field-label">Notes</span>
-            <span class="detail-field-value">{{ sub.notes }}</span>
+            <span class="detail-field-value">{{ tx.notes }}</span>
           </div>
         }
       </div>
@@ -558,9 +577,9 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
 
     <div footer style="display:flex;justify-content:flex-end;gap:8px;width:100%">
       <button class="vendor-cancel-btn" (click)="closeDetails()">Close</button>
-      <button class="vendor-save-btn" (click)="editFromDetails(sub)">
+      <button class="vendor-save-btn" (click)="editFromDetails(tx)">
         <span class="material-symbols-outlined">edit</span>
-        Edit Subscription
+        Edit Transaction
       </button>
     </div>
   </env-modal>
@@ -575,7 +594,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     confirmLabel="Move to Bin"
     (confirmed)="doDelete(subId)"
     (cancelled)="deleteConfirmId.set(null)">
-    This subscription will be moved to the Bin and can be restored later.
+    This transaction will be moved to the Bin and can be restored later.
 </env-confirm-dialog>
 }
 
@@ -588,7 +607,7 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
     confirmLabel="Move to Bin"
     (confirmed)="confirmBulkDelete()"
     (cancelled)="bulkDeleteConfirm.set(null)">
-    <strong>{{ ids.length }} subscription{{ ids.length !== 1 ? 's' : '' }}</strong> will be moved to the Bin and can be restored later.
+    <strong>{{ ids.length }} transaction{{ ids.length !== 1 ? 's' : '' }}</strong> will be moved to the Bin and can be restored later.
 </env-confirm-dialog>
 }
   `,
@@ -914,33 +933,34 @@ const VENDOR_PRESETS: Record<string, { category: string; billingCycle: 'monthly'
   `]
 })
 export class VendorComponent {
-    public subscriptionStore = inject(SubscriptionStore);
+    public transactionStore = inject(TransactionStore);
 
-    readonly categoryOptions = ['software', 'infrastructure', 'design', 'marketing', 'security', 'analytics', 'communication', 'finance', 'other'];
+    readonly typeOptions: TransactionType[] = ['recurring', 'one-time', 'bill', 'purchase', 'refund'];
+    readonly categoryOptions = ['software', 'infrastructure', 'design', 'marketing', 'security', 'analytics', 'communication', 'finance', 'utilities', 'shopping', 'travel', 'food', 'other'];
     readonly currencies = CURRENCIES;
     readonly vendorNames = Object.keys(VENDOR_PRESETS).map(k => k.charAt(0).toUpperCase() + k.slice(1));
 
     // ── Filter state ──────────────────────────────────────────────────────
-    searchQuery      = signal('');
-    selectedStatus   = signal<string | null>(null);
-    selectedCycle    = signal<'monthly' | 'yearly' | null>(null);
-    selectedCategory = signal<string | null>(null);
+    searchQuery    = signal('');
+    selectedType   = signal<TransactionType | null>(null);
+    selectedStatus = signal<string | null>(null);
 
     // ── Sort state ────────────────────────────────────────────────────────
-    sortCol = signal<'name' | 'price' | 'renewalDate'>('renewalDate');
+    sortCol = signal<'name' | 'amount' | 'date'>('date');
     sortDir = signal<'asc' | 'desc'>('asc');
 
     // ── Form state ────────────────────────────────────────────────────────
     formMode      = signal<'add' | 'edit' | null>(null);
     editingId     = signal<string | null>(null);
     formName      = signal('');
-    formCategory  = signal('software');
+    formType      = signal<TransactionType>('recurring');
+    formCategory  = signal('');
     formProjectId = signal('global');
-    formPrice     = signal<number>(0);
+    formAmount    = signal<number>(0);
     formCurrency  = signal('USD');
-    formCycle     = signal<'monthly' | 'yearly'>('monthly');
-    formRenewal   = signal('');
-    formStatus    = signal<'active' | 'paused' | 'cancelled'>('active');
+    formCycle     = signal<'monthly' | 'yearly' | 'weekly'>('monthly');
+    formDate      = signal('');
+    formStatus    = signal<'active' | 'paused' | 'cancelled' | 'completed'>('active');
     formNotes     = signal('');
     showAdvanced  = signal(false);
     presetApplied = signal(false);
@@ -961,9 +981,9 @@ export class VendorComponent {
     // ── Modal / delete state ──────────────────────────────────────────────
     deleteConfirmId   = signal<string | null>(null);
     bulkDeleteConfirm = signal<string[] | null>(null);
-    showImportModal = signal(false);
-    importText      = signal('');
-    viewingSub      = signal<Subscription | null>(null);
+    showImportModal   = signal(false);
+    importText        = signal('');
+    viewingTx         = signal<Transaction | null>(null);
 
     // ── AI Assistant ──────────────────────────────────────────────────────
     showAssistant = signal(false);
@@ -972,62 +992,52 @@ export class VendorComponent {
 
     readonly aiSuggestions = [
         'What is my total monthly spend?',
-        'Which subscriptions renew soon?',
-        'What are my most expensive subscriptions?',
-        'Show me a breakdown by category',
-        'Which subscriptions are paused or cancelled?',
+        'Which transactions are due soon?',
+        'What are my most expensive recurring services?',
+        'Show me a breakdown by type',
+        'Show me all refunds',
     ];
 
     // ── Computed ──────────────────────────────────────────────────────────
-    canSave = computed(() => !!this.formName() && !!this.formRenewal() && this.formPrice() > 0);
+    canSave = computed(() => !!this.formName() && this.formAmount() > 0);
 
     activeCount = computed(() =>
-        this.subscriptionStore.subscriptions().filter(s => !s.status || s.status === 'active').length
+        this.transactionStore.transactions().filter(t => !t.status || t.status === 'active').length
     );
-
     pausedCount = computed(() =>
-        this.subscriptionStore.subscriptions().filter(s => s.status === 'paused').length
+        this.transactionStore.transactions().filter(t => t.status === 'paused').length
     );
-
     cancelledCount = computed(() =>
-        this.subscriptionStore.subscriptions().filter(s => s.status === 'cancelled').length
+        this.transactionStore.transactions().filter(t => t.status === 'cancelled').length
     );
 
-    countByCategory = computed(() => {
+    countByType = computed(() => {
         const counts: Record<string, number> = {};
-        for (const s of this.subscriptionStore.subscriptions()) {
-            const cat = s.category || 'other';
-            counts[cat] = (counts[cat] ?? 0) + 1;
+        for (const t of this.transactionStore.transactions()) {
+            counts[t.type] = (counts[t.type] ?? 0) + 1;
         }
         return counts;
     });
 
     hasActiveFilters = computed(() =>
-        !!this.searchQuery() || this.selectedStatus() !== null ||
-        this.selectedCycle() !== null || this.selectedCategory() !== null
+        !!this.searchQuery() || this.selectedType() !== null || this.selectedStatus() !== null
     );
 
     defaultCurrency = computed(() => {
-        const subs = this.subscriptionStore.subscriptions();
-        if (!subs.length) return 'USD';
+        const txs = this.transactionStore.transactions();
+        if (!txs.length) return 'USD';
         const freq: Record<string, number> = {};
-        for (const s of subs) {
-            const cur = s.currency ?? 'USD';
-            freq[cur] = (freq[cur] ?? 0) + 1;
-        }
+        for (const t of txs) { const cur = t.currency ?? 'USD'; freq[cur] = (freq[cur] ?? 0) + 1; }
         return Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
     });
 
     upcomingBanner = computed(() => {
         const now = Date.now();
         const limit = 14 * 24 * 60 * 60 * 1000;
-        return this.subscriptionStore.subscriptions()
-            .filter(s => s.status !== 'cancelled' && !!s.renewalDate)
-            .filter(s => {
-                const diff = new Date(s.renewalDate).getTime() - now;
-                return diff >= 0 && diff <= limit;
-            })
-            .sort((a, b) => new Date(a.renewalDate).getTime() - new Date(b.renewalDate).getTime());
+        return this.transactionStore.transactions()
+            .filter(t => (t.type === 'recurring' || t.type === 'bill') && t.status !== 'cancelled' && !!t.date)
+            .filter(t => { const diff = new Date(t.date).getTime() - now; return diff >= 0 && diff <= limit; })
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     });
 
     importPreviewCount = computed(() =>
@@ -1037,143 +1047,121 @@ export class VendorComponent {
         }).length
     );
 
-    filteredSubs = computed(() => {
+    filteredTransactions = computed(() => {
         const q = this.searchQuery().toLowerCase();
-        let list = this.subscriptionStore.subscriptions();
+        let list = this.transactionStore.transactions();
 
-        if (q) {
-            list = list.filter(s =>
-                s.name.toLowerCase().includes(q) ||
-                s.category?.toLowerCase().includes(q) ||
-                s.projectId?.toLowerCase().includes(q) ||
-                s.notes?.toLowerCase().includes(q)
-            );
-        }
-        if (this.selectedStatus() !== null) {
-            const st = this.selectedStatus()!;
-            list = list.filter(s => (s.status ?? 'active') === st);
-        }
-        if (this.selectedCycle() !== null) {
-            list = list.filter(s => s.billingCycle === this.selectedCycle());
-        }
-        if (this.selectedCategory() !== null) {
-            list = list.filter(s => s.category === this.selectedCategory());
-        }
+        if (q) list = list.filter(t =>
+            t.name.toLowerCase().includes(q) ||
+            t.category?.toLowerCase().includes(q) ||
+            t.notes?.toLowerCase().includes(q)
+        );
+        if (this.selectedType() !== null) list = list.filter(t => t.type === this.selectedType());
+        if (this.selectedStatus() !== null) list = list.filter(t => (t.status ?? 'active') === this.selectedStatus());
 
         const col = this.sortCol();
         const dir = this.sortDir() === 'asc' ? 1 : -1;
         return [...list].sort((a, b) => {
-            if (col === 'name')        return dir * a.name.localeCompare(b.name);
-            if (col === 'price')       return dir * (a.price - b.price);
-            if (col === 'renewalDate') return dir * (new Date(a.renewalDate).getTime() - new Date(b.renewalDate).getTime());
+            if (col === 'name')   return dir * a.name.localeCompare(b.name);
+            if (col === 'amount') return dir * (a.amount - b.amount);
+            if (col === 'date')   return dir * (new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
             return 0;
         });
     });
 
     // ── Table config ──────────────────────────────────────────────────────
     readonly tableColumns: EnvTableColumn[] = [
-        { key: 'service',  header: 'Service',      type: 'avatar-text', sortable: true },
-        { key: 'category', header: 'Category',     type: 'badge', badgeMap: {
-            software:       { label: 'Software',       dotColor: '#60a5fa', bgColor: 'rgba(37,99,235,0.1)',   textColor: '#2563eb' },
-            infrastructure: { label: 'Infrastructure', dotColor: '#a78bfa', bgColor: 'rgba(109,40,217,0.1)',  textColor: '#7c3aed' },
-            design:         { label: 'Design',         dotColor: '#f472b6', bgColor: 'rgba(219,39,119,0.1)',  textColor: '#db2777' },
-            marketing:      { label: 'Marketing',      dotColor: '#4ade80', bgColor: 'rgba(22,163,74,0.1)',   textColor: '#16a34a' },
-            security:       { label: 'Security',       dotColor: '#fb923c', bgColor: 'rgba(194,65,12,0.1)',   textColor: '#c2410c' },
-            analytics:      { label: 'Analytics',      dotColor: '#fbbf24', bgColor: 'rgba(180,83,9,0.1)',    textColor: '#b45309' },
-            communication:  { label: 'Communication',  dotColor: '#34d399', bgColor: 'rgba(4,120,87,0.1)',    textColor: '#047857' },
-            finance:        { label: 'Finance',        dotColor: '#e879f9', bgColor: 'rgba(162,28,175,0.1)',  textColor: '#a21caf' },
-            other:          { label: 'Other',          dotColor: '#94a3b8', bgColor: 'rgba(100,116,139,0.1)', textColor: '#64748b' },
+        { key: 'service', header: 'Name',   type: 'avatar-text', sortable: true },
+        { key: 'type',    header: 'Type',   type: 'badge', badgeMap: {
+            'recurring': { label: 'Recurring',  dotColor: '#60a5fa', bgColor: 'rgba(96,165,250,0.1)',  textColor: '#60a5fa' },
+            'one-time':  { label: 'One-time',   dotColor: '#a78bfa', bgColor: 'rgba(167,139,250,0.1)', textColor: '#a78bfa' },
+            'bill':      { label: 'Bill',       dotColor: '#fb923c', bgColor: 'rgba(251,146,60,0.1)',  textColor: '#fb923c' },
+            'purchase':  { label: 'Purchase',   dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',  textColor: '#4ade80' },
+            'refund':    { label: 'Refund',     dotColor: '#34d399', bgColor: 'rgba(52,211,153,0.1)',  textColor: '#34d399' },
         }},
-        { key: 'amount',  header: 'Amount',       sortable: true },
-        { key: 'cycle',   header: 'Cycle' },
-        { key: 'renewal', header: 'Next Renewal', sortable: true },
-        { key: 'status',  header: 'Status',       type: 'badge', badgeMap: {
+        { key: 'amount',  header: 'Amount', sortable: true },
+        { key: 'date',    header: 'Date',   sortable: true },
+        { key: 'status',  header: 'Status', type: 'badge', badgeMap: {
             active:    { label: 'Active',    dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',  textColor: '#4ade80'  },
             paused:    { label: 'Paused',    dotColor: '#fbbf24', bgColor: 'rgba(251,191,36,0.1)',  textColor: '#fbbf24'  },
             cancelled: { label: 'Cancelled', dotColor: '#94a3b8', bgColor: 'rgba(148,163,184,0.1)', textColor: '#94a3b8'  },
+            completed: { label: 'Completed', dotColor: '#60a5fa', bgColor: 'rgba(96,165,250,0.1)',  textColor: '#60a5fa'  },
         }},
     ];
 
     readonly tableActions: EnvTableAction[] = [
         { key: 'view',   label: 'View Details', icon: 'open_in_new', bulk: false },
         { key: 'edit',   label: 'Edit',         icon: 'edit',        bulk: false },
-        { key: 'delete', label: 'Delete',        icon: 'delete', danger: true },
+        { key: 'delete', label: 'Delete',        icon: 'delete',     danger: true },
     ];
 
     tableRows = computed(() =>
-        this.filteredSubs().map(sub => ({
-            id:       sub.id,
-            service:  { name: sub.name },
-            category: sub.category || 'other',
-            amount:   `${this.currencySymbol(sub.currency)}${sub.price.toFixed(2)}`,
-            cycle:    sub.billingCycle.charAt(0).toUpperCase() + sub.billingCycle.slice(1),
-            renewal:  this.formatRenewal(sub),
-            status:   sub.status || 'active',
-            _sub:     sub,
+        this.filteredTransactions().map(t => ({
+            id:      t.id,
+            service: { name: t.name },
+            type:    t.type,
+            amount:  `${this.currencySymbol(t.currency)}${t.amount.toFixed(2)}${t.type === 'recurring' && t.billingCycle ? '/' + t.billingCycle.slice(0, 2) : ''}`,
+            date:    this.formatDateDisplay(t),
+            status:  t.status || 'active',
+            _tx:     t,
         }))
     );
 
     handleTableAction(event: EnvTableActionEvent) {
-        const sub = event.row['_sub'] as Subscription;
-        if (!sub) return;
+        const t = event.row['_tx'] as Transaction;
+        if (!t) return;
         switch (event.actionKey) {
-            case 'view':   this.openDetails(sub); break;
-            case 'edit':   this.openEditForm(sub); break;
-            case 'delete': this.deleteConfirmId.set(sub.id); break;
+            case 'view':   this.openDetails(t); break;
+            case 'edit':   this.openEditForm(t); break;
+            case 'delete': this.deleteConfirmId.set(t.id); break;
         }
     }
 
     handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
-        if (event.actionKey === 'delete') {
-            this.bulkDeleteConfirm.set([...event.selectedIds] as string[]);
-        }
+        if (event.actionKey === 'delete') this.bulkDeleteConfirm.set([...event.selectedIds] as string[]);
     }
 
     async confirmBulkDelete() {
         const ids = this.bulkDeleteConfirm();
-        if (ids) {
-            for (const id of ids) {
-                await this.subscriptionStore.deleteSubscription(id);
-            }
-        }
+        if (ids) { for (const id of ids) await this.transactionStore.delete(id); }
         this.bulkDeleteConfirm.set(null);
     }
 
     handleTableSort(event: EnvTableSortEvent) {
-        const colMap: Record<string, 'name' | 'price' | 'renewalDate'> = {
-            service: 'name', amount: 'price', renewal: 'renewalDate',
+        const colMap: Record<string, 'name' | 'amount' | 'date'> = {
+            service: 'name', amount: 'amount', date: 'date',
         };
         const col = colMap[event.key];
         if (col) { this.sortCol.set(col); this.sortDir.set(event.direction); }
     }
 
-    private formatRenewal(sub: Subscription): string {
-        const date = this.formatDate(sub.renewalDate);
-        const days = this.daysUntil(sub.renewalDate);
-        if (days === null || sub.status === 'cancelled') return date;
-        if (days === 0) return `${date} · today`;
-        return `${date} · in ${days}d`;
+    private formatDateDisplay(t: Transaction): string {
+        const d = this.formatDate(t.date);
+        if (!t.date) return '—';
+        if (t.type !== 'recurring' && t.type !== 'bill') return d;
+        const days = this.daysUntil(t.date);
+        if (days === null || t.status === 'cancelled') return d;
+        if (days === 0) return `${d} · today`;
+        return `${d} · in ${days}d`;
     }
 
+    typeMeta(type: TransactionType) { return TYPE_META[type]; }
+
     // ── Filter helpers ────────────────────────────────────────────────────
+    toggleTypeFilter(type: TransactionType) {
+        this.selectedType.set(this.selectedType() === type ? null : type);
+    }
     toggleStatusFilter(status: string) {
         this.selectedStatus.set(this.selectedStatus() === status ? null : status);
     }
-    toggleCycleFilter(cycle: 'monthly' | 'yearly') {
-        this.selectedCycle.set(this.selectedCycle() === cycle ? null : cycle);
-    }
-    toggleCategoryFilter(cat: string) {
-        this.selectedCategory.set(this.selectedCategory() === cat ? null : cat);
-    }
     clearFilters() {
         this.searchQuery.set('');
+        this.selectedType.set(null);
         this.selectedStatus.set(null);
-        this.selectedCycle.set(null);
-        this.selectedCategory.set(null);
     }
 
     // ── Sort ──────────────────────────────────────────────────────────────
-    setSort(col: 'name' | 'price' | 'renewalDate') {
+    setSort(col: 'name' | 'amount' | 'date') {
         if (this.sortCol() === col) this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
         else { this.sortCol.set(col); this.sortDir.set('asc'); }
     }
@@ -1182,24 +1170,25 @@ export class VendorComponent {
     openAddForm() {
         if (this.formMode() !== null) { this.closeForm(); return; }
         this.resetForm();
-        this.formRenewal.set(this.autoRenewalDate('monthly'));
+        this.formDate.set(this.autoDate('monthly'));
         this.formMode.set('add');
         setTimeout(() => (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus(), 60);
     }
 
-    openEditForm(sub: Subscription) {
-        this.editingId.set(sub.id);
-        this.formName.set(sub.name);
-        this.formCategory.set(sub.category ?? 'software');
-        this.formProjectId.set(sub.projectId ?? 'global');
-        this.formPrice.set(sub.price);
-        this.formCurrency.set(sub.currency ?? 'USD');
-        this.formCycle.set(sub.billingCycle);
-        this.formRenewal.set(sub.renewalDate ? sub.renewalDate.split('T')[0] : '');
-        this.formStatus.set(sub.status ?? 'active');
-        this.formNotes.set(sub.notes ?? '');
+    openEditForm(t: Transaction) {
+        this.editingId.set(t.id);
+        this.formName.set(t.name);
+        this.formType.set(t.type ?? 'recurring');
+        this.formCategory.set(t.category ?? '');
+        this.formProjectId.set(t.projectId ?? 'global');
+        this.formAmount.set(t.amount);
+        this.formCurrency.set(t.currency ?? 'USD');
+        this.formCycle.set(t.billingCycle ?? 'monthly');
+        this.formDate.set(t.date ? t.date.split('T')[0] : '');
+        this.formStatus.set(t.status ?? 'active');
+        this.formNotes.set(t.notes ?? '');
         this.presetApplied.set(false);
-        this.showAdvanced.set((!!sub.projectId && sub.projectId !== 'global') || !!sub.notes);
+        this.showAdvanced.set((!!t.projectId && t.projectId !== 'global') || !!t.notes);
         this.formMode.set('edit');
     }
 
@@ -1208,12 +1197,13 @@ export class VendorComponent {
     private resetForm() {
         this.editingId.set(null);
         this.formName.set('');
-        this.formCategory.set('software');
+        this.formType.set(this.selectedType() ?? 'recurring');
+        this.formCategory.set('');
         this.formProjectId.set('global');
-        this.formPrice.set(0);
+        this.formAmount.set(0);
         this.formCurrency.set('USD');
         this.formCycle.set('monthly');
-        this.formRenewal.set('');
+        this.formDate.set('');
         this.formStatus.set('active');
         this.formNotes.set('');
         this.showAdvanced.set(false);
@@ -1223,21 +1213,23 @@ export class VendorComponent {
     // ── Save actions ──────────────────────────────────────────────────────
     private async saveFormInternal(): Promise<boolean> {
         if (!this.canSave()) return false;
-        const payload: Partial<Subscription> = {
+        const type = this.formType();
+        const payload: Partial<Transaction> = {
             name:         this.formName(),
-            category:     this.formCategory() || 'software',
-            projectId:    this.formProjectId() || undefined,
-            price:        Number(this.formPrice()),
+            type,
+            category:     this.formCategory() || undefined,
+            projectId:    this.formProjectId() !== 'global' ? this.formProjectId() : undefined,
+            amount:       Number(this.formAmount()),
             currency:     this.formCurrency(),
-            billingCycle: this.formCycle(),
-            renewalDate:  this.formRenewal(),
+            date:         this.formDate() || new Date().toISOString().split('T')[0],
+            billingCycle: type === 'recurring' ? this.formCycle() : undefined,
             status:       this.formStatus(),
             notes:        this.formNotes() || undefined,
         };
         if (this.formMode() === 'add') {
-            await this.subscriptionStore.addSubscription({ id: crypto.randomUUID(), ...payload } as Subscription);
+            await this.transactionStore.add({ id: crypto.randomUUID(), ...payload } as Transaction);
         } else if (this.editingId()) {
-            await this.subscriptionStore.updateSubscription(this.editingId()!, payload);
+            await this.transactionStore.update(this.editingId()!, payload);
         }
         return true;
     }
@@ -1249,21 +1241,21 @@ export class VendorComponent {
     async saveAndAddAnother() {
         if (await this.saveFormInternal()) {
             this.resetForm();
-            this.formRenewal.set(this.autoRenewalDate('monthly'));
+            this.formDate.set(this.autoDate('monthly'));
             this.formMode.set('add');
             setTimeout(() => (document.querySelector('.vendor-name-input') as HTMLInputElement)?.focus(), 60);
         }
     }
 
     async doDelete(id: string) {
-        await this.subscriptionStore.deleteSubscription(id);
+        await this.transactionStore.delete(id);
         this.deleteConfirmId.set(null);
     }
 
-    async cycleStatus(sub: Subscription) {
-        const order: ('active' | 'paused' | 'cancelled')[] = ['active', 'paused', 'cancelled'];
-        const idx = order.indexOf(sub.status ?? 'active');
-        await this.subscriptionStore.updateSubscription(sub.id, { status: order[(idx + 1) % 3] });
+    async cycleStatus(t: Transaction) {
+        const order: Transaction['status'][] = ['active', 'paused', 'cancelled', 'completed'];
+        const idx = order.indexOf(t.status ?? 'active');
+        await this.transactionStore.update(t.id, { status: order[(idx + 1) % order.length] });
     }
 
     // ── Form field helpers ────────────────────────────────────────────────
@@ -1271,13 +1263,13 @@ export class VendorComponent {
         this.formName.set(name);
         this.vendorHighlightIdx.set(-1);
         this.showVendorDropdown.set(true);
-        if (this.formMode() !== 'add') return;
+        if (this.formMode() !== 'add' || this.formType() !== 'recurring') return;
         const preset = VENDOR_PRESETS[name.toLowerCase().trim()];
         if (preset) {
             this.formCategory.set(preset.category);
             this.formCycle.set(preset.billingCycle);
             this.formCurrency.set(preset.currency);
-            this.formRenewal.set(this.autoRenewalDate(preset.billingCycle));
+            this.formDate.set(this.autoDate(preset.billingCycle));
             this.presetApplied.set(true);
         } else {
             this.presetApplied.set(false);
@@ -1289,15 +1281,13 @@ export class VendorComponent {
         this.formCategory.set(v.category);
         this.formCycle.set(v.billingCycle);
         this.formCurrency.set(v.currency);
-        if (this.formMode() === 'add') this.formRenewal.set(this.autoRenewalDate(v.billingCycle));
+        if (this.formMode() === 'add') this.formDate.set(this.autoDate(v.billingCycle));
         this.presetApplied.set(true);
         this.showVendorDropdown.set(false);
         this.vendorHighlightIdx.set(-1);
     }
 
-    onVendorBlur() {
-        setTimeout(() => this.showVendorDropdown.set(false), 150);
-    }
+    onVendorBlur() { setTimeout(() => this.showVendorDropdown.set(false), 150); }
 
     onVendorKeydown(e: KeyboardEvent) {
         if (!this.showVendorDropdown()) return;
@@ -1321,7 +1311,8 @@ export class VendorComponent {
         const icons: Record<string, string> = {
             software: 'code', infrastructure: 'cloud', design: 'palette',
             marketing: 'campaign', security: 'shield', analytics: 'bar_chart',
-            communication: 'chat', finance: 'payments', other: 'category',
+            communication: 'chat', finance: 'payments', utilities: 'electrical_services',
+            shopping: 'shopping_bag', travel: 'flight', food: 'restaurant', other: 'category',
         };
         return icons[cat] ?? 'category';
     }
@@ -1337,9 +1328,9 @@ export class VendorComponent {
         return overrides[key] ?? key.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
 
-    setCycle(cycle: 'monthly' | 'yearly') {
+    setCycle(cycle: 'monthly' | 'yearly' | 'weekly') {
         this.formCycle.set(cycle);
-        if (this.formMode() === 'add') this.formRenewal.set(this.autoRenewalDate(cycle));
+        if (this.formMode() === 'add') this.formDate.set(this.autoDate(cycle));
     }
 
     rotateCurrency() {
@@ -1347,11 +1338,11 @@ export class VendorComponent {
         this.formCurrency.set(CURRENCIES[(idx + 1) % CURRENCIES.length]);
     }
 
-    addRenewalOffset(months: number) {
-        const base = this.formRenewal();
+    addDateOffset(months: number) {
+        const base = this.formDate();
         const d = base ? new Date(base + 'T12:00:00') : new Date();
         d.setMonth(d.getMonth() + months);
-        this.formRenewal.set(this.toLocalDateString(d));
+        this.formDate.set(this.toLocalDateString(d));
     }
 
     toggleAdvanced() { this.showAdvanced.update(v => !v); }
@@ -1362,24 +1353,22 @@ export class VendorComponent {
         for (const line of lines) {
             const parts = line.split(',').map(p => p.trim());
             if (parts.length < 2) continue;
-            const name  = parts[0];
-            const price = parseFloat(parts[1]);
-            if (!name || isNaN(price)) continue;
+            const name   = parts[0];
+            const amount = parseFloat(parts[1]);
+            if (!name || isNaN(amount)) continue;
 
-            const cycleRaw = (parts[2] ?? 'monthly').toLowerCase();
-            const cycle: 'monthly' | 'yearly' = cycleRaw === 'yearly' ? 'yearly' : 'monthly';
+            const typeRaw  = (parts[2] ?? 'recurring').toLowerCase() as TransactionType;
+            const type: TransactionType = this.typeOptions.includes(typeRaw) ? typeRaw : 'recurring';
             const preset   = VENDOR_PRESETS[name.toLowerCase()];
-            const category = parts[3] || preset?.category  || 'software';
-            const currency = parts[4] || preset?.currency  || 'USD';
+            const category = parts[3] || preset?.category || '';
+            const currency = parts[4] || preset?.currency || 'USD';
+            const cycle: 'monthly' | 'yearly' = (parts[5] ?? 'monthly').toLowerCase() === 'yearly' ? 'yearly' : 'monthly';
 
-            await this.subscriptionStore.addSubscription({
+            await this.transactionStore.add({
                 id:          crypto.randomUUID(),
-                name,
-                price,
-                billingCycle: cycle,
-                category,
-                currency,
-                renewalDate:  this.autoRenewalDate(cycle),
+                name, type, amount, category, currency,
+                date:         this.autoDate(type === 'recurring' ? cycle : 'monthly'),
+                billingCycle: type === 'recurring' ? cycle : undefined,
                 status:       'active',
             });
         }
@@ -1411,24 +1400,26 @@ export class VendorComponent {
         return STATUS_META[status || 'active'] ?? STATUS_META['active'];
     }
 
-    monthlyCost(sub: Subscription): string {
-        const sym = this.currencySymbol(sub.currency);
-        const val = sub.billingCycle === 'yearly' ? sub.price / 12 : sub.price;
+    monthlyCost(t: Transaction): string {
+        if (t.type !== 'recurring') return `${this.currencySymbol(t.currency)}${t.amount.toFixed(2)}`;
+        const sym = this.currencySymbol(t.currency);
+        const val = t.billingCycle === 'yearly' ? t.amount / 12 : t.billingCycle === 'weekly' ? t.amount * 4.33 : t.amount;
         return `${sym}${val.toFixed(2)}/mo`;
     }
 
-    yearlyCost(sub: Subscription): string {
-        const sym = this.currencySymbol(sub.currency);
-        const val = sub.billingCycle === 'monthly' ? sub.price * 12 : sub.price;
+    yearlyCost(t: Transaction): string {
+        if (t.type !== 'recurring') return '';
+        const sym = this.currencySymbol(t.currency);
+        const val = t.billingCycle === 'monthly' ? t.amount * 12 : t.billingCycle === 'weekly' ? t.amount * 52 : t.amount;
         return `${sym}${val.toFixed(2)}/yr`;
     }
 
-    openDetails(sub: Subscription) { this.viewingSub.set(sub); }
-    closeDetails() { this.viewingSub.set(null); }
+    openDetails(t: Transaction) { this.viewingTx.set(t); }
+    closeDetails()              { this.viewingTx.set(null); }
 
-    editFromDetails(sub: Subscription) {
+    editFromDetails(t: Transaction) {
         this.closeDetails();
-        setTimeout(() => this.openEditForm(sub), 50);
+        setTimeout(() => this.openEditForm(t), 50);
     }
 
     currencySymbol(currency: string | undefined): string {
@@ -1447,44 +1438,45 @@ export class VendorComponent {
 
         await new Promise(r => setTimeout(r, 800 + Math.random() * 400));
 
-        const subs = this.subscriptionStore.subscriptions();
-        const active = subs.filter(s => !s.status || s.status === 'active');
-        const q = text.toLowerCase();
+        const txs    = this.transactionStore.transactions();
+        const active = txs.filter(t => !t.status || t.status === 'active');
+        const q      = text.toLowerCase();
         let response = '';
 
         if (q.includes('total') || q.includes('spend') || q.includes('cost')) {
-            const mo = this.subscriptionStore.totalMonthlyCost();
-            const yr = this.subscriptionStore.totalYearlyCost();
+            const mo  = this.transactionStore.totalMonthlyCost();
+            const yr  = this.transactionStore.totalYearlyCost();
             const sym = this.currencySymbol(this.defaultCurrency());
-            response = `Your total monthly spend is **${sym}${mo.toFixed(2)}/mo** (${sym}${yr.toFixed(2)}/yr) across ${active.length} active subscription${active.length !== 1 ? 's' : ''}.`;
-        } else if (q.includes('renew') || q.includes('soon') || q.includes('upcoming')) {
+            const rec = txs.filter(t => t.type === 'recurring' && t.status === 'active').length;
+            response = `Your recurring monthly spend is **${sym}${mo.toFixed(2)}/mo** (${sym}${yr.toFixed(2)}/yr) across ${rec} active recurring transaction${rec !== 1 ? 's' : ''}.`;
+        } else if (q.includes('due') || q.includes('renew') || q.includes('soon') || q.includes('upcoming')) {
             const upcoming = this.upcomingBanner();
             response = upcoming.length
-                ? `${upcoming.length} subscription${upcoming.length > 1 ? 's renew' : ' renews'} in the next 14 days: ${upcoming.map(s => `${s.name} (${this.formatDate(s.renewalDate)})`).join(', ')}.`
-                : `No subscriptions renewing in the next 14 days.`;
-        } else if (q.includes('expensive') || q.includes('most') || q.includes('highest')) {
-            const top = [...active].sort((a, b) => {
-                const ma = a.billingCycle === 'yearly' ? a.price / 12 : a.price;
-                const mb = b.billingCycle === 'yearly' ? b.price / 12 : b.price;
+                ? `${upcoming.length} transaction${upcoming.length > 1 ? 's are' : ' is'} due in the next 14 days: ${upcoming.map(t => `${t.name} (${this.formatDate(t.date)})`).join(', ')}.`
+                : `Nothing due in the next 14 days.`;
+        } else if (q.includes('expensive') || q.includes('highest')) {
+            const top = [...active.filter(t => t.type === 'recurring')].sort((a, b) => {
+                const ma = a.billingCycle === 'yearly' ? a.amount / 12 : a.amount;
+                const mb = b.billingCycle === 'yearly' ? b.amount / 12 : b.amount;
                 return mb - ma;
             }).slice(0, 5);
             response = top.length
-                ? `Top 5 by monthly cost:\n${top.map((s, i) => `${i + 1}. ${s.name} — ${this.currencySymbol(s.currency)}${(s.billingCycle === 'yearly' ? s.price / 12 : s.price).toFixed(2)}/mo`).join('\n')}`
-                : `No active subscriptions to rank.`;
-        } else if (q.includes('category') || q.includes('breakdown')) {
-            const counts = this.countByCategory();
-            const lines = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([cat, n]) => `${cat}: ${n}`);
-            response = lines.length
-                ? `Breakdown by category:\n${lines.join('\n')}`
-                : `No subscriptions yet.`;
-        } else if (q.includes('paused') || q.includes('cancelled')) {
-            const paused    = subs.filter(s => s.status === 'paused');
-            const cancelled = subs.filter(s => s.status === 'cancelled');
-            response = `You have ${paused.length} paused (${paused.map(s => s.name).join(', ') || 'none'}) and ${cancelled.length} cancelled subscription${cancelled.length !== 1 ? 's' : ''} (${cancelled.map(s => s.name).join(', ') || 'none'}).`;
+                ? `Top 5 recurring by monthly cost:\n${top.map((t, i) => `${i + 1}. ${t.name} — ${this.currencySymbol(t.currency)}${(t.billingCycle === 'yearly' ? t.amount / 12 : t.amount).toFixed(2)}/mo`).join('\n')}`
+                : `No active recurring transactions to rank.`;
+        } else if (q.includes('type') || q.includes('breakdown')) {
+            const counts = this.countByType();
+            const lines = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([type, n]) => `${TYPE_META[type as TransactionType]?.label ?? type}: ${n}`);
+            response = lines.length ? `Breakdown by type:\n${lines.join('\n')}` : `No transactions yet.`;
+        } else if (q.includes('refund')) {
+            const refunds = txs.filter(t => t.type === 'refund');
+            const total   = refunds.reduce((s, t) => s + t.amount, 0);
+            response = refunds.length
+                ? `You have ${refunds.length} refund${refunds.length > 1 ? 's' : ''} totalling ${this.currencySymbol(this.defaultCurrency())}${total.toFixed(2)}: ${refunds.map(t => t.name).join(', ')}.`
+                : `No refunds recorded yet.`;
         } else {
-            const mo = this.subscriptionStore.totalMonthlyCost();
+            const mo  = this.transactionStore.totalMonthlyCost();
             const sym = this.currencySymbol(this.defaultCurrency());
-            response = `You have ${active.length} active subscription${active.length !== 1 ? 's' : ''} costing ${sym}${mo.toFixed(2)}/mo. Try asking about your total spend, upcoming renewals, most expensive services, or a category breakdown.`;
+            response = `You have ${txs.length} transaction${txs.length !== 1 ? 's' : ''} (${active.length} active). Recurring monthly spend: ${sym}${mo.toFixed(2)}/mo. Try asking about total spend, upcoming due dates, most expensive services, a type breakdown, or refunds.`;
         }
 
         this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
@@ -1497,10 +1489,11 @@ export class VendorComponent {
     }
 
     // ── Private utilities ─────────────────────────────────────────────────
-    private autoRenewalDate(cycle: 'monthly' | 'yearly'): string {
+    private autoDate(cycle: 'monthly' | 'yearly' | 'weekly'): string {
         const d = new Date();
-        if (cycle === 'monthly') d.setMonth(d.getMonth() + 1);
-        else d.setFullYear(d.getFullYear() + 1);
+        if (cycle === 'monthly')      d.setMonth(d.getMonth() + 1);
+        else if (cycle === 'yearly')  d.setFullYear(d.getFullYear() + 1);
+        else                          d.setDate(d.getDate() + 7);
         return this.toLocalDateString(d);
     }
 

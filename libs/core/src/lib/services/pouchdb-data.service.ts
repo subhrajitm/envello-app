@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { SyncService } from './sync.service';
 import { LoggingService } from './logging.service';
 import { DataService } from '@envello/data';
-import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
+import { Credential, Transaction, CredentialTransactionLink } from '@envello/domain';
 import PouchDB from 'pouchdb';
 
 @Injectable({
@@ -20,14 +20,14 @@ export class PouchDbDataService implements DataService {
     /**
      * Collections that always live in the default namespace so they are visible
      * from every workspace context. Vault collections are also global so
-     * credentials/subscriptions are accessible regardless of active project.
+     * credentials/transactions are accessible regardless of active project.
      */
     private readonly GLOBAL_COLLECTIONS = new Set([
         'projects',
         'note_folders',
         'credentials',
-        'subscriptions',
-        'credential_subscription_links',
+        'transactions',
+        'credential_transaction_links',
         'user_preferences',
     ]);
 
@@ -39,7 +39,7 @@ export class PouchDbDataService implements DataService {
      */
     private readonly SYNC_EXCLUDED_COLLECTIONS = new Set([
         'credentials',
-        'credential_subscription_links',
+        'credential_transaction_links',
     ]);
 
     /** Set to true while applying pulled records to prevent re-triggering sync push. */
@@ -307,7 +307,7 @@ export class PouchDbDataService implements DataService {
 
     async pullFromRemote(_: string): Promise<void> {}
 
-    // ─── Vault & Subscriptions ───────────────────────────────────────────────────
+    // ─── Vault & Transactions ────────────────────────────────────────────────────
 
     async saveCredential(credential: Credential): Promise<void> {
         return this.upsert('credentials', credential);
@@ -319,23 +319,40 @@ export class PouchDbDataService implements DataService {
         return this.remove('credentials', id);
     }
 
-    async saveSubscription(subscription: Subscription): Promise<void> {
-        return this.upsert('subscriptions', subscription);
+    async saveTransaction(transaction: Transaction): Promise<void> {
+        return this.upsert('transactions', transaction);
     }
-    async getSubscriptions(): Promise<Subscription[]> {
-        return this.getAll<Subscription>('subscriptions');
+    async getTransactions(): Promise<Transaction[]> {
+        // Migrate any legacy 'subscriptions' docs on first read.
+        const legacy = await this.getAll<Transaction>('subscriptions');
+        if (legacy.length > 0) {
+            for (const item of legacy) {
+                await this.upsert('transactions', { ...item, type: item.type ?? 'recurring' as const });
+                await this.remove('subscriptions', item.id);
+            }
+        }
+        return this.getAll<Transaction>('transactions');
     }
-    async deleteSubscription(id: string): Promise<void> {
-        return this.remove('subscriptions', id);
+    async deleteTransaction(id: string): Promise<void> {
+        return this.remove('transactions', id);
     }
 
-    async saveLink(link: CredentialSubscriptionLink): Promise<void> {
-        return this.upsert('credential_subscription_links', link);
+    async saveLink(link: CredentialTransactionLink): Promise<void> {
+        return this.upsert('credential_transaction_links', link);
     }
-    async getLinks(): Promise<CredentialSubscriptionLink[]> {
-        return this.getAll<CredentialSubscriptionLink>('credential_subscription_links');
+    async getLinks(): Promise<CredentialTransactionLink[]> {
+        // Migrate legacy credential_subscription_links on first read.
+        const legacy = await this.getAll<any>('credential_subscription_links');
+        if (legacy.length > 0) {
+            for (const item of legacy) {
+                const migrated: CredentialTransactionLink = { id: item.id, credentialId: item.credentialId, transactionId: item.subscriptionId ?? item.transactionId };
+                await this.upsert('credential_transaction_links', migrated);
+                await this.remove('credential_subscription_links', item.id);
+            }
+        }
+        return this.getAll<CredentialTransactionLink>('credential_transaction_links');
     }
     async deleteLink(id: string): Promise<void> {
-        return this.remove('credential_subscription_links', id);
+        return this.remove('credential_transaction_links', id);
     }
 }

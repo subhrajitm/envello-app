@@ -152,7 +152,7 @@ export type BinItemType =
     | 'meeting'
     | 'bookmark'
     | 'credential'
-    | 'subscription';
+    | 'transaction';
 
 export interface BinItem {
     id: string;
@@ -179,25 +179,36 @@ export interface Credential {
     lastAccessedAt?: string;
 }
 
-export interface Subscription {
+export type TransactionType = 'recurring' | 'one-time' | 'bill' | 'purchase' | 'refund';
+
+export interface Transaction {
     id: string;
     name: string;
-    category: string;
-    price: number;
-    billingCycle: 'monthly' | 'yearly';
-    renewalDate: string;
-    status?: 'active' | 'paused' | 'cancelled';
+    type: TransactionType;
+    category?: string;
+    amount: number;
     currency?: string;
+    /** Next due date (recurring/bill) or transaction date (one-time/purchase/refund). ISO string. */
+    date: string;
+    /** Only relevant for type === 'recurring'. */
+    billingCycle?: 'monthly' | 'yearly' | 'weekly';
+    status?: 'active' | 'paused' | 'cancelled' | 'completed';
     ownerId?: string;
     projectId?: string;
     notes?: string;
 }
 
-export interface CredentialSubscriptionLink {
+/** @deprecated Use Transaction instead. Kept as alias for migration compatibility. */
+export type Subscription = Transaction;
+
+export interface CredentialTransactionLink {
     id: string;
     credentialId: string;
-    subscriptionId: string;
+    transactionId: string;
 }
+
+/** @deprecated Use CredentialTransactionLink instead. */
+export type CredentialSubscriptionLink = CredentialTransactionLink;
 
 export interface WorkspaceProfile {
     id: string;

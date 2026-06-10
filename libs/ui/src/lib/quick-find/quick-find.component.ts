@@ -46,7 +46,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
     { id: 'cmd-research',     type: 'command', title: 'Go to Knowledge',    preview: 'Articles & research',         icon: 'hub',          route: '/knowledge' },
     { id: 'cmd-bookmarks',    type: 'command', title: 'Go to Bookmarks',    preview: 'Saved links & resources',     icon: 'bookmarks',    route: '/bookmarks' },
     ...( IS_TAURI ? [{ id: 'cmd-vault', type: 'command' as const, title: 'Go to Vault', preview: 'Secrets & credentials', icon: 'lock', route: '/vault' }] : []),
-    { id: 'cmd-subscriptions',type: 'command', title: 'Go to Subscriptions', preview: 'Manage subscriptions',        icon: 'credit_card',  route: '/subscriptions' },
+    { id: 'cmd-transactions', type: 'command', title: 'Go to Transactions',  preview: 'Manage transactions',         icon: 'receipt_long', route: '/transactions' },
     { id: 'cmd-activity',     type: 'command', title: 'Go to Activity Log', preview: 'View recent activity',        icon: 'history',      route: '/activity-log' },
     { id: 'cmd-bin',          type: 'command', title: 'Go to Bin',          preview: 'Deleted items',               icon: 'delete',       route: '/bin' },
 ];

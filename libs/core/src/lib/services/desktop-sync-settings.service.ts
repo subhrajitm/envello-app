@@ -17,7 +17,7 @@ export const BACKUP_ELIGIBLE_COLLECTIONS = [
   { id: 'note_folders',          label: 'Note Folders' },
   { id: 'bookmarks',             label: 'Bookmarks' },
   { id: 'bookmark_folders',      label: 'Bookmark Folders' },
-  { id: 'subscriptions',         label: 'Subscriptions' },
+  { id: 'transactions',          label: 'Transactions' },
   { id: 'book_content',          label: 'Book Content' },
 ] as const;
 

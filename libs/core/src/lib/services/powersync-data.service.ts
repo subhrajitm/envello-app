@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { DataService } from '@envello/data';
-import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
+import { Credential, Transaction, CredentialTransactionLink } from '@envello/domain';
 import { PowerSyncService } from './powersync.service';
 import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
@@ -20,14 +20,14 @@ export class PowerSyncDataService implements DataService {
   private readonly GLOBAL_COLLECTIONS = new Set([
     'projects',
     'note_folders',
-    'subscriptions',
+    'transactions',
     'user_preferences',
   ]);
 
   /** Never synced — stored in the local-only `local_vault` table. */
   private readonly VAULT_COLLECTIONS = new Set([
     'credentials',
-    'credential_subscription_links',
+    'credential_transaction_links',
   ]);
 
   private get userId(): string {
@@ -178,17 +178,17 @@ export class PowerSyncDataService implements DataService {
     }
   }
 
-  // ─── Vault & Subscriptions ───────────────────────────────────────────────────
+  // ─── Vault & Transactions ────────────────────────────────────────────────────
 
-  async saveCredential(c: Credential): Promise<void>              { return this.upsert('credentials', c); }
-  async getCredentials(): Promise<Credential[]>                   { return this.getAll<Credential>('credentials'); }
-  async deleteCredential(id: string): Promise<void>               { return this.remove('credentials', id); }
+  async saveCredential(c: Credential): Promise<void>                 { return this.upsert('credentials', c); }
+  async getCredentials(): Promise<Credential[]>                      { return this.getAll<Credential>('credentials'); }
+  async deleteCredential(id: string): Promise<void>                  { return this.remove('credentials', id); }
 
-  async saveSubscription(s: Subscription): Promise<void>          { return this.upsert('subscriptions', s); }
-  async getSubscriptions(): Promise<Subscription[]>               { return this.getAll<Subscription>('subscriptions'); }
-  async deleteSubscription(id: string): Promise<void>             { return this.remove('subscriptions', id); }
+  async saveTransaction(t: Transaction): Promise<void>               { return this.upsert('transactions', t); }
+  async getTransactions(): Promise<Transaction[]>                    { return this.getAll<Transaction>('transactions'); }
+  async deleteTransaction(id: string): Promise<void>                 { return this.remove('transactions', id); }
 
-  async saveLink(l: CredentialSubscriptionLink): Promise<void>    { return this.upsert('credential_subscription_links', l); }
-  async getLinks(): Promise<CredentialSubscriptionLink[]>         { return this.getAll<CredentialSubscriptionLink>('credential_subscription_links'); }
-  async deleteLink(id: string): Promise<void>                     { return this.remove('credential_subscription_links', id); }
+  async saveLink(l: CredentialTransactionLink): Promise<void>        { return this.upsert('credential_transaction_links', l); }
+  async getLinks(): Promise<CredentialTransactionLink[]>             { return this.getAll<CredentialTransactionLink>('credential_transaction_links'); }
+  async deleteLink(id: string): Promise<void>                        { return this.remove('credential_transaction_links', id); }
 }

@@ -1,13 +1,13 @@
 import { Injectable, inject, effect } from '@angular/core';
 import { DataService } from '@envello/data';
-import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
+import { Credential, Transaction, CredentialTransactionLink } from '@envello/domain';
 import { SqliteDataService } from './sqlite-data.service';
 import { DesktopBackupService } from './desktop-backup.service';
 import { DesktopSyncSettingsService } from './desktop-sync-settings.service';
 import { AuthService } from './auth.service';
 import { SyncService, SyncRecord } from './sync.service';
 
-const NEVER_SYNC = new Set(['credentials', 'credential_subscription_links', 'bin_items']);
+const NEVER_SYNC = new Set(['credentials', 'credential_transaction_links', 'bin_items']);
 
 @Injectable({ providedIn: 'root' })
 export class DesktopDataService extends DataService {
@@ -105,11 +105,11 @@ export class DesktopDataService extends DataService {
   async getCredentials(): Promise<Credential[]>                   { return this.sqlite.getCredentials(); }
   async deleteCredential(id: string): Promise<void>               { return this.sqlite.deleteCredential(id); }
 
-  async saveSubscription(s: Subscription): Promise<void>          { return this.upsert('subscriptions', s as any); }
-  async getSubscriptions(): Promise<Subscription[]>               { return this.sqlite.getSubscriptions(); }
-  async deleteSubscription(id: string): Promise<void>             { return this.remove('subscriptions', id); }
+  async saveTransaction(t: Transaction): Promise<void>            { return this.upsert('transactions', t as any); }
+  async getTransactions(): Promise<Transaction[]>                 { return this.sqlite.getTransactions(); }
+  async deleteTransaction(id: string): Promise<void>              { return this.remove('transactions', id); }
 
-  async saveLink(l: CredentialSubscriptionLink): Promise<void>    { return this.sqlite.saveLink(l); }
-  async getLinks(): Promise<CredentialSubscriptionLink[]>         { return this.sqlite.getLinks(); }
+  async saveLink(l: CredentialTransactionLink): Promise<void>     { return this.sqlite.saveLink(l); }
+  async getLinks(): Promise<CredentialTransactionLink[]>          { return this.sqlite.getLinks(); }
   async deleteLink(id: string): Promise<void>                     { return this.sqlite.deleteLink(id); }
 }

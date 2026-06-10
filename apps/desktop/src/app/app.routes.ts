@@ -98,7 +98,7 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'subscriptions',
+    path: 'transactions',
     loadComponent: () => import('@envello/feature-vendor').then(m => m.VendorComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },

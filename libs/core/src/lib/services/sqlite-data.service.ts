@@ -51,8 +51,8 @@ export class SqliteDataService implements DataService {
             case 'research_summaries': return await this.sqlite.getAllResearchSummaries() as unknown as T[];
             case 'projects': return await this.sqlite.getAllProjects() as unknown as T[];
             case 'credentials': return await this.sqlite.getAllCredentials() as unknown as T[];
-            case 'subscriptions': return await this.sqlite.getAllSubscriptions() as unknown as T[];
-            case 'credential_subscription_links': return await this.sqlite.getAllLinks() as unknown as T[];
+            case 'transactions': return await this.sqlite.getAllTransactions() as unknown as T[];
+            case 'credential_transaction_links': return await this.sqlite.getAllLinks() as unknown as T[];
             case 'note_folders': return await this.sqlite.getAllNoteFolders() as unknown as T[];
             case 'bookmarks': return await this.sqlite.getAllBookmarks() as unknown as T[];
             case 'bookmark_folders': return await this.sqlite.getAllBookmarkFolders() as unknown as T[];
@@ -94,8 +94,8 @@ export class SqliteDataService implements DataService {
             case 'research_summaries': return await this.sqlite.upsertResearchSummary(item as any);
             case 'projects': return await this.sqlite.upsertProject(item as unknown as Project);
             case 'credentials': return await this.sqlite.upsertCredential(item as any);
-            case 'subscriptions': return await this.sqlite.upsertSubscription(item as any);
-            case 'credential_subscription_links': return await this.sqlite.upsertLink(item as any);
+            case 'transactions': return await this.sqlite.upsertTransaction(item as any);
+            case 'credential_transaction_links': return await this.sqlite.upsertLink(item as any);
             case 'note_folders': return await this.sqlite.upsertNoteFolder(item as any);
             case 'bookmarks': return await this.sqlite.upsertBookmark(item as any);
             case 'bookmark_folders': return await this.sqlite.upsertBookmarkFolder(item as any);
@@ -130,8 +130,8 @@ export class SqliteDataService implements DataService {
             case 'research_summaries': return await this.sqlite.removeResearchSummary(id);
             case 'projects': return await this.sqlite.removeProject(id);
             case 'credentials': return await this.sqlite.removeCredential(id);
-            case 'subscriptions': return await this.sqlite.removeSubscription(id);
-            case 'credential_subscription_links': return await this.sqlite.removeLink(id);
+            case 'transactions': return await this.sqlite.removeTransaction(id);
+            case 'credential_transaction_links': return await this.sqlite.removeLink(id);
             case 'note_folders': return await this.sqlite.removeNoteFolder(id);
             case 'bookmarks': return await this.sqlite.removeBookmark(id);
             case 'bookmark_folders': return await this.sqlite.removeBookmarkFolder(id);
@@ -146,16 +146,16 @@ export class SqliteDataService implements DataService {
 
     async pullFromRemote(_: string): Promise<void> {}
 
-    // ─── Vault & Subscriptions ──────────────────────────────────────────────────
+    // ─── Vault & Transactions ────────────────────────────────────────────────────
     async saveCredential(credential: any): Promise<void> { return this.upsert('credentials', credential); }
     async getCredentials(): Promise<any[]> { return this.getAll('credentials'); }
     async deleteCredential(id: string): Promise<void> { return this.remove('credentials', id); }
 
-    async saveSubscription(subscription: any): Promise<void> { return this.upsert('subscriptions', subscription); }
-    async getSubscriptions(): Promise<any[]> { return this.getAll('subscriptions'); }
-    async deleteSubscription(id: string): Promise<void> { return this.remove('subscriptions', id); }
+    async saveTransaction(transaction: any): Promise<void> { return this.upsert('transactions', transaction); }
+    async getTransactions(): Promise<any[]> { return this.getAll('transactions'); }
+    async deleteTransaction(id: string): Promise<void> { return this.remove('transactions', id); }
 
-    async saveLink(link: any): Promise<void> { return this.upsert('credential_subscription_links', link); }
-    async getLinks(): Promise<any[]> { return this.getAll('credential_subscription_links'); }
-    async deleteLink(id: string): Promise<void> { return this.remove('credential_subscription_links', id); }
+    async saveLink(link: any): Promise<void> { return this.upsert('credential_transaction_links', link); }
+    async getLinks(): Promise<any[]> { return this.getAll('credential_transaction_links'); }
+    async deleteLink(id: string): Promise<void> { return this.remove('credential_transaction_links', id); }
 }

@@ -1,24 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { VendorComponent } from './vendor.component';
-import { SubscriptionStore } from '@envello/state';
+import { TransactionStore } from '@envello/state';
 
 describe('VendorComponent', () => {
   let component: VendorComponent;
   let fixture: ComponentFixture<VendorComponent>;
-  let subscriptionStoreSpy: jasmine.SpyObj<SubscriptionStore>;
+  let transactionStoreSpy: jasmine.SpyObj<TransactionStore>;
 
-  const mockSubscriptions = signal<unknown[]>([]);
+  const mockTransactions = signal<unknown[]>([]);
   const mockUpcoming = signal<unknown[]>([]);
   const mockMonthlyCost = signal(0);
   const mockYearlyCost = signal(0);
 
   beforeEach(async () => {
-    subscriptionStoreSpy = jasmine.createSpyObj('SubscriptionStore',
-      ['addSubscription', 'updateSubscription', 'deleteSubscription'],
+    transactionStoreSpy = jasmine.createSpyObj('TransactionStore',
+      ['add', 'update', 'delete'],
       {
-        subscriptions: mockSubscriptions,
-        upcomingRenewals: mockUpcoming,
+        transactions: mockTransactions,
+        upcoming: mockUpcoming,
         totalMonthlyCost: mockMonthlyCost,
         totalYearlyCost: mockYearlyCost,
       }
@@ -26,7 +26,7 @@ describe('VendorComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [VendorComponent],
-      providers: [{ provide: SubscriptionStore, useValue: subscriptionStoreSpy }],
+      providers: [{ provide: TransactionStore, useValue: transactionStoreSpy }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(VendorComponent);
