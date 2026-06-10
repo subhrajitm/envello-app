@@ -45,7 +45,7 @@ export class SyncService {
                 data: item,
                 deleted: false,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'id,collection,profile_id' });
+            }, { onConflict: 'user_id,id,collection,profile_id' });
 
         if (error) console.error('[SyncService] push failed', collection, error.message);
     }
@@ -64,7 +64,7 @@ export class SyncService {
                 data: {},
                 deleted: true,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'id,collection,profile_id' });
+            }, { onConflict: 'user_id,id,collection,profile_id' });
 
         if (error) console.error('[SyncService] pushDelete failed', collection, error.message);
     }

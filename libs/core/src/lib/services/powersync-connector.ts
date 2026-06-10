@@ -32,12 +32,14 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
     const transaction = await database.getNextCrudTransaction();
     if (!transaction) return;
 
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) {
-      // Do NOT complete — let PowerSync retry once auth is available.
-      // Calling complete() without uploading would permanently drop the CRUD entry.
+    // Load the session explicitly so the Supabase client has the JWT attached
+    // before making any REST calls (session restore from localStorage is async).
+    const { data: { session } } = await this.supabase.getSession();
+    if (!session) {
+      // No active session — let PowerSync retry once auth is available.
       return;
     }
+    const userId = session.user.id;
 
     try {
       for (const op of transaction.crud) {
@@ -50,22 +52,24 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
         const now        = new Date().toISOString();
 
         if (op.op === UpdateType.DELETE) {
-          await this.supabase.client
+          const { error } = await this.supabase.client
             .from('user_data')
             .upsert(
               { id, user_id: userId, profile_id: profileId, collection, data: {}, deleted: true, updated_at: now },
-              { onConflict: 'user_id,profile_id,collection,id' }
+              { onConflict: 'user_id,id,collection,profile_id' }
             );
+          if (error) throw new Error(`[PowerSyncConnector] delete upsert failed: ${error.message}`);
         } else {
           let data: any = {};
           try { data = JSON.parse(op.opData?.['data'] ?? '{}'); } catch { /* keep empty */ }
 
-          await this.supabase.client
+          const { error } = await this.supabase.client
             .from('user_data')
             .upsert(
               { id, user_id: userId, profile_id: profileId, collection, data, deleted: false, updated_at: now },
-              { onConflict: 'user_id,profile_id,collection,id' }
+              { onConflict: 'user_id,id,collection,profile_id' }
             );
+          if (error) throw new Error(`[PowerSyncConnector] upsert failed: ${error.message}`);
         }
       }
 

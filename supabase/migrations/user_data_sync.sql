@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS user_data (
     deleted      BOOLEAN     NOT NULL DEFAULT FALSE,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    PRIMARY KEY (id, collection, profile_id)
+    PRIMARY KEY (user_id, id, collection, profile_id)
 );
 
 -- Index for efficient incremental pulls (gt updated_at queries)
