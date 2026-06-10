@@ -76,6 +76,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   editedTaskReminders = signal<string[]>([]);
   editedTaskRecurring = signal<boolean>(false);
   editedTaskRecurringPattern = signal<'daily' | 'weekly' | 'monthly' | 'yearly'>('weekly');
+  editedTaskStartDate = signal<string>('');
   detailsLabelInput = signal<string>('');
   newSubtaskTitle = signal<string>('');
   editingSubtaskId = signal<string | null>(null);
@@ -387,7 +388,11 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.newTaskDependencyInput.set('');
     this.showDependencySearch.set(false);
     this.newTaskHours.set('1');
-    this.newTaskStartDate.set('');
+    const _today = new Date();
+    const _y = _today.getFullYear();
+    const _m = String(_today.getMonth() + 1).padStart(2, '0');
+    const _d = String(_today.getDate()).padStart(2, '0');
+    this.newTaskStartDate.set(`${_y}-${_m}-${_d}`);
     this.newTaskRecurringInterval.set(1);
     this.newTaskRecurringEndDate.set('');
     this.newTaskReminderTimes.set([]);
@@ -1065,10 +1070,15 @@ export class TasksComponent implements OnInit, OnDestroy {
           if (button) {
             const rect = button.getBoundingClientRect();
             const popupWidth = 256;
+            const popupHeight = 460;
             const margin = 8;
             const left = Math.min(rect.left, window.innerWidth - popupWidth - margin);
+            const spaceBelow = window.innerHeight - rect.bottom - margin;
+            const top = spaceBelow >= popupHeight
+              ? rect.bottom + 8
+              : Math.max(margin, rect.top - popupHeight - 8);
             this.datePickerPosition.set({
-              top: rect.bottom + 8,
+              top,
               left: Math.max(margin, left)
             });
           }
@@ -1874,6 +1884,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.editedTaskRecurring.set(!!task.recurring);
     const p = task.recurring?.pattern;
     this.editedTaskRecurringPattern.set((p === 'daily' || p === 'weekly' || p === 'monthly' || p === 'yearly') ? p : 'weekly');
+    this.editedTaskStartDate.set(task.startDate || '');
     this.editingTaskDetails.set(false);
     this.detailsShowAdvanced.set(true);
     this.newSubtaskTitle.set('');
@@ -1969,7 +1980,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         pattern: this.editedTaskRecurringPattern(),
         interval: 1,
         nextDue: this.calculateNextDue(this.editedTaskDue(), this.editedTaskRecurringPattern(), 1)
-      } : undefined
+      } : undefined,
+      startDate: this.editedTaskStartDate() || undefined
     };
 
     if (task.parentId) {

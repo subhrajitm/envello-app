@@ -7145,7 +7145,7 @@ textarea:focus-visible {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 16px 6px 0;
+    padding: 0px 0px 6px 0;
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-app);
     flex-shrink: 0;
@@ -7245,6 +7245,8 @@ textarea:focus-visible {
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
     padding: 10px;
     width: 256px;
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
     animation: dp-fade-in 0.12s ease-out;
 }
 
