@@ -5496,38 +5496,111 @@ textarea:focus-visible {
     margin-top: 8px;
 }
 
-/* ─── Task Details Modal — Two-panel layout ─── */
+/* ─── Task Details Page ─── */
 
-/* Header context (project label) */
-.td-header-context {
+/* When detail or new task page is open, hide the task list and left sidebar */
+.tasks-body--detail .tasks-main-content,
+.tasks-body--new .tasks-main-content { display: none; }
+
+.tasks-body--detail .tasks-sidebar,
+.tasks-body--new .tasks-sidebar { display: none; }
+
+/* Allow absolute dropdowns to overflow the panel in detail/new modes */
+.tasks-body--detail,
+.tasks-body--new { overflow: visible; }
+
+.td-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-panel);
+    animation: td-panel-in 0.15s ease;
+}
+
+@keyframes td-panel-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.td-panel-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 12px 0 6px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.td-panel-hdr-title {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 0 8px;
+}
+
+.td-panel-back {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: background 0.12s, color 0.12s;
 }
-.td-header-context-icon {
-    font-size: 20px;
-    color: var(--text-primary);
-}
-.td-header-context-label {
-    color: var(--text-primary);
+.td-panel-back:hover { background: var(--bg-hover); color: var(--text-primary); }
+.td-panel-back .material-symbols-outlined { font-size: 18px; }
+
+.td-panel-hdr-right {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    position: relative;
 }
 
-/* Give the task-details large modal a definite height so the flex chain can resolve */
-:host ::ng-deep .env-modal--large:has(.td-body) {
-    height: 85vh;
+.td-panel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: background 0.12s, color 0.12s;
 }
+.td-panel-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.td-panel-btn.active { color: var(--accent-primary); background: var(--accent-primary-dim); }
+.td-panel-btn .material-symbols-outlined { font-size: 17px; }
 
-/* Remove default modal body padding for the two-panel layout */
-:host ::ng-deep .env-modal--large .env-modal-body:has(.td-body) {
-    padding: 0;
-    overflow: hidden;
+.td-panel-body {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    min-height: 0;
 }
+
+.td-panel-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.td-panel-foot .td-footer-delete { margin-right: auto; }
 
 /* Body: two columns */
 .td-body {
@@ -5989,6 +6062,31 @@ textarea:focus-visible {
 .td-prop-placeholder {
     color: var(--text-tertiary) !important;
 }
+.td-prop-date-row { flex: 1; }
+.td-prop-date-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-family: inherit;
+    color-scheme: inherit;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+}
+.td-prop-date-clear {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    padding: 0;
+    flex-shrink: 0;
+}
+.td-prop-date-clear:hover { color: var(--text-primary); }
+.td-prop-date-clear .material-symbols-outlined { font-size: 14px; }
 .td-priority-high {
     color: var(--color-danger, #ef4444) !important;
 }

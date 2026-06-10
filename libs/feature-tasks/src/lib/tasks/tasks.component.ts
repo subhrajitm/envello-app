@@ -1064,9 +1064,12 @@ export class TasksComponent implements OnInit, OnDestroy {
           const button = (target?.closest('.task-action-chip') || target?.closest('.task-modal-control-btn') || target?.closest('.td-prop-btn')) as HTMLElement;
           if (button) {
             const rect = button.getBoundingClientRect();
+            const popupWidth = 256;
+            const margin = 8;
+            const left = Math.min(rect.left, window.innerWidth - popupWidth - margin);
             this.datePickerPosition.set({
               top: rect.bottom + 8,
-              left: rect.left
+              left: Math.max(margin, left)
             });
           }
         }, 0);
@@ -1300,7 +1303,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (this.showDatePicker()) {
       if (!target.closest('.task-modal-date-picker') &&
         !target.closest('.task-modal-control-btn') &&
-        !target.closest('.task-action-chip')) {
+        !target.closest('.task-action-chip') &&
+        !target.closest('.td-prop-btn') &&
+        !target.closest('.dp-popup')) {
         this.showDatePicker.set(false);
         this.datePickerPosition.set(null);
       }
@@ -1326,7 +1331,8 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     // Close template dropdown if clicking outside
     if (this.newTaskTemplateOpen()) {
-      if (!target.closest('.modal-header-actions')) {
+      if (!target.closest('.modal-header-actions') &&
+          !target.closest('.td-panel-hdr-right')) {
         this.newTaskTemplateOpen.set(false);
       }
     }
