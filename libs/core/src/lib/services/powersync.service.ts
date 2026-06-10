@@ -33,6 +33,8 @@ export class PowerSyncService implements OnDestroy {
 
   private watchAbort = new AbortController();
 
+  private previousUserId: string | null = null;
+
   constructor() {
     this.ready = this.db.init().then(() => {
       window.dispatchEvent(new CustomEvent('envello:db-ready'));
@@ -47,6 +49,7 @@ export class PowerSyncService implements OnDestroy {
       const isGuest = this.auth.isGuest();
 
       if (user && !isGuest) {
+        this.previousUserId = user.id;
         const connector = new SupabasePowerSyncConnector(
           this.supabase,
           this.auth,
@@ -54,7 +57,14 @@ export class PowerSyncService implements OnDestroy {
         );
         this.db.connect(connector);
       } else {
-        this.db.disconnect();
+        if (this.previousUserId) {
+          // Wipe local SQLite data when a real user logs out so their data
+          // does not persist for the next person who opens the app.
+          this.db.disconnectAndClear().catch(() => {});
+          this.previousUserId = null;
+        } else {
+          this.db.disconnect();
+        }
       }
     });
   }

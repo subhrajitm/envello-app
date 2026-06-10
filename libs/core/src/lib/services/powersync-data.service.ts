@@ -4,12 +4,14 @@ import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/d
 import { PowerSyncService } from './powersync.service';
 import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
+import { LoggingService } from './logging.service';
 
 @Injectable({ providedIn: 'root' })
 export class PowerSyncDataService implements DataService {
   private readonly ps = inject(PowerSyncService);
   private readonly profileService = inject(WorkspaceProfileService);
   private readonly auth = inject(AuthService);
+  private readonly logging = inject(LoggingService);
 
   /**
    * Always live in the 'default' profile namespace so they are accessible
@@ -130,7 +132,7 @@ export class PowerSyncDataService implements DataService {
   }
 
   async importData(data: any): Promise<void> {
-    console.log('[PowerSyncDataService] importData', data);
+    this.logging.info('[PowerSyncDataService] importData');
   }
 
   async pullFromRemote(_: string): Promise<void> {}

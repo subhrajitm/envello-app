@@ -2,6 +2,7 @@ import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FileSystemService } from './file-system.service';
+import { LoggingService } from './logging.service';
 
 export interface Article {
   id: string;
@@ -32,6 +33,7 @@ export interface Article {
 export class ArticleService {
   private db = inject(DataService);
   private fs = inject(FileSystemService);
+  private logging = inject(LoggingService);
 
 
   articles = signal<Article[]>([]);
@@ -71,7 +73,7 @@ export class ArticleService {
     let mdContent = await this.fs.readFile('articles', id);
 
     if (mdContent === null && article.content && article.content.length > 0) {
-      console.log('[ArticleService] Migrating article to file:', id);
+      this.logging.info('[ArticleService] Migrating article to file:', id);
       await this.saveArticleContentToFile(id, article.content);
       return article.content;
     }

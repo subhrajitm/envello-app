@@ -2,6 +2,7 @@ import { Injectable, inject, effect } from '@angular/core';
 import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
 import { SyncService } from './sync.service';
+import { LoggingService } from './logging.service';
 import { DataService } from '@envello/data';
 import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
 import PouchDB from 'pouchdb';
@@ -14,6 +15,7 @@ export class PouchDbDataService implements DataService {
     private profileService = inject(WorkspaceProfileService);
     private authService = inject(AuthService);
     private syncService = inject(SyncService);
+    private logging = inject(LoggingService);
 
     /**
      * Collections that always live in the default namespace so they are visible
@@ -104,7 +106,7 @@ export class PouchDbDataService implements DataService {
                     });
                 await newDb.bulkDocs(docs);
                 await oldDb.destroy();
-                console.log(`[PouchDbDataService] Migrated ${docs.length} collections from ${oldDbName}`);
+                this.logging.info(`[PouchDbDataService] Migrated ${docs.length} collections from ${oldDbName}`);
             } catch {
                 // Old DB doesn't exist or migration already ran — skip silently
             }
@@ -300,7 +302,7 @@ export class PouchDbDataService implements DataService {
     }
 
     async importData(data: any): Promise<void> {
-        console.log('[PouchDbDataService] importData invoked.', data);
+        this.logging.info('[PouchDbDataService] importData invoked.');
     }
 
     async pullFromRemote(_: string): Promise<void> {}

@@ -35,6 +35,7 @@ export class SignUpComponent implements AfterViewInit, OnDestroy {
     ngOnDestroy() {
         cancelAnimationFrame(this.animId);
         this.resizeObs?.disconnect();
+        clearInterval(this.resendTimer);
     }
 
     private startLines() {

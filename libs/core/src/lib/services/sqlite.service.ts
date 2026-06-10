@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { WorkspaceProfileService } from './workspace-profile.service';
+import { LoggingService } from './logging.service';
 import Database from '@tauri-apps/plugin-sql';
 import { readTextFile } from '@tauri-apps/plugin-fs';
 import { BehaviorSubject, from, map, Observable } from 'rxjs';
@@ -79,6 +80,7 @@ export class SqliteService {
     private bookmarkFoldersSubject = new BehaviorSubject<BookmarkFolderDoc[]>([]);
 
     private profileService = inject(WorkspaceProfileService);
+    private logging = inject(LoggingService);
 
     constructor() {
         // Don't initialize eagerly - only init when first database operation is called
@@ -119,7 +121,7 @@ export class SqliteService {
             const profileId = this.profileService.activeProfileId() || 'default';
             const dbName = profileId === 'default' ? 'envello.db' : `envello_${profileId}.db`;
 
-            console.log(`[SqliteService] Opening database: ${dbName}`);
+            this.logging.info(`[SqliteService] Opening database: ${dbName}`);
             const db = await Database.load(`sqlite:${dbName}`);
 
             // Set this.db before createTables/loadAllData so that reloadX() methods
@@ -133,7 +135,7 @@ export class SqliteService {
                 throw setupError;
             }
 
-            console.log(`[SqliteService] Database ready for profile ${profileId}`);
+            this.logging.info(`[SqliteService] Database ready for profile ${profileId}`);
             // Notify StoreService that DB data is now available.
             window.dispatchEvent(new CustomEvent('envello:db-ready'));
             return db;

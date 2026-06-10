@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
+import { LoggingService } from './logging.service';
 
 export interface SyncRecord {
     id: string;
@@ -24,6 +25,7 @@ const MAX_LOG = 20;
 export class SyncService {
     private readonly supabase = inject(SupabaseService);
     private readonly auth = inject(AuthService);
+    private readonly logging = inject(LoggingService);
 
     private readonly TABLE = 'user_data';
     private readonly LAST_SYNC_PREFIX = 'envello_last_sync_';
@@ -138,7 +140,7 @@ export class SyncService {
                 localStorage.setItem(lastSyncKey, pullTime);
                 this.lastSyncedAt.set(pullTime);
                 this.addActivity({ timestamp: pullTime, direction: 'download', count: records.length });
-                console.log(`[SyncService] pulled ${records.length} record(s)`);
+                this.logging.info(`[SyncService] pulled ${records.length} record(s)`);
             }
             return records;
         } finally {

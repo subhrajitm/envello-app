@@ -145,7 +145,6 @@ export class StoreService {
         let mdContent = await this.fs.readNote(id);
 
         if (mdContent === null && note.content && note.content.length > 0) {
-            console.log('[StoreService] Migrating note to file:', id);
             await this.saveNoteContentToFile(id, note.content);
             return note.content;
         }
