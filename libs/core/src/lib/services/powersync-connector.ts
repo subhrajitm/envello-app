@@ -76,6 +76,9 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
       await transaction.complete();
     } catch (err) {
       console.error('[PowerSyncConnector] uploadData failed', err);
+      window.dispatchEvent(new CustomEvent('envello:sync-error', {
+        detail: err instanceof Error ? err.message : 'Upload failed'
+      }));
       throw err;
     }
   }

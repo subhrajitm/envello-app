@@ -12,6 +12,14 @@ export interface SyncRecord {
     updated_at: string;
 }
 
+export interface SyncActivity {
+    timestamp: string;
+    direction: 'upload' | 'download';
+    count: number;
+}
+
+const MAX_LOG = 20;
+
 @Injectable({ providedIn: 'root' })
 export class SyncService {
     private readonly supabase = inject(SupabaseService);
@@ -22,6 +30,10 @@ export class SyncService {
 
     readonly isSyncing = signal(false);
     readonly lastSyncedAt = signal<string | null>(null);
+    readonly syncActivity = signal<SyncActivity[]>([]);
+    readonly syncError = signal<string | null>(null);
+
+    private errorClearTimer: ReturnType<typeof setTimeout> | null = null;
 
     private get userId(): string | null {
         return this.auth.currentUser()?.id ?? null;
@@ -29,6 +41,16 @@ export class SyncService {
 
     private get canSync(): boolean {
         return !!this.userId && !this.auth.isGuest();
+    }
+
+    reportError(message: string): void {
+        this.syncError.set(message);
+        if (this.errorClearTimer) clearTimeout(this.errorClearTimer);
+        this.errorClearTimer = setTimeout(() => this.syncError.set(null), 6000);
+    }
+
+    private addActivity(entry: SyncActivity): void {
+        this.syncActivity.update(log => [entry, ...log].slice(0, MAX_LOG));
     }
 
     /** Push a single item to Supabase. Safe to fire-and-forget. */
@@ -47,7 +69,12 @@ export class SyncService {
                 updated_at: new Date().toISOString()
             }, { onConflict: 'user_id,id,collection,profile_id' });
 
-        if (error) console.error('[SyncService] push failed', collection, error.message);
+        if (error) {
+            console.error('[SyncService] push failed', collection, error.message);
+            this.reportError(`Upload failed: ${error.message}`);
+        } else {
+            this.addActivity({ timestamp: new Date().toISOString(), direction: 'upload', count: 1 });
+        }
     }
 
     /** Mark an item as deleted in Supabase. Safe to fire-and-forget. */
@@ -66,7 +93,12 @@ export class SyncService {
                 updated_at: new Date().toISOString()
             }, { onConflict: 'user_id,id,collection,profile_id' });
 
-        if (error) console.error('[SyncService] pushDelete failed', collection, error.message);
+        if (error) {
+            console.error('[SyncService] pushDelete failed', collection, error.message);
+            this.reportError(`Upload failed: ${error.message}`);
+        } else {
+            this.addActivity({ timestamp: new Date().toISOString(), direction: 'upload', count: 1 });
+        }
     }
 
     /**
@@ -97,6 +129,7 @@ export class SyncService {
 
             if (error) {
                 console.error('[SyncService] pull failed', error.message);
+                this.reportError(`Sync failed: ${error.message}`);
                 return [];
             }
 
@@ -104,6 +137,7 @@ export class SyncService {
             if (records.length > 0) {
                 localStorage.setItem(lastSyncKey, pullTime);
                 this.lastSyncedAt.set(pullTime);
+                this.addActivity({ timestamp: pullTime, direction: 'download', count: records.length });
                 console.log(`[SyncService] pulled ${records.length} record(s)`);
             }
             return records;
@@ -139,7 +173,10 @@ export class SyncService {
                 },
                 (payload: any) => {
                     const record = (payload.new ?? payload.old) as SyncRecord;
-                    if (record) onRecord(record);
+                    if (record) {
+                        this.addActivity({ timestamp: new Date().toISOString(), direction: 'download', count: 1 });
+                        onRecord(record);
+                    }
                 }
             )
             .subscribe();

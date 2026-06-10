@@ -697,11 +697,29 @@
         <div class="info-card">
           <div class="info-row">
             <span class="info-label">Storage Mode</span>
-            <span class="info-value">{{ isDesktop ? 'On-device' : 'Local (browser)' }}</span>
+            <span class="info-value">{{ isDesktop ? 'On-device SQLite' : 'Local (browser)' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Last Synced</span>
+            <span class="info-value">{{ formatSyncTime(syncService.lastSyncedAt()) }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Sync Status</span>
-            <span class="info-value">Saved locally</span>
+            @if (syncService.isSyncing()) {
+              <span class="info-value sync-status-active">
+                <span class="sync-mini-spinner"></span> Syncing…
+              </span>
+            } @else if (syncService.syncError()) {
+              <span class="info-value sync-status-error">
+                <span class="material-symbols-outlined" style="font-size:13px">error</span>
+                {{ syncService.syncError() }}
+              </span>
+            } @else {
+              <span class="info-value sync-status-ok">
+                <span class="material-symbols-outlined" style="font-size:13px">check_circle</span>
+                Up to date
+              </span>
+            }
           </div>
         </div>
 
@@ -747,6 +765,31 @@
                 <span class="toggle-track"></span>
               </label>
             </div>
+          </div>
+          }
+        </div>
+        }
+
+        @if (syncService.syncActivity().length > 0) {
+        <div class="section-divider"></div>
+        <div class="section-header" style="margin-top:0">
+          <h3>Sync Activity</h3>
+          <p>Recent sync events for this session</p>
+        </div>
+        <div class="sync-log">
+          @for (entry of syncService.syncActivity(); track entry.timestamp) {
+          <div class="sync-log-row">
+            <span class="material-symbols-outlined sync-log-icon"
+              [class.sync-log-up]="entry.direction === 'upload'"
+              [class.sync-log-down]="entry.direction === 'download'">
+              {{ entry.direction === 'upload' ? 'cloud_upload' : 'cloud_download' }}
+            </span>
+            <span class="sync-log-text">
+              {{ entry.direction === 'upload' ? 'Uploaded' : 'Downloaded' }}
+              <strong>{{ entry.count }}</strong>
+              {{ entry.count === 1 ? 'record' : 'records' }}
+            </span>
+            <span class="sync-log-time">{{ formatSyncTime(entry.timestamp) }}</span>
           </div>
           }
         </div>

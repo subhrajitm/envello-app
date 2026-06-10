@@ -103,13 +103,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isVoiceActive = this.voiceService.isVoiceActive;
 
   private readonly syncService = inject(SyncService);
-  readonly isSyncing = this.syncService.isSyncing;
-  readonly syncDone = signal(false);
-  private syncDoneTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly syncError = this.syncService.syncError;
+  readonly syncAnimating = signal(false);
+  private syncAnimTimer: ReturnType<typeof setTimeout> | null = null;
   private syncCompleteListener = () => {
-    this.syncDone.set(true);
-    if (this.syncDoneTimer) clearTimeout(this.syncDoneTimer);
-    this.syncDoneTimer = setTimeout(() => this.syncDone.set(false), 3000);
+    this.syncAnimating.set(true);
+    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
+    this.syncAnimTimer = setTimeout(() => this.syncAnimating.set(false), 800);
+  };
+  private syncErrorListener = (e: Event) => {
+    const msg = (e as CustomEvent).detail ?? 'Sync failed';
+    this.syncService.reportError(msg);
   };
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
@@ -316,6 +320,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     };
     window.addEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
     window.addEventListener('envello:sync-complete', this.syncCompleteListener);
+    window.addEventListener('envello:sync-error', this.syncErrorListener);
 
     // Apply initial layout
     this.applyNavigationLayout();
@@ -347,7 +352,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
       window.removeEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
     }
     window.removeEventListener('envello:sync-complete', this.syncCompleteListener);
-    if (this.syncDoneTimer) clearTimeout(this.syncDoneTimer);
+    window.removeEventListener('envello:sync-error', this.syncErrorListener);
+    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
     this.routeSub?.unsubscribe();
   }
 

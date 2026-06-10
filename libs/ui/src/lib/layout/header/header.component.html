@@ -58,17 +58,17 @@
           <span>Add New</span>
         </button>
 
-        @if (isSyncing()) {
-          <div class="sync-chip sync-chip--syncing">
-            <span class="sync-spinner"></span>
-            <span>Syncing…</span>
-          </div>
-        } @else if (syncDone()) {
-          <div class="sync-chip sync-chip--done">
-            <span class="material-symbols-outlined" style="font-size:13px;line-height:1">check</span>
-            <span>Synced</span>
-          </div>
-        }
+        <span
+          class="sync-icon"
+          [class.sync-icon--spinning]="syncAnimating() && !syncError()"
+          [class.sync-icon--error]="syncError()"
+          [title]="syncError() ?? (syncAnimating() ? 'Syncing…' : 'Up to date')"
+          aria-label="Sync status"
+        >
+          <span class="material-symbols-outlined">
+            {{ syncError() ? 'sync_problem' : 'sync' }}
+          </span>
+        </span>
 
         <button class="icon-btn notification-btn" (click)="openNotifications()">
           <span class="material-symbols-outlined">notifications</span>
