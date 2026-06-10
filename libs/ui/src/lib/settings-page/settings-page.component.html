@@ -634,25 +634,25 @@
               <span class="toggle-track"></span>
             </label>
           </div>
-          <div class="setting-item setting-row">
+          <div class="setting-item setting-row setting-row--disabled">
             <div class="setting-label-group">
               <label>Sound Effects <span class="badge-coming-soon">Coming soon</span></label>
               <span class="setting-desc">Play sounds for actions</span>
             </div>
-            <label class="toggle" title="Coming soon">
-              <input type="checkbox" [checked]="soundEffects()" (change)="toggleSoundEffects()" disabled>
+            <label class="toggle">
+              <input type="checkbox" [checked]="soundEffects()" disabled>
               <span class="toggle-track"></span>
             </label>
           </div>
         </div>
 
-        <div class="setting-item setting-row">
+        <div class="setting-item setting-row setting-row--disabled">
           <div class="setting-label-group">
             <label>Daily Summary <span class="badge-coming-soon">Coming soon</span></label>
             <span class="setting-desc">Receive daily progress report</span>
           </div>
-          <label class="toggle" title="Coming soon">
-            <input type="checkbox" [checked]="dailySummary()" (change)="toggleDailySummary()" disabled>
+          <label class="toggle">
+            <input type="checkbox" [checked]="dailySummary()" disabled>
             <span class="toggle-track"></span>
           </label>
         </div>
@@ -667,13 +667,13 @@
           <p>Storage, backup and sync preferences</p>
         </div>
 
-        <div class="setting-item setting-row">
+        <div class="setting-item setting-row setting-row--disabled">
           <div class="setting-label-group">
             <label>Analytics <span class="badge-coming-soon">Coming soon</span></label>
             <span class="setting-desc">Share anonymous usage data to improve Envello</span>
           </div>
-          <label class="toggle" title="Coming soon">
-            <input type="checkbox" [checked]="analytics()" (change)="toggleAnalytics()" disabled>
+          <label class="toggle">
+            <input type="checkbox" [checked]="analytics()" disabled>
             <span class="toggle-track"></span>
           </label>
         </div>

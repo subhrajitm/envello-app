@@ -251,6 +251,13 @@
   min-height: 28px;
 }
 
+.setting-row--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+  user-select: none;
+}
+
 .setting-label-group {
   display: flex;
   flex-direction: column;
