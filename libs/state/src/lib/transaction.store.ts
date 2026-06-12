@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
-import { Transaction } from '@envello/domain';
+import { Transaction, TransactionEvent } from '@envello/domain';
 import { BinService } from './bin.service';
 
 @Injectable({
@@ -64,8 +64,20 @@ export class TransactionStore {
     }
 
     async add(t: Transaction) {
-        await this.db.saveTransaction(t);
-        await this.load();
+        const now = new Date().toISOString();
+        const normalised: Transaction = {
+            ...t,
+            type: t.type ?? 'recurring' as const,
+            createdAt: now,
+            history: [{ date: now, kind: 'created', label: `${t.name} added` }],
+        };
+        this.transactionsSignal.update(list => [...list, normalised]);
+        try {
+            await this.db.saveTransaction(normalised);
+        } catch (e) {
+            console.error('[TransactionStore] add failed', e);
+            await this.load();
+        }
     }
 
     byProject(projectId: string) {
@@ -75,16 +87,53 @@ export class TransactionStore {
     async update(id: string, changes: Partial<Transaction>) {
         const existing = this.transactions().find(t => t.id === id);
         if (!existing) return;
-        await this.db.saveTransaction({ ...existing, ...changes });
-        await this.load();
+        const now = new Date().toISOString();
+        const newEvents: TransactionEvent[] = [];
+
+        if (changes.name !== undefined && changes.name !== existing.name)
+            newEvents.push({ date: now, kind: 'name_changed', label: `Renamed to "${changes.name}"`, detail: existing.name });
+
+        if (changes.amount !== undefined && changes.amount !== existing.amount) {
+            const cur = existing.currency ?? 'USD';
+            newEvents.push({ date: now, kind: 'amount_changed', label: 'Price updated',
+                detail: `${existing.amount} ${cur} → ${changes.amount} ${changes.currency ?? cur}` });
+        }
+
+        if (changes.status !== undefined && changes.status !== (existing.status ?? 'active'))
+            newEvents.push({ date: now, kind: 'status_changed', label: 'Status changed',
+                detail: `${existing.status ?? 'active'} → ${changes.status}` });
+
+        if (changes.date !== undefined && changes.date !== existing.date)
+            newEvents.push({ date: now, kind: 'date_changed', label: 'Due date updated',
+                detail: `${existing.date} → ${changes.date}` });
+
+        if (changes.billingCycle !== undefined && changes.billingCycle !== existing.billingCycle)
+            newEvents.push({ date: now, kind: 'cycle_changed', label: 'Billing cycle changed',
+                detail: `${existing.billingCycle} → ${changes.billingCycle}` });
+
+        const updated: Transaction = {
+            ...existing, ...changes,
+            history: [...(existing.history ?? []), ...newEvents],
+        };
+        this.transactionsSignal.update(list => list.map(t => t.id === id ? updated : t));
+        try {
+            await this.db.saveTransaction(updated);
+        } catch (e) {
+            console.error('[TransactionStore] update failed', e);
+            await this.load();
+        }
     }
 
     async delete(id: string) {
         const t = this.transactions().find(t => t.id === id);
-        if (t) {
-            this.bin.addToBin({ type: 'transaction', originalId: id, title: t.name, payload: t });
+        if (!t) return;
+        this.bin.addToBin({ type: 'transaction', originalId: id, title: t.name, payload: t });
+        this.transactionsSignal.update(list => list.filter(x => x.id !== id));
+        try {
+            await this.db.deleteTransaction(id);
+        } catch (e) {
+            console.error('[TransactionStore] delete failed', e);
+            await this.load();
         }
-        await this.db.deleteTransaction(id);
-        await this.load();
     }
 }

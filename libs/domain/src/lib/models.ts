@@ -181,6 +181,13 @@ export interface Credential {
 
 export type TransactionType = 'recurring' | 'one-time' | 'bill' | 'purchase' | 'refund';
 
+export interface TransactionEvent {
+    date: string;   // ISO datetime
+    kind: 'created' | 'billed' | 'amount_changed' | 'status_changed' | 'date_changed' | 'name_changed' | 'cycle_changed';
+    label: string;
+    detail?: string;  // e.g. "$10.00 → $15.00"
+}
+
 export interface Transaction {
     id: string;
     name: string;
@@ -196,6 +203,8 @@ export interface Transaction {
     ownerId?: string;
     projectId?: string;
     notes?: string;
+    createdAt?: string;
+    history?: TransactionEvent[];
 }
 
 /** @deprecated Use Transaction instead. Kept as alias for migration compatibility. */

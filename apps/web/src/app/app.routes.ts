@@ -98,6 +98,18 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'transactions/new',
+    loadComponent: () => import('@envello/feature-vendor').then(m => m.TransactionFormComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'transactions/:id',
+    loadComponent: () => import('@envello/feature-vendor').then(m => m.TransactionFormComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'spaces',
     loadComponent: () => import('@envello/feature-spaces').then(m => m.SpacesComponent),
     canActivate: [authGuard],
