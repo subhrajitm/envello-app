@@ -371,9 +371,7 @@
 </div><!-- /mt-view -->
 
 <!-- ─── Sidebar Slider (Create / Details) ─────────────────────────────────── -->
-@if (showSlider()) {
-<div class="mt-slider-backdrop" (click)="closeSlider()">
-  <div class="mt-slider-panel" (click)="$event.stopPropagation()">
+<env-slider-panel [isOpen]="showSlider()" (closed)="closeSlider()" width="660px">
 
     <!-- Header -->
     <div class="mt-slider-hdr">
@@ -960,9 +958,7 @@
       }
     </div>
 
-  </div>
-</div>
-}
+</env-slider-panel>
 
 <!-- ─── Calendar Sync Modal ─────────────────────────────────────────────────── -->
 @if (showSyncModal()) {

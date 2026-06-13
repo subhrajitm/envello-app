@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionStore } from '@envello/state';
 import { Transaction, TransactionType } from '@envello/domain';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 import {
     TYPE_META, STATUS_META, CURRENCIES, VENDOR_PRESETS,
@@ -14,7 +14,7 @@ import { TransactionFormComponent } from './transaction-form.component';
 @Component({
     selector: 'app-vendor',
     standalone: true,
-    imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, TransactionFormComponent],
+    imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, TransactionFormComponent, SliderPanelComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
 <div class="vs-view">
@@ -170,17 +170,13 @@ import { TransactionFormComponent } from './transaction-form.component';
 </div>
 
 <!-- ── SLIDER PANEL (Add / Edit) ── -->
-@if (showSlider()) {
-  <div class="vs-slider-backdrop" (click)="closeSlider()">
-    <div class="vs-slider-panel" (click)="$event.stopPropagation()">
-      <app-transaction-form
-        [txId]="sliderTxId()"
-        [embeddedMode]="true"
-        (close)="closeSlider()">
-      </app-transaction-form>
-    </div>
-  </div>
-}
+<env-slider-panel [isOpen]="showSlider()" (closed)="closeSlider()">
+  <app-transaction-form
+    [txId]="sliderTxId()"
+    [embeddedMode]="true"
+    (close)="closeSlider()">
+  </app-transaction-form>
+</env-slider-panel>
 
 <!-- ── BULK IMPORT MODAL ── -->
 @if (showImportModal()) {
@@ -407,28 +403,6 @@ import { TransactionFormComponent } from './transaction-form.component';
     }
     .vs-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── Slider panel ── */
-    .vs-slider-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 999;
-      display: flex; justify-content: flex-end;
-      animation: vs-bd-in 0.18s ease-out;
-    }
-    @keyframes vs-bd-in { from { opacity: 0; } to { opacity: 1; } }
-    .vs-slider-panel {
-      width: 620px; max-width: 95vw;
-      height: 100%;
-      background: var(--bg-app);
-      border-left: 1px solid var(--border-subtle);
-      display: flex; flex-direction: column; overflow: hidden;
-      box-shadow: -8px 0 40px rgba(0,0,0,0.18);
-      animation: vs-panel-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes vs-panel-in {
-      from { transform: translateX(100%); opacity: 0.6; }
-      to   { transform: translateX(0);    opacity: 1; }
-    }
     `]
 })
 export class VendorComponent {

@@ -16,11 +16,11 @@ import {
   PROVIDER_META,
   AiService,
 } from '@envello/core';
-import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent } from '@envello/ui';
+import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent, SliderPanelComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -592,9 +592,6 @@ export class MeetingsComponent {
         event.preventDefault();
       } else if (this.subItemDeleteTarget()) {
         this.subItemDeleteTarget.set(null);
-        event.preventDefault();
-      } else if (this.showSlider()) {
-        this.closeSlider();
         event.preventDefault();
       } else if (this.showShortcutsHelp()) {
         this.showShortcutsHelp.set(false);
