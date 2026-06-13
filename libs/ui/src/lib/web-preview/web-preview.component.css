@@ -22,7 +22,7 @@
   max-width: 90vw;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--bg-panel, #fff);
   border-left: 1px solid var(--border-color);
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.18);
   pointer-events: all;
@@ -111,6 +111,14 @@
   flex: 1;
   min-height: 0;
   position: relative;
+  background: var(--bg-panel, #fff);
+}
+
+/* On Tauri: transparent so the native child webview is visible below/above.
+   Pointer-events off so clicks reach the native webview instead of Angular. */
+.iframe-wrap--tauri {
+  background: transparent !important;
+  pointer-events: none;
 }
 
 iframe {
