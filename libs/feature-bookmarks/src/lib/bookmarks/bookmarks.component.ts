@@ -67,6 +67,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   deletingBookmarkId = signal<string>('');
   deletingBulkIds    = signal<string[]>([]);
 
+  showDeleteFolderConfirm = signal<boolean>(false);
+  deletingFolderId = signal<string>('');
+
   // ── Keyboard shortcuts help ──────────────────────────────────────────────────
   showShortcutsHelp = signal<boolean>(false);
 
@@ -492,9 +495,21 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.showAddFolderModal.set(false);
   }
 
-  deleteFolder(id: string) {
+  requestDeleteFolder(id: string) {
+    this.deletingFolderId.set(id);
+    this.showDeleteFolderConfirm.set(true);
+  }
+
+  confirmDeleteFolder() {
+    const id = this.deletingFolderId();
     this.store.deleteBookmarkFolder(id);
     if (this.selectedFolderId() === id) this.selectedFolderId.set('');
+    this.showDeleteFolderConfirm.set(false);
+    this.deletingFolderId.set('');
+  }
+
+  get deletingFolderName(): string {
+    return this.store.bookmarkFolders().find(f => f.id === this.deletingFolderId())?.name ?? 'this folder';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -687,6 +702,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.showEditModal.set(false);
     this.showAddFolderModal.set(false);
     this.showDeleteConfirm.set(false);
+    this.showDeleteFolderConfirm.set(false);
     this.showShortcutsHelp.set(false);
   }
 

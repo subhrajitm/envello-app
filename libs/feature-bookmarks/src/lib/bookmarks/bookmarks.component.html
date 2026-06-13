@@ -35,7 +35,7 @@
               <span class="bm-sb-count">{{ bookmarkCountByFolder()[folder.id] }}</span>
             }
           </button>
-          <button class="bm-sb-folder-del" (click)="deleteFolder(folder.id)" title="Delete folder">
+          <button class="bm-sb-folder-del" (click)="requestDeleteFolder(folder.id)" title="Delete folder">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
@@ -534,6 +534,20 @@
     (confirmed)="confirmDelete()"
     (cancelled)="showDeleteConfirm.set(false)">
     {{ deleteConfirmMessage }}
+</env-confirm-dialog>
+}
+
+<!-- ═══ DELETE FOLDER CONFIRM ═══ -->
+@if (showDeleteFolderConfirm()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Delete Folder"
+    icon="delete_forever"
+    variant="danger"
+    confirmLabel="Delete"
+    (confirmed)="confirmDeleteFolder()"
+    (cancelled)="showDeleteFolderConfirm.set(false)">
+    <strong>{{ deletingFolderName }}</strong> will be permanently deleted. Bookmarks inside will not be deleted but will become unorganised.
 </env-confirm-dialog>
 }
 
