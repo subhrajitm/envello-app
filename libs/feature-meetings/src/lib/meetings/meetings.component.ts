@@ -49,8 +49,9 @@ export class MeetingsComponent {
   calendarDate = signal<Date>(new Date());
   calendarView = signal<'day' | 'week' | 'month' | 'year'>('month');
 
-  // Create meeting modal
-  showCreateModal = signal(false);
+  // Slider panel (create / details)
+  showSlider = signal(false);
+  sliderMode = signal<'create' | 'details'>('create');
   newMeeting = signal<Partial<Meeting>>({
     title: '',
     description: '',
@@ -77,8 +78,7 @@ export class MeetingsComponent {
   recurringPattern = signal<'daily' | 'weekly' | 'biweekly' | 'monthly'>('weekly');
   recurringCount = signal(4);
 
-  // Meeting details modal
-  showDetailsModal = signal(false);
+  // Meeting details
   selectedMeeting = signal<Meeting | null>(null);
   editingMeeting = signal(false);
   editedMeeting = signal<Partial<Meeting>>({});
@@ -593,11 +593,8 @@ export class MeetingsComponent {
       } else if (this.subItemDeleteTarget()) {
         this.subItemDeleteTarget.set(null);
         event.preventDefault();
-      } else if (this.showCreateModal()) {
-        this.closeCreateModal();
-        event.preventDefault();
-      } else if (this.showDetailsModal()) {
-        this.closeDetailsModal();
+      } else if (this.showSlider()) {
+        this.closeSlider();
         event.preventDefault();
       } else if (this.showShortcutsHelp()) {
         this.showShortcutsHelp.set(false);
@@ -669,11 +666,12 @@ export class MeetingsComponent {
       labels: [],
       reminders: [{ time: 15, type: 'notification', sent: false }],
     });
-    this.showCreateModal.set(true);
+    this.sliderMode.set('create');
+    this.showSlider.set(true);
   }
 
   closeCreateModal() {
-    this.showCreateModal.set(false);
+    this.showSlider.set(false);
     this.showRecurringOptions.set(false);
   }
 
@@ -717,13 +715,19 @@ export class MeetingsComponent {
     this.editedMeeting.set({ ...meeting });
     this.editingMeeting.set(false);
     this.detailsTab.set('overview');
-    this.showDetailsModal.set(true);
+    this.sliderMode.set('details');
+    this.showSlider.set(true);
   }
 
   closeDetailsModal() {
-    this.showDetailsModal.set(false);
+    this.showSlider.set(false);
     this.selectedMeeting.set(null);
     this.editingMeeting.set(false);
+  }
+
+  closeSlider() {
+    if (this.sliderMode() === 'create') this.closeCreateModal();
+    else this.closeDetailsModal();
   }
 
   startEditing() {

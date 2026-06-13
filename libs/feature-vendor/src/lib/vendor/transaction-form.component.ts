@@ -1117,45 +1117,9 @@ export class TransactionFormComponent implements OnInit {
     timelineEvents = computed(() => {
         const tx = this._editingTx();
         if (!tx) return [];
-
-        type TimelineEntry = { date: Date; kind: string; label: string; detail?: string; synthetic?: boolean };
-        const entries: TimelineEntry[] = [];
-
-        // ── History events ────────────────────────────────────────────────
-        for (const ev of tx.history ?? []) {
-            entries.push({ date: new Date(ev.date), kind: ev.kind, label: ev.label, detail: ev.detail });
-        }
-
-        // ── Synthetic billing events (recurring / bill) ───────────────────
-        if ((tx.type === 'recurring' || tx.type === 'bill') && tx.billingCycle && tx.date) {
-            const nextDue  = new Date(tx.date + 'T12:00:00');
-            const origin   = tx.createdAt ? new Date(tx.createdAt) : null;
-            const today    = new Date();
-            today.setHours(23, 59, 59, 0);
-            const sym      = currencySymbol(tx.currency ?? 'USD');
-            const stepMo   = tx.billingCycle === 'yearly' ? 12 : tx.billingCycle === 'weekly' ? 0 : 1;
-            const stepDays = tx.billingCycle === 'weekly' ? 7 : 0;
-
-            let cursor = new Date(nextDue);
-            // Walk backwards from next due date to find past billings (up to 24 steps)
-            for (let i = 0; i < 24; i++) {
-                if (stepDays) cursor.setDate(cursor.getDate() - stepDays);
-                else          cursor.setMonth(cursor.getMonth() - stepMo);
-                if (origin && cursor < origin) break;
-                if (cursor > today) continue;   // future — skip
-                entries.push({
-                    date: new Date(cursor),
-                    kind: 'billed',
-                    label: `Billed — ${cursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-                    detail: `${sym}${tx.amount.toFixed(2)}`,
-                    synthetic: true,
-                });
-            }
-        }
-
-        // Sort descending (newest first)
-        entries.sort((a, b) => b.date.getTime() - a.date.getTime());
-        return entries;
+        return (tx.history ?? [])
+            .map(ev => ({ date: new Date(ev.date), kind: ev.kind, label: ev.label, detail: ev.detail }))
+            .sort((a, b) => b.date.getTime() - a.date.getTime());
     });
 
     vendorSuggestions = computed(() => {
