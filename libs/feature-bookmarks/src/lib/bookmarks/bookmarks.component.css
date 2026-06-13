@@ -630,36 +630,11 @@
 /* ═══════════════════════════════════════════════════════
    ADD BOOKMARK MODAL — matches add-new-modal design language
 ════════════════════════════════════════════════════════ */
-.bma-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 24px 16px;
-  overflow-y: auto;
-  animation: bmaFadeIn 0.12s ease-out;
-}
-@keyframes bmaFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.bma-modal {
-  width: 100%;
-  max-width: 540px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-main);
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.1);
+.bma-slider-inner {
   display: flex;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
-  animation: bmaSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes bmaSlideIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 /* Header */

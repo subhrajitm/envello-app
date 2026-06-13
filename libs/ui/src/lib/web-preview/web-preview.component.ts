@@ -71,23 +71,14 @@ export class WebPreviewComponent {
 
   private async mountEmbeddedWebview(url: string) {
     const el = this.contentAreaRef()?.nativeElement;
-    if (!el) {
-      console.warn('[WebPreview] contentAreaRef not ready');
-      return;
-    }
+    if (!el) return;
     const r = el.getBoundingClientRect();
-    console.log('[WebPreview] mounting at', { x: r.left, y: r.top, width: r.width, height: r.height }, url);
-    try {
-      await this.tauri.createEmbeddedWebview(url, {
-        x: r.left,
-        y: r.top,
-        width: r.width,
-        height: r.height,
-      });
-      console.log('[WebPreview] webview created');
-    } catch (e) {
-      console.error('[WebPreview] webview creation error', e);
-    }
+    await this.tauri.createEmbeddedWebview(url, {
+      x: r.left,
+      y: r.top,
+      width: r.width,
+      height: r.height,
+    });
     this.loadState.set('loaded');
   }
 

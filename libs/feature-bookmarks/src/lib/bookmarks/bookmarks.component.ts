@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetection
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService } from '@envello/core';
-import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent } from '@envello/ui';
+import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 type BookmarkView = 'all' | 'pinned' | 'archived' | 'recent';
@@ -12,7 +12,7 @@ type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 @Component({
   selector: 'app-bookmarks',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent],
   templateUrl: './bookmarks.component.html',
   styleUrl: './bookmarks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -282,6 +282,10 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.addColor.set('');
     this.showAddModal.set(true);
   }
+
+  closeAddModal() { this.showAddModal.set(false); }
+  closeEditModal() { this.showEditModal.set(false); }
+  closeAddFolderModal() { this.showAddFolderModal.set(false); }
 
   onAddUrlBlur() {
     const url = this.addUrl().trim();
