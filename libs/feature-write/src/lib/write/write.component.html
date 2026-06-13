@@ -260,31 +260,21 @@
       </div>
     </div>
 
-    <!-- Body: two-pane -->
-    <div class="wra-body">
+    <!-- Type pills -->
+    <div class="wra-type-pills">
+      @for (type of writingTypes; track type.id) {
+        <button class="wra-type-pill"
+          [class.wra-type-pill--active]="newBook().writingType === type.id"
+          [style.--pc]="getTypeMeta(type.id).color"
+          (click)="updateNewBook('writingType', type.id)">
+          <span class="material-symbols-outlined">{{ type.defaultIcon }}</span>
+          {{ type.label }}
+        </button>
+      }
+    </div>
 
-      <!-- Left: Writing Type sidebar -->
-      <nav class="wra-type-sidebar">
-        <div class="wra-sidebar-header">WRITING TYPE</div>
-        @for (type of writingTypes; track type.id) {
-          <button class="wra-type-item"
-            [class.wra-type-item--active]="newBook().writingType === type.id"
-            (click)="updateNewBook('writingType', type.id)">
-            <div class="wra-type-icon-wrap"
-              [style.background]="newBook().writingType === type.id ? getTypeMeta(type.id).color : 'transparent'"
-              [style.border-color]="newBook().writingType === type.id ? getTypeMeta(type.id).color : 'var(--border-subtle)'">
-              <span class="material-symbols-outlined"
-                [style.color]="newBook().writingType === type.id ? 'white' : getTypeMeta(type.id).color">
-                {{ type.defaultIcon }}
-              </span>
-            </div>
-            <span class="wra-type-label">{{ type.label }}</span>
-          </button>
-        }
-      </nav>
-
-      <!-- Right: Form pane -->
-      <div class="wra-form-pane">
+    <!-- Form pane -->
+    <div class="wra-form-pane">
 
         <!-- Title bar -->
         <div class="wra-name-bar">
@@ -344,7 +334,6 @@
         </div>
 
       </div>
-    </div>
 
     <!-- Footer -->
     <div class="wra-footer">

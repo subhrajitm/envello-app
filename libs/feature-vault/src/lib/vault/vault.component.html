@@ -145,34 +145,21 @@
       </div>
     </div>
 
-    <!-- Body: two-pane -->
-    <div class="vta-body">
+    <!-- Type pills -->
+    <div class="vta-type-pills">
+      @for (opt of typeOptions; track opt.type) {
+        <button class="vta-type-pill"
+          [class.vta-type-pill--active]="activeType() === opt.type"
+          [style.--pc]="opt.color"
+          (click)="setFormType(opt.type)">
+          <span class="material-symbols-outlined">{{ opt.icon }}</span>
+          {{ opt.label }}
+        </button>
+      }
+    </div>
 
-      <!-- Left: Type sidebar -->
-      <nav class="vta-type-sidebar">
-        <div class="vta-sidebar-label">TYPE</div>
-        @for (opt of typeOptions; track opt.type) {
-          <button
-            class="vta-type-item"
-            [class.vta-type-item--active]="activeType() === opt.type"
-            (click)="setFormType(opt.type)">
-            <div
-              class="vta-type-icon-wrap"
-              [style.background]="activeType() === opt.type ? opt.color : 'transparent'"
-              [style.border-color]="activeType() === opt.type ? opt.color : 'var(--border-subtle)'">
-              <span
-                class="material-symbols-outlined"
-                [style.color]="activeType() === opt.type ? 'white' : opt.color">
-                {{ opt.icon }}
-              </span>
-            </div>
-            <span class="vta-type-label">{{ opt.label }}</span>
-          </button>
-        }
-      </nav>
-
-      <!-- Right: Form fields -->
-      <div class="vta-form-pane">
+    <!-- Form fields -->
+    <div class="vta-form-pane">
 
         <!-- Name bar -->
         <div class="vta-name-bar">
@@ -247,7 +234,6 @@
         </div>
 
       </div>
-    </div>
 
     <!-- Footer -->
     <div class="vta-footer">
