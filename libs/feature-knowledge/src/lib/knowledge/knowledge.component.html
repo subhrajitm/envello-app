@@ -500,9 +500,7 @@
 </div>
 
 <!-- ── SOURCE DETAIL PANEL ── -->
-@if (showSourceDetail()) {
-  <div class="rsd-backdrop" (click)="closeSourceDetail()">
-    <div class="rsd-panel" (click)="$event.stopPropagation()">
+<env-slider-panel [isOpen]="showSourceDetail()" (closed)="closeSourceDetail()" width="400px">
 
       @if (selectedSource(); as source) {
 
@@ -679,9 +677,7 @@
 
       }
 
-    </div>
-  </div>
-}
+</env-slider-panel>
 
 <!-- ── UNIFIED ADD MODAL ── -->
 @if (showAddModal()) {
