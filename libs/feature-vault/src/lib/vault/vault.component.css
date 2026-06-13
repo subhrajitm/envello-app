@@ -262,39 +262,13 @@
 .vt-table-wrap::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 4px; }
 
 /* ═══════════════════════════════════════════════════════
-   ADD / EDIT MODAL  (vta-*)
+   ADD / EDIT SLIDER  (vta-*)
 ════════════════════════════════════════════════════════ */
-.vta-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 24px 16px;
-  overflow-y: auto;
-  animation: vtaFadeIn 0.12s ease-out;
-}
-@keyframes vtaFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.vta-modal {
-  width: 100%;
-  max-width: 620px;
-  max-height: calc(100vh - 48px);
-  background: var(--bg-panel);
-  border: 1px solid var(--border-main);
-  border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.1);
+.vta-slider-inner {
   display: flex;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
-  animation: vtaSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes vtaSlideIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 /* Header */

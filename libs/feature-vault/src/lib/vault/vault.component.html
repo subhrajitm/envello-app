@@ -124,154 +124,152 @@
 
 </div>
 
-<!-- ── ADD / EDIT MODAL ── -->
-@if (formMode() !== null) {
-  <div class="vta-backdrop" (click)="closeForm()">
-    <div class="vta-modal" (click)="$event.stopPropagation()">
+<!-- ── ADD / EDIT SLIDER ── -->
+<env-slider-panel [isOpen]="formMode() !== null" (closed)="closeForm()">
+  <div class="vta-slider-inner">
 
-      <!-- Header -->
-      <div class="vta-header">
-        <div class="vta-header-left">
-          <span class="material-symbols-outlined vta-header-icon">vpn_key</span>
-          <h2 class="vta-header-title">{{ formMode() === 'edit' ? 'Edit Credential' : 'New Credential' }}</h2>
-          @if (formMode() === 'edit') {
-            <span class="vta-editing-chip">{{ editName() }}</span>
-          }
-        </div>
-        <div class="vta-header-right">
-          <kbd class="vta-kbd">Esc</kbd>
-          <button class="vta-close-btn" (click)="closeForm()">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
+    <!-- Header -->
+    <div class="vta-header">
+      <div class="vta-header-left">
+        <span class="material-symbols-outlined vta-header-icon">vpn_key</span>
+        <h2 class="vta-header-title">{{ formMode() === 'edit' ? 'Edit Credential' : 'New Credential' }}</h2>
+        @if (formMode() === 'edit') {
+          <span class="vta-editing-chip">{{ editName() }}</span>
+        }
       </div>
+      <div class="vta-header-right">
+        <kbd class="vta-kbd">Esc</kbd>
+        <button class="vta-close-btn" (click)="closeForm()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </div>
 
-      <!-- Body: two-pane -->
-      <div class="vta-body">
+    <!-- Body: two-pane -->
+    <div class="vta-body">
 
-        <!-- Left: Type sidebar -->
-        <nav class="vta-type-sidebar">
-          <div class="vta-sidebar-label">TYPE</div>
-          @for (opt of typeOptions; track opt.type) {
-            <button
-              class="vta-type-item"
-              [class.vta-type-item--active]="activeType() === opt.type"
-              (click)="setFormType(opt.type)">
-              <div
-                class="vta-type-icon-wrap"
-                [style.background]="activeType() === opt.type ? opt.color : 'transparent'"
-                [style.border-color]="activeType() === opt.type ? opt.color : 'var(--border-subtle)'">
-                <span
-                  class="material-symbols-outlined"
-                  [style.color]="activeType() === opt.type ? 'white' : opt.color">
-                  {{ opt.icon }}
-                </span>
-              </div>
-              <span class="vta-type-label">{{ opt.label }}</span>
-            </button>
-          }
-        </nav>
-
-        <!-- Right: Form fields -->
-        <div class="vta-form-pane">
-
-          <!-- Name bar -->
-          <div class="vta-name-bar">
-            <div class="vta-name-icon-wrap">
-              <span class="material-symbols-outlined" [style.color]="getTypeMeta(activeType()).color">
-                {{ getTypeMeta(activeType()).icon }}
+      <!-- Left: Type sidebar -->
+      <nav class="vta-type-sidebar">
+        <div class="vta-sidebar-label">TYPE</div>
+        @for (opt of typeOptions; track opt.type) {
+          <button
+            class="vta-type-item"
+            [class.vta-type-item--active]="activeType() === opt.type"
+            (click)="setFormType(opt.type)">
+            <div
+              class="vta-type-icon-wrap"
+              [style.background]="activeType() === opt.type ? opt.color : 'transparent'"
+              [style.border-color]="activeType() === opt.type ? opt.color : 'var(--border-subtle)'">
+              <span
+                class="material-symbols-outlined"
+                [style.color]="activeType() === opt.type ? 'white' : opt.color">
+                {{ opt.icon }}
               </span>
             </div>
-            <input
-              class="vta-name-input"
-              type="text"
-              placeholder="Credential name…"
-              autofocus
-              [ngModel]="formMode() === 'edit' ? editName() : newCredName()"
-              (ngModelChange)="formMode() === 'edit' ? editName.set($event) : newCredName.set($event)">
-          </div>
-
-          <!-- Fields -->
-          <div class="vta-fields">
-            @if (activeType() !== 'note') {
-              <div class="vta-field-group">
-                <label class="vta-label">{{ usernameLabel() }}</label>
-                <input
-                  type="text"
-                  class="vta-input"
-                  [placeholder]="usernameLabel()"
-                  [ngModel]="formMode() === 'edit' ? editUsername() : newCredUsername()"
-                  (ngModelChange)="formMode() === 'edit' ? editUsername.set($event) : newCredUsername.set($event)">
-              </div>
-            }
-            <div class="vta-field-group">
-              <label class="vta-label">
-                {{ valueLabel() }}
-                @if (formMode() === 'edit') {
-                  <span class="vta-label-hint">(leave blank to keep existing)</span>
-                }
-              </label>
-              <input
-                type="password"
-                class="vta-input"
-                [placeholder]="valueLabel()"
-                [ngModel]="formMode() === 'edit' ? editValue() : newCredValue()"
-                (ngModelChange)="formMode() === 'edit' ? editValue.set($event) : newCredValue.set($event)">
-            </div>
-            <div class="vta-field-group">
-              <label class="vta-label">{{ urlLabel() }}</label>
-              <input
-                type="text"
-                class="vta-input"
-                [placeholder]="urlLabel()"
-                [ngModel]="formMode() === 'edit' ? editUrl() : newCredUrl()"
-                (ngModelChange)="formMode() === 'edit' ? editUrl.set($event) : newCredUrl.set($event)">
-            </div>
-            <div class="vta-field-group">
-              <label class="vta-label">Project Scope</label>
-              <input
-                type="text"
-                class="vta-input"
-                placeholder="global"
-                [ngModel]="formMode() === 'edit' ? editProjectId() : newProjectId()"
-                (ngModelChange)="formMode() === 'edit' ? editProjectId.set($event) : newProjectId.set($event)">
-            </div>
-            <div class="vta-field-group vta-field-group--wide">
-              <label class="vta-label">Notes</label>
-              <input
-                type="text"
-                class="vta-input"
-                placeholder="Optional description…"
-                [ngModel]="formMode() === 'edit' ? editNotes() : newCredNotes()"
-                (ngModelChange)="formMode() === 'edit' ? editNotes.set($event) : newCredNotes.set($event)">
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="vta-footer">
-        <div class="vta-footer-hints">
-          <span class="vta-hint"><kbd>Tab</kbd> Next field</span>
-          <span class="vta-hint"><kbd>Enter</kbd> Save</span>
-          <span class="vta-hint"><kbd>Esc</kbd> Close</span>
-        </div>
-        <div class="vta-footer-actions">
-          <button class="vta-cancel-btn" (click)="closeForm()">Cancel</button>
-          <button
-            class="vta-save-btn"
-            [disabled]="formMode() === 'edit' ? !editName() : (!newCredName() || !newCredValue())"
-            (click)="formMode() === 'edit' ? saveEdit() : addCredential()">
-            <span class="material-symbols-outlined">save</span>
-            {{ formMode() === 'edit' ? 'Save Changes' : 'Save Credential' }}
+            <span class="vta-type-label">{{ opt.label }}</span>
           </button>
-        </div>
-      </div>
+        }
+      </nav>
 
+      <!-- Right: Form fields -->
+      <div class="vta-form-pane">
+
+        <!-- Name bar -->
+        <div class="vta-name-bar">
+          <div class="vta-name-icon-wrap">
+            <span class="material-symbols-outlined" [style.color]="getTypeMeta(activeType()).color">
+              {{ getTypeMeta(activeType()).icon }}
+            </span>
+          </div>
+          <input
+            class="vta-name-input"
+            type="text"
+            placeholder="Credential name…"
+            autofocus
+            [ngModel]="formMode() === 'edit' ? editName() : newCredName()"
+            (ngModelChange)="formMode() === 'edit' ? editName.set($event) : newCredName.set($event)">
+        </div>
+
+        <!-- Fields -->
+        <div class="vta-fields">
+          @if (activeType() !== 'note') {
+            <div class="vta-field-group">
+              <label class="vta-label">{{ usernameLabel() }}</label>
+              <input
+                type="text"
+                class="vta-input"
+                [placeholder]="usernameLabel()"
+                [ngModel]="formMode() === 'edit' ? editUsername() : newCredUsername()"
+                (ngModelChange)="formMode() === 'edit' ? editUsername.set($event) : newCredUsername.set($event)">
+            </div>
+          }
+          <div class="vta-field-group">
+            <label class="vta-label">
+              {{ valueLabel() }}
+              @if (formMode() === 'edit') {
+                <span class="vta-label-hint">(leave blank to keep existing)</span>
+              }
+            </label>
+            <input
+              type="password"
+              class="vta-input"
+              [placeholder]="valueLabel()"
+              [ngModel]="formMode() === 'edit' ? editValue() : newCredValue()"
+              (ngModelChange)="formMode() === 'edit' ? editValue.set($event) : newCredValue.set($event)">
+          </div>
+          <div class="vta-field-group">
+            <label class="vta-label">{{ urlLabel() }}</label>
+            <input
+              type="text"
+              class="vta-input"
+              [placeholder]="urlLabel()"
+              [ngModel]="formMode() === 'edit' ? editUrl() : newCredUrl()"
+              (ngModelChange)="formMode() === 'edit' ? editUrl.set($event) : newCredUrl.set($event)">
+          </div>
+          <div class="vta-field-group">
+            <label class="vta-label">Project Scope</label>
+            <input
+              type="text"
+              class="vta-input"
+              placeholder="global"
+              [ngModel]="formMode() === 'edit' ? editProjectId() : newProjectId()"
+              (ngModelChange)="formMode() === 'edit' ? editProjectId.set($event) : newProjectId.set($event)">
+          </div>
+          <div class="vta-field-group vta-field-group--wide">
+            <label class="vta-label">Notes</label>
+            <input
+              type="text"
+              class="vta-input"
+              placeholder="Optional description…"
+              [ngModel]="formMode() === 'edit' ? editNotes() : newCredNotes()"
+              (ngModelChange)="formMode() === 'edit' ? editNotes.set($event) : newCredNotes.set($event)">
+          </div>
+        </div>
+
+      </div>
     </div>
+
+    <!-- Footer -->
+    <div class="vta-footer">
+      <div class="vta-footer-hints">
+        <span class="vta-hint"><kbd>Tab</kbd> Next field</span>
+        <span class="vta-hint"><kbd>Enter</kbd> Save</span>
+        <span class="vta-hint"><kbd>Esc</kbd> Close</span>
+      </div>
+      <div class="vta-footer-actions">
+        <button class="vta-cancel-btn" (click)="closeForm()">Cancel</button>
+        <button
+          class="vta-save-btn"
+          [disabled]="formMode() === 'edit' ? !editName() : (!newCredName() || !newCredValue())"
+          (click)="formMode() === 'edit' ? saveEdit() : addCredential()">
+          <span class="material-symbols-outlined">save</span>
+          {{ formMode() === 'edit' ? 'Save Changes' : 'Save Credential' }}
+        </button>
+      </div>
+    </div>
+
   </div>
-}
+</env-slider-panel>
 
 @if (deleteConfirmId(); as credId) {
 <env-confirm-dialog

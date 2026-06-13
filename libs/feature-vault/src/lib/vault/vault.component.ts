@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
 import { AiService } from '@envello/core';
 import { Credential } from '@envello/domain';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
@@ -28,7 +28,7 @@ const URL_LABEL: Record<string, string> = {
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent],
   templateUrl: './vault.component.html',
   styleUrl: './vault.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

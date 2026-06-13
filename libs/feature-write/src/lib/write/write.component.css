@@ -303,29 +303,11 @@
 }
 .wr-card-updated { font-size: 10px; color: var(--text-tertiary); }
 
-/* ── Add modal (wra-*) ── */
-.wra-backdrop {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-  display: flex; align-items: flex-start; justify-content: center;
-  padding: 24px; overflow-y: auto;
-  animation: wraFadeIn 0.12s ease-out;
-}
-@keyframes wraFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.wra-modal {
-  width: 100%; max-width: 640px;
-  max-height: calc(100vh - 48px);
-  background: var(--bg-panel);
-  border: 1px solid var(--border-main);
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.1);
+/* ── Add writing slider (wra-*) ── */
+.wra-slider-inner {
   display: flex; flex-direction: column;
-  overflow: hidden;
-  animation: wraSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  height: 100%; overflow: hidden;
 }
-.wra-modal--sm { max-width: 420px; }
-@keyframes wraSlideIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Header */
 .wra-header {
@@ -351,7 +333,7 @@
 .wra-close-btn .material-symbols-outlined { font-size: 18px; }
 
 /* Body */
-.wra-body { display: flex; flex: 1; min-height: 320px; overflow: hidden; }
+.wra-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
 /* Left: Type sidebar */
 .wra-type-sidebar {
