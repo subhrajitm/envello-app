@@ -335,6 +335,12 @@ export class StoreService {
         this.db.upsert('bookmark_folders', folder).catch(e => console.error('[StoreService] persist bookmark_folder failed', e));
     }
 
+    updateBookmarkFolder(id: string, updates: Partial<BookmarkFolder>) {
+        this.bookmarkFolders.update(list => list.map(f => f.id === id ? { ...f, ...updates } : f));
+        const folder = this.bookmarkFolders().find(f => f.id === id);
+        if (folder) this.db.upsert('bookmark_folders', folder).catch(e => console.error('[StoreService] persist bookmark_folder update failed', e));
+    }
+
     batchUpdateBookmarks(updates: Array<{ id: string; data: Partial<Bookmark> }>) {
         if (!updates.length) return;
         const patchMap = new Map(updates.map(u => [u.id, u.data]));
@@ -347,9 +353,16 @@ export class StoreService {
     }
 
     deleteBookmarkFolder(id: string) {
+        const affectedIds = this.bookmarks().filter(b => b.folderId === id).map(b => b.id);
         this.bookmarkFolders.update(list => list.filter(f => f.id !== id));
         this.bookmarks.update(list => list.map(b => b.folderId === id ? { ...b, folderId: undefined } : b));
         this.db.remove('bookmark_folders', id).catch(e => console.error('[StoreService] remove bookmark_folder failed', e));
+        // Persist the cleared folderId so bookmarks don't reload with a stale reference
+        if (affectedIds.length > 0) {
+            const updated = this.bookmarks().filter(b => affectedIds.includes(b.id));
+            Promise.all(updated.map(b => this.db.upsert('bookmarks', b)))
+                .catch(e => console.error('[StoreService] persist folder unlink failed', e));
+        }
     }
 
     addActivity(text: string, type: Activity['type'] = 'entry') {

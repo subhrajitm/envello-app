@@ -29,6 +29,8 @@ export interface EnvTableAction {
   danger?: boolean;
   /** Set false to hide this action from the bulk selection bar. Defaults to true. */
   bulk?: boolean;
+  /** Set true to show ONLY in the bulk bar, not in the per-row kebab menu. */
+  bulkOnly?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

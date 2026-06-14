@@ -40,6 +40,9 @@
               <span class="bm-sb-count">{{ bookmarkCountByFolder()[folder.id] }}</span>
             }
           </button>
+          <button class="bm-sb-folder-action" (click)="openEditFolderModal(folder)" title="Edit folder">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
           <button class="bm-sb-folder-del" (click)="requestDeleteFolder(folder.id)" title="Delete folder">
             <span class="material-symbols-outlined">delete</span>
           </button>
@@ -52,6 +55,10 @@
       <div class="bm-sb-section">
         <div class="bm-sb-section-hdr">
           <span class="bm-sb-section-label">TAGS</span>
+          <div class="bm-tag-mode-toggle">
+            <button [class.active]="tagFilterMode() === 'AND'" (click)="tagFilterMode.set('AND')" title="Match ALL selected tags">AND</button>
+            <button [class.active]="tagFilterMode() === 'OR'" (click)="tagFilterMode.set('OR')" title="Match ANY selected tag">OR</button>
+          </div>
           @if (selectedTags().length > 0) {
             <button class="bm-sb-section-clear" (click)="selectedTags.set([])">Clear</button>
           }
@@ -216,13 +223,18 @@
                 class="bm-fav"
                 [src]="bm.faviconUrl || getFaviconUrl(bm.url)"
                 [alt]="getDomain(bm.url)"
-                (error)="$any($event.target).style.visibility='hidden'"
+                (error)="onFaviconError($event, bm.url)"
               />
               <span class="bm-card-domain">{{ getDomain(bm.url) }}</span>
-              @if (bm.isPinned) {
-                <span class="material-symbols-outlined bm-pin-ico">push_pin</span>
-              }
               <div class="bm-card-actions">
+                <button
+                  class="bm-row-action"
+                  [class.bm-row-action--active]="bm.isPinned"
+                  (click)="togglePin(bm); $event.stopPropagation()"
+                  [title]="bm.isPinned ? 'Unpin' : 'Pin'"
+                >
+                  <span class="material-symbols-outlined">push_pin</span>
+                </button>
                 <button class="bm-row-action" (click)="openBookmark(bm)" title="Open">
                   <span class="material-symbols-outlined">open_in_new</span>
                 </button>
@@ -262,7 +274,7 @@
     <env-ai-panel
       title="Bookmarks Assistant"
       placeholder="Ask about your bookmarks…"
-      [suggestions]="aiSuggestions"
+      [suggestions]="aiSuggestions()"
       [messages]="aiMessages()"
       [loading]="aiLoading()"
       (send)="sendAiMessage($event)"
@@ -311,7 +323,10 @@
     @if (duplicateBookmark()) {
       <div class="bma-duplicate-warn">
         <span class="material-symbols-outlined">info</span>
-        <span>Already saved as <strong>{{ duplicateBookmark()!.title }}</strong></span>
+        <span>
+          Already saved as <strong>{{ duplicateBookmark()!.title }}</strong>
+          @if (duplicateBookmark()!.isArchived) { <em>(archived)</em> }
+        </span>
         <button class="bma-duplicate-open" (click)="openBookmark(duplicateBookmark()!); closeAddModal()">
           Open existing
         </button>
@@ -606,15 +621,22 @@
       </div>
     }
 
-    <!-- Error -->
+    <!-- Error / all-done notice -->
     @else if (autoOrganiseError()) {
-      <div class="bm-ao-error">
-        <span class="material-symbols-outlined">error_outline</span>
-        <div>
-          <p class="bm-ao-error-text">{{ autoOrganiseError() }}</p>
-          <button class="bm-ao-retry" (click)="triggerAutoOrganise()">Try again</button>
+      @if (autoOrganiseError() === 'All your bookmarks are already organised into folders.') {
+        <div class="bm-ao-done">
+          <span class="material-symbols-outlined">check_circle</span>
+          <p>{{ autoOrganiseError() }}</p>
         </div>
-      </div>
+      } @else {
+        <div class="bm-ao-error">
+          <span class="material-symbols-outlined">error_outline</span>
+          <div>
+            <p class="bm-ao-error-text">{{ autoOrganiseError() }}</p>
+            <button class="bm-ao-retry" (click)="triggerAutoOrganise()">Try again</button>
+          </div>
+        </div>
+      }
     }
 
     <!-- Preview -->
@@ -639,7 +661,7 @@
               @for (bm of group.bookmarks.slice(0, 4); track bm.id) {
                 <div class="bm-ao-item">
                   <img class="bm-fav" [src]="getFaviconUrl(bm.url)" [alt]="getDomain(bm.url)"
-                    (error)="$any($event.target).style.visibility='hidden'" />
+                    (error)="onFaviconError($event, bm.url)" />
                   <span class="bm-ao-item-title">{{ bm.title }}</span>
                   <span class="bm-ao-item-domain">{{ getDomain(bm.url) }}</span>
                 </div>
@@ -674,6 +696,92 @@
 
   </div>
 </env-slider-panel>
+
+<!-- ═══ TOAST ═══ -->
+@if (toastMessage()) {
+  <div class="bm-toast">
+    <span class="material-symbols-outlined">check_circle</span>
+    {{ toastMessage() }}
+  </div>
+}
+
+<!-- ═══ EDIT FOLDER SLIDER ═══ -->
+<env-slider-panel [isOpen]="showEditFolderModal()" (closed)="closeEditFolderModal()" width="480px">
+  <div class="bma-slider-inner">
+    <div class="bma-header">
+      <div class="bma-header-left">
+        <span class="material-symbols-outlined bma-header-icon">drive_file_rename_outline</span>
+        <h2 class="bma-header-title">Edit Folder</h2>
+      </div>
+      <div class="bma-header-right">
+        <button class="bma-close-btn" (click)="closeEditFolderModal()" title="Close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="bma-url-bar">
+      <span class="material-symbols-outlined bma-url-icon">folder</span>
+      <input class="bma-url-input" type="text" placeholder="Folder name"
+        [value]="editFolderName()" (input)="editFolderName.set($any($event.target).value)" autofocus />
+    </div>
+    <div class="bma-body">
+      <div class="bma-field">
+        <label class="bma-label">Icon</label>
+        <div class="bma-icon-picker">
+          @for (icon of folderIcons; track icon) {
+            <button class="bma-icon-option" [class.bma-icon-option--active]="editFolderIcon() === icon"
+              (click)="editFolderIcon.set(icon)">
+              <span class="material-symbols-outlined">{{ icon }}</span>
+            </button>
+          }
+        </div>
+      </div>
+      <div class="bma-field">
+        <label class="bma-label">Colour</label>
+        <div class="bma-colors">
+          @for (c of accentColors; track c) {
+            <button class="bma-swatch" [style.background-color]="c"
+              [class.bma-swatch--active]="editFolderColor() === c"
+              (click)="editFolderColor.set(editFolderColor() === c ? '' : c)"></button>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="bma-footer">
+      <div class="bma-footer-hints">
+        <span class="bma-shortcut-hint"><kbd>Esc</kbd> Close</span>
+      </div>
+      <div class="bma-footer-actions">
+        <button class="bma-btn-cancel" (click)="closeEditFolderModal()">Cancel</button>
+        <button class="bma-btn-save" (click)="submitEditFolder()" [disabled]="!editFolderName().trim()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</env-slider-panel>
+
+<!-- ═══ BULK MOVE TO FOLDER ═══ -->
+@if (showBulkMoveModal()) {
+  <env-modal
+    title="Move to Folder"
+    [isOpen]="true"
+    size="sm"
+    [noBodyScroll]="true"
+    (closed)="showBulkMoveModal.set(false)"
+  >
+    <div body class="bm-bulk-move">
+      @if (folderTree().length === 0) {
+        <p class="bm-bulk-move-empty">No folders yet. Create one first.</p>
+      }
+      @for (folder of folderTree(); track folder.id) {
+        <button class="bm-bulk-move-item" (click)="applyBulkMove(folder.id)">
+          <span class="material-symbols-outlined" [style.color]="folder.color || 'var(--text-tertiary)'">{{ folder.icon || 'folder' }}</span>
+          <span class="bm-bulk-move-name">{{ folder.name }}</span>
+          <span class="bm-bulk-move-count">{{ bookmarkCountByFolder()[folder.id] ?? 0 }}</span>
+        </button>
+      }
+    </div>
+  </env-modal>
+}
 
 <!-- ═══ KEYBOARD SHORTCUTS ═══ -->
 @if (showShortcutsHelp()) {

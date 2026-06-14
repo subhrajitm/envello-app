@@ -113,6 +113,20 @@
   transition: opacity 0.12s, color 0.12s;
 }
 .bm-sb-folder:hover .bm-sb-folder-del { opacity: 1; }
+.bm-sb-folder-action {
+  opacity: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  transition: opacity 0.12s, color 0.12s;
+}
+.bm-sb-folder:hover .bm-sb-folder-action { opacity: 1; }
+.bm-sb-folder-action:hover { color: var(--accent-primary); }
+.bm-sb-folder-action .material-symbols-outlined { font-size: 14px; }
 .bm-sb-folder-del:hover { color: var(--accent-red); }
 .bm-sb-folder-del .material-symbols-outlined { font-size: 14px; }
 
@@ -1059,6 +1073,19 @@
 .bm-ao-loading-text { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0; }
 .bm-ao-loading-sub  { font-size: 12px; color: var(--text-tertiary); margin: 0; }
 
+.bm-ao-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.bm-ao-done .material-symbols-outlined { font-size: 40px; color: #22c55e; }
+.bm-ao-done p { font-size: 14px; font-weight: 500; color: var(--text-primary); margin: 0; }
+
 .bm-ao-error {
   display: flex;
   align-items: flex-start;
@@ -1138,3 +1165,109 @@
   padding: 4px 0; margin: 0;
 }
 .bm-ao-unassigned .material-symbols-outlined { font-size: 15px; }
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════════ */
+.bm-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--text-primary);
+  color: var(--bg-panel);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  z-index: 9999;
+  white-space: nowrap;
+  animation: bm-toast-in 0.2s ease;
+}
+.bm-toast .material-symbols-outlined { font-size: 16px; color: #22c55e; }
+@keyframes bm-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   TAG MODE TOGGLE
+════════════════════════════════════════════════════════ */
+.bm-tag-mode-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-hover);
+  border-radius: 4px;
+  padding: 1px;
+}
+.bm-tag-mode-toggle button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  padding: 1px 5px;
+  border-radius: 3px;
+  transition: all 0.12s;
+  letter-spacing: 0.03em;
+}
+.bm-tag-mode-toggle button.active {
+  background: var(--bg-panel);
+  color: var(--accent-primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GRID CARD PIN ACTIVE STATE
+════════════════════════════════════════════════════════ */
+.bm-row-action--active { color: var(--accent-primary) !important; }
+
+/* ═══════════════════════════════════════════════════════
+   BULK MOVE MODAL
+════════════════════════════════════════════════════════ */
+.bm-bulk-move {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 320px;
+  padding: 6px 0;
+}
+.bm-bulk-move-empty {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  padding: 12px 20px;
+  margin: 0;
+}
+.bm-bulk-move-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  text-align: left;
+  transition: background 0.1s;
+}
+.bm-bulk-move-item:hover { background: var(--bg-hover); }
+.bm-bulk-move-item .material-symbols-outlined { font-size: 18px; flex-shrink: 0; }
+.bm-bulk-move-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-bulk-move-count {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg-hover);
+  border-radius: 10px;
+  padding: 1px 7px;
+}

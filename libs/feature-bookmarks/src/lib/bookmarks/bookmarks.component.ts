@@ -78,6 +78,25 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   // ── Drag-to-folder state ──────────────────────────────────────────────────────
   draggingBookmarkIds = signal<string[]>([]);
   dragOverFolderId = signal<string>('');
+  private _dragRafId?: number;
+
+  // ── Tag filter mode ───────────────────────────────────────────────────────────
+  tagFilterMode = signal<'AND' | 'OR'>('AND');
+
+  // ── Edit Folder modal ─────────────────────────────────────────────────────────
+  showEditFolderModal = signal(false);
+  editingFolder = signal<BookmarkFolder | null>(null);
+  editFolderName = signal('');
+  editFolderIcon = signal('folder');
+  editFolderColor = signal('');
+
+  // ── Bulk move to folder ───────────────────────────────────────────────────────
+  showBulkMoveModal = signal(false);
+  bulkMoveIds = signal<string[]>([]);
+
+  // ── Toast ─────────────────────────────────────────────────────────────────────
+  toastMessage = signal('');
+  private _toastTimer?: ReturnType<typeof setTimeout>;
 
   // ── Keyboard shortcuts help ──────────────────────────────────────────────────
   showShortcutsHelp = signal<boolean>(false);
@@ -93,13 +112,15 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   aiLoading = signal<boolean>(false);
   aiMessages = signal<AiPanelMessage[]>([]);
 
-  readonly aiSuggestions = [
-    'What topics do my bookmarks cover?',
-    'Which bookmarks have I never visited?',
-    'Suggest tags for untagged bookmarks',
-    'Which bookmarks are my most visited?',
-    'Find similar or duplicate bookmarks',
-  ];
+  aiSuggestions = computed(() => {
+    const active = this.store.bookmarks().filter(b => !b.isArchived);
+    const suggestions: string[] = ['What topics do my bookmarks cover?'];
+    if (active.some(b => !b.lastVisited)) suggestions.push('Which bookmarks have I never visited?');
+    if (active.some(b => !b.tags?.length)) suggestions.push('Suggest tags for untagged bookmarks');
+    if (active.some(b => (b.visitCount ?? 0) > 0)) suggestions.push('Which bookmarks are my most visited?');
+    suggestions.push('Find similar or duplicate bookmarks');
+    return suggestions.slice(0, 5);
+  });
 
   // ── Computed ─────────────────────────────────────────────────────────────────
   allTags = computed<string[]>(() => {
@@ -134,7 +155,10 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       id: 'recent',
       icon: 'history',
       label: 'Recently Added',
-      count: 0,
+      count: this.store.bookmarks().filter(b =>
+        !b.isArchived &&
+        Date.now() - new Date(b.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000
+      ).length,
     },
     {
       id: 'archived',
@@ -149,27 +173,36 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     const query = this.searchQuery().toLowerCase().trim();
     const folderId = this.selectedFolderId();
     const tags = this.selectedTags();
+    const tagMode = this.tagFilterMode();
     const sort = this.sortBy();
     const asc = this.sortAsc();
 
     let items = this.store.bookmarks();
 
-    // View filter
-    if (view === 'all') items = items.filter(b => !b.isArchived);
-    else if (view === 'pinned') items = items.filter(b => b.isPinned && !b.isArchived);
-    else if (view === 'archived') items = items.filter(b => b.isArchived);
-    else if (view === 'recent') {
-      items = items
-        .filter(b => !b.isArchived)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, 30);
+    // When searching, bypass view filter and search all non-archived bookmarks
+    if (query) {
+      items = items.filter(b => !b.isArchived);
+    } else {
+      if (view === 'all') items = items.filter(b => !b.isArchived);
+      else if (view === 'pinned') items = items.filter(b => b.isPinned && !b.isArchived);
+      else if (view === 'archived') items = items.filter(b => b.isArchived);
+      else if (view === 'recent') {
+        items = items
+          .filter(b => !b.isArchived)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+          .slice(0, 30);
+      }
     }
 
     // Folder filter
     if (folderId) items = items.filter(b => b.folderId === folderId);
 
-    // Tag filter
-    if (tags.length) items = items.filter(b => tags.every(t => b.tags?.includes(t)));
+    // Tag filter (AND or OR mode)
+    if (tags.length) {
+      items = tagMode === 'OR'
+        ? items.filter(b => tags.some(t => b.tags?.includes(t)))
+        : items.filter(b => tags.every(t => b.tags?.includes(t)));
+    }
 
     // Search
     if (query) {
@@ -181,8 +214,8 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Sort (skip for 'recent' which is already sorted)
-    if (view !== 'recent') {
+    // Sort (skip for 'recent' which is already sorted, and when searching)
+    if (view !== 'recent' || query) {
       items = [...items].sort((a, b) => {
         let va: string | number = '';
         let vb: string | number = '';
@@ -204,7 +237,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   bookmarkCountByFolder = computed<Record<string, number>>(() => {
     const counts: Record<string, number> = {};
     for (const b of this.store.bookmarks()) {
-      if (b.folderId) counts[b.folderId] = (counts[b.folderId] ?? 0) + 1;
+      if (b.folderId && !b.isArchived) counts[b.folderId] = (counts[b.folderId] ?? 0) + 1;
     }
     return counts;
   });
@@ -215,7 +248,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     return plan.folders.map(folder => ({
       folder,
       bookmarks: plan.assignments
-        .filter(a => a.folderName === folder.name)
+        .filter(a => a.folderName.toLowerCase() === folder.name.toLowerCase())
         .map(a => this.store.bookmarks().find(b => b.id === a.bookmarkId))
         .filter((b): b is Bookmark => !!b),
     })).filter(g => g.bookmarks.length > 0);
@@ -225,7 +258,12 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     const plan = this.autoOrganisePlan();
     if (!plan) return 0;
     const assigned = new Set(plan.assignments.map(a => a.bookmarkId));
-    return this.store.bookmarks().filter(b => !b.isArchived && !assigned.has(b.id)).length;
+    const existingFolderIds = new Set(this.store.bookmarkFolders().map(f => f.id));
+    return this.store.bookmarks().filter(b =>
+      !b.isArchived &&
+      (!b.folderId || !existingFolderIds.has(b.folderId)) &&
+      !assigned.has(b.id)
+    ).length;
   });
 
   readonly tableColumns: EnvTableColumn[] = [
@@ -246,6 +284,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       label: this.selectedView() === 'archived' ? 'Unarchive' : 'Archive',
       icon: this.selectedView() === 'archived' ? 'unarchive' : 'archive',
     },
+    { key: 'moveToFolder', label: 'Move to folder', icon: 'folder_open', bulkOnly: true },
     { key: 'delete', label: 'Delete', icon: 'delete', danger: true },
   ]);
 
@@ -277,14 +316,25 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   // ── Lifecycle ────────────────────────────────────────────────────────────────
   private _keyHandler!: (e: KeyboardEvent) => void;
+  private readonly _SORT_KEY = 'bm_sort_prefs';
 
   ngOnInit() {
     this._keyHandler = (e: KeyboardEvent) => this.handleGlobalKey(e);
     window.addEventListener('keydown', this._keyHandler);
+    try {
+      const saved = localStorage.getItem(this._SORT_KEY);
+      if (saved) {
+        const { sortBy, sortAsc } = JSON.parse(saved);
+        if (sortBy) this.sortBy.set(sortBy);
+        if (typeof sortAsc === 'boolean') this.sortAsc.set(sortAsc);
+      }
+    } catch { /* ignore */ }
   }
 
   ngOnDestroy() {
     window.removeEventListener('keydown', this._keyHandler);
+    if (this._dragRafId !== undefined) cancelAnimationFrame(this._dragRafId);
+    clearTimeout(this._toastTimer);
   }
 
   handleGlobalKey(e: KeyboardEvent) {
@@ -343,9 +393,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       } catch { /* ignore */ }
     }
 
-    // Duplicate check — normalise URL before comparing
+    // Duplicate check — includes archived so the same URL can't be silently re-added
     const normalised = this.normaliseUrl(raw);
-    const existing = this.store.bookmarks().find(b => !b.isArchived && this.normaliseUrl(b.url) === normalised);
+    const existing = this.store.bookmarks().find(b => this.normaliseUrl(b.url) === normalised);
     this.duplicateBookmark.set(existing ?? null);
   }
 
@@ -359,7 +409,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   addTagFromInput() {
-    const tag = this.addTagInput().trim().toLowerCase();
+    const tag = this.addTagInput().trim().toLowerCase().replace(/\s+/g, ' ');
     if (tag && !this.addTags().includes(tag)) {
       this.addTags.update(t => [...t, tag]);
     }
@@ -420,7 +470,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   editTagFromInput() {
-    const tag = this.editTagInput().trim().toLowerCase();
+    const tag = this.editTagInput().trim().toLowerCase().replace(/\s+/g, ' ');
     if (tag && !this.editTags().includes(tag)) {
       this.editTags.update(t => [...t, tag]);
     }
@@ -626,6 +676,13 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       this.sortBy.set(col);
       this.sortAsc.set(false);
     }
+    this.persistSort();
+  }
+
+  private persistSort() {
+    try {
+      localStorage.setItem(this._SORT_KEY, JSON.stringify({ sortBy: this.sortBy(), sortAsc: this.sortAsc() }));
+    } catch { /* ignore */ }
   }
 
   currentViewLabel(): string {
@@ -666,6 +723,11 @@ export class BookmarksComponent implements OnInit, OnDestroy {
       this.requestBulkDelete(affected.map(b => b.id));
       return;
     }
+    if (actionKey === 'moveToFolder') {
+      this.bulkMoveIds.set(affected.map(b => b.id));
+      this.showBulkMoveModal.set(true);
+      return;
+    }
     for (const bookmark of affected) {
       switch (actionKey) {
         case 'togglePin':     this.togglePin(bookmark); break;
@@ -678,6 +740,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     const sortKey = event.key as SortBy;
     this.sortBy.set(sortKey);
     this.sortAsc.set(event.direction === 'asc');
+    this.persistSort();
   }
 
   // ── Drag-to-folder ────────────────────────────────────────────────────────────
@@ -689,12 +752,20 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   onRowDragMoved(point: { x: number; y: number }) {
-    const el = document.elementFromPoint(point.x, point.y);
-    const folderId = el?.closest('[data-folder-id]')?.getAttribute('data-folder-id') ?? '';
-    if (folderId !== this.dragOverFolderId()) this.dragOverFolderId.set(folderId);
+    if (this._dragRafId !== undefined) return;
+    this._dragRafId = requestAnimationFrame(() => {
+      this._dragRafId = undefined;
+      const el = document.elementFromPoint(point.x, point.y);
+      const folderId = el?.closest('[data-folder-id]')?.getAttribute('data-folder-id') ?? '';
+      if (folderId !== this.dragOverFolderId()) this.dragOverFolderId.set(folderId);
+    });
   }
 
   onRowDragEnd(point: { x: number; y: number }) {
+    if (this._dragRafId !== undefined) {
+      cancelAnimationFrame(this._dragRafId);
+      this._dragRafId = undefined;
+    }
     const ids = this.draggingBookmarkIds();
     if (ids.length > 0) {
       const el = document.elementFromPoint(point.x, point.y);
@@ -703,6 +774,8 @@ export class BookmarksComponent implements OnInit, OnDestroy {
         ids.forEach(id => this.store.updateBookmark(id, { folderId }));
         this.selectedView.set('all');
         this.selectedFolderId.set(folderId);
+        const name = this.folderName(folderId);
+        this.showToast(`Moved ${ids.length} bookmark${ids.length > 1 ? 's' : ''} to "${name}"`);
       }
     }
     this.draggingBookmarkIds.set([]);
@@ -711,6 +784,57 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   trackById(_: number, item: Bookmark) { return item.id; }
   trackByFolderId(_: number, f: BookmarkFolder) { return f.id; }
+
+  // ── Edit folder ───────────────────────────────────────────────────────────────
+  openEditFolderModal(folder: BookmarkFolder) {
+    this.editingFolder.set(folder);
+    this.editFolderName.set(folder.name);
+    this.editFolderIcon.set(folder.icon || 'folder');
+    this.editFolderColor.set(folder.color || '');
+    this.showEditFolderModal.set(true);
+  }
+
+  closeEditFolderModal() { this.showEditFolderModal.set(false); }
+
+  submitEditFolder() {
+    const folder = this.editingFolder();
+    const name = this.editFolderName().trim();
+    if (!folder || !name) return;
+    this.store.updateBookmarkFolder(folder.id, {
+      name,
+      icon: this.editFolderIcon() || 'folder',
+      color: this.editFolderColor() || undefined,
+    });
+    this.showEditFolderModal.set(false);
+  }
+
+  // ── Bulk move to folder ───────────────────────────────────────────────────────
+  applyBulkMove(folderId: string) {
+    const ids = this.bulkMoveIds();
+    ids.forEach(id => this.store.updateBookmark(id, { folderId }));
+    const name = this.folderName(folderId);
+    this.showToast(`Moved ${ids.length} bookmark${ids.length > 1 ? 's' : ''} to "${name}"`);
+    this.showBulkMoveModal.set(false);
+    this.bulkMoveIds.set([]);
+    this.selectedView.set('all');
+    this.selectedFolderId.set(folderId);
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────────
+  showToast(message: string) {
+    this.toastMessage.set(message);
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => this.toastMessage.set(''), 2500);
+  }
+
+  // ── Favicon fallback ──────────────────────────────────────────────────────────
+  onFaviconError(event: Event, url: string) {
+    const img = event.target as HTMLImageElement;
+    const initial = this.getDomain(url).charAt(0).toUpperCase() || '?';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="%23e5e7eb"/><text x="8" y="11.5" text-anchor="middle" font-size="9" font-weight="700" fill="%239ca3af" font-family="sans-serif">${initial}</text></svg>`;
+    img.src = `data:image/svg+xml,${svg}`;
+    img.onerror = null;
+  }
 
   // ── AI Assistant methods ──────────────────────────────────────────────────────
   toggleAssistant() { this.showAssistant.update(v => !v); }
@@ -790,17 +914,29 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.showAddModal.set(false);
     this.showEditModal.set(false);
     this.showAddFolderModal.set(false);
+    this.showEditFolderModal.set(false);
     this.showDeleteConfirm.set(false);
     this.showDeleteFolderConfirm.set(false);
     this.showShortcutsHelp.set(false);
     this.showAutoOrganiseModal.set(false);
+    this.showBulkMoveModal.set(false);
   }
 
   // ── Auto-organise ─────────────────────────────────────────────────────────────
   async triggerAutoOrganise() {
-    // Only send unorganised bookmarks — already-foldered ones don't need re-sorting
-    const bookmarks = this.store.bookmarks().filter(b => !b.isArchived && !b.folderId);
-    if (!bookmarks.length) return;
+    // Treat bookmarks as unorganised if they have no folderId OR if their folderId
+    // points to a folder that no longer exists (orphaned reference from a deleted folder)
+    const existingFolderIds = new Set(this.store.bookmarkFolders().map(f => f.id));
+    const bookmarks = this.store.bookmarks().filter(b =>
+      !b.isArchived && (!b.folderId || !existingFolderIds.has(b.folderId))
+    );
+
+    if (!bookmarks.length) {
+      this.autoOrganisePlan.set(null);
+      this.autoOrganiseError.set('All your bookmarks are already organised into folders.');
+      this.showAutoOrganiseModal.set(true);
+      return;
+    }
 
     this.autoOrganiseLoading.set(true);
     this.autoOrganiseError.set('');
@@ -861,8 +997,15 @@ Rules:1-2 word names, min 2 per folder, skip ambiguous`;
       }
     }
 
-    // One signal pass + concurrent DB writes instead of N individual updates
+    // Only move bookmarks that are currently unorganised (no folderId, or orphaned folderId)
+    const existingFolderIds = new Set(this.store.bookmarkFolders().map(f => f.id));
+    const unorganisedIds = new Set(
+      this.store.bookmarks()
+        .filter(b => !b.folderId || !existingFolderIds.has(b.folderId))
+        .map(b => b.id)
+    );
     const updates = plan.assignments
+      .filter(a => unorganisedIds.has(a.bookmarkId))
       .map(a => ({ id: a.bookmarkId, data: { folderId: nameToId.get(a.folderName.toLowerCase()) } }))
       .filter((u): u is { id: string; data: { folderId: string } } => !!u.data.folderId);
     this.store.batchUpdateBookmarks(updates);
