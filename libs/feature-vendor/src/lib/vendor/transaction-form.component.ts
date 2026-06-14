@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, input, output, OnInit, ChangeDetectionStrategy, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -68,8 +68,8 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
   <!-- Scrollable body -->
   <div class="tf-scroll">
 
-    <!-- ── SLIDER HERO CARD (embedded mode) ── -->
-    @if (embeddedMode()) {
+    <!-- ── SLIDER HERO CARD + TABS (embedded edit mode only) ── -->
+    @if (embeddedMode() && isEditMode()) {
       <div class="tf-slider-hero-card">
         <div class="tf-slider-hero-left">
           <div class="tf-hero-avatar tf-hero-avatar--lg" [style.background]="avatarBgFn(formName() || 'N')">
@@ -96,16 +96,12 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
           }
         </div>
       </div>
-
-      <!-- Tabs (edit mode only) -->
-      @if (isEditMode()) {
-        <div class="tf-tabs">
-          <button class="tf-tab" [class.tf-tab--active]="sliderTab() === 'details'"
-            (click)="sliderTab.set('details')">Details</button>
-          <button class="tf-tab" [class.tf-tab--active]="sliderTab() === 'updates'"
-            (click)="sliderTab.set('updates')">Updates</button>
-        </div>
-      }
+      <div class="tf-tabs">
+        <button class="tf-tab" [class.tf-tab--active]="sliderTab() === 'details'"
+          (click)="sliderTab.set('details')">Details</button>
+        <button class="tf-tab" [class.tf-tab--active]="sliderTab() === 'updates'"
+          (click)="sliderTab.set('updates')">Updates</button>
+      </div>
     }
 
     <!-- ── STANDARD HERO (route mode) ── -->
@@ -235,214 +231,200 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
         <div class="tf-slider-form-label">Fill in details</div>
       }
 
-    <!-- Two-column layout -->
+    <!-- Form layout -->
     <div class="tf-cols">
 
-      <!-- Left: Form card -->
+      <!-- Form -->
       <div class="tf-form-col">
-        <div class="tf-card">
+        <div [class.tf-card]="!embeddedMode()">
 
-          <!-- Section: Type cards -->
-          <div class="tf-section-label">Transaction Type</div>
-          <div class="type-cards">
-            @for (opt of typeOptions; track opt) {
-              <button type="button" class="type-card"
-                [class.type-card-active]="formType() === opt"
-                [ngStyle]="typeCardStyle(opt)"
-                (click)="selectType(opt)">
-                <span class="material-symbols-outlined type-card-icon"
-                  [style.color]="typeMeta(opt).color">{{ typeMeta(opt).icon }}</span>
-                <span class="type-card-label">{{ typeMeta(opt).label }}</span>
-                <span class="type-card-hint">{{ typeHint(opt) }}</span>
-              </button>
-            }
+          <!-- ── Q1: Type ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">Transaction type</div>
+            <div class="type-chips">
+              @for (opt of typeOptions; track opt) {
+                <button type="button" class="type-chip"
+                  [class.type-chip--active]="formType() === opt"
+                  [style.--chip-color]="typeMeta(opt).color"
+                  (click)="selectType(opt)">
+                  <span class="material-symbols-outlined">{{ typeMeta(opt).icon }}</span>
+                  <span>{{ typeMeta(opt).label }}</span>
+                </button>
+              }
+            </div>
           </div>
 
-          <div class="tf-divider"></div>
+          <!-- ── Q2: Amount (hero size) ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">How much?</div>
+            <div class="tf-amount-hero">
+              <select class="tf-currency-sel"
+                [ngModel]="formCurrency()" (ngModelChange)="formCurrency.set($event)">
+                @for (c of currencies; track c) {
+                  <option [value]="c">{{ c }}</option>
+                }
+              </select>
+              <input type="number" step="0.01" min="0" class="tf-amount-big"
+                [ngModel]="formAmount()" (ngModelChange)="formAmount.set($event)"
+                placeholder="0.00">
+            </div>
 
-          <!-- Section: Name + Category -->
-          <div class="form-grid">
-            <div class="form-field fg-2">
-              <label class="form-label">{{ nameLabel() }}</label>
-              <div class="vd-wrap">
-                <div class="name-wrap">
-                  <span class="material-symbols-outlined vd-search-icon">search</span>
-                  <input type="text" class="form-input vd-input vendor-name-input"
-                    [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
-                    (click)="showVendorDropdown.set(true)"
-                    (blur)="onVendorBlur()"
-                    (keydown)="onVendorKeydown($event)"
-                    [attr.placeholder]="namePlaceholder()"
-                    autocomplete="off">
-                  @if (presetApplied()) {
-                    <span class="preset-badge">
-                      <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
-                      auto-filled
+            <!-- Billing cycle pills (recurring only) -->
+            @if (formType() === 'recurring') {
+              <div class="tf-cycle-pills">
+                <button type="button" class="tf-cycle-pill"
+                  [class.tf-cycle-pill--active]="formCycle() === 'monthly'"
+                  (click)="setCycle('monthly')">Monthly</button>
+                <button type="button" class="tf-cycle-pill"
+                  [class.tf-cycle-pill--active]="formCycle() === 'yearly'"
+                  (click)="setCycle('yearly')">Yearly</button>
+                <button type="button" class="tf-cycle-pill"
+                  [class.tf-cycle-pill--active]="formCycle() === 'weekly'"
+                  (click)="setCycle('weekly')">Weekly</button>
+              </div>
+            }
+
+            <!-- Date — summary, expands on click -->
+            <div class="tf-date-row">
+              @if (!showDateInput()) {
+                <button type="button" class="date-summary" (click)="showDateInput.set(true)">
+                  <span class="material-symbols-outlined">calendar_month</span>
+                  <span class="date-summary-text">
+                    {{ dateLabel() }}: <strong>{{ formatPreviewDate(formDate()) }}</strong>
+                  </span>
+                  @if (daysUntilPreview() !== null && (formType() === 'recurring' || formType() === 'bill')) {
+                    <span class="date-badge"
+                      [class.date-badge--soon]="daysUntilPreview()! <= 7 && daysUntilPreview()! >= 0"
+                      [class.date-badge--overdue]="daysUntilPreview()! < 0">
+                      @if (daysUntilPreview()! < 0) { overdue }
+                      @else if (daysUntilPreview()! === 0) { today }
+                      @else { in {{ daysUntilPreview() }} days }
                     </span>
                   }
-                </div>
-                @if (showVendorDropdown() && vendorSuggestions().length > 0) {
-                  <div class="vd-dropdown">
-                    @if (!formName()) {
-                      <div class="vd-section-label">
-                        <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">bolt</span>
-                        Popular services
-                      </div>
-                    }
-                    @for (v of vendorSuggestions(); track v.key; let i = $index) {
-                      <button type="button" class="vd-item"
-                        [class.vd-item-highlighted]="vendorHighlightIdx() === i"
-                        (mousedown)="selectVendor(v)">
-                        <div class="vd-avatar" [style.background]="avatarBgFn(v.displayName)">
-                          {{ v.displayName.charAt(0).toUpperCase() }}
-                        </div>
-                        <div class="vd-info">
-                          <span class="vd-name">{{ v.displayName }}</span>
-                          <span class="vd-meta">
-                            <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">{{ categoryIconFn(v.category) }}</span>
-                            {{ v.category }}
-                          </span>
-                        </div>
-                        <div class="vd-chips">
-                          <span class="vd-chip">{{ v.billingCycle }}</span>
-                          <span class="vd-chip vd-chip-currency">{{ v.currency }}</span>
-                        </div>
-                      </button>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-            <div class="form-field fg-1">
-              <label class="form-label">Category</label>
-              <input type="text" class="form-input" list="cat-list"
-                [ngModel]="formCategory()" (ngModelChange)="formCategory.set($event)"
-                placeholder="software">
-              <datalist id="cat-list">
-                @for (c of categoryOptions; track c) { <option [value]="c"> }
-              </datalist>
-            </div>
-          </div>
-
-          <div class="tf-divider"></div>
-
-          <!-- Section: Amount + Cycle + Date -->
-          <div class="form-grid">
-            <div class="form-field">
-              <label class="form-label">Amount</label>
-              <div class="price-wrap">
-                <select class="currency-select"
-                  [ngModel]="formCurrency()" (ngModelChange)="formCurrency.set($event)">
-                  @for (c of currencies; track c) {
-                    <option [value]="c">{{ c }}</option>
+                  <span class="material-symbols-outlined date-edit-ico">edit</span>
+                </button>
+              } @else {
+                <div class="renewal-wrap">
+                  <input type="date" class="form-input renewal-input"
+                    [ngModel]="formDate()" (ngModelChange)="formDate.set($event)">
+                  @if (formType() === 'recurring' || formType() === 'bill') {
+                    <div class="shortcut-row">
+                      <button type="button" class="shortcut-btn" (click)="addDateOffset(1)">+1m</button>
+                      <button type="button" class="shortcut-btn" (click)="addDateOffset(3)">+3m</button>
+                      <button type="button" class="shortcut-btn" (click)="addDateOffset(6)">+6m</button>
+                      <button type="button" class="shortcut-btn" (click)="addDateOffset(12)">+1y</button>
+                    </div>
                   }
-                </select>
-                <input type="number" step="0.01" min="0" class="form-input price-input"
-                  [ngModel]="formAmount()" (ngModelChange)="formAmount.set($event)"
-                  placeholder="0.00">
-              </div>
-            </div>
-            @if (formType() === 'recurring') {
-              <div class="form-field">
-                <label class="form-label">Billing Cycle</label>
-                <div class="seg-ctrl">
-                  <button type="button" class="seg-btn"
-                    [class.seg-active]="formCycle() === 'monthly'"
-                    (click)="setCycle('monthly')">Monthly</button>
-                  <button type="button" class="seg-btn"
-                    [class.seg-active]="formCycle() === 'yearly'"
-                    (click)="setCycle('yearly')">Yearly</button>
+                  <button type="button" class="date-collapse-btn" (click)="showDateInput.set(false)">
+                    <span class="material-symbols-outlined">expand_less</span> Done
+                  </button>
                 </div>
-              </div>
-            }
-            <div class="form-field fg-1">
-              <label class="form-label">{{ dateLabel() }}</label>
-              <div class="renewal-wrap">
-                <input type="date" class="form-input renewal-input"
-                  [ngModel]="formDate()" (ngModelChange)="formDate.set($event)">
-                @if (formType() === 'recurring' || formType() === 'bill') {
-                  <div class="shortcut-row">
-                    <button type="button" class="shortcut-btn" title="+1 month"  (click)="addDateOffset(1)">+1m</button>
-                    <button type="button" class="shortcut-btn" title="+3 months" (click)="addDateOffset(3)">+3m</button>
-                    <button type="button" class="shortcut-btn" title="+6 months" (click)="addDateOffset(6)">+6m</button>
-                    <button type="button" class="shortcut-btn" title="+1 year"   (click)="addDateOffset(12)">+1y</button>
-                  </div>
-                }
-              </div>
+              }
             </div>
           </div>
 
-          <!-- Status — inline for edit mode only -->
+          <!-- ── Q3: Name ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">{{ nameQuestion() }}</div>
+            <div class="vd-wrap">
+              <div class="name-wrap">
+                <span class="material-symbols-outlined vd-search-icon">search</span>
+                <input type="text" class="form-input vd-input vendor-name-input"
+                  [ngModel]="formName()" (ngModelChange)="onNameChange($event)"
+                  (click)="showVendorDropdown.set(true)"
+                  (blur)="onVendorBlur()"
+                  (keydown)="onVendorKeydown($event)"
+                  [attr.placeholder]="namePlaceholder()"
+                  autocomplete="off">
+                @if (presetApplied()) {
+                  <span class="preset-badge">
+                    <span class="material-symbols-outlined" style="font-size:11px">auto_awesome</span>
+                    auto-filled
+                  </span>
+                }
+              </div>
+              @if (showVendorDropdown() && vendorSuggestions().length > 0) {
+                <div class="vd-dropdown">
+                  @if (!formName()) {
+                    <div class="vd-section-label">
+                      <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">bolt</span>
+                      Popular services
+                    </div>
+                  }
+                  @for (v of vendorSuggestions(); track v.key; let i = $index) {
+                    <button type="button" class="vd-item"
+                      [class.vd-item-highlighted]="vendorHighlightIdx() === i"
+                      (mousedown)="selectVendor(v)">
+                      <div class="vd-avatar" [style.background]="avatarBgFn(v.displayName)">
+                        {{ v.displayName.charAt(0).toUpperCase() }}
+                      </div>
+                      <div class="vd-info">
+                        <span class="vd-name">{{ v.displayName }}</span>
+                        <span class="vd-meta">
+                          <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">{{ categoryIconFn(v.category) }}</span>
+                          {{ v.category }}
+                        </span>
+                      </div>
+                      <div class="vd-chips">
+                        <span class="vd-chip">{{ v.billingCycle }}</span>
+                        <span class="vd-chip vd-chip-currency">{{ v.currency }}</span>
+                      </div>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- ── Q4: Category (optional) ── -->
+          <div class="tf-q-section">
+            <div class="tf-q-label">Category <span class="tf-q-opt">optional</span></div>
+            <div class="cat-pills">
+              @for (c of categoryOptions; track c) {
+                <button type="button" class="cat-pill"
+                  [class.cat-pill--active]="formCategory() === c"
+                  (click)="formCategory.set(formCategory() === c ? '' : c)">
+                  <span class="material-symbols-outlined">{{ categoryIconFn(c) }}</span>
+                  {{ c }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- ── Q5: Notes (optional) ── -->
+          <div class="tf-q-section tf-q-section--last">
+            <div class="tf-q-label">Notes <span class="tf-q-opt">optional</span></div>
+            <textarea class="form-input form-textarea" rows="2"
+              placeholder="Add a note…"
+              [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"></textarea>
+          </div>
+
+          <!-- Status — edit mode only -->
           @if (isEditMode()) {
-            <div class="form-grid" style="margin-top:10px">
-              <div class="form-field">
-                <label class="form-label">Status</label>
-                <div class="seg-ctrl">
-                  <button type="button" class="seg-btn seg-green"
-                    [class.seg-active]="formStatus() === 'active'"
-                    (click)="formStatus.set('active')">Active</button>
-                  <button type="button" class="seg-btn seg-yellow"
-                    [class.seg-active]="formStatus() === 'paused'"
-                    (click)="formStatus.set('paused')">Paused</button>
-                  <button type="button" class="seg-btn seg-grey"
-                    [class.seg-active]="formStatus() === 'cancelled'"
-                    (click)="formStatus.set('cancelled')">Cancelled</button>
-                  <button type="button" class="seg-btn seg-blue"
-                    [class.seg-active]="formStatus() === 'completed'"
-                    (click)="formStatus.set('completed')">Completed</button>
-                </div>
+            <div class="tf-q-section tf-q-section--last">
+              <div class="tf-q-label">Status</div>
+              <div class="seg-ctrl">
+                <button type="button" class="seg-btn seg-green"
+                  [class.seg-active]="formStatus() === 'active'"
+                  (click)="formStatus.set('active')">Active</button>
+                <button type="button" class="seg-btn seg-yellow"
+                  [class.seg-active]="formStatus() === 'paused'"
+                  (click)="formStatus.set('paused')">Paused</button>
+                <button type="button" class="seg-btn seg-grey"
+                  [class.seg-active]="formStatus() === 'cancelled'"
+                  (click)="formStatus.set('cancelled')">Cancelled</button>
+                <button type="button" class="seg-btn seg-blue"
+                  [class.seg-active]="formStatus() === 'completed'"
+                  (click)="formStatus.set('completed')">Completed</button>
               </div>
             </div>
-          }
-
-          <div class="tf-divider"></div>
-
-          <!-- Advanced -->
-          <button type="button" class="advanced-toggle" (click)="toggleAdvanced()">
-            <span class="material-symbols-outlined" style="font-size:16px">
-              {{ showAdvanced() ? 'expand_less' : 'expand_more' }}
-            </span>
-            Advanced
-          </button>
-          @if (showAdvanced()) {
-            <div class="form-grid" style="margin-top:8px">
-              <div class="form-field fg-1">
-                <label class="form-label">Project Scope</label>
-                <input type="text" class="form-input"
-                  [ngModel]="formProjectId()" (ngModelChange)="formProjectId.set($event)"
-                  placeholder="global">
-              </div>
-              <div class="form-field fg-2">
-                <label class="form-label">Notes</label>
-                <input type="text" class="form-input"
-                  [ngModel]="formNotes()" (ngModelChange)="formNotes.set($event)"
-                  placeholder="Optional notes…">
-              </div>
-            </div>
-            @if (!isEditMode()) {
-              <div class="form-grid" style="margin-top:10px">
-                <div class="form-field">
-                  <label class="form-label">Initial Status</label>
-                  <div class="seg-ctrl">
-                    <button type="button" class="seg-btn seg-green"
-                      [class.seg-active]="formStatus() === 'active'"
-                      (click)="formStatus.set('active')">Active</button>
-                    <button type="button" class="seg-btn seg-yellow"
-                      [class.seg-active]="formStatus() === 'paused'"
-                      (click)="formStatus.set('paused')">Paused</button>
-                    <button type="button" class="seg-btn seg-grey"
-                      [class.seg-active]="formStatus() === 'cancelled'"
-                      (click)="formStatus.set('cancelled')">Cancelled</button>
-                  </div>
-                </div>
-              </div>
-            }
           }
 
         </div>
       </div>
 
-      <!-- Right: Preview panel -->
+      <!-- Preview (route mode only — slider already has hero card) -->
+      @if (!embeddedMode()) {
       <div class="tf-preview-col">
         <div class="tf-section-label preview-section-label">Preview</div>
         <div class="preview-card">
@@ -501,8 +483,45 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
           </div>
         </div>
       </div>
+      } <!-- end @if (!embeddedMode()) preview col -->
 
     </div>
+
+    <!-- ── LIVE PREVIEW card (embedded add mode, at bottom) ── -->
+    @if (embeddedMode() && !isEditMode()) {
+      <div class="tf-slider-preview-section">
+        <div class="tf-slider-preview-label">
+          <span class="material-symbols-outlined">visibility</span>
+          Preview
+        </div>
+        <div class="tf-slider-hero-card tf-slider-hero-card--bottom">
+          <div class="tf-slider-hero-left">
+            <div class="tf-hero-avatar tf-hero-avatar--lg" [style.background]="avatarBgFn(formName() || 'N')">
+              {{ (formName() || 'N').charAt(0).toUpperCase() }}
+            </div>
+            <div class="tf-slider-hero-info">
+              <div class="tf-slider-service-name" [class.tf-hero-ghost]="!formName()">
+                {{ formName() || 'Service name' }}
+              </div>
+              <div class="tf-slider-status-row">
+                <span class="tf-status-dot" [style.background]="typeMeta(formType()).color"></span>
+                <span class="tf-slider-status-label" [style.color]="typeMeta(formType()).color">
+                  {{ typeMeta(formType()).label }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="tf-slider-hero-right">
+            <div class="tf-slider-amount" [class.tf-hero-ghost]="formAmount() <= 0">
+              {{ previewAmountStr() }}
+            </div>
+            @if (formType() === 'recurring') {
+              <div class="tf-slider-cycle-label">per {{ formCycle() }}</div>
+            }
+          </div>
+        </div>
+      </div>
+    }
     } <!-- end Updates / add form -->
 
   </div> <!-- end tf-scroll -->
@@ -745,6 +764,42 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     .tf-shell--embedded .preview-card { display: none; }
     .tf-shell--embedded .preview-section-label { display: none; }
 
+    /* ── Embedded type-chips: single-row segmented style ── */
+    .tf-shell--embedded .type-chips {
+      display: flex; flex-wrap: nowrap; gap: 0;
+      background: var(--bg-hover);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px; padding: 3px;
+    }
+    .tf-shell--embedded .type-chip {
+      flex: 1; min-width: 0; justify-content: center;
+      flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 4px; border: none; border-radius: 8px;
+      background: transparent; font-size: 10.5px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+    }
+    .tf-shell--embedded .type-chip .material-symbols-outlined { font-size: 18px; }
+    .tf-shell--embedded .type-chip:hover { background: var(--bg-app); }
+    .tf-shell--embedded .type-chip--active {
+      background: var(--bg-panel) !important;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.14);
+      font-weight: 600;
+    }
+
+    /* ── Bottom live preview (embedded add mode) ── */
+    .tf-slider-preview-section { padding: 16px 16px 4px; }
+    .tf-slider-preview-label {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 10px;
+    }
+    .tf-slider-preview-label .material-symbols-outlined { font-size: 13px; }
+    .tf-slider-hero-card--bottom {
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: 12px; border-bottom: 1px solid var(--border-subtle) !important;
+    }
+
     /* ── Embedded footer ── */
     .tf-footer--embedded {
       padding: 10px 16px; gap: 10px;
@@ -811,20 +866,132 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     .preview-section-label { margin-bottom: 6px; }
     .tf-divider { border: none; border-top: 1px solid var(--border-subtle); margin: 12px 0; }
 
-    /* ── Type cards ── */
-    .type-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-    .type-card {
-      display: flex; flex-direction: column; align-items: flex-start;
-      padding: 8px 10px; border: 1.5px solid var(--border-subtle);
-      border-radius: 8px; background: var(--bg-app);
-      cursor: pointer; transition: all 0.15s; text-align: left; gap: 0;
+    /* ── Type chips ── */
+    .type-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .type-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border: 1.5px solid var(--border-subtle);
+      border-radius: 100px; background: var(--bg-app);
+      font-size: 12px; font-weight: 500; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
     }
-    .type-card:hover { border-color: var(--text-tertiary); background: var(--bg-hover); }
-    .type-card-icon { font-size: 16px; margin-bottom: 5px; }
-    .type-card-label { font-size: 11px; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
-    .type-card-hint { font-size: 9.5px; color: var(--text-tertiary); line-height: 1.3; margin-top: 2px; }
+    .type-chip .material-symbols-outlined { font-size: 15px; }
+    .type-chip:hover { border-color: var(--chip-color, var(--accent-primary)); color: var(--chip-color, var(--accent-primary)); background: var(--bg-hover); }
+    .type-chip--active {
+      border-color: var(--chip-color, var(--accent-primary));
+      color: var(--chip-color, var(--accent-primary));
+      background: color-mix(in srgb, var(--chip-color, var(--accent-primary)) 10%, transparent);
+      font-weight: 600;
+    }
+
+    /* ── Category pills ── */
+    .cat-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+    .cat-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border: 1px solid var(--border-subtle);
+      border-radius: 100px; background: var(--bg-app);
+      font-size: 11px; font-weight: 500; color: var(--text-tertiary);
+      cursor: pointer; transition: all 0.12s; text-transform: capitalize;
+    }
+    .cat-pill .material-symbols-outlined { font-size: 13px; }
+    .cat-pill:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+    .cat-pill--active {
+      background: var(--accent-primary-dim); border-color: var(--accent-primary);
+      color: var(--accent-primary); font-weight: 600;
+    }
+
+    /* ── Date summary ── */
+    .date-summary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 12px; border: 1px solid var(--border-subtle);
+      border-radius: 8px; background: var(--bg-app);
+      font-size: 12.5px; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.15s; width: 100%;
+    }
+    .date-summary .material-symbols-outlined { font-size: 16px; color: var(--text-tertiary); flex-shrink: 0; }
+    .date-summary:hover { border-color: var(--accent-primary); color: var(--text-primary); }
+    .date-summary-text { flex: 1; text-align: left; }
+    .date-badge {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 100px; background: var(--accent-primary-dim);
+      color: var(--accent-primary); flex-shrink: 0;
+    }
+    .date-badge--soon { background: color-mix(in srgb, #fbbf24 15%, transparent) !important; color: #fbbf24 !important; }
+    .date-badge--overdue { background: color-mix(in srgb, #ef4444 15%, transparent) !important; color: #ef4444 !important; }
+    .date-edit-ico { font-size: 14px !important; color: var(--text-tertiary); margin-left: auto; flex-shrink: 0; }
+    .date-collapse-btn {
+      display: inline-flex; align-items: center; gap: 3px;
+      margin-top: 4px; background: none; border: none;
+      font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+      cursor: pointer; padding: 0; transition: color 0.12s;
+    }
+    .date-collapse-btn:hover { color: var(--text-primary); }
+    .date-collapse-btn .material-symbols-outlined { font-size: 14px; }
+
+    /* ── Notes textarea ── */
+    .form-textarea {
+      resize: vertical; min-height: 52px; line-height: 1.5;
+    }
+
+    /* ── Optional label hint ── */
+    .form-label-opt { font-size: 10px; font-weight: 400; color: var(--text-tertiary); margin-left: 4px; }
 
     /* ── Form layout ── */
+    /* ── Q&A sections (Wise-inspired) ── */
+    .tf-q-section {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .tf-q-section:first-child { padding-top: 4px; }
+    .tf-q-section--last { border-bottom: none; padding-bottom: 4px; }
+    .tf-q-label {
+      font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px;
+    }
+    .tf-q-opt {
+      font-size: 11px; font-weight: 400; color: var(--text-tertiary); margin-left: 4px;
+    }
+
+    /* ── Amount hero ── */
+    .tf-amount-hero {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 2px solid var(--border-subtle);
+      margin-bottom: 12px;
+    }
+    .tf-amount-hero:focus-within { border-bottom-color: var(--accent-primary); }
+    .tf-currency-sel {
+      font-size: 15px; font-weight: 700; color: var(--text-secondary);
+      background: var(--bg-hover); border: 1px solid var(--border-subtle);
+      border-radius: 6px; padding: 5px 8px; cursor: pointer;
+      -webkit-appearance: none; appearance: none; outline: none;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .tf-currency-sel:focus { border-color: var(--accent-primary); }
+    .tf-amount-big {
+      font-size: 32px; font-weight: 800; color: var(--text-primary);
+      background: transparent; border: none; outline: none;
+      flex: 1; min-width: 0; letter-spacing: -1px;
+      font-family: inherit;
+    }
+    .tf-amount-big::placeholder { color: var(--border-main); }
+
+    /* ── Cycle pills ── */
+    .tf-cycle-pills { display: flex; gap: 6px; margin-bottom: 10px; }
+    .tf-cycle-pill {
+      padding: 5px 14px; border-radius: 100px;
+      border: 1px solid var(--border-subtle);
+      font-size: 12px; font-weight: 500; font-family: inherit;
+      background: none; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.12s;
+    }
+    .tf-cycle-pill:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+    .tf-cycle-pill--active {
+      background: var(--accent-primary-dim); border-color: var(--accent-primary);
+      color: var(--accent-primary); font-weight: 600;
+    }
+
+    /* ── Date row ── */
+    .tf-date-row { margin-top: 2px; }
+
     .form-grid { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
     .form-field { display: flex; flex-direction: column; }
     .fg-1 { flex: 1; min-width: 120px; }
@@ -907,6 +1074,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       color: var(--text-secondary); font-size: 11px; font-weight: 700;
       cursor: pointer; flex-shrink: 0; outline: none; min-width: 58px;
       transition: all 0.15s;
+      -webkit-appearance: none; appearance: none;
     }
     .currency-select:hover { background: var(--bg-active); color: var(--text-primary); }
     .price-input { border: none !important; border-radius: 0 !important; height: 100% !important; flex: 1; min-width: 80px; }
@@ -945,14 +1113,6 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       color: var(--accent-primary);
     }
 
-    /* ── Advanced toggle ── */
-    .advanced-toggle {
-      display: inline-flex; align-items: center; gap: 4px; margin-top: 2px;
-      background: transparent; border: none; color: var(--text-tertiary);
-      font-size: 11px; font-weight: 500; cursor: pointer; padding: 0;
-      transition: color 0.15s;
-    }
-    .advanced-toggle:hover { color: var(--text-secondary); }
 
     /* ── Preview card ── */
     .preview-card {
@@ -1052,10 +1212,10 @@ export class TransactionFormComponent implements OnInit {
     formDate      = signal('');
     formStatus    = signal<'active' | 'paused' | 'cancelled' | 'completed'>('active');
     formNotes     = signal('');
-    showAdvanced  = signal(false);
     presetApplied = signal(false);
     showVendorDropdown = signal(false);
     vendorHighlightIdx = signal(-1);
+    showDateInput = signal(false);
 
     deleteConfirmOpen = signal(false);
     sliderTab = signal<'details' | 'updates' | 'edit'>('details');
@@ -1076,6 +1236,17 @@ export class TransactionFormComponent implements OnInit {
             'bill':      'Biller',
             'purchase':  'Merchant',
             'refund':    'Refund From',
+        };
+        return map[this.formType()];
+    });
+
+    nameQuestion = computed<string>(() => {
+        const map: Record<TransactionType, string> = {
+            'recurring': 'What service are you tracking?',
+            'one-time':  'What\'s this purchase for?',
+            'bill':      'What\'s this bill for?',
+            'purchase':  'Where did you buy from?',
+            'refund':    'Who\'s refunding you?',
         };
         return map[this.formType()];
     });
@@ -1128,10 +1299,42 @@ export class TransactionFormComponent implements OnInit {
         return ALL_VENDOR_OPTIONS.filter(v => v.key.includes(q) || v.displayName.toLowerCase().includes(q)).slice(0, 9);
     });
 
+    constructor() {
+        // Embedded slider: react every time txId input changes (component is always mounted via content projection)
+        effect(() => {
+            if (!this.embeddedMode()) return;
+            const id = this.txId();
+            untracked(() => {
+                if (id) {
+                    this.isEditMode.set(true);
+                    this.editingId.set(id);
+                    const tx = this.transactionStore.transactions().find(t => t.id === id);
+                    if (tx) this.populateForm(tx);
+                    this.sliderTab.set('details');
+                } else {
+                    this.isEditMode.set(false);
+                    this.editingId.set(null);
+                    this.formName.set('');
+                    this.formType.set('recurring');
+                    this.formCategory.set('');
+                    this.formProjectId.set('global');
+                    this.formAmount.set(0);
+                    this.formCurrency.set('USD');
+                    this.formCycle.set('monthly');
+                    this.formDate.set(autoDate('monthly'));
+                    this.formStatus.set('active');
+                    this.formNotes.set('');
+                    this.presetApplied.set(false);
+                    this.showDateInput.set(false);
+                    this.sliderTab.set('updates');
+                }
+            });
+        });
+    }
+
     ngOnInit() {
-        const id = this.embeddedMode()
-            ? this.txId()
-            : this.route.snapshot.paramMap.get('id');
+        if (this.embeddedMode()) return; // handled reactively by the constructor effect
+        const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.isEditMode.set(true);
             this.editingId.set(id);
@@ -1140,7 +1343,6 @@ export class TransactionFormComponent implements OnInit {
             this.sliderTab.set('details');
         } else {
             this.formDate.set(autoDate('monthly'));
-            this.sliderTab.set('updates');
         }
     }
 
@@ -1155,7 +1357,6 @@ export class TransactionFormComponent implements OnInit {
         this.formDate.set(tx.date ? tx.date.split('T')[0] : '');
         this.formStatus.set(tx.status ?? 'active');
         this.formNotes.set(tx.notes ?? '');
-        this.showAdvanced.set((!!tx.projectId && tx.projectId !== 'global') || !!tx.notes);
     }
 
     back() {
@@ -1216,6 +1417,7 @@ export class TransactionFormComponent implements OnInit {
 
     selectType(type: TransactionType) {
         this.formType.set(type);
+        this.showDateInput.set(false);
         if (!this.isEditMode()) {
             if (type === 'recurring' || type === 'bill') {
                 this.formDate.set(autoDate(this.formCycle()));
@@ -1288,7 +1490,6 @@ export class TransactionFormComponent implements OnInit {
         this.formDate.set(toLocalDateString(d));
     }
 
-    toggleAdvanced() { this.showAdvanced.set(!this.showAdvanced()); }
 
     // ── Display helpers ───────────────────────────────────────────────────
     typeMeta(type: TransactionType)   { return TYPE_META[type]; }
