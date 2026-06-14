@@ -1183,6 +1183,7 @@ dependencies = [
 name = "envello"
 version = "0.1.3"
 dependencies = [
+ "cc",
  "serde",
  "serde_json",
  "tauri",

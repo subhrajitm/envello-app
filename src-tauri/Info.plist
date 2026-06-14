@@ -4,5 +4,7 @@
 <dict>
     <key>NSMicrophoneUsageDescription</key>
     <string>Envello uses the microphone for voice input and speech recognition.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Envello uses speech recognition to convert your voice into text while dictating notes and tasks.</string>
 </dict>
 </plist>

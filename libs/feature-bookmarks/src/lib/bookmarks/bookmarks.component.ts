@@ -234,7 +234,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   folderTree = computed(() => this.store.bookmarkFolders());
 
-  bookmarkCountByFolder = computed<Record<string, number>>(() => {
+  bookmarkCountByFolder = computed<Partial<Record<string, number>>>(() => {
     const counts: Record<string, number> = {};
     for (const b of this.store.bookmarks()) {
       if (b.folderId && !b.isArchived) counts[b.folderId] = (counts[b.folderId] ?? 0) + 1;
