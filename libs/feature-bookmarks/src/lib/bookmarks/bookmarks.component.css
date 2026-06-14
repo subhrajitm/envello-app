@@ -810,7 +810,16 @@
 }
 .bma-input:focus, .bma-select:focus, .bma-textarea:focus { border-color: var(--accent-primary); }
 .bma-input::placeholder, .bma-textarea::placeholder { color: var(--text-tertiary); }
-.bma-select { cursor: pointer; }
+.bma-select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  /* Custom chevron — replaces the native arrow lost by resetting appearance */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%239ca3af' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
 .bma-colors {
   display: flex;
   gap: 5px;
