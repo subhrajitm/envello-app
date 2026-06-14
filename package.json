@@ -13,7 +13,8 @@
     "start:web": "nx serve web",
     "build:web": "nx build web",
     "test:web": "nx test web",
-    "generate:context": "npx ts-node -O '{\"module\":\"commonjs\"}' tools/scripts/generate-ai-context.ts"
+    "generate:context": "npx ts-node -O '{\"module\":\"commonjs\"}' tools/scripts/generate-ai-context.ts",
+    "dev:mac": "bash scripts/dev-mac.sh"
   },
   "private": true,
   "dependencies": {
