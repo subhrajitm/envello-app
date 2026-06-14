@@ -335,6 +335,17 @@ export class StoreService {
         this.db.upsert('bookmark_folders', folder).catch(e => console.error('[StoreService] persist bookmark_folder failed', e));
     }
 
+    batchUpdateBookmarks(updates: Array<{ id: string; data: Partial<Bookmark> }>) {
+        if (!updates.length) return;
+        const patchMap = new Map(updates.map(u => [u.id, u.data]));
+        this.bookmarks.update(list =>
+            list.map(b => { const p = patchMap.get(b.id); return p ? { ...b, ...p } : b; })
+        );
+        const updated = this.bookmarks().filter(b => patchMap.has(b.id));
+        Promise.all(updated.map(b => this.db.upsert('bookmarks', b)))
+            .catch(e => console.error('[StoreService] batchUpdateBookmarks failed', e));
+    }
+
     deleteBookmarkFolder(id: string) {
         this.bookmarkFolders.update(list => list.filter(f => f.id !== id));
         this.bookmarks.update(list => list.map(b => b.folderId === id ? { ...b, folderId: undefined } : b));

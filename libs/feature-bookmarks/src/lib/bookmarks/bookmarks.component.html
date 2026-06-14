@@ -127,6 +127,17 @@
 
         <div class="bm-tb-divider"></div>
 
+        <!-- Auto-organise -->
+        <button
+          class="bm-ai-btn"
+          [class.loading]="autoOrganiseLoading()"
+          (click)="triggerAutoOrganise()"
+          title="Auto-organise with AI"
+        >
+          <span class="material-symbols-outlined" [class.bm-spin]="autoOrganiseLoading()">auto_fix_high</span>
+          <span>Organise</span>
+        </button>
+
         <!-- AI toggle -->
         <button
           class="bm-ai-btn"
@@ -286,16 +297,26 @@
         type="url"
         placeholder="Paste or type a URL…"
         [value]="addUrl()"
-        (input)="addUrl.set($any($event.target).value)"
+        (input)="onAddUrlInput($any($event.target).value)"
         (blur)="onAddUrlBlur()"
         autofocus
       />
       @if (addUrl()) {
-        <button class="bma-url-clear" (click)="addUrl.set('')" title="Clear">
+        <button class="bma-url-clear" (click)="addUrl.set(''); duplicateBookmark.set(null)" title="Clear">
           <span class="material-symbols-outlined">close</span>
         </button>
       }
     </div>
+
+    @if (duplicateBookmark()) {
+      <div class="bma-duplicate-warn">
+        <span class="material-symbols-outlined">info</span>
+        <span>Already saved as <strong>{{ duplicateBookmark()!.title }}</strong></span>
+        <button class="bma-duplicate-open" (click)="openBookmark(duplicateBookmark()!); closeAddModal()">
+          Open existing
+        </button>
+      </div>
+    }
 
     <div class="bma-body">
       <div class="bma-field">
@@ -559,6 +580,100 @@
     <strong>{{ deletingFolderName }}</strong> will be permanently deleted. Bookmarks inside will not be deleted but will become unorganised.
 </env-confirm-dialog>
 }
+
+<!-- ═══ AUTO-ORGANISE SLIDER ═══ -->
+<env-slider-panel [isOpen]="showAutoOrganiseModal()" (closed)="showAutoOrganiseModal.set(false)" width="580px">
+  <div class="bma-slider-inner">
+
+    <div class="bma-header">
+      <div class="bma-header-left">
+        <span class="material-symbols-outlined bma-header-icon">auto_fix_high</span>
+        <h2 class="bma-header-title">Auto-Organise</h2>
+      </div>
+      <div class="bma-header-right">
+        <button class="bma-close-btn" (click)="showAutoOrganiseModal.set(false)" title="Close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (autoOrganiseLoading()) {
+      <div class="bm-ao-loading">
+        <span class="material-symbols-outlined bm-spin">auto_awesome</span>
+        <p class="bm-ao-loading-text">Analysing your bookmarks…</p>
+        <p class="bm-ao-loading-sub">This may take a few seconds</p>
+      </div>
+    }
+
+    <!-- Error -->
+    @else if (autoOrganiseError()) {
+      <div class="bm-ao-error">
+        <span class="material-symbols-outlined">error_outline</span>
+        <div>
+          <p class="bm-ao-error-text">{{ autoOrganiseError() }}</p>
+          <button class="bm-ao-retry" (click)="triggerAutoOrganise()">Try again</button>
+        </div>
+      </div>
+    }
+
+    <!-- Preview -->
+    @else if (autoOrganisePlan()) {
+      <p class="bm-ao-summary">
+        AI suggests <strong>{{ autoOrganisePlanDetail().length }} folder{{ autoOrganisePlanDetail().length !== 1 ? 's' : '' }}</strong>
+        covering <strong>{{ autoOrganisePlan()!.assignments.length }}</strong> bookmarks.
+      </p>
+
+      <div class="bm-ao-body">
+        @for (group of autoOrganisePlanDetail(); track group.folder.name) {
+          <div class="bm-ao-group">
+            <div class="bm-ao-group-hdr">
+              <span class="material-symbols-outlined" [style.color]="group.folder.color">{{ group.folder.icon }}</span>
+              <span class="bm-ao-group-name">{{ group.folder.name }}</span>
+              <span class="bm-ao-group-count">{{ group.bookmarks.length }}</span>
+              @if (isNewFolder(group.folder.name)) {
+                <span class="bm-ao-new-badge">New</span>
+              }
+            </div>
+            <div class="bm-ao-group-items">
+              @for (bm of group.bookmarks.slice(0, 4); track bm.id) {
+                <div class="bm-ao-item">
+                  <img class="bm-fav" [src]="getFaviconUrl(bm.url)" [alt]="getDomain(bm.url)"
+                    (error)="$any($event.target).style.visibility='hidden'" />
+                  <span class="bm-ao-item-title">{{ bm.title }}</span>
+                  <span class="bm-ao-item-domain">{{ getDomain(bm.url) }}</span>
+                </div>
+              }
+              @if (group.bookmarks.length > 4) {
+                <p class="bm-ao-more">+{{ group.bookmarks.length - 4 }} more</p>
+              }
+            </div>
+          </div>
+        }
+
+        @if (autoOrganiseUnassignedCount() > 0) {
+          <p class="bm-ao-unassigned">
+            <span class="material-symbols-outlined">info</span>
+            {{ autoOrganiseUnassignedCount() }} bookmark{{ autoOrganiseUnassignedCount() !== 1 ? 's' : '' }} will stay unorganised
+          </p>
+        }
+      </div>
+
+      <div class="bma-footer">
+        <div class="bma-footer-hints">
+          <span class="bma-shortcut-hint">Review and apply the suggested structure</span>
+        </div>
+        <div class="bma-footer-actions">
+          <button class="bma-btn-cancel" (click)="showAutoOrganiseModal.set(false)">Cancel</button>
+          <button class="bma-btn-save" (click)="applyAutoOrganise()">
+            Apply Organisation
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+</env-slider-panel>
 
 <!-- ═══ KEYBOARD SHORTCUTS ═══ -->
 @if (showShortcutsHelp()) {

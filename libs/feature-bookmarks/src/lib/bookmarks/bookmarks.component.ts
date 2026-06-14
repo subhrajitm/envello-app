@@ -9,6 +9,10 @@ type BookmarkView = 'all' | 'pinned' | 'archived' | 'recent';
 type ViewMode = 'table' | 'grid';
 type SortBy = 'createdAt' | 'title' | 'lastVisited' | 'visitCount';
 
+interface AoFolder { name: string; icon: string; color: string; }
+interface AoAssignment { bookmarkId: string; folderName: string; }
+interface AoPlan { folders: AoFolder[]; assignments: AoAssignment[]; }
+
 @Component({
   selector: 'app-bookmarks',
   standalone: true,
@@ -43,6 +47,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   addTags = signal<string[]>([]);
   addFolderId = signal<string>('');
   addColor = signal<string>('');
+  duplicateBookmark = signal<Bookmark | null>(null);
 
   // ── Edit Bookmark modal ──────────────────────────────────────────────────────
   showEditModal = signal<boolean>(false);
@@ -76,6 +81,12 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   // ── Keyboard shortcuts help ──────────────────────────────────────────────────
   showShortcutsHelp = signal<boolean>(false);
+
+  // ── Auto-organise ─────────────────────────────────────────────────────────────
+  showAutoOrganiseModal = signal(false);
+  autoOrganiseLoading = signal(false);
+  autoOrganisePlan = signal<AoPlan | null>(null);
+  autoOrganiseError = signal('');
 
   // ── AI Assistant panel ───────────────────────────────────────────────────────
   showAssistant = signal<boolean>(false);
@@ -198,6 +209,25 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     return counts;
   });
 
+  autoOrganisePlanDetail = computed(() => {
+    const plan = this.autoOrganisePlan();
+    if (!plan) return [];
+    return plan.folders.map(folder => ({
+      folder,
+      bookmarks: plan.assignments
+        .filter(a => a.folderName === folder.name)
+        .map(a => this.store.bookmarks().find(b => b.id === a.bookmarkId))
+        .filter((b): b is Bookmark => !!b),
+    })).filter(g => g.bookmarks.length > 0);
+  });
+
+  autoOrganiseUnassignedCount = computed(() => {
+    const plan = this.autoOrganisePlan();
+    if (!plan) return 0;
+    const assigned = new Set(plan.assignments.map(a => a.bookmarkId));
+    return this.store.bookmarks().filter(b => !b.isArchived && !assigned.has(b.id)).length;
+  });
+
   readonly tableColumns: EnvTableColumn[] = [
     { key: 'title', header: 'Name', type: 'avatar-text', sortable: true },
     { key: 'domain', header: 'Domain' },
@@ -287,22 +317,44 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.addTags.set([]);
     this.addFolderId.set('');
     this.addColor.set('');
+    this.duplicateBookmark.set(null);
     this.showAddModal.set(true);
   }
 
-  closeAddModal() { this.showAddModal.set(false); }
+  closeAddModal() {
+    this.showAddModal.set(false);
+    this.duplicateBookmark.set(null);
+  }
   closeEditModal() { this.showEditModal.set(false); }
   closeAddFolderModal() { this.showAddFolderModal.set(false); }
 
+  onAddUrlInput(value: string) {
+    this.addUrl.set(value);
+    if (this.duplicateBookmark()) this.duplicateBookmark.set(null);
+  }
+
   onAddUrlBlur() {
-    const url = this.addUrl().trim();
-    if (url && !this.addTitle()) {
+    const raw = this.addUrl().trim();
+    if (!raw) return;
+
+    if (!this.addTitle()) {
       try {
-        const hostname = new URL(url).hostname.replace('www.', '');
-        this.addTitle.set(hostname);
-      } catch {
-        // ignore invalid URL
-      }
+        this.addTitle.set(new URL(raw).hostname.replace('www.', ''));
+      } catch { /* ignore */ }
+    }
+
+    // Duplicate check — normalise URL before comparing
+    const normalised = this.normaliseUrl(raw);
+    const existing = this.store.bookmarks().find(b => !b.isArchived && this.normaliseUrl(b.url) === normalised);
+    this.duplicateBookmark.set(existing ?? null);
+  }
+
+  private normaliseUrl(url: string): string {
+    try {
+      const u = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`);
+      return (u.origin + u.pathname).replace(/\/$/, '').toLowerCase();
+    } catch {
+      return url.toLowerCase().trim();
     }
   }
 
@@ -561,6 +613,10 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     return this.store.bookmarkFolders().find(f => f.id === folderId)?.name ?? '';
   }
 
+  isNewFolder(name: string): boolean {
+    return !this.store.bookmarkFolders().some(f => f.name.toLowerCase() === name.toLowerCase());
+  }
+
   toggleSortAsc() { this.sortAsc.set(!this.sortAsc()); }
 
   setSortBy(col: SortBy) {
@@ -737,6 +793,83 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     this.showDeleteConfirm.set(false);
     this.showDeleteFolderConfirm.set(false);
     this.showShortcutsHelp.set(false);
+    this.showAutoOrganiseModal.set(false);
+  }
+
+  // ── Auto-organise ─────────────────────────────────────────────────────────────
+  async triggerAutoOrganise() {
+    // Only send unorganised bookmarks — already-foldered ones don't need re-sorting
+    const bookmarks = this.store.bookmarks().filter(b => !b.isArchived && !b.folderId);
+    if (!bookmarks.length) return;
+
+    this.autoOrganiseLoading.set(true);
+    this.autoOrganiseError.set('');
+    this.autoOrganisePlan.set(null);
+    this.showAutoOrganiseModal.set(true);
+
+    try {
+      // Compact format: id | trimmed title | domain | tags — reduces token count
+      const list = bookmarks.slice(0, 60).map(b => {
+        const title = b.title.slice(0, 60);
+        const domain = this.getDomain(b.url);
+        const tags = b.tags?.length ? ` #${b.tags.slice(0, 3).join(' #')}` : '';
+        return `${b.id}|${title}|${domain}${tags}`;
+      }).join('\n');
+
+      const context = 'You are a bookmark organiser. Output ONLY valid JSON, no markdown or explanation.';
+      const prompt = `Group these bookmarks into 3–7 folders. Each row: id|title|domain[#tags]
+
+${list}
+
+JSON:{"folders":[{"name":"","icon":"","color":""}],"assignments":[{"bookmarkId":"","folderName":""}]}
+Icons:folder work school code favorite star rocket_launch science sports_esports travel_explore
+Colors:#6366f1 #8b5cf6 #ec4899 #ef4444 #f97316 #eab308 #22c55e #14b8a6 #3b82f6 #64748b
+Rules:1-2 word names, min 2 per folder, skip ambiguous`;
+
+      const raw = await this.aiService.sendMessage(prompt, context);
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('No JSON in response');
+      const plan: AoPlan = JSON.parse(match[0]);
+      this.autoOrganisePlan.set(plan);
+    } catch {
+      this.autoOrganiseError.set('Could not generate a plan. Check your AI settings and try again.');
+    } finally {
+      this.autoOrganiseLoading.set(false);
+    }
+  }
+
+  applyAutoOrganise() {
+    const plan = this.autoOrganisePlan();
+    if (!plan) return;
+
+    const existingByName = new Map(this.store.bookmarkFolders().map(f => [f.name.toLowerCase(), f.id]));
+    const nameToId = new Map<string, string>(existingByName);
+
+    // Create new folders (skip duplicates)
+    for (const f of plan.folders) {
+      const key = f.name.toLowerCase();
+      if (!existingByName.has(key)) {
+        const folder: BookmarkFolder = {
+          id: crypto.randomUUID(),
+          name: f.name,
+          icon: f.icon || 'folder',
+          color: f.color || undefined,
+          createdAt: new Date().toISOString(),
+        };
+        this.store.addBookmarkFolder(folder);
+        nameToId.set(key, folder.id);
+      }
+    }
+
+    // One signal pass + concurrent DB writes instead of N individual updates
+    const updates = plan.assignments
+      .map(a => ({ id: a.bookmarkId, data: { folderId: nameToId.get(a.folderName.toLowerCase()) } }))
+      .filter((u): u is { id: string; data: { folderId: string } } => !!u.data.folderId);
+    this.store.batchUpdateBookmarks(updates);
+
+    this.showAutoOrganiseModal.set(false);
+    this.autoOrganisePlan.set(null);
+    this.selectedView.set('all');
   }
 
   // Predefined colors for bookmark accent
