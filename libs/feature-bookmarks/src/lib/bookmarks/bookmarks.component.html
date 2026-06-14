@@ -21,7 +21,12 @@
         <p class="bm-sb-empty">No folders yet</p>
       }
       @for (folder of folderTree(); track folder.id) {
-        <div class="bm-sb-folder" [class.active]="selectedFolderId() === folder.id">
+        <div
+          class="bm-sb-folder"
+          [class.active]="selectedFolderId() === folder.id"
+          [class.drag-over]="dragOverFolderId() === folder.id"
+          [attr.data-folder-id]="folder.id"
+        >
           <button
             class="bm-sb-folder-btn"
             (click)="selectedView.set('all'); selectedFolderId.set(folder.id)"
@@ -164,11 +169,15 @@
             [showToolbar]="false"
             [showSortFilter]="false"
             [showSearch]="false"
+            [rowsDraggable]="folderTree().length > 0"
             rowIdKey="id"
             (rowClick)="openBookmark($event['bookmark'])"
             (actionClick)="handleTableAction($event)"
             (bulkActionClick)="handleBulkAction($event)"
             (sortChange)="handleTableSort($event)"
+            (rowDragStart)="onRowDragStart($event)"
+            (rowDragMoved)="onRowDragMoved($event)"
+            (rowDragEnd)="onRowDragEnd($event)"
           ></env-table>
         }
       </div>

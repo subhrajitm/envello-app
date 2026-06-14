@@ -28,6 +28,30 @@
   min-height: 0;
 }
 
+.env-table-row--draggable { cursor: grab; }
+.env-table-row--draggable:active { cursor: grabbing; }
+
+/* CDK drag preview chip */
+.env-drag-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-panel, #fff);
+  border: 1px solid var(--accent-primary, #6366f1);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-primary, #6366f1);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.env-drag-preview .material-symbols-outlined { font-size: 16px; }
+
+/* Suppress the default CDK placeholder row */
+.cdk-drag-placeholder { opacity: 0.3; }
+
 .env-table {
   width: 100%;
   border-collapse: collapse;

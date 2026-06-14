@@ -80,6 +80,11 @@
 }
 .bm-sb-folder:hover { background: var(--bg-hover); }
 .bm-sb-folder.active { background: var(--bg-active); }
+.bm-sb-folder.drag-over {
+  background: var(--accent-primary-dim);
+  outline: 1.5px dashed var(--accent-primary);
+  outline-offset: -1px;
+}
 .bm-sb-folder-btn {
   display: flex;
   align-items: center;

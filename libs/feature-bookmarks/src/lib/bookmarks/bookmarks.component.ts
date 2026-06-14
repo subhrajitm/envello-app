@@ -70,6 +70,10 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   showDeleteFolderConfirm = signal<boolean>(false);
   deletingFolderId = signal<string>('');
 
+  // ── Drag-to-folder state ──────────────────────────────────────────────────────
+  draggingBookmarkIds = signal<string[]>([]);
+  dragOverFolderId = signal<string>('');
+
   // ── Keyboard shortcuts help ──────────────────────────────────────────────────
   showShortcutsHelp = signal<boolean>(false);
 
@@ -618,6 +622,35 @@ export class BookmarksComponent implements OnInit, OnDestroy {
     const sortKey = event.key as SortBy;
     this.sortBy.set(sortKey);
     this.sortAsc.set(event.direction === 'asc');
+  }
+
+  // ── Drag-to-folder ────────────────────────────────────────────────────────────
+  onRowDragStart(rows: Record<string, unknown>[]) {
+    const ids = rows
+      .map(r => (r['bookmark'] as Bookmark | undefined)?.id)
+      .filter((id): id is string => !!id);
+    this.draggingBookmarkIds.set(ids);
+  }
+
+  onRowDragMoved(point: { x: number; y: number }) {
+    const el = document.elementFromPoint(point.x, point.y);
+    const folderId = el?.closest('[data-folder-id]')?.getAttribute('data-folder-id') ?? '';
+    if (folderId !== this.dragOverFolderId()) this.dragOverFolderId.set(folderId);
+  }
+
+  onRowDragEnd(point: { x: number; y: number }) {
+    const ids = this.draggingBookmarkIds();
+    if (ids.length > 0) {
+      const el = document.elementFromPoint(point.x, point.y);
+      const folderId = el?.closest('[data-folder-id]')?.getAttribute('data-folder-id') ?? '';
+      if (folderId) {
+        ids.forEach(id => this.store.updateBookmark(id, { folderId }));
+        this.selectedView.set('all');
+        this.selectedFolderId.set(folderId);
+      }
+    }
+    this.draggingBookmarkIds.set([]);
+    this.dragOverFolderId.set('');
   }
 
   trackById(_: number, item: Bookmark) { return item.id; }
