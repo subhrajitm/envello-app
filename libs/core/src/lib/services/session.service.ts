@@ -33,7 +33,6 @@ const PAGE_MAP: Record<string, string> = {
   'spaces':       'Spaces',
   'activity-log': 'Activity Log',
   'bin':               'Bin',
-  'developer-settings':'Developer Settings',
 };
 
 @Injectable({

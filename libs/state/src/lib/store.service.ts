@@ -29,11 +29,18 @@ export class StoreService {
     private workerCallbacks = new Map<string, (md: string) => void>();
     private saveTimeouts: { [id: string]: any } = {};
 
+    private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
+
     constructor() {
         this.loadFromDb();
         this.initMarkdownWorker();
         // Re-load after Supabase sync (web) or after SQLite DB becomes ready (desktop).
-        window.addEventListener('envello:sync-complete', () => this.loadFromDb());
+        // Debounce so rapid-fire realtime events (e.g. N bookmark upserts from a folder
+        // deletion) collapse into a single loadFromDb() call instead of N full reloads.
+        window.addEventListener('envello:sync-complete', () => {
+            clearTimeout(this._syncDebounceTimer);
+            this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
+        });
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
     }
 

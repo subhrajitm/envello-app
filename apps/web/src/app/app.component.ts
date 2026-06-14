@@ -135,7 +135,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       'bin': 'Bin',
       'activity-log': 'Activity Log',
       'settings': 'Settings',
-      'developer-settings': 'Developer Settings'
     };
     return map[url] || 'Workspace';
   }

@@ -80,12 +80,6 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'developer-settings',
-    loadComponent: () => import('./components/developer-settings/developer-settings.component').then(m => m.DeveloperSettingsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
     path: 'bookmarks',
     loadComponent: () => import('@envello/feature-bookmarks').then(m => m.BookmarksComponent),
     canActivate: [authGuard],

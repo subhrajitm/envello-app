@@ -101,11 +101,6 @@ export class ProfileMenuComponent {
     this.router.navigate(['/activity-log']);
   }
 
-  openDeveloperSettings() {
-    this.close();
-    this.router.navigate(['/developer-settings']);
-  }
-
   openHelp() {
     this.close();
   }
