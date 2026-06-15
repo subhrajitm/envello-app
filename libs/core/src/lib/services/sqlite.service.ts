@@ -245,20 +245,8 @@ export class SqliteService {
       )
     `);
 
-        // Bin Items
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS bin_items (
-        id TEXT PRIMARY KEY,
-        type TEXT,
-        originalId TEXT,
-        contextId TEXT,
-        title TEXT,
-        deletedAt TEXT,
-        payload TEXT
-      )
-    `);
-
-
+        // bin_items is legacy — items now soft-deleted via deleted_at on original collections
+        await db.execute('DROP TABLE IF EXISTS bin_items').catch(() => {});
 
         // Meetings
         await db.execute(`
@@ -439,28 +427,18 @@ export class SqliteService {
         notes TEXT
       )
     `);
-        // Keep legacy subscriptions table for migration reads only
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS subscriptions (
-        id TEXT PRIMARY KEY, name TEXT, category TEXT, price REAL,
-        billingCycle TEXT, renewalDate TEXT, ownerId TEXT, projectId TEXT,
-        notes TEXT, status TEXT, currency TEXT
-      )
-    `);
-        // One-time migration: copy subscriptions → transactions, then clear the source
+        // One-time migration: copy subscriptions → transactions, then drop the legacy table
         try {
             const legacy = await db.select<any[]>('SELECT * FROM subscriptions');
-            if (legacy.length > 0) {
-                for (const r of legacy) {
-                    await db.execute(
-                        `INSERT OR IGNORE INTO transactions (id, name, type, category, amount, currency, date, billingCycle, status, ownerId, projectId, notes)
-                         VALUES ($1,$2,'recurring',$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-                        [r.id, r.name, r.category, r.price ?? 0, r.currency ?? 'USD', r.renewalDate ?? '', r.billingCycle ?? 'monthly', r.status ?? 'active', r.ownerId ?? null, r.projectId ?? null, r.notes ?? null]
-                    );
-                }
-                await db.execute('DELETE FROM subscriptions');
+            for (const r of legacy) {
+                await db.execute(
+                    `INSERT OR IGNORE INTO transactions (id, name, type, category, amount, currency, date, billingCycle, status, ownerId, projectId, notes)
+                     VALUES ($1,$2,'recurring',$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                    [r.id, r.name, r.category, r.price ?? 0, r.currency ?? 'USD', r.renewalDate ?? '', r.billingCycle ?? 'monthly', r.status ?? 'active', r.ownerId ?? null, r.projectId ?? null, r.notes ?? null]
+                );
             }
-        } catch { /* migration already done or table empty */ }
+            await db.execute('DROP TABLE IF EXISTS subscriptions');
+        } catch { /* table already gone on fresh installs */ }
 
         // Credential Transaction Links (replaces credential_subscription_links)
         await db.execute(`
@@ -470,24 +448,17 @@ export class SqliteService {
         transactionId TEXT
       )
     `);
-        // One-time migration from old link table
-        await db.execute(`
-      CREATE TABLE IF NOT EXISTS credential_subscription_links (
-        id TEXT PRIMARY KEY, credentialId TEXT, subscriptionId TEXT
-      )
-    `);
+        // One-time migration from old link table, then drop it
         try {
             const legacyLinks = await db.select<any[]>('SELECT * FROM credential_subscription_links');
-            if (legacyLinks.length > 0) {
-                for (const r of legacyLinks) {
-                    await db.execute(
-                        'INSERT OR IGNORE INTO credential_transaction_links (id, credentialId, transactionId) VALUES ($1, $2, $3)',
-                        [r.id, r.credentialId, r.subscriptionId]
-                    );
-                }
-                await db.execute('DELETE FROM credential_subscription_links');
+            for (const r of legacyLinks) {
+                await db.execute(
+                    'INSERT OR IGNORE INTO credential_transaction_links (id, credentialId, transactionId) VALUES ($1, $2, $3)',
+                    [r.id, r.credentialId, r.subscriptionId]
+                );
             }
-        } catch { /* already migrated */ }
+            await db.execute('DROP TABLE IF EXISTS credential_subscription_links');
+        } catch { /* table already gone on fresh installs */ }
 
         // Note Folders
         await db.execute(`
