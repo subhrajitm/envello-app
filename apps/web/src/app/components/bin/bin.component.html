@@ -28,9 +28,8 @@
             <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">ALL</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">TASKS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">NOTES</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'book'" (click)="setFilter('book')">BOOKS</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'write'" (click)="setFilter('write')">WRITE</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">MEETINGS</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'book-chapter'" (click)="setFilter('book-chapter')">CHAPTERS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'bookmark'" (click)="setFilter('bookmark')">BOOKMARKS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'transaction'" (click)="setFilter('transaction')">TRANSACTIONS</button>
             <button class="filter-pill" [class.active]="activeFilter() === 'credential'" (click)="setFilter('credential')">VAULT</button>
@@ -71,34 +70,34 @@
                         </div>
                     </div>
                     <div class="col-item">
-                        <div class="bin-item-title">{{ item.title || item.originalId }}</div>
+                        <div class="bin-item-title">{{ item.title || item.id }}</div>
                         <div class="bin-item-meta">
                             <span class="type-badge type-{{ item.type }}">{{ formatType(item.type) }}</span>
                             <span class="meta-sep">•</span>
-                            <span class="meta-id">ID: {{ item.originalId | slice:0:8 }}</span>
+                            <span class="meta-id">ID: {{ item.id | slice:0:8 }}</span>
                         </div>
                     </div>
                     <div class="col-time">
-                        <div class="time-primary">{{ formatRelativeTime(item.deletedAt) }}</div>
-                        <div class="time-secondary">{{ item.deletedAt | date:'mediumDate' }}</div>
+                        <div class="time-primary">{{ formatRelativeTime(item.deleted_at) }}</div>
+                        <div class="time-secondary">{{ item.deleted_at | date:'mediumDate' }}</div>
                     </div>
                     <div class="col-scope">
-                        <div class="scope-label">CONTEXT</div>
-                        <div class="scope-value">{{ item.contextId || 'Global' }}</div>
+                        <div class="scope-label">TYPE</div>
+                        <div class="scope-value">{{ formatType(item.type) }}</div>
                     </div>
                     <div class="col-actions" (click)="$event.stopPropagation()">
                         @if (canRestore(item.type)) {
                         <button class="action-btn restore-btn"
                                 [class.loading]="restoringId() === item.id"
                                 [disabled]="restoringId() === item.id"
-                                (click)="openRestoreConfirm(item.id, item.title || item.originalId)"
+                                (click)="openRestoreConfirm(item.id, item.title || item.id)"
                                 title="Restore item">
                             <span class="material-symbols-outlined">restore_from_trash</span>
                             {{ restoringId() === item.id ? '...' : 'RESTORE' }}
                         </button>
                         }
                         <button class="action-btn delete-btn"
-                                (click)="openDeleteConfirm(item.id, item.title || item.originalId)"
+                                (click)="openDeleteConfirm(item.id, item.title || item.id)"
                                 title="Delete permanently">
                             <span class="material-symbols-outlined">delete_forever</span>
                         </button>
@@ -115,11 +114,11 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">ORIGINAL ID</span>
-                            <span class="detail-value">{{ item.originalId }}</span>
+                            <span class="detail-value">{{ item.id }}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">DELETED AT</span>
-                            <span class="detail-value">{{ item.deletedAt | date:'medium' }}</span>
+                            <span class="detail-value">{{ item.deleted_at | date:'medium' }}</span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">RESTORABLE</span>

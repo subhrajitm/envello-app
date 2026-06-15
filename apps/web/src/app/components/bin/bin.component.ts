@@ -1,11 +1,11 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { BinService, BinItem } from '@envello/core';
-import type { BinItemType } from '@envello/core';
+import { BinService } from '@envello/core';
+import type { BinEntry, BinEntryType } from '@envello/domain';
 import { ConfirmDialogComponent } from '@envello/ui';
 
-type FilterType = 'ALL' | BinItemType;
+type FilterType = 'ALL' | BinEntryType;
 
 interface ConfirmDialog {
   mode: 'restore' | 'delete' | 'empty';
@@ -33,7 +33,7 @@ export class BinComponent {
 
   allItems = computed(() =>
     [...this.binService.items()].sort(
-      (a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()
+      (a, b) => new Date(b.deleted_at).getTime() - new Date(a.deleted_at).getTime()
     )
   );
 
@@ -48,7 +48,7 @@ export class BinComponent {
     if (query) {
       list = list.filter(i =>
         (i.title ?? '').toLowerCase().includes(query) ||
-        i.originalId.toLowerCase().includes(query) ||
+        i.id.toLowerCase().includes(query) ||
         i.type.toLowerCase().includes(query)
       );
     }
@@ -57,7 +57,7 @@ export class BinComponent {
 
   totalCount = computed(() => this.allItems().length);
   visibleCount = computed(() => this.filteredItems().length);
-  restorableCount = computed(() => this.allItems().filter(i => this.binService.canRestore(i.type)).length);
+  restorableCount = computed(() => this.allItems().length);
   oldestItem = computed(() => {
     const items = this.allItems();
     if (!items.length) return null;
@@ -120,20 +120,15 @@ export class BinComponent {
     this.openEmptyConfirm();
   }
 
-  canRestore(type: BinItemType): boolean {
-    return this.binService.canRestore(type);
+  canRestore(_type: BinEntryType): boolean {
+    return true;
   }
 
-  getIconForType(type: BinItemType): string {
+  getIconForType(type: BinEntryType): string {
     switch (type) {
       case 'task': return 'task_alt';
       case 'daily-note': return 'edit_note';
-      case 'book': return 'menu_book';
-      case 'book-chapter': return 'article';
-      case 'book-note': return 'sticky_note_2';
-      case 'book-character': return 'person';
-      case 'book-location': return 'location_on';
-      case 'book-group': return 'folder';
+      case 'write': return 'edit';
       case 'meeting': return 'groups';
       case 'bookmark': return 'bookmark';
       case 'credential': return 'lock';
@@ -142,15 +137,10 @@ export class BinComponent {
     }
   }
 
-  formatType(type: BinItemType): string {
+  formatType(type: BinEntryType): string {
     switch (type) {
       case 'daily-note': return 'Daily Note';
-      case 'book': return 'Book';
-      case 'book-chapter': return 'Chapter';
-      case 'book-note': return 'Book Note';
-      case 'book-character': return 'Character';
-      case 'book-location': return 'Location';
-      case 'book-group': return 'Group';
+      case 'write': return 'Write';
       case 'task': return 'Task';
       case 'meeting': return 'Meeting';
       case 'bookmark': return 'Bookmark';
@@ -172,7 +162,7 @@ export class BinComponent {
     return new Date(iso).toLocaleDateString();
   }
 
-  payloadPreview(item: BinItem): { label: string; value: string }[] {
+  payloadPreview(item: BinEntry): { label: string; value: string }[] {
     const p: any = item.payload;
     if (!p || typeof p !== 'object') return [];
     const fields: { label: string; value: string }[] = [];

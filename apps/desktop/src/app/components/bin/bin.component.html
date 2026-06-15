@@ -19,9 +19,8 @@
                 <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">Tasks</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">Notes</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'book'" (click)="setFilter('book')">Books</button>
+                <button class="filter-pill" [class.active]="activeFilter() === 'write'" (click)="setFilter('write')">Write</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">Meetings</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'book-chapter'" (click)="setFilter('book-chapter')">Chapters</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'bookmark'" (click)="setFilter('bookmark')">Bookmarks</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'transaction'" (click)="setFilter('transaction')">Transactions</button>
                 <button class="filter-pill" [class.active]="activeFilter() === 'credential'" (click)="setFilter('credential')">Vault</button>
@@ -77,8 +76,8 @@
                                 <span class="material-symbols-outlined bin-icon">{{ getIconForType(item.type) }}</span>
                             </div>
                             <div class="item-text-wrap">
-                                <span class="item-title">{{ item.title || item.originalId }}</span>
-                                <span class="item-id">ID: {{ item.originalId | slice:0:12 }}...</span>
+                                <span class="item-title">{{ item.title || item.id }}</span>
+                                <span class="item-id">ID: {{ item.id | slice:0:12 }}...</span>
                             </div>
                         </div>
                     </div>
@@ -86,8 +85,8 @@
                     <!-- Date -->
                     <div class="col-date">
                         <div class="date-cell">
-                            <span class="date-primary">{{ formatDate(item.deletedAt) }}</span>
-                            <span class="date-sub">{{ formatTime(item.deletedAt) }}</span>
+                            <span class="date-primary">{{ formatDate(item.deleted_at) }}</span>
+                            <span class="date-sub">{{ formatTime(item.deleted_at) }}</span>
                         </div>
                     </div>
 
@@ -97,12 +96,12 @@
                             <button class="action-btn restore-btn"
                                     [class.loading]="restoringId() === item.id"
                                     [disabled]="restoringId() === item.id"
-                                    (click)="openRestoreConfirm(item.id, item.title || item.originalId)">
+                                    (click)="openRestoreConfirm(item.id, item.title || item.id)">
                                 <span class="material-symbols-outlined" style="font-size: 14px;">restore</span>
                                 {{ restoringId() === item.id ? 'Restoring…' : 'Restore' }}
                             </button>
                         }
-                        <button class="action-btn delete-btn" (click)="openDeleteConfirm(item.id, item.title || item.originalId)">
+                        <button class="action-btn delete-btn" (click)="openDeleteConfirm(item.id, item.title || item.id)">
                             <span class="material-symbols-outlined" style="font-size: 14px;">delete_forever</span>
                         </button>
                     </div>
@@ -115,7 +114,7 @@
                     <div class="detail-kv-row">
                         <div class="detail-kv">
                             <span class="detail-key">Full ID</span>
-                            <span class="detail-val">{{ item.originalId }}</span>
+                            <span class="detail-val">{{ item.id }}</span>
                         </div>
                         <div class="detail-kv">
                             <span class="detail-key">Type</span>
@@ -123,7 +122,7 @@
                         </div>
                         <div class="detail-kv">
                             <span class="detail-key">Deleted At</span>
-                            <span class="detail-val">{{ item.deletedAt }}</span>
+                            <span class="detail-val">{{ item.deleted_at }}</span>
                         </div>
                         <div class="detail-kv">
                             <span class="detail-key">Restorable</span>

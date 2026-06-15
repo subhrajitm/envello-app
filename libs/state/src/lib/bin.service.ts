@@ -1,65 +1,104 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { DataService } from '@envello/data';
-import { BinItem, BinItemType, Credential, Transaction } from '@envello/domain';
+import { BinEntry, BinEntryType } from '@envello/domain';
 
-const COLLECTION_MAP: Partial<Record<BinItemType, string>> = {
-    'task': 'tasks',
+const COLLECTION_MAP: Record<BinEntryType, string> = {
+    task: 'tasks',
     'daily-note': 'notes',
-    'book': 'books',
-    'meeting': 'meetings',
-    'bookmark': 'bookmarks',
+    write: 'books',
+    meeting: 'meetings',
+    bookmark: 'bookmarks',
+    credential: 'credentials',
+    transaction: 'transactions',
 };
 
-@Injectable({
-    providedIn: 'root'
-})
+const TITLE_FIELD: Partial<Record<BinEntryType, string>> = {
+    credential: 'name',
+    transaction: 'name',
+    bookmark: 'url',
+};
+
+@Injectable({ providedIn: 'root' })
 export class BinService {
-    readonly items = signal<BinItem[]>([]);
+    readonly items = signal<BinEntry[]>([]);
     private db = inject(DataService);
 
     constructor() {
         this.loadFromDb();
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
+        window.addEventListener('envello:sync-complete', () => this.loadFromDb());
     }
 
-    private async loadFromDb(): Promise<void> {
+    async loadFromDb(): Promise<void> {
         try {
-            const list = await this.db.getAll<BinItem>('bin_items');
-            this.items.set(list);
+            await this.migrateLegacyBinItems();
+
+            const [tasks, notes, books, meetings, bookmarks] = await Promise.all([
+                this.db.getAll<any>('tasks'),
+                this.db.getAll<any>('notes'),
+                this.db.getAll<any>('books'),
+                this.db.getAll<any>('meetings'),
+                this.db.getAll<any>('bookmarks'),
+            ]);
+
+            let credentials: any[] = [];
+            let transactions: any[] = [];
+            try { credentials = await this.db.getCredentials(); } catch { /* vault may not be ready */ }
+            try { transactions = await this.db.getTransactions(); } catch { /* */ }
+
+            const toEntries = (items: any[], type: BinEntryType): BinEntry[] =>
+                items
+                    .filter(i => !!i.deleted_at)
+                    .map(i => ({
+                        id: i.id,
+                        type,
+                        title: i[TITLE_FIELD[type] ?? 'title'] || i.id,
+                        deleted_at: i.deleted_at,
+                        payload: i,
+                    }));
+
+            this.items.set([
+                ...toEntries(tasks, 'task'),
+                ...toEntries(notes, 'daily-note'),
+                ...toEntries(books, 'write'),
+                ...toEntries(meetings, 'meeting'),
+                ...toEntries(bookmarks, 'bookmark'),
+                ...toEntries(credentials, 'credential'),
+                ...toEntries(transactions, 'transaction'),
+            ].sort((a, b) => b.deleted_at.localeCompare(a.deleted_at)));
         } catch (e) {
             console.error('[BinService] loadFromDb failed', e);
         }
     }
 
-    addToBin(item: Omit<BinItem, 'id' | 'deletedAt'>) {
-        const now = new Date().toISOString();
-        const binItem: BinItem = {
-            id: `bin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            deletedAt: now,
-            ...item
-        };
-        this.items.update(list => [binItem, ...list]);
-        this.db.upsert('bin_items', binItem).catch(e => console.error('[BinService] persist bin item failed', e));
+    /** One-time migration: move old bin_items records into their original collections. */
+    private async migrateLegacyBinItems(): Promise<void> {
+        try {
+            const legacy = await this.db.getAll<any>('bin_items');
+            if (!legacy.length) return;
+            for (const item of legacy) {
+                const collection = COLLECTION_MAP[item.type as BinEntryType];
+                if (collection && item.payload?.id) {
+                    await this.db.upsert(collection, { ...item.payload, deleted_at: item.deletedAt ?? new Date().toISOString() });
+                }
+                await this.db.remove('bin_items', item.id);
+            }
+        } catch { /* bin_items table may not exist on fresh installs */ }
     }
 
-    /** Restore a bin item back to its original collection, then remove it from the bin. */
-    async restore(binItemId: string): Promise<boolean> {
-        const item = this.items().find(i => i.id === binItemId);
-        if (!item) return false;
-
+    async restore(id: string): Promise<boolean> {
+        const entry = this.items().find(i => i.id === id);
+        if (!entry) return false;
         try {
-            const collection = COLLECTION_MAP[item.type];
-            if (collection) {
-                await this.db.upsert(collection, item.payload);
-            } else if (item.type === 'credential') {
-                await this.db.saveCredential(item.payload as Credential);
-            } else if (item.type === 'transaction') {
-                await this.db.saveTransaction(item.payload as Transaction);
+            const restored = { ...(entry.payload as any), deleted_at: null };
+            if (entry.type === 'credential') {
+                await this.db.saveCredential(restored);
+            } else if (entry.type === 'transaction') {
+                await this.db.saveTransaction(restored);
             } else {
-                return false;
+                await this.db.upsert(COLLECTION_MAP[entry.type], restored);
             }
-            this.permanentlyDelete(binItemId);
-            // Signal StoreService to reload so the restored item appears immediately.
+            this.items.update(list => list.filter(i => i.id !== id));
             window.dispatchEvent(new CustomEvent('envello:sync-complete'));
             return true;
         } catch (e) {
@@ -68,21 +107,20 @@ export class BinService {
         }
     }
 
-    /** Check if a bin item's type is restorable. */
-    canRestore(type: BinItemType): boolean {
-        return type in COLLECTION_MAP || type === 'credential' || type === 'transaction';
+    async permanentlyDelete(id: string): Promise<void> {
+        const entry = this.items().find(i => i.id === id);
+        if (!entry) return;
+        this.items.update(list => list.filter(i => i.id !== id));
+        await this.db.remove(COLLECTION_MAP[entry.type], id).catch(e =>
+            console.error('[BinService] permanentlyDelete failed', e)
+        );
     }
 
-    permanentlyDelete(binItemId: string) {
-        this.items.update(list => list.filter(i => i.id !== binItemId));
-        this.db.remove('bin_items', binItemId).catch(e => console.error('[BinService] remove bin item failed', e));
-    }
-
-    emptyBin() {
-        const items = this.items();
+    async emptyBin(): Promise<void> {
+        const entries = this.items();
         this.items.set([]);
-        items.forEach(item => {
-            this.db.remove('bin_items', item.id).catch(console.error);
-        });
+        await Promise.all(
+            entries.map(e => this.db.remove(COLLECTION_MAP[e.type], e.id).catch(console.error))
+        );
     }
 }

@@ -1,7 +1,6 @@
 import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, signal, inject } from '@angular/core';
 import { StoreService } from './store.service';
-import { BinService } from './bin.service';
 import { SqliteService } from './sqlite.service';
 import { DesktopBackupService } from './desktop-backup.service';
 import { DesktopSyncSettingsService } from './desktop-sync-settings.service';
@@ -118,7 +117,6 @@ const PERSIST_DEBOUNCE_MS = 500;
 export class BookContentService {
     activeBook = signal<BookContent | null>(null);
     store = inject(StoreService);
-    private bin = inject(BinService);
     private db = inject(SqliteService);
     private backup = inject(DesktopBackupService);
     private syncSettings = inject(DesktopSyncSettingsService);
@@ -419,16 +417,6 @@ export class BookContentService {
             }
 
             if (chapterToDelete) {
-                this.bin.addToBin({
-                    type: 'book-chapter',
-                    originalId: chapterToDelete.id,
-                    contextId: book.id,
-                    title: chapterToDelete.title,
-                    payload: {
-                        ...chapterToDelete,
-                        groupId: groupIdForChapter
-                    }
-                });
             }
 
             const newChapters = book.chapters.map(group => ({
@@ -546,26 +534,9 @@ export class BookContentService {
             if (groupToDelete) {
                 // Move all chapters in the group to bin
                 groupToDelete.children.forEach(chapter => {
-                    this.bin.addToBin({
-                        type: 'book-chapter',
-                        originalId: chapter.id,
-                        contextId: book.id,
-                        title: chapter.title,
-                        payload: {
-                            ...chapter,
-                            groupId: groupId
-                        }
-                    });
                 });
 
                 // Move the group itself to bin
-                this.bin.addToBin({
-                    type: 'book-group',
-                    originalId: groupToDelete.id,
-                    contextId: book.id,
-                    title: groupToDelete.title,
-                    payload: groupToDelete
-                });
             }
 
             const newChapters = book.chapters.filter(group => group.id !== groupId);
@@ -612,13 +583,6 @@ export class BookContentService {
 
             const noteToDelete = book.notes.find(note => note.id === noteId);
             if (noteToDelete) {
-                this.bin.addToBin({
-                    type: 'book-note',
-                    originalId: noteToDelete.id,
-                    contextId: book.id,
-                    title: noteToDelete.title,
-                    payload: noteToDelete
-                });
             }
 
             return { ...book, notes: book.notes.filter(note => note.id !== noteId) };
@@ -664,13 +628,6 @@ export class BookContentService {
 
             const characterToDelete = book.characters.find(char => char.id === characterId);
             if (characterToDelete) {
-                this.bin.addToBin({
-                    type: 'book-character',
-                    originalId: characterToDelete.id,
-                    contextId: book.id,
-                    title: characterToDelete.name,
-                    payload: characterToDelete
-                });
             }
 
             return {
@@ -738,13 +695,6 @@ export class BookContentService {
 
             const locationToDelete = book.locations.find(loc => loc.id === locationId);
             if (locationToDelete) {
-                this.bin.addToBin({
-                    type: 'book-location',
-                    originalId: locationToDelete.id,
-                    contextId: book.id,
-                    title: locationToDelete.name,
-                    payload: locationToDelete
-                });
             }
 
             return { ...book, locations: book.locations.filter(loc => loc.id !== locationId) };
@@ -823,13 +773,6 @@ export class BookContentService {
 
             const itemToDelete = book.frontMatter.find(item => item.id === itemId);
             if (itemToDelete) {
-                this.bin.addToBin({
-                    type: 'book-note', // Reuse note type for now
-                    originalId: itemToDelete.id,
-                    contextId: book.id,
-                    title: itemToDelete.title,
-                    payload: itemToDelete
-                });
             }
 
             this.store.addActivity('Deleted front matter item', 'system');
@@ -891,13 +834,6 @@ export class BookContentService {
         this.activeBook.update(book => {
             if (!book || !book.prologue) return null;
 
-            this.bin.addToBin({
-                type: 'book-note',
-                originalId: book.prologue.id,
-                contextId: book.id,
-                title: book.prologue.title,
-                payload: book.prologue
-            });
 
             this.store.addActivity('Deleted prologue', 'system');
             const { prologue, ...rest } = book;

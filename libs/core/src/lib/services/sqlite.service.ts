@@ -611,6 +611,7 @@ export class SqliteService {
     // ─── Tasks ─────────────────────────────────────────────────────────────────
     private async reloadTasks() {
         const db = await this.getDb();
+        await db.execute('ALTER TABLE tasks ADD COLUMN deleted_at TEXT').catch(() => {});
         const rows = await db.select<TaskDoc[]>('SELECT * FROM tasks');
         const parsed = rows.map((r: any) => this.parseRow<TaskDoc>(r, ['labels', 'reminders', 'subtasks', 'dependencies', 'recurring', 'attachments']));
         this.tasksSubject.next(parsed);
@@ -636,26 +637,26 @@ export class SqliteService {
 
         if (exists.length > 0) {
             await db.execute(`
-            UPDATE tasks SET 
-                title = $1, priority = $2, hours = $3, status = $4, project = $5, due = $6, 
-                labels = $7, reminders = $8, subtasks = $9, parentId = $10, dependencies = $11, 
-                recurring = $12, timeSpent = $13, notes = $14, attachments = $15, description = $16, 
-                startDate = $17, estimatedDuration = $18
-            WHERE id = $19`,
+            UPDATE tasks SET
+                title = $1, priority = $2, hours = $3, status = $4, project = $5, due = $6,
+                labels = $7, reminders = $8, subtasks = $9, parentId = $10, dependencies = $11,
+                recurring = $12, timeSpent = $13, notes = $14, attachments = $15, description = $16,
+                startDate = $17, estimatedDuration = $18, deleted_at = $19
+            WHERE id = $20`,
                 [jsonTask.title, jsonTask.priority, jsonTask.hours, jsonTask.status, jsonTask.project, jsonTask.due,
                 jsonTask.labels, jsonTask.reminders, jsonTask.subtasks, jsonTask.parentId, jsonTask.dependencies,
                 jsonTask.recurring, jsonTask.timeSpent, jsonTask.notes, jsonTask.attachments, jsonTask.description,
-                jsonTask.startDate, jsonTask.estimatedDuration, jsonTask.id]);
+                jsonTask.startDate, jsonTask.estimatedDuration, jsonTask.deleted_at ?? null, jsonTask.id]);
         } else {
             await db.execute(`
             INSERT INTO tasks (
-                id, title, priority, hours, status, project, due, labels, reminders, subtasks, 
-                parentId, dependencies, recurring, timeSpent, notes, attachments, description, startDate, estimatedDuration
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+                id, title, priority, hours, status, project, due, labels, reminders, subtasks,
+                parentId, dependencies, recurring, timeSpent, notes, attachments, description, startDate, estimatedDuration, deleted_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
                 [jsonTask.id, jsonTask.title, jsonTask.priority, jsonTask.hours, jsonTask.status, jsonTask.project, jsonTask.due,
                 jsonTask.labels, jsonTask.reminders, jsonTask.subtasks, jsonTask.parentId, jsonTask.dependencies,
                 jsonTask.recurring, jsonTask.timeSpent, jsonTask.notes, jsonTask.attachments, jsonTask.description,
-                jsonTask.startDate, jsonTask.estimatedDuration]
+                jsonTask.startDate, jsonTask.estimatedDuration, jsonTask.deleted_at ?? null]
             );
         }
         await this.reloadTasks();
@@ -678,6 +679,7 @@ export class SqliteService {
             // Try to add columns if they don't exist (Migration)
             await db.execute('ALTER TABLE notes ADD COLUMN filePath TEXT').catch(() => { });
             await db.execute('ALTER TABLE notes ADD COLUMN lastSynced TEXT').catch(() => { });
+            await db.execute('ALTER TABLE notes ADD COLUMN deleted_at TEXT').catch(() => { });
         } catch (e) {
             // Ignore column exists errors
         }
@@ -703,11 +705,11 @@ export class SqliteService {
         };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE notes SET date = $1, title = $2, preview = $3, content = $4, tags = $5, lastEdited = $6, filePath = $7, lastSynced = $8 WHERE id = $9`,
-                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, jsonNote.id]);
+            await db.execute(`UPDATE notes SET date = $1, title = $2, preview = $3, content = $4, tags = $5, lastEdited = $6, filePath = $7, lastSynced = $8, deleted_at = $9 WHERE id = $10`,
+                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, (jsonNote as any).deleted_at ?? null, jsonNote.id]);
         } else {
-            await db.execute(`INSERT INTO notes (id, date, title, preview, content, tags, lastEdited, filePath, lastSynced) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced]);
+            await db.execute(`INSERT INTO notes (id, date, title, preview, content, tags, lastEdited, filePath, lastSynced, deleted_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, (jsonNote as any).deleted_at ?? null]);
         }
         await this.reloadNotes();
     }
@@ -795,6 +797,7 @@ export class SqliteService {
     // ─── Books ─────────────────────────────────────────────────────────────────
     private async reloadBooks() {
         const db = await this.getDb();
+        await db.execute('ALTER TABLE books ADD COLUMN deleted_at TEXT').catch(() => {});
         const rows = await db.select<BookDoc[]>('SELECT * FROM books');
         const parsed = rows.map((r: any) => this.parseRow<BookDoc>(r, ['genre']));
         this.booksSubject.next(parsed);
@@ -808,16 +811,16 @@ export class SqliteService {
         if (exists.length > 0) {
             await db.execute(`
         UPDATE books SET title=$1, icon=$2, status=$3, wordCount=$4, targetWordCount=$5, progress=$6,
-        chapters=$7, notesCount=$8, createdDate=$9, lastUpdated=$10, genre=$11, isRecentlyUpdated=$12, coverImage=$13
-        WHERE id=$14`,
+        chapters=$7, notesCount=$8, createdDate=$9, lastUpdated=$10, genre=$11, isRecentlyUpdated=$12, coverImage=$13, deleted_at=$14
+        WHERE id=$15`,
                 [jsonBook.title, jsonBook.icon, jsonBook.status, jsonBook.wordCount, jsonBook.targetWordCount, jsonBook.progress,
-                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage, jsonBook.id]);
+                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage, jsonBook.deleted_at ?? null, jsonBook.id]);
         } else {
             await db.execute(`
-        INSERT INTO books (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        INSERT INTO books (id, title, icon, status, wordCount, targetWordCount, progress, chapters, notesCount, createdDate, lastUpdated, genre, isRecentlyUpdated, coverImage, deleted_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
                 [jsonBook.id, jsonBook.title, jsonBook.icon, jsonBook.status, jsonBook.wordCount, jsonBook.targetWordCount, jsonBook.progress,
-                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage]);
+                jsonBook.chapters, jsonBook.notesCount, jsonBook.createdDate, jsonBook.lastUpdated, jsonBook.genre, jsonBook.isRecentlyUpdated, jsonBook.coverImage, jsonBook.deleted_at ?? null]);
         }
         await this.reloadBooks();
     }
@@ -866,19 +869,9 @@ export class SqliteService {
         this.binItemsSubject.next(parsed);
     }
 
-    async upsertBinItem(item: BinItemDoc): Promise<void> {
-        const db = await this.getDb();
-        const exists = await db.select<any[]>('SELECT id FROM bin_items WHERE id = $1', [item.id]);
-        const jsonItem = { ...item, payload: this.toJson(item.payload) };
-
-        if (exists.length > 0) {
-            await db.execute('UPDATE bin_items SET type=$1, originalId=$2, contextId=$3, title=$4, deletedAt=$5, payload=$6 WHERE id=$7',
-                [jsonItem.type, jsonItem.originalId, jsonItem.contextId, jsonItem.title, jsonItem.deletedAt, jsonItem.payload, jsonItem.id]);
-        } else {
-            await db.execute('INSERT INTO bin_items (id, type, originalId, contextId, title, deletedAt, payload) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-                [jsonItem.id, jsonItem.type, jsonItem.originalId, jsonItem.contextId, jsonItem.title, jsonItem.deletedAt, jsonItem.payload]);
-        }
-        await this.reloadBinItems();
+    async upsertBinItem(_item: BinItemDoc): Promise<void> {
+        // No-op: bin items are now soft-deleted on their original collections.
+        // This method is kept for backward compatibility only.
     }
 
     async removeBinItem(id: string): Promise<void> {
@@ -903,6 +896,7 @@ export class SqliteService {
     // ─── Meetings ──────────────────────────────────────────────────────────────
     private async reloadMeetings() {
         const db = await this.getDb();
+        await db.execute('ALTER TABLE meetings ADD COLUMN deleted_at TEXT').catch(() => {});
         const rows = await db.select<MeetingDoc[]>('SELECT * FROM meetings');
         const parsed = rows.map((r: any) => this.parseRow<MeetingDoc>(r, ['attendees', 'organizer', 'agenda', 'notes', 'actionItems', 'labels', 'recurring', 'reminders', 'attachments']));
         this.meetingsSubject.next(parsed);
@@ -925,11 +919,11 @@ export class SqliteService {
         };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE meetings SET title=$1, description=$2, project=$3, date=$4, startTime=$5, endTime=$6, duration=$7, timezone=$8, location=$9, meetingLink=$10, meetingType=$11, platform=$12, attendees=$13, organizer=$14, agenda=$15, notes=$16, actionItems=$17, status=$18, priority=$19, color=$20, labels=$21, recurring=$22, reminders=$23, attachments=$24, createdAt=$25, updatedAt=$26, createdBy=$27 WHERE id=$28`,
-                [jsonDoc.title, jsonDoc.description, jsonDoc.project, jsonDoc.date, jsonDoc.startTime, jsonDoc.endTime, jsonDoc.duration, jsonDoc.timezone, jsonDoc.location, jsonDoc.meetingLink, jsonDoc.meetingType, jsonDoc.platform, jsonDoc.attendees, jsonDoc.organizer, jsonDoc.agenda, jsonDoc.notes, jsonDoc.actionItems, jsonDoc.status, jsonDoc.priority, jsonDoc.color, jsonDoc.labels, jsonDoc.recurring, jsonDoc.reminders, jsonDoc.attachments, jsonDoc.createdAt, jsonDoc.updatedAt, jsonDoc.createdBy, jsonDoc.id]);
+            await db.execute(`UPDATE meetings SET title=$1, description=$2, project=$3, date=$4, startTime=$5, endTime=$6, duration=$7, timezone=$8, location=$9, meetingLink=$10, meetingType=$11, platform=$12, attendees=$13, organizer=$14, agenda=$15, notes=$16, actionItems=$17, status=$18, priority=$19, color=$20, labels=$21, recurring=$22, reminders=$23, attachments=$24, createdAt=$25, updatedAt=$26, createdBy=$27, deleted_at=$28 WHERE id=$29`,
+                [jsonDoc.title, jsonDoc.description, jsonDoc.project, jsonDoc.date, jsonDoc.startTime, jsonDoc.endTime, jsonDoc.duration, jsonDoc.timezone, jsonDoc.location, jsonDoc.meetingLink, jsonDoc.meetingType, jsonDoc.platform, jsonDoc.attendees, jsonDoc.organizer, jsonDoc.agenda, jsonDoc.notes, jsonDoc.actionItems, jsonDoc.status, jsonDoc.priority, jsonDoc.color, jsonDoc.labels, jsonDoc.recurring, jsonDoc.reminders, jsonDoc.attachments, jsonDoc.createdAt, jsonDoc.updatedAt, jsonDoc.createdBy, (jsonDoc as any).deleted_at ?? null, jsonDoc.id]);
         } else {
-            await db.execute(`INSERT INTO meetings (id, title, description, project, date, startTime, endTime, duration, timezone, location, meetingLink, meetingType, platform, attendees, organizer, agenda, notes, actionItems, status, priority, color, labels, recurring, reminders, attachments, createdAt, updatedAt, createdBy) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)`,
-                [jsonDoc.id, jsonDoc.title, jsonDoc.description, jsonDoc.project, jsonDoc.date, jsonDoc.startTime, jsonDoc.endTime, jsonDoc.duration, jsonDoc.timezone, jsonDoc.location, jsonDoc.meetingLink, jsonDoc.meetingType, jsonDoc.platform, jsonDoc.attendees, jsonDoc.organizer, jsonDoc.agenda, jsonDoc.notes, jsonDoc.actionItems, jsonDoc.status, jsonDoc.priority, jsonDoc.color, jsonDoc.labels, jsonDoc.recurring, jsonDoc.reminders, jsonDoc.attachments, jsonDoc.createdAt, jsonDoc.updatedAt, jsonDoc.createdBy]);
+            await db.execute(`INSERT INTO meetings (id, title, description, project, date, startTime, endTime, duration, timezone, location, meetingLink, meetingType, platform, attendees, organizer, agenda, notes, actionItems, status, priority, color, labels, recurring, reminders, attachments, createdAt, updatedAt, createdBy, deleted_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)`,
+                [jsonDoc.id, jsonDoc.title, jsonDoc.description, jsonDoc.project, jsonDoc.date, jsonDoc.startTime, jsonDoc.endTime, jsonDoc.duration, jsonDoc.timezone, jsonDoc.location, jsonDoc.meetingLink, jsonDoc.meetingType, jsonDoc.platform, jsonDoc.attendees, jsonDoc.organizer, jsonDoc.agenda, jsonDoc.notes, jsonDoc.actionItems, jsonDoc.status, jsonDoc.priority, jsonDoc.color, jsonDoc.labels, jsonDoc.recurring, jsonDoc.reminders, jsonDoc.attachments, jsonDoc.createdAt, jsonDoc.updatedAt, jsonDoc.createdBy, (jsonDoc as any).deleted_at ?? null]);
         }
         await this.reloadMeetings();
     }
@@ -1154,6 +1148,7 @@ export class SqliteService {
     // ─── Vault & Transactions ───────────────────────────────────────────────────
     private async reloadCredentials() {
         const db = await this.getDb();
+        await db.execute('ALTER TABLE credentials ADD COLUMN deleted_at TEXT').catch(() => {});
         const rows = await db.select<CredentialDoc[]>('SELECT * FROM credentials');
         this.credentialsSubject.next(rows);
     }
@@ -1163,14 +1158,14 @@ export class SqliteService {
         const exists = await db.select<any[]>('SELECT id FROM credentials WHERE id = $1', [item.id]);
         if (exists.length > 0) {
             await db.execute(
-                `UPDATE credentials SET name=$1, type=$2, value=$3, username=$4, url=$5, notes=$6, projectId=$7, createdAt=$8, createdBy=$9, updatedAt=$10, lastAccessedAt=$11 WHERE id=$12`,
+                `UPDATE credentials SET name=$1, type=$2, value=$3, username=$4, url=$5, notes=$6, projectId=$7, createdAt=$8, createdBy=$9, updatedAt=$10, lastAccessedAt=$11, deleted_at=$12 WHERE id=$13`,
                 [item.name, item.type, item.value, item.username ?? null, item.url ?? null, item.notes ?? null,
-                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null, item.id]);
+                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null, item.deleted_at ?? null, item.id]);
         } else {
             await db.execute(
-                `INSERT INTO credentials (id, name, type, value, username, url, notes, projectId, createdAt, createdBy, updatedAt, lastAccessedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+                `INSERT INTO credentials (id, name, type, value, username, url, notes, projectId, createdAt, createdBy, updatedAt, lastAccessedAt, deleted_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
                 [item.id, item.name, item.type, item.value, item.username ?? null, item.url ?? null, item.notes ?? null,
-                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null]);
+                 item.projectId, item.createdAt, item.createdBy, item.updatedAt ?? null, item.lastAccessedAt ?? null, item.deleted_at ?? null]);
         }
         await this.reloadCredentials();
     }
@@ -1182,6 +1177,7 @@ export class SqliteService {
 
     private async reloadTransactions() {
         const db = await this.getDb();
+        await db.execute('ALTER TABLE transactions ADD COLUMN deleted_at TEXT').catch(() => {});
         const rows = await db.select<TransactionDoc[]>('SELECT * FROM transactions');
         this.transactionsSubject.next(rows);
     }
@@ -1191,14 +1187,14 @@ export class SqliteService {
         const exists = await db.select<any[]>('SELECT id FROM transactions WHERE id = $1', [item.id]);
         if (exists.length > 0) {
             await db.execute(
-                `UPDATE transactions SET name=$1, type=$2, category=$3, amount=$4, currency=$5, date=$6, billingCycle=$7, status=$8, ownerId=$9, projectId=$10, notes=$11 WHERE id=$12`,
+                `UPDATE transactions SET name=$1, type=$2, category=$3, amount=$4, currency=$5, date=$6, billingCycle=$7, status=$8, ownerId=$9, projectId=$10, notes=$11, deleted_at=$12 WHERE id=$13`,
                 [item.name, item.type ?? 'recurring', item.category ?? null, item.amount, item.currency ?? null,
-                 item.date, item.billingCycle ?? null, item.status ?? null, item.ownerId ?? null, item.projectId ?? null, item.notes ?? null, item.id]);
+                 item.date, item.billingCycle ?? null, item.status ?? null, item.ownerId ?? null, item.projectId ?? null, item.notes ?? null, item.deleted_at ?? null, item.id]);
         } else {
             await db.execute(
-                `INSERT INTO transactions (id, name, type, category, amount, currency, date, billingCycle, status, ownerId, projectId, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+                `INSERT INTO transactions (id, name, type, category, amount, currency, date, billingCycle, status, ownerId, projectId, notes, deleted_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
                 [item.id, item.name, item.type ?? 'recurring', item.category ?? null, item.amount, item.currency ?? null,
-                 item.date, item.billingCycle ?? null, item.status ?? null, item.ownerId ?? null, item.projectId ?? null, item.notes ?? null]);
+                 item.date, item.billingCycle ?? null, item.status ?? null, item.ownerId ?? null, item.projectId ?? null, item.notes ?? null, item.deleted_at ?? null]);
         }
         await this.reloadTransactions();
     }
@@ -1258,6 +1254,7 @@ export class SqliteService {
     // ─── Bookmarks ─────────────────────────────────────────────────────────────
     private async reloadBookmarks() {
         const db = await this.getDb();
+        await db.execute('ALTER TABLE bookmarks ADD COLUMN deleted_at TEXT').catch(() => {});
         const rows = await db.select<any[]>('SELECT * FROM bookmarks');
         const parsed = rows.map((r: any) => this.parseRow<BookmarkDoc>(r, ['tags'], ['isArchived', 'isPinned']));
         this.bookmarksSubject.next(parsed);
@@ -1276,12 +1273,12 @@ export class SqliteService {
         };
         if (exists.length > 0) {
             await db.execute(
-                `UPDATE bookmarks SET title=$1, url=$2, description=$3, faviconUrl=$4, tags=$5, folderId=$6, createdAt=$7, lastVisited=$8, visitCount=$9, notes=$10, color=$11, isArchived=$12, isPinned=$13 WHERE id=$14`,
-                [j.title, j.url, j.description, j.faviconUrl, j.tags, j.folderId, j.createdAt, j.lastVisited, j.visitCount, j.notes, j.color, j.isArchived, j.isPinned, j.id]);
+                `UPDATE bookmarks SET title=$1, url=$2, description=$3, faviconUrl=$4, tags=$5, folderId=$6, createdAt=$7, lastVisited=$8, visitCount=$9, notes=$10, color=$11, isArchived=$12, isPinned=$13, deleted_at=$14 WHERE id=$15`,
+                [j.title, j.url, j.description, j.faviconUrl, j.tags, j.folderId, j.createdAt, j.lastVisited, j.visitCount, j.notes, j.color, j.isArchived, j.isPinned, j.deleted_at ?? null, j.id]);
         } else {
             await db.execute(
-                `INSERT INTO bookmarks (id, title, url, description, faviconUrl, tags, folderId, createdAt, lastVisited, visitCount, notes, color, isArchived, isPinned) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-                [j.id, j.title, j.url, j.description, j.faviconUrl, j.tags, j.folderId, j.createdAt, j.lastVisited, j.visitCount, j.notes, j.color, j.isArchived, j.isPinned]);
+                `INSERT INTO bookmarks (id, title, url, description, faviconUrl, tags, folderId, createdAt, lastVisited, visitCount, notes, color, isArchived, isPinned, deleted_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+                [j.id, j.title, j.url, j.description, j.faviconUrl, j.tags, j.folderId, j.createdAt, j.lastVisited, j.visitCount, j.notes, j.color, j.isArchived, j.isPinned, j.deleted_at ?? null]);
         }
         await this.reloadBookmarks();
     }

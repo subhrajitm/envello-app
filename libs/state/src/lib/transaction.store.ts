@@ -1,14 +1,12 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
 import { Transaction, TransactionEvent } from '@envello/domain';
-import { BinService } from './bin.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class TransactionStore {
     private db = inject(DataService);
-    private bin = inject(BinService);
 
     private transactionsSignal = signal<Transaction[]>([]);
     public transactions = this.transactionsSignal.asReadonly();
@@ -56,8 +54,9 @@ export class TransactionStore {
     private async load() {
         try {
             const items = await this.db.getTransactions();
-            // Normalise legacy Subscription records that lack a `type` field.
-            this.transactionsSignal.set(items.map(t => ({ ...t, type: t.type ?? 'recurring' as const })));
+            this.transactionsSignal.set(
+                items.filter(t => !t.deleted_at).map(t => ({ ...t, type: t.type ?? 'recurring' as const }))
+            );
         } catch (e) {
             console.error('[TransactionStore] load failed', e);
         }
@@ -125,14 +124,13 @@ export class TransactionStore {
     }
 
     async delete(id: string) {
-        const t = this.transactions().find(t => t.id === id);
+        const t = this.transactions().find(x => x.id === id);
         if (!t) return;
-        this.bin.addToBin({ type: 'transaction', originalId: id, title: t.name, payload: t });
         this.transactionsSignal.update(list => list.filter(x => x.id !== id));
         try {
-            await this.db.deleteTransaction(id);
+            await this.db.saveTransaction({ ...t, deleted_at: new Date().toISOString() });
         } catch (e) {
-            console.error('[TransactionStore] delete failed', e);
+            console.error('[TransactionStore] soft-delete failed', e);
             await this.load();
         }
     }

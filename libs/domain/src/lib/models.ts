@@ -51,6 +51,8 @@ export interface Task {
     estimatedDuration?: number;
     /** ISO timestamp when the task was created */
     createdAt?: string;
+    /** Set when moved to bin; null/undefined means active */
+    deleted_at?: string | null;
 }
 
 export interface Note {
@@ -67,6 +69,7 @@ export interface Note {
     folderId?: string;
     /** Background color class for the editor (e.g. 'note-bg--rose') */
     bgColor?: string;
+    deleted_at?: string | null;
 }
 
 export interface PlanningItem {
@@ -111,6 +114,7 @@ export interface Book {
     genre: string[];
     isRecentlyUpdated: boolean;
     coverImage?: string;
+    deleted_at?: string | null;
 }
 
 export interface Project {
@@ -140,27 +144,25 @@ export interface Project {
     };
 }
 
-export type BinItemType =
-    | 'daily-note'
-    | 'book'
-    | 'book-chapter'
-    | 'book-group'
-    | 'book-note'
-    | 'book-character'
-    | 'book-location'
+/** @deprecated Use BinEntryType */
+export type BinItemType = BinEntryType;
+/** @deprecated Use BinEntry */
+export type BinItem = BinEntry;
+
+export type BinEntryType =
     | 'task'
+    | 'daily-note'
+    | 'write'
     | 'meeting'
     | 'bookmark'
     | 'credential'
     | 'transaction';
 
-export interface BinItem {
+export interface BinEntry {
     id: string;
-    type: BinItemType;
-    originalId: string;
-    contextId?: string;
+    type: BinEntryType;
     title?: string;
-    deletedAt: string;
+    deleted_at: string;
     payload: unknown;
 }
 
@@ -177,6 +179,7 @@ export interface Credential {
     createdBy?: string;
     updatedAt?: string;
     lastAccessedAt?: string;
+    deleted_at?: string | null;
 }
 
 export type TransactionType = 'recurring' | 'one-time' | 'bill' | 'purchase' | 'refund';
@@ -205,6 +208,7 @@ export interface Transaction {
     notes?: string;
     createdAt?: string;
     history?: TransactionEvent[];
+    deleted_at?: string | null;
 }
 
 /** @deprecated Use Transaction instead. Kept as alias for migration compatibility. */
@@ -243,6 +247,7 @@ export interface Bookmark {
     color?: string;
     isArchived?: boolean;
     isPinned?: boolean;
+    deleted_at?: string | null;
 }
 
 export interface StorageFile {

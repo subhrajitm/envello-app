@@ -1,10 +1,10 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { SlicePipe } from '@angular/common';
 import { BinService } from '@envello/core';
-import { BinItemType } from '@envello/domain';
+import { BinEntryType } from '@envello/domain';
 import { ConfirmDialogComponent } from '@envello/ui';
 
-type FilterType = 'ALL' | BinItemType;
+type FilterType = 'ALL' | BinEntryType;
 
 interface ConfirmDialog {
   mode: 'restore' | 'delete' | 'empty';
@@ -31,7 +31,7 @@ export class BinComponent {
 
   allItems = computed(() =>
     [...this.binService.items()].sort(
-      (a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()
+      (a, b) => new Date(b.deleted_at).getTime() - new Date(a.deleted_at).getTime()
     )
   );
 
@@ -45,7 +45,7 @@ export class BinComponent {
     }
     if (query) {
       list = list.filter(i =>
-        (i.title || i.originalId).toLowerCase().includes(query)
+        (i.title || i.id).toLowerCase().includes(query)
       );
     }
     return list;
@@ -67,8 +67,8 @@ export class BinComponent {
     this.expandedRowId.set(this.expandedRowId() === id ? null : id);
   }
 
-  canRestore(type: BinItemType): boolean {
-    return this.binService.canRestore(type);
+  canRestore(_type: BinEntryType): boolean {
+    return true;
   }
 
   openRestoreConfirm(id: string, title: string) {
@@ -114,12 +114,7 @@ export class BinComponent {
     switch (type) {
       case 'task':            return 'check_circle';
       case 'daily-note':      return 'edit_note';
-      case 'book':            return 'menu_book';
-      case 'book-chapter':    return 'article';
-      case 'book-note':       return 'sticky_note_2';
-      case 'book-character':  return 'person';
-      case 'book-location':   return 'location_on';
-      case 'book-group':      return 'group';
+      case 'write':           return 'edit';
       case 'meeting':         return 'event';
       case 'bookmark':        return 'bookmark';
       case 'credential':      return 'lock';
@@ -131,11 +126,7 @@ export class BinComponent {
   formatType(type: string): string {
     switch (type) {
       case 'daily-note':      return 'Daily Note';
-      case 'book-chapter':    return 'Chapter';
-      case 'book-note':       return 'Book Note';
-      case 'book-character':  return 'Character';
-      case 'book-location':   return 'Location';
-      case 'book-group':      return 'Group';
+      case 'write':           return 'Write';
       case 'bookmark':        return 'Bookmark';
       case 'credential':      return 'Credential';
       case 'transaction':     return 'Transaction';

@@ -1,7 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
 import { Credential } from '@envello/domain';
-import { BinService } from './bin.service';
 import { EncryptionUtil, AuthService, VaultKeyService } from '@envello/core';
 
 @Injectable({
@@ -11,7 +10,6 @@ export class VaultStore {
     private db = inject(DataService);
     private auth = inject(AuthService);
     private vaultKey = inject(VaultKeyService);
-    private bin = inject(BinService);
 
     private credentialsSignal = signal<Credential[]>([]);
     public credentials = this.credentialsSignal.asReadonly();
@@ -29,7 +27,7 @@ export class VaultStore {
     private async loadCredentials() {
         try {
             const creds = await this.db.getCredentials();
-            this.credentialsSignal.set(creds);
+            this.credentialsSignal.set(creds.filter(c => !c.deleted_at));
         } catch (e) {
             console.error('[VaultStore] loadCredentials failed', e);
         }
@@ -69,11 +67,9 @@ export class VaultStore {
 
     async deleteCredential(id: string) {
         const cred = this.credentials().find(c => c.id === id);
-        if (cred) {
-            this.bin.addToBin({ type: 'credential', originalId: id, title: cred.name, payload: cred });
-        }
-        await this.db.deleteCredential(id);
-        await this.loadCredentials();
+        if (!cred) return;
+        this.credentialsSignal.set(this.credentials().filter(c => c.id !== id));
+        await this.db.saveCredential({ ...cred, deleted_at: new Date().toISOString() });
     }
 
     /** Decrypt a stored value — handles v2 (AES-GCM) and legacy format transparently. */
