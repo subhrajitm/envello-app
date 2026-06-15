@@ -1121,9 +1121,6 @@
 }
 .rsa-label-opt { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.7; font-size: 9px; }
 
-/* ── Unified Add modal size ── */
-.rsa-modal--md { max-width: 560px; }
-
 /* ── Collection bar (above tabs) ── */
 .rsa-collection-bar {
   padding: 10px 16px 8px;
