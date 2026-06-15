@@ -343,19 +343,10 @@ const transactions = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
-const credential_transaction_links = new Table(
-  {
-    profile_id:    column.text,
-    credentialId:  column.text,
-    transactionId: column.text,
-  },
-  { localOnly: true }
-);
-
 export const AppSchema = new Schema({
   // Synced via PowerSync ↔ Supabase
   user_data,
-  // Local-only vault
+  // Local-only vault (credentials + links — never leave the device)
   local_vault,
   // Typed collection tables (localOnly, populated from user_data)
   tasks,
@@ -374,15 +365,18 @@ export const AppSchema = new Schema({
   bookmarks,
   bookmark_folders,
   transactions,
-  credential_transaction_links,
 });
 
-/** All typed collection table names (excludes user_data, local_vault). */
+/**
+ * Typed collection table names — the allowed whitelist for dynamic SQL.
+ * Vault collections (credentials, credential_transaction_links) are intentionally
+ * excluded: they live in `local_vault` and are never routed through these tables.
+ */
 export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'bookmarks',
-  'bookmark_folders', 'transactions', 'credential_transaction_links',
+  'bookmark_folders', 'transactions',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */

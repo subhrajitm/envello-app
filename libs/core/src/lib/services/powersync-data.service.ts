@@ -5,7 +5,7 @@ import { PowerSyncService } from './powersync.service';
 import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
 import { LoggingService } from './logging.service';
-import { JSON_FIELDS, BOOL_FIELDS } from '../config/powersync.schema';
+import { JSON_FIELDS, BOOL_FIELDS, TYPED_TABLES } from '../config/powersync.schema';
 
 @Injectable({ providedIn: 'root' })
 export class PowerSyncDataService implements DataService {
@@ -24,6 +24,15 @@ export class PowerSyncDataService implements DataService {
 
   private get userId(): string {
     return this.auth.currentUser()?.id ?? 'guest';
+  }
+
+  // ─── Collection name guard ───────────────────────────────────────────────────
+
+  /** Validates collection name against known table whitelist to prevent SQL injection. */
+  private assertSafeCollection(collection: string): void {
+    if (!TYPED_TABLES.has(collection) && !this.VAULT_COLLECTIONS.has(collection)) {
+      throw new Error(`[PowerSyncDataService] Unknown collection: "${collection}"`);
+    }
   }
 
   // ─── Row parsing ─────────────────────────────────────────────────────────────
@@ -69,6 +78,7 @@ export class PowerSyncDataService implements DataService {
   // ─── Public DataService API ──────────────────────────────────────────────────
 
   async getAll<T>(collection: string): Promise<T[]> {
+    this.assertSafeCollection(collection);
     if (this.VAULT_COLLECTIONS.has(collection)) return this.getVaultAll<T>(collection);
 
     try {
@@ -98,6 +108,7 @@ export class PowerSyncDataService implements DataService {
   }
 
   async upsert<T>(collection: string, item: T): Promise<void> {
+    this.assertSafeCollection(collection);
     if (this.VAULT_COLLECTIONS.has(collection)) return this.upsertVault(collection, item);
 
     try {
@@ -132,6 +143,7 @@ export class PowerSyncDataService implements DataService {
   }
 
   async remove(collection: string, id: string): Promise<void> {
+    this.assertSafeCollection(collection);
     if (this.VAULT_COLLECTIONS.has(collection)) return this.removeVault(collection, id);
 
     try {
@@ -162,6 +174,7 @@ export class PowerSyncDataService implements DataService {
 
   /** Write a single item into its typed local table. */
   async upsertToTypedTable(collection: string, profileId: string, item: any): Promise<void> {
+    if (!TYPED_TABLES.has(collection)) return; // guard: skip vault and unknown collections
     const id = item?.id;
     if (!id) return;
     const { cols, vals } = this.itemToColumns(collection, profileId, item);
@@ -182,6 +195,7 @@ export class PowerSyncDataService implements DataService {
         'SELECT id, profile_id, collection, data, deleted FROM user_data', []
       );
       for (const row of rows) {
+        if (!TYPED_TABLES.has(row.collection)) continue; // skip vault + unknown collections
         if (row.deleted) {
           await this.ps.db.execute(`DELETE FROM ${row.collection} WHERE id = ?`, [row.id]).catch(() => {});
           continue;
