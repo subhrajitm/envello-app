@@ -52,17 +52,10 @@ export class VaultStore {
 
     async addCredential(cred: Omit<Credential, 'value'> & { unencryptedValue: string }) {
         if (this.isTauri) {
-            // Desktop: store raw value in Stronghold, metadata in SQLite
-            await this.stronghold.insert(
-                `${STRONGHOLD_KEY_PREFIX}${cred.id}`,
-                cred.unencryptedValue
-            );
-            const newCred: Credential = { ...cred, value: STRONGHOLD_PLACEHOLDER };
-            await this.db.saveCredential(newCred);
+            const value = await this.encryptForDesktop(cred.id, cred.unencryptedValue);
+            await this.db.saveCredential({ ...cred, value });
         } else {
-            // Web: full credential JSON encrypted in Supabase Vault
-            const newCred: Credential = { ...cred, value: cred.unencryptedValue };
-            await this.supabaseVault.save(newCred);
+            await this.supabaseVault.save({ ...cred, value: cred.unencryptedValue });
         }
         await this.loadCredentials();
     }
@@ -78,10 +71,11 @@ export class VaultStore {
         const updated: Credential = { ...existing, ...rest, updatedAt: new Date().toISOString() };
 
         if (this.isTauri) {
+            let value = updated.value;
             if (newUnencryptedValue) {
-                await this.stronghold.insert(`${STRONGHOLD_KEY_PREFIX}${id}`, newUnencryptedValue);
+                value = await this.encryptForDesktop(id, newUnencryptedValue);
             }
-            await this.db.saveCredential({ ...updated, value: STRONGHOLD_PLACEHOLDER });
+            await this.db.saveCredential({ ...updated, value });
         } else {
             if (newUnencryptedValue) updated.value = newUnencryptedValue;
             await this.supabaseVault.save(updated);
@@ -109,6 +103,23 @@ export class VaultStore {
             await this.db.saveCredential({ ...cred, value: STRONGHOLD_PLACEHOLDER, deleted_at: new Date().toISOString() });
         } else {
             await this.supabaseVault.softDelete(id);
+        }
+    }
+
+    /**
+     * Encrypt a secret for desktop storage.
+     * Tries Stronghold first (Argon2id-backed, most secure).
+     * Falls back to AES-256-GCM (VaultKeyService) if Stronghold is unavailable —
+     * e.g., during first launch before capabilities are rebuilt, or on non-Tauri dev builds.
+     * decryptValue() handles both formats transparently.
+     */
+    private async encryptForDesktop(credentialId: string, plaintext: string): Promise<string> {
+        try {
+            await this.stronghold.insert(`${STRONGHOLD_KEY_PREFIX}${credentialId}`, plaintext);
+            return STRONGHOLD_PLACEHOLDER;
+        } catch {
+            const key = await this.vaultKey.getOrCreateKey(this.userId);
+            return EncryptionUtil.encryptWithKey(plaintext, key);
         }
     }
 

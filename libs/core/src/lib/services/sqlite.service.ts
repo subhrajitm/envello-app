@@ -533,7 +533,6 @@ export class SqliteService {
             this.reloadPlanningItems(),
             this.reloadActivities(),
             this.reloadBooks(),
-            this.reloadBinItems(),
 
             this.reloadMeetings(),
             this.reloadArticles(),
@@ -845,16 +844,12 @@ export class SqliteService {
         // This method is kept for backward compatibility only.
     }
 
-    async removeBinItem(id: string): Promise<void> {
-        const db = await this.getDb();
-        await db.execute('DELETE FROM bin_items WHERE id = $1', [id]);
-        await this.reloadBinItems();
+    async removeBinItem(_id: string): Promise<void> {
+        // No-op: bin_items table dropped; bin is handled via deleted_at on source collections.
     }
 
     async clearBin(): Promise<void> {
-        const db = await this.getDb();
-        await db.execute('DELETE FROM bin_items');
-        await this.reloadBinItems();
+        // No-op: bin_items table dropped; bin is handled via deleted_at on source collections.
     }
 
     binItems$(): Observable<BinItemDoc[]> {

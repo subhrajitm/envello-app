@@ -246,13 +246,16 @@
         <span class="vta-hint"><kbd>Esc</kbd> Close</span>
       </div>
       <div class="vta-footer-actions">
+        @if (saveError()) {
+          <span class="vta-save-error">{{ saveError() }}</span>
+        }
         <button class="vta-cancel-btn" (click)="closeForm()">Cancel</button>
         <button
           class="vta-save-btn"
-          [disabled]="formMode() === 'edit' ? !editName() : (!newCredName() || !newCredValue())"
+          [disabled]="saving() || (formMode() === 'edit' ? !editName() : (!newCredName() || !newCredValue()))"
           (click)="formMode() === 'edit' ? saveEdit() : addCredential()">
-          <span class="material-symbols-outlined">save</span>
-          {{ formMode() === 'edit' ? 'Save Changes' : 'Save Credential' }}
+          <span class="material-symbols-outlined">{{ saving() ? 'hourglass_empty' : 'save' }}</span>
+          {{ saving() ? 'Saving…' : (formMode() === 'edit' ? 'Save Changes' : 'Save Credential') }}
         </button>
       </div>
     </div>

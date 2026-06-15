@@ -500,26 +500,11 @@
 .rsd-save-btn .material-symbols-outlined { font-size: 15px; }
 
 /* ── Modals (rsa-*) ── */
-.rsa-backdrop {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-  display: flex; align-items: flex-start; justify-content: center;
-  padding: 24px; overflow-y: auto;
-  animation: rsaFadeIn 0.12s ease-out;
+/* Slider panel inner wrapper — fills the env-slider-panel container */
+.rsa-slider-inner {
+  display: flex; flex-direction: column;
+  height: 100%; overflow: hidden;
 }
-@keyframes rsaFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.rsa-modal {
-  width: 100%; max-width: 640px; max-height: calc(100vh - 48px);
-  background: var(--bg-panel); border: 1px solid var(--border-main);
-  border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.1);
-  display: flex; flex-direction: column; overflow: hidden;
-  animation: rsaSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.rsa-modal--xs { max-width: 400px; }
-.rsa-modal--sm { max-width: 480px; }
-.rsa-modal--lg { max-width: 640px; }
-@keyframes rsaSlideIn { from { opacity: 0; } to { opacity: 1; } }
 
 .rsa-header {
   display: flex; align-items: center; justify-content: space-between;
