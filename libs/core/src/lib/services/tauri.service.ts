@@ -67,6 +67,7 @@ export class TauriService {
   // ── Shell ─────────────────────────────────────────────────────────────────
 
   async openUrl(url: string): Promise<void> {
+    if (!/^https?:\/\//i.test(url)) return;
     if (this._isTauri()) {
       const { open } = await import('@tauri-apps/plugin-shell');
       await open(url);

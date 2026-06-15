@@ -7,6 +7,7 @@ export class WebPreviewService {
   title = signal('');
 
   open(url: string, title = ''): void {
+    if (!/^https?:\/\//i.test(url)) return;
     this.url.set(url);
     this.title.set(title || this.extractDomain(url));
     this.isOpen.set(true);
