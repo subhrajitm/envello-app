@@ -155,7 +155,11 @@ export class VoiceService {
           clearTimeout(this.commandPressTimer);
           this.commandPressTimer = null;
         }
-        this.handleRecognitionState(false);
+        this.isControlPressed = false;
+        this.isVoiceActive.set(false);
+        // Force-stop even if onstart hasn't fired yet
+        try { this.recognition?.stop(); } catch (_) {}
+        this.isRecognizing = false;
       }
     });
 
