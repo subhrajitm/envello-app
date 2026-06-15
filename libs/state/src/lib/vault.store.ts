@@ -32,6 +32,8 @@ export class VaultStore {
         window.addEventListener('envello:sync-complete', () => this.loadCredentials());
     }
 
+    reload() { this.loadCredentials(); }
+
     private async loadCredentials() {
         try {
             let creds: Credential[];

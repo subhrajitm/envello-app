@@ -2,8 +2,9 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy, HostListe
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
-import { AiService } from '@envello/core';
+import { AiService, VaultUnlockService } from '@envello/core';
 import { Credential } from '@envello/domain';
+import { VaultUnlockComponent } from '../vault-unlock/vault-unlock.component';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
@@ -28,7 +29,7 @@ const URL_LABEL: Record<string, string> = {
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, VaultUnlockComponent],
   templateUrl: './vault.component.html',
   styleUrl: './vault.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -36,6 +37,10 @@ const URL_LABEL: Record<string, string> = {
 export class VaultComponent {
   public vaultStore = inject(VaultStore);
   private aiService = inject(AiService);
+  readonly vaultUnlock = inject(VaultUnlockService);
+
+  readonly isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+  readonly showUnlock = computed(() => !this.isTauri && !this.vaultUnlock.isUnlocked());
 
   readonly typeOptions = (Object.keys(TYPE_META) as Array<Credential['type']>).map(type => ({ type, ...TYPE_META[type] }));
 

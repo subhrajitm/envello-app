@@ -61,7 +61,7 @@
     "stronghold:allow-load-client",
     "stronghold:allow-save",
     "stronghold:allow-get-store-record",
-    "stronghold:allow-insert-store-record",
+    "stronghold:allow-save-store-record",
     "stronghold:allow-remove-store-record",
     {
       "identifier": "fs:allow-read-file",

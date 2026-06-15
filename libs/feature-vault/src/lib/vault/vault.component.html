@@ -1,3 +1,6 @@
+@if (showUnlock()) {
+  <app-vault-unlock (unlocked)="vaultStore.reload()" />
+} @else {
 <div class="vt-view">
 
   <!-- ── SIDEBAR ── -->
@@ -288,4 +291,6 @@
     <span class="material-symbols-outlined" style="font-size:14px;">content_paste_off</span>
     Clipboard cleared
   </div>
+}
+
 }
