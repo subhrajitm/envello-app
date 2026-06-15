@@ -7,7 +7,7 @@ import { ButtonComponent } from '../button/button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService, APP_VERSION } from '@envello/core';
 import { AiService, AiProvider, AiFeature } from '@envello/core';
-import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService } from '@envello/core';
+import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
@@ -88,9 +88,23 @@ export class SettingsPageComponent implements OnInit {
   private readonly dataService = inject(DataService);
   private readonly bookContent = inject(BookContentService);
   private readonly tauri = inject(TauriService);
+  readonly syncService = inject(SyncService);
   readonly backupCollections = BACKUP_ELIGIBLE_COLLECTIONS;
   readonly isDesktop = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
   restoreStatus = signal<Record<string, 'idle' | 'restoring' | 'done' | 'error'>>({});
+
+  formatSyncTime(iso: string | null): string {
+    if (!iso) return 'Never';
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `${diffH}h ago`;
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
 
   async restoreCollection(id: string): Promise<void> {
     this.restoreStatus.update(s => ({ ...s, [id]: 'restoring' }));
@@ -151,7 +165,7 @@ export class SettingsPageComponent implements OnInit {
     { id: 'knowledge',     label: 'Knowledge',      icon: 'hub',            desktopOnly: false },
     { id: 'write',         label: 'Write',          icon: 'edit',           desktopOnly: false },
     { id: 'vault',         label: 'Vault',          icon: 'lock',           desktopOnly: true  },
-    { id: 'subscriptions', label: 'Subscriptions',  icon: 'credit_card',    desktopOnly: false },
+    { id: 'transactions',  label: 'Transactions',   icon: 'receipt_long',   desktopOnly: false },
     { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',      desktopOnly: false },
   ];
 

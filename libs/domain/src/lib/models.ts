@@ -51,6 +51,8 @@ export interface Task {
     estimatedDuration?: number;
     /** ISO timestamp when the task was created */
     createdAt?: string;
+    /** Set when moved to bin; null/undefined means active */
+    deleted_at?: string | null;
 }
 
 export interface Note {
@@ -67,6 +69,7 @@ export interface Note {
     folderId?: string;
     /** Background color class for the editor (e.g. 'note-bg--rose') */
     bgColor?: string;
+    deleted_at?: string | null;
 }
 
 export interface PlanningItem {
@@ -111,6 +114,7 @@ export interface Book {
     genre: string[];
     isRecentlyUpdated: boolean;
     coverImage?: string;
+    deleted_at?: string | null;
 }
 
 export interface Project {
@@ -140,27 +144,25 @@ export interface Project {
     };
 }
 
-export type BinItemType =
-    | 'daily-note'
-    | 'book'
-    | 'book-chapter'
-    | 'book-group'
-    | 'book-note'
-    | 'book-character'
-    | 'book-location'
+/** @deprecated Use BinEntryType */
+export type BinItemType = BinEntryType;
+/** @deprecated Use BinEntry */
+export type BinItem = BinEntry;
+
+export type BinEntryType =
     | 'task'
+    | 'daily-note'
+    | 'write'
     | 'meeting'
     | 'bookmark'
     | 'credential'
-    | 'subscription';
+    | 'transaction';
 
-export interface BinItem {
+export interface BinEntry {
     id: string;
-    type: BinItemType;
-    originalId: string;
-    contextId?: string;
+    type: BinEntryType;
     title?: string;
-    deletedAt: string;
+    deleted_at: string;
     payload: unknown;
 }
 
@@ -177,27 +179,49 @@ export interface Credential {
     createdBy?: string;
     updatedAt?: string;
     lastAccessedAt?: string;
+    deleted_at?: string | null;
 }
 
-export interface Subscription {
+export type TransactionType = 'recurring' | 'one-time' | 'bill' | 'purchase' | 'refund';
+
+export interface TransactionEvent {
+    date: string;   // ISO datetime
+    kind: 'created' | 'billed' | 'amount_changed' | 'status_changed' | 'date_changed' | 'name_changed' | 'cycle_changed';
+    label: string;
+    detail?: string;  // e.g. "$10.00 → $15.00"
+}
+
+export interface Transaction {
     id: string;
     name: string;
-    category: string;
-    price: number;
-    billingCycle: 'monthly' | 'yearly';
-    renewalDate: string;
-    status?: 'active' | 'paused' | 'cancelled';
+    type: TransactionType;
+    category?: string;
+    amount: number;
     currency?: string;
+    /** Next due date (recurring/bill) or transaction date (one-time/purchase/refund). ISO string. */
+    date: string;
+    /** Only relevant for type === 'recurring'. */
+    billingCycle?: 'monthly' | 'yearly' | 'weekly';
+    status?: 'active' | 'paused' | 'cancelled' | 'completed';
     ownerId?: string;
     projectId?: string;
     notes?: string;
+    createdAt?: string;
+    history?: TransactionEvent[];
+    deleted_at?: string | null;
 }
 
-export interface CredentialSubscriptionLink {
+/** @deprecated Use Transaction instead. Kept as alias for migration compatibility. */
+export type Subscription = Transaction;
+
+export interface CredentialTransactionLink {
     id: string;
     credentialId: string;
-    subscriptionId: string;
+    transactionId: string;
 }
+
+/** @deprecated Use CredentialTransactionLink instead. */
+export type CredentialSubscriptionLink = CredentialTransactionLink;
 
 export interface WorkspaceProfile {
     id: string;
@@ -223,6 +247,7 @@ export interface Bookmark {
     color?: string;
     isArchived?: boolean;
     isPinned?: boolean;
+    deleted_at?: string | null;
 }
 
 export interface StorageFile {

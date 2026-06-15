@@ -361,22 +361,6 @@
 .rs-summary-tags { display: flex; gap: 4px; flex-wrap: wrap; }
 
 /* ── Source Detail Panel (rsd-*) ── */
-.rsd-backdrop {
-  position: fixed; inset: 0; z-index: 9998;
-  background: rgba(0,0,0,0.3); backdrop-filter: blur(2px);
-  display: flex; justify-content: flex-end;
-  animation: rsdFadeIn 0.15s ease-out;
-}
-@keyframes rsdFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.rsd-panel {
-  width: 400px; max-width: 90vw; height: 100%;
-  background: var(--bg-panel); border-left: 1px solid var(--border-main);
-  display: flex; flex-direction: column; overflow: hidden;
-  animation: rsdSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes rsdSlideIn { from { opacity: 0; } to { opacity: 1; } }
-
 .rsd-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 14px; border-bottom: 1px solid var(--border-subtle);

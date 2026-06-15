@@ -1,6 +1,5 @@
 import { logIfTauri } from '../utils/tauri-helpers';
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { BinService } from './bin.service';
 import { StoreService, Task } from './store.service';
 import { DataService } from '@envello/data';
 
@@ -42,6 +41,7 @@ export interface ActionItem {
 }
 
 export interface Meeting {
+  deleted_at?: string | null;
   id: string;
   title: string;
   description?: string;
@@ -132,7 +132,6 @@ export type MeetingSortBy = 'date' | 'title' | 'project' | 'priority' | 'attende
   providedIn: 'root'
 })
 export class MeetingsService {
-  private bin = inject(BinService);
   private store = inject(StoreService);
   private db = inject(DataService);
 
@@ -386,20 +385,13 @@ export class MeetingsService {
 
   deleteMeeting(id: string) {
     const existing = this.meetings();
-    const meetingToDelete = existing.find(m => m.id === id);
+    const meeting = existing.find(m => m.id === id);
+    if (!meeting) return;
 
-    if (meetingToDelete) {
-      this.bin.addToBin({
-        type: 'meeting',
-        originalId: meetingToDelete.id,
-        title: meetingToDelete.title,
-        payload: meetingToDelete
-      });
-    }
-
+    const softDeleted = { ...meeting, deleted_at: new Date().toISOString() };
     this.meetings.set(existing.filter(m => m.id !== id));
     this.store.addActivity('Meeting deleted', 'system');
-    this.db.remove('meetings', id).catch(e => logIfTauri('[MeetingsService] remove failed', e));
+    this.db.upsert('meetings', softDeleted).catch(e => logIfTauri('[MeetingsService] soft-delete failed', e));
   }
 
   cancelMeeting(id: string) {

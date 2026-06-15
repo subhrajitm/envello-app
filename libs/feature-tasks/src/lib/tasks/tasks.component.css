@@ -5496,38 +5496,111 @@ textarea:focus-visible {
     margin-top: 8px;
 }
 
-/* ─── Task Details Modal — Two-panel layout ─── */
+/* ─── Task Details Page ─── */
 
-/* Header context (project label) */
-.td-header-context {
+/* When detail or new task page is open, hide the task list and left sidebar */
+.tasks-body--detail .tasks-main-content,
+.tasks-body--new .tasks-main-content { display: none; }
+
+.tasks-body--detail .tasks-sidebar,
+.tasks-body--new .tasks-sidebar { display: none; }
+
+/* Allow absolute dropdowns to overflow the panel in detail/new modes */
+.tasks-body--detail,
+.tasks-body--new { overflow: visible; }
+
+.td-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-panel);
+    animation: td-panel-in 0.15s ease;
+}
+
+@keyframes td-panel-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.td-panel-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 12px 0 6px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.td-panel-hdr-title {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 0 8px;
+}
+
+.td-panel-back {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: background 0.12s, color 0.12s;
 }
-.td-header-context-icon {
-    font-size: 20px;
-    color: var(--text-primary);
-}
-.td-header-context-label {
-    color: var(--text-primary);
+.td-panel-back:hover { background: var(--bg-hover); color: var(--text-primary); }
+.td-panel-back .material-symbols-outlined { font-size: 18px; }
+
+.td-panel-hdr-right {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    position: relative;
 }
 
-/* Give the task-details large modal a definite height so the flex chain can resolve */
-:host ::ng-deep .env-modal--large:has(.td-body) {
-    height: 85vh;
+.td-panel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: background 0.12s, color 0.12s;
 }
+.td-panel-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.td-panel-btn.active { color: var(--accent-primary); background: var(--accent-primary-dim); }
+.td-panel-btn .material-symbols-outlined { font-size: 17px; }
 
-/* Remove default modal body padding for the two-panel layout */
-:host ::ng-deep .env-modal--large .env-modal-body:has(.td-body) {
-    padding: 0;
-    overflow: hidden;
+.td-panel-body {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    min-height: 0;
 }
+
+.td-panel-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.td-panel-foot .td-footer-delete { margin-right: auto; }
 
 /* Body: two columns */
 .td-body {
@@ -5690,7 +5763,7 @@ textarea:focus-visible {
 }
 
 .td-subtask-delete {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 20px;
@@ -5701,9 +5774,10 @@ textarea:focus-visible {
     color: var(--text-tertiary);
     cursor: pointer;
     flex-shrink: 0;
-    margin-left: auto;
     padding: 0;
-    transition: color 0.15s, background 0.15s;
+    opacity: 0;
+    pointer-events: none;
+    transition: color 0.15s, background 0.15s, opacity 0.15s;
 }
 
 .td-subtask-delete .material-symbols-outlined {
@@ -5717,7 +5791,8 @@ textarea:focus-visible {
 
 .td-subtask-item:hover .td-subtask-delete,
 .td-subtask-item--editing .td-subtask-delete {
-    display: flex;
+    opacity: 1;
+    pointer-events: auto;
 }
 .td-subtask-checkbox {
     width: 18px !important;
@@ -5770,6 +5845,119 @@ textarea:focus-visible {
     padding: 2px 6px;
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 14%, transparent);
+}
+
+/* Subtask date controls */
+.td-subtask-date-wrap {
+    position: relative;
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.td-subtask-date-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: color 0.15s, background 0.15s, opacity 0.15s;
+}
+.td-subtask-date-btn .material-symbols-outlined {
+    font-size: 13px;
+}
+.td-subtask-date-btn:hover {
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+}
+.td-subtask-item:hover .td-subtask-date-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.td-subtask-date-chip {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border: none;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    color: var(--accent-primary);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+.td-subtask-date-chip .material-symbols-outlined {
+    font-size: 11px;
+}
+.td-subtask-date-chip:hover {
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+.td-subtask-date-chip--overdue {
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 10%, transparent);
+    color: var(--color-danger, #ef4444);
+}
+.td-subtask-date-chip--overdue:hover {
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 18%, transparent);
+}
+
+.td-subtask-date-popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    min-width: 160px;
+}
+.td-subtask-date-input {
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    padding: 4px 6px;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+}
+.td-subtask-date-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 14%, transparent);
+}
+.td-subtask-date-clear {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    text-align: left;
+    transition: color 0.15s, background 0.15s;
+}
+.td-subtask-date-clear:hover {
+    color: var(--color-danger, #ef4444);
+    background: color-mix(in srgb, var(--color-danger, #ef4444) 8%, transparent);
 }
 .td-add-subtask-row {
     display: flex;
@@ -5874,6 +6062,31 @@ textarea:focus-visible {
 .td-prop-placeholder {
     color: var(--text-tertiary) !important;
 }
+.td-prop-date-row { flex: 1; }
+.td-prop-date-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-family: inherit;
+    color-scheme: inherit;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+}
+.td-prop-date-clear {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    padding: 0;
+    flex-shrink: 0;
+}
+.td-prop-date-clear:hover { color: var(--text-primary); }
+.td-prop-date-clear .material-symbols-outlined { font-size: 14px; }
 .td-priority-high {
     color: var(--color-danger, #ef4444) !important;
 }
@@ -6932,7 +7145,7 @@ textarea:focus-visible {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 16px 6px 0;
+    padding: 0px 0px 6px 0;
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-app);
     flex-shrink: 0;
@@ -7032,6 +7245,8 @@ textarea:focus-visible {
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
     padding: 10px;
     width: 256px;
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
     animation: dp-fade-in 0.12s ease-out;
 }
 

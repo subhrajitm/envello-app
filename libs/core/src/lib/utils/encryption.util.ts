@@ -1,10 +1,68 @@
 export class EncryptionUtil {
     private static readonly KEY_STORAGE_PREFIX = 'envello_vault_key_';
+    private static readonly IDB_NAME = 'envello_vault_keys';
+    private static readonly IDB_STORE = 'keys';
     private static readonly V2_PREFIX = 'v2:';
 
     // ── Key management ────────────────────────────────────────────────────────
 
+    /**
+     * Retrieve or generate the AES-256-GCM vault key for this user.
+     *
+     * Keys are stored as non-extractable CryptoKey objects in IndexedDB —
+     * they cannot be read back as raw bytes, even by JS running on the same
+     * origin. This eliminates the localStorage raw-key-exfiltration risk.
+     *
+     * Falls back to localStorage only for environments where IndexedDB is
+     * unavailable (e.g. some private-browsing modes).
+     */
     static async getOrCreateKey(userId: string): Promise<CryptoKey> {
+        try {
+            return await this.getOrCreateKeyIDB(userId);
+        } catch {
+            return this.getOrCreateKeyLocalStorage(userId);
+        }
+    }
+
+    private static openKeyStore(): Promise<IDBDatabase> {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(this.IDB_NAME, 1);
+            req.onupgradeneeded = () => req.result.createObjectStore(this.IDB_STORE);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    private static async getOrCreateKeyIDB(userId: string): Promise<CryptoKey> {
+        const db = await this.openKeyStore();
+        const storageKey = `${this.KEY_STORAGE_PREFIX}${userId}`;
+
+        // Try to retrieve existing non-extractable key
+        const existing = await new Promise<CryptoKey | undefined>((res, rej) => {
+            const tx = db.transaction(this.IDB_STORE, 'readonly');
+            const req = tx.objectStore(this.IDB_STORE).get(storageKey);
+            req.onsuccess = () => res(req.result as CryptoKey | undefined);
+            req.onerror = () => rej(req.error);
+        });
+        if (existing) { db.close(); return existing; }
+
+        // Generate a new non-extractable key and persist it in IndexedDB
+        const key = await crypto.subtle.generateKey(
+            { name: 'AES-GCM', length: 256 },
+            false,  // non-extractable — raw bytes never leave the crypto engine
+            ['encrypt', 'decrypt']
+        );
+        await new Promise<void>((res, rej) => {
+            const tx = db.transaction(this.IDB_STORE, 'readwrite');
+            const req = tx.objectStore(this.IDB_STORE).put(key, storageKey);
+            req.onsuccess = () => res();
+            req.onerror = () => rej(req.error);
+        });
+        db.close();
+        return key;
+    }
+
+    private static async getOrCreateKeyLocalStorage(userId: string): Promise<CryptoKey> {
         const storageKey = `${this.KEY_STORAGE_PREFIX}${userId}`;
         const stored = localStorage.getItem(storageKey);
         if (stored) {

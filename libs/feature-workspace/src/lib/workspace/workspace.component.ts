@@ -798,7 +798,7 @@ GENERAL RULES:
       'space': '/spaces', 'spaces': '/spaces', 'project': '/spaces', 'projects': '/spaces',
       'activity': '/activity-log', 'log': '/activity-log', 'logs': '/activity-log',
       'bin': '/bin', 'trash': '/bin',
-      'settings': '/developer-settings',
+      'settings': '/settings',
     };
     const key = Object.keys(navMap).find(k => target.includes(k));
     return { type: 'navigate', title: target, route: key ? navMap[key] : undefined };

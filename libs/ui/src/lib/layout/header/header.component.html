@@ -57,6 +57,21 @@
           <span class="material-symbols-outlined btn-icon-inner">add</span>
           <span>Add New</span>
         </button>
+
+        <button
+          class="sync-icon-btn"
+          [class.sync-icon--spinning]="isActivelySyncing() && !syncError()"
+          [class.sync-icon--error]="syncError()"
+          [title]="syncError() ?? (isActivelySyncing() ? 'Syncing…' : 'Click to sync now')"
+          [disabled]="isActivelySyncing()"
+          (click)="triggerManualSync()"
+          aria-label="Sync data"
+        >
+          <span class="material-symbols-outlined">
+            {{ syncError() ? 'sync_problem' : 'sync' }}
+          </span>
+        </button>
+
         <button class="icon-btn notification-btn" (click)="openNotifications()">
           <span class="material-symbols-outlined">notifications</span>
           @if (unreadCount() > 0) {

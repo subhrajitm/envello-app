@@ -38,14 +38,14 @@ export class VoiceService {
 
       this.recognition.onend = () => {
         this.isRecognizing = false;
-        // If VoiceService says it should be active but recognition ended
-        // we can try to restart it if the user is still long pressing
-        if (this.isVoiceActive()) {
-           try {
-             this.recognition.start();
-           } catch (e) {
-             console.error('Error restarting speech recognition:', e);
-           }
+        // Only restart if voice is active AND the user is still holding Ctrl
+        // (prevents infinite loops on error-triggered ends)
+        if (this.isVoiceActive() && this.isControlPressed) {
+          try {
+            this.recognition.start();
+          } catch (e) {
+            console.error('Error restarting speech recognition:', e);
+          }
         }
       };
 
@@ -64,11 +64,18 @@ export class VoiceService {
 
       this.recognition.onerror = (event: any) => {
         if (event.error === 'not-allowed') {
-          console.error('Voice: microphone access denied. On desktop, ensure the app has microphone entitlement.');
+          console.error('Voice: microphone/speech-recognition access denied. Check System Settings → Privacy & Security, and ensure the app has NSMicrophoneUsageDescription + NSSpeechRecognitionUsageDescription in Info.plist.');
+          this.isVoiceActive.set(false);
+          this.isRecognizing = false;
+          this.isControlPressed = false;
+        } else if (event.error === 'network') {
+          console.error('Voice: network error — speech recognition requires internet access to Apple servers.');
           this.isVoiceActive.set(false);
           this.isRecognizing = false;
         } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
           console.error('Speech recognition error:', event.error);
+          this.isVoiceActive.set(false);
+          this.isRecognizing = false;
         }
       };
     } else {
@@ -133,20 +140,26 @@ export class VoiceService {
     if (typeof window === 'undefined') return;
 
     window.addEventListener('keydown', (event) => {
-      // Check for Control key
       if (event.key === 'Control' && !this.isControlPressed) {
         this.isControlPressed = true;
-        // Start long press timer (500ms)
+        // Start recognition immediately — WKWebView requires getUserMedia/speech to be
+        // initiated within a direct user-gesture frame; setTimeout breaks that guarantee.
+        this.handleRecognitionState(true);
+        // Show the visual mic-active state only after the hold threshold
         this.commandPressTimer = setTimeout(() => {
-          this.isVoiceActive.set(true); // Activate voice on long press
-          this.handleRecognitionState(true); // Start listening
+          this.isVoiceActive.set(true);
         }, 500);
       } else if (this.isControlPressed && event.key !== 'Control') {
-        // Cancel if it's a shortcut combination like Ctrl+C
+        // Ctrl+<key> shortcut — cancel voice, don't activate
         if (this.commandPressTimer) {
           clearTimeout(this.commandPressTimer);
           this.commandPressTimer = null;
         }
+        this.isControlPressed = false;
+        this.isVoiceActive.set(false);
+        // Force-stop even if onstart hasn't fired yet
+        try { this.recognition?.stop(); } catch (_) {}
+        this.isRecognizing = false;
       }
     });
 
@@ -157,9 +170,8 @@ export class VoiceService {
           clearTimeout(this.commandPressTimer);
           this.commandPressTimer = null;
         }
-        // Deactivate voice on release
         this.isVoiceActive.set(false);
-        this.handleRecognitionState(false); // Stop listening
+        this.handleRecognitionState(false);
       }
     });
   }

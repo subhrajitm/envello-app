@@ -5,12 +5,102 @@ use tauri::{Emitter, Manager};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
+// ── macOS: grant WKWebView media-capture permission ────────────────────────────────────────────
+//
+// WRY already attaches its own WKUIDelegate to the WKWebView.  Replacing it would
+// break WRY's context-menu / drag-drop handling and crash the app.
+//
+// Instead we ADD our requestMediaCapturePermission implementation directly to
+// WRY's existing delegate class at runtime (safe to do after a class is registered).
+// class_addMethod returns false and is a no-op if the method already exists.
+#[cfg(target_os = "macos")]
+mod macos_media {
+    use std::ffi::{c_char, c_void};
+
+    type Id  = *mut c_void;
+    type Sel = *mut c_void;
+
+    #[link(name = "objc", kind = "dylib")]
+    extern "C" {
+        fn sel_registerName(name: *const c_char) -> Sel;
+        fn object_getClass(obj: Id) -> Id;
+        fn class_addMethod(cls: Id, name: Sel, imp: unsafe extern "C" fn(), types: *const c_char) -> bool;
+        fn objc_getProtocol(name: *const c_char) -> Id;
+        fn class_addProtocol(cls: Id, protocol: Id) -> bool;
+        fn objc_msgSend(receiver: Id, sel: Sel, ...) -> Id;
+    }
+
+    // ObjC helper — defined in src/media_helper.m, compiled via build.rs.
+    // Calling the block from ObjC lets the compiler emit the correct PAC-authenticated
+    // `blraa` branch on Apple Silicon instead of Rust's plain `blr`, which would
+    // trigger a Pointer Authentication fault and crash the app.
+    extern "C" {
+        fn envello_grant_media_permission(handler: Id);
+    }
+
+    /// Called by WKWebView when the page requests microphone / speech-recognition access.
+    unsafe extern "C" fn grant_media(
+        _: Id, _: Sel,
+        _: Id,      // WKWebView*
+        _: Id,      // WKSecurityOrigin*
+        _: Id,      // WKFrameInfo*
+        _: usize,   // WKMediaCaptureType (NSUInteger)
+        handler: Id // void (^)(WKPermissionDecision)
+    ) {
+        if handler.is_null() { return; }
+        envello_grant_media_permission(handler);
+    }
+
+    pub fn patch_delegate(window: &tauri::WebviewWindow) {
+        // Type encoding for the selector:
+        //   v  = void (return)   @  = self (id)   :  = SEL
+        //   @  = WKWebView*      @  = WKSecurityOrigin*   @  = WKFrameInfo*
+        //   Q  = WKMediaCaptureType (NSUInteger = u64)    @  = handler block (id)
+        const TYPES: &[u8] = b"v@:@@@Q@\0";
+        const SEL_NAME: &[u8] =
+            b"webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:\0";
+
+        let _ = window.with_webview(|webview| unsafe {
+            let wv = webview.inner() as Id;
+            if wv.is_null() { return; }
+
+            // ── Step 1: get WRY's existing UIDelegate (must not replace it) ──
+            let sel_delegate: Sel = sel_registerName(b"UIDelegate\0".as_ptr() as _);
+            let get_delegate: unsafe extern "C" fn(Id, Sel) -> Id =
+                std::mem::transmute(objc_msgSend as unsafe extern "C" fn(Id, Sel, ...) -> Id);
+            let delegate = get_delegate(wv, sel_delegate);
+            if delegate.is_null() { return; }
+
+            // ── Step 2: inject our method into the delegate's class ──
+            // class_addMethod is a no-op (returns false) if the method already exists.
+            let cls = object_getClass(delegate);
+            if cls.is_null() { return; }
+
+            let media_sel: Sel = sel_registerName(SEL_NAME.as_ptr() as _);
+            class_addMethod(
+                cls,
+                media_sel,
+                std::mem::transmute(
+                    grant_media as unsafe extern "C" fn(Id, Sel, Id, Id, Id, usize, Id),
+                ),
+                TYPES.as_ptr() as _,
+            );
+
+            // Ensure the class formally conforms to WKUIDelegate so WKWebView
+            // routes the permission call to our newly added method.
+            let proto = objc_getProtocol(b"WKUIDelegate\0".as_ptr() as _);
+            if !proto.is_null() {
+                class_addProtocol(cls, proto);
+            }
+        });
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         // ── Reliability ──────────────────────────────────────────────────────
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            // If a second instance is launched, bring the existing window to front.
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.unminimize();
@@ -36,6 +126,12 @@ fn main() {
         .plugin(tauri_plugin_os::init())
         // ── App setup ────────────────────────────────────────────────────────
         .setup(|app| {
+            // Inject the media-capture grant into WRY's existing WKUIDelegate.
+            #[cfg(target_os = "macos")]
+            if let Some(window) = app.get_webview_window("main") {
+                macos_media::patch_delegate(&window);
+            }
+
             // System tray
             let show_item = MenuItem::with_id(app, "show", "Open Envello", true, None::<&str>)?;
             let new_note_item =
@@ -67,7 +163,6 @@ fn main() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
-                    // Left-click on tray icon → show window
                     if let TrayIconEvent::Click {
                         button: MouseButton::Left,
                         button_state: MouseButtonState::Up,

@@ -203,7 +203,7 @@ export class UserService {
       id: 'guest',
       name: 'Guest User',
       email: 'guest@envello.app',
-      avatar: 'https://ui-avatars.com/api/?name=Guest+User&background=random',
+      avatar: undefined,
       role: 'Guest',
       joinedDate: new Date(),
       preferences: {

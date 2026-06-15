@@ -64,9 +64,13 @@ export class LoggingService {
     }
   }
 
-  /** Stub: send error to backend log collector (implement when backend exists) */
   private sendToBackend(level: string, message: string, error: Error): void {
-    if (!environment.apiBaseUrl) return;
-    // Example: navigator.sendBeacon(`${environment.apiBaseUrl}/logs`, JSON.stringify({ level, message, stack: error.stack }));
+    if (!environment.apiBaseUrl || typeof navigator === 'undefined') return;
+    try {
+      navigator.sendBeacon(
+        `${environment.apiBaseUrl}/logs`,
+        JSON.stringify({ level, message, stack: error.stack, timestamp: new Date().toISOString() })
+      );
+    } catch { /* sendBeacon not available in all environments */ }
   }
 }

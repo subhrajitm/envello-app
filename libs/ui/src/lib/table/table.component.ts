@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, signal, HostListener, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CdkDrag, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 
 export interface EnvTableColumn {
   key: string;
@@ -28,6 +29,8 @@ export interface EnvTableAction {
   danger?: boolean;
   /** Set false to hide this action from the bulk selection bar. Defaults to true. */
   bulk?: boolean;
+  /** Set true to show ONLY in the bulk bar, not in the per-row kebab menu. */
+  bulkOnly?: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,7 +49,7 @@ export interface EnvTableActionEvent {
 @Component({
   selector: 'env-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CdkDrag],
   templateUrl: './table.component.html',
   styleUrl: './table.component.css',
 })
@@ -98,6 +101,13 @@ export class TableComponent implements OnChanges {
   @Output() rowClick         = new EventEmitter<EnvTableRow>();
   @Output() sortByClick      = new EventEmitter<void>();
   @Output() filterClick      = new EventEmitter<void>();
+  @Output() rowDragStart     = new EventEmitter<EnvTableRow[]>();
+  @Output() rowDragMoved     = new EventEmitter<{ x: number; y: number }>();
+  @Output() rowDragEnd       = new EventEmitter<{ x: number; y: number }>();
+
+  // ── Drag ─────────────────────────────────────────────────────────────────────
+  @Input() rowsDraggable = false;
+  _draggingCount = signal(0);
 
   // ── Internal pagination state (source of truth for rendering) ────────────────
   _page     = signal(1);
@@ -308,7 +318,32 @@ export class TableComponent implements OnChanges {
     this.clearSelection();
   }
 
+  // ── CDK Drag ─────────────────────────────────────────────────────────────────
+  onCdkDragStarted(row: EnvTableRow) {
+    const id = row[this.rowIdKey];
+    const rows = this.selectedIds().has(id)
+      ? this.rows.filter(r => this.selectedIds().has(r[this.rowIdKey]))
+      : [row];
+    this._draggingCount.set(rows.length);
+    this.rowDragStart.emit(rows);
+  }
+
+  onCdkDragMoved(event: CdkDragMove<EnvTableRow>) {
+    this.rowDragMoved.emit({ x: event.pointerPosition.x, y: event.pointerPosition.y });
+  }
+
+  onCdkDragEnded(row: EnvTableRow, event: CdkDragEnd<EnvTableRow>) {
+    event.source.reset();
+    this._draggingCount.set(0);
+    this.rowDragEnd.emit({ x: event.dropPoint.x, y: event.dropPoint.y });
+  }
+
   // ── Close menu on outside click ──────────────────────────────────────────────
   @HostListener('document:click')
   onDocClick() { this.openMenuId.set(null); }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
+    if (this.selectedIds().size > 0) this.clearSelection();
+  }
 }

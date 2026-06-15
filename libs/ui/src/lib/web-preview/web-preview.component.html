@@ -1,5 +1,5 @@
 @if (preview.isOpen()) {
-  <div class="backdrop" (click)="preview.close()"></div>
+  <div class="backdrop" (click)="close()"></div>
 
   <aside class="drawer">
     <header class="toolbar">
@@ -27,7 +27,7 @@
         </button>
 
         @if (tauri.isTauri()) {
-          <button class="icon-btn" title="Open in window" (click)="openInWindow()">
+          <button class="icon-btn" title="Pop out to window" (click)="openInWindow()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="3" width="20" height="14" rx="2"/>
               <path d="M8 21h8M12 17v4"/>
@@ -43,7 +43,7 @@
           </button>
         }
 
-        <button class="icon-btn close-btn" title="Close" (click)="preview.close()">
+        <button class="icon-btn close-btn" title="Close" (click)="close()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -52,30 +52,32 @@
       </div>
     </header>
 
-    <div class="iframe-wrap">
+    <div class="iframe-wrap" #contentArea [class.iframe-wrap--tauri]="tauri.isTauri()">
       @if (loadState() === 'loading') {
         <div class="load-overlay">
           <div class="spinner"></div>
         </div>
       }
 
-      @if (loadState() === 'blocked') {
-        <div class="blocked-state">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-          </svg>
-          <p>This site can't be previewed here.</p>
-          <button class="open-btn" (click)="openExternal()">Open in browser</button>
-        </div>
-      } @else {
-        <iframe
-          #iframe
-          [src]="safeUrl()"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          (load)="onIframeLoad()"
-          title="Web preview"
-        ></iframe>
+      @if (!tauri.isTauri()) {
+        @if (loadState() === 'blocked') {
+          <div class="blocked-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            </svg>
+            <p>This site can't be previewed here.</p>
+            <button class="open-btn" (click)="openExternal()">Open in browser</button>
+          </div>
+        } @else {
+          <iframe
+            #iframe
+            [src]="safeUrl()"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            (load)="onIframeLoad()"
+            title="Web preview"
+          ></iframe>
+        }
       }
     </div>
   </aside>

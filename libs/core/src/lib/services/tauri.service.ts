@@ -67,6 +67,7 @@ export class TauriService {
   // ── Shell ─────────────────────────────────────────────────────────────────
 
   async openUrl(url: string): Promise<void> {
+    if (!/^https?:\/\//i.test(url)) return;
     if (this._isTauri()) {
       const { open } = await import('@tauri-apps/plugin-shell');
       await open(url);
@@ -89,6 +90,47 @@ export class TauriService {
     } catch {
       await this.openUrl(url);
     }
+  }
+
+  // ── Embedded webview (in-app panel) ───────────────────────────────────────
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private _embeddedWebview: any = null;
+
+  async createEmbeddedWebview(url: string, bounds: { x: number; y: number; width: number; height: number }): Promise<void> {
+    if (!this._isTauri()) return;
+    await this.destroyEmbeddedWebview();
+    try {
+      const { Webview } = await import('@tauri-apps/api/webview');
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await new Promise<void>((resolve, reject) => {
+        const wv = new Webview(getCurrentWindow(), 'env-web-preview', {
+          url, x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height,
+        });
+        this._embeddedWebview = wv;
+        wv.once('tauri://created', () => resolve());
+        wv.once('tauri://error', (e) => reject(e));
+      });
+    } catch (e) {
+      console.error('[TauriService] createEmbeddedWebview failed', e);
+      this._embeddedWebview = null;
+    }
+  }
+
+  async destroyEmbeddedWebview(): Promise<void> {
+    if (this._embeddedWebview) {
+      try { await this._embeddedWebview.close(); } catch { /* webview may already be gone */ }
+      this._embeddedWebview = null;
+    }
+  }
+
+  async updateEmbeddedWebviewBounds(bounds: { x: number; y: number; width: number; height: number }): Promise<void> {
+    if (!this._embeddedWebview) return;
+    try {
+      const { LogicalSize, LogicalPosition } = await import('@tauri-apps/api/window');
+      await this._embeddedWebview.setPosition(new LogicalPosition(bounds.x, bounds.y));
+      await this._embeddedWebview.setSize(new LogicalSize(bounds.width, bounds.height));
+    } catch { /* ignore */ }
   }
 
   // ── File system ───────────────────────────────────────────────────────────

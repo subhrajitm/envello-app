@@ -242,131 +242,118 @@
 
 </div>
 
-<!-- ── ADD PIECE MODAL ── -->
-@if (showAddModal()) {
-  <div class="wra-backdrop" (click)="closeAddModal()">
-    <div class="wra-modal" (click)="$event.stopPropagation()">
+<!-- ── ADD WRITING SLIDER ── -->
+<env-slider-panel [isOpen]="showAddModal()" (closed)="closeAddModal()" width="640px">
+  <div class="wra-slider-inner">
 
-      <!-- Header -->
-      <div class="wra-header">
-        <div class="wra-header-left">
-          <span class="material-symbols-outlined wra-header-icon">edit_note</span>
-          <h2 class="wra-header-title">New Writing</h2>
-        </div>
-        <div class="wra-header-right">
-          <kbd class="wra-esc-key">Esc</kbd>
-          <button class="wra-close-btn" (click)="closeAddModal()">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
+    <!-- Header -->
+    <div class="wra-header">
+      <div class="wra-header-left">
+        <span class="material-symbols-outlined wra-header-icon">edit_note</span>
+        <h2 class="wra-header-title">New Writing</h2>
       </div>
-
-      <!-- Body: two-pane -->
-      <div class="wra-body">
-
-        <!-- Left: Writing Type sidebar -->
-        <nav class="wra-type-sidebar">
-          <div class="wra-sidebar-header">WRITING TYPE</div>
-          @for (type of writingTypes; track type.id) {
-            <button class="wra-type-item"
-              [class.wra-type-item--active]="newBook().writingType === type.id"
-              (click)="updateNewBook('writingType', type.id)">
-              <div class="wra-type-icon-wrap"
-                [style.background]="newBook().writingType === type.id ? getTypeMeta(type.id).color : 'transparent'"
-                [style.border-color]="newBook().writingType === type.id ? getTypeMeta(type.id).color : 'var(--border-subtle)'">
-                <span class="material-symbols-outlined"
-                  [style.color]="newBook().writingType === type.id ? 'white' : getTypeMeta(type.id).color">
-                  {{ type.defaultIcon }}
-                </span>
-              </div>
-              <span class="wra-type-label">{{ type.label }}</span>
-            </button>
-          }
-        </nav>
-
-        <!-- Right: Form pane -->
-        <div class="wra-form-pane">
-
-          <!-- Title bar -->
-          <div class="wra-name-bar">
-            <div class="wra-name-icon-wrap">
-              <span class="material-symbols-outlined"
-                [style.color]="getTypeMeta(newBook().writingType).color">
-                {{ newBook().icon }}
-              </span>
-            </div>
-            <input class="wra-name-input" type="text" placeholder="Title…" autofocus
-              [ngModel]="newBook().title"
-              (ngModelChange)="updateNewBook('title', $event)">
-          </div>
-
-          <!-- Status picker -->
-          <div class="wra-field-group wra-field-group--wide">
-            <label class="wra-label">Status</label>
-            <div class="wra-status-picker">
-              @for (s of allStatusItems; track s.id) {
-                <button class="wra-status-opt" [class.wra-status-opt--active]="newBook().status === s.id"
-                  [style.border-color]="newBook().status === s.id ? s.color : ''"
-                  [style.background]="newBook().status === s.id ? s.color + '20' : ''"
-                  (click)="updateNewBook('status', s.id)">
-                  <span class="wr-status-dot" [style.background]="s.color"></span>
-                  {{ s.label }}
-                </button>
-              }
-            </div>
-          </div>
-
-          <div class="wra-fields">
-            <div class="wra-field-group">
-              <label class="wra-label">Target word count</label>
-              <input type="number" class="wra-input" min="0" placeholder="e.g. 80000"
-                [ngModel]="newBook().targetWordCount"
-                (ngModelChange)="updateNewBook('targetWordCount', +$event || 0)">
-            </div>
-            <div class="wra-field-group">
-              <label class="wra-label">Tags</label>
-              <input type="text" class="wra-input" placeholder="Sci-Fi, Thriller, …"
-                [ngModel]="newBook().genre"
-                (ngModelChange)="updateNewBook('genre', $event)">
-            </div>
-          </div>
-
-          <!-- Icon picker -->
-          <div class="wra-field-group wra-field-group--wide">
-            <label class="wra-label">Icon</label>
-            <div class="wra-icon-picker">
-              @for (opt of bookIcons; track opt.id) {
-                <button class="wra-icon-opt" [class.wra-icon-opt--active]="newBook().icon === opt.id"
-                  (click)="updateNewBook('icon', opt.id)" [title]="opt.label">
-                  <span class="material-symbols-outlined">{{ opt.id }}</span>
-                </button>
-              }
-            </div>
-          </div>
-
-        </div>
+      <div class="wra-header-right">
+        <kbd class="wra-esc-key">Esc</kbd>
+        <button class="wra-close-btn" (click)="closeAddModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
-
-      <!-- Footer -->
-      <div class="wra-footer">
-        <div class="wra-footer-hints">
-          <span class="wra-hint"><kbd>Tab</kbd> Next field</span>
-          <span class="wra-hint"><kbd>Enter</kbd> Create</span>
-          <span class="wra-hint"><kbd>Esc</kbd> Close</span>
-        </div>
-        <div class="wra-footer-actions">
-          <button class="wra-cancel-btn" (click)="closeAddModal()">Cancel</button>
-          <button class="wra-create-btn" (click)="addBook()"
-            [disabled]="!newBook().title.trim() || addModalSubmitting()">
-            <span class="material-symbols-outlined">add</span>
-            {{ addModalSubmitting() ? 'Creating…' : 'Create Writing' }}
-          </button>
-        </div>
-      </div>
-
     </div>
+
+    <!-- Type pills -->
+    <div class="wra-type-pills">
+      @for (type of writingTypes; track type.id) {
+        <button class="wra-type-pill"
+          [class.wra-type-pill--active]="newBook().writingType === type.id"
+          [style.--pc]="getTypeMeta(type.id).color"
+          (click)="updateNewBook('writingType', type.id)">
+          <span class="material-symbols-outlined">{{ type.defaultIcon }}</span>
+          {{ type.label }}
+        </button>
+      }
+    </div>
+
+    <!-- Form pane -->
+    <div class="wra-form-pane">
+
+        <!-- Title bar -->
+        <div class="wra-name-bar">
+          <div class="wra-name-icon-wrap">
+            <span class="material-symbols-outlined"
+              [style.color]="getTypeMeta(newBook().writingType).color">
+              {{ newBook().icon }}
+            </span>
+          </div>
+          <input class="wra-name-input" type="text" placeholder="Title…" autofocus
+            [ngModel]="newBook().title"
+            (ngModelChange)="updateNewBook('title', $event)">
+        </div>
+
+        <!-- Status picker -->
+        <div class="wra-field-group wra-field-group--wide">
+          <label class="wra-label">Status</label>
+          <div class="wra-status-picker">
+            @for (s of allStatusItems; track s.id) {
+              <button class="wra-status-opt" [class.wra-status-opt--active]="newBook().status === s.id"
+                [style.border-color]="newBook().status === s.id ? s.color : ''"
+                [style.background]="newBook().status === s.id ? s.color + '20' : ''"
+                (click)="updateNewBook('status', s.id)">
+                <span class="wr-status-dot" [style.background]="s.color"></span>
+                {{ s.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="wra-fields">
+          <div class="wra-field-group">
+            <label class="wra-label">Target word count</label>
+            <input type="number" class="wra-input" min="0" placeholder="e.g. 80000"
+              [ngModel]="newBook().targetWordCount"
+              (ngModelChange)="updateNewBook('targetWordCount', +$event || 0)">
+          </div>
+          <div class="wra-field-group">
+            <label class="wra-label">Tags</label>
+            <input type="text" class="wra-input" placeholder="Sci-Fi, Thriller, …"
+              [ngModel]="newBook().genre"
+              (ngModelChange)="updateNewBook('genre', $event)">
+          </div>
+        </div>
+
+        <!-- Icon picker -->
+        <div class="wra-field-group wra-field-group--wide">
+          <label class="wra-label">Icon</label>
+          <div class="wra-icon-picker">
+            @for (opt of bookIcons; track opt.id) {
+              <button class="wra-icon-opt" [class.wra-icon-opt--active]="newBook().icon === opt.id"
+                (click)="updateNewBook('icon', opt.id)" [title]="opt.label">
+                <span class="material-symbols-outlined">{{ opt.id }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+      </div>
+
+    <!-- Footer -->
+    <div class="wra-footer">
+      <div class="wra-footer-hints">
+        <span class="wra-hint"><kbd>Tab</kbd> Next field</span>
+        <span class="wra-hint"><kbd>Enter</kbd> Create</span>
+        <span class="wra-hint"><kbd>Esc</kbd> Close</span>
+      </div>
+      <div class="wra-footer-actions">
+        <button class="wra-cancel-btn" (click)="closeAddModal()">Cancel</button>
+        <button class="wra-create-btn" (click)="addBook()"
+          [disabled]="!newBook().title.trim() || addModalSubmitting()">
+          <span class="material-symbols-outlined">add</span>
+          {{ addModalSubmitting() ? 'Creating…' : 'Create Writing' }}
+        </button>
+      </div>
+    </div>
+
   </div>
-}
+</env-slider-panel>
 
 <!-- ── DELETE MODAL ── -->
 @if (showDeleteModal()) {

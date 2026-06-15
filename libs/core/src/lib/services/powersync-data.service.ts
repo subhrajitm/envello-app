@@ -1,77 +1,106 @@
 import { Injectable, inject } from '@angular/core';
 import { DataService } from '@envello/data';
-import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
+import { Credential, Transaction, CredentialTransactionLink } from '@envello/domain';
 import { PowerSyncService } from './powersync.service';
 import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
+import { LoggingService } from './logging.service';
+import { JSON_FIELDS, BOOL_FIELDS, TYPED_TABLES } from '../config/powersync.schema';
 
 @Injectable({ providedIn: 'root' })
 export class PowerSyncDataService implements DataService {
   private readonly ps = inject(PowerSyncService);
   private readonly profileService = inject(WorkspaceProfileService);
   private readonly auth = inject(AuthService);
+  private readonly logging = inject(LoggingService);
 
-  /**
-   * Always live in the 'default' profile namespace so they are accessible
-   * regardless of which workspace is active.
-   */
   private readonly GLOBAL_COLLECTIONS = new Set([
-    'projects',
-    'note_folders',
-    'subscriptions',
-    'user_preferences',
+    'projects', 'note_folders', 'transactions', 'user_preferences',
   ]);
 
-  /** Never synced — stored in the local-only `local_vault` table. */
   private readonly VAULT_COLLECTIONS = new Set([
-    'credentials',
-    'credential_subscription_links',
+    'credentials', 'credential_transaction_links',
   ]);
 
   private get userId(): string {
     return this.auth.currentUser()?.id ?? 'guest';
   }
 
+  // ─── Collection name guard ───────────────────────────────────────────────────
+
+  /** Validates collection name against known table whitelist to prevent SQL injection. */
+  private assertSafeCollection(collection: string): void {
+    if (!TYPED_TABLES.has(collection) && !this.VAULT_COLLECTIONS.has(collection)) {
+      throw new Error(`[PowerSyncDataService] Unknown collection: "${collection}"`);
+    }
+  }
+
+  // ─── Row parsing ─────────────────────────────────────────────────────────────
+
+  private parseRow<T>(collection: string, row: any): T {
+    const result: any = { ...row };
+    for (const f of JSON_FIELDS[collection] ?? []) {
+      if (typeof result[f] === 'string' && result[f]) {
+        try { result[f] = JSON.parse(result[f]); } catch { result[f] = null; }
+      }
+    }
+    for (const f of BOOL_FIELDS[collection] ?? []) {
+      if (result[f] !== undefined && result[f] !== null) {
+        result[f] = result[f] === 1 || result[f] === true;
+      }
+    }
+    return result as T;
+  }
+
+  /** Serialize a domain item to typed column values for INSERT OR REPLACE. */
+  private itemToColumns(collection: string, profileId: string, item: any): { cols: string[]; vals: any[] } {
+    const jsonFields = new Set(JSON_FIELDS[collection] ?? []);
+    const boolFields = new Set(BOOL_FIELDS[collection] ?? []);
+    const cols: string[] = ['profile_id'];
+    const vals: any[] = [profileId];
+
+    for (const [key, val] of Object.entries(item)) {
+      if (key === 'id') continue;
+      cols.push(key);
+      if (val === null || val === undefined) {
+        vals.push(null);
+      } else if (jsonFields.has(key) || (Array.isArray(val)) || (typeof val === 'object')) {
+        vals.push(JSON.stringify(val));
+      } else if (boolFields.has(key)) {
+        vals.push(val ? 1 : 0);
+      } else {
+        vals.push(val);
+      }
+    }
+    return { cols, vals };
+  }
+
   // ─── Public DataService API ──────────────────────────────────────────────────
 
   async getAll<T>(collection: string): Promise<T[]> {
-    if (this.VAULT_COLLECTIONS.has(collection)) {
-      return this.getVaultAll<T>(collection);
-    }
+    this.assertSafeCollection(collection);
+    if (this.VAULT_COLLECTIONS.has(collection)) return this.getVaultAll<T>(collection);
 
     try {
       const activeId = this.profileService.activeProfileId() || 'default';
       const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
 
-      let rows: Array<{ data: string }>;
-
+      let rows: any[];
       if (!isGlobal && activeId === 'default') {
-        // "All Projects" mode — aggregate across every profile
-        rows = await this.ps.db.getAll<{ data: string }>(
-          'SELECT data FROM user_data WHERE collection = ? AND deleted = 0',
-          [collection]
-        );
+        // "All Projects" mode — all rows regardless of profile
+        rows = await this.ps.db.getAll(`SELECT * FROM ${collection}`, []);
       } else {
         const profileId = isGlobal ? 'default' : activeId;
-        rows = await this.ps.db.getAll<{ data: string }>(
-          'SELECT data FROM user_data WHERE collection = ? AND profile_id = ? AND deleted = 0',
-          [collection, profileId]
+        rows = await this.ps.db.getAll(
+          `SELECT * FROM ${collection} WHERE profile_id = ? OR profile_id IS NULL`,
+          [profileId]
         );
       }
 
       const seen = new Set<string>();
-      const result: T[] = [];
-      for (const row of rows) {
-        try {
-          const item = JSON.parse(row.data) as T;
-          const id = (item as any).id;
-          if (id && !seen.has(id)) {
-            seen.add(id);
-            result.push(item);
-          }
-        } catch { /* skip malformed row */ }
-      }
-      return result;
+      return rows
+        .filter(r => { const id = r.id; if (!id || seen.has(id)) return false; seen.add(id); return true; })
+        .map(r => this.parseRow<T>(collection, r));
     } catch (e) {
       console.error(`[PowerSyncDataService] getAll failed for ${collection}`, e);
       return [];
@@ -79,9 +108,8 @@ export class PowerSyncDataService implements DataService {
   }
 
   async upsert<T>(collection: string, item: T): Promise<void> {
-    if (this.VAULT_COLLECTIONS.has(collection)) {
-      return this.upsertVault(collection, item);
-    }
+    this.assertSafeCollection(collection);
+    if (this.VAULT_COLLECTIONS.has(collection)) return this.upsertVault(collection, item);
 
     try {
       const id = (item as any).id as string;
@@ -89,63 +117,107 @@ export class PowerSyncDataService implements DataService {
 
       const activeId = this.profileService.activeProfileId() || 'default';
       const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
-
       let profileId: string;
 
       if (!isGlobal && activeId === 'default') {
-        // Preserve the owning profile of an existing record; new items go to default
         const existing = await this.ps.db.getOptional<{ profile_id: string }>(
-          'SELECT profile_id FROM user_data WHERE id = ? AND collection = ? LIMIT 1',
-          [id, collection]
+          `SELECT profile_id FROM ${collection} WHERE id = ? LIMIT 1`, [id]
         );
         profileId = existing?.profile_id ?? 'default';
       } else {
         profileId = isGlobal ? 'default' : activeId;
       }
 
+      // 1. Write to user_data for PowerSync sync upload
       await this.ps.db.execute(
-        `INSERT OR REPLACE INTO user_data
-           (id, user_id, profile_id, collection, data, deleted, updated_at)
+        `INSERT OR REPLACE INTO user_data (id, user_id, profile_id, collection, data, deleted, updated_at)
          VALUES (?, ?, ?, ?, ?, 0, ?)`,
         [id, this.userId, profileId, collection, JSON.stringify(item), new Date().toISOString()]
       );
+
+      // 2. Write to typed table for fast local reads
+      await this.upsertToTypedTable(collection, profileId, item);
     } catch (e) {
       console.error(`[PowerSyncDataService] upsert failed for ${collection}`, e);
     }
   }
 
   async remove(collection: string, id: string): Promise<void> {
-    if (this.VAULT_COLLECTIONS.has(collection)) {
-      return this.removeVault(collection, id);
-    }
+    this.assertSafeCollection(collection);
+    if (this.VAULT_COLLECTIONS.has(collection)) return this.removeVault(collection, id);
 
     try {
+      // Mark deleted in user_data for sync
+      const activeId = this.profileService.activeProfileId() || 'default';
+      const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+      const profileId = isGlobal ? 'default' : activeId;
+
       await this.ps.db.execute(
-        'DELETE FROM user_data WHERE id = ? AND collection = ?',
-        [id, collection]
+        `INSERT OR REPLACE INTO user_data (id, user_id, profile_id, collection, data, deleted, updated_at)
+         VALUES (?, ?, ?, ?, '{}', 1, ?)`,
+        [id, this.userId, profileId, collection, new Date().toISOString()]
       );
+      // Remove from typed table
+      await this.ps.db.execute(`DELETE FROM ${collection} WHERE id = ?`, [id]);
     } catch (e) {
       console.error(`[PowerSyncDataService] remove failed for ${collection}`, e);
     }
   }
 
   async importData(data: any): Promise<void> {
-    console.log('[PowerSyncDataService] importData', data);
+    this.logging.info('[PowerSyncDataService] importData');
   }
 
   async pullFromRemote(_: string): Promise<void> {}
 
-  // ─── Local Vault helpers (credentials — never leave the device) ──────────────
+  // ─── Typed table helpers ─────────────────────────────────────────────────────
+
+  /** Write a single item into its typed local table. */
+  async upsertToTypedTable(collection: string, profileId: string, item: any): Promise<void> {
+    if (!TYPED_TABLES.has(collection)) return; // guard: skip vault and unknown collections
+    const id = item?.id;
+    if (!id) return;
+    const { cols, vals } = this.itemToColumns(collection, profileId, item);
+    const placeholders = cols.map(() => '?').join(', ');
+    await this.ps.db.execute(
+      `INSERT OR REPLACE INTO ${collection} (id, ${cols.join(', ')}) VALUES (?, ${placeholders})`,
+      [id, ...vals]
+    );
+  }
+
+  /**
+   * Repopulate all typed tables from the current user_data contents.
+   * Called once on first sync and after PowerSync delivers a batch.
+   */
+  async rebuildTypedTablesFromUserData(): Promise<void> {
+    try {
+      const rows = await this.ps.db.getAll<{ id: string; profile_id: string; collection: string; data: string; deleted: number }>(
+        'SELECT id, profile_id, collection, data, deleted FROM user_data', []
+      );
+      for (const row of rows) {
+        if (!TYPED_TABLES.has(row.collection)) continue; // skip vault + unknown collections
+        if (row.deleted) {
+          await this.ps.db.execute(`DELETE FROM ${row.collection} WHERE id = ?`, [row.id]).catch(() => {});
+          continue;
+        }
+        try {
+          const item = JSON.parse(row.data);
+          await this.upsertToTypedTable(row.collection, row.profile_id, item).catch(() => {});
+        } catch { /* skip malformed */ }
+      }
+    } catch (e) {
+      console.error('[PowerSyncDataService] rebuildTypedTables failed', e);
+    }
+  }
+
+  // ─── Local Vault helpers ─────────────────────────────────────────────────────
 
   private async getVaultAll<T>(type: string): Promise<T[]> {
     try {
       const rows = await this.ps.db.getAll<{ data: string }>(
-        'SELECT data FROM local_vault WHERE type = ?',
-        [type]
+        'SELECT data FROM local_vault WHERE type = ?', [type]
       );
-      return rows
-        .map(r => { try { return JSON.parse(r.data) as T; } catch { return null as any; } })
-        .filter(Boolean);
+      return rows.map(r => { try { return JSON.parse(r.data) as T; } catch { return null as any; } }).filter(Boolean);
     } catch (e) {
       console.error(`[PowerSyncDataService] getVaultAll failed for ${type}`, e);
       return [];
@@ -167,26 +239,23 @@ export class PowerSyncDataService implements DataService {
 
   private async removeVault(type: string, id: string): Promise<void> {
     try {
-      await this.ps.db.execute(
-        'DELETE FROM local_vault WHERE id = ? AND type = ?',
-        [id, type]
-      );
+      await this.ps.db.execute('DELETE FROM local_vault WHERE id = ? AND type = ?', [id, type]);
     } catch (e) {
       console.error(`[PowerSyncDataService] removeVault failed for ${type}`, e);
     }
   }
 
-  // ─── Vault & Subscriptions ───────────────────────────────────────────────────
+  // ─── Vault & Transactions ────────────────────────────────────────────────────
 
-  async saveCredential(c: Credential): Promise<void>              { return this.upsert('credentials', c); }
-  async getCredentials(): Promise<Credential[]>                   { return this.getAll<Credential>('credentials'); }
-  async deleteCredential(id: string): Promise<void>               { return this.remove('credentials', id); }
+  async saveCredential(c: Credential): Promise<void>          { return this.upsert('credentials', c); }
+  async getCredentials(): Promise<Credential[]>               { return this.getAll<Credential>('credentials'); }
+  async deleteCredential(id: string): Promise<void>           { return this.remove('credentials', id); }
 
-  async saveSubscription(s: Subscription): Promise<void>          { return this.upsert('subscriptions', s); }
-  async getSubscriptions(): Promise<Subscription[]>               { return this.getAll<Subscription>('subscriptions'); }
-  async deleteSubscription(id: string): Promise<void>             { return this.remove('subscriptions', id); }
+  async saveTransaction(t: Transaction): Promise<void>        { return this.upsert('transactions', t); }
+  async getTransactions(): Promise<Transaction[]>             { return this.getAll<Transaction>('transactions'); }
+  async deleteTransaction(id: string): Promise<void>          { return this.remove('transactions', id); }
 
-  async saveLink(l: CredentialSubscriptionLink): Promise<void>    { return this.upsert('credential_subscription_links', l); }
-  async getLinks(): Promise<CredentialSubscriptionLink[]>         { return this.getAll<CredentialSubscriptionLink>('credential_subscription_links'); }
-  async deleteLink(id: string): Promise<void>                     { return this.remove('credential_subscription_links', id); }
+  async saveLink(l: CredentialTransactionLink): Promise<void> { return this.upsert('credential_transaction_links', l); }
+  async getLinks(): Promise<CredentialTransactionLink[]>      { return this.getAll<CredentialTransactionLink>('credential_transaction_links'); }
+  async deleteLink(id: string): Promise<void>                 { return this.remove('credential_transaction_links', id); }
 }

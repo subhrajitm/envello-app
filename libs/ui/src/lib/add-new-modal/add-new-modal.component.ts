@@ -73,7 +73,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         { id: 'research',     title: 'Knowledge',    description: 'Add sources, links, and notes to your knowledge base', icon: 'hub', route: '/knowledge', color: '#f4e89c', category: 'knowledge', shortcut: '4', keywords: ['research', 'knowledge', 'library', 'source'], tag: 'RESEARCH' },
         { id: 'bookmark',     title: 'Bookmark',     description: 'Save a link or resource',             icon: 'bookmark',      route: '/bookmarks',     color: '#b48ce8', category: 'knowledge', shortcut: '5', keywords: ['bookmark', 'link', 'url', 'save'],     tag: 'BOOKMARK' },
         ...( this.isTauri ? [{ id: 'vault', title: 'Vault Entry', description: 'Store a secret or credential', icon: 'lock', route: '/vault', color: '#f59e0b', category: 'knowledge' as OptionCategory, shortcut: '', keywords: ['vault', 'credential', 'secret', 'key'], tag: 'VAULT' }] : []),
-        { id: 'subscription', title: 'Subscription', description: 'Track a subscription',                icon: 'credit_card',   route: '/subscriptions', color: '#34d399', category: 'knowledge', shortcut: '',  keywords: ['subscription', 'billing'],             tag: 'SUBSCRIPTION' },
+        { id: 'transaction', title: 'Transaction', description: 'Track a transaction or expense',          icon: 'receipt_long',  route: '/transactions',  color: '#34d399', category: 'knowledge', shortcut: '',  keywords: ['transaction', 'billing', 'expense'],   tag: 'TRANSACTION' },
         // Create
         { id: 'book',         title: 'Write',        description: 'Start a new book or writing project', icon: 'menu_book',    route: '/write',         color: '#c4a8d8', category: 'create',  shortcut: '7', keywords: ['novel', 'book', 'story', 'writing', 'draft'], tag: 'WRITE' },
     ];
@@ -95,7 +95,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         meeting:      this.meetingsService.meetings().length,
         bookmark:     this.store.bookmarks().length,
         vault:        0,
-        subscription: 0,
+        transaction: 0,
     }));
 
     // Computed: filtered options based on search
@@ -269,7 +269,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                         this.createBookmark();
                         break;
                     case 'vault':
-                    case 'subscription':
+                    case 'transaction':
                         this.router.navigate([option.route]);
                         break;
 

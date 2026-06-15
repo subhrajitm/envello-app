@@ -80,12 +80,6 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'developer-settings',
-    loadComponent: () => import('./components/developer-settings/developer-settings.component').then(m => m.DeveloperSettingsComponent),
-    canActivate: [authGuard],
-    data: { hasSidebar: true },
-  },
-  {
     path: 'bookmarks',
     loadComponent: () => import('@envello/feature-bookmarks').then(m => m.BookmarksComponent),
     canActivate: [authGuard],
@@ -98,8 +92,20 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
-    path: 'subscriptions',
+    path: 'transactions',
     loadComponent: () => import('@envello/feature-vendor').then(m => m.VendorComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'transactions/new',
+    loadComponent: () => import('@envello/feature-vendor').then(m => m.TransactionFormComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
+    path: 'transactions/:id',
+    loadComponent: () => import('@envello/feature-vendor').then(m => m.TransactionFormComponent),
     canActivate: [authGuard],
     data: { hasSidebar: true },
   },

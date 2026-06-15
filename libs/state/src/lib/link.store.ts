@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { DataService } from '@envello/data';
-import { CredentialSubscriptionLink } from '@envello/domain';
+import { CredentialTransactionLink } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -9,7 +9,7 @@ export class LinkStore {
     private db = inject(DataService);
 
     // State
-    private linksSignal = signal<CredentialSubscriptionLink[]>([]);
+    private linksSignal = signal<CredentialTransactionLink[]>([]);
     public links = this.linksSignal.asReadonly();
 
     constructor() {
@@ -21,9 +21,9 @@ export class LinkStore {
         this.linksSignal.set(links);
     }
 
-    async linkCredentialToSubscription(credentialId: string, subscriptionId: string) {
+    async linkCredentialToTransaction(credentialId: string, transactionId: string) {
         const id = crypto.randomUUID();
-        const link: CredentialSubscriptionLink = { id, credentialId, subscriptionId };
+        const link: CredentialTransactionLink = { id, credentialId, transactionId };
         await this.db.saveLink(link);
         await this.loadLinks();
     }
@@ -34,14 +34,14 @@ export class LinkStore {
     }
 
     getLinksByCredential(credentialId: string) {
-        return computed(() => 
+        return computed(() =>
             this.links().filter(l => l.credentialId === credentialId)
         );
     }
 
-    getLinksBySubscription(subscriptionId: string) {
-        return computed(() => 
-            this.links().filter(l => l.subscriptionId === subscriptionId)
+    getLinksByTransaction(transactionId: string) {
+        return computed(() =>
+            this.links().filter(l => l.transactionId === transactionId)
         );
     }
 }

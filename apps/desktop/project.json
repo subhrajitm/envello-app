@@ -14,6 +14,13 @@
         "browser": "apps/desktop/src/main.ts",
         "polyfills": [],
         "tsConfig": "apps/desktop/tsconfig.app.json",
+        "allowedCommonJsDependencies": [
+          "@opentelemetry/api",
+          "spark-md5",
+          "vuvuzela",
+          "events",
+          "@vercel/oidc"
+        ],
         "assets": [
           {
             "glob": "**/*",
@@ -35,13 +42,13 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "1.5MB",
-              "maximumError": "2.5MB"
+              "maximumWarning": "3MB",
+              "maximumError": "5MB"
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "100kB",
-              "maximumError": "150kB"
+              "maximumWarning": "150kB",
+              "maximumError": "200kB"
             }
           ],
           "outputHashing": "all",
@@ -56,13 +63,13 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "1.5MB",
-              "maximumError": "2.5MB"
+              "maximumWarning": "3MB",
+              "maximumError": "5MB"
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "20kB",
-              "maximumError": "40kB"
+              "maximumWarning": "150kB",
+              "maximumError": "200kB"
             }
           ],
           "outputHashing": "all",

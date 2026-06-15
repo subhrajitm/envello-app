@@ -2,8 +2,9 @@ import { Injectable, inject, effect } from '@angular/core';
 import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
 import { SyncService } from './sync.service';
+import { LoggingService } from './logging.service';
 import { DataService } from '@envello/data';
-import { Credential, Subscription, CredentialSubscriptionLink } from '@envello/domain';
+import { Credential, Transaction, CredentialTransactionLink } from '@envello/domain';
 import PouchDB from 'pouchdb';
 
 @Injectable({
@@ -14,18 +15,19 @@ export class PouchDbDataService implements DataService {
     private profileService = inject(WorkspaceProfileService);
     private authService = inject(AuthService);
     private syncService = inject(SyncService);
+    private logging = inject(LoggingService);
 
     /**
      * Collections that always live in the default namespace so they are visible
      * from every workspace context. Vault collections are also global so
-     * credentials/subscriptions are accessible regardless of active project.
+     * credentials/transactions are accessible regardless of active project.
      */
     private readonly GLOBAL_COLLECTIONS = new Set([
         'projects',
         'note_folders',
         'credentials',
-        'subscriptions',
-        'credential_subscription_links',
+        'transactions',
+        'credential_transaction_links',
         'user_preferences',
     ]);
 
@@ -37,7 +39,7 @@ export class PouchDbDataService implements DataService {
      */
     private readonly SYNC_EXCLUDED_COLLECTIONS = new Set([
         'credentials',
-        'credential_subscription_links',
+        'credential_transaction_links',
     ]);
 
     /** Set to true while applying pulled records to prevent re-triggering sync push. */
@@ -54,27 +56,33 @@ export class PouchDbDataService implements DataService {
             if (user && !this.hasPulled) {
                 this.hasPulled = true;
                 this.migrateResearchCollections().then(() => this.pullAndApply()).then(() => {
-                    this.unsubscribeRealtime = this.syncService.subscribeRealtime(async (record) => {
-                        this.applyingSync = true;
-                        try {
-                            if (this.SYNC_EXCLUDED_COLLECTIONS.has(record.collection)) return;
-                            if (record.deleted) {
-                                await this.removeFromProfile(record.collection, record.profile_id, record.id);
-                            } else if (record.data?.id) {
-                                await this.upsertToProfile(record.collection, record.profile_id, record.data);
+                    this.unsubscribeRealtime = this.syncService.subscribeRealtime(
+                        async (record) => {
+                            this.applyingSync = true;
+                            try {
+                                if (this.SYNC_EXCLUDED_COLLECTIONS.has(record.collection)) return;
+                                if (record.deleted) {
+                                    await this.removeFromProfile(record.collection, record.profile_id, record.id);
+                                } else if (record.data?.id) {
+                                    await this.upsertToProfile(record.collection, record.profile_id, record.data);
+                                }
+                                window.dispatchEvent(new CustomEvent('envello:sync-complete'));
+                            } finally {
+                                this.applyingSync = false;
                             }
-                            window.dispatchEvent(new CustomEvent('envello:sync-complete'));
-                        } finally {
-                            this.applyingSync = false;
-                        }
-                    });
+                        },
+                        // On WebSocket reconnect: pull to catch events missed while disconnected
+                        () => this.pullAndApply()
+                    );
                 });
             }
-            // Unsubscribe on logout
+            // Unsubscribe on logout and clear the sync cursor so a different
+            // user logging in on this device starts with a clean pull.
             if (!user && this.unsubscribeRealtime) {
                 this.unsubscribeRealtime();
                 this.unsubscribeRealtime = undefined;
                 this.hasPulled = false;
+                this.syncService.clearSyncCursor(this.authService.currentUser()?.id ?? '');
             }
         });
     }
@@ -104,7 +112,7 @@ export class PouchDbDataService implements DataService {
                     });
                 await newDb.bulkDocs(docs);
                 await oldDb.destroy();
-                console.log(`[PouchDbDataService] Migrated ${docs.length} collections from ${oldDbName}`);
+                this.logging.info(`[PouchDbDataService] Migrated ${docs.length} collections from ${oldDbName}`);
             } catch {
                 // Old DB doesn't exist or migration already ran — skip silently
             }
@@ -300,12 +308,12 @@ export class PouchDbDataService implements DataService {
     }
 
     async importData(data: any): Promise<void> {
-        console.log('[PouchDbDataService] importData invoked.', data);
+        this.logging.info('[PouchDbDataService] importData invoked.');
     }
 
     async pullFromRemote(_: string): Promise<void> {}
 
-    // ─── Vault & Subscriptions ───────────────────────────────────────────────────
+    // ─── Vault & Transactions ────────────────────────────────────────────────────
 
     async saveCredential(credential: Credential): Promise<void> {
         return this.upsert('credentials', credential);
@@ -317,23 +325,40 @@ export class PouchDbDataService implements DataService {
         return this.remove('credentials', id);
     }
 
-    async saveSubscription(subscription: Subscription): Promise<void> {
-        return this.upsert('subscriptions', subscription);
+    async saveTransaction(transaction: Transaction): Promise<void> {
+        return this.upsert('transactions', transaction);
     }
-    async getSubscriptions(): Promise<Subscription[]> {
-        return this.getAll<Subscription>('subscriptions');
+    async getTransactions(): Promise<Transaction[]> {
+        // Migrate any legacy 'subscriptions' docs on first read.
+        const legacy = await this.getAll<Transaction>('subscriptions');
+        if (legacy.length > 0) {
+            for (const item of legacy) {
+                await this.upsert('transactions', { ...item, type: item.type ?? 'recurring' as const });
+                await this.remove('subscriptions', item.id);
+            }
+        }
+        return this.getAll<Transaction>('transactions');
     }
-    async deleteSubscription(id: string): Promise<void> {
-        return this.remove('subscriptions', id);
+    async deleteTransaction(id: string): Promise<void> {
+        return this.remove('transactions', id);
     }
 
-    async saveLink(link: CredentialSubscriptionLink): Promise<void> {
-        return this.upsert('credential_subscription_links', link);
+    async saveLink(link: CredentialTransactionLink): Promise<void> {
+        return this.upsert('credential_transaction_links', link);
     }
-    async getLinks(): Promise<CredentialSubscriptionLink[]> {
-        return this.getAll<CredentialSubscriptionLink>('credential_subscription_links');
+    async getLinks(): Promise<CredentialTransactionLink[]> {
+        // Migrate legacy credential_subscription_links on first read.
+        const legacy = await this.getAll<any>('credential_subscription_links');
+        if (legacy.length > 0) {
+            for (const item of legacy) {
+                const migrated: CredentialTransactionLink = { id: item.id, credentialId: item.credentialId, transactionId: item.subscriptionId ?? item.transactionId };
+                await this.upsert('credential_transaction_links', migrated);
+                await this.remove('credential_subscription_links', item.id);
+            }
+        }
+        return this.getAll<CredentialTransactionLink>('credential_transaction_links');
     }
     async deleteLink(id: string): Promise<void> {
-        return this.remove('credential_subscription_links', id);
+        return this.remove('credential_transaction_links', id);
     }
 }

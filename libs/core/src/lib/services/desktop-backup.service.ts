@@ -33,7 +33,7 @@ export class DesktopBackupService {
           deleted: false,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: 'user_id,profile_id,collection,id' }
+        { onConflict: 'user_id,id,collection,profile_id' }
       );
 
     if (error) console.error('[DesktopBackupService] push failed', collection, error);

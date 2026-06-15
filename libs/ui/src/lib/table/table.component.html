@@ -136,7 +136,24 @@
             <tr
               class="env-table-row"
               [class.env-table-row--selected]="isSelected(row)"
+              [class.env-table-row--draggable]="rowsDraggable"
+              cdkDrag
+              [cdkDragData]="row"
+              [cdkDragDisabled]="!rowsDraggable"
+              (cdkDragStarted)="onCdkDragStarted(row)"
+              (cdkDragMoved)="onCdkDragMoved($event)"
+              (cdkDragEnded)="onCdkDragEnded(row, $event)"
               (click)="rowClick.emit(row)">
+              <ng-template cdkDragPreview>
+                <div class="env-drag-preview">
+                  <span class="material-symbols-outlined">drag_indicator</span>
+                  @if (_draggingCount() > 1) {
+                    Move {{ _draggingCount() }} items
+                  } @else {
+                    Move to folder
+                  }
+                </div>
+              </ng-template>
 
               <!-- Checkbox -->
               <td class="env-table-td env-table-td--check" (click)="$event.stopPropagation()">
@@ -200,15 +217,17 @@
                     @if (isMenuOpen(row)) {
                       <div class="env-table-menu" (click)="$event.stopPropagation()">
                         @for (action of actions; track action.key) {
-                          <button
-                            class="env-table-menu-item"
-                            [class.env-table-menu-item--danger]="action.danger"
-                            (click)="onAction(row, action.key)">
-                            @if (action.icon) {
-                              <span class="material-symbols-outlined">{{ action.icon }}</span>
-                            }
-                            {{ action.label }}
-                          </button>
+                          @if (!action.bulkOnly) {
+                            <button
+                              class="env-table-menu-item"
+                              [class.env-table-menu-item--danger]="action.danger"
+                              (click)="onAction(row, action.key)">
+                              @if (action.icon) {
+                                <span class="material-symbols-outlined">{{ action.icon }}</span>
+                              }
+                              {{ action.label }}
+                            </button>
+                          }
                         }
                       </div>
                     }

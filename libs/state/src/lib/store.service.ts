@@ -1,5 +1,4 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { BinService } from './bin.service';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
 import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder } from '@envello/domain';
@@ -21,7 +20,6 @@ export class StoreService {
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
 
-    private bin = inject(BinService);
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
 
@@ -29,11 +27,18 @@ export class StoreService {
     private workerCallbacks = new Map<string, (md: string) => void>();
     private saveTimeouts: { [id: string]: any } = {};
 
+    private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
+
     constructor() {
         this.loadFromDb();
         this.initMarkdownWorker();
         // Re-load after Supabase sync (web) or after SQLite DB becomes ready (desktop).
-        window.addEventListener('envello:sync-complete', () => this.loadFromDb());
+        // Debounce so rapid-fire realtime events (e.g. N bookmark upserts from a folder
+        // deletion) collapse into a single loadFromDb() call instead of N full reloads.
+        window.addEventListener('envello:sync-complete', () => {
+            clearTimeout(this._syncDebounceTimer);
+            this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
+        });
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
     }
 
@@ -92,16 +97,17 @@ export class StoreService {
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
             ]);
-            this.tasks.set(tasks || []);
+            this.tasks.set((tasks || []).filter(t => !t.deleted_at));
             // Merge: preserve any in-memory notes whose IDs aren't in the DB yet
             // (newly created notes that haven't been persisted before this reload fires).
-            const dbNoteIds = new Set((notes || []).map(n => n.id));
+            const activenotes = (notes || []).filter(n => !n.deleted_at);
+            const dbNoteIds = new Set(activenotes.map(n => n.id));
             const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
-            this.notes.set([...pendingNotes, ...(notes || [])]);
+            this.notes.set([...pendingNotes, ...activenotes]);
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
-            this.books.set(books || []);
-            this.bookmarks.set(bookmarks || []);
+            this.books.set((books || []).filter(b => !b.deleted_at));
+            this.bookmarks.set((bookmarks || []).filter(b => !b.deleted_at));
             this.bookmarkFolders.set(bookmarkFolders || []);
             this.spaces.set(spaces || []);
 
@@ -145,7 +151,6 @@ export class StoreService {
         let mdContent = await this.fs.readNote(id);
 
         if (mdContent === null && note.content && note.content.length > 0) {
-            console.log('[StoreService] Migrating note to file:', id);
             await this.saveNoteContentToFile(id, note.content);
             return note.content;
         }
@@ -175,21 +180,12 @@ export class StoreService {
     }
 
     deleteTask(id: string) {
-        const existingTasks = this.tasks();
-        const taskToDelete = existingTasks.find(t => t.id === id);
-
-        if (taskToDelete) {
-            this.bin.addToBin({
-                type: 'task',
-                originalId: taskToDelete.id,
-                title: taskToDelete.title,
-                payload: taskToDelete
-            });
-        }
-
-        this.tasks.set(existingTasks.filter(t => t.id !== id));
+        const task = this.tasks().find(t => t.id === id);
+        if (!task) return;
+        this.tasks.update(list => list.filter(t => t.id !== id));
         this.addActivity('Task deleted', 'system');
-        this.db.remove('tasks', id).catch(e => console.error('[StoreService] remove task failed', e));
+        this.db.upsert('tasks', { ...task, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete task failed', e));
     }
 
     async addNote(note: Note) {
@@ -243,22 +239,12 @@ export class StoreService {
     }
 
     deleteNote(id: string) {
-        const existingNotes = this.notes();
-        const noteToDelete = existingNotes.find(n => n.id === id);
-
-        if (noteToDelete) {
-            this.bin.addToBin({
-                type: 'daily-note',
-                originalId: noteToDelete.id,
-                title: noteToDelete.title,
-                payload: noteToDelete
-            });
-        }
-
-        this.notes.set(existingNotes.filter(n => n.id !== id));
+        const note = this.notes().find(n => n.id === id);
+        if (!note) return;
+        this.notes.update(list => list.filter(n => n.id !== id));
         this.addActivity('Note deleted', 'system');
-        this.db.remove('notes', id).catch(e => console.error('[StoreService] remove note failed', e));
-        this.fs.deleteNote(id).catch((e: unknown) => console.error('Failed to delete note file', e));
+        this.db.upsert('notes', { ...note, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete note failed', e));
     }
 
     addPlanningItem(item: PlanningItem) {
@@ -293,20 +279,12 @@ export class StoreService {
     }
 
     deleteBook(id: string) {
-        const existing = this.books();
-        const book = existing.find(n => n.id === id);
-        if (book) {
-            this.bin.addToBin({
-                type: 'book',
-                originalId: book.id,
-                title: book.title,
-                payload: book,
-            });
-        }
-        this.books.set(existing.filter(n => n.id !== id));
+        const book = this.books().find(b => b.id === id);
+        if (!book) return;
+        this.books.update(list => list.filter(b => b.id !== id));
         this.addActivity('Book deleted', 'system');
-        this.db.remove('books', id).catch(e => console.error('[StoreService] remove book failed', e));
-        this.db.remove('book_content', id).catch(e => console.error('[StoreService] remove book content failed', e));
+        this.db.upsert('books', { ...book, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete book failed', e));
     }
 
     addBookmark(bookmark: Bookmark) {
@@ -323,12 +301,11 @@ export class StoreService {
 
     deleteBookmark(id: string) {
         const bookmark = this.bookmarks().find(b => b.id === id);
-        if (bookmark) {
-            this.bin.addToBin({ type: 'bookmark', originalId: id, title: bookmark.title || bookmark.url, payload: bookmark });
-        }
+        if (!bookmark) return;
         this.bookmarks.update(list => list.filter(b => b.id !== id));
         this.addActivity('Bookmark removed', 'system');
-        this.db.remove('bookmarks', id).catch(e => console.error('[StoreService] remove bookmark failed', e));
+        this.db.upsert('bookmarks', { ...bookmark, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete bookmark failed', e));
     }
 
     addBookmarkFolder(folder: BookmarkFolder) {
@@ -336,10 +313,34 @@ export class StoreService {
         this.db.upsert('bookmark_folders', folder).catch(e => console.error('[StoreService] persist bookmark_folder failed', e));
     }
 
+    updateBookmarkFolder(id: string, updates: Partial<BookmarkFolder>) {
+        this.bookmarkFolders.update(list => list.map(f => f.id === id ? { ...f, ...updates } : f));
+        const folder = this.bookmarkFolders().find(f => f.id === id);
+        if (folder) this.db.upsert('bookmark_folders', folder).catch(e => console.error('[StoreService] persist bookmark_folder update failed', e));
+    }
+
+    batchUpdateBookmarks(updates: Array<{ id: string; data: Partial<Bookmark> }>) {
+        if (!updates.length) return;
+        const patchMap = new Map(updates.map(u => [u.id, u.data]));
+        this.bookmarks.update(list =>
+            list.map(b => { const p = patchMap.get(b.id); return p ? { ...b, ...p } : b; })
+        );
+        const updated = this.bookmarks().filter(b => patchMap.has(b.id));
+        Promise.all(updated.map(b => this.db.upsert('bookmarks', b)))
+            .catch(e => console.error('[StoreService] batchUpdateBookmarks failed', e));
+    }
+
     deleteBookmarkFolder(id: string) {
+        const affectedIds = this.bookmarks().filter(b => b.folderId === id).map(b => b.id);
         this.bookmarkFolders.update(list => list.filter(f => f.id !== id));
         this.bookmarks.update(list => list.map(b => b.folderId === id ? { ...b, folderId: undefined } : b));
         this.db.remove('bookmark_folders', id).catch(e => console.error('[StoreService] remove bookmark_folder failed', e));
+        // Persist the cleared folderId so bookmarks don't reload with a stale reference
+        if (affectedIds.length > 0) {
+            const updated = this.bookmarks().filter(b => affectedIds.includes(b.id));
+            Promise.all(updated.map(b => this.db.upsert('bookmarks', b)))
+                .catch(e => console.error('[StoreService] persist folder unlink failed', e));
+        }
     }
 
     addActivity(text: string, type: Activity['type'] = 'entry') {
