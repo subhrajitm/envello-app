@@ -380,7 +380,16 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   onAddUrlInput(value: string) {
     this.addUrl.set(value);
-    if (this.duplicateBookmark()) this.duplicateBookmark.set(null);
+    const raw = value.trim();
+    const urlToTest = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+      new URL(urlToTest);
+      const normalised = this.normaliseUrl(raw);
+      const existing = this.store.bookmarks().find(b => this.normaliseUrl(b.url) === normalised);
+      this.duplicateBookmark.set(existing ?? null);
+    } catch {
+      this.duplicateBookmark.set(null);
+    }
   }
 
   onAddUrlBlur() {
@@ -402,7 +411,8 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   private normaliseUrl(url: string): string {
     try {
       const u = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`);
-      return (u.origin + u.pathname).replace(/\/$/, '').toLowerCase();
+      const host = u.host.replace(/^www\./, '');
+      return `${u.protocol}//${host}${u.pathname}`.replace(/\/$/, '').toLowerCase();
     } catch {
       return url.toLowerCase().trim();
     }
