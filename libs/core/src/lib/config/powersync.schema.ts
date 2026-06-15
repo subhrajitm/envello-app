@@ -3,12 +3,18 @@ import { column, Schema, Table } from '@powersync/web';
 /**
  * PowerSync local SQLite schema.
  *
- * All synced collections map to a single `user_data` table — matching the
- * existing Supabase `user_data` table structure. The `data` column holds each
- * item as a JSON string. Queries filter by `collection` and `profile_id`.
+ * `user_data` — synced with Supabase via PowerSync. Stores every item as a
+ *               JSON string in `data`. PowerSync upload/download uses this table.
  *
- * `local_vault` is local-only (never synced) and holds encrypted credentials.
+ * Typed collection tables — localOnly, never synced by PowerSync directly.
+ *   Written by PowerSyncDataService on every upsert/delete, and repopulated from
+ *   `user_data` whenever PowerSync delivers a sync batch (onChange handler).
+ *   Provides proper column types, indexes, and avoids JSON.parse on every read.
+ *
+ * `local_vault` — local-only encrypted credentials, never leaves the device.
  */
+
+// ── Synced ───────────────────────────────────────────────────────────────────
 
 const user_data = new Table(
   {
@@ -21,18 +27,380 @@ const user_data = new Table(
   },
   {
     indexes: {
-      idx_collection: ['collection'],
-      idx_profile:    ['profile_id'],
+      by_collection: ['collection'],
+      by_profile:    ['profile_id'],
     },
   }
 );
 
+// ── Local-only vault ─────────────────────────────────────────────────────────
+
 const local_vault = new Table(
+  { type: column.text, data: column.text },
+  { localOnly: true }
+);
+
+// ── Typed collection tables (localOnly) ──────────────────────────────────────
+
+const tasks = new Table(
   {
-    type: column.text,
-    data: column.text,
+    profile_id:        column.text,
+    title:             column.text,
+    priority:          column.text,
+    hours:             column.text,
+    status:            column.text,
+    project:           column.text,
+    due:               column.text,
+    labels:            column.text,
+    reminders:         column.text,
+    subtasks:          column.text,
+    parentId:          column.text,
+    dependencies:      column.text,
+    recurring:         column.text,
+    timeSpent:         column.real,
+    notes:             column.text,
+    attachments:       column.text,
+    description:       column.text,
+    startDate:         column.text,
+    estimatedDuration: column.real,
+    deleted_at:        column.text,
+  },
+  {
+    localOnly: true,
+    indexes: {
+      by_profile_status: ['profile_id', 'status'],
+      by_due:            ['due'],
+    },
+  }
+);
+
+const notes = new Table(
+  {
+    profile_id: column.text,
+    date:       column.text,
+    title:      column.text,
+    preview:    column.text,
+    content:    column.text,
+    tags:       column.text,
+    lastEdited: column.text,
+    filePath:   column.text,
+    lastSynced: column.text,
+    folderId:   column.text,
+    bgColor:    column.text,
+    deleted_at: column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_profile_folder: ['profile_id', 'folderId'] },
+  }
+);
+
+const planning_items = new Table(
+  {
+    profile_id: column.text,
+    title:      column.text,
+    tag:        column.text,
+    stage:      column.text,
+    active:     column.integer,
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
+const activities = new Table(
+  {
+    profile_id: column.text,
+    text:       column.text,
+    time:       column.text,
+    type:       column.text,
+  },
+  { localOnly: true, indexes: { by_profile_time: ['profile_id', 'time'] } }
+);
+
+const books = new Table(
+  {
+    profile_id:       column.text,
+    title:            column.text,
+    icon:             column.text,
+    status:           column.text,
+    wordCount:        column.real,
+    targetWordCount:  column.real,
+    progress:         column.real,
+    chapters:         column.real,
+    notesCount:       column.real,
+    createdDate:      column.text,
+    lastUpdated:      column.text,
+    genre:            column.text,
+    isRecentlyUpdated:column.integer,
+    coverImage:       column.text,
+    deleted_at:       column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_profile_status: ['profile_id', 'status'] },
+  }
+);
+
+const book_content = new Table(
+  { profile_id: column.text, data: column.text },
+  { localOnly: true }
+);
+
+const meetings = new Table(
+  {
+    profile_id:  column.text,
+    title:       column.text,
+    description: column.text,
+    project:     column.text,
+    date:        column.text,
+    startTime:   column.text,
+    endTime:     column.text,
+    duration:    column.real,
+    timezone:    column.text,
+    location:    column.text,
+    meetingLink: column.text,
+    meetingType: column.text,
+    platform:    column.text,
+    attendees:   column.text,
+    organizer:   column.text,
+    agenda:      column.text,
+    notes:       column.text,
+    actionItems: column.text,
+    status:      column.text,
+    priority:    column.text,
+    color:       column.text,
+    labels:      column.text,
+    recurring:   column.text,
+    reminders:   column.text,
+    attachments: column.text,
+    createdAt:   column.text,
+    updatedAt:   column.text,
+    createdBy:   column.text,
+    deleted_at:  column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_profile_date: ['profile_id', 'date'], by_status: ['status'] },
+  }
+);
+
+const articles = new Table(
+  {
+    profile_id:    column.text,
+    title:         column.text,
+    platform:      column.text,
+    pipeline:      column.text,
+    wordCount:     column.real,
+    content:       column.text,
+    url:           column.text,
+    scheduledDate: column.text,
+    engagement:    column.text,
+    tags:          column.text,
+    lastUpdated:   column.text,
+    createdDate:   column.text,
+    icon:          column.text,
+    excerpt:       column.text,
+    deleted_at:    column.text,
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
+const research_collections = new Table(
+  {
+    profile_id:   column.text,
+    name:         column.text,
+    description:  column.text,
+    color:        column.text,
+    createdDate:  column.text,
+    lastModified: column.text,
+    deleted_at:   column.text,
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
+const research_sources = new Table(
+  {
+    profile_id:    column.text,
+    collectionId:  column.text,
+    title:         column.text,
+    sourceType:    column.text,
+    url:           column.text,
+    description:   column.text,
+    author:        column.text,
+    publishDate:   column.text,
+    tags:          column.text,
+    status:        column.text,
+    notes:         column.text,
+    createdDate:   column.text,
+    lastAccessed:  column.text,
+    deleted_at:    column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_collection: ['collectionId'] },
+  }
+);
+
+const research_summaries = new Table(
+  {
+    profile_id:   column.text,
+    collectionId: column.text,
+    title:        column.text,
+    content:      column.text,
+    sourceIds:    column.text,
+    tags:         column.text,
+    createdDate:  column.text,
+    lastModified: column.text,
+    deleted_at:   column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_collection: ['collectionId'] },
+  }
+);
+
+const projects = new Table(
+  {
+    profile_id:      column.text,
+    title:           column.text,
+    description:     column.text,
+    status:          column.text,
+    words:           column.text,
+    updated:         column.text,
+    icon:            column.text,
+    dueDate:         column.text,
+    priority:        column.text,
+    progress:        column.real,
+    team:            column.text,
+    tags:            column.text,
+    type:            column.text,
+    linkedResources: column.text,
+    deleted_at:      column.text,
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
+const note_folders = new Table(
+  { profile_id: column.text, name: column.text, icon: column.text },
+  { localOnly: true }
+);
+
+const bookmarks = new Table(
+  {
+    profile_id:  column.text,
+    title:       column.text,
+    url:         column.text,
+    description: column.text,
+    faviconUrl:  column.text,
+    tags:        column.text,
+    folderId:    column.text,
+    createdAt:   column.text,
+    lastVisited: column.text,
+    visitCount:  column.real,
+    notes:       column.text,
+    color:       column.text,
+    isArchived:  column.integer,
+    isPinned:    column.integer,
+    deleted_at:  column.text,
+  },
+  {
+    localOnly: true,
+    indexes: {
+      by_profile_folder:   ['profile_id', 'folderId'],
+      by_profile_archived: ['profile_id', 'isArchived'],
+      by_profile_pinned:   ['profile_id', 'isPinned'],
+    },
+  }
+);
+
+const bookmark_folders = new Table(
+  {
+    profile_id: column.text,
+    name:       column.text,
+    parentId:   column.text,
+    icon:       column.text,
+    color:      column.text,
+    createdAt:  column.text,
   },
   { localOnly: true }
 );
 
-export const AppSchema = new Schema({ user_data, local_vault });
+const transactions = new Table(
+  {
+    profile_id:  column.text,
+    name:        column.text,
+    type:        column.text,
+    category:    column.text,
+    amount:      column.real,
+    currency:    column.text,
+    date:        column.text,
+    billingCycle:column.text,
+    status:      column.text,
+    ownerId:     column.text,
+    projectId:   column.text,
+    notes:       column.text,
+    deleted_at:  column.text,
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
+const credential_transaction_links = new Table(
+  {
+    profile_id:    column.text,
+    credentialId:  column.text,
+    transactionId: column.text,
+  },
+  { localOnly: true }
+);
+
+export const AppSchema = new Schema({
+  // Synced via PowerSync ↔ Supabase
+  user_data,
+  // Local-only vault
+  local_vault,
+  // Typed collection tables (localOnly, populated from user_data)
+  tasks,
+  notes,
+  planning_items,
+  activities,
+  books,
+  book_content,
+  meetings,
+  articles,
+  research_collections,
+  research_sources,
+  research_summaries,
+  projects,
+  note_folders,
+  bookmarks,
+  bookmark_folders,
+  transactions,
+  credential_transaction_links,
+});
+
+/** All typed collection table names (excludes user_data, local_vault). */
+export const TYPED_TABLES = new Set([
+  'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
+  'meetings', 'articles', 'research_collections', 'research_sources',
+  'research_summaries', 'projects', 'note_folders', 'bookmarks',
+  'bookmark_folders', 'transactions', 'credential_transaction_links',
+]);
+
+/** Fields that are stored as JSON strings in SQLite. */
+export const JSON_FIELDS: Record<string, string[]> = {
+  tasks:                ['labels', 'reminders', 'subtasks', 'dependencies', 'recurring', 'attachments'],
+  notes:                ['tags'],
+  books:                ['genre'],
+  meetings:             ['attendees', 'organizer', 'agenda', 'notes', 'actionItems', 'labels', 'recurring', 'reminders', 'attachments'],
+  articles:             ['engagement', 'tags'],
+  research_sources:     ['tags'],
+  research_summaries:   ['sourceIds', 'tags'],
+  projects:             ['team', 'tags', 'linkedResources'],
+  bookmarks:            ['tags'],
+};
+
+/** Fields that are stored as 0/1 integers in SQLite but are booleans in TS. */
+export const BOOL_FIELDS: Record<string, string[]> = {
+  books:          ['isRecentlyUpdated'],
+  bookmarks:      ['isArchived', 'isPinned'],
+  planning_items: ['active'],
+};

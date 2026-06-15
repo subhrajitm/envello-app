@@ -4,6 +4,7 @@ import { AppSchema } from '../config/powersync.schema';
 import { SupabasePowerSyncConnector } from './powersync-connector';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
+import { PowerSyncDataService } from './powersync-data.service';
 import { environment } from '../environments/environment';
 
 // Pre-built UMD workers served as static assets; avoids esbuild trying to
@@ -16,6 +17,7 @@ const SYNC_WORKER = '/assets/worker/SharedSyncImplementation.umd.js';
 export class PowerSyncService implements OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly supabase = inject(SupabaseService);
+  private readonly dataService = inject(PowerSyncDataService);
 
   readonly db = new PowerSyncDatabase({
     schema: AppSchema,
@@ -70,11 +72,14 @@ export class PowerSyncService implements OnDestroy {
   }
 
   private watchTableChanges(): void {
-    // This watcher runs for the full service lifetime; aborted only on ngOnDestroy.
     const signal = this.watchAbort.signal;
     (async () => {
       try {
+        // Watch user_data for PowerSync sync downloads.
+        // When PowerSync writes new data here, unpack it into the typed local tables
+        // so getAll() queries benefit from column indexes without JSON parsing.
         for await (const _ of this.db.onChange({ tables: ['user_data'], signal })) {
+          await this.dataService.rebuildTypedTablesFromUserData();
           window.dispatchEvent(new CustomEvent('envello:sync-complete'));
         }
       } catch {
