@@ -56,27 +56,33 @@ export class PouchDbDataService implements DataService {
             if (user && !this.hasPulled) {
                 this.hasPulled = true;
                 this.migrateResearchCollections().then(() => this.pullAndApply()).then(() => {
-                    this.unsubscribeRealtime = this.syncService.subscribeRealtime(async (record) => {
-                        this.applyingSync = true;
-                        try {
-                            if (this.SYNC_EXCLUDED_COLLECTIONS.has(record.collection)) return;
-                            if (record.deleted) {
-                                await this.removeFromProfile(record.collection, record.profile_id, record.id);
-                            } else if (record.data?.id) {
-                                await this.upsertToProfile(record.collection, record.profile_id, record.data);
+                    this.unsubscribeRealtime = this.syncService.subscribeRealtime(
+                        async (record) => {
+                            this.applyingSync = true;
+                            try {
+                                if (this.SYNC_EXCLUDED_COLLECTIONS.has(record.collection)) return;
+                                if (record.deleted) {
+                                    await this.removeFromProfile(record.collection, record.profile_id, record.id);
+                                } else if (record.data?.id) {
+                                    await this.upsertToProfile(record.collection, record.profile_id, record.data);
+                                }
+                                window.dispatchEvent(new CustomEvent('envello:sync-complete'));
+                            } finally {
+                                this.applyingSync = false;
                             }
-                            window.dispatchEvent(new CustomEvent('envello:sync-complete'));
-                        } finally {
-                            this.applyingSync = false;
-                        }
-                    });
+                        },
+                        // On WebSocket reconnect: pull to catch events missed while disconnected
+                        () => this.pullAndApply()
+                    );
                 });
             }
-            // Unsubscribe on logout
+            // Unsubscribe on logout and clear the sync cursor so a different
+            // user logging in on this device starts with a clean pull.
             if (!user && this.unsubscribeRealtime) {
                 this.unsubscribeRealtime();
                 this.unsubscribeRealtime = undefined;
                 this.hasPulled = false;
+                this.syncService.clearSyncCursor(this.authService.currentUser()?.id ?? '');
             }
         });
     }
