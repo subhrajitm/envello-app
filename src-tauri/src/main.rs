@@ -119,6 +119,20 @@ fn main() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_stronghold::Builder::new(|password| {
+            // Derive a 32-byte vault key from the password using Argon2id.
+            // The password is the user's Supabase UID — unique per user, never leaves the device.
+            use argon2::{Argon2, Params, Algorithm, Version};
+            let params = Params::new(65536, 3, 1, Some(32))
+                .expect("Valid Argon2 params");
+            let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
+            let mut key = vec![0u8; 32];
+            // Static salt scoped to the app — acceptable since the password is already
+            // a random UUID (Supabase UID) rather than a user-typed password.
+            argon2.hash_password_into(password.as_bytes(), b"envello-vault-v1", &mut key)
+                .expect("Argon2 key derivation failed");
+            key
+        }).build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec![]),

@@ -55,6 +55,14 @@
     "autostart:allow-is-enabled",
     "window-state:allow-restore-state",
     "window-state:allow-save-window-state",
+    "stronghold:allow-initialize",
+    "stronghold:allow-destroy",
+    "stronghold:allow-create-client",
+    "stronghold:allow-load-client",
+    "stronghold:allow-save",
+    "stronghold:allow-get-store-record",
+    "stronghold:allow-insert-store-record",
+    "stronghold:allow-remove-store-record",
     {
       "identifier": "fs:allow-read-file",
       "allow": [
