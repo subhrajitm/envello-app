@@ -42,7 +42,7 @@ jobs:
             platform-key: linux-x86_64
             sig-dir: src-tauri/target/release/bundle
             sig-ext: '*.AppImage.sig'
-          - platform: windows-2025        # Windows .msi + .exe
+          - platform: windows-2025        # Windows x64 .msi + .exe
             args: ''
             rust-target: ''
             artifact-pattern: |
@@ -50,6 +50,15 @@ jobs:
               src-tauri/target/release/bundle/nsis/*.exe
             platform-key: windows-x86_64
             sig-dir: src-tauri/target/release/bundle/nsis
+            sig-ext: '*.exe.sig'
+          - platform: windows-2025        # Windows ARM64 (Surface, Snapdragon)
+            args: '--target aarch64-pc-windows-msvc'
+            rust-target: aarch64-pc-windows-msvc
+            artifact-pattern: |
+              src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/*.msi
+              src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
+            platform-key: windows-aarch64
+            sig-dir: src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis
             sig-ext: '*.exe.sig'
 
     runs-on: ${{ matrix.platform }}
@@ -109,7 +118,8 @@ jobs:
             |---|---|
             | macOS (Apple Silicon) | `Envello_*_aarch64.dmg` |
             | macOS (Intel) | `Envello_*_x64.dmg` |
-            | Windows | `Envello_*_x64-setup.exe` or `.msi` |
+            | Windows (x64) | `Envello_*_x64-setup.exe` or `.msi` |
+            | Windows (ARM64 — Surface, Snapdragon) | `Envello_*_arm64-setup.exe` or `.msi` |
             | Linux | `Envello_*_amd64.AppImage` |
           draft: false
           prerelease: false
@@ -159,7 +169,7 @@ jobs:
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           PLATFORMS_JSON=""
 
-          for PLATFORM_KEY in darwin-aarch64 darwin-x86_64 linux-x86_64 windows-x86_64; do
+          for PLATFORM_KEY in darwin-aarch64 darwin-x86_64 linux-x86_64 windows-x86_64 windows-aarch64; do
             SIG_FILE="/tmp/sigs/sig-${PLATFORM_KEY}/${PLATFORM_KEY}.sig"
             NAME_FILE="/tmp/sigs/sig-${PLATFORM_KEY}/${PLATFORM_KEY}.name"
 
