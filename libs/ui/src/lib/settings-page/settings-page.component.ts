@@ -628,9 +628,9 @@ export class SettingsPageComponent implements OnInit {
     this.isDirty.set(false);
   }
 
-  checkUpdates() { this.tauri.openUrl('https://github.com/envello-app/envello/releases'); }
-  openDocs()     { this.tauri.openUrl('https://github.com/envello-app/envello/wiki'); }
-  reportIssue()  { this.tauri.openUrl('https://github.com/envello-app/envello/issues/new'); }
+  checkUpdates() { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/releases'); }
+  openDocs()     { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/wiki'); }
+  reportIssue()  { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/issues/new'); }
 
   private loadSettings() {
     const saved = localStorage.getItem('envello-settings');
