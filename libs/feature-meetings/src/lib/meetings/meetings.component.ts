@@ -15,6 +15,7 @@ import {
   CalendarConnection,
   PROVIDER_META,
   AiService,
+  MeetingAutopilotService,
 } from '@envello/core';
 import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 @Component({
@@ -28,7 +29,11 @@ export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
   syncService = inject(CalendarSyncService);
   private aiService = inject(AiService);
+  readonly autopilotService = inject(MeetingAutopilotService);
   readonly providerMeta = PROVIDER_META;
+
+  // Autopilot state
+  showAutopilotResult = signal(false);
 
   // Delete confirm
   deleteMeetingTarget = signal<Meeting | null>(null);
@@ -1316,6 +1321,25 @@ export class MeetingsComponent {
     this.syncNewName.set('');
     this.syncNewUrl.set('');
     await this.syncService.syncConnection(conn.id);
+  }
+
+  async runAutopilot() {
+    const meeting = this.selectedMeeting();
+    if (!meeting) return;
+    this.autopilotService.reset();
+    this.showAutopilotResult.set(false);
+    const result = await this.autopilotService.runForMeeting(meeting.id);
+    if (result) {
+      this.showAutopilotResult.set(true);
+      // Refresh selected meeting after status update
+      const updated = this.meetingsService.meetings().find(m => m.id === meeting.id);
+      if (updated) this.selectedMeeting.set(updated);
+    }
+  }
+
+  dismissAutopilot() {
+    this.showAutopilotResult.set(false);
+    this.autopilotService.reset();
   }
 
   async syncAllCalendars() { await this.syncService.syncAll(); }

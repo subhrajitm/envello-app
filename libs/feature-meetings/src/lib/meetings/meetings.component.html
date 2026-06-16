@@ -940,13 +940,54 @@
             <span class="material-symbols-outlined">video_call</span> Join
           </button>
           }
-          @if (selectedMeeting()!.status === 'scheduled') {
+          @if (selectedMeeting()!.status === 'scheduled' || selectedMeeting()!.status === 'in_progress') {
+          <button class="mta-btn mta-btn--autopilot"
+            [disabled]="autopilotService.status() === 'running'"
+            (click)="runAutopilot()"
+            title="AI generates summary note, tasks, and follow-up from this meeting">
+            @if (autopilotService.status() === 'running') {
+              <span class="mta-autopilot-spinner"></span>
+              {{ autopilotService.progress() }}
+            } @else {
+              <span class="material-symbols-outlined">auto_awesome</span> Wrap Up
+            }
+          </button>
           <button class="mta-btn mta-btn--primary" (click)="completeMeeting(selectedMeeting()!)">
             <span class="material-symbols-outlined">check_circle</span> Mark Complete
           </button>
           <button class="mta-btn mta-btn--ghost" (click)="cancelMeeting(selectedMeeting()!)">
             <span class="material-symbols-outlined">event_busy</span> Cancel Meeting
           </button>
+          }
+
+          @if (showAutopilotResult() && autopilotService.lastResult()) {
+          <div class="mta-autopilot-result">
+            <div class="mta-ap-header">
+              <span class="material-symbols-outlined" style="color:#a78bfa">auto_awesome</span>
+              <strong>Autopilot done</strong>
+              <button class="mta-ap-close" (click)="dismissAutopilot()">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="mta-ap-items">
+              <div class="mta-ap-item">
+                <span class="material-symbols-outlined mta-ap-icon" style="color:#34d399">edit_note</span>
+                Summary note saved to Notes
+              </div>
+              @if (autopilotService.lastResult()!.tasks.length > 0) {
+              <div class="mta-ap-item">
+                <span class="material-symbols-outlined mta-ap-icon" style="color:#fbbf24">check_circle</span>
+                {{ autopilotService.lastResult()!.tasks.length }} task{{ autopilotService.lastResult()!.tasks.length !== 1 ? 's' : '' }} added
+              </div>
+              }
+              @if (autopilotService.lastResult()!.followUpMeeting) {
+              <div class="mta-ap-item">
+                <span class="material-symbols-outlined mta-ap-icon" style="color:#60a5fa">calendar_month</span>
+                Follow-up meeting scheduled
+              </div>
+              }
+            </div>
+          </div>
           }
           <button class="mta-btn mta-btn--ghost" (click)="duplicateMeeting(selectedMeeting()!)">
             <span class="material-symbols-outlined">content_copy</span> Duplicate

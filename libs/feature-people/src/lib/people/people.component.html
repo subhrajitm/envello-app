@@ -1,0 +1,245 @@
+<div class="ppl-view">
+
+  <!-- Sidebar -->
+  <env-feature-sidebar
+    title="People"
+    [navItems]="sidebarNavItems()"
+    [activeNavId]="'all'"
+    (navItemClick)="onNavItemClick($event)">
+  </env-feature-sidebar>
+
+  <!-- Main area -->
+  <div class="ppl-main">
+
+    <!-- Toolbar -->
+    <div class="ppl-toolbar">
+      <div class="ppl-search-wrap">
+        <span class="material-symbols-outlined ppl-search-icon">search</span>
+        <input class="ppl-search" type="text" placeholder="Search people…"
+          [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+        @if (searchQuery()) {
+          <button class="ppl-search-clear" (click)="searchQuery.set('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+      <div class="ppl-toolbar-right">
+        <button class="ppl-add-btn" (click)="openAddForm()">
+          <span class="material-symbols-outlined">person_add</span>
+          Add Person
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid view -->
+    @if (view() === 'grid') {
+      <div class="ppl-content">
+
+        <!-- Suggestions from meeting attendees -->
+        @if (discoveredPeople().length > 0 && !searchQuery()) {
+          <div class="ppl-discover">
+            <div class="ppl-discover-header">
+              <span class="material-symbols-outlined" style="color:#a78bfa">auto_awesome</span>
+              Found in your meetings — add them to People?
+            </div>
+            <div class="ppl-discover-list">
+              @for (d of discoveredPeople(); track d.email) {
+                <div class="ppl-discover-item">
+                  <span class="ppl-discover-name">{{ d.name || d.email }}</span>
+                  @if (d.sources[0]) {
+                    <span class="ppl-discover-src">{{ d.sources[0] }}</span>
+                  }
+                  <button class="ppl-discover-add" (click)="importPerson(d)">
+                    <span class="material-symbols-outlined">add</span>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (displayedProfiles().length === 0) {
+          <env-empty-state
+            [compact]="true"
+            icon="group"
+            title="No people yet"
+            description="Add contacts or they'll be discovered from your meetings."
+            ctaLabel="+ Add Person"
+            (ctaClicked)="openAddForm()">
+          </env-empty-state>
+        } @else {
+          <div class="ppl-grid">
+            @for (profile of displayedProfiles(); track profile.person.id; let i = $index) {
+              <div class="ppl-card" (click)="selectPerson(profile.person.id)">
+                <div class="ppl-card-avatar" [style.background]="avatarColor(i)">
+                  {{ initials(profile.person.name) }}
+                </div>
+                <div class="ppl-card-info">
+                  <div class="ppl-card-name">{{ profile.person.name }}</div>
+                  @if (profile.person.role || profile.person.company) {
+                    <div class="ppl-card-role">{{ profile.person.role }}{{ profile.person.role && profile.person.company ? ' · ' : '' }}{{ profile.person.company }}</div>
+                  }
+                  <div class="ppl-card-meta">
+                    <span class="ppl-meta-chip">
+                      <span class="material-symbols-outlined" style="font-size:12px">history</span>
+                      {{ daysSince(profile.lastSeen) }}
+                    </span>
+                    @if (profile.totalInteractions > 0) {
+                      <span class="ppl-meta-chip">{{ profile.totalInteractions }} interaction{{ profile.totalInteractions !== 1 ? 's' : '' }}</span>
+                    }
+                    @if (profile.openTasks > 0) {
+                      <span class="ppl-meta-chip ppl-chip--warn">{{ profile.openTasks }} open task{{ profile.openTasks !== 1 ? 's' : '' }}</span>
+                    }
+                    @if (profile.upcomingMeetings > 0) {
+                      <span class="ppl-meta-chip ppl-chip--info">{{ profile.upcomingMeetings }} upcoming</span>
+                    }
+                  </div>
+                </div>
+                <span class="material-symbols-outlined ppl-card-arrow">chevron_right</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Profile view -->
+    @if (view() === 'profile' && selectedProfile()) {
+      <div class="ppl-profile">
+        <div class="ppl-profile-header">
+          <button class="ppl-back" (click)="backToGrid()">
+            <span class="material-symbols-outlined">arrow_back</span>
+            People
+          </button>
+          <button class="ppl-delete-btn" (click)="confirmDelete(selectedProfile()!.person)">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+
+        <div class="ppl-profile-hero">
+          <div class="ppl-hero-avatar">{{ initials(selectedProfile()!.person.name) }}</div>
+          <div class="ppl-hero-info">
+            <h2 class="ppl-hero-name">{{ selectedProfile()!.person.name }}</h2>
+            @if (selectedProfile()!.person.role) {
+              <div class="ppl-hero-role">{{ selectedProfile()!.person.role }}</div>
+            }
+            @if (selectedProfile()!.person.company) {
+              <div class="ppl-hero-company">{{ selectedProfile()!.person.company }}</div>
+            }
+            @if (selectedProfile()!.person.email) {
+              <a class="ppl-hero-email" [href]="'mailto:' + selectedProfile()!.person.email">
+                {{ selectedProfile()!.person.email }}
+              </a>
+            }
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="ppl-stats-row">
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ selectedProfile()!.totalInteractions }}</span>
+            <span class="ppl-stat-lbl">Interactions</span>
+          </div>
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ selectedProfile()!.openTasks }}</span>
+            <span class="ppl-stat-lbl">Open Tasks</span>
+          </div>
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ selectedProfile()!.upcomingMeetings }}</span>
+            <span class="ppl-stat-lbl">Upcoming</span>
+          </div>
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ daysSince(selectedProfile()!.lastSeen) }}</span>
+            <span class="ppl-stat-lbl">Last seen</span>
+          </div>
+        </div>
+
+        <!-- AI Insight -->
+        <div class="ppl-insight-row">
+          <button class="ppl-insight-btn" (click)="generateInsight()" [disabled]="generatingInsight()">
+            @if (generatingInsight()) {
+              <span class="ppl-insight-spinner"></span> Generating…
+            } @else {
+              <span class="material-symbols-outlined">auto_awesome</span> AI Relationship Insight
+            }
+          </button>
+          @if (insight()) {
+            <div class="ppl-insight-text">{{ insight() }}</div>
+          }
+        </div>
+
+        <!-- Interaction timeline -->
+        <div class="ppl-timeline">
+          <h3 class="ppl-timeline-title">Interaction History</h3>
+          @if (selectedProfile()!.interactions.length === 0) {
+            <div class="ppl-timeline-empty">No recorded interactions yet.</div>
+          } @else {
+            @for (item of selectedProfile()!.interactions; track item.id) {
+              <div class="ppl-tl-item">
+                <span class="ppl-tl-icon">
+                  <span class="material-symbols-outlined">{{ interactionIcon(item.type) }}</span>
+                </span>
+                <div class="ppl-tl-body">
+                  <div class="ppl-tl-title">{{ item.title }}</div>
+                  @if (item.preview) {
+                    <div class="ppl-tl-preview">{{ item.preview }}</div>
+                  }
+                  <div class="ppl-tl-date">{{ item.date }}</div>
+                </div>
+                <span class="ppl-tl-badge ppl-tl-badge--{{ item.type }}">{{ item.type }}</span>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Add person form modal -->
+@if (showAddForm()) {
+  <div class="ppl-modal-backdrop" (click)="closeAddForm()">
+    <div class="ppl-modal" (click)="$event.stopPropagation()">
+      <div class="ppl-modal-header">
+        <span class="ppl-modal-title">Add Person</span>
+        <button class="ppl-modal-close" (click)="closeAddForm()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="ppl-modal-body">
+        <label class="ppl-field">
+          <span>Name *</span>
+          <input [(ngModel)]="newName" placeholder="Full name" />
+        </label>
+        <label class="ppl-field">
+          <span>Email</span>
+          <input [(ngModel)]="newEmail" type="email" placeholder="name@company.com" />
+        </label>
+        <label class="ppl-field">
+          <span>Company</span>
+          <input [(ngModel)]="newCompany" placeholder="Company name" />
+        </label>
+        <label class="ppl-field">
+          <span>Role</span>
+          <input [(ngModel)]="newRole" placeholder="Job title" />
+        </label>
+      </div>
+      <div class="ppl-modal-footer">
+        <button class="ppl-btn-ghost" (click)="closeAddForm()">Cancel</button>
+        <button class="ppl-btn-primary" [disabled]="!newName().trim()" (click)="addPerson()">Add Person</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete confirm -->
+<env-confirm-dialog
+  [isOpen]="!!deleteTarget()"
+  title="Remove Person"
+  icon="person_remove"
+  variant="danger"
+  confirmLabel="Remove"
+  (confirmed)="deletePerson()"
+  (cancelled)="deleteTarget.set(null)">
+  Remove <strong>{{ deleteTarget()?.name }}</strong> from your People list? Their interactions stay intact.
+</env-confirm-dialog>

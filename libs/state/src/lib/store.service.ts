@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { DataService } from '@envello/data';
 import { FILE_SYSTEM } from './tokens';
-import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder } from '@envello/domain';
+import { Task, Note, PlanningItem, Activity, Book, Project, Bookmark, BookmarkFolder, Person } from '@envello/domain';
 
 @Injectable({
     providedIn: 'root'
@@ -19,6 +19,7 @@ export class StoreService {
     bookmarks = signal<Bookmark[]>([]);
     bookmarkFolders = signal<BookmarkFolder[]>([]);
     spaces = signal<Project[]>([]);
+    people = signal<Person[]>([]);
 
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
@@ -86,7 +87,7 @@ export class StoreService {
 
     private async loadFromDb(retries = 1): Promise<void> {
         try {
-            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces] = await Promise.all([
+            const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
                 this.db.getAll<Note>('notes'),
                 this.db.getAll<PlanningItem>('planning_items'),
@@ -96,6 +97,7 @@ export class StoreService {
                 this.db.getAll<Bookmark>('bookmarks'),
                 this.db.getAll<BookmarkFolder>('bookmark_folders'),
                 this.db.getAll<Project>('projects'),
+                this.db.getAll<Person>('people'),
             ]);
             this.tasks.set((tasks || []).filter(t => !t.deleted_at));
             // Merge: preserve any in-memory notes whose IDs aren't in the DB yet
@@ -110,6 +112,7 @@ export class StoreService {
             this.bookmarks.set((bookmarks || []).filter(b => !b.deleted_at));
             this.bookmarkFolders.set(bookmarkFolders || []);
             this.spaces.set(spaces || []);
+            this.people.set((people || []).filter(p => !p.deleted_at));
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -140,6 +143,7 @@ export class StoreService {
             this.bookmarks.set([]);
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
+            this.people.set([]);
         }
     }
 
@@ -378,5 +382,28 @@ export class StoreService {
                 console.error('[StoreService] persist note_folders failed', e)
             );
         }
+    }
+
+    // ─── People CRUD ─────────────────────────────────────────────────────────
+
+    addPerson(person: Person) {
+        this.people.update(list => [...list, person]);
+        this.addActivity('Person added: ' + person.name, 'system');
+        this.db.upsert('people', person).catch(e => console.error('[StoreService] persist person failed', e));
+    }
+
+    updatePerson(id: string, updates: Partial<Person>) {
+        this.people.update(list => list.map(p => p.id === id ? { ...p, ...updates } : p));
+        const person = this.people().find(p => p.id === id);
+        if (person) this.db.upsert('people', person).catch(e => console.error('[StoreService] persist person failed', e));
+    }
+
+    deletePerson(id: string) {
+        const person = this.people().find(p => p.id === id);
+        if (!person) return;
+        this.people.update(list => list.filter(p => p.id !== id));
+        this.addActivity('Person removed', 'system');
+        this.db.upsert('people', { ...person, deleted_at: new Date().toISOString() })
+            .catch(e => console.error('[StoreService] soft-delete person failed', e));
     }
 }

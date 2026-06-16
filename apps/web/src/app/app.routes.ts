@@ -115,6 +115,12 @@ export const routes: Routes = [
     data: { hasSidebar: true },
   },
   {
+    path: 'people',
+    loadComponent: () => import('@envello/feature-people').then(m => m.PeopleComponent),
+    canActivate: [authGuard],
+    data: { hasSidebar: true },
+  },
+  {
     path: 'not-found',
     loadComponent: () => import('./components/errors/not-found/not-found.component').then(m => m.NotFoundComponent),
     data: { hasSidebar: false },

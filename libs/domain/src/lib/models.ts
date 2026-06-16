@@ -273,3 +273,17 @@ export interface BookmarkFolder {
     color?: string;
     createdAt: string;
 }
+
+export interface Person {
+    id: string;
+    name: string;
+    email?: string;
+    company?: string;
+    role?: string;
+    avatar?: string;
+    tags?: string[];
+    notes?: string;
+    lastInteraction?: string; // ISO date of most recent interaction
+    createdAt: string;
+    deleted_at?: string | null;
+}

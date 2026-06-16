@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService, BookContentService, UserPreferencesService } from '@envello/core';
+import { AuthService, BookContentService, UserPreferencesService, CaptureService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
@@ -36,6 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   private bookContentService = inject(BookContentService);
   private userPrefsService = inject(UserPreferencesService);
+  private captureService = inject(CaptureService);
 
   private unlistenFileDrop?: () => void;
   private unlistenCloseRequested?: () => void;
@@ -127,6 +128,11 @@ export class AppComponent implements OnInit, OnDestroy {
           this.router.navigate([route]);
         });
       }
+      // Quick Capture: Cmd/Ctrl+Shift+K
+      await this.tauriService.registerShortcut('CommandOrControl+Shift+K', () => {
+        this.tauriService.showWindow();
+        this.captureService.open();
+      });
     } catch { /* shortcuts may already be registered or OS denied */ }
   }
 
@@ -193,6 +199,7 @@ export class AppComponent implements OnInit, OnDestroy {
       'daily-notes': 'Notes', 'knowledge': 'Knowledge', 'write': 'Write',
       'spaces': 'Spaces', 'bin': 'Bin', 'activity-log': 'Activity Log',
       'settings': 'Settings',      'bookmarks': 'Bookmarks', 'vault': 'Vault', 'transactions': 'Transactions',
+      'people': 'People',
     };
     return map[url] || 'Workspace';
   }

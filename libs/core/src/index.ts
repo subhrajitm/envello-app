@@ -40,3 +40,7 @@ export * from './lib/services/desktop-backup.service';
 export * from './lib/services/desktop-data.service';
 export * from './lib/services/web-preview.service';
 export * from './lib/tokens/app-version.token';
+export * from './lib/services/capture.service';
+export * from './lib/services/context.service';
+export * from './lib/services/meeting-autopilot.service';
+export * from './lib/services/relationship.service';

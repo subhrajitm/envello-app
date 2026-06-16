@@ -1,0 +1,58 @@
+@if (captureService.isOverlayOpen()) {
+  <div class="qc-backdrop" (click)="close()">
+    <div class="qc-card" (click)="$event.stopPropagation()">
+
+      <!-- Input row -->
+      <div class="qc-input-row" [class.qc-submitting]="submitting()">
+        <span class="material-symbols-outlined qc-icon">
+          {{ typeMeta()?.icon ?? 'add_circle' }}
+        </span>
+        <input
+          #captureInput
+          class="qc-input"
+          type="text"
+          [value]="inputText()"
+          (input)="onInput($event)"
+          placeholder="What's on your mind? (task, note, meeting, bookmark…)"
+          autocomplete="off"
+          spellcheck="false"
+          [disabled]="submitting()"
+        />
+        @if (classifying()) {
+          <span class="qc-spinner"></span>
+        }
+        @if (success()) {
+          <span class="material-symbols-outlined qc-success-icon">check_circle</span>
+        }
+        <kbd class="qc-esc" (click)="close()">ESC</kbd>
+      </div>
+
+      <!-- Intent preview -->
+      @if (intent() && !success()) {
+        <div class="qc-intent-row">
+          <span class="qc-type-chip" [style.background]="typeMeta()!.color + '22'" [style.color]="typeMeta()!.color">
+            <span class="material-symbols-outlined" style="font-size:14px">{{ typeMeta()!.icon }}</span>
+            {{ typeMeta()!.label }}
+          </span>
+          @for (hint of fieldHints(); track hint) {
+            <span class="qc-field-hint">{{ hint }}</span>
+          }
+          <span class="qc-confidence">{{ (intent()!.confidence * 100 | number:'1.0-0') }}% sure</span>
+        </div>
+      }
+
+      @if (success()) {
+        <div class="qc-intent-row qc-success-row">
+          <span class="material-symbols-outlined" style="color:#34d399;font-size:16px">check_circle</span>
+          <span style="color:#34d399">{{ typeMeta()?.label }} created — navigating…</span>
+        </div>
+      }
+
+      <!-- Footer -->
+      <div class="qc-footer">
+        <span class="qc-hint"><kbd>↵ Enter</kbd> to save · <kbd>Esc</kbd> to cancel</span>
+        <span class="qc-shortcut">⌘⇧K</span>
+      </div>
+    </div>
+  </div>
+}
