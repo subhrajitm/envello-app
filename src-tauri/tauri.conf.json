@@ -47,7 +47,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNGREM3Rjc5REVBQUFGMDQKUldRRXI2cmVlWC9jUDdYdTJFaFE2enAvZWJTZ3oxY1B6VXNkbXFnS2ptcXJCeHlqT2t4aGIrclgK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY3NUI0NDlEMzRDNEEwQTMKUldTam9NUTBuVVJiOTFONGdMMTE2T1VLQmlzekJYQ0VRYWR1c2NhRTNxR1RDdkRFUDFLV0hBdlQK",
       "endpoints": [
         "https://github.com/subhrajitm/envello-app/releases/latest/download/latest.json"
       ]

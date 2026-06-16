@@ -12,6 +12,9 @@ on:
 
 jobs:
   build:
+    # Skip when version-bump.yml just pushed a release commit — release.yml
+    # handles the full build for those. Avoids wasting parallel CI minutes.
+    if: "!startsWith(github.event.head_commit.message, 'chore: release v')"
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     strategy:
