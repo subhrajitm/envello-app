@@ -1,6 +1,6 @@
 {
   "productName": "Envello",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "identifier": "com.envello.app",
   "build": {
     "beforeDevCommand": "CI=true npm run dev",
@@ -55,7 +55,9 @@
     "deep-link": {
       "mobile": [],
       "desktop": {
-        "schemes": ["envello"]
+        "schemes": [
+          "envello"
+        ]
       }
     }
   }
