@@ -151,7 +151,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   navItems = computed(() => {
     const hidden = this.hiddenNavItemIds();
     return this.navItemDefs.filter(item => {
-      if (item.id === 'vault' && !this.isTauri) return false;
       return !hidden.includes(item.id);
     });
   });

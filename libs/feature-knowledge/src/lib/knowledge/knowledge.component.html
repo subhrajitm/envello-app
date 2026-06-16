@@ -680,9 +680,8 @@
 </env-slider-panel>
 
 <!-- ── UNIFIED ADD MODAL ── -->
-@if (showAddModal()) {
-  <div class="rsa-backdrop" (click)="closeAddModal()">
-    <div class="rsa-modal rsa-modal--md" (click)="$event.stopPropagation()">
+<env-slider-panel [isOpen]="showAddModal()" (closed)="closeAddModal()" width="600px">
+  <div class="rsa-slider-inner">
 
       <div class="rsa-header">
         <div class="rsa-header-left">
@@ -967,14 +966,12 @@
         </div>
       }
 
-    </div>
   </div>
-}
+</env-slider-panel>
 
 <!-- ── NEW SUMMARY MODAL ── -->
-@if (showSummaryModal()) {
-  <div class="rsa-backdrop" (click)="closeSummaryModal()">
-    <div class="rsa-modal rsa-modal--lg" (click)="$event.stopPropagation()">
+<env-slider-panel [isOpen]="showSummaryModal()" (closed)="closeSummaryModal()" width="700px">
+  <div class="rsa-slider-inner">
 
       <div class="rsa-header">
         <div class="rsa-header-left">
@@ -1094,9 +1091,8 @@
         </div>
       </div>
 
-    </div>
   </div>
-}
+</env-slider-panel>
 
 <!-- ── DELETE COLLECTION ── -->
 <env-confirm-dialog

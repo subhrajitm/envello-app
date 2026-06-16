@@ -1,4 +1,4 @@
-import { Injectable, inject, effect, OnDestroy } from '@angular/core';
+import { Injectable, inject, effect, OnDestroy, Injector } from '@angular/core';
 import { PowerSyncDatabase, WASQLiteOpenFactory } from '@powersync/web';
 import { AppSchema } from '../config/powersync.schema';
 import { SupabasePowerSyncConnector } from './powersync-connector';
@@ -17,7 +17,12 @@ const SYNC_WORKER = '/assets/worker/SharedSyncImplementation.umd.js';
 export class PowerSyncService implements OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly supabase = inject(SupabaseService);
-  private readonly dataService = inject(PowerSyncDataService);
+  private readonly injector = inject(Injector);
+
+  // Lazy to break the PowerSyncService ↔ PowerSyncDataService circular dependency.
+  private get dataService(): PowerSyncDataService {
+    return this.injector.get(PowerSyncDataService);
+  }
 
   readonly db = new PowerSyncDatabase({
     schema: AppSchema,

@@ -961,9 +961,8 @@
 </env-slider-panel>
 
 <!-- ─── Calendar Sync Modal ─────────────────────────────────────────────────── -->
-@if (showSyncModal()) {
-<div class="mta-backdrop" (click)="closeSyncModal()">
-  <div class="mta-modal mta-modal--md" (click)="$event.stopPropagation()">
+<env-slider-panel [isOpen]="showSyncModal()" (closed)="closeSyncModal()" width="560px">
+  <div class="mta-slider-inner">
     <div class="mta-modal-hdr">
       <span class="mta-modal-title">Sync External Calendars</span>
       <button class="mta-modal-close" (click)="closeSyncModal()">
@@ -1060,13 +1059,11 @@
       <button class="mta-btn mta-btn--ghost" (click)="closeSyncModal()">Close</button>
     </div>
   </div>
-</div>
-}
+</env-slider-panel>
 
-<!-- ─── Keyboard Shortcuts Modal ────────────────────────────────────────────── -->
-@if (showShortcutsHelp()) {
-<div class="mta-backdrop" (click)="closeShortcutsHelp()">
-  <div class="mta-modal mta-modal--sm" (click)="$event.stopPropagation()">
+<!-- ─── Keyboard Shortcuts Panel ─────────────────────────────────────────────── -->
+<env-slider-panel [isOpen]="showShortcutsHelp()" (closed)="closeShortcutsHelp()" width="400px">
+  <div class="mta-slider-inner">
     <div class="mta-modal-hdr">
       <span class="mta-modal-title">Keyboard Shortcuts</span>
       <button class="mta-modal-close" (click)="closeShortcutsHelp()">
@@ -1087,14 +1084,13 @@
           <h4>Actions</h4>
           <div class="mta-shortcut"><span>New meeting</span><kbd>⌘</kbd>+<kbd>N</kbd></div>
           <div class="mta-shortcut"><span>Search</span><kbd>⌘</kbd>+<kbd>K</kbd></div>
-          <div class="mta-shortcut"><span>Close modal</span><kbd>Esc</kbd></div>
+          <div class="mta-shortcut"><span>Close panel</span><kbd>Esc</kbd></div>
           <div class="mta-shortcut"><span>Show shortcuts</span><kbd>⌘</kbd>+<kbd>/</kbd></div>
         </div>
       </div>
     </div>
   </div>
-</div>
-}
+</env-slider-panel>
 
 @if (deleteMeetingTarget(); as meeting) {
 <env-confirm-dialog
