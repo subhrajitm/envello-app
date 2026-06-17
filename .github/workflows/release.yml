@@ -1,13 +1,15 @@
 name: Release
 
 # Triggers:
-#   - Push a git tag like "v1.2.3" → creates a GitHub Release with signed installers
-#   - Manually via Actions tab (workflow_dispatch)
+#   - Called by version-bump.yml after a successful version commit (workflow_call)
+#   - Manually via Actions tab (workflow_dispatch) — pick the tag ref
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to build (e.g. v1.2.3)'
+        required: false
+        type: string
   workflow_call:
     inputs:
       tag:

@@ -75,20 +75,33 @@ jobs:
           # Replace the first occurrence of version = "..." in Cargo.toml (the workspace package)
           sed -i "0,/^version = \"[0-9]*\.[0-9]*\.[0-9]*\"/{s//version = \"$V\"/}" src-tauri/Cargo.toml
 
+      - name: Update src-tauri/Cargo.lock
+        run: |
+          CURRENT=${{ steps.version.outputs.current }}
+          V=${{ steps.version.outputs.next }}
+          # Update the version for the 'envello' package entry in Cargo.lock.
+          # Uses awk to replace only the version line that immediately follows the
+          # matching name line, avoiding false matches on dependency entries.
+          awk -v cur="$CURRENT" -v next="$V" '
+            /^name = "envello"$/ { found=1 }
+            found && /^version = / { sub(cur, next); found=0 }
+            { print }
+          ' src-tauri/Cargo.lock > src-tauri/Cargo.lock.tmp
+          mv src-tauri/Cargo.lock.tmp src-tauri/Cargo.lock
+
       - name: Commit and tag
         run: |
           V=${{ steps.version.outputs.next }}
-          git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
+          git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
           git commit -m "chore: release v$V"
-          # Annotated tag — required for --follow-tags and best practice for releases
+          # Annotated tag for release reference — not used to trigger release.yml
+          # (that is done via workflow_call in the build job below).
           git tag -a "v$V" -m "Release v$V"
 
       - name: Push commit and tag
         run: |
           V=${{ steps.version.outputs.next }}
           git push origin main
-          # Push the tag explicitly — --follow-tags only works with annotated tags
-          # and can be unreliable. An explicit push is always safe.
           git push origin "v$V"
 
   build:
