@@ -53,6 +53,10 @@
       </div>
 
       <div class="header-actions flex items-center gap-2">
+        <button class="btn-capture" (click)="openQuickCapture()" title="Quick capture (⌘⇧K)">
+          <span class="material-symbols-outlined btn-icon-inner">bolt</span>
+          <span>Capture</span>
+        </button>
         <button class="btn-new-space" (click)="openAddNew()">
           <span class="material-symbols-outlined btn-icon-inner">add</span>
           <span>Add New</span>
@@ -257,6 +261,9 @@
     </button>
   </div>
 }
+
+<!-- Quick Capture Overlay -->
+<env-quick-capture></env-quick-capture>
 
 <!-- Quick Find Modal -->
 <app-quick-find></app-quick-find>

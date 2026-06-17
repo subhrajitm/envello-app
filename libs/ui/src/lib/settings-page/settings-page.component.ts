@@ -7,6 +7,7 @@ import { ButtonComponent } from '../button/button.component';
 import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService, APP_VERSION } from '@envello/core';
 import { AiService, AiProvider, AiFeature } from '@envello/core';
+import { SmartMonitorService, MONITOR_RULES, MonitorRuleId } from '@envello/core';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -45,7 +46,9 @@ export class SettingsPageComponent implements OnInit {
   private location = inject(Location);
   private userPrefsService = inject(UserPreferencesService);
   readonly appVersion = inject(APP_VERSION);
-  aiService = inject(AiService);
+  aiService     = inject(AiService);
+  monitorService = inject(SmartMonitorService);
+  readonly monitorRules = MONITOR_RULES;
 
   // Navigation / dialog state
   activeSection = signal('general');
@@ -153,6 +156,7 @@ export class SettingsPageComponent implements OnInit {
     { id: 'appearance',    label: 'Appearance',        description: 'Colors, themes and fonts',              icon: 'palette' },
     { id: 'editor',        label: 'Editor',            description: 'Writing experience and tools',          icon: 'edit_note' },
     { id: 'ai',            label: 'AI & Integrations', description: 'Configure AI providers and API keys',   icon: 'smart_toy' },
+    { id: 'monitor',       label: 'Smart Monitor',     description: 'Auto-create tasks from your data 24/7', icon: 'bolt' },
     { id: 'notifications', label: 'Notifications',     description: 'Alerts and reminders',                  icon: 'notifications' },
     { id: 'data',          label: 'Data & Sync',       description: 'Backup, storage and sync options',      icon: 'sync' },
     { id: 'about',         label: 'About',             description: 'Version and system information',        icon: 'info' }

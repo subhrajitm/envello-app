@@ -1024,3 +1024,90 @@
   letter-spacing: 0.03em;
   white-space: nowrap;
 }
+
+/* ─── Smart Monitor rules grid (mirrors .sections-grid pattern) ─────── */
+.monitor-rules {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: opacity .2s;
+}
+.monitor-rules--disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+.monitor-rules-header {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  padding: 8px 16px;
+  gap: 8px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.monitor-rules-row {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background .15s;
+}
+.monitor-rules-row:last-child { border-bottom: none; }
+.monitor-rules-row:hover { background: var(--bg-hover); }
+.monitor-rule-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+}
+.monitor-rule-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+/* ─── Smart Monitor digest ──────────────────────────────────────────── */
+.monitor-digest {
+  margin-top: 12px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.monitor-digest-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding: 8px 12px 4px;
+}
+.monitor-digest-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+}
+.monitor-digest-text { flex: 1; color: var(--text-secondary); }
+.monitor-digest-rule {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+.monitor-spin {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}

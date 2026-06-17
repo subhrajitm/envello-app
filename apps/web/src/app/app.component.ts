@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
-import { TauriService, SessionService, UserPreferencesService } from '@envello/core';
+import { TauriService, SessionService, UserPreferencesService, SmartMonitorService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
@@ -20,7 +20,8 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private tauriService = inject(TauriService);
   private sessionService = inject(SessionService);
   private userPrefsService = inject(UserPreferencesService);
-  private swUpdate = inject(SwUpdate, { optional: true });
+  private swUpdate  = inject(SwUpdate, { optional: true });
+  private monitor   = inject(SmartMonitorService);
   private unlistenFileDrop?: () => void;
 
   updateAvailable = signal(false);
@@ -51,6 +52,9 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.setupSwUpdate();
     this.loadNavigationLayout();
+    // Smart Monitor — run after sync completes or after 6s fallback
+    window.addEventListener('envello:sync-complete', () => setTimeout(() => this.monitor.run(), 1500), { once: true });
+    setTimeout(() => this.monitor.run(), 6000);
 
     // Listen for navigation layout changes from settings
     this.navigationLayoutListener = (event: CustomEvent) => {
@@ -132,6 +136,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       'spaces':  'Spaces',
       // vault is desktop-only
       'transactions': 'Transactions',
+      'people': 'People',
       'bin': 'Bin',
       'activity-log': 'Activity Log',
       'settings': 'Settings',

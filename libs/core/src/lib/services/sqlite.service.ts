@@ -78,6 +78,7 @@ export class SqliteService {
     private noteFoldersSubject = new BehaviorSubject<NoteFolderDoc[]>([]);
     private bookmarksSubject = new BehaviorSubject<BookmarkDoc[]>([]);
     private bookmarkFoldersSubject = new BehaviorSubject<BookmarkFolderDoc[]>([]);
+    private peopleSubject = new BehaviorSubject<any[]>([]);
 
     private profileService = inject(WorkspaceProfileService);
     private logging = inject(LoggingService);
@@ -501,6 +502,22 @@ export class SqliteService {
       )
     `);
 
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS people (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT,
+        company TEXT,
+        role TEXT,
+        avatar TEXT,
+        tags TEXT,
+        notes TEXT,
+        lastInteraction TEXT,
+        createdAt TEXT,
+        deleted_at TEXT
+      )
+    `);
+
         // App metadata — stores per-app key/value pairs (e.g. vault encryption key)
         await db.execute(`
       CREATE TABLE IF NOT EXISTS app_meta (
@@ -546,6 +563,7 @@ export class SqliteService {
             this.reloadNoteFolders(),
             this.reloadBookmarks(),
             this.reloadBookmarkFolders(),
+            this.reloadPeople(),
         ]);
     }
 
@@ -1277,6 +1295,36 @@ export class SqliteService {
         const db = await this.getDb();
         await db.execute('DELETE FROM bookmark_folders WHERE id = $1', [id]);
         await this.reloadBookmarkFolders();
+    }
+
+    // ─── People ────────────────────────────────────────────────────────────────
+    private async reloadPeople() {
+        const db = await this.getDb();
+        const rows = await db.select<any[]>('SELECT * FROM people');
+        this.peopleSubject.next(rows.map(r => this.parseRow<any>(r, ['tags'])));
+    }
+    async getAllPeople(): Promise<any[]> { return this.peopleSubject.getValue(); }
+    async upsertPerson(item: any): Promise<void> {
+        const db = await this.getDb();
+        const j = { ...item, tags: this.toJson(item.tags) };
+        const exists = await db.select<any[]>('SELECT id FROM people WHERE id = $1', [item.id]);
+        if (exists.length > 0) {
+            await db.execute(
+                `UPDATE people SET name=$1, email=$2, company=$3, role=$4, avatar=$5, tags=$6, notes=$7, lastInteraction=$8, deleted_at=$9 WHERE id=$10`,
+                [j.name, j.email ?? null, j.company ?? null, j.role ?? null, j.avatar ?? null, j.tags, j.notes ?? null, j.lastInteraction ?? null, j.deleted_at ?? null, j.id]
+            );
+        } else {
+            await db.execute(
+                `INSERT INTO people (id, name, email, company, role, avatar, tags, notes, lastInteraction, createdAt, deleted_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                [j.id, j.name, j.email ?? null, j.company ?? null, j.role ?? null, j.avatar ?? null, j.tags, j.notes ?? null, j.lastInteraction ?? null, j.createdAt, j.deleted_at ?? null]
+            );
+        }
+        await this.reloadPeople();
+    }
+    async removePerson(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM people WHERE id = $1', [id]);
+        await this.reloadPeople();
     }
 
     // ─── Export ────────────────────────────────────────────────────────────────

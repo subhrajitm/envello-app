@@ -30,3 +30,4 @@ export * from './lib/toast/toast.component';
 export * from './lib/editor-floating-menu/editor-floating-menu.component';
 export * from './lib/web-preview/web-preview.component';
 export * from './lib/slider-panel/slider-panel.component';
+export * from './lib/quick-capture/quick-capture.component';

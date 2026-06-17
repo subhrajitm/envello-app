@@ -14,6 +14,8 @@ import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.componen
 import { NotificationCenterComponent } from '../../notification-center/notification-center.component';
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
+import { QuickCaptureComponent } from '../../quick-capture/quick-capture.component';
+import { CaptureService } from '@envello/core';
 
 export interface NavItem {
   id: string;
@@ -27,7 +29,7 @@ export interface NavItem {
 @Component({
   selector: 'lib-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, QuickCaptureComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -39,6 +41,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @Output() subNavVisibleChange = new EventEmitter<boolean>();
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
+  @ViewChild(QuickCaptureComponent) quickCapture?: QuickCaptureComponent;
   @ViewChild(NotificationCenterComponent) notificationCenter?: NotificationCenterComponent;
   @ViewChild(ProfileMenuComponent) profileMenu?: ProfileMenuComponent;
   @ViewChild(ProfileEditorComponent) profileEditor?: ProfileEditorComponent;
@@ -51,6 +54,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private workspaceService = inject(WorkspaceProfileService);
   private storeService = inject(StoreService);
   private router = inject(Router);
+  readonly captureService = inject(CaptureService);
 
   // Space switcher
   showSpaceSwitcher = signal(false);
@@ -142,6 +146,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { id: 'vault',         label: 'Vault',          icon: 'lock',         route: 'vault' },
     { id: 'transactions',  label: 'Transactions',   icon: 'receipt_long', route: 'transactions' },
     { id: 'bookmarks',     label: 'Bookmarks',      icon: 'bookmarks',    route: 'bookmarks' },
+    { id: 'people',        label: 'People',          icon: 'group',        route: 'people' },
   ];
 
   private hiddenNavItemIds = signal<string[]>([]);
@@ -255,6 +260,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   openQuickFind() {
     this.quickFind?.open();
+  }
+
+  openQuickCapture() {
+    this.captureService.open();
   }
 
   openAddNew() {

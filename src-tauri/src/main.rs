@@ -137,6 +137,7 @@ fn main() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec![]),
         ))
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_os::init())
         // ── App setup ────────────────────────────────────────────────────────
         .setup(|app| {

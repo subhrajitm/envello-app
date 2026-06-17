@@ -144,17 +144,34 @@ export class CalendarSyncService {
     return this.syncing().has(id);
   }
 
+  // ─── ICS fetch ───────────────────────────────────────────────────
+
+  /** On desktop uses tauri-plugin-http (bypasses CORS). On web uses browser fetch. */
+  private async fetchICS(url: string): Promise<string> {
+    const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+    if (isTauri) {
+      // Tauri's native HTTP client makes a real network request, bypassing
+      // the WebView's CORS enforcement — required for Google Calendar ICS URLs.
+      const { fetch: tauriFetch } = await import('@tauri-apps/plugin-http');
+      const res = await tauriFetch(url, { method: 'GET' });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      return res.text();
+    }
+    // Web: standard fetch — only works if the URL allows cross-origin requests.
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    return res.text();
+  }
+
   // ─── ICS fetch + parse ───────────────────────────────────────────
 
   private async fetchAndParse(url: string): Promise<Array<Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>>> {
     let text: string;
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      text = await res.text();
+      text = await this.fetchICS(url);
     } catch (err: any) {
-      if (err?.message?.includes('Failed to fetch') || err?.name === 'TypeError') {
-        throw new Error('Could not reach the calendar URL. This may be a CORS restriction — try using the desktop app, or ensure the calendar URL is publicly accessible.');
+      if (err?.message?.includes('Failed to fetch') || err?.name === 'TypeError' || err?.message?.includes('CORS')) {
+        throw new Error('Could not reach the calendar URL. On web, the calendar feed must be publicly accessible (no CORS restriction). On desktop, this should work — if it doesn\'t, check that the URL is correct.');
       }
       throw err;
     }
