@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService, BookContentService, UserPreferencesService, CaptureService } from '@envello/core';
+import { AuthService, BookContentService, UserPreferencesService, CaptureService, SmartMonitorService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
@@ -36,7 +36,8 @@ export class AppComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   private bookContentService = inject(BookContentService);
   private userPrefsService = inject(UserPreferencesService);
-  private captureService = inject(CaptureService);
+  private captureService  = inject(CaptureService);
+  private monitor         = inject(SmartMonitorService);
 
   private unlistenFileDrop?: () => void;
   private unlistenCloseRequested?: () => void;
@@ -92,6 +93,9 @@ export class AppComponent implements OnInit, OnDestroy {
     this.setupDeepLinks();
     this.setupTrayEvents();
     setTimeout(() => this.updateService.checkForUpdate(), 3000);
+    // Smart Monitor — runs after data has loaded from DB (give it 4s)
+    window.addEventListener('envello:db-ready', () => setTimeout(() => this.monitor.run(), 1500), { once: true });
+    setTimeout(() => this.monitor.run(), 6000); // fallback if event already fired
   }
 
   private async setupTauriFileDrop(): Promise<void> {

@@ -615,6 +615,95 @@
       </div>
       }
 
+      <!-- Smart Monitor -->
+      @if (activeSection() === 'monitor') {
+      <div class="settings-section">
+        <div class="section-header">
+          <h2>Smart Monitor</h2>
+          <p>Envello watches your data and automatically creates tasks so nothing slips through the cracks.
+             Runs every time the app opens.</p>
+        </div>
+
+        <!-- Master toggle -->
+        <div class="setting-item setting-row">
+          <div class="setting-label-group">
+            <label>Enable Smart Monitor</label>
+            <span class="setting-desc">Turn off to disable all automatic task creation</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" [checked]="monitorService.enabled()"
+              (change)="monitorService.setEnabled($any($event.target).checked)" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+
+        <!-- Rules grid (same visual pattern as Sections) -->
+        <div class="monitor-rules" [class.monitor-rules--disabled]="!monitorService.enabled()">
+          <div class="monitor-rules-header">
+            <span class="sections-col-label">Rule</span>
+            <span class="sections-col-label" style="text-align:center">Active</span>
+          </div>
+          @for (rule of monitorRules; track rule.id) {
+            <div class="monitor-rules-row">
+              <div class="monitor-rule-label">
+                <span class="material-symbols-outlined" style="font-size:16px;color:var(--text-tertiary)">{{ rule.icon }}</span>
+                <div>
+                  <div class="monitor-rule-name">{{ rule.label }}</div>
+                  <div class="setting-desc">{{ rule.description }}</div>
+                </div>
+              </div>
+              <div class="sections-toggle-cell">
+                <label class="toggle">
+                  <input type="checkbox"
+                    [checked]="monitorService.isRuleEnabled(rule.id)"
+                    [disabled]="!monitorService.enabled()"
+                    (change)="monitorService.setRuleEnabled(rule.id, $any($event.target).checked)" />
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Run now -->
+        <div class="setting-item setting-row">
+          <div class="setting-label-group">
+            <label>Run now</label>
+            <span class="setting-desc">
+              @if (monitorService.lastDigest()) {
+                Last run: {{ monitorService.lastDigest()!.findings.length }} task(s) created,
+                {{ monitorService.lastDigest()!.skipped }} already existed
+              } @else {
+                Not yet run this session
+              }
+            </span>
+          </div>
+          <button class="btn-secondary" [disabled]="monitorService.running()" (click)="monitorService.run(true)">
+            @if (monitorService.running()) {
+              <span class="monitor-spin"></span> Running…
+            } @else {
+              <span class="material-symbols-outlined" style="font-size:15px">bolt</span> Run Monitor
+            }
+          </button>
+        </div>
+
+        <!-- Digest (tasks created this session) -->
+        @if (monitorService.lastDigest() && monitorService.lastDigest()!.findings.length > 0) {
+          <div class="monitor-digest">
+            <div class="monitor-digest-title">Tasks created this session</div>
+            @for (f of monitorService.lastDigest()!.findings; track f.taskId) {
+              <div class="monitor-digest-row">
+                <span class="material-symbols-outlined" style="font-size:14px;color:var(--accent-primary)">task_alt</span>
+                <span class="monitor-digest-text">{{ f.title }}</span>
+                <span class="monitor-digest-rule">{{ f.ruleId }}</span>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+      }
+
       <!-- Notifications -->
       @if (activeSection() === 'notifications') {
       <div class="settings-section">
