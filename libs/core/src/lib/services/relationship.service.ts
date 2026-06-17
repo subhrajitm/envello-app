@@ -66,8 +66,8 @@ export class RelationshipService {
       }
     }
 
-    return Array.from(discovered.entries()).map(([, v]) => ({
-      name: v.email ? v.email.split('@')[0] : '',
+    return Array.from(discovered.entries()).map(([name, v]) => ({
+      name,
       email: v.email,
       sources: Array.from(v.sources),
     })).filter(d => d.sources.length > 0);
