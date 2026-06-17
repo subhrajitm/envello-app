@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
 import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
 
-type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed';
+type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
 type TaskListItem =
   | { kind: 'header'; label: string; count: number; accent: string }
@@ -280,6 +280,11 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Bulk delete confirmation
   bulkDeleteModalOpen = signal<boolean>(false);
 
+  /** Tasks auto-created by the Smart Monitor (labelled '⚡ monitor'). */
+  monitorTasks = computed(() =>
+    this.store.tasks().filter(t => t.labels?.includes('⚡ monitor'))
+  );
+
   sidebarItems = computed<SidebarNavItem[]>(() => [
     {
       id: 'inbox',
@@ -304,6 +309,12 @@ export class TasksComponent implements OnInit, OnDestroy {
       icon: 'task_alt',
       label: 'Completed',
       count: this.completedTasksCount()
+    },
+    {
+      id: 'monitor',
+      icon: 'bolt',
+      label: 'Smart Monitor',
+      count: this.monitorTasks().filter(t => t.status !== 'COMPLETED').length
     }
   ]);
 
@@ -326,9 +337,10 @@ export class TasksComponent implements OnInit, OnDestroy {
    */
   viewTitle = computed(() => {
     const view = this.selectedView();
-    if (view === 'today') return 'Today';
-    if (view === 'upcoming') return 'Upcoming';
+    if (view === 'today')     return 'Today';
+    if (view === 'upcoming')  return 'Upcoming';
     if (view === 'completed') return 'Completed';
+    if (view === 'monitor')   return 'Smart Monitor';
     return 'Inbox';
   });
 
@@ -342,6 +354,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     const overdue = this.store
       .tasks()
       .filter(t => this.isOverdue(t)).length;
+
+    if (this.selectedView() === 'monitor') {
+      const active    = this.monitorTasks().filter(t => t.status === 'ACTIVE').length;
+      const completed = this.monitorTasks().filter(t => t.status === 'COMPLETED').length;
+      return `${total} total • ${active} active • ${completed} completed`;
+    }
 
     const parts: string[] = [];
     parts.push(`${total} task${total === 1 ? '' : 's'}`);
@@ -858,6 +876,8 @@ export class TasksComponent implements OnInit, OnDestroy {
       });
     } else if (view === 'completed') {
       base = this.store.tasks().filter(t => t.status === 'COMPLETED');
+    } else if (view === 'monitor') {
+      base = this.monitorTasks();
     } else {
       // inbox
       base = this.inboxTasks();

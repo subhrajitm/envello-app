@@ -690,12 +690,46 @@
         <!-- Digest (tasks created this session) -->
         @if (monitorService.lastDigest() && monitorService.lastDigest()!.findings.length > 0) {
           <div class="monitor-digest">
-            <div class="monitor-digest-title">Tasks created this session</div>
+            <div class="monitor-digest-title">Created this session</div>
             @for (f of monitorService.lastDigest()!.findings; track f.taskId) {
               <div class="monitor-digest-row">
                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--accent-primary)">task_alt</span>
                 <span class="monitor-digest-text">{{ f.title }}</span>
                 <span class="monitor-digest-rule">{{ f.ruleId }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Persistent history — all tasks ever created by the monitor -->
+        @if (monitorHistory().length > 0) {
+          <div class="monitor-history">
+            <div class="monitor-history-hdr">
+              <span class="sections-col-label">All Monitor Tasks ({{ monitorHistory().length }})</span>
+              <span class="sections-col-label" style="text-align:center">Rule</span>
+              <span class="sections-col-label" style="text-align:center">Status</span>
+            </div>
+            @for (task of monitorHistory(); track task.id) {
+              <div class="monitor-history-row">
+                <div class="monitor-history-title">
+                  <span class="material-symbols-outlined"
+                    style="font-size:14px"
+                    [style.color]="task.status === 'COMPLETED' ? '#34d399' : task.priority === 'HIGH' ? '#f87171' : 'var(--text-tertiary)'">
+                    {{ task.status === 'COMPLETED' ? 'check_circle' : 'radio_button_unchecked' }}
+                  </span>
+                  <span [style.text-decoration]="task.status === 'COMPLETED' ? 'line-through' : 'none'"
+                        [style.color]="task.status === 'COMPLETED' ? 'var(--text-tertiary)' : 'var(--text-primary)'">
+                    {{ task.title }}
+                  </span>
+                </div>
+                <span class="monitor-digest-rule">
+                  {{ monitorTaskRule(task) }}
+                </span>
+                <span class="monitor-history-status"
+                  [class.monitor-status--done]="task.status === 'COMPLETED'"
+                  [class.monitor-status--active]="task.status === 'ACTIVE'">
+                  {{ task.status }}
+                </span>
               </div>
             }
           </div>

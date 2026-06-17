@@ -78,7 +78,22 @@ jobs:
           V=${{ steps.version.outputs.next }}
           git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
           git commit -m "chore: release v$V"
-          git tag "v$V"
+          # Annotated tag — required for --follow-tags and best practice for releases
+          git tag -a "v$V" -m "Release v$V"
 
       - name: Push commit and tag
-        run: git push origin main --follow-tags
+        run: |
+          V=${{ steps.version.outputs.next }}
+          git push origin main
+          # Push the tag explicitly — --follow-tags only works with annotated tags
+          # and can be unreliable. An explicit push is always safe.
+          git push origin "v$V"
+
+      - name: Trigger release build
+        # GITHUB_TOKEN can't trigger other workflows via a push event.
+        # Calling release.yml via workflow_dispatch explicitly works around this.
+        run: |
+          V=${{ steps.version.outputs.next }}
+          gh workflow run release.yml --ref "v$V"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

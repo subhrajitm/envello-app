@@ -132,12 +132,14 @@ export class SmartMonitorService {
   async run(manual = false): Promise<MonitorDigest> {
     const empty: MonitorDigest = { findings: [], skipped: 0, ranAt: new Date().toISOString() };
     if (this.running() || !this.enabled()) return empty;
-    // Auto-runs fire at most once per session to prevent double-trigger
-    // (event listener + fallback timeout both try to run on startup).
+    // Auto-runs fire at most once per session to prevent double-trigger.
     if (!manual && this.sessionRanAt > 0) return empty;
     if (!manual) this.sessionRanAt = Date.now();
 
     this.running.set(true);
+    // Yield to Angular's change detection so the spinner actually renders.
+    await new Promise<void>(resolve => setTimeout(resolve, 50));
+
     const fingerprints = this.loadFingerprints();
     const findings: MonitorFinding[] = [];
     let skipped = 0;
@@ -153,13 +155,22 @@ export class SmartMonitorService {
       ];
 
       for (const check of checks) {
-        for (const finding of check()) {
+        let checkFindings: MonitorFinding[];
+        try {
+          checkFindings = check();
+        } catch (e) {
+          console.warn('[SmartMonitor] rule threw:', e);
+          continue;
+        }
+
+        for (const finding of checkFindings) {
           const fp = this.fingerprint(finding);
-          if (fingerprints.has(fp)) { skipped++; continue; }
+          // Manual runs skip the fingerprint cache so the user always sees current state.
+          if (!manual && fingerprints.has(fp)) { skipped++; continue; }
           this.createTask(finding);
-          fingerprints.add(fp);
+          if (!manual) fingerprints.add(fp); // only persist fingerprints for auto-runs
           findings.push(finding);
-          // For meeting action items, link the new task back so it's never recreated
+          // For meeting action items, link the new task so it's never recreated.
           const f = finding as MonitorFinding & { _meetingId?: string; _actionId?: string };
           if (f._meetingId && f._actionId && finding.taskId) {
             this.linkMeetingAction(f._meetingId, f._actionId, finding.taskId);
@@ -167,18 +178,38 @@ export class SmartMonitorService {
         }
       }
 
-      this.saveFingerprints(fingerprints);
+      if (!manual) this.saveFingerprints(fingerprints);
 
+      // Always notify on manual runs so the user knows it ran.
       if (findings.length > 0) {
         this.notify.add({
-          type: 'info',
-          title: `⚡ Smart Monitor: ${findings.length} new task${findings.length !== 1 ? 's' : ''} created`,
+          type: 'success',
+          title: `⚡ Smart Monitor: ${findings.length} task${findings.length !== 1 ? 's' : ''} created`,
           message: findings.slice(0, 3).map(f => `• ${f.title}`).join('\n')
             + (findings.length > 3 ? `\n• …and ${findings.length - 3} more` : ''),
           icon: 'bolt',
         });
+      } else if (manual) {
+        this.notify.add({
+          type: 'info',
+          title: '⚡ Smart Monitor: all clear',
+          message: skipped > 0
+            ? `${skipped} item${skipped !== 1 ? 's' : ''} checked — no new tasks needed`
+            : 'No actionable items found right now',
+          icon: 'check_circle',
+        });
       }
 
+    } catch (e) {
+      console.error('[SmartMonitor] run failed:', e);
+      if (manual) {
+        this.notify.add({
+          type: 'error',
+          title: '⚡ Smart Monitor failed',
+          message: String((e as Error)?.message ?? e),
+          icon: 'error',
+        });
+      }
     } finally {
       this.running.set(false);
     }

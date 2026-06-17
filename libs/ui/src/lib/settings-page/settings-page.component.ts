@@ -8,6 +8,7 @@ import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService, APP_VERSION } from '@envello/core';
 import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { SmartMonitorService, MONITOR_RULES, MonitorRuleId } from '@envello/core';
+import { Task } from '@envello/domain';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -49,6 +50,18 @@ export class SettingsPageComponent implements OnInit {
   aiService     = inject(AiService);
   monitorService = inject(SmartMonitorService);
   readonly monitorRules = MONITOR_RULES;
+
+  /** All tasks auto-created by Smart Monitor, newest first. */
+  readonly monitorHistory = computed(() =>
+    this.storeService.tasks()
+      .filter((t: Task) => t.labels?.includes('⚡ monitor'))
+      .sort((a: Task, b: Task) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+  );
+
+  /** Returns the first label that is not the monitor marker, or '—'. */
+  monitorTaskRule(task: Task): string {
+    return task.labels?.find(l => l !== '⚡ monitor') ?? '—';
+  }
 
   // Navigation / dialog state
   activeSection = signal('general');

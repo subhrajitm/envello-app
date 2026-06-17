@@ -1101,6 +1101,54 @@
   color: var(--accent-primary);
   font-weight: 600;
 }
+/* ─── Monitor task history ───────────────────────────────────────────── */
+.monitor-history {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.monitor-history-hdr {
+  display: grid;
+  grid-template-columns: 1fr 130px 90px;
+  padding: 8px 14px;
+  gap: 8px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.monitor-history-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 90px;
+  align-items: center;
+  padding: 9px 14px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background .12s;
+}
+.monitor-history-row:last-child { border-bottom: none; }
+.monitor-history-row:hover { background: var(--bg-hover); }
+.monitor-history-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  min-width: 0;
+}
+.monitor-history-title span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.monitor-history-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  text-align: center;
+}
+.monitor-status--done   { color: #34d399; }
+.monitor-status--active { color: var(--accent-primary); }
+
 .monitor-spin {
   display: inline-block;
   width: 12px;
