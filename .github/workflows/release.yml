@@ -8,6 +8,12 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Git tag to build (e.g. v1.2.3)'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -65,6 +71,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -108,7 +116,7 @@ jobs:
       - name: Upload installers to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: 'Envello ${{ github.ref_name }}'
+          name: 'Envello ${{ inputs.tag || github.ref_name }}'
           body: |
             ## What's new
             See commits for details.
@@ -149,7 +157,7 @@ jobs:
 
   update-manifest:
     needs: release
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_call'
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -163,7 +171,7 @@ jobs:
 
       - name: Generate latest.json
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
           REPO: ${{ github.repository }}
         run: |
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -202,5 +210,5 @@ jobs:
       - name: Upload latest.json to GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: gh release upload "$TAG" /tmp/latest.json --clobber --repo "${{ github.repository }}"

@@ -1,9 +1,9 @@
 name: Auto Release
 
 # Runs on every push to main.
-# Bumps the patch version across all three version files, commits a
-# "chore: release vX.Y.Z" commit, pushes a tag, and the tag then
-# triggers release.yml which builds installers for all platforms.
+# 1. Bumps the patch version in package.json, tauri.conf.json, and Cargo.toml.
+# 2. Commits "chore: release vX.Y.Z" and pushes an annotated tag.
+# 3. Calls release.yml via workflow_call (no PAT needed) to build installers.
 #
 # Skip a release by including [skip release] anywhere in the commit message.
 on:
@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.next }}
 
     steps:
       - uses: actions/checkout@v4
@@ -89,11 +91,11 @@ jobs:
           # and can be unreliable. An explicit push is always safe.
           git push origin "v$V"
 
-      - name: Trigger release build
-        # GITHUB_TOKEN can't trigger other workflows via a push event.
-        # Calling release.yml via workflow_dispatch explicitly works around this.
-        run: |
-          V=${{ steps.version.outputs.next }}
-          gh workflow run release.yml --ref "v$V"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build:
+    needs: bump-and-release
+    # workflow_call lets us chain directly — no PAT or dispatch needed.
+    uses: ./.github/workflows/release.yml
+    secrets: inherit
+    with:
+      tag: v${{ needs.bump-and-release.outputs.version }}
+
