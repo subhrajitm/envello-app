@@ -367,6 +367,120 @@
       </div>
       }
 
+      <!-- Connected Accounts -->
+      @if (activeSection() === 'connected') {
+        <div class="settings-section">
+          <div class="settings-section-title">Connected Accounts</div>
+          <p class="settings-section-desc">Sign in with Google to automatically sync calendar events, contacts, and parse emails for subscriptions and tasks.</p>
+
+          <!-- Google Account Card -->
+          <div class="conn-card">
+            <div class="conn-card-header">
+              <div class="conn-card-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+              </div>
+              <div class="conn-card-info">
+                <div class="conn-card-name">Google</div>
+                @if (googleAuth.connected()) {
+                  <div class="conn-card-status conn-card-status--connected">
+                    <span class="material-symbols-outlined" style="font-size:13px">check_circle</span>
+                    Connected as {{ googleAuth.account()?.email }}
+                  </div>
+                } @else {
+                  <div class="conn-card-status">Not connected</div>
+                }
+              </div>
+              @if (googleAuth.connected()) {
+                <button class="conn-disconnect-btn" (click)="googleAuth.disconnect()">Disconnect</button>
+              } @else {
+                <button class="conn-connect-btn" [disabled]="googleAuth.connecting()" (click)="googleAuth.connect()">
+                  @if (googleAuth.connecting()) { <span class="monitor-spin"></span> } @else { Connect }
+                </button>
+              }
+            </div>
+
+            @if (googleAuth.connected()) {
+              <div class="conn-services">
+
+                <!-- Calendar -->
+                <div class="conn-service-row">
+                  <span class="material-symbols-outlined conn-service-icon" style="color:#4285F4">calendar_month</span>
+                  <div class="conn-service-info">
+                    <span class="conn-service-label">Google Calendar</span>
+                    <span class="conn-service-sub">{{ googleCalendar.lastSync() ? 'Last synced ' + googleCalendar.lastSync() : 'Not yet synced' }}</span>
+                  </div>
+                  <button class="conn-sync-btn" [disabled]="googleCalendar.syncing()" (click)="googleCalendar.sync()">
+                    <span class="material-symbols-outlined" [class.monitor-spin]="googleCalendar.syncing()">sync</span>
+                    {{ googleCalendar.syncing() ? 'Syncing…' : 'Sync now' }}
+                  </button>
+                </div>
+
+                <!-- Contacts -->
+                <div class="conn-service-row">
+                  <span class="material-symbols-outlined conn-service-icon" style="color:#34A853">contacts</span>
+                  <div class="conn-service-info">
+                    <span class="conn-service-label">Google Contacts</span>
+                    <span class="conn-service-sub">{{ googleContacts.lastSync() ? 'Last synced ' + googleContacts.lastSync() : 'Not yet synced' }}</span>
+                  </div>
+                  <button class="conn-sync-btn" [disabled]="googleContacts.syncing()" (click)="googleContacts.sync()">
+                    <span class="material-symbols-outlined" [class.monitor-spin]="googleContacts.syncing()">sync</span>
+                    {{ googleContacts.syncing() ? 'Syncing…' : 'Sync now' }}
+                  </button>
+                </div>
+
+                <!-- Gmail -->
+                <div class="conn-service-row">
+                  <span class="material-symbols-outlined conn-service-icon" style="color:#EA4335">mail</span>
+                  <div class="conn-service-info">
+                    <span class="conn-service-label">Gmail Smart Import</span>
+                    <span class="conn-service-sub">Scans Promotions &amp; Updates for subscriptions, tasks and contacts</span>
+                  </div>
+                  <button class="conn-sync-btn" [disabled]="googleGmail.fetching()" (click)="googleGmail.fetchSuggestions()">
+                    <span class="material-symbols-outlined" [class.monitor-spin]="googleGmail.fetching()">auto_awesome</span>
+                    {{ googleGmail.fetching() ? 'Scanning…' : 'Scan now' }}
+                  </button>
+                </div>
+
+                <!-- Gmail suggestions review -->
+                @if (googleGmail.suggestions().length > 0) {
+                  <div class="conn-suggestions">
+                    <div class="conn-suggestions-hdr">
+                      <span>{{ googleGmail.suggestions().length }} suggestion{{ googleGmail.suggestions().length !== 1 ? 's' : '' }} to review</span>
+                      <button class="conn-dismiss-all" (click)="googleGmail.dismissAll()">Dismiss all</button>
+                    </div>
+                    @for (s of googleGmail.suggestions(); track s.id) {
+                      <div class="conn-suggestion-row">
+                        <div class="conn-sug-kind conn-sug-kind--{{ s.kind }}">{{ s.kind }}</div>
+                        <div class="conn-sug-body">
+                          <div class="conn-sug-title">{{ s.data['name'] ?? s.data['title'] ?? s.source.subject }}</div>
+                          <div class="conn-sug-meta">{{ s.source.from }} · {{ s.source.date }}</div>
+                        </div>
+                        <div class="conn-sug-actions">
+                          <button class="conn-sug-accept" (click)="googleGmail.accept(s.id)">Import</button>
+                          <button class="conn-sug-dismiss" (click)="googleGmail.dismiss(s.id)">
+                            <span class="material-symbols-outlined">close</span>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <p class="conn-scope-note">
+            <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">lock</span>
+            Envello only requests read-only access. No emails, events or contacts are ever sent to Envello servers — all processing happens locally on your device.
+          </p>
+        </div>
+      }
+
       <!-- AI & Integrations -->
       @if (activeSection() === 'ai') {
       <div class="settings-section">

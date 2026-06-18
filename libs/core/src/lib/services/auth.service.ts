@@ -2,13 +2,15 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoggingService } from './logging.service';
 import { SupabaseService } from './supabase.service';
+import { TauriService } from './tauri.service';
 import { User, Session } from '@supabase/supabase-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly router = inject(Router);
-  private readonly logging = inject(LoggingService);
+  private readonly router   = inject(Router);
+  private readonly logging  = inject(LoggingService);
   private readonly supabase = inject(SupabaseService);
+  private readonly tauri    = inject(TauriService);
 
   private readonly _session = signal<Session | null>(null);
   private readonly _user = signal<User | null>(null);
@@ -69,6 +71,43 @@ export class AuthService {
     this._isGuest.set(true);
     localStorage.setItem('envello-guest-mode', 'true');
     this.router.navigate(['/workspace']);
+  }
+
+  async loginWithGoogle(): Promise<void> {
+    this.logging.info('AuthService.loginWithGoogle');
+    const redirectTo = this.tauri.isTauri()
+      ? 'envello://auth-callback'
+      : `${window.location.origin}/auth/callback`;
+
+    const { data, error } = await this.supabase.client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        scopes: [
+          'https://www.googleapis.com/auth/calendar.readonly',
+          'https://www.googleapis.com/auth/gmail.readonly',
+          'https://www.googleapis.com/auth/contacts.readonly',
+        ].join(' '),
+        skipBrowserRedirect: this.tauri.isTauri(),
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+      },
+    });
+
+    if (error) { this.logging.error('Google OAuth failed', error.message); throw error; }
+
+    if (this.tauri.isTauri() && data.url) {
+      await this.tauri.openUrl(data.url);
+      // Session completion handled by deep-link callback in AppComponent
+    }
+    // On web: browser redirects automatically, Supabase detects session on return
+  }
+
+  async handleOAuthCallback(url: string): Promise<void> {
+    const u = new URL(url.includes('://') ? url.replace(/^[a-z]+:\/\//, 'https://x.x/') : url);
+    const code = u.searchParams.get('code');
+    if (!code) return;
+    const { error } = await this.supabase.client.auth.exchangeCodeForSession(code);
+    if (error) this.logging.error('OAuth callback failed', error.message);
   }
 
   async login(email: string, password: string): Promise<boolean> {
