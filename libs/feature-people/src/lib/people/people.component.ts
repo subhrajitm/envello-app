@@ -39,12 +39,17 @@ export class PeopleComponent {
   showSlider    = signal(false);
   selectedId    = signal<string | null>(null);
 
-  // ── Add form ────────────────────────────────────────────────────────────────
-  showAddForm   = signal(false);
-  newName       = signal('');
-  newEmail      = signal('');
-  newCompany    = signal('');
-  newRole       = signal('');
+  // ── Add / Edit mode (shared fields — never active simultaneously) ────────────
+  addMode       = signal(false);
+  editMode      = signal(false);
+  editName      = signal('');
+  editEmail     = signal('');
+  editPhone     = signal('');
+  editCompany   = signal('');
+  editRole      = signal('');
+  editNotes     = signal('');
+  editTagInput  = signal('');
+  editTags      = signal<string[]>([]);
 
   // ── Delete ──────────────────────────────────────────────────────────────────
   deleteTarget  = signal<Person | null>(null);
@@ -84,6 +89,7 @@ export class PeopleComponent {
     return byFilter.filter(p =>
       p.person.name.toLowerCase().includes(q) ||
       p.person.email?.toLowerCase().includes(q) ||
+      p.person.phone?.toLowerCase().includes(q) ||
       p.person.company?.toLowerCase().includes(q) ||
       p.person.role?.toLowerCase().includes(q)
     );
@@ -162,32 +168,91 @@ export class PeopleComponent {
     this.showSlider.set(false);
     this.selectedId.set(null);
     this.insight.set('');
+    this.editMode.set(false);
+    this.addMode.set(false);
+  }
+
+  // ── Edit ────────────────────────────────────────────────────────────────────
+
+  openEdit() {
+    const p = this.selectedProfile()?.person;
+    if (!p) return;
+    this.editName.set(p.name);
+    this.editEmail.set(p.email ?? '');
+    this.editPhone.set(p.phone ?? '');
+    this.editCompany.set(p.company ?? '');
+    this.editRole.set(p.role ?? '');
+    this.editNotes.set(p.notes ?? '');
+    this.editTags.set([...(p.tags ?? [])]);
+    this.editTagInput.set('');
+    this.editMode.set(true);
+  }
+
+  cancelEdit() {
+    this.editMode.set(false);
+    this.editTagInput.set('');
+  }
+
+  saveEdit() {
+    const id = this.selectedId();
+    if (!id || !this.editName().trim()) return;
+    this.store.updatePerson(id, {
+      name:    this.editName().trim(),
+      email:   this.editEmail().trim()   || undefined,
+      phone:   this.editPhone().trim()   || undefined,
+      company: this.editCompany().trim() || undefined,
+      role:    this.editRole().trim()    || undefined,
+      notes:   this.editNotes().trim()   || undefined,
+      tags:    this.editTags(),
+    });
+    this.editMode.set(false);
+  }
+
+  addEditTag() {
+    const tag = this.editTagInput().trim();
+    if (!tag || this.editTags().includes(tag)) { this.editTagInput.set(''); return; }
+    this.editTags.update(ts => [...ts, tag]);
+    this.editTagInput.set('');
+  }
+
+  removeEditTag(tag: string) {
+    this.editTags.update(ts => ts.filter(t => t !== tag));
   }
 
   // ── Add person ──────────────────────────────────────────────────────────────
 
-  openAddForm() { this.showAddForm.set(true); }
-
-  closeAddForm() {
-    this.showAddForm.set(false);
-    this.newName.set(''); this.newEmail.set('');
-    this.newCompany.set(''); this.newRole.set('');
+  openAddForm() {
+    this.editName.set('');
+    this.editEmail.set('');
+    this.editPhone.set('');
+    this.editCompany.set('');
+    this.editRole.set('');
+    this.editNotes.set('');
+    this.editTags.set([]);
+    this.editTagInput.set('');
+    this.addMode.set(true);
+    this.editMode.set(false);
+    this.selectedId.set(null);
+    this.insight.set('');
+    this.showSlider.set(true);
   }
 
   addPerson() {
-    const name = this.newName().trim();
+    const name = this.editName().trim();
     if (!name) return;
     const person: Person = {
       id: `person-${Date.now()}`,
       name,
-      email:   this.newEmail().trim()   || undefined,
-      company: this.newCompany().trim() || undefined,
-      role:    this.newRole().trim()    || undefined,
+      email:   this.editEmail().trim()   || undefined,
+      phone:   this.editPhone().trim()   || undefined,
+      company: this.editCompany().trim() || undefined,
+      role:    this.editRole().trim()    || undefined,
+      notes:   this.editNotes().trim()   || undefined,
+      tags:    this.editTags(),
       createdAt: new Date().toISOString(),
-      tags: [],
     };
     this.store.addPerson(person);
-    this.closeAddForm();
+    this.addMode.set(false);
     this.openProfile(person.id);
   }
 

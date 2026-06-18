@@ -145,133 +145,264 @@
 
 <!-- ═══════════ PROFILE SLIDER ═══════════ -->
 <env-slider-panel [isOpen]="showSlider()" (closed)="closeSlider()" width="480px">
+
+  <!-- ── ADD MODE ── -->
+  @if (addMode()) {
+    <div class="ppl-slider-inner">
+      <div class="ppl-slider-hdr">
+        <div class="ppl-slider-hero">
+          <div class="ppl-hero-av ppl-hero-av--new">
+            <span class="material-symbols-outlined">person_add</span>
+          </div>
+          <div class="ppl-edit-name-wrap">
+            <input class="ppl-edit-name-input" [value]="editName()"
+              (input)="editName.set($any($event.target).value)"
+              placeholder="Full name" autofocus />
+          </div>
+        </div>
+        <div class="ppl-slider-actions">
+          <button class="ppl-btn-ghost ppl-btn-sm" (click)="closeSlider()">Cancel</button>
+          <button class="ppl-btn-primary ppl-btn-sm"
+            [class.ppl-btn-primary--disabled]="!editName().trim()"
+            (click)="addPerson()">Add Person</button>
+        </div>
+      </div>
+
+      <div class="ppl-edit-form">
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Email</label>
+          <input class="ppl-edit-input" type="email" [value]="editEmail()"
+            (input)="editEmail.set($any($event.target).value)" placeholder="name@company.com" />
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Phone</label>
+          <input class="ppl-edit-input" type="tel" [value]="editPhone()"
+            (input)="editPhone.set($any($event.target).value)" placeholder="+1 555 000 0000" />
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Company</label>
+          <input class="ppl-edit-input" [value]="editCompany()"
+            (input)="editCompany.set($any($event.target).value)" placeholder="Company name" />
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Role</label>
+          <input class="ppl-edit-input" [value]="editRole()"
+            (input)="editRole.set($any($event.target).value)" placeholder="Job title" />
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Notes</label>
+          <textarea class="ppl-edit-input ppl-edit-textarea" rows="3" [value]="editNotes()"
+            (input)="editNotes.set($any($event.target).value)" placeholder="Notes about this person…"></textarea>
+        </div>
+        <div class="ppl-edit-row">
+          <label class="ppl-edit-label">Tags</label>
+          <div class="ppl-edit-tags">
+            @for (tag of editTags(); track tag) {
+              <span class="ppl-tag">
+                {{ tag }}
+                <button class="ppl-tag-remove" (click)="removeEditTag(tag)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </span>
+            }
+            <input class="ppl-tag-input" [value]="editTagInput()"
+              (input)="editTagInput.set($any($event.target).value)"
+              (keydown.enter)="addEditTag()"
+              (keydown.comma)="addEditTag()"
+              placeholder="Add tag…" />
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── VIEW / EDIT MODE ── -->
   @if (selectedProfile()) {
     <div class="ppl-slider-inner">
 
+      <!-- ── Header ── -->
       <div class="ppl-slider-hdr">
         <div class="ppl-slider-hero">
           <div class="ppl-hero-av" [style.background]="avatarColor(profileIndex())">
             {{ initials(selectedProfile()!.person.name) }}
           </div>
-          <div>
-            <div class="ppl-hero-name">{{ selectedProfile()!.person.name }}</div>
-            @if (selectedProfile()!.person.role) {
-              <div class="ppl-hero-role">{{ selectedProfile()!.person.role }}</div>
-            }
-            @if (selectedProfile()!.person.company) {
-              <div class="ppl-hero-company">{{ selectedProfile()!.person.company }}</div>
-            }
-            @if (selectedProfile()!.person.email) {
-              <a class="ppl-hero-email" [href]="'mailto:' + selectedProfile()!.person.email">
-                {{ selectedProfile()!.person.email }}
-              </a>
-            }
-          </div>
-        </div>
-        <button class="ppl-delete-btn" (click)="confirmDelete(selectedProfile()!.person)" title="Remove person">
-          <span class="material-symbols-outlined">delete</span>
-        </button>
-      </div>
-
-      <!-- Stats -->
-      <div class="ppl-stats-row">
-        <div class="ppl-stat">
-          <span class="ppl-stat-val">{{ selectedProfile()!.totalInteractions }}</span>
-          <span class="ppl-stat-lbl">Interactions</span>
-        </div>
-        <div class="ppl-stat">
-          <span class="ppl-stat-val">{{ selectedProfile()!.openTasks }}</span>
-          <span class="ppl-stat-lbl">Open Tasks</span>
-        </div>
-        <div class="ppl-stat">
-          <span class="ppl-stat-val">{{ selectedProfile()!.upcomingMeetings }}</span>
-          <span class="ppl-stat-lbl">Upcoming</span>
-        </div>
-        <div class="ppl-stat">
-          <span class="ppl-stat-val">{{ daysSince(selectedProfile()!.lastSeen) }}</span>
-          <span class="ppl-stat-lbl">Last seen</span>
-        </div>
-      </div>
-
-      <!-- AI Insight -->
-      <div class="ppl-insight-wrap">
-        <button class="ppl-insight-btn" (click)="generateInsight()" [disabled]="generatingInsight()">
-          @if (generatingInsight()) {
-            <span class="ppl-spinner"></span> Generating…
+          @if (!editMode()) {
+            <div>
+              <div class="ppl-hero-name">{{ selectedProfile()!.person.name }}</div>
+              @if (selectedProfile()!.person.role) {
+                <div class="ppl-hero-role">{{ selectedProfile()!.person.role }}</div>
+              }
+              @if (selectedProfile()!.person.company) {
+                <div class="ppl-hero-company">{{ selectedProfile()!.person.company }}</div>
+              }
+              @if (selectedProfile()!.person.email) {
+                <a class="ppl-hero-email" [href]="'mailto:' + selectedProfile()!.person.email">
+                  {{ selectedProfile()!.person.email }}
+                </a>
+              }
+              @if (selectedProfile()!.person.phone) {
+                <a class="ppl-hero-email" [href]="'tel:' + selectedProfile()!.person.phone">
+                  {{ selectedProfile()!.person.phone }}
+                </a>
+              }
+            </div>
           } @else {
-            <span class="material-symbols-outlined">auto_awesome</span> AI Relationship Insight
-          }
-        </button>
-        @if (insight()) {
-          <div class="ppl-insight-text">{{ insight() }}</div>
-        }
-      </div>
-
-      <!-- Timeline -->
-      <div class="ppl-timeline-wrap">
-        <div class="ppl-timeline-title">Interaction History</div>
-        @if (selectedProfile()!.interactions.length === 0) {
-          <div class="ppl-timeline-empty">No recorded interactions yet.</div>
-        } @else {
-          @for (item of selectedProfile()!.interactions; track item.id) {
-            <div class="ppl-tl-item">
-              <div class="ppl-tl-icon">
-                <span class="material-symbols-outlined">{{ interactionIcon(item.type) }}</span>
-              </div>
-              <div class="ppl-tl-body">
-                <div class="ppl-tl-title">{{ item.title }}</div>
-                @if (item.preview) { <div class="ppl-tl-preview">{{ item.preview }}</div> }
-                <div class="ppl-tl-date">{{ item.date }}</div>
-              </div>
-              <span class="ppl-tl-badge ppl-tl-badge--{{ item.type }}">{{ item.type }}</span>
+            <div class="ppl-edit-name-wrap">
+              <input class="ppl-edit-name-input" [value]="editName()"
+                (input)="editName.set($any($event.target).value)" placeholder="Full name" />
             </div>
           }
-        }
+        </div>
+        <div class="ppl-slider-actions">
+          @if (!editMode()) {
+            <button class="ppl-icon-btn" (click)="openEdit()" title="Edit person">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+            <button class="ppl-icon-btn ppl-icon-btn--danger" (click)="confirmDelete(selectedProfile()!.person)" title="Remove person">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          } @else {
+            <button class="ppl-btn-ghost ppl-btn-sm" (click)="cancelEdit()">Cancel</button>
+            <button class="ppl-btn-primary ppl-btn-sm"
+              [class.ppl-btn-primary--disabled]="!editName().trim()"
+              (click)="saveEdit()">Save</button>
+          }
+        </div>
       </div>
+
+      <!-- ── Edit Form ── -->
+      @if (editMode()) {
+        <div class="ppl-edit-form">
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Email</label>
+            <input class="ppl-edit-input" type="email" [value]="editEmail()"
+              (input)="editEmail.set($any($event.target).value)" placeholder="name@company.com" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Phone</label>
+            <input class="ppl-edit-input" type="tel" [value]="editPhone()"
+              (input)="editPhone.set($any($event.target).value)" placeholder="+1 555 000 0000" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Company</label>
+            <input class="ppl-edit-input" [value]="editCompany()"
+              (input)="editCompany.set($any($event.target).value)" placeholder="Company name" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Role</label>
+            <input class="ppl-edit-input" [value]="editRole()"
+              (input)="editRole.set($any($event.target).value)" placeholder="Job title" />
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Notes</label>
+            <textarea class="ppl-edit-input ppl-edit-textarea" rows="3" [value]="editNotes()"
+              (input)="editNotes.set($any($event.target).value)" placeholder="Notes about this person…"></textarea>
+          </div>
+          <div class="ppl-edit-row">
+            <label class="ppl-edit-label">Tags</label>
+            <div class="ppl-edit-tags">
+              @for (tag of editTags(); track tag) {
+                <span class="ppl-tag">
+                  {{ tag }}
+                  <button class="ppl-tag-remove" (click)="removeEditTag(tag)">
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
+                </span>
+              }
+              <input class="ppl-tag-input" [value]="editTagInput()"
+                (input)="editTagInput.set($any($event.target).value)"
+                (keydown.enter)="addEditTag()"
+                (keydown.comma)="addEditTag()"
+                placeholder="Add tag…" />
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (!editMode()) {
+        <!-- ── Details ── -->
+        @if (selectedProfile()!.person.notes || (selectedProfile()!.person.tags?.length ?? 0) > 0) {
+          <div class="ppl-details-section">
+            @if ((selectedProfile()!.person.tags?.length ?? 0) > 0) {
+              <div class="ppl-details-row">
+                <span class="ppl-details-label">Tags</span>
+                <div class="ppl-tags-list">
+                  @for (tag of selectedProfile()!.person.tags!; track tag) {
+                    <span class="ppl-tag ppl-tag--readonly">{{ tag }}</span>
+                  }
+                </div>
+              </div>
+            }
+            @if (selectedProfile()!.person.notes) {
+              <div class="ppl-details-row">
+                <span class="ppl-details-label">Notes</span>
+                <p class="ppl-details-notes">{{ selectedProfile()!.person.notes }}</p>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── Stats ── -->
+        <div class="ppl-stats-row">
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ selectedProfile()!.totalInteractions }}</span>
+            <span class="ppl-stat-lbl">Interactions</span>
+          </div>
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ selectedProfile()!.openTasks }}</span>
+            <span class="ppl-stat-lbl">Open Tasks</span>
+          </div>
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ selectedProfile()!.upcomingMeetings }}</span>
+            <span class="ppl-stat-lbl">Upcoming</span>
+          </div>
+          <div class="ppl-stat">
+            <span class="ppl-stat-val">{{ daysSince(selectedProfile()!.lastSeen) }}</span>
+            <span class="ppl-stat-lbl">Last seen</span>
+          </div>
+        </div>
+
+        <!-- ── AI Insight ── -->
+        <div class="ppl-insight-wrap">
+          <button class="ppl-insight-btn" (click)="generateInsight()" [disabled]="generatingInsight()">
+            @if (generatingInsight()) {
+              <span class="ppl-spinner"></span> Generating…
+            } @else {
+              <span class="material-symbols-outlined">auto_awesome</span> AI Relationship Insight
+            }
+          </button>
+          @if (insight()) {
+            <div class="ppl-insight-text">{{ insight() }}</div>
+          }
+        </div>
+
+        <!-- ── Timeline ── -->
+        <div class="ppl-timeline-wrap">
+          <div class="ppl-timeline-title">Interaction History</div>
+          @if (selectedProfile()!.interactions.length === 0) {
+            <div class="ppl-timeline-empty">No recorded interactions yet.</div>
+          } @else {
+            @for (item of selectedProfile()!.interactions; track item.id) {
+              <div class="ppl-tl-item">
+                <div class="ppl-tl-icon">
+                  <span class="material-symbols-outlined">{{ interactionIcon(item.type) }}</span>
+                </div>
+                <div class="ppl-tl-body">
+                  <div class="ppl-tl-title">{{ item.title }}</div>
+                  @if (item.preview) { <div class="ppl-tl-preview">{{ item.preview }}</div> }
+                  <div class="ppl-tl-date">{{ item.date }}</div>
+                </div>
+                <span class="ppl-tl-badge ppl-tl-badge--{{ item.type }}">{{ item.type }}</span>
+              </div>
+            }
+          }
+        </div>
+      }
+
     </div>
   }
 </env-slider-panel>
 
-<!-- ═══════════ ADD PERSON MODAL ═══════════ -->
-@if (showAddForm()) {
-  <div class="ppl-modal-backdrop" (click)="closeAddForm()">
-    <div class="ppl-modal" (click)="$event.stopPropagation()">
-      <div class="ppl-modal-header">
-        <span class="ppl-modal-title">Add Person</span>
-        <button class="ppl-modal-close" (click)="closeAddForm()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <div class="ppl-modal-body">
-        <label class="ppl-field">
-          <span>Name *</span>
-          <input [value]="newName()" (input)="newName.set($any($event.target).value)"
-            placeholder="Full name" (keydown.enter)="addPerson()" autocomplete="off" />
-        </label>
-        <label class="ppl-field">
-          <span>Email</span>
-          <input [value]="newEmail()" (input)="newEmail.set($any($event.target).value)"
-            type="email" placeholder="name@company.com" autocomplete="off" />
-        </label>
-        <label class="ppl-field">
-          <span>Company</span>
-          <input [value]="newCompany()" (input)="newCompany.set($any($event.target).value)"
-            placeholder="Company name" autocomplete="off" />
-        </label>
-        <label class="ppl-field">
-          <span>Role</span>
-          <input [value]="newRole()" (input)="newRole.set($any($event.target).value)"
-            placeholder="Job title" autocomplete="off" />
-        </label>
-      </div>
-      <div class="ppl-modal-footer">
-        <button class="ppl-btn-ghost" (click)="closeAddForm()">Cancel</button>
-        <button class="ppl-btn-primary" [class.ppl-btn-primary--disabled]="!newName().trim()"
-          (click)="addPerson()">Add Person</button>
-      </div>
-    </div>
-  </div>
-}
 
 <!-- ═══════════ IMPORT PREVIEW MODAL ═══════════ -->
 @if (importPreviewing() && importPreview()) {
@@ -323,6 +454,7 @@
               <div class="ppl-import-info">
                 <span class="ppl-import-name">{{ contact.name }}</span>
                 @if (contact.email) { <span class="ppl-import-meta">{{ contact.email }}</span> }
+                @if (contact.phone) { <span class="ppl-import-meta">{{ contact.phone }}</span> }
                 @if (contact.company) { <span class="ppl-import-meta">{{ contact.company }}</span> }
               </div>
               @if (isKnown(contact)) {
