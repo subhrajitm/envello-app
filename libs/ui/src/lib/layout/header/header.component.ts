@@ -15,6 +15,7 @@ import { NotificationCenterComponent } from '../../notification-center/notificat
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
 import { QuickCaptureComponent } from '../../quick-capture/quick-capture.component';
+import { EnvLogoComponent } from '../../logo/logo.component';
 import { CaptureService } from '@envello/core';
 
 export interface NavItem {
@@ -29,7 +30,7 @@ export interface NavItem {
 @Component({
   selector: 'lib-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, QuickCaptureComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, QuickCaptureComponent, EnvLogoComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -11,6 +11,7 @@ const MODEL_PLACEHOLDERS: Record<AiProvider, string> = {
   grok: 'grok-2',
   gemini: 'gemini-1.5-pro',
   deepseek: 'deepseek-chat',
+  local: 'local-model',
 };
 
 @Component({

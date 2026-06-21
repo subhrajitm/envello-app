@@ -1,1 +1,37 @@
-/* You can add global styles to this file, and also import other style files */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:   #000000;
+  --dark:    #0a0a0a;
+  --gray:    #111111;
+  --gray2:   #171717;
+  --border:  #262626;
+  --accent:  #f97316;
+  --accent-h:#ea6a05;
+  --muted:   #a3a3a3;
+  --text:    #ffffff;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--black);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: 'JetBrains Mono', 'Menlo', monospace; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; }
+ul { list-style: none; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+.grid-pattern {
+  background-image: radial-gradient(circle, #262626 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.ascii { color: #262626; line-height: 1; font-size: 10px; user-select: none; font-family: 'JetBrains Mono', monospace; }

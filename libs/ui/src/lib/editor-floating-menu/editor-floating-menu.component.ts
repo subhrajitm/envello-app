@@ -3,6 +3,9 @@ import {
   ChangeDetectionStrategy, OnInit, DestroyRef, inject, ViewEncapsulation
 } from '@angular/core';
 import { Editor } from '@tiptap/core';
+// Side-effect import — augments ChainedCommands with the extension command types
+// (toggleBold, toggleItalic, toggleHeading, etc.) used in this template.
+import '@tiptap/starter-kit';
 
 @Component({
   selector: 'env-editor-floating-menu',
