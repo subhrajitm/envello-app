@@ -1,6 +1,6 @@
 import { Component, signal, OnInit, OnDestroy, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UserService, TauriService, APP_VERSION } from '@envello/core';
+import { UserService, TauriService, APP_VERSION, SyncService } from '@envello/core';
 
 @Component({
   selector: 'app-footer',
@@ -15,10 +15,27 @@ export class FooterComponent implements OnInit, OnDestroy {
   private readonly injectedVersion = inject(APP_VERSION);
   private userStats = computed(() => this.userService.user()?.stats);
 
+  private readonly syncService = inject(SyncService);
+
   currentStreak = computed(() => this.userStats()?.daysActive || 0);
   appVersion = signal(this.injectedVersion);
   isCollapsed = signal(false);
   isOnline = signal(navigator.onLine);
+
+  readonly syncError = this.syncService.syncError;
+  readonly syncAnimating = signal(false);
+  readonly isActivelySyncing = computed(() => this.syncService.isSyncing() || this.syncAnimating());
+  private syncAnimTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private syncCompleteListener = () => {
+    this.syncAnimating.set(true);
+    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
+    this.syncAnimTimer = setTimeout(() => this.syncAnimating.set(false), 800);
+  };
+  private syncErrorListener = (e: Event) => {
+    const msg = (e as CustomEvent).detail ?? 'Sync failed';
+    this.syncService.reportError(msg);
+  };
 
   constructor() {
     effect(() => {
@@ -29,19 +46,26 @@ export class FooterComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Restore collapsed state
     const saved = localStorage.getItem('envello-footer-collapsed');
     if (saved === 'true') this.isCollapsed.set(true);
-    // Track online/offline
     this._onOnline = () => this.isOnline.set(true);
     this._onOffline = () => this.isOnline.set(false);
     window.addEventListener('online', this._onOnline);
     window.addEventListener('offline', this._onOffline);
+    window.addEventListener('envello:sync-complete', this.syncCompleteListener);
+    window.addEventListener('envello:sync-error', this.syncErrorListener);
   }
 
   ngOnDestroy() {
     window.removeEventListener('online', this._onOnline!);
     window.removeEventListener('offline', this._onOffline!);
+    window.removeEventListener('envello:sync-complete', this.syncCompleteListener);
+    window.removeEventListener('envello:sync-error', this.syncErrorListener);
+    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
+  }
+
+  triggerManualSync(): void {
+    window.dispatchEvent(new CustomEvent('envello:manual-sync'));
   }
 
   private _onOnline?: () => void;

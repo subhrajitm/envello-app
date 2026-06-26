@@ -14,6 +14,209 @@
     animation: fadeIn 0.12s ease-out;
 }
 
+.add-new-backdrop--compact {
+    background: rgba(0, 0, 0, 0.52);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: flex-start;
+    padding-top: 20vh;
+}
+
+/* ── Compact capture card ── */
+.anm-card {
+    width: 90%;
+    max-width: 560px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-main);
+    border-radius: 16px;
+    box-shadow: 0 32px 96px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+    position: relative;
+    animation: slideIn 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.anm-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 20px;
+    transition: opacity 0.2s;
+}
+
+.anm-input-row--submitting { opacity: 0.6; }
+
+.anm-icon {
+    font-size: 22px;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.anm-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    caret-color: var(--accent-primary);
+    min-width: 0;
+}
+
+.anm-input::placeholder { color: var(--text-tertiary); font-weight: 400; }
+.anm-input:disabled { cursor: default; }
+
+.anm-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-subtle);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+.anm-clear-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.anm-clear-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.anm-esc {
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: var(--bg-hover);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+}
+
+.anm-intent-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 20px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-hover);
+    animation: fadeIn 0.15s ease-out;
+}
+
+/* Quick-type pills */
+.anm-pills-row {
+    display: flex;
+    gap: 6px;
+    padding: 10px 20px 12px;
+    border-top: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+}
+
+.anm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    white-space: nowrap;
+}
+
+.anm-pill:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-main);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.anm-pill:active {
+    transform: translateY(0);
+}
+
+.anm-pill-icon {
+    font-size: 14px;
+}
+
+.anm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.anm-hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.anm-hint kbd {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    font-family: inherit;
+}
+
+.anm-manual-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 5px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.anm-manual-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+/* Back button in full modal header */
+.back-btn {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+}
+
+.back-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -446,12 +649,6 @@
 .content-card-desc {
     font-size: 11px;
     color: var(--text-tertiary);
-}
-
-.content-card-count {
-    font-size: 10px;
-    color: var(--text-tertiary);
-    flex-shrink: 0;
 }
 
 /* Empty state */

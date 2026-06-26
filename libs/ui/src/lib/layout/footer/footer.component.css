@@ -54,15 +54,75 @@
     font-family: var(--font-mono);
 }
 
-/* Online/Offline sync dot */
-.sync-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
+/* Sync button */
+.footer-sync-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 0 7px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+}
+
+.footer-sync-btn:hover:not(:disabled) {
+    border-color: var(--border-main);
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+}
+
+.footer-sync-btn:disabled { cursor: default; }
+
+.footer-sync-icon {
+    font-size: 12px;
+    display: inline-block;
     flex-shrink: 0;
 }
-.sync-online  { background: var(--accent-green); box-shadow: 0 0 4px color-mix(in srgb, var(--accent-green) 50%, transparent); }
-.sync-offline { background: var(--accent-red);   box-shadow: 0 0 4px color-mix(in srgb, var(--accent-red)   50%, transparent); }
+
+.footer-sync-btn--active {
+    border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 6%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+.footer-sync-btn--active .footer-sync-icon {
+    animation: footer-sync-spin 0.8s linear infinite;
+}
+
+.footer-sync-btn--error {
+    border-color: rgba(220, 38, 38, 0.4);
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.06);
+}
+
+.footer-sync-btn--error:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: #dc2626;
+}
+
+.footer-sync-btn--compact {
+    padding: 0 5px;
+    border: none;
+    background: transparent;
+}
+
+.footer-sync-label {
+    font-size: 10px;
+}
+
+@keyframes footer-sync-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
 
 .footer-spacer {
     flex: 1;

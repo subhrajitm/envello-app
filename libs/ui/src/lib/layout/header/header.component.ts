@@ -6,7 +6,6 @@ import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
 import { BinService } from '@envello/core';
 import { WorkspaceProfileService, StoreService } from '@envello/core';
-import { SyncService } from '@envello/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
@@ -102,24 +101,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   voiceService = inject(VoiceService);
   isVoiceActive = this.voiceService.isVoiceActive;
 
-  private readonly syncService = inject(SyncService);
-  readonly syncError = this.syncService.syncError;
-  readonly syncAnimating = signal(false);
-  readonly isActivelySyncing = computed(() => this.syncService.isSyncing() || this.syncAnimating());
-  private syncAnimTimer: ReturnType<typeof setTimeout> | null = null;
-  private syncCompleteListener = () => {
-    this.syncAnimating.set(true);
-    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
-    this.syncAnimTimer = setTimeout(() => this.syncAnimating.set(false), 800);
-  };
-  private syncErrorListener = (e: Event) => {
-    const msg = (e as CustomEvent).detail ?? 'Sync failed';
-    this.syncService.reportError(msg);
-  };
-
-  triggerManualSync(): void {
-    window.dispatchEvent(new CustomEvent('envello:manual-sync'));
-  }
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
@@ -324,8 +305,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       }
     };
     window.addEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
-    window.addEventListener('envello:sync-complete', this.syncCompleteListener);
-    window.addEventListener('envello:sync-error', this.syncErrorListener);
 
     // Apply initial layout
     this.applyNavigationLayout();
@@ -356,9 +335,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.navVisibilityListener) {
       window.removeEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
     }
-    window.removeEventListener('envello:sync-complete', this.syncCompleteListener);
-    window.removeEventListener('envello:sync-error', this.syncErrorListener);
-    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
     this.routeSub?.unsubscribe();
   }
 

@@ -51,6 +51,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private captureService = inject(CaptureService);
 
     isOpen = signal(false);
+    captureMode = signal(true);
     searchQuery = signal('');
     isCreating = signal(false);
     createdItem = signal<string | null>(null);
@@ -106,6 +107,10 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         // Create
         { id: 'book',         title: 'Write',        description: 'Start a new book or writing project', icon: 'menu_book',    route: '/write',         color: '#c4a8d8', category: 'create',  shortcut: '7', keywords: ['novel', 'book', 'story', 'writing', 'draft'], tag: 'WRITE' },
     ];
+
+    readonly quickOptions = this.options.filter(o =>
+        ['task', 'note', 'meeting', 'bookmark', 'transaction'].includes(o.id)
+    );
 
     readonly sidebarCategories: { id: SidebarCategoryId; label: string; icon: string }[] = [
         { id: 'all',     label: 'All Templates', icon: 'grid_view' },
@@ -234,6 +239,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     open() {
         this.isOpen.set(true);
+        this.captureMode.set(true);
         this.searchQuery.set('');
         this.focusedIndex.set(0);
         this.createdItem.set(null);
@@ -241,6 +247,12 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         this.captureIntent.set(null);
         this.classifying.set(false);
 
+        setTimeout(() => this.searchInput?.nativeElement?.focus(), 50);
+    }
+
+    switchToManual() {
+        this.captureMode.set(false);
+        this.captureIntent.set(null);
         setTimeout(() => this.searchInput?.nativeElement?.focus(), 50);
     }
 
@@ -288,7 +300,12 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
             const result = await this.captureService.dispatch(intent);
             this.createdItem.set(this.typeMeta()?.label ?? 'Item');
             setTimeout(() => {
-                this.close();
+                // Reset state directly — don't use close() which guards on isCreating
+                this.isCreating.set(false);
+                this.isOpen.set(false);
+                this.searchQuery.set('');
+                this.createdItem.set(null);
+                this.captureIntent.set(null);
                 this.router.navigate([result.route]);
             }, 500);
         } catch {
@@ -297,7 +314,10 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     clearSearch() {
+        if (this.classifyTimer) clearTimeout(this.classifyTimer);
         this.searchQuery.set('');
+        this.captureIntent.set(null);
+        this.classifying.set(false);
         this.focusedIndex.set(0);
         this.searchInput?.nativeElement?.focus();
     }
