@@ -34,6 +34,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   selectedView = signal<TaskViewFilter>('inbox');
   searchExpanded = signal(false);
   calSidebarCollapsed = signal(false);
+  collapsedGroups = signal<Set<string>>(new Set());
   quickAddMode = signal<'do-now' | 'do-later'>('do-now');
   /**
    * Main content layout mode for the center panel.
@@ -921,10 +922,13 @@ export class TasksComponent implements OnInit, OnDestroy {
       items = tasks.map(t => ({ kind: 'task', task: t }));
     } else {
       items = [];
+      const collapsed = this.collapsedGroups();
       const push = (label: string, accent: string, list: Task[]) => {
         if (!list.length) return;
         items.push({ kind: 'header', label, count: list.length, accent });
-        list.forEach(t => items.push({ kind: 'task', task: t }));
+        if (!collapsed.has(label)) {
+          list.forEach(t => items.push({ kind: 'task', task: t }));
+        }
       };
 
       const today = new Date();
@@ -943,7 +947,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     const appendSubtasks = (subs: Array<{ task: Task; parentTitle: string }>, label: string) => {
       if (!subs.length) return;
       items.push({ kind: 'header', label, count: subs.length, accent: '#8b5cf6' });
-      subs.forEach(({ task, parentTitle }) => items.push({ kind: 'subtask', task, parentTitle }));
+      if (!this.collapsedGroups().has(label)) {
+        subs.forEach(({ task, parentTitle }) => items.push({ kind: 'subtask', task, parentTitle }));
+      }
     };
 
     const view = this.selectedView();
@@ -957,6 +963,18 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     return items;
   });
+
+  toggleGroupCollapse(label: string) {
+    this.collapsedGroups.update(set => {
+      const next = new Set(set);
+      next.has(label) ? next.delete(label) : next.add(label);
+      return next;
+    });
+  }
+
+  isGroupCollapsed(label: string) {
+    return this.collapsedGroups().has(label);
+  }
 
   cycleTaskPriority(task: Task, event: Event) {
     event.stopPropagation();

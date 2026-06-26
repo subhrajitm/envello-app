@@ -185,8 +185,11 @@
                     @for (item of flatListItems(); track $index) {
 
                         @if (item.kind === 'header') {
-                        <div class="task-group-header" [style.--group-accent]="item.accent">
-                            <span class="task-group-dot"></span>
+                        <div class="task-group-header" [style.--group-accent]="item.accent"
+                             (click)="toggleGroupCollapse(item.label)">
+                            <button class="task-group-chevron" [class.collapsed]="isGroupCollapsed(item.label)">
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </button>
                             <span class="task-group-label">{{ item.label }}</span>
                             <span class="task-group-count">{{ item.count }}</span>
                         </div>
