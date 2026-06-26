@@ -57,39 +57,7 @@
             {{ getThemeIcon() }}
           </span>
         </button>
-        <!-- Space Switcher -->
-        <div class="ps-wrap">
-          <button type="button" class="ps-btn" (click)="toggleSpaceSwitcher()" title="Switch space">
-            <span class="ps-dot" [style.background]="activeSpace().color"></span>
-            <span class="ps-name">{{ activeSpace().name }}</span>
-            <span class="material-symbols-outlined ps-chevron">expand_more</span>
-          </button>
-
-          @if (showSpaceSwitcher()) {
-            <div class="ps-dropdown">
-              <div class="ps-dropdown-label">Spaces</div>
-              <div class="ps-list">
-                @for (p of spaces(); track p.id) {
-                  <button class="ps-item" [class.ps-item-active]="activeSpace().id === p.id" (click)="switchSpace(p.id)">
-                    <span class="ps-item-dot" [style.background]="p.color"></span>
-                    <span class="ps-item-name">{{ p.name }}</span>
-                    @if (activeSpace().id === p.id) {
-                      <span class="material-symbols-outlined ps-check">check</span>
-                    }
-                  </button>
-                }
-              </div>
-              <div class="ps-divider"></div>
-              <button class="ps-manage" (click)="manageSpaces()">
-                <span class="material-symbols-outlined" style="font-size:15px">settings</span>
-                Manage Spaces
-              </button>
-            </div>
-            <div class="ps-backdrop" (click)="closeSpaceSwitcher()"></div>
-          }
-        </div>
-
-        <button type="button" class="profile-menu" (click)="openProfileMenu()" aria-label="Profile menu">
+<button type="button" class="profile-menu" (click)="openProfileMenu()" aria-label="Profile menu">
           <div class="profile-avatar">
             @if (user()?.avatar) {
               @if (isAvatarLoading()) {

@@ -2765,7 +2765,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     'Improve the description',
     'Estimate time needed',
     'Suggest labels',
-    'What should I do next?',
+    'Identify potential blockers',
   ];
 
   readonly aiSuggestions = [

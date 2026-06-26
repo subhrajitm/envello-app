@@ -703,19 +703,20 @@
 .task-item {
     display: flex;
     align-items: flex-start;
-    padding: 5px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--bg-panel, #ffffff);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 7px 14px;
+    border: none;
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+    background: transparent;
+    transition: background 0.12s;
     position: relative;
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 10px;
+    margin-bottom: 0;
     box-shadow: none;
 }
 
 .task-item:hover {
-    background: var(--bg-hover-soft, rgba(0,0,0,0.02));
+    background: var(--bg-hover);
 }
 
 .task-item.completed {
@@ -743,21 +744,22 @@
     gap: 3px;
 }
 
-/* Drag Handle */
+/* Drag Handle — hidden until hover */
 .task-drag-handle {
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-tertiary);
     cursor: grab;
-    opacity: 0.5;
-    transition: opacity 0.2s;
-    width: 20px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    width: 16px;
+    flex-shrink: 0;
     padding-top: 4px;
 }
 
 .task-item:hover .task-drag-handle {
-    opacity: 0.8;
+    opacity: 0.5;
 }
 
 .task-drag-handle .material-symbols-outlined {
@@ -773,27 +775,27 @@
 }
 
 .list-circular-checkbox {
-    width: 26px;
-    height: 26px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--bg-panel, #fff);
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--border-highlight);
+    border-radius: 50%;
+    background: transparent;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    transition: all 0.2s;
+    flex-shrink: 0;
+    transition: border-color 0.15s, background 0.15s;
 }
 
 .list-circular-checkbox:hover {
-    border-color: var(--border-highlight);
-    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
+    border-color: var(--accent-primary);
 }
 
 .list-circular-checkbox.checked {
-    background: var(--bg-panel, #fff);
-    border-color: var(--border-color);
+    background: transparent;
+    border-color: var(--border-highlight);
 }
 
 .list-circular-checkbox.blocked {
@@ -863,13 +865,11 @@
 
 .metadata-item.label-chip {
     color: var(--text-tertiary);
-    background: white;
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    padding: 0 5px;
+    background: transparent;
+    border: none;
+    padding: 0;
     font-size: 11px;
-    font-weight: 500;
-    line-height: 1.6;
+    font-weight: 400;
 }
 
 /* Collapse button column — shown only on tasks with subtasks, right-aligned */
@@ -884,21 +884,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-panel, #fff);
-    border: 1px solid var(--border-color);
+    background: transparent;
+    border: none;
     cursor: pointer;
     padding: 2px;
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--text-tertiary);
-    transition: color 0.15s, background 0.15s, border-color 0.15s;
-    width: 26px;
-    height: 26px;
+    transition: color 0.15s, background 0.15s;
+    width: 22px;
+    height: 22px;
+    opacity: 0;
+}
+
+.task-item:hover .task-collapse-btn {
+    opacity: 1;
 }
 
 .task-collapse-btn:hover {
     color: var(--text-secondary);
-    border-color: var(--border-highlight);
-    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
+    background: var(--bg-hover);
 }
 
 .task-subtasks-chevron {
@@ -1002,27 +1006,26 @@
 }
 
 .icon-btn {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-panel, #fff);
+    border-radius: 5px;
+    border: none;
+    background: transparent;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.12s, color 0.12s;
 }
 
 .icon-btn:hover {
-    background: var(--bg-hover-soft, rgba(0,0,0,0.03));
-    border-color: var(--border-highlight);
+    background: var(--bg-hover);
     color: var(--text-primary);
 }
 
 .icon-btn .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .grid-header {
@@ -2811,13 +2814,11 @@
 /* --- RIGHT SIDEBAR COMPACT --- */
 .tasks-sidebar {
     width: 260px;
-    /* Slightly wider for better content fit */
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    border-left: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
     background: var(--bg-panel);
-    /* Match panel bg */
 }
 
 .tasks-header-col {
@@ -2835,35 +2836,33 @@
     background: var(--bg-panel);
     border-bottom: 1px solid var(--border-subtle);
     overflow: hidden;
+    padding: 10px 10px 0;
 }
 
 .cal-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px 8px;
-    border-bottom: 1px solid var(--border-subtle);
+    padding: 0 2px 8px;
 }
 
 .cal-card-month-nav {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .cal-card-month-label {
     font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
+    font-weight: 600;
     color: var(--text-primary);
-    text-transform: uppercase;
-    min-width: 80px;
+    min-width: 72px;
     text-align: center;
 }
 
 .cal-nav-btn {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2872,7 +2871,7 @@
     color: var(--text-tertiary);
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.12s, color 0.12s;
     padding: 0;
 }
 
@@ -2882,55 +2881,32 @@
 }
 
 .cal-nav-btn .material-symbols-outlined {
-    font-size: 16px;
+    font-size: 15px;
 }
 
+/* Hidden — jumping to today is done by clicking today's cell */
 .cal-card-today-chip {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    border-radius: 16px;
-    border: 1px solid var(--border-subtle);
-    background: var(--bg-app);
-    color: var(--text-secondary);
-    font-size: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.3px;
-}
-
-.cal-card-today-chip:hover {
-    background: var(--accent-primary);
-    color: var(--accent-primary-text);
-    border-color: var(--accent-primary);
-}
-
-.cal-card-today-chip .material-symbols-outlined {
-    font-size: 13px;
+    display: none;
 }
 
 .cal-card-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    padding: 8px 8px 4px;
+    padding: 0 0 4px;
     text-align: center;
 }
 
 .cal-card-weekdays span {
     font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    font-weight: 600;
     color: var(--text-disabled);
 }
 
 .cal-card-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    padding: 0 8px 8px;
+    gap: 0;
+    padding: 0 0 8px;
 }
 
 .cal-cell {
@@ -2942,27 +2918,26 @@
     aspect-ratio: 1;
     border: none;
     background: transparent;
-    border-radius: 6px;
+    border-radius: 50%;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.12s;
     padding: 0;
-    gap: 2px;
+    gap: 1px;
 }
 
 .cal-cell-num {
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--text-secondary);
     line-height: 1;
-    font-family: var(--font-mono);
 }
 
 .cal-cell-dot {
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
     border-radius: 50%;
     background: var(--accent-primary);
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .cal-cell:hover:not(.cal-cell--today):not(.cal-cell--other-month) {
@@ -2975,12 +2950,11 @@
 
 .cal-cell--other-month .cal-cell-num {
     color: var(--text-disabled);
-    font-weight: 400;
 }
 
 .cal-cell--today {
     background: var(--accent-primary);
-    border-radius: 6px;
+    border-radius: 50%;
 }
 
 .cal-cell--today .cal-cell-num {
@@ -2998,14 +2972,15 @@
 }
 
 .cal-cell--selected {
-    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
-    border-radius: 6px;
-    outline: 1px solid var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    border-radius: 50%;
+    outline: 1px solid color-mix(in srgb, var(--accent-primary) 50%, transparent);
+    outline-offset: -1px;
 }
 
 .cal-cell--selected .cal-cell-num {
     color: var(--accent-primary);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* KPI context row */
@@ -3061,6 +3036,7 @@
     display: flex;
     align-items: stretch;
     border-top: 1px solid var(--border-subtle);
+    margin: 0 -10px;
 }
 
 .cal-stat {
@@ -3069,9 +3045,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8px 4px;
+    padding: 7px 4px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.12s;
     gap: 2px;
 }
 
@@ -3080,19 +3056,18 @@
 }
 
 .cal-stat-value {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-primary);
-    font-family: var(--font-mono);
     line-height: 1;
 }
 
 .cal-stat-label {
     font-size: 9px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
 }
 
 .cal-stat-sep {
@@ -7176,19 +7151,10 @@ textarea:focus-visible {
 }
 
 /* Priority Left Border */
-.task-item.priority-border-high {
-    border-left: 3px solid #ef4444;
-    padding-left: 13px;
-}
-
-.task-item.priority-border-medium {
-    border-left: 3px solid #f59e0b;
-    padding-left: 13px;
-}
-
+.task-item.priority-border-high,
+.task-item.priority-border-medium,
 .task-item.priority-border-low {
-    border-left: 3px solid #6366f1;
-    padding-left: 13px;
+    /* Priority shown via dot only — no border */
 }
 
 /* Task Title Row Inner (dot + title inline) */

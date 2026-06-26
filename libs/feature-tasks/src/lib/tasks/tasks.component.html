@@ -101,8 +101,75 @@
                 </div>
     </div>
 
-    <!-- Body row: task list + sidebar + AI panel -->
+    <!-- Body row: sidebar + task list + AI panel -->
     <div class="tasks-body" [class.tasks-body--detail]="!!selectedTaskForDetails()" [class.tasks-body--new]="newTaskModalOpen()">
+
+    <!-- Left Sidebar -->
+    <div class="tasks-sidebar">
+        <div class="sidebar-calendar-card">
+            <!-- Calendar Header -->
+            <div class="cal-card-header">
+                <div class="cal-card-month-nav">
+                    <button class="cal-nav-btn" (click)="navigateMonth('prev')" aria-label="Previous month">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <span class="cal-card-month-label">{{ calendarMonth() }}</span>
+                    <button class="cal-nav-btn" (click)="navigateMonth('next')" aria-label="Next month">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+                <button class="cal-card-today-chip" (click)="jumpToToday()" title="Jump to today">
+                    <span class="material-symbols-outlined">today</span>
+                    Today
+                </button>
+            </div>
+
+            <!-- Day Headers -->
+            <div class="cal-card-weekdays">
+                @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
+                <span>{{ d }}</span>
+                }
+            </div>
+
+            <!-- Day Grid -->
+            <div class="cal-card-grid">
+                @for (day of calendarDays(); track $index) {
+                <button class="cal-cell"
+                    [class.cal-cell--other-month]="!day.isCurrentMonth"
+                    [class.cal-cell--today]="day.isToday"
+                    [class.cal-cell--has-tasks]="day.isActive && day.isCurrentMonth && !day.isToday"
+                    [class.cal-cell--selected]="day.isSelected && !day.isToday"
+                    (click)="onCalendarDayClick(day)"
+                    [attr.aria-label]="day.isToday ? 'Today' : 'Day ' + day.day">
+                    <span class="cal-cell-num">{{ day.day }}</span>
+                    @if (day.isActive && day.isCurrentMonth) {
+                    <span class="cal-cell-dot"></span>
+                    }
+                </button>
+                }
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="cal-card-stats">
+                <div class="cal-stat" (click)="onMetricClick('today')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ todayTasksCount() }}</span>
+                    <span class="cal-stat-label">Today</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('active')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ activeTasksCount() }}</span>
+                    <span class="cal-stat-label">Active</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('completed')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ completedTasksCount() }}</span>
+                    <span class="cal-stat-label">Done</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
     <div class="tasks-main-content">
 
         <!-- Task List / Data Grid + Thumbnails -->
@@ -382,127 +449,6 @@
         </div>
 
         }
-    </div>
-
-    <!-- Right Sidebar -->
-    <div class="tasks-sidebar">
-        <div class="sidebar-calendar-card">
-            <!-- Calendar Header -->
-            <div class="cal-card-header">
-                <div class="cal-card-month-nav">
-                    <button class="cal-nav-btn" (click)="navigateMonth('prev')" aria-label="Previous month">
-                        <span class="material-symbols-outlined">chevron_left</span>
-                    </button>
-                    <span class="cal-card-month-label">{{ calendarMonth() }}</span>
-                    <button class="cal-nav-btn" (click)="navigateMonth('next')" aria-label="Next month">
-                        <span class="material-symbols-outlined">chevron_right</span>
-                    </button>
-                </div>
-                <button class="cal-card-today-chip" (click)="jumpToToday()" title="Jump to today">
-                    <span class="material-symbols-outlined">today</span>
-                    Today
-                </button>
-            </div>
-
-            <!-- Day Headers -->
-            <div class="cal-card-weekdays">
-                @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
-                <span>{{ d }}</span>
-                }
-            </div>
-
-            <!-- Day Grid -->
-            <div class="cal-card-grid">
-                @for (day of calendarDays(); track $index) {
-                <button class="cal-cell"
-                    [class.cal-cell--other-month]="!day.isCurrentMonth"
-                    [class.cal-cell--today]="day.isToday"
-                    [class.cal-cell--has-tasks]="day.isActive && day.isCurrentMonth && !day.isToday"
-                    [class.cal-cell--selected]="day.isSelected && !day.isToday"
-                    (click)="onCalendarDayClick(day)"
-                    [attr.aria-label]="day.isToday ? 'Today' : 'Day ' + day.day">
-                    <span class="cal-cell-num">{{ day.day }}</span>
-                    @if (day.isActive && day.isCurrentMonth) {
-                    <span class="cal-cell-dot"></span>
-                    }
-                </button>
-                }
-            </div>
-
-            <!-- Quick Stats Row -->
-            <div class="cal-card-stats">
-                <div class="cal-stat" (click)="onMetricClick('today')" role="button" tabindex="0">
-                    <span class="cal-stat-value">{{ todayTasksCount() }}</span>
-                    <span class="cal-stat-label">Today</span>
-                </div>
-                <div class="cal-stat-sep"></div>
-                <div class="cal-stat" (click)="onMetricClick('active')" role="button" tabindex="0">
-                    <span class="cal-stat-value">{{ activeTasksCount() }}</span>
-                    <span class="cal-stat-label">Active</span>
-                </div>
-                <div class="cal-stat-sep"></div>
-                <div class="cal-stat" (click)="onMetricClick('completed')" role="button" tabindex="0">
-                    <span class="cal-stat-value">{{ completedTasksCount() }}</span>
-                    <span class="cal-stat-label">Done</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dynamic KPI Panels -->
-        <div class="kpis-compact-list">
-            <!-- Context label -->
-            <div class="kpi-context-row">
-                <span class="kpi-context-label">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    {{ selectedDayLabel() }}
-                </span>
-                @if (selectedCalendarDay()) {
-                <button class="kpi-context-clear" (click)="selectedCalendarDay.set(null)" title="Clear selection">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-                }
-            </div>
-
-            <!-- Completion -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('completed')" aria-label="Show completed tasks">
-                <div class="kpi-icon green"><span class="material-symbols-outlined">check_circle</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Completed</span>
-                    <div class="kpi-value-row">
-                        <span class="kpi-value">{{ selectedDayCompleted() }}</span>
-                        <span class="kpi-sub">/ {{ selectedDayTotal() }}</span>
-                        <span class="kpi-percent">({{ (selectedDayCompleted() / (selectedDayTotal() || 1) * 100) | number:'1.0-0' }}%)</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Due Today / Due on Date -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('today')" aria-label="Show tasks due">
-                <div class="kpi-icon blue"><span class="material-symbols-outlined">event_available</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">{{ selectedCalendarDay() ? 'Due This Day' : 'Due Today' }}</span>
-                    <span class="kpi-value">{{ selectedDayToday() }}</span>
-                </div>
-            </div>
-
-            <!-- Active -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('active')" aria-label="Show active tasks">
-                <div class="kpi-icon purple"><span class="material-symbols-outlined">work_history</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">In Progress</span>
-                    <span class="kpi-value">{{ selectedDayActive() }}</span>
-                </div>
-            </div>
-
-            <!-- High Priority -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('priority')" aria-label="Show high priority tasks">
-                <div class="kpi-icon orange"><span class="material-symbols-outlined">flag</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">High Priority</span>
-                    <span class="kpi-value">{{ selectedDayPriority() }}</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     @if (selectedTaskForDetails(); as task) {
