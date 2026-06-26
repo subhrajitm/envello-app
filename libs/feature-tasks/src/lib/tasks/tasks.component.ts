@@ -32,6 +32,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Left sidebar state
   sidebarSearch = signal<string>('');
   selectedView = signal<TaskViewFilter>('inbox');
+  searchExpanded = signal(false);
+  calSidebarCollapsed = signal(false);
   quickAddMode = signal<'do-now' | 'do-later'>('do-now');
   /**
    * Main content layout mode for the center panel.
