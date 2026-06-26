@@ -4,6 +4,7 @@ import { StoreService, Task, Note, Book, Bookmark } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { MeetingsService, MEETING_COLORS } from '@envello/core';
 import { BookContentService } from '@envello/core';
+import { CaptureService, CaptureIntent, CAPTURE_TYPE_META } from '@envello/core';
 
 type OptionCategory = 'create' | 'plan' | 'knowledge';
 type SidebarCategoryId = 'all' | 'recent' | OptionCategory;
@@ -47,6 +48,8 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private meetingsService = inject(MeetingsService);
 
     private bookContentService = inject(BookContentService);
+    private captureService = inject(CaptureService);
+
     isOpen = signal(false);
     searchQuery = signal('');
     isCreating = signal(false);
@@ -54,6 +57,32 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     focusedIndex = signal(0);
     recentOptionIds = signal<string[]>([]);
     selectedCategoryId = signal<SidebarCategoryId>('all');
+
+    captureIntent = signal<CaptureIntent | null>(null);
+    classifying = signal(false);
+    private classifyTimer: ReturnType<typeof setTimeout> | null = null;
+
+    readonly typeMeta = computed(() => {
+        const t = this.captureIntent()?.type;
+        return t ? CAPTURE_TYPE_META[t] : null;
+    });
+
+    readonly captureFieldHints = computed(() => {
+        const f = this.captureIntent()?.fields;
+        if (!f) return [];
+        const hints: string[] = [];
+        if (f.due) hints.push(`Due ${f.due}`);
+        if (f.priority && f.priority !== 'MEDIUM') hints.push(f.priority);
+        if (f.attendees?.length) hints.push(`With: ${f.attendees.join(', ')}`);
+        if (f.amount) hints.push(`Amount: ${f.amount}`);
+        if (f.date) hints.push(`Date: ${f.date}`);
+        return hints;
+    });
+
+    readonly captureConfidence = computed(() => {
+        const c = this.captureIntent()?.confidence;
+        return c != null ? Math.round(c * 100) : null;
+    });
 
     readonly categories: { id: OptionCategory; label: string; icon: string }[] = [
         { id: 'plan',      label: 'Plan',      icon: 'task_alt' },
@@ -209,6 +238,8 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         this.focusedIndex.set(0);
         this.createdItem.set(null);
         this.selectedCategoryId.set('all');
+        this.captureIntent.set(null);
+        this.classifying.set(false);
 
         setTimeout(() => this.searchInput?.nativeElement?.focus(), 50);
     }
@@ -219,16 +250,50 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     close() {
-        if (this.isCreating()) return; // Don't close while creating
+        if (this.isCreating()) return;
+        if (this.classifyTimer) clearTimeout(this.classifyTimer);
         this.isOpen.set(false);
         this.searchQuery.set('');
         this.createdItem.set(null);
+        this.captureIntent.set(null);
+        this.classifying.set(false);
     }
 
     onSearchChange(event: Event) {
         const value = (event.target as HTMLInputElement).value;
         this.searchQuery.set(value);
         this.focusedIndex.set(0);
+        this.captureIntent.set(null);
+
+        if (this.classifyTimer) clearTimeout(this.classifyTimer);
+        if (value.trim().length < 3) { this.classifying.set(false); return; }
+
+        this.classifying.set(true);
+        this.classifyTimer = setTimeout(async () => {
+            const result = await this.captureService.classify(value.trim());
+            this.captureIntent.set(result);
+            this.classifying.set(false);
+        }, 550);
+    }
+
+    async submitCapture() {
+        const text = this.searchQuery().trim();
+        if (!text || this.isCreating()) return;
+
+        this.isCreating.set(true);
+        if (this.classifyTimer) clearTimeout(this.classifyTimer);
+
+        try {
+            const intent = this.captureIntent() ?? await this.captureService.classify(text);
+            const result = await this.captureService.dispatch(intent);
+            this.createdItem.set(this.typeMeta()?.label ?? 'Item');
+            setTimeout(() => {
+                this.close();
+                this.router.navigate([result.route]);
+            }, 500);
+        } catch {
+            this.isCreating.set(false);
+        }
     }
 
     clearSearch() {
@@ -426,6 +491,13 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
             return;
         }
 
+        // ⌘⇧K alias (replaces standalone Quick Capture)
+        if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'K') {
+            event.preventDefault();
+            if (this.isOpen()) { this.close(); } else { this.open(); }
+            return;
+        }
+
         if (!this.isOpen()) return;
 
         const options = this.flatVisibleOptions();
@@ -451,7 +523,11 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
             case 'Enter':
                 event.preventDefault();
-                this.selectFocusedOption();
+                if (this.searchQuery().trim()) {
+                    this.submitCapture();
+                } else {
+                    this.selectFocusedOption();
+                }
                 break;
 
             case 'Tab':
@@ -464,25 +540,6 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.scrollToFocused();
                 break;
 
-            // Number shortcuts (1-8)
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-                // Only trigger if not typing in search
-                if (document.activeElement === this.searchInput?.nativeElement && this.searchQuery()) {
-                    return;
-                }
-                const option = this.options.find(o => o.shortcut === event.key);
-                if (option) {
-                    event.preventDefault();
-                    this.selectOption(option);
-                }
-                break;
         }
     }
 
