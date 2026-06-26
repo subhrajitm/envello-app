@@ -262,7 +262,7 @@ export class KnowledgeComponent implements OnDestroy {
   readonly sourceActions: EnvTableAction[] = [
     { key: 'mark-unread',    label: 'Unread',    icon: 'radio_button_unchecked', bulk: true  },
     { key: 'mark-reading',   label: 'Reading',   icon: 'menu_book',              bulk: true  },
-    { key: 'mark-processed', label: 'Processed', icon: 'task_alt',               bulk: true  },
+    { key: 'mark-processed', label: 'Processed', icon: 'done_all',               bulk: true  },
     { key: 'delete',         label: 'Delete',    icon: 'delete', danger: true,   bulk: false },
   ];
 

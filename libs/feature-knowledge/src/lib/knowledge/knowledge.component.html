@@ -607,7 +607,7 @@
               <div class="rsd-linked-list">
                 @for (task of linkedTasks(); track task.id) {
                   <div class="rsd-linked-item">
-                    <span class="material-symbols-outlined">task_alt</span>
+                    <span class="material-symbols-outlined">done_all</span>
                     <span class="rsd-linked-title">{{ task.title }}</span>
                     <button class="rsd-linked-unlink" (click)="unlinkTask(task.id)" title="Unlink">
                       <span class="material-symbols-outlined">link_off</span>
@@ -626,7 +626,7 @@
                   <div class="rsd-task-list">
                     @for (task of availableTasks(); track task.id) {
                       <button class="rsd-task-opt" (click)="linkTask(task.id)">
-                        <span class="material-symbols-outlined">task_alt</span>
+                        <span class="material-symbols-outlined">done_all</span>
                         {{ task.title }}
                       </button>
                     }

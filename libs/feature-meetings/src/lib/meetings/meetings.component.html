@@ -120,7 +120,7 @@
           <div class="mt-item-actions" (click)="$event.stopPropagation()">
             @if (meeting.actionItems && getOpenActionItemsCount(meeting) > 0) {
             <span class="mt-items-badge">
-              <span class="material-symbols-outlined">task_alt</span>
+              <span class="material-symbols-outlined">done_all</span>
               {{ getOpenActionItemsCount(meeting) }}
             </span>
             }
@@ -897,7 +897,7 @@
               <div class="mta-action-btns">
                 @if (!item.linkedTaskId && item.status !== 'completed') {
                 <button type="button" class="mt-icon-btn" title="Convert to Task" (click)="convertToTask(item)">
-                  <span class="material-symbols-outlined">task_alt</span>
+                  <span class="material-symbols-outlined">done_all</span>
                 </button>
                 }
                 <button type="button" class="mt-icon-btn mt-icon-btn--danger" (click)="deleteActionItem(item.id)">
@@ -909,7 +909,7 @@
           </div>
           } @else {
           <div class="mta-tab-empty">
-            <span class="material-symbols-outlined">task_alt</span>
+            <span class="material-symbols-outlined">done_all</span>
             <p>No action items yet</p>
           </div>
           }

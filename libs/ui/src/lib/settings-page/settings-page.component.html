@@ -807,7 +807,7 @@
             <div class="monitor-digest-title">Created this session</div>
             @for (f of monitorService.lastDigest()!.findings; track f.taskId) {
               <div class="monitor-digest-row">
-                <span class="material-symbols-outlined" style="font-size:14px;color:var(--accent-primary)">task_alt</span>
+                <span class="material-symbols-outlined" style="font-size:14px;color:var(--accent-primary)">done_all</span>
                 <span class="monitor-digest-text">{{ f.title }}</span>
                 <span class="monitor-digest-rule">{{ f.ruleId }}</span>
               </div>

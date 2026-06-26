@@ -309,7 +309,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     },
     {
       id: 'completed',
-      icon: 'task_alt',
+      icon: 'done_all',
       label: 'Completed',
       count: this.completedTasksCount()
     },

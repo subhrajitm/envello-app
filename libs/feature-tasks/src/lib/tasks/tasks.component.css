@@ -36,17 +36,19 @@
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
-    min-height: 44px;
-    padding: 8px 24px;
-    position: relative;
-    background: var(--bg-app);
+    height: 44px;
+    padding: 0 16px;
+    gap: 12px;
+    background: var(--bg-panel);
     border-bottom: 1px solid var(--border-subtle);
 }
 
 .toolbar-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
 }
 
 .tasks-toolbar-quick-actions {
@@ -2842,41 +2844,42 @@
     white-space: nowrap;
 }
 
-/* Search box */
+/* Search box — matches other pages */
 .search-input-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: var(--bg-panel);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    padding: 0 10px;
-    height: 30px;
-    width: 220px;
-    transition: border-color 0.15s;
-}
-.search-input-wrapper:focus-within {
-    border-color: var(--border-main);
 }
 
 .search-icon {
-    font-size: 15px;
+    position: absolute;
+    left: 8px;
+    font-size: 16px;
     color: var(--text-tertiary);
-    flex-shrink: 0;
+    pointer-events: none;
 }
 
 .toolbar-search {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
+    height: 28px;
+    padding: 0 28px 0 28px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
     font-size: 12px;
     color: var(--text-primary);
-    min-width: 0;
+    outline: none;
+    width: 200px;
+    transition: border-color 0.15s, background 0.15s;
+}
+.toolbar-search:focus {
+    border-color: var(--accent-primary);
+    background: var(--bg-panel);
 }
 .toolbar-search::placeholder { color: var(--text-tertiary); }
 
 .search-clear-btn {
+    position: absolute;
+    right: 6px;
     display: flex;
     align-items: center;
     background: transparent;
@@ -2885,7 +2888,6 @@
     cursor: pointer;
     padding: 2px;
     border-radius: 3px;
-    flex-shrink: 0;
 }
 .search-clear-btn:hover { color: var(--text-primary); }
 

@@ -86,7 +86,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     readonly categories: { id: OptionCategory; label: string; icon: string }[] = [
-        { id: 'plan',      label: 'Plan',      icon: 'task_alt' },
+        { id: 'plan',      label: 'Plan',      icon: 'checklist' },
         { id: 'knowledge', label: 'Knowledge', icon: 'local_library' },
         { id: 'create',    label: 'Create',    icon: 'edit_note' }
     ];
@@ -115,7 +115,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly sidebarCategories: { id: SidebarCategoryId; label: string; icon: string }[] = [
         { id: 'all',     label: 'All Templates', icon: 'grid_view' },
         { id: 'recent',  label: 'Recent',        icon: 'history' },
-        { id: 'plan',    label: 'Plan',           icon: 'task_alt' },
+        { id: 'plan',    label: 'Plan',           icon: 'checklist' },
         { id: 'knowledge', label: 'Knowledge',      icon: 'local_library' },
         { id: 'create',  label: 'Create',         icon: 'edit_note' },
     ];

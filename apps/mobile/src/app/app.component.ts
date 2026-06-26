@@ -24,7 +24,7 @@ export class AppComponent implements OnInit {
 
   readonly navItems: NavItem[] = [
     { path: '/workspace', label: 'Home',     icon: 'space_dashboard', tab: 'workspace' },
-    { path: '/tasks',     label: 'Tasks',    icon: 'task_alt',        tab: 'tasks'     },
+    { path: '/tasks',     label: 'Tasks',    icon: 'checklist',        tab: 'tasks'     },
     { path: '/daily-notes', label: 'Notes',  icon: 'edit_note',       tab: 'notes'     },
     { path: '/settings',  label: 'Settings', icon: 'settings',        tab: 'settings'  },
   ];
