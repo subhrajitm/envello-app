@@ -73,10 +73,17 @@ interface SidebarActivityItem {
   icon: string;
   iconColor: string;
   subtitle?: string;
-  description?: string;
+  isOverdue?: boolean;
   route: string;
   task?: Task;
   queryParams?: Record<string, string>;
+  sortDate?: string;     // ISO string used for time-group bucketing
+  relativeTime?: string; // compact right-side label: "2h ago", "in 3d", "today"
+}
+
+interface SidebarGroup {
+  label: string;
+  items: SidebarActivityItem[];
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -111,7 +118,25 @@ export class WorkspaceComponent {
   latency      = signal(24);
   systemTime   = signal(new Date());
 
-  sidebarError = signal<string | null>(null);
+  sidebarError      = signal<string | null>(null);
+  sidebarFilterOpen = signal(false);
+  sidebarFilter     = signal<'all' | 'task' | 'note' | 'bookmark' | 'meeting' | 'book'>('all');
+
+  readonly filterOptions: { value: 'all' | 'task' | 'note' | 'bookmark' | 'meeting' | 'book'; label: string; icon: string }[] = [
+    { value: 'all',      label: 'All',       icon: 'apps' },
+    { value: 'task',     label: 'Tasks',     icon: 'check_circle_outline' },
+    { value: 'note',     label: 'Notes',     icon: 'edit_note' },
+    { value: 'bookmark', label: 'Bookmarks', icon: 'bookmark' },
+    { value: 'meeting',  label: 'Meetings',  icon: 'groups' },
+    { value: 'book',     label: 'Writing',   icon: 'menu_book' },
+  ];
+
+  activeFilterLabel = computed(() =>
+    this.filterOptions.find(o => o.value === this.sidebarFilter())?.label ?? 'All'
+  );
+  activeFilterIcon = computed(() =>
+    this.filterOptions.find(o => o.value === this.sidebarFilter())?.icon ?? 'apps'
+  );
 
   // ── Conversation state ───────────────────────────────────────────────────────
   /** Ordered list of turns shown in the conversation thread */
@@ -202,63 +227,74 @@ export class WorkspaceComponent {
 
   userName = computed(() => this.userService.userName());
 
-  sidebarTasksCompleted = computed(() => this.allTasksFlat().filter(t => t.status === 'COMPLETED').length);
-  sidebarTasksDashOffset = computed(() => {
-    const total = this.allTasksFlat().length;
-    if (total === 0) return 62.83;
-    const progress = this.sidebarTasksCompleted() / total;
-    return 62.83 - (62.83 * progress);
-  });
+  activeTasksCount = computed(() => this.store.tasks().filter(t => t.status !== 'COMPLETED').length);
 
   sidebarActivityItems = computed((): SidebarActivityItem[] => {
     const items: SidebarActivityItem[] = [];
-    const now = new Date();
+    const seen  = new Set<string>();
+    const now   = new Date();
+    const todayStr = this.localDateStr(now);
 
-    // Active tasks (non-completed, non-subtask) — highest priority first, up to 3
+    const push = (item: SidebarActivityItem) => {
+      if (!seen.has(item.id)) { seen.add(item.id); items.push(item); }
+    };
+
+    // Active tasks (non-completed, non-subtask) — highest priority first, up to 5
     const priorityScore: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
     const tasks = this.store.tasks()
       .filter(t => t.status !== 'COMPLETED' && !t.parentId)
       .sort((a, b) => (priorityScore[b.priority] ?? 2) - (priorityScore[a.priority] ?? 2))
-      .slice(0, 3);
+      .slice(0, 5);
     for (const t of tasks) {
-      items.push({
+      push({
         kind: 'task', id: t.id, title: t.title,
-        icon: 'check_circle', iconColor: '#3b82f6',
-        subtitle: this.formatTaskSubtitle(t),
-        description: t.notes?.trim() || undefined,
+        icon: 'check_circle_outline', iconColor: '#3b82f6',
+        subtitle:     this.taskSubtitle(t, todayStr),
+        isOverdue:    !!t.due && t.due < todayStr,
         route: '/tasks', task: t,
+        sortDate:     t.due ? `${t.due}T00:00:00` : new Date().toISOString(),
+        relativeTime: this.taskRelativeTime(t, todayStr),
       });
     }
 
-    // Recent notes (latest 2, sorted by date then lastEdited)
+    // Recent notes (latest 3)
     const notes = [...this.store.notes()]
       .sort((a, b) => {
         try { return new Date(b.date).getTime() - new Date(a.date).getTime(); } catch { return 0; }
       })
-      .slice(0, 2);
+      .slice(0, 3);
     for (const n of notes) {
-      items.push({
-        kind: 'note', id: n.id, title: n.title,
+      const sortDate    = this.parseDateToIso(n.date);
+      const noteTitle   = this.sanitizeNoteTitle(n);
+      const firstLine   = n.preview?.split(/[.!?\n]/)[0]?.substring(0, 60)?.trim() || '';
+      const noteSub     = firstLine && firstLine !== noteTitle
+        ? firstLine
+        : (noteTitle === 'Untitled Note' ? n.date : undefined);
+      push({
+        kind: 'note', id: n.id, title: noteTitle,
         icon: 'edit_note', iconColor: '#a855f7',
-        subtitle: this.formatNoteSubtitle(n),
-        description: n.preview?.trim() || undefined,
+        subtitle: noteSub,
         route: '/daily-notes',
         queryParams: { noteId: n.id },
+        sortDate:     sortDate ?? new Date().toISOString(),
+        relativeTime: sortDate ? this.relativeTimeStr(sortDate) : undefined,
       });
     }
 
-    // Most recent bookmark (by ISO createdAt)
+    // Most recent bookmark
     const bm = [...this.store.bookmarks()]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
     if (bm) {
       let host = bm.url;
-      try { host = new URL(bm.url).hostname; } catch { /* keep raw */ }
-      items.push({
+      try { host = new URL(bm.url).hostname.replace(/^www\./, ''); } catch { /* keep raw */ }
+      const titleNorm = bm.title.toLowerCase().replace(/^www\./, '');
+      push({
         kind: 'bookmark', id: bm.id, title: bm.title,
         icon: 'bookmark', iconColor: '#f59e0b',
-        subtitle: host,
-        description: bm.description?.trim() || undefined,
+        subtitle: host && host.toLowerCase() !== titleNorm ? host : undefined,
         route: '/bookmarks',
+        sortDate:     bm.createdAt,
+        relativeTime: this.relativeTimeStr(bm.createdAt),
       });
     }
 
@@ -269,17 +305,16 @@ export class WorkspaceComponent {
         new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime()
       )[0];
     if (meeting) {
-      const diffMins = Math.floor((new Date(`${meeting.date}T${meeting.startTime}`).getTime() - now.getTime()) / 60000);
-      const meetingSub = diffMins < 60
-        ? `in ${diffMins}m`
-        : diffMins < 1440
-          ? `${meeting.date} at ${meeting.startTime}`
-          : meeting.date;
-      items.push({
+      const diffMins = Math.floor(
+        (new Date(`${meeting.date}T${meeting.startTime}`).getTime() - now.getTime()) / 60000
+      );
+      push({
         kind: 'meeting', id: meeting.id, title: meeting.title,
         icon: 'groups', iconColor: '#10b981',
-        subtitle: meetingSub,
+        subtitle: diffMins < 60 ? `in ${diffMins}m` : `${meeting.date} · ${meeting.startTime}`,
         route: '/meetings',
+        sortDate:     `${meeting.date}T${meeting.startTime}`,
+        relativeTime: meeting.date === todayStr ? 'today' : undefined,
       });
     }
 
@@ -287,15 +322,48 @@ export class WorkspaceComponent {
     const book = [...this.store.books()]
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0];
     if (book) {
-      items.push({
+      push({
         kind: 'book', id: book.id, title: book.title,
         icon: book.icon || 'menu_book', iconColor: '#ec4899',
         subtitle: this.formatBookSubtitle(book),
         route: `/write/${book.id}`,
+        sortDate:     book.createdAt || new Date(0).toISOString(),
+        relativeTime: book.createdAt ? this.relativeTimeStr(book.createdAt) : undefined,
       });
     }
 
     return items;
+  });
+
+  filteredSidebarItems = computed(() => {
+    const filter = this.sidebarFilter();
+    const items  = this.sidebarActivityItems();
+    return filter === 'all' ? items : items.filter(i => i.kind === filter);
+  });
+
+  groupedSidebarItems = computed((): SidebarGroup[] => {
+    const items    = this.filteredSidebarItems();
+    const today    = new Date();
+    const todayStr = this.localDateStr(today);
+    const yest     = new Date(today);
+    yest.setDate(yest.getDate() - 1);
+    const yesterdayStr = this.localDateStr(yest);
+
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    const buckets: Record<string, SidebarActivityItem[]> = { t: [], y: [], o: [] };
+    for (const item of items) {
+      const d = (item.sortDate ?? '').substring(0, 10);
+      if (d === todayStr)          buckets['t'].push(item);
+      else if (d === yesterdayStr) buckets['y'].push(item);
+      else                         buckets['o'].push(item);
+    }
+
+    const groups: SidebarGroup[] = [];
+    if (buckets['t'].length) groups.push({ label: `Today, ${fmt(today)}`,     items: buckets['t'] });
+    if (buckets['y'].length) groups.push({ label: `Yesterday, ${fmt(yest)}`,  items: buckets['y'] });
+    if (buckets['o'].length) groups.push({ label: 'Older',                    items: buckets['o'] });
+    return groups;
   });
 
   // ── Voice ───────────────────────────────────────────────────────────────────
@@ -308,6 +376,13 @@ export class WorkspaceComponent {
       setInterval(() => this.systemTime.set(new Date()), 60000);
       this.updatePerformanceMetrics();
       setInterval(() => this.updatePerformanceMetrics(), 5000);
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  handleDocumentClick(event: MouseEvent) {
+    if (!(event.target as HTMLElement).closest('.ra-filter-dropdown')) {
+      this.sidebarFilterOpen.set(false);
     }
   }
 
@@ -1101,6 +1176,17 @@ GENERAL RULES:
     return `Good Evening`;
   }
 
+  toggleSidebarFilter() { this.sidebarFilterOpen.update(v => !v); }
+
+  setSidebarFilter(value: 'all' | 'task' | 'note' | 'bookmark' | 'meeting' | 'book') {
+    this.sidebarFilter.set(value);
+    this.sidebarFilterOpen.set(false);
+  }
+
+  navigateToActivity() {
+    this.router.navigate(['/activity-log']);
+  }
+
   navigateToCreated() {
     const c = this.lastCreated();
     if (c) this.router.navigate([c.route], c.queryParams ? { queryParams: c.queryParams } : {});
@@ -1170,6 +1256,59 @@ GENERAL RULES:
     const words = book.wordCount ?? 0;
     const formatted = words >= 1000 ? `${(words / 1000).toFixed(1)}k words` : `${words} words`;
     return `${status} · ${formatted}`;
+  }
+
+  private sanitizeNoteTitle(note: Note): string {
+    const t = note.title?.trim();
+    if (!t || t === note.date ||
+        /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}/.test(t)) {
+      return note.preview?.split(/[.!?\n]/)[0]?.substring(0, 60)?.trim() || 'Untitled Note';
+    }
+    return t;
+  }
+
+  private parseDateToIso(dateStr: string): string | undefined {
+    try {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    } catch { /* */ }
+    return undefined;
+  }
+
+  private relativeTimeStr(isoStr: string): string {
+    const diffMs = Date.now() - new Date(isoStr).getTime();
+    if (isNaN(diffMs)) return '';
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 2)  return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffH = Math.floor(diffMs / 3600000);
+    if (diffH < 24)    return `${diffH}h ago`;
+    const diffD = Math.floor(diffMs / 86400000);
+    if (diffD < 7)     return `${diffD}d ago`;
+    if (diffD < 30)    return `${Math.floor(diffD / 7)}w ago`;
+    return `${Math.floor(diffD / 30)}mo ago`;
+  }
+
+  private taskSubtitle(task: Task, todayStr: string): string | undefined {
+    if (!task.due) return task.priority === 'HIGH' ? 'High priority' : undefined;
+    const diffDays = Math.round(
+      (new Date(task.due + 'T00:00:00').getTime() - new Date(todayStr + 'T00:00:00').getTime()) / 86400000
+    );
+    if (diffDays < 0)  return `${Math.abs(diffDays)}d overdue`;
+    if (diffDays === 0) return 'Due today';
+    return undefined;
+  }
+
+  private taskRelativeTime(task: Task, todayStr: string): string {
+    if (!task.due) return '';
+    if (task.due === todayStr) return 'today';
+    const diffDays = Math.round(
+      (new Date(task.due + 'T00:00:00').getTime() - new Date(todayStr + 'T00:00:00').getTime()) / 86400000
+    );
+    if (diffDays < 0)   return '';    // overdue shown in subtitle
+    if (diffDays === 1) return 'tomorrow';
+    if (diffDays <= 7)  return `in ${diffDays}d`;
+    return `in ${Math.floor(diffDays / 7)}w`;
   }
 
   addSubtask(task: Task, event: Event) {

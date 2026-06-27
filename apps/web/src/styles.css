@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Plus Jakarta Sans (headings) */
+@import '@fontsource/plus-jakarta-sans/300.css';
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+
 :root {
     /* Enterprise Dark Theme Palette */
     --bg-app: #09090b;
@@ -26,6 +33,7 @@
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     --font-serif: 'Georgia', 'Times New Roman', serif;
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 [data-theme="enterprise-dark"] {
@@ -217,6 +225,7 @@
     --font-sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'Atkinson Hyperlegible', monospace;
     --font-serif: 'Atkinson Hyperlegible', serif;
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 [data-theme="typewriter"] .panel,
@@ -254,6 +263,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading, var(--font-sans));
 }
 
 body {
