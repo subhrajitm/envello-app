@@ -125,17 +125,12 @@
           <env-empty-state
             icon="edit_note"
             title="Nothing here yet"
-            description="Create your first writing to start writing books, articles, scripts and more."
-            ctaLabel="New Writing"
-            ctaIcon="add"
-            (ctaClicked)="openAddModal()">
+            description="Create your first writing to start writing books, articles, scripts and more.">
           </env-empty-state>
         } @else {
           <env-empty-state
             icon="search_off"
-            title="No results match your filters"
-            secondaryCtaLabel="Clear Filters"
-            (secondaryCtaClicked)="clearFilters()">
+            title="No results match your filters">
           </env-empty-state>
         }
       } @else if (viewMode() === 'LIST') {

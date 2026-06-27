@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
-import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
+import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
@@ -15,7 +15,7 @@ type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

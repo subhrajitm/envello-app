@@ -121,19 +121,12 @@ import { TransactionFormComponent } from './transaction-form.component';
           <env-empty-state
             icon="receipt_long"
             title="No transactions yet"
-            description="Track your costs — add one manually or import a list."
-            ctaLabel="Add Transaction"
-            ctaIcon="add"
-            secondaryCtaLabel="Import"
-            (ctaClicked)="openAddForm()"
-            (secondaryCtaClicked)="showImportModal.set(true)">
+            description="Track your costs — add one manually or import a list.">
           </env-empty-state>
         } @else {
           <env-empty-state
             icon="search_off"
-            title="No results match your filters"
-            secondaryCtaLabel="Clear Filters"
-            (secondaryCtaClicked)="clearFilters()">
+            title="No results match your filters">
           </env-empty-state>
         }
       } @else {

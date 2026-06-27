@@ -6,99 +6,192 @@
 }
 
 .env-empty-state {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 24px;
+  padding: 48px 32px 36px;
   text-align: center;
-  color: var(--text-tertiary);
   flex: 1;
-  min-height: 180px;
+  min-height: 200px;
   width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
+  animation: es-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.env-empty-state--compact {
-  padding: 28px 16px;
+@keyframes es-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Decorative background dots ── */
+.env-empty-state__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.es-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-primary) 6%, transparent);
+}
+
+.es-dot--1 {
+  width: 160px;
+  height: 160px;
+  top: -40px;
+  right: -40px;
+}
+
+.es-dot--2 {
+  width: 100px;
+  height: 100px;
+  bottom: -20px;
+  left: -20px;
+  background: color-mix(in srgb, var(--accent-primary) 4%, transparent);
+}
+
+.es-dot--3 {
+  width: 60px;
+  height: 60px;
+  top: 30%;
+  left: 8%;
+  background: color-mix(in srgb, var(--accent-primary) 3%, transparent);
+}
+
+/* ── Icon with concentric rings ── */
+.env-empty-state__icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent-primary) 10%, var(--bg-panel));
+  margin-bottom: 20px;
+  flex-shrink: 0;
+  /* Concentric ring glow via box-shadow */
+  box-shadow:
+    0 0 0 8px  color-mix(in srgb, var(--accent-primary) 6%, transparent),
+    0 0 0 16px color-mix(in srgb, var(--accent-primary) 3%, transparent);
 }
 
 .env-empty-state__icon {
-  font-size: 36px;
-  opacity: 0.35;
-  margin-bottom: 14px;
+  font-size: 26px;
+  color: var(--accent-primary);
 }
 
-.env-empty-state--compact .env-empty-state__icon {
-  font-size: 28px;
-  margin-bottom: 10px;
-}
-
+/* ── Typography ── */
 .env-empty-state__title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 6px 0;
-}
-
-.env-empty-state--compact .env-empty-state__title {
-  font-size: 13px;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
 }
 
 .env-empty-state__description {
   font-size: 12.5px;
   color: var(--text-tertiary);
-  margin: 0 0 20px 0;
+  margin: 0 0 20px;
   line-height: 1.6;
-  max-width: 340px;
+  max-width: 260px;
 }
 
+/* ── Actions ── */
 .env-empty-state__actions {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .env-empty-state__cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 18px;
-  border-radius: 6px;
+  gap: 5px;
+  padding: 7px 16px;
+  border-radius: 7px;
   border: none;
   background: var(--accent-primary);
   color: var(--accent-primary-text);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.12s;
 }
-
 .env-empty-state__cta:hover {
   opacity: 0.88;
+  transform: translateY(-1px);
 }
-
-.env-empty-state__cta .material-symbols-outlined {
-  font-size: 16px;
-}
+.env-empty-state__cta .material-symbols-outlined { font-size: 14px; }
 
 .env-empty-state__secondary {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: 7px;
   border: 1px solid var(--border-subtle);
   background: transparent;
   color: var(--text-secondary);
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-
 .env-empty-state__secondary:hover {
   background: var(--bg-hover);
+  border-color: var(--border-main);
   color: var(--text-primary);
 }
+
+/* ── Hint strip ── */
+.env-empty-state__hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 20px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.es-hint-icon {
+  font-size: 13px;
+  color: var(--accent-primary);
+  opacity: 0.7;
+}
+
+/* ── Compact variant ── */
+.env-empty-state--compact {
+  padding: 28px 20px 24px;
+  min-height: 140px;
+}
+
+.env-empty-state--compact .env-empty-state__bg { display: none; }
+
+.env-empty-state--compact .env-empty-state__icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  margin-bottom: 12px;
+  box-shadow:
+    0 0 0 5px  color-mix(in srgb, var(--accent-primary) 6%, transparent),
+    0 0 0 10px color-mix(in srgb, var(--accent-primary) 3%, transparent);
+}
+
+.env-empty-state--compact .env-empty-state__icon { font-size: 18px; }
+.env-empty-state--compact .env-empty-state__title { font-size: 13px; margin-bottom: 4px; }
+.env-empty-state--compact .env-empty-state__description { font-size: 11.5px; margin-bottom: 14px; }
+.env-empty-state--compact .env-empty-state__cta { padding: 5px 12px; font-size: 12px; }
+.env-empty-state--compact .env-empty-state__secondary { padding: 5px 12px; font-size: 12px; }
+.env-empty-state--compact .env-empty-state__hint { margin-top: 14px; font-size: 10.5px; }

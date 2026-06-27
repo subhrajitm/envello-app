@@ -171,12 +171,7 @@
           <env-empty-state
             [icon]="emptyStateConfig().icon"
             [title]="emptyStateConfig().title"
-            [description]="emptyStateConfig().subtitle"
-            [ctaLabel]="emptyStateConfig().showAdd ? 'Add your first bookmark' : ''"
-            ctaIcon="add"
-            [secondaryCtaLabel]="emptyStateConfig().showClear ? 'Clear Filters' : ''"
-            (ctaClicked)="openAddModal()"
-            (secondaryCtaClicked)="clearFilters()">
+            [description]="emptyStateConfig().subtitle">
           </env-empty-state>
         } @else {
           <env-table
@@ -207,12 +202,7 @@
         <env-empty-state
           [icon]="emptyStateConfig().icon"
           [title]="emptyStateConfig().title"
-          [description]="emptyStateConfig().subtitle"
-          [ctaLabel]="emptyStateConfig().showAdd ? 'Add your first bookmark' : ''"
-          ctaIcon="add"
-          [secondaryCtaLabel]="emptyStateConfig().showClear ? 'Clear Filters' : ''"
-          (ctaClicked)="openAddModal()"
-          (secondaryCtaClicked)="clearFilters()">
+          [description]="emptyStateConfig().subtitle">
         </env-empty-state>
       }
       <div class="bm-grid">

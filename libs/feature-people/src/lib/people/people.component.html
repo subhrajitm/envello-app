@@ -75,9 +75,7 @@
           <env-empty-state
             icon="group"
             [title]="searchQuery() ? 'No results' : 'No people yet'"
-            [description]="searchQuery() ? 'Try a different search.' : 'Add contacts or import from Google / Apple.'"
-            [ctaLabel]="!searchQuery() ? '+ Add Person' : ''"
-            (ctaClicked)="openAddForm()">
+            [description]="searchQuery() ? 'Try a different search.' : 'Add contacts or import from Google / Apple.'">
           </env-empty-state>
         } @else {
           <env-table
@@ -103,9 +101,7 @@
           <env-empty-state
             icon="group"
             [title]="searchQuery() ? 'No results' : 'No people yet'"
-            [description]="searchQuery() ? 'Try a different search.' : 'Add contacts or import from Google / Apple.'"
-            [ctaLabel]="!searchQuery() ? '+ Add Person' : ''"
-            (ctaClicked)="openAddForm()">
+            [description]="searchQuery() ? 'Try a different search.' : 'Add contacts or import from Google / Apple.'">
           </env-empty-state>
         } @else {
           <div class="ppl-grid">

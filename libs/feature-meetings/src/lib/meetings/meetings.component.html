@@ -63,9 +63,7 @@
             [compact]="true"
             [icon]="searchQuery() ? 'search_off' : 'event_busy'"
             [title]="searchQuery() ? 'No results' : 'No meetings'"
-            [description]="searchQuery() ? 'Adjust your search.' : 'Schedule your first meeting.'"
-            [ctaLabel]="!searchQuery() ? '+ New Meeting' : ''"
-            (ctaClicked)="openCreateModal()">
+            [description]="searchQuery() ? 'Adjust your search.' : 'Schedule your first meeting.'">
           </env-empty-state>
         } @else {
         @for (meeting of filteredMeetings(); track meeting.id) {

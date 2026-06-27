@@ -329,9 +329,7 @@
                 <env-empty-state
                   [compact]="true"
                   icon="search_off"
-                  title="No sources match your filters"
-                  secondaryCtaLabel="Clear Filters"
-                  (secondaryCtaClicked)="clearFilters()">
+                  title="No sources match your filters">
                 </env-empty-state>
               }
             </div>
@@ -357,10 +355,7 @@
             <env-empty-state
               icon="summarize"
               title="No summaries yet"
-              description="Create a summary to synthesize insights from your sources."
-              ctaLabel="New Summary"
-              ctaIcon="add"
-              (ctaClicked)="openSummaryModal()">
+              description="Create a summary to synthesize insights from your sources.">
             </env-empty-state>
           } @else {
             <env-table
@@ -458,9 +453,7 @@
               <env-empty-state
                 [compact]="true"
                 icon="search_off"
-                title="No sources match your filters"
-                secondaryCtaLabel="Clear Filters"
-                (secondaryCtaClicked)="clearFilters()">
+                title="No sources match your filters">
               </env-empty-state>
             }
           </div>

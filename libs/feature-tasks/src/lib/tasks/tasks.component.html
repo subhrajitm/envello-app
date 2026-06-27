@@ -167,18 +167,14 @@
                     @if (store.tasks().length === 0) {
                       <env-empty-state
                         icon="checklist"
-                        title="You're all set to start"
-                        description="Create your first task to kick off your workspace."
-                        ctaLabel="+ New Task"
-                        (ctaClicked)="openNewTaskDialog()">
+                        title="No tasks yet"
+                        description="Capture anything on your mind — tasks, deadlines, or to-dos.">
                       </env-empty-state>
                     } @else {
                       <env-empty-state
                         icon="search_off"
                         title="No tasks found"
-                        description="No tasks match the current filter or search criteria."
-                        secondaryCtaLabel="Clear Filters"
-                        (secondaryCtaClicked)="sidebarSearch.set(''); selectedView.set('inbox')">
+                        description="Nothing matches your current filter or search.">
                       </env-empty-state>
                     }
                 } @else {
@@ -297,18 +293,13 @@
               <env-empty-state
                 icon="checklist"
                 title="No tasks yet"
-                description="Create your first task to kick off your workspace."
-                ctaLabel="New Task"
-                ctaIcon="add"
-                (ctaClicked)="openNewTaskDialog()">
+                description="Capture anything on your mind — tasks, deadlines, or to-dos.">
               </env-empty-state>
             } @else {
               <env-empty-state
                 icon="search_off"
                 title="No tasks found"
-                description="No tasks match the current filter or search criteria."
-                secondaryCtaLabel="Clear filters"
-                (secondaryCtaClicked)="sidebarSearch.set(''); selectedView.set('inbox')">
+                description="Nothing matches your current filter or search.">
               </env-empty-state>
             }
             } @else {
@@ -1100,57 +1091,31 @@
 
 
 <!-- Delete Task Confirmation Modal -->
-<env-modal
+<env-confirm-dialog
     [isOpen]="deleteModalOpen()"
-    (closed)="cancelDeleteTask()"
     title="Delete task"
-    size="sm"
->
-    <div body>
-        @if (taskPendingDelete(); as task) {
-        <p>Are you sure you want to delete the task "<strong>{{ task.title }}</strong>"?</p>
-        <p>This action moves the task to the bin.</p>
-        }
-    </div>
-    <div footer class="task-modal-footer">
-        <div class="task-modal-footer-actions">
-            <button type="button"
-                    class="btn-secondary"
-                    (click)="cancelDeleteTask()">
-                Cancel
-            </button>
-            <button type="button"
-                    class="btn-primary"
-                    (click)="confirmDeleteTask()">
-                Delete
-            </button>
-        </div>
-    </div>
-</env-modal>
+    icon="delete"
+    variant="danger"
+    confirmLabel="Delete"
+    cancelLabel="Cancel"
+    (confirmed)="confirmDeleteTask()"
+    (cancelled)="cancelDeleteTask()">
+    @if (taskPendingDelete(); as task) {
+        Delete "<strong>{{ task.title }}</strong>"? It will be moved to the bin.
+    }
+</env-confirm-dialog>
 
-<!-- Bulk Delete Confirmation Modal -->
-<env-modal
+<env-confirm-dialog
     [isOpen]="bulkDeleteModalOpen()"
-    (closed)="cancelBulkDelete()"
-    size="sm"
->
-    <div header>
-        <h2 class="env-modal-title">
-            <span class="material-symbols-outlined">delete_sweep</span>
-            <span>Delete {{ selectedTasks().size }} tasks</span>
-        </h2>
-    </div>
-    <div body>
-        <p>Are you sure you want to delete <strong>{{ selectedTasks().size }} task{{ selectedTasks().size === 1 ? '' : 's' }}</strong>?</p>
-        <p>This action moves them to the bin.</p>
-    </div>
-    <div footer class="task-modal-footer">
-        <div class="task-modal-footer-actions">
-            <button type="button" class="btn-secondary" (click)="cancelBulkDelete()">Cancel</button>
-            <button type="button" class="btn-primary" (click)="confirmBulkDelete()">Delete</button>
-        </div>
-    </div>
-</env-modal>
+    title="Delete {{ selectedTasks().size }} tasks"
+    icon="delete_sweep"
+    variant="danger"
+    confirmLabel="Delete"
+    cancelLabel="Cancel"
+    (confirmed)="confirmBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+    {{ selectedTasks().size }} task{{ selectedTasks().size === 1 ? '' : 's' }} will be moved to the bin.
+</env-confirm-dialog>
 
 <!-- Focus Mode Overlay -->
 @if (focusMode() && focusedTask()) {
