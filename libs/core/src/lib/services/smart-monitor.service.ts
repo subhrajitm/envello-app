@@ -105,6 +105,8 @@ export class SmartMonitorService {
   enabled = signal(this.loadEnabled());
 
   private config: Record<MonitorRuleId, boolean> = this.loadConfig();
+  /** Fingerprints cached in memory — loaded once, written only when changed. */
+  private fingerprints = this.loadFingerprints();
   /** Prevents the auto-trigger from running more than once per session. */
   private sessionRanAt = 0;
 
@@ -140,7 +142,6 @@ export class SmartMonitorService {
     // Yield to Angular's change detection so the spinner actually renders.
     await new Promise<void>(resolve => setTimeout(resolve, 50));
 
-    const fingerprints = this.loadFingerprints();
     const findings: MonitorFinding[] = [];
     let skipped = 0;
 
@@ -166,9 +167,9 @@ export class SmartMonitorService {
         for (const finding of checkFindings) {
           const fp = this.fingerprint(finding);
           // Manual runs skip the fingerprint cache so the user always sees current state.
-          if (!manual && fingerprints.has(fp)) { skipped++; continue; }
+          if (!manual && this.fingerprints.has(fp)) { skipped++; continue; }
           this.createTask(finding);
-          if (!manual) fingerprints.add(fp); // only persist fingerprints for auto-runs
+          if (!manual) this.fingerprints.add(fp); // only persist fingerprints for auto-runs
           findings.push(finding);
           // For meeting action items, link the new task so it's never recreated.
           const f = finding as MonitorFinding & { _meetingId?: string; _actionId?: string };
@@ -178,7 +179,7 @@ export class SmartMonitorService {
         }
       }
 
-      if (!manual) this.saveFingerprints(fingerprints);
+      if (!manual) this.saveFingerprints(this.fingerprints);
 
       // Always notify on manual runs so the user knows it ran.
       if (findings.length > 0) {
@@ -430,6 +431,11 @@ export class SmartMonitorService {
   private saveFingerprints(set: Set<string>) {
     try {
       const arr = [...set].slice(-MAX_FINGERPRINTS);
+      // Keep the in-memory Set capped too so it never grows beyond MAX_FINGERPRINTS
+      if (set.size > MAX_FINGERPRINTS) {
+        set.clear();
+        arr.forEach(fp => set.add(fp));
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
     } catch { /* ignore */ }
   }

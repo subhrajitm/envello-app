@@ -811,6 +811,8 @@ export class KnowledgeComponent implements OnDestroy {
       this.mediaRecorder.onstop = () => {
         const type = this.mediaRecorder?.mimeType ?? 'audio/webm';
         const blob = new Blob(this.audioChunks, { type });
+        // Clear raw chunks immediately — the compiled Blob is all we need
+        this.audioChunks = [];
         if (this.recordedUrl()) URL.revokeObjectURL(this.recordedUrl());
         this.recordedBlob.set(blob);
         this.recordedUrl.set(URL.createObjectURL(blob));

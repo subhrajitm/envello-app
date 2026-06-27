@@ -21,21 +21,29 @@ export class StoreService {
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
 
+    // Memory caps — prevents unbounded growth for heavy collections
+    private static readonly LIMITS = {
+        tasks:     2000,
+        notes:     500,
+        bookmarks: 1000,
+        people:    500,
+    };
+
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
 
     private markdownWorker: Worker | null = null;
     private workerCallbacks = new Map<string, (md: string) => void>();
-    private saveTimeouts: { [id: string]: any } = {};
+    private saveTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
     private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
+    private _loadInProgress = false;
 
     constructor() {
         this.loadFromDb();
         this.initMarkdownWorker();
         // Re-load after Supabase sync (web) or after SQLite DB becomes ready (desktop).
-        // Debounce so rapid-fire realtime events (e.g. N bookmark upserts from a folder
-        // deletion) collapse into a single loadFromDb() call instead of N full reloads.
+        // Debounce so rapid-fire realtime events collapse into a single reload.
         window.addEventListener('envello:sync-complete', () => {
             clearTimeout(this._syncDebounceTimer);
             this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
@@ -86,6 +94,8 @@ export class StoreService {
     }
 
     private async loadFromDb(retries = 1): Promise<void> {
+        if (this._loadInProgress) return;
+        this._loadInProgress = true;
         try {
             const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
@@ -99,20 +109,38 @@ export class StoreService {
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people'),
             ]);
-            this.tasks.set((tasks || []).filter(t => !t.deleted_at));
-            // Merge: preserve any in-memory notes whose IDs aren't in the DB yet
-            // (newly created notes that haven't been persisted before this reload fires).
-            const activenotes = (notes || []).filter(n => !n.deleted_at);
-            const dbNoteIds = new Set(activenotes.map(n => n.id));
+
+            // Tasks — cap, exclude soft-deleted
+            const activeTasks = (tasks || [])
+                .filter(t => !t.deleted_at)
+                .slice(0, StoreService.LIMITS.tasks);
+            this.tasks.set(activeTasks);
+
+            // Notes — strip content from metadata load; content is lazy-loaded via loadNoteContent().
+            // Preserves any in-memory notes not yet in DB (just-created, not yet persisted).
+            const activeNotes = (notes || [])
+                .filter(n => !n.deleted_at)
+                .slice(0, StoreService.LIMITS.notes)
+                .map(n => ({ ...n, content: undefined })) as Note[];
+            const dbNoteIds = new Set(activeNotes.map(n => n.id));
             const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
-            this.notes.set([...pendingNotes, ...activenotes]);
+            this.notes.set([...pendingNotes, ...activeNotes]);
+
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
             this.books.set((books || []).filter(b => !b.deleted_at));
-            this.bookmarks.set((bookmarks || []).filter(b => !b.deleted_at));
+
+            // Bookmarks — cap, exclude soft-deleted
+            this.bookmarks.set(
+                (bookmarks || []).filter(b => !b.deleted_at).slice(0, StoreService.LIMITS.bookmarks)
+            );
             this.bookmarkFolders.set(bookmarkFolders || []);
             this.spaces.set(spaces || []);
-            this.people.set((people || []).filter(p => !p.deleted_at));
+
+            // People — cap, exclude soft-deleted
+            this.people.set(
+                (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
+            );
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -130,7 +158,6 @@ export class StoreService {
         } catch (e) {
             console.error('[StoreService] loadFromDb failed', e);
             if (retries > 0) {
-                // Single retry after 500ms — handles transient Tauri startup race
                 setTimeout(() => this.loadFromDb(0), 500);
                 return;
             }
@@ -144,12 +171,15 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+        } finally {
+            this._loadInProgress = false;
         }
     }
 
     async loadNoteContent(id: string): Promise<string> {
         const note = this.notes().find(n => n.id === id);
         if (!note) return '';
+        // content is stripped on load to save memory — always fetch from file/DB
         if (note.content && note.content.length > 5) return note.content;
 
         let mdContent = await this.fs.readNote(id);
@@ -216,10 +246,12 @@ export class StoreService {
         if (!note) return;
 
         if (updates.content !== undefined) {
-            if (this.saveTimeouts[id]) clearTimeout(this.saveTimeouts[id]);
-            this.saveTimeouts[id] = setTimeout(() => {
+            const existing = this.saveTimeouts.get(id);
+            if (existing) clearTimeout(existing);
+            this.saveTimeouts.set(id, setTimeout(() => {
+                this.saveTimeouts.delete(id);
                 this.saveNoteContentToFile(id, updates.content || '');
-            }, 1000);
+            }, 1000));
         }
 
         this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));

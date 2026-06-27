@@ -428,6 +428,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (!force && this.hasUnsavedNewTaskData()) {
       if (!confirm('Discard unsaved task?')) return;
     }
+    this.revokeAllBlobUrls();
+    this.filesToUpload.set([]);
     this.newTaskModalOpen.set(false);
     this.newTaskShowAdvanced.set(false);
     this.showDatePicker.set(false);
@@ -685,7 +687,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   getFilePreview(file: File): string {
-    return URL.createObjectURL(file);
+    if (!this.blobUrls.has(file)) {
+      this.blobUrls.set(file, URL.createObjectURL(file));
+    }
+    return this.blobUrls.get(file)!;
   }
 
   previewImage(url: string) {
@@ -2268,6 +2273,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (this.pomodoroInterval) {
       clearInterval(this.pomodoroInterval);
     }
+    this.revokeAllBlobUrls();
   }
 
   // Recurring tasks
@@ -2567,6 +2573,18 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   // File attachment methods
+  private blobUrls = new Map<File, string>();
+
+  private revokeBlobUrl(file: File) {
+    const url = this.blobUrls.get(file);
+    if (url) { URL.revokeObjectURL(url); this.blobUrls.delete(file); }
+  }
+
+  private revokeAllBlobUrls() {
+    this.blobUrls.forEach(url => URL.revokeObjectURL(url));
+    this.blobUrls.clear();
+  }
+
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -2577,6 +2595,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   removeFileToUpload(index: number) {
     const files = this.filesToUpload();
+    this.revokeBlobUrl(files[index]);
     this.filesToUpload.set(files.filter((_, i) => i !== index));
   }
 
@@ -2605,6 +2624,7 @@ export class TasksComponent implements OnInit, OnDestroy {
           attachments: [...(task.attachments ?? []), ...attachments],
         });
       }
+      this.revokeAllBlobUrls();
       this.filesToUpload.set([]);
     } catch (e) {
       this.notificationService.error('Upload failed', (e as Error).message ?? 'Could not upload files.');
