@@ -64,6 +64,7 @@ export class GoogleCalendarService {
           title: `Google Calendar synced`,
           message: `${imported} event${imported !== 1 ? 's' : ''} imported${skipped ? `, ${skipped} already up to date` : ''}`,
           icon: 'calendar_month',
+          link: '/meetings',
         });
       }
       return { imported, skipped };

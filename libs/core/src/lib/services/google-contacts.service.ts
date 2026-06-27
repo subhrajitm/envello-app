@@ -61,6 +61,7 @@ export class GoogleContactsService {
           title: 'Google Contacts synced',
           message: `${imported} contact${imported !== 1 ? 's' : ''} imported${skipped ? `, ${skipped} already up to date` : ''}`,
           icon: 'contacts',
+          link: '/people',
         });
       }
       return { imported, skipped };

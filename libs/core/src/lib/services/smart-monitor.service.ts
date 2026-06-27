@@ -189,6 +189,7 @@ export class SmartMonitorService {
           message: findings.slice(0, 3).map(f => `• ${f.title}`).join('\n')
             + (findings.length > 3 ? `\n• …and ${findings.length - 3} more` : ''),
           icon: 'bolt',
+          link: '/tasks',
         });
       } else if (manual) {
         this.notify.add({

@@ -2347,7 +2347,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           this.notificationService.info(
             `Reminder: ${task.title}`,
-            `Due: ${task.due} — ${reminder}`
+            `Due: ${task.due} — ${reminder}`,
+            { link: '/tasks' }
           );
         }, delay);
       }

@@ -46,6 +46,7 @@ export class GoogleGmailService {
           title: `Gmail: ${parsed.length} suggestion${parsed.length !== 1 ? 's' : ''} found`,
           message: 'Review and import subscriptions, tasks and contacts.',
           icon: 'mail',
+          link: '/settings',
         });
       }
     } catch (e: any) {

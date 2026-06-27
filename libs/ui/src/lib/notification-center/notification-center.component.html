@@ -43,6 +43,7 @@
         } @else {
         @for (notification of filteredNotifications(); track notification.id) {
         <div class="notification-item" [class.unread]="!notification.read"
+            [class.notification-item--linked]="hasLink(notification)"
             [class.type-info]="notification.type === 'info'" [class.type-success]="notification.type === 'success'"
             [class.type-warning]="notification.type === 'warning'" [class.type-error]="notification.type === 'error'">
 
@@ -71,12 +72,15 @@
             </div>
 
             <div class="notification-actions">
+                @if (hasLink(notification)) {
+                <span class="notification-link-arrow material-symbols-outlined">chevron_right</span>
+                }
                 @if (!notification.read) {
-                <button class="icon-btn-small" (click)="markAsRead(notification.id)" title="Mark as read">
+                <button class="icon-btn-small" (click)="markAsRead(notification.id); $event.stopPropagation()" title="Mark as read">
                     <span class="material-symbols-outlined">done</span>
                 </button>
                 }
-                <button class="icon-btn-small" (click)="deleteNotification(notification.id)" title="Delete">
+                <button class="icon-btn-small" (click)="deleteNotification(notification.id); $event.stopPropagation()" title="Delete">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>

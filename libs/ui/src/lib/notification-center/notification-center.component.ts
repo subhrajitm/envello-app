@@ -1,5 +1,6 @@
 import { Component, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { NotificationService, Notification, NotificationType } from '@envello/core';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -24,6 +25,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 })
 export class NotificationCenterComponent {
   private notificationService = inject(NotificationService);
+  private router = inject(Router);
 
   isOpen = signal(false);
   activeTab = signal<'all' | 'unread'>('all');
@@ -87,6 +89,10 @@ export class NotificationCenterComponent {
     if (!notification.read) {
       this.markAsRead(notification.id);
     }
+    if (notification.link) {
+      this.close();
+      this.router.navigateByUrl(notification.link);
+    }
   }
 
   handleAction(notification: Notification, event: Event) {
@@ -94,7 +100,15 @@ export class NotificationCenterComponent {
     if (notification.actionCallback) {
       notification.actionCallback();
     }
+    if (notification.link) {
+      this.close();
+      this.router.navigateByUrl(notification.link);
+    }
     this.markAsRead(notification.id);
+  }
+
+  hasLink(notification: Notification): boolean {
+    return !!(notification.link || notification.actionCallback);
   }
 
   getDefaultIcon(type: NotificationType): string {

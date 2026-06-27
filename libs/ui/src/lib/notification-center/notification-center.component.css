@@ -245,12 +245,34 @@
 }
 
 /* Notification Actions */
+.notification-item--linked {
+    cursor: pointer;
+}
+
+.notification-item--linked:hover {
+    background: var(--bg-hover);
+}
+
+.notification-link-arrow {
+    font-size: 16px;
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.15s;
+    flex-shrink: 0;
+}
+
+.notification-item--linked:hover .notification-link-arrow {
+    opacity: 1;
+    transform: translateX(2px);
+}
+
 .notification-actions {
     display: flex;
     flex-direction: column;
     gap: 2px;
     opacity: 0;
     transition: opacity 0.2s;
+    align-items: center;
 }
 
 .notification-item:hover .notification-actions {
