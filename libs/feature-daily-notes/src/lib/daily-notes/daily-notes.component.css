@@ -1104,7 +1104,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
     font-family: var(--editor-font, var(--font-sans));
     font-size: var(--editor-font-size, 15px);
     line-height: var(--editor-line-height, 1.75);
-    min-height: 50vh;
+    min-height: none;
     color: var(--text-primary);
 }
 
