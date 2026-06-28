@@ -1224,7 +1224,7 @@
   border: 1px solid var(--border-subtle);
 }
 .rsa-recording-dot {
-  width: 10px; height: 10px; border-radius: 50%; background: #ef4444;
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent-red);
   animation: rec-pulse 1s ease-in-out infinite;
 }
 @keyframes rec-pulse {
@@ -1234,10 +1234,10 @@
 .rsa-recording-time { font-size: 22px; font-weight: 600; letter-spacing: 2px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .rsa-stop-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px;
-  border-radius: 7px; background: #ef444420; border: 1px solid #ef4444;
-  color: #ef4444; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.12s;
+  border-radius: 7px; background: var(--accent-red)20; border: 1px solid var(--accent-red);
+  color: var(--accent-red); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.12s;
 }
-.rsa-stop-btn:hover { background: #ef4444; color: #fff; }
+.rsa-stop-btn:hover { background: var(--accent-red); color: #fff; }
 .rsa-stop-btn .material-symbols-outlined { font-size: 18px; }
 .rsa-audio-preview {
   display: flex; flex-direction: column; gap: 10px; align-items: stretch;
@@ -1248,12 +1248,12 @@
   padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-subtle);
   background: transparent; font-size: 12px; color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
 }
-.rsa-audio-discard-btn:hover { color: #ef4444; border-color: #ef4444; background: #ef444410; }
+.rsa-audio-discard-btn:hover { color: var(--accent-red); border-color: var(--accent-red); background: var(--accent-red)10; }
 .rsa-audio-discard-btn .material-symbols-outlined { font-size: 15px; }
 .rsa-audio-error {
   display: flex; align-items: center; gap: 8px; padding: 10px 14px;
-  background: #ef444412; border: 1px solid #ef444440; border-radius: 8px;
-  font-size: 12.5px; color: #ef4444;
+  background: var(--accent-red)12; border: 1px solid var(--accent-red)40; border-radius: 8px;
+  font-size: 12.5px; color: var(--accent-red);
 }
 .rsa-audio-error .material-symbols-outlined { font-size: 18px; flex-shrink: 0; }
 

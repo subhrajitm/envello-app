@@ -16,15 +16,15 @@
     --bg-subtle: #141318;    /* between Onyx and Shadow Grey */
     --bg-element: #1e1d2a;   /* between Shadow Grey and Space Indigo */
 
-    --border-subtle: #1e1d2a;
-    --border-main: #2f2d41;  /* Space Indigo */
-    --border-highlight: #3b354f; /* Vintage Grape */
+    --border-subtle: #1e1e24;
+    --border-main: #2e2e38;
+    --border-highlight: #444450;
 
-    /* Cool-tinted soft white — readable without glare on indigo-dark surfaces */
-    --text-primary: #d0cede;
-    --text-secondary: #7870a0;
-    --text-tertiary: #4e4868;
-    --text-disabled: #2e2a40;
+    /* Neutral grays — clean, no purple cast on icons or secondary text */
+    --text-primary: #e8e8e8;
+    --text-secondary: #888888;
+    --text-tertiary: #505050;
+    --text-disabled: #383838;
 
     /* Bird palette — full 9-stop spectrum, matte-tuned for dark surfaces */
     --accent-gold:    #f5a200;
@@ -57,14 +57,14 @@
     --bg-subtle: #1e1d2a;
     --bg-element: #272539;
 
-    --border-subtle: #272539;
-    --border-main: #3b354f;  /* Vintage Grape */
-    --border-highlight: #5b5570; /* Vintage Grape (light) */
+    --border-subtle: #272730;
+    --border-main: #3a3a46;
+    --border-highlight: #545460;
 
-    --text-primary: #d0cede;
-    --text-secondary: #7870a0;
-    --text-tertiary: #4e4868;
-    --text-disabled: #2e2a40;
+    --text-primary: #e8e8e8;
+    --text-secondary: #888888;
+    --text-tertiary: #505050;
+    --text-disabled: #383838;
 
     /* Bird palette — slightly desaturated for the Space Indigo surface */
     --accent-gold:    #f5a800;

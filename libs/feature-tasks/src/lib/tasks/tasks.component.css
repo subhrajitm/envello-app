@@ -6655,7 +6655,7 @@ textarea:focus-visible {
 
 .metadata-item-compact.priority-high { color: var(--accent-red); border-color: var(--accent-red)30; background: var(--accent-red)10; }
 .metadata-item-compact.priority-medium { color: var(--accent-yellow); border-color: var(--accent-yellow)30; background: var(--accent-yellow)10; }
-.metadata-item-compact.priority-low { color: #6b7280; border-color: #6b728030; background: #6b728010; }
+.metadata-item-compact.priority-low { color: var(--text-secondary); border-color: var(--text-secondary)30; background: var(--text-secondary)10; }
 
 .metadata-item-compact.status-active { color: var(--accent-green); border-color: var(--accent-green)30; background: var(--accent-green)10; }
 .metadata-item-compact.status-completed { color: var(--accent-blue); border-color: var(--accent-blue)30; background: var(--accent-blue)10; }
@@ -7111,8 +7111,8 @@ textarea:focus-visible {
 }
 
 .btn-danger-compact:hover {
-    background: #dc2626;
-    border-color: #dc2626;
+    background: var(--accent-red);
+    border-color: var(--accent-red);
 }
 
 .btn-danger-compact .material-symbols-outlined {
@@ -7852,7 +7852,7 @@ textarea:focus-visible {
 
 .priority-badge-high   { background: var(--accent-red)20; color: var(--accent-red); }
 .priority-badge-medium { background: var(--accent-yellow)20; color: var(--accent-yellow); }
-.priority-badge-low    { background: #6b728020; color: #6b7280; }
+.priority-badge-low    { background: var(--text-secondary)20; color: var(--text-secondary); }
 
 .subtask-priority-select {
     font-size: 11px;
@@ -8254,15 +8254,15 @@ textarea:focus-visible {
 
 /* Priority chip accent colours */
 .nt-chip.priority-medium {
-    color: #b45309;
-    border-color: #fde68a;
-    background: #fffbeb;
+    color: var(--accent-yellow);
+    border-color: var(--accent-yellow)40;
+    background: var(--accent-yellow)12;
 }
 
 .nt-chip.priority-high {
-    color: #dc2626;
-    border-color: #fecaca;
-    background: #fef2f2;
+    color: var(--accent-red);
+    border-color: var(--accent-red)40;
+    background: var(--accent-red)12;
 }
 
 .nt-chip.priority-low {

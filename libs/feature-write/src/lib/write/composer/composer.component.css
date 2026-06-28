@@ -1434,7 +1434,7 @@
 }
 
 .status-badge.status-draft {
-    background: #3b82f6;
+    background: var(--accent-blue);
     color: #fff;
 }
 
@@ -3352,19 +3352,19 @@
 }
 
 .status-dot-empty {
-    background: #6b7280;
+    background: var(--text-secondary);
 }
 
 .status-dot-draft {
-    background: #3b82f6;
+    background: var(--accent-blue);
 }
 
 .status-dot-editing {
-    background: #f59e0b;
+    background: var(--accent-yellow);
 }
 
 .status-dot-done {
-    background: #16a34a;
+    background: var(--accent-green);
 }
 
 /* Inline Rename Input */
@@ -3868,8 +3868,8 @@
 }
 
 .ne-modal-btn.delete:hover {
-    background: #ff2222;
-    box-shadow: 0 4px 8px rgba(255, 68, 68, 0.3);
+    background: var(--accent-red);
+    box-shadow: 0 4px 8px var(--accent-red)4d;
 }
 
 .ne-modal-input-wrapper {
@@ -5403,7 +5403,7 @@
   font-size: 10px;
   color: #fff;
   font-weight: 600;
-  background: #16a34a;
+  background: var(--accent-green);
   padding: 2px 7px;
   border-radius: 10px;
   letter-spacing: 0.03em;

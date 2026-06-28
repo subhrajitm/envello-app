@@ -1134,8 +1134,8 @@ li[data-type="taskItem"] input[type="checkbox"] {
 }
 
 ::ng-deep .dn-editor-text .ProseMirror pre {
-    background: #1e1e1e;
-    color: #e0e0e0;
+    background: var(--bg-subtle);
+    color: var(--text-primary);
     font-family: var(--font-mono);
     padding: 1rem;
     border-radius: 8px;
