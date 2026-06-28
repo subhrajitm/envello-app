@@ -37,10 +37,10 @@
 
     <!-- Toolbar -->
     <div class="vt-toolbar">
-      <div class="vt-toolbar-search">
-        <span class="material-symbols-outlined vt-toolbar-search-icon">search</span>
+      <div class="vt-toolbar-search toolbar-search-wrap">
+        <span class="material-symbols-outlined vt-toolbar-search-icon toolbar-search-icon">search</span>
         <input
-          class="vt-toolbar-search-input"
+          class="vt-toolbar-search-input toolbar-search-input"
           type="text"
           placeholder="Search credentials…"
           [ngModel]="searchQuery()"
@@ -48,7 +48,7 @@
       </div>
       <div class="vt-toolbar-right">
         @if (hasActiveFilters()) {
-          <div class="vt-filter-chip">
+          <div class="vt-filter-chip filter-chip">
             <span>Filtered</span>
             <button (click)="clearFilters()">
               <span class="material-symbols-outlined">close</span>
@@ -57,7 +57,7 @@
         }
         <div class="vt-tb-divider"></div>
         <button
-          class="vt-ai-btn"
+          class="vt-ai-btn btn-ai-toggle"
           [class.active]="showAssistant()"
           title="AI Assistant"
           (click)="toggleAssistant()">
@@ -65,7 +65,7 @@
           AI
         </button>
         <div class="vt-tb-divider"></div>
-        <button class="vt-add-btn" (click)="openAddForm()">
+        <button class="vt-add-btn btn-add-primary" (click)="openAddForm()">
           <span class="material-symbols-outlined">add</span>
           New Credential
         </button>

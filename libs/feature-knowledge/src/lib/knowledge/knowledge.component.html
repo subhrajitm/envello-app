@@ -54,13 +54,13 @@
     <!-- Toolbar — always visible -->
     <div class="rs-toolbar">
       @if (viewMode() === 'sources' || viewMode() === 'files') {
-        <div class="rs-search-wrap">
-          <span class="material-symbols-outlined rs-search-icon">search</span>
-          <input class="rs-search-input" type="text"
+        <div class="rs-search-wrap toolbar-search-wrap">
+          <span class="material-symbols-outlined rs-search-icon toolbar-search-icon">search</span>
+          <input class="rs-search-input toolbar-search-input" type="text"
             [placeholder]="viewMode() === 'files' ? 'Search files…' : 'Search sources…'"
             [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
           @if (searchQuery()) {
-            <button class="rs-search-clear" (click)="searchQuery.set('')">
+            <button class="rs-search-clear toolbar-search-clear" (click)="searchQuery.set('')">
               <span class="material-symbols-outlined">close</span>
             </button>
           }
@@ -92,19 +92,19 @@
         </button>
         <div class="rs-tb-divider"></div>
         @if (viewMode() === 'summaries' && selectedCollection()) {
-          <button class="rs-add-btn" (click)="openSummaryModal()">
+          <button class="rs-add-btn btn-add-primary" (click)="openSummaryModal()">
             <span class="material-symbols-outlined">add</span>
             New Summary
           </button>
         } @else if (viewMode() === 'files') {
-          <button class="rs-add-btn" (click)="openAddModal()">
+          <button class="rs-add-btn btn-add-primary" (click)="openAddModal()">
             <span class="material-symbols-outlined">add</span>
-            Add
+            New File
           </button>
         } @else {
-          <button class="rs-add-btn" (click)="openAddModal()">
+          <button class="rs-add-btn btn-add-primary" (click)="openAddModal()">
             <span class="material-symbols-outlined">add</span>
-            Add
+            New Source
           </button>
         }
       </div>

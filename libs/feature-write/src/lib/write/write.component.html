@@ -47,12 +47,12 @@
 
     <!-- Toolbar -->
     <div class="wr-toolbar">
-      <div class="wr-search-wrap">
-        <span class="material-symbols-outlined wr-search-icon">search</span>
-        <input class="wr-search-input" type="text" placeholder="Search writing…"
+      <div class="wr-search-wrap toolbar-search-wrap">
+        <span class="material-symbols-outlined wr-search-icon toolbar-search-icon">search</span>
+        <input class="wr-search-input toolbar-search-input" type="text" placeholder="Search writing…"
           [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
         @if (searchQuery()) {
-          <button class="wr-search-clear" (click)="searchQuery.set('')">
+          <button class="wr-search-clear toolbar-search-clear" (click)="searchQuery.set('')">
             <span class="material-symbols-outlined">close</span>
           </button>
         }
@@ -66,11 +66,11 @@
         <div class="wr-tb-divider"></div>
 
         <!-- View toggle -->
-        <button class="wr-view-btn" [class.wr-view-btn--active]="viewMode() === 'LIST'"
+        <button class="wr-view-btn btn-view-mode" [class.wr-view-btn--active]="viewMode() === 'LIST'" [class.active]="viewMode() === 'LIST'"
           (click)="viewMode.set('LIST')" title="List view">
           <span class="material-symbols-outlined">format_list_bulleted</span>
         </button>
-        <button class="wr-view-btn" [class.wr-view-btn--active]="viewMode() === 'GRID'"
+        <button class="wr-view-btn btn-view-mode" [class.wr-view-btn--active]="viewMode() === 'GRID'" [class.active]="viewMode() === 'GRID'"
           (click)="viewMode.set('GRID')" title="Grid view">
           <span class="material-symbols-outlined">grid_view</span>
         </button>
@@ -110,7 +110,7 @@
           AI
         </button>
         <div class="wr-tb-divider"></div>
-        <button class="wr-add-btn" (click)="openAddModal()">
+        <button class="wr-add-btn btn-add-primary" (click)="openAddModal()">
           <span class="material-symbols-outlined">add</span>
           New Writing
         </button>

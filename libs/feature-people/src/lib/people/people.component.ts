@@ -51,6 +51,11 @@ export class PeopleComponent {
   editTagInput  = signal('');
   editTags      = signal<string[]>([]);
 
+  // ── Bulk selection ──────────────────────────────────────────────────────────
+  selectedPeople  = signal<Set<string>>(new Set());
+  bulkActionMode  = computed(() => this.selectedPeople().size > 0);
+  bulkDeleteModalOpen = signal(false);
+
   // ── Delete ──────────────────────────────────────────────────────────────────
   deleteTarget  = signal<Person | null>(null);
 
@@ -125,8 +130,9 @@ export class PeopleComponent {
   ];
 
   readonly tableActions: EnvTableAction[] = [
-    { key: 'view',   label: 'View profile', icon: 'person',  bulk: false },
-    { key: 'delete', label: 'Delete',       icon: 'delete',  danger: true, bulk: false },
+    { key: 'view',        label: 'View profile', icon: 'person', bulk: false },
+    { key: 'delete',      label: 'Delete',       icon: 'delete', danger: true, bulk: false },
+    { key: 'bulkDelete',  label: 'Delete',       icon: 'delete', danger: true, bulkOnly: true },
   ];
 
   readonly tableRows = computed(() =>
@@ -156,6 +162,28 @@ export class PeopleComponent {
       const person = this.store.people().find(p => p.id === id);
       if (person) this.deleteTarget.set(person);
     }
+  }
+
+  handleBulkAction(event: { selectedIds: Set<unknown>; actionKey: string }) {
+    const ids = event.selectedIds as Set<string>;
+    this.selectedPeople.set(ids);
+    if (event.actionKey === 'bulkDelete') {
+      this.bulkDeleteModalOpen.set(true);
+    }
+  }
+
+  confirmBulkDelete() {
+    this.selectedPeople().forEach(id => this.store.deletePerson(id));
+    this.selectedPeople.set(new Set());
+    this.bulkDeleteModalOpen.set(false);
+  }
+
+  cancelBulkDelete() {
+    this.bulkDeleteModalOpen.set(false);
+  }
+
+  clearBulkSelection() {
+    this.selectedPeople.set(new Set());
   }
 
   openProfile(id: string) {

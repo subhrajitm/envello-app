@@ -269,6 +269,198 @@ h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading, var(--font-sans));
 }
 
+/* ── Shared feature toolbar ── */
+.feature-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 44px;
+    padding: 0 16px;
+    gap: 12px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.feature-toolbar-left  { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.feature-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.feature-toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-subtle);
+    flex-shrink: 0;
+}
+
+/* ── Shared toolbar search ── */
+.toolbar-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.toolbar-search-icon {
+    position: absolute;
+    left: 8px;
+    font-size: 16px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+}
+
+.toolbar-search-input {
+    height: 28px;
+    padding: 0 28px 0 28px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    outline: none;
+    width: 200px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.toolbar-search-input:focus {
+    border-color: var(--accent-primary);
+    background: var(--bg-panel);
+}
+
+.toolbar-search-input::placeholder { color: var(--text-tertiary); }
+
+.toolbar-search-clear {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    padding: 0;
+}
+
+.toolbar-search-clear:hover { color: var(--text-primary); }
+.toolbar-search-clear .material-symbols-outlined { font-size: 14px; }
+
+/* ── Shared view mode toggle ── */
+.btn-view-mode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+}
+
+.btn-view-mode:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.btn-view-mode.active {
+    background: var(--bg-active);
+    border-color: var(--border-main);
+    color: var(--text-primary);
+}
+
+.btn-view-mode .material-symbols-outlined { font-size: 16px; }
+
+/* ── Shared view mode group wrapper ── */
+.view-mode-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 2px;
+}
+
+/* ── Shared filter chip ── */
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent-primary-dim);
+    color: var(--accent-primary);
+    border-radius: 12px;
+    padding: 2px 6px 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    flex-shrink: 0;
+}
+
+.filter-chip button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.filter-chip .material-symbols-outlined { font-size: 13px; }
+
+.filter-clear {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    padding: 2px 4px;
+    transition: color 0.12s;
+}
+
+.filter-clear:hover { color: var(--text-primary); }
+
+/* ── Shared bulk actions bar ── */
+.bulk-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.bulk-selection-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    font-family: var(--font-sans);
+    white-space: nowrap;
+}
+
+/* ── Shared primary add button ── */
+.btn-add-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 12px;
+    background: var(--accent-primary);
+    color: var(--accent-primary-text, #000);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+}
+
+.btn-add-primary:hover { opacity: 0.88; }
+.btn-add-primary .material-symbols-outlined { font-size: 16px; }
+
 /* ── Shared AI toggle button — used across all feature toolbars ── */
 .btn-ai-toggle {
     display: inline-flex;

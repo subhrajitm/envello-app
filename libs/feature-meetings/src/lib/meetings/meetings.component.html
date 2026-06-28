@@ -14,22 +14,22 @@
 
     <!-- Toolbar -->
     <div class="mt-toolbar">
-      <div class="mt-search-wrap">
-        <span class="material-symbols-outlined mt-search-icon">search</span>
-        <input type="text" class="mt-search" placeholder="Search meetings..."
+      <div class="mt-search-wrap toolbar-search-wrap">
+        <span class="material-symbols-outlined mt-search-icon toolbar-search-icon">search</span>
+        <input type="text" class="mt-search toolbar-search-input" placeholder="Search meetings…"
           [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
         @if (searchQuery()) {
-        <button class="mt-search-clear" (click)="searchQuery.set('')" title="Clear">
+        <button class="mt-search-clear toolbar-search-clear" (click)="searchQuery.set('')" title="Clear">
           <span class="material-symbols-outlined">close</span>
         </button>
         }
       </div>
       <div class="mt-toolbar-right">
-        <div class="mt-view-toggle">
-          <button class="mt-vt-btn" [class.active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')" title="Calendar">
+        <div class="mt-view-toggle view-mode-group">
+          <button class="mt-vt-btn btn-view-mode" [class.active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')" title="Calendar">
             <span class="material-symbols-outlined">calendar_month</span>
           </button>
-          <button class="mt-vt-btn" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table">
+          <button class="mt-vt-btn btn-view-mode" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table">
             <span class="material-symbols-outlined">table_rows</span>
           </button>
         </div>
@@ -45,7 +45,7 @@
           <span>AI</span>
         </button>
         <div class="mt-tb-divider"></div>
-        <button class="mt-add-btn" (click)="openCreateModal()">
+        <button class="mt-add-btn btn-add-primary" (click)="openCreateModal()">
           <span class="material-symbols-outlined">add</span>
           New Meeting
         </button>
