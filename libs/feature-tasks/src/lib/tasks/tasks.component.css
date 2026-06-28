@@ -375,19 +375,19 @@
 }
 
 .kpi-icon.blue {
-    background: #3b82f6;
+    background: var(--accent-blue);
 }
 
 .kpi-icon.green {
-    background: #10b981;
+    background: var(--accent-green);
 }
 
 .kpi-icon.purple {
-    background: #8b5cf6;
+    background: var(--accent-purple);
 }
 
 .kpi-icon.orange {
-    background: #f59e0b;
+    background: var(--accent-yellow);
 }
 
 .kpi-content {
@@ -477,10 +477,10 @@
     color: white;
 }
 
-.kpi-card-icon.blue  { background: #3b82f6; }
-.kpi-card-icon.green { background: #10b981; }
-.kpi-card-icon.purple{ background: #8b5cf6; }
-.kpi-card-icon.orange{ background: #f59e0b; }
+.kpi-card-icon.blue  { background: var(--accent-blue); }
+.kpi-card-icon.green { background: var(--accent-green); }
+.kpi-card-icon.purple{ background: var(--accent-purple); }
+.kpi-card-icon.orange{ background: var(--accent-yellow); }
 
 .kpi-card-meta {
     flex: 1;
@@ -520,10 +520,10 @@
     line-height: 1;
 }
 
-.green-text  { color: #10b981; }
-.blue-text   { color: #3b82f6; }
-.purple-text { color: #8b5cf6; }
-.orange-text { color: #f59e0b; }
+.green-text  { color: var(--accent-green); }
+.blue-text   { color: var(--accent-blue); }
+.purple-text { color: var(--accent-purple); }
+.orange-text { color: var(--accent-yellow); }
 
 /* Animated progress bar */
 .kpi-progress-track {
@@ -540,10 +540,10 @@
     min-width: 2px;
 }
 
-.kpi-progress-fill.green  { background: #10b981; }
-.kpi-progress-fill.blue   { background: #3b82f6; }
-.kpi-progress-fill.purple { background: #8b5cf6; }
-.kpi-progress-fill.orange { background: #f59e0b; }
+.kpi-progress-fill.green  { background: var(--accent-green); }
+.kpi-progress-fill.blue   { background: var(--accent-blue); }
+.kpi-progress-fill.purple { background: var(--accent-purple); }
+.kpi-progress-fill.orange { background: var(--accent-yellow); }
 
 /* Metrics Grid - COMPACT (kept for backward compatibility) */
 .tasks-metrics-grid {
@@ -594,22 +594,22 @@
 
 .metric-icon-wrapper.blue {
     background: rgba(59, 130, 246, 0.1);
-    color: #60a5fa;
+    color: var(--accent-blue);
 }
 
 .metric-icon-wrapper.green {
     background: rgba(34, 197, 94, 0.1);
-    color: #4ade80;
+    color: var(--accent-green);
 }
 
 .metric-icon-wrapper.purple {
     background: rgba(168, 85, 247, 0.1);
-    color: #c084fc;
+    color: var(--accent-purple);
 }
 
 .metric-icon-wrapper.orange {
     background: rgba(249, 115, 22, 0.1);
-    color: #fb923c;
+    color: var(--accent-orange);
 }
 
 .metric-content {
@@ -665,7 +665,7 @@
 
 .metric-progress-fill {
     height: 100%;
-    background: #4ade80;
+    background: var(--accent-green);
     border-radius: 0 2px 2px 0;
     opacity: 0.8;
 }
@@ -835,7 +835,7 @@
 }
 
 .metadata-item.overdue {
-    color: var(--color-danger, #ef4444);
+    color: var(--color-danger, var(--accent-red));
     font-weight: 500;
 }
 
@@ -1291,23 +1291,23 @@
 }
 
 .status-badge.todo {
-    background: color-mix(in srgb, #94a3b8 15%, transparent);
-    color: #64748b;
+    background: color-mix(in srgb, var(--text-secondary) 15%, transparent);
+    color: var(--text-secondary);
 }
 
 .status-badge.in_progress {
-    background: color-mix(in srgb, #3b82f6 15%, transparent);
-    color: #3b82f6;
+    background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
+    color: var(--accent-blue);
 }
 
 .status-badge.completed {
-    background: color-mix(in srgb, #22c55e 15%, transparent);
-    color: #16a34a;
+    background: color-mix(in srgb, var(--accent-green) 15%, transparent);
+    color: var(--accent-green);
 }
 
 .status-badge.blocked {
-    background: color-mix(in srgb, #ef4444 15%, transparent);
-    color: #ef4444;
+    background: color-mix(in srgb, var(--accent-red) 15%, transparent);
+    color: var(--accent-red);
 }
 
 /* Due Date */
@@ -1400,18 +1400,18 @@
 
 /* Priority-colored left accent + subtle tint */
 .thumb-card.thumb-high {
-    border-left-color: #ef4444;
-    background: color-mix(in srgb, #ef4444 4%, var(--bg-panel));
+    border-left-color: var(--accent-red);
+    background: color-mix(in srgb, var(--accent-red) 4%, var(--bg-panel));
 }
 
 .thumb-card.thumb-medium {
-    border-left-color: #f59e0b;
-    background: color-mix(in srgb, #f59e0b 4%, var(--bg-panel));
+    border-left-color: var(--accent-yellow);
+    background: color-mix(in srgb, var(--accent-yellow) 4%, var(--bg-panel));
 }
 
 .thumb-card.thumb-low {
-    border-left-color: #6366f1;
-    background: color-mix(in srgb, #6366f1 4%, var(--bg-panel));
+    border-left-color: var(--accent-indigo);
+    background: color-mix(in srgb, var(--accent-indigo) 4%, var(--bg-panel));
 }
 
 .thumb-card-completed {
@@ -1468,18 +1468,18 @@
 }
 
 .thumb-priority.p1 {
-    background: color-mix(in srgb, #ef4444 15%, transparent);
-    color: #ef4444;
+    background: color-mix(in srgb, var(--accent-red) 15%, transparent);
+    color: var(--accent-red);
 }
 
 .thumb-priority.p2 {
-    background: color-mix(in srgb, #f59e0b 15%, transparent);
-    color: #d97706;
+    background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
+    color: var(--accent-yellow);
 }
 
 .thumb-priority.p3 {
-    background: color-mix(in srgb, #6366f1 15%, transparent);
-    color: #6366f1;
+    background: color-mix(in srgb, var(--accent-indigo) 15%, transparent);
+    color: var(--accent-indigo);
 }
 
 .thumb-hours {
@@ -1788,9 +1788,9 @@
 }
 
 .task-action-chip.priority-medium {
-    background: color-mix(in srgb, #f59e0b 12%, transparent);
-    border-color: color-mix(in srgb, #f59e0b 40%, transparent);
-    color: #f59e0b;
+    background: color-mix(in srgb, var(--accent-yellow) 12%, transparent);
+    border-color: color-mix(in srgb, var(--accent-yellow) 40%, transparent);
+    color: var(--accent-yellow);
 }
 
 /* Hours estimate chip */
@@ -2214,7 +2214,7 @@
 }
 
 .new-task-reminder-chip button:hover {
-    color: var(--color-danger, #ef4444);
+    color: var(--color-danger, var(--accent-red));
 }
 
 .new-task-reminder-chip button .material-symbols-outlined {
@@ -4309,17 +4309,17 @@
 
 .timeline-priority.p1 {
     background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    color: var(--accent-red);
 }
 
 .timeline-priority.p2 {
     background: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
+    color: var(--accent-yellow);
 }
 
 .timeline-priority.p3 {
     background: rgba(156, 163, 175, 0.1);
-    color: #9ca3af;
+    color: var(--text-secondary);
 }
 
 .timeline-duration {
@@ -4400,7 +4400,7 @@
 }
 
 .timeline-bar-high {
-    background: #ef4444;
+    background: var(--accent-red);
 }
 
 .timeline-bar-blocked {
@@ -4896,7 +4896,7 @@
 
 /* Voice Input */
 .btn-icon-only.recording {
-    background: #ef4444;
+    background: var(--accent-red);
     color: white;
     animation: pulse-recording 1.5s ease-in-out infinite;
 }
@@ -4932,7 +4932,7 @@
 }
 
 .quick-add-voice.recording {
-    background: #ef4444;
+    background: var(--accent-red);
     color: white;
     animation: pulse-recording 1.5s ease-in-out infinite;
 }
@@ -4947,7 +4947,7 @@
     border-radius: 6px;
     margin-top: 8px;
     font-size: 12px;
-    color: #ef4444;
+    color: var(--accent-red);
     font-weight: 500;
 }
 
@@ -5080,7 +5080,7 @@
     gap: 12px;
     padding: 12px 16px;
     background: var(--bg-panel);
-    border: 1px solid #ef4444;
+    border: 1px solid var(--accent-red);
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     min-width: 300px;
@@ -5089,7 +5089,7 @@
 
 .error-icon {
     font-size: 20px;
-    color: #ef4444;
+    color: var(--accent-red);
     flex-shrink: 0;
 }
 
@@ -5242,22 +5242,6 @@ textarea:focus-visible {
 
 .task-modal-description-preview a:hover {
     text-decoration: none;
-}
-
-/* Theme Toggle */
-[data-theme="dark"] {
-    --bg-app: #1a1a1a;
-    --bg-panel: #242424;
-    --bg-hover: #2a2a2a;
-    --bg-active: #333333;
-    --text-primary: #ffffff;
-    --text-secondary: #b0b0b0;
-    --text-tertiary: #808080;
-    --text-disabled: #606060;
-    --border-subtle: #333333;
-    --border-highlight: #444444;
-    --accent-primary: #3b82f6;
-    --accent-primary-text: #ffffff;
 }
 
 /* Skeleton Loaders */
@@ -5468,7 +5452,7 @@ textarea:focus-visible {
 }
 
 .task-card-minimal:hover .task-min-title {
-    color: #ffd700;
+    color: var(--accent-primary);
 }
 
 .task-card-minimal.checked .task-min-title {
@@ -5529,7 +5513,7 @@ textarea:focus-visible {
 }
 
 .btn-add-entry:hover {
-    border-color: #ffd700;
+    border-color: var(--accent-primary);
     color: var(--text-primary);
 }
 
@@ -5830,8 +5814,8 @@ textarea:focus-visible {
 }
 
 .td-subtask-delete:hover {
-    color: var(--color-danger, #ef4444);
-    background: color-mix(in srgb, var(--color-danger, #ef4444) 8%, transparent);
+    color: var(--color-danger, var(--accent-red));
+    background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 8%, transparent);
 }
 
 .td-subtask-item:hover .td-subtask-delete,
@@ -5951,11 +5935,11 @@ textarea:focus-visible {
     background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
 }
 .td-subtask-date-chip--overdue {
-    background: color-mix(in srgb, var(--color-danger, #ef4444) 10%, transparent);
-    color: var(--color-danger, #ef4444);
+    background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 10%, transparent);
+    color: var(--color-danger, var(--accent-red));
 }
 .td-subtask-date-chip--overdue:hover {
-    background: color-mix(in srgb, var(--color-danger, #ef4444) 18%, transparent);
+    background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 18%, transparent);
 }
 
 .td-subtask-date-popover {
@@ -6001,8 +5985,8 @@ textarea:focus-visible {
     transition: color 0.15s, background 0.15s;
 }
 .td-subtask-date-clear:hover {
-    color: var(--color-danger, #ef4444);
-    background: color-mix(in srgb, var(--color-danger, #ef4444) 8%, transparent);
+    color: var(--color-danger, var(--accent-red));
+    background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 8%, transparent);
 }
 .td-add-subtask-row {
     display: flex;
@@ -6017,7 +6001,7 @@ textarea:focus-visible {
 }
 .td-add-subtask-icon {
     font-size: 16px;
-    color: var(--color-danger, #ef4444);
+    color: var(--color-danger, var(--accent-red));
 }
 .td-add-subtask-input {
     flex: 1;
@@ -6133,10 +6117,10 @@ textarea:focus-visible {
 .td-prop-date-clear:hover { color: var(--text-primary); }
 .td-prop-date-clear .material-symbols-outlined { font-size: 14px; }
 .td-priority-high {
-    color: var(--color-danger, #ef4444) !important;
+    color: var(--color-danger, var(--accent-red)) !important;
 }
 .td-priority-high .td-prop-icon {
-    color: var(--color-danger, #ef4444);
+    color: var(--color-danger, var(--accent-red));
 }
 .td-priority-low {
     color: var(--text-tertiary) !important;
@@ -6290,7 +6274,7 @@ textarea:focus-visible {
     transition: color 0.1s;
 }
 .td-reminder-remove:hover {
-    color: var(--color-danger, #ef4444);
+    color: var(--color-danger, var(--accent-red));
 }
 .td-reminder-remove .material-symbols-outlined {
     font-size: 12px;
@@ -6361,9 +6345,9 @@ textarea:focus-visible {
     transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 .td-footer-delete:hover {
-    color: var(--color-danger, #ef4444);
-    border-color: var(--color-danger, #ef4444);
-    background: color-mix(in srgb, var(--color-danger, #ef4444) 6%, transparent);
+    color: var(--color-danger, var(--accent-red));
+    border-color: var(--color-danger, var(--accent-red));
+    background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 6%, transparent);
 }
 .td-footer-delete .material-symbols-outlined {
     font-size: 16px;
@@ -6482,28 +6466,28 @@ textarea:focus-visible {
 }
 
 .task-details-complete-btn:hover {
-    background: color-mix(in srgb, #10b981 8%, transparent);
-    border-color: color-mix(in srgb, #10b981 40%, transparent);
-    color: #10b981;
+    background: color-mix(in srgb, var(--accent-green) 8%, transparent);
+    border-color: color-mix(in srgb, var(--accent-green) 40%, transparent);
+    color: var(--accent-green);
 }
 
 .task-details-complete-btn.is-completed {
-    color: #3b82f6;
-    border-color: color-mix(in srgb, #3b82f6 30%, transparent);
-    background: color-mix(in srgb, #3b82f6 8%, transparent);
+    color: var(--accent-blue);
+    border-color: color-mix(in srgb, var(--accent-blue) 30%, transparent);
+    background: color-mix(in srgb, var(--accent-blue) 8%, transparent);
 }
 
 .task-details-delete-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: var(--accent-red, #ef4444);
-    border-color: color-mix(in srgb, var(--accent-red, #ef4444) 30%, transparent);
+    color: var(--accent-red, var(--accent-red));
+    border-color: color-mix(in srgb, var(--accent-red, var(--accent-red)) 30%, transparent);
 }
 
 .task-details-delete-btn:hover {
-    background: color-mix(in srgb, var(--accent-red, #ef4444) 8%, transparent);
-    border-color: color-mix(in srgb, var(--accent-red, #ef4444) 50%, transparent);
+    background: color-mix(in srgb, var(--accent-red, var(--accent-red)) 8%, transparent);
+    border-color: color-mix(in srgb, var(--accent-red, var(--accent-red)) 50%, transparent);
 }
 
 .new-task-subtask-count {
@@ -6669,12 +6653,12 @@ textarea:focus-visible {
     cursor: pointer;
 }
 
-.metadata-item-compact.priority-high { color: #ef4444; border-color: #ef444430; background: #ef444410; }
-.metadata-item-compact.priority-medium { color: #f59e0b; border-color: #f59e0b30; background: #f59e0b10; }
+.metadata-item-compact.priority-high { color: var(--accent-red); border-color: var(--accent-red)30; background: var(--accent-red)10; }
+.metadata-item-compact.priority-medium { color: var(--accent-yellow); border-color: var(--accent-yellow)30; background: var(--accent-yellow)10; }
 .metadata-item-compact.priority-low { color: #6b7280; border-color: #6b728030; background: #6b728010; }
 
-.metadata-item-compact.status-active { color: #10b981; border-color: #10b98130; background: #10b98110; }
-.metadata-item-compact.status-completed { color: #3b82f6; border-color: #3b82f630; background: #3b82f610; }
+.metadata-item-compact.status-active { color: var(--accent-green); border-color: var(--accent-green)30; background: var(--accent-green)10; }
+.metadata-item-compact.status-completed { color: var(--accent-blue); border-color: var(--accent-blue)30; background: var(--accent-blue)10; }
 
 /* Sections */
 .task-details-section {
@@ -6949,8 +6933,8 @@ textarea:focus-visible {
 }
 
 .dependency-item-compact.blocked {
-    border-color: #ef444430;
-    background: #ef444410;
+    border-color: var(--accent-red)30;
+    background: var(--accent-red)10;
 }
 
 .dependency-icon {
@@ -6974,8 +6958,8 @@ textarea:focus-visible {
     font-size: 10px;
     font-weight: 600;
     padding: 2px 6px;
-    background: #ef444420;
-    color: #ef4444;
+    background: var(--accent-red)20;
+    color: var(--accent-red);
     border-radius: 10px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -7121,9 +7105,9 @@ textarea:focus-visible {
 }
 
 .btn-danger-compact {
-    background: #ef4444;
+    background: var(--accent-red);
     color: white;
-    border-color: #ef4444;
+    border-color: var(--accent-red);
 }
 
 .btn-danger-compact:hover {
@@ -7269,24 +7253,24 @@ textarea:focus-visible {
 }
 
 .task-priority-dot.dot-high {
-    background: #ef4444;
+    background: var(--accent-red);
 }
 
 .task-priority-dot.dot-medium {
-    background: #f59e0b;
+    background: var(--accent-yellow);
 }
 
 .task-priority-dot.dot-low {
-    background: #6366f1;
+    background: var(--accent-indigo);
 }
 
 /* Priority Cycle Button States */
 .icon-btn.icon-btn--high {
-    color: #ef4444;
+    color: var(--accent-red);
 }
 
 .icon-btn.icon-btn--medium {
-    color: #f59e0b;
+    color: var(--accent-yellow);
 }
 
 /* ─── Date Picker Popup ─── */
@@ -7823,9 +7807,9 @@ textarea:focus-visible {
    Issue 9 – Status chip
 ───────────────────────────────────────────────── */
 .task-action-chip.status-pending {
-    background: color-mix(in srgb, #8b5cf6 12%, transparent);
-    border-color: color-mix(in srgb, #8b5cf6 40%, transparent);
-    color: #8b5cf6;
+    background: color-mix(in srgb, var(--accent-purple) 12%, transparent);
+    border-color: color-mix(in srgb, var(--accent-purple) 40%, transparent);
+    color: var(--accent-purple);
 }
 
 /* ─────────────────────────────────────────────────
@@ -7866,8 +7850,8 @@ textarea:focus-visible {
     flex-shrink: 0;
 }
 
-.priority-badge-high   { background: #ef444420; color: #ef4444; }
-.priority-badge-medium { background: #f59e0b20; color: #f59e0b; }
+.priority-badge-high   { background: var(--accent-red)20; color: var(--accent-red); }
+.priority-badge-medium { background: var(--accent-yellow)20; color: var(--accent-yellow); }
 .priority-badge-low    { background: #6b728020; color: #6b7280; }
 
 .subtask-priority-select {

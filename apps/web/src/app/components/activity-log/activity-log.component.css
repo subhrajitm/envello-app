@@ -241,22 +241,22 @@ h1 {
 /* Type colors logic */
 .log-icon-wrapper.entry {
     background: rgba(252, 211, 77, 0.1);
-    color: #fcd34d;
+    color: var(--accent-yellow);
 }
 
 .log-icon-wrapper.sync {
     background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
+    color: var(--accent-blue);
 }
 
 .log-icon-wrapper.ai {
     background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
+    color: var(--accent-green);
 }
 
 .log-icon-wrapper.system {
     background: rgba(168, 85, 247, 0.1);
-    color: #a855f7;
+    color: var(--accent-purple);
 }
 
 .log-action-text {
@@ -296,7 +296,7 @@ h1 {
 
 .status-badge.success {
     background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
+    color: var(--accent-green);
     border: 1px solid rgba(34, 197, 94, 0.2);
 }
 

@@ -269,8 +269,8 @@
 }
 
 .kbd {
-  background: #444;
-  color: #aaa;
+  background: var(--bg-active);
+  color: var(--text-secondary);
 }
 
 .btn-ghost .kbd-light {
@@ -471,8 +471,8 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #a8f0d8;
-  color: #0b7a5a;
+  background: rgba(58, 186, 112, 0.2);
+  color: var(--accent-green);
   font-size: 9px;
   font-weight: 700;
   display: flex;
@@ -879,7 +879,7 @@
 .e-circle {
   width: 10px;
   height: 10px;
-  background: #ccc;
+  background: var(--border-highlight);
   border-radius: 50%;
   border: 2px solid var(--bg-page);
   margin-left: -4px;
@@ -887,11 +887,11 @@
 
 .e-circle:first-child {
   margin-left: 0;
-  background: #999;
+  background: var(--text-tertiary);
 }
 
 .e-circle:last-child {
-  background: #444;
+  background: var(--bg-active);
 }
 
 .entity-count {

@@ -100,13 +100,13 @@
 
 .footer-sync-btn--error {
     border-color: rgba(220, 38, 38, 0.4);
-    color: #dc2626;
+    color: var(--accent-red);
     background: rgba(220, 38, 38, 0.06);
 }
 
 .footer-sync-btn--error:hover:not(:disabled) {
     background: rgba(220, 38, 38, 0.1);
-    border-color: #dc2626;
+    border-color: var(--accent-red);
 }
 
 .footer-sync-btn--compact {

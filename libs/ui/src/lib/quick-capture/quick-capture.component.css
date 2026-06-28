@@ -97,7 +97,7 @@
 
 .qc-success-icon {
   font-size: 20px;
-  color: #34d399;
+  color: var(--accent-green);
   flex-shrink: 0;
   animation: qc-pop .2s ease-out;
 }

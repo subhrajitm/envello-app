@@ -225,8 +225,8 @@
 .ppl-card-sub  { font-size: 11px; color: var(--text-tertiary); margin: 2px 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppl-card-meta { display: flex; flex-wrap: wrap; gap: 3px; }
 .ppl-chip { font-size: 10px; color: var(--text-secondary); background: var(--bg-hover); border-radius: 4px; padding: 2px 5px; }
-.ppl-chip--warn { color: #fbbf24; background: color-mix(in srgb, #fbbf24 12%, transparent); }
-.ppl-chip--info { color: #60a5fa; background: color-mix(in srgb, #60a5fa 12%, transparent); }
+.ppl-chip--warn { color: var(--accent-yellow); background: color-mix(in srgb, var(--accent-yellow) 12%, transparent); }
+.ppl-chip--info { color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 12%, transparent); }
 .ppl-card-arrow { font-size: 18px; color: var(--text-tertiary); flex-shrink: 0; }
 
 /* ═══════════════════════════════════════════════════════
@@ -277,7 +277,7 @@
 .ppl-insight-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #6d28d9, #4f46e5);
+  background: var(--gradient-bird);
   color: #fff; border: none; border-radius: 7px;
   font-size: 12px; font-weight: 500; cursor: pointer;
   margin-bottom: 10px;
@@ -287,8 +287,8 @@
 .ppl-insight-text {
   font-size: 13px; color: var(--text-secondary); line-height: 1.6;
   padding: 10px 12px;
-  background: color-mix(in srgb, #6d28d9 6%, var(--bg-panel));
-  border-left: 3px solid #6d28d9;
+  background: var(--accent-primary-dim);
+  border-left: 3px solid var(--accent-primary);
   border-radius: 0 7px 7px 0;
 }
 
@@ -303,9 +303,9 @@
 .ppl-tl-preview { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 .ppl-tl-date    { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
 .ppl-tl-badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
-.ppl-tl-badge--meeting     { background: color-mix(in srgb, #60a5fa 15%, transparent); color: #60a5fa; }
-.ppl-tl-badge--task        { background: color-mix(in srgb, #fbbf24 15%, transparent); color: #fbbf24; }
-.ppl-tl-badge--note        { background: color-mix(in srgb, #34d399 15%, transparent); color: #34d399; }
+.ppl-tl-badge--meeting     { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
+.ppl-tl-badge--task        { background: color-mix(in srgb, var(--accent-yellow) 15%, transparent); color: var(--accent-yellow); }
+.ppl-tl-badge--note        { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
 .ppl-tl-badge--transaction { background: color-mix(in srgb, #f87171 15%, transparent); color: #f87171; }
 
 /* ═══════════════════════════════════════════════════════
@@ -405,7 +405,7 @@
 .ppl-import-success {
   display: flex; align-items: center; gap: 10px;
   padding: 32px 20px; justify-content: center;
-  font-size: 14px; font-weight: 500; color: #34d399;
+  font-size: 14px; font-weight: 500; color: var(--accent-green);
 }
 .ppl-import-success .material-symbols-outlined { font-size: 26px; }
 

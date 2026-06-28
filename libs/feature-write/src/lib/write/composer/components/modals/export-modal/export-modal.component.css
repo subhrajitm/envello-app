@@ -130,9 +130,9 @@
   vertical-align: middle;
   margin-right: 4px;
 }
-.ne-status-done    { background: #4ade80; }
-.ne-status-editing { background: #60a5fa; }
-.ne-status-draft   { background: #fbbf24; }
+.ne-status-done    { background: var(--accent-green); }
+.ne-status-editing { background: var(--accent-blue); }
+.ne-status-draft   { background: var(--accent-yellow); }
 .ne-status-empty   { background: var(--border-highlight); }
 
 .ne-status-label {

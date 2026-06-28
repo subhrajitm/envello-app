@@ -34,8 +34,8 @@
 }
 
 .badge-high {
-    background: #4d1a1a;
-    color: #f87171;
+    background: rgba(204, 30, 60, 0.15);
+    color: var(--accent-red);
     padding: 2px 6px;
     border-radius: 3px;
     font-size: 9px;
@@ -67,7 +67,7 @@
     height: 16px;
     margin-top: 1px;
     cursor: pointer;
-    accent-color: #ffd700;
+    accent-color: var(--accent-primary);
 }
 
 .task-content {
@@ -111,18 +111,18 @@
 }
 
 .priority-high {
-    background: #4d1a1a;
-    color: #f87171;
+    background: rgba(204, 30, 60, 0.15);
+    color: var(--accent-red);
 }
 
 .priority-med {
-    background: #3d3d1a;
-    color: #fbbf24;
+    background: rgba(240, 192, 0, 0.15);
+    color: var(--accent-yellow);
 }
 
 .priority-low {
-    background: #1a3d3d;
-    color: #60a5fa;
+    background: rgba(28, 88, 216, 0.15);
+    color: var(--accent-blue);
 }
 
 .task-due {

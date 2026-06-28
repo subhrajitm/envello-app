@@ -74,7 +74,7 @@
 }
 
 .profile-card.active-card {
-    border: 2.5px solid #e15512;
+    border: 2.5px solid var(--accent-primary);
 }
 
 .card-top {
@@ -120,7 +120,7 @@
     font-weight: 700;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    color: #e15512;
+    color: var(--accent-primary);
     background: rgba(225, 85, 18, 0.1);
     padding: 2px 8px;
     border-radius: 20px;

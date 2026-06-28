@@ -39,13 +39,13 @@
 }
 
 .metric-change.positive {
-    background: #1a4d1a;
-    color: #4ade80;
+    background: rgba(58, 186, 112, 0.15);
+    color: var(--accent-green);
 }
 
 .metric-change.negative {
-    background: #4d1a1a;
-    color: #f87171;
+    background: rgba(204, 30, 60, 0.15);
+    color: var(--accent-red);
 }
 
 .metric-sub {

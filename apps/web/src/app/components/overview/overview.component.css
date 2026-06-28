@@ -62,17 +62,17 @@
 }
 
 .stat-value.streak-fire {
-    color: #ef4444;
+    color: var(--accent-red);
     /* Red for 100d+ */
 }
 
 .stat-value.streak-gold {
-    color: #f59e0b;
+    color: var(--accent-yellow);
     /* Amber for 30d+ */
 }
 
 .stat-value.streak-active {
-    color: #fcd34d;
+    color: var(--accent-yellow);
     /* Yellow for 7d+ */
 }
 
@@ -126,7 +126,7 @@
     bottom: 12px;
     width: 2px;
     border-radius: 0 2px 2px 0;
-    background: #fcd34d;
+    background: var(--accent-yellow);
 }
 
 .plan-row-top {
@@ -282,15 +282,15 @@
 }
 
 .dot.blue {
-    background: #3b82f6;
+    background: var(--accent-blue);
 }
 
 .dot.purple {
-    background: #a855f7;
+    background: var(--accent-purple);
 }
 
 .dot.yellow {
-    background: #fcd34d;
+    background: var(--accent-yellow);
 }
 
 .cal-nav {
@@ -365,13 +365,13 @@
 }
 
 .day-num.today {
-    color: #fcd34d;
+    color: var(--accent-yellow);
     font-weight: 700;
 }
 
 .today-badge {
-    background: #332800;
-    color: #fcd34d;
+    background: var(--accent-primary-dim);
+    color: var(--accent-yellow);
     font-size: 8px;
     padding: 2px 4px;
     border-radius: 2px;
@@ -457,15 +457,15 @@
 }
 
 .act-dot.entry {
-    background: #fcd34d;
+    background: var(--accent-yellow);
 }
 
 .act-dot.sync {
-    background: #3b82f6;
+    background: var(--accent-blue);
 }
 
 .act-dot.ai {
-    background: #22c55e;
+    background: var(--accent-green);
 }
 
 .act-content {
@@ -519,8 +519,8 @@
 }
 
 .switch-toggle.on {
-    background: #332800;
-    border: 1px solid #665200;
+    background: var(--accent-primary-dim);
+    border: 1px solid var(--accent-primary-dim);
 }
 
 .switch-toggle.on::after {
@@ -531,7 +531,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #fcd34d;
+    background: var(--accent-yellow);
 }
 
 @media (max-width: 1200px) {

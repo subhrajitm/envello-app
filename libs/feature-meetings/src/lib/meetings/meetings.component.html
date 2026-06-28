@@ -961,7 +961,7 @@
           @if (showAutopilotResult() && autopilotService.lastResult()) {
           <div class="mta-autopilot-result">
             <div class="mta-ap-header">
-              <span class="material-symbols-outlined" style="color:#a78bfa">auto_awesome</span>
+              <span class="material-symbols-outlined" style="color:var(--accent-purple)">auto_awesome</span>
               <strong>Autopilot done</strong>
               <button class="mta-ap-close" (click)="dismissAutopilot()">
                 <span class="material-symbols-outlined">close</span>
@@ -969,18 +969,18 @@
             </div>
             <div class="mta-ap-items">
               <div class="mta-ap-item">
-                <span class="material-symbols-outlined mta-ap-icon" style="color:#34d399">edit_note</span>
+                <span class="material-symbols-outlined mta-ap-icon" style="color:var(--accent-green)">edit_note</span>
                 Summary note saved to Notes
               </div>
               @if (autopilotService.lastResult()!.tasks.length > 0) {
               <div class="mta-ap-item">
-                <span class="material-symbols-outlined mta-ap-icon" style="color:#fbbf24">check_circle</span>
+                <span class="material-symbols-outlined mta-ap-icon" style="color:var(--accent-yellow)">check_circle</span>
                 {{ autopilotService.lastResult()!.tasks.length }} task{{ autopilotService.lastResult()!.tasks.length !== 1 ? 's' : '' }} added
               </div>
               }
               @if (autopilotService.lastResult()!.followUpMeeting) {
               <div class="mta-ap-item">
-                <span class="material-symbols-outlined mta-ap-icon" style="color:#60a5fa">calendar_month</span>
+                <span class="material-symbols-outlined mta-ap-icon" style="color:var(--accent-blue)">calendar_month</span>
                 Follow-up meeting scheduled
               </div>
               }

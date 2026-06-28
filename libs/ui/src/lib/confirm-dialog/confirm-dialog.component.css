@@ -50,13 +50,13 @@
 
 .cd-icon--danger {
     background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    color: var(--accent-red);
     border: 1px solid rgba(239, 68, 68, 0.22);
 }
 
 .cd-icon--success {
     background: rgba(34, 197, 94, 0.12);
-    color: #22c55e;
+    color: var(--accent-green);
     border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
@@ -117,14 +117,14 @@
 .cd-confirm .material-symbols-outlined { font-size: 15px; }
 
 .cd-confirm--danger {
-    background: #ef4444;
+    background: var(--accent-red);
     color: white;
 }
-.cd-confirm--danger:hover { background: #dc2626; }
+.cd-confirm--danger:hover { background: var(--accent-red); }
 
 .cd-confirm--success {
     background: rgba(34, 197, 94, 0.12);
-    color: #22c55e;
+    color: var(--accent-green);
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 .cd-confirm--success:hover {

@@ -8,27 +8,39 @@
 @import '@fontsource/plus-jakarta-sans/700.css';
 
 :root {
-    /* Enterprise Dark Theme Palette */
-    --bg-app: #09090b;
-    --bg-panel: #121212;
-    --bg-hover: #1e1e1e;
-    --bg-active: #27272a;
+    /* Space Indigo Dark — Onyx → Shadow Grey → Space Indigo depth ramp */
+    --bg-app: #0d0d12;       /* Onyx */
+    --bg-panel: #181921;     /* Shadow Grey */
+    --bg-hover: #222130;     /* Shadow Grey (lighter) */
+    --bg-active: #2f2d41;    /* Space Indigo */
+    --bg-subtle: #141318;    /* between Onyx and Shadow Grey */
+    --bg-element: #1e1d2a;   /* between Shadow Grey and Space Indigo */
 
-    --border-subtle: #1f1f22;
-    --border-main: #27272a;
-    --border-highlight: #3f3f46;
+    --border-subtle: #1e1d2a;
+    --border-main: #2f2d41;  /* Space Indigo */
+    --border-highlight: #3b354f; /* Vintage Grape */
 
-    --text-primary: #ffffff;
-    --text-secondary: #d4d4d8;
-    --text-tertiary: #a1a1aa;
+    /* Cool-tinted soft white — readable without glare on indigo-dark surfaces */
+    --text-primary: #d0cede;
+    --text-secondary: #7870a0;
+    --text-tertiary: #4e4868;
+    --text-disabled: #2e2a40;
 
-    --accent-primary: #ffd700;
-    --accent-primary-dim: rgba(255, 215, 0, 0.1);
-    --accent-primary-text: #000000;
-    --accent-blue: #60a5fa;
-    --accent-red: #f87171;
-    --accent-green: #4ade80;
-    --accent-purple: #a855f7;
+    /* Bird palette — full 9-stop spectrum, matte-tuned for dark surfaces */
+    --accent-gold:    #f5a200;
+    --accent-orange:  #f07000;
+    --accent-primary: #f5a623;
+    --accent-primary-dim: rgba(245, 166, 35, 0.15);
+    --accent-primary-text: #0d0d12;
+    --accent-red:     #cc1e3c;
+    --accent-pink:    #b81e68;
+    --accent-purple:  #7818a0;
+    --accent-indigo:  #3828a8;
+    --accent-blue:    #1c58d8;
+    --accent-sky:     #1880e8;
+    --accent-green:   #3aba70;
+    --accent-yellow:  #f0c000;
+    --gradient-bird: linear-gradient(135deg, #f5a200 0%, #f07000 18%, #e8622a 33%, #cc1e3c 47%, #b81e68 60%, #7818a0 73%, #3828a8 84%, #1c58d8 92%, #1880e8 100%);
 
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
@@ -37,44 +49,38 @@
 }
 
 [data-theme="enterprise-dark"] {
-    /* Enterprise Dark Theme - Softer, Less Intense */
-    --bg-app: #18181b;
-    /* Zinc 900 - lighter than pure black */
-    --bg-panel: #27272a;
-    /* Zinc 800 */
-    --bg-hover: #3f3f46;
-    /* Zinc 700 */
-    --bg-active: #52525b;
-    /* Zinc 600 */
+    /* Space Indigo Enterprise — one step lighter in the ramp, same indigo character */
+    --bg-app: #181921;       /* Shadow Grey */
+    --bg-panel: #222130;     /* Shadow Grey (lighter) */
+    --bg-hover: #2f2d41;     /* Space Indigo */
+    --bg-active: #3b354f;    /* Vintage Grape (dark) */
+    --bg-subtle: #1e1d2a;
+    --bg-element: #272539;
 
-    --bg-subtle: #1f1f23;
-    /* Between app and panel */
-    --bg-element: #2d2d30;
+    --border-subtle: #272539;
+    --border-main: #3b354f;  /* Vintage Grape */
+    --border-highlight: #5b5570; /* Vintage Grape (light) */
 
-    --border-subtle: #3f3f46;
-    /* Zinc 700 */
-    --border-main: #52525b;
-    /* Zinc 600 */
-    --border-highlight: #71717a;
-    /* Zinc 500 */
+    --text-primary: #d0cede;
+    --text-secondary: #7870a0;
+    --text-tertiary: #4e4868;
+    --text-disabled: #2e2a40;
 
-    --text-primary: #fafafa;
-    /* Zinc 50 */
-    --text-secondary: #e4e4e7;
-    /* Zinc 200 */
-    --text-tertiary: #a1a1aa;
-    /* Zinc 400 */
-    --text-disabled: #71717a;
-
-    --accent-primary: #fbbf24;
-    /* Amber 400 - slightly softer than pure gold */
-    --accent-primary-dim: rgba(251, 191, 36, 0.1);
-    --accent-primary-text: #000000;
-    --accent-blue: #60a5fa;
-    --accent-red: #f87171;
-    --accent-green: #4ade80;
-    --accent-purple: #a855f7;
-    --accent-yellow: #fcd34d;
+    /* Bird palette — slightly desaturated for the Space Indigo surface */
+    --accent-gold:    #f5a800;
+    --accent-orange:  #f07200;
+    --accent-primary: #e8a020;
+    --accent-primary-dim: rgba(232, 160, 32, 0.15);
+    --accent-primary-text: #0d0d12;
+    --accent-red:     #c81e3c;
+    --accent-pink:    #b81e68;
+    --accent-purple:  #7818a0;
+    --accent-indigo:  #3c28a8;
+    --accent-blue:    #1c58d8;
+    --accent-sky:     #1a88f0;
+    --accent-green:   #3aba70;
+    --accent-yellow:  #f0c800;
+    --gradient-bird: linear-gradient(135deg, #f5a800 0%, #f07200 18%, #e05828 33%, #c81e3c 47%, #b81e68 60%, #7818a0 73%, #3c28a8 84%, #1c58d8 92%, #1a88f0 100%);
 
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
@@ -258,6 +264,25 @@
     color: #000000 !important;
 }
 
+/* ── Compatibility aliases for legacy component variable names ── */
+:root,
+[data-theme="dark"],
+[data-theme="enterprise-dark"] {
+    --border-color:    var(--border-main);
+    --bg-page:         var(--bg-app);
+    --bg-sidebar:      var(--bg-subtle);
+    --bg-secondary:    var(--bg-panel);
+    --bg-primary:      var(--bg-app);
+    --bg-tertiary:     var(--bg-hover);
+    --bg-overlay:      var(--bg-element);
+    --surface-2:       var(--bg-element);
+    --accent:          var(--accent-primary);
+    --accent-amber:    var(--accent-yellow);
+    --accent-green-solid: var(--accent-green);
+    --color-danger:    var(--accent-red);
+    --error:           var(--accent-red);
+    --primary:         var(--accent-primary);
+}
 
 * {
     margin: 0;

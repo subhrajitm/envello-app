@@ -252,15 +252,15 @@
               (click)="filterStatus.set('ALL')">All</button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
               (click)="filterStatus.set('UNREAD')">
-              <span class="rs-pill-dot" style="background:#f87171"></span>Unread
+              <span class="rs-pill-dot" style="background:var(--accent-red)"></span>Unread
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
               (click)="filterStatus.set('READING')">
-              <span class="rs-pill-dot" style="background:#facc15"></span>Reading
+              <span class="rs-pill-dot" style="background:var(--accent-yellow)"></span>Reading
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
               (click)="filterStatus.set('PROCESSED')">
-              <span class="rs-pill-dot" style="background:#4ade80"></span>Processed
+              <span class="rs-pill-dot" style="background:var(--accent-green)"></span>Processed
             </button>
 
             <div class="rs-tabs-right-divider"></div>
@@ -399,15 +399,15 @@
               (click)="filterStatus.set('ALL')">All</button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
               (click)="filterStatus.set('UNREAD')">
-              <span class="rs-pill-dot" style="background:#f87171"></span>Unread
+              <span class="rs-pill-dot" style="background:var(--accent-red)"></span>Unread
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
               (click)="filterStatus.set('READING')">
-              <span class="rs-pill-dot" style="background:#facc15"></span>Reading
+              <span class="rs-pill-dot" style="background:var(--accent-yellow)"></span>Reading
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
               (click)="filterStatus.set('PROCESSED')">
-              <span class="rs-pill-dot" style="background:#4ade80"></span>Processed
+              <span class="rs-pill-dot" style="background:var(--accent-green)"></span>Processed
             </button>
             <div class="rs-tabs-right-divider"></div>
             <select class="rs-type-select" [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
@@ -524,17 +524,17 @@
               <button class="rsd-status-btn" [class.active]="source.status === 'UNREAD'"
                 [style.--sc]="'#f87171'"
                 (click)="updateSourceStatus('UNREAD')">
-                <span class="rs-status-dot" style="background:#f87171"></span>Unread
+                <span class="rs-status-dot" style="background:var(--accent-red)"></span>Unread
               </button>
               <button class="rsd-status-btn" [class.active]="source.status === 'READING'"
                 [style.--sc]="'#facc15'"
                 (click)="updateSourceStatus('READING')">
-                <span class="rs-status-dot" style="background:#facc15"></span>Reading
+                <span class="rs-status-dot" style="background:var(--accent-yellow)"></span>Reading
               </button>
               <button class="rsd-status-btn" [class.active]="source.status === 'PROCESSED'"
                 [style.--sc]="'#4ade80'"
                 (click)="updateSourceStatus('PROCESSED')">
-                <span class="rs-status-dot" style="background:#4ade80"></span>Processed
+                <span class="rs-status-dot" style="background:var(--accent-green)"></span>Processed
               </button>
             </div>
           </div>

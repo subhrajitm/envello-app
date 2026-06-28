@@ -451,7 +451,7 @@
               (click)="!isKnown(contact) && toggleImportContact($index)">
               <div class="ppl-import-check">
                 @if (isKnown(contact)) {
-                  <span class="material-symbols-outlined" style="font-size:16px;color:#34d399">check_circle</span>
+                  <span class="material-symbols-outlined" style="font-size:16px;color:var(--accent-green)">check_circle</span>
                 } @else {
                   <div class="ppl-checkbox" [class.checked]="importSelected().has($index)">
                     @if (importSelected().has($index)) {

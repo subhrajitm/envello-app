@@ -174,7 +174,7 @@
 }
 
 .type-warning .notification-icon {
-    background: #f59e0b;
+    background: var(--accent-yellow);
 }
 
 .type-error .notification-icon {

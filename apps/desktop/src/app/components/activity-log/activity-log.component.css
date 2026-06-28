@@ -287,10 +287,10 @@
     font-size: 16px;
 }
 
-.event-icon-wrap.entry  { background: rgba(252, 211, 77, 0.12); color: #d97706; }
-.event-icon-wrap.sync   { background: rgba(59, 130, 246, 0.1);  color: #3b82f6; }
-.event-icon-wrap.ai     { background: rgba(34, 197, 94, 0.1);   color: #16a34a; }
-.event-icon-wrap.system { background: rgba(168, 85, 247, 0.1);  color: #9333ea; }
+.event-icon-wrap.entry  { background: rgba(252, 211, 77, 0.12); color: var(--accent-yellow); }
+.event-icon-wrap.sync   { background: rgba(59, 130, 246, 0.1);  color: var(--accent-blue); }
+.event-icon-wrap.ai     { background: rgba(34, 197, 94, 0.1);   color: var(--accent-green); }
+.event-icon-wrap.system { background: rgba(168, 85, 247, 0.1);  color: var(--accent-purple); }
 
 .event-text-wrap {
     display: flex;
