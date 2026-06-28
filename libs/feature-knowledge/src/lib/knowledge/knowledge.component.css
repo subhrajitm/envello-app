@@ -83,7 +83,7 @@
   flex-shrink: 0; transition: all 0.12s;
 }
 .rs-lib-del .material-symbols-outlined { font-size: 14px; }
-.rs-lib-del:hover { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
+.rs-lib-del:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); color: var(--accent-red); }
 .rs-lib-item:hover .rs-lib-del { display: flex; }
 
 .rs-sb-empty {
@@ -233,7 +233,7 @@
 }
 .rs-type-pill .material-symbols-outlined { font-size: 13px; }
 .rs-type-pill--clear { padding: 2px 6px; }
-.rs-type-pill--clear:hover { background: color-mix(in srgb, #ef4444 12%, transparent); border-color: #ef4444; color: #ef4444; }
+.rs-type-pill--clear:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); border-color: var(--accent-red); color: var(--accent-red); }
 .rs-pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .rs-tabs-right-divider { width: 1px; height: 14px; background: var(--border-subtle); margin: 0 2px; flex-shrink: 0; }
 
@@ -335,7 +335,7 @@
   color: var(--text-tertiary); cursor: pointer; transition: all 0.15s;
 }
 .rs-row-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-.rs-row-btn--danger:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.rs-row-btn--danger:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .rs-row-btn .material-symbols-outlined { font-size: 16px; }
 
 .rs-tag {
@@ -388,7 +388,7 @@
   background: transparent; border: none; border-radius: 6px;
   color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
 }
-.rsd-close-btn:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.rsd-close-btn:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .rsd-close-btn .material-symbols-outlined { font-size: 18px; }
 
 .rsd-body { flex: 1 1 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
@@ -483,12 +483,12 @@
 }
 .rsd-del-btn {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 12px; background: color-mix(in srgb, #ef4444 10%, transparent);
-  color: #ef4444; border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
+  padding: 7px 12px; background: color-mix(in srgb, var(--accent-red) 10%, transparent);
+  color: var(--accent-red); border: 1px solid color-mix(in srgb, var(--accent-red) 30%, transparent);
   border-radius: 6px; font-size: 12.5px; font-weight: 600;
   cursor: pointer; transition: all 0.15s;
 }
-.rsd-del-btn:hover { background: color-mix(in srgb, #ef4444 18%, transparent); }
+.rsd-del-btn:hover { background: color-mix(in srgb, var(--accent-red) 18%, transparent); }
 .rsd-del-btn .material-symbols-outlined { font-size: 15px; }
 .rsd-save-btn {
   display: inline-flex; align-items: center; gap: 5px;
@@ -525,7 +525,7 @@
   background: transparent; border: none; border-radius: 6px;
   color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
 }
-.rsa-close-btn:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.rsa-close-btn:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .rsa-close-btn .material-symbols-outlined { font-size: 18px; }
 
 /* Two-pane body */
@@ -878,7 +878,7 @@
   transition: all 0.1s;
 }
 .rs-file-action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-.rs-file-action-btn--danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+.rs-file-action-btn--danger:hover { background: var(--accent-red)1a; color: var(--accent-red); }
 .rs-file-action-btn .material-symbols-outlined { font-size: 16px; }
 
 /* File search empty state */
@@ -966,7 +966,7 @@
 }
 .rs-bulk-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rs-bulk-btn .material-symbols-outlined { font-size: 14px; }
-.rs-bulk-btn--danger:hover { background: color-mix(in srgb,#ef4444 10%,transparent); color:#ef4444; border-color:#ef444440; }
+.rs-bulk-btn--danger:hover { background: color-mix(in srgb,var(--accent-red) 10%,transparent); color:var(--accent-red); border-color:var(--accent-red)40; }
 .rs-bulk-btn--clear { padding: 0 6px; }
 .rs-bulk-sep { width: 1px; height: 16px; background: var(--border-subtle); margin: 0 2px; }
 
@@ -1058,7 +1058,7 @@
   background: transparent; border: none; border-radius: 4px;
   color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
 }
-.rsd-linked-unlink:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+.rsd-linked-unlink:hover { color: var(--accent-red); background: var(--accent-red)1a; }
 .rsd-linked-unlink .material-symbols-outlined { font-size: 14px; }
 .rsd-task-picker {
   display: flex; flex-direction: column; gap: 4px;

@@ -250,9 +250,9 @@
 }
 .wr-menu-item:hover { background: var(--bg-hover); }
 .wr-menu-item .material-symbols-outlined { font-size: 16px; color: var(--text-tertiary); }
-.wr-menu-item--danger { color: #ef4444; }
-.wr-menu-item--danger:hover { background: color-mix(in srgb, #ef4444 10%, transparent); }
-.wr-menu-item--danger .material-symbols-outlined { color: #ef4444; }
+.wr-menu-item--danger { color: var(--accent-red); }
+.wr-menu-item--danger:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); }
+.wr-menu-item--danger .material-symbols-outlined { color: var(--accent-red); }
 .wr-menu-divider { height: 1px; background: var(--border-subtle); margin: 3px 6px; }
 
 /* ── Grid view ── */
@@ -329,7 +329,7 @@
   background: transparent; border: none; border-radius: 6px;
   color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
 }
-.wra-close-btn:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.wra-close-btn:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .wra-close-btn .material-symbols-outlined { font-size: 18px; }
 
 /* Type pills */
@@ -472,12 +472,12 @@
 .wra-delete-hint { font-size: 11.5px; color: var(--text-tertiary); margin: 0; }
 .wra-delete-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px;
-  background: color-mix(in srgb, #ef4444 12%, transparent);
-  color: #ef4444; border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
+  background: color-mix(in srgb, var(--accent-red) 12%, transparent);
+  color: var(--accent-red); border: 1px solid color-mix(in srgb, var(--accent-red) 30%, transparent);
   border-radius: 6px; font-size: 13px; font-weight: 600;
   cursor: pointer; transition: all 0.15s;
 }
-.wra-delete-btn:hover { background: color-mix(in srgb, #ef4444 20%, transparent); }
+.wra-delete-btn:hover { background: color-mix(in srgb, var(--accent-red) 20%, transparent); }
 .wra-delete-btn .material-symbols-outlined { font-size: 15px; }
 
 /* ══════════════════════════════════════════════════════

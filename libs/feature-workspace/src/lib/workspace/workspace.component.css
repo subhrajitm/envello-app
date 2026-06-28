@@ -553,11 +553,11 @@
 
 /* ── Recent Activity — per-type color token ──────────────── */
 
-.ra-item[data-kind="task"]     { --kind-color: #3b82f6; }
-.ra-item[data-kind="note"]     { --kind-color: #a855f7; }
-.ra-item[data-kind="bookmark"] { --kind-color: #f59e0b; }
-.ra-item[data-kind="meeting"]  { --kind-color: #10b981; }
-.ra-item[data-kind="book"]     { --kind-color: #ec4899; }
+.ra-item[data-kind="task"]     { --kind-color: var(--accent-blue); }
+.ra-item[data-kind="note"]     { --kind-color: var(--accent-purple); }
+.ra-item[data-kind="bookmark"] { --kind-color: var(--accent-yellow); }
+.ra-item[data-kind="meeting"]  { --kind-color: var(--accent-green); }
+.ra-item[data-kind="book"]     { --kind-color: var(--accent-pink); }
 
 /* ── Header ──────────────────────────────────────────────── */
 

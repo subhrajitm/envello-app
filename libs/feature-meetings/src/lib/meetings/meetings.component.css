@@ -320,7 +320,7 @@
   border-radius: 5px;
   flex-shrink: 0;
 }
-.mt-item-badge--done { background: color-mix(in srgb, #10b981 15%, transparent); color: #10b981; }
+.mt-item-badge--done { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
 .mt-item-badge--cancelled { background: color-mix(in srgb, var(--accent-red) 15%, transparent); color: var(--accent-red); }
 .mt-item-priority-dot {
   width: 6px;
@@ -1381,9 +1381,9 @@
 .mta-attendee-name { font-size: 13px; color: var(--text-primary); display: block; }
 .mta-attendee-role { font-size: 11px; color: var(--text-tertiary); display: block; }
 .mta-attendee-status { font-size: 14px; flex-shrink: 0; }
-.mta-attendee-status--accepted { color: #10b981; }
+.mta-attendee-status--accepted { color: var(--accent-green); }
 .mta-attendee-status--declined { color: var(--accent-red); }
-.mta-attendee-status--tentative { color: #f59e0b; }
+.mta-attendee-status--tentative { color: var(--accent-yellow); }
 .mta-attendee-status--pending { color: var(--text-tertiary); }
 
 .mta-add-attendee-form {
@@ -1500,8 +1500,8 @@
 .mta-action-btns { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .mta-priority { font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 4px; }
 .mta-priority--high { background: color-mix(in srgb, var(--accent-red) 15%, transparent); color: var(--accent-red); }
-.mta-priority--medium { background: color-mix(in srgb, #f97316 15%, transparent); color: #f97316; }
-.mta-priority--low { background: color-mix(in srgb, #10b981 15%, transparent); color: #10b981; }
+.mta-priority--medium { background: color-mix(in srgb, var(--accent-orange) 15%, transparent); color: var(--accent-orange); }
+.mta-priority--low { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
 
 /* ── Sync Modal ──────────────────────────────────────────────────────────── */
 .mta-sync-tabs {

@@ -305,8 +305,8 @@
 }
 
 .close-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: color-mix(in srgb, var(--accent-red) 10%, transparent);
+    color: var(--accent-red);
 }
 
 .close-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -474,7 +474,7 @@
 
 .creating-text { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 
-.success-icon { font-size: 20px; color: #10b981; }
+.success-icon { font-size: 20px; color: var(--accent-green); }
 
 /* Two-pane body */
 .modal-body {

@@ -118,8 +118,8 @@
 .sp-menu-item:hover:not(:disabled) { background: var(--bg-hover); }
 .sp-menu-item:disabled { opacity: 0.35; cursor: not-allowed; }
 .sp-menu-item .material-symbols-outlined { font-size: 15px; color: var(--text-tertiary); }
-.sp-menu-item-danger { color: #ef4444; }
-.sp-menu-item-danger .material-symbols-outlined { color: #ef4444; }
+.sp-menu-item-danger { color: var(--accent-red); }
+.sp-menu-item-danger .material-symbols-outlined { color: var(--accent-red); }
 .sp-menu-item-danger:hover:not(:disabled) { background: rgba(239,68,68,0.08); }
 
 /* Avatar wrapper — holds circle + active checkmark */
@@ -327,7 +327,7 @@
 .sp-form-field { display: flex; flex-direction: column; gap: 8px; }
 
 .sp-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.03em; text-transform: uppercase; }
-.sp-required { color: #ef4444; }
+.sp-required { color: var(--accent-red); }
 
 .sp-input {
   width: 100%;
@@ -412,7 +412,7 @@
   width: 60px;
   height: 60px;
   border-radius: 14px;
-  background: var(--sp-color, #3b82f6);
+  background: var(--sp-color, var(--accent-blue));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -446,10 +446,10 @@
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
 }
-.sp-status-chip.sp-status-planning { background: rgba(59,130,246,0.1); color: #3b82f6; border-color: rgba(59,130,246,0.2); }
-.sp-status-chip.sp-status-active   { background: rgba(16,185,129,0.1); color: #10b981; border-color: rgba(16,185,129,0.2); }
-.sp-status-chip.sp-status-complete { background: rgba(16,185,129,0.1); color: #10b981; border-color: rgba(16,185,129,0.2); }
-.sp-status-chip.sp-status-review   { background: rgba(245,158,11,0.1); color: #f59e0b; border-color: rgba(245,158,11,0.2); }
+.sp-status-chip.sp-status-planning { background: var(--accent-blue)1a; color: var(--accent-blue); border-color: var(--accent-blue)33; }
+.sp-status-chip.sp-status-active   { background: var(--accent-green)1a; color: var(--accent-green); border-color: var(--accent-green)33; }
+.sp-status-chip.sp-status-complete { background: var(--accent-green)1a; color: var(--accent-green); border-color: var(--accent-green)33; }
+.sp-status-chip.sp-status-review   { background: var(--accent-yellow)1a; color: var(--accent-yellow); border-color: var(--accent-yellow)33; }
 
 /* Info grid */
 .sp-detail-grid {

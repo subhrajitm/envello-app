@@ -403,9 +403,9 @@
 }
 .env-table-menu-item:hover { background: var(--bg-hover); }
 .env-table-menu-item .material-symbols-outlined { font-size: 15px; color: var(--text-secondary); }
-.env-table-menu-item--danger { color: #ef4444; }
-.env-table-menu-item--danger .material-symbols-outlined { color: #ef4444; }
-.env-table-menu-item--danger:hover { background: color-mix(in srgb, #ef4444 10%, transparent); }
+.env-table-menu-item--danger { color: var(--accent-red); }
+.env-table-menu-item--danger .material-symbols-outlined { color: var(--accent-red); }
+.env-table-menu-item--danger:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); }
 
 /* ── Empty state ──────────────────────────────────────────────────────────── */
 .env-table-td-empty { text-align: center; }
@@ -526,9 +526,9 @@
 .env-table-sel-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .env-table-sel-btn .material-symbols-outlined { font-size: 13px; }
 
-.env-table-sel-btn--danger { color: #ef4444; }
-.env-table-sel-btn--danger:hover { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
-.env-table-sel-btn--danger .material-symbols-outlined { color: #ef4444; }
+.env-table-sel-btn--danger { color: var(--accent-red); }
+.env-table-sel-btn--danger:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); color: var(--accent-red); }
+.env-table-sel-btn--danger .material-symbols-outlined { color: var(--accent-red); }
 
 .env-table-sel-clear {
   display: flex;
