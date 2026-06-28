@@ -1088,7 +1088,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
 }
 
 .dn-entry-heading-input {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-heading, var(--font-sans));
     letter-spacing: -0.02em;
 }
 
@@ -1127,7 +1127,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
 ::ng-deep .dn-editor-text .ProseMirror pre {
     background: #1e1e1e;
     color: #e0e0e0;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-family: var(--font-mono);
     padding: 1rem;
     border-radius: 8px;
     font-size: 14px;

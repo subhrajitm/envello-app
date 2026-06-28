@@ -107,7 +107,7 @@
   border: 1px solid var(--border-main);
   border-bottom-width: 2px;
   border-radius: 5px;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-primary);
 }

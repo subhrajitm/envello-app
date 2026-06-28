@@ -684,7 +684,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    padding: 0 24px 24px;
+    padding: 0;
 }
 
 .list-body.virtual-scroll-container {
@@ -697,7 +697,7 @@
 .task-item {
     display: flex;
     align-items: center;
-    padding: 11px 0;
+    padding: 11px 24px;
     border: none;
     border-bottom: 1px solid var(--border-subtle);
     border-radius: 0;
@@ -723,7 +723,7 @@
 
 /* Calendar subtask list items */
 .task-item-subtask {
-    padding-left: 24px;
+    padding-left: 48px;
     border-left: 3px solid var(--border-subtle);
     background: var(--bg-secondary, rgba(0,0,0,0.015));
 }
@@ -7190,7 +7190,7 @@ textarea:focus-visible {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 24px 0 8px;
+    padding: 24px 24px 8px;
     border-bottom: none;
     background: transparent;
     flex-shrink: 0;

@@ -520,7 +520,7 @@
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-  padding-bottom: 16px;
+  padding-bottom: 0;
 }
 
 .si-error {

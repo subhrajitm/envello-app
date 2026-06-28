@@ -2335,7 +2335,7 @@
 .context-content {
     white-space: pre-wrap;
     line-height: 1.5;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     opacity: 0.8;
 }
 
@@ -5331,7 +5331,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   font-size: 11px;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .ne-focus-toast-close {
