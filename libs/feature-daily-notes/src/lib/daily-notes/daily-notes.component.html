@@ -385,7 +385,7 @@
                 @if (editor) {
                 <div class="dn-format-panel">
                     <div class="dn-panel-header">
-                        <span class="material-symbols-outlined">text_format</span>
+                        <span class="material-symbols-outlined">format_paragraph</span>
                         FORMAT
                         <button class="dn-panel-close" (click)="rightPanelCollapsed.set(true)" title="Close">
                             <span class="material-symbols-outlined">close</span>
@@ -563,26 +563,19 @@
             }
             <!-- Always-visible icon strip -->
             <div class="ne-right-strip">
+                <!-- Panel toggles -->
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'ai'"
                     (click)="setRightTab('ai')" title="AI Assistant">
                     <span class="material-symbols-outlined">auto_awesome</span>
                 </button>
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'format'"
                     (click)="setRightTab('format')" title="Format">
-                    <span class="material-symbols-outlined">text_format</span>
+                    <span class="material-symbols-outlined">format_paragraph</span>
                 </button>
-                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'info'"
-                    (click)="setRightTab('info')" title="Note Info">
-                    <span class="material-symbols-outlined">info</span>
-                </button>
-                <span class="dn-save-indicator"
-                    [class.saving]="isSaving()"
-                    [class.saved]="!isSaving() && !!lastSaved()"
-                    [title]="isSaving() ? 'Saving…' : 'Saved'">
-                    <span class="material-symbols-outlined">{{ isSaving() ? 'sync' : 'cloud_done' }}</span>
-                </span>
-                <div class="ne-strip-spacer"></div>
+
                 <div class="ne-strip-divider"></div>
+
+                <!-- Editor history -->
                 @if (editor) {
                 <button class="ne-strip-btn" (click)="editor.chain().focus().undo().run()" [disabled]="!canUndo()" title="Undo">
                     <span class="material-symbols-outlined">undo</span>
@@ -591,6 +584,11 @@
                     <span class="material-symbols-outlined">redo</span>
                 </button>
                 }
+
+                <!-- Push note actions to bottom -->
+                <div class="ne-strip-spacer"></div>
+
+                <!-- Note actions -->
                 <button class="ne-strip-btn" [class.active]="isPinned(note)" (click)="togglePin(note)"
                     [title]="isPinned(note) ? 'Unpin note' : 'Pin note'">
                     <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
@@ -601,6 +599,22 @@
                 <button class="ne-strip-btn" (click)="exportNote()" title="Export">
                     <span class="material-symbols-outlined">download</span>
                 </button>
+
+                <!-- Save status -->
+                <span class="dn-save-indicator"
+                    [class.saving]="isSaving()"
+                    [class.saved]="!isSaving() && !!lastSaved()"
+                    [title]="isSaving() ? 'Saving…' : 'Saved'">
+                    <span class="material-symbols-outlined">{{ isSaving() ? 'sync' : 'cloud_done' }}</span>
+                </span>
+
+                <!-- Note info -->
+                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'info'"
+                    (click)="setRightTab('info')" title="Note Info">
+                    <span class="material-symbols-outlined">info</span>
+                </button>
+
+                <!-- Destructive — always last -->
                 <button class="ne-strip-btn ne-strip-btn--danger" (click)="deleteCurrentNote()" title="Delete note">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
