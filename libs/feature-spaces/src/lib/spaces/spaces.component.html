@@ -86,63 +86,99 @@
 }
 
 <!-- ── NEW / EDIT MODAL ── -->
-<env-modal [isOpen]="showModal()" [title]="editMode() ? 'Edit Space' : 'New Space'"
+<env-modal [isOpen]="showModal()"
+  [title]="editMode() ? 'Edit Space' : (modalStep() === 1 ? 'New Space' : 'Customize Space')"
   size="sm" (closed)="closeModal()">
 
   <div body class="sp-modal-form">
 
-    <!-- Live preview banner -->
-    <div class="sp-edit-preview">
-      <div class="sp-edit-avatar" [style.background]="formColor()">
-        <span class="material-symbols-outlined">{{ formIcon() }}</span>
-      </div>
-      <div class="sp-edit-preview-text">
-        <span class="sp-edit-preview-name">{{ formName() || 'Space name' }}</span>
-        <span class="sp-edit-preview-hint">Live preview</span>
-      </div>
-    </div>
-
-    <!-- Name -->
-    <div class="sp-form-field">
-      <label class="sp-label">Name <span class="sp-required">*</span></label>
-      <input class="sp-input" type="text" placeholder="e.g. Personal, Work, Side Project"
-        [ngModel]="formName()" (ngModelChange)="formName.set($event)"
-        (keyup.enter)="saveProfile()" autofocus>
-    </div>
-
-    <!-- Color -->
-    <div class="sp-form-field">
-      <label class="sp-label">Color</label>
-      <div class="sp-color-picker">
-        @for (color of colorOptions; track color) {
-          <button type="button" class="sp-color-swatch"
-            [style.background]="color"
-            [class.selected]="formColor() === color"
-            (click)="formColor.set(color)"></button>
+    <!-- Step 1: Template selection -->
+    @if (!editMode() && modalStep() === 1) {
+      <p class="sp-step-desc">Choose a template to get started quickly.</p>
+      <div class="sp-type-list">
+        @for (tpl of spaceTemplates; track tpl.id) {
+          <div class="sp-type-card" [class.selected]="selectedTemplate() === tpl.id"
+            (click)="selectTemplate(tpl.id)">
+            <div class="sp-type-card-icon" [style.color]="selectedTemplate() === tpl.id ? tpl.color : null">
+              <span class="material-symbols-outlined">{{ tpl.icon }}</span>
+            </div>
+            <div class="sp-type-card-text">
+              <span class="sp-type-card-title">{{ tpl.title }}</span>
+              <span class="sp-type-card-desc">{{ tpl.description }}</span>
+            </div>
+            <div class="sp-type-radio">
+              <div class="sp-type-radio-dot"></div>
+            </div>
+          </div>
         }
       </div>
-    </div>
+    }
 
-    <!-- Icon -->
-    <div class="sp-form-field">
-      <label class="sp-label">Icon</label>
-      <div class="sp-icon-picker">
-        @for (ic of iconOptions; track ic) {
-          <button class="sp-icon-opt" [class.selected]="formIcon() === ic"
-            (click)="formIcon.set(ic)" type="button">
-            <span class="material-symbols-outlined">{{ ic }}</span>
-          </button>
-        }
+    <!-- Step 2: Customization form -->
+    @if (editMode() || modalStep() === 2) {
+      <!-- Live preview banner -->
+      <div class="sp-edit-preview">
+        <div class="sp-edit-avatar" [style.background]="formColor()">
+          <span class="material-symbols-outlined">{{ formIcon() }}</span>
+        </div>
+        <div class="sp-edit-preview-text">
+          <span class="sp-edit-preview-name">{{ formName() || 'Space name' }}</span>
+          <span class="sp-edit-preview-hint">Live preview</span>
+        </div>
       </div>
-    </div>
+
+      <!-- Name -->
+      <div class="sp-form-field">
+        <label class="sp-label">Name <span class="sp-required">*</span></label>
+        <input class="sp-input" type="text" placeholder="e.g. Personal, Work, Side Project"
+          [ngModel]="formName()" (ngModelChange)="formName.set($event)"
+          (keyup.enter)="saveProfile()" autofocus>
+      </div>
+
+      <!-- Color -->
+      <div class="sp-form-field">
+        <label class="sp-label">Color</label>
+        <div class="sp-color-picker">
+          @for (color of colorOptions; track color) {
+            <button type="button" class="sp-color-swatch"
+              [style.background]="color"
+              [class.selected]="formColor() === color"
+              (click)="formColor.set(color)"></button>
+          }
+        </div>
+      </div>
+
+      <!-- Icon -->
+      <div class="sp-form-field">
+        <label class="sp-label">Icon</label>
+        <div class="sp-icon-picker">
+          @for (ic of iconOptions; track ic) {
+            <button class="sp-icon-opt" [class.selected]="formIcon() === ic"
+              (click)="formIcon.set(ic)" type="button">
+              <span class="material-symbols-outlined">{{ ic }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
 
   </div>
 
   <div footer>
-    <env-button variant="secondary" (clicked)="closeModal()">Cancel</env-button>
-    <env-button variant="primary" [disabled]="!formName().trim()" (clicked)="saveProfile()">
-      {{ editMode() ? 'Save Changes' : 'Create Space' }}
-    </env-button>
+    @if (!editMode() && modalStep() === 1) {
+      <env-button variant="secondary" (clicked)="closeModal()">Cancel</env-button>
+      <env-button variant="primary" (clicked)="nextStep()">Next</env-button>
+    } @else if (!editMode() && modalStep() === 2) {
+      <env-button variant="secondary" (clicked)="modalStep.set(1)">Back</env-button>
+      <env-button variant="primary" [disabled]="!formName().trim()" (clicked)="saveProfile()">
+        Create Space
+      </env-button>
+    } @else {
+      <env-button variant="secondary" (clicked)="closeModal()">Cancel</env-button>
+      <env-button variant="primary" [disabled]="!formName().trim()" (clicked)="saveProfile()">
+        Save Changes
+      </env-button>
+    }
   </div>
 
 </env-modal>
