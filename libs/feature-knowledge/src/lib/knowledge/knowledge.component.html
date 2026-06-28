@@ -85,8 +85,8 @@
             <span class="material-symbols-outlined">filter_list_off</span>
           </button>
         }
-        <button class="rs-tool-btn" [class.rs-tool-btn--active]="showAssistant()"
-          (click)="toggleAssistant()">
+        <button class="rs-tool-btn btn-ai-toggle" [class.rs-tool-btn--active]="showAssistant()" [class.active]="showAssistant()"
+          (click)="toggleAssistant()" title="AI Assistant">
           <span class="material-symbols-outlined">auto_awesome</span>
           AI
         </button>

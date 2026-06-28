@@ -104,7 +104,7 @@
         </div>
 
         <div class="wr-tb-divider"></div>
-        <button class="wr-tool-btn" [class.wr-tool-btn--active]="showAssistant()"
+        <button class="wr-tool-btn btn-ai-toggle" [class.wr-tool-btn--active]="showAssistant()" [class.active]="showAssistant()"
           title="AI Assistant" (click)="toggleAssistant()">
           <span class="material-symbols-outlined">auto_awesome</span>
           AI

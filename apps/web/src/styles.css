@@ -269,6 +269,35 @@ h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading, var(--font-sans));
 }
 
+/* ── Shared AI toggle button — used across all feature toolbars ── */
+.btn-ai-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-ai-toggle .material-symbols-outlined { font-size: 15px; }
+
+.btn-ai-toggle:hover,
+.btn-ai-toggle.active {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: var(--accent-primary-dim, transparent);
+}
+
 body {
     font-family: var(--font-sans);
     background: var(--bg-app);
