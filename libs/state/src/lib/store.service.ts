@@ -34,7 +34,11 @@ export class StoreService {
 
     private markdownWorker: Worker | null = null;
     private workerCallbacks = new Map<string, (md: string) => void>();
-    private saveTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+    private saveTimeouts        = new Map<string, ReturnType<typeof setTimeout>>();
+    private pendingSaveContent  = new Map<string, string>(); // content awaiting debounced file write
+
+    /** In-memory content cache — survives loadFromDb() which strips content from the signal. */
+    private contentCache = new Map<string, string>();
 
     private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
     private _loadInProgress = false;
@@ -179,21 +183,57 @@ export class StoreService {
     async loadNoteContent(id: string): Promise<string> {
         const note = this.notes().find(n => n.id === id);
         if (!note) return '';
-        // content is stripped on load to save memory — always fetch from file/DB
-        if (note.content && note.content.length > 5) return note.content;
 
-        let mdContent = await this.fs.readNote(id);
+        // 1. In-memory cache hit — zero I/O, survives loadFromDb() stripping.
+        const cached = this.contentCache.get(id);
+        if (cached && cached.length > 0) {
+            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: cached } : n));
+            return cached;
+        }
 
-        if (mdContent === null && note.content && note.content.length > 0) {
-            await this.saveNoteContentToFile(id, note.content);
+        // 2. Signal already has content (e.g. freshly created note not yet stripped).
+        if (note.content && note.content.length > 5) {
+            this.contentCache.set(id, note.content);
             return note.content;
         }
 
-        if (mdContent) {
-            const { marked } = await import('marked');
-            const html = await marked.parse(mdContent);
-            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html as string } : n));
-            return html as string;
+        // 3. Flush any debounced file-write before reading so the file exists.
+        if (this.saveTimeouts.has(id)) {
+            const pending = this.pendingSaveContent.get(id) ?? '';
+            clearTimeout(this.saveTimeouts.get(id));
+            this.saveTimeouts.delete(id);
+            this.pendingSaveContent.delete(id);
+            if (pending) {
+                this.contentCache.set(id, pending);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: pending } : n));
+                await this.saveNoteContentToFile(id, pending);
+                return pending;
+            }
+        }
+
+        // 4. Read from file system (desktop: .md file; web: localStorage).
+        try {
+            const mdContent = await this.fs.readNote(id);
+            if (mdContent) {
+                const { marked } = await import('marked');
+                const html = await marked.parse(mdContent) as string;
+                this.contentCache.set(id, html);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html } : n));
+                return html;
+            }
+        } catch (e) {
+            console.error('[StoreService] loadNoteContent file read failed for', id, e);
+        }
+
+        // 5. Last resort: reconstruct from preview stored in SQLite.
+        //    preview is plain text — wrap in a paragraph so the editor renders it.
+        //    Also re-saves to file so future loads hit step 4.
+        if (note.preview && note.preview.length > 0) {
+            const html = `<p>${note.preview}</p>`;
+            this.contentCache.set(id, html);
+            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html } : n));
+            this.saveNoteContentToFile(id, html).catch(() => {});
+            return html;
         }
 
         return '';
@@ -223,6 +263,7 @@ export class StoreService {
     }
 
     async addNote(note: Note) {
+        if (note.content) this.contentCache.set(note.id, note.content);
         this.notes.update(notes => [note, ...notes]);
         this.addActivity("Entry added to '" + note.title + "'", 'entry');
         // Persist to DB immediately so a concurrent loadFromDb() won't lose this note.
@@ -246,37 +287,58 @@ export class StoreService {
         if (!note) return;
 
         if (updates.content !== undefined) {
+            this.contentCache.set(id, updates.content || '');
             const existing = this.saveTimeouts.get(id);
             if (existing) clearTimeout(existing);
+            this.pendingSaveContent.set(id, updates.content || '');
             this.saveTimeouts.set(id, setTimeout(() => {
                 this.saveTimeouts.delete(id);
-                this.saveNoteContentToFile(id, updates.content || '');
+                const content = this.pendingSaveContent.get(id) ?? '';
+                this.pendingSaveContent.delete(id);
+                this.saveNoteContentToFile(id, content);
             }, 1000));
         }
 
         this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
     }
 
-    private async saveNoteContentToFile(id: string, html: string) {
-        const md = await this.htmlToMarkdown(html);
-        const filePath = await this.fs.saveNote(id, md);
+    /** Flush all debounced note file-writes immediately. Call before app close. */
+    async flushPendingNoteSaves(): Promise<void> {
+        const pending = [...this.saveTimeouts.keys()];
+        for (const id of pending) {
+            clearTimeout(this.saveTimeouts.get(id));
+            this.saveTimeouts.delete(id);
+            const content = this.pendingSaveContent.get(id) ?? '';
+            this.pendingSaveContent.delete(id);
+            if (content) await this.saveNoteContentToFile(id, content);
+        }
+    }
 
-        const note = this.notes().find(n => n.id === id);
-        if (note && note.filePath !== filePath) {
-            // Update DB only — do NOT mutate the notes() signal here.
-            // A signal write would trigger the content-loading effect in the editor
-            // component, which compares editor HTML to note.content. At this point
-            // note.content may be stale (captured at the last debounce cycle) while
-            // the editor has newer in-flight content, causing typing to get reverted.
-            this.db.upsert('notes', { ...note, filePath }).catch(e =>
-                console.error('[StoreService] persist note filePath failed', e)
-            );
+    private async saveNoteContentToFile(id: string, html: string) {
+        try {
+            const md = await this.htmlToMarkdown(html);
+            const filePath = await this.fs.saveNote(id, md);
+
+            const note = this.notes().find(n => n.id === id);
+            if (note && note.filePath !== filePath) {
+                // Update DB only — do NOT mutate the notes() signal here.
+                // A signal write would trigger the content-loading effect in the editor
+                // component, which compares editor HTML to note.content. At this point
+                // note.content may be stale (captured at the last debounce cycle) while
+                // the editor has newer in-flight content, causing typing to get reverted.
+                this.db.upsert('notes', { ...note, filePath }).catch(e =>
+                    console.error('[StoreService] persist note filePath failed', e)
+                );
+            }
+        } catch (e) {
+            console.error('[StoreService] saveNoteContentToFile failed for', id, e);
         }
     }
 
     deleteNote(id: string) {
         const note = this.notes().find(n => n.id === id);
         if (!note) return;
+        this.contentCache.delete(id);
         this.notes.update(list => list.filter(n => n.id !== id));
         this.addActivity('Note deleted', 'system');
         this.db.upsert('notes', { ...note, deleted_at: new Date().toISOString() })

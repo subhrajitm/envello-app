@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { StoreService, Note, AiService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage } from '@envello/ui';
+import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -38,7 +38,7 @@ interface NoteGroup {
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -54,8 +54,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private searchDebounceId: ReturnType<typeof setTimeout> | null = null;
   private formatFramePending = false;
   private _cleanupFormatListener: (() => void) | null = null;
-  private lastLoadedNoteId = '';
-  private lastTitleNoteId = '';
+  private lastLoadedNoteId   = '';
+  private lastLoadedContent  = '';
+  private lastTitleNoteId    = '';
 
   // Local copy of the title shown in the input. Decoupled from notes() so the
   // input stays instant while the store write is debounced at 300 ms.
@@ -77,7 +78,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   characterCount = signal(0);
 
   // Modal State
-  activeModal = signal<'none' | 'new-folder' | 'rename-folder' | 'link' | 'image' | 'delete-confirm' | 'delete-folder-confirm' | 'export' | 'youtube'>('none');
+  activeModal        = signal<'none' | 'new-folder' | 'rename-folder' | 'link' | 'image' | 'export' | 'youtube'>('none');
+  deleteNoteOpen     = signal(false);
+  deleteFolderOpen   = signal(false);
   modalInputValue = signal<string>('');
   modalInputPlaceholder = signal<string>('');
   modalTitle = signal<string>('');
@@ -164,8 +167,6 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const t = this.modalTitle();
     if (t) return t;
     const m = this.activeModal();
-    if (m === 'delete-confirm') return 'Delete Note';
-    if (m === 'delete-folder-confirm') return 'Delete Folder';
     if (m === 'rename-folder') return 'Rename Folder';
     if (m === 'export') return 'Export Note';
     return '';
@@ -360,7 +361,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
       this.selectedEntryId.set(validSelected);
       this.openNotes.set(finalOpen);
-      this.store.loadNoteContent(validSelected);
+      this.store.loadNoteContent(validSelected).then(html => {
+        if (!this.editor || !html) return;
+        if (html !== this.lastLoadedContent) {
+          this.lastLoadedNoteId  = validSelected;
+          this.lastLoadedContent = html;
+          this.editor.commands.setContent(html, { emitUpdate: false });
+        }
+      });
     });
 
     effect(() => {
@@ -373,12 +381,20 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     effect(() => {
       const note = this.selectedNote();
       if (note && this.editor) {
+        const contentReady = note.content && note.content.length > 0;
         if (note.id !== this.lastLoadedNoteId) {
+          // New note selected — set whatever content we have now (may be empty until async load completes)
           this.lastLoadedNoteId = note.id;
+          this.lastLoadedContent = note.content ?? '';
           this.editor.commands.setContent(note.content ?? '', { emitUpdate: false });
+        } else if (contentReady && note.content !== this.lastLoadedContent) {
+          // Same note — content arrived asynchronously after the initial (empty) setContent
+          this.lastLoadedContent = note.content!;
+          this.editor.commands.setContent(note.content!, { emitUpdate: false });
         }
       } else if (!note && this.editor && this.lastLoadedNoteId) {
         this.lastLoadedNoteId = '';
+        this.lastLoadedContent = '';
         this.editor.commands.setContent('', { emitUpdate: false });
       }
     });
@@ -662,18 +678,26 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   selectNote(id: string) {
     this.allTabsClosed = false;
     this.flushTitleSave();
-    // Eagerly set editor content from the store cache to eliminate the stale-content
-    // flash that would otherwise show while loadNoteContent fetches from DB.
-    if (this.editor && id !== this.lastLoadedNoteId) {
-      const cached = this.notes().find(n => n.id === id);
-      this.lastLoadedNoteId = id;
-      this.editor.commands.setContent(cached?.content ?? '', { emitUpdate: false });
-    }
+
     this.selectedEntryId.set(id);
-    this.store.loadNoteContent(id);
     if (!this.openNotes().includes(id)) {
       this.openNotes.update(tabs => [...tabs, id]);
     }
+
+    // Load content and set it directly on the editor regardless of whether
+    // loadFromDb() races and wipes the notes() signal in between.
+    this.store.loadNoteContent(id).then(html => {
+      if (!this.editor || this.selectedEntryId() !== id) return;
+      if (html && html !== this.lastLoadedContent) {
+        this.lastLoadedNoteId    = id;
+        this.lastLoadedContent   = html;
+        this.editor.commands.setContent(html, { emitUpdate: false });
+      } else if (!html && this.lastLoadedNoteId !== id) {
+        this.lastLoadedNoteId  = id;
+        this.lastLoadedContent = '';
+        this.editor.commands.setContent('', { emitUpdate: false });
+      }
+    });
   }
 
   toggleGroup(groupId: string) {
@@ -956,13 +980,13 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     const activeId = this.selectedEntryId();
     if (activeId) {
       this.tempNoteId.set(activeId);
-      this.activeModal.set('delete-confirm');
+      this.deleteNoteOpen.set(true);
     }
   }
 
   requestDeleteNote(noteId: string) {
     this.tempNoteId.set(noteId);
-    this.activeModal.set('delete-confirm');
+    this.deleteNoteOpen.set(true);
   }
 
   confirmDeleteNote() {
@@ -971,14 +995,19 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
       this.closeNoteTab(activeId);
       this.store.deleteNote(activeId);
     }
-    this.closeModal();
+    this.deleteNoteOpen.set(false);
+  }
+
+  cancelDeleteNote() {
+    this.deleteNoteOpen.set(false);
+    this.tempNoteId.set('');
   }
 
   requestDeleteFolder(folderId: string, event: Event) {
     event.stopPropagation();
-    if (this.noteGroups().length <= 1) return; // cannot delete the only folder
+    if (this.noteGroups().length <= 1) return;
     this.tempFolderId.set(folderId);
-    this.activeModal.set('delete-folder-confirm');
+    this.deleteFolderOpen.set(true);
   }
 
   confirmDeleteFolder() {
@@ -990,7 +1019,13 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
         .forEach((n) => this.store.updateNote(n.id, { folderId: targetFolderId }));
       this.store.removeNoteFolder(folderId);
     }
-    this.closeModal();
+    this.deleteFolderOpen.set(false);
+    this.tempFolderId.set('');
+  }
+
+  cancelDeleteFolder() {
+    this.deleteFolderOpen.set(false);
+    this.tempFolderId.set('');
   }
 
   addTag(tag: string) {

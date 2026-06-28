@@ -329,6 +329,13 @@ h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading, var(--font-sans));
 }
 
+/* Keep editor prose headings in the editor font, not the heading font */
+.ProseMirror h1, .ProseMirror h2, .ProseMirror h3,
+.ProseMirror h4, .ProseMirror h5, .ProseMirror h6 {
+    font-family: var(--editor-font, var(--font-sans));
+    color: var(--text-primary);
+}
+
 /* ── Shared feature toolbar ── */
 .feature-toolbar {
     display: flex;

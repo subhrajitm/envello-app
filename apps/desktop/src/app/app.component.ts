@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService, BookContentService, UserPreferencesService, CaptureService, SmartMonitorService, GoogleAuthService } from '@envello/core';
+import { AuthService, BookContentService, UserPreferencesService, CaptureService, SmartMonitorService, GoogleAuthService, StoreService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
@@ -36,6 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
   authService   = inject(AuthService);
   private googleAuth = inject(GoogleAuthService);
   private bookContentService = inject(BookContentService);
+  private storeService       = inject(StoreService);
   private userPrefsService = inject(UserPreferencesService);
   private captureService  = inject(CaptureService);
   private monitor         = inject(SmartMonitorService);
@@ -113,6 +114,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.unlistenCloseRequested = await win.onCloseRequested(async (event) => {
         event.preventDefault();
         try { await this.bookContentService.flushPersist(); } catch { /* non-fatal */ }
+        try { await this.storeService.flushPendingNoteSaves(); } catch { /* non-fatal */ }
         // Respect "minimize to tray" setting — hide instead of destroy if enabled
         const settings = JSON.parse(localStorage.getItem('envello-settings') || '{}');
         if (settings['minimizeToTray']) {

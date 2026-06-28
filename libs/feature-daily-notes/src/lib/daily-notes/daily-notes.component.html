@@ -38,12 +38,6 @@
                 [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
                 (keydown.enter)="confirmAddYoutube()" autofocus>
             }
-            @if (activeModal() === 'delete-confirm') {
-            <p>Are you sure you want to delete this note? This action cannot be undone.</p>
-            }
-            @if (activeModal() === 'delete-folder-confirm') {
-            <p>Are you sure you want to delete this folder? All notes within it will be removed from this view. This action cannot be undone.</p>
-            }
             @if (activeModal() === 'export') {
             <p>Choose a format to export your note.</p>
             <div class="modal-export-row">
@@ -73,15 +67,31 @@
             @if (activeModal() === 'youtube') {
             <env-button variant="primary" (clicked)="confirmAddYoutube()">Insert Video</env-button>
             }
-            @if (activeModal() === 'delete-confirm') {
-            <env-button variant="danger" (clicked)="confirmDeleteNote()">Delete Note</env-button>
-            }
-            @if (activeModal() === 'delete-folder-confirm') {
-            <env-button variant="danger" (clicked)="confirmDeleteFolder()">Delete Folder</env-button>
-            }
             }
         </div>
     </env-modal>
+
+    <env-confirm-dialog
+        [isOpen]="deleteNoteOpen()"
+        title="Delete Note"
+        icon="delete"
+        variant="danger"
+        confirmLabel="Delete"
+        (confirmed)="confirmDeleteNote()"
+        (cancelled)="cancelDeleteNote()">
+        This note will be moved to the bin. This action cannot be undone.
+    </env-confirm-dialog>
+
+    <env-confirm-dialog
+        [isOpen]="deleteFolderOpen()"
+        title="Delete Folder"
+        icon="folder_delete"
+        variant="danger"
+        confirmLabel="Delete Folder"
+        (confirmed)="confirmDeleteFolder()"
+        (cancelled)="cancelDeleteFolder()">
+        All notes in this folder will be moved to the default folder. This action cannot be undone.
+    </env-confirm-dialog>
 
     <div class="dn-sidebar">
         <!-- Search Bar -->

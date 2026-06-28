@@ -946,10 +946,12 @@
 
 ::ng-deep .dn-editor-text .ProseMirror p {
     margin: 0 0 0.5em;
+    color: var(--text-primary);
 }
 
 ::ng-deep .dn-editor-text .ProseMirror p:last-child {
     margin-bottom: 0;
+    color: var(--text-primary);
 }
 
 ::ng-deep .dn-editor-text .ProseMirror p.is-editor-empty:first-child::before {
@@ -1103,6 +1105,13 @@ li[data-type="taskItem"] input[type="checkbox"] {
     font-size: var(--editor-font-size, 15px);
     line-height: var(--editor-line-height, 1.75);
     min-height: 50vh;
+    color: var(--text-primary);
+}
+
+::ng-deep .dn-editor-text .ProseMirror li,
+::ng-deep .dn-editor-text .ProseMirror ul,
+::ng-deep .dn-editor-text .ProseMirror ol {
+    color: var(--text-primary);
 }
 
 ::ng-deep .dn-editor-text .ProseMirror:focus {
