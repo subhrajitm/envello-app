@@ -127,7 +127,7 @@
     justify-content: center;
     background: var(--bg-active);
     color: var(--text-secondary);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     padding: 0 5px;
     height: 16px;
@@ -498,7 +498,7 @@
 }
 
 .kpi-card-sub {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     white-space: nowrap;
     overflow: hidden;
@@ -593,22 +593,22 @@
 }
 
 .metric-icon-wrapper.blue {
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--accent-blue)1a;
     color: var(--accent-blue);
 }
 
 .metric-icon-wrapper.green {
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--accent-green)1a;
     color: var(--accent-green);
 }
 
 .metric-icon-wrapper.purple {
-    background: rgba(168, 85, 247, 0.1);
+    background: var(--accent-purple)1a;
     color: var(--accent-purple);
 }
 
 .metric-icon-wrapper.orange {
-    background: rgba(249, 115, 22, 0.1);
+    background: var(--accent-orange)1a;
     color: var(--accent-orange);
 }
 
@@ -951,7 +951,7 @@
 }
 
 .task-subtask-checkbox .material-symbols-outlined {
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .task-subtask-title {
@@ -1283,7 +1283,7 @@
 .status-badge {
     padding: 2px 6px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -1456,7 +1456,7 @@
 }
 
 .thumb-status {
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .thumb-priority {
@@ -2554,7 +2554,7 @@
 }
 
 .date-picker-days-header span {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-tertiary);
 }
@@ -2971,7 +2971,7 @@
 }
 
 .cal-card-weekdays span {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 0.03em;
@@ -3143,7 +3143,7 @@
 }
 
 .cal-stat-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--text-tertiary);
     text-transform: uppercase;
@@ -4311,24 +4311,24 @@
 }
 
 .timeline-priority {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 4px;
 }
 
 .timeline-priority.p1 {
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--accent-red)1a;
     color: var(--accent-red);
 }
 
 .timeline-priority.p2 {
-    background: rgba(245, 158, 11, 0.1);
+    background: var(--accent-yellow)1a;
     color: var(--accent-yellow);
 }
 
 .timeline-priority.p3 {
-    background: rgba(156, 163, 175, 0.1);
+    background: var(--text-secondary)1a;
     color: var(--text-secondary);
 }
 
@@ -4952,8 +4952,8 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: var(--accent-red)1a;
+    border: 1px solid var(--accent-red)4d;
     border-radius: 6px;
     margin-top: 8px;
     font-size: 12px;
@@ -5437,7 +5437,7 @@ textarea:focus-visible {
     left: 50%;
     transform: translate(-50%, -50%);
     color: var(--accent-primary-text);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
     line-height: 1;
 }
@@ -5480,7 +5480,7 @@ textarea:focus-visible {
 
 .p-badge {
     color: var(--text-tertiary);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     padding: 1px 4px;
     background: var(--bg-active);
@@ -5489,12 +5489,12 @@ textarea:focus-visible {
 
 .h-badge {
     color: var(--text-tertiary);
-    font-size: 9px;
+    font-size: 11px;
     font-family: var(--font-mono);
 }
 
 .sub-meta-time {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     margin-top: 1px;
     font-family: var(--font-mono);
@@ -5529,7 +5529,7 @@ textarea:focus-visible {
 
 .version-info {
     text-align: center;
-    font-size: 8px;
+    font-size: 10px;
     color: var(--text-disabled);
     letter-spacing: 1px;
     margin-top: 8px;
@@ -7040,7 +7040,7 @@ textarea:focus-visible {
 }
 
 .attachment-size-compact {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
 }
 
@@ -7543,7 +7543,7 @@ textarea:focus-visible {
 
 .td-ai-title {
     flex: 1;
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--accent-primary);
     text-transform: uppercase;
@@ -7585,7 +7585,7 @@ textarea:focus-visible {
     border: 1px solid var(--border-subtle);
     border-radius: 100px;
     padding: 3px 10px;
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--text-secondary);
     cursor: pointer;
     font-family: inherit;
@@ -7687,7 +7687,7 @@ textarea:focus-visible {
     background: transparent;
     border: none;
     outline: none;
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--text-primary);
     font-family: inherit;
     padding: 7px 0;

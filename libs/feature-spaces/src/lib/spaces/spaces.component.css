@@ -107,7 +107,7 @@
   border: none;
   border-radius: 6px;
   background: none;
-  font-size: 12.5px;
+  font-size: 13px;
   font-family: inherit;
   color: var(--text-primary);
   cursor: pointer;
@@ -120,7 +120,7 @@
 .sp-menu-item .material-symbols-outlined { font-size: 15px; color: var(--text-tertiary); }
 .sp-menu-item-danger { color: var(--accent-red); }
 .sp-menu-item-danger .material-symbols-outlined { color: var(--accent-red); }
-.sp-menu-item-danger:hover:not(:disabled) { background: rgba(239,68,68,0.08); }
+.sp-menu-item-danger:hover:not(:disabled) { background: var(--accent-red)14; }
 
 /* Avatar wrapper — holds circle + active checkmark */
 .sp-avatar-wrap {
@@ -192,7 +192,7 @@
 
 /* Card text */
 .sp-card-name {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
   text-align: center;
@@ -201,7 +201,7 @@
   white-space: nowrap;
   max-width: 100%;
 }
-.sp-card-meta { font-size: 10.5px; color: var(--text-tertiary); }
+.sp-card-meta { font-size: 11px; color: var(--text-tertiary); }
 
 /* Card action buttons row */
 .sp-card-actions {
@@ -432,7 +432,7 @@
 /* Form fields */
 .sp-form-field { display: flex; flex-direction: column; gap: 8px; }
 
-.sp-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.03em; text-transform: uppercase; }
+.sp-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.03em; text-transform: uppercase; }
 .sp-required { color: var(--accent-red); }
 
 .sp-input {
@@ -443,7 +443,7 @@
   border-radius: 8px;
   background: var(--bg-app);
   color: var(--text-primary);
-  font-size: 13.5px;
+  font-size: 14px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   font-family: inherit;
@@ -543,7 +543,7 @@
 .sp-detail-hero-badges { display: flex; align-items: center; gap: 6px; }
 
 .sp-status-chip {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 20px;
@@ -650,4 +650,4 @@
 .sp-resource-item:hover { background: var(--bg-hover); border-color: var(--border-highlight); }
 .sp-resource-icon { font-size: 17px; color: var(--text-tertiary); }
 .sp-resource-count { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1; }
-.sp-resource-label { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.sp-resource-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }

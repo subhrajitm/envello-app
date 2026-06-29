@@ -237,7 +237,7 @@
 
 /* ─── Badges ─── */
 .qf-badge {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 10px;
@@ -245,10 +245,10 @@
     letter-spacing: 0.3px;
     white-space: nowrap;
 }
-.badge-task    { background: rgba(252,211,77,0.12); color: var(--accent-yellow); border: 1px solid rgba(252,211,77,0.2); }
-.badge-book    { background: rgba(251,146,60,0.1);  color: var(--accent-orange); border: 1px solid rgba(251,146,60,0.2); }
-.badge-meeting { background: rgba(236,72,153,0.1);  color: var(--accent-pink); border: 1px solid rgba(236,72,153,0.2); }
-.badge-project { background: rgba(96,165,250,0.1);  color: var(--accent-blue); border: 1px solid rgba(96,165,250,0.2); }
+.badge-task    { background: var(--accent-yellow)1f; color: var(--accent-yellow); border: 1px solid var(--accent-yellow)33; }
+.badge-book    { background: var(--accent-orange)1a; color: var(--accent-orange); border: 1px solid var(--accent-orange)33; }
+.badge-meeting { background: var(--accent-pink)1a;   color: var(--accent-pink);   border: 1px solid var(--accent-pink)33; }
+.badge-project { background: var(--accent-blue)1a;   color: var(--accent-blue);   border: 1px solid var(--accent-blue)33; }
 
 .qf-item-badge {
     padding: 2px 7px;
@@ -352,7 +352,7 @@
 }
 
 .qf-ai-text {
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 1.65;
     color: var(--text-primary);
     white-space: pre-wrap;
@@ -418,7 +418,7 @@
 }
 
 .qf-ai-tag {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     padding: 2px 5px;
     border-radius: 4px;

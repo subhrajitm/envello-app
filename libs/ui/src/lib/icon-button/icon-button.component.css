@@ -68,7 +68,7 @@
 }
 
 .env-icon-btn--danger:hover:not(:disabled) {
-  background: rgba(248, 113, 113, 0.1);
+  background: var(--accent-red)1a;
   color: var(--accent-red);
   border-color: var(--accent-red);
 }

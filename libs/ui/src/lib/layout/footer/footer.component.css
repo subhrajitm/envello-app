@@ -49,7 +49,7 @@
 }
 
 .footer-version-sm {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     font-family: var(--font-mono);
 }
@@ -99,13 +99,13 @@
 }
 
 .footer-sync-btn--error {
-    border-color: rgba(220, 38, 38, 0.4);
+    border-color: var(--accent-red)66;
     color: var(--accent-red);
-    background: rgba(220, 38, 38, 0.06);
+    background: var(--accent-red)0f;
 }
 
 .footer-sync-btn--error:hover:not(:disabled) {
-    background: rgba(220, 38, 38, 0.1);
+    background: var(--accent-red)1a;
     border-color: var(--accent-red);
 }
 

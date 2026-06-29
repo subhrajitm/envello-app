@@ -121,7 +121,7 @@
     letter-spacing: 0.4px;
     text-transform: uppercase;
     color: var(--accent-primary);
-    background: rgba(225, 85, 18, 0.1);
+    background: var(--accent-primary)1a;
     padding: 2px 8px;
     border-radius: 20px;
 }
@@ -208,7 +208,7 @@
 }
 
 .card-action-btn.danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--accent-red)1a;
     color: var(--accent-red);
 }
 

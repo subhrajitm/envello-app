@@ -4,8 +4,8 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px 20px;
-  background: linear-gradient(90deg, rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.06));
-  border-bottom: 1px solid rgba(99, 102, 241, 0.25);
+  background: linear-gradient(90deg, var(--accent-primary)1f, var(--accent-primary)0f);
+  border-bottom: 1px solid var(--accent-primary)40;
   font-size: 13px;
   flex-shrink: 0;
 }
@@ -60,7 +60,7 @@
 .btn-later {
   padding: 5px 14px;
   background: transparent;
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  border: 1px solid var(--accent-primary)4d;
   border-radius: 6px;
   color: var(--text-secondary, #cbd5e1);
   font-size: 12px;
@@ -70,7 +70,7 @@
 }
 
 .btn-later:hover {
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--accent-primary)1a;
 }
 
 .btn-install {
@@ -101,7 +101,7 @@
 .progress-bar {
   width: 140px;
   height: 5px;
-  background: rgba(99, 102, 241, 0.2);
+  background: var(--accent-primary)33;
   border-radius: 3px;
   overflow: hidden;
 }

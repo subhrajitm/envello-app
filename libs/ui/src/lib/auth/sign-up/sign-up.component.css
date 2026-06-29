@@ -111,7 +111,7 @@
 }
 
 .sidebar-subtitle {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -213,7 +213,7 @@
 }
 
 .step-status {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -548,8 +548,8 @@
     align-items: center;
     gap: 6px;
     padding: 8px 10px;
-    background: rgba(248, 113, 113, 0.1);
-    border: 1px solid rgba(248, 113, 113, 0.3);
+    background: var(--accent-red)1a;
+    border: 1px solid var(--accent-red)4d;
     border-radius: 4px;
     color: var(--accent-red);
     font-size: 11px;

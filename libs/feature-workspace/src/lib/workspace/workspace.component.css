@@ -58,7 +58,7 @@
 .context-label {
   background: var(--accent-dim);
   color: var(--accent);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
   padding: 4px 8px;
@@ -265,7 +265,7 @@
   font-family: var(--font-mono);
   padding: 2px 4px;
   border-radius: 2px;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .kbd {
@@ -471,9 +471,9 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(58, 186, 112, 0.2);
+  background: var(--accent-green)33;
   color: var(--accent-green);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -663,7 +663,7 @@
 /* ── Date group header ───────────────────────────────────── */
 
 .ra-date-header {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-tertiary);
   font-family: var(--font-sans);
@@ -765,7 +765,7 @@
 }
 
 .ra-time {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-tertiary);
   font-family: var(--font-sans);
   white-space: nowrap;
@@ -854,7 +854,7 @@
   align-items: center;
   padding: 0 24px;
   background: var(--bg-page);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-tertiary);
   letter-spacing: 1px;
@@ -1172,7 +1172,7 @@
 
 .created-text {
   flex: 1;
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;

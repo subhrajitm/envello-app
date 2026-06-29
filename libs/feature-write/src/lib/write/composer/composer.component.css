@@ -416,7 +416,7 @@
 
 .ne-acc-title {
     flex: 1;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1.5px;
     color: var(--text-tertiary);
@@ -496,7 +496,7 @@
 .ne-chap-header {
     padding: 0 10px;
     margin-bottom: 0;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.06em;
     color: var(--text-tertiary);
@@ -737,7 +737,7 @@
 }
 
 .ne-chap-meta {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     opacity: 0.8;
 }
@@ -834,7 +834,7 @@
 
 .stat-label {
     color: var(--text-tertiary);
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.5px;
 }
 
@@ -1427,7 +1427,7 @@
 .status-badge {
     padding: 2px 8px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1907,7 +1907,7 @@
 /* Removed old context box - replaced with chat interface */
 
 .ctx-header {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     display: flex;
@@ -2100,7 +2100,7 @@
 }
 
 .message-time {
-    font-size: 8px;
+    font-size: 10px;
     color: var(--text-disabled);
     margin-top: 3px;
     padding: 0 2px;
@@ -2199,7 +2199,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     cursor: pointer;
     padding: 3px 6px;
@@ -2298,7 +2298,7 @@
     padding: 8px 10px;
     max-height: 150px;
     overflow-y: auto;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-secondary);
 }
 
@@ -2308,7 +2308,7 @@
     align-items: center;
     margin-bottom: 6px;
     font-weight: 600;
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .context-preview .ctx-header button {
@@ -2345,7 +2345,7 @@
 }
 
 .sugg-header {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     display: flex;
@@ -2460,7 +2460,7 @@
 
 .sc-hint {
     margin-left: auto;
-    font-size: 9px;
+    font-size: 11px;
     background: var(--bg-hover);
     padding: 2px 4px;
     border-radius: 2px;
@@ -2731,7 +2731,7 @@
 }
 
 .note-time {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
 }
 
@@ -2765,7 +2765,7 @@
 
 .meta-section label {
     display: block;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     margin-bottom: 6px;
@@ -2800,7 +2800,7 @@
 }
 
 .stat-label-mini {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-tertiary);
     text-transform: uppercase;
@@ -2939,7 +2939,7 @@
 .version-badge {
     padding: 2px 8px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -3609,7 +3609,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -3664,7 +3664,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -3694,7 +3694,7 @@
 }
 
 .ne-ent-prop label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -5354,7 +5354,7 @@
 }
 
 .ne-recent-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--text-tertiary);
@@ -5370,7 +5370,7 @@
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: 12px;
   padding: 4px 4px;
   border-radius: 4px;
   text-align: left;
@@ -6111,7 +6111,7 @@
 }
 
 .ne-mention-item-badge {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.6px;
     text-transform: uppercase;
@@ -6225,7 +6225,7 @@
 }
 
 .ne-char-name-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--text-tertiary);
@@ -6303,7 +6303,7 @@
 }
 
 .ne-char-section-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -6335,7 +6335,7 @@
 .ne-char-field:last-child { border-bottom: none; }
 
 .ne-char-field label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -6382,7 +6382,7 @@
     align-items: center;
     gap: 6px;
     padding: 11px 24px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -6405,7 +6405,7 @@
 .ne-char-prose-tiptap .ProseMirror {
     min-height: 180px;
     padding: 18px 24px;
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 1.8;
     color: var(--text-primary);
     outline: none;
@@ -6906,7 +6906,7 @@
 }
 
 .ne-loc-name-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--text-tertiary);

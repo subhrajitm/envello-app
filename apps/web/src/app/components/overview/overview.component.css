@@ -42,7 +42,7 @@
 }
 
 .stat-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     margin-bottom: 4px;
@@ -142,7 +142,7 @@
 }
 
 .plan-tag {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 2px;
@@ -326,7 +326,7 @@
 
 .cal-day-header {
     background: var(--bg-panel);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     display: flex;
@@ -372,7 +372,7 @@
 .today-badge {
     background: var(--accent-primary-dim);
     color: var(--accent-yellow);
-    font-size: 8px;
+    font-size: 10px;
     padding: 2px 4px;
     border-radius: 2px;
     font-weight: 700;
@@ -385,7 +385,7 @@
 }
 
 .cal-event {
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 700;
     padding: 4px 6px;
     border-radius: 3px;
@@ -418,7 +418,7 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-disabled);
     padding: 12px;
@@ -496,7 +496,7 @@
 }
 
 .config-header {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     margin-bottom: 12px;
@@ -588,7 +588,7 @@
     }
 
     .cal-event {
-        font-size: 8px;
+        font-size: 10px;
         padding: 4px;
         text-overflow: ellipsis;
         white-space: nowrap;

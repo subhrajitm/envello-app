@@ -28,7 +28,7 @@
   padding: 6px 8px 4px;
 }
 .ppl-sb-section-label {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: .06em;
   color: var(--text-tertiary);
@@ -302,7 +302,7 @@
 .ppl-tl-title   { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppl-tl-preview { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 .ppl-tl-date    { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
-.ppl-tl-badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
+.ppl-tl-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
 .ppl-tl-badge--meeting     { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
 .ppl-tl-badge--task        { background: color-mix(in srgb, var(--accent-yellow) 15%, transparent); color: var(--accent-yellow); }
 .ppl-tl-badge--note        { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }

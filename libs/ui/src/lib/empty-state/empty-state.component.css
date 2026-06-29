@@ -96,7 +96,7 @@
 }
 
 .env-empty-state__description {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-tertiary);
   margin: 0 0 20px;
   line-height: 1.6;
@@ -121,7 +121,7 @@
   border: none;
   background: var(--accent-primary);
   color: var(--accent-primary-text);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s, transform 0.12s;
@@ -140,7 +140,7 @@
   border: 1px solid var(--border-subtle);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -191,7 +191,7 @@
 
 .env-empty-state--compact .env-empty-state__icon { font-size: 18px; }
 .env-empty-state--compact .env-empty-state__title { font-size: 13px; margin-bottom: 4px; }
-.env-empty-state--compact .env-empty-state__description { font-size: 11.5px; margin-bottom: 14px; }
+.env-empty-state--compact .env-empty-state__description { font-size: 12px; margin-bottom: 14px; }
 .env-empty-state--compact .env-empty-state__cta { padding: 5px 12px; font-size: 12px; }
 .env-empty-state--compact .env-empty-state__secondary { padding: 5px 12px; font-size: 12px; }
-.env-empty-state--compact .env-empty-state__hint { margin-top: 14px; font-size: 10.5px; }
+.env-empty-state--compact .env-empty-state__hint { margin-top: 14px; font-size: 11px; }

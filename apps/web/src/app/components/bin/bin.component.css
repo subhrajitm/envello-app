@@ -50,7 +50,7 @@
 .back-btn .material-symbols-outlined { font-size: 16px; }
 
 .bin-breadcrumbs {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     font-weight: 700;
     letter-spacing: 1px;
@@ -103,8 +103,8 @@ h1 {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: var(--accent-red)14;
+    border: 1px solid var(--accent-red)4d;
     color: var(--accent-red);
     border-radius: 6px;
     padding: 6px 12px;
@@ -115,8 +115,8 @@ h1 {
     transition: all 0.2s;
 }
 .empty-btn:hover {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.5);
+    background: var(--accent-red)26;
+    border-color: var(--accent-red)80;
 }
 .empty-btn .material-symbols-outlined { font-size: 15px; }
 
@@ -162,7 +162,7 @@ h1 {
     padding: 10px 16px;
     background: var(--bg-subtle);
     border-bottom: 1px solid var(--border-subtle);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 1px;
@@ -215,7 +215,7 @@ h1 {
 }
 
 .col-scope { display: flex; flex-direction: column; gap: 2px; }
-.scope-label { font-size: 9px; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.5px; }
+.scope-label { font-size: 11px; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.5px; }
 .scope-value { font-size: 12px; color: var(--text-secondary); }
 
 .col-actions {
@@ -237,10 +237,10 @@ h1 {
 .bin-icon { font-size: 15px; }
 
 .bin-icon-wrapper.type-task           { background: var(--accent-yellow)1a;  color: var(--accent-yellow); }
-.bin-icon-wrapper.type-daily-note     { background: rgba(34,197,94,0.1);    color: var(--accent-green); }
+.bin-icon-wrapper.type-daily-note     { background: var(--accent-green)1a;  color: var(--accent-green); }
 .bin-icon-wrapper.type-novel          { background: var(--accent-blue)1a;    color: var(--accent-blue); }
 .bin-icon-wrapper.type-novel-chapter  { background: var(--accent-blue)1a;    color: var(--accent-blue); }
-.bin-icon-wrapper.type-novel-note     { background: rgba(34,197,94,0.1);    color: var(--accent-green); }
+.bin-icon-wrapper.type-novel-note     { background: var(--accent-green)1a;  color: var(--accent-green); }
 .bin-icon-wrapper.type-novel-character{ background: var(--accent-yellow)1a;  color: var(--accent-yellow); }
 .bin-icon-wrapper.type-novel-location { background: var(--accent-purple)1a;  color: var(--accent-purple); }
 .bin-icon-wrapper.type-novel-group    { background: var(--text-secondary)1a; color: var(--text-secondary); }
@@ -267,7 +267,7 @@ h1 {
 }
 
 .type-badge {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 10px;
@@ -289,7 +289,7 @@ h1 {
 
 .meta-id {
     font-family: var(--font-mono, monospace);
-    font-size: 9px;
+    font-size: 11px;
 }
 
 /* ─── Action Buttons ─────────────────────────────────────────────────────── */
@@ -299,7 +299,7 @@ h1 {
     gap: 4px;
     border: none;
     border-radius: 5px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.3px;
     cursor: pointer;
@@ -310,13 +310,13 @@ h1 {
 .action-btn .material-symbols-outlined { font-size: 14px; }
 
 .restore-btn {
-    background: rgba(34,197,94,0.08);
-    border: 1px solid rgba(34,197,94,0.25);
+    background: var(--accent-green)14;
+    border: 1px solid var(--accent-green)40;
     color: var(--accent-green);
 }
 .restore-btn:hover {
-    background: rgba(34,197,94,0.15);
-    border-color: rgba(34,197,94,0.45);
+    background: var(--accent-green)26;
+    border-color: var(--accent-green)73;
 }
 .restore-btn.loading {
     opacity: 0.6;
@@ -324,14 +324,14 @@ h1 {
 }
 
 .delete-btn {
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.2);
+    background: var(--accent-red)14;
+    border: 1px solid var(--accent-red)33;
     color: var(--accent-red);
     padding: 4px 6px;
 }
 .delete-btn:hover {
-    background: rgba(239,68,68,0.15);
-    border-color: rgba(239,68,68,0.4);
+    background: var(--accent-red)26;
+    border-color: var(--accent-red)66;
 }
 
 /* ─── Expand Icon ─────────────────────────────────────────────────────────── */
@@ -362,7 +362,7 @@ h1 {
 }
 
 .detail-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 0.5px;

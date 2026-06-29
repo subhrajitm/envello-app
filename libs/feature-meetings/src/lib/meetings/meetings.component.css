@@ -367,8 +367,8 @@
   flex-shrink: 0;
 }
 .mt-av:first-child { margin-left: 0; }
-.mt-av--more { background: var(--bg-hover); color: var(--text-secondary); font-size: 9px; }
-.mt-av--sm { width: 20px; height: 20px; font-size: 9px; }
+.mt-av--more { background: var(--bg-hover); color: var(--text-secondary); font-size: 11px; }
+.mt-av--sm { width: 20px; height: 20px; font-size: 11px; }
 
 .mt-item-actions {
   display: flex;
@@ -582,7 +582,7 @@
 }
 .mt-cal-tl-event-att {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
   color: rgba(255,255,255,0.65);
   margin-top: 1px;
 }
@@ -698,7 +698,7 @@
 }
 .mt-cal-ym-weekdays span {
   text-align: center;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-tertiary);
   padding: 2px 0;
@@ -809,7 +809,7 @@
 }
 
 .mt-cal-day-badge {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--accent-primary);
   background: var(--accent-primary-dim);

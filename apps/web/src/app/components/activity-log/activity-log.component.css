@@ -54,7 +54,7 @@
 }
 
 .al-breadcrumbs {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     font-weight: 700;
     letter-spacing: 1px;
@@ -156,7 +156,7 @@ h1 {
     padding: 10px 16px;
     background: var(--bg-subtle);
     border-bottom: 1px solid var(--border-subtle);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 1px;
@@ -240,22 +240,22 @@ h1 {
 
 /* Type colors logic */
 .log-icon-wrapper.entry {
-    background: rgba(252, 211, 77, 0.1);
+    background: var(--accent-yellow)1a;
     color: var(--accent-yellow);
 }
 
 .log-icon-wrapper.sync {
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--accent-blue)1a;
     color: var(--accent-blue);
 }
 
 .log-icon-wrapper.ai {
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--accent-green)1a;
     color: var(--accent-green);
 }
 
 .log-icon-wrapper.system {
-    background: rgba(168, 85, 247, 0.1);
+    background: var(--accent-purple)1a;
     color: var(--accent-purple);
 }
 
@@ -267,7 +267,7 @@ h1 {
 }
 
 .log-id {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     font-family: var(--font-mono, monospace);
 }
@@ -279,7 +279,7 @@ h1 {
     background: var(--bg-element);
     border: 1px solid var(--border-highlight);
     color: var(--text-secondary);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -287,7 +287,7 @@ h1 {
 }
 
 .status-badge {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 12px;
@@ -295,9 +295,9 @@ h1 {
 }
 
 .status-badge.success {
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--accent-green)1a;
     color: var(--accent-green);
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--accent-green)33;
 }
 
 .expand-icon {
@@ -330,7 +330,7 @@ h1 {
 }
 
 .detail-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 0.5px;
