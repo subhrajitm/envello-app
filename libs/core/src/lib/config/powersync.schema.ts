@@ -377,6 +377,8 @@ const user_preferences = new Table(
     navigationLayout:     column.text,
     versionHistoryLimit:  column.real,
     hiddenNavItems:       column.text,  // JSON string[]
+    onboardingUseCase:    column.text,
+    sidebarCollapsed:     column.integer,
     compactMode:          column.integer,
     animations:           column.integer,
     autoSave:             column.integer,
@@ -390,6 +392,24 @@ const user_preferences = new Table(
     minimizeToTray:       column.integer,
   },
   { localOnly: true }
+);
+
+const library_files = new Table(
+  {
+    profile_id:  column.text,
+    name:        column.text,
+    mimeType:    column.text,
+    size:        column.real,
+    storagePath: column.text,
+    publicUrl:   column.text,
+    uploadedAt:  column.text,
+    collectionId:column.text,
+    sourceType:  column.text,
+    sourceId:    column.text,
+    description: column.text,
+    tags:        column.text,  // JSON string[]
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
 export const AppSchema = new Schema({
@@ -416,6 +436,7 @@ export const AppSchema = new Schema({
   transactions,
   people,
   user_preferences,
+  library_files,
 });
 
 /**
@@ -427,7 +448,7 @@ export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'bookmarks',
-  'bookmark_folders', 'transactions', 'people', 'user_preferences',
+  'bookmark_folders', 'transactions', 'people', 'user_preferences', 'library_files',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -444,6 +465,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
   transactions:         ['history'],
   people:               ['tags'],
   user_preferences:     ['hiddenNavItems'],
+  library_files:        ['tags'],
 };
 
 /** Fields that are stored as 0/1 integers in SQLite but are booleans in TS. */
@@ -454,6 +476,6 @@ export const BOOL_FIELDS: Record<string, string[]> = {
   user_preferences: [
     'compactMode', 'animations', 'autoSave', 'spellCheck', 'focusMode',
     'desktopNotifications', 'soundEffects', 'dailySummary', 'analytics',
-    'alwaysOnTop', 'minimizeToTray',
+    'alwaysOnTop', 'minimizeToTray', 'sidebarCollapsed',
   ],
 };
