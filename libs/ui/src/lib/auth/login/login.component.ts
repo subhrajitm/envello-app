@@ -439,7 +439,6 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
       'dark':             [255, 215,   0],
       'enterprise-dark':  [251, 191,  36],
       'light':            [180,  83,   9],
-      'colorful':         [240, 125,  89],
       'typewriter':       [ 60,  60,  60],
     };
     return map[theme] ?? map['light'];

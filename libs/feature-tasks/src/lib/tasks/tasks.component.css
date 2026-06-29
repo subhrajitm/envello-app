@@ -2962,20 +2962,22 @@
 .cal-card-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
     padding: 0 0 4px;
     text-align: center;
 }
 
 .cal-card-weekdays span {
     font-size: 9px;
-    font-weight: 600;
-    color: var(--text-disabled);
+    font-weight: 700;
+    color: var(--text-tertiary);
+    letter-spacing: 0.03em;
 }
 
 .cal-card-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0;
+    gap: 3px;
     padding: 0 0 8px;
 }
 
@@ -2987,8 +2989,8 @@
     justify-content: center;
     aspect-ratio: 1;
     border: none;
-    background: transparent;
-    border-radius: 50%;
+    background: var(--bg-element);
+    border-radius: 7px;
     cursor: pointer;
     transition: background 0.12s;
     padding: 0;
@@ -2997,7 +2999,7 @@
 
 .cal-cell-num {
     font-size: 11px;
-    font-weight: 400;
+    font-weight: 500;
     color: var(--text-secondary);
     line-height: 1;
 }
@@ -3007,24 +3009,29 @@
     height: 3px;
     border-radius: 50%;
     background: var(--accent-primary);
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 .cal-cell:hover:not(.cal-cell--today):not(.cal-cell--other-month) {
-    background: var(--bg-hover);
+    background: var(--bg-active);
 }
 
 .cal-cell:hover:not(.cal-cell--today):not(.cal-cell--other-month) .cal-cell-num {
     color: var(--text-primary);
 }
 
+.cal-cell--other-month {
+    background: var(--bg-subtle);
+}
+
 .cal-cell--other-month .cal-cell-num {
     color: var(--text-disabled);
+    font-weight: 400;
 }
 
 .cal-cell--today {
     background: var(--accent-primary);
-    border-radius: 50%;
+    border-radius: 7px;
 }
 
 .cal-cell--today .cal-cell-num {
@@ -3033,7 +3040,7 @@
 }
 
 .cal-cell--today .cal-cell-dot {
-    background: rgba(255,255,255,0.7);
+    background: rgba(255, 255, 255, 0.6);
 }
 
 .cal-cell--has-tasks .cal-cell-num {
@@ -3042,9 +3049,9 @@
 }
 
 .cal-cell--selected {
-    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-    border-radius: 50%;
-    outline: 1px solid color-mix(in srgb, var(--accent-primary) 50%, transparent);
+    background: var(--accent-primary-dim);
+    border-radius: 7px;
+    outline: 1.5px solid color-mix(in srgb, var(--accent-primary) 60%, transparent);
     outline-offset: -1px;
 }
 

@@ -222,7 +222,6 @@ export class SettingsPageComponent implements OnInit {
     { value: 'dark',            label: 'Midnight',   icon: 'nights_stay' },
     { value: 'enterprise-dark', label: 'Pro Dark',   icon: 'dark_mode' },
     { value: 'light',           label: 'Paper',      icon: 'light_mode' },
-    { value: 'colorful',        label: 'Colorful',   icon: 'palette' },
     { value: 'typewriter',      label: 'Typewriter', icon: 'article' }
   ];
 

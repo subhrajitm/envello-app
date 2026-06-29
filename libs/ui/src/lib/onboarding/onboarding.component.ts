@@ -38,7 +38,6 @@ export class OnboardingComponent implements OnInit {
     { id: 'dark',              label: 'Midnight',   icon: 'nights_stay' },
     { id: 'enterprise-dark',   label: 'Pro Dark',   icon: 'dark_mode' },
     { id: 'light',             label: 'Paper',      icon: 'light_mode' },
-    { id: 'colorful',          label: 'Colorful',   icon: 'palette' },
   ];
 
   aiProviders: { id: AiProvider; label: string; icon: string }[] = [
