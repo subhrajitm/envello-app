@@ -95,6 +95,8 @@
     /* Clean white for contrast */
     --bg-hover: #ebebeb;
     --bg-active: #e2e2e2;
+    --bg-subtle: #f2f2f0;
+    --bg-element: #ebebeb;
 
     --border-subtle: #e5e5e0;
     --border-main: #d6d6d0;
@@ -189,7 +191,9 @@
 /* ── Compatibility aliases for legacy component variable names ── */
 :root,
 [data-theme="dark"],
-[data-theme="enterprise-dark"] {
+[data-theme="enterprise-dark"],
+[data-theme="light"],
+[data-theme="typewriter"] {
     --border-color:    var(--border-main);
     --bg-page:         var(--bg-app);
     --bg-sidebar:      var(--bg-subtle);

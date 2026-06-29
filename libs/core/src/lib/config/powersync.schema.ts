@@ -63,6 +63,7 @@ const tasks = new Table(
     description:       column.text,
     startDate:         column.text,
     estimatedDuration: column.real,
+    createdAt:         column.text,
     deleted_at:        column.text,
   },
   {
@@ -127,8 +128,10 @@ const books = new Table(
     progress:         column.real,
     chapters:         column.real,
     notesCount:       column.real,
+    writingType:      column.text,
     createdDate:      column.text,
     lastUpdated:      column.text,
+    createdAt:        column.text,
     genre:            column.text,
     isRecentlyUpdated:column.integer,
     coverImage:       column.text,
@@ -338,6 +341,8 @@ const transactions = new Table(
     ownerId:     column.text,
     projectId:   column.text,
     notes:       column.text,
+    createdAt:   column.text,
+    history:     column.text,
     deleted_at:  column.text,
   },
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
@@ -436,6 +441,7 @@ export const JSON_FIELDS: Record<string, string[]> = {
   research_summaries:   ['sourceIds', 'tags'],
   projects:             ['team', 'tags', 'linkedResources'],
   bookmarks:            ['tags'],
+  transactions:         ['history'],
   people:               ['tags'],
   user_preferences:     ['hiddenNavItems'],
 };
