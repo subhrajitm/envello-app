@@ -343,6 +343,50 @@ const transactions = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+const people = new Table(
+  {
+    profile_id:      column.text,
+    name:            column.text,
+    email:           column.text,
+    phone:           column.text,
+    company:         column.text,
+    role:            column.text,
+    avatar:          column.text,
+    tags:            column.text,  // JSON string[]
+    notes:           column.text,
+    lastInteraction: column.text,
+    createdAt:       column.text,
+    deleted_at:      column.text,
+  },
+  { localOnly: true, indexes: { by_profile: ['profile_id'] } }
+);
+
+const user_preferences = new Table(
+  {
+    profile_id:           column.text,
+    theme:                column.text,
+    fontSize:             column.real,
+    editorFont:           column.text,
+    editorFontSize:       column.real,
+    lineHeight:           column.text,
+    navigationLayout:     column.text,
+    versionHistoryLimit:  column.real,
+    hiddenNavItems:       column.text,  // JSON string[]
+    compactMode:          column.integer,
+    animations:           column.integer,
+    autoSave:             column.integer,
+    spellCheck:           column.integer,
+    focusMode:            column.integer,
+    desktopNotifications: column.integer,
+    soundEffects:         column.integer,
+    dailySummary:         column.integer,
+    analytics:            column.integer,
+    alwaysOnTop:          column.integer,
+    minimizeToTray:       column.integer,
+  },
+  { localOnly: true }
+);
+
 export const AppSchema = new Schema({
   // Synced via PowerSync ↔ Supabase
   user_data,
@@ -365,6 +409,8 @@ export const AppSchema = new Schema({
   bookmarks,
   bookmark_folders,
   transactions,
+  people,
+  user_preferences,
 });
 
 /**
@@ -376,7 +422,7 @@ export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
   'research_summaries', 'projects', 'note_folders', 'bookmarks',
-  'bookmark_folders', 'transactions',
+  'bookmark_folders', 'transactions', 'people', 'user_preferences',
 ]);
 
 /** Fields that are stored as JSON strings in SQLite. */
@@ -390,11 +436,18 @@ export const JSON_FIELDS: Record<string, string[]> = {
   research_summaries:   ['sourceIds', 'tags'],
   projects:             ['team', 'tags', 'linkedResources'],
   bookmarks:            ['tags'],
+  people:               ['tags'],
+  user_preferences:     ['hiddenNavItems'],
 };
 
 /** Fields that are stored as 0/1 integers in SQLite but are booleans in TS. */
 export const BOOL_FIELDS: Record<string, string[]> = {
-  books:          ['isRecentlyUpdated'],
-  bookmarks:      ['isArchived', 'isPinned'],
-  planning_items: ['active'],
+  books:            ['isRecentlyUpdated'],
+  bookmarks:        ['isArchived', 'isPinned'],
+  planning_items:   ['active'],
+  user_preferences: [
+    'compactMode', 'animations', 'autoSave', 'spellCheck', 'focusMode',
+    'desktopNotifications', 'soundEffects', 'dailySummary', 'analytics',
+    'alwaysOnTop', 'minimizeToTray',
+  ],
 };
