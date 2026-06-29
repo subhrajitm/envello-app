@@ -100,6 +100,13 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   searchQuery = signal<string>('');   // debounced — drives filteredNotes
   selectedFilter = signal<string>('all');
   selectedTag = signal<string>('');
+  sortBy = signal<'manual' | 'modified' | 'created' | 'alpha'>(
+    (typeof localStorage !== 'undefined'
+      ? (localStorage.getItem('dn-sort-by') as 'manual' | 'modified' | 'created' | 'alpha' | null)
+      : null) ?? 'manual'
+  );
+  showSortMenu = signal(false);
+  focusedNoteId = signal<string | null>(null);
   showColorPicker = signal<boolean>(false);
   isFullWidth = signal<boolean>(
     typeof localStorage !== 'undefined'
@@ -242,6 +249,21 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   getNotesForFolder(folderId: string): Note[] {
     const notes = this.notesPerFolder().get(folderId) ?? [];
+    const sort = this.sortBy();
+    if (sort !== 'manual') {
+      return [...notes].sort((a, b) => {
+        if (sort === 'alpha') return (a.title || 'Untitled').localeCompare(b.title || 'Untitled');
+        if (sort === 'created') {
+          const aT = parseInt(a.id, 10) || new Date(a.date).getTime();
+          const bT = parseInt(b.id, 10) || new Date(b.date).getTime();
+          return bT - aT;
+        }
+        // modified: use lastEdited if available, fall back to id timestamp
+        const aM = a.lastEdited ? new Date(a.lastEdited).getTime() : parseInt(a.id, 10) || new Date(a.date).getTime();
+        const bM = b.lastEdited ? new Date(b.lastEdited).getTime() : parseInt(b.id, 10) || new Date(b.date).getTime();
+        return bM - aM;
+      });
+    }
     try {
       const raw = localStorage.getItem(this.noteOrderKey(folderId));
       if (!raw) return notes;
@@ -328,7 +350,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   getPreviewText(preview: string): string {
     if (!preview?.trim()) return '';
-    let clean = preview
+    const clean = preview
       .replace(/^\[MOCK\]\s*/i, '')
       .replace(/^\[[^\]]+\]\s*/, '')
       .replace(/<[^>]*>/g, '')
@@ -699,7 +721,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.multiSelectedIds.update(set => {
         const next = new Set(set);
-        next.has(noteId) ? next.delete(noteId) : next.add(noteId);
+        if (next.has(noteId)) { next.delete(noteId); } else { next.add(noteId); }
         return next;
       });
       this.lastClickedNoteId = noteId;
@@ -908,6 +930,48 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return note.tags?.filter(tag => tag !== 'pinned') || [];
   }
 
+  getTagColor(tag: string): string {
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+      hash = (hash * 31 + tag.charCodeAt(i)) & 0x7fffffff;
+    }
+    return `hsl(${hash % 360}, 65%, 55%)`;
+  }
+
+  setSortBy(sort: 'manual' | 'modified' | 'created' | 'alpha') {
+    this.sortBy.set(sort);
+    this.showSortMenu.set(false);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('dn-sort-by', sort);
+  }
+
+  navigateNotes(direction: 'up' | 'down') {
+    const notes = this.filteredNotes();
+    if (notes.length === 0) return;
+    const currentId = this.focusedNoteId();
+    if (!currentId) {
+      const note = direction === 'down' ? notes[0] : notes[notes.length - 1];
+      this.focusedNoteId.set(note.id);
+      this.scrollNoteIntoView(note.id);
+      return;
+    }
+    const idx = notes.findIndex(n => n.id === currentId);
+    const next = idx === -1 ? 0
+      : direction === 'down' ? Math.min(idx + 1, notes.length - 1)
+      : Math.max(idx - 1, 0);
+    this.focusedNoteId.set(notes[next].id);
+    this.scrollNoteIntoView(notes[next].id);
+  }
+
+  private scrollNoteIntoView(noteId: string) {
+    const folderId = this.effectiveFolderId(this.filteredNotes().find(n => n.id === noteId)!);
+    const group = this.noteGroups().find(g => g.id === folderId);
+    if (group && !group.expanded) this.toggleGroup(folderId);
+    setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-note-id="${noteId}"]`)
+        ?.scrollIntoView({ block: 'nearest' });
+    }, 0);
+  }
+
   setNoteBgColor(color: string) {
     const id = this.selectedEntryId();
     if (id) this.store.updateNote(id, { bgColor: color });
@@ -1045,6 +1109,22 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       event.preventDefault();
       if (this.activeModal() === 'none') this.handleNewFolder();
     }
+
+    if (!event.metaKey && !event.ctrlKey && !event.altKey && this.activeModal() === 'none') {
+      const inInput = !!(event.target as HTMLElement)?.closest('input, textarea, [contenteditable]');
+      if (!inInput) {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          this.navigateNotes('down');
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          this.navigateNotes('up');
+        } else if (event.key === 'Enter' && this.focusedNoteId()) {
+          event.preventDefault();
+          this.selectNote(this.focusedNoteId()!);
+        }
+      }
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -1065,6 +1145,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.dn-bulk-move-wrap')) {
       if (this.showBulkMoveMenu()) this.showBulkMoveMenu.set(false);
+    }
+    if (!target.closest('.dn-sort-wrap')) {
+      if (this.showSortMenu()) this.showSortMenu.set(false);
     }
   }
 

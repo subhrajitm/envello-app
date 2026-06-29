@@ -431,6 +431,12 @@
     background: var(--bg-hover);
 }
 
+.note-card-item.keyboard-focused:not(.active) {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: -2px;
+    background: var(--bg-hover);
+}
+
 .note-card-item.active {
     background: var(--accent-primary-dim);
     color: var(--accent-primary);
@@ -2210,6 +2216,73 @@ tiptap-editor:focus,
 
 .dn-quick-chip.active .dn-chip-count {
     background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
+}
+
+.dn-quick-chip.chip-empty {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
+.dn-folders-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.dn-sort-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.dn-sort-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: var(--z-dropdown);
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.dn-sort-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: left;
+    transition: background 0.1s, color 0.1s;
+}
+
+.dn-sort-item .material-symbols-outlined {
+    font-size: 15px;
+}
+
+.dn-sort-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.dn-sort-item.active {
+    color: var(--accent-primary);
+    background: var(--accent-primary-dim);
+}
+
+.sort-active {
+    color: var(--accent-primary);
 }
 
 /* ─── Sidebar Dividers & Section Labels ─────────────────────────────────────── */

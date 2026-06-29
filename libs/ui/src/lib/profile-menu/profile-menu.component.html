@@ -1,3 +1,6 @@
+<!-- Backdrop — must appear before dropdown so dropdown stacks above it at equal z-index -->
+<div class="profile-backdrop" *ngIf="isOpen()" (click)="close()"></div>
+
 <div class="profile-dropdown" *ngIf="isOpen()" [@slideDown] (click)="$event.stopPropagation()">
     <!-- User Info Section -->
     <div class="profile-header flex items-center gap-3">
@@ -108,9 +111,6 @@
         <span>Member since {{ getMemberSince() }}</span>
     </div>
 </div>
-
-<!-- Backdrop -->
-<div class="profile-backdrop" *ngIf="isOpen()" (click)="close()"></div>
 
 <!-- Add Profile Modal -->
 <env-modal
