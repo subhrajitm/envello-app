@@ -98,7 +98,7 @@
         <div class="dn-search-header">
             <div class="search-container">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" class="dn-search-input" placeholder="Search notes..."
+                <input type="text" class="dn-search-input" placeholder="Search titles &amp; content…"
                     [ngModel]="searchInput()" (ngModelChange)="onSearchInput($event)" />
                 @if (searchInput()) {
                 <env-icon-button icon="close" variant="borderless" [size]="20" title="Clear search" (clicked)="clearSearch()" style="position:absolute;right:6px;" />
@@ -128,14 +128,16 @@
                 All
                 <span class="dn-chip-count">{{ notes().length }}</span>
             </button>
-            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'tagged' && !selectedTag()" (click)="setFilter('tagged')">
+            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'tagged' && !selectedTag()"
+                [class.chip-empty]="taggedCount() === 0" (click)="setFilter('tagged')">
                 <span class="material-symbols-outlined">label</span>
                 Tagged
                 @if (taggedCount()) {
                 <span class="dn-chip-count">{{ taggedCount() }}</span>
                 }
             </button>
-            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'pinned' && !selectedTag()" (click)="setFilter('pinned')">
+            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'pinned' && !selectedTag()"
+                [class.chip-empty]="pinnedCount() === 0" (click)="setFilter('pinned')">
                 <span class="material-symbols-outlined">push_pin</span>
                 Pinned
                 @if (pinnedCount()) {
@@ -149,7 +151,30 @@
         <!-- My Folders Header -->
         <div class="dn-folders-hdr">
             <span class="dn-sb-section-label">My Folders</span>
+            <div class="dn-folders-actions">
+            <div class="dn-sort-wrap">
+                <env-icon-button [icon]="sortBy() !== 'manual' ? 'sort' : 'sort'" variant="borderless" [size]="24"
+                    [class.sort-active]="sortBy() !== 'manual'"
+                    title="Sort notes" (clicked)="showSortMenu.set(!showSortMenu())" />
+                @if (showSortMenu()) {
+                <div class="dn-sort-menu">
+                    <button class="dn-sort-item" [class.active]="sortBy() === 'manual'" (click)="setSortBy('manual')">
+                        <span class="material-symbols-outlined">drag_indicator</span> Manual
+                    </button>
+                    <button class="dn-sort-item" [class.active]="sortBy() === 'modified'" (click)="setSortBy('modified')">
+                        <span class="material-symbols-outlined">history</span> Last modified
+                    </button>
+                    <button class="dn-sort-item" [class.active]="sortBy() === 'created'" (click)="setSortBy('created')">
+                        <span class="material-symbols-outlined">add_circle</span> Date created
+                    </button>
+                    <button class="dn-sort-item" [class.active]="sortBy() === 'alpha'" (click)="setSortBy('alpha')">
+                        <span class="material-symbols-outlined">sort_by_alpha</span> Alphabetical
+                    </button>
+                </div>
+                }
+            </div>
             <env-icon-button [icon]="allExpanded() ? 'unfold_less' : 'unfold_more'" variant="borderless" [size]="24" [title]="allExpanded() ? 'Collapse all' : 'Expand all'" (clicked)="toggleExpandAll()" />
+            </div>
         </div>
 
         <!-- Folder Tree -->
@@ -218,13 +243,15 @@
                     } @else {
                     @for (entry of getNotesForFolder(group.id); track entry.id) {
                     <div class="note-card-item"
+                        [attr.data-note-id]="entry.id"
                         [class.active]="selectedNote()?.id === entry.id && !isMultiSelecting()"
+                        [class.keyboard-focused]="focusedNoteId() === entry.id"
                         [class.multi-selected]="multiSelectedIds().has(entry.id)"
                         [class.dragging]="draggingNoteId() === entry.id"
                         [class.drag-above]="dragOverNoteId() === entry.id && dragInsertBefore()"
                         [class.drag-below]="dragOverNoteId() === entry.id && !dragInsertBefore()"
                         draggable="true"
-                        (click)="onNoteClick(entry.id, group.id, $event)"
+                        (click)="focusedNoteId.set(entry.id); onNoteClick(entry.id, group.id, $event)"
                         (dragstart)="onNoteDragStart(entry.id, $event)"
                         (dragend)="onNoteDragEnd()"
                         (dragover)="onNoteItemDragOver(entry.id, group.id, $event)"
@@ -236,6 +263,13 @@
                             @if (getPreviewText(entry.preview)) {
                             <span class="note-card-meta">
                                 <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
+                            </span>
+                            }
+                            @if (getNoteTags(entry).length) {
+                            <span class="note-card-tags">
+                                @for (tag of getNoteTags(entry); track tag) {
+                                <span class="note-tag-dot" [style.background]="getTagColor(tag)" [title]="tag"></span>
+                                }
                             </span>
                             }
                         </div>
