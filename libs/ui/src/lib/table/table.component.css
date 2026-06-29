@@ -237,7 +237,7 @@
   user-select: none;
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-base);
 }
 .env-table-th--check { width: 48px; padding: 14px 10px 14px 18px; }
 .env-table-th--action { width: 96px; text-align: center; }
@@ -375,7 +375,7 @@
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  z-index: 1000;
+  z-index: var(--z-modal);
   background: var(--bg-panel);
   border: 1px solid var(--border-main);
   border-radius: 10px;
@@ -451,7 +451,7 @@
   gap: 8px;
   background: var(--bg-panel);
   flex-shrink: 0;
-  z-index: 1;
+  z-index: var(--z-base);
 }
 
 .env-table-foot-left {
@@ -475,7 +475,7 @@
   border-radius: 8px;
   background: var(--accent-primary-dim);
   border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent);
-  z-index: 2;
+  z-index: var(--z-base);
   animation: sel-bar-in 0.15s ease;
 }
 

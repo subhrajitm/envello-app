@@ -1013,7 +1013,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
     .name-wrap { position: relative; display: flex; align-items: center; }
     .vd-search-icon {
       position: absolute; left: 10px; font-size: 17px;
-      color: var(--text-tertiary); pointer-events: none; z-index: 1;
+      color: var(--text-tertiary); pointer-events: none; z-index: var(--z-base);
     }
     .vd-input { padding-left: 34px !important; }
     .name-wrap .form-input { flex: 1; }
@@ -1030,7 +1030,7 @@ const POPULAR_VENDOR_OPTIONS = ALL_VENDOR_OPTIONS.filter(v => POPULAR_VENDOR_KEY
       background: var(--bg-panel); border: 1px solid var(--border-subtle);
       border-radius: 10px; padding: 4px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      z-index: 9999; max-height: 280px; overflow-y: auto;
+      z-index: var(--z-notification); max-height: 280px; overflow-y: auto;
     }
     .vd-section-label {
       padding: 6px 10px 4px; font-size: 10.5px; font-weight: 600;

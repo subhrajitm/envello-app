@@ -139,14 +139,14 @@ import { ButtonComponent } from '../../button/button.component';
       padding: 28px 24px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
       position: relative;
-      z-index: 10;
+      z-index: var(--z-floating);
     }
-    
+
     .lines-bg {
       position: absolute;
       inset: 0;
       overflow: hidden;
-      z-index: 1;
+      z-index: var(--z-base);
       pointer-events: none;
     }
 

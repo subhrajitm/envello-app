@@ -88,7 +88,7 @@
   position: absolute;
   top: 30px;
   left: 6px;
-  z-index: 200;
+  z-index: var(--z-sticky);
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
@@ -219,7 +219,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-notification);
   backdrop-filter: blur(0px);
   animation: sp-overlay-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
@@ -628,7 +628,7 @@
   height: 100%;
   background: var(--accent-primary);
   border-radius: 99px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sp-resource-grid {

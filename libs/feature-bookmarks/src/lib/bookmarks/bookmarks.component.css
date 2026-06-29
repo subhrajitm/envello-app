@@ -324,7 +324,7 @@
   border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-base);
 }
 .bm-th {
   display: flex;
@@ -1193,7 +1193,7 @@
   font-size: 13px;
   font-weight: 500;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  z-index: 9999;
+  z-index: var(--z-notification);
   white-space: nowrap;
   animation: bm-toast-in 0.2s ease;
 }

@@ -394,7 +394,7 @@
   position: absolute;
   top: 100%;
   right: 0;
-  z-index: 100;
+  z-index: var(--z-dropdown);
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -559,7 +559,7 @@
   padding: 4px 8px;
   cursor: pointer;
   overflow: hidden;
-  z-index: 2;
+  z-index: var(--z-base);
   transition: filter 0.1s;
   min-height: 24px;
 }

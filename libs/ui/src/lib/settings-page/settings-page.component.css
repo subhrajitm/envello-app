@@ -36,7 +36,7 @@
   background: var(--bg-panel);
   flex-shrink: 0;
   gap: 1rem;
-  z-index: 10;
+  z-index: var(--z-floating);
 }
 
 .topbar-left {
@@ -1269,3 +1269,63 @@
   background: var(--bg-hover); border-radius: 7px; margin-top: 4px;
   display: flex; gap: 5px; align-items: flex-start;
 }
+
+/* ─── Extracted inline-style utility classes ─────────────────────────────── */
+
+/* Icon sizes */
+.settings-icon-xs  { font-size: 13px; }
+.settings-icon-sm  { font-size: 15px; }
+.settings-icon-sm-14 { font-size: 14px; }
+.settings-icon-md  { font-size: 16px; }
+
+/* Icon colour overrides */
+.settings-icon-muted  { color: var(--text-tertiary); }
+.settings-icon-accent { color: var(--accent-primary); }
+.settings-google-blue  { color: #4285F4; }
+.settings-google-green { color: #34A853; }
+.settings-google-red   { color: #EA4335; }
+
+/* Margin helpers */
+.settings-no-margin-top    { margin-top: 0; }
+.settings-margin-top-sm    { margin-top: 8px; }
+.settings-margin-top-half  { margin-top: 0.5rem; }
+.settings-margin-top-3q    { margin-top: 0.75rem; }
+.settings-margin-top-1     { margin-top: 1rem; }
+
+/* Width helpers */
+.settings-full-width  { width: 100%; }
+.settings-min-w-160   { min-width: 160px; }
+.settings-min-w-220   { min-width: 220px; }
+
+/* Text alignment */
+.settings-center { text-align: center; }
+
+/* Layout helpers */
+.settings-inline-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.settings-flex-row-sm {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.settings-flex-row-md {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Mono small */
+.settings-mono-sm {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* Vertical align */
+.settings-valign-mid { vertical-align: middle; }
+
+/* Spin animation */
+.settings-spin { animation: spin 1s linear infinite; }

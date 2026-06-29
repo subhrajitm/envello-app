@@ -40,7 +40,7 @@
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1);
     min-width: 160px;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     overflow: hidden;
 }
 
@@ -137,7 +137,7 @@
 }
 
 .filter-dd-close {
-    font-size: 14px !important;
+    font-size: 14px;
     margin-left: auto;
     opacity: 0.5;
     transition: opacity 0.15s;
@@ -193,7 +193,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s;
 }
 
 .dn-section-action-btn:hover {
@@ -241,7 +241,7 @@
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
     min-width: 180px;
-    z-index: 1000;
+    z-index: var(--z-modal);
     overflow: hidden;
 }
 
@@ -291,7 +291,7 @@
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease;
     user-select: none;
     border-radius: 0;
 }
@@ -301,7 +301,7 @@
 }
 
 .folder-chevron {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     transition: transform 0.2s ease;
     width: 14px;
@@ -313,7 +313,7 @@
 }
 
 .folder-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-secondary);
 }
 
@@ -409,7 +409,7 @@
     margin: 0;
     border-radius: 0;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease;
     background: transparent;
     position: relative;
 }
@@ -424,7 +424,7 @@
     height: 0;
     background: var(--accent-primary);
     border-radius: 0 2px 2px 0;
-    transition: width 0.2s ease, height 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
 .note-card-item:hover {
@@ -459,7 +459,7 @@
 }
 
 .note-card-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     flex-shrink: 0;
     margin-top: 2px;
@@ -563,7 +563,7 @@
     background: var(--bg-subtle);
     height: 44px;
     position: relative;
-    z-index: 1;
+    z-index: var(--z-base);
 }
 
 .dn-editor-header::after {
@@ -624,7 +624,7 @@
     font-weight: 500;
     border-left: 2px solid var(--accent-primary);
     position: relative;
-    z-index: 2;
+    z-index: var(--z-base);
 }
 
 .editor-tab.pinned .tab-icon {
@@ -681,9 +681,9 @@
 /* Editor Body — horizontal flex for content + right sidebar */
 .dn-editor-body {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: row;
-    min-height: 0;
 }
 
 /* Editor Content */
@@ -737,7 +737,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    z-index: 10;
+    z-index: var(--z-floating);
 }
 
 .editor-action-btn {
@@ -751,7 +751,7 @@
     border-radius: 6px;
     cursor: pointer;
     color: var(--text-tertiary);
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 
 .editor-action-btn:hover {
@@ -781,7 +781,7 @@
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     min-width: 120px;
-    z-index: 100;
+    z-index: var(--z-dropdown);
 }
 
 .color-swatch {
@@ -793,7 +793,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
     padding: 0;
 }
 
@@ -812,7 +812,7 @@
 }
 
 .color-swatch-none-icon {
-    font-size: 12px !important;
+    font-size: 12px;
     color: var(--text-tertiary);
 }
 
@@ -964,7 +964,7 @@
     font-size: 12px;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
 .add-tag-btn:hover {
@@ -1203,7 +1203,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
     font-weight: 500;
     font-size: 12px;
     color: var(--text-secondary);
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
 .editor-tag-chip:hover {
@@ -1230,7 +1230,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
 .tag-remove,
 .folder-header,
 .note-item {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-btn:active {
@@ -1278,7 +1278,7 @@ input:focus,
 .modal-input:focus,
 .dn-editor-text:focus,
 ::ng-deep .dn-editor-text .ProseMirror:focus {
-    outline: none !important;
+    outline: none;
 }
 
 /* Add soft focus ring to inputs that need it */
@@ -1304,7 +1304,7 @@ input:focus,
 
 /* Ensure global reset for these elements in this component scope */
 *:focus-visible {
-    outline: none !important;
+    outline: none;
     /* Re-add softer replacement if needed for a specific element */
 }
 
@@ -1358,7 +1358,7 @@ tiptap-editor:focus,
 }
 
 ::ng-deep .dn-editor-text .selectedCell:after {
-    z-index: 2;
+    z-index: var(--z-base);
     position: absolute;
     content: "";
     left: 0;
@@ -1427,7 +1427,7 @@ tiptap-editor:focus,
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease, opacity 0.1s ease;
     margin: 0;
     border-radius: 0;
     position: relative;
@@ -1462,7 +1462,7 @@ tiptap-editor:focus,
 }
 
 .tag-item-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     flex-shrink: 0;
 }
@@ -1544,7 +1544,7 @@ tiptap-editor:focus,
 }
 
 .info-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     flex-shrink: 0;
 }
@@ -1671,7 +1671,7 @@ tiptap-editor:focus,
     height: 2px;
     background: var(--accent-primary);
     border-radius: 1px;
-    z-index: 2;
+    z-index: var(--z-base);
     width: auto;
 }
 
@@ -1684,7 +1684,7 @@ tiptap-editor:focus,
     height: 2px;
     background: var(--accent-primary);
     border-radius: 1px;
-    z-index: 2;
+    z-index: var(--z-base);
 }
 
 /* ── Feature 14: Multi-select ── */
@@ -1709,7 +1709,7 @@ tiptap-editor:focus,
     padding: 8px 10px;
     background: var(--bg-panel);
     border-top: 1px solid var(--border-main);
-    z-index: 10;
+    z-index: var(--z-floating);
 }
 
 .dn-multi-count {
@@ -1773,7 +1773,7 @@ tiptap-editor:focus,
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.18);
     min-width: 160px;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     overflow: hidden;
 }
 
@@ -2018,7 +2018,7 @@ tiptap-editor:focus,
     border-radius: 6px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
     font-size: 11px;
     font-weight: 500;
 }
@@ -2052,7 +2052,7 @@ tiptap-editor:focus,
 }
 
 .dn-info-icon {
-    font-size: 15px !important;
+    font-size: 15px;
     color: var(--text-tertiary);
     flex-shrink: 0;
     margin-top: 1px;
@@ -2121,7 +2121,7 @@ tiptap-editor:focus,
     font-size: 11px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 
 .dn-info-tag:hover {
@@ -2145,7 +2145,7 @@ tiptap-editor:focus,
 }
 
 .dn-info-saved-icon {
-    font-size: 15px !important;
+    font-size: 15px;
     color: var(--accent-green);
 }
 
@@ -2182,7 +2182,7 @@ tiptap-editor:focus,
 }
 
 .dn-quick-chip .material-symbols-outlined {
-    font-size: 13px !important;
+    font-size: 13px;
 }
 
 .dn-quick-chip:hover {
@@ -2270,7 +2270,7 @@ tiptap-editor:focus,
 }
 
 .dn-fav-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-secondary);
     flex-shrink: 0;
 }
@@ -2328,7 +2328,7 @@ tiptap-editor:focus,
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 
 .dn-sb-add-btn:hover {
@@ -2415,7 +2415,7 @@ tiptap-editor:focus,
     font-size: 11px;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
     font-weight: 500;
 }
 

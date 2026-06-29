@@ -118,7 +118,7 @@
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   position: relative;
 }
 
@@ -154,7 +154,7 @@
   height: 6px;
   background-color: currentColor;
   border-radius: 2px;
-  transition: height 0.2s ease;
+  transition: max-height 0.2s ease;
 }
 
 .voice-btn.active .voice-bar {
@@ -340,7 +340,7 @@
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  z-index: 100;
+  z-index: var(--z-dropdown);
   overflow: hidden;
 }
 
@@ -425,7 +425,7 @@
   text-align: left;
   min-height: 32px;
   border-radius: 0 !important;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
   position: relative;
 }
 
@@ -651,7 +651,7 @@
     pointer-events: none;
     transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: none;
-    z-index: 600;
+    z-index: var(--z-overlay);
   }
 
   /* Open state: fade in */
@@ -685,7 +685,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.45);
-    z-index: 599;
+    z-index: var(--z-overlay);
     animation: backdropFade 0.2s ease;
   }
 
@@ -708,7 +708,7 @@
   top: calc(52px + var(--titlebar-height, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1500;
+  z-index: var(--z-popover);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -743,7 +743,7 @@
   display: flex;
   align-items: center;
   margin-left: 8px;
-  transition: all 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 .voice-banner-dismiss:hover {
   color: var(--text-primary);
@@ -803,7 +803,7 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   max-width: 160px;
   white-space: nowrap;
 }
@@ -843,7 +843,7 @@
   border-radius: 10px;
   padding: 4px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: var(--z-modal);
   display: flex;
   flex-direction: column;
 }
@@ -917,12 +917,12 @@
   font-weight: 500;
   cursor: pointer;
   text-align: left;
-  transition: all 0.1s;
+  transition: background 0.1s, color 0.1s;
 }
 .ps-manage:hover { background: var(--bg-hover); color: var(--text-secondary); }
 
 .ps-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: var(--z-modal-backdrop);
 }

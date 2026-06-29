@@ -184,7 +184,7 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
     .sp-backdrop {
       position: fixed;
       inset: 0;
-      z-index: 9999;
+      z-index: var(--z-notification);
       background: rgba(0,0,0,0.18);
       backdrop-filter: blur(3px);
       -webkit-backdrop-filter: blur(3px);
@@ -201,7 +201,7 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
       border: 1px solid var(--border-subtle);
       border-radius: 16px;
       box-shadow: 0 32px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05);
-      z-index: 10000;
+      z-index: var(--z-system);
       display: flex;
       flex-direction: column;
       overflow: hidden;

@@ -464,7 +464,7 @@
   border-radius: 50%;
   border: 2px solid var(--bg-panel);
   object-fit: cover;
-  z-index: 2;
+  z-index: var(--z-base);
 }
 
 .dp-avatar-text {
@@ -480,7 +480,7 @@
   justify-content: center;
   border: 2px solid var(--bg-panel);
   margin-left: -6px;
-  z-index: 1;
+  z-index: var(--z-base);
 }
 
 .dp-actions {
@@ -624,7 +624,7 @@
   border-radius: 10px;
   padding: 4px;
   min-width: 148px;
-  z-index: 200;
+  z-index: var(--z-sticky);
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;

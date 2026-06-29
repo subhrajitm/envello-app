@@ -14,12 +14,12 @@
     <div class="topbar-actions">
       @if (saveStatus() === 'saving') {
         <span class="save-status">
-          <span class="material-symbols-outlined" style="font-size:15px;animation:spin 1s linear infinite;">progress_activity</span>
+          <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
           Saving…
         </span>
       } @else if (saveStatus() === 'saved') {
         <span class="save-status save-status--ok">
-          <span class="material-symbols-outlined" style="font-size:15px;">check_circle</span>
+          <span class="material-symbols-outlined settings-icon-sm">check_circle</span>
           Saved
         </span>
       } @else if (isDirty()) {
@@ -98,7 +98,7 @@
 
         @if (isDesktop) {
           <div class="section-divider"></div>
-          <div class="section-header" style="margin-top:0">
+          <div class="section-header settings-no-margin-top">
             <h3>Window</h3>
             <p>Desktop window behaviour</p>
           </div>
@@ -135,7 +135,7 @@
             </div>
           </div>
 
-          <div class="section-header" style="margin-top:8px">
+          <div class="section-header settings-margin-top-sm">
             <h3>Global Shortcuts</h3>
             <p>Work even when Envello is in the background</p>
           </div>
@@ -152,7 +152,7 @@
               <span class="info-label"><kbd class="kbd">⌘ ⇧ W</kbd></span>
               <span class="info-value">Jump to Workspace</span>
             </div>
-            <p class="hint-text" style="margin-top:0.5rem">
+            <p class="hint-text settings-margin-top-half">
               Shortcuts bring Envello to the foreground from any app.
             </p>
           </div>
@@ -224,11 +224,11 @@
 
         @if (lastSectionError()) {
           <p class="sections-last-error">
-            <span class="material-symbols-outlined" style="font-size:15px;">info</span>
+            <span class="material-symbols-outlined settings-icon-sm">info</span>
             Can't hide — at least one section must remain visible on {{ lastSectionError() === 'web' ? 'Web' : 'Desktop' }}.
           </p>
         } @else {
-          <p class="hint-text" style="margin-top:1rem">
+          <p class="hint-text settings-margin-top-1">
             Changes preview live. At least one section must remain visible per platform.
           </p>
         }
@@ -286,7 +286,7 @@
             <label>Editor Font</label>
             <span class="setting-desc">Writing font family</span>
           </div>
-          <select class="select-input" style="min-width:160px" [value]="editorFont()" (change)="setEditorFont($event)">
+          <select class="select-input settings-min-w-160" [value]="editorFont()" (change)="setEditorFont($event)">
             <option value="sans">Sans-serif (Inter)</option>
             <option value="serif">Serif (Georgia)</option>
             <option value="mono">Monospace (JetBrains Mono)</option>
@@ -358,7 +358,7 @@
           </div>
           <div class="setting-control">
             <input type="range" min="10" max="100" step="10" [value]="versionHistoryLimit()"
-              (input)="setVersionHistoryLimit($event)" class="range-slider" style="width:100%">
+              (input)="setVersionHistoryLimit($event)" class="range-slider settings-full-width">
             <div class="range-labels">
               <span>10</span><span>50</span><span>100</span>
             </div>
@@ -388,7 +388,7 @@
                 <div class="conn-card-name">Google</div>
                 @if (googleAuth.connected()) {
                   <div class="conn-card-status conn-card-status--connected">
-                    <span class="material-symbols-outlined" style="font-size:13px">check_circle</span>
+                    <span class="material-symbols-outlined settings-icon-xs">check_circle</span>
                     Connected as {{ googleAuth.account()?.email }}
                   </div>
                 } @else {
@@ -409,7 +409,7 @@
 
                 <!-- Calendar -->
                 <div class="conn-service-row">
-                  <span class="material-symbols-outlined conn-service-icon" style="color:#4285F4">calendar_month</span>
+                  <span class="material-symbols-outlined conn-service-icon settings-google-blue">calendar_month</span>
                   <div class="conn-service-info">
                     <span class="conn-service-label">Google Calendar</span>
                     <span class="conn-service-sub">{{ googleCalendar.lastSync() ? 'Last synced ' + googleCalendar.lastSync() : 'Not yet synced' }}</span>
@@ -422,7 +422,7 @@
 
                 <!-- Contacts -->
                 <div class="conn-service-row">
-                  <span class="material-symbols-outlined conn-service-icon" style="color:#34A853">contacts</span>
+                  <span class="material-symbols-outlined conn-service-icon settings-google-green">contacts</span>
                   <div class="conn-service-info">
                     <span class="conn-service-label">Google Contacts</span>
                     <span class="conn-service-sub">{{ googleContacts.lastSync() ? 'Last synced ' + googleContacts.lastSync() : 'Not yet synced' }}</span>
@@ -435,7 +435,7 @@
 
                 <!-- Gmail -->
                 <div class="conn-service-row">
-                  <span class="material-symbols-outlined conn-service-icon" style="color:#EA4335">mail</span>
+                  <span class="material-symbols-outlined conn-service-icon settings-google-red">mail</span>
                   <div class="conn-service-info">
                     <span class="conn-service-label">Gmail Smart Import</span>
                     <span class="conn-service-sub">Scans Promotions &amp; Updates for subscriptions, tasks and contacts</span>
@@ -475,7 +475,7 @@
           </div>
 
           <p class="conn-scope-note">
-            <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">lock</span>
+            <span class="material-symbols-outlined settings-icon-xs settings-valign-mid">lock</span>
             Envello only requests read-only access. No emails, events or contacts are ever sent to Envello servers — all processing happens locally on your device.
           </p>
         </div>
@@ -571,7 +571,7 @@
             <label>Model</label>
             <span class="setting-desc">Specific model identifier</span>
           </div>
-          <div class="setting-control" style="min-width:220px">
+          <div class="setting-control settings-min-w-220">
             <select class="select-input w-full" [ngModel]="aiModel()"
               (ngModelChange)="setAiModel($event)">
               @if (aiProvider() === 'local') {
@@ -610,28 +610,28 @@
         </div>
 
         <div class="setting-item flex flex-col gap-2">
-          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-            <button class="btn-secondary" style="display:flex;align-items:center;gap:0.4rem;"
+          <div class="settings-inline-group">
+            <button class="btn-secondary settings-flex-row-sm"
               [disabled]="testStatus() === 'testing'" (click)="testConnection()">
               @if (testStatus() === 'testing') {
-              <span class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite;">progress_activity</span>
+              <span class="material-symbols-outlined settings-icon-md settings-spin">progress_activity</span>
               Testing…
               } @else if (aiProvider() === 'local') {
-              <span class="material-symbols-outlined" style="font-size:16px;">download</span>
+              <span class="material-symbols-outlined settings-icon-md">download</span>
               Load Model
               } @else {
-              <span class="material-symbols-outlined" style="font-size:16px;">wifi_tethering</span>
+              <span class="material-symbols-outlined settings-icon-md">wifi_tethering</span>
               Test Connection
               }
             </button>
             @if (testStatus() === 'success') {
             <span class="test-ok">
-              <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
+              <span class="material-symbols-outlined settings-icon-md">check_circle</span>
               {{ testMessage() }}
             </span>
             } @else if (testStatus() === 'error') {
             <span class="test-err">
-              <span class="material-symbols-outlined" style="font-size:16px;">error</span>
+              <span class="material-symbols-outlined settings-icon-md">error</span>
               {{ testMessage() }}
             </span>
             }
@@ -649,7 +649,7 @@
             <span class="info-value">Session (local only)</span>
           </div>
           }
-          <p class="hint-text" style="margin-top:0.75rem;">
+          <p class="hint-text settings-margin-top-3q">
             @if (aiProvider() === 'local') {
             Runs fully in-browser via Transformers.js (ONNX). No data leaves your device.
             } @else {
@@ -677,7 +677,7 @@
                 <span>{{ feat.label }}</span>
                 @if (featureOverridesWithMissingKey().includes(feat.id)) {
                   <span class="feature-warn-badge" title="API key missing for this provider">
-                    <span class="material-symbols-outlined" style="font-size:13px;">key_off</span>
+                    <span class="material-symbols-outlined settings-icon-xs">key_off</span>
                     No key
                   </span>
                 } @else {
@@ -755,12 +755,12 @@
         <div class="monitor-rules" [class.monitor-rules--disabled]="!monitorService.enabled()">
           <div class="monitor-rules-header">
             <span class="sections-col-label">Rule</span>
-            <span class="sections-col-label" style="text-align:center">Active</span>
+            <span class="sections-col-label settings-center">Active</span>
           </div>
           @for (rule of monitorRules; track rule.id) {
             <div class="monitor-rules-row">
               <div class="monitor-rule-label">
-                <span class="material-symbols-outlined" style="font-size:16px;color:var(--text-tertiary)">{{ rule.icon }}</span>
+                <span class="material-symbols-outlined settings-icon-md settings-icon-muted">{{ rule.icon }}</span>
                 <div>
                   <div class="monitor-rule-name">{{ rule.label }}</div>
                   <div class="setting-desc">{{ rule.description }}</div>
@@ -796,7 +796,7 @@
             @if (monitorService.running()) {
               <span class="monitor-spin"></span> Running…
             } @else {
-              <span class="material-symbols-outlined" style="font-size:15px">bolt</span> Run Monitor
+              <span class="material-symbols-outlined settings-icon-sm">bolt</span> Run Monitor
             }
           </button>
         </div>
@@ -807,7 +807,7 @@
             <div class="monitor-digest-title">Created this session</div>
             @for (f of monitorService.lastDigest()!.findings; track f.taskId) {
               <div class="monitor-digest-row">
-                <span class="material-symbols-outlined" style="font-size:14px;color:var(--accent-primary)">done_all</span>
+                <span class="material-symbols-outlined settings-icon-sm-14 settings-icon-accent">done_all</span>
                 <span class="monitor-digest-text">{{ f.title }}</span>
                 <span class="monitor-digest-rule">{{ f.ruleId }}</span>
               </div>
@@ -820,14 +820,13 @@
           <div class="monitor-history">
             <div class="monitor-history-hdr">
               <span class="sections-col-label">All Monitor Tasks ({{ monitorHistory().length }})</span>
-              <span class="sections-col-label" style="text-align:center">Rule</span>
-              <span class="sections-col-label" style="text-align:center">Status</span>
+              <span class="sections-col-label settings-center">Rule</span>
+              <span class="sections-col-label settings-center">Status</span>
             </div>
             @for (task of monitorHistory(); track task.id) {
               <div class="monitor-history-row">
                 <div class="monitor-history-title">
-                  <span class="material-symbols-outlined"
-                    style="font-size:14px"
+                  <span class="material-symbols-outlined settings-icon-sm-14"
                     [style.color]="task.status === 'COMPLETED' ? '#34d399' : task.priority === 'HIGH' ? '#f87171' : 'var(--text-tertiary)'">
                     {{ task.status === 'COMPLETED' ? 'check_circle' : 'radio_button_unchecked' }}
                   </span>
@@ -920,11 +919,11 @@
             <label>Export Data</label>
             <span class="setting-desc">Download all your data as a JSON archive</span>
           </div>
-          <div class="setting-control" style="display:flex;align-items:center;gap:0.6rem;">
+          <div class="setting-control settings-flex-row-md">
             <env-button variant="secondary" (clicked)="exportAllData()">Export All Data</env-button>
             @if (exportDone()) {
               <span class="export-done-label">
-                <span class="material-symbols-outlined" style="font-size:15px;">check_circle</span>
+                <span class="material-symbols-outlined settings-icon-sm">check_circle</span>
                 Downloaded
               </span>
             }
@@ -948,12 +947,12 @@
               </span>
             } @else if (syncService.syncError()) {
               <span class="info-value sync-status-error">
-                <span class="material-symbols-outlined" style="font-size:13px">error</span>
+                <span class="material-symbols-outlined settings-icon-xs">error</span>
                 {{ syncService.syncError() }}
               </span>
             } @else {
               <span class="info-value sync-status-ok">
-                <span class="material-symbols-outlined" style="font-size:13px">check_circle</span>
+                <span class="material-symbols-outlined settings-icon-xs">check_circle</span>
                 Up to date
               </span>
             }
@@ -962,7 +961,7 @@
 
         @if (isDesktop) {
         <div class="section-divider"></div>
-        <div class="section-header" style="margin-top:0">
+        <div class="section-header settings-no-margin-top">
           <h3>Cloud Backup</h3>
           <p>Choose which collections to back up to the cloud. Vault and credentials are always local-only.</p>
         </div>
@@ -1009,7 +1008,7 @@
 
         @if (syncService.syncActivity().length > 0) {
         <div class="section-divider"></div>
-        <div class="section-header" style="margin-top:0">
+        <div class="section-header settings-no-margin-top">
           <h3>Sync Activity</h3>
           <p>Recent sync events for this session</p>
         </div>
@@ -1092,13 +1091,13 @@
         </div>
 
         @if (isDesktop) {
-          <div class="info-card" style="margin-top:0">
+          <div class="info-card settings-no-margin-top">
             <div class="info-row">
               <span class="info-label">Deep Link Scheme</span>
-              <span class="info-value" style="font-family:var(--font-mono);font-size:11px;">envello://</span>
+              <span class="info-value settings-mono-sm">envello://</span>
             </div>
-            <p class="hint-text" style="margin-top:0.5rem">
-              Open notes from other apps: <code style="font-size:11px;">envello://note/&lt;id&gt;</code>
+            <p class="hint-text settings-margin-top-half">
+              Open notes from other apps: <code class="settings-mono-sm">envello://note/&lt;id&gt;</code>
             </p>
           </div>
         }

@@ -346,7 +346,7 @@ import { TransactionFormComponent } from './transaction-form.component';
     /* ── Import modal (inline) ── */
     .vs-modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
+      display: flex; align-items: center; justify-content: center; z-index: var(--z-modal);
     }
     .vs-modal-box {
       background: var(--bg-panel); border: 1px solid var(--border-subtle);
