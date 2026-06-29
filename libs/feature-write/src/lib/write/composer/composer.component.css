@@ -151,8 +151,8 @@
 
 /* Sidebar Left */
 .ne-sidebar-left {
-    width: 240px;
-    min-width: 240px;
+    width: 260px;
+    min-width: 260px;
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
@@ -6291,7 +6291,7 @@
 
 /* ── LEFT SIDEBAR ── */
 .ne-char-sidebar {
-    width: 252px;
+    width: 260px;
     flex-shrink: 0;
     border-right: 1px solid var(--border-subtle);
     overflow-y: auto;

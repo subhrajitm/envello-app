@@ -32,7 +32,10 @@ interface NoteGroup {
   icon: string;
   count: number;
   expanded: boolean;
+  color?: string;
 }
+
+const FOLDER_COLORS = ['#f87171','#fb923c','#fbbf24','#4ade80','#34d399','#38bdf8','#818cf8','#c084fc','#f472b6','#94a3b8'];
 
 
 @Component({
@@ -155,8 +158,21 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
   noteBgClass = computed(() => this.selectedNote()?.bgColor ?? '');
 
-  dragOverFolderId = signal<string | null>(null);
-  draggingNoteId = signal<string | null>(null);
+  dragOverFolderId  = signal<string | null>(null);
+  draggingNoteId    = signal<string | null>(null);
+  dragOverNoteId    = signal<string | null>(null);
+  dragInsertBefore  = signal<boolean>(true);
+
+  // ── Multi-select ──────────────────────────────────────────────────────────
+  multiSelectedIds  = signal<Set<string>>(new Set());
+  isMultiSelecting  = computed(() => this.multiSelectedIds().size > 0);
+  private lastClickedNoteId: string | null = null;
+  showBulkMoveMenu  = signal(false);
+
+  // ── Folder colors (persisted in localStorage) ─────────────────────────────
+  readonly folderColorOptions = FOLDER_COLORS;
+  private folderColorsKey = 'dn-folder-colors';
+  private noteOrderKey    = (id: string) => `dn-note-order-${id}`;
 
   formatState = signal({
     bold: false, italic: false, underline: false, strike: false, highlight: false, link: false,
@@ -225,7 +241,16 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   getNotesForFolder(folderId: string): Note[] {
-    return this.notesPerFolder().get(folderId) ?? [];
+    const notes = this.notesPerFolder().get(folderId) ?? [];
+    try {
+      const raw = localStorage.getItem(this.noteOrderKey(folderId));
+      if (!raw) return notes;
+      const order: string[] = JSON.parse(raw);
+      const indexed = new Map(notes.map(n => [n.id, n]));
+      const ordered = order.map(id => indexed.get(id)).filter(Boolean) as Note[];
+      const rest = notes.filter(n => !order.includes(n.id));
+      return [...ordered, ...rest];
+    } catch { return notes; }
   }
 
   getBucketedNotes(notes: Note[]): { label: string, notes: Note[] }[] {
@@ -302,9 +327,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   getPreviewText(preview: string): string {
-    if (!preview || preview.trim() === '') return 'No additional text';
-    if (preview === "Start writing...") return "No additional text";
-    return preview;
+    if (!preview?.trim()) return '';
+    let clean = preview
+      .replace(/^\[MOCK\]\s*/i, '')
+      .replace(/^\[[^\]]+\]\s*/, '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean || clean === 'Start writing...') return '';
+    return clean.length > 80 ? clean.slice(0, 80) + '…' : clean;
   }
 
   allExpanded = computed(() => this.noteGroups().every(g => g.expanded));
@@ -333,15 +364,18 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const folders = this.store.noteFolders();
       if (folders.length === 0) return;
       const current = untracked(() => this.noteGroups());
+      const savedColors = this.getFolderColors();
       const next: NoteGroup[] = folders.map((f) => {
         const cur = current.find((c) => c.id === f.id);
         return {
           ...f,
           expanded: cur?.expanded ?? true,
           count: cur?.count ?? 0,
+          color: savedColors[f.id],
         };
       });
       this.noteGroups.set(next);
+      this.restoreFolderCollapseState();
     });
 
     effect(() => {
@@ -601,6 +635,112 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.store.updateNote(noteId, { folderId: targetFolderId });
   }
 
+  // ── Folder colors ─────────────────────────────────────────────────────────
+  private getFolderColors(): Record<string, string> {
+    try { return JSON.parse(localStorage.getItem(this.folderColorsKey) ?? '{}'); } catch { return {}; }
+  }
+
+  setFolderColor(folderId: string, color: string, event: Event) {
+    event.stopPropagation();
+    const colors = this.getFolderColors();
+    colors[folderId] = color;
+    localStorage.setItem(this.folderColorsKey, JSON.stringify(colors));
+    this.noteGroups.update(gs => gs.map(g => g.id === folderId ? { ...g, color } : g));
+  }
+
+  getFolderColor(folderId: string): string {
+    return this.getFolderColors()[folderId] ?? '';
+  }
+
+  // ── Drag-to-reorder within folder ─────────────────────────────────────────
+  onNoteItemDragOver(noteId: string, folderId: string, event: DragEvent) {
+    const dragging = this.draggingNoteId();
+    if (!dragging || dragging === noteId) return;
+    const srcNote = this.notes().find(n => n.id === dragging);
+    if (!srcNote || this.effectiveFolderId(srcNote) !== folderId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.dragOverNoteId.set(noteId);
+    this.dragInsertBefore.set(event.clientY < rect.top + rect.height / 2);
+  }
+
+  onNoteItemDragLeave() {
+    this.dragOverNoteId.set(null);
+  }
+
+  onNoteItemDrop(targetNoteId: string, folderId: string, event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const draggingId = this.draggingNoteId();
+    if (!draggingId || draggingId === targetNoteId) { this.dragOverNoteId.set(null); return; }
+    const srcNote = this.notes().find(n => n.id === draggingId);
+    if (!srcNote || this.effectiveFolderId(srcNote) !== folderId) {
+      this.onFolderDrop(folderId, event);
+      this.dragOverNoteId.set(null);
+      return;
+    }
+    const ordered = this.getNotesForFolder(folderId).map(n => n.id);
+    const fromIdx = ordered.indexOf(draggingId);
+    let toIdx = ordered.indexOf(targetNoteId);
+    if (fromIdx === -1 || toIdx === -1) { this.dragOverNoteId.set(null); return; }
+    ordered.splice(fromIdx, 1);
+    if (!this.dragInsertBefore()) toIdx++;
+    ordered.splice(Math.max(0, toIdx > fromIdx ? toIdx - 1 : toIdx), 0, draggingId);
+    localStorage.setItem(this.noteOrderKey(folderId), JSON.stringify(ordered));
+    this.dragOverNoteId.set(null);
+    this.draggingNoteId.set(null);
+    this.dragOverFolderId.set(null);
+  }
+
+  // ── Multi-select ──────────────────────────────────────────────────────────
+  onNoteClick(noteId: string, folderId: string, event: MouseEvent) {
+    if (event.metaKey || event.ctrlKey) {
+      event.preventDefault();
+      this.multiSelectedIds.update(set => {
+        const next = new Set(set);
+        next.has(noteId) ? next.delete(noteId) : next.add(noteId);
+        return next;
+      });
+      this.lastClickedNoteId = noteId;
+      return;
+    }
+    if (event.shiftKey && this.lastClickedNoteId) {
+      event.preventDefault();
+      const notes = this.getNotesForFolder(folderId).map(n => n.id);
+      const from = notes.indexOf(this.lastClickedNoteId);
+      const to   = notes.indexOf(noteId);
+      if (from !== -1 && to !== -1) {
+        const [start, end] = from < to ? [from, to] : [to, from];
+        const range = notes.slice(start, end + 1);
+        this.multiSelectedIds.update(set => { const next = new Set(set); range.forEach(id => next.add(id)); return next; });
+      }
+      return;
+    }
+    this.multiSelectedIds.set(new Set());
+    this.lastClickedNoteId = noteId;
+    this.selectNote(noteId);
+  }
+
+  clearMultiSelect() {
+    this.multiSelectedIds.set(new Set());
+    this.lastClickedNoteId = null;
+    this.showBulkMoveMenu.set(false);
+  }
+
+  bulkDelete() {
+    const ids = [...this.multiSelectedIds()];
+    ids.forEach(id => this.store.deleteNote(id));
+    this.clearMultiSelect();
+  }
+
+  toggleBulkMoveMenu() { this.showBulkMoveMenu.update(v => !v); }
+
+  bulkMoveToFolder(targetFolderId: string) {
+    [...this.multiSelectedIds()].forEach(id => this.store.updateNote(id, { folderId: targetFolderId }));
+    this.clearMultiSelect();
+  }
+
   onNoteDragStart(noteId: string, event: DragEvent) {
     if (event.dataTransfer) {
       event.dataTransfer.setData('text/plain', noteId);
@@ -709,6 +849,21 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.noteGroups.update(groups =>
       groups.map(g => g.id === groupId ? { ...g, expanded: !g.expanded } : g)
     );
+    const collapsed = this.noteGroups()
+      .filter(g => !g.expanded)
+      .map(g => g.id);
+    localStorage.setItem('dn-collapsed-folders', JSON.stringify(collapsed));
+  }
+
+  private restoreFolderCollapseState() {
+    try {
+      const raw = localStorage.getItem('dn-collapsed-folders');
+      if (!raw) return;
+      const collapsed: string[] = JSON.parse(raw);
+      this.noteGroups.update(groups =>
+        groups.map(g => ({ ...g, expanded: !collapsed.includes(g.id) }))
+      );
+    } catch { /* ignore malformed storage */ }
   }
 
   onSearchInput(value: string) {
@@ -764,6 +919,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (tag) this.addTag(tag);
     this.tagInputValue.set('');
     this.showTagInput.set(false);
+  }
+
+  onTagInputBlur(event: FocusEvent) {
+    const related = event.relatedTarget as HTMLElement | null;
+    if (related?.closest('.tag-input-wrapper') || related?.closest('.add-tag-btn')) return;
+    this.submitTagInput();
   }
 
   startRenameFolder(folderId: string, currentName: string, event: Event) {
@@ -870,16 +1031,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     if ((event.metaKey || event.ctrlKey) && event.key === 's') {
       event.preventDefault();
-      if (this.saveTimeout) {
-        clearTimeout(this.saveTimeout);
-        this.saveTimeout = null;
-        const content = this.editor?.getHTML() ?? '';
-        const plainText = this.editor?.getText() ?? '';
-        const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
-        this.updateNoteContent(content, preview);
-        this.isSaving.set(false);
-        this.lastSaved.set(new Date());
-      }
+      if (this.saveTimeout) clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+      const content = this.editor?.getHTML() ?? '';
+      const plainText = this.editor?.getText() ?? '';
+      const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
+      this.isSaving.set(true);
+      this.updateNoteContent(content, preview);
+      this.lastSaved.set(new Date());
+      setTimeout(() => this.isSaving.set(false), 600);
+    }
+    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'n') {
+      event.preventDefault();
+      if (this.activeModal() === 'none') this.handleNewFolder();
     }
   }
 
@@ -898,6 +1062,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.dn-add-wrap')) {
       if (this.showAddMenu()) this.showAddMenu.set(false);
+    }
+    if (!target.closest('.dn-bulk-move-wrap')) {
+      if (this.showBulkMoveMenu()) this.showBulkMoveMenu.set(false);
     }
   }
 
@@ -968,15 +1135,18 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
         prompt,
         'You are a knowledgeable and articulate note-taking assistant. Write informative, engaging content.'
       )) {
+        if (this.selectedEntryId() !== activeId) break;
         accumulated += chunk;
         if (accumulated.length - lastUpdate >= 80) {
           if (this.editor) this.editor.commands.setContent(this.plainToHtml(accumulated));
           lastUpdate = accumulated.length;
         }
       }
-      const html = this.plainToHtml(accumulated);
-      if (this.editor) this.editor.commands.setContent(html);
-      this.store.updateNote(activeId, { content: html, preview: accumulated.substring(0, 120) });
+      if (this.selectedEntryId() === activeId && accumulated) {
+        const html = this.plainToHtml(accumulated);
+        if (this.editor) this.editor.commands.setContent(html);
+        this.store.updateNote(activeId, { content: html, preview: accumulated.substring(0, 120) });
+      }
     } catch {
       if (this.editor) this.editor.commands.setContent('<p></p>');
     } finally {
@@ -1021,10 +1191,11 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
   confirmDeleteFolder() {
     const folderId = this.tempFolderId();
     if (folderId) {
-      const targetFolderId = this.noteGroups().find((g) => g.id !== folderId)!.id;
+      const fallback = this.noteGroups().find((g) => g.id !== folderId);
+      if (!fallback) return;
       this.notes()
         .filter((n) => this.effectiveFolderId(n) === folderId)
-        .forEach((n) => this.store.updateNote(n.id, { folderId: targetFolderId }));
+        .forEach((n) => this.store.updateNote(n.id, { folderId: fallback.id }));
       this.store.removeNoteFolder(folderId);
     }
     this.deleteFolderOpen.set(false);
@@ -1149,7 +1320,9 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     } else if (format === 'pdf') {
       const printWin = window.open('', '_blank');
       if (printWin) {
-        printWin.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 24px;line-height:1.7;color:#111;}h1,h2,h3{font-weight:700;}pre{background:#f4f4f4;padding:1rem;border-radius:6px;overflow-x:auto;}blockquote{border-left:3px solid #888;padding-left:1rem;color:#555;font-style:italic;}</style></head><body><h1>${this.selectedNote()?.title ?? ''}</h1>${content}</body></html>`);
+        const escHtml = (s: string) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] ?? c));
+        const safeTitle = escHtml(this.selectedNote()?.title ?? '');
+        printWin.document.write(`<!DOCTYPE html><html><head><title>${safeTitle}</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 24px;line-height:1.7;color:#111;}h1,h2,h3{font-weight:700;}pre{background:#f4f4f4;padding:1rem;border-radius:6px;overflow-x:auto;}blockquote{border-left:3px solid #888;padding-left:1rem;color:#555;font-style:italic;}</style></head><body><h1>${safeTitle}</h1>${content}</body></html>`);
         printWin.document.close();
         printWin.focus();
         printWin.print();
@@ -1219,6 +1392,7 @@ ${content.substring(0, 2000)}`;
       return;
     }
 
+    const activeId  = this.selectedEntryId();
     const { to } = this.editor.state.selection;
     this.editor.chain().focus().setTextSelection(to).run();
     const anchor    = this.editor.state.selection.anchor;
@@ -1255,7 +1429,7 @@ ${content.substring(0, 2000)}`;
       }
       flush();
       // Single insertion after stream completes — avoids per-chunk transaction races
-      if (accumulated && !this.aiAbort) {
+      if (accumulated && !this.aiAbort && this.editor && this.selectedEntryId() === activeId) {
         this.editor.view.dispatch(
           this.editor.state.tr.insertText(accumulated, this.editor.state.selection.anchor)
         );

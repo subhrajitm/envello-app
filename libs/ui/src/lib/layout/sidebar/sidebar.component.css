@@ -1,5 +1,5 @@
 .env-sidebar {
-  width: 240px;
+  width: 260px;
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
