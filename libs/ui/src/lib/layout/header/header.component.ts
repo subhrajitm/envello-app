@@ -6,7 +6,6 @@ import { UserService } from '@envello/core';
 import { VoiceService } from '@envello/core';
 import { BinService } from '@envello/core';
 import { WorkspaceProfileService, StoreService } from '@envello/core';
-import { SyncService } from '@envello/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { QuickFindComponent } from '../../quick-find/quick-find.component';
@@ -14,8 +13,7 @@ import { AddNewModalComponent } from '../../add-new-modal/add-new-modal.componen
 import { NotificationCenterComponent } from '../../notification-center/notification-center.component';
 import { ProfileMenuComponent } from '../../profile-menu/profile-menu.component';
 import { ProfileEditorComponent } from '../../profile-editor/profile-editor.component';
-import { QuickCaptureComponent } from '../../quick-capture/quick-capture.component';
-import { CaptureService } from '@envello/core';
+import { EnvLogoComponent } from '../../logo/logo.component';
 
 export interface NavItem {
   id: string;
@@ -29,7 +27,7 @@ export interface NavItem {
 @Component({
   selector: 'lib-header',
   standalone: true,
-  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, QuickCaptureComponent],
+  imports: [CommonModule, QuickFindComponent, AddNewModalComponent, NotificationCenterComponent, ProfileMenuComponent, ProfileEditorComponent, EnvLogoComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -41,7 +39,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @Output() subNavVisibleChange = new EventEmitter<boolean>();
   @ViewChild(QuickFindComponent) quickFind?: QuickFindComponent;
   @ViewChild(AddNewModalComponent) addNewModal?: AddNewModalComponent;
-  @ViewChild(QuickCaptureComponent) quickCapture?: QuickCaptureComponent;
   @ViewChild(NotificationCenterComponent) notificationCenter?: NotificationCenterComponent;
   @ViewChild(ProfileMenuComponent) profileMenu?: ProfileMenuComponent;
   @ViewChild(ProfileEditorComponent) profileEditor?: ProfileEditorComponent;
@@ -54,8 +51,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private workspaceService = inject(WorkspaceProfileService);
   private storeService = inject(StoreService);
   private router = inject(Router);
-  readonly captureService = inject(CaptureService);
-
   // Space switcher
   showSpaceSwitcher = signal(false);
 
@@ -106,24 +101,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   voiceService = inject(VoiceService);
   isVoiceActive = this.voiceService.isVoiceActive;
 
-  private readonly syncService = inject(SyncService);
-  readonly syncError = this.syncService.syncError;
-  readonly syncAnimating = signal(false);
-  readonly isActivelySyncing = computed(() => this.syncService.isSyncing() || this.syncAnimating());
-  private syncAnimTimer: ReturnType<typeof setTimeout> | null = null;
-  private syncCompleteListener = () => {
-    this.syncAnimating.set(true);
-    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
-    this.syncAnimTimer = setTimeout(() => this.syncAnimating.set(false), 800);
-  };
-  private syncErrorListener = (e: Event) => {
-    const msg = (e as CustomEvent).detail ?? 'Sync failed';
-    this.syncService.reportError(msg);
-  };
-
-  triggerManualSync(): void {
-    window.dispatchEvent(new CustomEvent('envello:manual-sync'));
-  }
 
   private navigationLayoutListener?: (event: CustomEvent) => void;
   private previousLayout?: 'vertical' | 'horizontal' | 'minimized';
@@ -262,10 +239,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.quickFind?.open();
   }
 
-  openQuickCapture() {
-    this.captureService.open();
-  }
-
   openAddNew() {
     this.addNewModal?.open();
   }
@@ -332,8 +305,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       }
     };
     window.addEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
-    window.addEventListener('envello:sync-complete', this.syncCompleteListener);
-    window.addEventListener('envello:sync-error', this.syncErrorListener);
 
     // Apply initial layout
     this.applyNavigationLayout();
@@ -364,9 +335,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.navVisibilityListener) {
       window.removeEventListener('navVisibilityChanged', this.navVisibilityListener as EventListener);
     }
-    window.removeEventListener('envello:sync-complete', this.syncCompleteListener);
-    window.removeEventListener('envello:sync-error', this.syncErrorListener);
-    if (this.syncAnimTimer) clearTimeout(this.syncAnimTimer);
     this.routeSub?.unsubscribe();
   }
 

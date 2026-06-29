@@ -3,7 +3,7 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
-    z-index: 10001;
+    z-index: var(--z-system);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -49,15 +49,15 @@
 .cd-icon .material-symbols-outlined { font-size: 26px; }
 
 .cd-icon--danger {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.22);
+    background: var(--accent-red)1a;
+    color: var(--accent-red);
+    border: 1px solid var(--accent-red)38;
 }
 
 .cd-icon--success {
-    background: rgba(34, 197, 94, 0.12);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.25);
+    background: var(--accent-green)1f;
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green)40;
 }
 
 /* ── Text ── */
@@ -117,17 +117,17 @@
 .cd-confirm .material-symbols-outlined { font-size: 15px; }
 
 .cd-confirm--danger {
-    background: #ef4444;
+    background: var(--accent-red);
     color: white;
 }
-.cd-confirm--danger:hover { background: #dc2626; }
+.cd-confirm--danger:hover { background: var(--accent-red); }
 
 .cd-confirm--success {
-    background: rgba(34, 197, 94, 0.12);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: var(--accent-green)1f;
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green)4d;
 }
 .cd-confirm--success:hover {
-    background: rgba(34, 197, 94, 0.2);
-    border-color: rgba(34, 197, 94, 0.5);
+    background: var(--accent-green)33;
+    border-color: var(--accent-green)80;
 }

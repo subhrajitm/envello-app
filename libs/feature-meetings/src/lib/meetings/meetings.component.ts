@@ -40,7 +40,7 @@ export class MeetingsComponent {
   subItemDeleteTarget = signal<{ type: 'agenda' | 'action' | 'note'; id: string } | null>(null);
 
   // View state
-  viewMode = signal<MeetingViewMode>('calendar');
+  viewMode = signal<MeetingViewMode>('table');
   viewFilter = signal<MeetingViewFilter>('all');
 
   // Filters

@@ -20,7 +20,7 @@ import { Component, ChangeDetectionStrategy, HostListener, input, output } from 
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.45);
-            z-index: 999;
+            z-index: var(--z-modal-backdrop);
             display: flex;
             justify-content: flex-end;
             animation: esp-bd-in 0.18s ease-out;

@@ -7,7 +7,7 @@
 
 /* Sidebar — Compass-style tree panel */
 .dn-sidebar {
-    width: 240px;
+    width: 260px;
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
@@ -24,6 +24,49 @@
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
+}
+
+.dn-add-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.dn-add-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1);
+    min-width: 160px;
+    z-index: var(--z-dropdown);
+    overflow: hidden;
+}
+
+.dn-add-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.dn-add-menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.dn-add-menu-item .material-symbols-outlined {
+    font-size: 17px;
+    color: var(--text-secondary);
 }
 
 .search-container {
@@ -94,7 +137,7 @@
 }
 
 .filter-dd-close {
-    font-size: 14px !important;
+    font-size: 14px;
     margin-left: auto;
     opacity: 0.5;
     transition: opacity 0.15s;
@@ -150,7 +193,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s;
 }
 
 .dn-section-action-btn:hover {
@@ -198,7 +241,7 @@
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
     min-width: 180px;
-    z-index: 1000;
+    z-index: var(--z-modal);
     overflow: hidden;
 }
 
@@ -248,7 +291,7 @@
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease;
     user-select: none;
     border-radius: 0;
 }
@@ -258,7 +301,7 @@
 }
 
 .folder-chevron {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     transition: transform 0.2s ease;
     width: 14px;
@@ -270,13 +313,13 @@
 }
 
 .folder-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-secondary);
 }
 
 .folder-name {
     flex: 1;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-primary);
     white-space: nowrap;
@@ -318,7 +361,7 @@
 }
 
 .dropdown-item.danger:hover {
-    background: rgba(248, 113, 113, 0.1);
+    background: var(--accent-red)1a;
 }
 
 .folder-header.drop-target {
@@ -348,7 +391,7 @@
 }
 
 .time-bucket-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     padding: 4px 10px 2px 0;
@@ -366,7 +409,7 @@
     margin: 0;
     border-radius: 0;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease;
     background: transparent;
     position: relative;
 }
@@ -381,7 +424,7 @@
     height: 0;
     background: var(--accent-primary);
     border-radius: 0 2px 2px 0;
-    transition: width 0.2s ease, height 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
 .note-card-item:hover {
@@ -416,7 +459,7 @@
 }
 
 .note-card-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     flex-shrink: 0;
     margin-top: 2px;
@@ -434,7 +477,7 @@
 
 .note-card-title {
     display: block;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-primary);
     white-space: nowrap;
@@ -520,7 +563,7 @@
     background: var(--bg-subtle);
     height: 44px;
     position: relative;
-    z-index: 1;
+    z-index: var(--z-base);
 }
 
 .dn-editor-header::after {
@@ -581,7 +624,7 @@
     font-weight: 500;
     border-left: 2px solid var(--accent-primary);
     position: relative;
-    z-index: 2;
+    z-index: var(--z-base);
 }
 
 .editor-tab.pinned .tab-icon {
@@ -638,9 +681,9 @@
 /* Editor Body — horizontal flex for content + right sidebar */
 .dn-editor-body {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: row;
-    min-height: 0;
 }
 
 /* Editor Content */
@@ -694,7 +737,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    z-index: 10;
+    z-index: var(--z-floating);
 }
 
 .editor-action-btn {
@@ -708,7 +751,7 @@
     border-radius: 6px;
     cursor: pointer;
     color: var(--text-tertiary);
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 
 .editor-action-btn:hover {
@@ -738,7 +781,7 @@
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     min-width: 120px;
-    z-index: 100;
+    z-index: var(--z-dropdown);
 }
 
 .color-swatch {
@@ -750,7 +793,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
     padding: 0;
 }
 
@@ -769,7 +812,7 @@
 }
 
 .color-swatch-none-icon {
-    font-size: 12px !important;
+    font-size: 12px;
     color: var(--text-tertiary);
 }
 
@@ -921,7 +964,7 @@
     font-size: 12px;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
 .add-tag-btn:hover {
@@ -946,10 +989,12 @@
 
 ::ng-deep .dn-editor-text .ProseMirror p {
     margin: 0 0 0.5em;
+    color: var(--text-primary);
 }
 
 ::ng-deep .dn-editor-text .ProseMirror p:last-child {
     margin-bottom: 0;
+    color: var(--text-primary);
 }
 
 ::ng-deep .dn-editor-text .ProseMirror p.is-editor-empty:first-child::before {
@@ -1088,7 +1133,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
 }
 
 .dn-entry-heading-input {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-heading, var(--font-sans));
     letter-spacing: -0.02em;
 }
 
@@ -1099,10 +1144,17 @@ li[data-type="taskItem"] input[type="checkbox"] {
 
 /* Tiptap Editor Styling - Notion-esque */
 ::ng-deep .dn-editor-text .ProseMirror {
-    font-family: var(--editor-font, var(--font-sans));
-    font-size: var(--editor-font-size, 15px);
-    line-height: var(--editor-line-height, 1.75);
-    min-height: 50vh;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.75;
+    min-height: none;
+    color: var(--text-primary);
+}
+
+::ng-deep .dn-editor-text .ProseMirror li,
+::ng-deep .dn-editor-text .ProseMirror ul,
+::ng-deep .dn-editor-text .ProseMirror ol {
+    color: var(--text-primary);
 }
 
 ::ng-deep .dn-editor-text .ProseMirror:focus {
@@ -1125,9 +1177,9 @@ li[data-type="taskItem"] input[type="checkbox"] {
 }
 
 ::ng-deep .dn-editor-text .ProseMirror pre {
-    background: #1e1e1e;
-    color: #e0e0e0;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
     padding: 1rem;
     border-radius: 8px;
     font-size: 14px;
@@ -1151,7 +1203,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
     font-weight: 500;
     font-size: 12px;
     color: var(--text-secondary);
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
 .editor-tag-chip:hover {
@@ -1178,7 +1230,7 @@ li[data-type="taskItem"] input[type="checkbox"] {
 .tag-remove,
 .folder-header,
 .note-item {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .action-btn:active {
@@ -1226,7 +1278,7 @@ input:focus,
 .modal-input:focus,
 .dn-editor-text:focus,
 ::ng-deep .dn-editor-text .ProseMirror:focus {
-    outline: none !important;
+    outline: none;
 }
 
 /* Add soft focus ring to inputs that need it */
@@ -1252,7 +1304,7 @@ input:focus,
 
 /* Ensure global reset for these elements in this component scope */
 *:focus-visible {
-    outline: none !important;
+    outline: none;
     /* Re-add softer replacement if needed for a specific element */
 }
 
@@ -1306,7 +1358,7 @@ tiptap-editor:focus,
 }
 
 ::ng-deep .dn-editor-text .selectedCell:after {
-    z-index: 2;
+    z-index: var(--z-base);
     position: absolute;
     content: "";
     left: 0;
@@ -1375,7 +1427,7 @@ tiptap-editor:focus,
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease, opacity 0.1s ease;
     margin: 0;
     border-radius: 0;
     position: relative;
@@ -1410,14 +1462,14 @@ tiptap-editor:focus,
 }
 
 .tag-item-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     flex-shrink: 0;
 }
 
 .tag-name {
     flex: 1;
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -1492,7 +1544,7 @@ tiptap-editor:focus,
 }
 
 .info-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-tertiary);
     flex-shrink: 0;
 }
@@ -1573,6 +1625,164 @@ tiptap-editor:focus,
     font-size: 11px;
     color: var(--text-tertiary);
     font-style: italic;
+}
+
+/* ── Feature 11: Folder color dot ── */
+.folder-color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+.folder-header:hover .folder-color-dot {
+    transform: scale(1.2);
+}
+
+.folder-color-row {
+    display: flex;
+    gap: 5px;
+    padding: 6px 12px 8px;
+    flex-wrap: wrap;
+}
+
+.folder-color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.folder-color-swatch:hover { transform: scale(1.15); }
+.folder-color-swatch.selected { border-color: var(--text-primary); transform: scale(1.1); }
+
+/* ── Feature 13: Drag-to-reorder indicators ── */
+.note-card-item.drag-above::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: var(--accent-primary);
+    border-radius: 1px;
+    z-index: var(--z-base);
+    width: auto;
+}
+
+.note-card-item.drag-below::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: var(--accent-primary);
+    border-radius: 1px;
+    z-index: var(--z-base);
+}
+
+/* ── Feature 14: Multi-select ── */
+.note-card-item.multi-selected {
+    background: var(--accent-primary-dim);
+}
+
+.note-card-item.multi-selected .note-card-title {
+    color: var(--accent-primary);
+}
+
+.note-card-item.multi-selected .note-card-icon {
+    color: var(--accent-primary);
+}
+
+.dn-multi-bar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border-main);
+    z-index: var(--z-floating);
+}
+
+.dn-multi-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    flex: 1;
+    white-space: nowrap;
+}
+
+.dn-multi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border-main);
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    white-space: nowrap;
+    font-family: var(--font-sans);
+}
+
+.dn-multi-btn:hover { background: var(--bg-active); color: var(--text-primary); }
+.dn-multi-btn .material-symbols-outlined { font-size: 14px; }
+
+.dn-multi-btn--danger:hover { background: var(--accent-red)18; color: var(--accent-red); border-color: var(--accent-red)40; }
+
+.dn-multi-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+    margin-left: 2px;
+    transition: background 0.12s, color 0.12s;
+    flex-shrink: 0;
+}
+.dn-multi-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.dn-multi-close .material-symbols-outlined { font-size: 14px; }
+
+/* Bulk move dropdown */
+.dn-bulk-move-wrap { position: relative; }
+
+.dn-bulk-move-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    min-width: 160px;
+    z-index: var(--z-dropdown);
+    overflow: hidden;
+}
+
+.folder-color-dot-sm {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
 }
 
 /* ─── Tab Add Button ───────────────────────────────────────────────────────── */
@@ -1698,7 +1908,7 @@ tiptap-editor:focus,
 }
 
 .ne-strip-btn--danger:hover:not([disabled]) {
-    background: rgba(248, 113, 113, 0.12);
+    background: var(--accent-red)1f;
     color: var(--accent-red);
 }
 
@@ -1775,7 +1985,7 @@ tiptap-editor:focus,
 }
 
 .dn-format-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -1808,8 +2018,8 @@ tiptap-editor:focus,
     border-radius: 6px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.12s;
-    font-size: 9px;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
+    font-size: 11px;
     font-weight: 500;
 }
 
@@ -1842,7 +2052,7 @@ tiptap-editor:focus,
 }
 
 .dn-info-icon {
-    font-size: 15px !important;
+    font-size: 15px;
     color: var(--text-tertiary);
     flex-shrink: 0;
     margin-top: 1px;
@@ -1883,7 +2093,7 @@ tiptap-editor:focus,
 }
 
 .dn-stat-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1911,7 +2121,7 @@ tiptap-editor:focus,
     font-size: 11px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 
 .dn-info-tag:hover {
@@ -1935,7 +2145,7 @@ tiptap-editor:focus,
 }
 
 .dn-info-saved-icon {
-    font-size: 15px !important;
+    font-size: 15px;
     color: var(--accent-green);
 }
 
@@ -1948,61 +2158,58 @@ tiptap-editor:focus,
 
 /* ─── Quick Access Items ────────────────────────────────────────────────────── */
 .dn-quick-access {
-    padding: 0 0;
+    display: flex;
+    gap: 5px;
+    padding: 8px 10px;
     flex-shrink: 0;
 }
 
-.dn-quick-item {
-    width: 100%;
-    display: flex;
+.dn-quick-chip {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 5px 14px;
+    gap: 4px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border-subtle);
     background: transparent;
-    border: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-sans);
     cursor: pointer;
-    color: var(--text-primary);
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+}
+
+.dn-quick-chip .material-symbols-outlined {
     font-size: 13px;
-    transition: background 0.12s;
-    text-align: left;
 }
 
-.dn-quick-item:hover:not(:disabled) {
+.dn-quick-chip:hover {
     background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-highlight);
 }
 
-.dn-quick-item.active {
+.dn-quick-chip.active {
     background: var(--accent-primary-dim);
-}
-
-.dn-quick-item.active .dn-quick-icon,
-.dn-quick-item.active .dn-quick-label {
+    border-color: var(--accent-primary);
     color: var(--accent-primary);
 }
 
-
-.dn-quick-icon {
-    font-size: 16px !important;
-    color: var(--text-secondary);
-    flex-shrink: 0;
-}
-
-.dn-quick-label {
-    flex: 1;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.dn-quick-count {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    background: var(--bg-app);
-    border-radius: 10px;
-    padding: 1px 6px;
-    font-weight: 600;
-    min-width: 18px;
+.dn-chip-count {
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--bg-hover);
+    border-radius: 8px;
+    padding: 0 5px;
+    line-height: 16px;
+    min-width: 16px;
     text-align: center;
+}
+
+.dn-quick-chip.active .dn-chip-count {
+    background: color-mix(in srgb, var(--accent-primary) 20%, transparent);
 }
 
 /* ─── Sidebar Dividers & Section Labels ─────────────────────────────────────── */
@@ -2063,7 +2270,7 @@ tiptap-editor:focus,
 }
 
 .dn-fav-icon {
-    font-size: 14px !important;
+    font-size: 14px;
     color: var(--text-secondary);
     flex-shrink: 0;
 }
@@ -2121,7 +2328,7 @@ tiptap-editor:focus,
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 
 .dn-sb-add-btn:hover {
@@ -2208,7 +2415,7 @@ tiptap-editor:focus,
     font-size: 11px;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
     font-weight: 500;
 }
 

@@ -38,12 +38,6 @@
                 [ngModel]="modalInputValue()" (ngModelChange)="modalInputValue.set($event)"
                 (keydown.enter)="confirmAddYoutube()" autofocus>
             }
-            @if (activeModal() === 'delete-confirm') {
-            <p>Are you sure you want to delete this note? This action cannot be undone.</p>
-            }
-            @if (activeModal() === 'delete-folder-confirm') {
-            <p>Are you sure you want to delete this folder? All notes within it will be removed from this view. This action cannot be undone.</p>
-            }
             @if (activeModal() === 'export') {
             <p>Choose a format to export your note.</p>
             <div class="modal-export-row">
@@ -73,15 +67,31 @@
             @if (activeModal() === 'youtube') {
             <env-button variant="primary" (clicked)="confirmAddYoutube()">Insert Video</env-button>
             }
-            @if (activeModal() === 'delete-confirm') {
-            <env-button variant="danger" (clicked)="confirmDeleteNote()">Delete Note</env-button>
-            }
-            @if (activeModal() === 'delete-folder-confirm') {
-            <env-button variant="danger" (clicked)="confirmDeleteFolder()">Delete Folder</env-button>
-            }
             }
         </div>
     </env-modal>
+
+    <env-confirm-dialog
+        [isOpen]="deleteNoteOpen()"
+        title="Delete Note"
+        icon="delete"
+        variant="danger"
+        confirmLabel="Delete"
+        (confirmed)="confirmDeleteNote()"
+        (cancelled)="cancelDeleteNote()">
+        This note will be moved to the bin. This action cannot be undone.
+    </env-confirm-dialog>
+
+    <env-confirm-dialog
+        [isOpen]="deleteFolderOpen()"
+        title="Delete Folder"
+        icon="folder_delete"
+        variant="danger"
+        confirmLabel="Delete Folder"
+        (confirmed)="confirmDeleteFolder()"
+        (cancelled)="cancelDeleteFolder()">
+        All notes in this folder will be moved to the default folder. This action cannot be undone.
+    </env-confirm-dialog>
 
     <div class="dn-sidebar">
         <!-- Search Bar -->
@@ -94,25 +104,43 @@
                 <env-icon-button icon="close" variant="borderless" [size]="20" title="Clear search" (clicked)="clearSearch()" style="position:absolute;right:6px;" />
                 }
             </div>
-            <env-icon-button icon="add" variant="primary" [size]="28" title="New note (⌘N)" (clicked)="handleNewNote()" />
+            <!-- Add dropdown -->
+            <div class="dn-add-wrap">
+                <env-icon-button icon="add" variant="primary" [size]="28" title="New note or folder" (clicked)="toggleAddMenu()" />
+                @if (showAddMenu()) {
+                <div class="dn-add-menu">
+                    <button class="dn-add-menu-item" (click)="handleNewNote(); closeAddMenu()">
+                        <span class="material-symbols-outlined">note_add</span>
+                        New Note
+                    </button>
+                    <button class="dn-add-menu-item" (click)="handleNewFolder(); closeAddMenu()">
+                        <span class="material-symbols-outlined">create_new_folder</span>
+                        New Folder
+                    </button>
+                </div>
+                }
+            </div>
         </div>
 
-        <!-- Quick Access -->
+        <!-- Quick Access — horizontal filter chips -->
         <div class="dn-quick-access">
-            <button class="dn-quick-item" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
-                <span class="material-symbols-outlined dn-quick-icon">notes</span>
-                <span class="dn-quick-label">All Notes</span>
-                <span class="dn-quick-count">{{ notes().length }}</span>
+            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'all' && !selectedTag()" (click)="setFilter('all')">
+                All
+                <span class="dn-chip-count">{{ notes().length }}</span>
             </button>
-            <button class="dn-quick-item" [class.active]="selectedFilter() === 'tagged' && !selectedTag()" (click)="setFilter('tagged')">
-                <span class="material-symbols-outlined dn-quick-icon">label</span>
-                <span class="dn-quick-label">Tagged</span>
-                <span class="dn-quick-count">{{ taggedCount() }}</span>
+            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'tagged' && !selectedTag()" (click)="setFilter('tagged')">
+                <span class="material-symbols-outlined">label</span>
+                Tagged
+                @if (taggedCount()) {
+                <span class="dn-chip-count">{{ taggedCount() }}</span>
+                }
             </button>
-            <button class="dn-quick-item" [class.active]="selectedFilter() === 'pinned' && !selectedTag()" (click)="setFilter('pinned')">
-                <span class="material-symbols-outlined dn-quick-icon">push_pin</span>
-                <span class="dn-quick-label">Pinned</span>
-                <span class="dn-quick-count">{{ pinnedCount() }}</span>
+            <button class="dn-quick-chip" [class.active]="selectedFilter() === 'pinned' && !selectedTag()" (click)="setFilter('pinned')">
+                <span class="material-symbols-outlined">push_pin</span>
+                Pinned
+                @if (pinnedCount()) {
+                <span class="dn-chip-count">{{ pinnedCount() }}</span>
+                }
             </button>
         </div>
 
@@ -121,10 +149,7 @@
         <!-- My Folders Header -->
         <div class="dn-folders-hdr">
             <span class="dn-sb-section-label">My Folders</span>
-            <div style="display:flex;gap:2px;">
-                <env-icon-button [icon]="allExpanded() ? 'unfold_less' : 'unfold_more'" variant="borderless" [size]="24" [title]="allExpanded() ? 'Collapse all' : 'Expand all'" (clicked)="toggleExpandAll()" />
-                <env-icon-button icon="add" variant="borderless" [size]="24" title="New folder" (clicked)="handleNewFolder()" />
-            </div>
+            <env-icon-button [icon]="allExpanded() ? 'unfold_less' : 'unfold_more'" variant="borderless" [size]="24" [title]="allExpanded() ? 'Collapse all' : 'Expand all'" (clicked)="toggleExpandAll()" />
         </div>
 
         <!-- Folder Tree -->
@@ -154,9 +179,7 @@
                     (dragleave)="onFolderDragLeave($event)"
                     (drop)="onFolderDrop(group.id, $event)">
                     <span class="material-symbols-outlined folder-chevron">chevron_right</span>
-                    <span class="material-symbols-outlined folder-icon">
-                        {{ group.expanded ? 'folder_open' : 'folder' }}
-                    </span>
+                    <span class="folder-color-dot" [style.background]="group.color || 'var(--text-tertiary)'"></span>
                     <span class="folder-name">{{ group.name }}</span>
                     <div class="folder-menu-wrapper">
                         <env-icon-button icon="more_horiz" variant="borderless" [size]="24" title="Folder options" class="folder-menu-btn" (click)="$event.stopPropagation()" (clicked)="toggleFolderMenu(group.id)" />
@@ -166,6 +189,14 @@
                                 <span class="material-symbols-outlined">edit</span>
                                 <span>Rename</span>
                             </button>
+                            <div class="folder-color-row">
+                                @for (c of folderColorOptions; track c) {
+                                <button class="folder-color-swatch"
+                                    [style.background]="c"
+                                    [class.selected]="group.color === c"
+                                    (click)="setFolderColor(group.id, c, $event)" title="Set folder color"></button>
+                                }
+                            </div>
                             @if (noteGroups().length > 1) {
                             <button class="dropdown-item danger" (click)="requestDeleteFolder(group.id, $event)">
                                 <span class="material-symbols-outlined">delete</span>
@@ -186,16 +217,23 @@
                     <div class="folder-empty">No notes in this folder</div>
                     } @else {
                     @for (entry of getNotesForFolder(group.id); track entry.id) {
-                    <div class="note-card-item" [class.active]="selectedNote()?.id === entry.id"
+                    <div class="note-card-item"
+                        [class.active]="selectedNote()?.id === entry.id && !isMultiSelecting()"
+                        [class.multi-selected]="multiSelectedIds().has(entry.id)"
                         [class.dragging]="draggingNoteId() === entry.id"
+                        [class.drag-above]="dragOverNoteId() === entry.id && dragInsertBefore()"
+                        [class.drag-below]="dragOverNoteId() === entry.id && !dragInsertBefore()"
                         draggable="true"
-                        (click)="selectNote(entry.id)"
+                        (click)="onNoteClick(entry.id, group.id, $event)"
                         (dragstart)="onNoteDragStart(entry.id, $event)"
-                        (dragend)="onNoteDragEnd()">
+                        (dragend)="onNoteDragEnd()"
+                        (dragover)="onNoteItemDragOver(entry.id, group.id, $event)"
+                        (dragleave)="onNoteItemDragLeave()"
+                        (drop)="onNoteItemDrop(entry.id, group.id, $event)">
                         <span class="note-card-icon material-symbols-outlined">{{ isPinned(entry) ? 'push_pin' : 'description' }}</span>
                         <div class="note-card-body">
                             <span class="note-card-title">{{ entry.title || 'Untitled' }}</span>
-                            @if (getPreviewText(entry.preview) !== 'No additional text') {
+                            @if (getPreviewText(entry.preview)) {
                             <span class="note-card-meta">
                                 <span class="note-card-preview">{{ getPreviewText(entry.preview) }}</span>
                             </span>
@@ -214,6 +252,36 @@
             }
             }
         </div>
+
+        <!-- Multi-select floating bar -->
+        @if (isMultiSelecting()) {
+        <div class="dn-multi-bar">
+            <span class="dn-multi-count">{{ multiSelectedIds().size }} selected</span>
+            <div class="dn-bulk-move-wrap">
+                <button class="dn-multi-btn" (click)="toggleBulkMoveMenu()">
+                    <span class="material-symbols-outlined">drive_file_move</span>
+                    Move
+                </button>
+                @if (showBulkMoveMenu()) {
+                <div class="dn-bulk-move-menu">
+                    @for (g of noteGroups(); track g.id) {
+                    <button class="dropdown-item" (click)="bulkMoveToFolder(g.id)">
+                        <span class="folder-color-dot-sm" [style.background]="g.color || 'var(--text-tertiary)'"></span>
+                        {{ g.name }}
+                    </button>
+                    }
+                </div>
+                }
+            </div>
+            <button class="dn-multi-btn dn-multi-btn--danger" (click)="bulkDelete()">
+                <span class="material-symbols-outlined">delete</span>
+                Delete
+            </button>
+            <button class="dn-multi-close" (click)="clearMultiSelect()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        }
     </div>
 
     <!-- Editor Pane -->
@@ -291,7 +359,7 @@
                             [ngModel]="tagInputValue()" (ngModelChange)="tagInputValue.set($event)"
                             (keydown.enter)="submitTagInput()"
                             (keydown.escape)="showTagInput.set(false); tagInputValue.set('')"
-                            (blur)="submitTagInput()"
+                            (blur)="onTagInputBlur($event)"
                             autofocus />
                     </div>
                     } @else {
@@ -302,6 +370,7 @@
                     }
                 </div>
 
+                @if (editor) {
                 <env-editor-floating-menu [editor]="editor" trigger="selection"
                     (askChanges)="handleAskChanges($event)"
                     (linkClick)="setLink()">
@@ -330,6 +399,7 @@
                         <span class="material-symbols-outlined">smart_display</span>
                     </button>
                 </env-editor-floating-menu>
+                }
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
 
@@ -375,7 +445,7 @@
                 @if (editor) {
                 <div class="dn-format-panel">
                     <div class="dn-panel-header">
-                        <span class="material-symbols-outlined">text_format</span>
+                        <span class="material-symbols-outlined">format_paragraph</span>
                         FORMAT
                         <button class="dn-panel-close" (click)="rightPanelCollapsed.set(true)" title="Close">
                             <span class="material-symbols-outlined">close</span>
@@ -553,26 +623,19 @@
             }
             <!-- Always-visible icon strip -->
             <div class="ne-right-strip">
+                <!-- Panel toggles -->
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'ai'"
                     (click)="setRightTab('ai')" title="AI Assistant">
                     <span class="material-symbols-outlined">auto_awesome</span>
                 </button>
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'format'"
                     (click)="setRightTab('format')" title="Format">
-                    <span class="material-symbols-outlined">text_format</span>
+                    <span class="material-symbols-outlined">format_paragraph</span>
                 </button>
-                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'info'"
-                    (click)="setRightTab('info')" title="Note Info">
-                    <span class="material-symbols-outlined">info</span>
-                </button>
-                <span class="dn-save-indicator"
-                    [class.saving]="isSaving()"
-                    [class.saved]="!isSaving() && !!lastSaved()"
-                    [title]="isSaving() ? 'Saving…' : 'Saved'">
-                    <span class="material-symbols-outlined">{{ isSaving() ? 'sync' : 'cloud_done' }}</span>
-                </span>
-                <div class="ne-strip-spacer"></div>
+
                 <div class="ne-strip-divider"></div>
+
+                <!-- Editor history -->
                 @if (editor) {
                 <button class="ne-strip-btn" (click)="editor.chain().focus().undo().run()" [disabled]="!canUndo()" title="Undo">
                     <span class="material-symbols-outlined">undo</span>
@@ -581,6 +644,11 @@
                     <span class="material-symbols-outlined">redo</span>
                 </button>
                 }
+
+                <!-- Push note actions to bottom -->
+                <div class="ne-strip-spacer"></div>
+
+                <!-- Note actions -->
                 <button class="ne-strip-btn" [class.active]="isPinned(note)" (click)="togglePin(note)"
                     [title]="isPinned(note) ? 'Unpin note' : 'Pin note'">
                     <span class="material-symbols-outlined">{{ isPinned(note) ? 'keep_off' : 'keep' }}</span>
@@ -591,6 +659,22 @@
                 <button class="ne-strip-btn" (click)="exportNote()" title="Export">
                     <span class="material-symbols-outlined">download</span>
                 </button>
+
+                <!-- Save status -->
+                <span class="dn-save-indicator"
+                    [class.saving]="isSaving()"
+                    [class.saved]="!isSaving() && !!lastSaved()"
+                    [title]="isSaving() ? 'Saving…' : 'Saved'">
+                    <span class="material-symbols-outlined">{{ isSaving() ? 'sync' : 'cloud_done' }}</span>
+                </span>
+
+                <!-- Note info -->
+                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'info'"
+                    (click)="setRightTab('info')" title="Note Info">
+                    <span class="material-symbols-outlined">info</span>
+                </button>
+
+                <!-- Destructive — always last -->
                 <button class="ne-strip-btn ne-strip-btn--danger" (click)="deleteCurrentNote()" title="Delete note">
                     <span class="material-symbols-outlined">delete</span>
                 </button>

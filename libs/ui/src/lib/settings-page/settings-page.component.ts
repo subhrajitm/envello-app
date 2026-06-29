@@ -8,6 +8,7 @@ import { EnvLogoComponent } from '../logo/logo.component';
 import { ThemeService, Theme, StoreService, UserPreferencesService, APP_VERSION } from '@envello/core';
 import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { SmartMonitorService, MONITOR_RULES, MonitorRuleId } from '@envello/core';
+import { GoogleAuthService, GoogleCalendarService, GoogleContactsService, GoogleGmailService } from '@envello/core';
 import { Task } from '@envello/domain';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService } from '@envello/core';
 import { DataService } from '@envello/data';
@@ -48,7 +49,11 @@ export class SettingsPageComponent implements OnInit {
   private userPrefsService = inject(UserPreferencesService);
   readonly appVersion = inject(APP_VERSION);
   aiService     = inject(AiService);
-  monitorService = inject(SmartMonitorService);
+  monitorService   = inject(SmartMonitorService);
+  googleAuth       = inject(GoogleAuthService);
+  googleCalendar   = inject(GoogleCalendarService);
+  googleContacts   = inject(GoogleContactsService);
+  googleGmail      = inject(GoogleGmailService);
   readonly monitorRules = MONITOR_RULES;
 
   /** All tasks auto-created by Smart Monitor, newest first. */
@@ -168,6 +173,7 @@ export class SettingsPageComponent implements OnInit {
     { id: 'sections',      label: 'Sections',          description: 'Show or hide navigation sections',      icon: 'grid_view' },
     { id: 'appearance',    label: 'Appearance',        description: 'Colors, themes and fonts',              icon: 'palette' },
     { id: 'editor',        label: 'Editor',            description: 'Writing experience and tools',          icon: 'edit_note' },
+    { id: 'connected',     label: 'Connected Accounts', description: 'Google, calendar, contacts and Gmail', icon: 'link' },
     { id: 'ai',            label: 'AI & Integrations', description: 'Configure AI providers and API keys',   icon: 'smart_toy' },
     { id: 'monitor',       label: 'Smart Monitor',     description: 'Auto-create tasks from your data 24/7', icon: 'bolt' },
     { id: 'notifications', label: 'Notifications',     description: 'Alerts and reminders',                  icon: 'notifications' },
@@ -216,7 +222,6 @@ export class SettingsPageComponent implements OnInit {
     { value: 'dark',            label: 'Midnight',   icon: 'nights_stay' },
     { value: 'enterprise-dark', label: 'Pro Dark',   icon: 'dark_mode' },
     { value: 'light',           label: 'Paper',      icon: 'light_mode' },
-    { value: 'colorful',        label: 'Colorful',   icon: 'palette' },
     { value: 'typewriter',      label: 'Typewriter', icon: 'article' }
   ];
 

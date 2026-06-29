@@ -85,10 +85,10 @@
     <!-- Toolbar -->
     <div class="bm-toolbar">
       <!-- Search -->
-      <div class="bm-toolbar-search">
-        <span class="material-symbols-outlined bm-toolbar-search-icon">search</span>
+      <div class="bm-toolbar-search toolbar-search-wrap">
+        <span class="material-symbols-outlined bm-toolbar-search-icon toolbar-search-icon">search</span>
         <input
-          class="bm-toolbar-search-input"
+          class="bm-toolbar-search-input toolbar-search-input"
           type="text"
           placeholder="Search bookmarks…"
           [value]="searchQuery()"
@@ -101,21 +101,21 @@
         <!-- Active filter chips -->
         @if (selectedTags().length > 0) {
           @for (tag of selectedTags(); track tag) {
-            <span class="bm-filter-chip">
+            <span class="bm-filter-chip filter-chip">
               #{{ tag }}
               <button (click)="toggleTagFilter(tag)">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </span>
           }
-          <button class="bm-filter-clear" (click)="clearFilters()">Clear</button>
+          <button class="bm-filter-clear filter-clear" (click)="clearFilters()">Clear</button>
           <div class="bm-tb-divider"></div>
         }
 
         <!-- View toggle -->
-        <div class="bm-view-toggle">
+        <div class="bm-view-toggle view-mode-group">
           <button
-            class="bm-vt-btn"
+            class="bm-vt-btn btn-view-mode"
             [class.active]="viewMode() === 'table'"
             (click)="viewMode.set('table')"
             title="Table view"
@@ -123,7 +123,7 @@
             <span class="material-symbols-outlined">table_rows</span>
           </button>
           <button
-            class="bm-vt-btn"
+            class="bm-vt-btn btn-view-mode"
             [class.active]="viewMode() === 'grid'"
             (click)="viewMode.set('grid')"
             title="Grid view"
@@ -147,7 +147,7 @@
 
         <!-- AI toggle -->
         <button
-          class="bm-ai-btn"
+          class="btn-ai-toggle"
           [class.active]="showAssistant()"
           (click)="toggleAssistant()"
           title="AI Assistant"
@@ -157,9 +157,9 @@
         </button>
 
         <!-- Add bookmark -->
-        <button class="bm-add-btn" (click)="openAddModal()">
+        <button class="bm-add-btn btn-add-primary" (click)="openAddModal()">
           <span class="material-symbols-outlined">add</span>
-          Add Bookmark
+          New Bookmark
         </button>
       </div>
     </div>
@@ -171,12 +171,7 @@
           <env-empty-state
             [icon]="emptyStateConfig().icon"
             [title]="emptyStateConfig().title"
-            [description]="emptyStateConfig().subtitle"
-            [ctaLabel]="emptyStateConfig().showAdd ? 'Add your first bookmark' : ''"
-            ctaIcon="add"
-            [secondaryCtaLabel]="emptyStateConfig().showClear ? 'Clear Filters' : ''"
-            (ctaClicked)="openAddModal()"
-            (secondaryCtaClicked)="clearFilters()">
+            [description]="emptyStateConfig().subtitle">
           </env-empty-state>
         } @else {
           <env-table
@@ -207,12 +202,7 @@
         <env-empty-state
           [icon]="emptyStateConfig().icon"
           [title]="emptyStateConfig().title"
-          [description]="emptyStateConfig().subtitle"
-          [ctaLabel]="emptyStateConfig().showAdd ? 'Add your first bookmark' : ''"
-          ctaIcon="add"
-          [secondaryCtaLabel]="emptyStateConfig().showClear ? 'Clear Filters' : ''"
-          (ctaClicked)="openAddModal()"
-          (secondaryCtaClicked)="clearFilters()">
+          [description]="emptyStateConfig().subtitle">
         </env-empty-state>
       }
       <div class="bm-grid">

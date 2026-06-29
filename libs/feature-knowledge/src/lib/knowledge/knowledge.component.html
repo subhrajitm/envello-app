@@ -54,13 +54,13 @@
     <!-- Toolbar — always visible -->
     <div class="rs-toolbar">
       @if (viewMode() === 'sources' || viewMode() === 'files') {
-        <div class="rs-search-wrap">
-          <span class="material-symbols-outlined rs-search-icon">search</span>
-          <input class="rs-search-input" type="text"
+        <div class="rs-search-wrap toolbar-search-wrap">
+          <span class="material-symbols-outlined rs-search-icon toolbar-search-icon">search</span>
+          <input class="rs-search-input toolbar-search-input" type="text"
             [placeholder]="viewMode() === 'files' ? 'Search files…' : 'Search sources…'"
             [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
           @if (searchQuery()) {
-            <button class="rs-search-clear" (click)="searchQuery.set('')">
+            <button class="rs-search-clear toolbar-search-clear" (click)="searchQuery.set('')">
               <span class="material-symbols-outlined">close</span>
             </button>
           }
@@ -85,26 +85,26 @@
             <span class="material-symbols-outlined">filter_list_off</span>
           </button>
         }
-        <button class="rs-tool-btn" [class.rs-tool-btn--active]="showAssistant()"
-          (click)="toggleAssistant()">
+        <button class="rs-tool-btn btn-ai-toggle" [class.rs-tool-btn--active]="showAssistant()" [class.active]="showAssistant()"
+          (click)="toggleAssistant()" title="AI Assistant">
           <span class="material-symbols-outlined">auto_awesome</span>
           AI
         </button>
         <div class="rs-tb-divider"></div>
         @if (viewMode() === 'summaries' && selectedCollection()) {
-          <button class="rs-add-btn" (click)="openSummaryModal()">
+          <button class="rs-add-btn btn-add-primary" (click)="openSummaryModal()">
             <span class="material-symbols-outlined">add</span>
             New Summary
           </button>
         } @else if (viewMode() === 'files') {
-          <button class="rs-add-btn" (click)="openAddModal()">
+          <button class="rs-add-btn btn-add-primary" (click)="openAddModal()">
             <span class="material-symbols-outlined">add</span>
-            Add
+            New File
           </button>
         } @else {
-          <button class="rs-add-btn" (click)="openAddModal()">
+          <button class="rs-add-btn btn-add-primary" (click)="openAddModal()">
             <span class="material-symbols-outlined">add</span>
-            Add
+            New Source
           </button>
         }
       </div>
@@ -252,15 +252,15 @@
               (click)="filterStatus.set('ALL')">All</button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
               (click)="filterStatus.set('UNREAD')">
-              <span class="rs-pill-dot" style="background:#f87171"></span>Unread
+              <span class="rs-pill-dot" style="background:var(--accent-red)"></span>Unread
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
               (click)="filterStatus.set('READING')">
-              <span class="rs-pill-dot" style="background:#facc15"></span>Reading
+              <span class="rs-pill-dot" style="background:var(--accent-yellow)"></span>Reading
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
               (click)="filterStatus.set('PROCESSED')">
-              <span class="rs-pill-dot" style="background:#4ade80"></span>Processed
+              <span class="rs-pill-dot" style="background:var(--accent-green)"></span>Processed
             </button>
 
             <div class="rs-tabs-right-divider"></div>
@@ -329,9 +329,7 @@
                 <env-empty-state
                   [compact]="true"
                   icon="search_off"
-                  title="No sources match your filters"
-                  secondaryCtaLabel="Clear Filters"
-                  (secondaryCtaClicked)="clearFilters()">
+                  title="No sources match your filters">
                 </env-empty-state>
               }
             </div>
@@ -357,10 +355,7 @@
             <env-empty-state
               icon="summarize"
               title="No summaries yet"
-              description="Create a summary to synthesize insights from your sources."
-              ctaLabel="New Summary"
-              ctaIcon="add"
-              (ctaClicked)="openSummaryModal()">
+              description="Create a summary to synthesize insights from your sources.">
             </env-empty-state>
           } @else {
             <env-table
@@ -404,15 +399,15 @@
               (click)="filterStatus.set('ALL')">All</button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
               (click)="filterStatus.set('UNREAD')">
-              <span class="rs-pill-dot" style="background:#f87171"></span>Unread
+              <span class="rs-pill-dot" style="background:var(--accent-red)"></span>Unread
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
               (click)="filterStatus.set('READING')">
-              <span class="rs-pill-dot" style="background:#facc15"></span>Reading
+              <span class="rs-pill-dot" style="background:var(--accent-yellow)"></span>Reading
             </button>
             <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
               (click)="filterStatus.set('PROCESSED')">
-              <span class="rs-pill-dot" style="background:#4ade80"></span>Processed
+              <span class="rs-pill-dot" style="background:var(--accent-green)"></span>Processed
             </button>
             <div class="rs-tabs-right-divider"></div>
             <select class="rs-type-select" [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
@@ -458,9 +453,7 @@
               <env-empty-state
                 [compact]="true"
                 icon="search_off"
-                title="No sources match your filters"
-                secondaryCtaLabel="Clear Filters"
-                (secondaryCtaClicked)="clearFilters()">
+                title="No sources match your filters">
               </env-empty-state>
             }
           </div>
@@ -531,17 +524,17 @@
               <button class="rsd-status-btn" [class.active]="source.status === 'UNREAD'"
                 [style.--sc]="'#f87171'"
                 (click)="updateSourceStatus('UNREAD')">
-                <span class="rs-status-dot" style="background:#f87171"></span>Unread
+                <span class="rs-status-dot" style="background:var(--accent-red)"></span>Unread
               </button>
               <button class="rsd-status-btn" [class.active]="source.status === 'READING'"
                 [style.--sc]="'#facc15'"
                 (click)="updateSourceStatus('READING')">
-                <span class="rs-status-dot" style="background:#facc15"></span>Reading
+                <span class="rs-status-dot" style="background:var(--accent-yellow)"></span>Reading
               </button>
               <button class="rsd-status-btn" [class.active]="source.status === 'PROCESSED'"
                 [style.--sc]="'#4ade80'"
                 (click)="updateSourceStatus('PROCESSED')">
-                <span class="rs-status-dot" style="background:#4ade80"></span>Processed
+                <span class="rs-status-dot" style="background:var(--accent-green)"></span>Processed
               </button>
             </div>
           </div>
@@ -607,7 +600,7 @@
               <div class="rsd-linked-list">
                 @for (task of linkedTasks(); track task.id) {
                   <div class="rsd-linked-item">
-                    <span class="material-symbols-outlined">task_alt</span>
+                    <span class="material-symbols-outlined">done_all</span>
                     <span class="rsd-linked-title">{{ task.title }}</span>
                     <button class="rsd-linked-unlink" (click)="unlinkTask(task.id)" title="Unlink">
                       <span class="material-symbols-outlined">link_off</span>
@@ -626,7 +619,7 @@
                   <div class="rsd-task-list">
                     @for (task of availableTasks(); track task.id) {
                       <button class="rsd-task-opt" (click)="linkTask(task.id)">
-                        <span class="material-symbols-outlined">task_alt</span>
+                        <span class="material-symbols-outlined">done_all</span>
                         {{ task.title }}
                       </button>
                     }

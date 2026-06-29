@@ -21,21 +21,33 @@ export class StoreService {
     spaces = signal<Project[]>([]);
     people = signal<Person[]>([]);
 
+    // Memory caps — prevents unbounded growth for heavy collections
+    private static readonly LIMITS = {
+        tasks:     2000,
+        notes:     500,
+        bookmarks: 1000,
+        people:    500,
+    };
+
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
 
     private markdownWorker: Worker | null = null;
     private workerCallbacks = new Map<string, (md: string) => void>();
-    private saveTimeouts: { [id: string]: any } = {};
+    private saveTimeouts        = new Map<string, ReturnType<typeof setTimeout>>();
+    private pendingSaveContent  = new Map<string, string>(); // content awaiting debounced file write
+
+    /** In-memory content cache — survives loadFromDb() which strips content from the signal. */
+    private contentCache = new Map<string, string>();
 
     private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
+    private _loadInProgress = false;
 
     constructor() {
         this.loadFromDb();
         this.initMarkdownWorker();
         // Re-load after Supabase sync (web) or after SQLite DB becomes ready (desktop).
-        // Debounce so rapid-fire realtime events (e.g. N bookmark upserts from a folder
-        // deletion) collapse into a single loadFromDb() call instead of N full reloads.
+        // Debounce so rapid-fire realtime events collapse into a single reload.
         window.addEventListener('envello:sync-complete', () => {
             clearTimeout(this._syncDebounceTimer);
             this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
@@ -86,6 +98,8 @@ export class StoreService {
     }
 
     private async loadFromDb(retries = 1): Promise<void> {
+        if (this._loadInProgress) return;
+        this._loadInProgress = true;
         try {
             const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
@@ -99,20 +113,38 @@ export class StoreService {
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people'),
             ]);
-            this.tasks.set((tasks || []).filter(t => !t.deleted_at));
-            // Merge: preserve any in-memory notes whose IDs aren't in the DB yet
-            // (newly created notes that haven't been persisted before this reload fires).
-            const activenotes = (notes || []).filter(n => !n.deleted_at);
-            const dbNoteIds = new Set(activenotes.map(n => n.id));
+
+            // Tasks — cap, exclude soft-deleted
+            const activeTasks = (tasks || [])
+                .filter(t => !t.deleted_at)
+                .slice(0, StoreService.LIMITS.tasks);
+            this.tasks.set(activeTasks);
+
+            // Notes — strip content from metadata load; content is lazy-loaded via loadNoteContent().
+            // Preserves any in-memory notes not yet in DB (just-created, not yet persisted).
+            const activeNotes = (notes || [])
+                .filter(n => !n.deleted_at)
+                .slice(0, StoreService.LIMITS.notes)
+                .map(n => ({ ...n, content: undefined })) as Note[];
+            const dbNoteIds = new Set(activeNotes.map(n => n.id));
             const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
-            this.notes.set([...pendingNotes, ...activenotes]);
+            this.notes.set([...pendingNotes, ...activeNotes]);
+
             this.planningItems.set(planningItems || []);
             this.activities.set((activities || []).slice(0, 50));
             this.books.set((books || []).filter(b => !b.deleted_at));
-            this.bookmarks.set((bookmarks || []).filter(b => !b.deleted_at));
+
+            // Bookmarks — cap, exclude soft-deleted
+            this.bookmarks.set(
+                (bookmarks || []).filter(b => !b.deleted_at).slice(0, StoreService.LIMITS.bookmarks)
+            );
             this.bookmarkFolders.set(bookmarkFolders || []);
             this.spaces.set(spaces || []);
-            this.people.set((people || []).filter(p => !p.deleted_at));
+
+            // People — cap, exclude soft-deleted
+            this.people.set(
+                (people || []).filter(p => !p.deleted_at).slice(0, StoreService.LIMITS.people)
+            );
 
             if (folders?.length) {
                 this.noteFolders.set(folders);
@@ -130,7 +162,6 @@ export class StoreService {
         } catch (e) {
             console.error('[StoreService] loadFromDb failed', e);
             if (retries > 0) {
-                // Single retry after 500ms — handles transient Tauri startup race
                 setTimeout(() => this.loadFromDb(0), 500);
                 return;
             }
@@ -144,26 +175,65 @@ export class StoreService {
             this.bookmarkFolders.set([]);
             this.spaces.set([]);
             this.people.set([]);
+        } finally {
+            this._loadInProgress = false;
         }
     }
 
     async loadNoteContent(id: string): Promise<string> {
         const note = this.notes().find(n => n.id === id);
         if (!note) return '';
-        if (note.content && note.content.length > 5) return note.content;
 
-        let mdContent = await this.fs.readNote(id);
+        // 1. In-memory cache hit — zero I/O, survives loadFromDb() stripping.
+        const cached = this.contentCache.get(id);
+        if (cached && cached.length > 0) {
+            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: cached } : n));
+            return cached;
+        }
 
-        if (mdContent === null && note.content && note.content.length > 0) {
-            await this.saveNoteContentToFile(id, note.content);
+        // 2. Signal already has content (e.g. freshly created note not yet stripped).
+        if (note.content && note.content.length > 5) {
+            this.contentCache.set(id, note.content);
             return note.content;
         }
 
-        if (mdContent) {
-            const { marked } = await import('marked');
-            const html = await marked.parse(mdContent);
-            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html as string } : n));
-            return html as string;
+        // 3. Flush any debounced file-write before reading so the file exists.
+        if (this.saveTimeouts.has(id)) {
+            const pending = this.pendingSaveContent.get(id) ?? '';
+            clearTimeout(this.saveTimeouts.get(id));
+            this.saveTimeouts.delete(id);
+            this.pendingSaveContent.delete(id);
+            if (pending) {
+                this.contentCache.set(id, pending);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: pending } : n));
+                await this.saveNoteContentToFile(id, pending);
+                return pending;
+            }
+        }
+
+        // 4. Read from file system (desktop: .md file; web: localStorage).
+        try {
+            const mdContent = await this.fs.readNote(id);
+            if (mdContent) {
+                const { marked } = await import('marked');
+                const html = await marked.parse(mdContent) as string;
+                this.contentCache.set(id, html);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html } : n));
+                return html;
+            }
+        } catch (e) {
+            console.error('[StoreService] loadNoteContent file read failed for', id, e);
+        }
+
+        // 5. Last resort: reconstruct from preview stored in SQLite.
+        //    preview is plain text — wrap in a paragraph so the editor renders it.
+        //    Also re-saves to file so future loads hit step 4.
+        if (note.preview && note.preview.length > 0) {
+            const html = `<p>${note.preview}</p>`;
+            this.contentCache.set(id, html);
+            this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html } : n));
+            this.saveNoteContentToFile(id, html).catch(() => {});
+            return html;
         }
 
         return '';
@@ -193,6 +263,7 @@ export class StoreService {
     }
 
     async addNote(note: Note) {
+        if (note.content) this.contentCache.set(note.id, note.content);
         this.notes.update(notes => [note, ...notes]);
         this.addActivity("Entry added to '" + note.title + "'", 'entry');
         // Persist to DB immediately so a concurrent loadFromDb() won't lose this note.
@@ -216,35 +287,58 @@ export class StoreService {
         if (!note) return;
 
         if (updates.content !== undefined) {
-            if (this.saveTimeouts[id]) clearTimeout(this.saveTimeouts[id]);
-            this.saveTimeouts[id] = setTimeout(() => {
-                this.saveNoteContentToFile(id, updates.content || '');
-            }, 1000);
+            this.contentCache.set(id, updates.content || '');
+            const existing = this.saveTimeouts.get(id);
+            if (existing) clearTimeout(existing);
+            this.pendingSaveContent.set(id, updates.content || '');
+            this.saveTimeouts.set(id, setTimeout(() => {
+                this.saveTimeouts.delete(id);
+                const content = this.pendingSaveContent.get(id) ?? '';
+                this.pendingSaveContent.delete(id);
+                this.saveNoteContentToFile(id, content);
+            }, 1000));
         }
 
         this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
     }
 
-    private async saveNoteContentToFile(id: string, html: string) {
-        const md = await this.htmlToMarkdown(html);
-        const filePath = await this.fs.saveNote(id, md);
+    /** Flush all debounced note file-writes immediately. Call before app close. */
+    async flushPendingNoteSaves(): Promise<void> {
+        const pending = [...this.saveTimeouts.keys()];
+        for (const id of pending) {
+            clearTimeout(this.saveTimeouts.get(id));
+            this.saveTimeouts.delete(id);
+            const content = this.pendingSaveContent.get(id) ?? '';
+            this.pendingSaveContent.delete(id);
+            if (content) await this.saveNoteContentToFile(id, content);
+        }
+    }
 
-        const note = this.notes().find(n => n.id === id);
-        if (note && note.filePath !== filePath) {
-            // Update DB only — do NOT mutate the notes() signal here.
-            // A signal write would trigger the content-loading effect in the editor
-            // component, which compares editor HTML to note.content. At this point
-            // note.content may be stale (captured at the last debounce cycle) while
-            // the editor has newer in-flight content, causing typing to get reverted.
-            this.db.upsert('notes', { ...note, filePath }).catch(e =>
-                console.error('[StoreService] persist note filePath failed', e)
-            );
+    private async saveNoteContentToFile(id: string, html: string) {
+        try {
+            const md = await this.htmlToMarkdown(html);
+            const filePath = await this.fs.saveNote(id, md);
+
+            const note = this.notes().find(n => n.id === id);
+            if (note && note.filePath !== filePath) {
+                // Update DB only — do NOT mutate the notes() signal here.
+                // A signal write would trigger the content-loading effect in the editor
+                // component, which compares editor HTML to note.content. At this point
+                // note.content may be stale (captured at the last debounce cycle) while
+                // the editor has newer in-flight content, causing typing to get reverted.
+                this.db.upsert('notes', { ...note, filePath }).catch(e =>
+                    console.error('[StoreService] persist note filePath failed', e)
+                );
+            }
+        } catch (e) {
+            console.error('[StoreService] saveNoteContentToFile failed for', id, e);
         }
     }
 
     deleteNote(id: string) {
         const note = this.notes().find(n => n.id === id);
         if (!note) return;
+        this.contentCache.delete(id);
         this.notes.update(list => list.filter(n => n.id !== id));
         this.addActivity('Note deleted', 'system');
         this.db.upsert('notes', { ...note, deleted_at: new Date().toISOString() })

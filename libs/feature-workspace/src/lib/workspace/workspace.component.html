@@ -158,17 +158,25 @@
     @defer (on idle) {
       <aside class="sidebar">
         <div class="sidebar-section full-height">
-          <div class="dp-header">
-            <h2 class="dp-title">
-              <span class="material-symbols-outlined dp-title-icon">history</span>
-              Recent activity
-            </h2>
-            <div class="dp-progress" [title]="sidebarTasksCompleted() + ' of ' + store.tasks().length + ' tasks completed'">
-              <svg class="progress-ring" width="24" height="24">
-                <circle class="progress-ring-bg" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" />
-                <circle class="progress-ring-fill" stroke-width="2" fill="transparent" r="10" cx="12" cy="12" stroke-dasharray="62.83" [attr.stroke-dashoffset]="sidebarTasksDashOffset()" />
-              </svg>
-              <span class="dp-progress-text">{{ sidebarTasksCompleted() }}/{{ store.tasks().length }} done</span>
+          <div class="ra-header">
+            <h2 class="ra-heading">Recent Activities</h2>
+            <div class="ra-filter-dropdown">
+              <button class="ra-filter-btn" [class.open]="sidebarFilterOpen()" (click)="toggleSidebarFilter()">
+                <span class="material-symbols-outlined ra-filter-icon">{{ activeFilterIcon() }}</span>
+                {{ activeFilterLabel() }}
+                <span class="material-symbols-outlined ra-filter-chevron" [class.open]="sidebarFilterOpen()">expand_more</span>
+              </button>
+              @if (sidebarFilterOpen()) {
+                <div class="ra-filter-menu">
+                  @for (opt of filterOptions; track opt.value) {
+                    <button class="ra-filter-option" [class.active]="sidebarFilter() === opt.value"
+                      (click)="setSidebarFilter(opt.value)">
+                      <span class="material-symbols-outlined">{{ opt.icon }}</span>
+                      {{ opt.label }}
+                    </button>
+                  }
+                </div>
+              }
             </div>
           </div>
 
@@ -179,41 +187,51 @@
             </div>
           }
 
-          <div class="dp-list si-list">
-            @for (item of sidebarActivityItems(); track item.id) {
-              <div class="dp-item si-item" (click)="navigateSidebarItem(item, $event)">
-                <div class="dp-item-main">
-
-                  @if (item.kind === 'task' && item.task) {
-                    <div class="dp-checkbox" [class.checked]="item.task.status === 'COMPLETED'"
-                         (click)="toggleSidebarTask(item.task, $event)" title="Toggle status">
-                      @if (item.task.status === 'COMPLETED') {
-                        <span class="material-symbols-outlined" style="font-size: 14px; font-weight: bold;">check</span>
+          <div class="si-list">
+            @if (sidebarActivityItems().length === 0) {
+              <div class="si-empty">Nothing here yet</div>
+            } @else {
+              @for (group of groupedSidebarItems(); track group.label) {
+                <div class="ra-date-header">{{ group.label }}</div>
+                @for (item of group.items; track item.id) {
+                  <div class="ra-item" [attr.data-kind]="item.kind" (click)="navigateSidebarItem(item, $event)">
+                    <div class="ra-icon-circle">
+                      <span class="material-symbols-outlined ra-icon" [style.color]="item.iconColor">{{ item.icon }}</span>
+                    </div>
+                    <div class="ra-body">
+                      <div class="ra-title" [class.completed]="item.task?.status === 'COMPLETED'">{{ item.title }}</div>
+                      @if (item.subtitle) {
+                        <div class="ra-subtitle" [class.ra-subtitle--overdue]="item.isOverdue">{{ item.subtitle }}</div>
                       }
                     </div>
-                  } @else {
-                    <span class="si-type-icon material-symbols-outlined" [style.color]="item.iconColor">{{ item.icon }}</span>
-                  }
-
-                  <div class="si-text">
-                    <div class="dp-item-title" [class.completed]="item.task?.status === 'COMPLETED'">{{ item.title }}</div>
-                    @if (item.subtitle) {
-                      <div class="si-subtitle">{{ item.subtitle }}</div>
-                    }
-                    @if (item.description) {
-                      <div class="si-description">{{ item.description }}</div>
-                    }
+                    <div class="ra-right">
+                      @if (item.relativeTime) {
+                        <span class="ra-time">{{ item.relativeTime }}</span>
+                      }
+                      <div class="ra-actions">
+                        @if (item.kind === 'task' && item.task) {
+                          <button class="ra-action-btn"
+                            (click)="toggleSidebarTask(item.task, $event)"
+                            [title]="item.task.status === 'COMPLETED' ? 'Mark active' : 'Complete'">
+                            <span class="material-symbols-outlined">{{ item.task.status === 'COMPLETED' ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                          </button>
+                        }
+                        <button class="ra-action-btn" title="Open">
+                          <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
+                }
+              }
+            }
+          </div>
 
-                  <button class="dp-action-btn si-nav-btn" title="View">
-                    <span class="material-symbols-outlined">arrow_forward</span>
-                  </button>
-                </div>
-              </div>
-            }
-            @if (sidebarActivityItems().length === 0) {
-              <div style="text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 16px;">Nothing here yet</div>
-            }
+          <div class="ra-footer">
+            <button class="ra-show-more-btn" (click)="navigateToActivity()">
+              Show all activity
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
           </div>
         </div>
       </aside>
@@ -221,8 +239,8 @@
       <aside class="sidebar" aria-hidden="true">
         <div class="sidebar-section full-height"
           style="gap:8px;display:flex;flex-direction:column;padding:16px;">
-          @for (i of [1,2,3,4,5,6]; track i) {
-            <div style="height:44px;border-radius:6px;background:var(--bg-secondary,#1a1a1a);opacity:0.5;"></div>
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div style="height:36px;border-radius:4px;background:var(--bg-secondary,#1a1a1a);opacity:0.5;"></div>
           }
         </div>
       </aside>
@@ -230,42 +248,4 @@
 
   </div>
 
-  <!-- ── Bottom Status Bar ── -->
-  <footer class="status-bar">
-    <div class="sb-left">
-      <div class="active-item">
-        <span class="status-dot"></span>
-        INTELLIGENT CAPTURE v3.0
-      </div>
-      <div class="divider"></div>
-      <div class="active-item">
-        <span class="material-symbols-outlined" style="font-size:12px;">auto_awesome</span>
-        AI-POWERED
-      </div>
-    </div>
-
-    <div class="sb-right">
-      <div class="linked-entities" title="Active Tasks: {{ linkedEntities().tasks }}">
-        LINKED:
-        <div class="entity-circles">
-          <span class="e-circle"
-            [style.background]="linkedEntities().tasks > 0 ? '#3b82f6' : '#374151'"></span>
-        </div>
-        <span class="entity-count">{{ linkedEntities().tasks }}</span>
-      </div>
-      <div class="divider"></div>
-      <div class="active-item">
-        CPU
-        <div class="metric-bar">
-          <div class="metric-fill" [style.width.%]="cpuUsage()"></div>
-        </div>
-      </div>
-      <div class="active-item">
-        LAT
-        <div class="metric-bar">
-          <div class="metric-fill" [style.width.%]="latency()"></div>
-        </div>
-      </div>
-    </div>
-  </footer>
 </div>

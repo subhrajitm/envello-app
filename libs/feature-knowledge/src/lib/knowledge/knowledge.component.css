@@ -19,7 +19,7 @@
 .rs-sb-search-input {
   width: 100%; height: 26px; padding: 0 22px 0 24px;
   background: var(--bg-hover); border: 1px solid var(--border-subtle);
-  border-radius: 5px; font-size: 11.5px; color: var(--text-primary);
+  border-radius: 5px; font-size: 12px; color: var(--text-primary);
   outline: none;
 }
 .rs-sb-search-input:focus { border-color: var(--accent-primary); background: var(--bg-panel); }
@@ -60,13 +60,13 @@
 }
 .rs-lib-info { flex: 1; min-width: 0; }
 .rs-lib-name {
-  display: block; font-size: 12.5px; font-weight: 500;
+  display: block; font-size: 13px; font-weight: 500;
   color: var(--text-primary); white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
 }
 .rs-lib-item.active .rs-lib-name { color: var(--accent-primary); }
 .rs-lib-count {
-  font-size: 10.5px; color: var(--text-tertiary);
+  font-size: 11px; color: var(--text-tertiary);
   background: var(--bg-app); border: 1px solid var(--border-subtle);
   border-radius: 10px; padding: 0 5px;
   font-family: var(--font-mono); min-width: 16px; text-align: center;
@@ -80,15 +80,15 @@
   display: none; align-items: center; justify-content: center;
   width: 20px; height: 20px; background: transparent; border: none;
   border-radius: 4px; color: var(--text-tertiary); cursor: pointer;
-  flex-shrink: 0; transition: all 0.12s;
+  flex-shrink: 0; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rs-lib-del .material-symbols-outlined { font-size: 14px; }
-.rs-lib-del:hover { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
+.rs-lib-del:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); color: var(--accent-red); }
 .rs-lib-item:hover .rs-lib-del { display: flex; }
 
 .rs-sb-empty {
   padding: 24px 12px; text-align: center;
-  color: var(--text-tertiary); font-size: 11.5px;
+  color: var(--text-tertiary); font-size: 12px;
 }
 .rs-sb-empty .material-symbols-outlined { font-size: 24px; opacity: 0.3; display: block; margin-bottom: 6px; }
 
@@ -116,7 +116,7 @@
   height: 28px; padding: 0 26px 0 28px;
   background: var(--bg-hover); border: 1px solid var(--border-subtle);
   border-radius: 5px; font-size: 12px; color: var(--text-primary);
-  outline: none; width: 180px; transition: all 0.2s;
+  outline: none; width: 180px; transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
 }
 .rs-search-input:focus { background: var(--bg-panel); border-color: var(--accent-primary); }
 .rs-search-input::placeholder { color: var(--text-tertiary); }
@@ -132,7 +132,7 @@
   height: 28px; padding: 0 10px; display: flex; align-items: center; gap: 5px;
   background: transparent; border: 1px solid var(--border-subtle);
   border-radius: 5px; color: var(--text-secondary); font-size: 12px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; white-space: nowrap;
 }
 .rs-tool-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rs-tool-btn--active { background: var(--accent-primary-dim) !important; border-color: var(--accent-primary) !important; color: var(--accent-primary) !important; }
@@ -162,7 +162,7 @@
 .rs-lib-bc-close {
   width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 50%;
-  color: var(--text-tertiary); cursor: pointer; flex-shrink: 0; transition: all 0.12s;
+  color: var(--text-tertiary); cursor: pointer; flex-shrink: 0; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
   padding: 0;
 }
 .rs-lib-bc-close:hover { background: var(--bg-active); color: var(--text-primary); }
@@ -174,8 +174,8 @@
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 12px; background: var(--bg-panel);
   border: 1px solid var(--border-subtle); border-radius: 20px;
-  font-size: 12.5px; font-weight: 500; color: var(--text-primary);
-  cursor: pointer; transition: all 0.15s;
+  font-size: 13px; font-weight: 500; color: var(--text-primary);
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rs-empty-lib-chip:hover { background: var(--bg-hover); border-color: var(--border-main); }
 .rs-empty-chip-count {
@@ -195,8 +195,8 @@
 .rs-tab {
   display: flex; align-items: center; gap: 5px; padding: 4px 10px;
   background: transparent; border: 1px solid transparent;
-  border-radius: 5px; font-size: 12.5px; font-weight: 500;
-  color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+  border-radius: 5px; font-size: 13px; font-weight: 500;
+  color: var(--text-secondary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rs-tab:hover { color: var(--text-primary); background: var(--bg-hover); }
 .rs-tab.active { color: var(--accent-primary); background: var(--accent-primary-dim); border-color: var(--accent-primary); }
@@ -219,8 +219,8 @@
 .rs-status-pills::-webkit-scrollbar { display: none; }
 .rs-status-pill, .rs-type-pill {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 9px; border-radius: 20px; font-size: 11.5px; font-weight: 500;
-  white-space: nowrap; cursor: pointer; transition: all 0.12s;
+  padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  white-space: nowrap; cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
   background: transparent; border: 1px solid var(--border-subtle);
   color: var(--text-secondary); flex-shrink: 0;
 }
@@ -233,7 +233,7 @@
 }
 .rs-type-pill .material-symbols-outlined { font-size: 13px; }
 .rs-type-pill--clear { padding: 2px 6px; }
-.rs-type-pill--clear:hover { background: color-mix(in srgb, #ef4444 12%, transparent); border-color: #ef4444; color: #ef4444; }
+.rs-type-pill--clear:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); border-color: var(--accent-red); color: var(--accent-red); }
 .rs-pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .rs-tabs-right-divider { width: 1px; height: 14px; background: var(--border-subtle); margin: 0 2px; flex-shrink: 0; }
 
@@ -241,7 +241,7 @@
 .rs-type-select {
   height: 22px; padding: 0 22px 0 7px; border-radius: 12px;
   border: 1px solid var(--border-subtle); background: var(--bg-panel);
-  color: var(--text-secondary); font-size: 11.5px; font-weight: 500;
+  color: var(--text-secondary); font-size: 12px; font-weight: 500;
   outline: none; cursor: pointer; appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 7px center;
@@ -264,11 +264,11 @@
 .rs-table-head {
   display: flex; align-items: center; height: 34px;
   background: var(--bg-panel); border-bottom: 1px solid var(--border-main);
-  position: sticky; top: 0; z-index: 10; flex-shrink: 0;
+  position: sticky; top: 0; z-index: var(--z-floating); flex-shrink: 0;
 }
 .rs-th {
   display: flex; align-items: center; padding: 0 14px;
-  font-size: 10.5px; font-weight: 600; color: var(--text-tertiary);
+  font-size: 11px; font-weight: 600; color: var(--text-tertiary);
   text-transform: uppercase; letter-spacing: 0.04em;
   border-right: 1px solid var(--border-subtle);
 }
@@ -303,7 +303,7 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .rs-src-desc {
-  font-size: 10.5px; color: var(--text-tertiary);
+  font-size: 11px; color: var(--text-tertiary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .rs-src-tags { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -314,7 +314,7 @@
   letter-spacing: 0.4px; border: 1px solid; white-space: nowrap;
 }
 
-.rs-status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-secondary); }
+.rs-status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
 .rs-status-dot   { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
 .rs-meta-text { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -324,7 +324,7 @@
   display: none;
   align-items: center;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-tertiary);
 }
 .rs-src-mobile-sep { opacity: 0.4; }
@@ -332,10 +332,10 @@
 .rs-row-btn {
   width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 5px;
-  color: var(--text-tertiary); cursor: pointer; transition: all 0.15s;
+  color: var(--text-tertiary); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rs-row-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-.rs-row-btn--danger:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.rs-row-btn--danger:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .rs-row-btn .material-symbols-outlined { font-size: 16px; }
 
 .rs-tag {
@@ -354,10 +354,10 @@
 .rs-summary-hd { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
 .rs-summary-icon { font-size: 18px; color: var(--accent-primary); flex-shrink: 0; margin-top: 1px; }
 .rs-summary-info { flex: 1; min-width: 0; }
-.rs-summary-title { display: block; font-size: 13.5px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
-.rs-summary-meta  { font-size: 10.5px; color: var(--text-tertiary); }
+.rs-summary-title { display: block; font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.rs-summary-meta  { font-size: 11px; color: var(--text-tertiary); }
 .rs-summary-date  { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
-.rs-summary-content { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 8px; }
+.rs-summary-content { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 8px; }
 .rs-summary-tags { display: flex; gap: 4px; flex-wrap: wrap; }
 
 /* ── Source Detail Panel (rsd-*) ── */
@@ -386,9 +386,9 @@
   width: 30px; height: 30px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 6px;
-  color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
+  color: var(--text-tertiary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.rsd-close-btn:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.rsd-close-btn:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .rsd-close-btn .material-symbols-outlined { font-size: 18px; }
 
 .rsd-body { flex: 1 1 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
@@ -406,7 +406,7 @@
 .rsd-input {
   width: 100%; height: 32px; padding: 0 8px; box-sizing: border-box;
   background: var(--bg-app); border: 1px solid var(--border-subtle);
-  border-radius: 5px; font-size: 12.5px; color: var(--text-primary);
+  border-radius: 5px; font-size: 13px; color: var(--text-primary);
   outline: none; transition: border-color 0.15s; font-family: inherit;
 }
 .rsd-input:focus { border-color: var(--accent-primary); }
@@ -414,7 +414,7 @@
 .rsd-desc {
   width: 100%; min-height: 52px; padding: 6px 8px; box-sizing: border-box;
   background: var(--bg-app); border: 1px solid var(--border-subtle);
-  border-radius: 5px; font-size: 12.5px; color: var(--text-primary);
+  border-radius: 5px; font-size: 13px; color: var(--text-primary);
   outline: none; transition: border-color 0.15s; resize: vertical;
   font-family: inherit; line-height: 1.4;
 }
@@ -427,12 +427,12 @@
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-hover); border: 1px solid var(--border-subtle);
   border-radius: 5px; color: var(--text-tertiary); text-decoration: none;
-  transition: all 0.12s;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rsd-url-open:hover { background: var(--accent-primary-dim); color: var(--accent-primary); border-color: var(--accent-primary); }
 .rsd-url-open .material-symbols-outlined { font-size: 15px; }
 .rsd-unsaved-badge {
-  font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
+  font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
   background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
   color: var(--accent-primary); text-transform: uppercase; letter-spacing: 0.04em;
 }
@@ -443,7 +443,7 @@
   padding: 5px 12px; border-radius: 5px;
   border: 1px solid var(--border-subtle);
   background: transparent; font-size: 12px; font-weight: 500;
-  color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+  color: var(--text-secondary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rsd-status-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rsd-status-btn.active {
@@ -472,7 +472,7 @@
 .rsd-ai-result {
   padding: 10px; background: var(--bg-hover);
   border: 1px solid var(--border-subtle); border-radius: 6px;
-  font-size: 12.5px; color: var(--text-secondary); line-height: 1.6;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
   white-space: pre-wrap;
 }
 
@@ -483,17 +483,17 @@
 }
 .rsd-del-btn {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 12px; background: color-mix(in srgb, #ef4444 10%, transparent);
-  color: #ef4444; border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
-  border-radius: 6px; font-size: 12.5px; font-weight: 600;
-  cursor: pointer; transition: all 0.15s;
+  padding: 7px 12px; background: color-mix(in srgb, var(--accent-red) 10%, transparent);
+  color: var(--accent-red); border: 1px solid color-mix(in srgb, var(--accent-red) 30%, transparent);
+  border-radius: 6px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
-.rsd-del-btn:hover { background: color-mix(in srgb, #ef4444 18%, transparent); }
+.rsd-del-btn:hover { background: color-mix(in srgb, var(--accent-red) 18%, transparent); }
 .rsd-del-btn .material-symbols-outlined { font-size: 15px; }
 .rsd-save-btn {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 7px 14px; background: var(--accent-primary); color: var(--accent-primary-text);
-  border: none; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+  border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
   cursor: pointer; transition: opacity 0.15s;
 }
 .rsd-save-btn:hover { opacity: 0.88; }
@@ -523,9 +523,9 @@
 .rsa-close-btn {
   width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 6px;
-  color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
+  color: var(--text-tertiary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.rsa-close-btn:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.rsa-close-btn:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .rsa-close-btn .material-symbols-outlined { font-size: 18px; }
 
 /* Two-pane body */
@@ -540,7 +540,7 @@
 }
 .rsa-sidebar-header {
   padding: 6px 8px 4px;
-  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.06em; color: var(--text-tertiary);
 }
 .rsa-type-item {
@@ -548,14 +548,14 @@
   width: 100%; padding: 6px 8px; margin-bottom: 1px;
   background: transparent; border: none; border-radius: 6px;
   cursor: pointer; text-align: left; color: var(--text-secondary);
-  font-size: 12px; font-weight: 500; transition: all 0.12s;
+  font-size: 12px; font-weight: 500; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rsa-type-item:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rsa-type-item--active { background: var(--bg-hover); color: var(--text-primary); font-weight: 600; }
 .rsa-type-icon-wrap {
   width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--border-subtle); transition: all 0.12s;
+  border: 1px solid var(--border-subtle); transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rsa-type-icon-wrap .material-symbols-outlined { font-size: 14px; }
 .rsa-type-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -629,7 +629,7 @@
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 10px; border-radius: 5px; font-size: 12px; font-weight: 500;
   background: var(--accent-primary-dim); border: 1px solid var(--accent-primary);
-  color: var(--accent-primary); cursor: pointer; transition: all 0.12s;
+  color: var(--accent-primary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rsa-ai-gen-btn:hover:not(:disabled) { background: var(--accent-primary); color: var(--accent-primary-text); }
 .rsa-ai-gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -639,8 +639,8 @@
 .rsa-source-sel {
   display: flex; align-items: center; gap: 8px; padding: 6px 8px;
   background: transparent; border: 1px solid var(--border-subtle);
-  border-radius: 6px; cursor: pointer; font-size: 12.5px; color: var(--text-secondary);
-  transition: all 0.12s; text-align: left; width: 100%;
+  border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-secondary);
+  transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s; text-align: left; width: 100%;
 }
 .rsa-source-sel:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rsa-source-sel.active {
@@ -668,7 +668,7 @@
 .rsa-cancel-btn {
   padding: 7px 14px; background: transparent; border: 1px solid var(--border-subtle);
   border-radius: 6px; font-size: 13px; color: var(--text-secondary);
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rsa-cancel-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rsa-create-btn {
@@ -750,7 +750,7 @@
   border-radius: 14px;
   padding: 60px 24px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
   color: var(--text-tertiary);
 }
 .rs-files-drop-zone:hover,
@@ -787,7 +787,7 @@
   background: color-mix(in srgb, var(--accent-primary) 8%, var(--bg-app));
   border: 2px dashed var(--accent-primary);
   border-radius: 10px;
-  z-index: 10;
+  z-index: var(--z-floating);
   font-size: 16px;
   font-weight: 600;
   color: var(--accent-primary);
@@ -853,7 +853,7 @@
 }
 .rs-file-meta {
   display: block;
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-tertiary);
   margin-top: 2px;
 }
@@ -875,10 +875,10 @@
   background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: all 0.1s;
+  transition: background 0.1s, color 0.1s, border-color 0.1s, opacity 0.1s;
 }
 .rs-file-action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
-.rs-file-action-btn--danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+.rs-file-action-btn--danger:hover { background: var(--accent-red)1a; color: var(--accent-red); }
 .rs-file-action-btn .material-symbols-outlined { font-size: 16px; }
 
 /* File search empty state */
@@ -920,7 +920,7 @@
 .rs-th-sort {
   display: flex; align-items: center; gap: 3px;
   background: none; border: none; cursor: pointer;
-  font-size: 10.5px; font-weight: 600; color: var(--text-tertiary);
+  font-size: 11px; font-weight: 600; color: var(--text-tertiary);
   text-transform: uppercase; letter-spacing: 0.04em;
   padding: 0; white-space: nowrap;
 }
@@ -933,8 +933,8 @@
   display: inline-flex; align-items: center; gap: 5px;
   background: transparent; border: 1px solid transparent;
   border-radius: 20px; padding: 3px 8px;
-  font-size: 11.5px; color: var(--text-secondary);
-  cursor: pointer; transition: all 0.12s;
+  font-size: 12px; color: var(--text-secondary);
+  cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rs-status-cycle-btn:hover {
   background: var(--bg-hover);
@@ -960,13 +960,13 @@
   display: inline-flex; align-items: center; gap: 4px;
   height: 26px; padding: 0 9px;
   background: var(--bg-panel); border: 1px solid var(--border-subtle);
-  border-radius: 5px; font-size: 11.5px; font-weight: 500;
-  color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+  border-radius: 5px; font-size: 12px; font-weight: 500;
+  color: var(--text-secondary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
   white-space: nowrap;
 }
 .rs-bulk-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rs-bulk-btn .material-symbols-outlined { font-size: 14px; }
-.rs-bulk-btn--danger:hover { background: color-mix(in srgb,#ef4444 10%,transparent); color:#ef4444; border-color:#ef444440; }
+.rs-bulk-btn--danger:hover { background: color-mix(in srgb,var(--accent-red) 10%,transparent); color:var(--accent-red); border-color:var(--accent-red)40; }
 .rs-bulk-btn--clear { padding: 0 6px; }
 .rs-bulk-sep { width: 1px; height: 16px; background: var(--border-subtle); margin: 0 2px; }
 
@@ -996,7 +996,7 @@
   display: inline-flex; align-items: center; gap: 5px;
   background: var(--bg-hover); border: 1px solid var(--border-subtle);
   border-radius: 6px; font-size: 12px; font-weight: 500;
-  color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+  color: var(--text-secondary); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
   white-space: nowrap;
 }
 .rsa-fetch-btn:hover:not(:disabled) { background: var(--accent-primary-dim); border-color: var(--accent-primary); color: var(--accent-primary); }
@@ -1011,7 +1011,7 @@
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-hover); border: 1px solid var(--border-subtle);
   border-radius: 6px; color: var(--text-secondary); cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rsa-suggest-btn:hover:not(:disabled) { background: var(--accent-primary-dim); border-color: var(--accent-primary); color: var(--accent-primary); }
 .rsa-suggest-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -1025,8 +1025,8 @@
   background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
   color: var(--accent-primary);
   border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
-  border-radius: 6px; font-size: 12.5px; font-weight: 600;
-  cursor: pointer; transition: all 0.15s;
+  border-radius: 6px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rsd-ai-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--accent-primary) 18%, transparent); }
 .rsd-ai-btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -1039,11 +1039,11 @@
 .rsd-link-add-btn {
   width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 4px;
-  color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
+  color: var(--text-tertiary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rsd-link-add-btn:hover { background: var(--bg-hover); color: var(--accent-primary); }
 .rsd-link-add-btn .material-symbols-outlined { font-size: 16px; }
-.rsd-linked-empty { font-size: 11.5px; color: var(--text-tertiary); font-style: italic; }
+.rsd-linked-empty { font-size: 12px; color: var(--text-tertiary); font-style: italic; }
 .rsd-linked-list { display: flex; flex-direction: column; gap: 4px; }
 .rsd-linked-item {
   display: flex; align-items: center; gap: 7px;
@@ -1056,9 +1056,9 @@
   width: 20px; height: 20px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 4px;
-  color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
+  color: var(--text-tertiary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.rsd-linked-unlink:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+.rsd-linked-unlink:hover { color: var(--accent-red); background: var(--accent-red)1a; }
 .rsd-linked-unlink .material-symbols-outlined { font-size: 14px; }
 .rsd-task-picker {
   display: flex; flex-direction: column; gap: 4px;
@@ -1078,11 +1078,11 @@
   padding: 5px 8px; background: transparent; border: none;
   border-radius: 5px; text-align: left; width: 100%;
   font-size: 12px; color: var(--text-secondary); cursor: pointer;
-  transition: all 0.1s;
+  transition: background 0.1s, color 0.1s, border-color 0.1s, opacity 0.1s;
 }
 .rsd-task-opt:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rsd-task-opt .material-symbols-outlined { font-size: 14px; color: var(--text-tertiary); flex-shrink: 0; }
-.rsd-task-empty { font-size: 11.5px; color: var(--text-tertiary); text-align: center; padding: 8px 0; }
+.rsd-task-empty { font-size: 12px; color: var(--text-tertiary); text-align: center; padding: 8px 0; }
 
 /* ── All Sources view ── */
 .rs-sb-section--top { padding: 4px 6px 2px; flex-shrink: 0; }
@@ -1097,16 +1097,16 @@
 /* Library badge on source rows (in all-sources view) */
 .rs-src-lib {
   display: flex; align-items: center; gap: 4px;
-  font-size: 10.5px; color: var(--text-tertiary);
+  font-size: 11px; color: var(--text-tertiary);
 }
 .rs-src-lib .rs-lib-dot { width: 6px; height: 6px; }
-.rs-src-lib--none { font-size: 10.5px; color: var(--text-tertiary); font-style: italic; opacity: 0.6; }
+.rs-src-lib--none { font-size: 11px; color: var(--text-tertiary); font-style: italic; opacity: 0.6; }
 
 /* Library select in source detail */
 .rsd-collection-select {
   height: 30px; padding: 0 10px; width: 100%; box-sizing: border-box;
   background: var(--bg-app); border: 1px solid var(--border-subtle);
-  border-radius: 6px; font-size: 12.5px; color: var(--text-primary);
+  border-radius: 6px; font-size: 13px; color: var(--text-primary);
   outline: none; cursor: pointer; appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 9px center;
@@ -1119,7 +1119,7 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 10px center;
 }
-.rsa-label-opt { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.7; font-size: 9px; }
+.rsa-label-opt { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.7; font-size: 11px; }
 
 /* ── Collection bar (above tabs) ── */
 .rsa-collection-bar {
@@ -1141,7 +1141,7 @@
   border-radius: 6px; border: 1px solid var(--border);
   background: var(--bg-secondary); color: var(--text-secondary);
   font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rsa-new-col-btn:hover { background: var(--accent-primary-dim); border-color: var(--accent-primary); color: var(--accent-primary); }
 .rsa-new-col-btn .material-symbols-outlined { font-size: 15px; }
@@ -1163,7 +1163,7 @@
   display: flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 6px;
   border: none; background: transparent; color: var(--text-tertiary);
-  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; flex-shrink: 0;
 }
 .rsa-icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .rsa-icon-btn .material-symbols-outlined { font-size: 16px; }
@@ -1177,7 +1177,7 @@
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
   padding: 10px 16px; border: none; background: transparent;
   font-size: 13px; font-weight: 500; color: var(--text-secondary);
-  cursor: pointer; transition: all 0.12s; border-bottom: 2px solid transparent;
+  cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s; border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
 .rsa-add-tab:hover { color: var(--text-primary); background: var(--bg-hover); }
@@ -1196,17 +1196,17 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; padding: 28px 24px; flex: 1;
 }
-.rsa-audio-hint { font-size: 12.5px; color: var(--text-tertiary); margin: 0; }
+.rsa-audio-hint { font-size: 13px; color: var(--text-tertiary); margin: 0; }
 .rsa-mic-btn {
   width: 72px; height: 72px; border-radius: 50%;
   background: var(--accent-primary-dim); border: 2px solid var(--accent-primary);
   color: var(--accent-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rsa-mic-btn:hover { background: var(--accent-primary); color: var(--accent-primary-text); transform: scale(1.06); }
 .rsa-mic-btn .material-symbols-outlined { font-size: 32px; }
 .rsa-audio-divider {
-  display: flex; align-items: center; width: 100%; gap: 10px; color: var(--text-tertiary); font-size: 11.5px;
+  display: flex; align-items: center; width: 100%; gap: 10px; color: var(--text-tertiary); font-size: 12px;
 }
 .rsa-audio-divider::before, .rsa-audio-divider::after {
   content: ''; flex: 1; height: 1px; background: var(--border-subtle);
@@ -1214,7 +1214,7 @@
 .rsa-audio-upload-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
   border: 1px solid var(--border-subtle); border-radius: 7px; background: transparent;
-  font-size: 12.5px; color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+  font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .rsa-audio-upload-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-highlight); }
 .rsa-audio-upload-btn .material-symbols-outlined { font-size: 17px; }
@@ -1224,7 +1224,7 @@
   border: 1px solid var(--border-subtle);
 }
 .rsa-recording-dot {
-  width: 10px; height: 10px; border-radius: 50%; background: #ef4444;
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent-red);
   animation: rec-pulse 1s ease-in-out infinite;
 }
 @keyframes rec-pulse {
@@ -1234,10 +1234,10 @@
 .rsa-recording-time { font-size: 22px; font-weight: 600; letter-spacing: 2px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .rsa-stop-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px;
-  border-radius: 7px; background: #ef444420; border: 1px solid #ef4444;
-  color: #ef4444; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.12s;
+  border-radius: 7px; background: var(--accent-red)20; border: 1px solid var(--accent-red);
+  color: var(--accent-red); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.rsa-stop-btn:hover { background: #ef4444; color: #fff; }
+.rsa-stop-btn:hover { background: var(--accent-red); color: #fff; }
 .rsa-stop-btn .material-symbols-outlined { font-size: 18px; }
 .rsa-audio-preview {
   display: flex; flex-direction: column; gap: 10px; align-items: stretch;
@@ -1246,14 +1246,14 @@
 .rsa-audio-discard-btn {
   display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
   padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-subtle);
-  background: transparent; font-size: 12px; color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
+  background: transparent; font-size: 12px; color: var(--text-tertiary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.rsa-audio-discard-btn:hover { color: #ef4444; border-color: #ef4444; background: #ef444410; }
+.rsa-audio-discard-btn:hover { color: var(--accent-red); border-color: var(--accent-red); background: var(--accent-red)10; }
 .rsa-audio-discard-btn .material-symbols-outlined { font-size: 15px; }
 .rsa-audio-error {
   display: flex; align-items: center; gap: 8px; padding: 10px 14px;
-  background: #ef444412; border: 1px solid #ef444440; border-radius: 8px;
-  font-size: 12.5px; color: #ef4444;
+  background: var(--accent-red)12; border: 1px solid var(--accent-red)40; border-radius: 8px;
+  font-size: 13px; color: var(--accent-red);
 }
 .rsa-audio-error .material-symbols-outlined { font-size: 18px; flex-shrink: 0; }
 
@@ -1265,7 +1265,7 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 48px 24px; text-align: center;
   border: 2px dashed var(--border-highlight);
-  border-radius: 14px; transition: all 0.15s; cursor: default;
+  border-radius: 14px; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; cursor: default;
   color: var(--text-tertiary); width: 100%;
 }
 .rs-intake-zone.dragging {
@@ -1279,7 +1279,7 @@
 }
 .rs-intake-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 8px; }
 .rs-intake-sub {
-  font-size: 12.5px; color: var(--text-tertiary);
+  font-size: 13px; color: var(--text-tertiary);
   margin: 0 auto 24px; max-width: 360px; line-height: 1.65;
 }
 .rs-intake-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -1288,7 +1288,7 @@
   padding: 8px 16px; background: var(--bg-panel);
   border: 1px solid var(--border-main); border-radius: 7px;
   font-size: 13px; font-weight: 500; color: var(--text-secondary);
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .rs-intake-btn:hover {
   background: var(--accent-primary-dim); border-color: var(--accent-primary);

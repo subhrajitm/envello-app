@@ -13,6 +13,8 @@ export interface Notification {
   actionLabel?: string;
   actionCallback?: () => void;
   icon?: string;
+  /** Route to navigate to when the notification is clicked (survives localStorage). */
+  link?: string;
 }
 
 @Injectable({

@@ -507,6 +507,7 @@ export class SqliteService {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT,
+        phone TEXT,
         company TEXT,
         role TEXT,
         avatar TEXT,
@@ -1300,6 +1301,7 @@ export class SqliteService {
     // ─── People ────────────────────────────────────────────────────────────────
     private async reloadPeople() {
         const db = await this.getDb();
+        await db.execute('ALTER TABLE people ADD COLUMN phone TEXT').catch(() => {});
         const rows = await db.select<any[]>('SELECT * FROM people');
         this.peopleSubject.next(rows.map(r => this.parseRow<any>(r, ['tags'])));
     }
@@ -1310,13 +1312,13 @@ export class SqliteService {
         const exists = await db.select<any[]>('SELECT id FROM people WHERE id = $1', [item.id]);
         if (exists.length > 0) {
             await db.execute(
-                `UPDATE people SET name=$1, email=$2, company=$3, role=$4, avatar=$5, tags=$6, notes=$7, lastInteraction=$8, deleted_at=$9 WHERE id=$10`,
-                [j.name, j.email ?? null, j.company ?? null, j.role ?? null, j.avatar ?? null, j.tags, j.notes ?? null, j.lastInteraction ?? null, j.deleted_at ?? null, j.id]
+                `UPDATE people SET name=$1, email=$2, phone=$3, company=$4, role=$5, avatar=$6, tags=$7, notes=$8, lastInteraction=$9, deleted_at=$10 WHERE id=$11`,
+                [j.name, j.email ?? null, j.phone ?? null, j.company ?? null, j.role ?? null, j.avatar ?? null, j.tags, j.notes ?? null, j.lastInteraction ?? null, j.deleted_at ?? null, j.id]
             );
         } else {
             await db.execute(
-                `INSERT INTO people (id, name, email, company, role, avatar, tags, notes, lastInteraction, createdAt, deleted_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-                [j.id, j.name, j.email ?? null, j.company ?? null, j.role ?? null, j.avatar ?? null, j.tags, j.notes ?? null, j.lastInteraction ?? null, j.createdAt, j.deleted_at ?? null]
+                `INSERT INTO people (id, name, email, phone, company, role, avatar, tags, notes, lastInteraction, createdAt, deleted_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+                [j.id, j.name, j.email ?? null, j.phone ?? null, j.company ?? null, j.role ?? null, j.avatar ?? null, j.tags, j.notes ?? null, j.lastInteraction ?? null, j.createdAt, j.deleted_at ?? null]
             );
         }
         await this.reloadPeople();

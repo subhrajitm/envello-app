@@ -14,22 +14,22 @@
 
     <!-- Toolbar -->
     <div class="mt-toolbar">
-      <div class="mt-search-wrap">
-        <span class="material-symbols-outlined mt-search-icon">search</span>
-        <input type="text" class="mt-search" placeholder="Search meetings..."
+      <div class="mt-search-wrap toolbar-search-wrap">
+        <span class="material-symbols-outlined mt-search-icon toolbar-search-icon">search</span>
+        <input type="text" class="mt-search toolbar-search-input" placeholder="Search meetings…"
           [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
         @if (searchQuery()) {
-        <button class="mt-search-clear" (click)="searchQuery.set('')" title="Clear">
+        <button class="mt-search-clear toolbar-search-clear" (click)="searchQuery.set('')" title="Clear">
           <span class="material-symbols-outlined">close</span>
         </button>
         }
       </div>
       <div class="mt-toolbar-right">
-        <div class="mt-view-toggle">
-          <button class="mt-vt-btn" [class.active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')" title="Calendar">
+        <div class="mt-view-toggle view-mode-group">
+          <button class="mt-vt-btn btn-view-mode" [class.active]="viewMode() === 'calendar'" (click)="viewMode.set('calendar')" title="Calendar">
             <span class="material-symbols-outlined">calendar_month</span>
           </button>
-          <button class="mt-vt-btn" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table">
+          <button class="mt-vt-btn btn-view-mode" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table">
             <span class="material-symbols-outlined">table_rows</span>
           </button>
         </div>
@@ -40,12 +40,12 @@
           <span class="mt-sync-badge">{{ syncService.connections().length }}</span>
           }
         </button>
-        <button class="mt-ai-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+        <button class="btn-ai-toggle" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
           <span class="material-symbols-outlined">auto_awesome</span>
           <span>AI</span>
         </button>
         <div class="mt-tb-divider"></div>
-        <button class="mt-add-btn" (click)="openCreateModal()">
+        <button class="mt-add-btn btn-add-primary" (click)="openCreateModal()">
           <span class="material-symbols-outlined">add</span>
           New Meeting
         </button>
@@ -63,9 +63,7 @@
             [compact]="true"
             [icon]="searchQuery() ? 'search_off' : 'event_busy'"
             [title]="searchQuery() ? 'No results' : 'No meetings'"
-            [description]="searchQuery() ? 'Adjust your search.' : 'Schedule your first meeting.'"
-            [ctaLabel]="!searchQuery() ? '+ New Meeting' : ''"
-            (ctaClicked)="openCreateModal()">
+            [description]="searchQuery() ? 'Adjust your search.' : 'Schedule your first meeting.'">
           </env-empty-state>
         } @else {
         @for (meeting of filteredMeetings(); track meeting.id) {
@@ -120,7 +118,7 @@
           <div class="mt-item-actions" (click)="$event.stopPropagation()">
             @if (meeting.actionItems && getOpenActionItemsCount(meeting) > 0) {
             <span class="mt-items-badge">
-              <span class="material-symbols-outlined">task_alt</span>
+              <span class="material-symbols-outlined">done_all</span>
               {{ getOpenActionItemsCount(meeting) }}
             </span>
             }
@@ -897,7 +895,7 @@
               <div class="mta-action-btns">
                 @if (!item.linkedTaskId && item.status !== 'completed') {
                 <button type="button" class="mt-icon-btn" title="Convert to Task" (click)="convertToTask(item)">
-                  <span class="material-symbols-outlined">task_alt</span>
+                  <span class="material-symbols-outlined">done_all</span>
                 </button>
                 }
                 <button type="button" class="mt-icon-btn mt-icon-btn--danger" (click)="deleteActionItem(item.id)">
@@ -909,7 +907,7 @@
           </div>
           } @else {
           <div class="mta-tab-empty">
-            <span class="material-symbols-outlined">task_alt</span>
+            <span class="material-symbols-outlined">done_all</span>
             <p>No action items yet</p>
           </div>
           }
@@ -963,7 +961,7 @@
           @if (showAutopilotResult() && autopilotService.lastResult()) {
           <div class="mta-autopilot-result">
             <div class="mta-ap-header">
-              <span class="material-symbols-outlined" style="color:#a78bfa">auto_awesome</span>
+              <span class="material-symbols-outlined" style="color:var(--accent-purple)">auto_awesome</span>
               <strong>Autopilot done</strong>
               <button class="mta-ap-close" (click)="dismissAutopilot()">
                 <span class="material-symbols-outlined">close</span>
@@ -971,18 +969,18 @@
             </div>
             <div class="mta-ap-items">
               <div class="mta-ap-item">
-                <span class="material-symbols-outlined mta-ap-icon" style="color:#34d399">edit_note</span>
+                <span class="material-symbols-outlined mta-ap-icon" style="color:var(--accent-green)">edit_note</span>
                 Summary note saved to Notes
               </div>
               @if (autopilotService.lastResult()!.tasks.length > 0) {
               <div class="mta-ap-item">
-                <span class="material-symbols-outlined mta-ap-icon" style="color:#fbbf24">check_circle</span>
+                <span class="material-symbols-outlined mta-ap-icon" style="color:var(--accent-yellow)">check_circle</span>
                 {{ autopilotService.lastResult()!.tasks.length }} task{{ autopilotService.lastResult()!.tasks.length !== 1 ? 's' : '' }} added
               </div>
               }
               @if (autopilotService.lastResult()!.followUpMeeting) {
               <div class="mta-ap-item">
-                <span class="material-symbols-outlined mta-ap-icon" style="color:#60a5fa">calendar_month</span>
+                <span class="material-symbols-outlined mta-ap-icon" style="color:var(--accent-blue)">calendar_month</span>
                 Follow-up meeting scheduled
               </div>
               }

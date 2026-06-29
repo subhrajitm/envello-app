@@ -126,7 +126,7 @@ export class BinComponent {
 
   getIconForType(type: BinEntryType): string {
     switch (type) {
-      case 'task': return 'task_alt';
+      case 'task': return 'checklist';
       case 'daily-note': return 'edit_note';
       case 'write': return 'edit';
       case 'meeting': return 'groups';

@@ -4,7 +4,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 10000;
+    z-index: var(--z-system);
     background: var(--accent-primary);
     color: var(--accent-primary-text);
     display: flex;

@@ -42,6 +42,7 @@ export class SessionService implements OnDestroy {
   private router = inject(Router);
   private routerSub?: Subscription;
   private intervalId?: ReturnType<typeof setInterval>;
+  private persistTimer?: ReturnType<typeof setTimeout>;
   
   private currentPage = signal<string>('');
   private pageStartTime = signal<number>(0);
@@ -81,10 +82,11 @@ export class SessionService implements OnDestroy {
       this.onPageChange(pageName);
     });
 
-    // Update time every second while on a page
+    // Update time every 10s — granular enough for analytics, 10× less overhead than 1s.
+    // Skips work automatically when document is hidden (checked inside updateCurrentPageTime).
     this.intervalId = setInterval(() => {
-      this.updateCurrentPageTime();
-    }, 1000);
+      if (!document.hidden) this.updateCurrentPageTime();
+    }, 10_000);
 
     // Handle visibility changes (tab hidden/shown)
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
@@ -104,31 +106,28 @@ export class SessionService implements OnDestroy {
   }
 
   private cleanup(): void {
-    // Save current page time before cleanup
     this.saveCurrentPageTime();
-    
-    if (this.routerSub) {
-      this.routerSub.unsubscribe();
-    }
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
+    this.routerSub?.unsubscribe();
+    if (this.intervalId) clearInterval(this.intervalId);
+    if (this.persistTimer) clearTimeout(this.persistTimer);
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    // Flush any pending debounced write immediately on cleanup
+    this.flushPersist();
   }
 
   private handleVisibilityChange = (): void => {
     if (document.hidden) {
-      // Tab hidden - save current time
       this.saveCurrentPageTime();
+      this.flushPersist(); // Write immediately when going to background
     } else {
-      // Tab visible again - reset start time
       this.pageStartTime.set(Date.now());
     }
   };
 
   private handleBeforeUnload = (): void => {
     this.saveCurrentPageTime();
+    this.flushPersist(); // Must write synchronously on unload
   };
 
   private onPageChange(newPage: string): void {
@@ -162,17 +161,13 @@ export class SessionService implements OnDestroy {
   }
 
   private updateCurrentPageTime(): void {
-    if (document.hidden) return;
-    
     const page = this.currentPage();
     const startTime = this.pageStartTime();
     if (!page || !startTime) return;
-    
+
     const elapsed = Date.now() - startTime;
-    
-    // Only update if at least 1 second has passed
-    if (elapsed >= 1000) {
-      this.addTimeToPage(page, 1000);
+    if (elapsed >= 10_000) {
+      this.addTimeToPage(page, 10_000);
       this.pageStartTime.set(Date.now());
     }
   }
@@ -258,7 +253,17 @@ export class SessionService implements OnDestroy {
     };
   }
 
+  // Debounce localStorage writes — at most one write every 30s instead of every tick.
   private persistSessionData(): void {
+    if (this.persistTimer) return;
+    this.persistTimer = setTimeout(() => {
+      this.flushPersist();
+    }, 30_000);
+  }
+
+  private flushPersist(): void {
+    clearTimeout(this.persistTimer);
+    this.persistTimer = undefined;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.sessionData()));
     } catch (e) {

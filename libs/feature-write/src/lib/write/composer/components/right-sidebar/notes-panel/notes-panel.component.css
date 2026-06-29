@@ -27,7 +27,7 @@
 .note-edit-title:focus,
 .note-edit-body:focus {
   outline: none;
-  border-color: var(--accent, #6366f1);
+  border-color: var(--accent, var(--accent-primary));
 }
 .note-edit-actions {
   display: flex;
@@ -48,9 +48,9 @@
   color: var(--text-secondary, #9ca3af);
 }
 .note-edit-save {
-  background: var(--accent, #6366f1);
+  background: var(--accent, var(--accent-primary));
   color: #fff;
-  border-color: var(--accent, #6366f1);
+  border-color: var(--accent, var(--accent-primary));
 }
 .note-edit-save:disabled { opacity: 0.4; cursor: not-allowed; }
 

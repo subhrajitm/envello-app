@@ -151,8 +151,8 @@
 
 /* Sidebar Left */
 .ne-sidebar-left {
-    width: 240px;
-    min-width: 240px;
+    width: 260px;
+    min-width: 260px;
     background: var(--bg-app);
     border-right: 1px solid var(--border-subtle);
     display: flex;
@@ -416,7 +416,7 @@
 
 .ne-acc-title {
     flex: 1;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1.5px;
     color: var(--text-tertiary);
@@ -496,7 +496,7 @@
 .ne-chap-header {
     padding: 0 10px;
     margin-bottom: 0;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.06em;
     color: var(--text-tertiary);
@@ -571,7 +571,7 @@
     border: 1px solid var(--border-subtle);
     border-radius: 6px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--border-highlight);
-    z-index: 1000;
+    z-index: var(--z-modal);
     overflow: hidden;
     min-width: 180px;
     padding: 4px;
@@ -737,7 +737,7 @@
 }
 
 .ne-chap-meta {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     opacity: 0.8;
 }
@@ -834,7 +834,7 @@
 
 .stat-label {
     color: var(--text-tertiary);
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.5px;
 }
 
@@ -855,7 +855,7 @@
     min-height: 0;
     height: 100%;
     position: relative;
-    z-index: 1;
+    z-index: var(--z-base);
     padding-right: 0;
     margin-right: 0;
     /* Prevent layout shift during tab switching */
@@ -904,7 +904,7 @@
     background: var(--bg-subtle);
     height: 44px;
     position: relative;
-    z-index: 1;
+    z-index: var(--z-base);
     flex-shrink: 0;
     box-sizing: border-box;
 }
@@ -967,7 +967,7 @@
     font-weight: 500;
     border-top: 2px solid var(--accent-primary);
     position: relative;
-    z-index: 2;
+    z-index: var(--z-base);
 }
 
 .tab-label {
@@ -1049,7 +1049,7 @@
     padding: 0 12px;
     flex-shrink: 0;
     position: relative;
-    z-index: 2;
+    z-index: var(--z-base);
     background: var(--bg-subtle);
     border-left: 1px solid var(--border-subtle);
 }
@@ -1170,7 +1170,7 @@
     gap: 0;
     background: var(--bg-panel);
     position: relative;
-    z-index: 0;
+    z-index: var(--z-base);
     flex-shrink: 0;
     box-sizing: border-box;
 }
@@ -1303,7 +1303,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    z-index: 10;
+    z-index: var(--z-floating);
 }
 
 .ms-action-btn {
@@ -1343,7 +1343,7 @@
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     min-width: 120px;
-    z-index: 100;
+    z-index: var(--z-dropdown);
 }
 
 .ms-color-swatch {
@@ -1427,30 +1427,30 @@
 .status-badge {
     padding: 2px 8px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .status-badge.status-draft {
-    background: #3b82f6;
+    background: var(--accent-blue);
     color: #fff;
 }
 
 .status-badge.status-editing {
-    background: color-mix(in srgb, #f59e0b 18%, transparent);
-    color: #f59e0b;
+    background: color-mix(in srgb, var(--accent-yellow) 18%, transparent);
+    color: var(--accent-yellow);
 }
 
 .status-badge.status-done {
-    background: color-mix(in srgb, #16a34a 18%, transparent);
-    color: #16a34a;
+    background: color-mix(in srgb, var(--accent-green) 18%, transparent);
+    color: var(--accent-green);
 }
 
 .status-badge.status-empty {
-    background: color-mix(in srgb, #6b7280 14%, transparent);
-    color: #6b7280;
+    background: color-mix(in srgb, var(--text-secondary) 14%, transparent);
+    color: var(--text-secondary);
 }
 
 .save-indicator {
@@ -1654,7 +1654,7 @@
     bottom: 0;
     top: auto;
     left: auto;
-    z-index: 1000;
+    z-index: var(--z-modal);
 }
 
 .ne-tab-placeholder {
@@ -1907,7 +1907,7 @@
 /* Removed old context box - replaced with chat interface */
 
 .ctx-header {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     display: flex;
@@ -2100,7 +2100,7 @@
 }
 
 .message-time {
-    font-size: 8px;
+    font-size: 10px;
     color: var(--text-disabled);
     margin-top: 3px;
     padding: 0 2px;
@@ -2170,10 +2170,10 @@
     align-items: center;
     gap: 6px;
     padding: 8px 10px;
-    background: rgba(255, 0, 0, 0.08);
-    border: 1px solid rgba(255, 0, 0, 0.15);
+    background: var(--accent-red)14;
+    border: 1px solid var(--accent-red)26;
     border-radius: 5px;
-    color: #ff4444;
+    color: var(--accent-red);
     font-size: 10px;
     margin: 6px 0;
     font-weight: 500;
@@ -2199,7 +2199,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     cursor: pointer;
     padding: 3px 6px;
@@ -2298,7 +2298,7 @@
     padding: 8px 10px;
     max-height: 150px;
     overflow-y: auto;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-secondary);
 }
 
@@ -2308,7 +2308,7 @@
     align-items: center;
     margin-bottom: 6px;
     font-weight: 600;
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .context-preview .ctx-header button {
@@ -2335,7 +2335,7 @@
 .context-content {
     white-space: pre-wrap;
     line-height: 1.5;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
     opacity: 0.8;
 }
 
@@ -2345,7 +2345,7 @@
 }
 
 .sugg-header {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     display: flex;
@@ -2460,7 +2460,7 @@
 
 .sc-hint {
     margin-left: auto;
-    font-size: 9px;
+    font-size: 11px;
     background: var(--bg-hover);
     padding: 2px 4px;
     border-radius: 2px;
@@ -2654,7 +2654,7 @@
 }
 
 .list-delete:hover {
-    color: var(--accent-red, #ff4444);
+    color: var(--accent-red, var(--accent-red));
     background: var(--bg-hover);
 }
 
@@ -2731,7 +2731,7 @@
 }
 
 .note-time {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
 }
 
@@ -2745,7 +2745,7 @@
 }
 
 .note-delete:hover {
-    color: var(--accent-red, #ff4444);
+    color: var(--accent-red, var(--accent-red));
     background: var(--bg-hover);
 }
 
@@ -2765,7 +2765,7 @@
 
 .meta-section label {
     display: block;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     margin-bottom: 6px;
@@ -2800,7 +2800,7 @@
 }
 
 .stat-label-mini {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-tertiary);
     text-transform: uppercase;
@@ -2939,7 +2939,7 @@
 .version-badge {
     padding: 2px 8px;
     border-radius: 3px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -3067,7 +3067,7 @@
 
 .mention-badge.character-mention {
     background: var(--accent-blue, #60a5fa);
-    color: #000;
+    color: var(--accent-primary-text);
 }
 
 .mention-badge.location-mention {
@@ -3318,7 +3318,7 @@
 
 .chapter-delete:hover,
 .group-delete:hover {
-    color: var(--accent-red, #ff4444);
+    color: var(--accent-red, var(--accent-red));
     background: var(--bg-hover);
 }
 
@@ -3352,19 +3352,19 @@
 }
 
 .status-dot-empty {
-    background: #6b7280;
+    background: var(--text-secondary);
 }
 
 .status-dot-draft {
-    background: #3b82f6;
+    background: var(--accent-blue);
 }
 
 .status-dot-editing {
-    background: #f59e0b;
+    background: var(--accent-yellow);
 }
 
 .status-dot-done {
-    background: #16a34a;
+    background: var(--accent-green);
 }
 
 /* Inline Rename Input */
@@ -3421,7 +3421,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.35);
-    z-index: 10000;
+    z-index: var(--z-system);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3609,7 +3609,7 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -3664,7 +3664,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -3694,7 +3694,7 @@
 }
 
 .ne-ent-prop label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -3796,7 +3796,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--z-modal);
     backdrop-filter: blur(2px);
 }
 
@@ -3862,14 +3862,14 @@
 }
 
 .ne-modal-btn.delete {
-    background: var(--accent-red, #ff4444);
+    background: var(--accent-red, var(--accent-red));
     color: #fff;
     box-shadow: 0 2px 4px rgba(255, 68, 68, 0.2);
 }
 
 .ne-modal-btn.delete:hover {
-    background: #ff2222;
-    box-shadow: 0 4px 8px rgba(255, 68, 68, 0.3);
+    background: var(--accent-red);
+    box-shadow: 0 4px 8px var(--accent-red)4d;
 }
 
 .ne-modal-input-wrapper {
@@ -4226,7 +4226,7 @@
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    z-index: 1000;
+    z-index: var(--z-modal);
     animation: dropdownFadeIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(12px);
 }
@@ -4347,7 +4347,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
+    z-index: var(--z-notification);
     background: var(--bg-app);
 }
 
@@ -4364,7 +4364,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
+    z-index: var(--z-notification);
     background: var(--bg-app);
 }
 
@@ -4666,7 +4666,7 @@
 /* ── Modal inline error ── */
 .ne-modal-error {
     font-size: 11px;
-    color: #ef4444;
+    color: var(--accent-red);
     margin-top: 6px;
 }
 
@@ -5101,7 +5101,7 @@
 .sidebar-toggle.right {
     left: -20px !important;
     border-radius: 4px 0 0 4px !important;
-    z-index: 101 !important;
+    z-index: calc(var(--z-dropdown) + 1) !important;
 }
 
 /* Ensure right sidebar toggle is visible when collapsed */
@@ -5267,7 +5267,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     transition: all 0.2s;
 }
 
@@ -5279,7 +5279,7 @@
 .sidebar-toggle.right {
     left: -24px;
     border-radius: 4px 0 0 4px;
-    z-index: 101; /* Higher z-index to ensure visibility */
+    z-index: calc(var(--z-dropdown) + 1); /* Higher z-index to ensure visibility */
 }
 
 /* Right sidebar toggle specific positioning */
@@ -5288,7 +5288,7 @@
     left: -24px;
     top: 50%;
     transform: translateY(-50%);
-    z-index: 101;
+    z-index: calc(var(--z-dropdown) + 1);
 }
 
 /* When right sidebar is collapsed, ensure toggle is visible */
@@ -5304,7 +5304,7 @@
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: var(--z-notification);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -5331,7 +5331,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   font-size: 11px;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .ne-focus-toast-close {
@@ -5354,7 +5354,7 @@
 }
 
 .ne-recent-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--text-tertiary);
@@ -5370,7 +5370,7 @@
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: 12px;
   padding: 4px 4px;
   border-radius: 4px;
   text-align: left;
@@ -5403,7 +5403,7 @@
   font-size: 10px;
   color: #fff;
   font-weight: 600;
-  background: #16a34a;
+  background: var(--accent-green);
   padding: 2px 7px;
   border-radius: 10px;
   letter-spacing: 0.03em;
@@ -5569,7 +5569,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9000;
+    z-index: var(--z-notification);
     padding: 20px;
 }
 
@@ -5673,7 +5673,7 @@
 }
 
 .ne-popup-req {
-    color: var(--accent-red, #ef4444);
+    color: var(--accent-red, var(--accent-red));
     margin-left: 1px;
 }
 
@@ -5877,7 +5877,7 @@
     stroke-width: 1;
 }
 
-.ne-rel-del:hover .ne-rel-del-bg { fill: color-mix(in srgb, #ef4444 14%, transparent); stroke: #ef4444; }
+.ne-rel-del:hover .ne-rel-del-bg { fill: color-mix(in srgb, var(--accent-red) 14%, transparent); stroke: var(--accent-red); }
 
 .ne-rel-del-x {
     font-size: 13px;
@@ -5889,7 +5889,7 @@
     pointer-events: none;
 }
 
-.ne-rel-del:hover .ne-rel-del-x { fill: #ef4444; }
+.ne-rel-del:hover .ne-rel-del-x { fill: var(--accent-red); }
 
 /* ── Nodes ── */
 .ne-rel-node { cursor: default; }
@@ -6011,12 +6011,12 @@
 /* ── Relationship popup error ── */
 .ne-popup-err {
     font-size: 11px;
-    color: #ef4444;
+    color: var(--accent-red);
     margin: -4px 0 4px;
     padding: 6px 10px;
-    background: color-mix(in srgb, #ef4444 8%, transparent);
+    background: color-mix(in srgb, var(--accent-red) 8%, transparent);
     border-radius: 6px;
-    border: 1px solid color-mix(in srgb, #ef4444 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-red) 20%, transparent);
 }
 
 /* ── @mention chip (inline in editor) ── */
@@ -6045,20 +6045,20 @@
 }
 
 .ne-mention[data-mention-type="location"]:hover {
-    background: color-mix(in srgb, #10b981 20%, transparent);
-    border-color: color-mix(in srgb, #10b981 45%, transparent);
+    background: color-mix(in srgb, var(--accent-green) 20%, transparent);
+    border-color: color-mix(in srgb, var(--accent-green) 45%, transparent);
 }
 
 .ne-mention[data-mention-type="location"] {
-    color: #10b981;
-    background: color-mix(in srgb, #10b981 10%, transparent);
-    border-color: color-mix(in srgb, #10b981 25%, transparent);
+    color: var(--accent-green);
+    background: color-mix(in srgb, var(--accent-green) 10%, transparent);
+    border-color: color-mix(in srgb, var(--accent-green) 25%, transparent);
 }
 
 /* ── @mention suggestion dropdown ── */
 .ne-mention-list {
     position: fixed;
-    z-index: 9999;
+    z-index: var(--z-notification);
     background: var(--bg-panel, #fff);
     border: 1px solid var(--border-subtle, #e5e7eb);
     border-radius: 10px;
@@ -6111,7 +6111,7 @@
 }
 
 .ne-mention-item-badge {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.6px;
     text-transform: uppercase;
@@ -6126,8 +6126,8 @@
 }
 
 .ne-mention-item-badge--location {
-    color: #10b981;
-    background: color-mix(in srgb, #10b981 10%, transparent);
+    color: var(--accent-green);
+    background: color-mix(in srgb, var(--accent-green) 10%, transparent);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -6225,7 +6225,7 @@
 }
 
 .ne-char-name-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--text-tertiary);
@@ -6291,7 +6291,7 @@
 
 /* ── LEFT SIDEBAR ── */
 .ne-char-sidebar {
-    width: 252px;
+    width: 260px;
     flex-shrink: 0;
     border-right: 1px solid var(--border-subtle);
     overflow-y: auto;
@@ -6303,7 +6303,7 @@
 }
 
 .ne-char-section-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -6335,7 +6335,7 @@
 .ne-char-field:last-child { border-bottom: none; }
 
 .ne-char-field label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -6382,7 +6382,7 @@
     align-items: center;
     gap: 6px;
     padding: 11px 24px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -6392,7 +6392,7 @@
     flex-shrink: 0;
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: var(--z-base);
 }
 
 .ne-char-prose-hdr .material-symbols-outlined {
@@ -6405,7 +6405,7 @@
 .ne-char-prose-tiptap .ProseMirror {
     min-height: 180px;
     padding: 18px 24px;
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 1.8;
     color: var(--text-primary);
     outline: none;
@@ -6701,7 +6701,7 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
@@ -6848,7 +6848,7 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    z-index: 200;
+    z-index: var(--z-sticky);
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
     border-radius: 10px;
@@ -6906,7 +6906,7 @@
 }
 
 .ne-loc-name-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--text-tertiary);

@@ -27,6 +27,13 @@
 @import '@fontsource/merriweather/700.css';
 @import '@fontsource/merriweather/300-italic.css';
 
+/* Plus Jakarta Sans (headings) */
+@import '@fontsource/plus-jakarta-sans/300.css';
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+
 /* Material Symbols Outlined (icon font) */
 @import 'material-symbols/outlined.css';
 
@@ -70,76 +77,88 @@
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     --font-serif: 'Georgia', 'Times New Roman', serif;
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 [data-theme="dark"] {
-    /* Midnight Dark (True Black) */
-    --bg-app: #000000;
-    --bg-panel: #0a0a0a;
-    --bg-hover: #121212;
-    --bg-active: #1a1a1a;
-    --bg-subtle: #0f0f0f;
-    --bg-element: #18181b;
+    /* Neutral Dark — pure grey ramp, no colour cast */
+    --bg-app: #0f0f0f;
+    --bg-panel: #181818;
+    --bg-hover: #212121;
+    --bg-active: #2a2a2a;
+    --bg-subtle: #131313;
+    --bg-element: #1c1c1c;
 
-    --border-subtle: #18181b;
-    --border-main: #27272a;
-    --border-highlight: #3f3f46;
+    --border-subtle: #202020;
+    --border-main: #2a2a2a;
+    --border-highlight: #3a3a3a;
 
-    --text-primary: #ffffff;
-    --text-secondary: #d4d4d8;
-    --text-tertiary: #a1a1aa;
-    --text-disabled: #71717a;
+    /* Neutral grays — clean, no purple cast on icons or secondary text */
+    --text-primary: #e8e8e8;
+    --text-secondary: #888888;
+    --text-tertiary: #505050;
+    --text-disabled: #383838;
 
-    --accent-primary: #ffd700;
-    --accent-primary-dim: rgba(255, 215, 0, 0.1);
-    --accent-primary-text: #000000;
-    --accent-blue: #60a5fa;
-    --accent-red: #f87171;
-    --accent-green: #4ade80;
-    --accent-purple: #a855f7;
-    --accent-yellow: #fcd34d;
+    /* Bird palette — full 9-stop spectrum, matte-tuned for dark surfaces */
+    --accent-gold:    #f5a200;
+    --accent-orange:  #f07000;
+    --accent-primary: #f5a623;
+    --accent-primary-dim: rgba(245, 166, 35, 0.15);
+    --accent-primary-text: #111111;
+    --accent-red:     #cc1e3c;
+    --accent-pink:    #b81e68;
+    --accent-purple:  #7818a0;
+    --accent-indigo:  #3828a8;
+    --accent-blue:    #1c58d8;
+    --accent-sky:     #1880e8;
+    --accent-green:   #3aba70;
+    --accent-yellow:  #f0c000;
+    --gradient-bird: linear-gradient(135deg, #f5a200 0%, #f07000 18%, #e8622a 33%, #cc1e3c 47%, #b81e68 60%, #7818a0 73%, #3828a8 84%, #1c58d8 92%, #1880e8 100%);
 
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     --font-serif: 'Georgia', 'Times New Roman', serif;
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 [data-theme="enterprise-dark"] {
-    /* Enterprise Dark Theme - Softer, Zinc-based */
-    --bg-app: #18181b;
-    /* Zinc 900 */
-    --bg-panel: #27272a;
-    /* Zinc 800 */
-    --bg-hover: #3f3f46;
-    /* Zinc 700 */
-    --bg-active: #52525b;
-    /* Zinc 600 */
+    /* Neutral Enterprise Dark — one step lighter grey, no colour cast */
+    --bg-app: #181818;
+    --bg-panel: #212121;
+    --bg-hover: #2a2a2a;
+    --bg-active: #333333;
+    --bg-subtle: #1c1c1c;
+    --bg-element: #252525;
 
-    --bg-subtle: #1f1f23;
-    --bg-element: #2d2d30;
+    --border-subtle: #252525;
+    --border-main: #333333;
+    --border-highlight: #444444;
 
-    --border-subtle: #3f3f46;
-    --border-main: #52525b;
-    --border-highlight: #71717a;
+    --text-primary: #e8e8e8;
+    --text-secondary: #888888;
+    --text-tertiary: #505050;
+    --text-disabled: #383838;
 
-    /* [Rest of Zinc colors preserved] */
-    --text-primary: #fafafa;
-    --text-secondary: #e4e4e7;
-    --text-tertiary: #a1a1aa;
-    --text-disabled: #71717a;
-
-    --accent-primary: #fbbf24;
-    --accent-primary-dim: rgba(251, 191, 36, 0.1);
-    --accent-primary-text: #000000;
-    --accent-blue: #60a5fa;
-    --accent-red: #f87171;
-    --accent-green: #4ade80;
-    --accent-purple: #a855f7;
-    --accent-yellow: #fcd34d;
+    /* Bird palette — slightly desaturated for the Space Indigo surface */
+    --accent-gold:    #f5a800;
+    --accent-orange:  #f07200;
+    --accent-primary: #e8a020;
+    --accent-primary-dim: rgba(232, 160, 32, 0.15);
+    --accent-primary-text: #111111;
+    --accent-red:     #c81e3c;
+    --accent-pink:    #b81e68;
+    --accent-purple:  #7818a0;
+    --accent-indigo:  #3c28a8;
+    --accent-blue:    #1c58d8;
+    --accent-sky:     #1a88f0;
+    --accent-green:   #3aba70;
+    --accent-yellow:  #f0c800;
+    --gradient-bird: linear-gradient(135deg, #f5a800 0%, #f07200 18%, #e05828 33%, #c81e3c 47%, #b81e68 60%, #7818a0 73%, #3c28a8 84%, #1c58d8 92%, #1a88f0 100%);
 
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     --font-serif: 'Georgia', 'Times New Roman', serif;
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 [data-theme="typewriter"] {
@@ -172,6 +191,7 @@
     --font-sans: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'Atkinson Hyperlegible', monospace;
     --font-serif: 'Atkinson Hyperlegible', serif;
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 [data-theme="light"] {
@@ -198,84 +218,6 @@
     --accent-primary-text: #ffffff;
 }
 
-[data-theme="colorful"] {
-    /* Colorful theme on white background */
-    --primary: #000;
-    --secondary: #333;
-    --tertiary: #777;
-    --turq: #61dce2;
-    --turq-50: #b0edf0;
-    --turq-25: #d7f6f8;
-    --green: #8add8a;
-    --green-50: #c4eec4;
-    --green-25: #e2f6e2;
-    --lavender: #a49edb;
-    --lavender-50: #d1ceed;
-    --lavender-25: #e8e7f6;
-    --peach: #f2af97;
-    --peach-50: #f8d7cb;
-    --peach-25: #fcebe5;
-    --selection: #a7d4ff;
-    --selection-dark: #92c8fb;
-    --selection-light: #e9f5fe;
-    --grey-primary: #201d1d;
-    --grey-secondary: #686d79;
-    --grey-tertiary: #8a92a1;
-    --grey-3: #a6abb5;
-    --grey-2: #c9cdd3;
-    --grey-1: #dde0e4;
-    --grey-bg2: #eef0f1;
-    --grey-bg1: #f9fafa;
-    --grey-bg-0: #fff;
-    --line: var(--grey-tertiary);
-    --ugc-ruby: #f25881;
-    --ugc-amethyst: #a85caf;
-    --ugc-violet: #675caf;
-    --ugc-sky: #3099dd;
-    --ugc-cyan: #22b6c7;
-    --ugc-teal: #24b1a2;
-    --ugc-leaf: #3cba3e;
-    --ugc-amber: #f07d59;
-    --unsorted: #3a3e5e;
-    --shadow-s: 0px 2px 3px #a9b3c64d, 0px 1px 3px #a9b3c680;
-    --shadow-m: 0px 1px 6px #a9b3c64d, 0px 6px 10px #a9b3c680;
-    --shadow-l: 0px 3px 12px #a9b3c64d, 0px 12px 18px #a9b3c680;
-    --shadow-s-dark: 0px 2px 3px #0000001a, 0px 1px 3px #00000040;
-    --shadow-m-dark: 0px 1px 6px #00000040, 0px 6px 10px #0000001a;
-    --shadow-l-dark: 0px 3px 12px #0000001a, 0px 12px 18px #00000040;
-    --h-header: 60px;
-    --tone-explore-25: var(--turq-25);
-    --tone-explore-50: var(--turq-50);
-    --tone-filters-25: var(--lavender-25);
-    --tone-filters-50: var(--lavender-50);
-    --activity-success-dark: #288343;
-    --activity-success: #1daa47;
-    --activity-success-bg: #cef7dc;
-    --activity-important-dark: #ea8d00;
-    --activity-important: #f5c751;
-    --activity-important-bg: #fef1c5;
-    --activity-error: #d70000;
-    --activity-error-dark: #a10000;
-    --activity-error-bg: #fcebe5;
-
-    /* Map app-level tokens to colorful scheme with white background */
-    --bg-app: var(--grey-bg-0);
-    --bg-panel: var(--grey-bg1);
-    --bg-hover: var(--grey-bg2);
-    --bg-active: var(--selection-light);
-
-    --border-subtle: var(--grey-1);
-    --border-main: var(--grey-2);
-    --border-highlight: var(--line);
-
-    --text-primary: var(--primary);
-    --text-secondary: var(--secondary);
-    --text-tertiary: var(--tertiary);
-
-    --accent-primary: var(--ugc-amber);
-    --accent-primary-dim: rgba(240, 125, 89, 0.12);
-    --accent-primary-text: #ffffff;
-}
 
 [data-theme="typewriter"] .panel,
 [data-theme="typewriter"] .card,
@@ -307,11 +249,262 @@
     color: #000000 !important;
 }
 
+/* ── Compatibility aliases for legacy component variable names ── */
+:root,
+[data-theme="dark"],
+[data-theme="enterprise-dark"] {
+    --border-color:    var(--border-main);
+    --bg-page:         var(--bg-app);
+    --bg-sidebar:      var(--bg-subtle);
+    --bg-secondary:    var(--bg-panel);
+    --bg-primary:      var(--bg-app);
+    --bg-tertiary:     var(--bg-hover);
+    --bg-overlay:      var(--bg-element);
+    --surface-2:       var(--bg-element);
+    --accent:          var(--accent-primary);
+    --accent-amber:    var(--accent-yellow);
+    --accent-green-solid: var(--accent-green);
+    --color-danger:    var(--accent-red);
+    --error:           var(--accent-red);
+    --primary:         var(--accent-primary);
+}
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading, var(--font-sans));
+}
+
+/* Keep editor prose headings in the editor font, not the heading font */
+.ProseMirror h1, .ProseMirror h2, .ProseMirror h3,
+.ProseMirror h4, .ProseMirror h5, .ProseMirror h6 {
+    font-family: var(--editor-font, var(--font-sans));
+    color: var(--text-primary);
+}
+
+/* ── Shared feature toolbar ── */
+.feature-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 44px;
+    padding: 0 16px;
+    gap: 12px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.feature-toolbar-left  { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.feature-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.feature-toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-subtle);
+    flex-shrink: 0;
+}
+
+/* ── Shared toolbar search ── */
+.toolbar-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.toolbar-search-icon {
+    position: absolute;
+    left: 8px;
+    font-size: 16px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+}
+
+.toolbar-search-input {
+    height: 28px;
+    padding: 0 28px 0 28px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    outline: none;
+    width: 200px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.toolbar-search-input:focus {
+    border-color: var(--accent-primary);
+    background: var(--bg-panel);
+}
+
+.toolbar-search-input::placeholder { color: var(--text-tertiary); }
+
+.toolbar-search-clear {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    padding: 0;
+}
+
+.toolbar-search-clear:hover { color: var(--text-primary); }
+.toolbar-search-clear .material-symbols-outlined { font-size: 14px; }
+
+/* ── Shared view mode toggle ── */
+.btn-view-mode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+}
+
+.btn-view-mode:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.btn-view-mode.active {
+    background: var(--bg-active);
+    border-color: var(--border-main);
+    color: var(--text-primary);
+}
+
+.btn-view-mode .material-symbols-outlined { font-size: 16px; }
+
+/* ── Shared view mode group wrapper ── */
+.view-mode-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 2px;
+}
+
+/* ── Shared filter chip ── */
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent-primary-dim);
+    color: var(--accent-primary);
+    border-radius: 12px;
+    padding: 2px 6px 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    flex-shrink: 0;
+}
+
+.filter-chip button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.filter-chip .material-symbols-outlined { font-size: 13px; }
+
+.filter-clear {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    padding: 2px 4px;
+    transition: color 0.12s;
+}
+
+.filter-clear:hover { color: var(--text-primary); }
+
+/* ── Shared bulk actions bar ── */
+.bulk-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.bulk-selection-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    font-family: var(--font-sans);
+    white-space: nowrap;
+}
+
+/* ── Shared primary add button ── */
+.btn-add-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 12px;
+    background: var(--accent-primary);
+    color: var(--accent-primary-text, #000);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+}
+
+.btn-add-primary:hover { opacity: 0.88; }
+.btn-add-primary .material-symbols-outlined { font-size: 16px; }
+
+/* ── Shared AI toggle button — used across all feature toolbars ── */
+.btn-ai-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-ai-toggle .material-symbols-outlined { font-size: 15px; }
+
+.btn-ai-toggle:hover,
+.btn-ai-toggle.active {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: var(--accent-primary-dim, transparent);
 }
 
 body {
@@ -361,6 +554,19 @@ code {
     --text-xl: 16px;
     --text-2xl: 18px;
     --text-3xl: 20px;
+
+    /* ── Z-index scale ── */
+    --z-base:     1;
+    --z-floating: 10;
+    --z-dropdown: 100;
+    --z-sticky:   200;
+    --z-overlay:  500;
+    --z-modal-backdrop: 999;
+    --z-modal:    1000;
+    --z-modal-top: 1100;
+    --z-popover:  1200;
+    --z-notification: 9000;
+    --z-system:   10000;
 }
 
 /* Shared Form Styles - use .form-group + .form-label + .form-input across app */

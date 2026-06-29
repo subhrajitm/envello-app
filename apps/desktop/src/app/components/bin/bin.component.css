@@ -45,9 +45,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(239, 68, 68, 0.06);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    color: #ef4444;
+    background: var(--accent-red)0f;
+    border: 1px solid var(--accent-red)40;
+    color: var(--accent-red);
     padding: 0 12px;
     height: 32px;
     border-radius: 6px;
@@ -58,8 +58,8 @@
 }
 
 .bin-empty-btn:hover {
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.45);
+    background: var(--accent-red)1f;
+    border-color: var(--accent-red)73;
 }
 
 .bin-empty-btn:disabled {
@@ -274,16 +274,16 @@
     font-size: 16px;
 }
 
-.bin-icon-wrap.type-task            { background: rgba(252, 211, 77, 0.12);  color: #d97706; }
-.bin-icon-wrap.type-daily-note      { background: rgba(34, 197, 94, 0.1);    color: #16a34a; }
-.bin-icon-wrap.type-novel           { background: rgba(59, 130, 246, 0.1);   color: #3b82f6; }
-.bin-icon-wrap.type-novel-chapter   { background: rgba(96, 165, 250, 0.1);   color: #60a5fa; }
-.bin-icon-wrap.type-novel-note      { background: rgba(34, 197, 94, 0.1);    color: #16a34a; }
-.bin-icon-wrap.type-novel-character { background: rgba(251, 191, 36, 0.1);   color: #d97706; }
-.bin-icon-wrap.type-novel-location  { background: rgba(168, 85, 247, 0.1);   color: #9333ea; }
-.bin-icon-wrap.type-novel-group     { background: rgba(148, 163, 184, 0.1);  color: #94a3b8; }
-.bin-icon-wrap.type-book            { background: rgba(251, 146, 60, 0.1);   color: #ea580c; }
-.bin-icon-wrap.type-meeting         { background: rgba(236, 72, 153, 0.1);   color: #db2777; }
+.bin-icon-wrap.type-task            { background: var(--accent-yellow)1a;  color: var(--accent-yellow); }
+.bin-icon-wrap.type-daily-note      { background: var(--accent-green)1a;   color: var(--accent-green); }
+.bin-icon-wrap.type-novel           { background: var(--accent-blue)1a;    color: var(--accent-blue); }
+.bin-icon-wrap.type-novel-chapter   { background: var(--accent-blue)1a;    color: var(--accent-blue); }
+.bin-icon-wrap.type-novel-note      { background: var(--accent-green)1a;   color: var(--accent-green); }
+.bin-icon-wrap.type-novel-character { background: var(--accent-yellow)1a;  color: var(--accent-yellow); }
+.bin-icon-wrap.type-novel-location  { background: var(--accent-purple)1a;  color: var(--accent-purple); }
+.bin-icon-wrap.type-novel-group     { background: var(--text-secondary)1a; color: var(--text-secondary); }
+.bin-icon-wrap.type-book            { background: var(--accent-orange)1a;  color: var(--accent-orange); }
+.bin-icon-wrap.type-meeting         { background: var(--accent-pink)1a;    color: var(--accent-pink); }
 
 .item-text-wrap {
     display: flex;
@@ -348,14 +348,14 @@
 }
 
 .restore-btn {
-    background: rgba(34, 197, 94, 0.08);
-    border: 1px solid rgba(34, 197, 94, 0.25);
-    color: #16a34a;
+    background: var(--accent-green)14;
+    border: 1px solid var(--accent-green)40;
+    color: var(--accent-green);
 }
 
 .restore-btn:hover {
-    background: rgba(34, 197, 94, 0.15);
-    border-color: rgba(34, 197, 94, 0.45);
+    background: var(--accent-green)26;
+    border-color: var(--accent-green)73;
 }
 
 .restore-btn.loading {
@@ -364,15 +364,15 @@
 }
 
 .delete-btn {
-    background: rgba(239, 68, 68, 0.06);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    background: var(--accent-red)0f;
+    border: 1px solid var(--accent-red)33;
+    color: var(--accent-red);
     padding: 0 6px;
 }
 
 .delete-btn:hover {
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.4);
+    background: var(--accent-red)1f;
+    border-color: var(--accent-red)66;
 }
 
 /* ─── Detail Panel ─── */
@@ -409,7 +409,7 @@
 }
 
 .detail-val.status-success {
-    color: #16a34a;
+    color: var(--accent-green);
     font-family: var(--font-sans);
     font-weight: 600;
 }

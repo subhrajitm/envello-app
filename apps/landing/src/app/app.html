@@ -1,2 +1,659 @@
-<app-nx-welcome></app-nx-welcome>
-<router-outlet></router-outlet>
+<!-- ═══ TOP BANNER ═══ -->
+<div class="top-banner">
+  Smart Monitor is now generally available. Tasks, meetings, notes, contacts and AI in one platform.
+  <a href="#">Learn More →</a>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <nav class="header-nav container">
+    <div class="header-left">
+      <a href="#" class="logo">
+        <span class="logo-hex">⬡</span>
+        <span class="logo-text">Envello</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Product</a></li>
+        <li><a href="#ai">Solutions</a></li>
+        <li><a href="#integrations">Integrations</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#">Enterprise</a></li>
+        <li><a href="#">Docs</a></li>
+      </ul>
+    </div>
+    <div class="header-right">
+      <a href="#" class="nav-muted">Login</a>
+      <a href="#" class="nav-muted">Sign up</a>
+      <a href="#" class="btn-accent">Book a demo →</a>
+    </div>
+  </nav>
+</header>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="ascii hero-ascii">
+    &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br/>
+    &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br/>
+    &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;
+  </div>
+  <div class="container">
+    <div class="mono hero-prefix">~/workspace</div>
+    <h1 class="hero-title">
+      Productivity re-invented for<br>high-output engineering teams
+    </h1>
+    <p class="hero-sub">
+      The workspace-native platform for tasks, meetings, notes, writing and AI. Built for humans and machines alike.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-accent btn-lg">Book a demo</button>
+      <button class="btn-outline btn-lg">Start free →</button>
+    </div>
+  </div>
+
+  <!-- Dashboard mockup -->
+  <div class="container">
+    <div class="mockup-wrap">
+      <div class="mockup-inner">
+        <!-- App chrome -->
+        <div class="app-chrome">
+          <div class="chrome-dots">
+            <span class="cdot" style="background:#ef4444"></span>
+            <span class="cdot" style="background:#f59e0b"></span>
+            <span class="cdot" style="background:#22c55e"></span>
+          </div>
+          <div class="chrome-url mono">app.envello.com/workspace</div>
+          <div class="chrome-actions mono" style="color:var(--border)">⟳ ⋮</div>
+        </div>
+
+        <!-- App layout -->
+        <div class="app-layout">
+          <!-- Sidebar -->
+          <div class="app-sb">
+            <div class="sb-logo mono">⬡ Envello</div>
+            <div class="sb-sep">WORKSPACE</div>
+            <div class="sb-item sb-active"><span>✓</span> Tasks</div>
+            <div class="sb-item"><span>◎</span> Meetings</div>
+            <div class="sb-item"><span>✎</span> Daily Notes</div>
+            <div class="sb-item"><span>⚑</span> Write</div>
+            <div class="sb-item"><span>⊞</span> Knowledge</div>
+            <div class="sb-sep" style="margin-top:10px">MANAGE</div>
+            <div class="sb-item"><span>🔖</span> Bookmarks</div>
+            <div class="sb-item"><span>👤</span> People</div>
+            <div class="sb-item"><span>🔒</span> Vault</div>
+            <div class="sb-item"><span>💳</span> Transactions</div>
+          </div>
+
+          <!-- Main panel -->
+          <div class="app-body">
+            <div class="app-topbar">
+              <div class="app-section-title">Today's Tasks <span class="app-badge">12</span></div>
+              <div class="app-topbar-right">
+                <div class="app-btn mono">+ New</div>
+                <div class="app-btn mono">⊞ View</div>
+                <div class="app-btn mono">⟳ Sync</div>
+              </div>
+            </div>
+            <div class="task-list">
+              <div class="task-row task-done">
+                <div class="task-chk task-chk--done">✓</div>
+                <div class="task-info">
+                  <div class="task-name">Review Q3 product roadmap with design team</div>
+                  <div class="task-meta mono"><span>Design</span><span>·</span><span>Sarah Chen</span></div>
+                </div>
+                <div class="task-tag" style="color:#4ade80;border-color:#4ade8030">Done</div>
+              </div>
+              <div class="task-row">
+                <div class="task-chk"></div>
+                <div class="task-info">
+                  <div class="task-name">Prepare investor update deck — Series A</div>
+                  <div class="task-meta mono"><span>Finance</span><span>·</span><span>Due today</span></div>
+                </div>
+                <div class="task-tag task-tag--accent">High</div>
+              </div>
+              <div class="task-row">
+                <div class="task-chk"></div>
+                <div class="task-info">
+                  <div class="task-name">Follow up: API integration spec with engineering</div>
+                  <div class="task-meta mono"><span>Engineering</span><span>·</span><span>Tomorrow</span></div>
+                </div>
+                <div class="task-tag">Medium</div>
+              </div>
+              <div class="task-row">
+                <div class="task-chk"></div>
+                <div class="task-info">
+                  <div class="task-name">Write chapter 4 — The Turning Point</div>
+                  <div class="task-meta mono"><span>Write</span><span>·</span><span>Personal</span></div>
+                </div>
+                <div class="task-tag">Low</div>
+              </div>
+              <div class="monitor-row">
+                <span class="mono" style="color:var(--accent)">⚡ Smart Monitor</span>
+                found 3 new tasks from meetings and overdue subscriptions
+                <button class="monitor-review">Review →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right panel -->
+          <div class="app-right">
+            <div class="rw-title mono">UPCOMING</div>
+            <div class="rw-item">
+              <div class="rw-time mono">10:00</div>
+              <div class="rw-dot" style="background:#4285F4"></div>
+              <div class="rw-name">Standup · Meet</div>
+            </div>
+            <div class="rw-item">
+              <div class="rw-time mono">14:30</div>
+              <div class="rw-dot" style="background:var(--accent)"></div>
+              <div class="rw-name">Client Review · Zoom</div>
+            </div>
+            <div class="rw-item">
+              <div class="rw-time mono">17:00</div>
+              <div class="rw-dot" style="background:#34A853"></div>
+              <div class="rw-name">1:1 Frank · Meet</div>
+            </div>
+            <div class="rw-sep"></div>
+            <div class="rw-title mono">AI INSIGHTS</div>
+            <div class="rw-insight"><span style="color:var(--accent)">●</span> 2 subscriptions due</div>
+            <div class="rw-insight"><span style="color:#f59e0b">●</span> 14d since Sarah Chen</div>
+            <div class="rw-insight"><span style="color:#22c55e">●</span> Calendar synced · 18 events</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LOGO WALL ═══ -->
+<section class="logos-section">
+  <div class="container">
+    <div class="logos-header">
+      <h2 class="logos-sup">Fueling productivity for 10,000+ individuals and teams.</h2>
+      <h3 class="logos-main">Work smarter, ship faster, focus deeper.</h3>
+    </div>
+    <div class="logos-grid">
+      <div class="logo-item">Freelancers</div>
+      <div class="logo-item">Indie Hackers</div>
+      <div class="logo-item">Writers</div>
+      <div class="logo-item">Product Teams</div>
+      <div class="logo-item">Researchers</div>
+      <div class="logo-item">Founders</div>
+      <div class="logo-item">Consultants</div>
+      <div class="logo-item">Engineers</div>
+      <div class="logo-item">Designers</div>
+      <div class="logo-item">Analysts</div>
+      <div class="logo-item">Lawyers</div>
+      <div class="logo-item">Students</div>
+    </div>
+
+    <div class="quotes-grid">
+      <div class="quote-card">
+        <blockquote>"Envello replaced Notion, Todoist and my notes app all at once. The Smart Monitor feature alone saves me an hour a week — tasks just appear when I need them."</blockquote>
+        <div class="quote-footer">
+          <div class="quote-author">
+            <div class="quote-av" style="background:#e85;">M</div>
+            <div>
+              <div class="quote-name">Marcus W.</div>
+              <div class="quote-role">Senior Product Manager</div>
+            </div>
+          </div>
+          <div class="quote-brand">PRODUCT</div>
+        </div>
+        <a href="#" class="quote-link mono">Case study →</a>
+      </div>
+      <div class="quote-card">
+        <blockquote>"The beautiful thing about Envello is it just works. One login with Google and my entire calendar, contacts, and subscription tracking just synced automatically."</blockquote>
+        <div class="quote-footer">
+          <div class="quote-author">
+            <div class="quote-av" style="background:#58a;">R</div>
+            <div>
+              <div class="quote-name">Rohan A.</div>
+              <div class="quote-role">Founder, Series A Startup</div>
+            </div>
+          </div>
+          <div class="quote-brand">STARTUP</div>
+        </div>
+        <a href="#" class="quote-link mono">Case study →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURE GRID ═══ -->
+<section class="feat-section" id="features">
+  <div class="container">
+    <h2 class="feat-title">Discover the full potential of your work data.</h2>
+    <p class="feat-sub">Maximise the value of your tasks, notes and meetings. Streamline knowledge management and prepare your team for AI-driven productivity.</p>
+
+    <div class="feat-cards">
+      <div class="feat-card">
+        <div class="feat-card-ascii mono accent">
+          $$$$$$$$$$$$$$$$$$$$<br/>$$$$$$$$$$$$$$$$$$$$<br/>$$$$$$$$$$$$$$$$$$$$
+        </div>
+        <h3>Cut context switching to zero</h3>
+        <p>Tasks, meetings, notes, writing, bookmarks, contacts and vault — all in one offline-first workspace with shared AI context.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-card-ascii mono accent">
+          ////////////////////<br/>////////////////////<br/>////////////////////
+        </div>
+        <h3>Accelerate AI productivity</h3>
+        <p>Smart Monitor auto-creates tasks, Gmail parses subscriptions, and AI writes, summarises and researches across every module.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-card-ascii mono accent">
+          xxxxxxxxxxxxxxxxxxxx<br/>xxxxxxxxxxxxxxxxxxxx<br/>xxxxxxxxxxxxxxxxxxxx
+        </div>
+        <h3>Unlock relationship intelligence</h3>
+        <p>Every person you meet, email or collaborate with is tracked automatically — with interaction timelines, open tasks and AI insights.</p>
+      </div>
+    </div>
+
+    <div class="feat-actions">
+      <button class="btn-white">Book a Demo</button>
+      <button class="btn-outline">Start free →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TABS SECTION ═══ -->
+<section class="tabs-section" id="ai">
+  <div class="container">
+    <h2 class="tabs-title">Solve today's challenges, shape tomorrow's workflows.</h2>
+    <div class="tabs-bar">
+      <button class="tab tab--active">
+        <span>✓</span> Task management
+      </button>
+      <button class="tab">
+        <span>◎</span> Meeting intelligence
+      </button>
+      <button class="tab">
+        <span>⚡</span> AI automation
+      </button>
+      <button class="tab">
+        <span>⬡</span> Build on Envello
+      </button>
+    </div>
+    <div class="tabs-content">
+      <div class="tabs-left">
+        <h3>Streamline task management for rapid execution</h3>
+        <p>Collect and track work effortlessly. Real-time AI analysis and intelligent views empower your team to execute faster while reducing cognitive load.</p>
+        <ul class="tabs-list">
+          <li><span class="accent">✓</span> Manage thousands of tasks across projects in real-time</li>
+          <li><span class="accent">✓</span> Auto-create tasks from meetings, emails and subscriptions</li>
+          <li><span class="accent">✓</span> Use Smart Monitor for background AI task generation</li>
+        </ul>
+        <a href="#" class="tabs-link accent">Learn more about task management →</a>
+      </div>
+      <div class="tabs-right">
+        <div class="tabs-mockup">
+          <!-- Task manager mini-mockup -->
+          <div class="mono" style="font-size:10px;color:var(--accent);margin-bottom:12px">~/tasks</div>
+          <div class="tmock-item">
+            <span class="tmock-check done">✓</span>
+            <span class="tmock-text done">Review roadmap</span>
+            <span class="mono" style="font-size:9px;color:#4ade80">DONE</span>
+          </div>
+          <div class="tmock-item">
+            <span class="tmock-check"></span>
+            <span class="tmock-text">Investor update deck</span>
+            <span class="mono" style="font-size:9px;color:var(--accent)">HIGH</span>
+          </div>
+          <div class="tmock-item">
+            <span class="tmock-check"></span>
+            <span class="tmock-text">API integration spec</span>
+            <span class="mono" style="font-size:9px;color:var(--muted)">MED</span>
+          </div>
+          <div class="tmock-item">
+            <span class="tmock-check"></span>
+            <span class="tmock-text">Write chapter 4</span>
+            <span class="mono" style="font-size:9px;color:var(--muted)">LOW</span>
+          </div>
+          <div class="tmock-monitor mono">
+            ⚡ 3 tasks created by Smart Monitor
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRICING ═══ -->
+<section class="pricing-section" id="pricing">
+  <div class="container">
+    <h2 class="pricing-title">Transparent, flexible pricing that scales with you.</h2>
+    <p class="pricing-sub">From solo founders to global teams with thousands of workspaces, Envello grows with you.</p>
+    <div class="pricing-cards">
+      <!-- Cloud -->
+      <div class="p-card">
+        <h3>Envello Cloud</h3>
+        <p>Fully managed with usage-based pricing and automatic sync. Start free, scale seamlessly with predictable costs.</p>
+        <div class="p-features">
+          <div class="p-feat">
+            <div class="p-feat-num accent mono">[1]</div>
+            <div>
+              <div class="p-feat-title">Free tier + pay as you grow</div>
+              <p>Start with all 8 modules free. Upgrade for Google sync, cloud AI and unlimited storage.</p>
+            </div>
+          </div>
+          <div class="p-feat">
+            <div class="p-feat-num accent mono">[2]</div>
+            <div>
+              <div class="p-feat-title">Instant setup</div>
+              <p>Working in minutes. Desktop app, web PWA and Google integration available from day one.</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-actions">
+          <button class="btn-accent">Start free</button>
+          <button class="btn-outline">Open playground →</button>
+        </div>
+      </div>
+      <!-- Enterprise -->
+      <div class="p-card">
+        <h3>Self-hosted Enterprise</h3>
+        <p>Deploy on your own infrastructure. Full data sovereignty, SSO, audit logs and custom AI model integration.</p>
+        <div class="p-features">
+          <div class="p-feat">
+            <div class="p-feat-num accent mono">[A]</div>
+            <div>
+              <div class="p-feat-title">Volume discounts, automatically</div>
+              <p>Transparent pricing with no negotiations. Best available rate applied from the console.</p>
+            </div>
+          </div>
+          <div class="p-feat">
+            <div class="p-feat-num accent mono">[B]</div>
+            <div>
+              <div class="p-feat-title">No artificial limits</div>
+              <p>Unlimited workspaces, users and AI calls. On-premise Ollama keeps data fully private.</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-actions">
+          <button class="btn-white">Talk to sales</button>
+          <button class="btn-outline">Contact us →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="testi-section">
+  <div class="container">
+    <div class="testi-header">
+      <div>
+        <h2>Empowering 10,000+ teams with accelerated productivity.</h2>
+        <p style="color:var(--muted);margin-top:6px">From indie hackers to enterprise engineering teams.</p>
+      </div>
+      <div class="testi-nav">
+        <button class="testi-nav-btn">←</button>
+        <button class="testi-nav-btn">→</button>
+      </div>
+    </div>
+    <div class="testi-scroll">
+      <div class="testi-card">
+        <div class="testi-card-header">
+          <div class="mono muted small">FOCUS</div>
+          <div class="testi-brand">Writers</div>
+        </div>
+        <p class="muted small">Envello's Write module + Knowledge Base lets authors manage chapters, research and notes in one place.</p>
+        <blockquote>"As a writer and developer, I was always switching tools. Envello's offline-first approach and local AI with Ollama sealed it for me."</blockquote>
+        <div class="testi-author">
+          <div class="testi-av" style="background:#8b5cf6">J</div>
+          <div>
+            <div class="testi-name">Jana K.</div>
+            <div class="muted small">Full-stack Developer & Author</div>
+          </div>
+        </div>
+        <a href="#" class="mono muted small underline">Case study →</a>
+      </div>
+      <div class="testi-card">
+        <div class="testi-card-header">
+          <div class="mono muted small">SAVINGS</div>
+          <div class="testi-brand">Startups</div>
+        </div>
+        <p class="muted small">Envello's Smart Monitor replaced a dedicated project manager for early-stage teams.</p>
+        <blockquote>"We replaced Notion, Linear and Calendly with Envello. The Google sync means our whole team's calendar and contacts just work out of the box."</blockquote>
+        <div class="testi-author">
+          <div class="testi-av" style="background:#e85;">R</div>
+          <div>
+            <div class="testi-name">Rohan A.</div>
+            <div class="muted small">Founder, Series A Startup</div>
+          </div>
+        </div>
+        <a href="#" class="mono muted small underline">Case study →</a>
+      </div>
+      <div class="testi-card">
+        <div class="testi-card-header">
+          <div class="mono muted small">CLARITY</div>
+          <div class="testi-brand">Teams</div>
+        </div>
+        <p class="muted small">Product teams use Envello's meeting intelligence and task sync to eliminate status meetings.</p>
+        <blockquote>"Smart Monitor creates action items from every meeting automatically. Our standup is now 5 minutes because everyone already knows what to work on."</blockquote>
+        <div class="testi-author">
+          <div class="testi-av" style="background:#0891b2">M</div>
+          <div>
+            <div class="testi-name">Marcus W.</div>
+            <div class="muted small">Senior Product Manager</div>
+          </div>
+        </div>
+        <a href="#" class="mono muted small underline">Case study →</a>
+      </div>
+    </div>
+    <div class="testi-logos">
+      <span>Writers</span>
+      <span>Founders</span>
+      <span>Engineers</span>
+      <span>Researchers</span>
+      <span>Consultants</span>
+      <span>Lawyers</span>
+      <span>Designers</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BLOG ═══ -->
+<section class="blog-section">
+  <div class="container">
+    <div class="blog-header">
+      <h2>Stay up-to-date with our latest<br/>announcements, product updates, and events.</h2>
+      <div class="testi-nav">
+        <button class="testi-nav-btn">←</button>
+        <button class="testi-nav-btn">→</button>
+      </div>
+    </div>
+    <div class="blog-grid">
+      <a href="#" class="blog-card">
+        <p class="mono muted small">June 18, 2026 • Envello Team</p>
+        <h3>Google Calendar, Contacts & Gmail sync: one OAuth login, three superpowers</h3>
+        <p class="muted small">A single sign-in with Google now automatically syncs your calendar events, imports contacts and scans Gmail for subscriptions and tasks...</p>
+        <span class="mono small" style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">Read more →</span>
+      </a>
+      <a href="#" class="blog-card">
+        <p class="mono muted small">June 12, 2026 • Envello Team</p>
+        <h3>Smart Monitor: how background AI turns your data into action items automatically</h3>
+        <p class="muted small">Envello's flagship AI feature watches your meetings, subscriptions and contacts silently — and creates tasks before you realise you need them...</p>
+        <span class="mono small" style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">Read more →</span>
+      </a>
+      <a href="#" class="blog-card">
+        <p class="mono muted small">June 05, 2026 • Envello Team</p>
+        <h3>Offline-first architecture: why we chose SQLite + Tauri over cloud-only sync</h3>
+        <p class="muted small">Our engineering team explains the decision to build on SQLite for desktop persistence and how Tauri enables a true native experience...</p>
+        <span class="mono small" style="font-weight:700;text-transform:uppercase;letter-spacing:.08em">Read more →</span>
+      </a>
+    </div>
+    <div class="blog-footer">
+      <a href="#" class="underline">Read more blog posts →</a>
+      <a href="#" class="underline">See what we've shipped →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA SECTION ═══ -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Get up and running in minutes.</h2>
+    <div class="cta-grid">
+      <div class="cta-left">
+        <div class="mono accent small">[-] ADOPT ENVELLO</div>
+        <h3>Don't wait months for results. With Envello, see value from day one.</h3>
+        <ul class="cta-list">
+          <li><span class="accent">✓</span> Create your first task in under 60 seconds</li>
+          <li><span class="accent">✓</span> Connect Google Calendar and contacts in one click</li>
+          <li><span class="accent">✓</span> Start with the free desktop app — no account required</li>
+          <li><span class="accent">✓</span> Smart Monitor starts finding tasks in your first session</li>
+          <li><span class="accent">✓</span> Achieve measurable productivity gains within 7 days</li>
+        </ul>
+        <div class="cta-actions">
+          <button class="btn-accent">Book a demo</button>
+          <button class="btn-outline">Start free →</button>
+        </div>
+      </div>
+      <div class="cta-right mono small">
+        <div class="cta-chart-header">
+          <span class="muted">Time to Value</span>
+          <div class="cta-chart-days">
+            <span>DAY 1<br/><span style="opacity:.5;font-size:9px">ACTIVE</span></span>
+            <span>DAY 7<br/><span style="opacity:.5;font-size:9px">ROI</span></span>
+            <span>DAY 30<br/><span style="opacity:.5;font-size:9px">GROWTH</span></span>
+          </div>
+        </div>
+        <div class="cta-bars">
+          <div class="cta-bar-row">
+            <span>App setup</span>
+            <div class="cta-bar-track"><div class="cta-bar" style="width:100%"></div></div>
+          </div>
+          <div class="cta-bar-row">
+            <span>Google sync</span>
+            <div class="cta-bar-track">
+              <div class="cta-bar cta-bar--dim" style="width:20%"></div>
+              <div class="cta-bar" style="width:80%"></div>
+            </div>
+          </div>
+          <div class="cta-bar-row">
+            <span>Task intelligence</span>
+            <div class="cta-bar-track">
+              <div class="cta-bar cta-bar--dim" style="width:40%"></div>
+              <div class="cta-bar" style="width:60%"></div>
+            </div>
+          </div>
+          <div class="cta-bar-row">
+            <span>Value realised</span>
+            <div class="cta-bar-track">
+              <div class="cta-bar cta-bar--dim" style="width:65%"></div>
+              <div class="cta-bar" style="width:35%"></div>
+            </div>
+          </div>
+          <div class="cta-bar-row">
+            <span>AI insights</span>
+            <div class="cta-bar-track">
+              <div class="cta-bar cta-bar--dim" style="width:100%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo" style="margin-bottom:16px;font-size:18px">
+          <span class="logo-hex">⬡</span>
+          <span class="logo-text">Envello</span>
+        </div>
+        <p class="muted small">Envello unifies tasks, meetings, notes, writing, contacts and AI in one offline-first workspace for modern teams.</p>
+        <div class="footer-brand-actions" style="margin-top:20px">
+          <button class="btn-accent btn-sm">Book a demo</button>
+          <button class="btn-outline btn-sm">Start free →</button>
+        </div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <div class="footer-col-title">Get Started</div>
+          <a href="#">Download</a>
+          <a href="#">Book a demo</a>
+          <a href="#">Login</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Product</div>
+          <a href="#">Features</a>
+          <a href="#">Tasks</a>
+          <a href="#">Meetings</a>
+          <a href="#">AI Monitor</a>
+          <a href="#">Vault</a>
+          <a href="#">Pricing</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Integrations</div>
+          <a href="#">Google</a>
+          <a href="#">Outlook</a>
+          <a href="#">Apple Calendar</a>
+          <a href="#">Zoom</a>
+          <a href="#">OpenAI</a>
+          <a href="#">Ollama</a>
+          <a href="#">Supabase</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Resources</div>
+          <a href="#">Documentation</a>
+          <a href="#">API Reference</a>
+          <a href="#">Changelog</a>
+          <a href="#">Blog</a>
+          <a href="#">Community</a>
+          <a href="#">Support</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Company</div>
+          <a href="#">Pricing</a>
+          <a href="#">Enterprise</a>
+          <a href="#">About</a>
+          <a href="#">Careers</a>
+          <a href="#">Contact</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Legal</div>
+          <a href="#">Security</a>
+          <a href="#">Privacy policy</a>
+          <a href="#">Terms of service</a>
+          <a href="#">Cookies</a>
+          <a href="#">GDPR</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-status">
+        <div class="status-row">
+          <span class="status-dot"></span>
+          <span class="muted small">Status: All Systems Operational</span>
+        </div>
+        <a href="#" class="muted small">Download Envello Logo (.zip)</a>
+        <a href="#" class="muted small">Join our Discord community →</a>
+      </div>
+      <div class="footer-social">
+        <a href="#" class="social-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        </a>
+        <a href="#" class="social-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-copy muted small">
+      Designed and engineered globally. Copyright © 2026 Envello, Inc. All rights reserved.
+    </div>
+
+    <!-- ASCII decoration -->
+    <div class="ascii footer-ascii">
+      &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br/>
+      &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;<br/>
+      &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; ENVELLO, INC. &gt;&gt;&gt;
+    </div>
+  </div>
+</footer>

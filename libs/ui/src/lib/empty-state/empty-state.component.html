@@ -1,25 +1,46 @@
 <div [class]="'env-empty-state' + (compact ? ' env-empty-state--compact' : '')">
-  <span class="material-symbols-outlined env-empty-state__icon">{{ icon }}</span>
-  @if (title) {
-    <h3 class="env-empty-state__title">{{ title }}</h3>
-  }
+
+  <!-- Decorative background dots -->
+  <div class="env-empty-state__bg" aria-hidden="true">
+    <span class="es-dot es-dot--1"></span>
+    <span class="es-dot es-dot--2"></span>
+    <span class="es-dot es-dot--3"></span>
+  </div>
+
+  <!-- Icon with concentric ring glow -->
+  <div class="env-empty-state__icon-wrap">
+    <span class="material-symbols-outlined env-empty-state__icon">{{ icon }}</span>
+  </div>
+
+  <h3 class="env-empty-state__title">{{ title }}</h3>
+
   @if (description) {
     <p class="env-empty-state__description">{{ description }}</p>
   }
-  <div class="env-empty-state__actions">
-    @if (ctaLabel) {
-      <button class="env-empty-state__cta" (click)="ctaClicked.emit()">
-        @if (ctaIcon) {
-          <span class="material-symbols-outlined">{{ ctaIcon }}</span>
-        }
-        {{ ctaLabel }}
-      </button>
-    }
-    @if (secondaryCtaLabel) {
-      <button class="env-empty-state__secondary" (click)="secondaryCtaClicked.emit()">
-        {{ secondaryCtaLabel }}
-      </button>
-    }
-    <ng-content></ng-content>
-  </div>
+
+  @if (ctaLabel || secondaryCtaLabel) {
+    <div class="env-empty-state__actions">
+      @if (ctaLabel) {
+        <button class="env-empty-state__cta" (click)="ctaClicked.emit()">
+          @if (ctaIcon) {
+            <span class="material-symbols-outlined">{{ ctaIcon }}</span>
+          }
+          {{ ctaLabel }}
+        </button>
+      }
+      @if (secondaryCtaLabel) {
+        <button class="env-empty-state__secondary" (click)="secondaryCtaClicked.emit()">
+          {{ secondaryCtaLabel }}
+        </button>
+      }
+      <ng-content></ng-content>
+    </div>
+  }
+
+  @if (hint) {
+    <div class="env-empty-state__hint">
+      <span class="material-symbols-outlined es-hint-icon">lightbulb</span>
+      <span>{{ hint }}</span>
+    </div>
+  }
 </div>

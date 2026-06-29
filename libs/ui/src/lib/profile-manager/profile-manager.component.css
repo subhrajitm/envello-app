@@ -74,7 +74,7 @@
 }
 
 .profile-card.active-card {
-    border: 2.5px solid #e15512;
+    border: 2.5px solid var(--accent-primary);
 }
 
 .card-top {
@@ -120,8 +120,8 @@
     font-weight: 700;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    color: #e15512;
-    background: rgba(225, 85, 18, 0.1);
+    color: var(--accent-primary);
+    background: var(--accent-primary)1a;
     padding: 2px 8px;
     border-radius: 20px;
 }
@@ -208,8 +208,8 @@
 }
 
 .card-action-btn.danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: var(--accent-red)1a;
+    color: var(--accent-red);
 }
 
 .card-action-btn:disabled {

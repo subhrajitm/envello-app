@@ -7,7 +7,7 @@
 .wr-sb-section { padding: 4px 6px; flex-shrink: 0; }
 .wr-sb-section-title {
   padding: 6px 8px 4px;
-  font-size: 9.5px; font-weight: 700;
+  font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--text-tertiary);
 }
@@ -18,8 +18,8 @@
   width: 100%; display: flex; align-items: center; gap: 7px;
   padding: 5px 8px; background: transparent; border: none;
   border-radius: 6px; color: var(--text-secondary);
-  font-size: 12.5px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s; text-align: left;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; text-align: left;
 }
 .wr-sb-item:hover { background: var(--bg-hover); color: var(--text-primary); }
 .wr-sb-item.active { background: var(--accent-primary-dim); color: var(--accent-primary); }
@@ -27,7 +27,7 @@
 .wr-sb-item.active .material-symbols-outlined { color: var(--accent-primary); }
 .wr-sb-label { flex: 1; }
 .wr-sb-count {
-  font-size: 10.5px; color: var(--text-tertiary);
+  font-size: 11px; color: var(--text-tertiary);
   background: var(--bg-app); border: 1px solid var(--border-subtle);
   border-radius: 10px; padding: 0 5px;
   font-family: var(--font-mono); min-width: 16px; text-align: center;
@@ -62,7 +62,7 @@
   height: 28px; padding: 0 26px 0 28px;
   background: var(--bg-hover); border: 1px solid var(--border-subtle);
   border-radius: 5px; font-size: 12px; color: var(--text-primary);
-  outline: none; width: 190px; transition: all 0.2s;
+  outline: none; width: 190px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s, color 0.2s;
 }
 .wr-search-input:focus { background: var(--bg-panel); border-color: var(--accent-primary); }
 .wr-search-input::placeholder { color: var(--text-tertiary); }
@@ -78,7 +78,7 @@
   height: 28px; padding: 0 10px; display: flex; align-items: center; gap: 5px;
   background: transparent; border: 1px solid var(--border-subtle);
   border-radius: 5px; color: var(--text-secondary); font-size: 12px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s; white-space: nowrap;
 }
 .wr-tool-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .wr-tool-btn--active { background: var(--accent-primary-dim) !important; border-color: var(--accent-primary) !important; color: var(--accent-primary) !important; }
@@ -87,7 +87,7 @@
 .wr-view-btn {
   width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: 1px solid var(--border-subtle);
-  border-radius: 5px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+  border-radius: 5px; color: var(--text-secondary); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .wr-view-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .wr-view-btn--active { background: var(--accent-primary-dim); border-color: var(--accent-primary); color: var(--accent-primary); }
@@ -99,7 +99,7 @@
   position: absolute; top: calc(100% + 4px); right: 0;
   background: var(--bg-panel); border: 1px solid var(--border-subtle);
   border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 100; min-width: 160px; padding: 4px;
+  z-index: var(--z-dropdown); min-width: 160px; padding: 4px;
   animation: wrDropIn 0.12s ease-out;
 }
 @keyframes wrDropIn { from { opacity: 0; } to { opacity: 1; } }
@@ -139,7 +139,7 @@
 .wr-table-head {
   display: flex; align-items: center; height: 36px;
   background: var(--bg-panel); border-bottom: 1px solid var(--border-main);
-  position: sticky; top: 0; z-index: 10; flex-shrink: 0;
+  position: sticky; top: 0; z-index: var(--z-floating); flex-shrink: 0;
 }
 .wr-th {
   display: flex; align-items: center; gap: 4px; padding: 0 14px;
@@ -182,7 +182,7 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   display: flex; align-items: center; gap: 6px;
 }
-.wr-book-meta { font-size: 10.5px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-book-meta { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .wr-recent-dot {
   display: inline-block; width: 6px; height: 6px;
@@ -204,7 +204,7 @@
 /* Status badge */
 .wr-status-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11.5px; color: var(--text-secondary); white-space: nowrap;
+  font-size: 12px; color: var(--text-secondary); white-space: nowrap;
 }
 .wr-status-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
@@ -213,21 +213,21 @@
 /* Words */
 .wr-words-wrap { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 .wr-words-nums { display: flex; align-items: baseline; gap: 3px; }
-.wr-words-val    { font-size: 12.5px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); }
+.wr-words-val    { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); }
 .wr-words-sep    { font-size: 11px; color: var(--text-tertiary); }
 .wr-words-target { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
 .wr-progress-bar { height: 2px; background: var(--border-subtle); border-radius: 1px; }
-.wr-progress-fill { height: 100%; border-radius: 1px; transition: width 0.3s; }
+.wr-progress-fill { height: 100%; border-radius: 1px; transition: max-width 0.3s; }
 
 /* Updated */
-.wr-updated-text { font-size: 11.5px; color: var(--text-tertiary); white-space: nowrap; }
+.wr-updated-text { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; }
 
 /* Row actions */
 .wr-row-actions { display: flex; align-items: center; justify-content: flex-end; }
 .wr-row-btn {
   width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 5px;
-  color: var(--text-tertiary); cursor: pointer; transition: all 0.15s;
+  color: var(--text-tertiary); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .wr-row-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .wr-row-btn .material-symbols-outlined { font-size: 16px; }
@@ -238,7 +238,7 @@
   position: absolute; top: calc(100% + 4px); right: 0;
   background: var(--bg-panel); border: 1px solid var(--border-subtle);
   border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
-  z-index: 1000; min-width: 140px; padding: 4px;
+  z-index: var(--z-modal); min-width: 140px; padding: 4px;
   animation: wrDropIn 0.12s ease-out;
 }
 .wr-menu-dropdown--card { top: calc(100% + 2px); }
@@ -250,9 +250,9 @@
 }
 .wr-menu-item:hover { background: var(--bg-hover); }
 .wr-menu-item .material-symbols-outlined { font-size: 16px; color: var(--text-tertiary); }
-.wr-menu-item--danger { color: #ef4444; }
-.wr-menu-item--danger:hover { background: color-mix(in srgb, #ef4444 10%, transparent); }
-.wr-menu-item--danger .material-symbols-outlined { color: #ef4444; }
+.wr-menu-item--danger { color: var(--accent-red); }
+.wr-menu-item--danger:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); }
+.wr-menu-item--danger .material-symbols-outlined { color: var(--accent-red); }
 .wr-menu-divider { height: 1px; background: var(--border-subtle); margin: 3px 6px; }
 
 /* ── Grid view ── */
@@ -264,7 +264,7 @@
   background: var(--bg-panel); border: 1px solid var(--border-subtle);
   border-radius: 9px; overflow: hidden;
   display: flex; flex-direction: column;
-  position: relative; transition: all 0.2s;
+  position: relative; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 .wr-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); border-color: var(--border-main); }
 .wr-card-cover {
@@ -275,11 +275,11 @@
 .wr-card-status {
   position: absolute; bottom: 10px; left: 12px;
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 10.5px; font-weight: 600; color: var(--text-secondary);
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
   background: var(--bg-panel); border: 1px solid var(--border-subtle);
   border-radius: 4px; padding: 2px 7px;
 }
-.wr-card-menu-wrap { position: absolute; top: 6px; right: 6px; z-index: 1; }
+.wr-card-menu-wrap { position: absolute; top: 6px; right: 6px; z-index: var(--z-base); }
 .wr-card-menu-btn {
   width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
   background: rgba(0,0,0,0.35); border: none; border-radius: 5px;
@@ -327,9 +327,9 @@
 .wra-close-btn {
   width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; border-radius: 6px;
-  color: var(--text-tertiary); cursor: pointer; transition: all 0.12s;
+  color: var(--text-tertiary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
-.wra-close-btn:hover { background: color-mix(in srgb, #ef4444 10%, transparent); color: #ef4444; }
+.wra-close-btn:hover { background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red); }
 .wra-close-btn .material-symbols-outlined { font-size: 18px; }
 
 /* Type pills */
@@ -355,7 +355,7 @@
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.12s;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .wra-type-pill:hover {
   border-color: var(--pc);
@@ -399,7 +399,7 @@
   padding: 4px 10px; border-radius: 5px;
   border: 1px solid var(--border-subtle);
   background: transparent; font-size: 12px; font-weight: 500;
-  color: var(--text-secondary); cursor: pointer; transition: all 0.12s;
+  color: var(--text-secondary); cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
 }
 .wra-status-opt:hover { background: var(--bg-hover); color: var(--text-primary); }
 .wra-status-opt--active { font-weight: 600; color: var(--text-primary); }
@@ -426,7 +426,7 @@
   width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
   background: var(--bg-app); border: 1px solid var(--border-subtle);
   border-radius: 6px; cursor: pointer; color: var(--text-tertiary);
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .wra-icon-opt:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-main); }
 .wra-icon-opt--active { background: color-mix(in srgb, var(--accent-primary) 15%, transparent); border-color: var(--accent-primary); color: var(--accent-primary); }
@@ -453,7 +453,7 @@
 .wra-cancel-btn {
   padding: 7px 14px; background: transparent; border: 1px solid var(--border-subtle);
   border-radius: 6px; font-size: 13px; color: var(--text-secondary);
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .wra-cancel-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .wra-create-btn {
@@ -469,15 +469,15 @@
 /* Delete modal body */
 .wra-delete-body { padding: 16px 18px; }
 .wra-delete-msg  { font-size: 13px; color: var(--text-primary); margin: 0 0 6px; line-height: 1.5; }
-.wra-delete-hint { font-size: 11.5px; color: var(--text-tertiary); margin: 0; }
+.wra-delete-hint { font-size: 12px; color: var(--text-tertiary); margin: 0; }
 .wra-delete-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px;
-  background: color-mix(in srgb, #ef4444 12%, transparent);
-  color: #ef4444; border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
+  background: color-mix(in srgb, var(--accent-red) 12%, transparent);
+  color: var(--accent-red); border: 1px solid color-mix(in srgb, var(--accent-red) 30%, transparent);
   border-radius: 6px; font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
-.wra-delete-btn:hover { background: color-mix(in srgb, #ef4444 20%, transparent); }
+.wra-delete-btn:hover { background: color-mix(in srgb, var(--accent-red) 20%, transparent); }
 .wra-delete-btn .material-symbols-outlined { font-size: 15px; }
 
 /* ══════════════════════════════════════════════════════

@@ -55,12 +55,22 @@ export class SpacesComponent {
   showDetails       = signal(false);
   detailsProfile    = signal<WorkspaceProfile | null>(null);
 
+  modalStep        = signal<1 | 2>(1);
+  selectedTemplate = signal<string>('blank');
+
   // ── Form ──────────────────────────────────────────────────────────────────
   formName  = signal('');
   formColor = signal('#3b82f6');
   formIcon  = signal('folder');
 
   readonly colorOptions = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#f97316'];
+
+  readonly spaceTemplates = [
+    { id: 'blank',    icon: 'folder',        title: 'Blank Space',    description: 'A clean slate for anything.',             color: '#3b82f6', formIcon: 'folder' },
+    { id: 'project',  icon: 'rocket_launch', title: 'Project Space',  description: 'Track tasks, goals and milestones.',       color: '#f07000', formIcon: 'rocket_launch' },
+    { id: 'personal', icon: 'person',        title: 'Personal Space', description: 'Notes, journals and personal ideas.',      color: '#8020a8', formIcon: 'person' },
+    { id: 'study',    icon: 'school',        title: 'Study Space',    description: 'Research, reading and learning.',          color: '#1c58d8', formIcon: 'school' },
+  ];
   readonly iconOptions  = ['folder', 'rocket_launch', 'laptop', 'brush', 'science', 'bolt', 'star', 'flag', 'campaign', 'architecture'];
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -86,6 +96,7 @@ export class SpacesComponent {
   openNewModal() {
     this.formName.set(''); this.formColor.set('#3b82f6'); this.formIcon.set('folder');
     this.editMode.set(false); this.editProfileId.set(null);
+    this.modalStep.set(1); this.selectedTemplate.set('blank');
     this.showModal.set(true);
   }
 
@@ -94,12 +105,20 @@ export class SpacesComponent {
     this.formName.set(profile.name);
     this.formColor.set(profile.color || '#3b82f6');
     this.formIcon.set(profile.icon || 'folder');
-    this.editMode.set(true);
-    this.editProfileId.set(profile.id);
+    this.editMode.set(true); this.editProfileId.set(profile.id);
+    this.modalStep.set(2);
     this.showModal.set(true);
   }
 
-  closeModal() { this.showModal.set(false); }
+  closeModal() { this.showModal.set(false); this.modalStep.set(1); }
+
+  selectTemplate(id: string) { this.selectedTemplate.set(id); }
+
+  nextStep() {
+    const tpl = this.spaceTemplates.find(t => t.id === this.selectedTemplate());
+    if (tpl) { this.formColor.set(tpl.color); this.formIcon.set(tpl.formIcon); }
+    this.modalStep.set(2);
+  }
 
   saveProfile() {
     const name = this.formName().trim();

@@ -121,19 +121,12 @@ import { TransactionFormComponent } from './transaction-form.component';
           <env-empty-state
             icon="receipt_long"
             title="No transactions yet"
-            description="Track your costs — add one manually or import a list."
-            ctaLabel="Add Transaction"
-            ctaIcon="add"
-            secondaryCtaLabel="Import"
-            (ctaClicked)="openAddForm()"
-            (secondaryCtaClicked)="showImportModal.set(true)">
+            description="Track your costs — add one manually or import a list.">
           </env-empty-state>
         } @else {
           <env-empty-state
             icon="search_off"
-            title="No results match your filters"
-            secondaryCtaLabel="Clear Filters"
-            (secondaryCtaClicked)="clearFilters()">
+            title="No results match your filters">
           </env-empty-state>
         }
       } @else {
@@ -353,7 +346,7 @@ import { TransactionFormComponent } from './transaction-form.component';
     /* ── Import modal (inline) ── */
     .vs-modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
+      display: flex; align-items: center; justify-content: center; z-index: var(--z-modal);
     }
     .vs-modal-box {
       background: var(--bg-panel); border: 1px solid var(--border-subtle);

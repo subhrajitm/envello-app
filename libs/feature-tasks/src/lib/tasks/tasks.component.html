@@ -1,108 +1,150 @@
 
 <div class="tasks-view-minimal h-full">
 
-    <!-- Enterprise Header / Toolbar -->
+    <!-- Toolbar -->
     <div class="tasks-toolbar">
-            <div class="toolbar-left">
-                <div class="tasks-toolbar-quick-actions">
-                    <button type="button"
-                            class="btn-primary add-task-main-btn"
-                            (click)="openNewTaskDialog()"
-                            title="Add new task">
-                        <span class="material-symbols-outlined">add</span>
-                        <span class="btn-label">Add Task</span>
-                    </button>
-                </div>
-                @if (quickAddVisible()) {
-                <div class="quick-capture-bar" (click)="$event.stopPropagation()">
-                    <span class="material-symbols-outlined quick-capture-icon">bolt</span>
-                    <input type="text"
-                           class="quick-add-input"
-                           placeholder='Try "Review PR tomorrow #urgent"'
-                           [value]="quickAddInput()"
-                           (input)="quickAddInput.set($any($event.target).value)"
-                           (keydown.enter)="handleQuickAdd()"
-                           (keydown.escape)="quickAddVisible.set(false); quickAddInput.set('')"
-                           autofocus>
-                    <button type="button" class="quick-capture-submit" (click)="handleQuickAdd()" [disabled]="!quickAddInput().trim()">
-                        <span class="material-symbols-outlined">add</span>
-                    </button>
-                    <button type="button" class="quick-capture-close" (click)="quickAddVisible.set(false); quickAddInput.set('')">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
-                }
-                <div class="toolbar-divider"></div>
-
-                <!-- Primary Navigation Tabs -->
-                <div class="view-switcher main-nav-tabs" role="navigation">
-                    @for (item of sidebarItems(); track item.id) {
-                    <button class="view-btn" 
-                            [class.active]="selectedView() === item.id"
-                            (click)="onSidebarActiveChange(item.id)">
-                        <span class="material-symbols-outlined">{{ item.icon }}</span>
-                        <span class="view-btn-label">{{ item.label }}</span>
-                        @if (item.count) {
-                        <span class="nav-badge">{{ item.count }}</span>
-                        }
-                    </button>
-                    }
-                </div>
-                </div>
-
-            <div class="toolbar-right">
-                <div class="search-input-wrapper">
-                    <span class="material-symbols-outlined search-icon">search</span>
-                    <input type="text" class="toolbar-search" [value]="sidebarSearch()"
-                        (input)="sidebarSearch.set($any($event.target).value)"
-                        placeholder="Search tasks, people, tags...">
-                </div>
-                <div class="toolbar-divider"></div>
-                <div class="view-switcher" aria-label="Change tasks layout" role="group">
-                    <button class="view-btn icon-only" [class.active]="viewMode() === 'list'"
-                        (click)="viewMode.set('list')"
-                        title="List view" aria-label="List view">
-                        <span class="material-symbols-outlined">format_list_bulleted</span>
-                    </button>
-
-                    <button class="view-btn icon-only"
-                        [class.active]="viewMode() === 'thumbnails'"
-                        (click)="viewMode.set('thumbnails')"
-                        title="Thumbnails view"
-                        aria-label="Thumbnails view">
-                        <span class="material-symbols-outlined">view_module</span>
-                    </button>
-                </div>
-                <div class="toolbar-divider"></div>
-                <button class="ai-toggle-btn" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
-                    <span class="material-symbols-outlined">auto_awesome</span>
-                    <span>Assistant</span>
+        <div class="toolbar-left">
+            <!-- Search -->
+            <div class="search-input-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="toolbar-search" [value]="sidebarSearch()"
+                    (input)="sidebarSearch.set($any($event.target).value)"
+                    placeholder="Search tasks…">
+                @if (sidebarSearch()) {
+                <button class="search-clear-btn" (click)="sidebarSearch.set('')">
+                    <span class="material-symbols-outlined" style="font-size:14px">close</span>
                 </button>
-                @if (bulkActionMode()) {
-                <div class="bulk-actions-bar">
-                    <span class="bulk-selection-count">{{ selectedTasks().size }} selected</span>
-                    <button class="btn-secondary btn-sm" (click)="bulkCompleteTasks()">
-                        <span class="material-symbols-outlined">done_all</span>
-                        Complete
-                    </button>
-                    <button class="btn-secondary btn-sm" (click)="bulkChangePriority('HIGH')">
-                        <span class="material-symbols-outlined">flag</span>
-                        High Priority
-                    </button>
-                    <button class="btn-secondary btn-sm" (click)="bulkDeleteTasks()">
-                        <span class="material-symbols-outlined">delete</span>
-                        Delete
-                    </button>
-                    <button class="btn-icon-only" (click)="clearSelection()" title="Clear selection">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
                 }
-                </div>
+            </div>
+            <div class="toolbar-divider"></div>
+            <!-- Nav tabs -->
+            <div class="view-switcher main-nav-tabs" role="navigation">
+                @for (item of sidebarItems(); track item.id) {
+                <button class="view-btn"
+                        [class.active]="selectedView() === item.id"
+                        (click)="onSidebarActiveChange(item.id)">
+                    <span class="material-symbols-outlined">{{ item.icon }}</span>
+                    <span class="view-btn-label">{{ item.label }}</span>
+                    @if (item.count) {
+                    <span class="nav-badge">{{ item.count }}</span>
+                    }
+                </button>
+                }
+            </div>
+        </div>
+
+        <div class="toolbar-right">
+            @if (bulkActionMode()) {
+            <div class="bulk-actions-bar">
+                <span class="bulk-selection-count">{{ selectedTasks().size }} selected</span>
+                <button class="btn-secondary btn-sm" (click)="bulkCompleteTasks()">
+                    <span class="material-symbols-outlined">done_all</span>
+                    Complete
+                </button>
+                <button class="btn-secondary btn-sm" (click)="bulkChangePriority('HIGH')">
+                    <span class="material-symbols-outlined">flag</span>
+                    High Priority
+                </button>
+                <button class="btn-secondary btn-sm" (click)="bulkDeleteTasks()">
+                    <span class="material-symbols-outlined">delete</span>
+                    Delete
+                </button>
+                <button class="btn-icon-only" (click)="clearSelection()" title="Clear selection">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            }
+            <button class="btn-ai-toggle" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span>AI</span>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button type="button"
+                    class="btn-primary add-task-main-btn"
+                    (click)="openNewTaskDialog()"
+                    title="Add new task">
+                <span class="material-symbols-outlined">add</span>
+                <span class="btn-label">New Task</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Body row: task list + sidebar + AI panel -->
+    <!-- Body row: sidebar + task list + AI panel -->
     <div class="tasks-body" [class.tasks-body--detail]="!!selectedTaskForDetails()" [class.tasks-body--new]="newTaskModalOpen()">
+
+    <!-- Left Sidebar -->
+    <div class="tasks-sidebar" [class.tasks-sidebar--collapsed]="calSidebarCollapsed()">
+        <div class="sidebar-calendar-card">
+            <!-- Calendar Header -->
+            <div class="cal-card-header">
+                <div class="cal-card-month-nav">
+                    <button class="cal-nav-btn" (click)="navigateMonth('prev')" aria-label="Previous month">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <span class="cal-card-month-label">{{ calendarMonth() }}</span>
+                    <button class="cal-nav-btn" (click)="navigateMonth('next')" aria-label="Next month">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+                <button class="cal-card-today-chip" (click)="jumpToToday()" title="Jump to today">
+                    <span class="material-symbols-outlined">today</span>
+                    Today
+                </button>
+            </div>
+
+            <!-- Day Headers -->
+            <div class="cal-card-weekdays">
+                @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
+                <span>{{ d }}</span>
+                }
+            </div>
+
+            <!-- Day Grid -->
+            <div class="cal-card-grid">
+                @for (day of calendarDays(); track $index) {
+                <button class="cal-cell"
+                    [class.cal-cell--other-month]="!day.isCurrentMonth"
+                    [class.cal-cell--today]="day.isToday"
+                    [class.cal-cell--has-tasks]="day.isActive && day.isCurrentMonth && !day.isToday"
+                    [class.cal-cell--selected]="day.isSelected && !day.isToday"
+                    (click)="onCalendarDayClick(day)"
+                    [attr.aria-label]="day.isToday ? 'Today' : 'Day ' + day.day">
+                    <span class="cal-cell-num">{{ day.day }}</span>
+                    @if (day.isActive && day.isCurrentMonth) {
+                    <span class="cal-cell-dot"></span>
+                    }
+                </button>
+                }
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="cal-card-stats">
+                <div class="cal-stat" (click)="onMetricClick('today')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ todayTasksCount() }}</span>
+                    <span class="cal-stat-label">Today</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('active')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ activeTasksCount() }}</span>
+                    <span class="cal-stat-label">Active</span>
+                </div>
+                <div class="cal-stat-sep"></div>
+                <div class="cal-stat" (click)="onMetricClick('completed')" role="button" tabindex="0">
+                    <span class="cal-stat-value">{{ completedTasksCount() }}</span>
+                    <span class="cal-stat-label">Done</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapse toggle -->
+        <button class="cal-sidebar-toggle" (click)="calSidebarCollapsed.set(!calSidebarCollapsed())"
+                [title]="calSidebarCollapsed() ? 'Show calendar' : 'Hide calendar'">
+            <span class="material-symbols-outlined">
+                {{ calSidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
+            </span>
+        </button>
+    </div>
+
     <div class="tasks-main-content">
 
         <!-- Task List / Data Grid + Thumbnails -->
@@ -115,7 +157,6 @@
                 @if (isLoading()) {
                     @for (i of [1,2,3,4,5]; track i) {
                     <div class="task-item skeleton-row">
-                        <div class="task-drag-handle" style="opacity: 0.1;"><span class="material-symbols-outlined">drag_indicator</span></div>
                         <div class="task-check-column"><div class="list-circular-checkbox" style="opacity: 0.2;"></div></div>
                         <div class="task-main-column">
                             <div class="skeleton-text" [style.width.%]="[72, 58, 80, 65, 75][i - 1]"></div>
@@ -126,27 +167,26 @@
                 } @else if(filteredTasks().length === 0 && calendarDaySubtasks().length === 0 && todaySubtasks().length === 0 && upcomingSubtasks().length === 0) {
                     @if (store.tasks().length === 0) {
                       <env-empty-state
-                        icon="task_alt"
-                        title="You're all set to start"
-                        description="Create your first task to kick off your workspace."
-                        ctaLabel="+ New Task"
-                        (ctaClicked)="openNewTaskDialog()">
+                        icon="checklist"
+                        title="No tasks yet"
+                        description="Capture anything on your mind — tasks, deadlines, or to-dos.">
                       </env-empty-state>
                     } @else {
                       <env-empty-state
                         icon="search_off"
                         title="No tasks found"
-                        description="No tasks match the current filter or search criteria."
-                        secondaryCtaLabel="Clear Filters"
-                        (secondaryCtaClicked)="sidebarSearch.set(''); selectedView.set('inbox')">
+                        description="Nothing matches your current filter or search.">
                       </env-empty-state>
                     }
                 } @else {
                     @for (item of flatListItems(); track $index) {
 
                         @if (item.kind === 'header') {
-                        <div class="task-group-header" [style.--group-accent]="item.accent">
-                            <span class="task-group-dot"></span>
+                        <div class="task-group-header" [style.--group-accent]="item.accent"
+                             (click)="toggleGroupCollapse(item.label)">
+                            <button class="task-group-chevron" [class.collapsed]="isGroupCollapsed(item.label)">
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </button>
                             <span class="task-group-label">{{ item.label }}</span>
                             <span class="task-group-count">{{ item.count }}</span>
                         </div>
@@ -192,63 +232,42 @@
                         @if (item.kind === 'task') {
                         <div class="task-item"
                              [class.completed]="item.task.status === 'COMPLETED'"
-                             [class.priority-border-high]="item.task.priority === 'HIGH'"
-                             [class.priority-border-medium]="item.task.priority === 'MEDIUM'"
-                             [class.priority-border-low]="item.task.priority === 'LOW'"
-                             [draggable]="true"
                              (click)="openTaskDetails(item.task)">
 
-                            <div class="task-drag-handle" (click)="$event.stopPropagation()">
-                                <span class="material-symbols-outlined">drag_indicator</span>
+                            <!-- Checkbox LEFT -->
+                            <div class="task-check-column" (click)="$event.stopPropagation()">
+                                <button class="list-circular-checkbox"
+                                        [class.checked]="item.task.status === 'COMPLETED'"
+                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
+                                        (click)="toggleTaskStatus(item.task)"
+                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
+                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
+                                    @if (item.task.status === 'COMPLETED') {
+                                        <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 18px;">check_circle</span>
+                                    } @else if (hasIncompleteSubtasks(item.task)) {
+                                        <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">lock</span>
+                                    }
+                                </button>
                             </div>
 
+                            <!-- Main content -->
                             <div class="task-main-column">
                                 <div class="task-title-row-inner">
-                                    <span class="task-priority-dot"
-                                          [class.dot-high]="item.task.priority === 'HIGH'"
-                                          [class.dot-medium]="item.task.priority === 'MEDIUM'"
-                                          [class.dot-low]="item.task.priority === 'LOW'"></span>
                                     <div class="task-title-text">{{ item.task.title }}</div>
+                                    @if (item.task.subtasks && item.task.subtasks.length > 0) {
+                                    <span class="task-subtask-count">{{ getCompletedSubtasks(item.task) }}/{{ item.task.subtasks.length }}</span>
+                                    }
                                 </div>
+                                @if (item.task.due) {
                                 <div class="task-metadata-row">
-                                    @if (item.task.due) {
                                     <span class="metadata-item due-date" [class.overdue]="item.task.due.includes('Overdue')">
-                                        <span class="material-symbols-outlined">calendar_today</span>
                                         {{ item.task.due }}
                                     </span>
-                                    }
-                                    @if (item.task.project && item.task.project !== 'Inbox') {
-                                    <span class="metadata-item project">
-                                        <span class="material-symbols-outlined">folder</span>
-                                        {{ item.task.project }}
-                                    </span>
-                                    }
-                                    @if (item.task.labels && item.task.labels.length > 0) {
-                                        @for (label of item.task.labels; track label) {
-                                        <span class="metadata-item label-chip">{{ label }}</span>
-                                        }
-                                    }
-                                </div>
-
-                                @if (item.task.subtasks && item.task.subtasks.length > 0 && !isSubtasksCollapsed(item.task.id)) {
-                                <div class="task-subtasks-list">
-                                    @for (subtask of item.task.subtasks; track subtask.id) {
-                                    <div class="task-subtask-row">
-                                        <button class="task-subtask-checkbox"
-                                                [class.checked]="subtask.status === 'COMPLETED'"
-                                                (click)="toggleSubtaskStatus(item.task, subtask); $event.stopPropagation()"
-                                                [attr.aria-label]="(subtask.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + subtask.title">
-                                            @if (subtask.status === 'COMPLETED') {
-                                                <span class="material-symbols-outlined">check</span>
-                                            }
-                                        </button>
-                                        <span class="task-subtask-title" [class.completed]="subtask.status === 'COMPLETED'">{{ subtask.title }}</span>
-                                    </div>
-                                    }
                                 </div>
                                 }
                             </div>
 
+                            <!-- Hover actions -->
                             <div class="task-actions-column" (click)="$event.stopPropagation()">
                                 <button class="icon-btn"
                                         (click)="cycleTaskPriority(item.task, $event)"
@@ -259,35 +278,6 @@
                                 </button>
                                 <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)" title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
                                     <span class="material-symbols-outlined">delete</span>
-                                </button>
-                            </div>
-
-                            @if (item.task.subtasks && item.task.subtasks.length > 0) {
-                            <div class="task-collapse-btn-col" (click)="$event.stopPropagation()">
-                                <button class="task-collapse-btn"
-                                        (click)="toggleSubtasksCollapse(item.task.id, $event)"
-                                        [attr.aria-label]="isSubtasksCollapsed(item.task.id) ? 'Expand subtasks' : 'Collapse subtasks'"
-                                        [title]="isSubtasksCollapsed(item.task.id) ? 'Expand subtasks' : 'Collapse subtasks'">
-                                    <span class="material-symbols-outlined task-subtasks-chevron"
-                                          [class.collapsed]="isSubtasksCollapsed(item.task.id)">expand_more</span>
-                                </button>
-                            </div>
-                            }
-
-                            <div class="task-check-column" (click)="$event.stopPropagation()">
-                                <button class="list-circular-checkbox"
-                                        [class.checked]="item.task.status === 'COMPLETED'"
-                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
-                                        (click)="toggleTaskStatus(item.task)"
-                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
-                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
-                                    @if (item.task.status === 'COMPLETED') {
-                                        <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 22px;">check_circle</span>
-                                    } @else if (hasIncompleteSubtasks(item.task)) {
-                                        <span class="material-symbols-outlined" style="font-size:16px;color:var(--text-tertiary)">lock</span>
-                                    } @else {
-                                        <span class="material-symbols-outlined" style="color: var(--border-color); font-size: 22px;">radio_button_unchecked</span>
-                                    }
                                 </button>
                             </div>
                         </div>
@@ -302,20 +292,15 @@
             @if(filteredTasks().length === 0) {
             @if (store.tasks().length === 0) {
               <env-empty-state
-                icon="task_alt"
+                icon="checklist"
                 title="No tasks yet"
-                description="Create your first task to kick off your workspace."
-                ctaLabel="New Task"
-                ctaIcon="add"
-                (ctaClicked)="openNewTaskDialog()">
+                description="Capture anything on your mind — tasks, deadlines, or to-dos.">
               </env-empty-state>
             } @else {
               <env-empty-state
                 icon="search_off"
                 title="No tasks found"
-                description="No tasks match the current filter or search criteria."
-                secondaryCtaLabel="Clear filters"
-                (secondaryCtaClicked)="sidebarSearch.set(''); selectedView.set('inbox')">
+                description="Nothing matches your current filter or search.">
               </env-empty-state>
             }
             } @else {
@@ -382,127 +367,6 @@
         </div>
 
         }
-    </div>
-
-    <!-- Right Sidebar -->
-    <div class="tasks-sidebar">
-        <div class="sidebar-calendar-card">
-            <!-- Calendar Header -->
-            <div class="cal-card-header">
-                <div class="cal-card-month-nav">
-                    <button class="cal-nav-btn" (click)="navigateMonth('prev')" aria-label="Previous month">
-                        <span class="material-symbols-outlined">chevron_left</span>
-                    </button>
-                    <span class="cal-card-month-label">{{ calendarMonth() }}</span>
-                    <button class="cal-nav-btn" (click)="navigateMonth('next')" aria-label="Next month">
-                        <span class="material-symbols-outlined">chevron_right</span>
-                    </button>
-                </div>
-                <button class="cal-card-today-chip" (click)="jumpToToday()" title="Jump to today">
-                    <span class="material-symbols-outlined">today</span>
-                    Today
-                </button>
-            </div>
-
-            <!-- Day Headers -->
-            <div class="cal-card-weekdays">
-                @for (d of ['Su','Mo','Tu','We','Th','Fr','Sa']; track d) {
-                <span>{{ d }}</span>
-                }
-            </div>
-
-            <!-- Day Grid -->
-            <div class="cal-card-grid">
-                @for (day of calendarDays(); track $index) {
-                <button class="cal-cell"
-                    [class.cal-cell--other-month]="!day.isCurrentMonth"
-                    [class.cal-cell--today]="day.isToday"
-                    [class.cal-cell--has-tasks]="day.isActive && day.isCurrentMonth && !day.isToday"
-                    [class.cal-cell--selected]="day.isSelected && !day.isToday"
-                    (click)="onCalendarDayClick(day)"
-                    [attr.aria-label]="day.isToday ? 'Today' : 'Day ' + day.day">
-                    <span class="cal-cell-num">{{ day.day }}</span>
-                    @if (day.isActive && day.isCurrentMonth) {
-                    <span class="cal-cell-dot"></span>
-                    }
-                </button>
-                }
-            </div>
-
-            <!-- Quick Stats Row -->
-            <div class="cal-card-stats">
-                <div class="cal-stat" (click)="onMetricClick('today')" role="button" tabindex="0">
-                    <span class="cal-stat-value">{{ todayTasksCount() }}</span>
-                    <span class="cal-stat-label">Today</span>
-                </div>
-                <div class="cal-stat-sep"></div>
-                <div class="cal-stat" (click)="onMetricClick('active')" role="button" tabindex="0">
-                    <span class="cal-stat-value">{{ activeTasksCount() }}</span>
-                    <span class="cal-stat-label">Active</span>
-                </div>
-                <div class="cal-stat-sep"></div>
-                <div class="cal-stat" (click)="onMetricClick('completed')" role="button" tabindex="0">
-                    <span class="cal-stat-value">{{ completedTasksCount() }}</span>
-                    <span class="cal-stat-label">Done</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dynamic KPI Panels -->
-        <div class="kpis-compact-list">
-            <!-- Context label -->
-            <div class="kpi-context-row">
-                <span class="kpi-context-label">
-                    <span class="material-symbols-outlined">calendar_today</span>
-                    {{ selectedDayLabel() }}
-                </span>
-                @if (selectedCalendarDay()) {
-                <button class="kpi-context-clear" (click)="selectedCalendarDay.set(null)" title="Clear selection">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-                }
-            </div>
-
-            <!-- Completion -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('completed')" aria-label="Show completed tasks">
-                <div class="kpi-icon green"><span class="material-symbols-outlined">check_circle</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Completed</span>
-                    <div class="kpi-value-row">
-                        <span class="kpi-value">{{ selectedDayCompleted() }}</span>
-                        <span class="kpi-sub">/ {{ selectedDayTotal() }}</span>
-                        <span class="kpi-percent">({{ (selectedDayCompleted() / (selectedDayTotal() || 1) * 100) | number:'1.0-0' }}%)</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Due Today / Due on Date -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('today')" aria-label="Show tasks due">
-                <div class="kpi-icon blue"><span class="material-symbols-outlined">event_available</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">{{ selectedCalendarDay() ? 'Due This Day' : 'Due Today' }}</span>
-                    <span class="kpi-value">{{ selectedDayToday() }}</span>
-                </div>
-            </div>
-
-            <!-- Active -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('active')" aria-label="Show active tasks">
-                <div class="kpi-icon purple"><span class="material-symbols-outlined">work_history</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">In Progress</span>
-                    <span class="kpi-value">{{ selectedDayActive() }}</span>
-                </div>
-            </div>
-
-            <!-- High Priority -->
-            <div class="kpi-item" role="button" tabindex="0" (click)="onMetricClick('priority')" aria-label="Show high priority tasks">
-                <div class="kpi-icon orange"><span class="material-symbols-outlined">flag</span></div>
-                <div class="kpi-content">
-                    <span class="kpi-label">High Priority</span>
-                    <span class="kpi-value">{{ selectedDayPriority() }}</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     @if (selectedTaskForDetails(); as task) {
@@ -1228,57 +1092,31 @@
 
 
 <!-- Delete Task Confirmation Modal -->
-<env-modal
+<env-confirm-dialog
     [isOpen]="deleteModalOpen()"
-    (closed)="cancelDeleteTask()"
     title="Delete task"
-    size="sm"
->
-    <div body>
-        @if (taskPendingDelete(); as task) {
-        <p>Are you sure you want to delete the task "<strong>{{ task.title }}</strong>"?</p>
-        <p>This action moves the task to the bin.</p>
-        }
-    </div>
-    <div footer class="task-modal-footer">
-        <div class="task-modal-footer-actions">
-            <button type="button"
-                    class="btn-secondary"
-                    (click)="cancelDeleteTask()">
-                Cancel
-            </button>
-            <button type="button"
-                    class="btn-primary"
-                    (click)="confirmDeleteTask()">
-                Delete
-            </button>
-        </div>
-    </div>
-</env-modal>
+    icon="delete"
+    variant="danger"
+    confirmLabel="Delete"
+    cancelLabel="Cancel"
+    (confirmed)="confirmDeleteTask()"
+    (cancelled)="cancelDeleteTask()">
+    @if (taskPendingDelete(); as task) {
+        Delete "<strong>{{ task.title }}</strong>"? It will be moved to the bin.
+    }
+</env-confirm-dialog>
 
-<!-- Bulk Delete Confirmation Modal -->
-<env-modal
+<env-confirm-dialog
     [isOpen]="bulkDeleteModalOpen()"
-    (closed)="cancelBulkDelete()"
-    size="sm"
->
-    <div header>
-        <h2 class="env-modal-title">
-            <span class="material-symbols-outlined">delete_sweep</span>
-            <span>Delete {{ selectedTasks().size }} tasks</span>
-        </h2>
-    </div>
-    <div body>
-        <p>Are you sure you want to delete <strong>{{ selectedTasks().size }} task{{ selectedTasks().size === 1 ? '' : 's' }}</strong>?</p>
-        <p>This action moves them to the bin.</p>
-    </div>
-    <div footer class="task-modal-footer">
-        <div class="task-modal-footer-actions">
-            <button type="button" class="btn-secondary" (click)="cancelBulkDelete()">Cancel</button>
-            <button type="button" class="btn-primary" (click)="confirmBulkDelete()">Delete</button>
-        </div>
-    </div>
-</env-modal>
+    title="Delete {{ selectedTasks().size }} tasks"
+    icon="delete_sweep"
+    variant="danger"
+    confirmLabel="Delete"
+    cancelLabel="Cancel"
+    (confirmed)="confirmBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+    {{ selectedTasks().size }} task{{ selectedTasks().size === 1 ? '' : 's' }} will be moved to the bin.
+</env-confirm-dialog>
 
 <!-- Focus Mode Overlay -->
 @if (focusMode() && focusedTask()) {

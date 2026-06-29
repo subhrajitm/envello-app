@@ -21,17 +21,17 @@
 }
 
 .env-badge--success {
-  background: rgba(16, 185, 129, 0.15);
+  background: var(--accent-green)26;
   color: var(--accent-green);
 }
 
 .env-badge--warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  background: var(--accent-yellow)26;
+  color: var(--accent-yellow);
 }
 
 .env-badge--error {
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--accent-red)26;
   color: var(--accent-red);
 }
 

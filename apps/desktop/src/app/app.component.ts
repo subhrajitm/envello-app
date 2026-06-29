@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { AuthService, BookContentService, UserPreferencesService, CaptureService, SmartMonitorService } from '@envello/core';
+import { AuthService, BookContentService, UserPreferencesService, CaptureService, SmartMonitorService, GoogleAuthService, StoreService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
 import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
@@ -33,8 +33,10 @@ export class AppComponent implements OnInit, OnDestroy {
   private tauriService = inject(TauriService);
   private sessionService = inject(SessionService);
   private updateService = inject(UpdateService);
-  authService = inject(AuthService);
+  authService   = inject(AuthService);
+  private googleAuth = inject(GoogleAuthService);
   private bookContentService = inject(BookContentService);
+  private storeService       = inject(StoreService);
   private userPrefsService = inject(UserPreferencesService);
   private captureService  = inject(CaptureService);
   private monitor         = inject(SmartMonitorService);
@@ -112,6 +114,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.unlistenCloseRequested = await win.onCloseRequested(async (event) => {
         event.preventDefault();
         try { await this.bookContentService.flushPersist(); } catch { /* non-fatal */ }
+        try { await this.storeService.flushPendingNoteSaves(); } catch { /* non-fatal */ }
         // Respect "minimize to tray" setting — hide instead of destroy if enabled
         const settings = JSON.parse(localStorage.getItem('envello-settings') || '{}');
         if (settings['minimizeToTray']) {
@@ -154,11 +157,20 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private handleDeepLink(url: string): void {
     try {
+      const parsed = new URL(url.replace('envello://', 'https://envello.app/'));
+      const [, section, id] = parsed.pathname.split('/');
+
+      // OAuth callback — exchange PKCE code for session
+      if (section === 'auth-callback' || parsed.searchParams.has('code')) {
+        this.googleAuth.handleCallback(url);
+        this.authService.handleOAuthCallback(url);
+        this.router.navigate(['/workspace']);
+        return;
+      }
+
       // envello://note/<id>    → /daily-notes?id=<id>
       // envello://task/<id>   → /tasks?id=<id>
       // envello://workspace   → /workspace
-      const { pathname } = new URL(url.replace('envello://', 'https://envello.app/'));
-      const [, section, id] = pathname.split('/');
       const routeMap: Record<string, string> = {
         note: '/daily-notes', task: '/tasks', workspace: '/workspace',
         write: '/write', bookmarks: '/bookmarks', knowledge: '/knowledge',

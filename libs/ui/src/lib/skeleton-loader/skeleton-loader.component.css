@@ -12,9 +12,9 @@
 .shimmer {
   background: linear-gradient(
     90deg,
-    var(--bg-secondary, #2a2a2a) 25%,
-    var(--bg-tertiary, #333) 37%,
-    var(--bg-secondary, #2a2a2a) 63%
+    var(--bg-secondary, var(--bg-hover)) 25%,
+    var(--bg-tertiary, var(--bg-active)) 37%,
+    var(--bg-secondary, var(--bg-hover)) 63%
   );
   background-size: 800px 100%;
   animation: shimmer 1.4s ease-in-out infinite;
@@ -23,9 +23,9 @@
 .shimmer-inner {
   background: linear-gradient(
     90deg,
-    var(--bg-tertiary, #333) 25%,
-    var(--bg-hover, #3a3a3a) 37%,
-    var(--bg-tertiary, #333) 63%
+    var(--bg-tertiary, var(--bg-active)) 25%,
+    var(--bg-hover, var(--bg-active)) 37%,
+    var(--bg-tertiary, var(--bg-active)) 63%
   );
   background-size: 800px 100%;
   animation: shimmer 1.4s ease-in-out infinite;
@@ -45,7 +45,7 @@
   gap: 12px;
   padding: 12px 16px;
   border-radius: 8px;
-  background: var(--bg-secondary, #2a2a2a);
+  background: var(--bg-secondary, var(--bg-hover));
 }
 
 .skeleton-avatar {

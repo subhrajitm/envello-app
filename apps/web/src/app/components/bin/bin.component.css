@@ -50,7 +50,7 @@
 .back-btn .material-symbols-outlined { font-size: 16px; }
 
 .bin-breadcrumbs {
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-tertiary);
     font-weight: 700;
     letter-spacing: 1px;
@@ -103,9 +103,9 @@ h1 {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #ef4444;
+    background: var(--accent-red)14;
+    border: 1px solid var(--accent-red)4d;
+    color: var(--accent-red);
     border-radius: 6px;
     padding: 6px 12px;
     font-size: 10px;
@@ -115,8 +115,8 @@ h1 {
     transition: all 0.2s;
 }
 .empty-btn:hover {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.5);
+    background: var(--accent-red)26;
+    border-color: var(--accent-red)80;
 }
 .empty-btn .material-symbols-outlined { font-size: 15px; }
 
@@ -162,7 +162,7 @@ h1 {
     padding: 10px 16px;
     background: var(--bg-subtle);
     border-bottom: 1px solid var(--border-subtle);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 1px;
@@ -215,7 +215,7 @@ h1 {
 }
 
 .col-scope { display: flex; flex-direction: column; gap: 2px; }
-.scope-label { font-size: 9px; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.5px; }
+.scope-label { font-size: 11px; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.5px; }
 .scope-value { font-size: 12px; color: var(--text-secondary); }
 
 .col-actions {
@@ -236,16 +236,16 @@ h1 {
 }
 .bin-icon { font-size: 15px; }
 
-.bin-icon-wrapper.type-task           { background: rgba(252,211,77,0.1);   color: #fcd34d; }
-.bin-icon-wrapper.type-daily-note     { background: rgba(34,197,94,0.1);    color: #22c55e; }
-.bin-icon-wrapper.type-novel          { background: rgba(59,130,246,0.1);   color: #3b82f6; }
-.bin-icon-wrapper.type-novel-chapter  { background: rgba(96,165,250,0.1);   color: #60a5fa; }
-.bin-icon-wrapper.type-novel-note     { background: rgba(34,197,94,0.1);    color: #22c55e; }
-.bin-icon-wrapper.type-novel-character{ background: rgba(251,191,36,0.1);   color: #fbbf24; }
-.bin-icon-wrapper.type-novel-location { background: rgba(168,85,247,0.1);   color: #a855f7; }
-.bin-icon-wrapper.type-novel-group    { background: rgba(148,163,184,0.1);  color: #94a3b8; }
-.bin-icon-wrapper.type-book           { background: rgba(251,146,60,0.1);   color: #fb923c; }
-.bin-icon-wrapper.type-meeting        { background: rgba(236,72,153,0.1);   color: #ec4899; }
+.bin-icon-wrapper.type-task           { background: var(--accent-yellow)1a;  color: var(--accent-yellow); }
+.bin-icon-wrapper.type-daily-note     { background: var(--accent-green)1a;  color: var(--accent-green); }
+.bin-icon-wrapper.type-novel          { background: var(--accent-blue)1a;    color: var(--accent-blue); }
+.bin-icon-wrapper.type-novel-chapter  { background: var(--accent-blue)1a;    color: var(--accent-blue); }
+.bin-icon-wrapper.type-novel-note     { background: var(--accent-green)1a;  color: var(--accent-green); }
+.bin-icon-wrapper.type-novel-character{ background: var(--accent-yellow)1a;  color: var(--accent-yellow); }
+.bin-icon-wrapper.type-novel-location { background: var(--accent-purple)1a;  color: var(--accent-purple); }
+.bin-icon-wrapper.type-novel-group    { background: var(--text-secondary)1a; color: var(--text-secondary); }
+.bin-icon-wrapper.type-book           { background: var(--accent-orange)1a;  color: var(--accent-orange); }
+.bin-icon-wrapper.type-meeting        { background: var(--accent-pink)1a;    color: var(--accent-pink); }
 
 /* ─── Item Info ───────────────────────────────────────────────────────────── */
 .bin-item-title {
@@ -267,7 +267,7 @@ h1 {
 }
 
 .type-badge {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 10px;
@@ -275,21 +275,21 @@ h1 {
     letter-spacing: 0.3px;
 }
 
-.type-badge.type-task            { background: rgba(252,211,77,0.1);  color: #fcd34d;  border: 1px solid rgba(252,211,77,0.2);  }
-.type-badge.type-daily-note      { background: rgba(34,197,94,0.1);   color: #22c55e;  border: 1px solid rgba(34,197,94,0.2);   }
-.type-badge.type-novel           { background: rgba(59,130,246,0.1);  color: #3b82f6;  border: 1px solid rgba(59,130,246,0.2);  }
-.type-badge.type-novel-chapter   { background: rgba(96,165,250,0.1);  color: #60a5fa;  border: 1px solid rgba(96,165,250,0.2);  }
-.type-badge.type-novel-note      { background: rgba(34,197,94,0.1);   color: #22c55e;  border: 1px solid rgba(34,197,94,0.2);   }
-.type-badge.type-novel-character { background: rgba(251,191,36,0.1);  color: #fbbf24;  border: 1px solid rgba(251,191,36,0.2);  }
-.type-badge.type-novel-location  { background: rgba(168,85,247,0.1);  color: #a855f7;  border: 1px solid rgba(168,85,247,0.2);  }
-.type-badge.type-book            { background: rgba(251,146,60,0.1);  color: #fb923c;  border: 1px solid rgba(251,146,60,0.2);  }
-.type-badge.type-meeting         { background: rgba(236,72,153,0.1);  color: #ec4899;  border: 1px solid rgba(236,72,153,0.2);  }
+.type-badge.type-task            { background: var(--accent-yellow)1a; color: var(--accent-yellow); border: 1px solid var(--accent-yellow)33; }
+.type-badge.type-daily-note      { background: var(--accent-green)1a;  color: var(--accent-green);  border: 1px solid var(--accent-green)33;  }
+.type-badge.type-novel           { background: var(--accent-blue)1a;   color: var(--accent-blue);   border: 1px solid var(--accent-blue)33;   }
+.type-badge.type-novel-chapter   { background: var(--accent-blue)1a;   color: var(--accent-blue);   border: 1px solid var(--accent-blue)33;   }
+.type-badge.type-novel-note      { background: var(--accent-green)1a;  color: var(--accent-green);  border: 1px solid var(--accent-green)33;  }
+.type-badge.type-novel-character { background: var(--accent-yellow)1a; color: var(--accent-yellow); border: 1px solid var(--accent-yellow)33; }
+.type-badge.type-novel-location  { background: var(--accent-purple)1a; color: var(--accent-purple); border: 1px solid var(--accent-purple)33; }
+.type-badge.type-book            { background: var(--accent-orange)1a; color: var(--accent-orange); border: 1px solid var(--accent-orange)33; }
+.type-badge.type-meeting         { background: var(--accent-pink)1a;   color: var(--accent-pink);   border: 1px solid var(--accent-pink)33;   }
 
 .meta-sep { opacity: 0.4; }
 
 .meta-id {
     font-family: var(--font-mono, monospace);
-    font-size: 9px;
+    font-size: 11px;
 }
 
 /* ─── Action Buttons ─────────────────────────────────────────────────────── */
@@ -299,7 +299,7 @@ h1 {
     gap: 4px;
     border: none;
     border-radius: 5px;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.3px;
     cursor: pointer;
@@ -310,13 +310,13 @@ h1 {
 .action-btn .material-symbols-outlined { font-size: 14px; }
 
 .restore-btn {
-    background: rgba(34,197,94,0.08);
-    border: 1px solid rgba(34,197,94,0.25);
-    color: #22c55e;
+    background: var(--accent-green)14;
+    border: 1px solid var(--accent-green)40;
+    color: var(--accent-green);
 }
 .restore-btn:hover {
-    background: rgba(34,197,94,0.15);
-    border-color: rgba(34,197,94,0.45);
+    background: var(--accent-green)26;
+    border-color: var(--accent-green)73;
 }
 .restore-btn.loading {
     opacity: 0.6;
@@ -324,14 +324,14 @@ h1 {
 }
 
 .delete-btn {
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.2);
-    color: #ef4444;
+    background: var(--accent-red)14;
+    border: 1px solid var(--accent-red)33;
+    color: var(--accent-red);
     padding: 4px 6px;
 }
 .delete-btn:hover {
-    background: rgba(239,68,68,0.15);
-    border-color: rgba(239,68,68,0.4);
+    background: var(--accent-red)26;
+    border-color: var(--accent-red)66;
 }
 
 /* ─── Expand Icon ─────────────────────────────────────────────────────────── */
@@ -362,7 +362,7 @@ h1 {
 }
 
 .detail-label {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--text-tertiary);
     letter-spacing: 0.5px;
@@ -375,7 +375,7 @@ h1 {
     word-break: break-all;
 }
 
-.detail-yes { color: #22c55e; }
+.detail-yes { color: var(--accent-green); }
 .detail-no  { color: var(--text-tertiary); }
 
 /* ─── Empty State ─────────────────────────────────────────────────────────── */

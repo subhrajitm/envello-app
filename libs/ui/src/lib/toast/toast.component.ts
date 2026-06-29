@@ -36,7 +36,7 @@ interface Toast {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      z-index: 9999;
+      z-index: var(--z-notification);
       display: flex;
       flex-direction: column-reverse;
       gap: 10px;

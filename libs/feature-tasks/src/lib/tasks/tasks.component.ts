@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
-import { SidebarNavItem, ModalComponent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
+import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
@@ -15,7 +15,7 @@ type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, ModalComponent, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -32,6 +32,9 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Left sidebar state
   sidebarSearch = signal<string>('');
   selectedView = signal<TaskViewFilter>('inbox');
+  searchExpanded = signal(false);
+  calSidebarCollapsed = signal(false);
+  collapsedGroups = signal<Set<string>>(new Set());
   quickAddMode = signal<'do-now' | 'do-later'>('do-now');
   /**
    * Main content layout mode for the center panel.
@@ -306,7 +309,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     },
     {
       id: 'completed',
-      icon: 'task_alt',
+      icon: 'done_all',
       label: 'Completed',
       count: this.completedTasksCount()
     },
@@ -425,6 +428,8 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (!force && this.hasUnsavedNewTaskData()) {
       if (!confirm('Discard unsaved task?')) return;
     }
+    this.revokeAllBlobUrls();
+    this.filesToUpload.set([]);
     this.newTaskModalOpen.set(false);
     this.newTaskShowAdvanced.set(false);
     this.showDatePicker.set(false);
@@ -682,7 +687,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   getFilePreview(file: File): string {
-    return URL.createObjectURL(file);
+    if (!this.blobUrls.has(file)) {
+      this.blobUrls.set(file, URL.createObjectURL(file));
+    }
+    return this.blobUrls.get(file)!;
   }
 
   previewImage(url: string) {
@@ -919,10 +927,13 @@ export class TasksComponent implements OnInit, OnDestroy {
       items = tasks.map(t => ({ kind: 'task', task: t }));
     } else {
       items = [];
+      const collapsed = this.collapsedGroups();
       const push = (label: string, accent: string, list: Task[]) => {
         if (!list.length) return;
         items.push({ kind: 'header', label, count: list.length, accent });
-        list.forEach(t => items.push({ kind: 'task', task: t }));
+        if (!collapsed.has(label)) {
+          list.forEach(t => items.push({ kind: 'task', task: t }));
+        }
       };
 
       const today = new Date();
@@ -941,7 +952,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     const appendSubtasks = (subs: Array<{ task: Task; parentTitle: string }>, label: string) => {
       if (!subs.length) return;
       items.push({ kind: 'header', label, count: subs.length, accent: '#8b5cf6' });
-      subs.forEach(({ task, parentTitle }) => items.push({ kind: 'subtask', task, parentTitle }));
+      if (!this.collapsedGroups().has(label)) {
+        subs.forEach(({ task, parentTitle }) => items.push({ kind: 'subtask', task, parentTitle }));
+      }
     };
 
     const view = this.selectedView();
@@ -955,6 +968,18 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     return items;
   });
+
+  toggleGroupCollapse(label: string) {
+    this.collapsedGroups.update(set => {
+      const next = new Set(set);
+      next.has(label) ? next.delete(label) : next.add(label);
+      return next;
+    });
+  }
+
+  isGroupCollapsed(label: string) {
+    return this.collapsedGroups().has(label);
+  }
 
   cycleTaskPriority(task: Task, event: Event) {
     event.stopPropagation();
@@ -2248,6 +2273,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (this.pomodoroInterval) {
       clearInterval(this.pomodoroInterval);
     }
+    this.revokeAllBlobUrls();
   }
 
   // Recurring tasks
@@ -2321,7 +2347,8 @@ export class TasksComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           this.notificationService.info(
             `Reminder: ${task.title}`,
-            `Due: ${task.due} — ${reminder}`
+            `Due: ${task.due} — ${reminder}`,
+            { link: '/tasks' }
           );
         }, delay);
       }
@@ -2547,6 +2574,18 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   // File attachment methods
+  private blobUrls = new Map<File, string>();
+
+  private revokeBlobUrl(file: File) {
+    const url = this.blobUrls.get(file);
+    if (url) { URL.revokeObjectURL(url); this.blobUrls.delete(file); }
+  }
+
+  private revokeAllBlobUrls() {
+    this.blobUrls.forEach(url => URL.revokeObjectURL(url));
+    this.blobUrls.clear();
+  }
+
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -2557,6 +2596,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   removeFileToUpload(index: number) {
     const files = this.filesToUpload();
+    this.revokeBlobUrl(files[index]);
     this.filesToUpload.set(files.filter((_, i) => i !== index));
   }
 
@@ -2585,6 +2625,7 @@ export class TasksComponent implements OnInit, OnDestroy {
           attachments: [...(task.attachments ?? []), ...attachments],
         });
       }
+      this.revokeAllBlobUrls();
       this.filesToUpload.set([]);
     } catch (e) {
       this.notificationService.error('Upload failed', (e as Error).message ?? 'Could not upload files.');
@@ -2765,7 +2806,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     'Improve the description',
     'Estimate time needed',
     'Suggest labels',
-    'What should I do next?',
+    'Identify potential blockers',
   ];
 
   readonly aiSuggestions = [

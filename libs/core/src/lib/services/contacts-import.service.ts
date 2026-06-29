@@ -7,7 +7,7 @@ export interface ImportedContact {
   email?: string;
   company?: string;
   role?: string;
-  phone?: string; // parsed but not stored in Person yet — for display in preview
+  phone?: string;
 }
 
 export interface ImportPreview {
@@ -41,6 +41,7 @@ export class ContactsImportService {
         id: `person-import-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         name: c.name.trim(),
         email: c.email || undefined,
+        phone: c.phone || undefined,
         company: c.company || undefined,
         role: c.role || undefined,
         tags: ['imported'],

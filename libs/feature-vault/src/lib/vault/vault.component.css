@@ -35,7 +35,7 @@
   border-radius: 5px;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
   transition: background 0.12s, color 0.12s;
@@ -72,7 +72,7 @@
   padding: 6px 8px 4px;
 }
 .vt-sb-section-label {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--text-tertiary);
@@ -253,7 +253,7 @@
 }
 .vt-empty-icon  { font-size: 40px; opacity: 0.3; margin-bottom: 14px; display: block; }
 .vt-empty-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin: 0 0 6px; }
-.vt-empty-sub   { font-size: 12.5px; color: var(--text-tertiary); margin: 0 auto 20px; max-width: 340px; line-height: 1.65; }
+.vt-empty-sub   { font-size: 13px; color: var(--text-tertiary); margin: 0 auto 20px; max-width: 340px; line-height: 1.65; }
 .vt-empty-actions { display: flex; gap: 8px; justify-content: center; }
 
 /* Table scrollbar */
@@ -488,7 +488,7 @@
 .vta-save-btn:hover:not(:disabled) { opacity: 0.88; }
 .vta-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .vta-save-btn .material-symbols-outlined { font-size: 15px; }
-.vta-save-error { font-size: 11.5px; color: #ef4444; flex: 1; }
+.vta-save-error { font-size: 12px; color: var(--accent-red); flex: 1; }
 
 /* Form pane scrollbar */
 .vta-form-pane::-webkit-scrollbar { width: 5px; }
@@ -500,7 +500,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 9999;
+  z-index: var(--z-notification);
   display: flex;
   align-items: center;
   gap: 6px;
