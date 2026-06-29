@@ -412,6 +412,8 @@
     transition: background 0.1s ease, color 0.1s ease;
     background: transparent;
     position: relative;
+    -webkit-user-drag: element;
+    user-select: none;
 }
 
 .note-card-item::before {
@@ -462,6 +464,10 @@
 
 .note-card-item.dragging {
     opacity: 0.5;
+}
+
+.note-card-item.dragging * {
+    pointer-events: none;
 }
 
 .note-card-icon {
@@ -1815,6 +1821,36 @@ tiptap-editor:focus,
 
 .editor-tab-add .material-symbols-outlined {
     font-size: 16px;
+}
+
+.close-all-tabs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    align-self: center;
+    margin-right: 8px;
+    padding: 3px 8px;
+    height: 24px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.close-all-tabs-btn .material-symbols-outlined {
+    font-size: 13px;
+}
+
+.close-all-tabs-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-highlight);
 }
 
 /* ─── Right Sidebar: composer-style strip + expandable panel ──────────────── */

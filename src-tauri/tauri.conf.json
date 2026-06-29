@@ -26,7 +26,8 @@
         "minHeight": 600,
         "decorations": true,
         "transparent": true,
-        "titleBarStyle": "Overlay"
+        "titleBarStyle": "Overlay",
+        "dragDropEnabled": false
       }
     ]
   },

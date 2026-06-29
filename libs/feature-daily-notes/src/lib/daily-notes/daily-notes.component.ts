@@ -166,9 +166,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   noteBgClass = computed(() => this.selectedNote()?.bgColor ?? '');
 
   dragOverFolderId  = signal<string | null>(null);
-  draggingNoteId    = signal<string | null>(null);
+  draggingNoteId    = signal<string | null>(null);  // visual-only (CSS classes)
   dragOverNoteId    = signal<string | null>(null);
   dragInsertBefore  = signal<boolean>(true);
+  /** Plain property — survives WKWebView's dragend-before-drop event ordering. */
+  private _activeDragNoteId: string | null = null;
 
   // ── Multi-select ──────────────────────────────────────────────────────────
   multiSelectedIds  = signal<Set<string>>(new Set());
@@ -694,7 +696,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   onNoteItemDrop(targetNoteId: string, folderId: string, event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
-    const draggingId = this.draggingNoteId();
+    const draggingId = this._activeDragNoteId ?? this.draggingNoteId();
     if (!draggingId || draggingId === targetNoteId) { this.dragOverNoteId.set(null); return; }
     const srcNote = this.notes().find(n => n.id === draggingId);
     if (!srcNote || this.effectiveFolderId(srcNote) !== folderId) {
@@ -710,6 +712,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (!this.dragInsertBefore()) toIdx++;
     ordered.splice(Math.max(0, toIdx > fromIdx ? toIdx - 1 : toIdx), 0, draggingId);
     localStorage.setItem(this.noteOrderKey(folderId), JSON.stringify(ordered));
+    this._activeDragNoteId = null;
     this.dragOverNoteId.set(null);
     this.draggingNoteId.set(null);
     this.dragOverFolderId.set(null);
@@ -768,12 +771,19 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       event.dataTransfer.setData('text/plain', noteId);
       event.dataTransfer.effectAllowed = 'move';
     }
+    this._activeDragNoteId = noteId;
     this.draggingNoteId.set(noteId);
   }
 
   onNoteDragEnd() {
-    this.draggingNoteId.set(null);
-    this.dragOverFolderId.set(null);
+    // WKWebView fires dragend BEFORE drop — defer cleanup so drop handlers
+    // can still read _activeDragNoteId when they fire.
+    setTimeout(() => {
+      this._activeDragNoteId = null;
+      this.draggingNoteId.set(null);
+      this.dragOverFolderId.set(null);
+      this.dragOverNoteId.set(null);
+    }, 0);
   }
 
   onFolderDragOver(folderId: string, event: DragEvent) {
@@ -792,8 +802,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.dragOverFolderId.set(null);
-    const noteId = event.dataTransfer?.getData('text/plain');
+    const noteId = this._activeDragNoteId ?? this.draggingNoteId() ?? event.dataTransfer?.getData('text/plain');
+    this._activeDragNoteId = null;
     if (noteId) this.moveNoteToFolder(noteId, folderId);
+    this.draggingNoteId.set(null);
   }
 
   onListDragOver(event: DragEvent) {
@@ -813,9 +825,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if ((event.target as HTMLElement)?.closest?.('.folder-group')) return;
     event.preventDefault();
     this.dragOverFolderId.set(null);
-    const noteId = event.dataTransfer?.getData('text/plain');
+    const noteId = this._activeDragNoteId ?? this.draggingNoteId() ?? event.dataTransfer?.getData('text/plain');
+    this._activeDragNoteId = null;
     const firstId = this.noteGroups()[0]?.id ?? 'personal';
     if (noteId) this.moveNoteToFolder(noteId, firstId);
+    this.draggingNoteId.set(null);
   }
 
   private loadSelectionFromStorage(): { selectedId: string; openNotes: string[] } | null {
@@ -1081,6 +1095,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (this.selectedEntryId() === noteId) {
       this.selectedEntryId.set(remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1] : '');
     }
+  }
+
+  closeAllTabs() {
+    this.openNotes.set([]);
+    this.selectedEntryId.set('');
+    this.allTabsClosed = true;
   }
 
   getNoteById(id: string): Note | undefined {

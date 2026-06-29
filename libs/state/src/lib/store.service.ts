@@ -42,6 +42,8 @@ export class StoreService {
 
     private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
     private _loadInProgress = false;
+    /** Notes with in-flight DB upserts — loadFromDb() keeps in-memory version for these. */
+    private _pendingNoteUpserts = new Map<string, Note>();
 
     constructor() {
         this.loadFromDb();
@@ -122,10 +124,17 @@ export class StoreService {
 
             // Notes — strip content from metadata load; content is lazy-loaded via loadNoteContent().
             // Preserves any in-memory notes not yet in DB (just-created, not yet persisted).
+            // Also preserves in-flight upserts so sync events don't snap back optimistic updates.
             const activeNotes = (notes || [])
                 .filter(n => !n.deleted_at)
                 .slice(0, StoreService.LIMITS.notes)
-                .map(n => ({ ...n, content: undefined })) as Note[];
+                .map(n => {
+                    const pending = this._pendingNoteUpserts.get(n.id);
+                    // Pending write hasn't landed in DB yet — use the in-memory version
+                    return pending
+                        ? { ...n, ...pending, content: undefined } as Note
+                        : { ...n, content: undefined } as Note;
+                });
             const dbNoteIds = new Set(activeNotes.map(n => n.id));
             const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
             this.notes.set([...pendingNotes, ...activeNotes]);
@@ -299,7 +308,13 @@ export class StoreService {
             }, 1000));
         }
 
-        this.db.upsert('notes', note).catch(e => console.error('[StoreService] persist note failed', e));
+        this._pendingNoteUpserts.set(id, note);
+        this.db.upsert('notes', note)
+            .then(() => this._pendingNoteUpserts.delete(id))
+            .catch(e => {
+                this._pendingNoteUpserts.delete(id);
+                console.error('[StoreService] persist note failed', e);
+            });
     }
 
     /** Flush all debounced note file-writes immediately. Call before app close. */

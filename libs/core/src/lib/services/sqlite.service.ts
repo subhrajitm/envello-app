@@ -183,7 +183,12 @@ export class SqliteService {
         preview TEXT,
         content TEXT,
         tags TEXT,
-        lastEdited TEXT
+        lastEdited TEXT,
+        filePath TEXT,
+        lastSynced TEXT,
+        deleted_at TEXT,
+        folderId TEXT,
+        bgColor TEXT
       )
     `);
 
@@ -665,10 +670,12 @@ export class SqliteService {
     private async reloadNotes() {
         const db = await this.getDb();
         try {
-            // Try to add columns if they don't exist (Migration)
+            // Column migrations — each is a no-op if the column already exists
             await db.execute('ALTER TABLE notes ADD COLUMN filePath TEXT').catch(() => { });
             await db.execute('ALTER TABLE notes ADD COLUMN lastSynced TEXT').catch(() => { });
             await db.execute('ALTER TABLE notes ADD COLUMN deleted_at TEXT').catch(() => { });
+            await db.execute('ALTER TABLE notes ADD COLUMN folderId TEXT').catch(() => { });
+            await db.execute('ALTER TABLE notes ADD COLUMN bgColor TEXT').catch(() => { });
         } catch (e) {
             // Ignore column exists errors
         }
@@ -694,11 +701,21 @@ export class SqliteService {
         };
 
         if (exists.length > 0) {
-            await db.execute(`UPDATE notes SET date = $1, title = $2, preview = $3, content = $4, tags = $5, lastEdited = $6, filePath = $7, lastSynced = $8, deleted_at = $9 WHERE id = $10`,
-                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, (jsonNote as any).deleted_at ?? null, jsonNote.id]);
+            await db.execute(
+                `UPDATE notes SET date=$1, title=$2, preview=$3, content=$4, tags=$5, lastEdited=$6, filePath=$7, lastSynced=$8, deleted_at=$9, folderId=$10, bgColor=$11 WHERE id=$12`,
+                [jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags,
+                 jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced,
+                 (jsonNote as any).deleted_at ?? null, (jsonNote as any).folderId ?? null,
+                 (jsonNote as any).bgColor ?? null, jsonNote.id]
+            );
         } else {
-            await db.execute(`INSERT INTO notes (id, date, title, preview, content, tags, lastEdited, filePath, lastSynced, deleted_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content, jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced, (jsonNote as any).deleted_at ?? null]);
+            await db.execute(
+                `INSERT INTO notes (id, date, title, preview, content, tags, lastEdited, filePath, lastSynced, deleted_at, folderId, bgColor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+                [jsonNote.id, jsonNote.date, jsonNote.title, jsonNote.preview, jsonNote.content,
+                 jsonNote.tags, jsonNote.lastEdited, jsonNote.filePath, jsonNote.lastSynced,
+                 (jsonNote as any).deleted_at ?? null, (jsonNote as any).folderId ?? null,
+                 (jsonNote as any).bgColor ?? null]
+            );
         }
         await this.reloadNotes();
     }

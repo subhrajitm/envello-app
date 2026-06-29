@@ -336,6 +336,12 @@
                 }
                 <env-icon-button icon="add" variant="borderless" [size]="28" title="New note" class="editor-tab-add" (clicked)="handleNewNote()" />
             </div>
+            @if (openNotes().length > 1) {
+            <button class="close-all-tabs-btn" title="Close all tabs" (click)="closeAllTabs()">
+                <span class="material-symbols-outlined">close_fullscreen</span>
+                Close all
+            </button>
+            }
         </div>
 
         <!-- Editor Body — content + right sidebar side by side -->
