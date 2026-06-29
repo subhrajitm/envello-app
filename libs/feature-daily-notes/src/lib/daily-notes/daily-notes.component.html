@@ -104,7 +104,22 @@
                 <env-icon-button icon="close" variant="borderless" [size]="20" title="Clear search" (clicked)="clearSearch()" style="position:absolute;right:6px;" />
                 }
             </div>
-            <env-icon-button icon="add" variant="primary" [size]="28" title="New note (⌘N)" (clicked)="handleNewNote()" />
+            <!-- Add dropdown -->
+            <div class="dn-add-wrap">
+                <env-icon-button icon="add" variant="primary" [size]="28" title="New note or folder" (clicked)="toggleAddMenu()" />
+                @if (showAddMenu()) {
+                <div class="dn-add-menu">
+                    <button class="dn-add-menu-item" (click)="handleNewNote(); closeAddMenu()">
+                        <span class="material-symbols-outlined">note_add</span>
+                        New Note
+                    </button>
+                    <button class="dn-add-menu-item" (click)="handleNewFolder(); closeAddMenu()">
+                        <span class="material-symbols-outlined">create_new_folder</span>
+                        New Folder
+                    </button>
+                </div>
+                }
+            </div>
         </div>
 
         <!-- Quick Access -->
@@ -131,10 +146,7 @@
         <!-- My Folders Header -->
         <div class="dn-folders-hdr">
             <span class="dn-sb-section-label">My Folders</span>
-            <div style="display:flex;gap:2px;">
-                <env-icon-button [icon]="allExpanded() ? 'unfold_less' : 'unfold_more'" variant="borderless" [size]="24" [title]="allExpanded() ? 'Collapse all' : 'Expand all'" (clicked)="toggleExpandAll()" />
-                <env-icon-button icon="add" variant="borderless" [size]="24" title="New folder" (clicked)="handleNewFolder()" />
-            </div>
+            <env-icon-button [icon]="allExpanded() ? 'unfold_less' : 'unfold_more'" variant="borderless" [size]="24" [title]="allExpanded() ? 'Collapse all' : 'Expand all'" (clicked)="toggleExpandAll()" />
         </div>
 
         <!-- Folder Tree -->

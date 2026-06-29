@@ -746,13 +746,22 @@
 
 .ra-subtitle--overdue { color: var(--alert, #dc2626); }
 
-/* Right: time + hover actions */
+/* Right: absolutely overlays the item — no flex space consumed */
 .ra-right {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.ra-time,
+.ra-actions {
+  pointer-events: auto;
 }
 
 .ra-time {
@@ -760,13 +769,19 @@
   color: var(--text-tertiary);
   font-family: var(--font-sans);
   white-space: nowrap;
+  transition: opacity 0.12s;
 }
+
+.ra-item:hover .ra-time { opacity: 0; }
 
 .ra-actions {
   display: flex;
   gap: 1px;
   opacity: 0;
   transition: opacity 0.12s;
+  background: var(--bg-hover);
+  border-radius: 6px;
+  padding: 1px;
 }
 
 .ra-item:hover .ra-actions { opacity: 1; }

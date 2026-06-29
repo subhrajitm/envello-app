@@ -992,16 +992,17 @@
     align-items: center;
     justify-content: center;
     border-radius: 5px;
-    border: none;
+    border: 1px solid var(--border-main);
     background: transparent;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: background 0.12s, color 0.12s;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
 .icon-btn:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
+    border-color: var(--border-highlight);
 }
 
 .icon-btn .material-symbols-outlined {
@@ -1321,14 +1322,14 @@
     width: 24px;
     height: 24px;
     border-radius: 4px;
-    border: none;
+    border: 1px solid var(--border-main);
     background: transparent;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: var(--text-tertiary);
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-icon-only .material-symbols-outlined {
@@ -1340,6 +1341,7 @@
 .btn-icon-only:focus-visible {
     background: var(--bg-hover);
     color: var(--text-primary);
+    border-color: var(--border-highlight);
     outline: none;
 }
 
@@ -1523,6 +1525,7 @@
 .thumb-card:hover .btn-icon-only {
     background: var(--bg-hover);
     color: var(--text-primary);
+    border-color: var(--border-highlight);
 }
 
 .task-modal-pill-row {
@@ -2989,7 +2992,7 @@
     justify-content: center;
     aspect-ratio: 1;
     border: none;
-    background: var(--bg-element);
+    background: var(--bg-hover);
     border-radius: 7px;
     cursor: pointer;
     transition: background 0.12s;
@@ -3012,7 +3015,7 @@
     opacity: 0.9;
 }
 
-.cal-cell:hover:not(.cal-cell--today):not(.cal-cell--other-month) {
+.cal-cell:hover:not(.cal-cell--today):not(.cal-cell--selected):not(.cal-cell--other-month) {
     background: var(--bg-active);
 }
 

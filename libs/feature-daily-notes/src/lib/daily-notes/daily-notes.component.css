@@ -26,6 +26,49 @@
     flex-shrink: 0;
 }
 
+.dn-add-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.dn-add-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1);
+    min-width: 160px;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.dn-add-menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.dn-add-menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.dn-add-menu-item .material-symbols-outlined {
+    font-size: 17px;
+    color: var(--text-secondary);
+}
+
 .search-container {
     flex: 1;
     position: relative;
@@ -1101,9 +1144,9 @@ li[data-type="taskItem"] input[type="checkbox"] {
 
 /* Tiptap Editor Styling - Notion-esque */
 ::ng-deep .dn-editor-text .ProseMirror {
-    font-family: var(--editor-font, var(--font-sans));
-    font-size: var(--editor-font-size, 15px);
-    line-height: var(--editor-line-height, 1.75);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.75;
     min-height: none;
     color: var(--text-primary);
 }

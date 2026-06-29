@@ -77,6 +77,11 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   wordCount = signal(0);
   characterCount = signal(0);
 
+  showAddMenu = signal(false);
+
+  toggleAddMenu() { this.showAddMenu.update(v => !v); }
+  closeAddMenu()  { this.showAddMenu.set(false); }
+
   // Modal State
   activeModal        = signal<'none' | 'new-folder' | 'rename-folder' | 'link' | 'image' | 'export' | 'youtube'>('none');
   deleteNoteOpen     = signal(false);
@@ -890,6 +895,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     if (!target.closest('.tag-input-wrapper') && !target.closest('.add-tag-btn')) {
       if (this.showTagInput()) this.submitTagInput();
+    }
+    if (!target.closest('.dn-add-wrap')) {
+      if (this.showAddMenu()) this.showAddMenu.set(false);
     }
   }
 
