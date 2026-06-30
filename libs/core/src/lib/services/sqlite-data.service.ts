@@ -57,6 +57,8 @@ export class SqliteDataService implements DataService {
             case 'bookmarks': return await this.sqlite.getAllBookmarks() as unknown as T[];
             case 'bookmark_folders': return await this.sqlite.getAllBookmarkFolders() as unknown as T[];
             case 'people': return await this.sqlite.getAllPeople() as unknown as T[];
+            case 'note_history': return await this.sqlite.getAllNoteHistory() as unknown as T[];
+            case 'chapter_history': return await this.sqlite.getAllChapterHistory() as unknown as T[];
             default:
                 console.warn(`[SqliteDataService] Unknown collection ${collection}`);
                 return [];
@@ -101,6 +103,8 @@ export class SqliteDataService implements DataService {
             case 'bookmarks': return await this.sqlite.upsertBookmark(item as any);
             case 'bookmark_folders': return await this.sqlite.upsertBookmarkFolder(item as any);
             case 'people': return await this.sqlite.upsertPerson(item as any);
+            case 'note_history': return await this.sqlite.upsertNoteHistory(item as any);
+            case 'chapter_history': return await this.sqlite.upsertChapterHistory(item as any);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for upsert`);
         }
     }
@@ -138,6 +142,8 @@ export class SqliteDataService implements DataService {
             case 'bookmarks': return await this.sqlite.removeBookmark(id);
             case 'bookmark_folders': return await this.sqlite.removeBookmarkFolder(id);
             case 'people': return await this.sqlite.removePerson(id);
+            case 'note_history': return await this.sqlite.removeNoteHistory(id);
+            case 'chapter_history': return await this.sqlite.removeChapterHistory(id);
             default: console.warn(`[SqliteDataService] Unknown collection ${collection} for remove`);
         }
     }

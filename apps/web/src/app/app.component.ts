@@ -1,15 +1,15 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
-import { TauriService, SessionService, UserPreferencesService, SmartMonitorService } from '@envello/core';
+import { HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent, MorningBriefingComponent } from '@envello/ui';
+import { TauriService, SessionService, UserPreferencesService, SmartMonitorService, MorningBriefingService } from '@envello/core';
 import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, KeyboardShortcutsComponent, ToastComponent, WebPreviewComponent, MorningBriefingComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -21,10 +21,13 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   private sessionService = inject(SessionService);
   private userPrefsService = inject(UserPreferencesService);
   private swUpdate  = inject(SwUpdate, { optional: true });
-  private monitor   = inject(SmartMonitorService);
+  private monitor          = inject(SmartMonitorService);
+  private briefingService  = inject(MorningBriefingService);
+  @ViewChild('briefing') briefingRef?: MorningBriefingComponent;
   private unlistenFileDrop?: () => void;
 
   updateAvailable = signal(false);
+  showBriefing    = signal(false);
 
   currentTab = signal('Workspace');
   hasSidebar = signal(true);
@@ -55,6 +58,16 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     // Smart Monitor — run after sync completes or after 6s fallback
     window.addEventListener('envello:sync-complete', () => setTimeout(() => this.monitor.run(), 1500), { once: true });
     setTimeout(() => this.monitor.run(), 6000);
+
+    // Morning Briefing — show once per day after data is ready
+    const tryShowBriefing = () => {
+      if (this.briefingService.shouldShow()) {
+        this.showBriefing.set(true);
+        setTimeout(() => this.briefingRef?.open(), 50);
+      }
+    };
+    window.addEventListener('envello:sync-complete', () => setTimeout(tryShowBriefing, 2000), { once: true });
+    setTimeout(tryShowBriefing, 7000);
 
     // Listen for navigation layout changes from settings
     this.navigationLayoutListener = (event: CustomEvent) => {
@@ -137,6 +150,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       // vault is desktop-only
       'transactions': 'Transactions',
       'people': 'People',
+      'analytics': 'Analytics',
       'bin': 'Bin',
       'activity-log': 'Activity Log',
       'settings': 'Settings',

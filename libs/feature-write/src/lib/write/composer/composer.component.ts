@@ -1553,23 +1553,48 @@ export class ComposerComponent implements OnInit, OnDestroy {
     return changed ? doc.body.innerHTML : html;
   }
 
-  openVersionHistory() {
+  async openVersionHistory() {
     const activeId = this.activeChapterId();
     const frontMatterId = this.activeFrontMatterId();
     const prologueId = this.activePrologueId();
 
-    let versions: VersionSnapshot[] = [];
+    // Load persisted snapshots from DB before opening
+    if (activeId)      await this.versionHistoryService.loadFromDb(activeId, 'chapter');
+    else if (frontMatterId) await this.versionHistoryService.loadFromDb(frontMatterId, 'frontMatter');
+    else if (prologueId)    await this.versionHistoryService.loadFromDb('prologue', 'prologue');
 
-    if (activeId) {
-      versions = this.versionHistoryService.getVersions(activeId, 'chapter');
-    } else if (frontMatterId) {
-      versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
-    } else if (prologueId) {
-      versions = this.versionHistoryService.getVersions('prologue', 'prologue');
-    }
+    let versions: VersionSnapshot[] = [];
+    if (activeId)      versions = this.versionHistoryService.getVersions(activeId, 'chapter');
+    else if (frontMatterId) versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
+    else if (prologueId)    versions = this.versionHistoryService.getVersions('prologue', 'prologue');
 
     this.versionHistory.set(versions);
     this.versionHistoryOpen.set(true);
+  }
+
+  async deleteVersionSnapshot(event: { id: string; contentId: string; contentType: string }) {
+    await this.versionHistoryService.deleteSnapshot(
+      event.id, event.contentId,
+      event.contentType as 'chapter' | 'frontMatter' | 'prologue',
+    );
+    // Refresh list
+    await this.openVersionHistory();
+  }
+
+  saveVersionNow() {
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+    const content = this.editor?.getHTML() ?? '';
+    const title   = this.title();
+    const count   = this.wordCount();
+
+    if (activeId)            this.versionHistoryService.addVersion(activeId, 'chapter', content, title, count, true);
+    else if (frontMatterId)  this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', content, title, count, true);
+    else if (prologueId)     this.versionHistoryService.addVersion('prologue', 'prologue', content, title, count, true);
+
+    // Refresh modal if open
+    if (this.versionHistoryOpen()) this.openVersionHistory();
   }
 
   closeVersionHistory() {

@@ -1,9 +1,9 @@
 import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Note, AiService, ContextService, RecentActivityService } from '@envello/core';
+import { StoreService, Note, AiService, ContextService, RecentActivityService, NoteHistoryService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent } from '@envello/ui';
+import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, NoteHistoryPanelComponent } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -41,7 +41,7 @@ const FOLDER_COLORS = ['#f87171','#fb923c','#fbbf24','#4ade80','#34d399','#38bdf
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent, NoteHistoryPanelComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -53,6 +53,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
   private recentActivity = inject(RecentActivityService);
+  private noteHistory = inject(NoteHistoryService);
+
+  showHistoryPanel = signal(false);
   editor!: Editor;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
   private titleSaveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -630,7 +633,23 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const activeId = this.selectedEntryId();
     if (activeId) {
       this.store.updateNote(activeId, { content, preview });
+      const note = this.selectedNote();
+      if (note) this.noteHistory.autoSnapshot(activeId, note.title, content);
     }
+  }
+
+  async saveVersionNow() {
+    const note = this.selectedNote();
+    if (!note || !this.editor) return;
+    await this.noteHistory.saveSnapshot(note.id, note.title, this.editor.getHTML());
+  }
+
+  onHistoryRestored() {
+    const note = this.selectedNote();
+    if (note?.content && this.editor) {
+      this.editor.commands.setContent(note.content, { emitUpdate: false });
+    }
+    this.showHistoryPanel.set(false);
   }
 
   handleNewNote() {

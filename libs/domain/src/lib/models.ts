@@ -72,6 +72,15 @@ export interface Note {
     deleted_at?: string | null;
 }
 
+export interface NoteHistoryEntry {
+    id: string;
+    noteId: string;
+    title: string;
+    content: string; // HTML snapshot
+    snapshotAt: string; // ISO timestamp
+    label?: string; // optional user-provided label e.g. "Before big edit"
+}
+
 export interface PlanningItem {
     id: string;
     title: string;

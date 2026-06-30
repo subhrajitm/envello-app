@@ -96,6 +96,11 @@ export class ProfileMenuComponent {
     this.onOpenSettings.emit();
   }
 
+  openAnalytics() {
+    this.close();
+    this.router.navigate(['/analytics']);
+  }
+
   openActivity() {
     this.close();
     this.router.navigate(['/activity-log']);

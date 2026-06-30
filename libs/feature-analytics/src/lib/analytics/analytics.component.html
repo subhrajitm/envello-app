@@ -1,0 +1,326 @@
+<div class="an-page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────────── -->
+  <div class="an-header">
+    <div class="an-header-left">
+      <span class="material-symbols-outlined an-header-icon">bar_chart</span>
+      <div>
+        <h1 class="an-title">Analytics</h1>
+        <p class="an-subtitle">{{ periodLabel() }}</p>
+      </div>
+    </div>
+    <div class="an-period-toggle">
+      @for (p of [7, 30, 90]; track p) {
+        <button class="an-period-btn" [class.an-period-btn--active]="period() === p"
+          (click)="setPeriod(p === 7 ? 7 : p === 30 ? 30 : 90)">
+          {{ p }}d
+        </button>
+      }
+    </div>
+  </div>
+
+  @let s = stats();
+
+  <!-- ── Top row: Score + Quick Stats ──────────────────────────────────────── -->
+  <div class="an-top-row">
+
+    <!-- Score -->
+    <div class="an-card an-card--score">
+      <span class="an-card-label">Productivity Score</span>
+      <div class="an-score-ring" [style.--score]="s.productivityScore" [style.--score-color]="scoreColor(s.productivityScore)">
+        <svg viewBox="0 0 80 80" class="an-ring-svg">
+          <circle cx="40" cy="40" r="34" class="an-ring-track"/>
+          <circle cx="40" cy="40" r="34" class="an-ring-fill"
+            [style.stroke-dashoffset]="213.6 - (213.6 * s.productivityScore / 100)"
+            [style.stroke]="scoreColor(s.productivityScore)"/>
+        </svg>
+        <div class="an-score-inner">
+          <span class="an-score-num">{{ s.productivityScore }}</span>
+          <span class="an-score-denom">/100</span>
+        </div>
+      </div>
+      <span class="an-score-label" [style.color]="scoreColor(s.productivityScore)">{{ scoreLabel(s.productivityScore) }}</span>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="an-quick-stats">
+      <div class="an-stat">
+        <span class="material-symbols-outlined an-stat-icon" style="color:var(--accent-primary)">checklist</span>
+        <span class="an-stat-value">{{ s.tasks.completed }}</span>
+        <span class="an-stat-label">Tasks done</span>
+      </div>
+      <div class="an-stat">
+        <span class="material-symbols-outlined an-stat-icon" style="color:var(--accent-green,#34d399)">note</span>
+        <span class="an-stat-value">{{ s.notes.createdInPeriod }}</span>
+        <span class="an-stat-label">Notes created</span>
+      </div>
+      <div class="an-stat">
+        <span class="material-symbols-outlined an-stat-icon" style="color:var(--accent-yellow,#fbbf24)">calendar_month</span>
+        <span class="an-stat-value">{{ s.meetings.inPeriod }}</span>
+        <span class="an-stat-label">Meetings</span>
+      </div>
+      <div class="an-stat">
+        <span class="material-symbols-outlined an-stat-icon" style="color:#c084fc">menu_book</span>
+        <span class="an-stat-value">{{ s.writing.totalWords | number }}</span>
+        <span class="an-stat-label">Words written</span>
+      </div>
+      <div class="an-stat">
+        <span class="material-symbols-outlined an-stat-icon" style="color:var(--accent-red,#f87171)">warning</span>
+        <span class="an-stat-value">{{ s.tasks.overdue }}</span>
+        <span class="an-stat-label">Overdue</span>
+      </div>
+      <div class="an-stat">
+        <span class="material-symbols-outlined an-stat-icon" style="color:var(--text-tertiary)">bookmark</span>
+        <span class="an-stat-value">{{ s.bookmarks.savedInPeriod }}</span>
+        <span class="an-stat-label">Bookmarks saved</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Activity chart ────────────────────────────────────────────────────── -->
+  <div class="an-card an-card--full">
+    <div class="an-card-header">
+      <span class="an-card-label">Daily Activity</span>
+      <div class="an-legend">
+        <span class="an-legend-dot" style="background:var(--accent-primary)"></span><span>Tasks</span>
+        <span class="an-legend-dot" style="background:var(--accent-green,#34d399)"></span><span>Notes</span>
+        <span class="an-legend-dot" style="background:var(--accent-yellow,#fbbf24)"></span><span>Meetings</span>
+      </div>
+    </div>
+    <div class="an-chart">
+      @for (bar of s.daily; track trackBar($index, bar)) {
+        <div class="an-bar-col">
+          <div class="an-bar-stack" [style.height.%]="bar.height || 2">
+            @if (bar.meetings > 0) {
+              <div class="an-bar-seg" style="background:var(--accent-yellow,#fbbf24)"
+                [style.flex]="bar.meetings"></div>
+            }
+            @if (bar.notes > 0) {
+              <div class="an-bar-seg" style="background:var(--accent-green,#34d399)"
+                [style.flex]="bar.notes"></div>
+            }
+            @if (bar.tasks > 0) {
+              <div class="an-bar-seg" style="background:var(--accent-primary)"
+                [style.flex]="bar.tasks"></div>
+            }
+          </div>
+          <span class="an-bar-label">{{ bar.label }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Tasks + Meetings ──────────────────────────────────────────────────── -->
+  <div class="an-row">
+
+    <!-- Tasks -->
+    <div class="an-card">
+      <div class="an-card-header">
+        <span class="an-card-label">Tasks</span>
+        <span class="an-chip">{{ s.tasks.total }} total</span>
+      </div>
+
+      <!-- Completion rate -->
+      <div class="an-metric">
+        <div class="an-metric-row">
+          <span class="an-metric-label">Completion rate</span>
+          <span class="an-metric-value" [style.color]="scoreColor(s.tasks.completionRate)">{{ s.tasks.completionRate }}%</span>
+        </div>
+        <div class="an-track"><div class="an-fill" [style.width.%]="s.tasks.completionRate" [style.background]="scoreColor(s.tasks.completionRate)"></div></div>
+      </div>
+
+      <!-- Status breakdown -->
+      <div class="an-breakdown-group">
+        <span class="an-breakdown-title">Status</span>
+        @for (entry of [['ACTIVE', $any(s.tasks.byStatus)['ACTIVE']], ['COMPLETED', $any(s.tasks.byStatus)['COMPLETED']], ['PENDING', $any(s.tasks.byStatus)['PENDING']]]; track entry[0]) {
+          <div class="an-breakdown-row">
+            <span class="an-breakdown-label">{{ entry[0] }}</span>
+            <div class="an-track an-track--sm">
+              <div class="an-fill an-fill--muted" [style.width.%]="pct(+entry[1], s.tasks.total)"></div>
+            </div>
+            <span class="an-breakdown-count">{{ entry[1] }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Priority breakdown -->
+      <div class="an-breakdown-group">
+        <span class="an-breakdown-title">Priority</span>
+        @for (p of ['HIGH', 'MEDIUM', 'LOW']; track p) {
+          <div class="an-breakdown-row">
+            <span class="an-breakdown-label" [style.color]="priorityColor(p)">{{ p }}</span>
+            <div class="an-track an-track--sm">
+              <div class="an-fill" [style.width.%]="pct($any(s.tasks.byPriority)[p] ?? 0, s.tasks.total)"
+                [style.background]="priorityColor(p)"></div>
+            </div>
+            <span class="an-breakdown-count">{{ $any(s.tasks.byPriority)[p] ?? 0 }}</span>
+          </div>
+        }
+      </div>
+
+      @if (s.tasks.topProjects.length > 0) {
+        <div class="an-breakdown-group">
+          <span class="an-breakdown-title">Top Projects</span>
+          @for (proj of s.tasks.topProjects; track proj.name) {
+            <div class="an-breakdown-row">
+              <span class="an-breakdown-label">{{ proj.name }}</span>
+              <div class="an-track an-track--sm">
+                <div class="an-fill an-fill--muted" [style.width.%]="pct(proj.count, s.tasks.total)"></div>
+              </div>
+              <span class="an-breakdown-count">{{ proj.count }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Meetings -->
+    <div class="an-card">
+      <div class="an-card-header">
+        <span class="an-card-label">Meetings</span>
+        <span class="an-chip">{{ s.meetings.inPeriod }} this period</span>
+      </div>
+
+      <div class="an-meeting-stats">
+        <div class="an-meeting-stat">
+          <span class="an-meeting-stat-value">{{ s.meetings.inPeriod }}</span>
+          <span class="an-meeting-stat-label">Meetings attended</span>
+        </div>
+        <div class="an-meeting-stat">
+          <span class="an-meeting-stat-value">{{ formatMinutes(s.meetings.totalMinutes) }}</span>
+          <span class="an-meeting-stat-label">Total time</span>
+        </div>
+        <div class="an-meeting-stat">
+          <span class="an-meeting-stat-value">{{ formatMinutes(s.meetings.avgDuration) }}</span>
+          <span class="an-meeting-stat-label">Avg duration</span>
+        </div>
+      </div>
+
+      @if (s.meetings.inPeriod > 0) {
+        <div class="an-breakdown-group">
+          <span class="an-breakdown-title">By type</span>
+          @for (entry of $any(s.meetings.byType) | keyvalue; track entry.key) {
+            <div class="an-breakdown-row">
+              <span class="material-symbols-outlined an-type-icon" [style.color]="meetingTypeColor($any(entry.key))">
+                {{ meetingTypeIcon($any(entry.key)) }}
+              </span>
+              <span class="an-breakdown-label">{{ entry.key }}</span>
+              <div class="an-track an-track--sm">
+                <div class="an-fill" [style.width.%]="meetingTypePct($any(entry.key))" [style.background]="meetingTypeColor($any(entry.key))"></div>
+              </div>
+              <span class="an-breakdown-count">{{ entry.value }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="an-empty">No meetings this period.</p>
+      }
+    </div>
+
+  </div>
+
+  <!-- ── Notes + Writing ───────────────────────────────────────────────────── -->
+  <div class="an-row">
+
+    <!-- Notes -->
+    <div class="an-card">
+      <div class="an-card-header">
+        <span class="an-card-label">Notes</span>
+        <span class="an-chip">{{ s.notes.total }} total</span>
+      </div>
+
+      <div class="an-meeting-stats">
+        <div class="an-meeting-stat">
+          <span class="an-meeting-stat-value">{{ s.notes.createdInPeriod }}</span>
+          <span class="an-meeting-stat-label">Created</span>
+        </div>
+        <div class="an-meeting-stat">
+          <span class="an-meeting-stat-value">{{ s.notes.editedInPeriod }}</span>
+          <span class="an-meeting-stat-label">Edited</span>
+        </div>
+        <div class="an-meeting-stat">
+          <span class="an-meeting-stat-value">{{ s.notes.topTags.length }}</span>
+          <span class="an-meeting-stat-label">Unique tags</span>
+        </div>
+      </div>
+
+      @if (s.notes.topTags.length > 0) {
+        <div class="an-breakdown-group">
+          <span class="an-breakdown-title">Top tags</span>
+          @for (t of s.notes.topTags; track t.tag) {
+            <div class="an-breakdown-row">
+              <span class="an-breakdown-label">#{{ t.tag }}</span>
+              <div class="an-track an-track--sm">
+                <div class="an-fill an-fill--muted" [style.width.%]="pct(t.count, s.notes.total)"></div>
+              </div>
+              <span class="an-breakdown-count">{{ t.count }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="an-breakdown-group">
+        <div class="an-metric">
+          <div class="an-metric-row">
+            <span class="an-metric-label">Bookmarks</span>
+            <span class="an-metric-value">{{ s.bookmarks.total }}</span>
+          </div>
+          <div class="an-metric-row">
+            <span class="an-metric-label">Saved this period</span>
+            <span class="an-metric-value">{{ s.bookmarks.savedInPeriod }}</span>
+          </div>
+          <div class="an-metric-row">
+            <span class="an-metric-label">Total visits</span>
+            <span class="an-metric-value">{{ s.bookmarks.totalVisits }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Writing -->
+    <div class="an-card">
+      <div class="an-card-header">
+        <span class="an-card-label">Writing</span>
+        @if (s.writing.totalWords > 0) {
+          <span class="an-chip">{{ s.writing.totalWords | number }} words total</span>
+        }
+      </div>
+
+      @if (s.writing.books.length > 0) {
+        @for (book of s.writing.books; track book.title) {
+          <div class="an-book">
+            <div class="an-book-header">
+              <span class="an-book-title">{{ book.title }}</span>
+              <span class="an-book-status">{{ book.status }}</span>
+            </div>
+            <div class="an-track">
+              <div class="an-fill an-fill--purple" [style.width.%]="book.progress"></div>
+            </div>
+            <div class="an-book-stats">
+              <span>{{ book.wordCount | number }} words</span>
+              <span>{{ book.progress }}%</span>
+              <span>{{ (book.targetWordCount - book.wordCount) | number }} to go</span>
+            </div>
+          </div>
+        }
+
+        @if (s.writing.totalTarget > 0) {
+          <div class="an-metric" style="margin-top:8px">
+            <div class="an-metric-row">
+              <span class="an-metric-label">Overall progress</span>
+              <span class="an-metric-value">{{ s.writing.overallProgress }}%</span>
+            </div>
+            <div class="an-track">
+              <div class="an-fill an-fill--purple" [style.width.%]="s.writing.overallProgress"></div>
+            </div>
+          </div>
+        }
+      } @else {
+        <p class="an-empty">No active writing projects.</p>
+      }
+    </div>
+
+  </div>
+
+</div>

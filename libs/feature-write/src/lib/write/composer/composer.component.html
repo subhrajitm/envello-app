@@ -446,7 +446,9 @@
         (cancel)="cancelLinkModal()" />
 
     <app-version-history-modal [isOpen]="versionHistoryOpen()" [versions]="versionHistory()"
-        (restore)="restoreVersion($event)" (close)="closeVersionHistory()" />
+        (restore)="restoreVersion($event)" (close)="closeVersionHistory()"
+        (saveNow)="saveVersionNow()"
+        (deleteSnapshot)="deleteVersionSnapshot($event)" />
 
     @if (exportModalOpen()) {
     <app-export-modal

@@ -699,6 +699,9 @@
                 <button class="ne-strip-btn" (click)="exportNote()" title="Export">
                     <span class="material-symbols-outlined">download</span>
                 </button>
+                <button class="ne-strip-btn" (click)="showHistoryPanel.set(true)" title="Version History">
+                    <span class="material-symbols-outlined">history</span>
+                </button>
 
                 <!-- Save status -->
                 <span class="dn-save-indicator"
@@ -737,3 +740,11 @@
         }
     </div>
 </div>
+
+<!-- Version History Panel -->
+<env-note-history-panel
+  [noteId]="selectedNote()?.id ?? ''"
+  [isOpen]="showHistoryPanel()"
+  (closed)="showHistoryPanel.set(false)"
+  (restored)="onHistoryRestored()">
+</env-note-history-panel>
