@@ -1,6 +1,6 @@
 [package]
 name = "envello"
-version = "0.1.11"
+version = "0.1.12"
 description = "Envello — a distraction-free workspace for notes, tasks, writing, and research"
 authors = ["Subhrajit Mandal"]
 license = "MIT"
