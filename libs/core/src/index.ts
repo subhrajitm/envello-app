@@ -44,6 +44,7 @@ export * from './lib/services/capture.service';
 export * from './lib/services/contacts-import.service';
 export * from './lib/services/smart-monitor.service';
 export * from './lib/services/context.service';
+export * from './lib/services/recent-activity.service';
 export * from './lib/services/meeting-autopilot.service';
 export * from './lib/services/relationship.service';export * from './lib/services/google-auth.service';
 export * from './lib/services/google-calendar.service';

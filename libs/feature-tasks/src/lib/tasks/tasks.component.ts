@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService } from '@envello/core';
+import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService, RecentActivityService } from '@envello/core';
 import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
@@ -27,6 +27,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   private fileStorage = inject(FileStorageService);
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
+  private recentActivity = inject(RecentActivityService);
   private themeService = inject(ThemeService);
   private userPrefsService = inject(UserPreferencesService);
 
@@ -1920,6 +1921,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Task details modal methods
   openTaskDetails(task: Task) {
     this.selectedTaskId.set(task.id);
+    this.recentActivity.track(task.id, 'task');
     this.editedTaskTitle.set(task.title);
     this.editedTaskDescription.set(task.description || task.notes || '');
     this.editedTaskPriority.set(task.priority);

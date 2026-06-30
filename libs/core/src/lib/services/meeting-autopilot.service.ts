@@ -42,7 +42,6 @@ export class MeetingAutopilotService {
       // Gather cross-module context for this meeting's topic / project
       const ctx = await this.context.buildContext(
         [meeting.title, meeting.project ?? ''].filter(Boolean).join(' '),
-        3,
       );
 
       this.progress.set('Generating artifacts with AI…');

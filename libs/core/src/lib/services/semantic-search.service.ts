@@ -23,6 +23,15 @@ interface IndexEntry {
     vector: number[];
 }
 
+interface CollectedItem {
+    text: string;
+    cacheKey: string; // 'type:id' for single-chunk, 'type:id:N' for multi-chunk
+    result: SemanticResult;
+}
+
+const CHUNK_SIZE    = 1500; // chars (~375 tokens)
+const CHUNK_OVERLAP = 200;  // chars of overlap between adjacent chunks
+
 @Injectable({ providedIn: 'root' })
 export class SemanticSearchService {
     private ai    = inject(AiService);
@@ -81,38 +90,74 @@ export class SemanticSearchService {
         return this.cachedModel;
     }
 
-    private collectItems(): { text: string; result: SemanticResult }[] {
-        const items: { text: string; result: SemanticResult }[] = [];
+    /**
+     * Split text into overlapping chunks. Returns a single-element array if
+     * the text fits within CHUNK_SIZE so callers don't need a special case.
+     */
+    private chunkText(text: string): string[] {
+        if (text.length <= CHUNK_SIZE) return [text];
+        const chunks: string[] = [];
+        let start = 0;
+        while (start < text.length) {
+            chunks.push(text.slice(start, start + CHUNK_SIZE));
+            start += CHUNK_SIZE - CHUNK_OVERLAP;
+        }
+        return chunks;
+    }
 
-        this.store.notes().forEach(n => items.push({
-            text: [n.title, n.preview, ...(n.tags ?? [])].filter(Boolean).join(' '),
-            result: { id: n.id, type: 'note', title: n.title, preview: n.preview || '',
-                      icon: 'edit_note', route: '/daily-notes', tags: n.tags, date: n.lastEdited || n.date },
-        }));
+    private collectItems(): CollectedItem[] {
+        const items: CollectedItem[] = [];
 
-        this.store.bookmarks().forEach(b => items.push({
-            text: [b.title, b.description, b.url, b.notes, ...(b.tags ?? [])].filter(Boolean).join(' '),
-            result: { id: b.id, type: 'bookmark', title: b.title, preview: b.url,
-                      icon: 'bookmark', route: '/bookmarks', tags: b.tags },
-        }));
+        const push = (baseKey: string, fullText: string, result: SemanticResult) => {
+            const chunks = this.chunkText(fullText);
+            chunks.forEach((chunk, i) => {
+                items.push({
+                    text: chunk,
+                    // Multi-chunk items use 'type:id:N'; single-chunk keeps 'type:id'
+                    // for backward cache compatibility.
+                    cacheKey: chunks.length > 1 ? `${baseKey}:${i}` : baseKey,
+                    result: { ...result, preview: chunk },
+                });
+            });
+        };
+
+        this.store.notes().forEach(n =>
+            push(`note:${n.id}`,
+                [n.title, n.preview, ...(n.tags ?? [])].filter(Boolean).join(' '),
+                { id: n.id, type: 'note', title: n.title, preview: n.preview || '',
+                  icon: 'edit_note', route: '/daily-notes', tags: n.tags, date: n.lastEdited || n.date },
+            )
+        );
+
+        this.store.bookmarks().forEach(b =>
+            push(`bookmark:${b.id}`,
+                [b.title, b.description, b.url, b.notes, ...(b.tags ?? [])].filter(Boolean).join(' '),
+                { id: b.id, type: 'bookmark', title: b.title, preview: b.url,
+                  icon: 'bookmark', route: '/bookmarks', tags: b.tags },
+            )
+        );
 
         const flattenTasks = (tasks: ReturnType<typeof this.store.tasks>): ReturnType<typeof this.store.tasks> => {
             const out: ReturnType<typeof this.store.tasks> = [];
             for (const t of tasks) { out.push(t); if (t.subtasks?.length) out.push(...flattenTasks(t.subtasks as any)); }
             return out;
         };
-        flattenTasks(this.store.tasks()).forEach(t => items.push({
-            text: [t.title, t.description, t.notes, t.project, ...(t.labels ?? [])].filter(Boolean).join(' '),
-            result: { id: t.id, type: 'task', title: t.title,
-                      preview: [t.project, t.priority].filter(Boolean).join(' · '),
-                      icon: 'check_circle', route: '/tasks', date: t.due, badge: t.status },
-        }));
+        flattenTasks(this.store.tasks()).forEach(t =>
+            push(`task:${t.id}`,
+                [t.title, t.description, t.notes, t.project, ...(t.labels ?? [])].filter(Boolean).join(' '),
+                { id: t.id, type: 'task', title: t.title,
+                  preview: [t.project, t.priority].filter(Boolean).join(' · '),
+                  icon: 'check_circle', route: '/tasks', date: t.due, badge: t.status },
+            )
+        );
 
-        this.store.books().forEach(n => items.push({
-            text: [n.title, ...n.genre].filter(Boolean).join(' '),
-            result: { id: n.id, type: 'book', title: n.title, preview: n.genre.join(', '),
-                      icon: 'menu_book', route: '/write', badge: n.status },
-        }));
+        this.store.books().forEach(n =>
+            push(`book:${n.id}`,
+                [n.title, ...n.genre].filter(Boolean).join(' '),
+                { id: n.id, type: 'book', title: n.title, preview: n.genre.join(', '),
+                  icon: 'menu_book', route: '/write', badge: n.status },
+            )
+        );
 
         return items;
     }
@@ -154,16 +199,14 @@ export class SemanticSearchService {
                 return;
             }
 
-            // Load persisted cache (all entries in one IDB read)
             const stored = await this.cache.getAll();
 
-            const toEmbed:  typeof items = [];
-            const fromCache: IndexEntry[] = [];
+            const toEmbed:   CollectedItem[] = [];
+            const fromCache: IndexEntry[]    = [];
 
             for (const item of items) {
-                const key   = `${item.result.type}:${item.result.id}`;
                 const h     = this.hash(item.text);
-                const entry = stored.get(key);
+                const entry = stored.get(item.cacheKey);
 
                 if (entry && entry.hash === h && entry.provider === provider) {
                     fromCache.push({ result: item.result, vector: entry.vector });
@@ -172,24 +215,22 @@ export class SemanticSearchService {
                 }
             }
 
-            // Only call the embedding API for new or changed items
             const freshEntries: IndexEntry[] = [];
             if (toEmbed.length > 0) {
                 const { embeddings } = await embedMany({ model, values: toEmbed.map(i => i.text) });
 
                 freshEntries.push(...toEmbed.map((item, i) => ({ result: item.result, vector: embeddings[i] })));
 
-                // Persist in a single IndexedDB transaction
                 await this.cache.setMany(toEmbed.map((item, i) => ({
-                    key:      `${item.result.type}:${item.result.id}`,
+                    key:      item.cacheKey,
                     hash:     this.hash(item.text),
                     vector:   embeddings[i],
                     provider,
                 })));
             }
 
-            // Remove stale entries (items deleted from the store)
-            const liveKeys  = new Set(items.map(i => `${i.result.type}:${i.result.id}`));
+            // Remove stale entries — includes old whole-doc keys superseded by chunks
+            const liveKeys  = new Set(items.map(i => i.cacheKey));
             const staleKeys = [...stored.keys()].filter(k => !liveKeys.has(k));
             await this.cache.deleteMany(staleKeys);
 
@@ -213,12 +254,25 @@ export class SemanticSearchService {
         try {
             const { embeddings } = await embedMany({ model, values: [query] });
             const qv = embeddings[0];
-            return this.index
-                .map(e  => ({ result: e.result, score: this.cosine(qv, e.vector) }))
-                .filter(e => e.score > 0.5)
+
+            // Score all entries (chunks and whole-docs alike)
+            const scored = this.index
+                .map(e => ({ result: e.result, score: this.cosine(qv, e.vector) }))
+                .filter(e => e.score > 0.5);
+
+            // Dedup by parent document ID — keep the highest-scoring chunk per doc
+            const best = new Map<string, { result: SemanticResult; score: number }>();
+            for (const entry of scored) {
+                const existing = best.get(entry.result.id);
+                if (!existing || entry.score > existing.score) {
+                    best.set(entry.result.id, entry);
+                }
+            }
+
+            return [...best.values()]
                 .sort((a, b) => b.score - a.score)
                 .slice(0, k)
-                .map(e  => e.result);
+                .map(e => e.result);
         } catch (e) {
             console.error('[SemanticSearch] search failed:', e);
             return [];

@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService, ContextService } from '@envello/core';
+import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService, ContextService, RecentActivityService } from '@envello/core';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
@@ -25,6 +25,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
+  private recentActivity = inject(RecentActivityService);
   private webPreview = inject(WebPreviewService);
 
   // ── View state ──────────────────────────────────────────────────────────────
@@ -566,6 +567,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   openBookmark(bookmark: Bookmark) {
+    this.recentActivity.track(bookmark.id, 'bookmark');
     this.store.updateBookmark(bookmark.id, {
       lastVisited: new Date().toISOString(),
       visitCount: (bookmark.visitCount ?? 0) + 1,

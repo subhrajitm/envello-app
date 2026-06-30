@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Note, AiService, ContextService } from '@envello/core';
+import { StoreService, Note, AiService, ContextService, RecentActivityService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent } from '@envello/ui';
@@ -52,6 +52,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
+  private recentActivity = inject(RecentActivityService);
   editor!: Editor;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
   private titleSaveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -862,6 +863,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.flushTitleSave();
 
     this.selectedEntryId.set(id);
+    this.recentActivity.track(id, 'note');
     if (!this.openNotes().includes(id)) {
       this.openNotes.update(tabs => [...tabs, id]);
     }
