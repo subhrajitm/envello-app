@@ -257,9 +257,9 @@
 .vt-empty-actions { display: flex; gap: 8px; justify-content: center; }
 
 /* Table scrollbar */
-.vt-table-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
+.vt-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
 .vt-table-wrap::-webkit-scrollbar-track { background: transparent; }
-.vt-table-wrap::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 4px; }
+.vt-table-wrap::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 4px; }
 
 /* ═══════════════════════════════════════════════════════
    ADD / EDIT SLIDER  (vta-*)
@@ -491,9 +491,9 @@
 .vta-save-error { font-size: 12px; color: var(--accent-red); flex: 1; }
 
 /* Form pane scrollbar */
-.vta-form-pane::-webkit-scrollbar { width: 5px; }
+.vta-form-pane::-webkit-scrollbar { width: 6px; }
 .vta-form-pane::-webkit-scrollbar-track { background: transparent; }
-.vta-form-pane::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 3px; }
+.vta-form-pane::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 3px; }
 
 /* Clipboard-cleared toast */
 .vt-clipboard-toast {

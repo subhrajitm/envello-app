@@ -1891,8 +1891,8 @@ tiptap-editor:focus,
 }
 
 .dn-right-content::-webkit-scrollbar-thumb {
-    background: var(--border-subtle);
-    border-radius: 2px;
+    background: var(--border-highlight);
+    border-radius: 3px;
 }
 
 /* Override env-ai-panel when embedded in the sidebar */

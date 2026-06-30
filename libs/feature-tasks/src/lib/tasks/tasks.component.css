@@ -8071,12 +8071,12 @@ textarea:focus-visible {
     overflow-y: auto;
     min-height: 0;
     scrollbar-width: thin;
-    scrollbar-color: var(--border-main) transparent;
+    scrollbar-color: var(--border-highlight) transparent;
 }
 
-.nt-left::-webkit-scrollbar { width: 4px; }
+.nt-left::-webkit-scrollbar { width: 6px; }
 .nt-left::-webkit-scrollbar-track { background: transparent; }
-.nt-left::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 2px; }
+.nt-left::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 3px; }
 
 /* Subtasks section inside left pane */
 .nt-left-subtasks {
@@ -8159,12 +8159,12 @@ textarea:focus-visible {
     min-height: 0;
     padding: 20px 16px;
     scrollbar-width: thin;
-    scrollbar-color: var(--border-main) transparent;
+    scrollbar-color: var(--border-highlight) transparent;
 }
 
-.nt-right::-webkit-scrollbar { width: 4px; }
+.nt-right::-webkit-scrollbar { width: 6px; }
 .nt-right::-webkit-scrollbar-track { background: transparent; }
-.nt-right::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 2px; }
+.nt-right::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 3px; }
 
 /* Right pane section */
 .nt-section {
