@@ -145,6 +145,12 @@
     color: var(--text-tertiary);
     align-self: flex-end;
     margin-top: 4px;
+    transition: color 0.2s;
+}
+
+.char-count--over {
+    color: var(--accent-red);
+    font-weight: 600;
 }
 
 /* Buttons */

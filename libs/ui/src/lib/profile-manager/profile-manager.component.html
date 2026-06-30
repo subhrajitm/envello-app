@@ -1,12 +1,12 @@
 <div class="orbit-page">
     <header class="orbit-header">
         <div class="orbit-header-left">
-            <h1 class="orbit-title">Projects</h1>
+            <h1 class="orbit-title">Spaces</h1>
         </div>
         <div class="orbit-header-right">
             <button class="create-profile-btn" (click)="openAddModal()">
                 <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
-                New Project
+                New Space
             </button>
         </div>
     </header>
@@ -62,14 +62,14 @@
 <!-- Add Profile Modal -->
 <env-modal
     [isOpen]="isAddModalOpen()"
-    title="New Project"
+    title="New Space"
     size="sm"
     (closed)="cancelAdd()"
 >
     <!-- Same body & footer as before -->
     <div body class="flex flex-col gap-4">
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Name</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Space Name</label>
             <input type="text"
                 class="form-input w-full"
                 placeholder="e.g., Personal, Client A, Work"
@@ -79,7 +79,7 @@
                 autofocus
             >
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Data in this project (notes, tasks, transactions) will be isolated from other projects.
+                Data in this space (notes, tasks, transactions) will be isolated from other spaces.
             </p>
         </div>
     </div>
@@ -88,21 +88,21 @@
             Cancel
         </button>
         <button class="btn-primary" (click)="confirmAdd()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; font-size: 13px; font-weight: 600;">
-            Create Project
+            Create Space
         </button>
     </ng-container>
 </env-modal>
 
-<!-- Edit Project Modal -->
+<!-- Edit Space Modal -->
 <env-modal
     [isOpen]="isEditModalOpen()"
-    title="Edit Project"
+    title="Edit Space"
     size="sm"
     (closed)="cancelEdit()"
 >
     <div body class="flex flex-col gap-5">
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Name</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Space Name</label>
             <input type="text"
                 class="form-input w-full"
                 style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
@@ -113,7 +113,7 @@
         </div>
         
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Project Color</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Space Color</label>
             <div class="color-picker flex items-center gap-3">
                 @for (color of ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899', '#6366f1']; track color) {
                 <button type="button" 
@@ -128,7 +128,7 @@
                 }
             </div>
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Pick a color to visually distinguish this project.
+                Pick a color to visually distinguish this space.
             </p>
         </div>
     </div>
@@ -146,12 +146,12 @@
 @if (isDeleteModalOpen()) {
 <env-confirm-dialog
     [isOpen]="true"
-    title="Delete Project"
+    [title]="'Delete \'' + profileToDeleteName() + '\''"
     icon="delete_forever"
     variant="danger"
     confirmLabel="Delete Permanently"
     (confirmed)="confirmDelete()"
     (cancelled)="cancelDelete()">
-    All data in this project — notes, tasks, and transactions — will be permanently <strong>deleted and unrecoverable</strong>.
+    All data in <strong>"{{ profileToDeleteName() }}"</strong> — notes, tasks, and transactions — will be permanently <strong>deleted and unrecoverable</strong>.
 </env-confirm-dialog>
 }

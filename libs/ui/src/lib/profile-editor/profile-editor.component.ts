@@ -32,8 +32,10 @@ export class ProfileEditorComponent {
   isSaving = signal(false);
   isImageLoading = signal(false);
 
+  readonly BIO_MAX = 200;
+
   get isValid(): boolean {
-    return this.tempName.trim().length > 0;
+    return this.tempName.trim().length > 0 && this.tempBio.length <= this.BIO_MAX;
   }
 
   open() {

@@ -87,15 +87,19 @@ export class ProfileManagerComponent {
   // Delete Modal Logic
   isDeleteModalOpen = signal(false);
   profileToDelete = signal<string | null>(null);
+  profileToDeleteName = signal<string>('');
 
   openDeleteModal(id: string) {
+    const name = this.workspaces().find(w => w.id === id)?.name ?? 'this project';
     this.profileToDelete.set(id);
+    this.profileToDeleteName.set(name);
     this.isDeleteModalOpen.set(true);
   }
 
   cancelDelete() {
     this.isDeleteModalOpen.set(false);
     this.profileToDelete.set(null);
+    this.profileToDeleteName.set('');
   }
 
   confirmDelete() {

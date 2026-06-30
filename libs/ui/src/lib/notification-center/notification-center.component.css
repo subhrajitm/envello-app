@@ -125,7 +125,7 @@
 .notifications-list {
     flex: 1;
     overflow-y: auto;
-    max-height: calc(100vh - 220px);
+    min-height: 0;
 }
 
 .notification-item {
@@ -378,6 +378,6 @@
     }
 
     .notifications-list {
-        max-height: calc(100vh - 200px);
+        min-height: 0;
     }
 }

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { UserService, WorkspaceProfileService } from '@envello/core';
+import { UserService, WorkspaceProfileService, StoreService, NotificationService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
 import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcuts.service';
 
@@ -40,7 +40,10 @@ export class ProfileMenuComponent {
   onOpenProfile = output<void>();
   onOpenSettings = output<void>();
 
-  workspaceService = inject(WorkspaceProfileService);
+  private workspaceService = inject(WorkspaceProfileService);
+  private storeService = inject(StoreService);
+  private notify = inject(NotificationService);
+
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
 
@@ -59,10 +62,20 @@ export class ProfileMenuComponent {
 
   confirmAddWorkspace() {
     const name = this.newProfileName().trim();
-    if (name) {
-      this.workspaceService.addProfile(name);
-      this.isAddProfileModalOpen.set(false);
-    }
+    if (!name) return;
+    const newId = crypto.randomUUID();
+    this.storeService.addSpace({
+      id: newId,
+      title: name,
+      description: '',
+      status: 'PLANNING',
+      words: 0,
+      updated: new Date().toISOString(),
+      icon: 'folder'
+    });
+    this.workspaceService.addProfileWithId(newId, name, '#3b82f6', 'folder');
+    this.isAddProfileModalOpen.set(false);
+    this.workspaceService.switchProfile(newId);
   }
 
   cancelAddWorkspace() {
@@ -71,7 +84,7 @@ export class ProfileMenuComponent {
 
   manageProfiles() {
     this.close();
-    this.router.navigate(['/profiles']);
+    this.router.navigate(['/spaces']);
   }
 
   open() {
@@ -108,6 +121,7 @@ export class ProfileMenuComponent {
 
   openHelp() {
     this.close();
+    this.notify.info('Help & Support', 'Documentation and support resources coming soon.');
   }
 
   openBin() {

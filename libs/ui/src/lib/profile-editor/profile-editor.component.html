@@ -42,8 +42,8 @@
         <div class="form-group flex flex-col gap-2">
             <label>Bio</label>
             <textarea [(ngModel)]="tempBio" class="form-textarea" placeholder="Tell us about yourself..."
-                rows="4"></textarea>
-            <span class="char-count">{{ tempBio.length }}/200</span>
+                rows="4" [maxlength]="BIO_MAX"></textarea>
+            <span class="char-count" [class.char-count--over]="tempBio.length > BIO_MAX">{{ tempBio.length }}/{{ BIO_MAX }}</span>
         </div>
     </div>
     <div footer class="flex items-center justify-end gap-2">

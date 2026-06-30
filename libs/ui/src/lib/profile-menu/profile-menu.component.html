@@ -36,6 +36,31 @@
         </div>
     </div>
 
+    <!-- Space Switcher -->
+    <div class="menu-section workspace-section">
+        <div class="section-label">Space</div>
+        @for (ws of workspaces(); track ws.id) {
+        <button class="menu-item workspace-item" [class.workspace-active]="activeWorkspace().id === ws.id"
+            (click)="ws.id !== activeWorkspace().id && switchWorkspace(ws.id)">
+            <span class="workspace-dot" [style.background]="ws.color || 'var(--accent-primary)'"></span>
+            <span class="workspace-name">{{ ws.name }}</span>
+            @if (activeWorkspace().id === ws.id) {
+            <span class="material-symbols-outlined workspace-check">check</span>
+            }
+        </button>
+        }
+        <button class="menu-item" (click)="addWorkspace()">
+            <span class="material-symbols-outlined">add_circle</span>
+            <span>Add Space</span>
+        </button>
+        <button class="menu-item" (click)="manageProfiles()">
+            <span class="material-symbols-outlined">grid_view</span>
+            <span>All Spaces</span>
+        </button>
+    </div>
+
+    <div class="menu-divider"></div>
+
     <!-- Menu Items -->
     <div class="menu-section flex flex-col">
         <button class="menu-item flex items-center gap-2 w-full" (click)="openProfile()">
@@ -116,35 +141,30 @@
     </div>
 </div>
 
-<!-- Add Profile Modal -->
+<!-- Add Space Modal -->
 <env-modal
     [isOpen]="isAddProfileModalOpen()"
-    title="Create Local Profile"
+    title="New Space"
     size="sm"
     (closed)="cancelAddWorkspace()"
 >
-    <div body class="flex flex-col gap-4" style="padding: 16px 20px;">
-        <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Profile Name</label>
+    <div body class="modal-body-content">
+        <div class="form-group">
+            <label class="form-label">Space Name</label>
             <input type="text"
-                class="form-input w-full"
+                class="form-input"
                 placeholder="e.g., Personal, Client A, Side Project"
-                style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
                 [ngModel]="newProfileName()" (ngModelChange)="newProfileName.set($event)"
                 (keyup.enter)="confirmAddWorkspace()"
                 autofocus
             >
-            <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Data created in this profile (notes, passwords, transactions) will be isolated to this local workspace.
-            </p>
+            <span class="form-hint">Data in this space (notes, tasks, transactions) will be isolated from other spaces.</span>
         </div>
     </div>
-    <div footer class="flex justify-end gap-3" style="width: 100%; padding: 16px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-hover);">
-        <button class="btn-cancel" (click)="cancelAddWorkspace()" style="padding: 8px 16px; border-radius: 6px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">
-            Cancel
+    <ng-container footer>
+        <button class="modal-btn-cancel" (click)="cancelAddWorkspace()">Cancel</button>
+        <button class="modal-btn-primary" (click)="confirmAddWorkspace()" [disabled]="!newProfileName().trim()">
+            Create Space
         </button>
-        <button class="btn-primary" (click)="confirmAddWorkspace()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; cursor: pointer; font-size: 13px; font-weight: 600;">
-            Create Profile
-        </button>
-    </div>
+    </ng-container>
 </env-modal>

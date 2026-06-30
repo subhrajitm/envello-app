@@ -279,6 +279,114 @@
     color: var(--text-tertiary);
 }
 
+/* Section Labels */
+.section-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 4px 10px 2px;
+}
+
+/* Workspace Items */
+.workspace-section {
+    padding-bottom: 6px;
+}
+
+.workspace-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.workspace-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.workspace-check {
+    font-size: 16px !important;
+    color: var(--accent-primary) !important;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.workspace-active {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.workspace-active .material-symbols-outlined {
+    color: var(--text-primary);
+}
+
+/* Modal Content */
+.modal-body-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.form-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.modal-btn-cancel {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn-cancel:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-main);
+}
+
+.modal-btn-primary {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: var(--accent-primary);
+    color: var(--accent-primary-text);
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.modal-btn-primary:hover:not(:disabled) {
+    opacity: 0.88;
+}
+
+.modal-btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .profile-dropdown {
