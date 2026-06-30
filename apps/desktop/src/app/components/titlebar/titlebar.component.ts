@@ -1,5 +1,5 @@
 import { Component, Input, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
-import { WorkspaceProfileService } from '@envello/core';
+import { WorkspaceProfileService, AuthService } from '@envello/core';
 import { Router } from '@angular/router';
 
 type NavLayout = 'minimized' | 'vertical' | 'horizontal';
@@ -11,12 +11,14 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
     <div class="titlebar" data-tauri-drag-region>
       <div class="titlebar-traffic" data-tauri-drag-region></div>
 
-      <!-- Space switcher trigger -->
+      <!-- Space switcher — only shown when authenticated -->
+      @if (isAuthenticated()) {
       <button class="titlebar-space-btn" (click)="openSwitcher()" title="Switch space (⌘P)">
         <span class="titlebar-space-dot" [style.background]="activeSpace().color"></span>
         <span class="titlebar-space-name">{{ activeSpace().name }}</span>
         <span class="material-symbols-outlined titlebar-space-chevron">unfold_more</span>
       </button>
+      }
 
       <!-- Layout toggles -->
       <div class="titlebar-actions">
@@ -356,7 +358,9 @@ export class TitlebarComponent implements OnInit, OnDestroy {
 
   private workspaceService = inject(WorkspaceProfileService);
   private router = inject(Router);
+  private auth = inject(AuthService);
 
+  isAuthenticated = this.auth.isAuthenticated;
   activeSpace = this.workspaceService.activeProfile;
   spaces = computed(() => {
     const profiles = this.workspaceService.profiles();
