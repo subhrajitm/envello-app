@@ -185,20 +185,22 @@ export class SmartMonitorService {
       if (findings.length > 0) {
         this.notify.add({
           type: 'success',
-          title: `Smart Monitor: ${findings.length} task${findings.length !== 1 ? 's' : ''} created`,
+          title: `${findings.length} task${findings.length !== 1 ? 's' : ''} created`,
           message: findings.slice(0, 3).map(f => `• ${f.title}`).join('\n')
             + (findings.length > 3 ? `\n• …and ${findings.length - 3} more` : ''),
           icon: 'bolt',
+          isAi: true,
           link: '/tasks',
         });
       } else if (manual) {
         this.notify.add({
           type: 'info',
-          title: 'Smart Monitor: all clear',
+          title: 'All clear',
           message: skipped > 0
             ? `${skipped} item${skipped !== 1 ? 's' : ''} checked — no new tasks needed`
             : 'No actionable items found right now',
           icon: 'check_circle',
+          isAi: true,
         });
       }
 
@@ -210,6 +212,7 @@ export class SmartMonitorService {
           title: 'Smart Monitor failed',
           message: String((e as Error)?.message ?? e),
           icon: 'error',
+          isAi: true,
         });
       }
     } finally {

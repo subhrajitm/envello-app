@@ -13,6 +13,8 @@ export interface Notification {
   actionLabel?: string;
   actionCallback?: () => void;
   icon?: string;
+  /** Marks the notification as AI-generated — shows a faded sparkle badge in the toast. */
+  isAi?: boolean;
   /** Route to navigate to when the notification is clicked (survives localStorage). */
   link?: string;
 }

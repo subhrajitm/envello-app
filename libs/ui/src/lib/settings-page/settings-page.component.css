@@ -1108,6 +1108,15 @@
   overflow: hidden;
   margin-top: 4px;
 }
+.monitor-history-body {
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-highlight) transparent;
+}
+.monitor-history-body::-webkit-scrollbar { width: 6px; }
+.monitor-history-body::-webkit-scrollbar-track { background: transparent; }
+.monitor-history-body::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 3px; }
 .monitor-history-hdr {
   display: grid;
   grid-template-columns: 1fr 130px 90px;

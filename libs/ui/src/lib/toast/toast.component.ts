@@ -12,6 +12,7 @@ interface Toast {
   message: string;
   type: Notification['type'];
   icon: string;
+  isAi: boolean;
   leaving: boolean;
 }
 
@@ -29,9 +30,12 @@ interface Toast {
             <span class="material-symbols-outlined">close</span>
           </button>
 
-          <!-- Header: type icon + title -->
+          <!-- Header: type icon + optional AI badge + title -->
           <div class="toast-header">
             <span class="material-symbols-outlined toast-type-icon">{{ toast.icon }}</span>
+            @if (toast.isAi) {
+              <span class="material-symbols-outlined toast-ai-badge" title="AI-generated">auto_awesome</span>
+            }
             <span class="toast-title">{{ toast.title }}</span>
           </div>
 
@@ -126,6 +130,13 @@ interface Toast {
     .toast--warning .toast-type-icon { color: var(--accent-yellow); }
     .toast--info    .toast-type-icon { color: var(--accent-blue); }
 
+    .toast-ai-badge {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
     .toast-title {
       font-size: 16px;
       font-weight: 600;
@@ -199,7 +210,7 @@ export class ToastComponent {
   }
 
   show(n: Notification) {
-    const toast: Toast = { id: n.id, title: n.title, message: n.message, type: n.type, icon: n.icon ?? this.iconFor(n.type), leaving: false };
+    const toast: Toast = { id: n.id, title: n.title, message: n.message, type: n.type, icon: n.icon ?? this.iconFor(n.type), isAi: !!n.isAi, leaving: false };
     this.toasts.update(t => [...t, toast]);
     setTimeout(() => this.dismiss(n.id), DURATION_MS);
   }

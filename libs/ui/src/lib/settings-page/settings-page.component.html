@@ -823,6 +823,7 @@
               <span class="sections-col-label settings-center">Rule</span>
               <span class="sections-col-label settings-center">Status</span>
             </div>
+            <div class="monitor-history-body">
             @for (task of monitorHistory(); track task.id) {
               <div class="monitor-history-row">
                 <div class="monitor-history-title">
@@ -845,6 +846,7 @@
                 </span>
               </div>
             }
+            </div>
           </div>
         }
 
