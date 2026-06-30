@@ -69,7 +69,6 @@
                             </div>
                             <div class="event-text-wrap">
                                 <span class="event-action">{{ activity.action }}</span>
-                                <span class="event-id">ID: {{ activity.id | slice:0:12 }}...</span>
                             </div>
                         </div>
                     </div>
@@ -98,9 +97,14 @@
                 @if (expandedRowId() === activity.id) {
                 <div class="al-detail-panel">
                     <div class="detail-kv-row">
-                        <div class="detail-kv">
-                            <span class="detail-key">Full ID</span>
-                            <span class="detail-val">{{ activity.id }}</span>
+                        <div class="detail-kv detail-kv--id">
+                            <span class="detail-key">Event ID</span>
+                            <div class="detail-id-row">
+                                <span class="detail-val detail-val--mono">{{ activity.id }}</span>
+                                <button class="copy-btn" (click)="copyId(activity.id); $event.stopPropagation()" title="Copy ID">
+                                    <span class="material-symbols-outlined">{{ copiedId() === activity.id ? 'check' : 'content_copy' }}</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="detail-kv">
                             <span class="detail-key">Type</span>

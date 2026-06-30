@@ -397,8 +397,35 @@
 .detail-val {
     font-size: 12px;
     color: var(--text-primary);
-    font-family: var(--font-mono, monospace);
 }
+
+.detail-val--mono {
+    font-family: var(--font-mono, monospace);
+    word-break: break-all;
+}
+
+.detail-kv--id { min-width: 0; flex: 1; }
+
+.detail-id-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    transition: color 0.15s;
+}
+.copy-btn:hover { color: var(--text-primary); }
+.copy-btn .material-symbols-outlined { font-size: 14px; }
 
 .detail-val.status-success {
     color: var(--accent-green);

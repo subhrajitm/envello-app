@@ -269,7 +269,7 @@ export class PeopleComponent {
     const name = this.editName().trim();
     if (!name) return;
     const person: Person = {
-      id: `person-${Date.now()}`,
+      id: `person-${crypto.randomUUID()}`,
       name,
       email:   this.editEmail().trim()   || undefined,
       phone:   this.editPhone().trim()   || undefined,

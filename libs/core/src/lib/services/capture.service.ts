@@ -80,7 +80,7 @@ JSON schema:
     switch (intent.type) {
       case 'task': {
         const task: Task = {
-          id: `task-${Date.now()}`,
+          id: `task-${crypto.randomUUID()}`,
           title: intent.title,
           priority: intent.fields.priority ?? 'MEDIUM',
           hours: '1.0H',
@@ -95,7 +95,7 @@ JSON schema:
       case 'note': {
         const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const note: Note = {
-          id: `note-${Date.now()}`,
+          id: `note-${crypto.randomUUID()}`,
           date: dateStr,
           title: intent.title.slice(0, 80),
           preview: intent.title,
@@ -126,7 +126,7 @@ JSON schema:
 
       case 'bookmark': {
         const bm: Bookmark = {
-          id: `bm-${Date.now()}`,
+          id: `bm-${crypto.randomUUID()}`,
           title: intent.title,
           url: intent.fields.url ?? 'https://',
           createdAt: now.toISOString(),

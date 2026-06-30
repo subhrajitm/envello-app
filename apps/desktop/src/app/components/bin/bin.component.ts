@@ -28,6 +28,7 @@ export class BinComponent {
   expandedRowId = signal<string | null>(null);
   restoringId = signal<string | null>(null);
   confirmDialog = signal<ConfirmDialog | null>(null);
+  copiedId = signal<string | null>(null);
 
   allItems = computed(() =>
     [...this.binService.items()].sort(
@@ -65,6 +66,12 @@ export class BinComponent {
 
   toggleRow(id: string) {
     this.expandedRowId.set(this.expandedRowId() === id ? null : id);
+  }
+
+  async copyId(id: string): Promise<void> {
+    await navigator.clipboard.writeText(id);
+    this.copiedId.set(id);
+    setTimeout(() => this.copiedId.set(null), 2000);
   }
 
   canRestore(_type: BinEntryType): boolean {

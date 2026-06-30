@@ -78,7 +78,7 @@ export class CalendarSyncService {
   addConnection(partial: Omit<CalendarConnection, 'id' | 'color'>): CalendarConnection {
     const conn: CalendarConnection = {
       ...partial,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       color: PROVIDER_META[partial.provider].color,
     };
     this.connections.update(cs => [...cs, conn]);

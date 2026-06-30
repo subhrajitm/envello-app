@@ -66,11 +66,9 @@
                         </div>
                     </div>
                     <div class="col-item">
-                        <div class="bin-item-title">{{ item.title || item.id }}</div>
+                        <div class="bin-item-title">{{ item.title || '(untitled)' }}</div>
                         <div class="bin-item-meta">
                             <span class="type-badge type-{{ item.type }}">{{ formatType(item.type) }}</span>
-                            <span class="meta-sep">•</span>
-                            <span class="meta-id">ID: {{ item.id | slice:0:8 }}</span>
                         </div>
                     </div>
                     <div class="col-time">

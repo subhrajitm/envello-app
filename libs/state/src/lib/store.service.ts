@@ -499,7 +499,7 @@ export class StoreService {
 
     addActivity(text: string, type: Activity['type'] = 'entry') {
         const newActivity: Activity = {
-            id: Date.now().toString(),
+            id: crypto.randomUUID(),
             text,
             time: 'Just now',
             type

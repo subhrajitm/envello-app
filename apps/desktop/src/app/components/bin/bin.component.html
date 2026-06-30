@@ -71,8 +71,7 @@
                                 <span class="material-symbols-outlined bin-icon">{{ getIconForType(item.type) }}</span>
                             </div>
                             <div class="item-text-wrap">
-                                <span class="item-title">{{ item.title || item.id }}</span>
-                                <span class="item-id">ID: {{ item.id | slice:0:12 }}...</span>
+                                <span class="item-title">{{ item.title || '(untitled)' }}</span>
                             </div>
                         </div>
                     </div>
@@ -107,9 +106,14 @@
                 @if (expandedRowId() === item.id) {
                 <div class="bin-detail-panel">
                     <div class="detail-kv-row">
-                        <div class="detail-kv">
-                            <span class="detail-key">Full ID</span>
-                            <span class="detail-val">{{ item.id }}</span>
+                        <div class="detail-kv detail-kv--id">
+                            <span class="detail-key">Item ID</span>
+                            <div class="detail-id-row">
+                                <span class="detail-val detail-val--mono">{{ item.id }}</span>
+                                <button class="copy-btn" (click)="copyId(item.id); $event.stopPropagation()" title="Copy ID">
+                                    <span class="material-symbols-outlined">{{ copiedId() === item.id ? 'check' : 'content_copy' }}</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="detail-kv">
                             <span class="detail-key">Type</span>

@@ -386,7 +386,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
         const timeStr = today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         const newNote: Note = {
-            id: `note-${Date.now()}`,
+            id: `note-${crypto.randomUUID()}`,
             date: dateStr,
             title: `Note - ${dateStr}`,
             preview: 'Start writing...',
@@ -401,7 +401,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private createTask() {
         const newTask: Task = {
-            id: `task-${Date.now()}`,
+            id: `task-${crypto.randomUUID()}`,
             title: 'New Task',
             priority: 'MEDIUM',
             hours: '1.0H',
@@ -413,7 +413,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     private createBook() {
-        const id = `book-${Date.now()}`;
+        const id = `book-${crypto.randomUUID()}`;
         const newBook: Book = {
             id,
             title: 'Untitled Book',
@@ -473,7 +473,7 @@ export class AddNewModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private createBookmark() {
         const bookmark: Bookmark = {
-            id: `bm-${Date.now()}`,
+            id: `bm-${crypto.randomUUID()}`,
             title: 'New Bookmark',
             url: 'https://',
             createdAt: new Date().toISOString(),

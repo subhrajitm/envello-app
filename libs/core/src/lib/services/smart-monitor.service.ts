@@ -390,7 +390,7 @@ export class SmartMonitorService {
 
   private createTask(finding: MonitorFinding) {
     const task: Task = {
-      id: `monitor-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: `monitor-${crypto.randomUUID()}`,
       title: finding.title,
       priority: finding.priority,
       hours: '0.5H',
