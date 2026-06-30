@@ -82,9 +82,9 @@ jobs:
           # Update the version for the 'envello' package entry in Cargo.lock.
           # Uses awk to replace only the version line that immediately follows the
           # matching name line, avoiding false matches on dependency entries.
-          awk -v cur="$CURRENT" -v next="$V" '
+          awk -v cur="$CURRENT" -v nver="$V" '
             /^name = "envello"$/ { found=1 }
-            found && /^version = / { sub(cur, next); found=0 }
+            found && /^version = / { sub(cur, nver); found=0 }
             { print }
           ' src-tauri/Cargo.lock > src-tauri/Cargo.lock.tmp
           mv src-tauri/Cargo.lock.tmp src-tauri/Cargo.lock
