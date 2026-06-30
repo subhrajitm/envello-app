@@ -1,37 +1,32 @@
 <div class="bin-page">
 
-    <!-- Page Header -->
-    <div class="bin-header">
-        <h1 class="bin-title">Bin</h1>
-        <div class="bin-header-actions">
+    <!-- Compact toolbar: title · type filters · search · empty -->
+    <div class="bin-toolbar">
+        <h1 class="bin-title">
+            <span class="material-symbols-outlined bin-title-icon">delete_outline</span>
+            Bin
+        </h1>
+
+        <div class="bin-filter-pills">
+            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">Tasks</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">Notes</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'write'" (click)="setFilter('write')">Write</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">Meetings</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'bookmark'" (click)="setFilter('bookmark')">Bookmarks</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'transaction'" (click)="setFilter('transaction')">Transactions</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'credential'" (click)="setFilter('credential')">Vault</button>
+        </div>
+
+        <div class="bin-toolbar-right">
+            <div class="bin-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Search bin…" (input)="updateSearch($event)" />
+            </div>
             <button class="bin-empty-btn" (click)="openEmptyConfirm()" [disabled]="totalCount() === 0">
-                <span class="material-symbols-outlined" style="font-size: 16px;">delete_sweep</span>
+                <span class="material-symbols-outlined">delete_sweep</span>
                 Empty Bin
             </button>
-        </div>
-    </div>
-
-    <!-- Filter Row -->
-    <div class="bin-filter-bar">
-        <div class="filter-group">
-            <label class="filter-label">Type</label>
-            <div class="filter-pills">
-                <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'task'" (click)="setFilter('task')">Tasks</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'daily-note'" (click)="setFilter('daily-note')">Notes</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'write'" (click)="setFilter('write')">Write</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'meeting'" (click)="setFilter('meeting')">Meetings</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'bookmark'" (click)="setFilter('bookmark')">Bookmarks</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'transaction'" (click)="setFilter('transaction')">Transactions</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'credential'" (click)="setFilter('credential')">Vault</button>
-            </div>
-        </div>
-        <div class="filter-group search-group">
-            <label class="filter-label">Search</label>
-            <div class="bin-search">
-                <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-tertiary);">search</span>
-                <input type="text" placeholder="Search bin..." (input)="updateSearch($event)" />
-            </div>
         </div>
     </div>
 
