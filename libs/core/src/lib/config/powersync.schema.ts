@@ -366,6 +366,38 @@ const people = new Table(
   { localOnly: true, indexes: { by_profile: ['profile_id'] } }
 );
 
+const note_history = new Table(
+  {
+    profile_id: column.text,
+    noteId:     column.text,
+    title:      column.text,
+    content:    column.text,
+    snapshotAt: column.text,
+    label:      column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_note: ['noteId'] },
+  }
+);
+
+const chapter_history = new Table(
+  {
+    profile_id:  column.text,
+    contentId:   column.text,
+    contentType: column.text,
+    title:       column.text,
+    content:     column.text,
+    wordCount:   column.real,
+    description: column.text,
+    timestamp:   column.text,
+  },
+  {
+    localOnly: true,
+    indexes: { by_content: ['contentId', 'contentType'] },
+  }
+);
+
 const user_preferences = new Table(
   {
     profile_id:           column.text,
@@ -431,6 +463,8 @@ export const AppSchema = new Schema({
   research_summaries,
   projects,
   note_folders,
+  note_history,
+  chapter_history,
   bookmarks,
   bookmark_folders,
   transactions,
@@ -447,7 +481,7 @@ export const AppSchema = new Schema({
 export const TYPED_TABLES = new Set([
   'tasks', 'notes', 'planning_items', 'activities', 'books', 'book_content',
   'meetings', 'articles', 'research_collections', 'research_sources',
-  'research_summaries', 'projects', 'note_folders', 'bookmarks',
+  'research_summaries', 'projects', 'note_folders', 'note_history', 'chapter_history', 'bookmarks',
   'bookmark_folders', 'transactions', 'people', 'user_preferences', 'library_files',
 ]);
 

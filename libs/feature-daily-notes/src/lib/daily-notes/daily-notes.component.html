@@ -746,5 +746,6 @@
   [noteId]="selectedNote()?.id ?? ''"
   [isOpen]="showHistoryPanel()"
   (closed)="showHistoryPanel.set(false)"
-  (restored)="onHistoryRestored()">
+  (restored)="onHistoryRestored()"
+  (saveNow)="saveVersionNow()">
 </env-note-history-panel>

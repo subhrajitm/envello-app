@@ -15,11 +15,21 @@ export class NoteHistoryService {
   private lastSnapshotAt = new Map<string, number>();
 
   /**
-   * Auto-snapshot: saves a snapshot if ≥30 min have passed since the last one
-   * for this note. Call this from the note save path.
+   * Auto-snapshot: saves a snapshot if ≥30 min have passed since the last one.
+   * Seeds the in-memory timer from the DB on first call per note so restarts
+   * don't reset the 30-minute window.
    */
   async autoSnapshot(noteId: string, title: string, content: string): Promise<void> {
-    if (!content?.trim()) return;
+    if (!content?.replace(/<[^>]*>/g, '').trim()) return;
+
+    // Seed from DB if not yet tracked in this session
+    if (!this.lastSnapshotAt.has(noteId)) {
+      const history = await this.getHistory(noteId);
+      if (history.length > 0) {
+        this.lastSnapshotAt.set(noteId, new Date(history[0].snapshotAt).getTime());
+      }
+    }
+
     const last = this.lastSnapshotAt.get(noteId) ?? 0;
     if (Date.now() - last < AUTO_INTERVAL_MS) return;
     await this.saveSnapshot(noteId, title, content);
@@ -27,7 +37,7 @@ export class NoteHistoryService {
 
   /** Always saves a snapshot regardless of timing. Used for manual "Save version". */
   async saveSnapshot(noteId: string, title: string, content: string, label?: string): Promise<void> {
-    if (!content?.trim()) return;
+    if (!content?.replace(/<[^>]*>/g, '').trim()) return;
 
     const entry: NoteHistoryEntry = {
       id: crypto.randomUUID(),
@@ -57,8 +67,12 @@ export class NoteHistoryService {
       .sort((a, b) => b.snapshotAt.localeCompare(a.snapshotAt));
   }
 
-  /** Restores a snapshot into the active note. */
-  restore(entry: NoteHistoryEntry): void {
+  /** Restores a snapshot into the active note. Saves the current content first so it's recoverable. */
+  async restore(entry: NoteHistoryEntry): Promise<void> {
+    const note = this.store.notes().find(n => n.id === entry.noteId);
+    if (note?.content) {
+      await this.saveSnapshot(entry.noteId, note.title, note.content, 'Before restore');
+    }
     this.store.updateNote(entry.noteId, {
       content: entry.content,
       preview: entry.content.replace(/<[^>]*>/g, '').substring(0, 100),

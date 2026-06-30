@@ -11,9 +11,15 @@
         <p class="nh-subtitle">{{ entries().length }} snapshot{{ entries().length !== 1 ? 's' : '' }}</p>
       </div>
     </div>
-    <button class="nh-close" (click)="close()" aria-label="Close">
-      <span class="material-symbols-outlined">close</span>
-    </button>
+    <div class="nh-header-right">
+      <button class="nh-btn nh-btn--ghost nh-btn--sm" (click)="saveNow.emit()" title="Save a snapshot right now">
+        <span class="material-symbols-outlined">save</span>
+        Save version now
+      </button>
+      <button class="nh-close" (click)="close()" aria-label="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
   </div>
 
   @if (loading()) {
@@ -25,7 +31,7 @@
     <div class="nh-empty">
       <span class="material-symbols-outlined nh-empty-icon">history_toggle_off</span>
       <p>No snapshots yet.</p>
-      <p class="nh-empty-hint">Snapshots are saved automatically every 30 minutes while you write. Use the "Save version" button to create one now.</p>
+      <p class="nh-empty-hint">Snapshots are saved automatically every 30 minutes while you write. Use "Save version now" above to create one immediately.</p>
     </div>
   } @else {
 

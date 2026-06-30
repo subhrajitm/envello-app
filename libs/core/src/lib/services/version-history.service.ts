@@ -27,11 +27,14 @@ export class VersionHistoryService {
     private histories  = new Map<string, VersionHistory>();
     private loadedKeys = new Set<string>(); // keys that have been fetched from DB
 
+    private _maxVersions = 0;
     private get MAX_VERSIONS(): number {
+        if (this._maxVersions > 0) return this._maxVersions;
         try {
             const saved = localStorage.getItem('envello-settings');
-            return saved ? (JSON.parse(saved).versionHistoryLimit || 50) : 50;
-        } catch { return 50; }
+            this._maxVersions = saved ? (JSON.parse(saved).versionHistoryLimit || 50) : 50;
+        } catch { this._maxVersions = 50; }
+        return this._maxVersions;
     }
 
     private readonly SNAPSHOT_DEBOUNCE = 30_000; // 30 s
@@ -89,9 +92,8 @@ export class VersionHistoryService {
             if (history.versions.length > this.MAX_VERSIONS) {
                 const oldest = history.versions.shift()!;
                 this.db.remove('chapter_history', oldest.id).catch(() => {});
-            } else {
-                history.currentIndex = history.versions.length - 1;
             }
+            history.currentIndex = history.versions.length - 1;
 
             this.db.upsert('chapter_history', this.toDbRecord(snapshot)).catch(() => {});
         };

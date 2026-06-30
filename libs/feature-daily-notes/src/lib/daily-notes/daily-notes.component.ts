@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
+// NoteHistoryPanelComponent imported below via @envello/ui
 import { CommonModule } from '@angular/common';
 import { StoreService, Note, AiService, ContextService, RecentActivityService, NoteHistoryService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
@@ -71,6 +72,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   titleInputValue = signal('');
 
   @ViewChild('titleInput') titleInputRef?: ElementRef<HTMLInputElement>;
+  @ViewChild(NoteHistoryPanelComponent) historyPanelRef?: NoteHistoryPanelComponent;
 
   canUndo = signal(false);
   canRedo = signal(false);
@@ -641,12 +643,33 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   async saveVersionNow() {
     const note = this.selectedNote();
     if (!note || !this.editor) return;
-    await this.noteHistory.saveSnapshot(note.id, note.title, this.editor.getHTML());
+
+    // Prefer the live editor HTML (includes unsaved in-flight typing).
+    // Fall back to store.loadNoteContent if the editor hasn't loaded the note yet
+    // (content is lazy-loaded async from localStorage via marked, so there's a brief window
+    // where the editor is empty even though the note has real content).
+    let html = this.editor.getHTML();
+    if (!this.editor.getText().trim()) {
+      html = await this.store.loadNoteContent(note.id);
+    }
+
+    await this.noteHistory.saveSnapshot(note.id, note.title, html);
+
+    // Refresh the panel list — prefer direct call, fall back to toggle isOpen
+    if (this.showHistoryPanel()) {
+      if (this.historyPanelRef) {
+        await this.historyPanelRef.loadHistory(note.id);
+      } else {
+        this.showHistoryPanel.set(false);
+        this.showHistoryPanel.set(true);
+      }
+    }
   }
 
   onHistoryRestored() {
     const note = this.selectedNote();
     if (note?.content && this.editor) {
+      this.lastLoadedContent = note.content;
       this.editor.commands.setContent(note.content, { emitUpdate: false });
     }
     this.showHistoryPanel.set(false);
@@ -776,7 +799,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   bulkDelete() {
     const ids = [...this.multiSelectedIds()];
-    ids.forEach(id => this.store.deleteNote(id));
+    ids.forEach(id => {
+      this.store.deleteNote(id);
+      this.noteHistory.deleteAllForNote(id).catch(() => {});
+    });
     this.clearMultiSelect();
   }
 
@@ -1297,6 +1323,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     if (activeId) {
       this.closeNoteTab(activeId);
       this.store.deleteNote(activeId);
+      this.noteHistory.deleteAllForNote(activeId).catch(() => {});
     }
     this.deleteNoteOpen.set(false);
   }

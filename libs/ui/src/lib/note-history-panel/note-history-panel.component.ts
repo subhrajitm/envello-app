@@ -16,10 +16,11 @@ export class NoteHistoryPanelComponent {
   private historyService = inject(NoteHistoryService);
   private cdr            = inject(ChangeDetectorRef);
 
-  noteId  = input<string>('');
-  isOpen  = input<boolean>(false);
-  closed  = output<void>();
+  noteId   = input<string>('');
+  isOpen   = input<boolean>(false);
+  closed   = output<void>();
   restored = output<void>();
+  saveNow  = output<void>();
 
   entries  = signal<NoteHistoryEntry[]>([]);
   selected = signal<NoteHistoryEntry | null>(null);
@@ -53,26 +54,12 @@ export class NoteHistoryPanelComponent {
     this.confirmDeleteId.set(null);
   }
 
-  restore() {
+  async restore() {
     const entry = this.selected();
     if (!entry) return;
-    this.historyService.restore(entry);
+    await this.historyService.restore(entry);
     this.restored.emit();
     this.close();
-  }
-
-  async saveManual() {
-    const id = this.noteId();
-    if (!id || this.saving()) return;
-    this.saving.set(true);
-    try {
-      // Get current note content from the store via the service
-      // (the component trigger will handle calling saveSnapshot with current content)
-      this.saving.set(false);
-      this.cdr.markForCheck();
-    } finally {
-      this.saving.set(false);
-    }
   }
 
   confirmDelete(id: string) {

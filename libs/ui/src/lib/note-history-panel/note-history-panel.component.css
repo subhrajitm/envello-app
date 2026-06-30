@@ -60,6 +60,8 @@
 
 .nh-subtitle { font-size: 11px; color: var(--text-tertiary); margin: 2px 0 0; }
 
+.nh-header-right { display: flex; align-items: center; gap: 8px; }
+
 .nh-close {
   display: flex; align-items: center; justify-content: center;
   width: 30px; height: 30px; border-radius: 7px; border: none;
@@ -245,5 +247,6 @@
 .nh-btn--danger:hover { background: var(--accent-red, #f87171)40; }
 .nh-btn--ghost { background: var(--bg-hover); color: var(--text-secondary); }
 .nh-btn--ghost:hover { background: var(--bg-active); }
+.nh-btn--sm { padding: 5px 10px; font-size: 11px; }
 .nh-btn--xs { padding: 3px 8px; font-size: 10px; border-radius: 5px; }
 .nh-btn .material-symbols-outlined { font-size: 15px; }
