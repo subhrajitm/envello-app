@@ -20,20 +20,20 @@
 
     <!-- Quick Stats -->
     <div class="quick-stats flex items-center justify-around">
-        <div class="stat-item flex flex-col items-center">
+        <button class="stat-item stat-item--link flex flex-col items-center" (click)="openWords()" title="Go to Notes">
             <span class="stat-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
             <span class="stat-label">Words</span>
-        </div>
+        </button>
         <div class="stat-divider"></div>
-        <div class="stat-item flex flex-col items-center">
+        <button class="stat-item stat-item--link flex flex-col items-center" (click)="openDocuments()" title="Go to Write">
             <span class="stat-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
             <span class="stat-label">Documents</span>
-        </div>
+        </button>
         <div class="stat-divider"></div>
-        <div class="stat-item flex flex-col items-center">
+        <button class="stat-item stat-item--link flex flex-col items-center" (click)="openAnalytics()" title="Go to Analytics">
             <span class="stat-value">{{ user()?.stats?.daysActive || 0 }}</span>
             <span class="stat-label">Days Active</span>
-        </div>
+        </button>
     </div>
 
     <!-- Space Switcher -->
@@ -140,6 +140,20 @@
         <span>Member since {{ getMemberSince() }}</span>
     </div>
 </div>
+
+<!-- Logout Confirmation -->
+@if (logoutConfirm()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Sign out?"
+    icon="logout"
+    variant="danger"
+    confirmLabel="Sign Out"
+    (confirmed)="doLogout()"
+    (cancelled)="logoutConfirm.set(false)">
+    You'll be signed out of your account. Any unsaved changes will be lost.
+</env-confirm-dialog>
+}
 
 <!-- Add Space Modal -->
 <env-modal

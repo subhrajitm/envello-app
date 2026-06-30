@@ -27,7 +27,7 @@ export class ProfileEditorComponent {
   tempName = '';
   tempBio = '';
   tempAvatar = signal<string | undefined>(undefined);
-  tempGender: 'male' | 'female' = 'male';
+  tempGender = signal<'male' | 'female'>('male');
 
   isSaving = signal(false);
   isImageLoading = signal(false);
@@ -43,7 +43,7 @@ export class ProfileEditorComponent {
     if (currentUser) {
       this.tempName = currentUser.name;
       this.tempBio = currentUser.bio || '';
-      this.tempGender = currentUser.preferences.gender || 'male';
+      this.tempGender.set(currentUser.preferences.gender || 'male');
 
       // Set loading state FIRST, then avatar to prevent flash
       if (currentUser.avatar) {
@@ -68,7 +68,7 @@ export class ProfileEditorComponent {
     } else {
       // Set loading FIRST, then change avatar
       this.isImageLoading.set(true);
-      this.tempGender = option;
+      this.tempGender.set(option);
       this.tempAvatar.set(this.userService.getAvatarForGender(option));
     }
   }
@@ -96,7 +96,7 @@ export class ProfileEditorComponent {
           avatar: this.tempAvatar()
         }),
         this.userService.updatePreferences({
-          gender: this.tempGender
+          gender: this.tempGender()
         })
       ]);
 

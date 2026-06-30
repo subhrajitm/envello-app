@@ -128,6 +128,23 @@
     font-weight: 600;
 }
 
+.stat-item--link {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px 8px;
+    transition: background 0.15s;
+}
+
+.stat-item--link:hover {
+    background: var(--bg-hover);
+}
+
+.stat-item--link:hover .stat-value {
+    color: var(--accent-primary);
+}
+
 .stat-divider {
     width: 1px;
     background: var(--border-subtle);

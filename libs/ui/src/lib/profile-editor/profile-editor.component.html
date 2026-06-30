@@ -13,11 +13,11 @@
                 }
             </div>
             <div class="flex items-center justify-center gap-3 mt-2">
-                <env-button [variant]="tempAvatar() && tempGender === 'male' ? 'primary' : 'secondary'"
+                <env-button [variant]="tempAvatar() && tempGender() === 'male' ? 'primary' : 'secondary'"
                     (clicked)="setAvatarOption('male')" [disabled]="isSaving()">
                     Male
                 </env-button>
-                <env-button [variant]="tempAvatar() && tempGender === 'female' ? 'primary' : 'secondary'"
+                <env-button [variant]="tempAvatar() && tempGender() === 'female' ? 'primary' : 'secondary'"
                     (clicked)="setAvatarOption('female')" [disabled]="isSaving()">
                     Female
                 </env-button>

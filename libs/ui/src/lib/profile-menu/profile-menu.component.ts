@@ -1,16 +1,18 @@
 import { Component, signal, inject, output, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { UserService, WorkspaceProfileService, StoreService, NotificationService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcuts.service';
 
 @Component({
   selector: 'app-profile-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, ConfirmDialogComponent],
+  providers: [DatePipe],
   templateUrl: './profile-menu.component.html',
   styleUrl: './profile-menu.component.css',
   animations: [
@@ -43,6 +45,9 @@ export class ProfileMenuComponent {
   private workspaceService = inject(WorkspaceProfileService);
   private storeService = inject(StoreService);
   private notify = inject(NotificationService);
+  private datePipe = inject(DatePipe);
+
+  logoutConfirm = signal(false);
 
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
@@ -150,7 +155,22 @@ export class ProfileMenuComponent {
 
   logout() {
     this.close();
+    this.logoutConfirm.set(true);
+  }
+
+  doLogout() {
+    this.logoutConfirm.set(false);
     this.userService.logout();
+  }
+
+  openWords() {
+    this.close();
+    this.router.navigate(['/daily-notes']);
+  }
+
+  openDocuments() {
+    this.close();
+    this.router.navigate(['/write']);
   }
 
   formatNumber(num: number): string {
@@ -166,11 +186,7 @@ export class ProfileMenuComponent {
   getMemberSince(): string {
     const joinedDate = this.user()?.joinedDate;
     if (!joinedDate) return '';
-
-    return joinedDate.toLocaleDateString('en-US', {
-      month: 'short',
-      year: 'numeric'
-    });
+    return this.datePipe.transform(joinedDate, 'MMM yyyy') ?? '';
   }
 
   @HostListener('document:keydown.escape', ['$event'])

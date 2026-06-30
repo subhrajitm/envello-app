@@ -31,9 +31,7 @@
                             <h3 class="card-title">{{ wp.name }}</h3>
                         </div>
                         <div class="card-main-icon">
-                            <span class="material-symbols-outlined icon-symbol"
-                                  [textContent]="wp.id === 'default' ? 'account_circle' : (wp.name.toLowerCase().includes('personal') ? 'person' : 'hub')">
-                            </span>
+                            <span class="material-symbols-outlined icon-symbol">{{ wp.icon || 'folder' }}</span>
                         </div>
                     </div>
                 </div>
