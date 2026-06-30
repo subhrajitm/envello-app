@@ -46,11 +46,12 @@ export class VersionHistoryModalComponent {
   onClose() { this.selected.set(null); this.confirmDeleteId.set(null); this.close.emit(); }
 
   previewText(content: string): string {
-    return content.replace(/<[^>]*>/g, '').substring(0, 70) + '…';
+    const text = content.replace(/<[^>]*>/g, '');
+    return text.length > 70 ? text.substring(0, 70) + '…' : text;
   }
 
   isCurrent(v: VersionSnapshot): boolean {
-    const all = this.versions();
-    return all.length > 0 && all[all.length - 1].id === v.id;
+    const current = this.vhs.getCurrentVersion(v.contentId, v.contentType);
+    return current?.id === v.id;
   }
 }

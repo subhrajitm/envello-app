@@ -22,6 +22,11 @@ export class PowerSyncDataService implements DataService {
     'credentials', 'credential_transaction_links',
   ]);
 
+  /** Collections declared localOnly:true in the PowerSync schema — never written to user_data. */
+  private readonly LOCAL_ONLY_COLLECTIONS = new Set([
+    'note_history', 'chapter_history',
+  ]);
+
   private get userId(): string {
     return this.auth.currentUser()?.id ?? 'guest';
   }
@@ -128,12 +133,14 @@ export class PowerSyncDataService implements DataService {
         profileId = isGlobal ? 'default' : activeId;
       }
 
-      // 1. Write to user_data for PowerSync sync upload
-      await this.ps.db.execute(
-        `INSERT OR REPLACE INTO user_data (id, user_id, profile_id, collection, data, deleted, updated_at)
-         VALUES (?, ?, ?, ?, ?, 0, ?)`,
-        [id, this.userId, profileId, collection, JSON.stringify(item), new Date().toISOString()]
-      );
+      // 1. Write to user_data for PowerSync sync upload (skip localOnly collections)
+      if (!this.LOCAL_ONLY_COLLECTIONS.has(collection)) {
+        await this.ps.db.execute(
+          `INSERT OR REPLACE INTO user_data (id, user_id, profile_id, collection, data, deleted, updated_at)
+           VALUES (?, ?, ?, ?, ?, 0, ?)`,
+          [id, this.userId, profileId, collection, JSON.stringify(item), new Date().toISOString()]
+        );
+      }
 
       // 2. Write to typed table for fast local reads
       await this.upsertToTypedTable(collection, profileId, item);
@@ -147,16 +154,17 @@ export class PowerSyncDataService implements DataService {
     if (this.VAULT_COLLECTIONS.has(collection)) return this.removeVault(collection, id);
 
     try {
-      // Mark deleted in user_data for sync
-      const activeId = this.profileService.activeProfileId() || 'default';
-      const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
-      const profileId = isGlobal ? 'default' : activeId;
-
-      await this.ps.db.execute(
-        `INSERT OR REPLACE INTO user_data (id, user_id, profile_id, collection, data, deleted, updated_at)
-         VALUES (?, ?, ?, ?, '{}', 1, ?)`,
-        [id, this.userId, profileId, collection, new Date().toISOString()]
-      );
+      // Mark deleted in user_data for sync (skip localOnly collections)
+      if (!this.LOCAL_ONLY_COLLECTIONS.has(collection)) {
+        const activeId = this.profileService.activeProfileId() || 'default';
+        const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
+        const profileId = isGlobal ? 'default' : activeId;
+        await this.ps.db.execute(
+          `INSERT OR REPLACE INTO user_data (id, user_id, profile_id, collection, data, deleted, updated_at)
+           VALUES (?, ?, ?, ?, '{}', 1, ?)`,
+          [id, this.userId, profileId, collection, new Date().toISOString()]
+        );
+      }
       // Remove from typed table
       await this.ps.db.execute(`DELETE FROM ${collection} WHERE id = ?`, [id]);
     } catch (e) {

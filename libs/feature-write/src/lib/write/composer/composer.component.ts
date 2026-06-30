@@ -743,6 +743,13 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if (this._mentionLabelDebounce) clearTimeout(this._mentionLabelDebounce);
     if (this._focusModeHandler) window.removeEventListener('focusModeChanged', this._focusModeHandler);
     if (this._beforeUnloadHandler) window.removeEventListener('beforeunload', this._beforeUnloadHandler);
+    // E: Release in-memory history caches to prevent Map growth in long sessions
+    const chapterId     = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId    = this.activePrologueId();
+    if (chapterId)     this.versionHistoryService.evictFromMemory(chapterId, 'chapter');
+    if (frontMatterId) this.versionHistoryService.evictFromMemory(frontMatterId, 'frontMatter');
+    if (prologueId)    this.versionHistoryService.evictFromMemory('prologue', 'prologue');
     this.editor.destroy();
   }
 
@@ -907,6 +914,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
     switch (modal.type) {
       case 'chapter':
         this.bookService.deleteChapter(modal.id);
+        this.versionHistoryService.clearHistory(modal.id, 'chapter');
         this.closeEditorTab(modal.id);
         if (this.activeChapterId() === modal.id) {
           this.activeChapterId.set(null);
@@ -919,7 +927,10 @@ export class ComposerComponent implements OnInit, OnDestroy {
         const deletedGroup = book?.chapters.find(g => g.id === modal.id);
         if (deletedGroup) {
           const deletedChapterIds = deletedGroup.children.map(c => c.id);
-          deletedChapterIds.forEach(id => this.closeEditorTab(id));
+          deletedChapterIds.forEach(id => {
+            this.versionHistoryService.clearHistory(id, 'chapter');
+            this.closeEditorTab(id);
+          });
           if (this.activeChapterId() && deletedChapterIds.includes(this.activeChapterId()!)) {
             this.activeChapterId.set(null);
             this.title.set('');
@@ -1461,12 +1472,14 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
   deletePrologue() {
     this.bookService.deletePrologue();
+    this.versionHistoryService.clearHistory('prologue', 'prologue');
     this.closeEditorTab('prologue');
     this.activePrologueId.set(null);
   }
 
   deleteFrontMatterItem(itemId: string, title: string) {
     this.bookService.deleteFrontMatterItem(itemId);
+    this.versionHistoryService.clearHistory(itemId, 'frontMatter');
     this.closeEditorTab(itemId);
     if (this.activeFrontMatterId() === itemId) {
       this.activeFrontMatterId.set(null);
@@ -2130,6 +2143,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
     selected.forEach(chapterId => {
       this.bookService.deleteChapter(chapterId);
+      this.versionHistoryService.clearHistory(chapterId, 'chapter');
       this.closeEditorTab(chapterId);
     });
 

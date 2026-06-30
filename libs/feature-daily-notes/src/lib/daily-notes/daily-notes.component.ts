@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 // NoteHistoryPanelComponent imported below via @envello/ui
 import { CommonModule } from '@angular/common';
-import { StoreService, Note, AiService, ContextService, RecentActivityService, NoteHistoryService } from '@envello/core';
+import { StoreService, Note, AiService, ContextService, RecentActivityService, NoteHistoryService, NotificationService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, NoteHistoryPanelComponent } from '@envello/ui';
@@ -55,6 +55,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private contextService = inject(ContextService);
   private recentActivity = inject(RecentActivityService);
   private noteHistory = inject(NoteHistoryService);
+  private notify      = inject(NotificationService);
 
   showHistoryPanel = signal(false);
   editor!: Editor;
@@ -653,7 +654,20 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       html = await this.store.loadNoteContent(note.id);
     }
 
-    await this.noteHistory.saveSnapshot(note.id, note.title, html);
+    const label = this.historyPanelRef?.manualLabel()?.trim() || undefined;
+    const saved = await this.noteHistory.saveSnapshot(note.id, note.title, html, label);
+
+    if (!saved) {
+      // F: inform the user why nothing was saved
+      const reason = !html || !html.replace(/<[^>]*>/g, '').trim()
+        ? 'Nothing to save — the note is empty.'
+        : 'This version is identical to the previous snapshot.';
+      this.notify.warning('Version not saved', reason);
+      this.historyPanelRef?.saving.set(false);
+      return;
+    }
+
+    this.historyPanelRef?.manualLabel.set('');
 
     // Refresh the panel list — prefer direct call, fall back to toggle isOpen
     if (this.showHistoryPanel()) {
@@ -801,7 +815,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     const ids = [...this.multiSelectedIds()];
     ids.forEach(id => {
       this.store.deleteNote(id);
-      this.noteHistory.deleteAllForNote(id).catch(() => {});
+      this.noteHistory.deleteAllForNote(id).catch(e => console.warn('[DailyNotes] deleteAllForNote failed', e));
     });
     this.clearMultiSelect();
   }
@@ -1323,7 +1337,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     if (activeId) {
       this.closeNoteTab(activeId);
       this.store.deleteNote(activeId);
-      this.noteHistory.deleteAllForNote(activeId).catch(() => {});
+      this.noteHistory.deleteAllForNote(activeId).catch(e => console.warn('[DailyNotes] deleteAllForNote failed', e));
     }
     this.deleteNoteOpen.set(false);
   }

@@ -45,8 +45,15 @@ export class NoteHistoryPanelComponent {
       this.entries.set(entries);
     } finally {
       this.loading.set(false);
+      this.saving.set(false);
       this.cdr.markForCheck();
     }
+  }
+
+  triggerSave() {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.saveNow.emit();
   }
 
   select(entry: NoteHistoryEntry) {
@@ -85,6 +92,7 @@ export class NoteHistoryPanelComponent {
   }
 
   previewText(content: string): string {
-    return content.replace(/<[^>]*>/g, '').substring(0, 80) + '…';
+    const text = content.replace(/<[^>]*>/g, '');
+    return text.length > 80 ? text.substring(0, 80) + '…' : text;
   }
 }

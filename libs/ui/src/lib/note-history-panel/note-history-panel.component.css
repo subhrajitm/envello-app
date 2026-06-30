@@ -62,6 +62,15 @@
 
 .nh-header-right { display: flex; align-items: center; gap: 8px; }
 
+.nh-label-input {
+  height: 30px; padding: 0 10px; font-size: 12px;
+  border: 1px solid var(--border-subtle); border-radius: 7px;
+  background: var(--bg-input, var(--bg-hover)); color: var(--text-primary);
+  outline: none; width: 180px; transition: border-color .15s;
+}
+.nh-label-input::placeholder { color: var(--text-tertiary); }
+.nh-label-input:focus { border-color: var(--accent-primary); }
+
 .nh-close {
   display: flex; align-items: center; justify-content: center;
   width: 30px; height: 30px; border-radius: 7px; border: none;
@@ -250,3 +259,4 @@
 .nh-btn--sm { padding: 5px 10px; font-size: 11px; }
 .nh-btn--xs { padding: 3px 8px; font-size: 10px; border-radius: 5px; }
 .nh-btn .material-symbols-outlined { font-size: 15px; }
+.nh-btn:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }

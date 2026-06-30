@@ -52,7 +52,7 @@ export class VersionHistoryService {
     ): VersionSnapshot {
         const now = new Date();
         return {
-            id: `${contentId}-${now.getTime()}`,
+            id: crypto.randomUUID(),
             timestamp: now,
             timestampIso: now.toISOString(),
             contentId,
@@ -78,6 +78,7 @@ export class VersionHistoryService {
         if (existingTimer) clearTimeout(existingTimer);
 
         const addSnapshot = () => {
+            if (!content?.replace(/<[^>]*>/g, '').trim()) return;
             const history  = this.getHistory(contentId, contentType);
             const snapshot = this.createSnapshot(contentId, contentType, content, title, wordCount);
 
@@ -204,6 +205,19 @@ export class VersionHistoryService {
         h.versions = h.versions.filter(v => v.id !== id);
         h.currentIndex = Math.min(h.currentIndex, h.versions.length - 1);
         await this.db.remove('chapter_history', id);
+    }
+
+    /**
+     * Releases the in-memory cache for a content item without touching the DB.
+     * Call this in ngOnDestroy when closing a chapter/frontMatter/prologue editor
+     * to prevent the histories Map from growing unbounded across long sessions (E).
+     */
+    evictFromMemory(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue'): void {
+        const key = `${contentType}-${contentId}`;
+        this.histories.delete(key);
+        this.loadedKeys.delete(key);
+        const timer = this.debounceTimers.get(key);
+        if (timer) { clearTimeout(timer); this.debounceTimers.delete(key); }
     }
 
     clearHistory(contentId: string, contentType: 'chapter' | 'frontMatter' | 'prologue'): void {

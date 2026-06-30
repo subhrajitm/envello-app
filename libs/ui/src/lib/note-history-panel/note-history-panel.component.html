@@ -12,9 +12,15 @@
       </div>
     </div>
     <div class="nh-header-right">
-      <button class="nh-btn nh-btn--ghost nh-btn--sm" (click)="saveNow.emit()" title="Save a snapshot right now">
-        <span class="material-symbols-outlined">save</span>
-        Save version now
+      <input class="nh-label-input"
+        [value]="manualLabel()"
+        (input)="manualLabel.set($any($event.target).value)"
+        placeholder="Label this version…"
+        maxlength="60"
+        aria-label="Version label" />
+      <button class="nh-btn nh-btn--ghost nh-btn--sm" (click)="triggerSave()" [disabled]="saving()" title="Save a snapshot right now">
+        <span class="material-symbols-outlined">{{ saving() ? 'hourglass_empty' : 'save' }}</span>
+        {{ saving() ? 'Saving…' : 'Save version now' }}
       </button>
       <button class="nh-close" (click)="close()" aria-label="Close">
         <span class="material-symbols-outlined">close</span>
