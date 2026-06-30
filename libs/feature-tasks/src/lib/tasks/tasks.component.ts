@@ -31,6 +31,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   private themeService = inject(ThemeService);
   private userPrefsService = inject(UserPreferencesService);
 
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
+
   // Left sidebar state
   sidebarSearch = signal<string>('');
   selectedView = signal<TaskViewFilter>('inbox');
@@ -2823,7 +2825,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   toggleAssistant() { this.showAssistant.update(v => !v); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {
@@ -2859,7 +2861,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   async sendDetailsAiMessage(text: string) {
     const task = this.selectedTaskForDetails();
-    if (!text.trim() || this.detailsAiLoading() || !task) return;
+    if (!text.trim() || this.detailsAiLoading() || !task || !this.aiService.aiEnabled()) return;
     this.detailsAiMessages.update(m => [...m, { role: 'user', text }]);
     this.detailsAiLoading.set(true);
     this.detailsAiInput.set('');

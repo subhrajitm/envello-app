@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, HostListener, ChangeDetectionStrat
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { StoreService, type Book, type WritingType, BookContentService } from '@envello/core';
+import { StoreService, type Book, type WritingType, BookContentService, AiService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 
 const WRITING_TYPE_META: Record<string, { color: string; icon: string }> = {
@@ -35,6 +35,9 @@ export class WriteComponent {
   private router = inject(Router);
   store = inject(StoreService);
   private bookContent = inject(BookContentService);
+  private aiService   = inject(AiService);
+
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   // ── Filter / sort ─────────────────────────────────────────────────────────
   viewMode     = signal<'LIST' | 'GRID'>('LIST');

@@ -34,6 +34,8 @@ export class MeetingsComponent {
   readonly autopilotService = inject(MeetingAutopilotService);
   readonly providerMeta = PROVIDER_META;
 
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
+
   // Autopilot state
   showAutopilotResult = signal(false);
 
@@ -1268,7 +1270,7 @@ export class MeetingsComponent {
   toggleAssistant() { this.showAssistant.update(v => !v); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {

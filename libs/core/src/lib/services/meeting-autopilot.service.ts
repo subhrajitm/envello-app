@@ -32,7 +32,7 @@ export class MeetingAutopilotService {
 
   async runForMeeting(meetingId: string): Promise<AutopilotResult | null> {
     const meeting = this.meetings.meetings().find(m => m.id === meetingId);
-    if (!meeting) return null;
+    if (!meeting || !this.ai.aiEnabled()) return null;
 
     this.status.set('running');
     this.progress.set('Building context…');

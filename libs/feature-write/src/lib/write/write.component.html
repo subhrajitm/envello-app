@@ -104,11 +104,13 @@
         </div>
 
         <div class="wr-tb-divider"></div>
+        @if (aiEnabled()) {
         <button class="wr-tool-btn btn-ai-toggle" [class.wr-tool-btn--active]="showAssistant()" [class.active]="showAssistant()"
           title="AI Assistant" (click)="toggleAssistant()">
           <span class="material-symbols-outlined">auto_awesome</span>
           AI
         </button>
+        }
         <div class="wr-tb-divider"></div>
         <button class="wr-add-btn btn-add-primary" (click)="openAddModal()">
           <span class="material-symbols-outlined">add</span>
@@ -222,7 +224,7 @@
   </div>
 
   <!-- AI panel -->
-  @if (showAssistant()) {
+  @if (aiEnabled() && showAssistant()) {
     <env-ai-panel
       title="Writing Assistant"
       placeholder="Ask about your writing…"

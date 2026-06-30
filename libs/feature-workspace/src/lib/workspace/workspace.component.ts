@@ -546,6 +546,7 @@ export class WorkspaceComponent {
    * AI can respond with: execute, ask, confirm, or cancel.
    */
   private async dispatchToAi() {
+    if (!this.aiService.aiEnabled()) return;
     const turn = await this.callConversationalAi();
 
     if (turn.action === 'execute' && turn.intent) {

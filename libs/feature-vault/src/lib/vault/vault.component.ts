@@ -42,6 +42,7 @@ export class VaultComponent {
 
   readonly isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
   readonly showUnlock = computed(() => !this.isTauri && !this.vaultUnlock.isUnlocked());
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   readonly typeOptions = (Object.keys(TYPE_META) as Array<Credential['type']>).map(type => ({ type, ...TYPE_META[type] }));
 
@@ -419,7 +420,7 @@ export class VaultComponent {
   clearAiChat()     { this.aiMessages.set([]); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {

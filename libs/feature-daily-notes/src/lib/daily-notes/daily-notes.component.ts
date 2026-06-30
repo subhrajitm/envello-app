@@ -57,6 +57,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private noteHistory = inject(NoteHistoryService);
   private notify      = inject(NotificationService);
 
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
+
   showHistoryPanel = signal(false);
   editor!: Editor;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;

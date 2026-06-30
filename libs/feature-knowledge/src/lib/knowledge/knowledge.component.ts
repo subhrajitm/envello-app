@@ -31,6 +31,8 @@ export class KnowledgeComponent implements OnDestroy {
   private aiService = inject(AiService);
   private contextService = inject(ContextService);
 
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
+
   // ── View state ────────────────────────────────────────────────────────────
   viewMode        = signal<ViewMode>('sources');
   selectedCollection = signal<ResearchCollection | null>(null);
@@ -551,7 +553,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // Feature 7: AI-suggest tags
   async suggestTags() {
-    if (this.suggestingTags() || (!this.newSourceTitle() && !this.newSourceUrl())) return;
+    if (this.suggestingTags() || (!this.newSourceTitle() && !this.newSourceUrl()) || !this.aiService.aiEnabled()) return;
     this.suggestingTags.set(true);
     try {
       const prompt = [
@@ -645,7 +647,7 @@ export class KnowledgeComponent implements OnDestroy {
   // Feature 4: AI generate notes
   async generateAiNotes() {
     const s = this.selectedSource();
-    if (!s || this.generatingNotes()) return;
+    if (!s || this.generatingNotes() || !this.aiService.aiEnabled()) return;
     this.generatingNotes.set(true);
     try {
       const prompt = [
@@ -724,7 +726,7 @@ export class KnowledgeComponent implements OnDestroy {
   isFileSelected(id: string) { return this.selectedFileIds().includes(id); }
 
   async generateAiSummary() {
-    if (this.generatingSummary()) return;
+    if (this.generatingSummary() || !this.aiService.aiEnabled()) return;
     this.generatingSummary.set(true);
     try {
       const selectedSources = this.sources().filter(s => this.selectedSourceIds().includes(s.id));
@@ -772,7 +774,7 @@ export class KnowledgeComponent implements OnDestroy {
   clearAiChat()     { this.aiMessages.set([]); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {

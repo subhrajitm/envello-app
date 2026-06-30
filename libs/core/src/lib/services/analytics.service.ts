@@ -399,6 +399,8 @@ export class AnalyticsService {
   // ─── AI insight ────────────────────────────────────────────────────────────
 
   async generateInsight(stats: AnalyticsStats): Promise<InsightItem[]> {
+    if (!this.ai.aiEnabled()) return this.ruleBasedInsight(stats);
+
     const system = [
       'You are a productivity coach. Return ONLY a valid JSON array of exactly 3 objects.',
       'Each object: { "category": one of [streak,tasks,notes,meetings,writing,warning,focus], "text": one sentence max 20 words, "you" voice, specific numbers }.',

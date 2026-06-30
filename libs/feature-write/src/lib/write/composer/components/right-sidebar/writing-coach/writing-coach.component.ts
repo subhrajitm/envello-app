@@ -126,6 +126,13 @@ export class WritingCoachComponent {
 
     const { system, user } = this.buildPrompt(key, manuscriptText, characterList, b.synopsis);
 
+    if (!this.ai.aiEnabled()) {
+      this.result.set('AI features are disabled. Enable them in Settings → AI.');
+      this.activeAnalysis.set(key);
+      this.cdr.markForCheck();
+      return;
+    }
+
     this.activeAnalysis.set(key);
     this.result.set('');
     this.isGenerating.set(true);

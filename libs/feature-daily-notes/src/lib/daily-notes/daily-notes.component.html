@@ -466,7 +466,7 @@
             <!-- Expandable content panel -->
             @if (!rightPanelCollapsed()) {
             <div class="dn-right-content">
-                @if (rightPanelTab() === 'ai') {
+                @if (aiEnabled() && rightPanelTab() === 'ai') {
                 <env-ai-panel
                     title="Notes Assistant"
                     placeholder="Ask about your notes…"
@@ -664,10 +664,12 @@
             <!-- Always-visible icon strip -->
             <div class="ne-right-strip">
                 <!-- Panel toggles -->
+                @if (aiEnabled()) {
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'ai'"
                     (click)="setRightTab('ai')" title="AI Assistant">
                     <span class="material-symbols-outlined">auto_awesome</span>
                 </button>
+                }
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'format'"
                     (click)="setRightTab('format')" title="Format">
                     <span class="material-symbols-outlined">format_paragraph</span>

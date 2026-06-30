@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AnalyticsService, AnalyticsStats, InsightItem } from '@envello/core';
+import { AnalyticsService, AnalyticsStats, InsightItem, AiService } from '@envello/core';
 
 const INSIGHT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -14,6 +14,7 @@ const INSIGHT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 })
 export class AnalyticsComponent {
   private analyticsService = inject(AnalyticsService);
+  protected aiService      = inject(AiService);
 
   period          = signal<7 | 30 | 90>(7);
   customFrom      = signal('');
@@ -62,6 +63,7 @@ export class AnalyticsComponent {
 
   async loadInsight(force = false): Promise<void> {
     if (this.insightLoading()) return;
+    if (!this.aiService.aiEnabled()) { this.insightItems.set([]); return; }
 
     if (!force) {
       const cached = this.readInsightCache();

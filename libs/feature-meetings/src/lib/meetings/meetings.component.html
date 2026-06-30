@@ -40,10 +40,12 @@
           <span class="mt-sync-badge">{{ syncService.connections().length }}</span>
           }
         </button>
+        @if (aiEnabled()) {
         <button class="btn-ai-toggle" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
           <span class="material-symbols-outlined">auto_awesome</span>
           <span>AI</span>
         </button>
+        }
         <div class="mt-tb-divider"></div>
         <button class="mt-add-btn btn-add-primary" (click)="openCreateModal()">
           <span class="material-symbols-outlined">add</span>
@@ -353,7 +355,7 @@
     </div><!-- /mt-content -->
   </div><!-- /mt-main -->
 
-  @if (showAssistant()) {
+  @if (aiEnabled() && showAssistant()) {
     <env-ai-panel
       title="Meetings Assistant"
       placeholder="Ask about your meetings…"
@@ -938,7 +940,7 @@
             <span class="material-symbols-outlined">video_call</span> Join
           </button>
           }
-          @if (selectedMeeting()!.status === 'scheduled' || selectedMeeting()!.status === 'in_progress') {
+          @if (aiEnabled() && (selectedMeeting()!.status === 'scheduled' || selectedMeeting()!.status === 'in_progress')) {
           <button class="mta-btn mta-btn--autopilot"
             [disabled]="autopilotService.status() === 'running'"
             (click)="runAutopilot()"

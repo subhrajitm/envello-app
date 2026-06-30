@@ -161,6 +161,7 @@
   </div>
 
   <!-- ── AI Insights ──────────────────────────────────────────────────────── -->
+  @if (aiService.aiEnabled()) {
   <div class="an-card an-card--full an-insight-card">
     <div class="an-card-header">
       <div class="an-card-header-left">
@@ -205,6 +206,7 @@
       <span>Based on {{ periodLabel() }}</span>
     </div>
   </div>
+  }
 
   <!-- ── Activity chart ────────────────────────────────────────────────────── -->
   <div class="an-card an-card--full">

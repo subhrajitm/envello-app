@@ -56,6 +56,7 @@
           </div>
         }
         <div class="vt-tb-divider"></div>
+        @if (aiEnabled()) {
         <button
           class="vt-ai-btn btn-ai-toggle"
           [class.active]="showAssistant()"
@@ -64,6 +65,7 @@
           <span class="material-symbols-outlined">auto_awesome</span>
           AI
         </button>
+        }
         <div class="vt-tb-divider"></div>
         <button class="vt-add-btn btn-add-primary" (click)="openAddForm()">
           <span class="material-symbols-outlined">add</span>
@@ -112,7 +114,7 @@
   </div>
 
   <!-- AI panel -->
-  @if (showAssistant()) {
+  @if (aiEnabled() && showAssistant()) {
     <env-ai-panel
       title="Vault Assistant"
       placeholder="Ask about your credentials…"

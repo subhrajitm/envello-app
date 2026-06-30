@@ -134,6 +134,7 @@
 
         <div class="bm-tb-divider"></div>
 
+        @if (aiEnabled()) {
         <!-- Auto-organise -->
         <button
           class="bm-ai-btn"
@@ -155,6 +156,7 @@
           <span class="material-symbols-outlined">auto_awesome</span>
           <span>AI</span>
         </button>
+        }
 
         <!-- Add bookmark -->
         <button class="bm-add-btn btn-add-primary" (click)="openAddModal()">
@@ -260,7 +262,7 @@
   </main>
 
   <!-- AI panel -->
-  @if (showAssistant()) {
+  @if (aiEnabled() && showAssistant()) {
     <env-ai-panel
       title="Bookmarks Assistant"
       placeholder="Ask about your bookmarks…"

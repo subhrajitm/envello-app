@@ -28,6 +28,8 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   private recentActivity = inject(RecentActivityService);
   private webPreview = inject(WebPreviewService);
 
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
+
   // ── View state ──────────────────────────────────────────────────────────────
   selectedView = signal<BookmarkView>('all');
   viewMode = signal<ViewMode>('table');
@@ -853,7 +855,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   toggleAssistant() { this.showAssistant.update(v => !v); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {
@@ -939,6 +941,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   // ── Auto-organise ─────────────────────────────────────────────────────────────
   async triggerAutoOrganise() {
+    if (!this.aiService.aiEnabled()) return;
     // Treat bookmarks as unorganised if they have no folderId OR if their folderId
     // points to a folder that no longer exists (orphaned reference from a deleted folder)
     const existingFolderIds = new Set(this.store.bookmarkFolders().map(f => f.id));
