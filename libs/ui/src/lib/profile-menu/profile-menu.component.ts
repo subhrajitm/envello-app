@@ -1,5 +1,5 @@
 import { Component, signal, inject, output, HostListener } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -11,7 +11,7 @@ import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcu
 @Component({
   selector: 'app-profile-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, ConfirmDialogComponent],
+  imports: [FormsModule, ModalComponent, ConfirmDialogComponent],
   providers: [DatePipe],
   templateUrl: './profile-menu.component.html',
   styleUrl: './profile-menu.component.css',
@@ -52,6 +52,8 @@ export class ProfileMenuComponent {
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
   switching = this.workspaceService.switching;
+  canAddSpace = this.workspaceService.canAddSpace;
+  maxSpaces = this.workspaceService.MAX_SPACES;
 
   isAddProfileModalOpen = signal(false);
   newProfileName = signal('');
@@ -77,7 +79,8 @@ export class ProfileMenuComponent {
       status: 'PLANNING',
       words: 0,
       updated: new Date().toISOString(),
-      icon: 'folder'
+      icon: 'folder',
+      color: '#3b82f6',
     });
     this.workspaceService.addProfileWithId(newId, name, '#3b82f6', 'folder');
     this.isAddProfileModalOpen.set(false);
@@ -188,6 +191,22 @@ export class ProfileMenuComponent {
     const joinedDate = this.user()?.joinedDate;
     if (!joinedDate) return '';
     return this.datePipe.transform(joinedDate, 'MMM yyyy') ?? '';
+  }
+
+  getLastLogin(): string {
+    const raw = this.user()?.stats?.lastLoginDate;
+    if (!raw) return '';
+    const date = new Date(raw);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const mins = Math.floor(diffMs / 60_000);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    if (mins < 2) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hrs < 24) return `Today at ${this.datePipe.transform(date, 'h:mm a')}`;
+    if (days === 1) return `Yesterday at ${this.datePipe.transform(date, 'h:mm a')}`;
+    return this.datePipe.transform(date, 'MMM d, h:mm a') ?? '';
   }
 
   @HostListener('document:keydown.escape', ['$event'])

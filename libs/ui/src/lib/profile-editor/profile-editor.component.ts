@@ -28,6 +28,8 @@ export class ProfileEditorComponent {
   tempBio = '';
   tempAvatar = signal<string | undefined>(undefined);
   tempGender = signal<'male' | 'female'>('male');
+  tempCustomUrl = signal('');
+  isGravatar = signal(false);
 
   isSaving = signal(false);
   isImageLoading = signal(false);
@@ -44,6 +46,8 @@ export class ProfileEditorComponent {
       this.tempName = currentUser.name;
       this.tempBio = currentUser.bio || '';
       this.tempGender.set(currentUser.preferences.gender || 'male');
+      this.tempCustomUrl.set('');
+      this.isGravatar.set(false);
 
       // Set loading state FIRST, then avatar to prevent flash
       if (currentUser.avatar) {
@@ -78,9 +82,34 @@ export class ProfileEditorComponent {
   }
 
   onImageError() {
-    // If image fails to load, fall back to initials
     this.isImageLoading.set(false);
     this.tempAvatar.set(undefined);
+    this.tempCustomUrl.set('');
+    this.isGravatar.set(false);
+  }
+
+  applyCustomUrl() {
+    const url = this.tempCustomUrl().trim();
+    if (!url) return;
+    this.isImageLoading.set(true);
+    this.isGravatar.set(false);
+    this.tempAvatar.set(url);
+  }
+
+  async useGravatar() {
+    const email = this.user()?.email;
+    if (!email) return;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(email.toLowerCase().trim());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hex = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    const url = `https://www.gravatar.com/avatar/${hex}?size=200&default=mp`;
+    this.isImageLoading.set(true);
+    this.isGravatar.set(true);
+    this.tempCustomUrl.set(url);
+    this.tempAvatar.set(url);
   }
 
   async save() {

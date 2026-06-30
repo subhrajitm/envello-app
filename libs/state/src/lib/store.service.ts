@@ -42,6 +42,10 @@ export class StoreService {
 
     private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
     private _loadInProgress = false;
+    /** Incremented on every profile switch; lets an in-flight load detect it has gone stale. */
+    private _loadGeneration = 0;
+    /** True when a load was requested while one was already in-flight. */
+    private _pendingLoad = false;
     /** Notes with in-flight DB upserts — loadFromDb() keeps in-memory version for these. */
     private _pendingNoteUpserts = new Map<string, Note>();
 
@@ -55,10 +59,21 @@ export class StoreService {
             this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
         });
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
-        // On profile switch: clear stale in-memory caches before the db-ready reload fires.
         window.addEventListener('envello:profile-switched', () => {
+            // Invalidate any in-flight load — its results belong to the old profile.
+            this._loadGeneration++;
             this.contentCache.clear();
             this._pendingNoteUpserts.clear();
+            // Show empty state immediately so the user sees the switch happened at once.
+            this.tasks.set([]);
+            this.notes.set([]);
+            this.planningItems.set([]);
+            this.activities.set([]);
+            this.books.set([]);
+            this.bookmarks.set([]);
+            this.bookmarkFolders.set([]);
+            this.spaces.set([]);
+            this.people.set([]);
         });
     }
 
@@ -105,8 +120,14 @@ export class StoreService {
     }
 
     private async loadFromDb(retries = 1): Promise<void> {
-        if (this._loadInProgress) return;
+        if (this._loadInProgress) {
+            // Another load is running. Queue a re-run so the latest profile wins.
+            this._pendingLoad = true;
+            return;
+        }
         this._loadInProgress = true;
+        this._pendingLoad = false;
+        const generation = this._loadGeneration;
         try {
             const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
@@ -120,6 +141,10 @@ export class StoreService {
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people'),
             ]);
+
+            // A profile switch happened while we were reading — discard stale results.
+            // The finally block will schedule a fresh load for the new profile.
+            if (generation !== this._loadGeneration) return;
 
             // Tasks — cap, exclude soft-deleted
             const activeTasks = (tasks || [])
@@ -173,9 +198,15 @@ export class StoreService {
                     );
                 }
             }
+
+            // Notify listeners that the store is fully populated for the active profile.
+            window.dispatchEvent(new CustomEvent('envello:store-loaded'));
         } catch (e) {
             console.error('[StoreService] loadFromDb failed', e);
             if (retries > 0) {
+                // Clear _pendingLoad so the finally block doesn't schedule a second
+                // concurrent reload on top of the retry we're about to schedule.
+                this._pendingLoad = false;
                 setTimeout(() => this.loadFromDb(0), 500);
                 return;
             }
@@ -191,6 +222,11 @@ export class StoreService {
             this.people.set([]);
         } finally {
             this._loadInProgress = false;
+            // If a profile switched while we were loading, run again immediately for the new profile.
+            if (this._pendingLoad || generation !== this._loadGeneration) {
+                this._pendingLoad = false;
+                setTimeout(() => this.loadFromDb(), 0);
+            }
         }
     }
 

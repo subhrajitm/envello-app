@@ -4,16 +4,39 @@
             <h1 class="orbit-title">Spaces</h1>
         </div>
         <div class="orbit-header-right">
-            <button class="create-profile-btn" (click)="openAddModal()">
+            <button class="create-profile-btn" (click)="openAddModal()"
+                [disabled]="!canAddSpace()"
+                [title]="canAddSpace() ? '' : 'Space limit reached (' + maxSpaces + ' max)'">
                 <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
                 New Space
+                @if (!canAddSpace()) {
+                <span class="limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
+                }
             </button>
         </div>
     </header>
 
+    <!-- Search -->
+    <div class="search-bar-wrapper">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input type="text" class="search-input" placeholder="Search spaces…"
+            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+        @if (searchQuery()) {
+        <button class="search-clear" (click)="searchQuery.set('')">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        }
+    </div>
+
     <div class="orbit-content-area">
+        @if (filteredWorkspaces().length === 0) {
+        <div class="search-empty">
+            <span class="material-symbols-outlined">search_off</span>
+            <p>No spaces match "{{ searchQuery() }}"</p>
+        </div>
+        }
         <div class="profile-grid">
-            @for (wp of workspaces(); track wp.id) {
+            @for (wp of filteredWorkspaces(); track wp.id) {
             <div class="profile-card" 
                  [class.active-card]="activeWorkspace().id === wp.id"
                  (click)="activeWorkspace().id !== wp.id && switchWorkspace(wp.id)">

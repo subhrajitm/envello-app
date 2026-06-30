@@ -155,7 +155,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     effect(() => {
       const dbSpaces = this.storeService.spaces();
       for (const p of dbSpaces) {
-        this.workspaceService.addProfileWithId(p.id, p.title, '#3b82f6', p.icon);
+        this.workspaceService.addProfileWithId(p.id, p.title, p.color || '#3b82f6', p.icon);
       }
     });
 

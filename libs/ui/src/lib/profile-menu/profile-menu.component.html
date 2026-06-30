@@ -1,7 +1,8 @@
+@if (isOpen()) {
 <!-- Backdrop — must appear before dropdown so dropdown stacks above it at equal z-index -->
-<div class="profile-backdrop" *ngIf="isOpen()" (click)="close()"></div>
+<div class="profile-backdrop" (click)="close()"></div>
 
-<div class="profile-dropdown" *ngIf="isOpen()" [@slideDown] (click)="$event.stopPropagation()">
+<div class="profile-dropdown" [@slideDown] (click)="$event.stopPropagation()">
     <!-- User Info Section -->
     <div class="profile-header flex items-center gap-3">
         <div class="profile-avatar-large">
@@ -54,9 +55,14 @@
             }
         </button>
         }
-        <button class="menu-item" (click)="addWorkspace()">
+        <button class="menu-item" (click)="canAddSpace() && addWorkspace()"
+            [class.menu-item--disabled]="!canAddSpace()"
+            [title]="canAddSpace() ? '' : 'Space limit reached (' + maxSpaces + ' max)'">
             <span class="material-symbols-outlined">add_circle</span>
             <span>Add Space</span>
+            @if (!canAddSpace()) {
+            <span class="space-limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
+            }
         </button>
         <button class="menu-item" (click)="manageProfiles()">
             <span class="material-symbols-outlined">grid_view</span>
@@ -132,6 +138,23 @@
 
     <div class="menu-divider"></div>
 
+    <!-- Security Section -->
+    <div class="menu-section">
+        <div class="section-label">Security</div>
+        <div class="security-row">
+            <span class="material-symbols-outlined security-icon">schedule</span>
+            <div class="security-info">
+                <span class="security-label">Last login</span>
+                <span class="security-value">{{ getLastLogin() || '—' }}</span>
+            </div>
+            <button class="security-settings-btn" (click)="openSettings()" title="Security settings">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="menu-divider"></div>
+
     <!-- Logout -->
     <div class="menu-section">
         <button class="menu-item logout-item" (click)="logout()">
@@ -145,6 +168,7 @@
         <span>Member since {{ getMemberSince() }}</span>
     </div>
 </div>
+}
 
 <!-- Logout Confirmation -->
 @if (logoutConfirm()) {

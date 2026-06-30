@@ -39,7 +39,7 @@ export class SpacesComponent {
 
   // ── Menu ──────────────────────────────────────────────────────────────────
   menuOpenId = signal<string | null>(null);
-  switching  = signal(false);
+  switching  = this.workspaceService.switching;
 
   toggleMenu(id: string) {
     this.menuOpenId.update(cur => cur === id ? null : id);
@@ -88,8 +88,7 @@ export class SpacesComponent {
   // ── Switch profile ────────────────────────────────────────────────────────
   switchTo(profile: WorkspaceProfile) {
     if (this.isActive(profile.id)) return;
-    this.switching.set(true);
-    setTimeout(() => this.workspaceService.switchProfile(profile.id), 60);
+    this.workspaceService.switchProfile(profile.id);
   }
 
   // ── New modal ─────────────────────────────────────────────────────────────
@@ -136,11 +135,11 @@ export class SpacesComponent {
       this.store.addSpace({
         id, title: name, status: 'PLANNING', words: 0,
         updated: new Date().toISOString(), icon: this.formIcon(), progress: 0,
+        color: this.formColor(),
       });
       this.workspaceService.addProfileWithId(id, name, this.formColor(), this.formIcon());
       this.closeModal();
-      this.switching.set(true);
-      setTimeout(() => this.workspaceService.switchProfile(id), 60);
+      this.workspaceService.switchProfile(id);
     }
   }
 

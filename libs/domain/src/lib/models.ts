@@ -134,6 +134,8 @@ export interface Project {
     words: number;
     updated: string;
     icon: string;
+    /** Accent color synced across devices via the projects collection. */
+    color?: string;
     dueDate?: string;
     priority?: 'HIGH' | 'MEDIUM' | 'LOW';
     progress?: number;

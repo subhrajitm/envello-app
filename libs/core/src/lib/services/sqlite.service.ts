@@ -118,8 +118,14 @@ export class SqliteService {
         this.initPromise = null;
         try {
             await this.getDb();
-        } catch {
-            // Non-Tauri environment — nothing to do
+        } catch (e) {
+            if (this.isTauri()) {
+                // A real failure on desktop — log so it's visible in the Tauri console.
+                // store-loaded will not fire; the 8 s safety timeout in WorkspaceProfileService
+                // will clear the switching flag.
+                console.error('[SqliteService] reinit failed for profile', e);
+            }
+            // In non-Tauri (web dev with ng serve), failure here is expected — ignore.
         }
     }
 
