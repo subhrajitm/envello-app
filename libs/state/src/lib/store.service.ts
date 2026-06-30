@@ -55,6 +55,11 @@ export class StoreService {
             this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
         });
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
+        // On profile switch: clear stale in-memory caches before the db-ready reload fires.
+        window.addEventListener('envello:profile-switched', () => {
+            this.contentCache.clear();
+            this._pendingNoteUpserts.clear();
+        });
     }
 
     private initMarkdownWorker() {

@@ -85,7 +85,9 @@ export class SqliteService {
 
     constructor() {
         // Don't initialize eagerly - only init when first database operation is called
-        // This prevents errors in browser/non-Tauri environments
+        // This prevents errors in browser/non-Tauri environments.
+        // On profile switch: close the current DB and re-open for the new active profile.
+        window.addEventListener('envello:profile-switched', () => this.reinit());
     }
 
     /**
@@ -107,6 +109,17 @@ export class SqliteService {
         } catch (error) {
             this.initPromise = null; // Allow retry on next call
             throw error;
+        }
+    }
+
+    /** Close the current database and re-open for the active profile. Called on profile switch. */
+    async reinit(): Promise<void> {
+        this.db = null;
+        this.initPromise = null;
+        try {
+            await this.getDb();
+        } catch {
+            // Non-Tauri environment — nothing to do
         }
     }
 

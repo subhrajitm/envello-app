@@ -11,7 +11,9 @@ export class WorkspaceProfileService {
 
   profiles = this.profilesSignal.asReadonly();
   activeProfileId = this.activeProfileIdSignal.asReadonly();
-  
+  /** True while the data layer is re-initializing after a profile switch. */
+  switching = signal(false);
+
   activeProfile = computed(() => {
     const profs = this.profiles();
     const id = this.activeProfileId();
@@ -96,20 +98,28 @@ export class WorkspaceProfileService {
   }
 
   switchProfile(id: string) {
-    if (this.profiles().some(p => p.id === id)) {
-      this.activeProfileIdSignal.set(id);
-      localStorage.setItem(this.ACTIVE_PROFILE_KEY, id);
-      
-      // Update last accessed
-      const updated = this.profiles().map(p => 
-        p.id === id ? { ...p, lastAccessed: new Date().toISOString() } : p
-      );
-      this.profilesSignal.set(updated);
-      localStorage.setItem(this.PROFILES_KEY, JSON.stringify(updated));
+    if (!this.profiles().some(p => p.id === id)) return;
 
-      // Hard reload to isolate databases safely
-      window.location.reload();
-    }
+    this.switching.set(true);
+    this.activeProfileIdSignal.set(id);
+    localStorage.setItem(this.ACTIVE_PROFILE_KEY, id);
+
+    const updated = this.profiles().map(p =>
+      p.id === id ? { ...p, lastAccessed: new Date().toISOString() } : p
+    );
+    this.profilesSignal.set(updated);
+    localStorage.setItem(this.PROFILES_KEY, JSON.stringify(updated));
+
+    // Tell the data layer (PouchDB/SQLite) to re-init for the new namespace.
+    // Each platform service listens for this and dispatches envello:db-ready when ready.
+    window.dispatchEvent(new CustomEvent('envello:profile-switched'));
+
+    // Clear the switching flag once the data layer signals it is ready.
+    const onReady = () => {
+      this.switching.set(false);
+      window.removeEventListener('envello:db-ready', onReady);
+    };
+    window.addEventListener('envello:db-ready', onReady);
   }
 
   removeProfile(id: string) {

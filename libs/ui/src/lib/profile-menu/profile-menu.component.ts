@@ -51,6 +51,7 @@ export class ProfileMenuComponent {
 
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
+  switching = this.workspaceService.switching;
 
   isAddProfileModalOpen = signal(false);
   newProfileName = signal('');

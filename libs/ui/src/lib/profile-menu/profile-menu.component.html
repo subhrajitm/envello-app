@@ -38,7 +38,12 @@
 
     <!-- Space Switcher -->
     <div class="menu-section workspace-section">
-        <div class="section-label">Space</div>
+        <div class="section-label flex items-center gap-2">
+            Space
+            @if (switching()) {
+            <span class="space-switching-spinner"></span>
+            }
+        </div>
         @for (ws of workspaces(); track ws.id) {
         <button class="menu-item workspace-item" [class.workspace-active]="activeWorkspace().id === ws.id"
             (click)="ws.id !== activeWorkspace().id && switchWorkspace(ws.id)">
