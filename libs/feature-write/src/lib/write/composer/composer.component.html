@@ -370,6 +370,8 @@
                     [writingType]="writingType()" [sectionLabel]="sectionLabel()"
                     (characterClicked)="navigateToCharacter($event)"
                     (closed)="rightSidebarCollapsed.set(true)" />
+                } @else if (rightSidebarTab() === 'coach') {
+                <app-writing-coach (closed)="rightSidebarCollapsed.set(true)" />
                 }
             </div>
             }
@@ -390,6 +392,12 @@
                     (click)="setActiveTab('manuscript')" title="Book Stats">
                     <span class="material-symbols-outlined">bar_chart</span>
                 </button>
+                @if (aiService.aiEnabled()) {
+                <button class="ne-strip-btn" [class.active]="!rightSidebarCollapsed() && rightSidebarTab() === 'coach'"
+                    (click)="setActiveTab('coach')" title="Writing Coach">
+                    <span class="material-symbols-outlined">school</span>
+                </button>
+                }
 
                 <!-- Spacer -->
                 <div class="ne-strip-spacer"></div>

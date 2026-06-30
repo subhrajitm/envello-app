@@ -49,6 +49,7 @@ import { CharacterRelationshipsComponent } from './components/editor/character-r
 
 // Right Sidebar
 import { AiPanelComponent } from './components/right-sidebar/ai-panel/ai-panel.component';
+import { WritingCoachComponent } from './components/right-sidebar/writing-coach/writing-coach.component';
 import { NotesPanelComponent } from './components/right-sidebar/notes-panel/notes-panel.component';
 import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-data/manuscript-data.component';
 
@@ -82,6 +83,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     AiPanelComponent,
     NotesPanelComponent,
     ManuscriptDataComponent,
+    WritingCoachComponent,
   ],
   templateUrl: './composer.component.html',
   styleUrl: './composer.component.css',
@@ -103,7 +105,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   activeChapterId = signal<string | null>(null);
   activeGroupId = signal<string | null>(null);
   wordCount = signal(0);
-  rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
+  rightSidebarTab = signal<'ai' | 'notes' | 'manuscript' | 'coach'>('ai');
   activeNav = signal<'manuscript' | 'structure' | 'characters' | 'locations'>('manuscript');
 
   // Structure view state
@@ -780,7 +782,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
     }
   }
 
-  setActiveTab(tab: 'ai' | 'notes' | 'manuscript') {
+  setActiveTab(tab: 'ai' | 'notes' | 'manuscript' | 'coach') {
     if (this.rightSidebarCollapsed() || this.rightSidebarTab() !== tab) {
       this.rightSidebarTab.set(tab);
       this.rightSidebarCollapsed.set(false);
