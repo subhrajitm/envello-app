@@ -410,7 +410,7 @@ export class MeetingsComponent {
 
   // ── Table view ──────────────────────────────────────────────────────────────
   readonly tableColumns: EnvTableColumn[] = [
-    { key: 'title',    header: 'Title',    sortable: true },
+    { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', badgeMap: {
       'video':     { label: 'Video',     dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
       'phone':     { label: 'Phone',     dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)',  textColor: '#8b5cf6' },

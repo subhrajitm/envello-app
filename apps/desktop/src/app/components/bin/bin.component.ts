@@ -1,5 +1,4 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
-import { SlicePipe } from '@angular/common';
 import { BinService } from '@envello/core';
 import { BinEntryType } from '@envello/domain';
 import { ConfirmDialogComponent } from '@envello/ui';
@@ -15,7 +14,7 @@ interface ConfirmDialog {
 @Component({
   selector: 'app-bin',
   standalone: true,
-  imports: [SlicePipe, ConfirmDialogComponent],
+  imports: [ConfirmDialogComponent],
   templateUrl: './bin.component.html',
   styleUrl: './bin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

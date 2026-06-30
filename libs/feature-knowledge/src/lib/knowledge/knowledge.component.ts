@@ -155,7 +155,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── env-table config ──────────────────────────────────────────────────────
   readonly sourceColumns: EnvTableColumn[] = [
-    { key: 'title',      header: 'Source',        sortable: true },
+    { key: 'title',      header: 'Source',        type: 'primary-text', sortable: true },
     { key: 'sourceType', header: 'Type',           type: 'badge', sortable: true, badgeMap: {
       WEB:       { label: 'Web',       dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.1)',   textColor: '#3b82f6' },
       PDF:       { label: 'PDF',       dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.1)',    textColor: '#ef4444' },
@@ -174,7 +174,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── File table config ────────────────────────────────────────────────────
   readonly fileColumns: EnvTableColumn[] = [
-    { key: 'name', header: 'Name',  sortable: true },
+    { key: 'name', header: 'Name',  type: 'primary-text', sortable: true },
     { key: 'type', header: 'Type' },
     { key: 'size', header: 'Size',  sortable: true },
   ];
@@ -219,7 +219,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── Summary table config ─────────────────────────────────────────────────
   readonly summaryColumns: EnvTableColumn[] = [
-    { key: 'title',   header: 'Title',   sortable: true },
+    { key: 'title',   header: 'Title',   type: 'primary-text', sortable: true },
     { key: 'sources', header: 'Sources' },
     { key: 'tags',    header: 'Tags' },
     { key: 'date',    header: 'Date',    sortable: true },

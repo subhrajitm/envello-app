@@ -183,6 +183,10 @@
                       <span class="env-table-av-name">{{ getAvatarCell(row, col).name }}</span>
                     </div>
 
+                  <!-- primary-text: prominent title without avatar -->
+                  } @else if (col.type === 'primary-text') {
+                    <span class="env-table-cell-primary">{{ row[col.key] }}</span>
+
                   <!-- badge -->
                   } @else if (col.type === 'badge') {
                     <span

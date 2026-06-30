@@ -6,8 +6,8 @@ import { CdkDrag, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
 export interface EnvTableColumn {
   key: string;
   header: string;
-  /** Defaults to 'text'. 'avatar-text' expects cell value { name, avatar?, initials? }. */
-  type?: 'text' | 'avatar-text' | 'badge';
+  /** Defaults to 'text'. 'avatar-text' expects cell value { name, avatar?, initials? }. 'primary-text' renders as a prominent title (13px, text-primary, medium weight) with truncation. */
+  type?: 'text' | 'avatar-text' | 'badge' | 'primary-text';
   sortable?: boolean;
   /**
    * For type='badge': maps row value string → badge appearance.

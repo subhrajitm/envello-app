@@ -158,7 +158,7 @@ export class VaultComponent {
 
   // ── Table config ─────────────────────────────────────────────────────────
   readonly tableColumns: EnvTableColumn[] = [
-    { key: 'name',     header: 'Credential', sortable: true },
+    { key: 'name',     header: 'Credential', type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',       type: 'badge', sortable: true,
       badgeMap: {
         login:   { label: 'Login',       dotColor: '#22c55e', bgColor: 'rgba(22,163,74,0.1)',   textColor: '#16a34a'  },

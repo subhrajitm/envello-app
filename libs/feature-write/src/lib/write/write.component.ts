@@ -73,7 +73,7 @@ export class WriteComponent {
   ];
   // ── Table configuration ──────────────────────────────────────────────────
   readonly tableColumns: EnvTableColumn[] = [
-    { key: 'title',    header: 'Title',    type: 'text',  sortable: true },
+    { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', sortable: true, badgeMap: {
       'Novel':       { dotColor: '#f59e0b', bgColor: 'rgba(245,158,11,0.12)',  textColor: '#f59e0b' },
       'Short Story': { dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
