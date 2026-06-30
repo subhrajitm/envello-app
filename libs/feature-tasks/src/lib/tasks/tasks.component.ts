@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
+import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService } from '@envello/core';
 import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
@@ -26,6 +26,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private fileStorage = inject(FileStorageService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
   private themeService = inject(ThemeService);
   private userPrefsService = inject(UserPreferencesService);
 
@@ -2841,7 +2842,9 @@ export class TasksComponent implements OnInit, OnDestroy {
         tasks.length ? `Task list:\n${taskList}` : 'No tasks yet.',
         'Answer concisely. Use markdown for lists. You can help prioritize, identify blockers, suggest next actions, or summarize workload.',
       ].join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);
@@ -2869,7 +2872,9 @@ export class TasksComponent implements OnInit, OnDestroy {
         task.notes ? `Notes: ${task.notes}` : '',
         'You can break the task into subtasks, improve the description, estimate time, suggest labels, or advise what to do next. Be concise and actionable. Use markdown lists.',
       ].filter(Boolean).join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);

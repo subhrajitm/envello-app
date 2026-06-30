@@ -1,7 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AiService } from '@envello/core';
+import { AiService, ContextService } from '@envello/core';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -17,6 +17,7 @@ interface ChatMessage {
 })
 export class FloatingAiButtonComponent {
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
 
   isOpen = signal(false);
   prompt = signal('');
@@ -36,7 +37,7 @@ export class FloatingAiButtonComponent {
     this.messages.update(m => [...m, { role: 'assistant' as const, content: '' }]);
 
     try {
-      for await (const chunk of this.aiService.streamMessage(text)) {
+      for await (const chunk of this.contextService.streamWithContext(text, text)) {
         this.messages.update(msgs => {
           const last = msgs[msgs.length - 1];
           return last.role === 'assistant'

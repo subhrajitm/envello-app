@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { StoreService, MeetingsService, SemanticSearchService, AiService } from '@envello/core';
+import { StoreService, MeetingsService, SemanticSearchService, AiService, ContextService } from '@envello/core';
 
 type ResultType = 'note' | 'task' | 'book' | 'bookmark' | 'meeting' | 'project' | 'command';
 type FilterType = 'all' | ResultType;
@@ -65,6 +65,7 @@ export class QuickFindComponent {
     private router = inject(Router);
     private semanticSearch = inject(SemanticSearchService);
     private ai = inject(AiService);
+    private contextService = inject(ContextService);
 
     isOpen = signal(false);
     searchQuery = signal('');
@@ -281,7 +282,7 @@ export class QuickFindComponent {
             .map(m => `  - "${m.title}" on ${m.date || 'no date'}: ${m.description || ''}`)
             .join('\n') || '  (none)';
 
-        const context = `You are a helpful assistant embedded in Envello, a personal productivity app.
+        let context = `You are a helpful assistant embedded in Envello, a personal productivity app.
 Answer using the user's actual data below. Be concise and specific.
 Tasks include both top-level tasks and subtasks. "due" dates are in YYYY-MM-DD format.
 
@@ -296,16 +297,19 @@ ${notesBlock}
 MEETINGS:
 ${meetingsBlock}`;
 
-        // ── Optionally augment with semantic search sources ───────────────────
+        // ── Augment with cross-module context (semantic + keyword, all modules) ─
         const sources: QuickFindResult[] = [];
         try {
-            const docs = await this.semanticSearch.search(question, 6);
-            sources.push(...docs.map(d => ({
-                id: d.id, type: d.type as ResultType,
-                title: d.title, preview: d.preview,
-                icon: d.icon, route: d.route,
+            const crossCtx = await this.contextService.buildContext(question);
+            sources.push(...crossCtx.blocks.map(b => ({
+                id: b.title, type: b.module.toLowerCase() as ResultType,
+                title: b.title, preview: b.content,
+                icon: 'link', route: '',
             })));
-        } catch { /* embeddings not configured — skip */ }
+            if (crossCtx.blocks.length) {
+                context += `\n\n--- Cross-module context ---\n${crossCtx.formatted}`;
+            }
+        } catch { /* context engine unavailable — proceed without */ }
         this.aiSources.set(sources);
 
         try {

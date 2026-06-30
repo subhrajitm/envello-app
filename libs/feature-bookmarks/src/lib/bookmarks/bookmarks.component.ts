@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService } from '@envello/core';
+import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService, ContextService } from '@envello/core';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
@@ -24,6 +24,7 @@ interface AoPlan { folders: AoFolder[]; assignments: AoAssignment[]; }
 export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
   private webPreview = inject(WebPreviewService);
 
   // ── View state ──────────────────────────────────────────────────────────────
@@ -869,7 +870,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
         tags.length ? `All tags: ${tags.join(', ')}` : '',
         'You can help find bookmarks, suggest tags, identify unvisited or duplicate links, summarize topics, or recommend what to read next. Answer concisely, use markdown lists.',
       ].filter(Boolean).join('\n');
-      const aiResponse = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const aiResponse = await this.aiService.sendMessage(text, fullContext);
       const response = aiResponse || this.bookmarkFallback(text, active, tags, folders);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     } catch {

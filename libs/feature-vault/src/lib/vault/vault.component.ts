@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, ChangeDetectionStrategy, HostListe
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VaultStore } from '@envello/state';
-import { AiService, VaultUnlockService } from '@envello/core';
+import { AiService, VaultUnlockService, ContextService } from '@envello/core';
 import { Credential } from '@envello/domain';
 import { VaultUnlockComponent } from '../vault-unlock/vault-unlock.component';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent } from '@envello/ui';
@@ -37,6 +37,7 @@ const URL_LABEL: Record<string, string> = {
 export class VaultComponent {
   public vaultStore = inject(VaultStore);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
   readonly vaultUnlock = inject(VaultUnlockService);
 
   readonly isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -438,7 +439,9 @@ export class VaultComponent {
         creds.length ? `Credential metadata:\n${credList}` : 'No credentials stored yet.',
         'You can help identify stale/unaccessed credentials, find missing URLs, summarize coverage by type, or give security hygiene advice. Be concise, use markdown lists.',
       ].join('\n');
-      const aiResponse = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const aiResponse = await this.aiService.sendMessage(text, fullContext);
       const response = aiResponse || this.vaultFallback(text, creds);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     } catch {

@@ -97,6 +97,16 @@ export class ContextService {
       }
     }
 
+    const bookMatches = this.store.books()
+      .filter(b => this.matches(q, [b.title, b.writingType, ...(b.genre ?? [])]))
+      .slice(0, maxBlocksPerModule);
+    for (const b of bookMatches) {
+      if (!blocks.find(bk => bk.title === b.title)) {
+        const meta = [b.status, b.writingType, b.genre?.join(', '), b.wordCount ? `${b.wordCount} words` : ''].filter(Boolean).join(' · ');
+        blocks.push({ module: 'Book', title: b.title, content: meta });
+      }
+    }
+
     const formatted = this.format(query, blocks);
     return { query, blocks, formatted };
   }
@@ -129,6 +139,13 @@ export class ContextService {
       .filter(n => (n.title + ' ' + n.preview).toLowerCase().includes(q));
     for (const n of notes.slice(0, 5)) {
       blocks.push({ module: 'Note', title: n.title, content: n.preview });
+    }
+
+    const books = this.store.books()
+      .filter(b => (b.title + ' ' + (b.genre ?? []).join(' ')).toLowerCase().includes(q));
+    for (const b of books.slice(0, 3)) {
+      const meta = [b.status, b.writingType, b.genre?.join(', ')].filter(Boolean).join(' · ');
+      blocks.push({ module: 'Book', title: b.title, content: meta });
     }
 
     return { query: name, blocks, formatted: this.format(name, blocks) };

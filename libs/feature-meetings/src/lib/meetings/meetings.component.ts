@@ -16,6 +16,7 @@ import {
   PROVIDER_META,
   AiService,
   MeetingAutopilotService,
+  ContextService,
 } from '@envello/core';
 import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 @Component({
@@ -29,6 +30,7 @@ export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
   syncService = inject(CalendarSyncService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
   readonly autopilotService = inject(MeetingAutopilotService);
   readonly providerMeta = PROVIDER_META;
 
@@ -1288,7 +1290,9 @@ export class MeetingsComponent {
         all.length ? `Meeting list (up to 30):\n${meetingList}` : 'No meetings yet.',
         'Answer concisely. Use markdown for lists. You can help with scheduling, action items, follow-ups, or workload summaries.',
       ].join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);

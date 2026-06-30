@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Note, AiService } from '@envello/core';
+import { StoreService, Note, AiService, ContextService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent } from '@envello/ui';
@@ -51,6 +51,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private tauriService = inject(TauriService);
   private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
   editor!: Editor;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
   private titleSaveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -1692,7 +1693,10 @@ ${content.substring(0, 2000)}`;
       });
     };
     try {
-      for await (const chunk of this.aiService.streamMessage(text, this.buildNoteAiContext())) {
+      const noteCtx = this.buildNoteAiContext();
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullCtx = crossCtx.blocks.length ? `${noteCtx}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : noteCtx;
+      for await (const chunk of this.aiService.streamMessage(text, fullCtx)) {
         if (this.aiAbort) break;
         pending += chunk;
         if (!rafScheduled) { rafScheduled = true; requestAnimationFrame(flush); }

@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService } from '@envello/core';
+import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService, ContextService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries' | 'files';
@@ -29,6 +29,7 @@ export class KnowledgeComponent implements OnDestroy {
   fileStorage     = inject(FileStorageService);
   store           = inject(StoreService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
 
   // ── View state ────────────────────────────────────────────────────────────
   viewMode        = signal<ViewMode>('sources');
@@ -790,7 +791,9 @@ export class KnowledgeComponent implements OnDestroy {
           : 'There are no sources yet.',
         'Answer concisely. Use markdown for lists and emphasis.',
       ].join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);
