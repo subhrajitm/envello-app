@@ -53,6 +53,7 @@ jobs:
           - platform: windows-2025        # Windows x64 .msi + .exe
             args: ''
             rust-target: ''
+            vcpkg-triplet: x64-windows-static
             artifact-pattern: |
               src-tauri/target/release/bundle/msi/*.msi
               src-tauri/target/release/bundle/nsis/*.exe
@@ -62,6 +63,7 @@ jobs:
           - platform: windows-2025        # Windows ARM64 (Surface, Snapdragon)
             args: '--target aarch64-pc-windows-msvc'
             rust-target: aarch64-pc-windows-msvc
+            vcpkg-triplet: arm64-windows-static
             artifact-pattern: |
               src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/*.msi
               src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
@@ -102,6 +104,15 @@ jobs:
             libappindicator3-dev \
             librsvg2-dev \
             patchelf
+
+      - name: Install libsodium (Windows)
+        if: matrix.platform == 'windows-2025'
+        shell: pwsh
+        run: |
+          vcpkg install libsodium:${{ matrix.vcpkg-triplet }}
+          $libDir = "C:/vcpkg/installed/${{ matrix.vcpkg-triplet }}/lib"
+          Add-Content $env:GITHUB_ENV "SODIUM_LIB_DIR=$libDir"
+          Add-Content $env:GITHUB_ENV "SODIUM_STATIC=1"
 
       - name: Install Node dependencies
         run: npm ci

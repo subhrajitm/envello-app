@@ -36,10 +36,12 @@ jobs:
           - platform: windows-2025
             args: ''
             rust-target: ''
+            vcpkg-triplet: x64-windows-static
             artifact-name: windows-x64
           - platform: windows-2025
             args: '--target aarch64-pc-windows-msvc'
             rust-target: aarch64-pc-windows-msvc
+            vcpkg-triplet: arm64-windows-static
             artifact-name: windows-arm64
 
     runs-on: ${{ matrix.platform }}
@@ -74,6 +76,15 @@ jobs:
             libappindicator3-dev \
             librsvg2-dev \
             patchelf
+
+      - name: Install libsodium (Windows)
+        if: matrix.platform == 'windows-2025'
+        shell: pwsh
+        run: |
+          vcpkg install libsodium:${{ matrix.vcpkg-triplet }}
+          $libDir = "C:/vcpkg/installed/${{ matrix.vcpkg-triplet }}/lib"
+          Add-Content $env:GITHUB_ENV "SODIUM_LIB_DIR=$libDir"
+          Add-Content $env:GITHUB_ENV "SODIUM_STATIC=1"
 
       - name: Install Node dependencies
         run: npm ci
