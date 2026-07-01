@@ -26,7 +26,8 @@
       "@envello/feature-spaces": ["libs/feature-spaces/src/index.ts"],
       "@envello/feature-meetings": ["libs/feature-meetings/src/index.ts"],
       "@envello/feature-knowledge": ["libs/feature-knowledge/src/index.ts"],
-      "@envello/feature-people": ["libs/feature-people/src/index.ts"]
+      "@envello/feature-people": ["libs/feature-people/src/index.ts"],
+      "@envello/feature-analytics": ["libs/feature-analytics/src/index.ts"]
     }
   }
 }

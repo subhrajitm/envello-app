@@ -32,6 +32,8 @@ export class StoreService {
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
 
+    private readonly isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
     private markdownWorker: Worker | null = null;
     private workerCallbacks = new Map<string, (md: string) => void>();
     private saveTimeouts        = new Map<string, ReturnType<typeof setTimeout>>();
@@ -42,6 +44,10 @@ export class StoreService {
 
     private _syncDebounceTimer?: ReturnType<typeof setTimeout>;
     private _loadInProgress = false;
+    /** Incremented on every profile switch; lets an in-flight load detect it has gone stale. */
+    private _loadGeneration = 0;
+    /** True when a load was requested while one was already in-flight. */
+    private _pendingLoad = false;
     /** Notes with in-flight DB upserts — loadFromDb() keeps in-memory version for these. */
     private _pendingNoteUpserts = new Map<string, Note>();
 
@@ -55,6 +61,24 @@ export class StoreService {
             this._syncDebounceTimer = setTimeout(() => this.loadFromDb(), 300);
         });
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
+        window.addEventListener('envello:profile-switched', () => {
+            // Flush in-progress note writes for the old profile before switching.
+            this.flushPendingNoteSaves().catch(() => {});
+            // Invalidate any in-flight load — its results belong to the old profile.
+            this._loadGeneration++;
+            this.contentCache.clear();
+            this._pendingNoteUpserts.clear();
+            // Show empty state immediately so the user sees the switch happened at once.
+            this.tasks.set([]);
+            this.notes.set([]);
+            this.planningItems.set([]);
+            this.activities.set([]);
+            this.books.set([]);
+            this.bookmarks.set([]);
+            this.bookmarkFolders.set([]);
+            this.spaces.set([]);
+            this.people.set([]);
+        });
     }
 
     private initMarkdownWorker() {
@@ -100,8 +124,14 @@ export class StoreService {
     }
 
     private async loadFromDb(retries = 1): Promise<void> {
-        if (this._loadInProgress) return;
+        if (this._loadInProgress) {
+            // Another load is running. Queue a re-run so the latest profile wins.
+            this._pendingLoad = true;
+            return;
+        }
         this._loadInProgress = true;
+        this._pendingLoad = false;
+        const generation = this._loadGeneration;
         try {
             const [tasks, notes, planningItems, activities, books, folders, bookmarks, bookmarkFolders, spaces, people] = await Promise.all([
                 this.db.getAll<Task>('tasks'),
@@ -115,6 +145,10 @@ export class StoreService {
                 this.db.getAll<Project>('projects'),
                 this.db.getAll<Person>('people'),
             ]);
+
+            // A profile switch happened while we were reading — discard stale results.
+            // The finally block will schedule a fresh load for the new profile.
+            if (generation !== this._loadGeneration) return;
 
             // Tasks — cap, exclude soft-deleted
             const activeTasks = (tasks || [])
@@ -130,10 +164,15 @@ export class StoreService {
                 .slice(0, StoreService.LIMITS.notes)
                 .map(n => {
                     const pending = this._pendingNoteUpserts.get(n.id);
-                    // Pending write hasn't landed in DB yet — use the in-memory version
-                    return pending
-                        ? { ...n, ...pending, content: undefined } as Note
-                        : { ...n, content: undefined } as Note;
+                    // Pending write hasn't landed in DB yet — use the in-memory version.
+                    if (pending) return { ...n, ...pending, content: undefined } as Note;
+                    // Note is actively being edited (unsaved content in debounce queue) —
+                    // keep the current in-memory metadata so sync doesn't clobber live edits.
+                    if (this.saveTimeouts.has(n.id) || this.pendingSaveContent.has(n.id)) {
+                        const live = this.notes().find(existing => existing.id === n.id);
+                        if (live) return { ...live, content: undefined } as Note;
+                    }
+                    return { ...n, content: undefined } as Note;
                 });
             const dbNoteIds = new Set(activeNotes.map(n => n.id));
             const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
@@ -168,9 +207,15 @@ export class StoreService {
                     );
                 }
             }
+
+            // Notify listeners that the store is fully populated for the active profile.
+            window.dispatchEvent(new CustomEvent('envello:store-loaded'));
         } catch (e) {
             console.error('[StoreService] loadFromDb failed', e);
             if (retries > 0) {
+                // Clear _pendingLoad so the finally block doesn't schedule a second
+                // concurrent reload on top of the retry we're about to schedule.
+                this._pendingLoad = false;
                 setTimeout(() => this.loadFromDb(0), 500);
                 return;
             }
@@ -186,6 +231,11 @@ export class StoreService {
             this.people.set([]);
         } finally {
             this._loadInProgress = false;
+            // If a profile switched while we were loading, run again immediately for the new profile.
+            if (this._pendingLoad || generation !== this._loadGeneration) {
+                this._pendingLoad = false;
+                setTimeout(() => this.loadFromDb(), 0);
+            }
         }
     }
 
@@ -206,7 +256,34 @@ export class StoreService {
             return note.content;
         }
 
-        // 3. Flush any debounced file-write before reading so the file exists.
+        // 3. Immediate HTML backup written synchronously in updateNote — survives reloads
+        //    that happen before the async markdown conversion + file write completes.
+        try {
+            const immediateHtml = localStorage.getItem(`env:note:html:${id}`);
+            if (immediateHtml) {
+                this.contentCache.set(id, immediateHtml);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: immediateHtml } : n));
+                return immediateHtml;
+            }
+        } catch { /* ignore — storage may be unavailable */ }
+
+        // 4. Read directly from the DB — content IS stored in the notes table by
+        //    updateNote → db.upsert, but loadFromDb strips it for performance.
+        //    This is the most reliable path on web (avoids async markdown roundtrip)
+        //    and also covers desktop when the .md file hasn't been written yet.
+        try {
+            const allNotes = await this.db.getAll<Note>('notes');
+            const dbNote = allNotes.find(n => n.id === id);
+            if (dbNote?.content && dbNote.content.length > 5) {
+                this.contentCache.set(id, dbNote.content);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: dbNote.content! } : n));
+                return dbNote.content;
+            }
+        } catch (e) {
+            console.error('[StoreService] loadNoteContent DB direct read failed for', id, e);
+        }
+
+        // 5. Flush any debounced file-write before reading so the file exists.
         if (this.saveTimeouts.has(id)) {
             const pending = this.pendingSaveContent.get(id) ?? '';
             clearTimeout(this.saveTimeouts.get(id));
@@ -220,12 +297,20 @@ export class StoreService {
             }
         }
 
-        // 4. Read from file system (desktop: .md file; web: localStorage).
+        // 6. Read from file system (desktop: .md file → parse; web: raw HTML stored directly).
         try {
-            const mdContent = await this.fs.readNote(id);
-            if (mdContent) {
-                const { marked } = await import('marked');
-                const html = await marked.parse(mdContent) as string;
+            const stored = await this.fs.readNote(id);
+            if (stored) {
+                let html: string;
+                const isHtml = stored.trimStart().startsWith('<') || !this.isTauri;
+                if (isHtml) {
+                    // Web stores raw HTML; also gracefully handles desktop files migrated from HTML.
+                    html = stored;
+                } else {
+                    // Desktop markdown file.
+                    const { marked } = await import('marked');
+                    html = await marked.parse(stored) as string;
+                }
                 this.contentCache.set(id, html);
                 this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html } : n));
                 return html;
@@ -234,7 +319,7 @@ export class StoreService {
             console.error('[StoreService] loadNoteContent file read failed for', id, e);
         }
 
-        // 5. Last resort: reconstruct from preview stored in SQLite.
+        // 7. Last resort: reconstruct from preview stored in SQLite.
         //    preview is plain text — wrap in a paragraph so the editor renders it.
         //    Also re-saves to file so future loads hit step 4.
         if (note.preview && note.preview.length > 0) {
@@ -280,26 +365,35 @@ export class StoreService {
         await this.saveNoteContentToFile(note.id, note.content || '');
     }
 
-    updateNote(id: string, updates: Partial<Note>) {
-        const timestamp = new Date();
-        const timeString = timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    updateNote(id: string, updates: Partial<Note>): Promise<void> {
+        // ISO 8601 — sortable, parseable, timezone-safe.
+        // Locale strings like "2:30 PM" cause new Date(...).getTime() = NaN
+        // which makes Array.sort() unstable in "modified" sort mode.
+        const isoNow = new Date().toISOString();
 
         this.notes.update(notes =>
             notes.map(note => note.id === id ? {
                 ...note,
                 ...updates,
-                lastEdited: updates.lastEdited || timeString
+                lastEdited: updates.lastEdited || isoNow
             } : note)
         );
 
         const note = this.notes().find(n => n.id === id);
-        if (!note) return;
+        if (!note) return Promise.resolve();
 
         if (updates.content !== undefined) {
-            this.contentCache.set(id, updates.content || '');
+            const html = updates.content || '';
+            this.contentCache.set(id, html);
+
+            // Immediate synchronous backup so content survives a reload that happens
+            // before the async markdown conversion + debounced file write completes.
+            // This key is cleaned up once the proper write finishes (see saveNoteContentToFile).
+            try { localStorage.setItem(`env:note:html:${id}`, html); } catch { /* quota */ }
+
             const existing = this.saveTimeouts.get(id);
             if (existing) clearTimeout(existing);
-            this.pendingSaveContent.set(id, updates.content || '');
+            this.pendingSaveContent.set(id, html);
             this.saveTimeouts.set(id, setTimeout(() => {
                 this.saveTimeouts.delete(id);
                 const content = this.pendingSaveContent.get(id) ?? '';
@@ -308,9 +402,11 @@ export class StoreService {
             }, 1000));
         }
 
+        // Return the DB upsert Promise so callers can await actual persistence
+        // and show accurate save indicators.
         this._pendingNoteUpserts.set(id, note);
-        this.db.upsert('notes', note)
-            .then(() => this._pendingNoteUpserts.delete(id))
+        return this.db.upsert('notes', note)
+            .then(() => { this._pendingNoteUpserts.delete(id); })
             .catch(e => {
                 this._pendingNoteUpserts.delete(id);
                 console.error('[StoreService] persist note failed', e);
@@ -331,8 +427,14 @@ export class StoreService {
 
     private async saveNoteContentToFile(id: string, html: string) {
         try {
-            const md = await this.htmlToMarkdown(html);
-            const filePath = await this.fs.saveNote(id, md);
+            // Web: store raw HTML — eliminates the lossy HTML→MD→HTML roundtrip that
+            // strips tiptap-specific elements (highlights, youtube embeds, text-align styles).
+            // Desktop: convert to human-readable markdown for the .md file.
+            const fileContent = this.isTauri ? await this.htmlToMarkdown(html) : html;
+            const filePath = await this.fs.saveNote(id, fileContent);
+
+            // Content written — the immediate HTML backup is no longer needed.
+            try { localStorage.removeItem(`env:note:html:${id}`); } catch { /* ignore */ }
 
             const note = this.notes().find(n => n.id === id);
             if (note && note.filePath !== filePath) {
@@ -353,7 +455,15 @@ export class StoreService {
     deleteNote(id: string) {
         const note = this.notes().find(n => n.id === id);
         if (!note) return;
+        // Cancel any in-flight debounced file write — the note no longer exists.
+        const pending = this.saveTimeouts.get(id);
+        if (pending) {
+            clearTimeout(pending);
+            this.saveTimeouts.delete(id);
+            this.pendingSaveContent.delete(id);
+        }
         this.contentCache.delete(id);
+        try { localStorage.removeItem(`env:note:html:${id}`); } catch { /* ignore */ }
         this.notes.update(list => list.filter(n => n.id !== id));
         this.addActivity('Note deleted', 'system');
         this.db.upsert('notes', { ...note, deleted_at: new Date().toISOString() })
@@ -458,7 +568,7 @@ export class StoreService {
 
     addActivity(text: string, type: Activity['type'] = 'entry') {
         const newActivity: Activity = {
-            id: Date.now().toString(),
+            id: crypto.randomUUID(),
             text,
             time: 'Just now',
             type

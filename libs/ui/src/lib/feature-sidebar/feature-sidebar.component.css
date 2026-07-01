@@ -95,4 +95,4 @@
 
 :host::-webkit-scrollbar { width: 4px; }
 :host::-webkit-scrollbar-track { background: transparent; }
-:host::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 4px; }
+:host::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 4px; }

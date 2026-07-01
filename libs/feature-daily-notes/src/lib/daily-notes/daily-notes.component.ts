@@ -1,9 +1,10 @@
 import { Component, computed, inject, signal, untracked, HostListener, OnInit, OnDestroy, effect, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
+// NoteHistoryPanelComponent imported below via @envello/ui
 import { CommonModule } from '@angular/common';
-import { StoreService, Note, AiService } from '@envello/core';
+import { StoreService, Note, AiService, ContextService, RecentActivityService, NoteHistoryService, NotificationService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent } from '@envello/ui';
+import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, NoteHistoryPanelComponent } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -41,7 +42,7 @@ const FOLDER_COLORS = ['#f87171','#fb923c','#fbbf24','#4ade80','#34d399','#38bdf
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent, NoteHistoryPanelComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -51,6 +52,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   private tauriService = inject(TauriService);
   private route = inject(ActivatedRoute);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
+  private recentActivity = inject(RecentActivityService);
+  private noteHistory = inject(NoteHistoryService);
+  private notify      = inject(NotificationService);
+
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
+
+  showHistoryPanel = signal(false);
   editor!: Editor;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
   private titleSaveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -66,6 +75,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   titleInputValue = signal('');
 
   @ViewChild('titleInput') titleInputRef?: ElementRef<HTMLInputElement>;
+  @ViewChild(NoteHistoryPanelComponent) historyPanelRef?: NoteHistoryPanelComponent;
 
   canUndo = signal(false);
   canRedo = signal(false);
@@ -79,6 +89,22 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   wordCount = signal(0);
   characterCount = signal(0);
+
+  readingTime = computed(() => {
+    const words = this.wordCount();
+    if (words < 10) return '';
+    const mins = Math.ceil(words / 200);
+    return mins === 1 ? '1 min read' : `${mins} min read`;
+  });
+
+  saveStatusLabel = computed(() => {
+    if (this.isSaving()) return 'Saving…';
+    const saved = this.lastSaved();
+    if (!saved) return '';
+    const diffSec = (Date.now() - saved.getTime()) / 1000;
+    if (diffSec < 5) return 'Saved';
+    return `Saved at ${saved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  });
 
   showAddMenu = signal(false);
 
@@ -159,7 +185,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   // Right sidebar panel
   rightPanelCollapsed = signal(true);
-  rightPanelTab = signal<'ai' | 'format' | 'info'>('ai');
+  rightPanelTab = signal<'ai' | 'format'>('ai');
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
@@ -249,6 +275,52 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return this.noteGroups().some((g) => g.id === fid) ? fid : firstFolderId;
   }
 
+  // Computed sorted list per folder — evaluated once per signal change, not twice
+  // per CD cycle (the template calls getNotesForFolder for both the empty check
+  // and the @for loop; a computed avoids repeating the sort/localStorage read).
+  readonly sortedNotesPerFolder = computed(() => {
+    const result = new Map<string, Note[]>();
+    const sort = this.sortBy();
+    for (const [folderId, notes] of this.notesPerFolder()) {
+      result.set(folderId, this._sortFolder(folderId, notes, sort));
+    }
+    return result;
+  });
+
+  private _sortFolder(folderId: string, notes: Note[], sort: string): Note[] {
+    const pinned   = notes.filter(n => n.tags?.includes('pinned'));
+    const unpinned = notes.filter(n => !n.tags?.includes('pinned'));
+
+    const sortUnpinned = (list: Note[]): Note[] => {
+      if (sort === 'manual') {
+        try {
+          const raw = localStorage.getItem(this.noteOrderKey(folderId));
+          const order: string[] = raw ? JSON.parse(raw) : [];
+          const orderSet = new Set(order);
+          const indexed  = new Map(list.map(n => [n.id, n]));
+          const ordered  = order.map(id => indexed.get(id)).filter(Boolean) as Note[];
+          const rest     = list.filter(n => !orderSet.has(n.id));
+          return [...rest, ...ordered];
+        } catch { return list; }
+      }
+      return [...list].sort((a, b) => {
+        if (sort === 'alpha') return (a.title || 'Untitled').localeCompare(b.title || 'Untitled');
+        if (sort === 'created') {
+          const aT = parseInt(a.id, 10) || new Date(a.date).getTime();
+          const bT = parseInt(b.id, 10) || new Date(b.date).getTime();
+          return bT - aT;
+        }
+        // modified: lastEdited is ISO — safe to parse
+        const aM = a.lastEdited ? new Date(a.lastEdited).getTime() : parseInt(a.id, 10) || new Date(a.date).getTime();
+        const bM = b.lastEdited ? new Date(b.lastEdited).getTime() : parseInt(b.id, 10) || new Date(b.date).getTime();
+        return bM - aM;
+      });
+    };
+
+    // Pinned notes always float to top, sorted among themselves, then unpinned
+    return [...sortUnpinned(pinned), ...sortUnpinned(unpinned)];
+  }
+
   getNotesForFolder(folderId: string): Note[] {
     const notes = this.notesPerFolder().get(folderId) ?? [];
     const sort = this.sortBy();
@@ -268,12 +340,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     try {
       const raw = localStorage.getItem(this.noteOrderKey(folderId));
-      if (!raw) return notes;
-      const order: string[] = JSON.parse(raw);
+      const order: string[] = raw ? JSON.parse(raw) : [];
+      const orderSet = new Set(order);               // O(1) lookup vs O(n) includes
       const indexed = new Map(notes.map(n => [n.id, n]));
       const ordered = order.map(id => indexed.get(id)).filter(Boolean) as Note[];
-      const rest = notes.filter(n => !order.includes(n.id));
-      return [...ordered, ...rest];
+      // Notes not in the saved order (e.g. synced from another device) go to the
+      // TOP so they're visible immediately, matching user expectation for new items.
+      const rest = notes.filter(n => !orderSet.has(n.id));
+      return [...rest, ...ordered];
     } catch { return notes; }
   }
 
@@ -339,6 +413,27 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (buckets.older.length > 0) result.push({ label: 'Older Notes', notes: buckets.older });
 
     return result;
+  }
+
+  formatNoteDate(date: string): string {
+    if (!date) return '';
+    // Strip time component — note.date may be "2026-06-30" or "2026-06-30T14:32:00Z"
+    const dateOnly = date.split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    if (dateOnly === todayStr) return 'Today';
+    if (dateOnly === yesterdayStr) return 'Yesterday';
+    const d = new Date(dateOnly + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    const sameYear = d.getFullYear() === today.getFullYear();
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      ...(sameYear ? {} : { year: 'numeric' }),
+    });
   }
 
   formatTime(id: string, lastEdited?: string): string {
@@ -483,7 +578,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('window:beforeunload')
-  onBeforeUnload() { this.flushTitleSave(); }
+  onBeforeUnload() {
+    this.flushTitleSave();
+    // Fire-and-forget: localStorage backup already covers content survival on reload,
+    // but this attempts to complete any pending markdown/file write before the tab closes.
+    this.store.flushPendingNoteSaves().catch(() => {});
+  }
 
   @HostListener('document:keydown.escape', ['$event'])
   handleEscape(event: Event) {
@@ -524,16 +624,20 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         },
       },
       onUpdate: ({ editor }) => {
-        // Debounce the store write — avoids a DataService write on every keystroke
+        // Debounce the store write — avoids a DataService write on every keystroke.
+        // isSaving stays true until the DB upsert resolves, so the indicator is accurate.
         this.isSaving.set(true);
         if (this.saveTimeout) clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(() => {
+        this.saveTimeout = setTimeout(async () => {
           const content = editor.getHTML();
           const plainText = editor.getText();
           const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
-          this.updateNoteContent(content, preview);
-          this.isSaving.set(false);
-          this.lastSaved.set(new Date());
+          try {
+            await this.updateNoteContent(content, preview);
+            this.lastSaved.set(new Date());
+          } finally {
+            this.isSaving.set(false);
+          }
         }, 500);
       },
     });
@@ -610,6 +714,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
     if (this.searchDebounceId) clearTimeout(this.searchDebounceId);
     this.flushTitleSave();
+    // Flush pending note content writes when navigating away from this route.
+    this.store.flushPendingNoteSaves().catch(() => {});
     this._cleanupFormatListener?.();
     if (this.editor) {
       this.editor.destroy();
@@ -624,11 +730,61 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (id) this.store.updateNote(id, { title: this.titleInputValue() });
   }
 
-  updateNoteContent(content: string, preview: string) {
+  async updateNoteContent(content: string, preview: string): Promise<void> {
     const activeId = this.selectedEntryId();
     if (activeId) {
-      this.store.updateNote(activeId, { content, preview });
+      await this.store.updateNote(activeId, { content, preview });
+      const note = this.selectedNote();
+      if (note) this.noteHistory.autoSnapshot(activeId, note.title, content);
     }
+  }
+
+  async saveVersionNow() {
+    const note = this.selectedNote();
+    if (!note || !this.editor) return;
+
+    // Prefer the live editor HTML (includes unsaved in-flight typing).
+    // Fall back to store.loadNoteContent if the editor hasn't loaded the note yet
+    // (content is lazy-loaded async from localStorage via marked, so there's a brief window
+    // where the editor is empty even though the note has real content).
+    let html = this.editor.getHTML();
+    if (!this.editor.getText().trim()) {
+      html = await this.store.loadNoteContent(note.id);
+    }
+
+    const label = this.historyPanelRef?.manualLabel()?.trim() || undefined;
+    const saved = await this.noteHistory.saveSnapshot(note.id, note.title, html, label);
+
+    if (!saved) {
+      // F: inform the user why nothing was saved
+      const reason = !html || !html.replace(/<[^>]*>/g, '').trim()
+        ? 'Nothing to save — the note is empty.'
+        : 'This version is identical to the previous snapshot.';
+      this.notify.warning('Version not saved', reason);
+      this.historyPanelRef?.saving.set(false);
+      return;
+    }
+
+    this.historyPanelRef?.manualLabel.set('');
+
+    // Refresh the panel list — prefer direct call, fall back to toggle isOpen
+    if (this.showHistoryPanel()) {
+      if (this.historyPanelRef) {
+        await this.historyPanelRef.loadHistory(note.id);
+      } else {
+        this.showHistoryPanel.set(false);
+        this.showHistoryPanel.set(true);
+      }
+    }
+  }
+
+  onHistoryRestored() {
+    const note = this.selectedNote();
+    if (note?.content && this.editor) {
+      this.lastLoadedContent = note.content;
+      this.editor.commands.setContent(note.content, { emitUpdate: false });
+    }
+    this.showHistoryPanel.set(false);
   }
 
   handleNewNote() {
@@ -647,6 +803,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       folderId,
     };
     this.store.addNote(newNote);
+    // Prepend to manual order so the note appears at the top of its folder immediately
+    // without waiting for drag-and-drop to register it in the saved order.
+    try {
+      const key = this.noteOrderKey(folderId);
+      const existing: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!existing.includes(newNote.id)) {
+        localStorage.setItem(key, JSON.stringify([newNote.id, ...existing]));
+      }
+    } catch { /* ignore */ }
     this.selectNote(newNote.id);
     // Select all text in the title field so the user can immediately overwrite it
     setTimeout(() => {
@@ -755,7 +920,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   bulkDelete() {
     const ids = [...this.multiSelectedIds()];
-    ids.forEach(id => this.store.deleteNote(id));
+    ids.forEach(id => {
+      this.store.deleteNote(id);
+      this.noteHistory.deleteAllForNote(id).catch(e => console.warn('[DailyNotes] deleteAllForNote failed', e));
+    });
     this.clearMultiSelect();
   }
 
@@ -861,6 +1029,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.flushTitleSave();
 
     this.selectedEntryId.set(id);
+    this.recentActivity.track(id, 'note');
     if (!this.openNotes().includes(id)) {
       this.openNotes.update(tabs => [...tabs, id]);
     }
@@ -1028,7 +1197,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.showDropdown.update(show => !show);
   }
 
-  setRightTab(tab: 'ai' | 'format' | 'info') {
+  setRightTab(tab: 'ai' | 'format') {
     if (this.rightPanelCollapsed() || this.rightPanelTab() !== tab) {
       this.rightPanelTab.set(tab);
       this.rightPanelCollapsed.set(false);
@@ -1121,9 +1290,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const plainText = this.editor?.getText() ?? '';
       const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
       this.isSaving.set(true);
-      this.updateNoteContent(content, preview);
-      this.lastSaved.set(new Date());
-      setTimeout(() => this.isSaving.set(false), 600);
+      this.updateNoteContent(content, preview)
+        .then(() => { this.lastSaved.set(new Date()); })
+        .finally(() => { this.isSaving.set(false); });
     }
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'n') {
       event.preventDefault();
@@ -1275,6 +1444,7 @@ Return plain text with paragraph breaks (double newline between paragraphs). No 
     if (activeId) {
       this.closeNoteTab(activeId);
       this.store.deleteNote(activeId);
+      this.noteHistory.deleteAllForNote(activeId).catch(e => console.warn('[DailyNotes] deleteAllForNote failed', e));
     }
     this.deleteNoteOpen.set(false);
   }
@@ -1692,7 +1862,10 @@ ${content.substring(0, 2000)}`;
       });
     };
     try {
-      for await (const chunk of this.aiService.streamMessage(text, this.buildNoteAiContext())) {
+      const noteCtx = this.buildNoteAiContext();
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullCtx = crossCtx.blocks.length ? `${noteCtx}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : noteCtx;
+      for await (const chunk of this.aiService.streamMessage(text, fullCtx)) {
         if (this.aiAbort) break;
         pending += chunk;
         if (!rafScheduled) { rafScheduled = true; requestAnimationFrame(flush); }

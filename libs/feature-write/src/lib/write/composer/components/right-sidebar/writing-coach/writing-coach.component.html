@@ -1,0 +1,88 @@
+<div class="wc-panel">
+
+  <!-- Header -->
+  <div class="wc-header">
+    <div class="wc-header-left">
+      <span class="material-symbols-outlined wc-header-icon">school</span>
+      <div>
+        <h3 class="wc-title">Writing Coach</h3>
+        <p class="wc-subtitle">Full-manuscript analysis</p>
+      </div>
+    </div>
+    <button class="ne-icon-btn" (click)="closed.emit()" title="Close">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  @if (!hasContent()) {
+    <!-- Empty state -->
+    <div class="wc-empty">
+      <span class="material-symbols-outlined wc-empty-icon">edit_note</span>
+      <p>Write some chapter content first, then come back for a full manuscript analysis.</p>
+    </div>
+  } @else if (activeAnalysis()) {
+
+    <!-- Result view -->
+    <div class="wc-result-header">
+      <div class="wc-result-title">
+        @for (card of cards; track card.key) {
+          @if (card.key === activeAnalysis()) {
+            <span class="material-symbols-outlined wc-result-icon">{{ card.icon }}</span>
+            <span>{{ card.label }}</span>
+          }
+        }
+      </div>
+      <div class="wc-result-actions">
+        @if (isGenerating()) {
+          <button class="wc-btn wc-btn--ghost wc-btn--sm" (click)="cancel()">
+            <span class="material-symbols-outlined">stop</span>
+            Stop
+          </button>
+        } @else {
+          <button class="wc-btn wc-btn--ghost wc-btn--sm" (click)="clear()">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Back
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="wc-result-body">
+      @if (result()) {
+        <div class="wc-result-text" [innerHTML]="formatResult(result())"></div>
+        @if (isGenerating()) {
+          <span class="wc-cursor">|</span>
+        }
+      } @else if (isGenerating()) {
+        <div class="wc-loading">
+          <span class="wc-dot"></span>
+          <span class="wc-dot"></span>
+          <span class="wc-dot"></span>
+          <span class="wc-loading-label">Analysing manuscript…</span>
+        </div>
+      }
+    </div>
+
+  } @else {
+
+    <!-- Analysis cards grid -->
+    <div class="wc-intro">
+      <p>Select an analysis to run across your entire manuscript — not just the current chapter.</p>
+    </div>
+
+    <div class="wc-cards">
+      @for (card of cards; track card.key) {
+        <button class="wc-card" (click)="run(card.key)" [disabled]="isGenerating()">
+          <span class="material-symbols-outlined wc-card-icon">{{ card.icon }}</span>
+          <div class="wc-card-body">
+            <span class="wc-card-label">{{ card.label }}</span>
+            <span class="wc-card-desc">{{ card.description }}</span>
+          </div>
+          <span class="material-symbols-outlined wc-card-arrow">chevron_right</span>
+        </button>
+      }
+    </div>
+
+  }
+
+</div>

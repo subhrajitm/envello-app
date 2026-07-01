@@ -1,16 +1,18 @@
 import { Component, signal, inject, output, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { UserService, WorkspaceProfileService } from '@envello/core';
+import { UserService, WorkspaceProfileService, StoreService, NotificationService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { KeyboardShortcutsService } from '../keyboard-shortcuts/keyboard-shortcuts.service';
 
 @Component({
   selector: 'app-profile-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent],
+  imports: [FormsModule, ModalComponent, ConfirmDialogComponent],
+  providers: [DatePipe],
   templateUrl: './profile-menu.component.html',
   styleUrl: './profile-menu.component.css',
   animations: [
@@ -40,9 +42,18 @@ export class ProfileMenuComponent {
   onOpenProfile = output<void>();
   onOpenSettings = output<void>();
 
-  workspaceService = inject(WorkspaceProfileService);
+  private workspaceService = inject(WorkspaceProfileService);
+  private storeService = inject(StoreService);
+  private notify = inject(NotificationService);
+  private datePipe = inject(DatePipe);
+
+  logoutConfirm = signal(false);
+
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
+  switching = this.workspaceService.switching;
+  canAddSpace = this.workspaceService.canAddSpace;
+  maxSpaces = this.workspaceService.MAX_SPACES;
 
   isAddProfileModalOpen = signal(false);
   newProfileName = signal('');
@@ -59,10 +70,21 @@ export class ProfileMenuComponent {
 
   confirmAddWorkspace() {
     const name = this.newProfileName().trim();
-    if (name) {
-      this.workspaceService.addProfile(name);
-      this.isAddProfileModalOpen.set(false);
-    }
+    if (!name) return;
+    const newId = crypto.randomUUID();
+    this.storeService.addSpace({
+      id: newId,
+      title: name,
+      description: '',
+      status: 'PLANNING',
+      words: 0,
+      updated: new Date().toISOString(),
+      icon: 'folder',
+      color: '#3b82f6',
+    });
+    this.workspaceService.addProfileWithId(newId, name, '#3b82f6', 'folder');
+    this.isAddProfileModalOpen.set(false);
+    this.workspaceService.switchProfile(newId);
   }
 
   cancelAddWorkspace() {
@@ -71,7 +93,7 @@ export class ProfileMenuComponent {
 
   manageProfiles() {
     this.close();
-    this.router.navigate(['/profiles']);
+    this.router.navigate(['/spaces']);
   }
 
   open() {
@@ -96,6 +118,11 @@ export class ProfileMenuComponent {
     this.onOpenSettings.emit();
   }
 
+  openAnalytics() {
+    this.close();
+    this.router.navigate(['/analytics']);
+  }
+
   openActivity() {
     this.close();
     this.router.navigate(['/activity-log']);
@@ -103,6 +130,7 @@ export class ProfileMenuComponent {
 
   openHelp() {
     this.close();
+    this.notify.info('Help & Support', 'Documentation and support resources coming soon.');
   }
 
   openBin() {
@@ -131,7 +159,22 @@ export class ProfileMenuComponent {
 
   logout() {
     this.close();
+    this.logoutConfirm.set(true);
+  }
+
+  doLogout() {
+    this.logoutConfirm.set(false);
     this.userService.logout();
+  }
+
+  openWords() {
+    this.close();
+    this.router.navigate(['/daily-notes']);
+  }
+
+  openDocuments() {
+    this.close();
+    this.router.navigate(['/write']);
   }
 
   formatNumber(num: number): string {
@@ -147,11 +190,23 @@ export class ProfileMenuComponent {
   getMemberSince(): string {
     const joinedDate = this.user()?.joinedDate;
     if (!joinedDate) return '';
+    return this.datePipe.transform(joinedDate, 'MMM yyyy') ?? '';
+  }
 
-    return joinedDate.toLocaleDateString('en-US', {
-      month: 'short',
-      year: 'numeric'
-    });
+  getLastLogin(): string {
+    const raw = this.user()?.stats?.lastLoginDate;
+    if (!raw) return '';
+    const date = new Date(raw);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const mins = Math.floor(diffMs / 60_000);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    if (mins < 2) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hrs < 24) return `Today at ${this.datePipe.transform(date, 'h:mm a')}`;
+    if (days === 1) return `Yesterday at ${this.datePipe.transform(date, 'h:mm a')}`;
+    return this.datePipe.transform(date, 'MMM d, h:mm a') ?? '';
   }
 
   @HostListener('document:keydown.escape', ['$event'])

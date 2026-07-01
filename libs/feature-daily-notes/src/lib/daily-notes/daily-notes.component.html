@@ -238,10 +238,11 @@
                     (dragover)="onFolderDragOver(group.id, $event)"
                     (dragleave)="onFolderDragLeave($event)"
                     (drop)="onFolderDrop(group.id, $event)">
-                    @if (getNotesForFolder(group.id).length === 0) {
+                    @let folderNotes = sortedNotesPerFolder().get(group.id) ?? [];
+                    @if (folderNotes.length === 0) {
                     <div class="folder-empty">No notes in this folder</div>
                     } @else {
-                    @for (entry of getNotesForFolder(group.id); track entry.id) {
+                    @for (entry of folderNotes; track entry.id) {
                     <div class="note-card-item"
                         [attr.data-note-id]="entry.id"
                         [class.active]="selectedNote()?.id === entry.id && !isMultiSelecting()"
@@ -251,7 +252,7 @@
                         [class.drag-above]="dragOverNoteId() === entry.id && dragInsertBefore()"
                         [class.drag-below]="dragOverNoteId() === entry.id && !dragInsertBefore()"
                         draggable="true"
-                        (click)="focusedNoteId.set(entry.id); onNoteClick(entry.id, group.id, $event)"
+                        (click)="onNoteClick(entry.id, group.id, $event)"
                         (dragstart)="onNoteDragStart(entry.id, $event)"
                         (dragend)="onNoteDragEnd()"
                         (dragover)="onNoteItemDragOver(entry.id, group.id, $event)"
@@ -338,8 +339,7 @@
             </div>
             @if (openNotes().length > 1) {
             <button class="close-all-tabs-btn" title="Close all tabs" (click)="closeAllTabs()">
-                <span class="material-symbols-outlined">close_fullscreen</span>
-                Close all
+                <span class="material-symbols-outlined">close</span>
             </button>
             }
         </div>
@@ -373,6 +373,28 @@
                     (keydown.enter)="checkAiTitleCommand(titleInputValue())"
                     [placeholder]="aiGenerating() ? 'Generating…' : 'Note title…'"
                     [disabled]="aiGenerating()" />
+
+                <!-- Byline: date · words · reading time · save status -->
+                <div class="dn-editor-statusbar">
+                    <span class="dn-sb-stat dn-sb-date" [title]="note.date">{{ formatNoteDate(note.date) }}</span>
+                    <span class="dn-sb-pipe">·</span>
+                    <span class="dn-sb-stat">{{ wordCount() }} words</span>
+                    @if (readingTime()) {
+                    <span class="dn-sb-pipe">·</span>
+                    <span class="dn-sb-stat">{{ readingTime() }}</span>
+                    }
+                    @if (isSaving()) {
+                    <span class="dn-sb-pipe">·</span>
+                    <span class="dn-sb-save dn-sb-save--saving">
+                        <span class="dn-sb-dot"></span>Saving…
+                    </span>
+                    } @else if (lastSaved()) {
+                    <span class="dn-sb-pipe">·</span>
+                    <span class="dn-sb-save dn-sb-save--done">
+                        <span class="dn-sb-dot"></span>{{ saveStatusLabel() }}
+                    </span>
+                    }
+                </div>
 
                 @if (aiGenerating()) {
                 <div class="dn-ai-generating">
@@ -442,22 +464,6 @@
                 }
 
                 <tiptap-editor [editor]="editor" class="dn-editor-text"></tiptap-editor>
-
-                <!-- Editor status bar: word count + active tags -->
-                <div class="dn-editor-statusbar">
-                    <span class="dn-statusbar-words">{{ wordCount() }} words</span>
-                    @if (getNoteTags(note).length > 0) {
-                    <span class="dn-statusbar-divider">·</span>
-                    <div class="dn-statusbar-tags">
-                        @for (tag of getNoteTags(note); track tag) {
-                        <button class="dn-statusbar-tag" [class.active]="selectedTag() === tag"
-                            (click)="selectTag(tag)" title="Filter by #{{ tag }}">
-                            #{{ tag }}
-                        </button>
-                        }
-                    </div>
-                    }
-                </div>
             </div>
         </div>
 
@@ -466,7 +472,7 @@
             <!-- Expandable content panel -->
             @if (!rightPanelCollapsed()) {
             <div class="dn-right-content">
-                @if (rightPanelTab() === 'ai') {
+                @if (aiEnabled() && rightPanelTab() === 'ai') {
                 <env-ai-panel
                     title="Notes Assistant"
                     placeholder="Ask about your notes…"
@@ -598,76 +604,18 @@
                     </div>
                 </div>
                 }
-                } @else if (rightPanelTab() === 'info') {
-                <div class="dn-info-panel">
-                    <div class="dn-panel-header">
-                        <span class="material-symbols-outlined">info</span>
-                        NOTE INFO
-                        <button class="dn-panel-close" (click)="rightPanelCollapsed.set(true)" title="Close">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-                    <div class="dn-format-section">
-                        <div class="dn-info-row">
-                            <span class="material-symbols-outlined dn-info-icon">calendar_today</span>
-                            <div class="dn-info-content">
-                                <span class="dn-info-label">Created</span>
-                                <span class="dn-info-value">{{ note.date }}</span>
-                            </div>
-                        </div>
-                        <div class="dn-info-row">
-                            <span class="material-symbols-outlined dn-info-icon">schedule</span>
-                            <div class="dn-info-content">
-                                <span class="dn-info-label">Time</span>
-                                <span class="dn-info-value">{{ formatTime(note.id, note.lastEdited) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dn-format-divider"></div>
-                    <div class="dn-format-section">
-                        <div class="dn-stat-grid">
-                            <div class="dn-stat-card">
-                                <div class="dn-stat-label">Words</div>
-                                <div class="dn-stat-value">{{ wordCount() }}</div>
-                            </div>
-                            <div class="dn-stat-card">
-                                <div class="dn-stat-label">Chars</div>
-                                <div class="dn-stat-value">{{ characterCount() }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    @if (getNoteTags(note).length > 0) {
-                    <div class="dn-format-divider"></div>
-                    <div class="dn-format-section">
-                        <div class="dn-format-label">TAGS</div>
-                        <div class="dn-info-tags">
-                            @for (tag of getNoteTags(note); track tag) {
-                            <button class="dn-info-tag" [class.active]="selectedTag() === tag"
-                                (click)="selectTag(tag)" title="Filter by #{{ tag }}">
-                                #{{ tag }}
-                            </button>
-                            }
-                        </div>
-                    </div>
-                    }
-                    <div class="dn-format-divider"></div>
-                    <div class="dn-format-section">
-                        <div class="dn-info-save-row">
-                            <span class="material-symbols-outlined dn-info-saved-icon">cloud_done</span>
-                            <span class="dn-info-saved-text">All changes saved</span>
-                        </div>
-                    </div>
-                </div>
                 }
             </div>
             }
             <!-- Always-visible icon strip -->
             <div class="ne-right-strip">
                 <!-- Panel toggles -->
+                @if (aiEnabled()) {
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'ai'"
                     (click)="setRightTab('ai')" title="AI Assistant">
                     <span class="material-symbols-outlined">auto_awesome</span>
                 </button>
+                }
                 <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'format'"
                     (click)="setRightTab('format')" title="Format">
                     <span class="material-symbols-outlined">format_paragraph</span>
@@ -699,6 +647,9 @@
                 <button class="ne-strip-btn" (click)="exportNote()" title="Export">
                     <span class="material-symbols-outlined">download</span>
                 </button>
+                <button class="ne-strip-btn" (click)="showHistoryPanel.set(true)" title="Version History">
+                    <span class="material-symbols-outlined">history</span>
+                </button>
 
                 <!-- Save status -->
                 <span class="dn-save-indicator"
@@ -707,12 +658,6 @@
                     [title]="isSaving() ? 'Saving…' : 'Saved'">
                     <span class="material-symbols-outlined">{{ isSaving() ? 'sync' : 'cloud_done' }}</span>
                 </span>
-
-                <!-- Note info -->
-                <button class="ne-strip-btn" [class.active]="!rightPanelCollapsed() && rightPanelTab() === 'info'"
-                    (click)="setRightTab('info')" title="Note Info">
-                    <span class="material-symbols-outlined">info</span>
-                </button>
 
                 <!-- Destructive — always last -->
                 <button class="ne-strip-btn ne-strip-btn--danger" (click)="deleteCurrentNote()" title="Delete note">
@@ -737,3 +682,12 @@
         }
     </div>
 </div>
+
+<!-- Version History Panel -->
+<env-note-history-panel
+  [noteId]="selectedNote()?.id ?? ''"
+  [isOpen]="showHistoryPanel()"
+  (closed)="showHistoryPanel.set(false)"
+  (restored)="onHistoryRestored()"
+  (saveNow)="saveVersionNow()">
+</env-note-history-panel>

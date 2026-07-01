@@ -1,32 +1,24 @@
 <div class="activity-log-page">
-    <div class="al-header">
-        <div class="al-header-top flex items-center justify-between">
-            <button class="back-btn" (click)="goBack()">
-                <span class="material-symbols-outlined">arrow_back</span>
-                BACK TO WORKSPACE
-            </button>
-            <div class="al-breadcrumbs">SYSTEM / LOGS / ACTIVITY</div>
+    <!-- Compact toolbar -->
+    <div class="al-toolbar">
+        <h1 class="al-title">
+            <span class="material-symbols-outlined al-title-icon">history</span>
+            Activity Log
+        </h1>
+
+        <div class="al-filter-pills">
+            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'" (click)="setFilter('ENTRY')">Entries</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'" (click)="setFilter('SYSTEM')">System</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'" (click)="setFilter('SYNC')">Sync</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI</button>
         </div>
-        <div class="al-title-row flex items-center justify-between">
-            <h1>Activity Log</h1>
-            <div class="al-controls">
-                <div class="search-input">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Search logs..." (input)="updateSearch($event)" />
-                </div>
+
+        <div class="al-toolbar-right">
+            <div class="search-input">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Search logs…" (input)="updateSearch($event)" />
             </div>
-        </div>
-        <div class="al-filters-row flex flex-wrap gap-2">
-            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'"
-                (click)="setFilter('ALL')">ALL</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'"
-                (click)="setFilter('ENTRY')">ENTRIES</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'"
-                (click)="setFilter('SYSTEM')">SYSTEM</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'"
-                (click)="setFilter('SYNC')">SYNC</button>
-            <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI
-                TOOLS</button>
         </div>
     </div>
 
@@ -50,7 +42,6 @@
                     </div>
                     <div class="col-action">
                         <div class="log-action-text">{{ activity.action }}</div>
-                        <div class="log-id">ID: {{ activity.id | slice:0:8 }}</div>
                     </div>
                     <div class="col-time">{{ activity.time }}</div>
                     <div class="col-user">

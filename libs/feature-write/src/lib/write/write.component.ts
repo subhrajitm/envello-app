@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, HostListener, ChangeDetectionStrat
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { StoreService, type Book, type WritingType, BookContentService } from '@envello/core';
+import { StoreService, type Book, type WritingType, BookContentService, AiService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 
 const WRITING_TYPE_META: Record<string, { color: string; icon: string }> = {
@@ -35,6 +35,9 @@ export class WriteComponent {
   private router = inject(Router);
   store = inject(StoreService);
   private bookContent = inject(BookContentService);
+  private aiService   = inject(AiService);
+
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   // ── Filter / sort ─────────────────────────────────────────────────────────
   viewMode     = signal<'LIST' | 'GRID'>('LIST');
@@ -73,7 +76,7 @@ export class WriteComponent {
   ];
   // ── Table configuration ──────────────────────────────────────────────────
   readonly tableColumns: EnvTableColumn[] = [
-    { key: 'title',    header: 'Title',    type: 'text',  sortable: true },
+    { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', sortable: true, badgeMap: {
       'Novel':       { dotColor: '#f59e0b', bgColor: 'rgba(245,158,11,0.12)',  textColor: '#f59e0b' },
       'Short Story': { dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },

@@ -8,6 +8,28 @@ const COLLECTION = 'user_preferences';
 const SETTINGS_ID = 'app-settings';
 const LS_KEY = 'envello-settings';
 
+/**
+ * Keys that are device-local and must never be written to or applied from
+ * the synced DB. Each device manages these independently via localStorage.
+ *
+ * - Visual/rendering prefs (theme, font sizes) vary by screen and environment.
+ *   Syncing them causes a flash-of-wrong-theme when sync-complete fires after
+ *   the app has already rendered with the locally-saved value.
+ * - Desktop-only prefs (alwaysOnTop, minimizeToTray) are meaningless on web.
+ * - Per-device notification control should not be overridden remotely.
+ */
+const DEVICE_LOCAL_KEYS = new Set([
+  'theme',
+  'fontSize',
+  'editorFont',
+  'editorFontSize',
+  'lineHeight',
+  'compactMode',
+  'desktopNotifications',
+  'alwaysOnTop',
+  'minimizeToTray',
+]);
+
 @Injectable({ providedIn: 'root' })
 export class UserPreferencesService implements OnDestroy {
   private readonly dataService = inject(DataService);
@@ -28,22 +50,20 @@ export class UserPreferencesService implements OnDestroy {
     window.removeEventListener('envello:db-ready',     this.dbReadyHandler);
   }
 
-  /**
-   * On DB-ready: fetch the latest remote copy (desktop → Supabase REST; PS/PouchDB → no-op
-   * since they manage sync themselves), then read from local DB and apply.
-   */
   private async onDbReady(): Promise<void> {
     await this.dataService.pullFromRemote(COLLECTION).catch(() => {});
-    // Always read local DB after pull — covers the case where pullFromRemote found nothing
-    // and didn't fire sync-complete, so syncHandler wouldn't have run yet.
     await this.syncFromDb();
   }
 
-  /** Persist preferences to both localStorage (instant) and the synced DB. */
+  /**
+   * Persist preferences to localStorage (instant) and the synced DB.
+   * Device-local keys are written to localStorage only — never to the DB.
+   */
   async save(prefs: AppPreferences): Promise<void> {
     localStorage.setItem(LS_KEY, JSON.stringify(prefs));
+    const syncable = this.stripDeviceLocal(prefs);
     try {
-      await this.dataService.upsert(COLLECTION, { id: SETTINGS_ID, ...prefs });
+      await this.dataService.upsert(COLLECTION, { id: SETTINGS_ID, ...syncable });
     } catch (e) {
       console.error('[UserPreferences] DB save failed', e);
     }
@@ -65,12 +85,34 @@ export class UserPreferencesService implements OnDestroy {
   }
 
   /**
-   * Apply a preferences object to the running app without requiring a page reload.
-   * Also updates localStorage so other components (header, app.component) pick it up.
+   * Apply a preferences object to the running app.
+   *
+   * When called from a DB sync event, device-local keys in the incoming payload
+   * are ignored — localStorage (already applied at boot by ThemeService etc.)
+   * wins. This prevents the flash-of-wrong-theme on sync-complete.
+   *
+   * When called with fromSync=false (explicit user action in Settings), all keys
+   * including device-local ones are applied immediately.
    */
-  apply(prefs: AppPreferences): void {
-    localStorage.setItem(LS_KEY, JSON.stringify(prefs));
+  apply(prefs: AppPreferences, fromSync = false): void {
+    if (fromSync) {
+      // Merge: synced prefs fill in the gaps, but device-local keys from
+      // localStorage always take precedence.
+      const local = JSON.parse(localStorage.getItem(LS_KEY) || '{}') as AppPreferences;
+      const merged: AppPreferences = { ...prefs };
+      for (const key of DEVICE_LOCAL_KEYS) {
+        if (local[key] !== undefined) merged[key] = local[key];
+        else delete merged[key];
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(merged));
+      this.applyToDOM(merged);
+    } else {
+      localStorage.setItem(LS_KEY, JSON.stringify(prefs));
+      this.applyToDOM(prefs);
+    }
+  }
 
+  private applyToDOM(prefs: AppPreferences): void {
     if (prefs['theme'])
       this.themeService.setTheme(prefs['theme'] as any);
 
@@ -83,8 +125,8 @@ export class UserPreferencesService implements OnDestroy {
     if (prefs['lineHeight'])
       document.documentElement.style.setProperty('--editor-line-height', String(prefs['lineHeight']));
 
-    document.body.classList.toggle('compact-mode',   !!prefs['compactMode']);
-    document.body.classList.toggle('no-animations',  prefs['animations'] === false);
+    document.body.classList.toggle('compact-mode',  !!prefs['compactMode']);
+    document.body.classList.toggle('no-animations', prefs['animations'] === false);
 
     if (prefs['navigationLayout'])
       window.dispatchEvent(new CustomEvent('navigationLayoutChanged', { detail: prefs['navigationLayout'] }));
@@ -96,7 +138,14 @@ export class UserPreferencesService implements OnDestroy {
 
   private async syncFromDb(): Promise<void> {
     const prefs = await this.loadFromDb();
-    if (prefs) this.apply(prefs);
+    if (prefs) this.apply(prefs, true);
+  }
+
+  /** Remove device-local keys before writing to the synced DB. */
+  private stripDeviceLocal(prefs: AppPreferences): AppPreferences {
+    return Object.fromEntries(
+      Object.entries(prefs).filter(([k]) => !DEVICE_LOCAL_KEYS.has(k))
+    );
   }
 
   private fontFamily(font: string): string {

@@ -358,7 +358,7 @@ export class MeetingsService {
   addMeeting(meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>): Meeting {
     const newMeeting: Meeting = {
       ...meeting,
-      id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+      id: crypto.randomUUID(),
       project: meeting.project?.trim() || undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -426,7 +426,7 @@ export class MeetingsService {
       notes: [],
       actionItems: original.actionItems?.map(ai => ({
         ...ai,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        id: crypto.randomUUID(),
         status: 'open' as const,
         linkedTaskId: undefined,
       })),
@@ -443,7 +443,7 @@ export class MeetingsService {
 
     const newItem: AgendaItem = {
       ...item,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
     };
 
     this.updateMeeting(meetingId, {
@@ -479,7 +479,7 @@ export class MeetingsService {
 
     const newItem: ActionItem = {
       ...item,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
     };
 
     this.updateMeeting(meetingId, {
@@ -518,7 +518,7 @@ export class MeetingsService {
     if (!actionItem) return;
 
     const task: Task = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       title: actionItem.title,
       priority: actionItem.priority ?? 'MEDIUM',
       hours: '1.0H',
@@ -540,7 +540,7 @@ export class MeetingsService {
     if (!meeting) return;
 
     const newNote: MeetingNote = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       content,
       createdAt: new Date().toISOString(),
       createdBy,
@@ -579,7 +579,7 @@ export class MeetingsService {
 
     const newAttendee: Attendee = {
       ...attendee,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
     };
 
     this.updateMeeting(meetingId, {
@@ -613,7 +613,7 @@ export class MeetingsService {
     baseMeeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>,
     count: number
   ): Meeting[] {
-    const seriesId = Date.now().toString();
+    const seriesId = crypto.randomUUID();
     const meetings: Meeting[] = [];
 
     for (let i = 0; i < count; i++) {

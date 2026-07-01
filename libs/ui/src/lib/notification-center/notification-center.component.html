@@ -1,3 +1,6 @@
+<!-- Backdrop — must appear before panel so panel stacks above it at equal z-index -->
+<div class="notification-backdrop" *ngIf="isOpen()" (click)="close()"></div>
+
 <div class="notification-panel" *ngIf="isOpen()" [@slideIn]>
     <!-- Header -->
     <div class="panel-header flex items-center justify-between">
@@ -99,9 +102,6 @@
     </div>
     }
 </div>
-
-<!-- Backdrop -->
-<div class="notification-backdrop" *ngIf="isOpen()" (click)="close()"></div>
 
 @if (clearConfirm()) {
 <env-confirm-dialog

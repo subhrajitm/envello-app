@@ -85,7 +85,9 @@ export class SqliteService {
 
     constructor() {
         // Don't initialize eagerly - only init when first database operation is called
-        // This prevents errors in browser/non-Tauri environments
+        // This prevents errors in browser/non-Tauri environments.
+        // On profile switch: close the current DB and re-open for the new active profile.
+        window.addEventListener('envello:profile-switched', () => this.reinit());
     }
 
     /**
@@ -107,6 +109,23 @@ export class SqliteService {
         } catch (error) {
             this.initPromise = null; // Allow retry on next call
             throw error;
+        }
+    }
+
+    /** Close the current database and re-open for the active profile. Called on profile switch. */
+    async reinit(): Promise<void> {
+        this.db = null;
+        this.initPromise = null;
+        try {
+            await this.getDb();
+        } catch (e) {
+            if (this.isTauri()) {
+                // A real failure on desktop — log so it's visible in the Tauri console.
+                // store-loaded will not fire; the 8 s safety timeout in WorkspaceProfileService
+                // will clear the switching flag.
+                console.error('[SqliteService] reinit failed for profile', e);
+            }
+            // In non-Tauri (web dev with ng serve), failure here is expected — ignore.
         }
     }
 
@@ -531,6 +550,110 @@ export class SqliteService {
         value TEXT NOT NULL
       )
     `);
+
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS note_history (
+        id         TEXT PRIMARY KEY,
+        noteId     TEXT NOT NULL,
+        title      TEXT,
+        content    TEXT,
+        snapshotAt TEXT,
+        label      TEXT
+      )
+    `);
+        try { await db.execute('CREATE INDEX IF NOT EXISTS idx_note_history_noteId ON note_history(noteId)'); } catch { /* already exists */ }
+
+        await db.execute(`
+      CREATE TABLE IF NOT EXISTS chapter_history (
+        id          TEXT PRIMARY KEY,
+        contentId   TEXT NOT NULL,
+        contentType TEXT NOT NULL,
+        title       TEXT,
+        content     TEXT,
+        wordCount   INTEGER DEFAULT 0,
+        description TEXT,
+        timestamp   TEXT
+      )
+    `);
+        try { await db.execute('CREATE INDEX IF NOT EXISTS idx_chapter_history_contentId ON chapter_history(contentId)'); } catch { /* already exists */ }
+    }
+
+    async getAllChapterHistory(): Promise<any[]> {
+        const db = await this.getDb();
+        return db.select<any[]>('SELECT * FROM chapter_history ORDER BY timestamp ASC');
+    }
+
+    async getChapterHistory(contentId: string): Promise<any[]> {
+        const db = await this.getDb();
+        return db.select<any[]>(
+            'SELECT * FROM chapter_history WHERE contentId = $1 ORDER BY timestamp ASC',
+            [contentId],
+        );
+    }
+
+    async upsertChapterHistory(entry: any): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM chapter_history WHERE id = $1', [entry.id]);
+        if (exists.length > 0) {
+            await db.execute(
+                'UPDATE chapter_history SET contentId=$1, contentType=$2, title=$3, content=$4, wordCount=$5, description=$6, timestamp=$7 WHERE id=$8',
+                [entry.contentId, entry.contentType, entry.title, entry.content, entry.wordCount, entry.description, entry.timestamp, entry.id],
+            );
+        } else {
+            await db.execute(
+                'INSERT INTO chapter_history (id, contentId, contentType, title, content, wordCount, description, timestamp) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+                [entry.id, entry.contentId, entry.contentType, entry.title, entry.content, entry.wordCount, entry.description, entry.timestamp],
+            );
+        }
+    }
+
+    async removeChapterHistory(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM chapter_history WHERE id = $1', [id]);
+    }
+
+    async removeChapterHistoryForContent(contentId: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM chapter_history WHERE contentId = $1', [contentId]);
+    }
+
+    async getAllNoteHistory(): Promise<any[]> {
+        const db = await this.getDb();
+        return db.select<any[]>('SELECT * FROM note_history ORDER BY snapshotAt DESC');
+    }
+
+    async getNoteHistory(noteId: string): Promise<any[]> {
+        const db = await this.getDb();
+        return db.select<any[]>(
+            'SELECT * FROM note_history WHERE noteId = $1 ORDER BY snapshotAt DESC',
+            [noteId],
+        );
+    }
+
+    async upsertNoteHistory(entry: any): Promise<void> {
+        const db = await this.getDb();
+        const exists = await db.select<any[]>('SELECT id FROM note_history WHERE id = $1', [entry.id]);
+        if (exists.length > 0) {
+            await db.execute(
+                'UPDATE note_history SET noteId=$1, title=$2, content=$3, snapshotAt=$4, label=$5 WHERE id=$6',
+                [entry.noteId, entry.title, entry.content, entry.snapshotAt, entry.label ?? null, entry.id],
+            );
+        } else {
+            await db.execute(
+                'INSERT INTO note_history (id, noteId, title, content, snapshotAt, label) VALUES ($1,$2,$3,$4,$5,$6)',
+                [entry.id, entry.noteId, entry.title, entry.content, entry.snapshotAt, entry.label ?? null],
+            );
+        }
+    }
+
+    async removeNoteHistory(id: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM note_history WHERE id = $1', [id]);
+    }
+
+    async removeNoteHistoryForNote(noteId: string): Promise<void> {
+        const db = await this.getDb();
+        await db.execute('DELETE FROM note_history WHERE noteId = $1', [noteId]);
     }
 
     async getAppMeta(key: string): Promise<string | null> {

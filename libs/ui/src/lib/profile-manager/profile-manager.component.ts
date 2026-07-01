@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { WorkspaceProfileService, UserService, StoreService } from '@envello/core';
 import { ModalComponent } from '../modal/modal.component';
@@ -19,6 +19,15 @@ export class ProfileManagerComponent {
   workspaces = this.workspaceService.profiles;
   activeWorkspace = this.workspaceService.activeProfile;
   userName = this.userService.userName;
+  canAddSpace = this.workspaceService.canAddSpace;
+  maxSpaces = this.workspaceService.MAX_SPACES;
+
+  searchQuery = signal('');
+  filteredWorkspaces = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    if (!q) return this.workspaces();
+    return this.workspaces().filter(w => w.name.toLowerCase().includes(q));
+  });
 
   isAddModalOpen = signal(false);
   newProfileName = signal('');
@@ -44,7 +53,8 @@ export class ProfileManagerComponent {
       status: 'PLANNING',
       words: 0,
       updated: new Date().toISOString(),
-      icon: 'folder'
+      icon: 'folder',
+      color: '#3b82f6',
     });
     this.workspaceService.addProfileWithId(newId, name, '#3b82f6', 'folder');
     this.isAddModalOpen.set(false);
@@ -78,8 +88,9 @@ export class ProfileManagerComponent {
     const id = this.editProfileId();
     const name = this.editProfileName().trim();
     if (id && name) {
-      this.workspaceService.updateProfile(id, { name, color: this.editProfileColor() });
-      this.storeService.updateSpace(id, { title: name });
+      const color = this.editProfileColor();
+      this.workspaceService.updateProfile(id, { name, color });
+      this.storeService.updateSpace(id, { title: name, color });
       this.cancelEdit();
     }
   }
@@ -87,15 +98,19 @@ export class ProfileManagerComponent {
   // Delete Modal Logic
   isDeleteModalOpen = signal(false);
   profileToDelete = signal<string | null>(null);
+  profileToDeleteName = signal<string>('');
 
   openDeleteModal(id: string) {
+    const name = this.workspaces().find(w => w.id === id)?.name ?? 'this project';
     this.profileToDelete.set(id);
+    this.profileToDeleteName.set(name);
     this.isDeleteModalOpen.set(true);
   }
 
   cancelDelete() {
     this.isDeleteModalOpen.set(false);
     this.profileToDelete.set(null);
+    this.profileToDeleteName.set('');
   }
 
   confirmDelete() {

@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService } from '@envello/core';
+import { StoreService, Bookmark, BookmarkFolder, AiService, WebPreviewService, ContextService, RecentActivityService } from '@envello/core';
 import { ModalComponent, AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableAction, EnvTableColumn, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
@@ -24,7 +24,11 @@ interface AoPlan { folders: AoFolder[]; assignments: AoAssignment[]; }
 export class BookmarksComponent implements OnInit, OnDestroy {
   store = inject(StoreService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
+  private recentActivity = inject(RecentActivityService);
   private webPreview = inject(WebPreviewService);
+
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   // ── View state ──────────────────────────────────────────────────────────────
   selectedView = signal<BookmarkView>('all');
@@ -565,6 +569,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   }
 
   openBookmark(bookmark: Bookmark) {
+    this.recentActivity.track(bookmark.id, 'bookmark');
     this.store.updateBookmark(bookmark.id, {
       lastVisited: new Date().toISOString(),
       visitCount: (bookmark.visitCount ?? 0) + 1,
@@ -850,7 +855,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
   toggleAssistant() { this.showAssistant.update(v => !v); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {
@@ -869,7 +874,9 @@ export class BookmarksComponent implements OnInit, OnDestroy {
         tags.length ? `All tags: ${tags.join(', ')}` : '',
         'You can help find bookmarks, suggest tags, identify unvisited or duplicate links, summarize topics, or recommend what to read next. Answer concisely, use markdown lists.',
       ].filter(Boolean).join('\n');
-      const aiResponse = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const aiResponse = await this.aiService.sendMessage(text, fullContext);
       const response = aiResponse || this.bookmarkFallback(text, active, tags, folders);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response }]);
     } catch {
@@ -934,6 +941,7 @@ export class BookmarksComponent implements OnInit, OnDestroy {
 
   // ── Auto-organise ─────────────────────────────────────────────────────────────
   async triggerAutoOrganise() {
+    if (!this.aiService.aiEnabled()) return;
     // Treat bookmarks as unorganised if they have no folderId OR if their folderId
     // points to a folder that no longer exists (orphaned reference from a deleted folder)
     const existingFolderIds = new Set(this.store.bookmarkFolders().map(f => f.id));

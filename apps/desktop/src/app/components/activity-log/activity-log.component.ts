@@ -18,6 +18,7 @@ export class ActivityLogComponent {
   searchQuery = signal('');
   activeFilter = signal<'ALL' | 'ENTRY' | 'SYSTEM' | 'SYNC' | 'AI'>('ALL');
   expandedRowId = signal<string | null>(null);
+  copiedId      = signal<string | null>(null);
 
   userName = this.userService.userName;
   userInitials = this.userService.userInitials;
@@ -71,6 +72,12 @@ export class ActivityLogComponent {
 
   toggleRow(id: string) {
     this.expandedRowId.set(this.expandedRowId() === id ? null : id);
+  }
+
+  async copyId(id: string): Promise<void> {
+    await navigator.clipboard.writeText(id);
+    this.copiedId.set(id);
+    setTimeout(() => this.copiedId.set(null), 2000);
   }
 
   refresh() {

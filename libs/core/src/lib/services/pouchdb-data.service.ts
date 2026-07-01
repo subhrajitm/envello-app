@@ -50,6 +50,15 @@ export class PouchDbDataService implements DataService {
     private unsubscribeRealtime?: () => void;
 
     constructor() {
+        // On profile switch: PouchDB resolves the active namespace per-request via activeProfileId(),
+        // so no re-init is needed — signal StoreService to reload from the new namespace.
+        // queueMicrotask ensures db-ready fires after ALL profile-switched handlers have run
+        // (including StoreService's handler that increments _loadGeneration), so the load
+        // captures the correct generation and isn't immediately discarded.
+        window.addEventListener('envello:profile-switched', () => {
+            queueMicrotask(() => window.dispatchEvent(new CustomEvent('envello:db-ready')));
+        });
+
         // Trigger a pull + realtime subscription the first time a user is authenticated.
         effect(() => {
             const user = this.authService.currentUser();

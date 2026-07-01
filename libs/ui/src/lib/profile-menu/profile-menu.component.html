@@ -1,7 +1,8 @@
+@if (isOpen()) {
 <!-- Backdrop — must appear before dropdown so dropdown stacks above it at equal z-index -->
-<div class="profile-backdrop" *ngIf="isOpen()" (click)="close()"></div>
+<div class="profile-backdrop" (click)="close()"></div>
 
-<div class="profile-dropdown" *ngIf="isOpen()" [@slideDown] (click)="$event.stopPropagation()">
+<div class="profile-dropdown" [@slideDown] (click)="$event.stopPropagation()">
     <!-- User Info Section -->
     <div class="profile-header flex items-center gap-3">
         <div class="profile-avatar-large">
@@ -18,129 +19,196 @@
         </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="quick-stats flex items-center justify-around">
-        <div class="stat-item flex flex-col items-center">
-            <span class="stat-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
-            <span class="stat-label">Words</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item flex flex-col items-center">
-            <span class="stat-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
-            <span class="stat-label">Documents</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item flex flex-col items-center">
-            <span class="stat-value">{{ user()?.stats?.daysActive || 0 }}</span>
-            <span class="stat-label">Days Active</span>
-        </div>
-    </div>
-
-    <!-- Menu Items -->
-    <div class="menu-section flex flex-col">
-        <button class="menu-item flex items-center gap-2 w-full" (click)="openProfile()">
-            <span class="material-symbols-outlined">person</span>
-            <span>My Profile</span>
+    <!-- Quick Stats — compact inline bar -->
+    <div class="quick-stats">
+        <button class="stat-chip" (click)="openWords()" title="Go to Notes">
+            <span class="stat-chip-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
+            <span class="stat-chip-label">words</span>
         </button>
-        <button class="menu-item flex items-center gap-2 w-full" (click)="openSettings()">
-            <span class="material-symbols-outlined">settings</span>
-            <span>Settings</span>
+        <span class="stat-chip-sep">·</span>
+        <button class="stat-chip" (click)="openDocuments()" title="Go to Write">
+            <span class="stat-chip-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
+            <span class="stat-chip-label">docs</span>
         </button>
-        <button class="menu-item flex items-center gap-2 w-full" (click)="openActivity()">
-            <span class="material-symbols-outlined">history</span>
-            <span>Activity Log</span>
+        <span class="stat-chip-sep">·</span>
+        <button class="stat-chip" (click)="openAnalytics()" title="Go to Analytics">
+            <span class="stat-chip-value">{{ user()?.stats?.daysActive || 0 }}</span>
+            <span class="stat-chip-label">days active</span>
         </button>
     </div>
 
-    <div class="menu-divider"></div>
+    <!-- Scrollable content -->
+    <div class="profile-scroll-content">
 
-    <div class="menu-section">
-        <button class="menu-item flex items-center gap-2 w-full" (click)="openHelp()">
-            <span class="material-symbols-outlined">help</span>
-            <span>Help & Support</span>
-        </button>
-        <button class="menu-item flex items-center gap-2 w-full" (click)="openBin()">
-            <span class="material-symbols-outlined">delete</span>
-            <span>Bin</span>
-        </button>
-        <button class="menu-item flex items-center gap-2 w-full" (click)="openKeyboardShortcuts()">
-            <span class="material-symbols-outlined">keyboard</span>
-            <span>Keyboard Shortcuts</span>
-        </button>
-    </div>
-
-    <div class="menu-divider"></div>
-
-    <!-- Preferences Toggle -->
-    <div class="menu-section">
-        <div class="menu-item-toggle">
-            <div class="toggle-info">
-                <span class="material-symbols-outlined">email</span>
-                <span>Email Notifications</span>
+        <!-- Space Switcher -->
+        <div class="menu-section workspace-section">
+            <div class="section-label flex items-center gap-2">
+                Space
+                @if (switching()) {
+                <span class="space-switching-spinner"></span>
+                }
             </div>
-            <label class="mini-toggle">
-                <input type="checkbox" [checked]="user()?.preferences?.emailNotifications"
-                    (change)="toggleEmailNotifications()">
-                <span class="mini-toggle-track"></span>
-            </label>
-        </div>
-        <div class="menu-item-toggle">
-            <div class="toggle-info">
-                <span class="material-symbols-outlined">backup</span>
-                <span>Auto Backup</span>
+            @for (ws of workspaces(); track ws.id) {
+            <button class="menu-item workspace-item" [class.workspace-active]="activeWorkspace().id === ws.id"
+                (click)="ws.id !== activeWorkspace().id && switchWorkspace(ws.id)">
+                <span class="workspace-dot" [style.background]="ws.color || 'var(--accent-primary)'"></span>
+                <span class="workspace-name">{{ ws.name }}</span>
+                @if (activeWorkspace().id === ws.id) {
+                <span class="material-symbols-outlined workspace-check">check</span>
+                }
+            </button>
+            }
+            <div class="space-actions-row">
+                <button class="space-action-btn" (click)="manageProfiles()">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    All Spaces
+                </button>
+                <button class="space-action-btn space-action-btn--add"
+                    (click)="canAddSpace() && addWorkspace()"
+                    [disabled]="!canAddSpace()"
+                    [title]="canAddSpace() ? 'New space' : 'Limit reached (' + maxSpaces + ')'">
+                    <span class="material-symbols-outlined">add</span>
+                    @if (!canAddSpace()) {
+                    <span class="space-limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
+                    }
+                </button>
             </div>
-            <label class="mini-toggle">
-                <input type="checkbox" [checked]="user()?.preferences?.autoBackup" (change)="toggleAutoBackup()">
-                <span class="mini-toggle-track"></span>
-            </label>
         </div>
-    </div>
 
-    <div class="menu-divider"></div>
+        <div class="menu-divider"></div>
 
-    <!-- Logout -->
-    <div class="menu-section">
-        <button class="menu-item logout-item" (click)="logout()">
+        <!-- Menu Items -->
+        <div class="menu-section flex flex-col">
+            <button class="menu-item flex items-center gap-2 w-full" (click)="openProfile()">
+                <span class="material-symbols-outlined">person</span>
+                <span>My Profile</span>
+            </button>
+            <button class="menu-item flex items-center gap-2 w-full" (click)="openSettings()">
+                <span class="material-symbols-outlined">settings</span>
+                <span>Settings</span>
+            </button>
+            <button class="menu-item flex items-center gap-2 w-full" (click)="openAnalytics()">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span>Analytics</span>
+            </button>
+            <button class="menu-item flex items-center gap-2 w-full" (click)="openActivity()">
+                <span class="material-symbols-outlined">history</span>
+                <span>Activity Log</span>
+            </button>
+        </div>
+
+        <div class="menu-divider"></div>
+
+        <div class="menu-section">
+            <button class="menu-item flex items-center gap-2 w-full" (click)="openHelp()">
+                <span class="material-symbols-outlined">help</span>
+                <span>Help & Support</span>
+            </button>
+            <button class="menu-item flex items-center gap-2 w-full" (click)="openBin()">
+                <span class="material-symbols-outlined">delete</span>
+                <span>Bin</span>
+            </button>
+            <button class="menu-item flex items-center gap-2 w-full" (click)="openKeyboardShortcuts()">
+                <span class="material-symbols-outlined">keyboard</span>
+                <span>Keyboard Shortcuts</span>
+            </button>
+        </div>
+
+        <div class="menu-divider"></div>
+
+        <!-- Preferences Toggle -->
+        <div class="menu-section">
+            <div class="menu-item-toggle">
+                <div class="toggle-info">
+                    <span class="material-symbols-outlined">email</span>
+                    <span>Email Notifications</span>
+                </div>
+                <label class="mini-toggle">
+                    <input type="checkbox" [checked]="user()?.preferences?.emailNotifications"
+                        (change)="toggleEmailNotifications()">
+                    <span class="mini-toggle-track"></span>
+                </label>
+            </div>
+            <div class="menu-item-toggle">
+                <div class="toggle-info">
+                    <span class="material-symbols-outlined">backup</span>
+                    <span>Auto Backup</span>
+                </div>
+                <label class="mini-toggle">
+                    <input type="checkbox" [checked]="user()?.preferences?.autoBackup" (change)="toggleAutoBackup()">
+                    <span class="mini-toggle-track"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="menu-divider"></div>
+
+        <!-- Security Section -->
+        <div class="menu-section">
+            <div class="section-label">Security</div>
+            <div class="security-row">
+                <span class="material-symbols-outlined security-icon">schedule</span>
+                <div class="security-info">
+                    <span class="security-label">Last login</span>
+                    <span class="security-value">{{ getLastLogin() || '—' }}</span>
+                </div>
+                <button class="security-settings-btn" (click)="openSettings()" title="Security settings">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /profile-scroll-content -->
+
+    <!-- Footer — always visible: logout + member-since -->
+    <div class="profile-footer">
+        <button class="footer-logout" (click)="logout()">
             <span class="material-symbols-outlined">logout</span>
             <span>Logout</span>
         </button>
-    </div>
-
-    <!-- Footer -->
-    <div class="profile-footer">
-        <span>Member since {{ getMemberSince() }}</span>
+        <span class="footer-meta">Member since {{ getMemberSince() }}</span>
     </div>
 </div>
+}
 
-<!-- Add Profile Modal -->
+<!-- Logout Confirmation -->
+@if (logoutConfirm()) {
+<env-confirm-dialog
+    [isOpen]="true"
+    title="Sign out?"
+    icon="logout"
+    variant="danger"
+    confirmLabel="Sign Out"
+    (confirmed)="doLogout()"
+    (cancelled)="logoutConfirm.set(false)">
+    You'll be signed out of your account. Any unsaved changes will be lost.
+</env-confirm-dialog>
+}
+
+<!-- Add Space Modal -->
 <env-modal
     [isOpen]="isAddProfileModalOpen()"
-    title="Create Local Profile"
+    title="New Space"
     size="sm"
     (closed)="cancelAddWorkspace()"
 >
-    <div body class="flex flex-col gap-4" style="padding: 16px 20px;">
-        <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Profile Name</label>
+    <div body class="modal-body-content">
+        <div class="form-group">
+            <label class="form-label">Space Name</label>
             <input type="text"
-                class="form-input w-full"
+                class="form-input"
                 placeholder="e.g., Personal, Client A, Side Project"
-                style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
                 [ngModel]="newProfileName()" (ngModelChange)="newProfileName.set($event)"
                 (keyup.enter)="confirmAddWorkspace()"
                 autofocus
             >
-            <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Data created in this profile (notes, passwords, transactions) will be isolated to this local workspace.
-            </p>
+            <span class="form-hint">Data in this space (notes, tasks, transactions) will be isolated from other spaces.</span>
         </div>
     </div>
-    <div footer class="flex justify-end gap-3" style="width: 100%; padding: 16px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-hover);">
-        <button class="btn-cancel" (click)="cancelAddWorkspace()" style="padding: 8px 16px; border-radius: 6px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">
-            Cancel
+    <ng-container footer>
+        <button class="modal-btn-cancel" (click)="cancelAddWorkspace()">Cancel</button>
+        <button class="modal-btn-primary" (click)="confirmAddWorkspace()" [disabled]="!newProfileName().trim()">
+            Create Space
         </button>
-        <button class="btn-primary" (click)="confirmAddWorkspace()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; cursor: pointer; font-size: 13px; font-weight: 600;">
-            Create Profile
-        </button>
-    </div>
+    </ng-container>
 </env-modal>

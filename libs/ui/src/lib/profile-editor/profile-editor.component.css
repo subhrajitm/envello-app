@@ -134,6 +134,91 @@
     align-items: flex-start;
 }
 
+/* Avatar presets */
+.avatar-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.avatar-preset-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: var(--bg-app);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 60px;
+}
+
+.avatar-preset-btn .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.avatar-preset-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-main);
+    color: var(--text-primary);
+}
+
+.avatar-preset-btn.active {
+    background: var(--accent-primary-dim);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.avatar-preset-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Custom URL row */
+.avatar-url-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
+}
+
+.avatar-url-input {
+    flex: 1;
+    font-size: 12px !important;
+}
+
+.avatar-url-apply {
+    padding: 0 14px;
+    height: 38px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.avatar-url-apply:hover:not(:disabled) {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary-text);
+}
+
+.avatar-url-apply:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .field-hint {
     font-size: 11px;
     color: var(--text-tertiary);
@@ -145,6 +230,12 @@
     color: var(--text-tertiary);
     align-self: flex-end;
     margin-top: 4px;
+    transition: color 0.2s;
+}
+
+.char-count--over {
+    color: var(--accent-red);
+    font-weight: 600;
 }
 
 /* Buttons */

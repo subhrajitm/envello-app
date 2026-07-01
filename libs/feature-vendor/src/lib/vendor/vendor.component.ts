@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionStore } from '@envello/state';
 import { Transaction, TransactionType } from '@envello/domain';
+import { AiService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 import {
@@ -85,11 +86,13 @@ import { TransactionFormComponent } from './transaction-form.component';
         <button class="vs-tool-btn" title="Bulk import" (click)="showImportModal.set(true)">
           <span class="material-symbols-outlined">upload</span>
         </button>
+        @if (aiEnabled()) {
         <button class="vs-tool-btn" [class.vs-tool-btn--active]="showAssistant()"
           title="AI Assistant" (click)="toggleAssistant()">
           <span class="material-symbols-outlined">auto_awesome</span>
           AI
         </button>
+        }
         <div class="vs-tb-divider"></div>
         <button class="vs-add-btn" (click)="openAddForm()">
           <span class="material-symbols-outlined">add</span>
@@ -147,7 +150,7 @@ import { TransactionFormComponent } from './transaction-form.component';
   </div>
 
   <!-- AI panel -->
-  @if (showAssistant()) {
+  @if (aiEnabled() && showAssistant()) {
     <env-ai-panel
       title="Transactions Assistant"
       placeholder="Ask about your transactions…"
@@ -400,6 +403,9 @@ import { TransactionFormComponent } from './transaction-form.component';
 })
 export class VendorComponent {
     public transactionStore = inject(TransactionStore);
+    private aiService       = inject(AiService);
+
+    protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
     readonly typeOptions: TransactionType[] = ['recurring', 'one-time', 'bill', 'purchase', 'refund'];
 

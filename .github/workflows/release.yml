@@ -34,7 +34,7 @@ jobs:
             platform-key: darwin-aarch64
             sig-dir: src-tauri/target/aarch64-apple-darwin/release/bundle
             sig-ext: '*.dmg.sig'
-          - platform: macos-13            # macOS x64 (Intel)
+          - platform: macos-latest        # macOS x64 (Intel) — cross-compiled from arm64 runner
             args: '--target x86_64-apple-darwin'
             rust-target: x86_64-apple-darwin
             artifact-pattern: 'src-tauri/target/x86_64-apple-darwin/release/bundle/**/*.dmg'

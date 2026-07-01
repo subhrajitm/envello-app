@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService } from '@envello/core';
+import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService, ContextService } from '@envello/core';
 import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries' | 'files';
@@ -29,6 +29,9 @@ export class KnowledgeComponent implements OnDestroy {
   fileStorage     = inject(FileStorageService);
   store           = inject(StoreService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
+
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   // ── View state ────────────────────────────────────────────────────────────
   viewMode        = signal<ViewMode>('sources');
@@ -154,7 +157,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── env-table config ──────────────────────────────────────────────────────
   readonly sourceColumns: EnvTableColumn[] = [
-    { key: 'title',      header: 'Source',        sortable: true },
+    { key: 'title',      header: 'Source',        type: 'primary-text', sortable: true },
     { key: 'sourceType', header: 'Type',           type: 'badge', sortable: true, badgeMap: {
       WEB:       { label: 'Web',       dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.1)',   textColor: '#3b82f6' },
       PDF:       { label: 'PDF',       dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.1)',    textColor: '#ef4444' },
@@ -173,7 +176,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── File table config ────────────────────────────────────────────────────
   readonly fileColumns: EnvTableColumn[] = [
-    { key: 'name', header: 'Name',  sortable: true },
+    { key: 'name', header: 'Name',  type: 'primary-text', sortable: true },
     { key: 'type', header: 'Type' },
     { key: 'size', header: 'Size',  sortable: true },
   ];
@@ -218,7 +221,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── Summary table config ─────────────────────────────────────────────────
   readonly summaryColumns: EnvTableColumn[] = [
-    { key: 'title',   header: 'Title',   sortable: true },
+    { key: 'title',   header: 'Title',   type: 'primary-text', sortable: true },
     { key: 'sources', header: 'Sources' },
     { key: 'tags',    header: 'Tags' },
     { key: 'date',    header: 'Date',    sortable: true },
@@ -550,7 +553,7 @@ export class KnowledgeComponent implements OnDestroy {
 
   // Feature 7: AI-suggest tags
   async suggestTags() {
-    if (this.suggestingTags() || (!this.newSourceTitle() && !this.newSourceUrl())) return;
+    if (this.suggestingTags() || (!this.newSourceTitle() && !this.newSourceUrl()) || !this.aiService.aiEnabled()) return;
     this.suggestingTags.set(true);
     try {
       const prompt = [
@@ -644,7 +647,7 @@ export class KnowledgeComponent implements OnDestroy {
   // Feature 4: AI generate notes
   async generateAiNotes() {
     const s = this.selectedSource();
-    if (!s || this.generatingNotes()) return;
+    if (!s || this.generatingNotes() || !this.aiService.aiEnabled()) return;
     this.generatingNotes.set(true);
     try {
       const prompt = [
@@ -723,7 +726,7 @@ export class KnowledgeComponent implements OnDestroy {
   isFileSelected(id: string) { return this.selectedFileIds().includes(id); }
 
   async generateAiSummary() {
-    if (this.generatingSummary()) return;
+    if (this.generatingSummary() || !this.aiService.aiEnabled()) return;
     this.generatingSummary.set(true);
     try {
       const selectedSources = this.sources().filter(s => this.selectedSourceIds().includes(s.id));
@@ -771,7 +774,7 @@ export class KnowledgeComponent implements OnDestroy {
   clearAiChat()     { this.aiMessages.set([]); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {
@@ -790,7 +793,9 @@ export class KnowledgeComponent implements OnDestroy {
           : 'There are no sources yet.',
         'Answer concisely. Use markdown for lists and emphasis.',
       ].join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);

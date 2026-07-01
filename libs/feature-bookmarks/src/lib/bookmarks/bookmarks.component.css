@@ -1004,19 +1004,19 @@
 .bma-icon-option .material-symbols-outlined { font-size: 18px; }
 
 /* Body scrollbar */
-.bma-body::-webkit-scrollbar { width: 5px; }
+.bma-body::-webkit-scrollbar { width: 6px; }
 .bma-body::-webkit-scrollbar-track { background: transparent; }
-.bma-body::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 3px; }
+.bma-body::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 3px; }
 
 /* Sidebar scrollbar */
 .bm-sidebar::-webkit-scrollbar { width: 4px; }
 .bm-sidebar::-webkit-scrollbar-track { background: transparent; }
-.bm-sidebar::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 4px; }
+.bm-sidebar::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 4px; }
 
 /* Table scrollbar */
-.bm-table-wrap::-webkit-scrollbar { width: 5px; height: 5px; }
+.bm-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
 .bm-table-wrap::-webkit-scrollbar-track { background: transparent; }
-.bm-table-wrap::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 4px; }
+.bm-table-wrap::-webkit-scrollbar-thumb { background: var(--border-highlight); border-radius: 4px; }
 
 /* ══════════════════════════════════════════════════════
    Bookmarks — Mobile Responsive

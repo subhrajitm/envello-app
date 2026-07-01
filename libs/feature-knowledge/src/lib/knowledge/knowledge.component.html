@@ -85,11 +85,13 @@
             <span class="material-symbols-outlined">filter_list_off</span>
           </button>
         }
+        @if (aiEnabled()) {
         <button class="rs-tool-btn btn-ai-toggle" [class.rs-tool-btn--active]="showAssistant()" [class.active]="showAssistant()"
           (click)="toggleAssistant()" title="AI Assistant">
           <span class="material-symbols-outlined">auto_awesome</span>
           AI
         </button>
+        }
         <div class="rs-tb-divider"></div>
         @if (viewMode() === 'summaries' && selectedCollection()) {
           <button class="rs-add-btn btn-add-primary" (click)="openSummaryModal()">
@@ -477,7 +479,7 @@
   </div>
 
   <!-- AI Panel -->
-  @if (showAssistant()) {
+  @if (aiEnabled() && showAssistant()) {
     <env-ai-panel
       title="Knowledge Assistant"
       placeholder="Ask about your knowledge…"
@@ -653,6 +655,7 @@
           </button>
           <div class="rsd-footer-right">
             <!-- AI generate notes (feature 4) -->
+            @if (aiEnabled()) {
             <button class="rsd-ai-btn" [disabled]="generatingNotes()" (click)="generateAiNotes()" title="AI generate notes">
               @if (generatingNotes()) {
                 <span class="rs-spinner"></span>
@@ -661,6 +664,7 @@
               }
               AI Notes
             </button>
+            }
             <button class="rsd-save-btn" (click)="saveNotes()">
               <span class="material-symbols-outlined">save</span>
               Save
@@ -793,12 +797,14 @@
               <div class="rsa-tag-row">
                 <input type="text" class="rsa-input" placeholder="tag1, tag2, …"
                   [ngModel]="newSourceTags()" (ngModelChange)="newSourceTags.set($event)">
+                @if (aiEnabled()) {
                 <button class="rsa-suggest-btn"
                   [disabled]="suggestingTags() || (!newSourceTitle() && !newSourceUrl())"
                   (click)="suggestTags()" title="AI suggest tags">
                   @if (suggestingTags()) { <span class="rs-spinner"></span> }
                   @else { <span class="material-symbols-outlined">auto_awesome</span> }
                 </button>
+                }
               </div>
             </div>
             <div class="rsa-field-group rsa-field-group--wide">
@@ -865,12 +871,14 @@
               <div class="rsa-tag-row">
                 <input type="text" class="rsa-input" placeholder="tag1, tag2, …"
                   [ngModel]="newSourceTags()" (ngModelChange)="newSourceTags.set($event)">
+                @if (aiEnabled()) {
                 <button class="rsa-suggest-btn"
                   [disabled]="suggestingTags() || !newSourceTitle()"
                   (click)="suggestTags()" title="AI suggest tags">
                   @if (suggestingTags()) { <span class="rs-spinner"></span> }
                   @else { <span class="material-symbols-outlined">auto_awesome</span> }
                 </button>
+                }
               </div>
             </div>
           </div>
@@ -1044,6 +1052,7 @@
         <div class="rsa-field-group">
           <div class="rsa-label-row">
             <label class="rsa-label">Content</label>
+            @if (aiEnabled()) {
             <button class="rsa-ai-gen-btn"
               [disabled]="generatingSummary() || (selectedSourceIds().length === 0 && selectedFileIds().length === 0)"
               (click)="generateAiSummary()"
@@ -1056,6 +1065,7 @@
                 Generate with AI
               }
             </button>
+            }
           </div>
           <textarea class="rsa-textarea rsa-textarea--tall" rows="5" placeholder="Write your summary or generate with AI…"
             [ngModel]="newSummaryContent()" (ngModelChange)="newSummaryContent.set($event)"></textarea>

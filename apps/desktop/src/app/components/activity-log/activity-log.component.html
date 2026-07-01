@@ -1,41 +1,29 @@
 <div class="al-page">
 
-    <!-- Page Header -->
-    <div class="al-header">
-        <h1 class="al-title">Activity logs</h1>
-        <div class="al-header-actions">
+    <!-- Compact toolbar: title · type filters · search · refresh -->
+    <div class="al-toolbar">
+        <h1 class="al-title">
+            <span class="material-symbols-outlined al-title-icon">history</span>
+            Activity Log
+        </h1>
+
+        <div class="al-filter-pills">
+            <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'" (click)="setFilter('ENTRY')">Entries</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'" (click)="setFilter('SYSTEM')">System</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'" (click)="setFilter('SYNC')">Sync</button>
+            <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI</button>
+        </div>
+
+        <div class="al-toolbar-right">
+            <div class="al-search">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Search activities…" (input)="updateSearch($event)" />
+            </div>
             <button class="al-refresh-btn" (click)="refresh()">
-                <span class="material-symbols-outlined" style="font-size: 16px;">refresh</span>
+                <span class="material-symbols-outlined">refresh</span>
                 Refresh
             </button>
-        </div>
-    </div>
-
-    <!-- Filter Row -->
-    <div class="al-filter-bar">
-        <div class="filter-group">
-            <label class="filter-label">Events</label>
-            <div class="filter-select-wrapper">
-                <span class="filter-select-text">Select events</span>
-                <span class="material-symbols-outlined" style="font-size: 16px;">expand_more</span>
-            </div>
-        </div>
-        <div class="filter-group">
-            <label class="filter-label">Type</label>
-            <div class="filter-pills">
-                <button class="filter-pill" [class.active]="activeFilter() === 'ALL'" (click)="setFilter('ALL')">All</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'ENTRY'" (click)="setFilter('ENTRY')">Entries</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'SYSTEM'" (click)="setFilter('SYSTEM')">System</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'SYNC'" (click)="setFilter('SYNC')">Sync</button>
-                <button class="filter-pill" [class.active]="activeFilter() === 'AI'" (click)="setFilter('AI')">AI</button>
-            </div>
-        </div>
-        <div class="filter-group search-group">
-            <label class="filter-label">Search</label>
-            <div class="al-search">
-                <span class="material-symbols-outlined" style="font-size: 15px; color: var(--text-tertiary);">search</span>
-                <input type="text" placeholder="Search activities..." (input)="updateSearch($event)" />
-            </div>
         </div>
     </div>
 
@@ -81,7 +69,6 @@
                             </div>
                             <div class="event-text-wrap">
                                 <span class="event-action">{{ activity.action }}</span>
-                                <span class="event-id">ID: {{ activity.id | slice:0:12 }}...</span>
                             </div>
                         </div>
                     </div>
@@ -110,9 +97,14 @@
                 @if (expandedRowId() === activity.id) {
                 <div class="al-detail-panel">
                     <div class="detail-kv-row">
-                        <div class="detail-kv">
-                            <span class="detail-key">Full ID</span>
-                            <span class="detail-val">{{ activity.id }}</span>
+                        <div class="detail-kv detail-kv--id">
+                            <span class="detail-key">Event ID</span>
+                            <div class="detail-id-row">
+                                <span class="detail-val detail-val--mono">{{ activity.id }}</span>
+                                <button class="copy-btn" (click)="copyId(activity.id); $event.stopPropagation()" title="Copy ID">
+                                    <span class="material-symbols-outlined">{{ copiedId() === activity.id ? 'check' : 'content_copy' }}</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="detail-kv">
                             <span class="detail-key">Type</span>

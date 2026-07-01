@@ -79,7 +79,9 @@
 }
 
 :host(.env-table--compact) .env-table-th {
-  padding: 8px 12px;
+  padding: 6px 12px;
+  font-size: 10px;
+  letter-spacing: 0.07em;
 }
 
 :host(.env-table--compact) .env-table-td {
@@ -102,7 +104,7 @@
 }
 
 :host(.env-table--compact) .env-table-av-name {
-  font-size: 12px;
+  font-size: 13px; /* title stays readable even in compact — hierarchy comes from header size */
 }
 
 :host(.env-table--compact) .env-table-badge {
@@ -228,9 +230,11 @@
 .env-table-th {
   padding: 14px 16px;
   text-align: left;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+  color: var(--text-tertiary);
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
@@ -281,16 +285,67 @@
   align-items: center;
   cursor: pointer;
 }
+
+/* Custom checkbox — removes OS rendering so theme CSS variables control appearance */
 .env-table-check-label input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 15px;
   height: 15px;
-  border-radius: 4px;
-  accent-color: var(--accent-primary);
+  border-radius: 3px;
+  border: 1.5px solid var(--border-highlight);
+  background: var(--bg-app);
   cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.12s, border-color 0.12s;
+  margin: 0;
+}
+
+.env-table-check-label input[type='checkbox']:hover {
+  border-color: var(--accent-primary);
+}
+
+.env-table-check-label input[type='checkbox']:checked {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+/* Checkmark via clip-path — no pseudo-element sizing issues */
+.env-table-check-label input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-primary-text, #fff);
+  clip-path: polygon(14% 44%, 0% 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  margin: 3px;
+}
+
+/* Indeterminate (−) dash */
+.env-table-check-label input[type='checkbox']:indeterminate {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.env-table-check-label input[type='checkbox']:indeterminate::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2.5px;
+  right: 2.5px;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--accent-primary-text, #fff);
+  border-radius: 1px;
 }
 
 /* ── Avatar-text cell ─────────────────────────────────────────────────────── */
-.env-table-av-cell { display: flex; align-items: center; gap: 10px; }
+.env-table-av-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0; /* allow truncation inside flex */
+}
 
 .env-table-av {
   width: 32px;
@@ -315,6 +370,9 @@
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 /* ── Badge cell ───────────────────────────────────────────────────────────── */
@@ -338,9 +396,20 @@
   opacity: 0.85;
 }
 
+/* ── Primary text cell (title without avatar) ─────────────────────────────── */
+.env-table-cell-primary {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
 /* ── Plain text cell ──────────────────────────────────────────────────────── */
 .env-table-cell-text {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;

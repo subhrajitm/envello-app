@@ -32,7 +32,7 @@ export class MeetingAutopilotService {
 
   async runForMeeting(meetingId: string): Promise<AutopilotResult | null> {
     const meeting = this.meetings.meetings().find(m => m.id === meetingId);
-    if (!meeting) return null;
+    if (!meeting || !this.ai.aiEnabled()) return null;
 
     this.status.set('running');
     this.progress.set('Building context…');
@@ -42,7 +42,6 @@ export class MeetingAutopilotService {
       // Gather cross-module context for this meeting's topic / project
       const ctx = await this.context.buildContext(
         [meeting.title, meeting.project ?? ''].filter(Boolean).join(' '),
-        3,
       );
 
       this.progress.set('Generating artifacts with AI…');

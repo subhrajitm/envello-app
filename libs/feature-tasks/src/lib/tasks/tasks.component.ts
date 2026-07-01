@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences } from '@envello/core';
+import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService, RecentActivityService } from '@envello/core';
 import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
@@ -26,8 +26,12 @@ export class TasksComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private fileStorage = inject(FileStorageService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
+  private recentActivity = inject(RecentActivityService);
   private themeService = inject(ThemeService);
   private userPrefsService = inject(UserPreferencesService);
+
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   // Left sidebar state
   sidebarSearch = signal<string>('');
@@ -1919,6 +1923,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Task details modal methods
   openTaskDetails(task: Task) {
     this.selectedTaskId.set(task.id);
+    this.recentActivity.track(task.id, 'task');
     this.editedTaskTitle.set(task.title);
     this.editedTaskDescription.set(task.description || task.notes || '');
     this.editedTaskPriority.set(task.priority);
@@ -2820,7 +2825,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   toggleAssistant() { this.showAssistant.update(v => !v); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {
@@ -2841,7 +2846,9 @@ export class TasksComponent implements OnInit, OnDestroy {
         tasks.length ? `Task list:\n${taskList}` : 'No tasks yet.',
         'Answer concisely. Use markdown for lists. You can help prioritize, identify blockers, suggest next actions, or summarize workload.',
       ].join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);
@@ -2854,7 +2861,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   async sendDetailsAiMessage(text: string) {
     const task = this.selectedTaskForDetails();
-    if (!text.trim() || this.detailsAiLoading() || !task) return;
+    if (!text.trim() || this.detailsAiLoading() || !task || !this.aiService.aiEnabled()) return;
     this.detailsAiMessages.update(m => [...m, { role: 'user', text }]);
     this.detailsAiLoading.set(true);
     this.detailsAiInput.set('');
@@ -2869,7 +2876,9 @@ export class TasksComponent implements OnInit, OnDestroy {
         task.notes ? `Notes: ${task.notes}` : '',
         'You can break the task into subtasks, improve the description, estimate time, suggest labels, or advise what to do next. Be concise and actionable. Use markdown lists.',
       ].filter(Boolean).join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.detailsAiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);

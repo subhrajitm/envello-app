@@ -1,0 +1,108 @@
+@if (isOpen()) {
+<div class="nh-overlay" (click)="$event.target === $event.currentTarget && close()">
+<div class="nh-panel">
+
+  <!-- Header -->
+  <div class="nh-header">
+    <div class="nh-header-left">
+      <span class="material-symbols-outlined nh-header-icon">history</span>
+      <div>
+        <h2 class="nh-title">Version History</h2>
+        <p class="nh-subtitle">{{ entries().length }} snapshot{{ entries().length !== 1 ? 's' : '' }}</p>
+      </div>
+    </div>
+    <div class="nh-header-right">
+      <input class="nh-label-input"
+        [value]="manualLabel()"
+        (input)="manualLabel.set($any($event.target).value)"
+        placeholder="Label this version…"
+        maxlength="60"
+        aria-label="Version label" />
+      <button class="nh-btn nh-btn--ghost nh-btn--sm" (click)="triggerSave()" [disabled]="saving()" title="Save a snapshot right now">
+        <span class="material-symbols-outlined">{{ saving() ? 'hourglass_empty' : 'save' }}</span>
+        {{ saving() ? 'Saving…' : 'Save version now' }}
+      </button>
+      <button class="nh-close" (click)="close()" aria-label="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="nh-loading">
+      <span class="material-symbols-outlined nh-spinner">progress_activity</span>
+      Loading history…
+    </div>
+  } @else if (entries().length === 0) {
+    <div class="nh-empty">
+      <span class="material-symbols-outlined nh-empty-icon">history_toggle_off</span>
+      <p>No snapshots yet.</p>
+      <p class="nh-empty-hint">Snapshots are saved automatically every 30 minutes while you write. Use "Save version now" above to create one immediately.</p>
+    </div>
+  } @else {
+
+    <div class="nh-body">
+
+      <!-- Sidebar: version list -->
+      <div class="nh-list">
+        @for (entry of entries(); track entry.id) {
+          <button class="nh-entry" [class.nh-entry--active]="selected()?.id === entry.id"
+            (click)="select(entry)">
+            <div class="nh-entry-main">
+              <span class="nh-entry-date">{{ formatDate(entry.snapshotAt) }}</span>
+              @if (entry.label) {
+                <span class="nh-entry-label">{{ entry.label }}</span>
+              }
+              <span class="nh-entry-preview">{{ previewText(entry.content) }}</span>
+            </div>
+            @if (confirmDeleteId() === entry.id) {
+              <div class="nh-entry-confirm" (click)="$event.stopPropagation()">
+                <span class="nh-entry-confirm-text">Delete?</span>
+                <button class="nh-btn nh-btn--danger nh-btn--xs" (click)="deleteSnapshot(entry.id)">Yes</button>
+                <button class="nh-btn nh-btn--ghost nh-btn--xs" (click)="confirmDeleteId.set(null)">No</button>
+              </div>
+            } @else {
+              <button class="nh-entry-delete" (click)="$event.stopPropagation(); confirmDelete(entry.id)"
+                aria-label="Delete snapshot">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- Preview pane -->
+      <div class="nh-preview-pane">
+        @if (selected(); as entry) {
+          <div class="nh-preview-header">
+            <div>
+              <p class="nh-preview-date">{{ formatDate(entry.snapshotAt) }}</p>
+              @if (entry.label) {
+                <p class="nh-preview-label">"{{ entry.label }}"</p>
+              }
+            </div>
+            <button class="nh-btn nh-btn--primary" (click)="restore()">
+              <span class="material-symbols-outlined">restore</span>
+              Restore this version
+            </button>
+          </div>
+          <div class="nh-preview-content ProseMirror" [innerHTML]="entry.content"></div>
+        } @else {
+          <div class="nh-preview-placeholder">
+            <span class="material-symbols-outlined nh-preview-placeholder-icon">touch_app</span>
+            <p>Select a version to preview it</p>
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+  <!-- Footer -->
+  <div class="nh-footer">
+    <p class="nh-footer-hint">Snapshots auto-save every 30 min. Max 30 kept per note.</p>
+  </div>
+
+</div>
+</div>
+}

@@ -16,6 +16,7 @@ import {
   PROVIDER_META,
   AiService,
   MeetingAutopilotService,
+  ContextService,
 } from '@envello/core';
 import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 @Component({
@@ -29,8 +30,11 @@ export class MeetingsComponent {
   meetingsService = inject(MeetingsService);
   syncService = inject(CalendarSyncService);
   private aiService = inject(AiService);
+  private contextService = inject(ContextService);
   readonly autopilotService = inject(MeetingAutopilotService);
   readonly providerMeta = PROVIDER_META;
+
+  protected aiEnabled = computed(() => this.aiService.aiEnabled());
 
   // Autopilot state
   showAutopilotResult = signal(false);
@@ -408,7 +412,7 @@ export class MeetingsComponent {
 
   // ── Table view ──────────────────────────────────────────────────────────────
   readonly tableColumns: EnvTableColumn[] = [
-    { key: 'title',    header: 'Title',    sortable: true },
+    { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', badgeMap: {
       'video':     { label: 'Video',     dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
       'phone':     { label: 'Phone',     dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)',  textColor: '#8b5cf6' },
@@ -1266,7 +1270,7 @@ export class MeetingsComponent {
   toggleAssistant() { this.showAssistant.update(v => !v); }
 
   async sendAiMessage(text: string) {
-    if (!text || this.aiLoading()) return;
+    if (!text || this.aiLoading() || !this.aiService.aiEnabled()) return;
     this.aiMessages.update(m => [...m, { role: 'user', text }]);
     this.aiLoading.set(true);
     try {
@@ -1288,7 +1292,9 @@ export class MeetingsComponent {
         all.length ? `Meeting list (up to 30):\n${meetingList}` : 'No meetings yet.',
         'Answer concisely. Use markdown for lists. You can help with scheduling, action items, follow-ups, or workload summaries.',
       ].join('\n');
-      const response = await this.aiService.sendMessage(text, context);
+      const crossCtx = await this.contextService.buildContext(text);
+      const fullContext = crossCtx.blocks.length ? `${context}\n\n--- Cross-module context ---\n${crossCtx.formatted}` : context;
+      const response = await this.aiService.sendMessage(text, fullContext);
       this.aiMessages.update(m => [...m, { role: 'assistant', text: response || 'No response — check your AI configuration in Settings.' }]);
     } catch {
       this.aiMessages.update(m => [...m, { role: 'assistant', text: 'Something went wrong. Check your AI configuration in Settings.' }]);

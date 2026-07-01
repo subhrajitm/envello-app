@@ -54,10 +54,12 @@
                 </button>
             </div>
             }
+            @if (aiEnabled()) {
             <button class="btn-ai-toggle" [class.active]="showAssistant()" (click)="toggleAssistant()" title="AI Assistant">
                 <span class="material-symbols-outlined">auto_awesome</span>
                 <span>AI</span>
             </button>
+            }
             <div class="toolbar-divider"></div>
             <button type="button"
                     class="btn-primary add-task-main-btn"
@@ -377,9 +379,11 @@
                 <span>Tasks</span>
             </button>
             <div class="td-panel-hdr-right">
+                @if (aiEnabled()) {
                 <button class="td-panel-btn" [class.active]="showDetailsAi()" (click)="showDetailsAi.set(!showDetailsAi())" title="AI Assistant">
                     <span class="material-symbols-outlined">auto_awesome</span>
                 </button>
+                }
             </div>
         </div>
         <div class="td-panel-body">
@@ -640,7 +644,7 @@
                 </div>
             </div>
 
-            @if (showDetailsAi()) {
+            @if (aiEnabled() && showDetailsAi()) {
             <!-- AI Assistant: full-width compact panel -->
             <div class="td-ai-full">
                 <div class="td-ai-header">
@@ -1076,7 +1080,7 @@
     </div><!-- /.td-panel new task -->
     }
 
-    @if (showAssistant() && !selectedTaskForDetails() && !newTaskModalOpen()) {
+    @if (aiEnabled() && showAssistant() && !selectedTaskForDetails() && !newTaskModalOpen()) {
         <env-ai-panel
             title="Tasks Assistant"
             placeholder="Ask about your tasks…"

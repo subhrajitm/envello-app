@@ -49,6 +49,7 @@ import { CharacterRelationshipsComponent } from './components/editor/character-r
 
 // Right Sidebar
 import { AiPanelComponent } from './components/right-sidebar/ai-panel/ai-panel.component';
+import { WritingCoachComponent } from './components/right-sidebar/writing-coach/writing-coach.component';
 import { NotesPanelComponent } from './components/right-sidebar/notes-panel/notes-panel.component';
 import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-data/manuscript-data.component';
 
@@ -82,6 +83,7 @@ import { ManuscriptDataComponent } from './components/right-sidebar/manuscript-d
     AiPanelComponent,
     NotesPanelComponent,
     ManuscriptDataComponent,
+    WritingCoachComponent,
   ],
   templateUrl: './composer.component.html',
   styleUrl: './composer.component.css',
@@ -103,7 +105,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
   activeChapterId = signal<string | null>(null);
   activeGroupId = signal<string | null>(null);
   wordCount = signal(0);
-  rightSidebarTab = signal<'ai' | 'notes' | 'manuscript'>('ai');
+  rightSidebarTab = signal<'ai' | 'notes' | 'manuscript' | 'coach'>('ai');
   activeNav = signal<'manuscript' | 'structure' | 'characters' | 'locations'>('manuscript');
 
   // Structure view state
@@ -741,6 +743,13 @@ export class ComposerComponent implements OnInit, OnDestroy {
     if (this._mentionLabelDebounce) clearTimeout(this._mentionLabelDebounce);
     if (this._focusModeHandler) window.removeEventListener('focusModeChanged', this._focusModeHandler);
     if (this._beforeUnloadHandler) window.removeEventListener('beforeunload', this._beforeUnloadHandler);
+    // E: Release in-memory history caches to prevent Map growth in long sessions
+    const chapterId     = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId    = this.activePrologueId();
+    if (chapterId)     this.versionHistoryService.evictFromMemory(chapterId, 'chapter');
+    if (frontMatterId) this.versionHistoryService.evictFromMemory(frontMatterId, 'frontMatter');
+    if (prologueId)    this.versionHistoryService.evictFromMemory('prologue', 'prologue');
     this.editor.destroy();
   }
 
@@ -780,7 +789,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
     }
   }
 
-  setActiveTab(tab: 'ai' | 'notes' | 'manuscript') {
+  setActiveTab(tab: 'ai' | 'notes' | 'manuscript' | 'coach') {
     if (this.rightSidebarCollapsed() || this.rightSidebarTab() !== tab) {
       this.rightSidebarTab.set(tab);
       this.rightSidebarCollapsed.set(false);
@@ -905,6 +914,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
     switch (modal.type) {
       case 'chapter':
         this.bookService.deleteChapter(modal.id);
+        this.versionHistoryService.clearHistory(modal.id, 'chapter');
         this.closeEditorTab(modal.id);
         if (this.activeChapterId() === modal.id) {
           this.activeChapterId.set(null);
@@ -917,7 +927,10 @@ export class ComposerComponent implements OnInit, OnDestroy {
         const deletedGroup = book?.chapters.find(g => g.id === modal.id);
         if (deletedGroup) {
           const deletedChapterIds = deletedGroup.children.map(c => c.id);
-          deletedChapterIds.forEach(id => this.closeEditorTab(id));
+          deletedChapterIds.forEach(id => {
+            this.versionHistoryService.clearHistory(id, 'chapter');
+            this.closeEditorTab(id);
+          });
           if (this.activeChapterId() && deletedChapterIds.includes(this.activeChapterId()!)) {
             this.activeChapterId.set(null);
             this.title.set('');
@@ -1459,12 +1472,14 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
   deletePrologue() {
     this.bookService.deletePrologue();
+    this.versionHistoryService.clearHistory('prologue', 'prologue');
     this.closeEditorTab('prologue');
     this.activePrologueId.set(null);
   }
 
   deleteFrontMatterItem(itemId: string, title: string) {
     this.bookService.deleteFrontMatterItem(itemId);
+    this.versionHistoryService.clearHistory(itemId, 'frontMatter');
     this.closeEditorTab(itemId);
     if (this.activeFrontMatterId() === itemId) {
       this.activeFrontMatterId.set(null);
@@ -1553,23 +1568,48 @@ export class ComposerComponent implements OnInit, OnDestroy {
     return changed ? doc.body.innerHTML : html;
   }
 
-  openVersionHistory() {
+  async openVersionHistory() {
     const activeId = this.activeChapterId();
     const frontMatterId = this.activeFrontMatterId();
     const prologueId = this.activePrologueId();
 
-    let versions: VersionSnapshot[] = [];
+    // Load persisted snapshots from DB before opening
+    if (activeId)      await this.versionHistoryService.loadFromDb(activeId, 'chapter');
+    else if (frontMatterId) await this.versionHistoryService.loadFromDb(frontMatterId, 'frontMatter');
+    else if (prologueId)    await this.versionHistoryService.loadFromDb('prologue', 'prologue');
 
-    if (activeId) {
-      versions = this.versionHistoryService.getVersions(activeId, 'chapter');
-    } else if (frontMatterId) {
-      versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
-    } else if (prologueId) {
-      versions = this.versionHistoryService.getVersions('prologue', 'prologue');
-    }
+    let versions: VersionSnapshot[] = [];
+    if (activeId)      versions = this.versionHistoryService.getVersions(activeId, 'chapter');
+    else if (frontMatterId) versions = this.versionHistoryService.getVersions(frontMatterId, 'frontMatter');
+    else if (prologueId)    versions = this.versionHistoryService.getVersions('prologue', 'prologue');
 
     this.versionHistory.set(versions);
     this.versionHistoryOpen.set(true);
+  }
+
+  async deleteVersionSnapshot(event: { id: string; contentId: string; contentType: string }) {
+    await this.versionHistoryService.deleteSnapshot(
+      event.id, event.contentId,
+      event.contentType as 'chapter' | 'frontMatter' | 'prologue',
+    );
+    // Refresh list
+    await this.openVersionHistory();
+  }
+
+  saveVersionNow() {
+    const activeId = this.activeChapterId();
+    const frontMatterId = this.activeFrontMatterId();
+    const prologueId = this.activePrologueId();
+    const content = this.editor?.getHTML() ?? '';
+    const title   = this.title();
+    const count   = this.wordCount();
+
+    if (activeId)            this.versionHistoryService.addVersion(activeId, 'chapter', content, title, count, true);
+    else if (frontMatterId)  this.versionHistoryService.addVersion(frontMatterId, 'frontMatter', content, title, count, true);
+    else if (prologueId)     this.versionHistoryService.addVersion('prologue', 'prologue', content, title, count, true);
+
+    // Refresh modal if open
+    if (this.versionHistoryOpen()) this.openVersionHistory();
   }
 
   closeVersionHistory() {
@@ -2103,6 +2143,7 @@ export class ComposerComponent implements OnInit, OnDestroy {
 
     selected.forEach(chapterId => {
       this.bookService.deleteChapter(chapterId);
+      this.versionHistoryService.clearHistory(chapterId, 'chapter');
       this.closeEditorTab(chapterId);
     });
 

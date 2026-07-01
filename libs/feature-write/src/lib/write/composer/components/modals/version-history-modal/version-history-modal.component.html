@@ -1,62 +1,101 @@
 @if (isOpen()) {
-<div class="ne-modal-overlay" (click)="close.emit()">
-    <div class="ne-modal version-history-modal" (click)="$event.stopPropagation()">
-        <div class="ne-modal-header">
-            <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined">history</span>
-                Version History
-            </div>
-            <button class="modal-close-btn" (click)="close.emit()">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        <div class="ne-modal-body version-history-body">
-            @if (versions().length === 0) {
-            <div class="version-history-empty">
-                <span class="material-symbols-outlined text-5xl text-[var(--text-tertiary)] opacity-50">history</span>
-                <p>No version history available</p>
-                <p class="text-xs text-[var(--text-tertiary)]">Versions are automatically saved as you edit</p>
-            </div>
-            } @else {
-            <div class="version-history-list">
-                @for (version of versions(); track version.id; let i = $index) {
-                <div class="version-item" [class.current]="i === versions().length - 1">
-                    <div class="version-header">
-                        <div class="version-info">
-                            <div class="version-title">
-                                @if (version.title) {
-                                {{ version.title }}
-                                } @else {
-                                <span class="text-[var(--text-tertiary)]">Untitled</span>
-                                }
-                            </div>
-                            <div class="version-meta">
-                                <span class="version-time">{{ versionHistoryService.formatTimestamp(version.timestamp) }}</span>
-                                <span class="version-sep">•</span>
-                                <span class="version-words">{{ version.wordCount }} words</span>
-                            </div>
-                        </div>
-                        @if (i === versions().length - 1) {
-                        <span class="version-badge current-badge">Current</span>
-                        }
-                    </div>
-                    @if (version.description) {
-                    <div class="version-description">{{ version.description }}</div>
-                    }
-                    <div class="version-actions">
-                        <button class="version-action-btn" (click)="restore.emit(version.id)" title="Restore this version">
-                            <span class="material-symbols-outlined">restore</span>
-                            Restore
-                        </button>
-                    </div>
-                </div>
-                }
-            </div>
-            }
-        </div>
-        <div class="ne-modal-footer">
-            <button class="ne-modal-btn cancel" (click)="close.emit()">Close</button>
-        </div>
+<div class="vh-overlay" (click)="$event.target === $event.currentTarget && onClose()">
+<div class="vh-panel">
+
+  <!-- Header -->
+  <div class="vh-header">
+    <div class="vh-header-left">
+      <span class="material-symbols-outlined vh-header-icon">history</span>
+      <div>
+        <h2 class="vh-title">Version History</h2>
+        <p class="vh-subtitle">{{ versions().length }} snapshot{{ versions().length !== 1 ? 's' : '' }} · auto-saved every 30 s</p>
+      </div>
     </div>
+    <div class="vh-header-actions">
+      <button class="vh-btn vh-btn--ghost" (click)="saveNow.emit()" title="Save a version right now">
+        <span class="material-symbols-outlined">save</span>
+        Save version now
+      </button>
+      <button class="vh-close" (click)="onClose()" aria-label="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  </div>
+
+  @if (versions().length === 0) {
+    <div class="vh-empty">
+      <span class="material-symbols-outlined vh-empty-icon">history_toggle_off</span>
+      <p>No snapshots yet.</p>
+      <p class="vh-empty-hint">Snapshots are auto-saved as you write. Use "Save version now" to create one immediately.</p>
+    </div>
+  } @else {
+
+    <div class="vh-body">
+
+      <!-- Version list -->
+      <div class="vh-list">
+        @for (v of versions().slice().reverse(); track v.id) {
+          <button class="vh-entry" [class.vh-entry--active]="selected()?.id === v.id"
+            (click)="select(v)">
+            <div class="vh-entry-main">
+              <div class="vh-entry-top">
+                <span class="vh-entry-time">{{ vhs.formatTimestamp(v.timestamp) }}</span>
+                @if (isCurrent(v)) {
+                  <span class="vh-badge-current">Current</span>
+                }
+              </div>
+              <span class="vh-entry-date">{{ vhs.formatFull(v.timestamp) }}</span>
+              <span class="vh-entry-words">{{ v.wordCount }} words</span>
+              <span class="vh-entry-preview">{{ previewText(v.content) }}</span>
+            </div>
+            @if (confirmDeleteId() === v.id) {
+              <div class="vh-entry-confirm" (click)="$event.stopPropagation()">
+                <span class="vh-confirm-text">Delete?</span>
+                <button class="vh-btn vh-btn--danger vh-btn--xs" (click)="onDelete(v)">Yes</button>
+                <button class="vh-btn vh-btn--ghost vh-btn--xs" (click)="confirmDeleteId.set(null)">No</button>
+              </div>
+            } @else if (!isCurrent(v)) {
+              <button class="vh-entry-delete" (click)="$event.stopPropagation(); confirmDelete(v.id)"
+                aria-label="Delete snapshot">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- Preview pane -->
+      <div class="vh-preview-pane">
+        @if (selected(); as v) {
+          <div class="vh-preview-header">
+            <div>
+              <p class="vh-preview-time">{{ vhs.formatFull(v.timestamp) }}</p>
+              @if (v.title) { <p class="vh-preview-title">{{ v.title }}</p> }
+              @if (v.description) { <p class="vh-preview-desc">{{ v.description }}</p> }
+            </div>
+            <button class="vh-btn vh-btn--primary" (click)="onRestore()" [disabled]="isCurrent(v)">
+              <span class="material-symbols-outlined">restore</span>
+              Restore
+            </button>
+          </div>
+          <div class="vh-preview-content ProseMirror" [innerHTML]="v.content"></div>
+        } @else {
+          <div class="vh-preview-placeholder">
+            <span class="material-symbols-outlined vh-placeholder-icon">touch_app</span>
+            <p>Select a version to preview it</p>
+          </div>
+        }
+      </div>
+
+    </div>
+
+  }
+
+  <div class="vh-footer">
+    <p class="vh-footer-hint">Max {{ versions().length > 0 ? '50' : '50' }} snapshots kept per chapter. Oldest removed automatically.</p>
+    <button class="vh-btn vh-btn--ghost" (click)="onClose()">Close</button>
+  </div>
+
+</div>
 </div>
 }
