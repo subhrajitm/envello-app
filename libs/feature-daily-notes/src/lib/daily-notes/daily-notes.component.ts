@@ -275,6 +275,52 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     return this.noteGroups().some((g) => g.id === fid) ? fid : firstFolderId;
   }
 
+  // Computed sorted list per folder — evaluated once per signal change, not twice
+  // per CD cycle (the template calls getNotesForFolder for both the empty check
+  // and the @for loop; a computed avoids repeating the sort/localStorage read).
+  readonly sortedNotesPerFolder = computed(() => {
+    const result = new Map<string, Note[]>();
+    const sort = this.sortBy();
+    for (const [folderId, notes] of this.notesPerFolder()) {
+      result.set(folderId, this._sortFolder(folderId, notes, sort));
+    }
+    return result;
+  });
+
+  private _sortFolder(folderId: string, notes: Note[], sort: string): Note[] {
+    const pinned   = notes.filter(n => n.tags?.includes('pinned'));
+    const unpinned = notes.filter(n => !n.tags?.includes('pinned'));
+
+    const sortUnpinned = (list: Note[]): Note[] => {
+      if (sort === 'manual') {
+        try {
+          const raw = localStorage.getItem(this.noteOrderKey(folderId));
+          const order: string[] = raw ? JSON.parse(raw) : [];
+          const orderSet = new Set(order);
+          const indexed  = new Map(list.map(n => [n.id, n]));
+          const ordered  = order.map(id => indexed.get(id)).filter(Boolean) as Note[];
+          const rest     = list.filter(n => !orderSet.has(n.id));
+          return [...rest, ...ordered];
+        } catch { return list; }
+      }
+      return [...list].sort((a, b) => {
+        if (sort === 'alpha') return (a.title || 'Untitled').localeCompare(b.title || 'Untitled');
+        if (sort === 'created') {
+          const aT = parseInt(a.id, 10) || new Date(a.date).getTime();
+          const bT = parseInt(b.id, 10) || new Date(b.date).getTime();
+          return bT - aT;
+        }
+        // modified: lastEdited is ISO — safe to parse
+        const aM = a.lastEdited ? new Date(a.lastEdited).getTime() : parseInt(a.id, 10) || new Date(a.date).getTime();
+        const bM = b.lastEdited ? new Date(b.lastEdited).getTime() : parseInt(b.id, 10) || new Date(b.date).getTime();
+        return bM - aM;
+      });
+    };
+
+    // Pinned notes always float to top, sorted among themselves, then unpinned
+    return [...sortUnpinned(pinned), ...sortUnpinned(unpinned)];
+  }
+
   getNotesForFolder(folderId: string): Note[] {
     const notes = this.notesPerFolder().get(folderId) ?? [];
     const sort = this.sortBy();
@@ -294,12 +340,14 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     }
     try {
       const raw = localStorage.getItem(this.noteOrderKey(folderId));
-      if (!raw) return notes;
-      const order: string[] = JSON.parse(raw);
+      const order: string[] = raw ? JSON.parse(raw) : [];
+      const orderSet = new Set(order);               // O(1) lookup vs O(n) includes
       const indexed = new Map(notes.map(n => [n.id, n]));
       const ordered = order.map(id => indexed.get(id)).filter(Boolean) as Note[];
-      const rest = notes.filter(n => !order.includes(n.id));
-      return [...ordered, ...rest];
+      // Notes not in the saved order (e.g. synced from another device) go to the
+      // TOP so they're visible immediately, matching user expectation for new items.
+      const rest = notes.filter(n => !orderSet.has(n.id));
+      return [...rest, ...ordered];
     } catch { return notes; }
   }
 
@@ -530,7 +578,12 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('window:beforeunload')
-  onBeforeUnload() { this.flushTitleSave(); }
+  onBeforeUnload() {
+    this.flushTitleSave();
+    // Fire-and-forget: localStorage backup already covers content survival on reload,
+    // but this attempts to complete any pending markdown/file write before the tab closes.
+    this.store.flushPendingNoteSaves().catch(() => {});
+  }
 
   @HostListener('document:keydown.escape', ['$event'])
   handleEscape(event: Event) {
@@ -571,16 +624,20 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
         },
       },
       onUpdate: ({ editor }) => {
-        // Debounce the store write — avoids a DataService write on every keystroke
+        // Debounce the store write — avoids a DataService write on every keystroke.
+        // isSaving stays true until the DB upsert resolves, so the indicator is accurate.
         this.isSaving.set(true);
         if (this.saveTimeout) clearTimeout(this.saveTimeout);
-        this.saveTimeout = setTimeout(() => {
+        this.saveTimeout = setTimeout(async () => {
           const content = editor.getHTML();
           const plainText = editor.getText();
           const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
-          this.updateNoteContent(content, preview);
-          this.isSaving.set(false);
-          this.lastSaved.set(new Date());
+          try {
+            await this.updateNoteContent(content, preview);
+            this.lastSaved.set(new Date());
+          } finally {
+            this.isSaving.set(false);
+          }
         }, 500);
       },
     });
@@ -657,6 +714,8 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
     if (this.searchDebounceId) clearTimeout(this.searchDebounceId);
     this.flushTitleSave();
+    // Flush pending note content writes when navigating away from this route.
+    this.store.flushPendingNoteSaves().catch(() => {});
     this._cleanupFormatListener?.();
     if (this.editor) {
       this.editor.destroy();
@@ -671,10 +730,10 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (id) this.store.updateNote(id, { title: this.titleInputValue() });
   }
 
-  updateNoteContent(content: string, preview: string) {
+  async updateNoteContent(content: string, preview: string): Promise<void> {
     const activeId = this.selectedEntryId();
     if (activeId) {
-      this.store.updateNote(activeId, { content, preview });
+      await this.store.updateNote(activeId, { content, preview });
       const note = this.selectedNote();
       if (note) this.noteHistory.autoSnapshot(activeId, note.title, content);
     }
@@ -744,6 +803,15 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       folderId,
     };
     this.store.addNote(newNote);
+    // Prepend to manual order so the note appears at the top of its folder immediately
+    // without waiting for drag-and-drop to register it in the saved order.
+    try {
+      const key = this.noteOrderKey(folderId);
+      const existing: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!existing.includes(newNote.id)) {
+        localStorage.setItem(key, JSON.stringify([newNote.id, ...existing]));
+      }
+    } catch { /* ignore */ }
     this.selectNote(newNote.id);
     // Select all text in the title field so the user can immediately overwrite it
     setTimeout(() => {
@@ -1222,9 +1290,9 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
       const plainText = this.editor?.getText() ?? '';
       const preview = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
       this.isSaving.set(true);
-      this.updateNoteContent(content, preview);
-      this.lastSaved.set(new Date());
-      setTimeout(() => this.isSaving.set(false), 600);
+      this.updateNoteContent(content, preview)
+        .then(() => { this.lastSaved.set(new Date()); })
+        .finally(() => { this.isSaving.set(false); });
     }
     if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'n') {
       event.preventDefault();

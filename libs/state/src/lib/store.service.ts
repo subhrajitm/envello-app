@@ -32,6 +32,8 @@ export class StoreService {
     private db = inject(DataService);
     private fs = inject(FILE_SYSTEM);
 
+    private readonly isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
     private markdownWorker: Worker | null = null;
     private workerCallbacks = new Map<string, (md: string) => void>();
     private saveTimeouts        = new Map<string, ReturnType<typeof setTimeout>>();
@@ -60,6 +62,8 @@ export class StoreService {
         });
         window.addEventListener('envello:db-ready', () => this.loadFromDb());
         window.addEventListener('envello:profile-switched', () => {
+            // Flush in-progress note writes for the old profile before switching.
+            this.flushPendingNoteSaves().catch(() => {});
             // Invalidate any in-flight load — its results belong to the old profile.
             this._loadGeneration++;
             this.contentCache.clear();
@@ -160,10 +164,15 @@ export class StoreService {
                 .slice(0, StoreService.LIMITS.notes)
                 .map(n => {
                     const pending = this._pendingNoteUpserts.get(n.id);
-                    // Pending write hasn't landed in DB yet — use the in-memory version
-                    return pending
-                        ? { ...n, ...pending, content: undefined } as Note
-                        : { ...n, content: undefined } as Note;
+                    // Pending write hasn't landed in DB yet — use the in-memory version.
+                    if (pending) return { ...n, ...pending, content: undefined } as Note;
+                    // Note is actively being edited (unsaved content in debounce queue) —
+                    // keep the current in-memory metadata so sync doesn't clobber live edits.
+                    if (this.saveTimeouts.has(n.id) || this.pendingSaveContent.has(n.id)) {
+                        const live = this.notes().find(existing => existing.id === n.id);
+                        if (live) return { ...live, content: undefined } as Note;
+                    }
+                    return { ...n, content: undefined } as Note;
                 });
             const dbNoteIds = new Set(activeNotes.map(n => n.id));
             const pendingNotes = this.notes().filter(n => !dbNoteIds.has(n.id));
@@ -288,12 +297,20 @@ export class StoreService {
             }
         }
 
-        // 6. Read from file system (desktop: .md file; web: localStorage).
+        // 6. Read from file system (desktop: .md file → parse; web: raw HTML stored directly).
         try {
-            const mdContent = await this.fs.readNote(id);
-            if (mdContent) {
-                const { marked } = await import('marked');
-                const html = await marked.parse(mdContent) as string;
+            const stored = await this.fs.readNote(id);
+            if (stored) {
+                let html: string;
+                const isHtml = stored.trimStart().startsWith('<') || !this.isTauri;
+                if (isHtml) {
+                    // Web stores raw HTML; also gracefully handles desktop files migrated from HTML.
+                    html = stored;
+                } else {
+                    // Desktop markdown file.
+                    const { marked } = await import('marked');
+                    html = await marked.parse(stored) as string;
+                }
                 this.contentCache.set(id, html);
                 this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: html } : n));
                 return html;
@@ -348,20 +365,22 @@ export class StoreService {
         await this.saveNoteContentToFile(note.id, note.content || '');
     }
 
-    updateNote(id: string, updates: Partial<Note>) {
-        const timestamp = new Date();
-        const timeString = timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    updateNote(id: string, updates: Partial<Note>): Promise<void> {
+        // ISO 8601 — sortable, parseable, timezone-safe.
+        // Locale strings like "2:30 PM" cause new Date(...).getTime() = NaN
+        // which makes Array.sort() unstable in "modified" sort mode.
+        const isoNow = new Date().toISOString();
 
         this.notes.update(notes =>
             notes.map(note => note.id === id ? {
                 ...note,
                 ...updates,
-                lastEdited: updates.lastEdited || timeString
+                lastEdited: updates.lastEdited || isoNow
             } : note)
         );
 
         const note = this.notes().find(n => n.id === id);
-        if (!note) return;
+        if (!note) return Promise.resolve();
 
         if (updates.content !== undefined) {
             const html = updates.content || '';
@@ -383,9 +402,11 @@ export class StoreService {
             }, 1000));
         }
 
+        // Return the DB upsert Promise so callers can await actual persistence
+        // and show accurate save indicators.
         this._pendingNoteUpserts.set(id, note);
-        this.db.upsert('notes', note)
-            .then(() => this._pendingNoteUpserts.delete(id))
+        return this.db.upsert('notes', note)
+            .then(() => { this._pendingNoteUpserts.delete(id); })
             .catch(e => {
                 this._pendingNoteUpserts.delete(id);
                 console.error('[StoreService] persist note failed', e);
@@ -406,10 +427,13 @@ export class StoreService {
 
     private async saveNoteContentToFile(id: string, html: string) {
         try {
-            const md = await this.htmlToMarkdown(html);
-            const filePath = await this.fs.saveNote(id, md);
+            // Web: store raw HTML — eliminates the lossy HTML→MD→HTML roundtrip that
+            // strips tiptap-specific elements (highlights, youtube embeds, text-align styles).
+            // Desktop: convert to human-readable markdown for the .md file.
+            const fileContent = this.isTauri ? await this.htmlToMarkdown(html) : html;
+            const filePath = await this.fs.saveNote(id, fileContent);
 
-            // Markdown written — the immediate HTML backup is no longer needed.
+            // Content written — the immediate HTML backup is no longer needed.
             try { localStorage.removeItem(`env:note:html:${id}`); } catch { /* ignore */ }
 
             const note = this.notes().find(n => n.id === id);
@@ -431,6 +455,13 @@ export class StoreService {
     deleteNote(id: string) {
         const note = this.notes().find(n => n.id === id);
         if (!note) return;
+        // Cancel any in-flight debounced file write — the note no longer exists.
+        const pending = this.saveTimeouts.get(id);
+        if (pending) {
+            clearTimeout(pending);
+            this.saveTimeouts.delete(id);
+            this.pendingSaveContent.delete(id);
+        }
         this.contentCache.delete(id);
         try { localStorage.removeItem(`env:note:html:${id}`); } catch { /* ignore */ }
         this.notes.update(list => list.filter(n => n.id !== id));

@@ -90,21 +90,36 @@ export class NoteHistoryService {
     if (this.historyCache.has(noteId)) {
       return this.historyCache.get(noteId)!;
     }
+    // First miss: load ALL history in one query and populate the full cache so
+    // subsequent calls for any note are O(1) instead of repeating the full-table scan.
     const all = await this.db.getAll<NoteHistoryEntry>('note_history');
-    const filtered = all
-      .filter(e => e.noteId === noteId)
-      .sort((a, b) => (b.snapshotAt ?? '').localeCompare(a.snapshotAt ?? ''));
-    this.historyCache.set(noteId, filtered);
-    return filtered;
+    const grouped = new Map<string, NoteHistoryEntry[]>();
+    for (const e of all) {
+      const list = grouped.get(e.noteId) ?? [];
+      list.push(e);
+      grouped.set(e.noteId, list);
+    }
+    for (const [nid, entries] of grouped) {
+      this.historyCache.set(
+        nid,
+        entries.sort((a, b) => (b.snapshotAt ?? '').localeCompare(a.snapshotAt ?? ''))
+      );
+    }
+    return this.historyCache.get(noteId) ?? [];
   }
 
   /** Restores a snapshot. Saves a 'Before restore' checkpoint first. */
   async restore(entry: NoteHistoryEntry): Promise<void> {
     const note = this.store.notes().find(n => n.id === entry.noteId);
-    if (note?.content) {
-      await this.saveSnapshot(entry.noteId, note.title, note.content, 'Before restore');
+    if (note) {
+      // note.content is stripped by loadFromDb — load the actual current content
+      // so the "Before restore" checkpoint captures what the user would lose.
+      const currentContent = await this.store.loadNoteContent(entry.noteId);
+      if (currentContent) {
+        await this.saveSnapshot(entry.noteId, note.title, currentContent, 'Before restore');
+      }
     }
-    this.store.updateNote(entry.noteId, {
+    await this.store.updateNote(entry.noteId, {
       content: entry.content,
       preview: entry.content.replace(/<[^>]*>/g, '').substring(0, 100),
     });

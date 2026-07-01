@@ -238,10 +238,11 @@
                     (dragover)="onFolderDragOver(group.id, $event)"
                     (dragleave)="onFolderDragLeave($event)"
                     (drop)="onFolderDrop(group.id, $event)">
-                    @if (getNotesForFolder(group.id).length === 0) {
+                    @let folderNotes = sortedNotesPerFolder().get(group.id) ?? [];
+                    @if (folderNotes.length === 0) {
                     <div class="folder-empty">No notes in this folder</div>
                     } @else {
-                    @for (entry of getNotesForFolder(group.id); track entry.id) {
+                    @for (entry of folderNotes; track entry.id) {
                     <div class="note-card-item"
                         [attr.data-note-id]="entry.id"
                         [class.active]="selectedNote()?.id === entry.id && !isMultiSelecting()"
@@ -251,7 +252,7 @@
                         [class.drag-above]="dragOverNoteId() === entry.id && dragInsertBefore()"
                         [class.drag-below]="dragOverNoteId() === entry.id && !dragInsertBefore()"
                         draggable="true"
-                        (click)="focusedNoteId.set(entry.id); onNoteClick(entry.id, group.id, $event)"
+                        (click)="onNoteClick(entry.id, group.id, $event)"
                         (dragstart)="onNoteDragStart(entry.id, $event)"
                         (dragend)="onNoteDragEnd()"
                         (dragover)="onNoteItemDragOver(entry.id, group.id, $event)"
@@ -338,8 +339,7 @@
             </div>
             @if (openNotes().length > 1) {
             <button class="close-all-tabs-btn" title="Close all tabs" (click)="closeAllTabs()">
-                <span class="material-symbols-outlined">close_fullscreen</span>
-                Close all
+                <span class="material-symbols-outlined">close</span>
             </button>
             }
         </div>
