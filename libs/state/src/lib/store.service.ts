@@ -247,7 +247,34 @@ export class StoreService {
             return note.content;
         }
 
-        // 3. Flush any debounced file-write before reading so the file exists.
+        // 3. Immediate HTML backup written synchronously in updateNote — survives reloads
+        //    that happen before the async markdown conversion + file write completes.
+        try {
+            const immediateHtml = localStorage.getItem(`env:note:html:${id}`);
+            if (immediateHtml) {
+                this.contentCache.set(id, immediateHtml);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: immediateHtml } : n));
+                return immediateHtml;
+            }
+        } catch { /* ignore — storage may be unavailable */ }
+
+        // 4. Read directly from the DB — content IS stored in the notes table by
+        //    updateNote → db.upsert, but loadFromDb strips it for performance.
+        //    This is the most reliable path on web (avoids async markdown roundtrip)
+        //    and also covers desktop when the .md file hasn't been written yet.
+        try {
+            const allNotes = await this.db.getAll<Note>('notes');
+            const dbNote = allNotes.find(n => n.id === id);
+            if (dbNote?.content && dbNote.content.length > 5) {
+                this.contentCache.set(id, dbNote.content);
+                this.notes.update(ns => ns.map(n => n.id === id ? { ...n, content: dbNote.content! } : n));
+                return dbNote.content;
+            }
+        } catch (e) {
+            console.error('[StoreService] loadNoteContent DB direct read failed for', id, e);
+        }
+
+        // 5. Flush any debounced file-write before reading so the file exists.
         if (this.saveTimeouts.has(id)) {
             const pending = this.pendingSaveContent.get(id) ?? '';
             clearTimeout(this.saveTimeouts.get(id));
@@ -261,7 +288,7 @@ export class StoreService {
             }
         }
 
-        // 4. Read from file system (desktop: .md file; web: localStorage).
+        // 6. Read from file system (desktop: .md file; web: localStorage).
         try {
             const mdContent = await this.fs.readNote(id);
             if (mdContent) {
@@ -275,7 +302,7 @@ export class StoreService {
             console.error('[StoreService] loadNoteContent file read failed for', id, e);
         }
 
-        // 5. Last resort: reconstruct from preview stored in SQLite.
+        // 7. Last resort: reconstruct from preview stored in SQLite.
         //    preview is plain text — wrap in a paragraph so the editor renders it.
         //    Also re-saves to file so future loads hit step 4.
         if (note.preview && note.preview.length > 0) {
@@ -337,10 +364,17 @@ export class StoreService {
         if (!note) return;
 
         if (updates.content !== undefined) {
-            this.contentCache.set(id, updates.content || '');
+            const html = updates.content || '';
+            this.contentCache.set(id, html);
+
+            // Immediate synchronous backup so content survives a reload that happens
+            // before the async markdown conversion + debounced file write completes.
+            // This key is cleaned up once the proper write finishes (see saveNoteContentToFile).
+            try { localStorage.setItem(`env:note:html:${id}`, html); } catch { /* quota */ }
+
             const existing = this.saveTimeouts.get(id);
             if (existing) clearTimeout(existing);
-            this.pendingSaveContent.set(id, updates.content || '');
+            this.pendingSaveContent.set(id, html);
             this.saveTimeouts.set(id, setTimeout(() => {
                 this.saveTimeouts.delete(id);
                 const content = this.pendingSaveContent.get(id) ?? '';
@@ -375,6 +409,9 @@ export class StoreService {
             const md = await this.htmlToMarkdown(html);
             const filePath = await this.fs.saveNote(id, md);
 
+            // Markdown written — the immediate HTML backup is no longer needed.
+            try { localStorage.removeItem(`env:note:html:${id}`); } catch { /* ignore */ }
+
             const note = this.notes().find(n => n.id === id);
             if (note && note.filePath !== filePath) {
                 // Update DB only — do NOT mutate the notes() signal here.
@@ -395,6 +432,7 @@ export class StoreService {
         const note = this.notes().find(n => n.id === id);
         if (!note) return;
         this.contentCache.delete(id);
+        try { localStorage.removeItem(`env:note:html:${id}`); } catch { /* ignore */ }
         this.notes.update(list => list.filter(n => n.id !== id));
         this.addActivity('Note deleted', 'system');
         this.db.upsert('notes', { ...note, deleted_at: new Date().toISOString() })

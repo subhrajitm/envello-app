@@ -90,6 +90,22 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
   wordCount = signal(0);
   characterCount = signal(0);
 
+  readingTime = computed(() => {
+    const words = this.wordCount();
+    if (words < 10) return '';
+    const mins = Math.ceil(words / 200);
+    return mins === 1 ? '1 min read' : `${mins} min read`;
+  });
+
+  saveStatusLabel = computed(() => {
+    if (this.isSaving()) return 'Saving…';
+    const saved = this.lastSaved();
+    if (!saved) return '';
+    const diffSec = (Date.now() - saved.getTime()) / 1000;
+    if (diffSec < 5) return 'Saved';
+    return `Saved at ${saved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  });
+
   showAddMenu = signal(false);
 
   toggleAddMenu() { this.showAddMenu.update(v => !v); }
@@ -169,7 +185,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
 
   // Right sidebar panel
   rightPanelCollapsed = signal(true);
-  rightPanelTab = signal<'ai' | 'format' | 'info'>('ai');
+  rightPanelTab = signal<'ai' | 'format'>('ai');
 
   pinnedCount = computed(() => this.notes().filter(n => this.isPinned(n)).length);
   taggedCount = computed(() => this.notes().filter(n => n.tags?.some(t => t !== 'pinned')).length);
@@ -349,6 +365,27 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     if (buckets.older.length > 0) result.push({ label: 'Older Notes', notes: buckets.older });
 
     return result;
+  }
+
+  formatNoteDate(date: string): string {
+    if (!date) return '';
+    // Strip time component — note.date may be "2026-06-30" or "2026-06-30T14:32:00Z"
+    const dateOnly = date.split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    if (dateOnly === todayStr) return 'Today';
+    if (dateOnly === yesterdayStr) return 'Yesterday';
+    const d = new Date(dateOnly + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    const sameYear = d.getFullYear() === today.getFullYear();
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      ...(sameYear ? {} : { year: 'numeric' }),
+    });
   }
 
   formatTime(id: string, lastEdited?: string): string {
@@ -1092,7 +1129,7 @@ export class DailyNotesComponent implements OnInit, OnDestroy {
     this.showDropdown.update(show => !show);
   }
 
-  setRightTab(tab: 'ai' | 'format' | 'info') {
+  setRightTab(tab: 'ai' | 'format') {
     if (this.rightPanelCollapsed() || this.rightPanelTab() !== tab) {
       this.rightPanelTab.set(tab);
       this.rightPanelCollapsed.set(false);
