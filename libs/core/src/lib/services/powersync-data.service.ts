@@ -90,12 +90,15 @@ export class PowerSyncDataService implements DataService {
       const activeId = this.profileService.activeProfileId() || 'default';
       const isGlobal = this.GLOBAL_COLLECTIONS.has(collection);
 
-      // Notes and tasks need a stable ORDER BY so loadFromDb always returns the same
+      // Notes need a stable ORDER BY so loadFromDb always returns the same
       // sequence after SQLite B-tree reorganisation from UPSERTs. Without ORDER BY,
       // notes jump between loadFromDb calls, breaking the manual-sort "rest" pool.
-      const orderClause = collection === 'notes' || collection === 'tasks'
+      // Tasks use `due` not `date`, so they get their own clause.
+      const orderClause = collection === 'notes'
         ? ' ORDER BY date DESC, id DESC'
-        : '';
+        : collection === 'tasks'
+          ? ' ORDER BY id DESC'
+          : '';
 
       let rows: any[];
       if (!isGlobal && activeId === 'default') {

@@ -29,7 +29,3 @@
 <env-toast></env-toast>
 <!-- In-app web preview drawer -->
 <env-web-preview></env-web-preview>
-<!-- Morning Briefing -->
-@if (showBriefing()) {
-  <env-morning-briefing #briefing (closed)="showBriefing.set(false)"></env-morning-briefing>
-}

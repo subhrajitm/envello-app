@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed, ViewChild } from '@angular/core';
-import { AuthService, BookContentService, UserPreferencesService, CaptureService, SmartMonitorService, GoogleAuthService, StoreService, MorningBriefingService } from '@envello/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { AuthService, BookContentService, UserPreferencesService, CaptureService, SmartMonitorService, GoogleAuthService, StoreService } from '@envello/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { TauriService, SessionService } from '@envello/core';
-import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent, MorningBriefingComponent } from '@envello/ui';
+import { HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, ToastComponent, WebPreviewComponent } from '@envello/ui';
 import { UpdateBannerComponent } from './components/update-banner/update-banner.component';
 import { TitlebarComponent } from './components/titlebar/titlebar.component';
 import { UpdateService } from './services/update.service';
@@ -22,7 +22,7 @@ const GLOBAL_SHORTCUTS: Record<string, string> = {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, UpdateBannerComponent, TitlebarComponent, ToastComponent, WebPreviewComponent, MorningBriefingComponent],
+  imports: [RouterOutlet, HeaderComponent, FooterComponent, EnvLogoComponent, KeyboardShortcutsComponent, OnboardingComponent, UpdateBannerComponent, TitlebarComponent, ToastComponent, WebPreviewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -40,10 +40,6 @@ export class AppComponent implements OnInit, OnDestroy {
   private userPrefsService = inject(UserPreferencesService);
   private captureService  = inject(CaptureService);
   private monitor          = inject(SmartMonitorService);
-  private briefingService  = inject(MorningBriefingService);
-
-  @ViewChild('briefing') briefingRef?: MorningBriefingComponent;
-  showBriefing = signal(false);
 
   private unlistenFileDrop?: () => void;
   private unlistenCloseRequested?: () => void;
@@ -103,15 +99,6 @@ export class AppComponent implements OnInit, OnDestroy {
     window.addEventListener('envello:db-ready', () => setTimeout(() => this.monitor.run(), 1500), { once: true });
     setTimeout(() => this.monitor.run(), 6000); // fallback if event already fired
 
-    // Morning Briefing — show once per day after DB is ready
-    const tryShowBriefing = () => {
-      if (this.briefingService.shouldShow()) {
-        this.showBriefing.set(true);
-        setTimeout(() => this.briefingRef?.open(), 50);
-      }
-    };
-    window.addEventListener('envello:db-ready', () => setTimeout(tryShowBriefing, 2000), { once: true });
-    setTimeout(tryShowBriefing, 7000);
   }
 
   private async setupTauriFileDrop(): Promise<void> {
