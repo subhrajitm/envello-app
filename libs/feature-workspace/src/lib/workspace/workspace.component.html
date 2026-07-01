@@ -203,11 +203,11 @@
                       @if (item.subtitle) {
                         <div class="ra-subtitle" [class.ra-subtitle--overdue]="item.isOverdue">{{ item.subtitle }}</div>
                       }
-                    </div>
-                    <div class="ra-right">
                       @if (item.relativeTime) {
                         <span class="ra-time">{{ item.relativeTime }}</span>
                       }
+                    </div>
+                    <div class="ra-right">
                       <div class="ra-actions">
                         @if (item.kind === 'task' && item.task) {
                           <button class="ra-action-btn"

@@ -716,7 +716,6 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-right: 56px;
 }
 
 .ra-title {
@@ -747,33 +746,19 @@
 
 .ra-subtitle--overdue { color: var(--alert, #dc2626); }
 
-/* Right: absolutely overlays the item — no flex space consumed */
 .ra-right {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  pointer-events: none;
-}
-
-.ra-time,
-.ra-actions {
-  pointer-events: auto;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .ra-time {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-tertiary);
   font-family: var(--font-sans);
   white-space: nowrap;
-  transition: opacity 0.12s;
+  margin-top: 2px;
 }
-
-.ra-item:hover .ra-time { opacity: 0; }
 
 .ra-actions {
   display: flex;
