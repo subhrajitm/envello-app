@@ -35,6 +35,7 @@ export * from './lib/services/supabase-vault.service';
 export * from './lib/services/vault-unlock.service';
 export * from './lib/services/powersync.service';
 export * from './lib/services/powersync-data.service';
+export * from './lib/services/crdt.service';
 export * from './lib/services/desktop-sync-settings.service';
 export * from './lib/services/desktop-backup.service';
 export * from './lib/services/desktop-data.service';

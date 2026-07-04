@@ -30,6 +30,11 @@
             "glob": "**/*",
             "input": "apps/desktop/src/assets",
             "output": "assets"
+          },
+          {
+            "glob": "automerge.wasm",
+            "input": "node_modules/@automerge/automerge/dist",
+            "output": "assets"
           }
         ],
         "styles": [

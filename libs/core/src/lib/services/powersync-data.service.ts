@@ -6,6 +6,7 @@ import { WorkspaceProfileService } from './workspace-profile.service';
 import { AuthService } from './auth.service';
 import { LoggingService } from './logging.service';
 import { JSON_FIELDS, BOOL_FIELDS, TYPED_TABLES } from '../config/powersync.schema';
+import { CrdtService } from './crdt.service';
 
 @Injectable({ providedIn: 'root' })
 export class PowerSyncDataService implements DataService {
@@ -13,6 +14,7 @@ export class PowerSyncDataService implements DataService {
   private readonly profileService = inject(WorkspaceProfileService);
   private readonly auth = inject(AuthService);
   private readonly logging = inject(LoggingService);
+  private readonly crdt = inject(CrdtService);
 
   private readonly GLOBAL_COLLECTIONS = new Set([
     'projects', 'note_folders', 'transactions', 'user_preferences',
@@ -142,16 +144,26 @@ export class PowerSyncDataService implements DataService {
         profileId = isGlobal ? 'default' : activeId;
       }
 
+      // For notes with content, attach the Automerge state so remote devices can merge.
+      let syncItem: any = item;
+      if (collection === 'notes') {
+        const note = item as any;
+        if (note.content) {
+          const crdtState = await this.crdt.recordLocalEdit(id, note.content, note.title ?? '');
+          syncItem = { ...note, crdt_state: crdtState };
+        }
+      }
+
       // 1. Write to user_data for PowerSync sync upload (skip localOnly collections)
       if (!this.LOCAL_ONLY_COLLECTIONS.has(collection)) {
         await this.ps.db.execute(
           `INSERT OR REPLACE INTO user_data (id, user_id, profile_id, collection, data, deleted, updated_at)
            VALUES (?, ?, ?, ?, ?, 0, ?)`,
-          [id, this.userId, profileId, collection, JSON.stringify(item), new Date().toISOString()]
+          [id, this.userId, profileId, collection, JSON.stringify(syncItem), new Date().toISOString()]
         );
       }
 
-      // 2. Write to typed table for fast local reads
+      // 2. Write to typed table for fast local reads (strip crdt_state — not a typed column)
       await this.upsertToTypedTable(collection, profileId, item);
     } catch (e) {
       console.error(`[PowerSyncDataService] upsert failed for ${collection}`, e);
@@ -176,6 +188,8 @@ export class PowerSyncDataService implements DataService {
       }
       // Remove from typed table
       await this.ps.db.execute(`DELETE FROM ${collection} WHERE id = ?`, [id]);
+      // Remove local CRDT state for deleted notes
+      if (collection === 'notes') await this.crdt.remove(id);
     } catch (e) {
       console.error(`[PowerSyncDataService] remove failed for ${collection}`, e);
     }
@@ -205,6 +219,8 @@ export class PowerSyncDataService implements DataService {
   /**
    * Repopulate all typed tables from the current user_data contents.
    * Called once on first sync and after PowerSync delivers a batch.
+   * For notes that carry a crdt_state, merges remote Automerge state with local
+   * before writing to the typed table.
    */
   async rebuildTypedTablesFromUserData(): Promise<void> {
     try {
@@ -215,10 +231,22 @@ export class PowerSyncDataService implements DataService {
         if (!TYPED_TABLES.has(row.collection)) continue; // skip vault + unknown collections
         if (row.deleted) {
           await this.ps.db.execute(`DELETE FROM ${row.collection} WHERE id = ?`, [row.id]).catch(() => {});
+          if (row.collection === 'notes') await this.crdt.remove(row.id);
           continue;
         }
         try {
           const item = JSON.parse(row.data);
+
+          // Merge remote Automerge state when available; fall back to raw data on error.
+          if (row.collection === 'notes' && item.crdt_state) {
+            const merged = await this.crdt.mergeRemote(row.id, item.crdt_state).catch(() => null);
+            if (merged) {
+              item.content = merged.content;
+              item.title   = merged.title;
+            }
+            delete item.crdt_state; // strip before writing to typed table
+          }
+
           await this.upsertToTypedTable(row.collection, row.profile_id, item).catch(() => {});
         } catch { /* skip malformed */ }
       }
