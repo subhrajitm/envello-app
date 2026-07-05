@@ -13,6 +13,7 @@ import { Task } from '@envello/domain';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { AuthService, UserActivityLogService, ActivityEntry, ActivityAction } from '@envello/core';
 
 interface SettingsSection {
   id: string;
@@ -112,6 +113,15 @@ export class SettingsPageComponent implements OnInit {
   readonly syncService = inject(SyncService);
   readonly backupCollections = BACKUP_ELIGIBLE_COLLECTIONS;
   readonly isDesktop = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+
+  private readonly authService    = inject(AuthService);
+  private readonly activityLogger = inject(UserActivityLogService);
+
+  readonly currentUserEmail = computed(() => this.authService.currentUser()?.email ?? '');
+  readonly currentDevice    = this.resolveCurrentDevice();
+  activityEntries           = signal<ActivityEntry[]>([]);
+  revokeOtherConfirm        = signal(false);
+  revokeAllConfirm          = signal(false);
   restoreStatus = signal<Record<string, 'idle' | 'restoring' | 'done' | 'error'>>({});
 
   formatSyncTime(iso: string | null): string {
@@ -178,6 +188,7 @@ export class SettingsPageComponent implements OnInit {
     { id: 'monitor',       label: 'Smart Monitor',     description: 'Auto-create tasks from your data 24/7', icon: 'bolt' },
     { id: 'notifications', label: 'Notifications',     description: 'Alerts and reminders',                  icon: 'notifications' },
     { id: 'data',          label: 'Data & Sync',       description: 'Backup, storage and sync options',      icon: 'sync' },
+    { id: 'security',      label: 'Security',          description: 'Sessions and account activity',         icon: 'security' },
     { id: 'about',         label: 'About',             description: 'Version and system information',        icon: 'info' }
   ];
 
@@ -392,6 +403,9 @@ export class SettingsPageComponent implements OnInit {
 
   setActiveSection(sectionId: string) {
     this.activeSection.set(sectionId);
+    if (sectionId === 'security') {
+      this.activityEntries.set(this.activityLogger.loadRecent());
+    }
     this.router.navigate([], { queryParams: { section: sectionId }, replaceUrl: true });
   }
 
@@ -653,6 +667,61 @@ export class SettingsPageComponent implements OnInit {
   checkUpdates() { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/releases'); }
   openDocs()     { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/wiki'); }
   reportIssue()  { this.tauri.openUrl('https://github.com/subhrajitm/envello-app/issues/new'); }
+
+  // ── Security section ────────────────────────────────────────────────────
+
+  private resolveCurrentDevice(): string {
+    if (typeof navigator === 'undefined') return 'Unknown device';
+    const ua = navigator.userAgent;
+    const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+    if (isTauri) return 'Desktop app';
+    if (ua.includes('Macintosh')) return 'Mac browser';
+    if (ua.includes('iPhone')) return 'iPhone';
+    if (ua.includes('iPad')) return 'iPad';
+    if (ua.includes('Android')) return 'Android';
+    if (ua.includes('Windows')) return 'Windows browser';
+    if (ua.includes('Linux')) return 'Linux browser';
+    return 'Browser';
+  }
+
+  async revokeOtherSessions(): Promise<void> {
+    this.revokeOtherConfirm.set(false);
+    await this.authService.signOutOtherDevices();
+    this.activityEntries.set(this.activityLogger.loadRecent());
+  }
+
+  async revokeAllSessions(): Promise<void> {
+    this.revokeAllConfirm.set(false);
+    await this.authService.signOutAllDevices();
+  }
+
+  readonly ACTION_META: Record<ActivityAction, { label: string; icon: string; cls: string }> = {
+    login:                 { label: 'Signed in',                   icon: 'login',          cls: 'sec-icon-login'   },
+    logout:                { label: 'Signed out',                  icon: 'logout',         cls: 'sec-icon-logout'  },
+    session_revoke_others: { label: 'Signed out other devices',    icon: 'devices_off',    cls: 'sec-icon-session' },
+    session_revoke_all:    { label: 'Signed out everywhere',       icon: 'no_accounts',    cls: 'sec-icon-logout'  },
+    key_saved:             { label: 'API key saved',               icon: 'key',            cls: 'sec-icon-key'     },
+    key_removed:           { label: 'API key removed',             icon: 'key_off',        cls: 'sec-icon-key'     },
+  };
+
+  actionMeta(action: ActivityAction) {
+    return this.ACTION_META[action] ?? { label: action, icon: 'info', cls: '' };
+  }
+
+  formatActivityTime(iso: string): string {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `${diffH}h ago`;
+    const diffD = Math.floor(diffH / 24);
+    if (diffD === 1) return 'Yesterday';
+    if (diffD < 7) return `${diffD}d ago`;
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
 
   private loadSettings() {
     const saved = localStorage.getItem('envello-settings');

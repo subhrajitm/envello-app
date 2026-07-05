@@ -3,14 +3,16 @@ import { Router } from '@angular/router';
 import { LoggingService } from './logging.service';
 import { SupabaseService } from './supabase.service';
 import { TauriService } from './tauri.service';
+import { UserActivityLogService } from './user-activity-log.service';
 import { User, Session } from '@supabase/supabase-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly router   = inject(Router);
-  private readonly logging  = inject(LoggingService);
-  private readonly supabase = inject(SupabaseService);
-  private readonly tauri    = inject(TauriService);
+  private readonly router      = inject(Router);
+  private readonly logging     = inject(LoggingService);
+  private readonly supabase    = inject(SupabaseService);
+  private readonly tauri       = inject(TauriService);
+  private readonly activityLog = inject(UserActivityLogService);
 
   private readonly _session = signal<Session | null>(null);
   private readonly _user = signal<User | null>(null);
@@ -51,11 +53,10 @@ export class AuthService {
       this._session.set(session);
       this._user.set(session?.user ?? null);
 
-      if (event === 'SIGNED_OUT') {
-        // Only clear guest mode if explicit logout happens (which clears both)
-        // But SIGNED_OUT comes from Supabase. 
-        // If we are guest, we are not interacting with Supabase auth changes usually.
-        // However, if we were signed in and signed out, we go to login.
+      if (event === 'SIGNED_IN') {
+        this.activityLog.log('login', session?.user?.email ?? undefined);
+      } else if (event === 'SIGNED_OUT') {
+        this.activityLog.log('logout');
         this._isGuest.set(false);
         localStorage.removeItem('envello-guest-mode');
         this.router.navigate(['/login']);
@@ -188,5 +189,26 @@ export class AuthService {
     if (error || !data.session) return false;
     this._session.set(data.session);
     return true;
+  }
+
+  /** Signs out all sessions except the current one. */
+  async signOutOtherDevices(): Promise<void> {
+    this.logging.info('AuthService.signOutOtherDevices');
+    const { error } = await this.supabase.client.auth.signOut({ scope: 'others' });
+    if (error) {
+      this.logging.error('signOutOtherDevices failed', error.message);
+      return;
+    }
+    this.activityLog.log('session_revoke_others');
+  }
+
+  /** Signs out all sessions including the current one. */
+  async signOutAllDevices(): Promise<void> {
+    this.logging.info('AuthService.signOutAllDevices');
+    const { error } = await this.supabase.client.auth.signOut({ scope: 'global' });
+    if (error) {
+      this.logging.error('signOutAllDevices failed', error.message);
+    }
+    // The SIGNED_OUT event listener handles navigation and cleanup.
   }
 }

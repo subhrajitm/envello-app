@@ -1052,6 +1052,101 @@
       </div>
       }
 
+      <!-- Security -->
+      @if (activeSection() === 'security') {
+      <div class="settings-section">
+        <div class="section-header">
+          <h2>Security</h2>
+          <p>Active sessions and account activity log</p>
+        </div>
+
+        <!-- Current session card -->
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-label">Current device</span>
+            <span class="info-value">
+              {{ currentDevice }}
+              <span class="sec-current-badge">Current</span>
+            </span>
+          </div>
+          @if (currentUserEmail()) {
+            <div class="info-row">
+              <span class="info-label">Signed in as</span>
+              <span class="info-value">{{ currentUserEmail() }}</span>
+            </div>
+          }
+          <div class="info-row">
+            <span class="info-label">Session status</span>
+            <span class="info-value sec-active-badge">
+              <span class="material-symbols-outlined settings-icon-xs">check_circle</span>
+              Active
+            </span>
+          </div>
+        </div>
+
+        <!-- Revoke other sessions -->
+        <div class="setting-item setting-row">
+          <div class="setting-label-group">
+            <label>Other devices</label>
+            <span class="setting-desc">Sign out of all other browsers and devices while staying signed in here</span>
+          </div>
+          <env-button variant="secondary" (clicked)="revokeOtherConfirm.set(true)">Sign out other devices</env-button>
+        </div>
+
+        <!-- Danger zone: sign out everywhere -->
+        <div class="danger-zone">
+          <div class="danger-zone-header">
+            <span class="material-symbols-outlined danger-zone-icon">warning</span>
+            <div>
+              <p class="danger-zone-title">Sign Out Everywhere</p>
+              <p class="danger-zone-desc">Ends all sessions, including this one — you'll be returned to the login screen.</p>
+            </div>
+          </div>
+          <div class="danger-zone-row">
+            <div class="setting-label-group">
+              <label>All devices</label>
+              <span class="setting-desc">Use this if your account may have been compromised</span>
+            </div>
+            <env-button variant="danger" (clicked)="revokeAllConfirm.set(true)">Sign Out Everywhere</env-button>
+          </div>
+        </div>
+
+        <!-- Activity log -->
+        <div class="section-divider"></div>
+        <div class="section-header settings-no-margin-top">
+          <h3>Activity Log</h3>
+          <p>Recent sign-in and security events on this device</p>
+        </div>
+
+        @if (activityEntries().length === 0) {
+          <div class="sec-empty">
+            <span class="material-symbols-outlined">history</span>
+            <p>No activity recorded yet — events appear after your next sign-in.</p>
+          </div>
+        } @else {
+          <div class="sec-log-card">
+            @for (entry of activityEntries(); track entry.id) {
+              <div class="sec-log-row">
+                <span class="material-symbols-outlined sec-log-icon {{ actionMeta(entry.action).cls }}">
+                  {{ actionMeta(entry.action).icon }}
+                </span>
+                <div class="sec-log-body">
+                  <span class="sec-log-label">{{ actionMeta(entry.action).label }}</span>
+                  @if (entry.details) {
+                    <span class="sec-log-detail">{{ entry.details }}</span>
+                  }
+                </div>
+                <div class="sec-log-meta">
+                  <span class="sec-log-device">{{ entry.device }}</span>
+                  <span class="sec-log-time">{{ formatActivityTime(entry.timestamp) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      }
+
       <!-- About -->
       @if (activeSection() === 'about') {
       <div class="settings-section">
@@ -1153,5 +1248,33 @@
   (confirmed)="confirmLeave()"
   (cancelled)="unsavedConfirm.set(false)">
   You have unsaved changes. If you leave now, your changes will be lost.
+</env-confirm-dialog>
+}
+
+@if (revokeOtherConfirm()) {
+<env-confirm-dialog
+  [isOpen]="true"
+  title="Sign Out Other Devices"
+  icon="devices_off"
+  variant="danger"
+  confirmLabel="Sign Out Other Devices"
+  cancelLabel="Cancel"
+  (confirmed)="revokeOtherSessions()"
+  (cancelled)="revokeOtherConfirm.set(false)">
+  All other browsers and devices will be signed out immediately. This session will remain active.
+</env-confirm-dialog>
+}
+
+@if (revokeAllConfirm()) {
+<env-confirm-dialog
+  [isOpen]="true"
+  title="Sign Out Everywhere"
+  icon="no_accounts"
+  variant="danger"
+  confirmLabel="Sign Out Everywhere"
+  cancelLabel="Cancel"
+  (confirmed)="revokeAllSessions()"
+  (cancelled)="revokeAllConfirm.set(false)">
+  All sessions including this one will be ended. You'll be returned to the login screen.
 </env-confirm-dialog>
 }

@@ -8,6 +8,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createXai } from '@ai-sdk/xai';
 import { SupabaseService } from './supabase.service';
+import { SecureKeyStorageService } from './secure-key-storage.service';
 
 export type AiProvider = 'openai' | 'anthropic' | 'ollama' | 'mock' | 'grok' | 'gemini' | 'deepseek' | 'local';
 export type AiFeature = 'writing' | 'research' | 'summarize' | 'chat';
@@ -60,12 +61,10 @@ export class AiService {
     private readonly REQUEST_TIMEOUT_MS = 60_000;
     private readonly TEST_TIMEOUT_MS = 15_000;
 
-    private readonly keyStorage: Storage =
-        typeof (window as any).__TAURI_INTERNALS__ !== 'undefined'
-            ? localStorage
-            : sessionStorage;
+    private readonly secureKeys = inject(SecureKeyStorageService);
 
     constructor() {
+        // Load non-sensitive settings synchronously from localStorage.
         const savedEnabled = localStorage.getItem('ai-enabled');
         if (savedEnabled !== null) this.aiEnabled.set(savedEnabled === 'true');
 
@@ -75,24 +74,41 @@ export class AiService {
         const savedModel = localStorage.getItem('ai-model');
         if (savedModel) this.modelName.set(savedModel);
 
-        const savedKey = this.keyStorage.getItem('ai-key');
-        if (savedKey) this.apiKey.set(savedKey);
-
         const savedFc = localStorage.getItem('ai-feature-configs');
         if (savedFc) try { this.featureConfigs.set(JSON.parse(savedFc)); } catch {}
-        const savedEk = this.keyStorage.getItem('ai-extra-keys');
-        if (savedEk) try { this.extraProviderKeys.set(JSON.parse(savedEk)); } catch {}
+
+        // Load API keys from secure storage asynchronously; re-init model once loaded.
+        this.loadKeysFromSecureStorage();
 
         this.loadPlatformConfig().then(() => this.initModel());
 
+        // Persist only non-sensitive settings in this effect.
+        // API keys are saved explicitly in updateConfig / setExtraProviderKey.
         effect(() => {
             localStorage.setItem('ai-enabled', String(this.aiEnabled()));
             localStorage.setItem('ai-provider', this.provider());
             localStorage.setItem('ai-model', this.modelName());
-            this.keyStorage.setItem('ai-key', this.apiKey());
             localStorage.setItem('ai-feature-configs', JSON.stringify(this.featureConfigs()));
-            this.keyStorage.setItem('ai-extra-keys', JSON.stringify(this.extraProviderKeys()));
         });
+    }
+
+    private async loadKeysFromSecureStorage(): Promise<void> {
+        try {
+            // Migrate any keys previously stored in plaintext localStorage → Stronghold.
+            await this.secureKeys.migrateFromLocalStorage('ai-key');
+            await this.secureKeys.migrateFromLocalStorage('ai-extra-keys');
+
+            const savedKey = await this.secureKeys.get('ai-key');
+            if (savedKey) this.apiKey.set(savedKey);
+
+            const savedEk = await this.secureKeys.get('ai-extra-keys');
+            if (savedEk) try { this.extraProviderKeys.set(JSON.parse(savedEk)); } catch {}
+
+            // Re-initialise the model now that the persisted key is available.
+            this.initModel();
+        } catch (e) {
+            console.error('[AiService] Failed to load keys from secure storage:', e);
+        }
     }
 
     private async loadPlatformConfig() {
@@ -117,7 +133,12 @@ export class AiService {
     updateConfig(provider: AiProvider, model: string, key: string) {
         this.provider.set(provider);
         if (model) this.modelName.set(model);
-        if (key) this.apiKey.set(key);
+        if (key !== undefined) {
+            this.apiKey.set(key);
+            this.secureKeys.set('ai-key', key).catch(e =>
+                console.error('[AiService] Failed to save API key:', e)
+            );
+        }
         this.initModel();
     }
 
@@ -131,7 +152,11 @@ export class AiService {
     }
 
     setExtraProviderKey(provider: AiProvider, key: string) {
-        this.extraProviderKeys.update(k => ({ ...k, [provider]: key }));
+        const updated = { ...this.extraProviderKeys(), [provider]: key };
+        this.extraProviderKeys.set(updated);
+        this.secureKeys.set('ai-extra-keys', JSON.stringify(updated)).catch(e =>
+            console.error('[AiService] Failed to save extra provider key:', e)
+        );
     }
 
     getKeyForProvider(provider: AiProvider): string {
