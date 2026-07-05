@@ -985,6 +985,96 @@
           }
         </div>
 
+        <!-- Import from Notion/Obsidian (#14) -->
+        <div class="section-divider"></div>
+        <div class="section-header settings-no-margin-top">
+          <h3>Import</h3>
+          <p>Bring in notes and tasks from Notion, Obsidian or any Markdown files</p>
+        </div>
+
+        <div class="import-options-row">
+          <div class="setting-label-group">
+            <label>Source</label>
+          </div>
+          <div class="import-source-btns">
+            @for (src of [['obsidian','Obsidian','hub'],['notion','Notion','grid_view'],['markdown','Markdown','article']]; track src[0]) {
+              <button class="export-fmt-btn" [class.active]="importSource() === src[0]"
+                (click)="importSource.set($any(src[0]))">
+                <span class="material-symbols-outlined">{{ src[2] }}</span>
+                {{ src[1] }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="import-options-row">
+          <div class="setting-label-group">
+            <label>Import as</label>
+          </div>
+          <div class="import-source-btns">
+            <button class="export-fmt-btn" [class.active]="importTarget() === 'notes'"
+              (click)="importTarget.set('notes')">
+              <span class="material-symbols-outlined">note</span>
+              Notes
+            </button>
+            <button class="export-fmt-btn" [class.active]="importTarget() === 'tasks'"
+              (click)="importTarget.set('tasks')">
+              <span class="material-symbols-outlined">checklist</span>
+              Tasks
+            </button>
+          </div>
+        </div>
+
+        <div class="import-file-row">
+          <label class="import-file-label" [class.import-loading]="isImporting()">
+            <input type="file" multiple
+              [accept]="importTarget() === 'tasks' ? '.md,.markdown,.csv' : '.md,.markdown'"
+              style="display:none"
+              (change)="onImportFilesSelected($event)"
+              [disabled]="isImporting()">
+            @if (isImporting()) {
+              <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
+              Importing…
+            } @else {
+              <span class="material-symbols-outlined settings-icon-sm">upload_file</span>
+              Choose files…
+            }
+          </label>
+          <span class="import-hint">
+            @if (importSource() === 'notion') {
+              Export from Notion as Markdown &amp; CSV, then select the files here
+            } @else if (importSource() === 'obsidian') {
+              Select .md files from your Obsidian vault
+            } @else {
+              Select any .md files
+            }
+          </span>
+        </div>
+
+        @if (importResult()) {
+          <div class="import-result" [class.import-result--ok]="importResult()!.errors.length === 0"
+            [class.import-result--warn]="importResult()!.errors.length > 0">
+            <span class="material-symbols-outlined">
+              {{ importResult()!.errors.length === 0 ? 'check_circle' : 'warning' }}
+            </span>
+            <div class="import-result-body">
+              <span>Imported <strong>{{ importResult()!.imported }}</strong>
+                {{ importResult()!.target === 'notes' ? 'note' : 'task' }}{{ importResult()!.imported !== 1 ? 's' : '' }}
+                @if (importResult()!.skipped > 0) {
+                  · <span class="import-skipped">{{ importResult()!.skipped }} skipped</span>
+                }
+              </span>
+              @if (importResult()!.errors.length > 0) {
+                <ul class="import-errors">
+                  @for (err of importResult()!.errors; track err) {
+                    <li>{{ err }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        }
+
         <div class="info-card">
           <div class="info-row">
             <span class="info-label">Storage Mode</span>
@@ -1238,6 +1328,53 @@
           <env-button variant="secondary" (clicked)="openDocs()">Documentation</env-button>
           <env-button variant="secondary" (clicked)="reportIssue()">Report Issue</env-button>
         </div>
+
+        <!-- Crash reports (#16) -->
+        <div class="section-divider"></div>
+        <div class="section-header settings-no-margin-top">
+          <div class="crash-header-row">
+            <div>
+              <h3>Crash Reports</h3>
+              <p>Errors captured on this device — sent anonymously to help fix bugs</p>
+            </div>
+            @if (crashReports().length > 0) {
+              <button class="btn-secondary crash-clear-btn" (click)="clearCrashReports()">
+                <span class="material-symbols-outlined settings-icon-sm">delete_sweep</span>
+                Clear
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (crashReports().length === 0) {
+          <div class="sec-empty">
+            <span class="material-symbols-outlined">bug_report</span>
+            <p>No crashes recorded — the app is running cleanly.</p>
+          </div>
+        } @else {
+          <div class="crash-log-card">
+            @for (report of crashReports(); track report.id) {
+              <div class="crash-log-row">
+                <div class="crash-log-icon-wrap">
+                  <span class="material-symbols-outlined crash-log-icon">error</span>
+                </div>
+                <div class="crash-log-body">
+                  <span class="crash-log-msg">{{ report.message }}</span>
+                  @if (report.url) {
+                    <span class="crash-log-url">{{ report.url }}</span>
+                  }
+                  @if (report.stack) {
+                    <pre class="crash-log-stack">{{ report.stack | slice:0:400 }}{{ (report.stack?.length ?? 0) > 400 ? '…' : '' }}</pre>
+                  }
+                </div>
+                <div class="crash-log-meta">
+                  <span class="crash-log-ver">v{{ report.appVersion }}</span>
+                  <span class="crash-log-time">{{ formatCrashTime(report.timestamp) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
       }
 

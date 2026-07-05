@@ -1476,3 +1476,137 @@
 .export-col-check input { accent-color: var(--accent-primary); cursor: pointer; }
 .export-col-check:hover { color: var(--text-primary); }
 .sec-log-time   { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+
+/* ─── Import (#14) ───────────────────────────────────────────────────────── */
+
+.import-options-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.import-options-row .setting-label-group { min-width: 80px; flex-shrink: 0; }
+.import-source-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.import-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.import-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px dashed var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.import-file-label:hover { background: var(--bg-hover); color: var(--text-primary); border-style: solid; }
+.import-file-label.import-loading { opacity: 0.6; cursor: not-allowed; }
+.import-file-label .material-symbols-outlined { font-size: 16px; }
+
+.import-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.import-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  font-size: 13px;
+  margin-top: 8px;
+}
+.import-result .material-symbols-outlined { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.import-result--ok  { border-color: color-mix(in srgb, var(--accent-green) 30%, transparent); background: color-mix(in srgb, var(--accent-green) 8%, transparent); color: var(--accent-green); }
+.import-result--ok  .material-symbols-outlined { color: var(--accent-green); }
+.import-result--warn { border-color: color-mix(in srgb, #f59e0b 30%, transparent); background: color-mix(in srgb, #f59e0b 8%, transparent); color: var(--text-primary); }
+.import-result--warn .material-symbols-outlined { color: #f59e0b; }
+
+.import-result-body { flex: 1; }
+.import-skipped { color: var(--text-tertiary); }
+
+.import-errors {
+  margin: 6px 0 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--accent-red);
+}
+.import-errors li { margin-bottom: 2px; }
+
+/* ─── Crash reports (#16) ────────────────────────────────────────────────── */
+
+.crash-header-row > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.crash-clear-btn { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
+.crash-log-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.crash-log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.crash-log-row:last-child { border-bottom: none; }
+.crash-log-row:hover { background: var(--bg-hover); }
+
+.crash-log-icon-wrap { flex-shrink: 0; margin-top: 2px; }
+.crash-log-icon { font-size: 16px; color: var(--accent-red); }
+
+.crash-log-body { flex: 1; min-width: 0; }
+.crash-log-msg {
+  display: block;
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crash-log-url {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+.crash-log-stack {
+  margin: 4px 0 0 0;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow: hidden;
+  max-height: 60px;
+  line-height: 1.4;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
+.crash-log-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.crash-log-ver  { font-size: 11px; color: var(--text-tertiary); }
+.crash-log-time { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }

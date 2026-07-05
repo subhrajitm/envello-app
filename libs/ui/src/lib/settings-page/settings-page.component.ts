@@ -10,7 +10,7 @@ import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { SmartMonitorService, MONITOR_RULES, MonitorRuleId } from '@envello/core';
 import { GoogleAuthService, GoogleCalendarService, GoogleContactsService, GoogleGmailService } from '@envello/core';
 import { Task } from '@envello/domain';
-import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService, DataExportService, EXPORT_COLLECTIONS, ExportFormat } from '@envello/core';
+import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService, DataExportService, EXPORT_COLLECTIONS, ExportFormat, ContentImportService, ImportSource, ImportTarget, ImportResult, CrashReportingService, CrashReport } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { AuthService, UserActivityLogService, ActivityEntry, ActivityAction } from '@envello/core';
@@ -155,6 +155,50 @@ export class SettingsPageComponent implements OnInit {
     } finally {
       this.isExporting.set(false);
     }
+  }
+
+  // ── Import from Notion/Obsidian (#14) ────────────────────────────────────
+  private readonly contentImport = inject(ContentImportService);
+  importSource = signal<ImportSource>('obsidian');
+  importTarget = signal<ImportTarget>('notes');
+  isImporting  = signal(false);
+  importResult = signal<ImportResult | null>(null);
+
+  async onImportFilesSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (!files.length) return;
+
+    this.isImporting.set(true);
+    this.importResult.set(null);
+    try {
+      const result = await this.contentImport.importFiles(
+        files,
+        this.importSource(),
+        this.importTarget(),
+      );
+      this.importResult.set(result);
+    } finally {
+      this.isImporting.set(false);
+    }
+  }
+
+  // ── Crash reports (#16) ──────────────────────────────────────────────────
+  private readonly crashReporting = inject(CrashReportingService);
+  crashReports = signal<CrashReport[]>([]);
+
+  loadCrashReports(): void {
+    this.crashReports.set(this.crashReporting.getRecent());
+  }
+
+  clearCrashReports(): void {
+    this.crashReporting.clear();
+    this.crashReports.set([]);
+  }
+
+  formatCrashTime(iso: string): string {
+    return this.formatActivityTime(iso);
   }
 
   formatSyncTime(iso: string | null): string {
@@ -425,6 +469,9 @@ export class SettingsPageComponent implements OnInit {
     this.activeSection.set(sectionId);
     if (sectionId === 'security') {
       this.activityEntries.set(this.activityLogger.loadRecent());
+    }
+    if (sectionId === 'about') {
+      this.loadCrashReports();
     }
     this.router.navigate([], { queryParams: { section: sectionId }, replaceUrl: true });
   }
