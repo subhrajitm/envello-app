@@ -35,6 +35,16 @@
             "glob": "automerge.wasm",
             "input": "node_modules/@automerge/automerge/dist",
             "output": "assets"
+          },
+          {
+            "glob": "*.umd.js",
+            "input": "node_modules/@powersync/web/dist/worker",
+            "output": "assets/worker"
+          },
+          {
+            "glob": "*.wasm",
+            "input": "node_modules/@powersync/web/dist",
+            "output": "assets"
           }
         ],
         "styles": [
