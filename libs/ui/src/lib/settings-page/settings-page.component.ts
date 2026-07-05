@@ -10,7 +10,7 @@ import { AiService, AiProvider, AiFeature } from '@envello/core';
 import { SmartMonitorService, MONITOR_RULES, MonitorRuleId } from '@envello/core';
 import { GoogleAuthService, GoogleCalendarService, GoogleContactsService, GoogleGmailService } from '@envello/core';
 import { Task } from '@envello/domain';
-import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService } from '@envello/core';
+import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService, DataExportService, EXPORT_COLLECTIONS, ExportFormat } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { AuthService, UserActivityLogService, ActivityEntry, ActivityAction } from '@envello/core';
@@ -122,7 +122,40 @@ export class SettingsPageComponent implements OnInit {
   activityEntries           = signal<ActivityEntry[]>([]);
   revokeOtherConfirm        = signal(false);
   revokeAllConfirm          = signal(false);
-  restoreStatus = signal<Record<string, 'idle' | 'restoring' | 'done' | 'error'>>({});
+
+  // ── Data export (#13) ─────────────────────────────────────────────────────
+  private readonly dataExport = inject(DataExportService);
+  readonly exportCollections = EXPORT_COLLECTIONS;
+  exportFormat = signal<ExportFormat>('json');
+  exportSelectedIds = signal<string[]>(EXPORT_COLLECTIONS.map(c => c.id));
+  isExporting = signal(false);
+
+  isExportCollectionSelected(id: string): boolean {
+    return this.exportSelectedIds().includes(id);
+  }
+
+  toggleExportCollection(id: string) {
+    const curr = this.exportSelectedIds();
+    this.exportSelectedIds.set(
+      curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]
+    );
+  }
+
+  selectAllExport()  { this.exportSelectedIds.set(EXPORT_COLLECTIONS.map(c => c.id)); }
+  selectNoneExport() { this.exportSelectedIds.set([]); }
+
+  async exportData() {
+    if (this.isExporting()) return;
+    this.isExporting.set(true);
+    this.exportDone.set(false);
+    try {
+      await this.dataExport.export(this.exportFormat(), this.exportSelectedIds());
+      this.exportDone.set(true);
+      setTimeout(() => this.exportDone.set(false), 3000);
+    } finally {
+      this.isExporting.set(false);
+    }
+  }
 
   formatSyncTime(iso: string | null): string {
     if (!iso) return 'Never';
@@ -137,19 +170,6 @@ export class SettingsPageComponent implements OnInit {
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
-  async restoreCollection(id: string): Promise<void> {
-    this.restoreStatus.update(s => ({ ...s, [id]: 'restoring' }));
-    try {
-      if (id === 'book_content') {
-        await this.bookContent.restoreFromBackup();
-      } else if (this.dataService instanceof DesktopDataService) {
-        await this.dataService.restoreCollection(id);
-      }
-      this.restoreStatus.update(s => ({ ...s, [id]: 'done' }));
-    } catch {
-      this.restoreStatus.update(s => ({ ...s, [id]: 'error' }));
-    }
-  }
 
   // AI signals
   aiProvider = signal<AiProvider>('mock');
@@ -576,27 +596,6 @@ export class SettingsPageComponent implements OnInit {
     setTimeout(() => { this.saveStatus.set('idle'); this.location.back(); }, 800);
   }
 
-  exportAllData() {
-    const data = {
-      exportedAt: new Date().toISOString(),
-      tasks: this.storeService.tasks(),
-      notes: this.storeService.notes(),
-      books: this.storeService.books(),
-      bookmarks: this.storeService.bookmarks(),
-      bookmarkFolders: this.storeService.bookmarkFolders(),
-      planningItems: this.storeService.planningItems(),
-      spaces: this.storeService.spaces(),
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `envello-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    this.exportDone.set(true);
-    setTimeout(() => this.exportDone.set(false), 2500);
-  }
 
   clearAllData() { this.clearDataConfirm.set(true); }
 

@@ -52,6 +52,7 @@ export * from './lib/services/analytics.service';
 export * from './lib/services/note-history.service';
 export * from './lib/services/meeting-autopilot.service';
 export * from './lib/services/user-activity-log.service';
+export * from './lib/services/data-export.service';
 export * from './lib/services/relationship.service';export * from './lib/services/google-auth.service';
 export * from './lib/services/google-calendar.service';
 export * from './lib/services/google-contacts.service';

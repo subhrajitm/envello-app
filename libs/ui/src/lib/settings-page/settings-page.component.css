@@ -1408,4 +1408,71 @@
 
 .sec-log-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
 .sec-log-device { font-size: 11px; color: var(--text-tertiary); }
+.sec-log-time { font-size: 11px; color: var(--text-tertiary); }
+
+/* ─── Export format / selective export (#13) ─────────────────────────────── */
+
+.export-format-row {
+  display: flex;
+  gap: 8px;
+}
+
+.export-fmt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.12s;
+}
+.export-fmt-btn .material-symbols-outlined { font-size: 16px; }
+.export-fmt-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.export-fmt-btn.active {
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.export-select-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link-btn:hover { opacity: 0.8; }
+.link-sep { color: var(--text-tertiary); }
+
+.export-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px 12px;
+}
+
+.export-col-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.export-col-check input { accent-color: var(--accent-primary); cursor: pointer; }
+.export-col-check:hover { color: var(--text-primary); }
 .sec-log-time   { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }

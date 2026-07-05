@@ -5,6 +5,7 @@ import { SupabasePowerSyncConnector } from './powersync-connector';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
 import { PowerSyncDataService } from './powersync-data.service';
+import { DesktopSyncSettingsService } from './desktop-sync-settings.service';
 import { environment } from '../environments/environment';
 
 // Pre-built UMD workers served as static assets; avoids esbuild trying to
@@ -23,6 +24,7 @@ export class PowerSyncService implements OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly supabase = inject(SupabaseService);
   private readonly injector = inject(Injector);
+  private readonly syncSettings = inject(DesktopSyncSettingsService);
 
   // Lazy to break the PowerSyncService ↔ PowerSyncDataService circular dependency.
   private get dataService(): PowerSyncDataService {
@@ -75,7 +77,8 @@ export class PowerSyncService implements OnDestroy {
         const connector = new SupabasePowerSyncConnector(
           this.supabase,
           this.auth,
-          environment.powerSyncUrl
+          environment.powerSyncUrl,
+          (col) => this.syncSettings.isEnabled(col),
         );
         this.db.connect(connector);
       } else {

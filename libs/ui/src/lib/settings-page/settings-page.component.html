@@ -916,20 +916,73 @@
           </label>
         </div>
 
-        <div class="setting-item setting-row">
+        <!-- Export (#13) -->
+        <div class="section-divider"></div>
+        <div class="section-header settings-no-margin-top">
+          <h3>Export Data</h3>
+          <p>Download a copy of your data in your chosen format</p>
+        </div>
+
+        <div class="setting-item flex flex-col gap-3">
           <div class="setting-label-group">
-            <label>Export Data</label>
-            <span class="setting-desc">Download all your data as a JSON archive</span>
+            <label>Format</label>
+            <span class="setting-desc">JSON preserves all fields; Markdown exports readable text for notes, meetings and articles</span>
           </div>
-          <div class="setting-control settings-flex-row-md">
-            <env-button variant="secondary" (clicked)="exportAllData()">Export All Data</env-button>
-            @if (exportDone()) {
-              <span class="export-done-label">
-                <span class="material-symbols-outlined settings-icon-sm">check_circle</span>
-                Downloaded
-              </span>
+          <div class="export-format-row">
+            <button class="export-fmt-btn" [class.active]="exportFormat() === 'json'"
+              (click)="exportFormat.set('json')">
+              <span class="material-symbols-outlined">data_object</span>
+              JSON
+            </button>
+            <button class="export-fmt-btn" [class.active]="exportFormat() === 'markdown'"
+              (click)="exportFormat.set('markdown')">
+              <span class="material-symbols-outlined">article</span>
+              Markdown
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-item flex flex-col gap-2">
+          <div class="setting-label-group">
+            <label>Collections to export</label>
+          </div>
+          <div class="export-select-actions">
+            <button class="link-btn" (click)="selectAllExport()">Select all</button>
+            <span class="link-sep">·</span>
+            <button class="link-btn" (click)="selectNoneExport()">None</button>
+          </div>
+          <div class="export-col-grid">
+            @for (col of exportCollections; track col.id) {
+              @if (exportFormat() !== 'markdown' || col.includeInMarkdown) {
+                <label class="export-col-check">
+                  <input type="checkbox"
+                    [checked]="isExportCollectionSelected(col.id)"
+                    (change)="toggleExportCollection(col.id)">
+                  <span>{{ col.label }}</span>
+                </label>
+              }
             }
           </div>
+        </div>
+
+        <div class="settings-inline-group">
+          <env-button variant="secondary"
+            [disabled]="isExporting() || exportSelectedIds().length === 0"
+            (clicked)="exportData()">
+            @if (isExporting()) {
+              <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
+              Exporting…
+            } @else {
+              <span class="material-symbols-outlined settings-icon-sm">download</span>
+              Export {{ exportSelectedIds().length }} collection{{ exportSelectedIds().length !== 1 ? 's' : '' }}
+            }
+          </env-button>
+          @if (exportDone()) {
+            <span class="export-done-label">
+              <span class="material-symbols-outlined settings-icon-sm">check_circle</span>
+              Downloaded
+            </span>
+          }
         </div>
 
         <div class="info-card">
@@ -961,11 +1014,11 @@
           </div>
         </div>
 
-        @if (isDesktop) {
+        <!-- Selective sync (#12) -->
         <div class="section-divider"></div>
         <div class="section-header settings-no-margin-top">
-          <h3>Cloud Backup</h3>
-          <p>Choose which collections to back up to the cloud. Vault and credentials are always local-only.</p>
+          <h3>Selective Sync</h3>
+          <p>Choose which collections are uploaded to the cloud. Vault and credentials are always local-only.</p>
         </div>
 
         <div class="backup-actions-bar">
@@ -978,24 +1031,6 @@
           <div class="backup-row">
             <span class="backup-label">{{ col.label }}</span>
             <div class="backup-row-actions">
-              @if (syncSettings.isEnabled(col.id)) {
-              <button class="restore-btn"
-                [class.done]="restoreStatus()[col.id] === 'done'"
-                [class.err]="restoreStatus()[col.id] === 'error'"
-                [disabled]="restoreStatus()[col.id] === 'restoring'"
-                (click)="restoreCollection(col.id)">
-                <span class="material-symbols-outlined">
-                  @if (restoreStatus()[col.id] === 'restoring') { progress_activity }
-                  @else if (restoreStatus()[col.id] === 'done') { check_circle }
-                  @else if (restoreStatus()[col.id] === 'error') { error }
-                  @else { cloud_download }
-                </span>
-                @if (restoreStatus()[col.id] === 'restoring') { Restoring… }
-                @else if (restoreStatus()[col.id] === 'done') { Restored }
-                @else if (restoreStatus()[col.id] === 'error') { Failed }
-                @else { Restore }
-              </button>
-              }
               <label class="toggle">
                 <input type="checkbox"
                   [checked]="syncSettings.isEnabled(col.id)"
@@ -1006,7 +1041,6 @@
           </div>
           }
         </div>
-        }
 
         @if (syncService.syncActivity().length > 0) {
         <div class="section-divider"></div>
