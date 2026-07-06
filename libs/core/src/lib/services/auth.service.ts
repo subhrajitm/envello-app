@@ -211,4 +211,18 @@ export class AuthService {
     }
     // The SIGNED_OUT event listener handles navigation and cleanup.
   }
+
+  /** Updates the authenticated user's email address. Supabase sends a confirmation to the new address. */
+  async updateEmail(newEmail: string): Promise<void> {
+    const { error } = await this.supabase.client.auth.updateUser({ email: newEmail });
+    if (error) throw new Error(error.message);
+    this.activityLog.log('key_saved', 'Email change requested');
+  }
+
+  /** Updates the authenticated user's password. */
+  async updatePassword(newPassword: string): Promise<void> {
+    const { error } = await this.supabase.client.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+    this.activityLog.log('key_saved', 'Password changed');
+  }
 }
