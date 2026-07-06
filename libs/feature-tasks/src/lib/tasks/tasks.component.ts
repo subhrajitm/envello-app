@@ -8,7 +8,8 @@ type ViewMode = 'list' | 'thumbnails' | 'timeline';
 type TaskListItem =
   | { kind: 'header'; label: string; count: number; accent: string }
   | { kind: 'task'; task: Task }
-  | { kind: 'subtask'; task: Task; parentTitle: string };
+  | { kind: 'subtask'; task: Task; parentTitle: string }
+  | { kind: 'add-row'; group: string; accent: string };
 
 type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 
@@ -50,6 +51,10 @@ export class TasksComponent implements OnInit, OnDestroy {
   // Quick add bar state
   quickAddVisible = signal<boolean>(false);
   quickAddInput = signal<string>('');
+
+  // Inline-add per group state
+  inlineAddGroup = signal<string | null>(null);
+  inlineAddTitle = signal<string>('');
 
   // Focus mode state
   focusMode = signal<boolean>(false);
@@ -937,6 +942,9 @@ export class TasksComponent implements OnInit, OnDestroy {
         items.push({ kind: 'header', label, count: list.length, accent });
         if (!collapsed.has(label)) {
           list.forEach(t => items.push({ kind: 'task', task: t }));
+          if (label !== 'Completed') {
+            items.push({ kind: 'add-row', group: label, accent });
+          }
         }
       };
 
@@ -983,6 +991,55 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   isGroupCollapsed(label: string) {
     return this.collapsedGroups().has(label);
+  }
+
+  // ── Inline add per group ──────────────────────────────────────────────────
+
+  openInlineAdd(group: string, event: Event) {
+    event.stopPropagation();
+    this.inlineAddGroup.set(group);
+    this.inlineAddTitle.set('');
+    setTimeout(() => {
+      (document.querySelector('.task-inline-input') as HTMLInputElement)?.focus();
+    }, 0);
+  }
+
+  closeInlineAdd() {
+    this.inlineAddGroup.set(null);
+    this.inlineAddTitle.set('');
+  }
+
+  onInlineAddBlur() {
+    setTimeout(() => {
+      if (!this.inlineAddTitle().trim()) this.closeInlineAdd();
+    }, 150);
+  }
+
+  submitInlineAdd(group: string, event?: Event) {
+    event?.stopPropagation();
+    const title = this.inlineAddTitle().trim();
+    if (!title) { this.closeInlineAdd(); return; }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let due: string | undefined;
+    let status: Task['status'] = 'ACTIVE';
+
+    if (group === 'Today') due = todayStr;
+
+    const task: Task = {
+      id: crypto.randomUUID(),
+      title,
+      priority: 'MEDIUM',
+      hours: '0',
+      status,
+      ...(due && { due }),
+      createdAt: new Date().toISOString(),
+    };
+    this.store.addTask(task);
+    this.inlineAddTitle.set('');
+    setTimeout(() => {
+      (document.querySelector('.task-inline-input') as HTMLInputElement)?.focus();
+    }, 0);
   }
 
   cycleTaskPriority(task: Task, event: Event) {

@@ -184,12 +184,14 @@
                     @for (item of flatListItems(); track $index) {
 
                         @if (item.kind === 'header') {
-                        <div class="task-group-header" [style.--group-accent]="item.accent"
-                             (click)="toggleGroupCollapse(item.label)">
-                            <button class="task-group-chevron" [class.collapsed]="isGroupCollapsed(item.label)">
+                        <div class="task-group-header" (click)="toggleGroupCollapse(item.label)">
+                            <button class="task-group-chevron" [class.collapsed]="isGroupCollapsed(item.label)" type="button">
                                 <span class="material-symbols-outlined">chevron_right</span>
                             </button>
-                            <span class="task-group-label">{{ item.label }}</span>
+                            <div class="task-group-chip" [style.background]="item.accent + '22'" [style.color]="item.accent">
+                                <span class="task-group-chip-dot" [style.background]="item.accent"></span>
+                                {{ item.label }}
+                            </div>
                             <span class="task-group-count">{{ item.count }}</span>
                         </div>
                         }
@@ -236,7 +238,7 @@
                              [class.completed]="item.task.status === 'COMPLETED'"
                              (click)="openTaskDetails(item.task)">
 
-                            <!-- Checkbox LEFT -->
+                            <!-- Checkbox -->
                             <div class="task-check-column" (click)="$event.stopPropagation()">
                                 <button class="list-circular-checkbox"
                                         [class.checked]="item.task.status === 'COMPLETED'"
@@ -252,7 +254,7 @@
                                 </button>
                             </div>
 
-                            <!-- Main content -->
+                            <!-- Title (flex: 1) -->
                             <div class="task-main-column">
                                 <div class="task-title-row-inner">
                                     <div class="task-title-text">{{ item.task.title }}</div>
@@ -260,28 +262,69 @@
                                     <span class="task-subtask-count">{{ getCompletedSubtasks(item.task) }}/{{ item.task.subtasks.length }}</span>
                                     }
                                 </div>
+                            </div>
+
+                            <!-- Due date column (always visible) -->
+                            <div class="task-col-due" (click)="$event.stopPropagation()">
                                 @if (item.task.due) {
-                                <div class="task-metadata-row">
-                                    <span class="metadata-item due-date" [class.overdue]="item.task.due.includes('Overdue')">
+                                    <span class="task-col-due-text"
+                                          [class.overdue]="item.task.due.includes('Overdue')">
                                         {{ item.task.due }}
                                     </span>
-                                </div>
                                 }
                             </div>
 
-                            <!-- Hover actions -->
-                            <div class="task-actions-column" (click)="$event.stopPropagation()">
-                                <button class="icon-btn"
+                            <!-- Priority column (always visible, click to cycle) -->
+                            <div class="task-col-priority" (click)="$event.stopPropagation()">
+                                <button class="task-priority-btn"
+                                        [class.priority-high]="item.task.priority === 'HIGH'"
+                                        [class.priority-medium]="item.task.priority === 'MEDIUM'"
+                                        [class.priority-low]="item.task.priority === 'LOW'"
                                         (click)="cycleTaskPriority(item.task, $event)"
-                                        title="Priority: {{ item.task.priority | titlecase }}"
-                                        [class.icon-btn--high]="item.task.priority === 'HIGH'"
-                                        [class.icon-btn--medium]="item.task.priority === 'MEDIUM'">
+                                        [title]="'Priority: ' + (item.task.priority | titlecase)">
                                     <span class="material-symbols-outlined">flag</span>
+                                    <span class="task-priority-label">{{ item.task.priority | titlecase }}</span>
                                 </button>
-                                <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)" title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
+                            </div>
+
+                            <!-- Delete (hover only) -->
+                            <div class="task-actions-column" (click)="$event.stopPropagation()">
+                                <button class="icon-btn" (click)="requestDeleteTask(item.task, $event)"
+                                        title="Delete" [attr.aria-label]="'Delete: ' + item.task.title">
                                     <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
+                        </div>
+                        }
+
+                        @if (item.kind === 'add-row') {
+                        <div class="task-inline-add" [class.task-inline-add--open]="inlineAddGroup() === item.group"
+                             (click)="$event.stopPropagation()">
+                            @if (inlineAddGroup() === item.group) {
+                                <div class="task-check-column">
+                                    <div class="task-inline-add-check"></div>
+                                </div>
+                                <input class="task-inline-input"
+                                       type="text"
+                                       placeholder="Task name…"
+                                       [value]="inlineAddTitle()"
+                                       (input)="inlineAddTitle.set($any($event.target).value)"
+                                       (keyup.enter)="submitInlineAdd(item.group, $event)"
+                                       (keyup.escape)="closeInlineAdd()"
+                                       (blur)="onInlineAddBlur()">
+                                <div class="task-inline-add-actions">
+                                    <button class="task-inline-save" type="button"
+                                            (click)="submitInlineAdd(item.group, $event)">Add</button>
+                                    <button class="task-inline-cancel" type="button"
+                                            (click)="closeInlineAdd()">Cancel</button>
+                                </div>
+                            } @else {
+                                <button class="task-add-inline-btn" type="button"
+                                        (click)="openInlineAdd(item.group, $event)">
+                                    <span class="material-symbols-outlined">add</span>
+                                    Add task
+                                </button>
+                            }
                         </div>
                         }
                     }
