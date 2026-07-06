@@ -39,7 +39,7 @@ export class TasksComponent implements OnInit, OnDestroy {
   selectedView = signal<TaskViewFilter>('inbox');
   searchExpanded = signal(false);
   calSidebarCollapsed = signal(false);
-  collapsedGroups = signal<Set<string>>(new Set());
+  collapsedGroups = signal<Set<string>>(new Set(['No Date', 'Completed']));
   quickAddMode = signal<'do-now' | 'do-later'>('do-now');
   /**
    * Main content layout mode for the center panel.
@@ -942,7 +942,7 @@ export class TasksComponent implements OnInit, OnDestroy {
         items.push({ kind: 'header', label, count: list.length, accent });
         if (!collapsed.has(label)) {
           list.forEach(t => items.push({ kind: 'task', task: t }));
-          if (label !== 'Completed') {
+          if (label !== 'Completed' && label !== 'Overdue') {
             items.push({ kind: 'add-row', group: label, accent });
           }
         }
@@ -980,6 +980,20 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     return items;
   });
+
+  groupIcon(label: string): string {
+    switch (label) {
+      case 'Overdue':            return 'warning';
+      case 'Today':              return 'today';
+      case 'Upcoming':           return 'schedule';
+      case 'No Date':            return 'event_busy';
+      case 'Completed':          return 'check_circle';
+      case 'Subtasks Due':
+      case 'Subtasks Due Today':
+      case 'Upcoming Subtasks':  return 'subdirectory_arrow_right';
+      default:                   return 'circle';
+    }
+  }
 
   toggleGroupCollapse(label: string) {
     this.collapsedGroups.update(set => {
@@ -1021,10 +1035,15 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (!title) { this.closeInlineAdd(); return; }
 
     const todayStr = new Date().toISOString().slice(0, 10);
+    const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = tomorrowDate.toISOString().slice(0, 10);
+
     let due: string | undefined;
     let status: Task['status'] = 'ACTIVE';
 
-    if (group === 'Today') due = todayStr;
+    if (group === 'Today')    due = todayStr;
+    if (group === 'Upcoming') due = tomorrowStr;
+    // 'No Date' → intentionally no due date
 
     const task: Task = {
       id: crypto.randomUUID(),
@@ -2622,17 +2641,27 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   parseDateFromString(dateStr: string): Date | null {
     if (!dateStr) return null;
-    if (dateStr.includes('Today')) {
-      return new Date();
-    }
+    if (dateStr.includes('Today')) return new Date();
     if (dateStr.includes('Tomorrow')) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow;
+      const d = new Date(); d.setDate(d.getDate() + 1); return d;
     }
-    // Try to parse common date formats
-    const parsed = new Date(dateStr);
-    return isNaN(parsed.getTime()) ? null : parsed;
+
+    // ISO format — always has year, parse directly
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // Human-readable without year e.g. "Mon, May 18" or "May 18"
+    // Append current year so the date lands in the right year
+    const currentYear = new Date().getFullYear();
+    const withYear = `${dateStr}, ${currentYear}`;
+    const candidate = new Date(withYear);
+    if (!isNaN(candidate.getTime())) return candidate;
+
+    // Last resort — try raw string (handles full dates like "May 18, 2026")
+    const fallback = new Date(dateStr);
+    return isNaN(fallback.getTime()) ? null : fallback;
   }
 
   // File attachment methods
@@ -2725,6 +2754,51 @@ export class TasksComponent implements OnInit, OnDestroy {
   clearSelection() {
     this.selectedTasks.set(new Set());
     this.bulkActionMode.set(false);
+  }
+
+  // ── Group-level select-all ────────────────────────────────────────────────
+
+  private groupTaskIds(label: string): string[] {
+    const tasks = this.filteredTasks();
+    const today = new Date();
+    switch (label) {
+      case 'Overdue':   return tasks.filter(t => this.isOverdue(t) && t.status !== 'COMPLETED').map(t => t.id);
+      case 'Today':     return tasks.filter(t => this.dueDateMatchesDay(t.due, today) && t.status !== 'COMPLETED').map(t => t.id);
+      case 'Upcoming':  return tasks.filter(t => !!t.due && !this.dueDateMatchesDay(t.due, today) && !this.isOverdue(t) && t.status !== 'COMPLETED').map(t => t.id);
+      case 'No Date':   return tasks.filter(t => !t.due && t.status !== 'COMPLETED').map(t => t.id);
+      case 'Completed': return tasks.filter(t => t.status === 'COMPLETED').map(t => t.id);
+      default:          return [];
+    }
+  }
+
+  isGroupAllSelected(label: string): boolean {
+    const ids = this.groupTaskIds(label);
+    return ids.length > 0 && ids.every(id => this.selectedTasks().has(id));
+  }
+
+  toggleGroupSelection(label: string, event: Event) {
+    event.stopPropagation();
+    const ids = this.groupTaskIds(label);
+    const allSelected = this.isGroupAllSelected(label);
+    const next = new Set(this.selectedTasks());
+    if (allSelected) {
+      ids.forEach(id => next.delete(id));
+    } else {
+      ids.forEach(id => next.add(id));
+    }
+    this.selectedTasks.set(next);
+    this.bulkActionMode.set(next.size > 0);
+  }
+
+  clearCompletedTasks() {
+    const completed = this.store.tasks().filter(t => t.status === 'COMPLETED');
+    completed.forEach(t => this.store.deleteTask(t.id));
+    if (completed.length > 0) {
+      this.notificationService.success(
+        'Cleared',
+        `${completed.length} completed task${completed.length === 1 ? '' : 's'} moved to bin.`
+      );
+    }
   }
 
   bulkCompleteTasks() {

@@ -188,11 +188,32 @@
                             <button class="task-group-chevron" [class.collapsed]="isGroupCollapsed(item.label)" type="button">
                                 <span class="material-symbols-outlined">chevron_right</span>
                             </button>
-                            <div class="task-group-chip" [style.background]="item.accent + '22'" [style.color]="item.accent">
-                                <span class="task-group-chip-dot" [style.background]="item.accent"></span>
+                            <div class="task-group-chip" [style.background]="item.accent">
+                                <span class="material-symbols-outlined task-group-chip-icon" aria-hidden="true">
+                                    {{ groupIcon(item.label) }}
+                                </span>
                                 {{ item.label }}
                             </div>
                             <span class="task-group-count">{{ item.count }}</span>
+                            <button class="task-group-select-all" type="button"
+                                    [class.task-group-select-all--active]="isGroupAllSelected(item.label)"
+                                    (click)="toggleGroupSelection(item.label, $event)"
+                                    [attr.aria-label]="isGroupAllSelected(item.label) ? 'Deselect all in ' + item.label : 'Select all in ' + item.label">
+                                <span class="material-symbols-outlined" aria-hidden="true">
+                                    {{ isGroupAllSelected(item.label) ? 'check_box' : 'check_box_outline_blank' }}
+                                </span>
+                                <span class="task-group-select-all-label">
+                                    {{ isGroupAllSelected(item.label) ? 'Deselect all' : 'Select all' }}
+                                </span>
+                            </button>
+                            @if (item.label === 'Completed') {
+                            <button class="task-group-clear-btn" type="button"
+                                    title="Move all completed tasks to bin"
+                                    (click)="$event.stopPropagation(); clearCompletedTasks()">
+                                <span class="material-symbols-outlined">delete_sweep</span>
+                                Clear
+                            </button>
+                            }
                         </div>
                         }
 
@@ -238,20 +259,33 @@
                              [class.completed]="item.task.status === 'COMPLETED'"
                              (click)="openTaskDetails(item.task)">
 
-                            <!-- Checkbox -->
+                            <!-- Checkbox / Selection overlay -->
                             <div class="task-check-column" (click)="$event.stopPropagation()">
-                                <button class="list-circular-checkbox"
-                                        [class.checked]="item.task.status === 'COMPLETED'"
-                                        [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
-                                        (click)="toggleTaskStatus(item.task)"
-                                        [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
-                                        [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
-                                    @if (item.task.status === 'COMPLETED') {
-                                        <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 18px;">check_circle</span>
-                                    } @else if (hasIncompleteSubtasks(item.task)) {
-                                        <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">lock</span>
-                                    }
-                                </button>
+                                <div class="task-check-wrap"
+                                     [class.task-check-wrap--selected]="selectedTasks().has(item.task.id)"
+                                     [class.task-check-wrap--bulk]="bulkActionMode()">
+                                    <!-- Status circle -->
+                                    <button class="list-circular-checkbox"
+                                            [class.checked]="item.task.status === 'COMPLETED'"
+                                            [class.blocked]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task)"
+                                            (click)="toggleTaskStatus(item.task)"
+                                            [title]="item.task.status !== 'COMPLETED' && hasIncompleteSubtasks(item.task) ? 'Complete all sub-tasks first' : ''"
+                                            [attr.aria-label]="(item.task.status === 'COMPLETED' ? 'Mark incomplete: ' : 'Mark complete: ') + item.task.title">
+                                        @if (item.task.status === 'COMPLETED') {
+                                            <span class="material-symbols-outlined" style="color: var(--accent-green); font-size: 18px;">check_circle</span>
+                                        } @else if (hasIncompleteSubtasks(item.task)) {
+                                            <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">lock</span>
+                                        }
+                                    </button>
+                                    <!-- Selection checkbox overlay -->
+                                    <button class="task-select-cb" type="button"
+                                            (click)="toggleTaskSelection(item.task.id)"
+                                            [attr.aria-label]="selectedTasks().has(item.task.id) ? 'Deselect task' : 'Select task'">
+                                        <span class="material-symbols-outlined">
+                                            {{ selectedTasks().has(item.task.id) ? 'check_box' : 'check_box_outline_blank' }}
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Title (flex: 1) -->

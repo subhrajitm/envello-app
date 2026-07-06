@@ -757,6 +757,47 @@
     flex-shrink: 0;
 }
 
+/* Selection checkbox overlay */
+.task-check-wrap {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-select-cb {
+    position: absolute;
+    inset: -3px;
+    background: var(--bg-panel);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.1s;
+    padding: 0;
+    z-index: 1;
+}
+.task-select-cb .material-symbols-outlined { font-size: 20px; }
+
+/* Show on row hover */
+.task-item:hover .task-select-cb { opacity: 1; }
+/* Always visible when selected or in bulk mode */
+.task-check-wrap--selected .task-select-cb,
+.task-check-wrap--bulk .task-select-cb { opacity: 1; }
+/* Accent colour when selected */
+.task-check-wrap--selected .task-select-cb { color: var(--accent-primary); }
+
+/* Hide status circle when checkbox is showing */
+.task-item:hover .task-check-wrap .list-circular-checkbox,
+.task-check-wrap--selected .list-circular-checkbox,
+.task-check-wrap--bulk .list-circular-checkbox { opacity: 0; }
+
 .list-circular-checkbox {
     width: 20px;
     height: 20px;
@@ -7227,23 +7268,59 @@ textarea:focus-visible {
     transform: rotate(0deg);
 }
 
+/* Group header select-all button */
+.task-group-select-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 5px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.12s, color 0.12s, background 0.1s, border-color 0.1s;
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin-left: auto;
+}
+.task-group-select-all .material-symbols-outlined { font-size: 16px; }
+.task-group-select-all-label { line-height: 1; }
+.task-group-header:hover .task-group-select-all { opacity: 1; }
+.task-group-select-all:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+    border-color: var(--border-subtle);
+}
+.task-group-select-all--active {
+    opacity: 1;
+    color: var(--accent-primary);
+    background: var(--accent-primary-dim);
+    border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
 /* Chip replaces plain label */
 .task-group-chip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 2px 8px 2px 6px;
+    gap: 4px;
+    padding: 3px 10px 3px 7px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
+    color: #fff;
+    flex-shrink: 0;
 }
 
-.task-group-chip-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
+.task-group-chip-icon {
+    font-size: 13px;
     flex-shrink: 0;
+    opacity: 0.92;
 }
 
 .task-group-label {
@@ -7260,6 +7337,30 @@ textarea:focus-visible {
     font-weight: 400;
     color: var(--text-tertiary);
     margin-left: 1px;
+}
+
+.task-group-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    opacity: 0;
+    transition: opacity 0.15s, background 0.1s, border-color 0.1s, color 0.1s;
+}
+.task-group-clear-btn .material-symbols-outlined { font-size: 14px; }
+.task-group-header:hover .task-group-clear-btn { opacity: 1; }
+.task-group-clear-btn:hover {
+    background: color-mix(in srgb, var(--accent-red) 8%, transparent);
+    border-color: color-mix(in srgb, var(--accent-red) 25%, transparent);
+    color: var(--accent-red);
 }
 
 /* ── Due date column ── */
