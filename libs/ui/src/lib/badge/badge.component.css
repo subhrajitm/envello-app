@@ -1,41 +1,77 @@
 .env-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  border-radius: 4px;
   font-weight: 600;
   line-height: 1.4;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
 
+/* ── Sizes ── */
+.env-badge--xs {
+  padding: 0 5px;
+  height: 16px;
+  min-width: 16px;
+  font-size: 10px;
+  border-radius: 10px;
+  justify-content: center;
+}
+
+.env-badge--sm {
+  padding: 2px 7px;
+  font-size: 11px;
+}
+
+.env-badge--md {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+/* ── Pill override ── */
 .env-badge--pill {
-  border-radius: 12px;
-  padding: 4px 10px;
+  border-radius: 999px;
 }
 
+/* ── Variants ── */
 .env-badge--default {
-  background: var(--bg-hover);
+  background: var(--bg-active);
   color: var(--text-secondary);
 }
 
 .env-badge--success {
-  background: var(--accent-green)26;
+  background: color-mix(in srgb, var(--accent-green) 15%, transparent);
   color: var(--accent-green);
 }
 
 .env-badge--warning {
-  background: var(--accent-yellow)26;
+  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
   color: var(--accent-yellow);
 }
 
 .env-badge--error {
-  background: var(--accent-red)26;
+  background: color-mix(in srgb, var(--accent-red) 15%, transparent);
   color: var(--accent-red);
 }
 
 .env-badge--accent {
   background: var(--accent-primary-dim);
   color: var(--accent-primary);
+}
+
+.env-badge--info {
+  background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
+  color: var(--accent-blue);
+}
+
+.env-badge--purple {
+  background: color-mix(in srgb, var(--accent-indigo) 15%, transparent);
+  color: var(--accent-indigo);
+}
+
+/* ── Custom color via --badge-custom-color ── */
+.env-badge--custom {
+  background: color-mix(in srgb, var(--badge-custom-color) 15%, transparent);
+  color: var(--badge-custom-color);
 }

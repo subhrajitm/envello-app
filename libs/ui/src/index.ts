@@ -1,4 +1,5 @@
 export * from './lib/badge/badge.component';
+export * from './lib/chip/chip.component';
 export * from './lib/button/button.component';
 export * from './lib/empty-state/empty-state.component';
 export * from './lib/icon-button/icon-button.component';

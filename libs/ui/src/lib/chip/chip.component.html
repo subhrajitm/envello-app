@@ -1,0 +1,17 @@
+<span
+  class="env-chip"
+  [class]="'env-chip--' + variant + ' env-chip--' + size + (active ? ' env-chip--active' : '')"
+  [style.--chip-custom-color]="customColor || null"
+  [class.env-chip--custom]="!!customColor"
+  [class.env-chip--removable]="removable"
+>
+  @if (icon) {
+    <span class="material-symbols-outlined env-chip-icon" aria-hidden="true">{{ icon }}</span>
+  }
+  <ng-content></ng-content>
+  @if (removable) {
+    <button type="button" class="env-chip-remove" (click)="onRemove($event)" aria-label="Remove">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  }
+</span>
