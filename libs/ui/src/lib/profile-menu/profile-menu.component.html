@@ -43,7 +43,7 @@
         <!-- Space Switcher -->
         <div class="menu-section workspace-section">
             <div class="section-label flex items-center gap-2">
-                Space
+                Workspace
                 @if (switching()) {
                 <span class="space-switching-spinner"></span>
                 }
@@ -61,12 +61,12 @@
             <div class="space-actions-row">
                 <button class="space-action-btn" (click)="manageProfiles()">
                     <span class="material-symbols-outlined">grid_view</span>
-                    All Spaces
+                    All Workspaces
                 </button>
                 <button class="space-action-btn space-action-btn--add"
                     (click)="canAddSpace() && addWorkspace()"
                     [disabled]="!canAddSpace()"
-                    [title]="canAddSpace() ? 'New space' : 'Limit reached (' + maxSpaces + ')'">
+                    [title]="canAddSpace() ? 'New workspace' : 'Limit reached (' + maxSpaces + ')'">
                     <span class="material-symbols-outlined">add</span>
                     @if (!canAddSpace()) {
                     <span class="space-limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
@@ -185,16 +185,16 @@
 </env-confirm-dialog>
 }
 
-<!-- Add Space Modal -->
+<!-- Add Workspace Modal -->
 <env-modal
     [isOpen]="isAddProfileModalOpen()"
-    title="New Space"
+    title="New Workspace"
     size="sm"
     (closed)="cancelAddWorkspace()"
 >
     <div body class="modal-body-content">
         <div class="form-group">
-            <label class="form-label">Space Name</label>
+            <label class="form-label">Workspace Name</label>
             <input type="text"
                 class="form-input"
                 placeholder="e.g., Personal, Client A, Side Project"
@@ -202,13 +202,13 @@
                 (keyup.enter)="confirmAddWorkspace()"
                 autofocus
             >
-            <span class="form-hint">Data in this space (notes, tasks, transactions) will be isolated from other spaces.</span>
+            <span class="form-hint">Data in this workspace (notes, tasks, transactions) will be isolated from other workspaces.</span>
         </div>
     </div>
     <ng-container footer>
         <button class="modal-btn-cancel" (click)="cancelAddWorkspace()">Cancel</button>
         <button class="modal-btn-primary" (click)="confirmAddWorkspace()" [disabled]="!newProfileName().trim()">
-            Create Space
+            Create Workspace
         </button>
     </ng-container>
 </env-modal>

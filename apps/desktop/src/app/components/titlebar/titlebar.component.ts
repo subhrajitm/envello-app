@@ -61,7 +61,7 @@ type NavLayout = 'minimized' | 'vertical' | 'horizontal';
 
         <!-- List -->
         <div class="sp-list">
-          <div class="sp-section-label">Spaces</div>
+          <div class="sp-section-label">Workspaces</div>
           @if (filtered().length === 0) {
             <div class="sp-empty">No results for "{{ query() }}"</div>
           }

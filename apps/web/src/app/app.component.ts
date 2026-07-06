@@ -133,7 +133,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       'tasks': 'Tasks',
       'meetings': 'Meetings',
       'bookmarks': 'Bookmarks',
-      'spaces':  'Spaces',
+      'spaces':  'Workspaces',
       // vault is desktop-only
       'transactions': 'Transactions',
       'people': 'People',

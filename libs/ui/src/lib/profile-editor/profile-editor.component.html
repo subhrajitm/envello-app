@@ -54,35 +54,37 @@
             <span class="pe-avatar-initials">{{ userInitials() }}</span>
           }
         </div>
-        <div class="pe-avatar-actions">
-          <button class="pe-avatar-btn" type="button"
-            [class.pe-avatar-btn--active]="tempAvatar() && tempGender() === 'male'"
-            (click)="setAvatarOption('male')">
-            <span class="material-symbols-outlined" aria-hidden="true">man</span> Male
-          </button>
-          <button class="pe-avatar-btn" type="button"
-            [class.pe-avatar-btn--active]="tempAvatar() && tempGender() === 'female'"
-            (click)="setAvatarOption('female')">
-            <span class="material-symbols-outlined" aria-hidden="true">woman</span> Female
-          </button>
-          <button class="pe-avatar-btn" type="button"
-            [class.pe-avatar-btn--active]="!tempAvatar()"
-            (click)="setAvatarOption('initials')">
-            <span class="material-symbols-outlined" aria-hidden="true">person</span> Initials
-          </button>
-          <button class="pe-avatar-btn" type="button"
-            [class.pe-avatar-btn--active]="isGravatar()"
-            (click)="useGravatar()">
-            <span class="material-symbols-outlined" aria-hidden="true">account_circle</span> Gravatar
-          </button>
-        </div>
-        <div class="pe-url-row">
-          <input type="url" class="pe-input" placeholder="Or paste an image URL…"
-            [ngModel]="tempCustomUrl()" (ngModelChange)="tempCustomUrl.set($event)"
-            (keyup.enter)="applyCustomUrl()">
-          <button class="pe-url-apply" type="button"
-            [disabled]="!tempCustomUrl().trim()"
-            (click)="applyCustomUrl()">Apply</button>
+        <div class="pe-avatar-right">
+          <div class="pe-avatar-actions">
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="tempAvatar() && tempGender() === 'male'"
+              (click)="setAvatarOption('male')">
+              <span class="material-symbols-outlined" aria-hidden="true">man</span> Male
+            </button>
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="tempAvatar() && tempGender() === 'female'"
+              (click)="setAvatarOption('female')">
+              <span class="material-symbols-outlined" aria-hidden="true">woman</span> Female
+            </button>
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="!tempAvatar()"
+              (click)="setAvatarOption('initials')">
+              <span class="material-symbols-outlined" aria-hidden="true">person</span> Initials
+            </button>
+            <button class="pe-avatar-btn" type="button"
+              [class.pe-avatar-btn--active]="isGravatar()"
+              (click)="useGravatar()">
+              <span class="material-symbols-outlined" aria-hidden="true">account_circle</span> Gravatar
+            </button>
+          </div>
+          <div class="pe-url-row">
+            <input type="url" class="pe-input" placeholder="Paste image URL…"
+              [ngModel]="tempCustomUrl()" (ngModelChange)="tempCustomUrl.set($event)"
+              (keyup.enter)="applyCustomUrl()">
+            <button class="pe-url-apply" type="button"
+              [disabled]="!tempCustomUrl().trim()"
+              (click)="applyCustomUrl()">Apply</button>
+          </div>
         </div>
       </div>
 

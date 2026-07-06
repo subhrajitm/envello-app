@@ -214,7 +214,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       'workspace': 'Workspace', 'tasks': 'Tasks', 'meetings': 'Meetings',
       'daily-notes': 'Notes', 'knowledge': 'Knowledge', 'write': 'Write',
-      'spaces': 'Spaces', 'bin': 'Bin', 'activity-log': 'Activity Log',
+      'spaces': 'Workspaces', 'bin': 'Bin', 'activity-log': 'Activity Log',
       'settings': 'Settings',      'bookmarks': 'Bookmarks', 'vault': 'Vault', 'transactions': 'Transactions',
       'people': 'People', 'analytics': 'Analytics',
     };

@@ -47,7 +47,7 @@
             </div>
             }
         </div>
-        <div footer>
+        <ng-container footer>
             @if (activeModal() === 'export') {
             <env-button variant="primary" (clicked)="closeModal()">Done</env-button>
             } @else {
@@ -68,7 +68,7 @@
             <env-button variant="primary" (clicked)="confirmAddYoutube()">Insert Video</env-button>
             }
             }
-        </div>
+        </ng-container>
     </env-modal>
 
     <env-confirm-dialog

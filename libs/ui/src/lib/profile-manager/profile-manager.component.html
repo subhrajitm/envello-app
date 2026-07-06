@@ -1,14 +1,14 @@
 <div class="orbit-page">
     <header class="orbit-header">
         <div class="orbit-header-left">
-            <h1 class="orbit-title">Spaces</h1>
+            <h1 class="orbit-title">Workspaces</h1>
         </div>
         <div class="orbit-header-right">
             <button class="create-profile-btn" (click)="openAddModal()"
                 [disabled]="!canAddSpace()"
-                [title]="canAddSpace() ? '' : 'Space limit reached (' + maxSpaces + ' max)'">
+                [title]="canAddSpace() ? '' : 'Workspace limit reached (' + maxSpaces + ' max)'">
                 <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
-                New Space
+                New Workspace
                 @if (!canAddSpace()) {
                 <span class="limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
                 }
@@ -19,7 +19,7 @@
     <!-- Search -->
     <div class="search-bar-wrapper">
         <span class="material-symbols-outlined search-icon">search</span>
-        <input type="text" class="search-input" placeholder="Search spaces…"
+        <input type="text" class="search-input" placeholder="Search workspaces…"
             [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
         @if (searchQuery()) {
         <button class="search-clear" (click)="searchQuery.set('')">
@@ -32,7 +32,7 @@
         @if (filteredWorkspaces().length === 0) {
         <div class="search-empty">
             <span class="material-symbols-outlined">search_off</span>
-            <p>No spaces match "{{ searchQuery() }}"</p>
+            <p>No workspaces match "{{ searchQuery() }}"</p>
         </div>
         }
         <div class="profile-grid">
@@ -83,14 +83,14 @@
 <!-- Add Profile Modal -->
 <env-modal
     [isOpen]="isAddModalOpen()"
-    title="New Space"
+    title="New Workspace"
     size="sm"
     (closed)="cancelAdd()"
 >
     <!-- Same body & footer as before -->
     <div body class="flex flex-col gap-4">
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Space Name</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Workspace Name</label>
             <input type="text"
                 class="form-input w-full"
                 placeholder="e.g., Personal, Client A, Work"
@@ -100,7 +100,7 @@
                 autofocus
             >
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Data in this space (notes, tasks, transactions) will be isolated from other spaces.
+                Data in this workspace (notes, tasks, transactions) will be isolated from other workspaces.
             </p>
         </div>
     </div>
@@ -109,21 +109,21 @@
             Cancel
         </button>
         <button class="btn-primary" (click)="confirmAdd()" [disabled]="!newProfileName().trim()" style="padding: 8px 16px; border-radius: 6px; background: var(--accent-primary); color: var(--accent-primary-text); border: none; font-size: 13px; font-weight: 600;">
-            Create Space
+            Create Workspace
         </button>
     </ng-container>
 </env-modal>
 
-<!-- Edit Space Modal -->
+<!-- Edit Workspace Modal -->
 <env-modal
     [isOpen]="isEditModalOpen()"
-    title="Edit Space"
+    title="Edit Workspace"
     size="sm"
     (closed)="cancelEdit()"
 >
     <div body class="flex flex-col gap-5">
         <div class="form-group flex flex-col gap-2">
-            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Space Name</label>
+            <label class="text-sm font-semibold" style="color: var(--text-secondary); font-size: 12px; margin-bottom: 4px;">Workspace Name</label>
             <input type="text"
                 class="form-input w-full"
                 style="background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.2s;"
@@ -149,7 +149,7 @@
                 }
             </div>
             <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4;">
-                Pick a color to visually distinguish this space.
+                Pick a color to visually distinguish this workspace.
             </p>
         </div>
     </div>

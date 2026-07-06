@@ -934,9 +934,9 @@ GENERAL RULES:
       return { type: 'research', title };
     }
 
-    // ── SPACE — not allowed; redirect to /spaces ─────────────────────────────────
-    if (/^(new project|new space|create project|create space|space:|project:)/i.test(lower)) {
-      return { type: 'navigate', title: 'spaces', route: '/spaces' };
+    // ── WORKSPACE — redirect to /spaces ─────────────────────────────────────────
+    if (/^(new project|new space|create project|create space|new workspace|create workspace|space:|project:)/i.test(lower)) {
+      return { type: 'navigate', title: 'workspaces', route: '/spaces' };
     }
 
     return null;

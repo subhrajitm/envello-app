@@ -31,7 +31,7 @@ const TYPE_META: Record<ResultType, { label: string; icon: string; color: string
     book:     { label: 'Books',     icon: 'menu_book',    color: '#3b82f6' },
     bookmark: { label: 'Bookmarks', icon: 'bookmark',     color: '#a855f7' },
     meeting:  { label: 'Meetings',  icon: 'calendar_month', color: '#ec4899' },
-    project:  { label: 'Spaces',    icon: 'folder',       color: '#60a5fa' },
+    project:  { label: 'Workspaces', icon: 'folder',       color: '#60a5fa' },
     command:  { label: 'Commands',  icon: 'terminal',     color: '#94a3b8' },
 };
 
