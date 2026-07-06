@@ -12,19 +12,21 @@
       </div>
     </div>
     <div class="topbar-actions">
-      @if (saveStatus() === 'saving') {
-        <span class="save-status">
-          <span class="material-symbols-outlined settings-icon-sm settings-spin">progress_activity</span>
-          Saving…
-        </span>
-      } @else if (saveStatus() === 'saved') {
-        <span class="save-status save-status--ok">
-          <span class="material-symbols-outlined settings-icon-sm">check_circle</span>
-          Saved
-        </span>
-      } @else if (isDirty()) {
-        <span class="save-status save-status--dirty">Unsaved changes</span>
-      }
+      <div aria-live="polite" aria-atomic="true" class="save-status-region">
+        @if (saveStatus() === 'saving') {
+          <span class="save-status">
+            <span class="material-symbols-outlined settings-icon-sm settings-spin" aria-hidden="true">progress_activity</span>
+            Saving…
+          </span>
+        } @else if (saveStatus() === 'saved') {
+          <span class="save-status save-status--ok">
+            <span class="material-symbols-outlined settings-icon-sm" aria-hidden="true">check_circle</span>
+            Saved
+          </span>
+        } @else if (isDirty()) {
+          <span class="save-status save-status--dirty">Unsaved changes</span>
+        }
+      </div>
       <env-button variant="ghost" (clicked)="resetToDefaults()">Reset to Defaults</env-button>
       <env-button variant="primary" (clicked)="saveSettings()">Save Changes</env-button>
     </div>
@@ -33,11 +35,13 @@
   <!-- Body -->
   <div class="settings-body">
     <!-- Sidebar -->
-    <nav class="settings-nav">
+    <nav class="settings-nav" aria-label="Settings sections">
       @for (section of sections; track section.id) {
-      <button class="settings-nav-item" [class.active]="activeSection() === section.id"
+      <button class="settings-nav-item" type="button"
+        [class.active]="activeSection() === section.id"
+        [attr.aria-current]="activeSection() === section.id ? 'page' : null"
         (click)="setActiveSection(section.id)">
-        <span class="nav-icon material-symbols-outlined">{{ section.icon }}</span>
+        <span class="nav-icon material-symbols-outlined" aria-hidden="true">{{ section.icon }}</span>
         <span class="nav-text">
           <span class="nav-label">{{ section.label }}</span>
           <span class="nav-desc">{{ section.description }}</span>
@@ -47,7 +51,7 @@
     </nav>
 
     <!-- Content panel -->
-    <div class="settings-content">
+    <div class="settings-content" role="main" aria-live="polite" aria-atomic="false">
 
       <!-- General -->
       @if (activeSection() === 'general') {
@@ -1086,21 +1090,23 @@
           </div>
           <div class="info-row">
             <span class="info-label">Sync Status</span>
-            @if (syncService.isSyncing()) {
-              <span class="info-value sync-status-active">
-                <span class="sync-mini-spinner"></span> Syncing…
-              </span>
-            } @else if (syncService.syncError()) {
-              <span class="info-value sync-status-error">
-                <span class="material-symbols-outlined settings-icon-xs">error</span>
-                {{ syncService.syncError() }}
-              </span>
-            } @else {
-              <span class="info-value sync-status-ok">
-                <span class="material-symbols-outlined settings-icon-xs">check_circle</span>
-                Up to date
-              </span>
-            }
+            <span aria-live="polite" aria-atomic="true">
+              @if (syncService.isSyncing()) {
+                <span class="info-value sync-status-active">
+                  <span class="sync-mini-spinner" aria-hidden="true"></span> Syncing…
+                </span>
+              } @else if (syncService.syncError()) {
+                <span class="info-value sync-status-error">
+                  <span class="material-symbols-outlined settings-icon-xs" aria-hidden="true">error</span>
+                  {{ syncService.syncError() }}
+                </span>
+              } @else {
+                <span class="info-value sync-status-ok">
+                  <span class="material-symbols-outlined settings-icon-xs" aria-hidden="true">check_circle</span>
+                  Up to date
+                </span>
+              }
+            </span>
           </div>
         </div>
 

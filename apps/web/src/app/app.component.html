@@ -1,3 +1,4 @@
+<a href="#main-content" class="skip-link">Skip to main content</a>
 @if (updateAvailable()) {
 <div class="sw-update-banner">
   A new version is available.
@@ -11,7 +12,7 @@
   </lib-header>
   }
 
-  <div class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
+  <div id="main-content" class="dashboard-content" [class.no-padding]="hasSidebar() || isFullScreen()"
     [class.immersive-view]="isImmersive()"
     [class.with-sidebar]="!isImmersive() && !isFullScreen() && navigationLayout() !== 'horizontal'"
     [class.sidebar-collapsed]="sidebarCollapsed()" [class.horizontal-nav]="navigationLayout() === 'horizontal'"

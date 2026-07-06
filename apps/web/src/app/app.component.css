@@ -152,3 +152,24 @@
         margin-left: 0 !important;
     }
 }
+/* ─── Skip link (accessibility) ─────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--bg-panel, #1e1e2e);
+  color: var(--text-primary, #fff);
+  border: 2px solid var(--accent-primary, #7c3aed);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.1s;
+}
+.skip-link:focus {
+  top: 8px;
+  outline: 3px solid var(--accent-primary, #7c3aed);
+  outline-offset: 2px;
+}

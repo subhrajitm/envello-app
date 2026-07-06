@@ -9,13 +9,14 @@ import { PowerSyncService } from '@envello/core';
   template: `
     <button
       class="sync-pill"
+      type="button"
       [class]="pillClass()"
       [title]="pillTooltip()"
       (click)="openSyncSettings()"
       aria-label="Sync status"
     >
-      <span class="sync-pill-dot" [class.sync-pill-dot--spin]="isSyncing()"></span>
-      <span class="sync-pill-label">{{ pillLabel() }}</span>
+      <span class="sync-pill-dot" [class.sync-pill-dot--spin]="isSyncing()" aria-hidden="true"></span>
+      <span class="sync-pill-label" aria-live="polite" aria-atomic="true">{{ pillLabel() }}</span>
     </button>
   `,
   styles: [`

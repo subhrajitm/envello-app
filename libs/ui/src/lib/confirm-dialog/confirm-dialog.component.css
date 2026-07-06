@@ -4,9 +4,6 @@
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     z-index: var(--z-system);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     animation: cdFadeIn 0.12s ease-out;
 }
 
@@ -16,11 +13,17 @@
 }
 
 .cd-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: calc(var(--z-system) + 1);
     background: var(--bg-panel);
     border: 1px solid var(--border-main);
     border-radius: 10px;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
     width: 340px;
+    max-width: calc(100vw - 32px);
     padding: 28px 24px 22px;
     display: flex;
     flex-direction: column;
@@ -31,8 +34,8 @@
 }
 
 @keyframes cdSlideIn {
-    from { opacity: 0; transform: scale(0.94); }
-    to   { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: translate(-50%, -48%) scale(0.94); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* ── Icon ── */

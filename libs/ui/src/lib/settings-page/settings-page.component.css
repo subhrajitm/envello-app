@@ -927,6 +927,8 @@
 
 /* ─── Topbar save-status indicator ──────────────────────────────────────── */
 
+.save-status-region { display: contents; }
+
 .save-status {
   display: flex;
   align-items: center;
