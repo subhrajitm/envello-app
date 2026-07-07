@@ -121,25 +121,6 @@
     white-space: nowrap;
 }
 
-.nav-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-active);
-    color: var(--text-secondary);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 0 5px;
-    height: 16px;
-    min-width: 16px;
-    border-radius: 10px;
-    margin-left: 2px;
-}
-
-.view-btn.active .nav-badge {
-    background: var(--accent-primary);
-    color: var(--accent-primary-text);
-}
 
 .view-btn-label {
     font-size: 11px;
@@ -1288,27 +1269,6 @@
 }
 
 /* Project Pill Compact */
-.project-pill {
-    background: var(--bg-active);
-    color: var(--text-secondary);
-    padding: 2px 8px;
-    border-radius: 4px;
-    /* Less rounded, more techy */
-    font-size: 10px;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
-    border: 1px solid transparent;
-}
-
-.project-pill:hover {
-    border-color: var(--border-subtle);
-    background: var(--bg-hover);
-}
-
-
 /* Priority Indicator Compact */
 .priority-indicator {
     display: flex;
@@ -1321,38 +1281,6 @@
 .p-dot {
     width: 6px;
     height: 6px;
-}
-
-/* Status Badge Compact */
-.status-badge {
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    background: var(--bg-active);
-    color: var(--text-secondary);
-}
-
-.status-badge.todo {
-    background: color-mix(in srgb, var(--text-secondary) 15%, transparent);
-    color: var(--text-secondary);
-}
-
-.status-badge.in_progress {
-    background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
-    color: var(--accent-blue);
-}
-
-.status-badge.completed {
-    background: color-mix(in srgb, var(--accent-green) 15%, transparent);
-    color: var(--accent-green);
-}
-
-.status-badge.blocked {
-    background: color-mix(in srgb, var(--accent-red) 15%, transparent);
-    color: var(--accent-red);
 }
 
 /* Due Date */
@@ -1490,10 +1418,6 @@
     white-space: nowrap;
 }
 
-.thumb-project-pill {
-    max-width: 120px;
-}
-
 .thumb-meta-row {
     display: flex;
     align-items: center;
@@ -1501,34 +1425,6 @@
     font-size: 10px;
 }
 
-.thumb-status {
-    font-size: 11px;
-}
-
-.thumb-priority {
-    font-size: 10px;
-    font-weight: 600;
-    font-family: var(--font-mono);
-    padding: 1px 6px;
-    border-radius: 999px;
-    background: var(--bg-active);
-    color: var(--text-secondary);
-}
-
-.thumb-priority.p1 {
-    background: color-mix(in srgb, var(--accent-red) 15%, transparent);
-    color: var(--accent-red);
-}
-
-.thumb-priority.p2 {
-    background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
-    color: var(--accent-yellow);
-}
-
-.thumb-priority.p3 {
-    background: color-mix(in srgb, var(--accent-indigo) 15%, transparent);
-    color: var(--accent-indigo);
-}
 
 .thumb-hours {
     font-size: 10px;
@@ -5969,35 +5865,6 @@ textarea:focus-visible {
     pointer-events: auto;
 }
 
-.td-subtask-date-chip {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    padding: 2px 6px;
-    border: none;
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
-    color: var(--accent-primary);
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.15s;
-}
-.td-subtask-date-chip .material-symbols-outlined {
-    font-size: 11px;
-}
-.td-subtask-date-chip:hover {
-    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
-}
-.td-subtask-date-chip--overdue {
-    background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 10%, transparent);
-    color: var(--color-danger, var(--accent-red));
-}
-.td-subtask-date-chip--overdue:hover {
-    background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 18%, transparent);
-}
-
 .td-subtask-date-popover {
     position: absolute;
     top: calc(100% + 4px);
@@ -6293,49 +6160,6 @@ textarea:focus-visible {
     font-size: 14px;
 }
 
-.td-reminder-chips {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding-top: 6px;
-    width: 100%;
-}
-.td-reminder-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--bg-app);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    width: 100%;
-}
-.td-reminder-chip .material-symbols-outlined {
-    font-size: 13px;
-    color: var(--accent-primary);
-    flex-shrink: 0;
-}
-.td-reminder-remove {
-    margin-left: auto;
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    color: var(--text-tertiary);
-    padding: 0;
-    border-radius: 3px;
-    transition: color 0.1s;
-}
-.td-reminder-remove:hover {
-    color: var(--color-danger, var(--accent-red));
-}
-.td-reminder-remove .material-symbols-outlined {
-    font-size: 12px;
-}
-
 /* Labels */
 .td-labels-area {
     display: flex;
@@ -6343,31 +6167,6 @@ textarea:focus-visible {
     gap: 6px;
     padding-top: 8px;
     width: 100%;
-}
-.td-label-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--bg-app);
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-.td-label-chip-remove {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    color: var(--text-tertiary);
-    line-height: 1;
-}
-.td-label-chip-remove .material-symbols-outlined {
-    font-size: 12px;
 }
 .td-label-input {
     border: none;
@@ -7309,7 +7108,7 @@ textarea:focus-visible {
     align-items: center;
     gap: 4px;
     padding: 3px 10px 3px 7px;
-    border-radius: 20px;
+    border-radius: 4px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.02em;
@@ -8107,23 +7906,6 @@ textarea:focus-visible {
     color: var(--text-tertiary);
     padding: 0 2px 2px;
 }
-
-/* ─────────────────────────────────────────────────
-   Issue 11 – Subtask priority
-───────────────────────────────────────────────── */
-.subtask-priority-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 1px 5px;
-    border-radius: 3px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    flex-shrink: 0;
-}
-
-.priority-badge-high   { background: var(--accent-red)20; color: var(--accent-red); }
-.priority-badge-medium { background: var(--accent-yellow)20; color: var(--accent-yellow); }
-.priority-badge-low    { background: var(--text-secondary)20; color: var(--text-secondary); }
 
 .subtask-priority-select {
     font-size: 11px;

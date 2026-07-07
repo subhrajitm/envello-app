@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { StoreService, type Book, type WritingType, BookContentService, AiService } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, type EnvTableColumn, type EnvTableAction, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent, BadgeComponent, ChipComponent } from '@envello/ui';
 
 const WRITING_TYPE_META: Record<string, { color: string; icon: string }> = {
   NOVEL:       { color: '#f59e0b', icon: 'menu_book'    },
@@ -26,7 +26,7 @@ const STATUS_META: Record<string, { color: string; icon: string; label: string }
 @Component({
   selector: 'app-write',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, EmptyStateComponent, SliderPanelComponent, BadgeComponent, ChipComponent],
   templateUrl: './write.component.html',
   styleUrl: './write.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -78,20 +78,20 @@ export class WriteComponent {
   readonly tableColumns: EnvTableColumn[] = [
     { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', sortable: true, badgeMap: {
-      'Novel':       { dotColor: '#f59e0b', bgColor: 'rgba(245,158,11,0.12)',  textColor: '#f59e0b' },
-      'Short Story': { dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
-      'Article':     { dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)',  textColor: '#10b981' },
-      'Essay':       { dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)', textColor: '#8b5cf6' },
-      'Script':      { dotColor: '#ec4899', bgColor: 'rgba(236,72,153,0.12)', textColor: '#ec4899' },
-      'Poetry':      { dotColor: '#f43f5e', bgColor: 'rgba(244,63,94,0.12)',  textColor: '#f43f5e' },
-      'Blog Post':   { dotColor: '#06b6d4', bgColor: 'rgba(6,182,212,0.12)',  textColor: '#06b6d4' },
-      'Research':    { dotColor: '#6366f1', bgColor: 'rgba(99,102,241,0.12)', textColor: '#6366f1' },
+      'Novel':       { variant: 'warning' },
+      'Short Story': { variant: 'info'    },
+      'Article':     { variant: 'success' },
+      'Essay':       { variant: 'purple'  },
+      'Script':      { variant: 'error'   },
+      'Poetry':      { variant: 'error'   },
+      'Blog Post':   { variant: 'info'    },
+      'Research':    { variant: 'purple'  },
     }},
     { key: 'status',   header: 'Status',   type: 'badge', sortable: true, badgeMap: {
-      'Planning':  { dotColor: '#9ca3af', bgColor: 'rgba(156,163,175,0.12)', textColor: '#9ca3af' },
-      'Drafting':  { dotColor: '#fbbf24', bgColor: 'rgba(251,191,36,0.12)',  textColor: '#fbbf24' },
-      'Revising':  { dotColor: '#fb923c', bgColor: 'rgba(251,146,60,0.12)',  textColor: '#fb923c' },
-      'Published': { dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.12)',  textColor: '#4ade80' },
+      'Planning':  { variant: 'default' },
+      'Drafting':  { variant: 'warning' },
+      'Revising':  { variant: 'warning' },
+      'Published': { variant: 'success' },
     }},
     { key: 'progress', header: 'Progress', type: 'text',  sortable: true },
     { key: 'updated',  header: 'Updated',  type: 'text',  sortable: true },

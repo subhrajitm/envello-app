@@ -217,24 +217,7 @@
   scrollbar-width: none; flex: 1; min-width: 0;
 }
 .rs-status-pills::-webkit-scrollbar { display: none; }
-.rs-status-pill, .rs-type-pill {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 500;
-  white-space: nowrap; cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
-  background: transparent; border: 1px solid var(--border-subtle);
-  color: var(--text-secondary); flex-shrink: 0;
-}
-.rs-status-pill:hover, .rs-type-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
-.rs-status-pill.active { background: var(--accent-primary-dim); border-color: var(--accent-primary); color: var(--accent-primary); }
-.rs-type-pill.active {
-  background: color-mix(in srgb, var(--pill-color, var(--accent-primary)) 12%, transparent);
-  border-color: color-mix(in srgb, var(--pill-color, var(--accent-primary)) 50%, transparent);
-  color: var(--pill-color, var(--accent-primary));
-}
-.rs-type-pill .material-symbols-outlined { font-size: 13px; }
-.rs-type-pill--clear { padding: 2px 6px; }
-.rs-type-pill--clear:hover { background: color-mix(in srgb, var(--accent-red) 12%, transparent); border-color: var(--accent-red); color: var(--accent-red); }
-.rs-pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.rs-status-pills button { background: transparent; border: none; padding: 0; cursor: pointer; flex-shrink: 0; }
 .rs-tabs-right-divider { width: 1px; height: 14px; background: var(--border-subtle); margin: 0 2px; flex-shrink: 0; }
 
 /* Type select */

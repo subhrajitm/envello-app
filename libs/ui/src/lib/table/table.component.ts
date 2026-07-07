@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, signal, HostListener, OnChanges
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkDrag, CdkDragEnd, CdkDragMove } from '@angular/cdk/drag-drop';
+import { BadgeComponent, BadgeVariant } from '../badge/badge.component';
 
 export interface EnvTableColumn {
   key: string;
@@ -11,9 +12,10 @@ export interface EnvTableColumn {
   sortable?: boolean;
   /**
    * For type='badge': maps row value string → badge appearance.
-   * Example: { 'New': { label: 'New', dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)', textColor: '#8b5cf6' } }
+   * Prefer `variant` (uses theme-aware CSS variables). Fall back to `dotColor` for custom colors.
+   * Example: { 'Done': { label: 'Done', variant: 'success' } }
    */
-  badgeMap?: Record<string, { label?: string; dotColor: string; bgColor: string; textColor: string }>;
+  badgeMap?: Record<string, { label?: string; variant?: BadgeVariant; dotColor?: string; bgColor?: string; textColor?: string }>;
 }
 
 export interface EnvTableTab {
@@ -49,7 +51,7 @@ export interface EnvTableActionEvent {
 @Component({
   selector: 'env-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, CdkDrag],
+  imports: [CommonModule, FormsModule, CdkDrag, BadgeComponent],
   templateUrl: './table.component.html',
   styleUrl: './table.component.css',
 })
@@ -298,13 +300,17 @@ export class TableComponent implements OnChanges {
     return cell.avatar ? `url(${cell.avatar})` : '';
   }
 
-  getBadge(row: EnvTableRow, col: EnvTableColumn): { label: string; dotColor: string; bgColor: string; textColor: string } {
+  getBadge(row: EnvTableRow, col: EnvTableColumn): { label: string; variant: BadgeVariant; dotColor: string } {
     const val      = row[col.key];
-    const fallback = { label: String(val ?? ''), dotColor: 'var(--text-tertiary)', bgColor: 'var(--bg-hover)', textColor: 'var(--text-secondary)' };
+    const fallback = { label: String(val ?? ''), variant: 'default' as BadgeVariant, dotColor: '' };
     if (!col.badgeMap) return fallback;
     const entry = col.badgeMap[val];
     if (!entry) return fallback;
-    return { label: entry.label ?? String(val ?? ''), dotColor: entry.dotColor, bgColor: entry.bgColor, textColor: entry.textColor };
+    return {
+      label:    entry.label ?? String(val ?? ''),
+      variant:  entry.variant ?? 'default',
+      dotColor: entry.variant ? '' : (entry.dotColor ?? ''),
+    };
   }
 
   clearSelection() {

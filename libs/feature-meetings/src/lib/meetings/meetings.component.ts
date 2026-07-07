@@ -18,11 +18,11 @@ import {
   MeetingAutopilotService,
   ContextService,
 } from '@envello/core';
-import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
+import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent, BadgeComponent, ChipComponent } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent, SliderPanelComponent],
+  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent, SliderPanelComponent, BadgeComponent, ChipComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -414,25 +414,25 @@ export class MeetingsComponent {
   readonly tableColumns: EnvTableColumn[] = [
     { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', badgeMap: {
-      'video':     { label: 'Video',     dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
-      'phone':     { label: 'Phone',     dotColor: '#8b5cf6', bgColor: 'rgba(139,92,246,0.12)',  textColor: '#8b5cf6' },
-      'in-person': { label: 'In Person', dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
-      'hybrid':    { label: 'Hybrid',    dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
+      'video':     { label: 'Video',     variant: 'info'    },
+      'phone':     { label: 'Phone',     variant: 'purple'  },
+      'in-person': { label: 'In Person', variant: 'success' },
+      'hybrid':    { label: 'Hybrid',    variant: 'warning' },
     }},
     { key: 'date',     header: 'Date',     sortable: true },
     { key: 'time',     header: 'Time' },
     { key: 'space',  header: 'Project' },
     { key: 'attendees',header: 'Attendees' },
     { key: 'status',   header: 'Status',   type: 'badge', badgeMap: {
-      'scheduled':  { label: 'Scheduled',  dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.12)',  textColor: '#3b82f6' },
-      'in_progress':{ label: 'In Progress',dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)',  textColor: '#f97316' },
-      'completed':  { label: 'Done',       dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
-      'cancelled':  { label: 'Cancelled',  dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
+      'scheduled':  { label: 'Scheduled',  variant: 'info'    },
+      'in_progress':{ label: 'In Progress',variant: 'warning' },
+      'completed':  { label: 'Done',       variant: 'success' },
+      'cancelled':  { label: 'Cancelled',  variant: 'error'   },
     }},
     { key: 'priority', header: 'Priority', type: 'badge', badgeMap: {
-      'HIGH':   { label: 'High',   dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.12)',  textColor: '#ef4444' },
-      'MEDIUM': { label: 'Medium', dotColor: '#f97316', bgColor: 'rgba(249,115,22,0.12)', textColor: '#f97316' },
-      'LOW':    { label: 'Low',    dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.12)', textColor: '#10b981' },
+      'HIGH':   { label: 'High',   variant: 'error'   },
+      'MEDIUM': { label: 'Medium', variant: 'warning' },
+      'LOW':    { label: 'Low',    variant: 'success' },
     }},
   ];
 

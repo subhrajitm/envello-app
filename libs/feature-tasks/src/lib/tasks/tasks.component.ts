@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoreService, Task, NotificationService, FileStorageService, AiService, ThemeService, UserPreferencesService, AppPreferences, ContextService, RecentActivityService } from '@envello/core';
-import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent } from '@envello/ui';
+import { SidebarNavItem, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, ConfirmDialogComponent, BadgeComponent, type BadgeVariant, ChipComponent } from '@envello/ui';
 
 type TaskViewFilter = 'inbox' | 'today' | 'upcoming' | 'completed' | 'monitor';
 type ViewMode = 'list' | 'thumbnails' | 'timeline';
@@ -16,7 +16,7 @@ type SubtaskDraft = { title: string; priority: Task['priority']; due?: string };
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, AiAssistantPanelComponent, EmptyStateComponent, ConfirmDialogComponent, BadgeComponent, ChipComponent],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -3019,4 +3019,41 @@ export class TasksComponent implements OnInit, OnDestroy {
   }
 
   clearDetailsAiChat() { this.detailsAiMessages.set([]); }
+
+  getStatusVariant(status: string): BadgeVariant {
+    const map: Record<string, BadgeVariant> = {
+      todo: 'default', in_progress: 'info', completed: 'success', blocked: 'error'
+    };
+    return map[status.toLowerCase()] ?? 'default';
+  }
+
+  getStatusIcon(status: string): string {
+    const map: Record<string, string> = {
+      todo: 'radio_button_unchecked', in_progress: 'pending', completed: 'check_circle', blocked: 'block'
+    };
+    return map[status.toLowerCase()] ?? 'circle';
+  }
+
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      todo: 'Todo', in_progress: 'In Progress', completed: 'Done', blocked: 'Blocked'
+    };
+    return map[status.toLowerCase()] ?? status;
+  }
+
+  getPriorityVariant(priority: string): BadgeVariant {
+    const map: Record<string, BadgeVariant> = {
+      p1: 'error', high: 'error', p2: 'warning', medium: 'warning', p3: 'purple', low: 'default'
+    };
+    return map[priority.toLowerCase()] ?? 'default';
+  }
+
+  getPriorityIcon(priority: string): string {
+    const map: Record<string, string> = {
+      p1: 'keyboard_double_arrow_up', high: 'keyboard_double_arrow_up',
+      p2: 'drag_handle', medium: 'drag_handle',
+      p3: 'keyboard_double_arrow_down', low: 'keyboard_double_arrow_down'
+    };
+    return map[priority.toLowerCase()] ?? 'drag_handle';
+  }
 }

@@ -1,12 +1,23 @@
 .env-badge {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   border-radius: 4px;
   font-weight: 600;
   line-height: 1.4;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   white-space: nowrap;
+}
+
+.env-badge-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.env-badge--md .env-badge-icon {
+  font-size: 13px;
 }
 
 /* ── Sizes ── */
@@ -74,4 +85,9 @@
 .env-badge--custom {
   background: color-mix(in srgb, var(--badge-custom-color) 15%, transparent);
   color: var(--badge-custom-color);
+}
+
+/* ── Bordered variant ── */
+.env-badge--bordered {
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
 }

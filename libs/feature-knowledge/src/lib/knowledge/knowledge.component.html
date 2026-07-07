@@ -146,9 +146,10 @@
 
         <!-- File type filter pills -->
         <div class="rs-status-pills">
-          @for (f of [['all','All'],['image','Images'],['document','Docs'],['video','Video'],['audio','Audio']] ; track f[0]) {
-            <button class="rs-status-pill" [class.active]="fileFilterType() === f[0]"
-              (click)="fileFilterType.set($any(f[0]))">{{ f[1] }}</button>
+          @for (f of [['all','All','layers'],['image','Images','image'],['document','Docs','description'],['video','Video','videocam'],['audio','Audio','music_note']] ; track f[0]) {
+            <button (click)="fileFilterType.set($any(f[0]))">
+              <env-chip [active]="fileFilterType() === f[0]" size="md" [icon]="f[2]">{{ f[1] }}</env-chip>
+            </button>
           }
         </div>
 
@@ -250,19 +251,17 @@
 
         @if (viewMode() === 'sources' && sources().length > 0) {
           <div class="rs-status-pills">
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'ALL'"
-              (click)="filterStatus.set('ALL')">All</button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
-              (click)="filterStatus.set('UNREAD')">
-              <span class="rs-pill-dot" style="background:var(--accent-red)"></span>Unread
+            <button (click)="filterStatus.set('ALL')">
+              <env-chip [active]="filterStatus() === 'ALL'" size="md" icon="format_list_bulleted">All</env-chip>
             </button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
-              (click)="filterStatus.set('READING')">
-              <span class="rs-pill-dot" style="background:var(--accent-yellow)"></span>Reading
+            <button (click)="filterStatus.set('UNREAD')">
+              <env-chip [active]="filterStatus() === 'UNREAD'" size="md" icon="fiber_new">Unread</env-chip>
             </button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
-              (click)="filterStatus.set('PROCESSED')">
-              <span class="rs-pill-dot" style="background:var(--accent-green)"></span>Processed
+            <button (click)="filterStatus.set('READING')">
+              <env-chip [active]="filterStatus() === 'READING'" size="md" icon="auto_stories">Reading</env-chip>
+            </button>
+            <button (click)="filterStatus.set('PROCESSED')">
+              <env-chip [active]="filterStatus() === 'PROCESSED'" size="md" icon="done_all">Processed</env-chip>
             </button>
 
             <div class="rs-tabs-right-divider"></div>
@@ -397,19 +396,17 @@
         </div>
         @if (researchService.sources().length > 0) {
           <div class="rs-status-pills">
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'ALL'"
-              (click)="filterStatus.set('ALL')">All</button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'UNREAD'"
-              (click)="filterStatus.set('UNREAD')">
-              <span class="rs-pill-dot" style="background:var(--accent-red)"></span>Unread
+            <button (click)="filterStatus.set('ALL')">
+              <env-chip [active]="filterStatus() === 'ALL'" size="md" icon="format_list_bulleted">All</env-chip>
             </button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'READING'"
-              (click)="filterStatus.set('READING')">
-              <span class="rs-pill-dot" style="background:var(--accent-yellow)"></span>Reading
+            <button (click)="filterStatus.set('UNREAD')">
+              <env-chip [active]="filterStatus() === 'UNREAD'" size="md" icon="fiber_new">Unread</env-chip>
             </button>
-            <button class="rs-status-pill" [class.active]="filterStatus() === 'PROCESSED'"
-              (click)="filterStatus.set('PROCESSED')">
-              <span class="rs-pill-dot" style="background:var(--accent-green)"></span>Processed
+            <button (click)="filterStatus.set('READING')">
+              <env-chip [active]="filterStatus() === 'READING'" size="md" icon="auto_stories">Reading</env-chip>
+            </button>
+            <button (click)="filterStatus.set('PROCESSED')">
+              <env-chip [active]="filterStatus() === 'PROCESSED'" size="md" icon="done_all">Processed</env-chip>
             </button>
             <div class="rs-tabs-right-divider"></div>
             <select class="rs-type-select" [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">

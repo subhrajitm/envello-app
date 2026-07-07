@@ -517,19 +517,19 @@ export class VendorComponent {
     readonly tableColumns: EnvTableColumn[] = [
         { key: 'service', header: 'Name',   type: 'avatar-text', sortable: true },
         { key: 'type',    header: 'Type',   type: 'badge', badgeMap: {
-            'recurring': { label: 'Recurring',  dotColor: '#60a5fa', bgColor: 'rgba(96,165,250,0.1)',  textColor: '#60a5fa' },
-            'one-time':  { label: 'One-time',   dotColor: '#a78bfa', bgColor: 'rgba(167,139,250,0.1)', textColor: '#a78bfa' },
-            'bill':      { label: 'Bill',       dotColor: '#fb923c', bgColor: 'rgba(251,146,60,0.1)',  textColor: '#fb923c' },
-            'purchase':  { label: 'Purchase',   dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',  textColor: '#4ade80' },
-            'refund':    { label: 'Refund',     dotColor: '#34d399', bgColor: 'rgba(52,211,153,0.1)',  textColor: '#34d399' },
+            'recurring': { label: 'Recurring', variant: 'info'    },
+            'one-time':  { label: 'One-time',  variant: 'purple'  },
+            'bill':      { label: 'Bill',      variant: 'warning' },
+            'purchase':  { label: 'Purchase',  variant: 'success' },
+            'refund':    { label: 'Refund',    variant: 'success' },
         }},
         { key: 'amount',  header: 'Amount', sortable: true },
         { key: 'date',    header: 'Date',   sortable: true },
         { key: 'status',  header: 'Status', type: 'badge', badgeMap: {
-            active:    { label: 'Active',    dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',  textColor: '#4ade80'  },
-            paused:    { label: 'Paused',    dotColor: '#fbbf24', bgColor: 'rgba(251,191,36,0.1)',  textColor: '#fbbf24'  },
-            cancelled: { label: 'Cancelled', dotColor: '#94a3b8', bgColor: 'rgba(148,163,184,0.1)', textColor: '#94a3b8'  },
-            completed: { label: 'Completed', dotColor: '#60a5fa', bgColor: 'rgba(96,165,250,0.1)',  textColor: '#60a5fa'  },
+            active:    { label: 'Active',    variant: 'success' },
+            paused:    { label: 'Paused',    variant: 'warning' },
+            cancelled: { label: 'Cancelled', variant: 'default' },
+            completed: { label: 'Completed', variant: 'info'    },
         }},
     ];
 

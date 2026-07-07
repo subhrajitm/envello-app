@@ -14,7 +14,7 @@
               (click)="tabChange.emit(tab.key)">
               {{ tab.label }}
               @if (tab.count !== undefined) {
-                <span class="env-ttab-count">{{ tab.count }}</span>
+                <env-badge size="xs">{{ tab.count }}</env-badge>
               }
             </button>
           }
@@ -189,16 +189,15 @@
 
                   <!-- badge -->
                   } @else if (col.type === 'badge') {
-                    <span
-                      class="env-table-badge"
-                      [style.background]="getBadge(row, col).bgColor"
-                      [style.color]="getBadge(row, col).textColor">
-                      <span
-                        class="env-table-badge-dot"
-                        [style.background]="getBadge(row, col).dotColor">
-                      </span>
+                    <env-badge
+                      [variant]="getBadge(row, col).variant"
+                      [customColor]="getBadge(row, col).dotColor"
+                      size="sm">
+                      @if (getBadge(row, col).dotColor) {
+                        <span class="env-tbadge-dot"></span>
+                      }
                       {{ getBadge(row, col).label }}
-                    </span>
+                    </env-badge>
 
                   <!-- text (default) -->
                   } @else {

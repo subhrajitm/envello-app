@@ -2,7 +2,7 @@ import { Component, signal, computed, inject, HostListener, OnDestroy } from '@a
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ResearchService, ResearchCollection, ResearchSource, ResearchSummary, FileStorageService, StorageFile, AiService, StoreService, ContextService } from '@envello/core';
-import { AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, EnvTableRow, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 
 type ViewMode = 'sources' | 'summaries' | 'files';
 type SortField = 'title' | 'status' | 'type' | 'date';
@@ -20,7 +20,7 @@ const SOURCE_TYPE_META: Record<string, { label: string; icon: string; color: str
 @Component({
   selector: 'app-knowledge',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EmptyStateComponent, SliderPanelComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EmptyStateComponent, SliderPanelComponent],
   templateUrl: './knowledge.component.html',
   styleUrl: './knowledge.component.css'
 })
@@ -159,17 +159,17 @@ export class KnowledgeComponent implements OnDestroy {
   readonly sourceColumns: EnvTableColumn[] = [
     { key: 'title',      header: 'Source',        type: 'primary-text', sortable: true },
     { key: 'sourceType', header: 'Type',           type: 'badge', sortable: true, badgeMap: {
-      WEB:       { label: 'Web',       dotColor: '#3b82f6', bgColor: 'rgba(59,130,246,0.1)',   textColor: '#3b82f6' },
-      PDF:       { label: 'PDF',       dotColor: '#ef4444', bgColor: 'rgba(239,68,68,0.1)',    textColor: '#ef4444' },
-      VIDEO:     { label: 'Video',     dotColor: '#a855f7', bgColor: 'rgba(168,85,247,0.1)',   textColor: '#a855f7' },
-      INTERVIEW: { label: 'Interview', dotColor: '#10b981', bgColor: 'rgba(16,185,129,0.1)',   textColor: '#10b981' },
-      PHYSICAL:  { label: 'Physical',  dotColor: '#f59e0b', bgColor: 'rgba(245,158,11,0.1)',   textColor: '#d97706' },
-      ARTICLE:   { label: 'Article',   dotColor: '#06b6d4', bgColor: 'rgba(6,182,212,0.1)',    textColor: '#0891b2' },
+      WEB:       { label: 'Web',       variant: 'info'    },
+      PDF:       { label: 'PDF',       variant: 'error'   },
+      VIDEO:     { label: 'Video',     variant: 'purple'  },
+      INTERVIEW: { label: 'Interview', variant: 'success' },
+      PHYSICAL:  { label: 'Physical',  variant: 'warning' },
+      ARTICLE:   { label: 'Article',   variant: 'info'    },
     }},
     { key: 'status', header: 'Status', type: 'badge', sortable: true, badgeMap: {
-      UNREAD:    { label: 'Unread',    dotColor: '#f87171', bgColor: 'rgba(248,113,113,0.1)',  textColor: '#ef4444' },
-      READING:   { label: 'Reading',   dotColor: '#facc15', bgColor: 'rgba(250,204,21,0.1)',   textColor: '#b45309' },
-      PROCESSED: { label: 'Processed', dotColor: '#4ade80', bgColor: 'rgba(74,222,128,0.1)',   textColor: '#16a34a' },
+      UNREAD:    { label: 'Unread',    variant: 'error'   },
+      READING:   { label: 'Reading',   variant: 'warning' },
+      PROCESSED: { label: 'Processed', variant: 'success' },
     }},
     { key: 'meta', header: 'Author · Date', sortable: true },
   ];

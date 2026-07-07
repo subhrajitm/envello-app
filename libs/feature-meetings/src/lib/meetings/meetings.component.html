@@ -79,10 +79,10 @@
               </span>
               <span class="mt-item-title">{{ meeting.title }}</span>
               @if (meeting.status === 'cancelled') {
-              <span class="mt-item-badge mt-item-badge--cancelled">Cancelled</span>
+              <env-badge variant="error" icon="cancel">Cancelled</env-badge>
               }
               @if (meeting.status === 'completed') {
-              <span class="mt-item-badge mt-item-badge--done">Done</span>
+              <env-badge variant="success" icon="check_circle">Done</env-badge>
               }
               @if (meeting.priority === 'HIGH' && meeting.status !== 'cancelled') {
               <span class="mt-item-priority-dot"></span>
@@ -546,11 +546,7 @@
           @if (newMeeting().attendees && newMeeting().attendees!.length > 0) {
           <div class="mta-chips">
             @for (attendee of newMeeting().attendees!; track attendee.id) {
-            <span class="mta-chip">{{ attendee.name }}
-              <button type="button" class="mta-chip-rm" (click)="removeAttendeeFromNew(attendee.id)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </span>
+            <env-chip [removable]="true" (removed)="removeAttendeeFromNew(attendee.id)">{{ attendee.name }}</env-chip>
             }
           </div>
           }
@@ -568,11 +564,7 @@
           @if (newMeeting().agenda && newMeeting().agenda!.length > 0) {
           <div class="mta-chips">
             @for (item of newMeeting().agenda!; track item.id; let i = $index) {
-            <span class="mta-chip"><span class="mta-chip-num">{{ i + 1 }}</span>{{ item.title }}
-              <button type="button" class="mta-chip-rm" (click)="removeAgendaItemFromNew(item.id)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </span>
+            <env-chip [removable]="true" (removed)="removeAgendaItemFromNew(item.id)"><span class="mta-chip-num">{{ i + 1 }}</span>{{ item.title }}</env-chip>
             }
           </div>
           }
@@ -590,11 +582,7 @@
           @if (newMeeting().labels && newMeeting().labels!.length > 0) {
           <div class="mta-chips">
             @for (label of newMeeting().labels!; track label) {
-            <span class="mta-chip">#{{ label }}
-              <button type="button" class="mta-chip-rm" (click)="removeLabelFromNew(label)">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </span>
+            <env-chip [removable]="true" (removed)="removeLabelFromNew(label)">#{{ label }}</env-chip>
             }
           </div>
           }
@@ -769,7 +757,7 @@
               <div class="mta-detail-label">Labels</div>
               <div class="mta-labels-row">
                 @for (label of selectedMeeting()!.labels!; track label) {
-                <span class="mta-label-tag">#{{ label }}</span>
+                <env-chip>#{{ label }}</env-chip>
                 }
               </div>
             </div>

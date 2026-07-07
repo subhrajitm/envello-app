@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { StoreService, Note, AiService, ContextService, RecentActivityService, NoteHistoryService, NotificationService } from '@envello/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, NoteHistoryPanelComponent } from '@envello/ui';
+import { ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, AiPanelMessage, ConfirmDialogComponent, NoteHistoryPanelComponent, BadgeComponent, ChipComponent } from '@envello/ui';
 import { TauriService } from '@envello/core';
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -42,7 +42,7 @@ const FOLDER_COLORS = ['#f87171','#fb923c','#fbbf24','#4ade80','#34d399','#38bdf
 @Component({
   selector: 'app-daily-notes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent, NoteHistoryPanelComponent],
+  imports: [CommonModule, FormsModule, TiptapEditorDirective, EditorFloatingMenuComponent, ButtonComponent, IconButtonComponent, ModalComponent, EmptyStateComponent, AiAssistantPanelComponent, ConfirmDialogComponent, NoteHistoryPanelComponent, BadgeComponent, ChipComponent],
   templateUrl: './daily-notes.component.html',
   styleUrl: './daily-notes.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

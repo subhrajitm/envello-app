@@ -119,18 +119,6 @@
 }
 .sp-card-icon .material-symbols-outlined { font-size: 20px; }
 
-.sp-active-badge {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
-  padding: 2px 7px;
-  border-radius: 20px;
-  align-self: flex-start;
-  margin-top: 4px;
-}
 
 /* ── Card body ── */
 .sp-card-body {
@@ -355,11 +343,6 @@
 .sp-avatar-initials { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
 .sp-detail-hero-name { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
 .sp-detail-hero-badges { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-.sp-status-chip {
-  display: inline-block; padding: 2px 8px; border-radius: 20px;
-  font-size: 11px; font-weight: 600;
-  background: var(--bg-active); color: var(--text-secondary);
-}
 
 .sp-detail-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;

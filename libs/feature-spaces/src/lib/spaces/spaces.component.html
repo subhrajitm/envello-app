@@ -30,7 +30,7 @@
             }
           </span>
           @if (isActive(profile.id)) {
-            <span class="sp-active-badge">Active</span>
+            <env-badge [pill]="true" style="background: rgba(255,255,255,0.25); color: #fff; align-self: flex-start; margin-top: 4px;">Active</env-badge>
           }
         </div>
 
@@ -192,9 +192,9 @@
             <env-badge variant="accent" [pill]="true">Active</env-badge>
           }
           @if (linkedSpace()?.status) {
-            <span class="sp-status-chip sp-status-{{ linkedSpace()?.status?.toLowerCase() }}">
+            <env-badge [variant]="getStatusVariant(linkedSpace()!.status!)" [pill]="true">
               {{ linkedSpace()?.status | titlecase }}
-            </span>
+            </env-badge>
           }
         </div>
       </div>

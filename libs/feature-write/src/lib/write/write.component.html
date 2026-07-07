@@ -260,12 +260,15 @@
     <!-- Type pills -->
     <div class="wra-type-pills">
       @for (type of writingTypes; track type.id) {
-        <button class="wra-type-pill"
-          [class.wra-type-pill--active]="newBook().writingType === type.id"
-          [style.--pc]="getTypeMeta(type.id).color"
+        <button class="wra-type-pill-btn"
           (click)="updateNewBook('writingType', type.id)">
-          <span class="material-symbols-outlined">{{ type.defaultIcon }}</span>
-          {{ type.label }}
+          <env-chip
+            size="md"
+            [active]="newBook().writingType === type.id"
+            [icon]="type.defaultIcon"
+            [customColor]="getTypeMeta(type.id).color">
+            {{ type.label }}
+          </env-chip>
         </button>
       }
     </div>

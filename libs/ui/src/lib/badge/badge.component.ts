@@ -20,8 +20,12 @@ export type BadgeSize = 'xs' | 'sm' | 'md';
 export class BadgeComponent {
   @Input() variant: BadgeVariant = 'default';
   @Input() size: BadgeSize = 'sm';
+  /** Material Symbols icon name shown before content */
+  @Input() icon = '';
   /** Fully-rounded pill shape */
   @Input() pill = false;
+  /** Adds a subtle tinted border (border-color derived from currentColor) */
+  @Input() bordered = false;
   /** Custom CSS color — applied via color-mix tinting (overrides variant colors) */
   @Input() customColor = '';
 }

@@ -26,7 +26,7 @@
                     <span class="material-symbols-outlined">{{ item.icon }}</span>
                     <span class="view-btn-label">{{ item.label }}</span>
                     @if (item.count) {
-                    <span class="nav-badge">{{ item.count }}</span>
+                    <env-badge size="xs">{{ item.count }}</env-badge>
                     }
                 </button>
                 }
@@ -396,20 +396,12 @@
                         <div class="thumb-title-row">
                             <h3 class="thumb-title">{{ task.title }}</h3>
                             @if(task.project) {
-                            <span class="project-pill thumb-project-pill">{{ task.project }}</span>
+                            <env-badge size="sm">{{ task.project }}</env-badge>
                             }
                         </div>
                         <div class="thumb-meta-row">
-                            <span class="status-badge thumb-status" [ngClass]="task.status.toLowerCase()">
-                                {{ task.status }}
-                            </span>
-                            <span class="thumb-priority" [ngClass]="{
-                                'p1': task.priority === 'HIGH',
-                                'p2': task.priority === 'MEDIUM',
-                                'p3': task.priority === 'LOW'
-                            }">
-                                {{ task.priority }}
-                            </span>
+                            <env-badge [variant]="getStatusVariant(task.status)" [icon]="getStatusIcon(task.status)">{{ getStatusLabel(task.status) }}</env-badge>
+                            <env-badge [variant]="getPriorityVariant(task.priority)" [pill]="true" [icon]="getPriorityIcon(task.priority)">{{ task.priority }}</env-badge>
                             @if(task.hours) {
                             <span class="thumb-hours">{{ task.hours }}</span>
                             }
@@ -535,13 +527,11 @@
 
                                 <div class="td-subtask-date-wrap">
                                     @if (subtask.due) {
-                                    <button class="td-subtask-date-chip"
-                                            [class.td-subtask-date-chip--overdue]="isOverdue(subtask)"
-                                            type="button"
+                                    <button type="button"
                                             (click)="toggleSubtaskDatePopover(subtask.id, $event)"
-                                            title="Change due date">
-                                        <span class="material-symbols-outlined">calendar_today</span>
-                                        <span>{{ formatSubtaskDue(subtask.due) }}</span>
+                                            title="Change due date"
+                                            style="background:none;border:none;padding:0;cursor:pointer">
+                                        <env-chip [variant]="isOverdue(subtask) ? 'danger' : 'accent'" icon="calendar_today" size="sm">{{ formatSubtaskDue(subtask.due) }}</env-chip>
                                     </button>
                                     } @else {
                                     <button class="td-subtask-date-btn" type="button"
@@ -635,12 +625,7 @@
                         </div>
                         <div class="td-labels-area">
                             @for (label of editedTaskLabels(); track label) {
-                            <span class="td-label-chip">
-                                {{ label }}
-                                <button type="button" class="td-label-chip-remove" (click)="removeLabelFromEdit(label)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip [removable]="true" (removed)="removeLabelFromEdit(label)">{{ label }}</env-chip>
                             }
                             <input type="text"
                                    class="td-label-input"
@@ -680,13 +665,7 @@
                         @if (editedTaskReminders().length > 0) {
                         <div class="td-reminder-chips">
                             @for (r of editedTaskReminders(); track r) {
-                            <span class="td-reminder-chip">
-                                <span class="material-symbols-outlined">notifications</span>
-                                {{ r }}
-                                <button type="button" class="td-reminder-remove" (click)="removeDetailsReminder(r)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip icon="alarm" [removable]="true" (removed)="removeDetailsReminder(r)">{{ r }}</env-chip>
                             }
                         </div>
                         }
@@ -846,15 +825,15 @@
                             <div class="td-subtask-item">
                                 <span class="material-symbols-outlined" style="font-size:14px;color:var(--text-tertiary)">subdirectory_arrow_right</span>
                                 <span class="td-subtask-title">{{ subtask.title }}</span>
-                                <span class="subtask-priority-badge" [class]="'priority-badge-' + subtask.priority.toLowerCase()">{{ subtask.priority | titlecase }}</span>
+                                <env-badge [variant]="getPriorityVariant(subtask.priority)" [icon]="getPriorityIcon(subtask.priority)">{{ subtask.priority | titlecase }}</env-badge>
 
                                 <div class="td-subtask-date-wrap">
                                     @if (subtask.due) {
-                                    <button class="td-subtask-date-chip" type="button"
+                                    <button type="button"
                                             (click)="toggleNewSubtaskDatePopover($index, $event)"
-                                            title="Change due date">
-                                        <span class="material-symbols-outlined">calendar_today</span>
-                                        <span>{{ formatSubtaskDue(subtask.due) }}</span>
+                                            title="Change due date"
+                                            style="background:none;border:none;padding:0;cursor:pointer">
+                                        <env-chip variant="accent" icon="calendar_today" size="sm">{{ formatSubtaskDue(subtask.due) }}</env-chip>
                                     </button>
                                     } @else {
                                     <button class="td-subtask-date-btn" type="button"
@@ -983,12 +962,7 @@
                         </div>
                         <div class="td-labels-area">
                             @for (label of newTaskLabels(); track label) {
-                            <span class="td-label-chip">
-                                #{{ label }}
-                                <button type="button" class="td-label-chip-remove" (click)="removeNewTaskLabel(label)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip [removable]="true" (removed)="removeNewTaskLabel(label)">#{{ label }}</env-chip>
                             }
                             <div style="position:relative;flex:1;min-width:80px">
                                 <input type="text"
@@ -1096,7 +1070,7 @@
                         <div class="td-prop-row-header"><span class="td-prop-label">Next occurrences</span></div>
                         <div class="td-labels-area">
                             @for (occ of nextOccurrences(); track occ) {
-                            <span class="td-label-chip" style="background:transparent">{{ occ }}</span>
+                            <env-chip>{{ occ }}</env-chip>
                             }
                         </div>
                     </div>
@@ -1130,13 +1104,7 @@
                         @if (newTaskHasReminder() && newTaskReminderTimes().length > 0) {
                         <div class="td-reminder-chips">
                             @for (r of newTaskReminderTimes(); track r) {
-                            <span class="td-reminder-chip">
-                                <span class="material-symbols-outlined">notifications</span>
-                                {{ r }}
-                                <button type="button" class="td-reminder-remove" (click)="removeNewTaskReminderPreset(r)">
-                                    <span class="material-symbols-outlined">close</span>
-                                </button>
-                            </span>
+                            <env-chip icon="alarm" [removable]="true" (removed)="removeNewTaskReminderPreset(r)">{{ r }}</env-chip>
                             }
                         </div>
                         }
