@@ -133,13 +133,13 @@
                   }
                   <div class="ppl-card-meta">
                     @if (profile.totalInteractions > 0) {
-                      <span class="ppl-chip">{{ profile.totalInteractions }} interactions</span>
+                      <env-chip variant="default">{{ profile.totalInteractions }} interactions</env-chip>
                     }
                     @if (profile.openTasks > 0) {
-                      <span class="ppl-chip ppl-chip--warn">{{ profile.openTasks }} open tasks</span>
+                      <env-chip variant="danger">{{ profile.openTasks }} open tasks</env-chip>
                     }
                     @if (profile.upcomingMeetings > 0) {
-                      <span class="ppl-chip ppl-chip--info">{{ profile.upcomingMeetings }} upcoming</span>
+                      <env-chip variant="success">{{ profile.upcomingMeetings }} upcoming</env-chip>
                     }
                   </div>
                 </div>
@@ -402,7 +402,7 @@
                   @if (item.preview) { <div class="ppl-tl-preview">{{ item.preview }}</div> }
                   <div class="ppl-tl-date">{{ item.date }}</div>
                 </div>
-                <span class="ppl-tl-badge ppl-tl-badge--{{ item.type }}">{{ item.type }}</span>
+                <env-badge [variant]="interactionVariant(item.type)">{{ item.type }}</env-badge>
               </div>
             }
           }
@@ -421,7 +421,7 @@
       <div class="ppl-modal-header">
         <div style="display:flex;align-items:center;gap:8px">
           <span class="ppl-modal-title">Import Contacts</span>
-          <span class="ppl-import-badge">{{ importPreview()!.fileName }}</span>
+          <env-badge variant="default" [pill]="true">{{ importPreview()!.fileName }}</env-badge>
         </div>
         <button class="ppl-modal-close" (click)="closeImport()">
           <span class="material-symbols-outlined">close</span>

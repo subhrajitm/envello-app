@@ -9,12 +9,13 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { Character } from '@envello/core';
+import { BadgeComponent } from '@envello/ui';
 import { avatarColor } from '../../../utils/avatar-color.util';
 
 @Component({
   selector: 'app-character-details',
   standalone: true,
-  imports: [FormsModule, TiptapEditorDirective],
+  imports: [FormsModule, TiptapEditorDirective, BadgeComponent],
   templateUrl: './character-details.component.html',
   styleUrls: [
     './character-details.component.css',

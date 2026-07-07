@@ -4,11 +4,12 @@ import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { NotificationService, Notification, NotificationType } from '@envello/core';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { BadgeComponent } from '../badge/badge.component';
 
 @Component({
   selector: 'app-notification-center',
   standalone: true,
-  imports: [CommonModule, ConfirmDialogComponent],
+  imports: [CommonModule, ConfirmDialogComponent, BadgeComponent],
   templateUrl: './notification-center.component.html',
   styleUrl: './notification-center.component.css',
   animations: [

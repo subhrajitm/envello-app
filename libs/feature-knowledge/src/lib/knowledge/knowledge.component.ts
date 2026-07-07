@@ -159,17 +159,17 @@ export class KnowledgeComponent implements OnDestroy {
   readonly sourceColumns: EnvTableColumn[] = [
     { key: 'title',      header: 'Source',        type: 'primary-text', sortable: true },
     { key: 'sourceType', header: 'Type',           type: 'badge', sortable: true, badgeMap: {
-      WEB:       { label: 'Web',       variant: 'info'    },
-      PDF:       { label: 'PDF',       variant: 'error'   },
-      VIDEO:     { label: 'Video',     variant: 'purple'  },
-      INTERVIEW: { label: 'Interview', variant: 'success' },
-      PHYSICAL:  { label: 'Physical',  variant: 'warning' },
-      ARTICLE:   { label: 'Article',   variant: 'info'    },
+      WEB:       { label: 'Web',       variant: 'info',    icon: 'language'       },
+      PDF:       { label: 'PDF',       variant: 'error',   icon: 'picture_as_pdf' },
+      VIDEO:     { label: 'Video',     variant: 'purple',  icon: 'smart_display'  },
+      INTERVIEW: { label: 'Interview', variant: 'success', icon: 'mic'            },
+      PHYSICAL:  { label: 'Physical',  variant: 'warning', icon: 'menu_book'      },
+      ARTICLE:   { label: 'Article',   variant: 'info',    icon: 'article'        },
     }},
     { key: 'status', header: 'Status', type: 'badge', sortable: true, badgeMap: {
-      UNREAD:    { label: 'Unread',    variant: 'error'   },
-      READING:   { label: 'Reading',   variant: 'warning' },
-      PROCESSED: { label: 'Processed', variant: 'success' },
+      UNREAD:    { label: 'Unread',    variant: 'error',   icon: 'mark_email_unread' },
+      READING:   { label: 'Reading',   variant: 'warning', icon: 'auto_stories'      },
+      PROCESSED: { label: 'Processed', variant: 'success', icon: 'done_all'          },
     }},
     { key: 'meta', header: 'Author · Date', sortable: true },
   ];

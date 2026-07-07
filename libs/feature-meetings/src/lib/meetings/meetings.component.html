@@ -37,7 +37,7 @@
           (click)="openSyncModal()" title="Sync external calendars">
           <span class="material-symbols-outlined">sync</span>
           @if (syncService.connections().length > 0) {
-          <span class="mt-sync-badge">{{ syncService.connections().length }}</span>
+          <env-badge size="xs">{{ syncService.connections().length }}</env-badge>
           }
         </button>
         @if (aiEnabled()) {
@@ -79,10 +79,10 @@
               </span>
               <span class="mt-item-title">{{ meeting.title }}</span>
               @if (meeting.status === 'cancelled') {
-              <env-badge variant="error" icon="cancel">Cancelled</env-badge>
+                <env-badge variant="error" size="xs">Cancelled</env-badge>
               }
               @if (meeting.status === 'completed') {
-              <env-badge variant="success" icon="check_circle">Done</env-badge>
+                <env-badge variant="success" size="xs">Done</env-badge>
               }
               @if (meeting.priority === 'HIGH' && meeting.status !== 'cancelled') {
               <span class="mt-item-priority-dot"></span>
@@ -119,10 +119,7 @@
           </div>
           <div class="mt-item-actions" (click)="$event.stopPropagation()">
             @if (meeting.actionItems && getOpenActionItemsCount(meeting) > 0) {
-            <span class="mt-items-badge">
-              <span class="material-symbols-outlined">done_all</span>
-              {{ getOpenActionItemsCount(meeting) }}
-            </span>
+            <env-badge size="xs" icon="done_all">{{ getOpenActionItemsCount(meeting) }}</env-badge>
             }
             @if (meeting.meetingLink) {
             <button class="mt-icon-btn" (click)="joinMeeting(meeting, $event)" title="Join">
@@ -274,7 +271,7 @@
                 <div class="mt-cal-day-hdr">
                   <span class="mt-cal-day-num">{{ day.getDate() }}</span>
                   @if (getMeetingsForDate(day).length > 0) {
-                  <span class="mt-cal-day-badge">{{ getMeetingsForDate(day).length }}</span>
+                  <env-badge size="xs">{{ getMeetingsForDate(day).length }}</env-badge>
                   }
                 </div>
                 <div class="mt-cal-day-events">
@@ -546,7 +543,7 @@
           @if (newMeeting().attendees && newMeeting().attendees!.length > 0) {
           <div class="mta-chips">
             @for (attendee of newMeeting().attendees!; track attendee.id) {
-            <env-chip [removable]="true" (removed)="removeAttendeeFromNew(attendee.id)">{{ attendee.name }}</env-chip>
+              <env-chip [removable]="true" (removed)="removeAttendeeFromNew(attendee.id)">{{ attendee.name }}</env-chip>
             }
           </div>
           }
@@ -564,7 +561,7 @@
           @if (newMeeting().agenda && newMeeting().agenda!.length > 0) {
           <div class="mta-chips">
             @for (item of newMeeting().agenda!; track item.id; let i = $index) {
-            <env-chip [removable]="true" (removed)="removeAgendaItemFromNew(item.id)"><span class="mta-chip-num">{{ i + 1 }}</span>{{ item.title }}</env-chip>
+              <env-chip [removable]="true" (removed)="removeAgendaItemFromNew(item.id)">{{ i + 1 }}. {{ item.title }}</env-chip>
             }
           </div>
           }
@@ -582,7 +579,7 @@
           @if (newMeeting().labels && newMeeting().labels!.length > 0) {
           <div class="mta-chips">
             @for (label of newMeeting().labels!; track label) {
-            <env-chip [removable]="true" (removed)="removeLabelFromNew(label)">#{{ label }}</env-chip>
+              <env-chip [removable]="true" (removed)="removeLabelFromNew(label)">#{{ label }}</env-chip>
             }
           </div>
           }
@@ -757,7 +754,7 @@
               <div class="mta-detail-label">Labels</div>
               <div class="mta-labels-row">
                 @for (label of selectedMeeting()!.labels!; track label) {
-                <env-chip>#{{ label }}</env-chip>
+                <span class="mta-label-tag">#{{ label }}</span>
                 }
               </div>
             </div>

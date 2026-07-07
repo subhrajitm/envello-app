@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { StoreService } from '@envello/core';
 import { UserService } from '@envello/core';
 import { RecentActivityComponent } from '../dashboard/recent-activity/recent-activity.component';
+import { BadgeComponent, BadgeVariant } from '@envello/ui';
 
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [CommonModule, RecentActivityComponent],
+  imports: [CommonModule, RecentActivityComponent, BadgeComponent],
   templateUrl: './overview.component.html',
   styleUrl: './overview.component.css'
 })
@@ -165,5 +166,13 @@ export class OverviewComponent {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
     return num.toString();
+  }
+
+  getPlanTagVariant(tag: string): BadgeVariant {
+    switch (tag?.toLowerCase()) {
+      case 'fiction':  return 'info';
+      case 'mystery':  return 'purple';
+      default:         return 'default';
+    }
   }
 }

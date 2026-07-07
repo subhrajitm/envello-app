@@ -217,7 +217,10 @@
   scrollbar-width: none; flex: 1; min-width: 0;
 }
 .rs-status-pills::-webkit-scrollbar { display: none; }
-.rs-status-pills button { background: transparent; border: none; padding: 0; cursor: pointer; flex-shrink: 0; }
+.rs-filter-btn {
+  background: none; border: none; padding: 0; cursor: pointer; flex-shrink: 0;
+}
+.rs-pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .rs-tabs-right-divider { width: 1px; height: 14px; background: var(--border-subtle); margin: 0 2px; flex-shrink: 0; }
 
 /* Type select */
@@ -414,11 +417,6 @@
 }
 .rsd-url-open:hover { background: var(--accent-primary-dim); color: var(--accent-primary); border-color: var(--accent-primary); }
 .rsd-url-open .material-symbols-outlined { font-size: 15px; }
-.rsd-unsaved-badge {
-  font-size: 11px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
-  background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
-  color: var(--accent-primary); text-transform: uppercase; letter-spacing: 0.04em;
-}
 
 .rsd-status-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .rsd-status-btn {

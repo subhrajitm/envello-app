@@ -1,5 +1,7 @@
 import { Component, signal, HostListener, inject, computed, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
+import { BadgeComponent } from '../badge/badge.component';
+import { ChipComponent } from '../chip/chip.component';
 import { StoreService, Task, Note, Book, Bookmark } from '@envello/core';
 import { ResearchService } from '@envello/core';
 import { MeetingsService, MEETING_COLORS } from '@envello/core';
@@ -33,7 +35,7 @@ const MAX_RECENT_ITEMS = 4;
 @Component({
     selector: 'app-add-new-modal',
     standalone: true,
-    imports: [],
+    imports: [BadgeComponent, ChipComponent],
     templateUrl: './add-new-modal.component.html',
     styleUrl: './add-new-modal.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush

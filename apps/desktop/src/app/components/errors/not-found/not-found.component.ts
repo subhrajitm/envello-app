@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { BadgeComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-not-found',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, BadgeComponent],
   templateUrl: './not-found.component.html',
   styleUrl: './not-found.component.css',
 })

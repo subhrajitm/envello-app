@@ -140,40 +140,6 @@
     align-items: center;
 }
 
-.status-badge {
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.status-yellow {
-    background: var(--accent-yellow)26;
-    color: var(--accent-yellow);
-}
-
-.status-blue {
-    background: var(--accent-blue)26;
-    color: var(--accent-blue);
-}
-
-.status-green {
-    background: var(--accent-green)26;
-    color: var(--accent-green);
-}
-
-.status-orange {
-    background: var(--accent-orange)26;
-    color: var(--accent-orange);
-}
-
-.status-gray {
-    background: var(--bg-hover);
-    color: var(--text-tertiary);
-}
-
 .col-words,
 .col-updated {
     color: var(--text-tertiary);

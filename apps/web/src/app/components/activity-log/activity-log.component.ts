@@ -2,11 +2,12 @@ import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StoreService } from '@envello/core';
+import { BadgeComponent, ChipComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-activity-log',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent, ChipComponent],
   templateUrl: './activity-log.component.html',
   styleUrl: './activity-log.component.css'
 })

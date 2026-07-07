@@ -1,13 +1,14 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AnalyticsService, AnalyticsStats, InsightItem, AiService } from '@envello/core';
+import { BadgeComponent, type BadgeVariant } from '@envello/ui';
 
 const INSIGHT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent],
   templateUrl: './analytics.component.html',
   styleUrl: './analytics.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -182,6 +183,10 @@ export class AnalyticsComponent {
 
   bookStatusLabel(s: string): string {
     return ({ DRAFTING: 'Drafting', PLANNING: 'Planning', REVISING: 'Revising', PUBLISHED: 'Published' } as Record<string, string>)[s] ?? s;
+  }
+
+  bookStatusVariant(s: string): BadgeVariant {
+    return ({ DRAFTING: 'default', PLANNING: 'warning', REVISING: 'accent', PUBLISHED: 'success' } as Record<string, BadgeVariant>)[s] ?? 'default';
   }
 
   deltaClass(d: number): string {

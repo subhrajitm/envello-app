@@ -7,7 +7,8 @@ import {
 import { Person } from '@envello/domain';
 import {
   ConfirmDialogComponent, EmptyStateComponent, FeatureSidebarComponent,
-  TableComponent, SliderPanelComponent,
+  TableComponent, SliderPanelComponent, BadgeComponent, ChipComponent,
+  type BadgeVariant,
 } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableActionEvent } from '@envello/ui';
 
@@ -20,6 +21,7 @@ type ViewMode = 'table' | 'grid';
   imports: [
     CommonModule, ConfirmDialogComponent, EmptyStateComponent,
     FeatureSidebarComponent, TableComponent, SliderPanelComponent,
+    BadgeComponent, ChipComponent,
   ],
   templateUrl: './people.component.html',
   styleUrl: './people.component.css',
@@ -379,6 +381,13 @@ export class PeopleComponent {
       note: 'edit_note', transaction: 'receipt_long',
     };
     return map[type];
+  }
+
+  interactionVariant(type: PersonInteraction['type']): BadgeVariant {
+    const map: Record<typeof type, BadgeVariant> = {
+      meeting: 'info', task: 'warning', note: 'success', transaction: 'error',
+    };
+    return map[type] ?? 'default';
   }
 
   initials(name: string): string {

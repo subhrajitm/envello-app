@@ -1,5 +1,6 @@
 import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BadgeComponent, BadgeVariant } from '@envello/ui';
 
 interface Task {
   id: string;
@@ -12,7 +13,7 @@ interface Task {
 @Component({
   selector: 'app-global-tasks',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent],
   templateUrl: './global-tasks.component.html',
   styleUrl: './global-tasks.component.css'
 })
@@ -41,16 +42,12 @@ export class GlobalTasksComponent {
 
   highPriorityCount = computed(() => this.tasks().filter((t) => t.priority === 'HIGH').length);
 
-  getPriorityColor(priority: string): string {
+  getPriorityVariant(priority: string): BadgeVariant {
     switch (priority) {
-      case 'HIGH':
-        return 'priority-high';
-      case 'MED':
-        return 'priority-med';
-      case 'LOW':
-        return 'priority-low';
-      default:
-        return 'priority-low';
+      case 'HIGH': return 'error';
+      case 'MED':  return 'warning';
+      case 'LOW':  return 'info';
+      default:     return 'default';
     }
   }
 }

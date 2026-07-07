@@ -2,6 +2,8 @@ import { Component, inject, signal, computed, HostListener, ChangeDetectionStrat
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { StoreService, MeetingsService, SemanticSearchService, AiService, ContextService } from '@envello/core';
+import { BadgeComponent } from '../badge/badge.component';
+import { ChipComponent } from '../chip/chip.component';
 
 type ResultType = 'note' | 'task' | 'book' | 'bookmark' | 'meeting' | 'project' | 'command';
 type FilterType = 'all' | ResultType;
@@ -54,7 +56,7 @@ const NAV_COMMANDS: QuickFindResult[] = [
 @Component({
     selector: 'app-quick-find',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, BadgeComponent, ChipComponent],
     templateUrl: './quick-find.component.html',
     styleUrl: './quick-find.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush

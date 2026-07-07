@@ -5,11 +5,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CaptureService, CaptureIntent, CAPTURE_TYPE_META } from '@envello/core';
+import { ChipComponent } from '../chip/chip.component';
 
 @Component({
   selector: 'env-quick-capture',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ChipComponent],
   templateUrl: './quick-capture.component.html',
   styleUrl: './quick-capture.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

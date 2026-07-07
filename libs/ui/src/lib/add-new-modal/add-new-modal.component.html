@@ -56,12 +56,7 @@
             <!-- Intent row -->
             @if (captureIntent() && !isCreating()) {
                 <div class="anm-intent-row">
-                    <span class="capture-type-chip"
-                        [style.background]="typeMeta()!.color + '22'"
-                        [style.color]="typeMeta()!.color">
-                        <span class="material-symbols-outlined" style="font-size:13px">{{ typeMeta()!.icon }}</span>
-                        {{ typeMeta()!.label }}
-                    </span>
+                    <env-chip size="sm" [customColor]="typeMeta()!.color" [icon]="typeMeta()!.icon">{{ typeMeta()!.label }}</env-chip>
                     @for (hint of captureFieldHints(); track hint) {
                         <span class="capture-field-hint">{{ hint }}</span>
                     }
@@ -149,12 +144,7 @@
             <!-- Intent preview row -->
             @if (captureIntent() && !isCreating()) {
                 <div class="capture-intent-row">
-                    <span class="capture-type-chip"
-                        [style.background]="typeMeta()!.color + '22'"
-                        [style.color]="typeMeta()!.color">
-                        <span class="material-symbols-outlined" style="font-size:13px">{{ typeMeta()!.icon }}</span>
-                        {{ typeMeta()!.label }}
-                    </span>
+                    <env-chip size="sm" [customColor]="typeMeta()!.color" [icon]="typeMeta()!.icon">{{ typeMeta()!.label }}</env-chip>
                     @for (hint of captureFieldHints(); track hint) {
                         <span class="capture-field-hint">{{ hint }}</span>
                     }
@@ -217,7 +207,7 @@
                             <div class="content-card-body">
                                 <div class="content-card-title">{{ option.title }}</div>
                                 <div class="content-card-meta">
-                                    <span class="content-card-tag">{{ option.tag }}</span>
+                                    <env-badge variant="default" size="xs" [bordered]="true">{{ option.tag }}</env-badge>
                                     <span class="content-card-desc">{{ option.description }}</span>
                                 </div>
                             </div>

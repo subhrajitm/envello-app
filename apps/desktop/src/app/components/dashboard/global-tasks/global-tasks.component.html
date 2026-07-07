@@ -4,7 +4,7 @@
             <span class="material-symbols-outlined section-icon">task</span>
             GLOBAL TASKS
             @if (highPriorityCount() > 0) {
-            <span class="badge-high">{{ highPriorityCount() }} High</span>
+            <env-badge variant="error" size="xs">{{ highPriorityCount() }} High</env-badge>
             }
         </div>
     </div>
@@ -18,9 +18,9 @@
                     @if (task.type) {
                     <span class="task-type">{{ task.type }}</span>
                     }
-                    <span class="priority-badge" [class]="getPriorityColor(task.priority)">
+                    <env-badge [variant]="getPriorityVariant(task.priority)" size="xs">
                         {{ task.priority }} PRIORITY
-                    </span>
+                    </env-badge>
                     <span class="task-due">Due {{ task.dueDate }}</span>
                 </div>
             </div>

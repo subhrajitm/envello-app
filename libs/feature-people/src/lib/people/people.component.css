@@ -224,9 +224,6 @@
 .ppl-card-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppl-card-sub  { font-size: 11px; color: var(--text-tertiary); margin: 2px 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppl-card-meta { display: flex; flex-wrap: wrap; gap: 3px; }
-.ppl-chip { font-size: 10px; color: var(--text-secondary); background: var(--bg-hover); border-radius: 4px; padding: 2px 5px; }
-.ppl-chip--warn { color: var(--accent-yellow); background: color-mix(in srgb, var(--accent-yellow) 12%, transparent); }
-.ppl-chip--info { color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 12%, transparent); }
 .ppl-card-arrow { font-size: 18px; color: var(--text-tertiary); flex-shrink: 0; }
 
 /* ═══════════════════════════════════════════════════════
@@ -302,11 +299,6 @@
 .ppl-tl-title   { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ppl-tl-preview { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 .ppl-tl-date    { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
-.ppl-tl-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
-.ppl-tl-badge--meeting     { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
-.ppl-tl-badge--task        { background: color-mix(in srgb, var(--accent-yellow) 15%, transparent); color: var(--accent-yellow); }
-.ppl-tl-badge--note        { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
-.ppl-tl-badge--transaction { background: color-mix(in srgb, var(--accent-red) 15%, transparent); color: var(--accent-red); }
 
 /* ═══════════════════════════════════════════════════════
    MODALS
@@ -366,10 +358,6 @@
 .ppl-btn-primary--disabled { opacity: .4; cursor: default; pointer-events: none; }
 
 /* Import modal specifics */
-.ppl-import-badge {
-  font-size: 11px; color: var(--text-tertiary);
-  background: var(--bg-hover); border-radius: 4px; padding: 2px 7px; font-weight: 400;
-}
 .ppl-import-stats {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 18px; font-size: 12px; color: var(--text-secondary);

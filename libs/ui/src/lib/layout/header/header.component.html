@@ -49,7 +49,7 @@
           [attr.aria-expanded]="false">
           <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
           @if (unreadCount() > 0) {
-            <span class="notification-badge" aria-label="{{ unreadCount() }} unread">{{ unreadCount() }}</span>
+            <env-badge size="xs" variant="error" [pill]="true" aria-label="{{ unreadCount() }} unread">{{ unreadCount() }}</env-badge>
           }
         </button>
         <button
@@ -169,7 +169,7 @@
             @if (!sidebarCollapsed()) {
               <span class="sidebar-label">Bin</span>
               @if (binCount() > 0) {
-                <span class="sidebar-bin-badge">{{ binCount() }}</span>
+                <env-badge size="xs" variant="error" [pill]="true" style="margin-left:auto">{{ binCount() }}</env-badge>
               }
             } @else if (binCount() > 0) {
               <span class="sidebar-bin-dot"></span>

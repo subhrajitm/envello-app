@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { Editor } from '@tiptap/core';
 import { TiptapEditorDirective } from 'ngx-tiptap';
 import { BookContentService, FrontMatterItem, Prologue } from '@envello/core';
+import { BadgeComponent } from '@envello/ui';
 
 @Component({
   selector: 'app-structure-editor',
   standalone: true,
-  imports: [FormsModule, TiptapEditorDirective],
+  imports: [FormsModule, TiptapEditorDirective, BadgeComponent],
   templateUrl: './structure-editor.component.html',
   styleUrls: [
     './structure-editor.component.css',

@@ -121,25 +121,12 @@
     border-bottom: 1px solid var(--border-subtle);
 }
 
-.stat-chip {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 3px;
-    padding: 3px 6px;
-    background: transparent;
+/* .stat-chip replaced by button.stat-nav-btn + env-chip */
+.stat-nav-btn {
+    background: none;
     border: none;
-    border-radius: 5px;
+    padding: 0;
     cursor: pointer;
-    transition: background 0.15s;
-    white-space: nowrap;
-}
-
-.stat-chip:hover {
-    background: var(--bg-hover);
-}
-
-.stat-chip:hover .stat-chip-value {
-    color: var(--accent-primary);
 }
 
 .stat-chip-value {
@@ -147,7 +134,6 @@
     font-weight: 700;
     color: var(--text-primary);
     font-family: var(--font-mono);
-    transition: color 0.15s;
 }
 
 .stat-chip-label {
@@ -519,18 +505,7 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
-
-.space-limit-badge {
-    margin-left: auto;
-    font-size: 10px;
-    font-weight: 700;
-    font-family: var(--font-mono);
-    color: var(--text-tertiary);
-    background: var(--bg-app);
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    padding: 1px 5px;
-}
+/* .space-limit-badge replaced by env-badge variant="warning" size="xs" */
 
 /* Security Section */
 .security-row {

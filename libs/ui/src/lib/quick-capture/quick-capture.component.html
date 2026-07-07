@@ -30,10 +30,7 @@
       <!-- Intent preview -->
       @if (intent() && !success()) {
         <div class="qc-intent-row">
-          <span class="qc-type-chip" [style.background]="typeMeta()!.color + '22'" [style.color]="typeMeta()!.color">
-            <span class="material-symbols-outlined" style="font-size:14px">{{ typeMeta()!.icon }}</span>
-            {{ typeMeta()!.label }}
-          </span>
+          <env-chip size="sm" [customColor]="typeMeta()!.color" [icon]="typeMeta()!.icon">{{ typeMeta()!.label }}</env-chip>
           @for (hint of fieldHints(); track hint) {
             <span class="qc-field-hint">{{ hint }}</span>
           }

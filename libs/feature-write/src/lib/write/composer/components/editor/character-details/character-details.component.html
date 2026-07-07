@@ -24,15 +24,15 @@
                     placeholder="Enter character name…" spellcheck="false" />
             </div>
             <div class="ne-char-hero-meta">
-                <span class="ne-ent-type-pill">
-                    <span class="material-symbols-outlined">person</span>
+                <env-badge variant="default" [pill]="true">
+                    <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;">person</span>
                     CHARACTER
-                </span>
+                </env-badge>
                 @if (c.role) {
-                <span class="ne-ent-attr-chip">{{ c.role }}</span>
+                <env-badge variant="accent">{{ c.role }}</env-badge>
                 }
                 @if (c.archetype) {
-                <span class="ne-ent-attr-chip ne-ent-attr-chip--muted">{{ c.archetype }}</span>
+                <env-badge variant="default">{{ c.archetype }}</env-badge>
                 }
                 @for (tag of (c.tags ?? []); track tag) {
                 <span class="ne-char-hero-tag">{{ tag }}</span>

@@ -174,14 +174,6 @@
   color: var(--text-tertiary);
 }
 
-.an-chip {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: var(--bg-active);
-  color: var(--accent-primary);
-}
 
 /* ── Top row ────────────────────────────────────────────────────────────────── */
 .an-top-row {
@@ -571,14 +563,6 @@
   text-overflow: ellipsis;
 }
 
-.an-book-status {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-}
 
 .an-book-stats {
   display: flex;

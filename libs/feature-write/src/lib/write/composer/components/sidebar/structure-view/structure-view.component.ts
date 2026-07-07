@@ -1,6 +1,7 @@
 import { Component, input, output, computed, inject, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BookContentService, FrontMatterItem, Prologue } from '@envello/core';
+import { BadgeComponent } from '@envello/ui';
 
 type FrontMatterType = 'title-page' | 'copyright' | 'toc' | 'dedication' | 'foreword' | 'preface';
 
@@ -17,7 +18,7 @@ const FM_OPTIONS_BY_TYPE: Record<string, FrontMatterType[]> = {
 @Component({
   selector: 'app-structure-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent],
   templateUrl: './structure-view.component.html',
   styleUrls: [
     './structure-view.component.css',

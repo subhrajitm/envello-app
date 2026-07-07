@@ -118,16 +118,7 @@
   background: var(--bg-hover);
 }
 
-.qc-type-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px 3px 8px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .02em;
-}
+/* .qc-type-chip replaced by env-chip [customColor] */
 
 .qc-field-hint {
   font-size: 12px;

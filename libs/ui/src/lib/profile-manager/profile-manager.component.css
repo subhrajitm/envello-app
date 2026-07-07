@@ -29,19 +29,10 @@
   gap: 16px;
 }
 
-/* Space limit badge inside button */
+/* Space limit badge replaced by env-badge variant="warning" size="xs" */
 .create-profile-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.limit-badge {
-    font-size: 10px;
-    font-family: var(--font-mono);
-    background: rgba(255,255,255,0.2);
-    border-radius: 4px;
-    padding: 1px 5px;
-    margin-left: 2px;
 }
 
 /* Search bar */
@@ -197,16 +188,7 @@
     white-space: nowrap;
 }
 
-.active-badge {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    color: var(--accent-primary);
-    background: var(--accent-primary)1a;
-    padding: 2px 8px;
-    border-radius: 20px;
-}
+/* .active-badge replaced by env-badge variant="success" size="xs" [pill]="true" */
 
 .card-star {
     font-size: 16px;

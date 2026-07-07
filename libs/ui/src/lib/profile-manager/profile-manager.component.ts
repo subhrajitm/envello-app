@@ -4,11 +4,12 @@ import { WorkspaceProfileService, UserService, StoreService } from '@envello/cor
 import { ModalComponent } from '../modal/modal.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { FormsModule } from '@angular/forms';
+import { BadgeComponent } from '../badge/badge.component';
 
 @Component({
   selector: 'app-profile-manager',
   standalone: true,
-  imports: [CommonModule, ModalComponent, FormsModule, DatePipe, ConfirmDialogComponent],
+  imports: [CommonModule, ModalComponent, FormsModule, DatePipe, ConfirmDialogComponent, BadgeComponent],
   templateUrl: './profile-manager.component.html',
   styleUrl: './profile-manager.component.css'
 })

@@ -21,19 +21,25 @@
 
     <!-- Quick Stats — compact inline bar -->
     <div class="quick-stats">
-        <button class="stat-chip" (click)="openWords()" title="Go to Notes">
-            <span class="stat-chip-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
-            <span class="stat-chip-label">words</span>
+        <button class="stat-nav-btn" (click)="openWords()" title="Go to Notes">
+            <env-chip size="sm">
+                <span class="stat-chip-value">{{ formatNumber(user()?.stats?.totalWords || 0) }}</span>
+                <span class="stat-chip-label">words</span>
+            </env-chip>
         </button>
         <span class="stat-chip-sep">·</span>
-        <button class="stat-chip" (click)="openDocuments()" title="Go to Write">
-            <span class="stat-chip-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
-            <span class="stat-chip-label">docs</span>
+        <button class="stat-nav-btn" (click)="openDocuments()" title="Go to Write">
+            <env-chip size="sm">
+                <span class="stat-chip-value">{{ user()?.stats?.totalDocuments || 0 }}</span>
+                <span class="stat-chip-label">docs</span>
+            </env-chip>
         </button>
         <span class="stat-chip-sep">·</span>
-        <button class="stat-chip" (click)="openAnalytics()" title="Go to Analytics">
-            <span class="stat-chip-value">{{ user()?.stats?.daysActive || 0 }}</span>
-            <span class="stat-chip-label">days active</span>
+        <button class="stat-nav-btn" (click)="openAnalytics()" title="Go to Analytics">
+            <env-chip size="sm">
+                <span class="stat-chip-value">{{ user()?.stats?.daysActive || 0 }}</span>
+                <span class="stat-chip-label">days active</span>
+            </env-chip>
         </button>
     </div>
 
@@ -69,7 +75,7 @@
                     [title]="canAddSpace() ? 'New workspace' : 'Limit reached (' + maxSpaces + ')'">
                     <span class="material-symbols-outlined">add</span>
                     @if (!canAddSpace()) {
-                    <span class="space-limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
+                    <env-badge variant="warning" size="xs">{{ workspaces().length }}/{{ maxSpaces }}</env-badge>
                     }
                 </button>
             </div>

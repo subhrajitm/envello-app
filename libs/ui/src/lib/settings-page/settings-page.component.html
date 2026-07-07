@@ -193,7 +193,7 @@
               <span class="nav-section-icon material-symbols-outlined">{{ item.icon }}</span>
               <span>{{ item.label }}</span>
               @if (item.desktopOnly) {
-                <span class="badge-platform">Desktop only</span>
+                <env-badge variant="info" size="xs">Desktop only</env-badge>
               }
             </div>
 
@@ -459,7 +459,13 @@
                     </div>
                     @for (s of googleGmail.suggestions(); track s.id) {
                       <div class="conn-suggestion-row">
-                        <div class="conn-sug-kind conn-sug-kind--{{ s.kind }}">{{ s.kind }}</div>
+                        @switch (s.kind) {
+                          @case ('subscription') { <env-badge variant="info" size="xs">{{ s.kind }}</env-badge> }
+                          @case ('task')         { <env-badge variant="warning" size="xs">{{ s.kind }}</env-badge> }
+                          @case ('meeting')      { <env-badge variant="success" size="xs">{{ s.kind }}</env-badge> }
+                          @case ('contact')      { <env-badge variant="purple" size="xs">{{ s.kind }}</env-badge> }
+                          @default               { <env-badge variant="default" size="xs">{{ s.kind }}</env-badge> }
+                        }
                         <div class="conn-sug-body">
                           <div class="conn-sug-title">{{ s.data['name'] ?? s.data['title'] ?? s.source.subject }}</div>
                           <div class="conn-sug-meta">{{ s.source.from }} · {{ s.source.date }}</div>
@@ -680,10 +686,7 @@
                 <span class="material-symbols-outlined feature-icon">{{ feat.icon }}</span>
                 <span>{{ feat.label }}</span>
                 @if (featureOverridesWithMissingKey().includes(feat.id)) {
-                  <span class="feature-warn-badge" title="API key missing for this provider">
-                    <span class="material-symbols-outlined settings-icon-xs">key_off</span>
-                    No key
-                  </span>
+                  <env-badge variant="warning" size="xs" icon="key_off" title="API key missing for this provider">No key</env-badge>
                 } @else {
                   <span class="feature-model-hint">{{ feat.hint }}</span>
                 }
@@ -719,7 +722,7 @@
           </div>
           @for (prov of extraProvidersNeeded(); track prov) {
           <div class="api-key-row">
-            <span class="provider-key-badge">{{ getProviderLabel(prov) }}</span>
+            <env-badge variant="default" size="sm" [bordered]="true">{{ getProviderLabel(prov) }}</env-badge>
             <input type="password" class="form-input"
               [ngModel]="aiService.extraProviderKeys()[prov] || ''"
               (ngModelChange)="aiService.setExtraProviderKey(prov, $event)"
@@ -878,7 +881,7 @@
           </div>
           <div class="setting-item setting-row setting-row--disabled">
             <div class="setting-label-group">
-              <label>Sound Effects <span class="badge-coming-soon">Coming soon</span></label>
+              <label>Sound Effects <env-badge variant="default" size="xs">Coming soon</env-badge></label>
               <span class="setting-desc">Play sounds for actions</span>
             </div>
             <label class="toggle">
@@ -890,7 +893,7 @@
 
         <div class="setting-item setting-row setting-row--disabled">
           <div class="setting-label-group">
-            <label>Daily Summary <span class="badge-coming-soon">Coming soon</span></label>
+            <label>Daily Summary <env-badge variant="default" size="xs">Coming soon</env-badge></label>
             <span class="setting-desc">Receive daily progress report</span>
           </div>
           <label class="toggle">
@@ -911,7 +914,7 @@
 
         <div class="setting-item setting-row setting-row--disabled">
           <div class="setting-label-group">
-            <label>Analytics <span class="badge-coming-soon">Coming soon</span></label>
+            <label>Analytics <env-badge variant="default" size="xs">Coming soon</env-badge></label>
             <span class="setting-desc">Share anonymous usage data to improve Envello</span>
           </div>
           <label class="toggle">
@@ -1196,7 +1199,7 @@
             <span class="info-label">Current device</span>
             <span class="info-value">
               {{ currentDevice }}
-              <span class="sec-current-badge">Current</span>
+              <env-badge variant="success" size="xs" [pill]="true">Current</env-badge>
             </span>
           </div>
           @if (currentUserEmail()) {

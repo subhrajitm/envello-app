@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { BinService } from '@envello/core';
 import { BinEntryType } from '@envello/domain';
-import { ConfirmDialogComponent } from '@envello/ui';
+import { ChipComponent, ConfirmDialogComponent } from '@envello/ui';
 
 type FilterType = 'ALL' | BinEntryType;
 
@@ -14,7 +14,7 @@ interface ConfirmDialog {
 @Component({
   selector: 'app-bin',
   standalone: true,
-  imports: [ConfirmDialogComponent],
+  imports: [ConfirmDialogComponent, ChipComponent],
   templateUrl: './bin.component.html',
   styleUrl: './bin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

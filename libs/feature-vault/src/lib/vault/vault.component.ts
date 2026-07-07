@@ -162,11 +162,11 @@ export class VaultComponent {
     { key: 'name',     header: 'Credential', type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',       type: 'badge', sortable: true,
       badgeMap: {
-        login:   { label: 'Login',       variant: 'success' },
-        api_key: { label: 'API Key',     variant: 'info'    },
-        ssh:     { label: 'SSH',         variant: 'purple'  },
-        db:      { label: 'Database',    variant: 'warning' },
-        note:    { label: 'Secure Note', variant: 'warning' },
+        login:   { label: 'Login',       variant: 'success', icon: 'person'      },
+        api_key: { label: 'API Key',     variant: 'info',    icon: 'key'         },
+        ssh:     { label: 'SSH',         variant: 'purple',  icon: 'terminal'    },
+        db:      { label: 'Database',    variant: 'warning', icon: 'storage'     },
+        note:    { label: 'Secure Note', variant: 'warning', icon: 'lock'        },
       }
     },
     { key: 'username', header: 'Username' },

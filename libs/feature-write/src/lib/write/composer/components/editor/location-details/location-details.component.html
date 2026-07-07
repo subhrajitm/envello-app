@@ -30,10 +30,10 @@
                     placeholder="Enter location name…" spellcheck="false" />
             </div>
             <div class="ne-loc-hero-meta">
-                <span class="ne-ent-type-pill">
-                    <span class="material-symbols-outlined">location_on</span>
+                <env-badge variant="default" [pill]="true">
+                    <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;">location_on</span>
                     LOCATION
-                </span>
+                </env-badge>
                 <input class="ne-loc-type-input" type="text" [value]="loc.type"
                     (input)="emit(loc.id, 'type', $any($event.target).value)"
                     placeholder="Set type…"

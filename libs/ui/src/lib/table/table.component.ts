@@ -15,7 +15,7 @@ export interface EnvTableColumn {
    * Prefer `variant` (uses theme-aware CSS variables). Fall back to `dotColor` for custom colors.
    * Example: { 'Done': { label: 'Done', variant: 'success' } }
    */
-  badgeMap?: Record<string, { label?: string; variant?: BadgeVariant; dotColor?: string; bgColor?: string; textColor?: string }>;
+  badgeMap?: Record<string, { label?: string; variant?: BadgeVariant; icon?: string; dotColor?: string; bgColor?: string; textColor?: string }>;
 }
 
 export interface EnvTableTab {
@@ -300,9 +300,9 @@ export class TableComponent implements OnChanges {
     return cell.avatar ? `url(${cell.avatar})` : '';
   }
 
-  getBadge(row: EnvTableRow, col: EnvTableColumn): { label: string; variant: BadgeVariant; dotColor: string } {
+  getBadge(row: EnvTableRow, col: EnvTableColumn): { label: string; variant: BadgeVariant; dotColor: string; icon: string } {
     const val      = row[col.key];
-    const fallback = { label: String(val ?? ''), variant: 'default' as BadgeVariant, dotColor: '' };
+    const fallback = { label: String(val ?? ''), variant: 'default' as BadgeVariant, dotColor: '', icon: '' };
     if (!col.badgeMap) return fallback;
     const entry = col.badgeMap[val];
     if (!entry) return fallback;
@@ -310,6 +310,7 @@ export class TableComponent implements OnChanges {
       label:    entry.label ?? String(val ?? ''),
       variant:  entry.variant ?? 'default',
       dotColor: entry.variant ? '' : (entry.dotColor ?? ''),
+      icon:     entry.icon ?? '',
     };
   }
 

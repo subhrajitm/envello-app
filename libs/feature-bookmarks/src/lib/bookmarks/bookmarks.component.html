@@ -101,7 +101,7 @@
         <!-- Active filter chips -->
         @if (selectedTags().length > 0) {
           @for (tag of selectedTags(); track tag) {
-            <env-chip variant="accent" [removable]="true" (removed)="toggleTagFilter(tag)">#{{ tag }}</env-chip>
+            <env-chip [removable]="true" (removed)="toggleTagFilter(tag)">#{{ tag }}</env-chip>
           }
           <button class="bm-filter-clear filter-clear" (click)="clearFilters()">Clear</button>
           <div class="bm-tb-divider"></div>
@@ -631,7 +631,7 @@
               <span class="bm-ao-group-name">{{ group.folder.name }}</span>
               <span class="bm-ao-group-count">{{ group.bookmarks.length }}</span>
               @if (isNewFolder(group.folder.name)) {
-                <span class="bm-ao-new-badge">New</span>
+                <env-badge variant="success">New</env-badge>
               }
             </div>
             <div class="bm-ao-group-items">

@@ -53,16 +53,6 @@
     color: var(--text-primary);
 }
 
-.unread-badge {
-    padding: 1px 6px;
-    background: var(--accent-primary);
-    color: var(--accent-primary-text);
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 700;
-    font-family: var(--font-mono);
-}
-
 .header-actions {
     display: flex;
     gap: 4px;

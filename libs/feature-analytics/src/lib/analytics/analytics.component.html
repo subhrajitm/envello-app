@@ -271,7 +271,7 @@
     <div class="an-card">
       <div class="an-card-header">
         <span class="an-card-label">Tasks</span>
-        <span class="an-chip">{{ s.tasks.total }} total</span>
+        <env-badge variant="accent">{{ s.tasks.total }} total</env-badge>
       </div>
 
       <div class="an-metric">
@@ -333,7 +333,7 @@
     <div class="an-card">
       <div class="an-card-header">
         <span class="an-card-label">Meetings</span>
-        <span class="an-chip">{{ s.meetings.inPeriod }} this period</span>
+        <env-badge variant="accent">{{ s.meetings.inPeriod }} this period</env-badge>
       </div>
 
       <div class="an-meeting-stats">
@@ -399,7 +399,7 @@
     <div class="an-card">
       <div class="an-card-header">
         <span class="an-card-label">Notes</span>
-        <span class="an-chip">{{ s.notes.total }} total</span>
+        <env-badge variant="accent">{{ s.notes.total }} total</env-badge>
       </div>
 
       <div class="an-meeting-stats">
@@ -456,7 +456,7 @@
       <div class="an-card-header">
         <span class="an-card-label">Writing</span>
         @if (s.writing.overallVelocity > 0) {
-          <span class="an-chip">{{ s.writing.overallVelocity }} words/day</span>
+          <env-badge variant="accent">{{ s.writing.overallVelocity }} words/day</env-badge>
         }
       </div>
 
@@ -465,7 +465,7 @@
           <div class="an-book">
             <div class="an-book-header">
               <span class="an-book-title">{{ book.title }}</span>
-              <span class="an-book-status">{{ bookStatusLabel(book.status) }}</span>
+              <env-badge [variant]="bookStatusVariant(book.status)">{{ bookStatusLabel(book.status) }}</env-badge>
             </div>
             <div class="an-track">
               <div class="an-fill an-fill--purple" [style.width.%]="book.progress"></div>

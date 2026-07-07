@@ -517,19 +517,19 @@ export class VendorComponent {
     readonly tableColumns: EnvTableColumn[] = [
         { key: 'service', header: 'Name',   type: 'avatar-text', sortable: true },
         { key: 'type',    header: 'Type',   type: 'badge', badgeMap: {
-            'recurring': { label: 'Recurring', variant: 'info'    },
-            'one-time':  { label: 'One-time',  variant: 'purple'  },
-            'bill':      { label: 'Bill',      variant: 'warning' },
-            'purchase':  { label: 'Purchase',  variant: 'success' },
-            'refund':    { label: 'Refund',    variant: 'success' },
+            'recurring': { label: 'Recurring', variant: 'info',    icon: 'autorenew'       },
+            'one-time':  { label: 'One-time',  variant: 'purple',  icon: 'receipt'         },
+            'bill':      { label: 'Bill',      variant: 'warning', icon: 'receipt_long'    },
+            'purchase':  { label: 'Purchase',  variant: 'success', icon: 'shopping_bag'    },
+            'refund':    { label: 'Refund',    variant: 'success', icon: 'currency_exchange'},
         }},
         { key: 'amount',  header: 'Amount', sortable: true },
         { key: 'date',    header: 'Date',   sortable: true },
         { key: 'status',  header: 'Status', type: 'badge', badgeMap: {
-            active:    { label: 'Active',    variant: 'success' },
-            paused:    { label: 'Paused',    variant: 'warning' },
-            cancelled: { label: 'Cancelled', variant: 'default' },
-            completed: { label: 'Completed', variant: 'info'    },
+            active:    { label: 'Active',    variant: 'success', icon: 'check_circle'  },
+            paused:    { label: 'Paused',    variant: 'warning', icon: 'pause_circle'  },
+            cancelled: { label: 'Cancelled', variant: 'default', icon: 'cancel'        },
+            completed: { label: 'Completed', variant: 'info',    icon: 'done_all'      },
         }},
     ];
 

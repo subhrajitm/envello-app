@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BadgeComponent, BadgeVariant } from '@envello/ui';
 
 interface Project {
   id: string;
@@ -13,7 +14,7 @@ interface Project {
 @Component({
   selector: 'app-project-oversight',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BadgeComponent],
   templateUrl: './project-oversight.component.html',
   styleUrl: './project-oversight.component.css'
 })
@@ -53,18 +54,13 @@ export class ProjectOversightComponent {
     },
   ]);
 
-  getStatusColor(status: string): string {
+  getStatusVariant(status: string): BadgeVariant {
     switch (status) {
-      case 'DRAFTING':
-        return 'status-yellow';
-      case 'PLANNING':
-        return 'status-blue';
-      case 'COMPLETE':
-        return 'status-green';
-      case 'REVIEW':
-        return 'status-orange';
-      default:
-        return 'status-gray';
+      case 'DRAFTING': return 'warning';
+      case 'PLANNING': return 'info';
+      case 'COMPLETE': return 'success';
+      case 'REVIEW':   return 'accent';
+      default:         return 'default';
     }
   }
 }

@@ -13,6 +13,7 @@ import { Task } from '@envello/domain';
 import { DesktopSyncSettingsService, DesktopDataService, BACKUP_ELIGIBLE_COLLECTIONS, BookContentService, TauriService, SyncService, DataExportService, EXPORT_COLLECTIONS, ExportFormat, ContentImportService, ImportSource, ImportTarget, ImportResult, CrashReportingService, CrashReport } from '@envello/core';
 import { DataService } from '@envello/data';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { BadgeComponent } from '../badge/badge.component';
 import { AuthService, UserActivityLogService, ActivityEntry, ActivityAction } from '@envello/core';
 
 interface SettingsSection {
@@ -37,7 +38,7 @@ interface AiProviderOption {
 @Component({
   selector: 'app-settings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, EnvLogoComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, EnvLogoComponent, ConfirmDialogComponent, BadgeComponent],
   templateUrl: './settings-page.component.html',
   styleUrl: './settings-page.component.css'
 })

@@ -1105,12 +1105,6 @@
   background: var(--accent-primary-dim); color: var(--accent-primary);
   border-radius: 10px; padding: 1px 7px;
 }
-.bm-ao-new-badge {
-  font-size: 10px; font-weight: 700;
-  background: color-mix(in srgb, var(--accent-green, var(--accent-green)) 15%, transparent);
-  color: var(--accent-green, var(--accent-green));
-  border-radius: 10px; padding: 1px 6px; letter-spacing: 0.03em;
-}
 
 .bm-ao-group-items { padding: 4px 0; }
 .bm-ao-item {

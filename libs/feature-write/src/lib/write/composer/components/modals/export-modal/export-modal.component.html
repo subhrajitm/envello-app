@@ -65,10 +65,12 @@
       <div class="ne-export-section-label">Format</div>
       <div class="ne-export-format-row">
         @for (fmt of formats(); track fmt.key) {
-        <button class="ne-export-chip" [class.selected]="selectedFormat() === fmt.key"
+        <button class="ne-format-btn" [class.selected]="selectedFormat() === fmt.key"
                 (click)="selectedFormat.set(fmt.key)">
-          <span class="material-symbols-outlined">{{ fmt.icon }}</span>
-          {{ fmt.label }}
+          <env-badge [variant]="selectedFormat() === fmt.key ? 'accent' : 'default'" [pill]="true">
+            <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">{{ fmt.icon }}</span>
+            {{ fmt.label }}
+          </env-badge>
         </button>
         }
       </div>

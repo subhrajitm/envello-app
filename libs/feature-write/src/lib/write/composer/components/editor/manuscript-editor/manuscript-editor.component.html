@@ -80,9 +80,9 @@
                         }
                     </span>
                     <span class="meta-sep">•</span>
-                    <span class="word-count-chip">{{ wordCount() | number }} words</span>
+                    <env-badge variant="default">{{ wordCount() | number }} words</env-badge>
                     @if (sessionWords() > 0) {
-                    <span class="session-words-chip">+{{ sessionWords() }} today</span>
+                    <env-badge variant="success">+{{ sessionWords() }} today</env-badge>
                     }
                 </div>
             </div>

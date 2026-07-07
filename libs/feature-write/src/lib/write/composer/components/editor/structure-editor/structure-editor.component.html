@@ -17,9 +17,9 @@
                         (ngModelChange)="bookService.updateFrontMatterTitle(item.id, $event)"
                         [placeholder]="getFrontMatterTypeLabel(item.type)" />
                     <div class="ne-doc-meta">
-                        <span class="ne-draft-tag">{{ getFrontMatterTypeLabel(item.type) }}</span>
+                        <env-badge variant="warning">{{ getFrontMatterTypeLabel(item.type) }}</env-badge>
                         <span class="meta-sep">•</span>
-                        <span class="word-count-chip">{{ item.wordCount }} words</span>
+                        <env-badge variant="default">{{ item.wordCount }} words</env-badge>
                     </div>
                     <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
                 </div>
@@ -43,9 +43,9 @@
                     (ngModelChange)="bookService.updatePrologueTitle($event)"
                     placeholder="Prologue Title" />
                 <div class="ne-doc-meta">
-                    <span class="ne-draft-tag">{{ p.status }}</span>
+                    <env-badge variant="warning">{{ p.status }}</env-badge>
                     <span class="meta-sep">•</span>
-                    <span class="word-count-chip">{{ p.wordCount }} words</span>
+                    <env-badge variant="default">{{ p.wordCount }} words</env-badge>
                 </div>
                 <tiptap-editor [editor]="editor()" class="ne-editor-text"></tiptap-editor>
             </div>

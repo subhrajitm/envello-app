@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { StoreService } from '@envello/core';
+import { BadgeComponent, BadgeVariant } from '@envello/ui';
 
 @Component({
   selector: 'app-project-oversight',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, BadgeComponent],
   templateUrl: './project-oversight.component.html',
   styleUrl: './project-oversight.component.css'
 })
@@ -15,18 +16,13 @@ export class ProjectOversightComponent {
   projects = this.store.spaces;
 
 
-  getStatusColor(status: string): string {
+  getStatusVariant(status: string): BadgeVariant {
     switch (status) {
-      case 'DRAFTING':
-        return 'status-yellow';
-      case 'PLANNING':
-        return 'status-blue';
-      case 'COMPLETE':
-        return 'status-green';
-      case 'REVIEW':
-        return 'status-orange';
-      default:
-        return 'status-gray';
+      case 'DRAFTING': return 'warning';
+      case 'PLANNING': return 'info';
+      case 'COMPLETE': return 'success';
+      case 'REVIEW':   return 'accent';
+      default:         return 'default';
     }
   }
 }

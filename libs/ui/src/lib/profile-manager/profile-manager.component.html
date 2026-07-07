@@ -10,7 +10,7 @@
                 <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
                 New Workspace
                 @if (!canAddSpace()) {
-                <span class="limit-badge">{{ workspaces().length }}/{{ maxSpaces }}</span>
+                <env-badge variant="warning" size="xs">{{ workspaces().length }}/{{ maxSpaces }}</env-badge>
                 }
             </button>
         </div>
@@ -45,7 +45,7 @@
                     <div class="card-top-row">
                         <span class="material-symbols-outlined card-star">star</span>
                         @if (activeWorkspace().id === wp.id) {
-                            <span class="active-badge">Active</span>
+                            <env-badge variant="success" size="xs" [pill]="true">Active</env-badge>
                         }
                     </div>
 

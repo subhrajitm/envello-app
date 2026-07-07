@@ -52,42 +52,42 @@
 }
 
 .env-badge--success {
-  background: color-mix(in srgb, var(--accent-green) 15%, transparent);
-  color: var(--accent-green);
+  background: var(--accent-green);
+  color: #fff;
 }
 
 .env-badge--warning {
-  background: color-mix(in srgb, var(--accent-yellow) 15%, transparent);
-  color: var(--accent-yellow);
+  background: var(--accent-yellow);
+  color: #1a1008;
 }
 
 .env-badge--error {
-  background: color-mix(in srgb, var(--accent-red) 15%, transparent);
-  color: var(--accent-red);
+  background: var(--accent-red);
+  color: #fff;
 }
 
 .env-badge--accent {
-  background: var(--accent-primary-dim);
-  color: var(--accent-primary);
+  background: var(--accent-primary);
+  color: var(--accent-primary-text, #fff);
 }
 
 .env-badge--info {
-  background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
-  color: var(--accent-blue);
+  background: var(--accent-blue);
+  color: #fff;
 }
 
 .env-badge--purple {
-  background: color-mix(in srgb, var(--accent-indigo) 15%, transparent);
-  color: var(--accent-indigo);
+  background: var(--accent-indigo);
+  color: #fff;
 }
 
 /* ── Custom color via --badge-custom-color ── */
 .env-badge--custom {
-  background: color-mix(in srgb, var(--badge-custom-color) 15%, transparent);
-  color: var(--badge-custom-color);
+  background: var(--badge-custom-color);
+  color: #fff;
 }
 
 /* ── Bordered variant ── */
 .env-badge--bordered {
-  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
 }

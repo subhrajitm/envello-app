@@ -8,7 +8,7 @@
             <span class="material-symbols-outlined">notifications</span>
             <h3>Notifications</h3>
             @if (unreadCount() > 0) {
-            <span class="unread-badge">{{ unreadCount() }}</span>
+            <env-badge size="xs" variant="accent" [pill]="true">{{ unreadCount() }}</env-badge>
             }
         </div>
         <div class="header-actions flex items-center gap-1">

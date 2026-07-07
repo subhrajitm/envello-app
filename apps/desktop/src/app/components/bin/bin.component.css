@@ -63,31 +63,12 @@
     flex-wrap: wrap;
 }
 
-.filter-pill {
-    background: transparent;
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-    padding: 0 10px;
-    height: 28px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
+.bin-filter-pills button {
+    background: none;
+    border: none;
+    padding: 0;
     cursor: pointer;
-    transition: all 0.12s;
-    white-space: nowrap;
-}
-
-.filter-pill:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-highlight);
-    color: var(--text-primary);
-}
-
-.filter-pill.active {
-    background: var(--text-primary);
-    color: var(--bg-app);
-    border-color: var(--text-primary);
-    font-weight: 600;
+    display: flex;
 }
 
 .bin-toolbar-right {

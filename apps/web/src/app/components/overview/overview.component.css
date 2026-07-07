@@ -141,23 +141,6 @@
     color: var(--text-primary);
 }
 
-.plan-tag {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 2px;
-}
-
-.plan-tag.fiction {
-    background: var(--bg-hover);
-    color: var(--accent-blue);
-}
-
-.plan-tag.mystery {
-    background: var(--bg-hover);
-    color: var(--accent-purple);
-}
-
 .plan-stage {
     font-size: 10px;
     color: var(--text-tertiary);
@@ -366,15 +349,6 @@
 
 .day-num.today {
     color: var(--accent-yellow);
-    font-weight: 700;
-}
-
-.today-badge {
-    background: var(--accent-primary-dim);
-    color: var(--accent-yellow);
-    font-size: 10px;
-    padding: 2px 4px;
-    border-radius: 2px;
     font-weight: 700;
 }
 

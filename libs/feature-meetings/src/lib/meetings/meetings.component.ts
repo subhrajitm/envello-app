@@ -18,11 +18,11 @@ import {
   MeetingAutopilotService,
   ContextService,
 } from '@envello/core';
-import { ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent, BadgeComponent, ChipComponent } from '@envello/ui';
+import { BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, EnvTableColumn, EnvTableAction, EnvTableActionEvent, EnvTableSortEvent, AiAssistantPanelComponent, AiPanelMessage, EmptyStateComponent, SliderPanelComponent } from '@envello/ui';
 @Component({
   selector: 'app-meetings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent, SliderPanelComponent, BadgeComponent, ChipComponent],
+  imports: [CommonModule, FormsModule, BadgeComponent, ChipComponent, ConfirmDialogComponent, FeatureSidebarComponent, TableComponent, AiAssistantPanelComponent, EmptyStateComponent, SliderPanelComponent],
   templateUrl: './meetings.component.html',
   styleUrl: './meetings.component.css'
 })
@@ -414,25 +414,25 @@ export class MeetingsComponent {
   readonly tableColumns: EnvTableColumn[] = [
     { key: 'title',    header: 'Title',    type: 'primary-text', sortable: true },
     { key: 'type',     header: 'Type',     type: 'badge', badgeMap: {
-      'video':     { label: 'Video',     variant: 'info'    },
-      'phone':     { label: 'Phone',     variant: 'purple'  },
-      'in-person': { label: 'In Person', variant: 'success' },
-      'hybrid':    { label: 'Hybrid',    variant: 'warning' },
+      'video':     { label: 'Video',     variant: 'info',    icon: 'videocam'   },
+      'phone':     { label: 'Phone',     variant: 'purple',  icon: 'phone'      },
+      'in-person': { label: 'In Person', variant: 'success', icon: 'handshake'  },
+      'hybrid':    { label: 'Hybrid',    variant: 'warning', icon: 'devices'    },
     }},
     { key: 'date',     header: 'Date',     sortable: true },
     { key: 'time',     header: 'Time' },
     { key: 'space',  header: 'Project' },
     { key: 'attendees',header: 'Attendees' },
     { key: 'status',   header: 'Status',   type: 'badge', badgeMap: {
-      'scheduled':  { label: 'Scheduled',  variant: 'info'    },
-      'in_progress':{ label: 'In Progress',variant: 'warning' },
-      'completed':  { label: 'Done',       variant: 'success' },
-      'cancelled':  { label: 'Cancelled',  variant: 'error'   },
+      'scheduled':  { label: 'Scheduled',  variant: 'info',    icon: 'event'          },
+      'in_progress':{ label: 'In Progress',variant: 'warning', icon: 'pending'        },
+      'completed':  { label: 'Done',       variant: 'success', icon: 'check_circle'   },
+      'cancelled':  { label: 'Cancelled',  variant: 'error',   icon: 'event_busy'     },
     }},
     { key: 'priority', header: 'Priority', type: 'badge', badgeMap: {
-      'HIGH':   { label: 'High',   variant: 'error'   },
-      'MEDIUM': { label: 'Medium', variant: 'warning' },
-      'LOW':    { label: 'Low',    variant: 'success' },
+      'HIGH':   { label: 'High',   variant: 'error',   icon: 'keyboard_double_arrow_up'   },
+      'MEDIUM': { label: 'Medium', variant: 'warning', icon: 'drag_handle'                },
+      'LOW':    { label: 'Low',    variant: 'success', icon: 'keyboard_double_arrow_down' },
     }},
   ];
 

@@ -1,6 +1,7 @@
 import { Component, input, output, signal, ViewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChipComponent } from '../chip/chip.component';
 
 export interface AiPanelMessage {
   role: 'user' | 'assistant';
@@ -10,7 +11,7 @@ export interface AiPanelMessage {
 @Component({
   selector: 'env-ai-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ChipComponent],
   templateUrl: './ai-assistant-panel.component.html',
   styleUrl: './ai-assistant-panel.component.css',
 })
