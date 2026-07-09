@@ -50,6 +50,10 @@ export class StoreService {
     private _pendingLoad = false;
     /** Notes with in-flight DB upserts — loadFromDb() keeps in-memory version for these. */
     private _pendingNoteUpserts = new Map<string, Note>();
+    /** Task IDs whose soft-delete upsert hasn't landed yet — loadFromDb() excludes these. */
+    private _pendingTaskDeletes = new Set<string>();
+    /** Tasks added but whose upsert hasn't landed yet — loadFromDb() keeps them in-memory. */
+    private _pendingTaskAdds = new Map<string, Task>();
 
     constructor() {
         this.loadFromDb();
@@ -150,11 +154,14 @@ export class StoreService {
             // The finally block will schedule a fresh load for the new profile.
             if (generation !== this._loadGeneration) return;
 
-            // Tasks — cap, exclude soft-deleted
+            // Tasks — cap, exclude soft-deleted and in-flight deletes
             const activeTasks = (tasks || [])
-                .filter(t => !t.deleted_at)
+                .filter(t => !t.deleted_at && !this._pendingTaskDeletes.has(t.id))
                 .slice(0, StoreService.LIMITS.tasks);
-            this.tasks.set(activeTasks);
+            // Preserve tasks added but not yet in DB (same pattern as pendingNotes)
+            const dbTaskIds = new Set(activeTasks.map(t => t.id));
+            const pendingAdds = [...this._pendingTaskAdds.values()].filter(t => !dbTaskIds.has(t.id));
+            this.tasks.set([...activeTasks, ...pendingAdds]);
 
             // Notes — strip content from metadata load; content is lazy-loaded via loadNoteContent().
             // Preserves any in-memory notes not yet in DB (just-created, not yet persisted).
@@ -336,7 +343,10 @@ export class StoreService {
     addTask(task: Task) {
         this.tasks.update(tasks => [...tasks, task]);
         this.addActivity('Task created: ' + task.title, 'system');
-        this.db.upsert('tasks', task).catch(e => console.error('[StoreService] persist task failed', e));
+        this._pendingTaskAdds.set(task.id, task);
+        this.db.upsert('tasks', task)
+            .catch(e => console.error('[StoreService] persist task failed', e))
+            .finally(() => this._pendingTaskAdds.delete(task.id));
     }
 
     updateTask(id: string, updates: Partial<Task>) {
@@ -352,8 +362,10 @@ export class StoreService {
         if (!task) return;
         this.tasks.update(list => list.filter(t => t.id !== id));
         this.addActivity('Task deleted', 'system');
+        this._pendingTaskDeletes.add(id);
         this.db.upsert('tasks', { ...task, deleted_at: new Date().toISOString() })
-            .catch(e => console.error('[StoreService] soft-delete task failed', e));
+            .catch(e => console.error('[StoreService] soft-delete task failed', e))
+            .finally(() => this._pendingTaskDeletes.delete(id));
     }
 
     async addNote(note: Note) {
