@@ -127,6 +127,19 @@ export class KnowledgeComponent implements OnDestroy {
   selectedFileIds    = signal<string[]>([]);
   generatingSummary  = signal(false);
 
+  // ── Sidebar new collection inline form ────────────────────────────────────
+  sidebarNewColOpen = signal(false);
+  sidebarNewColName = signal('');
+
+  openSidebarNewCol() { this.sidebarNewColOpen.set(true); }
+  saveSidebarNewCol() {
+    if (!this.sidebarNewColName()) return;
+    this.researchService.addCollection({ name: this.sidebarNewColName(), color: '#8b5cf6', description: '' });
+    this.sidebarNewColName.set('');
+    this.sidebarNewColOpen.set(false);
+  }
+  cancelSidebarNewCol() { this.sidebarNewColName.set(''); this.sidebarNewColOpen.set(false); }
+
   // ── Source detail ─────────────────────────────────────────────────────────
   editNotes       = signal('');
   editTitle       = signal('');
@@ -138,6 +151,7 @@ export class KnowledgeComponent implements OnDestroy {
   showLinkTask       = signal(false);
   taskSearch         = signal('');
   showUnsavedWarning = signal(false);
+  showDetailsMeta    = signal(false);
 
   // ── AI Assistant ──────────────────────────────────────────────────────────
   showAssistant = signal(false);
@@ -157,6 +171,11 @@ export class KnowledgeComponent implements OnDestroy {
 
   // ── env-table config ──────────────────────────────────────────────────────
   readonly sourceColumns: EnvTableColumn[] = [
+    { key: 'status', header: 'Status', type: 'badge', sortable: true, badgeMap: {
+      UNREAD:    { label: 'Unread',    variant: 'error',   icon: 'mark_email_unread' },
+      READING:   { label: 'Reading',   variant: 'warning', icon: 'auto_stories'      },
+      PROCESSED: { label: 'Processed', variant: 'success', icon: 'done_all'          },
+    }},
     { key: 'title',      header: 'Source',        type: 'primary-text', sortable: true },
     { key: 'sourceType', header: 'Type',           type: 'badge', sortable: true, badgeMap: {
       WEB:       { label: 'Web',       variant: 'info',    icon: 'language'       },
@@ -165,11 +184,6 @@ export class KnowledgeComponent implements OnDestroy {
       INTERVIEW: { label: 'Interview', variant: 'success', icon: 'mic'            },
       PHYSICAL:  { label: 'Physical',  variant: 'warning', icon: 'menu_book'      },
       ARTICLE:   { label: 'Article',   variant: 'info',    icon: 'article'        },
-    }},
-    { key: 'status', header: 'Status', type: 'badge', sortable: true, badgeMap: {
-      UNREAD:    { label: 'Unread',    variant: 'error',   icon: 'mark_email_unread' },
-      READING:   { label: 'Reading',   variant: 'warning', icon: 'auto_stories'      },
-      PROCESSED: { label: 'Processed', variant: 'success', icon: 'done_all'          },
     }},
     { key: 'meta', header: 'Author · Date', sortable: true },
   ];
@@ -313,7 +327,27 @@ export class KnowledgeComponent implements OnDestroy {
 
   summaries = computed(() => {
     const lib = this.selectedCollection();
-    return lib ? this.researchService.getSummariesByCollection(lib.id) : [];
+    return lib ? this.researchService.getSummariesByCollection(lib.id) : this.researchService.summaries();
+  });
+
+  allSummaries = computed(() => this.researchService.summaries());
+
+  allSummaryTableRows = computed(() => {
+    const { key, direction } = this.summarySort();
+    const rows = this.allSummaries().map(s => ({
+      id:       s.id,
+      title:    s.title,
+      sources:  s.sourceIds.length ? `${s.sourceIds.length} source${s.sourceIds.length !== 1 ? 's' : ''}` : '—',
+      tags:     s.tags.join(', ') || '—',
+      date:     this.formatDate(s.createdDate),
+      _rawDate: s.createdDate,
+    }));
+    return [...rows].sort((a, b) => {
+      const cmp = key === 'title'
+        ? a.title.localeCompare(b.title)
+        : (a._rawDate ?? '').localeCompare(b._rawDate ?? '');
+      return direction === 'asc' ? cmp : -cmp;
+    });
   });
 
   filteredSources = computed(() => {
@@ -517,16 +551,37 @@ export class KnowledgeComponent implements OnDestroy {
     this.closeAddModal();
   }
 
+  private mimeToSourceType(mimeType: string): ResearchSource['sourceType'] {
+    if (mimeType.startsWith('audio/')) return 'INTERVIEW';
+    if (mimeType.startsWith('video/')) return 'VIDEO';
+    if (mimeType === 'application/pdf') return 'PDF';
+    return 'ARTICLE';
+  }
+
+  private createSourcesFromFiles(uploaded: StorageFile[]) {
+    for (const f of uploaded) {
+      this.researchService.addSource({
+        collectionId: f.collectionId,
+        title: f.name.replace(/\.[^/.]+$/, ''),
+        sourceType: this.mimeToSourceType(f.mimeType),
+        tags: [],
+        status: 'UNREAD',
+      });
+    }
+    this.viewMode.set('sources');
+  }
+
   openFileInputFromModal() {
     const collectionId = this.resolveUploadCollectionId();
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
       if (files.length) {
-        this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, collectionId);
         this.closeAddModal();
+        const uploaded = await this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, collectionId);
+        this.createSourcesFromFiles(uploaded);
       }
     };
     input.click();
@@ -549,6 +604,13 @@ export class KnowledgeComponent implements OnDestroy {
       }
     } catch { /* silently fail */ }
     this.fetchingMeta.set(false);
+  }
+
+  onUrlPaste(event: ClipboardEvent) {
+    const text = event.clipboardData?.getData('text') ?? '';
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      setTimeout(() => this.fetchMetadata(), 50);
+    }
   }
 
   // Feature 7: AI-suggest tags
@@ -709,10 +771,10 @@ export class KnowledgeComponent implements OnDestroy {
   closeSummaryModal() { this.showSummaryModal.set(false); }
 
   saveSummary() {
+    if (!this.newSummaryTitle()) return;
     const lib = this.selectedCollection();
-    if (!this.newSummaryTitle() || !lib) return;
     this.researchService.addSummary({
-      collectionId: lib.id, title: this.newSummaryTitle(), content: this.newSummaryContent(),
+      collectionId: lib?.id ?? '', title: this.newSummaryTitle(), content: this.newSummaryContent(),
       sourceIds: this.selectedSourceIds(),
       fileIds: this.selectedFileIds(),
       tags: this.newSummaryTags().split(',').map(t => t.trim()).filter(t => t),
@@ -851,9 +913,10 @@ export class KnowledgeComponent implements OnDestroy {
     const ext = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'm4a' : 'webm';
     const title = this.audioTitle().trim() || `Recording ${new Date().toLocaleString()}`;
     const file = new File([blob], `${title}.${ext}`, { type: blob.type });
-    await this.fileStorage.uploadMany([file], { type: 'direct', id: 'knowledge' }, this.resolveUploadCollectionId());
+    const uploaded = await this.fileStorage.uploadMany([file], { type: 'direct', id: 'knowledge' }, this.resolveUploadCollectionId());
     this.discardRecording();
     this.closeAddModal();
+    this.createSourcesFromFiles(uploaded);
   }
 
   openAudioFileInput() {
@@ -862,9 +925,13 @@ export class KnowledgeComponent implements OnDestroy {
     input.type = 'file';
     input.accept = 'audio/*';
     input.multiple = true;
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const files = Array.from((e.target as HTMLInputElement).files ?? []);
-      if (files.length) { this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, collectionId); this.closeAddModal(); }
+      if (files.length) {
+        this.closeAddModal();
+        const uploaded = await this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, collectionId);
+        this.createSourcesFromFiles(uploaded);
+      }
     };
     input.click();
   }
@@ -881,11 +948,14 @@ export class KnowledgeComponent implements OnDestroy {
   }
 
   // ── File actions ──────────────────────────────────────────────────────────
-  onFileDrop(event: DragEvent) {
+  async onFileDrop(event: DragEvent) {
     event.preventDefault();
     this.isDraggingOver.set(false);
     const files = Array.from(event.dataTransfer?.files ?? []);
-    if (files.length) this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, this.resolveUploadCollectionId());
+    if (files.length) {
+      const uploaded = await this.fileStorage.uploadMany(files, { type: 'direct', id: 'knowledge' }, this.resolveUploadCollectionId());
+      this.createSourcesFromFiles(uploaded);
+    }
   }
 
   onDragOver(event: DragEvent) { event.preventDefault(); this.isDraggingOver.set(true); }
