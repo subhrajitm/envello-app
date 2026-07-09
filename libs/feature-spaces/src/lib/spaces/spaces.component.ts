@@ -7,8 +7,6 @@ import {
   ModalComponent,
   BadgeComponent,
   BadgeVariant,
-  ChipComponent,
-  IconButtonComponent,
   ConfirmDialogComponent,
 } from '@envello/ui';
 
@@ -21,8 +19,6 @@ import {
     ButtonComponent,
     ModalComponent,
     BadgeComponent,
-    ChipComponent,
-    IconButtonComponent,
     ConfirmDialogComponent,
   ],
   templateUrl: './spaces.component.html',

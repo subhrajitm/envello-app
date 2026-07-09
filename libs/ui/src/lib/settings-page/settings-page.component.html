@@ -1373,7 +1373,7 @@
                     <span class="crash-log-url">{{ report.url }}</span>
                   }
                   @if (report.stack) {
-                    <pre class="crash-log-stack">{{ report.stack | slice:0:400 }}{{ (report.stack?.length ?? 0) > 400 ? '…' : '' }}</pre>
+                    <pre class="crash-log-stack">{{ report.stack | slice:0:400 }}{{ report.stack.length > 400 ? '…' : '' }}</pre>
                   }
                 </div>
                 <div class="crash-log-meta">

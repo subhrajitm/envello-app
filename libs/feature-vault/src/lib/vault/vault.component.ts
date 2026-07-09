@@ -5,7 +5,7 @@ import { VaultStore } from '@envello/state';
 import { AiService, VaultUnlockService, ContextService } from '@envello/core';
 import { Credential } from '@envello/domain';
 import { VaultUnlockComponent } from '../vault-unlock/vault-unlock.component';
-import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, BadgeComponent, ChipComponent } from '@envello/ui';
+import { AiAssistantPanelComponent, AiPanelMessage, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, ChipComponent } from '@envello/ui';
 import type { EnvTableColumn, EnvTableAction, EnvTableSortEvent, EnvTableActionEvent } from '@envello/ui';
 
 const TYPE_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
@@ -29,7 +29,7 @@ const URL_LABEL: Record<string, string> = {
 @Component({
   selector: 'app-vault',
   standalone: true,
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, VaultUnlockComponent, BadgeComponent, ChipComponent],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent, TableComponent, ConfirmDialogComponent, FeatureSidebarComponent, SliderPanelComponent, VaultUnlockComponent, ChipComponent],
   templateUrl: './vault.component.html',
   styleUrl: './vault.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
