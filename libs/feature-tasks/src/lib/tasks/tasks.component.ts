@@ -2835,6 +2835,22 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.bulkDeleteModalOpen.set(false);
   }
 
+  bulkReopenTasks() {
+    const selected = this.selectedTasks();
+    selected.forEach(id => {
+      const task = this.store.tasks().find(t => t.id === id);
+      if (task && task.status === 'COMPLETED') {
+        this.store.updateTask(id, { status: 'ACTIVE' });
+      }
+    });
+    this.clearSelection();
+  }
+
+  hasCompletedSelected = computed(() => {
+    const selected = this.selectedTasks();
+    return this.store.tasks().some(t => selected.has(t.id) && t.status === 'COMPLETED');
+  });
+
   bulkChangePriority(priority: Task['priority']) {
     const selected = this.selectedTasks();
     selected.forEach(id => {

@@ -41,6 +41,12 @@
                     <span class="material-symbols-outlined">done_all</span>
                     Complete
                 </button>
+                @if (hasCompletedSelected()) {
+                <button class="btn-secondary btn-sm bulk-reopen-btn" (click)="bulkReopenTasks()">
+                    <span class="material-symbols-outlined">restart_alt</span>
+                    Reopen
+                </button>
+                }
                 <button class="btn-secondary btn-sm" (click)="bulkChangePriority('HIGH')">
                     <span class="material-symbols-outlined">flag</span>
                     High Priority
@@ -754,6 +760,12 @@
                 <span class="material-symbols-outlined">delete</span>
                 Delete
             </button>
+            @if (task.status === 'COMPLETED') {
+            <button type="button" class="td-footer-reopen" (click)="completeTaskFromDetails()">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Reopen
+            </button>
+            }
             <button type="button"
                     class="btn-minimal-save"
                     [disabled]="!editedTaskTitle().trim()"

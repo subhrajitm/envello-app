@@ -265,6 +265,16 @@
     color: var(--text-primary);
 }
 
+.bulk-reopen-btn {
+    color: var(--accent-green, #22c55e);
+    border-color: var(--accent-green, #22c55e);
+}
+.bulk-reopen-btn:hover {
+    background: color-mix(in srgb, var(--accent-green, #22c55e) 10%, transparent);
+    border-color: var(--accent-green, #22c55e);
+    color: var(--accent-green, #22c55e);
+}
+
 .btn-primary {
     height: 32px;
     display: inline-flex;
@@ -4371,7 +4381,7 @@
     padding: 8px 12px;
     background: var(--bg-panel);
     border: 1px solid var(--border-subtle);
-    border-radius: 6px;
+    border-radius: 0;
     margin-left: auto;
 }
 
@@ -6198,6 +6208,28 @@ textarea:focus-visible {
     background: color-mix(in srgb, var(--color-danger, var(--accent-red)) 6%, transparent);
 }
 .td-footer-delete .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.td-footer-reopen {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-app);
+    border: 1px solid var(--accent-green, #22c55e);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-green, #22c55e);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: inherit;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.td-footer-reopen:hover {
+    background: color-mix(in srgb, var(--accent-green, #22c55e) 10%, transparent);
+}
+.td-footer-reopen .material-symbols-outlined {
     font-size: 16px;
 }
 
