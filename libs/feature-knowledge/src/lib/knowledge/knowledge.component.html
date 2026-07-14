@@ -19,7 +19,7 @@
 
       <!-- Source types — only show if at least 1 exists -->
       @for (t of sourceTypeOptions; track t.id) {
-        @if ((typeCountMap()[t.id] ?? 0) > 0) {
+        @if (typeCountMap()[t.id] > 0) {
           <button class="rs-type-item"
             [class.active]="!selectedCollection() && sidebarType() === t.id"
             (click)="setSidebarType(t.id)">

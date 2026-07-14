@@ -603,9 +603,9 @@
                             <span class="material-symbols-outlined td-prop-icon">calendar_today</span>
                             <input type="date" class="td-prop-date-input"
                                    [value]="editedTaskDue() || ''"
-                                   (change)="editedTaskDue.set($any($event.target).value || '')">
+                                   (change)="editedTaskDue.set($any($event.target).value || ''); saveTaskDetails()">
                             @if (editedTaskDue()) {
-                            <button type="button" class="td-prop-date-clear" (click)="editedTaskDue.set('')" title="Clear date">
+                            <button type="button" class="td-prop-date-clear" (click)="editedTaskDue.set(''); saveTaskDetails()" title="Clear date">
                                 <span class="material-symbols-outlined">close</span>
                             </button>
                             }

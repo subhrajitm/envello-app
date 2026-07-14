@@ -1602,6 +1602,15 @@ export class TasksComponent implements OnInit, OnDestroy {
       {
         pattern: /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/,
         value: (match: RegExpMatchArray) => `${this.parseDate(match[1], match[2], match[3])}, ${this.newTaskDueTime()}`
+      },
+      // "by 10th Aug 2026", "by Aug 10 2026", "by Aug 10", "10 Aug 2026", "Aug 10th 2026" etc.
+      {
+        pattern: /\b(?:by\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d{4})?\b/i,
+        value: (match: RegExpMatchArray) => this.parseNlpMonthDate(match[1], match[2], match[3])
+      },
+      {
+        pattern: /\b(?:by\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(\d{4})?\b/i,
+        value: (match: RegExpMatchArray) => this.parseNlpMonthDate(match[2], match[1], match[3])
       }
     ];
 
@@ -2662,6 +2671,25 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Last resort — try raw string (handles full dates like "May 18, 2026")
     const fallback = new Date(dateStr);
     return isNaN(fallback.getTime()) ? null : fallback;
+  }
+
+  // Converts day + month-name + optional year to ISO "YYYY-MM-DD" for NLP parsing.
+  private parseNlpMonthDate(dayStr: string, monthStr: string, yearStr?: string): string {
+    const monthMap: Record<string, number> = {
+      jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
+      apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
+      aug: 7, august: 7, sep: 8, september: 8, oct: 9, october: 9,
+      nov: 10, november: 10, dec: 11, december: 11,
+    };
+    const month = monthMap[monthStr.toLowerCase().slice(0, 3)];
+    if (month === undefined) return '';
+    const day   = parseInt(dayStr, 10);
+    const today = new Date();
+    let year    = yearStr ? parseInt(yearStr, 10) : today.getFullYear();
+    // If no year given and the date has already passed this year, use next year
+    if (!yearStr && new Date(year, month, day) < today) year++;
+    const d = new Date(year, month, day);
+    return d.toISOString().slice(0, 10);
   }
 
   // File attachment methods

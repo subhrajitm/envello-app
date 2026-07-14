@@ -290,7 +290,7 @@ export class SmartMonitorService {
 
       findings.push({
         ruleId: 'overdue-tasks',
-        title: `Follow up: "${task.title}" (${daysOver}d overdue)`,
+        title: `Follow up: "${task.title}"`,
         reason: `Task "${task.title}" is ${daysOver} days past its due date`,
         taskId: '',
         priority: daysOver >= 7 ? 'HIGH' : 'MEDIUM',

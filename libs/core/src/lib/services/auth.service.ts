@@ -26,12 +26,13 @@ export class AuthService {
   private readonly _isGuest = signal(false);
 
   constructor() {
-    // Initial session load
+    // getSession() is safe to call here: on desktop (Tauri) autoRefreshToken is
+    // disabled in SupabaseService so it returns immediately from localStorage
+    // with no network call, even when offline.
     this.supabase.getSession().then(({ data: { session } }) => {
       this._session.set(session);
       this._user.set(session?.user ?? null);
 
-      // If no session, check for Guest Mode
       if (!session) {
         const isGuest = localStorage.getItem('envello-guest-mode') === 'true';
         if (isGuest) {
@@ -44,6 +45,8 @@ export class AuthService {
         this.logging.info('AuthService initialized', 'Authenticated');
       }
 
+      this._initialized.set(true);
+    }).catch(() => {
       this._initialized.set(true);
     });
 
